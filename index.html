@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>LAMBO CITY | 3D ENGINE</title>
+<title>LAMBO CITY | FINAL WORLD ENGINE</title>
 
 <style>
-body { margin: 0; overflow: hidden; background: black; }
+body { margin: 0; overflow: hidden; background: black; font-family: Arial; }
 
 /* HUD */
 #hud {
@@ -14,13 +14,12 @@ body { margin: 0; overflow: hidden; background: black; }
     top: 10px;
     left: 10px;
     color: white;
-    font-family: Arial;
     font-size: 12px;
-    z-index: 10;
     opacity: 0.7;
+    z-index: 10;
 }
 
-/* UI BUTTONS */
+/* UI */
 #ui {
     position: fixed;
     bottom: 10px;
@@ -36,17 +35,30 @@ button {
     color: white;
     cursor: pointer;
 }
+
+/* FADE CAMERA FX */
+#fade {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    background: black;
+    opacity: 0;
+    transition: 0.4s;
+    z-index: 9;
+    pointer-events: none;
+}
 </style>
 </head>
 
 <body>
 
-<div id="hud">LAMBO CITY // 3D ENGINE ACTIVE</div>
+<div id="hud">LAMBO CITY // FINAL ENGINE ACTIVE</div>
+<div id="fade"></div>
 
 <div id="ui">
-    <button onclick="go('city')">CITY</button>
-    <button onclick="go('yacht')">YACHT</button>
-    <button onclick="go('store')">STORE</button>
+    <button onclick="travel('city')">CITY</button>
+    <button onclick="travel('yacht')">YACHT</button>
+    <button onclick="travel('store')">STORE</button>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
@@ -54,7 +66,7 @@ button {
 <script>
 
 /* =========================
-   🎮 BASIC 3D ENGINE SETUP
+   🌍 ENGINE SETUP
 ========================= */
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x000000);
@@ -75,12 +87,10 @@ const light = new THREE.AmbientLight(0xffffff, 1);
 scene.add(light);
 
 /* =========================
-   🌍 ZONES (3D ROOMS)
+   🏙 WORLD ZONES
 ========================= */
-const zones = {};
-
-function createZone(color, x) {
-    const geo = new THREE.BoxGeometry(20, 10, 20);
+function zone(color, x) {
+    const geo = new THREE.BoxGeometry(18, 8, 18);
     const mat = new THREE.MeshBasicMaterial({ color });
     const mesh = new THREE.Mesh(geo, mat);
     mesh.position.x = x;
@@ -88,29 +98,33 @@ function createZone(color, x) {
     return mesh;
 }
 
-zones.city = createZone(0x3a1f0a, 0);
-zones.yacht = createZone(0x0a1a3a, 30);
-zones.store = createZone(0x3a0a0a, -30);
+const city = zone(0x3a1f0a, 0);
+const yacht = zone(0x0a1a3a, 30);
+const store = zone(0x3a0a0a, -30);
 
-/* CAMERA START */
-camera.position.z = 10;
+/* CAMERA */
+camera.position.z = 12;
+camera.position.y = 2;
 
 /* =========================
-   🎮 WORLD NAVIGATION
+   🎮 SMOOTH CAMERA SYSTEM
 ========================= */
-function go(zone) {
+let targetX = 0;
 
-    if (zone === "city") {
-        camera.position.x = 0;
-    }
+/* FIXED NAVIGATION (THIS WAS YOUR ISSUE) */
+function travel(area) {
 
-    if (zone === "yacht") {
-        camera.position.x = 30;
-    }
+    document.getElementById("fade").style.opacity = "1";
 
-    if (zone === "store") {
-        camera.position.x = -30;
-    }
+    setTimeout(() => {
+
+        if (area === "city") targetX = 0;
+        if (area === "yacht") targetX = 30;
+        if (area === "store") targetX = -30;
+
+        document.getElementById("fade").style.opacity = "0";
+
+    }, 300);
 }
 
 /* =========================
@@ -123,14 +137,16 @@ document.addEventListener("mousemove", (e) => {
 });
 
 /* =========================
-   🎮 ANIMATION LOOP
+   🎮 GAME LOOP (SMOOTH LERP)
 ========================= */
 function animate() {
-
     requestAnimationFrame(animate);
 
+    // smooth camera movement (FIXED GTA FEEL)
+    camera.position.x += (targetX - camera.position.x) * 0.08;
+
     camera.position.y = 2;
-    camera.rotation.y = mouseX * 0.2;
+    camera.rotation.y = mouseX * 0.25;
 
     renderer.render(scene, camera);
 }
