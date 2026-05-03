@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>LAMBO CITY | OPEN WORLD</title>
+<title>LAMBO CITY | SIMULATION ENGINE</title>
 
 <style>
 body {
@@ -14,30 +14,30 @@ body {
     color: white;
 }
 
-/* ===== WORLD FADE / CAMERA LAYER ===== */
+/* CAMERA LAYER */
 #camera {
     position: fixed;
     width: 100%;
     height: 100%;
     background: black;
-    transform: scale(1.2);
+    transform: scale(1.15);
     opacity: 1;
-    transition: transform 1.2s ease, opacity 1s ease;
+    transition: transform 0.9s ease, opacity 0.8s ease;
     z-index: 999;
 }
 
-/* ===== WORLD HUD ===== */
+/* HUD */
 #hud {
     position: fixed;
-    top: 15px;
-    left: 15px;
+    top: 12px;
+    left: 12px;
     font-size: 11px;
-    letter-spacing: 3px;
     opacity: 0.6;
+    letter-spacing: 3px;
     z-index: 50;
 }
 
-/* ===== WORLD AREAS ===== */
+/* WORLD */
 .world {
     position: absolute;
     width: 100%;
@@ -46,7 +46,7 @@ body {
     justify-content: center;
     align-items: center;
     flex-direction: column;
-    transition: transform 1s ease, opacity 1s ease;
+    transition: opacity 0.6s ease, transform 0.6s ease;
 }
 
 /* ENVIRONMENTS */
@@ -62,15 +62,14 @@ body {
     background: black;
 }
 
-/* ===== TITLE ===== */
+/* TITLE */
 .title {
     font-size: 38px;
     letter-spacing: 6px;
     margin-bottom: 20px;
-    text-transform: uppercase;
 }
 
-/* ===== OPEN WORLD BUTTONS (HUD STYLE) ===== */
+/* BUTTONS (SIMULATION STYLE) */
 button {
     margin: 8px;
     padding: 10px 18px;
@@ -79,8 +78,11 @@ button {
     color: white;
     cursor: pointer;
     letter-spacing: 2px;
-    transition: 0.3s;
-    font-size: 12px;
+    transition: 0.2s;
+}
+
+button:active {
+    transform: scale(0.95);
 }
 
 button:hover {
@@ -88,7 +90,7 @@ button:hover {
     color: black;
 }
 
-/* ===== VIP STREAM ===== */
+/* VIP STREAM */
 iframe {
     width: 80%;
     max-width: 900px;
@@ -97,39 +99,35 @@ iframe {
     border: 1px solid rgba(255,255,255,0.2);
 }
 
-/* ===== WORLD TRANSITION STATE ===== */
-.entering {
-    transform: scale(1.05);
-    opacity: 0;
+/* CLICK FEEDBACK PULSE */
+.pulse {
+    animation: pulse 0.4s ease;
 }
 
-.active {
-    transform: scale(1);
-    opacity: 1;
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.03); }
+    100% { transform: scale(1); }
 }
 </style>
 </head>
 
 <body>
 
-<!-- CAMERA EFFECT LAYER -->
 <div id="camera"></div>
-
-<!-- HUD -->
-<div id="hud">LAMBO CITY // OPEN WORLD ENGINE</div>
+<div id="hud">LAMBO CITY // SIMULATION ACTIVE</div>
 
 <!-- PORTAL -->
 <div id="portal" class="world">
     <div class="title">CITY GATE</div>
-    <button onclick="travel('city')">ENTER CITY</button>
+    <button onclick="travel('city', this)">ENTER CITY</button>
 </div>
 
 <!-- CITY -->
 <div id="city" class="world">
     <div class="title">LAMBO CITY</div>
-
-    <button onclick="travel('vip')">YACHT CLUB</button>
-    <button onclick="travel('portal')">EXIT WORLD</button>
+    <button onclick="travel('vip', this)">YACHT CLUB</button>
+    <button onclick="travel('portal', this)">EXIT WORLD</button>
 </div>
 
 <!-- VIP -->
@@ -141,59 +139,56 @@ iframe {
         allowfullscreen>
     </iframe>
 
-    <button onclick="travel('city')">BACK TO CITY</button>
+    <button onclick="travel('city', this)">BACK TO CITY</button>
 </div>
 
 <script>
 
 const camera = document.getElementById("camera");
 
-/* START WORLD (CINEMATIC DROP-IN) */
+/* INIT WORLD */
 window.onload = () => {
     setTimeout(() => {
         camera.style.transform = "scale(1)";
         camera.style.opacity = "0";
-
-        setTimeout(() => {
-            show("portal");
-        }, 900);
-
+        show("portal");
     }, 600);
 };
 
-/* WORLD SYSTEM */
+/* SHOW WORLD (SAFE SWITCH) */
 function show(id) {
     document.querySelectorAll(".world").forEach(w => {
         w.style.display = "none";
-        w.classList.remove("active");
     });
 
     const el = document.getElementById(id);
     el.style.display = "flex";
-
-    setTimeout(() => {
-        el.classList.add("active");
-    }, 50);
 }
 
-/* OPEN WORLD TRANSITION ENGINE */
-function travel(destination) {
+/* MAIN SIMULATION ENGINE */
+function travel(destination, btn) {
 
-    // cinematic zoom-out (camera pulls back)
+    // instant feedback (fixes “button not working feeling”)
+    if (btn) {
+        btn.classList.add("pulse");
+        setTimeout(() => btn.classList.remove("pulse"), 400);
+    }
+
+    // camera pull-back (enter transition)
     camera.style.opacity = "1";
-    camera.style.transform = "scale(1.2)";
+    camera.style.transform = "scale(1.15)";
 
     setTimeout(() => {
 
         show(destination);
 
-        // cinematic zoom-in (camera returns)
+        // camera settle-in (enter world)
         setTimeout(() => {
             camera.style.opacity = "0";
             camera.style.transform = "scale(1)";
-        }, 300);
+        }, 250);
 
-    }, 700);
+    }, 650);
 }
 
 </script>
