@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>LAMBO CITY | LIVING MULTIPLAYER CITY</title>
+<title>LAMBO CITY | ONLINE WORLD</title>
 
 <style>
 body {
@@ -14,7 +14,7 @@ body {
     color: white;
 }
 
-/* CAMERA LAYER */
+/* CAMERA */
 #camera {
     position: fixed;
     width: 100%;
@@ -37,14 +37,15 @@ body {
     z-index: 50;
 }
 
-/* LIVE ACTIVITY FEED */
+/* SERVER FEED */
 #feed {
     position: fixed;
     bottom: 12px;
     left: 12px;
     font-size: 10px;
-    opacity: 0.5;
-    max-width: 300px;
+    opacity: 0.6;
+    max-width: 320px;
+    line-height: 1.4;
 }
 
 /* WORLD */
@@ -58,21 +59,17 @@ body {
     flex-direction: column;
 }
 
-/* ===== DISTINCT WORLD IDENTITY ===== */
-
-/* PORTAL = cold / blue tone */
+/* ZONES (strong identity differences) */
 #portal {
-    background: radial-gradient(circle at center, #0a0a1a, #000);
+    background: radial-gradient(circle, #0a0f1f, #000);
 }
 
-/* CITY = neon warm chaos */
 #city {
-    background: radial-gradient(circle at top, #1a120a, #000);
+    background: radial-gradient(circle at top, #2a1a0a, #000);
 }
 
-/* VIP = luxury dark gold tone */
 #vip {
-    background: radial-gradient(circle at center, #11110a, #000);
+    background: radial-gradient(circle, #11110a, #000);
 }
 
 /* TITLE */
@@ -106,25 +103,14 @@ iframe {
     margin-top: 20px;
     border: 1px solid rgba(255,255,255,0.2);
 }
-
-/* TRANSITION FLASH */
-.flash {
-    animation: flash 0.5s ease;
-}
-
-@keyframes flash {
-    0% { filter: brightness(1); }
-    50% { filter: brightness(2); }
-    100% { filter: brightness(1); }
-}
 </style>
 </head>
 
 <body>
 
 <div id="camera"></div>
-<div id="hud">LAMBO CITY // MULTIPLAYER SIMULATION ACTIVE</div>
-<div id="feed"></div>
+<div id="hud">LAMBO CITY // ONLINE METAVERSE</div>
+<div id="feed">CONNECTING TO WORLD SERVER...</div>
 
 <!-- PORTAL -->
 <div id="portal" class="world">
@@ -156,9 +142,17 @@ iframe {
 const camera = document.getElementById("camera");
 const feed = document.getElementById("feed");
 
+let currentZone = "portal";
+let population = {
+    portal: 3,
+    city: 12,
+    vip: 5
+};
+
+/* INIT WORLD */
 window.onload = () => {
     show("portal");
-    simulatePlayers();
+    startMetaverse();
 };
 
 /* WORLD SWITCH */
@@ -166,23 +160,10 @@ function show(id) {
     document.querySelectorAll(".world").forEach(w => w.style.display = "none");
     document.getElementById(id).style.display = "flex";
 
-    updateHUD(id);
-    flashWorld();
+    currentZone = id;
 }
 
-/* HUD UPDATE */
-function updateHUD(id) {
-    const names = {
-        portal: "CITY GATE",
-        city: "LAMBO CITY CENTER",
-        vip: "YACHT CLUB VIP"
-    };
-
-    document.getElementById("hud").innerText =
-        "LAMBO CITY // " + (names[id] || "UNKNOWN ZONE");
-}
-
-/* STRONG TRANSITION (NOW VISUALLY OBVIOUS) */
+/* TRANSITION ENGINE */
 function travel(destination) {
 
     camera.style.opacity = "1";
@@ -200,29 +181,33 @@ function travel(destination) {
     }, 500);
 }
 
-/* ZONE FLASH (MAKES CHANGE OBVIOUS) */
-function flashWorld() {
-    document.body.classList.add("flash");
+/* 🧠 METAVERSE SIMULATION ENGINE */
+function startMetaverse() {
 
-    setTimeout(() => {
-        document.body.classList.remove("flash");
-    }, 400);
-}
-
-/* FAKE MULTIPLAYER ACTIVITY */
-function simulatePlayers() {
-    const messages = [
-        "DJ HERO entered City Center",
-        "User connected to Yacht Club stream",
-        "Citizen roaming downtown",
-        "VIP access session active",
-        "Neon traffic increasing in City"
+    const logs = [
+        "Citizen joined session",
+        "User moved between districts",
+        "VIP stream engagement detected",
+        "Traffic increasing in City Center",
+        "New visitor entered Lambo City",
+        "Yacht Club access requested"
     ];
 
     setInterval(() => {
-        const msg = messages[Math.floor(Math.random() * messages.length)];
-        feed.innerText = "LIVE: " + msg;
-    }, 2500);
+
+        // simulate population fluctuation
+        population.city += Math.floor(Math.random() * 3 - 1);
+        population.city = Math.max(5, population.city);
+
+        const msg = logs[Math.floor(Math.random() * logs.length)];
+
+        feed.innerHTML =
+        "ZONE: " + currentZone.toUpperCase() +
+        "<br>POPULATION: " + population[currentZone] +
+        "<br>SERVER: ACTIVE<br><br>" +
+        "LIVE: " + msg;
+
+    }, 2000);
 }
 
 </script>
