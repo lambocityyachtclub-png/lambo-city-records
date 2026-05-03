@@ -9,10 +9,22 @@
 body {
   margin: 0;
   font-family: Arial, sans-serif;
-  background: url('background: url('https://raw.githubusercontent.com/YOURUSERNAME/YOURREPO/main/yourimage.jpg') no-repeat center center/cover;') no-repeat center center/cover;
+  background: black;
   color: white;
 }
 
+/* BACKGROUND IMAGE LAYER */
+.bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: url('https://raw.githubusercontent.com/YOURUSERNAME/YOURREPO/main/yourimage.jpg') no-repeat center center/cover;
+  z-index: -1;
+}
+
+/* DARK OVERLAY */
 .overlay {
   background: rgba(0,0,0,0.75);
   min-height: 100vh;
@@ -84,6 +96,9 @@ body {
 
 <body>
 
+<!-- BACKGROUND -->
+<div class="bg"></div>
+
 <div class="overlay">
 <div class="container">
 
@@ -91,10 +106,10 @@ body {
 
 <div class="grid">
 
-<!-- STREAM -->
+<!-- TWITCH STREAM -->
 <div class="stream">
 <iframe
-  src="https://player.twitch.tv/?channel=YOUR_TWITCH_CHANNEL&parent=YOUR_DOMAIN"
+  src="https://player.twitch.tv/?channel=LamboCityRecords&parent=lambocityrecords.com"
   height="400"
   width="100%"
   allowfullscreen>
@@ -105,8 +120,8 @@ body {
 <div class="panel">
 <h3>ACTIVITY</h3>
 
-<button onclick="alert('DJ HERO joined')">DJ HERO joined</button>
-<button onclick="alert('Drop loading...')">Next Drop Soon</button>
+<button onclick="alert('HERO joined Lambo City')">HERO Joined</button>
+<button onclick="alert('Next drop loading...')">Next Drop Soon</button>
 <button onclick="window.location.href='/vip'">Boarding Pass Available</button>
 
 <hr>
@@ -117,7 +132,7 @@ body {
 
 </div>
 
-<!-- ENTER -->
+<!-- ENTER BUTTON -->
 <a href="/vip" class="enter-btn">ENTER LAMBO CITY</a>
 
 <!-- FEED -->
@@ -132,13 +147,15 @@ body {
 const feed = document.getElementById("feed");
 
 setInterval(() => {
-  const msg = document.createElement("p");
   const items = [
-    "SYSTEM: DJ HERO entered Lambo City",
+    "SYSTEM: HERO entered Lambo City",
     "SYSTEM: Boarding Pass updating...",
     "SYSTEM: VIP access preparing...",
+    "SYSTEM: Yacht event loading...",
     "USER: Waiting for drop"
   ];
+
+  const msg = document.createElement("p");
   msg.textContent = items[Math.floor(Math.random() * items.length)];
   feed.appendChild(msg);
   feed.scrollTop = feed.scrollHeight;
