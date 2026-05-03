@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>LAMBO CITY | ONLINE WORLD</title>
+<title>LAMBO CITY | GTA ONLINE LOBBY</title>
 
 <style>
 body {
@@ -14,7 +14,7 @@ body {
     color: white;
 }
 
-/* CAMERA */
+/* CAMERA TRANSITION */
 #camera {
     position: fixed;
     width: 100%;
@@ -22,7 +22,7 @@ body {
     background: black;
     opacity: 0;
     transform: scale(1.2);
-    transition: 0.6s ease;
+    transition: 0.5s ease;
     z-index: 999;
 }
 
@@ -37,15 +37,19 @@ body {
     z-index: 50;
 }
 
-/* SERVER FEED */
-#feed {
+/* GLOBAL CHAT (PERSISTENT LIKE GTA ONLINE) */
+#chat {
     position: fixed;
+    right: 12px;
     bottom: 12px;
-    left: 12px;
+    width: 260px;
+    height: 180px;
+    background: rgba(0,0,0,0.4);
+    border: 1px solid rgba(255,255,255,0.2);
+    padding: 8px;
     font-size: 10px;
-    opacity: 0.6;
-    max-width: 320px;
-    line-height: 1.4;
+    overflow: hidden;
+    z-index: 1000;
 }
 
 /* WORLD */
@@ -59,20 +63,11 @@ body {
     flex-direction: column;
 }
 
-/* ZONES (strong identity differences) */
-#portal {
-    background: radial-gradient(circle, #0a0f1f, #000);
-}
+/* CITY IDENTITY (STRONG GTA DIFFERENCE) */
+#portal { background: radial-gradient(circle, #0a0f1f, #000); }
+#city   { background: radial-gradient(circle at top, #2a1a0a, #000); }
+#vip    { background: radial-gradient(circle, #11110a, #000); }
 
-#city {
-    background: radial-gradient(circle at top, #2a1a0a, #000);
-}
-
-#vip {
-    background: radial-gradient(circle, #11110a, #000);
-}
-
-/* TITLE */
 .title {
     font-size: 38px;
     letter-spacing: 6px;
@@ -95,13 +90,12 @@ button:hover {
     color: black;
 }
 
-/* VIP STREAM */
+/* STREAM */
 iframe {
     width: 80%;
     max-width: 900px;
     height: 500px;
     margin-top: 20px;
-    border: 1px solid rgba(255,255,255,0.2);
 }
 </style>
 </head>
@@ -109,8 +103,10 @@ iframe {
 <body>
 
 <div id="camera"></div>
-<div id="hud">LAMBO CITY // ONLINE METAVERSE</div>
-<div id="feed">CONNECTING TO WORLD SERVER...</div>
+<div id="hud">LAMBO CITY // GTA ONLINE SESSION ACTIVE</div>
+
+<!-- GLOBAL CHAT (PERSISTENT ACROSS ALL ROOMS) -->
+<div id="chat"></div>
 
 <!-- PORTAL -->
 <div id="portal" class="world">
@@ -140,38 +136,32 @@ iframe {
 <script>
 
 const camera = document.getElementById("camera");
-const feed = document.getElementById("feed");
+const chat = document.getElementById("chat");
 
 let currentZone = "portal";
-let population = {
-    portal: 3,
-    city: 12,
-    vip: 5
-};
 
-/* INIT WORLD */
+/* WORLD INIT */
 window.onload = () => {
     show("portal");
-    startMetaverse();
+    startGTAChat();
 };
 
 /* WORLD SWITCH */
 function show(id) {
     document.querySelectorAll(".world").forEach(w => w.style.display = "none");
     document.getElementById(id).style.display = "flex";
-
     currentZone = id;
 }
 
-/* TRANSITION ENGINE */
-function travel(destination) {
+/* GTA STYLE TRANSITION */
+function travel(dest) {
 
     camera.style.opacity = "1";
     camera.style.transform = "scale(1.25)";
 
     setTimeout(() => {
 
-        show(destination);
+        show(dest);
 
         setTimeout(() => {
             camera.style.opacity = "0";
@@ -181,33 +171,37 @@ function travel(destination) {
     }, 500);
 }
 
-/* 🧠 METAVERSE SIMULATION ENGINE */
-function startMetaverse() {
+/* 💬 GTA ONLINE CHAT SYSTEM */
+function startGTAChat() {
 
-    const logs = [
-        "Citizen joined session",
-        "User moved between districts",
-        "VIP stream engagement detected",
-        "Traffic increasing in City Center",
-        "New visitor entered Lambo City",
-        "Yacht Club access requested"
+    const users = ["DJ HERO", "VIP_ACE", "CITY_RUNNER", "LAMBO_GUEST", "YACHT_KING"];
+
+    const messages = [
+        "entered the session",
+        "joined Lambo City",
+        "is cruising downtown",
+        "joined Yacht Club stream",
+        "left the city gate",
+        "is buying merch at LAMBO STORE (soon)"
     ];
 
     setInterval(() => {
 
-        // simulate population fluctuation
-        population.city += Math.floor(Math.random() * 3 - 1);
-        population.city = Math.max(5, population.city);
+        const user = users[Math.floor(Math.random() * users.length)];
+        const msg = messages[Math.floor(Math.random() * messages.length)];
 
-        const msg = logs[Math.floor(Math.random() * logs.length)];
+        const zoneTag = "[" + currentZone.toUpperCase() + "]";
 
-        feed.innerHTML =
-        "ZONE: " + currentZone.toUpperCase() +
-        "<br>POPULATION: " + population[currentZone] +
-        "<br>SERVER: ACTIVE<br><br>" +
-        "LIVE: " + msg;
+        const line = `${zoneTag} ${user}: ${msg}`;
 
-    }, 2000);
+        chat.innerHTML = line + "<br>" + chat.innerHTML;
+
+        // keep chat limited
+        if (chat.innerHTML.length > 1500) {
+            chat.innerHTML = chat.innerHTML.slice(0, 1500);
+        }
+
+    }, 1800);
 }
 
 </script>
