@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>LAMBO CITY | LIVING WORLD</title>
+<title>LAMBO CITY | WORLD ENGINE</title>
 
 <style>
 body {
@@ -14,18 +14,19 @@ body {
     color: white;
 }
 
-/* GLOBAL FADE */
+/* CINEMATIC OVERLAY (GTA FADE + ZOOM FEEL) */
 #fade {
     position: fixed;
     width: 100%;
     height: 100%;
     background: black;
     opacity: 1;
-    transition: 1s ease;
-    z-index: 99;
+    transform: scale(1.1);
+    transition: opacity 0.9s ease, transform 1.2s ease;
+    z-index: 100;
 }
 
-/* WORLD CONTAINER */
+/* WORLD SCREENS */
 .screen {
     position: absolute;
     width: 100%;
@@ -34,29 +35,31 @@ body {
     justify-content: center;
     align-items: center;
     flex-direction: column;
+    transition: transform 1s ease, opacity 1s ease;
 }
 
-/* PORTAL */
+/* ENVIRONMENTS */
 #portal {
     background: radial-gradient(circle, #111, #000);
 }
 
-/* CITY */
 #city {
     background: radial-gradient(circle at top, #111, #000);
 }
 
-/* VIP */
 #vip {
     background: black;
 }
 
+/* TITLE */
 .title {
-    font-size: 34px;
+    font-size: 36px;
     letter-spacing: 6px;
     margin-bottom: 20px;
+    text-transform: uppercase;
 }
 
+/* BUTTONS */
 button {
     margin: 10px;
     padding: 12px 20px;
@@ -64,6 +67,8 @@ button {
     background: transparent;
     color: white;
     cursor: pointer;
+    letter-spacing: 2px;
+    transition: 0.3s;
 }
 
 button:hover {
@@ -71,11 +76,24 @@ button:hover {
     color: black;
 }
 
+/* GTA STYLE “DEPTH SHIFT” */
+.enter {
+    transform: scale(1.08);
+    opacity: 0;
+}
+
+.active {
+    transform: scale(1);
+    opacity: 1;
+}
+
+/* VIP STREAM */
 iframe {
     width: 80%;
     max-width: 900px;
     height: 500px;
     margin-top: 20px;
+    border: 1px solid rgba(255,255,255,0.2);
 }
 </style>
 </head>
@@ -113,28 +131,49 @@ iframe {
 
 let fade = document.getElementById("fade");
 
-/* START WORLD */
+/* START WORLD (CINEMATIC DROP-IN) */
 window.onload = () => {
     setTimeout(() => {
+        fade.style.transform = "scale(1)";
         fade.style.opacity = "0";
-        show("portal");
+
+        setTimeout(() => {
+            show("portal");
+        }, 900);
+
     }, 600);
 };
 
 /* WORLD ENGINE */
 function show(id) {
-    document.querySelectorAll(".screen").forEach(s => s.style.display = "none");
-    document.getElementById(id).style.display = "flex";
+    document.querySelectorAll(".screen").forEach(s => {
+        s.style.display = "none";
+        s.classList.remove("active");
+    });
+
+    let el = document.getElementById(id);
+    el.style.display = "flex";
+
+    // GTA-style “camera settle”
+    setTimeout(() => {
+        el.classList.add("active");
+    }, 50);
 }
 
-/* TRANSITION WRAPPER */
+/* GTA STYLE TRANSITION */
 function transition(callback) {
     fade.style.opacity = "1";
+    fade.style.transform = "scale(1.1)";
 
     setTimeout(() => {
         callback();
-        fade.style.opacity = "0";
-    }, 800);
+
+        setTimeout(() => {
+            fade.style.opacity = "0";
+            fade.style.transform = "scale(1)";
+        }, 250);
+
+    }, 700);
 }
 
 /* NAVIGATION */
