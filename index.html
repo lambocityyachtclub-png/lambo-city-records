@@ -1,113 +1,59 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>LAMBO CITY</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-  body {
+body {
     margin: 0;
-    font-family: Arial, sans-serif;
+    background: radial-gradient(circle at top, #111, #000);
     color: white;
+    font-family: Arial;
     overflow: hidden;
-    background: black;
-  }
+}
 
-  /* CINEMATIC BACKGROUND (SUBTLE MOTION) */
-  .background {
-    position: fixed;
+.center {
+    position: absolute;
     width: 100%;
     height: 100%;
-    background: url('https://images.unsplash.com/photo-1508057198894-247b23fe5ade') center/cover no-repeat;
-    filter: brightness(0.35);
-    animation: zoom 18s infinite alternate ease-in-out;
-  }
-
-  @keyframes zoom {
-    from { transform: scale(1); }
-    to { transform: scale(1.05); }
-  }
-
-  /* TITLE */
-  .title {
-    position: absolute;
-    top: 8%;
-    width: 100%;
-    text-align: center;
-    font-size: 3rem;
-    letter-spacing: 6px;
-  }
-
-  /* PANEL */
-  #panel {
-    position: absolute;
-    top: 40%;
-    width: 100%;
-    text-align: center;
-    font-size: 1.2rem;
-  }
-
-  /* MENU */
-  .menu {
-    position: absolute;
-    bottom: 12%;
-    width: 100%;
     display: flex;
     justify-content: center;
-    gap: 20px;
-  }
+    align-items: center;
+    flex-direction: column;
+}
 
-  .btn {
-    padding: 14px 22px;
+button {
+    margin: 10px;
+    padding: 12px 20px;
     border: 1px solid white;
     background: transparent;
     color: white;
     cursor: pointer;
-    transition: 0.25s;
-    font-size: 14px;
-  }
+}
 
-  .btn:hover {
+button:hover {
     background: white;
     color: black;
-  }
+}
+
+.title {
+    font-size: 40px;
+    letter-spacing: 6px;
+    margin-bottom: 20px;
+}
 </style>
 </head>
 
 <body>
 
-<div class="background"></div>
+<div class="center">
+    <div class="title">LAMBO CITY</div>
 
-<div class="title">LAMBO CITY</div>
-
-<div id="panel">
-SYSTEM: Welcome to Lambo City<br>
-USER: Ready to board
+    <button onclick="location.href='portal.html'">ENTER CITY</button>
+    <button onclick="location.href='vip.html'">YACHT CLUB</button>
 </div>
-
-<div class="menu">
-<button onclick="location.href='portal.html'">ENTER CITY</button>
-<button onclick="location.href='vip.html'">YACHT CLUB</button>
-  <button class="btn" onclick="openRadio()">RADIO</button>
-</div>
-
-<script>
-function enterCity() {
-  document.getElementById("panel").innerHTML =
-  "SYSTEM: Entering Lambo City...<br>STATUS: World loading<br>CITIZENS: Active";
-}
-
-function openYacht() {
-  document.getElementById("panel").innerHTML =
-  "YACHT CLUB<br><br>STATUS: LOCKED 🔒<br>ACCESS: Not Granted";
-}
-
-function openRadio() {
-  document.getElementById("panel").innerHTML =
-  "LAMBO CITY RADIO<br><br>STATUS: Streaming Atmosphere<br>CHANNEL: Lambo City Records";
-}
-</script>
 
 </body>
 </html>
