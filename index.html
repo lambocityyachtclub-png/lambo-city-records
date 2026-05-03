@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Lambo City</title>
+<title>Lambo City Map</title>
 
 <style>
 body {
   margin: 0;
-  font-family: Arial, sans-serif;
+  font-family: Arial;
   background: black;
   color: white;
   overflow-x: hidden;
@@ -20,134 +20,79 @@ body {
   width: 100%;
   height: 100%;
   background: url('https://raw.githubusercontent.com/YOURUSERNAME/YOURREPO/main/yourimage.jpg') no-repeat center center/cover;
-  filter: brightness(0.45) contrast(1.1);
-  transform: scale(1.05);
+  filter: brightness(0.4);
   z-index: -2;
-  animation: slowZoom 20s infinite alternate ease-in-out;
 }
 
-@keyframes slowZoom {
-  from { transform: scale(1.05); }
-  to { transform: scale(1.12); }
-}
-
-/* DARK OVERLAY */
+/* OVERLAY */
 .overlay {
   min-height: 100vh;
-  background: radial-gradient(circle at top, rgba(0,0,0,0.4), rgba(0,0,0,0.92));
-  padding: 25px;
+  background: rgba(0,0,0,0.75);
+  padding: 20px;
 }
 
-/* HEADER */
+/* TITLE */
 .title {
   text-align: center;
-  font-size: 64px;
-  font-weight: bold;
-  letter-spacing: 4px;
+  font-size: 55px;
   color: gold;
-  text-shadow: 0 0 20px rgba(255,215,0,0.6);
-  margin-top: 10px;
+  font-weight: bold;
+  letter-spacing: 3px;
 }
 
-/* SUB TEXT */
 .subtitle {
   text-align: center;
-  max-width: 800px;
-  margin: 10px auto 30px;
   color: #ccc;
-  font-size: 16px;
+  margin-bottom: 20px;
 }
 
-/* MAIN LAYOUT */
-.container {
-  max-width: 1200px;
+/* MAP GRID */
+.map {
+  max-width: 1000px;
   margin: auto;
-}
-
-/* GRID */
-.grid {
   display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 20px;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
 }
 
-/* STREAM BOX */
-.stream {
-  border: 1px solid rgba(255,215,0,0.6);
-  box-shadow: 0 0 25px rgba(255,215,0,0.15);
-  overflow: hidden;
-  border-radius: 10px;
-}
-
-/* SIDE PANEL */
-.panel {
-  background: rgba(0,0,0,0.6);
-  border: 1px solid rgba(255,215,0,0.4);
-  padding: 18px;
-  border-radius: 10px;
-  backdrop-filter: blur(6px);
-}
-
-.panel h3 {
-  color: gold;
-  margin-top: 0;
-}
-
-/* BUTTONS */
-button {
-  width: 100%;
-  padding: 12px;
-  margin-top: 10px;
-  background: linear-gradient(90deg, gold, #ffcc00);
-  border: none;
-  font-weight: bold;
+/* DISTRICTS */
+.zone {
+  border: 1px solid rgba(255,215,0,0.5);
+  padding: 30px;
+  text-align: center;
   cursor: pointer;
-  border-radius: 6px;
-  transition: 0.2s;
+  background: rgba(0,0,0,0.5);
+  transition: 0.3s;
+  border-radius: 10px;
 }
 
-button:hover {
-  transform: scale(1.03);
-  box-shadow: 0 0 15px rgba(255,215,0,0.4);
+.zone:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 20px rgba(255,215,0,0.3);
+}
+
+/* PANEL */
+.panel {
+  max-width: 900px;
+  margin: 30px auto;
+  border: 1px solid gold;
+  padding: 20px;
+  background: rgba(0,0,0,0.6);
+  border-radius: 10px;
 }
 
 /* ENTER BUTTON */
 .enter {
   display: block;
+  width: 300px;
+  margin: 30px auto;
   text-align: center;
-  margin: 40px auto 10px;
-  padding: 16px 30px;
-  width: 320px;
-  background: linear-gradient(90deg, gold, #ffb700);
+  padding: 15px;
+  background: gold;
   color: black;
   font-weight: bold;
   text-decoration: none;
-  border-radius: 12px;
-  box-shadow: 0 0 25px rgba(255,215,0,0.25);
-  transition: 0.2s;
-}
-
-.enter:hover {
-  transform: scale(1.05);
-}
-
-/* LIVE FEED */
-.feed {
-  margin-top: 25px;
-  border: 1px solid rgba(255,215,0,0.4);
-  padding: 12px;
-  height: 130px;
-  overflow: auto;
-  background: rgba(0,0,0,0.5);
   border-radius: 10px;
-}
-
-/* SMALL STATUS */
-.status {
-  text-align: center;
-  color: lightgreen;
-  font-size: 13px;
-  margin-top: 10px;
 }
 </style>
 </head>
@@ -158,69 +103,48 @@ button:hover {
 
 <div class="overlay">
 
-<div class="container">
+<div class="title">LAMBO CITY MAP</div>
+<div class="subtitle">Click a district to enter different parts of the city</div>
 
-<div class="title">LAMBO CITY</div>
+<div class="map">
 
-<div class="subtitle">
-Welcome to the Lambo City interactive lounge. Explore music, drops, studio sessions, and the Yacht Club experience.
-</div>
-
-<div class="grid">
-
-<!-- STREAM -->
-<div class="stream">
-<iframe
-src="https://player.twitch.tv/?channel=LamboCityRecords&parent=lambocityrecords.com"
-width="100%"
-height="420"
-allowfullscreen>
-</iframe>
-</div>
-
-<!-- PANEL -->
-<div class="panel">
-<h3>EXPLORE CITY</h3>
-
-<button onclick="alert('Music Hub loading soon')">Music Hub</button>
-<button onclick="alert('Drop Zone preparing')">Drop Zone</button>
-<button onclick="alert('Studio District coming online')">Studio Access</button>
-<button onclick="alert('VIP previews locked')">VIP Preview</button>
-</div>
+<div class="zone" onclick="openZone('studio')">🎵 Studio District</div>
+<div class="zone" onclick="openZone('yacht')">🛥 Yacht Club</div>
+<div class="zone" onclick="openZone('drops')">🔥 Drop Zone</div>
+<div class="zone" onclick="openZone('vip')">🔐 VIP Vault</div>
 
 </div>
 
-<!-- ENTER -->
-<a class="enter" href="/vip.html">ENTER YACHT CLUB</a>
-
-<div class="status">SYSTEM ONLINE • LAMBO CITY SYNC ACTIVE</div>
-
-<!-- FEED -->
-<div class="feed" id="feed">
-<p>SYSTEM: Welcome to Lambo City Network</p>
+<div class="panel" id="panel">
+Welcome to the Lambo City Map. Select a district to explore.
 </div>
 
-</div>
+<a class="enter" href="/vip.html">ENTER YACHT CLUB PORTAL</a>
 
 </div>
 
 <script>
-const feed = document.getElementById("feed");
 
-setInterval(() => {
-  const msgs = [
-    "SYSTEM: Yacht engines online...",
-    "SYSTEM: Studio session active...",
-    "SYSTEM: Drop pipeline syncing...",
-    "SYSTEM: VIP vault secured...",
-    "SYSTEM: City grid stabilizing..."
-  ];
+function openZone(zone) {
+  const panel = document.getElementById("panel");
 
-  const p = document.createElement("p");
-  p.textContent = msgs[Math.floor(Math.random() * msgs.length)];
-  feed.appendChild(p);
-  feed.scrollTop = feed.scrollHeight;
-}, 3500);
+  if (zone === "studio") {
+    panel.innerHTML = "🎵 Studio District: HERO is recording new records in Lambo City Studios.";
+  }
+
+  if (zone === "yacht") {
+    panel.innerHTML = "🛥 Yacht Club: Private luxury events and invite-only gatherings.";
+  }
+
+  if (zone === "drops") {
+    panel.innerHTML = "🔥 Drop Zone: Upcoming releases, NFTs, and exclusive content loading soon.";
+  }
+
+  if (zone === "vip") {
+    panel.innerHTML = "🔐 VIP Vault: Access restricted. Boarding pass required in Yacht Club portal.";
+  }
+}
+
 </script>
 
 </body>
