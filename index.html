@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>LAMBO CITY | WORLD ENGINE v30</title>
+<title>LAMBO CITY | GTA WORLD v40</title>
 
 <style>
 body {
@@ -14,53 +14,47 @@ body {
     color: white;
 }
 
-/* =========================
-   🎮 LOBBY (ENTRY)
-========================= */
-#lobby {
+/* 🌌 WORLD ATMOSPHERE (THIS IS WHAT WAS MISSING) */
+body::before {
+    content: "";
     position: fixed;
     width: 100%;
     height: 100%;
-    background: radial-gradient(circle, #000, #050510);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-    z-index: 5000;
-    transition: opacity 1s ease;
+    background: radial-gradient(circle at 30% 20%, rgba(255,140,0,0.08), transparent 50%),
+                radial-gradient(circle at 70% 80%, rgba(0,140,255,0.08), transparent 60%);
+    animation: pulse 6s infinite alternate;
+    z-index: 0;
 }
 
-/* =========================
-   🎥 CAMERA FX LAYER
-========================= */
+@keyframes pulse {
+    0% { transform: scale(1); opacity: 0.6; }
+    100% { transform: scale(1.05); opacity: 1; }
+}
+
+/* 🌫 LIGHT FOG LAYER */
+#fog {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle, transparent 40%, rgba(0,0,0,0.7));
+    z-index: 10;
+    pointer-events: none;
+}
+
+/* 🎥 CAMERA EFFECT */
 #camera {
     position: fixed;
     width: 100%;
     height: 100%;
-    background: black;
+    background: white;
     opacity: 0;
-    transform: scale(1.3);
-    transition: 0.5s ease;
+    transform: scale(1.2);
+    transition: 0.4s ease;
     z-index: 999;
 }
 
-/* =========================
-   🌆 CITY HUB
-========================= */
-#city {
-    width: 100%;
-    height: 100%;
-    display: none;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-    background: radial-gradient(circle at top, #3a1f0a, #000);
-}
-
-/* =========================
-   🏠 INTERIORS
-========================= */
-.interior {
+/* 🏙 CITY */
+#city, .interior {
     position: fixed;
     width: 100%;
     height: 100%;
@@ -68,25 +62,32 @@ body {
     justify-content: center;
     align-items: center;
     flex-direction: column;
+    z-index: 5;
 }
 
-/* Yacht */
-#yacht {
-    background: radial-gradient(circle, #0a0f1a, #000);
+/* 🌆 CITY LOOK (NOW MOVES LIGHT) */
+#city {
+    background: linear-gradient(120deg, #1a0f0a, #000, #0a0a1a);
+    background-size: 400% 400%;
+    animation: cityMove 10s ease infinite;
 }
 
-/* Store */
-#store {
-    background: radial-gradient(circle, #1a0a0a, #000);
+@keyframes cityMove {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
 }
 
-/* =========================
-   🎯 UI
-========================= */
+/* 🏠 INTERIORS */
+#yacht { background: radial-gradient(circle, #0a0f1a, #000); }
+#store { background: radial-gradient(circle, #1a0a0a, #000); }
+
+/* 🎮 UI */
 .title {
     font-size: 42px;
     letter-spacing: 6px;
     margin-bottom: 20px;
+    text-shadow: 0 0 10px rgba(255,255,255,0.2);
 }
 
 button {
@@ -98,60 +99,49 @@ button {
     cursor: pointer;
 }
 
-/* =========================
-   🎥 STREAM
-========================= */
+button:hover {
+    background: white;
+    color: black;
+}
+
+/* 📺 STREAM */
 iframe {
     width: 80%;
     max-width: 900px;
     height: 450px;
-    margin-top: 20px;
-    border: 1px solid rgba(255,255,255,0.2);
 }
 
-/* =========================
-   🔊 AUDIO (hidden)
-========================= */
-audio { display: none; }
-
-/* =========================
-   🌐 WORLD CHAT (ambient feel)
-========================= */
+/* 💬 CHAT */
 #chat {
     position: fixed;
     right: 12px;
     bottom: 12px;
     width: 240px;
-    height: 150px;
+    height: 160px;
     font-size: 10px;
     background: rgba(0,0,0,0.4);
     border: 1px solid rgba(255,255,255,0.2);
     padding: 8px;
     overflow: hidden;
+    z-index: 100;
 }
 </style>
 </head>
 
 <body>
 
-<!-- 🎮 LOBBY -->
-<div id="lobby">
-    <div>CONNECTING TO LAMBO CITY ONLINE SESSION...</div>
-    <button onclick="enterWorld()">ENTER CITY</button>
-</div>
-
 <div id="camera"></div>
+<div id="fog"></div>
 <div id="chat"></div>
 
-<!-- 🌆 CITY -->
+<!-- CITY -->
 <div id="city">
     <div class="title">LAMBO CITY</div>
-
     <button onclick="enter('yacht')">YACHT CLUB</button>
     <button onclick="enter('store')">STORE</button>
 </div>
 
-<!-- 🚤 YACHT -->
+<!-- YACHT -->
 <div id="yacht" class="interior">
     <div class="title">YACHT CLUB</div>
 
@@ -160,134 +150,78 @@ audio { display: none; }
         allowfullscreen>
     </iframe>
 
-    <button onclick="exitInterior()">BACK TO CITY</button>
+    <button onclick="exitInterior()">BACK</button>
 </div>
 
-<!-- 🛍 STORE -->
+<!-- STORE -->
 <div id="store" class="interior">
     <div class="title">STORE</div>
-
     <button>HERO DROP</button>
-    <button>CLASSIC LINE</button>
-
-    <button onclick="exitInterior()">BACK TO CITY</button>
+    <button onclick="exitInterior()">BACK</button>
 </div>
-
-<!-- 🔊 AUDIO -->
-<audio id="cityAudio" loop>
-    <source src="https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3">
-</audio>
-
-<audio id="insideAudio" loop>
-    <source src="https://www.soundjay.com/misc/sounds/bell-ringing-01.mp3">
-</audio>
 
 <script>
 
-const lobby = document.getElementById("lobby");
-const camera = document.getElementById("camera");
 const city = document.getElementById("city");
 const yacht = document.getElementById("yacht");
 const store = document.getElementById("store");
-
-const cityAudio = document.getElementById("cityAudio");
-const insideAudio = document.getElementById("insideAudio");
+const camera = document.getElementById("camera");
 const chat = document.getElementById("chat");
 
-/* =========================
-   🎮 ENTER WORLD
-========================= */
-function enterWorld() {
+/* START */
+window.onload = () => {
+    city.style.display = "flex";
+    startChat();
+};
 
-    lobby.style.opacity = "0";
-
-    setTimeout(() => {
-        lobby.style.display = "none";
-        city.style.display = "flex";
-
-        flash();
-
-        cityAudio.currentTime = 0;
-        cityAudio.volume = 0.4;
-        cityAudio.play().catch(()=>{});
-
-        startChat();
-
-    }, 1000);
-}
-
-/* =========================
-   🎬 CAMERA FX (GTA SNAP FEEL)
-========================= */
+/* 🎥 CAMERA FLASH (NOW MORE NOTICEABLE) */
 function flash() {
-    camera.style.opacity = "1";
-    camera.style.transform = "scale(1.5)";
-    document.body.style.filter = "brightness(2)";
-
+    camera.style.opacity = "0.7";
+    camera.style.transform = "scale(1.4)";
     setTimeout(() => {
         camera.style.opacity = "0";
-        document.body.style.filter = "none";
-    }, 400);
+    }, 300);
 }
 
-/* =========================
-   🚪 ENTER INTERIOR
-========================= */
+/* 🚪 ENTER INTERIOR */
 function enter(type) {
 
     flash();
 
     setTimeout(() => {
-
         city.style.display = "none";
-
-        cityAudio.pause();
-
-        insideAudio.currentTime = 0;
-        insideAudio.volume = 0.4;
-        insideAudio.play().catch(()=>{});
 
         if (type === "yacht") yacht.style.display = "flex";
         if (type === "store") store.style.display = "flex";
 
-    }, 300);
+    }, 250);
 }
 
-/* =========================
-   🚪 EXIT INTERIOR
-========================= */
+/* 🚪 EXIT */
 function exitInterior() {
 
     flash();
 
     setTimeout(() => {
-
         yacht.style.display = "none";
         store.style.display = "none";
-
-        insideAudio.pause();
-
         city.style.display = "flex";
-
-        cityAudio.play();
-
-    }, 300);
+    }, 250);
 }
 
-/* =========================
-   💬 AMBIENT WORLD CHAT
-========================= */
+/* 💬 LIFE CHAT */
 function startChat() {
 
-    const users = ["HERO", "CITY_RUNNER", "VIP_GUEST", "LONG_BEACH_LOCAL"];
-    const msgs = ["is in Lambo City", "entered Yacht Club", "is shopping", "is driving around"];
+    const users = ["HERO", "LONG BEACH", "VIP", "DRIVER"];
+    const msgs = ["is cruising", "entered Yacht Club", "is shopping", "is online"];
 
     setInterval(() => {
 
-        const u = users[Math.floor(Math.random()*users.length)];
-        const m = msgs[Math.floor(Math.random()*msgs.length)];
-
-        chat.innerHTML = u + ": " + m + "<br>" + chat.innerHTML;
+        chat.innerHTML =
+        users[Math.floor(Math.random()*users.length)] +
+        ": " +
+        msgs[Math.floor(Math.random()*msgs.length)] +
+        "<br>" + chat.innerHTML;
 
     }, 2500);
 }
