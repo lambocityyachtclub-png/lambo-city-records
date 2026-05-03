@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>LAMBO CITY | SIMULATION ENGINE</title>
+<title>LAMBO CITY | INTERIOR SYSTEM</title>
 
 <style>
 body {
@@ -14,30 +14,30 @@ body {
     color: white;
 }
 
-/* CAMERA LAYER */
+/* ===== CAMERA BLACKOUT LAYER ===== */
 #camera {
     position: fixed;
     width: 100%;
     height: 100%;
     background: black;
-    transform: scale(1.15);
-    opacity: 1;
-    transition: transform 0.9s ease, opacity 0.8s ease;
+    opacity: 0;
+    transform: scale(1.2);
+    transition: opacity 0.35s ease, transform 0.8s ease;
     z-index: 999;
 }
 
-/* HUD */
+/* ===== HUD ===== */
 #hud {
     position: fixed;
     top: 12px;
     left: 12px;
     font-size: 11px;
-    opacity: 0.6;
+    opacity: 0.5;
     letter-spacing: 3px;
     z-index: 50;
 }
 
-/* WORLD */
+/* ===== WORLD STATES ===== */
 .world {
     position: absolute;
     width: 100%;
@@ -46,30 +46,31 @@ body {
     justify-content: center;
     align-items: center;
     flex-direction: column;
-    transition: opacity 0.6s ease, transform 0.6s ease;
 }
 
-/* ENVIRONMENTS */
+/* OUTSIDE */
 #portal {
     background: radial-gradient(circle, #111, #000);
 }
 
+/* CITY */
 #city {
     background: radial-gradient(circle at top, #111, #000);
 }
 
+/* INTERIOR (VIP) */
 #vip {
-    background: black;
+    background: linear-gradient(180deg, #000, #050505);
 }
 
-/* TITLE */
+/* ===== TITLE ===== */
 .title {
     font-size: 38px;
     letter-spacing: 6px;
     margin-bottom: 20px;
 }
 
-/* BUTTONS (SIMULATION STYLE) */
+/* ===== BUTTONS ===== */
 button {
     margin: 8px;
     padding: 10px 18px;
@@ -81,16 +82,12 @@ button {
     transition: 0.2s;
 }
 
-button:active {
-    transform: scale(0.95);
-}
-
 button:hover {
     background: white;
     color: black;
 }
 
-/* VIP STREAM */
+/* ===== VIP STREAM ===== */
 iframe {
     width: 80%;
     max-width: 900px;
@@ -99,15 +96,15 @@ iframe {
     border: 1px solid rgba(255,255,255,0.2);
 }
 
-/* CLICK FEEDBACK PULSE */
-.pulse {
-    animation: pulse 0.4s ease;
+/* ===== GTA STATE TRANSITION CLASS ===== */
+.fadeOut {
+    opacity: 0;
+    transform: scale(1.05);
 }
 
-@keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.03); }
-    100% { transform: scale(1); }
+.fadeIn {
+    opacity: 1;
+    transform: scale(1);
 }
 </style>
 </head>
@@ -115,104 +112,89 @@ iframe {
 <body>
 
 <div id="camera"></div>
-<div id="hud">LAMBO CITY // SIMULATION ACTIVE</div>
+<div id="hud">LAMBO CITY // INTERIOR STREAM ACTIVE</div>
 
 <!-- PORTAL -->
 <div id="portal" class="world">
     <div class="title">CITY GATE</div>
-    <button onclick="travel('city', this)">ENTER CITY</button>
+    <button onclick="enterCity()">ENTER CITY</button>
 </div>
 
 <!-- CITY -->
 <div id="city" class="world">
     <div class="title">LAMBO CITY</div>
-    <button onclick="travel('vip', this)">YACHT CLUB</button>
-    <button onclick="travel('portal', this)">EXIT WORLD</button>
+    <button onclick="enterVIP()">YACHT CLUB</button>
+    <button onclick="exitWorld()">EXIT WORLD</button>
 </div>
 
-<!-- VIP -->
+<!-- VIP INTERIOR -->
 <div id="vip" class="world">
-    <div class="title">YACHT CLUB</div>
+    <div class="title">YACHT CLUB INTERIOR</div>
 
     <iframe
         src="https://player.twitch.tv/?channel=lambocityrecords&parent=lambocityrecords.com"
         allowfullscreen>
     </iframe>
 
-    <button onclick="travel('city', this)">BACK TO CITY</button>
+    <button onclick="backToCity()">BACK TO CITY</button>
 </div>
 
 <script>
 
 const camera = document.getElementById("camera");
 
-/* DEBUG CHECK (this tells us instantly if JS is alive) */
-console.log("LAMBO CITY SIMULATION LOADED");
-
-/* INIT WORLD */
+/* START WORLD (CINEMATIC ENTRY) */
 window.onload = () => {
-    console.log("WORLD BOOT SEQUENCE START");
-
     setTimeout(() => {
-        camera.style.transform = "scale(1)";
-        camera.style.opacity = "0";
-
         show("portal");
-
-        console.log("PORTAL ACTIVE");
     }, 600);
 };
 
-/* SAFE WORLD SWITCH (never breaks) */
+/* ===== WORLD SWITCH CORE ===== */
 function show(id) {
-    const worlds = document.querySelectorAll(".world");
-
-    worlds.forEach(w => {
+    document.querySelectorAll(".world").forEach(w => {
         w.style.display = "none";
     });
 
-    const target = document.getElementById(id);
-
-    if (!target) {
-        console.error("WORLD NOT FOUND:", id);
-        return;
-    }
-
-    target.style.display = "flex";
-
-    console.log("SWITCHED TO:", id);
+    document.getElementById(id).style.display = "flex";
 }
 
-/* ULTRA SAFE TRAVEL FUNCTION */
-function travel(destination, btn) {
+/* ===== GTA STYLE INTERIOR TRANSITION ===== */
+function transition(targetFn) {
 
-    console.log("TRAVEL REQUEST:", destination);
-
-    if (!destination) {
-        console.error("NO DESTINATION PASSED");
-        return;
-    }
-
-    /* instant click feedback (100% reliable) */
-    if (btn) {
-        btn.style.transform = "scale(0.96)";
-        setTimeout(() => btn.style.transform = "scale(1)", 150);
-    }
-
-    /* camera effect */
+    // STEP 1: blackout (GTA fade-out)
     camera.style.opacity = "1";
     camera.style.transform = "scale(1.15)";
 
     setTimeout(() => {
 
-        show(destination);
+        // STEP 2: switch world (hidden moment)
+        targetFn();
 
+        // STEP 3: small delay BEFORE reveal (key GTA feel)
         setTimeout(() => {
             camera.style.opacity = "0";
             camera.style.transform = "scale(1)";
         }, 250);
 
-    }, 600);
+    }, 400);
+}
+
+/* ===== NAVIGATION ===== */
+function enterCity() {
+    transition(() => show("city"));
+}
+
+function enterVIP() {
+    transition(() => show("vip"));
+}
+
+function backToCity() {
+    transition(() => show("city"));
+}
+
+function exitWorld() {
+    transition(() => show("portal"));
 }
 
 </script>
