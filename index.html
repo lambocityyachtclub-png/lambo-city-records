@@ -1,18 +1,115 @@
-<!-- REPLACE ONLY YOUR BUTTON SECTION WITH THIS -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lambo City</title>
 
-<div class="panel">
-<h3>EXPLORE</h3>
+<style>
+body {
+  margin: 0;
+  font-family: Arial;
+  background: black;
+  color: white;
+}
 
-<button onclick="location.href='map.html'">City Map</button>
+.bg {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  background: url('https://raw.githubusercontent.com/YOURUSERNAME/YOURREPO/main/yourimage.jpg') no-repeat center center/cover;
+  filter: brightness(0.45);
+  z-index: -2;
+}
 
-<!-- RESTORED EXACT STYLE BUTTON -->
-<button onclick="location.href='vip.html'">
-ENTER YACHT CLUB
-</button>
+/* subtle cinematic overlay (NOT a redesign) */
+.overlay {
+  min-height: 100vh;
+  background: radial-gradient(circle at top, rgba(0,0,0,0.4), rgba(0,0,0,0.85));
+  padding: 30px;
+}
 
-<button onclick="alert('Music hub coming soon')">Music Hub</button>
-<button onclick="alert('Drop zone coming soon')">Drop Zone</button>
+.title {
+  text-align: center;
+  font-size: 60px;
+  color: gold;
+  font-weight: bold;
+  letter-spacing: 2px;
+}
+
+.subtitle {
+  text-align: center;
+  max-width: 800px;
+  margin: 10px auto 20px;
+  color: #ccc;
+}
+
+/* layout box stays same */
+.box {
+  max-width: 900px;
+  margin: auto;
+  border: 1px solid gold;
+  padding: 20px;
+  background: rgba(0,0,0,0.5);
+}
+
+/* twitch container */
+.stream {
+  max-width: 900px;
+  margin: 20px auto;
+  border: 1px solid rgba(255,215,0,0.4);
+}
+
+/* buttons unchanged */
+button, a {
+  display: block;
+  width: 250px;
+  margin: 15px auto;
+  padding: 12px;
+  background: gold;
+  color: black;
+  font-weight: bold;
+  text-align: center;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+}
+</style>
+</head>
+
+<body>
+
+<div class="bg"></div>
+
+<div class="overlay">
+
+<div class="title">LAMBO CITY</div>
+
+<div class="subtitle">
+Welcome to Lambo City — a digital luxury world of music, drops, and exclusive experiences.
+</div>
+
+<!-- 🔥 RESTORED TWITCH STREAM -->
+<div class="stream">
+<iframe
+src="https://player.twitch.tv/?channel=LamboCityRecords&parent=lambocityrecords.com"
+width="100%"
+height="420"
+allowfullscreen>
+</iframe>
+</div>
+
+<div class="box">
+
+<h3 style="text-align:center;">ENTER EXPERIENCE</h3>
+
+<button onclick="location.href='map.html'">ENTER CITY MAP</button>
+
+<button onclick="location.href='vip.html'">YACHT CLUB PORTAL</button>
 
 </div>
 
-<a class="enter" href="vip.html">ENTER YACHT CLUB</a>
+</div>
+
+</body>
+</html>
