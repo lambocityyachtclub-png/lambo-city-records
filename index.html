@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>LAMBO CITY | UNIFIED ENGINE v1</title>
+<title>LAMBO CITY | MISSION WORLD v2</title>
 
 <style>
-body { margin: 0; overflow: hidden; font-family: Arial; background: black; }
+body { margin:0; overflow:hidden; font-family:Arial; background:black; }
 
 /* HUD */
 #hud {
@@ -15,7 +15,18 @@ body { margin: 0; overflow: hidden; font-family: Arial; background: black; }
     left: 10px;
     color: white;
     font-size: 12px;
-    opacity: 0.75;
+    opacity: 0.8;
+    z-index: 10;
+}
+
+/* OBJECTIVE */
+#objective {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    color: white;
+    font-size: 13px;
+    opacity: 0.9;
     z-index: 10;
 }
 
@@ -27,7 +38,7 @@ body { margin: 0; overflow: hidden; font-family: Arial; background: black; }
     width: 6px;
     height: 6px;
     background: white;
-    transform: translate(-50%, -50%);
+    transform: translate(-50%,-50%);
     border-radius: 50%;
     z-index: 10;
 }
@@ -41,152 +52,76 @@ body { margin: 0; overflow: hidden; font-family: Arial; background: black; }
     opacity: 0;
     transition: 0.5s;
     z-index: 20;
-    pointer-events: none;
-}
-
-/* INTERACTION TEXT */
-#prompt {
-    position: fixed;
-    bottom: 20px;
-    left: 20px;
-    color: white;
-    font-size: 11px;
-    opacity: 0.7;
+    pointer-events:none;
 }
 </style>
 </head>
 
 <body>
 
-<div id="hud">LAMBO CITY // UNIFIED ENGINE v1</div>
+<div id="hud">LAMBO CITY // MISSION ENGINE v2</div>
+<div id="objective">MISSION: Enter the City Gate</div>
 <div id="crosshair"></div>
 <div id="fade"></div>
-<div id="prompt">WASD MOVE • CLICK TO LOCK • E INTERACT</div>
-
-<!-- 🔊 AUDIO -->
-<audio id="cityAudio" loop autoplay>
-    <source src="https://cdn.pixabay.com/audio/2022/10/16/audio_12b7f6c2b5.mp3" type="audio/mp3">
-</audio>
-
-<audio id="indoorAudio" loop>
-    <source src="https://cdn.pixabay.com/audio/2023/03/13/audio_2f5b1c8a6c.mp3" type="audio/mp3">
-</audio>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
 
 <script>
 
 /* =========================
-   🌍 SCENE SETUP
+   🌍 WORLD SETUP
 ========================= */
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x87a3c4);
+scene.background = new THREE.Color(0x111111);
 
-const camera = new THREE.PerspectiveCamera(
-    75,
-    window.innerWidth/window.innerHeight,
-    0.1,
-    1000
-);
-
-const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setSize(window.innerWidth, window.innerHeight);
+const camera = new THREE.PerspectiveCamera(75,innerWidth/innerHeight,0.1,1000);
+const renderer = new THREE.WebGLRenderer();
+renderer.setSize(innerWidth,innerHeight);
 document.body.appendChild(renderer.domElement);
 
 /* LIGHT */
-scene.add(new THREE.AmbientLight(0xffffff, 1));
+scene.add(new THREE.AmbientLight(0xffffff,1));
 
-/* =========================
-   🌆 GROUND + CITY
-========================= */
-const ground = new THREE.Mesh(
+/* FLOOR */
+const floor = new THREE.Mesh(
     new THREE.PlaneGeometry(200,200),
-    new THREE.MeshBasicMaterial({ color: 0x222222 })
+    new THREE.MeshBasicMaterial({color:0x222222})
 );
-ground.rotation.x = -Math.PI/2;
-scene.add(ground);
-
-/* BUILDINGS */
-function building(x,z){
-    const b = new THREE.Mesh(
-        new THREE.BoxGeometry(5, Math.random()*10+4, 5),
-        new THREE.MeshBasicMaterial({ color: 0x333333 })
-    );
-    b.position.set(x, b.geometry.parameters.height/2, z);
-    scene.add(b);
-}
-
-for(let i=0;i<30;i++){
-    building((Math.random()-0.5)*80,(Math.random()-0.5)*80);
-}
+floor.rotation.x = -Math.PI/2;
+scene.add(floor);
 
 /* =========================
-   🚗 TRAFFIC SYSTEM
+   🏙 MISSION LOCATIONS
 ========================= */
-const cars = [];
-function car(x,z){
-    const c = new THREE.Mesh(
-        new THREE.BoxGeometry(1,1,2),
-        new THREE.MeshBasicMaterial({ color: 0xff4444 })
+function zone(x,z,color){
+    const m = new THREE.Mesh(
+        new THREE.BoxGeometry(6,6,6),
+        new THREE.MeshBasicMaterial({color})
     );
-    c.position.set(x,0.5,z);
-    scene.add(c);
-    cars.push(c);
+    m.position.set(x,3,z);
+    scene.add(m);
+    return m;
 }
 
-for(let i=0;i<8;i++){
-    car(-30 + i*6, -10);
-}
-
-/* =========================
-   🧍 NPC SYSTEM
-========================= */
-const npcs = [];
-function npc(x,z){
-    const n = new THREE.Mesh(
-        new THREE.BoxGeometry(0.5,1.5,0.5),
-        new THREE.MeshBasicMaterial({ color: 0x00ffcc })
-    );
-    n.position.set(x,0.75,z);
-    scene.add(n);
-    npcs.push(n);
-}
-
-for(let i=0;i<12;i++){
-    npc((Math.random()-0.5)*40,(Math.random()-0.5)*40);
-}
-
-/* =========================
-   🚪 INTERIOR ZONES
-========================= */
-const yacht = new THREE.Mesh(
-    new THREE.BoxGeometry(6,6,6),
-    new THREE.MeshBasicMaterial({ color: 0x0a2a4a })
-);
-yacht.position.set(12,3,-10);
-scene.add(yacht);
-
-const store = new THREE.Mesh(
-    new THREE.BoxGeometry(6,6,6),
-    new THREE.MeshBasicMaterial({ color: 0x4a0a0a })
-);
-store.position.set(-12,3,-10);
-scene.add(store);
+const gate = zone(0,0,0x333333);
+const city = zone(10,0,0x553311);
+const yacht = zone(20,0,0x113355);
 
 /* =========================
    🎮 PLAYER
 ========================= */
 const player = {
-    rotY: 0,
-    speed: 0.12
+    speed:0.12,
+    rotY:0
 };
 
-camera.position.set(0,2,5);
+camera.position.set(0,2,6);
 
 /* =========================
-   🎮 CONTROLS
+   🎮 INPUT
 ========================= */
-let keys = {};
+let keys={};
+
 document.addEventListener("keydown",e=>keys[e.key.toLowerCase()]=true);
 document.addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
 
@@ -199,9 +134,39 @@ document.addEventListener("mousemove",(e)=>{
 });
 
 /* =========================
+   🎯 MISSION SYSTEM
+========================= */
+let missionStage = 0;
+
+const objective = document.getElementById("objective");
+const fade = document.getElementById("fade");
+
+/* =========================
+   🚪 INTERACTION LOGIC
+========================= */
+function interact(){
+
+    if(camera.position.distanceTo(gate.position)<3 && missionStage===0){
+        missionStage = 1;
+        objective.innerText = "MISSION: Enter the City";
+    }
+
+    if(camera.position.distanceTo(city.position)<3 && missionStage===1){
+        missionStage = 2;
+        objective.innerText = "MISSION: Go to Yacht Club";
+    }
+
+    if(camera.position.distanceTo(yacht.position)<3 && missionStage===2){
+        missionStage = 3;
+        objective.innerText = "MISSION COMPLETE: Welcome to Lambo City";
+    }
+}
+
+/* =========================
    🚶 MOVEMENT
 ========================= */
 function move(){
+
     let forward = new THREE.Vector3(
         -Math.sin(player.rotY),0,-Math.cos(player.rotY)
     );
@@ -219,81 +184,13 @@ function move(){
 }
 
 /* =========================
-   🚗 CAR MOVEMENT
-========================= */
-function updateCars(){
-    cars.forEach(c=>{
-        c.position.x += 0.05;
-        if(c.position.x > 40) c.position.x = -40;
-    });
-}
-
-/* =========================
-   🧍 NPC MOVEMENT
-========================= */
-function updateNPCs(){
-    npcs.forEach(n=>{
-        n.position.x += (Math.random()-0.5)*0.05;
-        n.position.z += (Math.random()-0.5)*0.05;
-    });
-}
-
-/* =========================
-   🚪 INTERACTIONS
-========================= */
-const fade = document.getElementById("fade");
-const cityAudio = document.getElementById("cityAudio");
-const indoorAudio = document.getElementById("indoorAudio");
-
-function enter(type){
-
-    fade.style.opacity = 1;
-
-    setTimeout(()=>{
-
-        if(type==="yacht"){
-            camera.position.set(12,2,-10);
-            scene.background = new THREE.Color(0x0a1a2a);
-        }
-
-        if(type==="store"){
-            camera.position.set(-12,2,-10);
-            scene.background = new THREE.Color(0x2a0a0a);
-        }
-
-        cityAudio.volume = 0.2;
-        indoorAudio.volume = 1;
-        indoorAudio.play();
-
-        setTimeout(()=>fade.style.opacity=0,400);
-
-    },400);
-}
-
-/* =========================
-   🚪 DOOR CHECK
-========================= */
-function doors(){
-
-    if(camera.position.distanceTo(yacht.position)<3 && keys["e"]){
-        enter("yacht");
-    }
-
-    if(camera.position.distanceTo(store.position)<3 && keys["e"]){
-        enter("store");
-    }
-}
-
-/* =========================
-   🎮 LOOP
+   🎮 GAME LOOP
 ========================= */
 function animate(){
     requestAnimationFrame(animate);
 
     move();
-    updateCars();
-    updateNPCs();
-    doors();
+    interact();
 
     renderer.render(scene,camera);
 }
@@ -301,9 +198,9 @@ animate();
 
 /* RESIZE */
 window.addEventListener("resize",()=>{
-    camera.aspect=window.innerWidth/window.innerHeight;
+    camera.aspect=innerWidth/innerHeight;
     camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth,window.innerHeight);
+    renderer.setSize(innerWidth,innerHeight);
 });
 
 </script>
