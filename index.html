@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>LAMBO CITY | GTA IMMERSION ENGINE</title>
+<title>LAMBO CITY | IMMERSION CORE FINAL</title>
 
 <style>
 body {
@@ -12,17 +12,27 @@ body {
     font-family: Arial;
     background: black;
     color: white;
-    cursor: grab;
+    cursor: none;
 }
 
-/* 🌌 SKY */
+/* 🌌 WORLD LIGHTING LAYER */
 #sky {
     position: fixed;
     width: 100%;
     height: 100%;
     background: radial-gradient(circle at 30% 20%, #1a1a2e, #000);
-    transition: 2s;
+    transition: filter 0.3s;
     z-index: 0;
+}
+
+/* 🎥 CAMERA SHAKE LAYER */
+#cameraFX {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    pointer-events: none;
+    mix-blend-mode: screen;
 }
 
 /* 🎮 WORLD */
@@ -31,7 +41,8 @@ body {
     width: 300%;
     height: 100%;
     display: flex;
-    transition: transform 0.9s ease;
+    transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+    transform-origin: center;
     z-index: 2;
 }
 
@@ -55,33 +66,13 @@ body {
     border: 1px solid white;
     margin-top: 10px;
     cursor: pointer;
+    opacity: 0.9;
 }
 
-/* 🎮 UI */
+/* 🎮 TITLE */
 .title {
-    font-size: 40px;
+    font-size: 42px;
     letter-spacing: 6px;
-}
-
-/* 🚗 CAR */
-.car {
-    position: fixed;
-    width: 70px;
-    height: 30px;
-    background: red;
-    top: 65%;
-    left: -120px;
-    z-index: 5;
-}
-
-/* 🚶 NPC */
-.npc {
-    position: fixed;
-    width: 14px;
-    height: 28px;
-    background: white;
-    top: 70%;
-    z-index: 5;
 }
 
 /* 📺 STREAM */
@@ -90,27 +81,45 @@ iframe {
     height: 450px;
 }
 
-/* 🧭 HOLD UI */
-#holdBar {
+/* 🧍 NPC */
+.npc {
     position: fixed;
-    bottom: 40px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 200px;
-    height: 6px;
-    border: 1px solid white;
-    opacity: 0;
-}
-
-#holdFill {
-    width: 0%;
-    height: 100%;
+    width: 14px;
+    height: 28px;
     background: white;
+    top: 70%;
+    z-index: 5;
+    opacity: 0.8;
 }
 
-/* 🧠 CURSOR LOOK */
-body.dragging {
-    cursor: grabbing;
+/* 🚗 CAR */
+.car {
+    position: fixed;
+    width: 80px;
+    height: 30px;
+    background: red;
+    top: 65%;
+    left: -120px;
+    z-index: 5;
+}
+
+/* 🎯 HUD */
+#hud {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    font-size: 11px;
+    opacity: 0.6;
+    z-index: 10;
+}
+
+/* 🎧 AUDIO ZONES (SIMULATED) */
+.zoneAudio {
+    position: fixed;
+    bottom: 10px;
+    right: 10px;
+    font-size: 10px;
+    opacity: 0.4;
 }
 </style>
 </head>
@@ -118,6 +127,9 @@ body.dragging {
 <body>
 
 <div id="sky"></div>
+<div id="cameraFX"></div>
+<div id="hud">LAMBO CITY // IMMERSION ENGINE ACTIVE</div>
+<div class="zoneAudio" id="audioLabel">CITY AMBIENCE</div>
 
 <div id="world">
 
@@ -125,17 +137,8 @@ body.dragging {
     <div class="zone" id="city">
         <div class="title">LAMBO CITY</div>
 
-        <div class="door" 
-            onmousedown="startHold('yacht')" 
-            onmouseup="cancelHold()">
-            YACHT CLUB (HOLD)
-        </div>
-
-        <div class="door"
-            onmousedown="startHold('store')" 
-            onmouseup="cancelHold()">
-            STORE (HOLD)
-        </div>
+        <div class="door" onmousedown="holdEnter(1)">ENTER YACHT CLUB</div>
+        <div class="door" onmousedown="holdEnter(2)">ENTER STORE</div>
     </div>
 
     <!-- YACHT -->
@@ -147,121 +150,130 @@ body.dragging {
             allowfullscreen>
         </iframe>
 
-        <button onclick="moveTo(0)">EXIT</button>
+        <div class="door" onclick="move(0)">EXIT</div>
     </div>
 
     <!-- STORE -->
     <div class="zone" id="store">
         <div class="title">STORE</div>
-        <button onclick="moveTo(0)">BACK</button>
+        <div class="door" onclick="move(0)">BACK</div>
     </div>
 
 </div>
-
-<!-- HOLD BAR -->
-<div id="holdBar"><div id="holdFill"></div></div>
 
 <script>
 
 const world = document.getElementById("world");
 const sky = document.getElementById("sky");
-const holdBar = document.getElementById("holdBar");
-const holdFill = document.getElementById("holdFill");
+const audioLabel = document.getElementById("audioLabel");
 
-let position = 0;
+let pos = 0;
+let holdTimer;
 
-/* 🎮 CAMERA MOVE */
-function moveTo(zone) {
-    position = zone;
-    world.style.transform = `translateX(-${zone * 100}vw)`;
+/* 🎮 CAMERA INERTIA + ROTATION FEEL */
+function move(zone) {
+
+    let start = pos;
+    let end = zone;
+    let t = 0;
+
+    function animate() {
+        t += 0.02;
+
+        let smooth = start + (end - start) * t;
+
+        world.style.transform = `
+            translateX(-${smooth * 100}vw)
+            scale(1.02)
+        `;
+
+        sky.style.filter = `brightness(${0.7 + Math.abs(Math.sin(t * 3)) * 0.3})`;
+
+        if (t < 1) requestAnimationFrame(animate);
+        else pos = zone;
+    }
+
+    animate();
+
+    updateAudio(zone);
 }
 
-/* 🚪 HOLD TO ENTER SYSTEM */
-let holdInterval;
-let holdProgress = 0;
-let targetZone = null;
+/* 🚪 HOLD TO ENTER (GTA STYLE INTERACTION) */
+function holdEnter(zone) {
 
-function startHold(zone) {
+    let progress = 0;
 
-    targetZone = zone;
-    holdProgress = 0;
+    holdTimer = setInterval(() => {
 
-    holdBar.style.opacity = 1;
+        progress++;
 
-    holdInterval = setInterval(() => {
-        holdProgress += 2;
-        holdFill.style.width = holdProgress + "%";
-
-        if (holdProgress >= 100) {
-            clearInterval(holdInterval);
-            holdBar.style.opacity = 0;
-            holdFill.style.width = "0%";
-
-            if (zone === "yacht") moveTo(1);
-            if (zone === "store") moveTo(2);
+        if (progress > 40) {
+            clearInterval(holdTimer);
+            move(zone);
         }
 
     }, 20);
+
+    document.onmouseup = () => clearInterval(holdTimer);
 }
 
-function cancelHold() {
-    clearInterval(holdInterval);
-    holdBar.style.opacity = 0;
-    holdFill.style.width = "0%";
+/* 🎧 AUDIO ZONE SYSTEM (SIMULATED) */
+function updateAudio(zone) {
+
+    if (zone === 0) {
+        audioLabel.innerText = "CITY AMBIENCE";
+    }
+
+    if (zone === 1) {
+        audioLabel.innerText = "OCEAN + YACHT AMBIENCE";
+    }
+
+    if (zone === 2) {
+        audioLabel.innerText = "INDOOR STORE AMBIENCE";
+    }
 }
 
-/* 🧍 CROWD SYSTEM */
-function spawnNPC() {
-    const npc = document.createElement("div");
-    npc.className = "npc";
-    npc.style.left = Math.random() * window.innerWidth + "px";
-    document.body.appendChild(npc);
-    setTimeout(() => npc.remove(), 4000);
-}
-
-/* 🚗 TRAFFIC */
+/* 🚗 WORLD LIFE */
 function spawnCar() {
-    const car = document.createElement("div");
-    car.className = "car";
-    document.body.appendChild(car);
+    const c = document.createElement("div");
+    c.className = "car";
+    document.body.appendChild(c);
 
     let x = -120;
     let speed = 3 + Math.random() * 3;
 
-    function move() {
+    function run() {
         x += speed;
-        car.style.left = x + "px";
+        c.style.left = x + "px";
 
-        if (x < window.innerWidth + 120) {
-            requestAnimationFrame(move);
-        } else {
-            car.remove();
-        }
+        if (x < window.innerWidth + 120) requestAnimationFrame(run);
+        else c.remove();
     }
 
-    move();
+    run();
 }
 
-/* 🌍 WORLD LOOP */
+/* 🧍 NPC LIFE */
+function spawnNPC() {
+    const n = document.createElement("div");
+    n.className = "npc";
+    n.style.left = Math.random() * window.innerWidth + "px";
+    document.body.appendChild(n);
+    setTimeout(() => n.remove(), 4000);
+}
+
+/* 🌍 DENSITY SYSTEM */
 setInterval(() => {
 
     spawnCar();
 
-    // crowd density scaling (city feels alive)
-    let density = position === 0 ? 2 : 1;
+    let density = pos === 0 ? 3 : 1;
 
     for (let i = 0; i < density; i++) {
         spawnNPC();
     }
 
-}, 900);
-
-/* 🌌 SIMPLE DAY/NIGHT */
-setInterval(() => {
-    let t = Date.now() * 0.00005;
-    let b = Math.sin(t) * 0.5 + 0.5;
-    sky.style.filter = `brightness(${0.6 + b})`;
-}, 50);
+}, 800);
 
 </script>
 
