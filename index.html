@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>LAMBO CITY | FINAL WORLD ENGINE</title>
+<title>LAMBO CITY | FIRST PERSON WORLD</title>
 
 <style>
-body { margin: 0; overflow: hidden; background: black; font-family: Arial; }
+body { margin: 0; overflow: hidden; font-family: Arial; background: black; }
 
 /* HUD */
 #hud {
@@ -19,54 +19,43 @@ body { margin: 0; overflow: hidden; background: black; font-family: Arial; }
     z-index: 10;
 }
 
-/* UI */
-#ui {
+/* INSTRUCTION */
+#hint {
     position: fixed;
     bottom: 10px;
     left: 10px;
-    z-index: 10;
-}
-
-button {
-    margin: 4px;
-    padding: 8px 12px;
-    background: transparent;
-    border: 1px solid white;
     color: white;
-    cursor: pointer;
+    font-size: 11px;
+    opacity: 0.6;
 }
 
-/* FADE CAMERA FX */
-#fade {
+/* CROSSHAIR */
+#crosshair {
     position: fixed;
-    width: 100%;
-    height: 100%;
-    background: black;
-    opacity: 0;
-    transition: 0.4s;
-    z-index: 9;
-    pointer-events: none;
+    top: 50%;
+    left: 50%;
+    width: 6px;
+    height: 6px;
+    background: white;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+    border-radius: 50%;
 }
 </style>
 </head>
 
 <body>
 
-<div id="hud">LAMBO CITY // FINAL ENGINE ACTIVE</div>
-<div id="fade"></div>
-
-<div id="ui">
-    <button onclick="travel('city')">CITY</button>
-    <button onclick="travel('yacht')">YACHT</button>
-    <button onclick="travel('store')">STORE</button>
-</div>
+<div id="hud">LAMBO CITY // FPS MODE ACTIVE</div>
+<div id="hint">CLICK TO LOCK MOUSE • WASD TO MOVE • E TO INTERACT</div>
+<div id="crosshair"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
 
 <script>
 
 /* =========================
-   🌍 ENGINE SETUP
+   🌍 BASIC WORLD
 ========================= */
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x000000);
@@ -86,67 +75,116 @@ document.body.appendChild(renderer.domElement);
 const light = new THREE.AmbientLight(0xffffff, 1);
 scene.add(light);
 
+/* FLOOR */
+const floorGeo = new THREE.PlaneGeometry(200, 200);
+const floorMat = new THREE.MeshBasicMaterial({ color: 0x111111 });
+const floor = new THREE.Mesh(floorGeo, floorMat);
+floor.rotation.x = -Math.PI / 2;
+scene.add(floor);
+
 /* =========================
-   🏙 WORLD ZONES
+   🏙 ROOMS / INTERIORS
 ========================= */
-function zone(color, x) {
-    const geo = new THREE.BoxGeometry(18, 8, 18);
+function room(color, x, z) {
+    const geo = new THREE.BoxGeometry(10, 6, 10);
     const mat = new THREE.MeshBasicMaterial({ color });
     const mesh = new THREE.Mesh(geo, mat);
-    mesh.position.x = x;
+    mesh.position.set(x, 3, z);
     scene.add(mesh);
     return mesh;
 }
 
-const city = zone(0x3a1f0a, 0);
-const yacht = zone(0x0a1a3a, 30);
-const store = zone(0x3a0a0a, -30);
-
-/* CAMERA */
-camera.position.z = 12;
-camera.position.y = 2;
+const cityDoor = room(0x3a1f0a, 0, -20);
+const yachtDoor = room(0x0a1a3a, 20, 0);
+const storeDoor = room(0x3a0a0a, -20, 0);
 
 /* =========================
-   🎮 SMOOTH CAMERA SYSTEM
+   🎮 PLAYER SYSTEM
 ========================= */
-let targetX = 0;
+const player = {
+    x: 0,
+    y: 2,
+    z: 5,
+    speed: 0.15,
+    rotX: 0,
+    rotY: 0
+};
 
-/* FIXED NAVIGATION (THIS WAS YOUR ISSUE) */
-function travel(area) {
-
-    document.getElementById("fade").style.opacity = "1";
-
-    setTimeout(() => {
-
-        if (area === "city") targetX = 0;
-        if (area === "yacht") targetX = 30;
-        if (area === "store") targetX = -30;
-
-        document.getElementById("fade").style.opacity = "0";
-
-    }, 300);
-}
+/* CAMERA START */
+camera.position.set(player.x, player.y, player.z);
 
 /* =========================
-   🧠 MOUSE LOOK (GTA FEEL)
+   🎮 CONTROLS
 ========================= */
-let mouseX = 0;
+let keys = {};
+
+document.addEventListener("keydown", (e) => keys[e.key.toLowerCase()] = true);
+document.addEventListener("keyup", (e) => keys[e.key.toLowerCase()] = false);
+
+/* MOUSE LOOK */
+let isLocked = false;
+
+document.body.addEventListener("click", () => {
+    document.body.requestPointerLock();
+});
 
 document.addEventListener("mousemove", (e) => {
-    mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
+    if (document.pointerLockElement === document.body) {
+        player.rotY -= e.movementX * 0.002;
+        player.rotX -= e.movementY * 0.002;
+    }
 });
 
 /* =========================
-   🎮 GAME LOOP (SMOOTH LERP)
+   🚪 INTERACTION SYSTEM
+========================= */
+function checkDoor() {
+
+    let distCity = camera.position.distanceTo(cityDoor.position);
+    let distYacht = camera.position.distanceTo(yachtDoor.position);
+    let distStore = camera.position.distanceTo(storeDoor.position);
+
+    if (distCity < 3 && keys["e"]) {
+        camera.position.set(0, 2, 10);
+    }
+
+    if (distYacht < 3 && keys["e"]) {
+        camera.position.set(20, 2, 10);
+    }
+
+    if (distStore < 3 && keys["e"]) {
+        camera.position.set(-20, 2, 10);
+    }
+}
+
+/* =========================
+   🎮 GAME LOOP
 ========================= */
 function animate() {
     requestAnimationFrame(animate);
 
-    // smooth camera movement (FIXED GTA FEEL)
-    camera.position.x += (targetX - camera.position.x) * 0.08;
+    /* MOVEMENT */
+    let forward = new THREE.Vector3(
+        -Math.sin(player.rotY),
+        0,
+        -Math.cos(player.rotY)
+    );
 
-    camera.position.y = 2;
-    camera.rotation.y = mouseX * 0.25;
+    let right = new THREE.Vector3(
+        Math.cos(player.rotY),
+        0,
+        -Math.sin(player.rotY)
+    );
+
+    if (keys["w"]) camera.position.addScaledVector(forward, player.speed);
+    if (keys["s"]) camera.position.addScaledVector(forward, -player.speed);
+    if (keys["a"]) camera.position.addScaledVector(right, -player.speed);
+    if (keys["d"]) camera.position.addScaledVector(right, player.speed);
+
+    /* CAMERA ROTATION */
+    camera.rotation.set(player.rotX, player.rotY, 0);
+
+    checkDoor();
 
     renderer.render(scene, camera);
 }
