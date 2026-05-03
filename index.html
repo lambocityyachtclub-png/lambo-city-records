@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>LAMBO CITY | LIVING WORLD</title>
+<title>LAMBO CITY | LIVING MULTIPLAYER CITY</title>
 
 <style>
 body {
@@ -14,7 +14,7 @@ body {
     color: white;
 }
 
-/* ===== CAMERA PHYSICS LAYER ===== */
+/* CAMERA LAYER */
 #camera {
     position: fixed;
     width: 100%;
@@ -22,30 +22,32 @@ body {
     background: black;
     opacity: 0;
     transform: scale(1.2);
-    transition: opacity 0.6s ease;
+    transition: 0.6s ease;
     z-index: 999;
 }
 
-/* ===== WORLD WRAPPER (FOR PARALLAX) ===== */
-#worldWrapper {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-/* ===== HUD ===== */
+/* HUD */
 #hud {
     position: fixed;
     top: 12px;
     left: 12px;
     font-size: 11px;
-    opacity: 0.5;
+    opacity: 0.7;
     letter-spacing: 3px;
     z-index: 50;
 }
 
-/* ===== WORLD STATES ===== */
+/* LIVE ACTIVITY FEED */
+#feed {
+    position: fixed;
+    bottom: 12px;
+    left: 12px;
+    font-size: 10px;
+    opacity: 0.5;
+    max-width: 300px;
+}
+
+/* WORLD */
 .world {
     position: absolute;
     width: 100%;
@@ -56,36 +58,31 @@ body {
     flex-direction: column;
 }
 
-/* BACKGROUND LAYERS (PARALLAX FEEL) */
-.layer {
-    position: absolute;
-    width: 110%;
-    height: 110%;
-    top: -5%;
-    left: -5%;
-    background: radial-gradient(circle, #111, #000);
-    transform: translateZ(0);
+/* ===== DISTINCT WORLD IDENTITY ===== */
+
+/* PORTAL = cold / blue tone */
+#portal {
+    background: radial-gradient(circle at center, #0a0a1a, #000);
 }
 
-/* CITY VARIANTS */
-#portal .layer { background: radial-gradient(circle, #111, #000); }
-#city .layer { background: radial-gradient(circle at top, #1a1a1a, #000); }
-#vip .layer { background: linear-gradient(180deg, #000, #050505); }
-
-/* ===== CONTENT ===== */
-.content {
-    position: relative;
-    z-index: 2;
-    text-align: center;
+/* CITY = neon warm chaos */
+#city {
+    background: radial-gradient(circle at top, #1a120a, #000);
 }
 
+/* VIP = luxury dark gold tone */
+#vip {
+    background: radial-gradient(circle at center, #11110a, #000);
+}
+
+/* TITLE */
 .title {
     font-size: 38px;
     letter-spacing: 6px;
     margin-bottom: 20px;
 }
 
-/* ===== BUTTONS ===== */
+/* BUTTONS */
 button {
     margin: 8px;
     padding: 10px 18px;
@@ -94,7 +91,6 @@ button {
     color: white;
     cursor: pointer;
     letter-spacing: 2px;
-    transition: 0.2s;
 }
 
 button:hover {
@@ -102,7 +98,7 @@ button:hover {
     color: black;
 }
 
-/* ===== VIP STREAM ===== */
+/* VIP STREAM */
 iframe {
     width: 80%;
     max-width: 900px;
@@ -111,9 +107,15 @@ iframe {
     border: 1px solid rgba(255,255,255,0.2);
 }
 
-/* ===== MOTION STATE ===== */
-.motion {
-    transform: scale(1.03);
+/* TRANSITION FLASH */
+.flash {
+    animation: flash 0.5s ease;
+}
+
+@keyframes flash {
+    0% { filter: brightness(1); }
+    50% { filter: brightness(2); }
+    100% { filter: brightness(1); }
 }
 </style>
 </head>
@@ -121,108 +123,107 @@ iframe {
 <body>
 
 <div id="camera"></div>
-<div id="hud">LAMBO CITY // LIVING SIMULATION ACTIVE</div>
-
-<div id="worldWrapper">
+<div id="hud">LAMBO CITY // MULTIPLAYER SIMULATION ACTIVE</div>
+<div id="feed"></div>
 
 <!-- PORTAL -->
 <div id="portal" class="world">
-    <div class="layer"></div>
-    <div class="content">
-        <div class="title">CITY GATE</div>
-        <button onclick="travel('city')">ENTER CITY</button>
-    </div>
+    <div class="title">CITY GATE</div>
+    <button onclick="travel('city')">ENTER CITY</button>
 </div>
 
 <!-- CITY -->
 <div id="city" class="world">
-    <div class="layer"></div>
-    <div class="content">
-        <div class="title">LAMBO CITY</div>
-        <button onclick="travel('vip')">YACHT CLUB</button>
-        <button onclick="travel('portal')">EXIT WORLD</button>
-    </div>
+    <div class="title">LAMBO CITY</div>
+    <button onclick="travel('vip')">YACHT CLUB</button>
+    <button onclick="travel('portal')">EXIT WORLD</button>
 </div>
 
 <!-- VIP -->
 <div id="vip" class="world">
-    <div class="layer"></div>
-    <div class="content">
-        <div class="title">YACHT CLUB</div>
+    <div class="title">YACHT CLUB</div>
 
-        <iframe
-            src="https://player.twitch.tv/?channel=lambocityrecords&parent=lambocityrecords.com"
-            allowfullscreen>
-        </iframe>
+    <iframe
+        src="https://player.twitch.tv/?channel=lambocityrecords&parent=lambocityrecords.com"
+        allowfullscreen>
+    </iframe>
 
-        <button onclick="travel('city')">BACK TO CITY</button>
-    </div>
-</div>
-
+    <button onclick="travel('city')">BACK TO CITY</button>
 </div>
 
 <script>
 
 const camera = document.getElementById("camera");
-const wrapper = document.getElementById("worldWrapper");
+const feed = document.getElementById("feed");
 
-let current = "portal";
-
-/* INIT WORLD */
 window.onload = () => {
-    setTimeout(() => {
-        show("portal");
-        camera.style.opacity = "0";
-    }, 600);
+    show("portal");
+    simulatePlayers();
 };
 
-/* SHOW WORLD */
+/* WORLD SWITCH */
 function show(id) {
     document.querySelectorAll(".world").forEach(w => w.style.display = "none");
     document.getElementById(id).style.display = "flex";
-    current = id;
+
+    updateHUD(id);
+    flashWorld();
 }
 
-/* ===== PHYSICS ENGINE (SIMULATED) ===== */
-function applyMotion(intensity) {
-    wrapper.style.transform = `scale(${1 + intensity})`;
+/* HUD UPDATE */
+function updateHUD(id) {
+    const names = {
+        portal: "CITY GATE",
+        city: "LAMBO CITY CENTER",
+        vip: "YACHT CLUB VIP"
+    };
 
-    setTimeout(() => {
-        wrapper.style.transform = "scale(1)";
-    }, 600);
+    document.getElementById("hud").innerText =
+        "LAMBO CITY // " + (names[id] || "UNKNOWN ZONE");
 }
 
-/* ===== LIVING TRANSITION SYSTEM ===== */
+/* STRONG TRANSITION (NOW VISUALLY OBVIOUS) */
 function travel(destination) {
 
-    // CAMERA “WEIGHT” (feels like movement resistance)
     camera.style.opacity = "1";
     camera.style.transform = "scale(1.25)";
 
-    applyMotion(0.02); // subtle world inertia
-
     setTimeout(() => {
 
-        // swap world mid-motion (key illusion point)
         show(destination);
 
-        // “settle physics”
         setTimeout(() => {
             camera.style.opacity = "0";
             camera.style.transform = "scale(1)";
-            applyMotion(0.01);
-        }, 300);
+        }, 250);
 
     }, 500);
 }
 
-/* ===== AMBIENT WORLD MOTION (SUBTLE LIVING FEEL) */
-setInterval(() => {
-    if (Math.random() > 0.7) {
-        wrapper.style.transform = "scale(1.01)";
-        setTimeout(() => wrapper.style.transform = "scale(1)", 800);
-    }
-}, 4000);
+/* ZONE FLASH (MAKES CHANGE OBVIOUS) */
+function flashWorld() {
+    document.body.classList.add("flash");
+
+    setTimeout(() => {
+        document.body.classList.remove("flash");
+    }, 400);
+}
+
+/* FAKE MULTIPLAYER ACTIVITY */
+function simulatePlayers() {
+    const messages = [
+        "DJ HERO entered City Center",
+        "User connected to Yacht Club stream",
+        "Citizen roaming downtown",
+        "VIP access session active",
+        "Neon traffic increasing in City"
+    ];
+
+    setInterval(() => {
+        const msg = messages[Math.floor(Math.random() * messages.length)];
+        feed.innerText = "LIVE: " + msg;
+    }, 2500);
+}
 
 </script>
 
