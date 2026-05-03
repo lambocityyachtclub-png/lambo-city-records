@@ -3,34 +3,26 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>LAMBO CITY | COMPLETE WORLD ENGINE</title>
+<title>LAMBO CITY | GTA IMMERSION ENGINE</title>
 
 <style>
 body {
     margin: 0;
     overflow: hidden;
     font-family: Arial;
-    color: white;
     background: black;
+    color: white;
+    cursor: grab;
 }
 
-/* 🌌 SKY / DAY NIGHT SYSTEM */
+/* 🌌 SKY */
 #sky {
     position: fixed;
     width: 100%;
     height: 100%;
     background: radial-gradient(circle at 30% 20%, #1a1a2e, #000);
-    transition: 3s;
+    transition: 2s;
     z-index: 0;
-}
-
-/* 🌫 ATMOSPHERE */
-#fog {
-    position: fixed;
-    width: 100%;
-    height: 100%;
-    background: radial-gradient(circle, transparent 40%, rgba(0,0,0,0.85));
-    z-index: 1;
 }
 
 /* 🎮 WORLD */
@@ -39,7 +31,7 @@ body {
     width: 300%;
     height: 100%;
     display: flex;
-    transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: transform 0.9s ease;
     z-index: 2;
 }
 
@@ -57,21 +49,6 @@ body {
 #yacht { background: radial-gradient(circle, #0a0f1a, #000); }
 #store { background: radial-gradient(circle, #1a0a0a, #000); }
 
-/* 🏷 UI */
-.title {
-    font-size: 40px;
-    letter-spacing: 6px;
-}
-
-button {
-    margin: 6px;
-    padding: 10px 16px;
-    border: 1px solid white;
-    background: transparent;
-    color: white;
-    cursor: pointer;
-}
-
 /* 🚪 DOORS */
 .door {
     padding: 12px 18px;
@@ -80,17 +57,16 @@ button {
     cursor: pointer;
 }
 
-/* 📺 STREAM */
-iframe {
-    width: 80%;
-    max-width: 900px;
-    height: 450px;
+/* 🎮 UI */
+.title {
+    font-size: 40px;
+    letter-spacing: 6px;
 }
 
 /* 🚗 CAR */
 .car {
     position: fixed;
-    width: 80px;
+    width: 70px;
     height: 30px;
     background: red;
     top: 65%;
@@ -108,19 +84,33 @@ iframe {
     z-index: 5;
 }
 
-/* 🧭 HUD */
-#hud {
-    position: fixed;
-    top: 10px;
-    left: 10px;
-    font-size: 11px;
-    opacity: 0.6;
-    z-index: 10;
+/* 📺 STREAM */
+iframe {
+    width: 80%;
+    height: 450px;
 }
 
-/* 🎧 AUDIO (hidden but active) */
-audio {
-    display: none;
+/* 🧭 HOLD UI */
+#holdBar {
+    position: fixed;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 200px;
+    height: 6px;
+    border: 1px solid white;
+    opacity: 0;
+}
+
+#holdFill {
+    width: 0%;
+    height: 100%;
+    background: white;
+}
+
+/* 🧠 CURSOR LOOK */
+body.dragging {
+    cursor: grabbing;
 }
 </style>
 </head>
@@ -128,13 +118,6 @@ audio {
 <body>
 
 <div id="sky"></div>
-<div id="fog"></div>
-<div id="hud">LAMBO CITY // WORLD ACTIVE</div>
-
-<!-- 🎧 AMBIENT AUDIO (OPTIONAL BUT READY) -->
-<audio id="audio" loop autoplay>
-    <source src="" type="audio/mpeg">
-</audio>
 
 <div id="world">
 
@@ -142,8 +125,17 @@ audio {
     <div class="zone" id="city">
         <div class="title">LAMBO CITY</div>
 
-        <div class="door" onclick="enter('yacht')">YACHT CLUB</div>
-        <div class="door" onclick="enter('store')">STORE</div>
+        <div class="door" 
+            onmousedown="startHold('yacht')" 
+            onmouseup="cancelHold()">
+            YACHT CLUB (HOLD)
+        </div>
+
+        <div class="door"
+            onmousedown="startHold('store')" 
+            onmouseup="cancelHold()">
+            STORE (HOLD)
+        </div>
     </div>
 
     <!-- YACHT -->
@@ -155,59 +147,79 @@ audio {
             allowfullscreen>
         </iframe>
 
-        <button onclick="exit()">BACK</button>
+        <button onclick="moveTo(0)">EXIT</button>
     </div>
 
     <!-- STORE -->
     <div class="zone" id="store">
         <div class="title">STORE</div>
-        <button>HERO DROP</button>
-        <button onclick="exit()">BACK</button>
+        <button onclick="moveTo(0)">BACK</button>
     </div>
 
 </div>
+
+<!-- HOLD BAR -->
+<div id="holdBar"><div id="holdFill"></div></div>
 
 <script>
 
 const world = document.getElementById("world");
 const sky = document.getElementById("sky");
+const holdBar = document.getElementById("holdBar");
+const holdFill = document.getElementById("holdFill");
 
 let position = 0;
 
-/* 🎮 SMOOTH GTA-STYLE MOVEMENT (INERTIA) */
+/* 🎮 CAMERA MOVE */
 function moveTo(zone) {
+    position = zone;
+    world.style.transform = `translateX(-${zone * 100}vw)`;
+}
 
-    let start = position;
-    let end = zone;
-    let t = 0;
+/* 🚪 HOLD TO ENTER SYSTEM */
+let holdInterval;
+let holdProgress = 0;
+let targetZone = null;
 
-    function animate() {
-        t += 0.02;
-        let smooth = start + (end - start) * t;
+function startHold(zone) {
 
-        world.style.transform = `translateX(-${smooth * 100}vw)`;
+    targetZone = zone;
+    holdProgress = 0;
 
-        if (t < 1) {
-            requestAnimationFrame(animate);
-        } else {
-            position = zone;
+    holdBar.style.opacity = 1;
+
+    holdInterval = setInterval(() => {
+        holdProgress += 2;
+        holdFill.style.width = holdProgress + "%";
+
+        if (holdProgress >= 100) {
+            clearInterval(holdInterval);
+            holdBar.style.opacity = 0;
+            holdFill.style.width = "0%";
+
+            if (zone === "yacht") moveTo(1);
+            if (zone === "store") moveTo(2);
         }
-    }
 
-    animate();
+    }, 20);
 }
 
-/* 🚪 INTERIORS */
-function enter(type) {
-    if (type === "yacht") moveTo(1);
-    if (type === "store") moveTo(2);
+function cancelHold() {
+    clearInterval(holdInterval);
+    holdBar.style.opacity = 0;
+    holdFill.style.width = "0%";
 }
 
-function exit() {
-    moveTo(0);
+/* 🧍 CROWD SYSTEM */
+function spawnNPC() {
+    const npc = document.createElement("div");
+    npc.className = "npc";
+    npc.style.left = Math.random() * window.innerWidth + "px";
+    document.body.appendChild(npc);
+    setTimeout(() => npc.remove(), 4000);
 }
 
-/* 🚗 CARS */
+/* 🚗 TRAFFIC */
 function spawnCar() {
     const car = document.createElement("div");
     car.className = "car";
@@ -230,34 +242,26 @@ function spawnCar() {
     move();
 }
 
-/* 🚶 NPC */
-function spawnNPC() {
-    const npc = document.createElement("div");
-    npc.className = "npc";
-    npc.style.left = Math.random() * window.innerWidth + "px";
-    document.body.appendChild(npc);
-
-    setTimeout(() => npc.remove(), 4000);
-}
-
-/* 🌍 DAY / NIGHT CYCLE */
-function dayNight() {
-    let t = 0;
-
-    setInterval(() => {
-        t += 0.01;
-
-        let brightness = Math.sin(t) * 0.5 + 0.5;
-
-        sky.style.filter = `brightness(${0.5 + brightness})`;
-
-    }, 100);
-}
-
 /* 🌍 WORLD LOOP */
-setInterval(spawnCar, 900);
-setInterval(spawnNPC, 700);
-dayNight();
+setInterval(() => {
+
+    spawnCar();
+
+    // crowd density scaling (city feels alive)
+    let density = position === 0 ? 2 : 1;
+
+    for (let i = 0; i < density; i++) {
+        spawnNPC();
+    }
+
+}, 900);
+
+/* 🌌 SIMPLE DAY/NIGHT */
+setInterval(() => {
+    let t = Date.now() * 0.00005;
+    let b = Math.sin(t) * 0.5 + 0.5;
+    sky.style.filter = `brightness(${0.6 + b})`;
+}, 50);
 
 </script>
 
