@@ -146,35 +146,60 @@ iframe {
 
 const camera = document.getElementById("camera");
 
+/* DEBUG CHECK (this tells us instantly if JS is alive) */
+console.log("LAMBO CITY SIMULATION LOADED");
+
 /* INIT WORLD */
 window.onload = () => {
+    console.log("WORLD BOOT SEQUENCE START");
+
     setTimeout(() => {
         camera.style.transform = "scale(1)";
         camera.style.opacity = "0";
+
         show("portal");
+
+        console.log("PORTAL ACTIVE");
     }, 600);
 };
 
-/* SHOW WORLD (SAFE SWITCH) */
+/* SAFE WORLD SWITCH (never breaks) */
 function show(id) {
-    document.querySelectorAll(".world").forEach(w => {
+    const worlds = document.querySelectorAll(".world");
+
+    worlds.forEach(w => {
         w.style.display = "none";
     });
 
-    const el = document.getElementById(id);
-    el.style.display = "flex";
-}
+    const target = document.getElementById(id);
 
-/* MAIN SIMULATION ENGINE */
-function travel(destination, btn) {
-
-    // instant feedback (fixes “button not working feeling”)
-    if (btn) {
-        btn.classList.add("pulse");
-        setTimeout(() => btn.classList.remove("pulse"), 400);
+    if (!target) {
+        console.error("WORLD NOT FOUND:", id);
+        return;
     }
 
-    // camera pull-back (enter transition)
+    target.style.display = "flex";
+
+    console.log("SWITCHED TO:", id);
+}
+
+/* ULTRA SAFE TRAVEL FUNCTION */
+function travel(destination, btn) {
+
+    console.log("TRAVEL REQUEST:", destination);
+
+    if (!destination) {
+        console.error("NO DESTINATION PASSED");
+        return;
+    }
+
+    /* instant click feedback (100% reliable) */
+    if (btn) {
+        btn.style.transform = "scale(0.96)";
+        setTimeout(() => btn.style.transform = "scale(1)", 150);
+    }
+
+    /* camera effect */
     camera.style.opacity = "1";
     camera.style.transform = "scale(1.15)";
 
@@ -182,13 +207,12 @@ function travel(destination, btn) {
 
         show(destination);
 
-        // camera settle-in (enter world)
         setTimeout(() => {
             camera.style.opacity = "0";
             camera.style.transform = "scale(1)";
         }, 250);
 
-    }, 650);
+    }, 600);
 }
 
 </script>
