@@ -3,171 +3,118 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Lambo City Lounge</title>
+<title>Lambo City</title>
 
 <style>
 body {
   margin: 0;
   font-family: Arial, sans-serif;
+  background: url('https://images.unsplash.com/photo-1502877338535-766e1452684a') no-repeat center center/cover;
   color: white;
-  overflow: hidden;
 }
 
-/* PENTHOUSE BACKGROUND */
-.bg {
-  position: fixed;
-  width: 100%;
-  height: 100%;
-  background: url('https://images.unsplash.com/photo-1500375592092-40eb2168fd21?auto=format&fit=crop&w=1950&q=80') no-repeat center center/cover;
-  filter: brightness(0.55);
-  z-index: -3;
-}
-
-/* DARK LUXURY OVERLAY */
 .overlay {
+  background: rgba(0,0,0,0.75);
   min-height: 100vh;
-  background: radial-gradient(circle at top, rgba(0,0,0,0.3), rgba(0,0,0,0.9));
   padding: 20px;
 }
 
-/* TITLE */
-.title {
-  text-align: center;
-  font-size: 60px;
-  font-weight: bold;
-  color: gold;
-  letter-spacing: 3px;
-}
-
-.subtitle {
-  text-align: center;
-  max-width: 800px;
-  margin: 10px auto 20px;
-  color: #ddd;
-}
-
-/* MAIN LAYOUT */
-.lounge {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 20px;
+.container {
   max-width: 1200px;
   margin: auto;
 }
 
-/* TV (TWITCH LIVING ROOM SCREEN) */
-.tv {
-  border-radius: 12px;
-  overflow: hidden;
-  border: 2px solid rgba(255,215,0,0.3);
-}
-
-/* CONTROL PANEL */
-.panel {
-  background: rgba(0,0,0,0.5);
-  border: 1px solid gold;
-  padding: 15px;
-  border-radius: 12px;
-}
-
-/* BUTTONS */
-button {
-  width: 100%;
-  padding: 12px;
-  margin-top: 12px;
-  background: gold;
-  border: none;
-  font-weight: bold;
-  cursor: pointer;
-  border-radius: 8px;
-}
-
-/* YACHT WINDOW VIEW */
-.window {
-  margin-top: 15px;
-  height: 120px;
-  background: url('https://images.unsplash.com/photo-1500375592092-40eb2168fd21?auto=format&fit=crop&w=1950&q=80') no-repeat center center/cover;
-  border-radius: 10px;
-  border: 1px solid rgba(255,215,0,0.3);
-}
-
-/* FLOATING AVATAR (LIFE IN ROOM FEEL) */
-.avatar {
-  width: 50px;
-  height: 50px;
-  background: gold;
-  border-radius: 50%;
-  position: absolute;
-  bottom: 70px;
-  left: 40px;
-  box-shadow: 0 0 15px gold;
-  animation: float 3s infinite ease-in-out;
-}
-
-@keyframes float {
-  0% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
-  100% { transform: translateY(0); }
-}
-
-/* ENTRY DOOR */
-.door {
-  margin-top: 15px;
-  padding: 12px;
+.title {
   text-align: center;
-  background: rgba(255,215,0,0.2);
+  font-size: 48px;
+  font-weight: bold;
+  margin-bottom: 20px;
+  text-shadow: 0 0 20px gold;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 20px;
+}
+
+.stream {
+  border: 2px solid gold;
+}
+
+.panel {
+  background: rgba(0,0,0,0.6);
+  padding: 15px;
   border: 1px solid gold;
+}
+
+.enter-btn {
+  display: block;
+  text-align: center;
+  margin: 30px auto;
+  padding: 15px 30px;
+  background: gold;
+  color: black;
+  font-weight: bold;
+  text-decoration: none;
+  width: 300px;
   border-radius: 10px;
-  cursor: pointer;
+  box-shadow: 0 0 15px gold;
+}
+
+.feed {
+  margin-top: 20px;
+  background: rgba(0,0,0,0.6);
+  padding: 15px;
+  border: 1px solid gold;
+  height: 120px;
+  overflow: auto;
 }
 </style>
 </head>
 
 <body>
 
-<div class="bg"></div>
-
 <div class="overlay">
+<div class="container">
 
 <div class="title">LAMBO CITY</div>
 
-<div class="subtitle">
-Records • Culture • Fashion • Music • Digital Luxury Experience
-</div>
+<div class="grid">
 
-<div class="lounge">
-
-<!-- TV (YOUR MUSIC + STREAM HUB) -->
-<div class="tv">
+<div class="stream">
 <iframe
-src="https://player.twitch.tv/?channel=LamboCityRecords&parent=lambocityrecords.com"
-width="100%"
-height="420"
-allowfullscreen>
+  src="https://player.twitch.tv/?channel=LAMBOCITYRecords&parent=localhost"
+  height="400"
+  width="100%"
+  allowfullscreen>
 </iframe>
 </div>
 
-<!-- SIDE PANEL (YOUR ORIGINAL CONTENT PRESERVED) -->
 <div class="panel">
+<h3>ACTIVITY</h3>
+<p>DJ HERO joined</p>
+<p>Next Drop Soon</p>
+<p>Boarding Pass Available</p>
 
-<h3>FEATURES</h3>
+<hr>
 
-<button onclick="location.href='map.html'">FLY AWAY COLLECTION</button>
-
-<button onclick="location.href='vip.html'">LAMBO CITY YACHT CLUB</button>
-
-<div class="door" onclick="location.href='vip.html'">
-ENTER YACHT CLUB
-</div>
-
-<div class="window"></div>
-
+<h3>DROPS</h3>
+<p>Coming Soon</p>
+<p>Yacht Event Preview</p>
 </div>
 
 </div>
 
-<div class="avatar"></div>
+<a href="#" class="enter-btn">ENTER LAMBO CITY</a>
 
+<div class="feed">
+<p>SYSTEM: Welcome to Lambo City</p>
+<p>USER: Ready to board</p>
+<p>SYSTEM: Drop incoming</p>
+</div>
+
+</div>
 </div>
 
 </body>
