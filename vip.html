@@ -1,127 +1,162 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Lambo City Boarding Portal</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>LAMBO CITY</title>
 
 <style>
-body {
-  margin: 0;
-  font-family: Arial;
-  background: black;
-  color: white;
-  text-align: center;
-}
+    body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background: black;
+        color: white;
+        overflow: hidden;
+    }
 
-.container {
-  padding: 50px;
-}
+    /* CITY MAIN SCREEN */
+    .city {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(circle at top, #111, #000);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        transition: 0.6s ease;
+    }
 
-.box {
-  border: 2px solid gold;
-  padding: 30px;
-  margin-top: 70px;
-  display: inline-block;
-  width: 80%;
-  max-width: 600px;
-  background: rgba(255,255,255,0.05);
-}
+    .title {
+        font-size: 42px;
+        letter-spacing: 6px;
+        margin-bottom: 20px;
+    }
 
-input {
-  padding: 12px;
-  width: 80%;
-  text-align: center;
-  margin-top: 10px;
-}
+    .buttons button {
+        background: transparent;
+        border: 1px solid white;
+        color: white;
+        padding: 12px 22px;
+        margin: 10px;
+        cursor: pointer;
+        letter-spacing: 2px;
+        transition: 0.3s;
+    }
 
-button {
-  margin-top: 10px;
-  padding: 12px;
-  background: gold;
-  border: none;
-  font-weight: bold;
-  cursor: pointer;
-}
+    .buttons button:hover {
+        background: white;
+        color: black;
+    }
 
-h1 {
-  color: gold;
-}
+    /* YACHT CLUB OVERLAY */
+    .yacht {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(to bottom, #050505, #000);
+        display: none;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        animation: fadeIn 0.6s ease;
+    }
 
-.hidden {
-  display: none;
-}
+    @keyframes fadeIn {
+        from {opacity: 0; transform: scale(1.05);}
+        to {opacity: 1; transform: scale(1);}
+    }
 
-.level {
-  color: lightgreen;
-  font-weight: bold;
-}
+    .vip-title {
+        font-size: 30px;
+        letter-spacing: 5px;
+        margin-bottom: 20px;
+        color: gold;
+    }
+
+    .frame {
+        width: 80%;
+        max-width: 900px;
+        height: 450px;
+        border: 1px solid rgba(255,255,255,0.2);
+        box-shadow: 0 0 40px rgba(255,215,0,0.1);
+    }
+
+    .exit {
+        margin-top: 20px;
+        border: 1px solid white;
+        padding: 10px 20px;
+        cursor: pointer;
+        background: transparent;
+        color: white;
+    }
+
+    .exit:hover {
+        background: white;
+        color: black;
+    }
+
+    /* RADIO ATMOSPHERE LAYER */
+    .radio-glow {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(circle at bottom, rgba(255,0,100,0.08), transparent);
+        pointer-events: none;
+    }
 </style>
 </head>
 
 <body>
 
-<div class="container">
+<!-- RADIO ATMOSPHERE -->
+<div class="radio-glow"></div>
 
-<h1>BOARDING PASS SYSTEM</h1>
+<!-- CITY MAIN -->
+<div class="city" id="city">
+    <div class="title">LAMBO CITY</div>
 
-<div class="box" id="login">
-  <h3>Enter Access Code</h3>
-  <input id="code" placeholder="Enter Boarding Code">
-  <br>
-  <button onclick="unlock()">UNLOCK</button>
+    <div class="buttons">
+        <button onclick="enterCity()">ENTER CITY</button>
+        <button onclick="openYacht()">YACHT CLUB</button>
+        <button onclick="radio()">RADIO</button>
+    </div>
 </div>
 
-<div class="box hidden" id="portal">
-  <h2 id="level"></h2>
-  <p id="msg"></p>
+<!-- YACHT CLUB -->
+<div class="yacht" id="yacht">
+    <div class="vip-title">YACHT CLUB — VIP INTERIOR</div>
 
-  <button onclick="alert('Loading private drop...')">VIEW DROP</button>
-  <button onclick="logout()">LOGOUT</button>
-</div>
+    <!-- TWITCH EMBED (replace channel name later) -->
+    <iframe
+        class="frame"
+        src="https://player.twitch.tv/?channel=monstercat&parent=localhost"
+        height="450"
+        width="900"
+        allowfullscreen>
+    </iframe>
 
+    <button class="exit" onclick="exitYacht()">EXIT YACHT CLUB</button>
 </div>
 
 <script>
-const level = localStorage.getItem("accessLevel");
-
-const codes = {
-  guest: "GUEST123",
-  vip: "VIP2026",
-  founder: "FOUNDER777"
-};
-
-function unlock() {
-  const input = document.getElementById("code").value;
-
-  if (input === codes[level]) {
-    localStorage.setItem("logged", "true");
-    showPortal();
-  } else {
-    alert("INVALID BOARDING PASS");
-  }
+function enterCity(){
+    alert("SYSTEM: Entering LAMBO CITY...");
 }
 
-function showPortal() {
-  document.getElementById("login").style.display = "none";
-  document.getElementById("portal").style.display = "inline-block";
-
-  document.getElementById("level").innerText =
-    level.toUpperCase() + " ACCESS GRANTED";
-
-  document.getElementById("msg").innerText =
-    "Welcome to the " + level + " zone of Lambo City";
+function openYacht(){
+    document.getElementById("city").style.display = "none";
+    document.getElementById("yacht").style.display = "flex";
 }
 
-function logout() {
-  localStorage.clear();
-  location.reload();
+function exitYacht(){
+    document.getElementById("yacht").style.display = "none";
+    document.getElementById("city").style.display = "flex";
 }
 
-window.onload = function () {
-  if (localStorage.getItem("logged") === "true") {
-    showPortal();
-  }
-};
+function radio(){
+    alert("RADIO: LAMBO CITY RECORDS STREAM ACTIVE");
+}
 </script>
 
 </body>
