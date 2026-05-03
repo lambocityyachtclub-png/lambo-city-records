@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>LAMBO CITY | GTA ONLINE LOBBY</title>
+<title>LAMBO CITY | WALKABLE WORLD</title>
 
 <style>
 body {
@@ -14,67 +14,50 @@ body {
     color: white;
 }
 
-/* CAMERA TRANSITION */
+/* CAMERA (NOW ACTS LIKE PLAYER POSITION) */
 #camera {
     position: fixed;
     width: 100%;
     height: 100%;
     background: black;
     opacity: 0;
-    transform: scale(1.2);
-    transition: 0.5s ease;
+    transform: scale(1.3);
+    transition: 0.8s ease;
     z-index: 999;
 }
 
-/* HUD */
-#hud {
-    position: fixed;
-    top: 12px;
-    left: 12px;
-    font-size: 11px;
-    opacity: 0.7;
-    letter-spacing: 3px;
-    z-index: 50;
-}
-
-/* GLOBAL CHAT (PERSISTENT LIKE GTA ONLINE) */
-#chat {
-    position: fixed;
-    right: 12px;
-    bottom: 12px;
-    width: 260px;
-    height: 180px;
-    background: rgba(0,0,0,0.4);
-    border: 1px solid rgba(255,255,255,0.2);
-    padding: 8px;
-    font-size: 10px;
-    overflow: hidden;
-    z-index: 1000;
-}
-
-/* WORLD */
-.world {
+/* WORLD LAYER (THIS MOVES = “WALKING”) */
+#world {
     position: absolute;
-    width: 100%;
+    width: 300%;
     height: 100%;
-    display: none;
+    display: flex;
+    transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ZONES AS SPACES (NOT SCREENS) */
+.zone {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
     justify-content: center;
     align-items: center;
     flex-direction: column;
 }
 
-/* CITY IDENTITY (STRONG GTA DIFFERENCE) */
+/* DISTINCT ENVIRONMENTS */
 #portal { background: radial-gradient(circle, #0a0f1f, #000); }
 #city   { background: radial-gradient(circle at top, #2a1a0a, #000); }
 #vip    { background: radial-gradient(circle, #11110a, #000); }
 
+/* TITLE */
 .title {
     font-size: 38px;
     letter-spacing: 6px;
     margin-bottom: 20px;
 }
 
-/* BUTTONS */
+/* BUTTONS (NOW ACT LIKE “DOORS”) */
 button {
     margin: 8px;
     padding: 10px 18px;
@@ -90,7 +73,7 @@ button:hover {
     color: black;
 }
 
-/* STREAM */
+/* VIP STREAM */
 iframe {
     width: 80%;
     max-width: 900px;
@@ -103,105 +86,66 @@ iframe {
 <body>
 
 <div id="camera"></div>
-<div id="hud">LAMBO CITY // GTA ONLINE SESSION ACTIVE</div>
 
-<!-- GLOBAL CHAT (PERSISTENT ACROSS ALL ROOMS) -->
-<div id="chat"></div>
+<!-- WORLD IS NOW ONE CONTINUOUS SPACE -->
+<div id="world">
 
-<!-- PORTAL -->
-<div id="portal" class="world">
-    <div class="title">CITY GATE</div>
-    <button onclick="travel('city')">ENTER CITY</button>
-</div>
+    <!-- PORTAL (LEFT) -->
+    <div class="zone" id="portal">
+        <div class="title">CITY GATE</div>
+        <button onclick="walkTo(0)">ENTER CITY</button>
+    </div>
 
-<!-- CITY -->
-<div id="city" class="world">
-    <div class="title">LAMBO CITY</div>
-    <button onclick="travel('vip')">YACHT CLUB</button>
-    <button onclick="travel('portal')">EXIT WORLD</button>
-</div>
+    <!-- CITY (CENTER) -->
+    <div class="zone" id="city">
+        <div class="title">LAMBO CITY</div>
+        <button onclick="walkTo(1)">YACHT CLUB</button>
+    </div>
 
-<!-- VIP -->
-<div id="vip" class="world">
-    <div class="title">YACHT CLUB</div>
+    <!-- VIP (RIGHT) -->
+    <div class="zone" id="vip">
+        <div class="title">YACHT CLUB</div>
 
-    <iframe
-        src="https://player.twitch.tv/?channel=lambocityrecords&parent=lambocityrecords.com"
-        allowfullscreen>
-    </iframe>
+        <iframe
+            src="https://player.twitch.tv/?channel=lambocityrecords&parent=lambocityrecords.com"
+            allowfullscreen>
+        </iframe>
 
-    <button onclick="travel('city')">BACK TO CITY</button>
+        <button onclick="walkTo(1)">BACK TO CITY</button>
+    </div>
+
 </div>
 
 <script>
 
+const world = document.getElementById("world");
 const camera = document.getElementById("camera");
-const chat = document.getElementById("chat");
 
-let currentZone = "portal";
-
-/* WORLD INIT */
+/* START */
 window.onload = () => {
-    show("portal");
-    startGTAChat();
+    camera.style.opacity = "0";
+    walkTo(0);
 };
 
-/* WORLD SWITCH */
-function show(id) {
-    document.querySelectorAll(".world").forEach(w => w.style.display = "none");
-    document.getElementById(id).style.display = "flex";
-    currentZone = id;
-}
+/* 🧠 WALKING SYSTEM (KEY CHANGE) */
+function walkTo(zoneIndex) {
 
-/* GTA STYLE TRANSITION */
-function travel(dest) {
-
+    // camera “body movement”
     camera.style.opacity = "1";
-    camera.style.transform = "scale(1.25)";
+    camera.style.transform = "scale(1.35)";
 
     setTimeout(() => {
 
-        show(dest);
+        // MOVE WORLD (THIS IS THE “WALK”)
+        world.style.transform = `translateX(-${zoneIndex * 100}vw)`;
 
+        // settle camera
         setTimeout(() => {
             camera.style.opacity = "0";
             camera.style.transform = "scale(1)";
-        }, 250);
+        }, 400);
 
-    }, 500);
-}
-
-/* 💬 GTA ONLINE CHAT SYSTEM */
-function startGTAChat() {
-
-    const users = ["DJ HERO", "VIP_ACE", "CITY_RUNNER", "LAMBO_GUEST", "YACHT_KING"];
-
-    const messages = [
-        "entered the session",
-        "joined Lambo City",
-        "is cruising downtown",
-        "joined Yacht Club stream",
-        "left the city gate",
-        "is buying merch at LAMBO STORE (soon)"
-    ];
-
-    setInterval(() => {
-
-        const user = users[Math.floor(Math.random() * users.length)];
-        const msg = messages[Math.floor(Math.random() * messages.length)];
-
-        const zoneTag = "[" + currentZone.toUpperCase() + "]";
-
-        const line = `${zoneTag} ${user}: ${msg}`;
-
-        chat.innerHTML = line + "<br>" + chat.innerHTML;
-
-        // keep chat limited
-        if (chat.innerHTML.length > 1500) {
-            chat.innerHTML = chat.innerHTML.slice(0, 1500);
-        }
-
-    }, 1800);
+    }, 400);
 }
 
 </script>
