@@ -3,160 +3,253 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>LAMBO CITY | LIVING STREETS v50</title>
+<title>LAMBO CITY | FINAL WORLD ENGINE</title>
 
 <style>
 body {
     margin: 0;
     overflow: hidden;
-    background: black;
     font-family: Arial;
+    background: black;
     color: white;
 }
 
-/* 🌆 CITY BACKGROUND */
-#city {
+/* 🌌 SKY / WEATHER */
+#sky {
     position: fixed;
     width: 100%;
     height: 100%;
-    background: linear-gradient(120deg, #120a08, #000, #0a0f1a);
-    background-size: 400% 400%;
-    animation: cityMove 12s ease infinite;
+    background: radial-gradient(circle at 30% 20%, #1a1a2e, #000);
+    animation: sky 10s infinite alternate;
+    z-index: 0;
 }
 
-@keyframes cityMove {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
+@keyframes sky {
+    0% { filter: brightness(1); }
+    50% { filter: brightness(1.2) hue-rotate(10deg); }
+    100% { filter: brightness(0.9); }
 }
 
-/* 🚗 ROAD LAYER */
-.road {
-    position: absolute;
+/* 🌫 FOG */
+#fog {
+    position: fixed;
     width: 100%;
-    height: 200px;
-    top: 60%;
-    background: rgba(0,0,0,0.4);
-    transform: skewY(-2deg);
+    height: 100%;
+    background: radial-gradient(circle, transparent 35%, rgba(0,0,0,0.85));
+    z-index: 2;
 }
 
-/* 🚗 CARS */
+/* 🚗 CAR */
 .car {
     position: absolute;
     width: 60px;
     height: 30px;
     background: red;
+    top: 60%;
     border-radius: 4px;
-    opacity: 0.9;
+    z-index: 3;
 }
 
-/* NPCS */
+/* 🚶 NPC */
 .npc {
     position: absolute;
     width: 15px;
     height: 30px;
     background: white;
     opacity: 0.7;
-    border-radius: 2px;
+    z-index: 3;
 }
 
-/* 🌫 ATMOSPHERE */
-#fog {
-    position: fixed;
-    width: 100%;
-    height: 100%;
-    background: radial-gradient(circle, transparent 40%, rgba(0,0,0,0.8));
-    pointer-events: none;
-}
-
-/* HUD */
+/* 🧭 HUD */
 #hud {
     position: fixed;
     top: 10px;
     left: 10px;
     font-size: 11px;
     opacity: 0.6;
+    z-index: 10;
 }
+
+/* 🌍 ZONES */
+.zone {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    z-index: 5;
+}
+
+#city {
+    background: radial-gradient(circle, #2a1a0a, #000);
+}
+
+#yacht {
+    background: radial-gradient(circle, #0a0f1a, #000);
+}
+
+#store {
+    background: radial-gradient(circle, #1a0a0a, #000);
+}
+
+/* 🎮 UI */
+.title {
+    font-size: 40px;
+    letter-spacing: 6px;
+    margin-bottom: 10px;
+}
+
+button {
+    margin: 8px;
+    padding: 10px 16px;
+    border: 1px solid white;
+    background: transparent;
+    color: white;
+    cursor: pointer;
+}
+
+/* 📺 TWITCH */
+iframe {
+    width: 80%;
+    max-width: 900px;
+    height: 450px;
+    border: 1px solid rgba(255,255,255,0.2);
+}
+
+/* 🔊 AUDIO */
+audio { display: none; }
+
 </style>
 </head>
 
 <body>
 
-<div id="city"></div>
-<div class="road"></div>
+<div id="sky"></div>
 <div id="fog"></div>
-<div id="hud">LAMBO CITY // STREET LIFE ACTIVE</div>
+<div id="hud">LAMBO CITY // LIVE WORLD ENGINE</div>
+
+<!-- CITY -->
+<div id="city" class="zone">
+    <div class="title">LAMBO CITY</div>
+    <button onclick="enter('yacht')">YACHT CLUB</button>
+    <button onclick="enter('store')">STORE</button>
+</div>
+
+<!-- YACHT -->
+<div id="yacht" class="zone">
+    <div class="title">YACHT CLUB</div>
+
+    <iframe
+        src="https://player.twitch.tv/?channel=lambocityrecords&parent=lambocityrecords.com"
+        allowfullscreen>
+    </iframe>
+
+    <button onclick="exit()">BACK TO CITY</button>
+</div>
+
+<!-- STORE -->
+<div id="store" class="zone">
+    <div class="title">STORE</div>
+    <button>HERO DROP</button>
+    <button onclick="exit()">BACK TO CITY</button>
+</div>
+
+<!-- AUDIO -->
+<audio id="cityAudio" loop>
+    <source src="https://www.soundjay.com/nature/sounds/wind-1.mp3">
+</audio>
+
+<audio id="oceanAudio" loop>
+    <source src="https://www.soundjay.com/nature/sounds/ocean-wave-1.mp3">
+</audio>
 
 <script>
 
 const city = document.getElementById("city");
+const yacht = document.getElementById("yacht");
+const store = document.getElementById("store");
 
-/* =========================
-   🚗 SPAWN CARS (LOOPING TRAFFIC)
-========================= */
+const cityAudio = document.getElementById("cityAudio");
+const oceanAudio = document.getElementById("oceanAudio");
+
+/* START */
+window.onload = () => {
+    city.style.display = "flex";
+
+    cityAudio.volume = 0.3;
+    cityAudio.play().catch(()=>{});
+
+    startWorld();
+};
+
+/* 🚪 ENTER */
+function enter(type) {
+
+    city.style.display = "none";
+
+    if (type === "yacht") {
+        yacht.style.display = "flex";
+        oceanAudio.volume = 0.4;
+        oceanAudio.play().catch(()=>{});
+    }
+
+    if (type === "store") {
+        store.style.display = "flex";
+    }
+}
+
+/* 🚪 EXIT */
+function exit() {
+    yacht.style.display = "none";
+    store.style.display = "none";
+
+    oceanAudio.pause();
+
+    city.style.display = "flex";
+}
+
+/* 🚗 CARS */
 function spawnCar() {
-
     const car = document.createElement("div");
     car.className = "car";
-
-    const y = 55 + Math.random() * 10;
-    car.style.top = y + "%";
     car.style.left = "-80px";
-
+    car.style.top = (55 + Math.random()*10) + "%";
     document.body.appendChild(car);
 
-    let pos = -80;
-
-    let speed = 2 + Math.random() * 3;
+    let x = -80;
 
     function move() {
-        pos += speed;
-        car.style.left = pos + "px";
+        x += 3;
+        car.style.left = x + "px";
 
-        if (pos > window.innerWidth + 100) {
-            car.remove();
-        } else {
+        if (x < window.innerWidth + 100) {
             requestAnimationFrame(move);
+        } else {
+            car.remove();
         }
     }
 
     move();
 }
 
-/* =========================
-   🚶 NPC WALKERS
-========================= */
+/* 🚶 NPC */
 function spawnNPC() {
-
     const npc = document.createElement("div");
     npc.className = "npc";
-
-    npc.style.left = Math.random() * window.innerWidth + "px";
-    npc.style.top = (60 + Math.random() * 20) + "%";
-
+    npc.style.left = Math.random()*window.innerWidth + "px";
+    npc.style.top = (60 + Math.random()*15) + "%";
     document.body.appendChild(npc);
 
-    let drift = 0;
-
-    function walk() {
-        drift += (Math.random() - 0.5) * 2;
-        npc.style.transform = `translateX(${drift}px)`;
-
-        if (Math.random() < 0.01) {
-            npc.remove();
-        } else {
-            requestAnimationFrame(walk);
-        }
-    }
-
-    walk();
+    setTimeout(()=> npc.remove(), 5000);
 }
 
-/* =========================
-   🌆 WORLD LOOP (THIS IS THE "LIVING CITY")
-========================= */
-setInterval(spawnCar, 1200);   // cars every 1.2 sec
-setInterval(spawnNPC, 900);    // NPCs constantly spawning
+/* 🌍 WORLD LOOP */
+function startWorld() {
+    setInterval(spawnCar, 1200);
+    setInterval(spawnNPC, 900);
+}
 
 </script>
 
