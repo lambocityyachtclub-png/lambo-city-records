@@ -1,121 +1,107 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Lambo City</title>
+  <meta charset="UTF-8">
+  <title>LAMBO CITY</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      margin: 0;
+      background: black;
+      color: white;
+      font-family: Arial, sans-serif;
+      overflow: hidden;
+    }
 
-<style>
-body {
-  margin: 0;
-  font-family: Arial, sans-serif;
-  background: url('https://images.unsplash.com/photo-1502877338535-766e1452684a') no-repeat center center/cover;
-  color: white;
-}
+    .background {
+      position: fixed;
+      width: 100%;
+      height: 100%;
+      background: url('https://images.unsplash.com/photo-1508057198894-247b23fe5ade') center/cover no-repeat;
+      filter: brightness(0.4);
+    }
 
-.overlay {
-  background: rgba(0,0,0,0.75);
-  min-height: 100vh;
-  padding: 20px;
-}
+    .title {
+      position: absolute;
+      top: 10%;
+      width: 100%;
+      text-align: center;
+      font-size: 3rem;
+      letter-spacing: 5px;
+    }
 
-.container {
-  max-width: 1200px;
-  margin: auto;
-}
+    .menu {
+      position: absolute;
+      bottom: 15%;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+    }
 
-.title {
-  text-align: center;
-  font-size: 48px;
-  font-weight: bold;
-  margin-bottom: 20px;
-  text-shadow: 0 0 20px gold;
-}
+    .btn {
+      padding: 15px 25px;
+      border: 1px solid white;
+      cursor: pointer;
+      transition: 0.3s;
+    }
 
-.grid {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 20px;
-}
+    .btn:hover {
+      background: white;
+      color: black;
+    }
 
-.stream {
-  border: 2px solid gold;
-}
-
-.panel {
-  background: rgba(0,0,0,0.6);
-  padding: 15px;
-  border: 1px solid gold;
-}
-
-.enter-btn {
-  display: block;
-  text-align: center;
-  margin: 30px auto;
-  padding: 15px 30px;
-  background: gold;
-  color: black;
-  font-weight: bold;
-  text-decoration: none;
-  width: 300px;
-  border-radius: 10px;
-  box-shadow: 0 0 15px gold;
-}
-
-.feed {
-  margin-top: 20px;
-  background: rgba(0,0,0,0.6);
-  padding: 15px;
-  border: 1px solid gold;
-  height: 120px;
-  overflow: auto;
-}
-</style>
+    #panel {
+      position:absolute;
+      top:40%;
+      width:100%;
+      text-align:center;
+      font-size:1.2rem;
+      opacity:0.9;
+    }
+  </style>
 </head>
-
 <body>
-
-<div class="overlay">
-<div class="container">
-
+<div class="background"></div>
 <div class="title">LAMBO CITY</div>
-
-<div class="grid">
-
-<div class="stream">
-<iframe
-  src="https://player.twitch.tv/?channel=LAMBOCITYRecords&parent=localhost"
-  height="400"
-  width="100%"
-  allowfullscreen>
-</iframe>
+<div id="panel">
+  <p>System ready...</p>
 </div>
-
-<div class="panel">
-<h3>ACTIVITY</h3>
-<p>DJ HERO joined</p>
-<p>Next Drop Soon</p>
-<p>Boarding Pass Available</p>
-
-<hr>
-
-<h3>DROPS</h3>
-<p>Coming Soon</p>
-<p>Yacht Event Preview</p>
+<div id="panel">
+  <p>System ready...</p>
 </div>
-
+<div class="menu">
+  <div class="btn" onclick="enterCity()">ENTER CITY</div>
+  <div class="btn" onclick="openYacht()">YACHT CLUB</div>
+  <div class="btn" onclick="openRadio()">RADIO</div>
 </div>
+<audio autoplay loop>
+  <source src="" type="audio/mpeg">
+</audio>
+<script>
+function enterCity() {
+  document.getElementById("panel").innerHTML = `
+    <h2>WELCOME TO LAMBO CITY</h2>
+    <p>The city is active. Citizens are moving.</p>
+    <p>New drops are loading...</p>
+  `;
+}
 
-<a href="#" class="enter-btn">ENTER LAMBO CITY</a>
+function openYacht() {
+  document.getElementById("panel").innerHTML = `
+    <h2>YACHT CLUB</h2>
+    <p>🔒 ACCESS LOCKED</p>
+    <p>Complete Access Protocol to enter.</p>
+  `;
+}
 
-<div class="feed">
-<p>SYSTEM: Welcome to Lambo City</p>
-<p>USER: Ready to board</p>
-<p>SYSTEM: Drop incoming</p>
-</div>
-
-</div>
-</div>
-
+function openRadio() {
+  document.getElementById("panel").innerHTML = `
+    <h2>LAMBO CITY RADIO</h2>
+    <p>Now Playing...</p>
+    <p>Streaming from LAMBO CITY RECORDS</p>
+  `;
+}
+</script>
 </body>
 </html>
