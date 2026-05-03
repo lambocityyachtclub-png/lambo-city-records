@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>LAMBO CITY | LIVING WORLD v20</title>
+<title>LAMBO CITY | INTERIOR WORLD v21</title>
 
 <style>
 body {
@@ -15,7 +15,7 @@ body {
 }
 
 /* =========================
-   🎮 CINEMATIC LOADING LOBBY
+   🎮 LOBBY
 ========================= */
 #lobby {
     position: fixed;
@@ -26,14 +26,8 @@ body {
     justify-content: center;
     align-items: center;
     flex-direction: column;
-    z-index: 3000;
-    transition: opacity 1.2s ease;
-}
-
-#lobbyText {
-    font-size: 14px;
-    letter-spacing: 6px;
-    opacity: 0.8;
+    z-index: 4000;
+    transition: opacity 1s ease;
 }
 
 #enterBtn {
@@ -42,11 +36,10 @@ body {
     border: 1px solid white;
     background: transparent;
     color: white;
-    cursor: pointer;
 }
 
 /* =========================
-   🎥 CAMERA LAYER (REAL FEEL SHIFT)
+   🎥 CAMERA (DEPTH FEEL)
 ========================= */
 #camera {
     position: fixed;
@@ -54,10 +47,10 @@ body {
     height: 100%;
     background: black;
     opacity: 0;
-    transform: scale(1.4);
+    transform: scale(1.3);
+    filter: blur(0px);
     transition: 0.6s ease;
     z-index: 999;
-    filter: blur(0px);
 }
 
 /* =========================
@@ -65,15 +58,13 @@ body {
 ========================= */
 #world {
     position: absolute;
-    width: 400%;
+    width: 300%;
     height: 100%;
     display: flex;
-    transition: transform 1.3s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* =========================
-   🌍 ZONES (NOW FEEL LIKE PLACES)
-========================= */
+/* OUTSIDE ZONES */
 .zone {
     width: 100vw;
     height: 100vh;
@@ -81,67 +72,62 @@ body {
     justify-content: center;
     align-items: center;
     flex-direction: column;
-    transition: filter 0.6s ease;
 }
 
-/* DISTINCT ENVIRONMENT IDENTITY */
-#portal {
-    background: radial-gradient(circle, #03040a, #000);
+/* INTERIOR SYSTEM (NEW LAYER) */
+.interior {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    background: radial-gradient(circle, #111, #000);
+    z-index: 2000;
 }
 
-#city {
-    background: radial-gradient(circle at top, #3a1f0a, #000);
+/* DIFFERENT INTERIORS */
+#yachtInterior {
+    background: radial-gradient(circle, #0a0f1a, #000);
 }
 
-#vip {
-    background: radial-gradient(circle, #0b0b10, #000);
-}
-
-#store {
-    background: radial-gradient(circle, #1a0505, #000);
+#storeInterior {
+    background: radial-gradient(circle, #1a0a0a, #000);
 }
 
 /* =========================
-   🎯 WORLD TITLE
+   🎯 TITLE
 ========================= */
 .title {
-    font-size: 44px;
-    letter-spacing: 8px;
+    font-size: 42px;
+    letter-spacing: 7px;
     margin-bottom: 20px;
 }
 
 /* =========================
-   🚪 INTERACTION BUTTONS
+   🚪 DOORS (IMPORTANT FEEL CHANGE)
 ========================= */
-button {
-    margin: 8px;
-    padding: 10px 18px;
+.door {
+    padding: 12px 20px;
     border: 1px solid rgba(255,255,255,0.6);
     background: transparent;
     color: white;
     cursor: pointer;
-    letter-spacing: 2px;
-    transition: 0.2s;
-}
-
-button:hover {
-    background: white;
-    color: black;
+    margin: 10px;
 }
 
 /* =========================
-   🎥 VIP STREAM
+   🎥 STREAM
 ========================= */
 iframe {
     width: 80%;
     max-width: 900px;
     height: 450px;
-    margin-top: 20px;
-    border: 1px solid rgba(255,255,255,0.2);
 }
 
 /* =========================
-   💬 WORLD ACTIVITY FEED
+   💬 CHAT FEED
 ========================= */
 #chat {
     position: fixed;
@@ -150,7 +136,7 @@ iframe {
     width: 260px;
     height: 180px;
     font-size: 10px;
-    background: rgba(0,0,0,0.35);
+    background: rgba(0,0,0,0.4);
     border: 1px solid rgba(255,255,255,0.2);
     padding: 8px;
     overflow: hidden;
@@ -158,7 +144,7 @@ iframe {
 }
 
 /* =========================
-   🎬 LOCATION OVERLAY (BIG GTA FEEL FIX)
+   🎬 LOCATION TEXT
 ========================= */
 #location {
     position: fixed;
@@ -166,9 +152,9 @@ iframe {
     left: 50%;
     transform: translate(-50%, -50%);
     font-size: 20px;
-    letter-spacing: 6px;
+    letter-spacing: 5px;
     opacity: 0;
-    z-index: 2000;
+    z-index: 3000;
     transition: 0.4s ease;
 }
 </style>
@@ -178,7 +164,7 @@ iframe {
 
 <!-- 🎮 LOBBY -->
 <div id="lobby">
-    <div id="lobbyText">CONNECTING TO LAMBO CITY ONLINE SESSION...</div>
+    <div>CONNECTING TO LAMBO CITY...</div>
     <button id="enterBtn" onclick="enterWorld()">ENTER CITY</button>
 </div>
 
@@ -189,119 +175,124 @@ iframe {
 <!-- 🌆 WORLD -->
 <div id="world">
 
-    <div class="zone" id="portal">
-        <div class="title">CITY GATE</div>
-        <button onclick="travel(0)">ENTER CITY</button>
-    </div>
-
+    <!-- CITY -->
     <div class="zone" id="city">
         <div class="title">LAMBO CITY</div>
-        <button onclick="travel(2)">YACHT CLUB</button>
-        <button onclick="travel(3)">STORE</button>
-    </div>
 
-    <div class="zone" id="vip">
-        <div class="title">YACHT CLUB</div>
+        <button class="door" onclick="enterInterior('yacht')">
+            ENTER YACHT CLUB
+        </button>
 
-        <iframe
-            src="https://player.twitch.tv/?channel=lambocityrecords&parent=lambocityrecords.com"
-            allowfullscreen>
-        </iframe>
-
-        <button onclick="travel(1)">BACK TO CITY</button>
-    </div>
-
-    <div class="zone" id="store">
-        <div class="title">LAMBO CITY STORE</div>
-
-        <button onclick="alert('HERO DROP ACTIVE')">👕 HERO DROP</button>
-        <button onclick="alert('CLASSIC COLLECTION')">🧢 COLLECTION</button>
-
-        <button onclick="travel(1)">BACK TO CITY</button>
+        <button class="door" onclick="enterInterior('store')">
+            ENTER STORE
+        </button>
     </div>
 
 </div>
 
+<!-- 🚤 YACHT INTERIOR -->
+<div class="interior" id="yachtInterior">
+    <div class="title">YACHT CLUB INTERIOR</div>
+
+    <iframe src="https://player.twitch.tv/?channel=lambocityrecords&parent=lambocityrecords.com"></iframe>
+
+    <button class="door" onclick="exitInterior()">EXIT TO CITY</button>
+</div>
+
+<!-- 🛍 STORE INTERIOR -->
+<div class="interior" id="storeInterior">
+    <div class="title">LAMBO CITY STORE</div>
+
+    <button class="door">HERO DROP</button>
+    <button class="door">CLASSIC LINE</button>
+
+    <button class="door" onclick="exitInterior()">EXIT TO CITY</button>
+</div>
+
 <script>
 
-const world = document.getElementById("world");
 const camera = document.getElementById("camera");
 const lobby = document.getElementById("lobby");
+const city = document.getElementById("city");
 const chat = document.getElementById("chat");
 const locationText = document.getElementById("location");
 
-let currentZone = 0;
+let currentInterior = null;
 
 /* =========================
    🎮 ENTER WORLD
 ========================= */
 function enterWorld() {
     lobby.style.opacity = "0";
-
-    setTimeout(() => {
-        lobby.style.display = "none";
-        travel(0);
-        startChat();
-    }, 1000);
+    setTimeout(() => lobby.style.display = "none", 1000);
 }
 
 /* =========================
-   🎬 LOCATION FEEL (IMPORTANT FIX)
+   🚪 ENTER BUILDING (KEY SYSTEM)
 ========================= */
-function showLocation(name) {
-    locationText.innerText = name;
-    locationText.style.opacity = "1";
-
-    setTimeout(() => {
-        locationText.style.opacity = "0";
-    }, 1000);
-}
-
-/* =========================
-   🌆 CINEMATIC TRAVEL SYSTEM
-========================= */
-function travel(zone) {
-
-    const names = ["PORTAL", "CITY", "YACHT CLUB", "STORE"];
+function enterInterior(type) {
 
     camera.style.opacity = "1";
-    camera.style.transform = "scale(1.7)";
+    camera.style.transform = "scale(1.6)";
     document.body.style.filter = "brightness(2) contrast(1.5)";
 
     setTimeout(() => {
 
-        world.style.transform = `translateX(-${zone * 100}vw)`;
-        currentZone = zone;
+        city.style.display = "none";
 
-        showLocation("ENTERING " + names[zone]);
+        if (type === "yacht") {
+            document.getElementById("yachtInterior").style.display = "flex";
+            showLocation("YACHT CLUB INTERIOR");
+            currentInterior = "yacht";
+        }
+
+        if (type === "store") {
+            document.getElementById("storeInterior").style.display = "flex";
+            showLocation("STORE INTERIOR");
+            currentInterior = "store";
+        }
 
         setTimeout(() => {
             camera.style.opacity = "0";
-            camera.style.transform = "scale(1)";
             document.body.style.filter = "brightness(1) contrast(1)";
-        }, 500);
+        }, 400);
 
     }, 300);
 }
 
 /* =========================
-   💬 WORLD ACTIVITY FEED
+   🚪 EXIT BUILDING
 ========================= */
-function startChat() {
+function exitInterior() {
 
-    const users = ["HERO", "CITY_RUNNER", "VIP_GUEST", "LONG_BEACH_LOCAL"];
-    const msgs = ["is in the city", "entered Yacht Club", "is shopping", "is driving through Lambo City"];
+    camera.style.opacity = "1";
+    document.body.style.filter = "brightness(2) contrast(1.5)";
 
-    setInterval(() => {
+    setTimeout(() => {
 
-        const u = users[Math.floor(Math.random() * users.length)];
-        const m = msgs[Math.floor(Math.random() * msgs.length)];
+        document.querySelectorAll(".interior").forEach(i => i.style.display = "none");
+        city.style.display = "flex";
 
-        chat.innerHTML =
-        "[" + ["PORTAL","CITY","VIP","STORE"][currentZone] + "] " +
-        u + ": " + m + "<br>" + chat.innerHTML;
+        showLocation("BACK TO CITY");
 
-    }, 2200);
+        setTimeout(() => {
+            camera.style.opacity = "0";
+            document.body.style.filter = "brightness(1)";
+        }, 400);
+
+    }, 300);
+}
+
+/* =========================
+   🎬 LOCATION FEEL
+========================= */
+function showLocation(text) {
+    locationText.innerText = text;
+    locationText.style.opacity = "1";
+
+    setTimeout(() => {
+        locationText.style.opacity = "0";
+    }, 900);
 }
 
 </script>
