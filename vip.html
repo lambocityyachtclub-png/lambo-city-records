@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Lambo City Access</title>
+<title>Lambo City Boarding Portal</title>
 
 <style>
 body {
@@ -20,16 +20,18 @@ body {
 .box {
   border: 2px solid gold;
   padding: 30px;
-  margin-top: 80px;
+  margin-top: 70px;
   display: inline-block;
   width: 80%;
   max-width: 600px;
+  background: rgba(255,255,255,0.05);
 }
 
 input {
   padding: 12px;
   width: 80%;
   text-align: center;
+  margin-top: 10px;
 }
 
 button {
@@ -45,8 +47,13 @@ h1 {
   color: gold;
 }
 
-.locked {
+.hidden {
   display: none;
+}
+
+.level {
+  color: lightgreen;
+  font-weight: bold;
 }
 </style>
 </head>
@@ -55,27 +62,27 @@ h1 {
 
 <div class="container">
 
-<h1>LAMBO CITY BOARDING PORTAL</h1>
+<h1>BOARDING PASS SYSTEM</h1>
 
-<div class="box" id="loginBox">
-  <h3>Enter Boarding Code</h3>
-  <input id="code" placeholder="Enter Access Code">
+<div class="box" id="login">
+  <h3>Enter Access Code</h3>
+  <input id="code" placeholder="Enter Boarding Code">
   <br>
-  <button onclick="unlock()">ENTER</button>
+  <button onclick="unlock()">UNLOCK</button>
 </div>
 
-<div class="box locked" id="content">
-  <h2 id="levelTitle"></h2>
-  <p id="message"></p>
+<div class="box hidden" id="portal">
+  <h2 id="level"></h2>
+  <p id="msg"></p>
 
-  <button onclick="alert('Drop unlocked')">View Drop</button>
-  <button onclick="logout()">Logout</button>
+  <button onclick="alert('Loading private drop...')">VIEW DROP</button>
+  <button onclick="logout()">LOGOUT</button>
 </div>
 
 </div>
 
 <script>
-const access = localStorage.getItem("accessLevel");
+const level = localStorage.getItem("accessLevel");
 
 const codes = {
   guest: "GUEST123",
@@ -86,23 +93,23 @@ const codes = {
 function unlock() {
   const input = document.getElementById("code").value;
 
-  if (input === codes[access]) {
-    showAccess(access);
-    localStorage.setItem("loggedIn", "true");
+  if (input === codes[level]) {
+    localStorage.setItem("logged", "true");
+    showPortal();
   } else {
-    alert("Invalid Boarding Pass Code");
+    alert("INVALID BOARDING PASS");
   }
 }
 
-function showAccess(level) {
-  document.getElementById("loginBox").style.display = "none";
-  document.getElementById("content").style.display = "block";
+function showPortal() {
+  document.getElementById("login").style.display = "none";
+  document.getElementById("portal").style.display = "inline-block";
 
-  document.getElementById("levelTitle").innerText =
+  document.getElementById("level").innerText =
     level.toUpperCase() + " ACCESS GRANTED";
 
-  document.getElementById("message").innerText =
-    "Welcome to " + level + " zone of Lambo City";
+  document.getElementById("msg").innerText =
+    "Welcome to the " + level + " zone of Lambo City";
 }
 
 function logout() {
@@ -111,8 +118,8 @@ function logout() {
 }
 
 window.onload = function () {
-  if (localStorage.getItem("loggedIn") === "true") {
-    showAccess(access);
+  if (localStorage.getItem("logged") === "true") {
+    showPortal();
   }
 };
 </script>
