@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Lambo City</title>
+<title>Lambo City Hub</title>
 
 <style>
 body {
@@ -13,32 +13,33 @@ body {
   color: white;
 }
 
+/* CITY BACKGROUND */
 .bg {
   position: fixed;
   width: 100%;
   height: 100%;
   background: url('https://raw.githubusercontent.com/YOURUSERNAME/YOURREPO/main/yourimage.jpg') no-repeat center center/cover;
   z-index: -1;
+  filter: brightness(0.6);
 }
 
+/* OVERLAY */
 .overlay {
-  background: rgba(0,0,0,0.75);
   min-height: 100vh;
+  background: rgba(0,0,0,0.7);
   padding: 20px;
 }
 
-.container {
-  max-width: 1100px;
-  margin: auto;
-}
-
-.title {
+/* HEADER */
+.header {
   text-align: center;
-  font-size: 52px;
+  font-size: 50px;
   font-weight: bold;
   color: gold;
+  margin-top: 10px;
 }
 
+/* HUB GRID */
 .grid {
   display: grid;
   grid-template-columns: 2fr 1fr;
@@ -46,10 +47,11 @@ body {
   margin-top: 20px;
 }
 
+/* PANEL */
 .panel {
   border: 1px solid gold;
   padding: 15px;
-  background: rgba(0,0,0,0.5);
+  background: rgba(0,0,0,0.6);
 }
 
 button {
@@ -62,26 +64,34 @@ button {
   cursor: pointer;
 }
 
+/* ENTER BUTTON */
 .enter {
   display: block;
   text-align: center;
   margin: 30px auto;
   padding: 15px;
-  width: 300px;
+  width: 320px;
   background: gold;
   color: black;
-  text-decoration: none;
   font-weight: bold;
+  text-decoration: none;
   border-radius: 10px;
 }
 
+/* LIVE FEED */
 .feed {
   margin-top: 20px;
   border: 1px solid gold;
   padding: 10px;
-  height: 120px;
+  height: 130px;
   overflow: auto;
   background: rgba(0,0,0,0.5);
+}
+
+/* STATUS */
+.status {
+  font-size: 14px;
+  color: lightgreen;
 }
 </style>
 </head>
@@ -91,12 +101,14 @@ button {
 <div class="bg"></div>
 
 <div class="overlay">
-<div class="container">
 
-<div class="title">LAMBO CITY</div>
+<div class="header">LAMBO CITY HUB</div>
+
+<p class="status" id="status">SYSTEM ONLINE • SERVER SYNCING...</p>
 
 <div class="grid">
 
+<!-- STREAM -->
 <div>
 <iframe
 src="https://player.twitch.tv/?channel=LamboCityRecords&parent=lambocityrecords.com"
@@ -104,50 +116,59 @@ width="100%" height="420" allowfullscreen>
 </iframe>
 </div>
 
+<!-- CONTROL PANEL -->
 <div class="panel">
-<h3>ACCESS PORTAL</h3>
+<h3>CONTROL CENTER</h3>
 
-<button onclick="enter('guest')">Enter Guest Zone</button>
-<button onclick="enter('vip')">Enter VIP Zone</button>
-<button onclick="enter('founder')">Enter Founder Zone</button>
+<button onclick="setAccess('guest')">Guest Access</button>
+<button onclick="setAccess('vip')">VIP Access</button>
+<button onclick="setAccess('founder')">Founder Access</button>
 
-<hr>
-
-<button onclick="alert('Drop loading...')">Next Drop</button>
+<button onclick="goVIP()">Enter Boarding Portal</button>
 </div>
 
 </div>
 
-<a class="enter" href="/vip.html">OPEN BOARDING PASS PORTAL</a>
+<a class="enter" href="/vip.html">OPEN BOARDING PASS SYSTEM</a>
 
 <div class="feed" id="feed">
-<p>SYSTEM: Lambo City Network Online</p>
+<p>SYSTEM: Lambo City initializing...</p>
 </div>
 
-</div>
 </div>
 
 <script>
 const feed = document.getElementById("feed");
 
-function enter(level) {
+function setAccess(level) {
   localStorage.setItem("accessLevel", level);
+  alert(level.toUpperCase() + " ACCESS SELECTED");
+}
+
+function goVIP() {
   window.location.href = "/vip.html";
 }
 
+/* LIVE FEED SIMULATION */
 setInterval(() => {
   const msgs = [
-    "SYSTEM: VIP nodes syncing...",
-    "SYSTEM: Yacht protocol active...",
-    "SYSTEM: Boarding passes scanning...",
-    "USER: Awaiting access level"
+    "SYSTEM: Yacht grid syncing...",
+    "SYSTEM: VIP doors calibrating...",
+    "SYSTEM: Boarding pass verified nodes scanning...",
+    "SYSTEM: City lights online...",
+    "USER: Waiting for entry..."
   ];
 
   const p = document.createElement("p");
   p.textContent = msgs[Math.floor(Math.random() * msgs.length)];
   feed.appendChild(p);
   feed.scrollTop = feed.scrollHeight;
-}, 4000);
+}, 3500);
+
+/* STATUS ANIMATION */
+setTimeout(() => {
+  document.getElementById("status").innerText = "SYSTEM ONLINE • LAMBO CITY ACTIVE";
+}, 3000);
 </script>
 
 </body>
