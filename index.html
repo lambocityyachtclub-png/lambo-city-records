@@ -1,45 +1,149 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Lambo City Records</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lambo City</title>
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: url('YOUR_IMAGE_LINK') no-repeat center center/cover;
+  color: white;
+}
+
+.overlay {
+  background: rgba(0,0,0,0.75);
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.container {
+  max-width: 1200px;
+  margin: auto;
+}
+
+.title {
+  text-align: center;
+  font-size: 48px;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 20px;
+}
+
+.stream {
+  border: 2px solid gold;
+}
+
+.panel {
+  background: rgba(0,0,0,0.6);
+  padding: 15px;
+  border: 1px solid gold;
+}
+
+.panel button {
+  display: block;
+  width: 100%;
+  margin: 10px 0;
+  padding: 10px;
+  background: gold;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.enter-btn {
+  display: block;
+  text-align: center;
+  margin: 30px auto;
+  padding: 15px 30px;
+  background: gold;
+  color: black;
+  font-weight: bold;
+  text-decoration: none;
+  width: 300px;
+  border-radius: 10px;
+}
+
+.feed {
+  margin-top: 20px;
+  background: rgba(0,0,0,0.6);
+  padding: 15px;
+  border: 1px solid gold;
+  height: 120px;
+  overflow: auto;
+}
+</style>
 </head>
 
-<body style="margin:0;background:#000;color:#fff;font-family:Arial;text-align:center;">
+<body>
 
-  <div style="padding:120px 20px;">
+<div class="overlay">
+<div class="container">
 
-    <h1 style="font-size:72px;letter-spacing:6px;">
-      LAMBO CITY
-    </h1>
+<div class="title">LAMBO CITY</div>
 
-    <p style="opacity:0.6;">
-      MUSIC • CULTURE • MOVEMENT
-    </p>
+<div class="grid">
 
-    <div style="margin-top:40px;">
-      <h2>NEW RELEASE</h2>
-      <p>HERO — LAMBO CITY VOL 1</p>
+<!-- STREAM -->
+<div class="stream">
+<iframe
+  src="https://player.twitch.tv/?channel=YOUR_TWITCH_CHANNEL&parent=YOUR_DOMAIN"
+  height="400"
+  width="100%"
+  allowfullscreen>
+</iframe>
+</div>
 
-      <a href="https://youtube.com/@Lambocityrecords" target="_blank">
-        <button style="padding:14px 26px;margin-top:15px;">
-          LISTEN / WATCH
-        </button>
-      </a>
-    </div>
+<!-- PANEL -->
+<div class="panel">
+<h3>ACTIVITY</h3>
 
-    <div style="margin-top:80px;">
-      <a href="portal.html">
-        <button style="padding:18px 30px;">
-          ENTER LAMBO CITY
-        </button>
-      </a>
-    </div>
+<button onclick="alert('DJ HERO joined')">DJ HERO joined</button>
+<button onclick="alert('Drop loading...')">Next Drop Soon</button>
+<button onclick="window.location.href='/vip'">Boarding Pass Available</button>
 
-    <p style="margin-top:80px;font-size:12px;opacity:0.4;">
-      Lambo City Yacht Club • NFT World Coming Soon
-    </p>
+<hr>
 
-  </div>
+<h3>DROPS</h3>
+<button onclick="alert('Preview coming soon')">Yacht Event Preview</button>
+</div>
+
+</div>
+
+<!-- ENTER -->
+<a href="/vip" class="enter-btn">ENTER LAMBO CITY</a>
+
+<!-- FEED -->
+<div class="feed" id="feed">
+<p>SYSTEM: Welcome to Lambo City</p>
+</div>
+
+</div>
+</div>
+
+<script>
+const feed = document.getElementById("feed");
+
+setInterval(() => {
+  const msg = document.createElement("p");
+  const items = [
+    "SYSTEM: DJ HERO entered Lambo City",
+    "SYSTEM: Boarding Pass updating...",
+    "SYSTEM: VIP access preparing...",
+    "USER: Waiting for drop"
+  ];
+  msg.textContent = items[Math.floor(Math.random() * items.length)];
+  feed.appendChild(msg);
+  feed.scrollTop = feed.scrollHeight;
+}, 4000);
+</script>
 
 </body>
 </html>
