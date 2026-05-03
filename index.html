@@ -8,65 +8,146 @@
 <style>
 body {
   margin: 0;
-  font-family: Arial;
+  font-family: Arial, sans-serif;
   background: black;
   color: white;
+  overflow-x: hidden;
 }
 
+/* BACKGROUND */
 .bg {
   position: fixed;
   width: 100%;
   height: 100%;
   background: url('https://raw.githubusercontent.com/YOURUSERNAME/YOURREPO/main/yourimage.jpg') no-repeat center center/cover;
-  filter: brightness(0.5);
-  z-index: -1;
+  filter: brightness(0.45) contrast(1.1);
+  transform: scale(1.05);
+  z-index: -2;
+  animation: slowZoom 20s infinite alternate ease-in-out;
 }
 
+@keyframes slowZoom {
+  from { transform: scale(1.05); }
+  to { transform: scale(1.12); }
+}
+
+/* DARK OVERLAY */
 .overlay {
   min-height: 100vh;
-  background: rgba(0,0,0,0.7);
-  padding: 20px;
+  background: radial-gradient(circle at top, rgba(0,0,0,0.4), rgba(0,0,0,0.92));
+  padding: 25px;
 }
 
+/* HEADER */
 .title {
   text-align: center;
-  font-size: 55px;
-  color: gold;
+  font-size: 64px;
   font-weight: bold;
+  letter-spacing: 4px;
+  color: gold;
+  text-shadow: 0 0 20px rgba(255,215,0,0.6);
+  margin-top: 10px;
 }
 
-.container {
-  max-width: 1000px;
-  margin: auto;
+/* SUB TEXT */
+.subtitle {
   text-align: center;
+  max-width: 800px;
+  margin: 10px auto 30px;
+  color: #ccc;
+  font-size: 16px;
 }
 
+/* MAIN LAYOUT */
+.container {
+  max-width: 1200px;
+  margin: auto;
+}
+
+/* GRID */
+.grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 20px;
+}
+
+/* STREAM BOX */
+.stream {
+  border: 1px solid rgba(255,215,0,0.6);
+  box-shadow: 0 0 25px rgba(255,215,0,0.15);
+  overflow: hidden;
+  border-radius: 10px;
+}
+
+/* SIDE PANEL */
 .panel {
-  margin-top: 30px;
-  border: 1px solid gold;
-  padding: 20px;
-  background: rgba(0,0,0,0.5);
+  background: rgba(0,0,0,0.6);
+  border: 1px solid rgba(255,215,0,0.4);
+  padding: 18px;
+  border-radius: 10px;
+  backdrop-filter: blur(6px);
 }
 
+.panel h3 {
+  color: gold;
+  margin-top: 0;
+}
+
+/* BUTTONS */
 button {
+  width: 100%;
   padding: 12px;
   margin-top: 10px;
-  width: 220px;
-  background: gold;
+  background: linear-gradient(90deg, gold, #ffcc00);
   border: none;
   font-weight: bold;
   cursor: pointer;
+  border-radius: 6px;
+  transition: 0.2s;
 }
 
+button:hover {
+  transform: scale(1.03);
+  box-shadow: 0 0 15px rgba(255,215,0,0.4);
+}
+
+/* ENTER BUTTON */
 .enter {
-  display: inline-block;
-  margin-top: 30px;
-  padding: 15px 25px;
-  background: gold;
+  display: block;
+  text-align: center;
+  margin: 40px auto 10px;
+  padding: 16px 30px;
+  width: 320px;
+  background: linear-gradient(90deg, gold, #ffb700);
   color: black;
   font-weight: bold;
   text-decoration: none;
+  border-radius: 12px;
+  box-shadow: 0 0 25px rgba(255,215,0,0.25);
+  transition: 0.2s;
+}
+
+.enter:hover {
+  transform: scale(1.05);
+}
+
+/* LIVE FEED */
+.feed {
+  margin-top: 25px;
+  border: 1px solid rgba(255,215,0,0.4);
+  padding: 12px;
+  height: 130px;
+  overflow: auto;
+  background: rgba(0,0,0,0.5);
   border-radius: 10px;
+}
+
+/* SMALL STATUS */
+.status {
+  text-align: center;
+  color: lightgreen;
+  font-size: 13px;
+  margin-top: 10px;
 }
 </style>
 </head>
@@ -81,32 +162,66 @@ button {
 
 <div class="title">LAMBO CITY</div>
 
-<p>Welcome to the Lambo City interactive lounge. Explore music, drops, and the Yacht Club experience.</p>
+<div class="subtitle">
+Welcome to the Lambo City interactive lounge. Explore music, drops, studio sessions, and the Yacht Club experience.
+</div>
 
-<div class="panel">
+<div class="grid">
 
-<h3>LIVE STREAM</h3>
-
+<!-- STREAM -->
+<div class="stream">
 <iframe
 src="https://player.twitch.tv/?channel=LamboCityRecords&parent=lambocityrecords.com"
-width="100%" height="400" allowfullscreen>
+width="100%"
+height="420"
+allowfullscreen>
 </iframe>
-
 </div>
 
+<!-- PANEL -->
 <div class="panel">
-<h3>EXPLORE</h3>
+<h3>EXPLORE CITY</h3>
 
-<button onclick="alert('Music hub coming soon')">Music Hub</button>
-<button onclick="alert('Drop zone coming soon')">Drop Zone</button>
-<button onclick="alert('Studio coming soon')">Studio Access</button>
+<button onclick="alert('Music Hub loading soon')">Music Hub</button>
+<button onclick="alert('Drop Zone preparing')">Drop Zone</button>
+<button onclick="alert('Studio District coming online')">Studio Access</button>
+<button onclick="alert('VIP previews locked')">VIP Preview</button>
 </div>
 
+</div>
+
+<!-- ENTER -->
 <a class="enter" href="/vip.html">ENTER YACHT CLUB</a>
 
+<div class="status">SYSTEM ONLINE • LAMBO CITY SYNC ACTIVE</div>
+
+<!-- FEED -->
+<div class="feed" id="feed">
+<p>SYSTEM: Welcome to Lambo City Network</p>
 </div>
 
 </div>
+
+</div>
+
+<script>
+const feed = document.getElementById("feed");
+
+setInterval(() => {
+  const msgs = [
+    "SYSTEM: Yacht engines online...",
+    "SYSTEM: Studio session active...",
+    "SYSTEM: Drop pipeline syncing...",
+    "SYSTEM: VIP vault secured...",
+    "SYSTEM: City grid stabilizing..."
+  ];
+
+  const p = document.createElement("p");
+  p.textContent = msgs[Math.floor(Math.random() * msgs.length)];
+  feed.appendChild(p);
+  feed.scrollTop = feed.scrollHeight;
+}, 3500);
+</script>
 
 </body>
 </html>
