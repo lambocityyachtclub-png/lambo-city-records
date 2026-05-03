@@ -13,7 +13,7 @@ body {
   color: white;
 }
 
-/* BACKGROUND IMAGE LAYER */
+/* BACKGROUND */
 .bg {
   position: fixed;
   top: 0;
@@ -24,7 +24,7 @@ body {
   z-index: -1;
 }
 
-/* DARK OVERLAY */
+/* OVERLAY */
 .overlay {
   background: rgba(0,0,0,0.75);
   min-height: 100vh;
@@ -43,16 +43,19 @@ body {
   margin-bottom: 20px;
 }
 
+/* LAYOUT */
 .grid {
   display: grid;
   grid-template-columns: 2fr 1fr;
   gap: 20px;
 }
 
+/* STREAM */
 .stream {
   border: 2px solid gold;
 }
 
+/* PANEL */
 .panel {
   background: rgba(0,0,0,0.6);
   padding: 15px;
@@ -70,6 +73,7 @@ body {
   font-weight: bold;
 }
 
+/* VIP BUTTON */
 .enter-btn {
   display: block;
   text-align: center;
@@ -83,6 +87,7 @@ body {
   border-radius: 10px;
 }
 
+/* FEED */
 .feed {
   margin-top: 20px;
   background: rgba(0,0,0,0.6);
@@ -96,7 +101,6 @@ body {
 
 <body>
 
-<!-- BACKGROUND -->
 <div class="bg"></div>
 
 <div class="overlay">
@@ -106,7 +110,7 @@ body {
 
 <div class="grid">
 
-<!-- TWITCH STREAM -->
+<!-- TWITCH -->
 <div class="stream">
 <iframe
   src="https://player.twitch.tv/?channel=LamboCityRecords&parent=lambocityrecords.com"
@@ -121,8 +125,8 @@ body {
 <h3>ACTIVITY</h3>
 
 <button onclick="alert('HERO joined Lambo City')">HERO Joined</button>
-<button onclick="alert('Next drop loading...')">Next Drop Soon</button>
-<button onclick="window.location.href='/vip'">Boarding Pass Available</button>
+<button onclick="alert('Drop loading...')">Next Drop Soon</button>
+<button onclick="goVIP()">Boarding Pass Available</button>
 
 <hr>
 
@@ -132,8 +136,8 @@ body {
 
 </div>
 
-<!-- ENTER BUTTON -->
-<a href="/vip" class="enter-btn">ENTER LAMBO CITY</a>
+<!-- VIP ENTRY -->
+<a href="/vip.html" class="enter-btn">ENTER LAMBO CITY VIP</a>
 
 <!-- FEED -->
 <div class="feed" id="feed">
@@ -149,10 +153,10 @@ const feed = document.getElementById("feed");
 setInterval(() => {
   const items = [
     "SYSTEM: HERO entered Lambo City",
-    "SYSTEM: Boarding Pass updating...",
-    "SYSTEM: VIP access preparing...",
-    "SYSTEM: Yacht event loading...",
-    "USER: Waiting for drop"
+    "SYSTEM: Boarding Pass syncing...",
+    "SYSTEM: VIP portal ready...",
+    "SYSTEM: Yacht drop loading...",
+    "USER: Waiting for access"
   ];
 
   const msg = document.createElement("p");
@@ -160,6 +164,10 @@ setInterval(() => {
   feed.appendChild(msg);
   feed.scrollTop = feed.scrollHeight;
 }, 4000);
+
+function goVIP() {
+  window.location.href = "/vip.html";
+}
 </script>
 
 </body>
