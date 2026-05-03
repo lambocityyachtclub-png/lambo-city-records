@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>LAMBO CITY | GTA LIVING WORLD</title>
+<title>LAMBO CITY | ONLINE SESSION</title>
 
 <style>
 body {
@@ -14,7 +14,40 @@ body {
     color: white;
 }
 
-/* CAMERA IMPACT LAYER */
+/* =========================
+   🎮 LOBBY LOADING SCREEN
+========================= */
+#lobby {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    background: black;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    z-index: 2000;
+    transition: opacity 1s ease;
+}
+
+#lobbyText {
+    font-size: 14px;
+    letter-spacing: 4px;
+    opacity: 0.8;
+}
+
+#enterBtn {
+    margin-top: 20px;
+    padding: 10px 18px;
+    border: 1px solid white;
+    background: transparent;
+    color: white;
+    cursor: pointer;
+}
+
+/* =========================
+   🎥 CAMERA EFFECT LAYER
+========================= */
 #camera {
     position: fixed;
     width: 100%;
@@ -22,30 +55,19 @@ body {
     background: black;
     opacity: 0;
     transform: scale(1.3);
-    transition: 0.6s ease;
+    transition: 0.5s ease;
     z-index: 999;
 }
 
-/* ARRIVAL TEXT */
-#arrival {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 18px;
-    letter-spacing: 4px;
-    opacity: 0;
-    transition: 0.4s;
-    z-index: 2000;
-}
-
-/* WORLD CONTAINER */
+/* =========================
+   🌆 WORLD ENGINE
+========================= */
 #world {
     position: absolute;
     width: 400%;
     height: 100%;
     display: flex;
-    transition: transform 1.1s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* ZONES */
@@ -58,31 +80,20 @@ body {
     flex-direction: column;
 }
 
-/* GTA DISTRICT IDENTITY */
-#portal {
-    background: radial-gradient(circle, #050a1a, #000);
-}
-
-#city {
-    background: radial-gradient(circle at top, #3a1f0a, #000);
-}
-
-#vip {
-    background: radial-gradient(circle, #101010, #000);
-}
-
-#store {
-    background: radial-gradient(circle, #2a0f0a, #000);
-}
+/* DISTRICTS (LONG BEACH INSPIRED FEEL) */
+#portal { background: radial-gradient(circle, #050a1a, #000); }
+#city   { background: radial-gradient(circle at top, #3a1f0a, #000); }
+#vip    { background: radial-gradient(circle, #0f0f0f, #000); }
+#store  { background: radial-gradient(circle, #2a0f0a, #000); }
 
 /* TITLE */
 .title {
-    font-size: 38px;
+    font-size: 40px;
     letter-spacing: 6px;
     margin-bottom: 20px;
 }
 
-/* BUTTONS (DOORS) */
+/* BUTTONS */
 button {
     margin: 8px;
     padding: 10px 18px;
@@ -107,7 +118,9 @@ iframe {
     border: 1px solid rgba(255,255,255,0.2);
 }
 
-/* GTA CHAT */
+/* =========================
+   💬 WORLD CHAT FEED
+========================= */
 #chat {
     position: fixed;
     right: 12px;
@@ -121,15 +134,35 @@ iframe {
     overflow: hidden;
     z-index: 1000;
 }
+
+/* =========================
+   🎬 WORLD MESSAGE HUD
+========================= */
+#hud {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    font-size: 10px;
+    letter-spacing: 3px;
+    opacity: 0.6;
+    z-index: 1000;
+}
 </style>
 </head>
 
 <body>
 
+<!-- 🎮 LOBBY -->
+<div id="lobby">
+    <div id="lobbyText">CONNECTING TO LAMBO CITY ONLINE...</div>
+    <button id="enterBtn" onclick="enterWorld()">ENTER CITY</button>
+</div>
+
 <div id="camera"></div>
-<div id="arrival"></div>
+<div id="hud">LAMBO CITY // HERO SESSION ACTIVE</div>
 <div id="chat"></div>
 
+<!-- 🌆 WORLD -->
 <div id="world">
 
     <!-- PORTAL -->
@@ -160,14 +193,14 @@ iframe {
 
     <!-- STORE -->
     <div class="zone" id="store">
-        <div class="title">LAMBO CITY RECORDS STORE</div>
+        <div class="title">LAMBO CITY STORE</div>
 
         <button onclick="alert('HERO - Fly Away Soon Tee')">
-            👕 HERO - Fly Away Soon Tee
+            👕 HERO DROP
         </button>
 
-        <button onclick="alert('LAMBO CITY Classic Drop')">
-            🧢 Classic Logo Drop
+        <button onclick="alert('LAMBO CITY CLASSIC')">
+            🧢 CLASSIC COLLECTION
         </button>
 
         <button onclick="walkTo(1)">BACK TO CITY</button>
@@ -180,30 +213,27 @@ iframe {
 const world = document.getElementById("world");
 const camera = document.getElementById("camera");
 const chat = document.getElementById("chat");
-const arrival = document.getElementById("arrival");
+const lobby = document.getElementById("lobby");
 
 let currentZone = 0;
 
-/* INIT */
-window.onload = () => {
-    walkTo(0);
-    startChat();
-};
-
-/* ARRIVAL SYSTEM */
-function showArrival(name) {
-    arrival.innerText = "ENTERING: " + name;
-    arrival.style.opacity = "1";
+/* =========================
+   🎮 ENTER WORLD (LOBBY EXIT)
+========================= */
+function enterWorld() {
+    lobby.style.opacity = "0";
 
     setTimeout(() => {
-        arrival.style.opacity = "0";
-    }, 900);
+        lobby.style.display = "none";
+        walkTo(0);
+        startChat();
+    }, 1000);
 }
 
-/* WALK SYSTEM (GTA IMPACT VERSION) */
+/* =========================
+   🌆 WALK SYSTEM (GTA TRANSITION)
+========================= */
 function walkTo(zoneIndex) {
-
-    const zoneNames = ["PORTAL", "CITY", "VIP", "STORE"];
 
     camera.style.opacity = "1";
     camera.style.transform = "scale(1.6)";
@@ -214,45 +244,31 @@ function walkTo(zoneIndex) {
         world.style.transform = `translateX(-${zoneIndex * 100}vw)`;
         currentZone = zoneIndex;
 
-        showArrival(zoneNames[zoneIndex]);
-
         setTimeout(() => {
             camera.style.opacity = "0";
             camera.style.transform = "scale(1)";
             document.body.style.filter = "brightness(1) contrast(1)";
-        }, 350);
+        }, 400);
 
     }, 300);
 }
 
-/* 💬 GTA ONLINE CHAT SYSTEM */
+/* =========================
+   💬 LIVING WORLD CHAT
+========================= */
 function startChat() {
 
-    const users = ["DJ HERO", "CITY_RUNNER", "VIP_ACE", "LAMBO_GUEST", "YACHT_KING"];
-
-    const messages = [
-        "joined session",
-        "entered Lambo City",
-        "is cruising downtown",
-        "is at Yacht Club",
-        "is buying merch",
-        "left City Gate"
-    ];
+    const users = ["DJ HERO", "CITY_RUNNER", "VIP_ACE", "LAMBO_GUEST", "LONG_BEACH_KID"];
+    const msgs = ["entered session", "is in Lambo City", "is at Yacht Club", "is shopping", "is cruising"];
 
     setInterval(() => {
 
-        const user = users[Math.floor(Math.random() * users.length)];
-        const msg = messages[Math.floor(Math.random() * messages.length)];
-
-        const zones = ["PORTAL", "CITY", "VIP", "STORE"];
+        const u = users[Math.floor(Math.random() * users.length)];
+        const m = msgs[Math.floor(Math.random() * msgs.length)];
 
         chat.innerHTML =
-        "[" + zones[currentZone] + "] " + user + ": " + msg + "<br>" +
-        chat.innerHTML;
-
-        if (chat.innerHTML.length > 1500) {
-            chat.innerHTML = chat.innerHTML.slice(0, 1500);
-        }
+        "[" + ["PORTAL","CITY","VIP","STORE"][currentZone] + "] " +
+        u + ": " + m + "<br>" + chat.innerHTML;
 
     }, 2000);
 }
