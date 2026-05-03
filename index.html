@@ -14,55 +14,29 @@ body {
   overflow: hidden;
 }
 
-/* LOADING SCREEN */
-#loading {
-  position: fixed;
-  width: 100%;
-  height: 100%;
-  background: black;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-direction: column;
-  z-index: 10;
-}
-
-.loader-text {
-  color: gold;
-  font-size: 28px;
-  letter-spacing: 2px;
-  animation: pulse 1.5s infinite;
-}
-
-@keyframes pulse {
-  0% { opacity: 0.3; }
-  50% { opacity: 1; }
-  100% { opacity: 0.3; }
-}
-
-/* MAIN BACKGROUND */
+/* BACKGROUND */
 .bg {
   position: fixed;
   width: 100%;
   height: 100%;
   background: url('https://raw.githubusercontent.com/YOURUSERNAME/YOURREPO/main/yourimage.jpg') no-repeat center center/cover;
-  filter: brightness(0.4);
+  filter: brightness(0.35);
   z-index: -2;
 }
 
-/* OVERLAY */
-.overlay {
+/* MAIN */
+.screen {
   min-height: 100vh;
-  background: rgba(0,0,0,0.75);
   padding: 20px;
-  display: none;
+  background: rgba(0,0,0,0.7);
 }
 
 /* TITLE */
 .title {
   text-align: center;
-  font-size: 55px;
+  font-size: 60px;
   color: gold;
+  letter-spacing: 3px;
   font-weight: bold;
 }
 
@@ -77,16 +51,17 @@ body {
 
 .zone {
   border: 1px solid rgba(255,215,0,0.5);
-  padding: 30px;
+  padding: 25px;
   text-align: center;
   cursor: pointer;
   background: rgba(0,0,0,0.6);
-  transition: 0.3s;
+  transition: 0.2s;
+  user-select: none;
 }
 
 .zone:hover {
   transform: scale(1.05);
-  box-shadow: 0 0 20px rgba(255,215,0,0.3);
+  box-shadow: 0 0 18px rgba(255,215,0,0.3);
 }
 
 /* PANEL */
@@ -96,9 +71,11 @@ body {
   padding: 20px;
   border: 1px solid gold;
   background: rgba(0,0,0,0.6);
+  min-height: 90px;
+  transition: 0.3s;
 }
 
-/* ENTER BUTTON */
+/* ENTER */
 .enter {
   display: block;
   width: 300px;
@@ -109,39 +86,40 @@ body {
   font-weight: bold;
   text-align: center;
   text-decoration: none;
+  border-radius: 10px;
+}
+
+/* STATUS */
+.status {
+  text-align: center;
+  color: lightgreen;
+  font-size: 12px;
+  margin-top: 10px;
 }
 </style>
 </head>
 
 <body>
 
-<!-- LOADING SCREEN -->
-<div id="loading">
-  <div class="loader-text">LAMBO CITY OS BOOTING...</div>
-  <div class="loader-text" style="font-size:14px;margin-top:10px;">
-    syncing yacht club • loading studio grid • initializing drops
-  </div>
-</div>
-
-<!-- BACKGROUND -->
 <div class="bg"></div>
 
-<!-- MAIN -->
-<div class="overlay" id="main">
+<div class="screen">
 
 <div class="title">LAMBO CITY OS</div>
 
+<div class="status" id="status">SYSTEM: INITIALIZING IMMERSION ENGINE...</div>
+
 <div class="map">
 
-<div class="zone" onclick="openZone('studio')">🎵 Studio District</div>
-<div class="zone" onclick="openZone('yacht')">🛥 Yacht Club</div>
-<div class="zone" onclick="openZone('drops')">🔥 Drop Zone</div>
-<div class="zone" onclick="openZone('vip')">🔐 VIP Vault</div>
+<div class="zone" onclick="enterZone('studio')">🎵 Studio District</div>
+<div class="zone" onclick="enterZone('yacht')">🛥 Yacht Club</div>
+<div class="zone" onclick="enterZone('drops')">🔥 Drop Zone</div>
+<div class="zone" onclick="enterZone('vip')">🔐 VIP Vault</div>
 
 </div>
 
 <div class="panel" id="panel">
-Welcome to Lambo City OS. Select a district to enter the system.
+System ready. Select a district to begin navigation.
 </div>
 
 <a class="enter" href="/vip.html">ENTER YACHT CLUB PORTAL</a>
@@ -150,32 +128,57 @@ Welcome to Lambo City OS. Select a district to enter the system.
 
 <script>
 
-/* BOOT SEQUENCE */
-setTimeout(() => {
-  document.getElementById("loading").style.display = "none";
-  document.getElementById("main").style.display = "block";
-}, 2500);
+const panel = document.getElementById("panel");
+const status = document.getElementById("status");
 
-/* ZONES */
-function openZone(zone) {
-  const panel = document.getElementById("panel");
+/* SOUND ENGINE (simple web audio - no files needed) */
+function beep(freq = 440, time = 0.08) {
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+
+  osc.frequency.value = freq;
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+
+  osc.start();
+  gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + time);
+  osc.stop(ctx.currentTime + time);
+}
+
+/* ZONE ENGINE */
+function enterZone(zone) {
+
+  beep(220 + Math.random() * 300);
+
+  status.innerText = "SYSTEM: LOADING " + zone.toUpperCase() + " DISTRICT...";
 
   if (zone === "studio") {
-    panel.innerHTML = "🎵 Studio District: HERO is recording new Lambo City records.";
+    panel.innerHTML = "🎵 Studio District: Recording sessions active. HERO is working inside Lambo City Studios.";
   }
 
   if (zone === "yacht") {
-    panel.innerHTML = "🛥 Yacht Club: Exclusive events, invite-only experiences, luxury access.";
+    panel.innerHTML = "🛥 Yacht Club: Luxury access zone. Private events and elite gatherings underway.";
   }
 
   if (zone === "drops") {
-    panel.innerHTML = "🔥 Drop Zone: Music drops, NFT releases, and upcoming launches.";
+    panel.innerHTML = "🔥 Drop Zone: Music releases and NFT drops are being prepared for launch.";
   }
 
   if (zone === "vip") {
-    panel.innerHTML = "🔐 VIP Vault: Locked. Access requires Yacht Club boarding pass.";
+    panel.innerHTML = "🔐 VIP Vault: Restricted access. Boarding pass required inside Yacht Club portal.";
   }
+
+  setTimeout(() => {
+    status.innerText = "SYSTEM: READY";
+  }, 800);
 }
+
+/* BOOT FEEL */
+setTimeout(() => {
+  status.innerText = "SYSTEM: LAMBO CITY IMMERSION ENGINE ONLINE";
+  beep(520);
+}, 1200);
 
 </script>
 
