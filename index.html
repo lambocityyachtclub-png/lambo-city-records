@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>LAMBO CITY | LIVING WORLD ENGINE</title>
+<title>LAMBO CITY | FINAL STABLE WORLD</title>
 
 <style>
 body {
@@ -20,13 +20,13 @@ body {
     width: 100%;
     height: 100%;
     background: radial-gradient(circle at 30% 20%, #1a1a2e, #000);
-    animation: skyMove 10s infinite alternate;
+    animation: sky 10s infinite alternate;
     z-index: 0;
 }
 
-@keyframes skyMove {
+@keyframes sky {
     0% { filter: brightness(1); }
-    50% { filter: brightness(1.15) hue-rotate(10deg); }
+    50% { filter: brightness(1.2); }
     100% { filter: brightness(0.9); }
 }
 
@@ -35,22 +35,29 @@ body {
     position: fixed;
     width: 100%;
     height: 100%;
-    background: radial-gradient(circle, transparent 35%, rgba(0,0,0,0.85));
+    background: radial-gradient(circle, transparent 40%, rgba(0,0,0,0.85));
     z-index: 1;
     pointer-events: none;
 }
 
-/* 🚗 CARS (FORCED VISIBILITY) */
+/* 🎮 WORLD LAYER */
+#world {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    z-index: 2;
+}
+
+/* 🚗 CAR (FORCED VISIBILITY) */
 .car {
     position: fixed;
-    width: 70px;
+    width: 80px;
     height: 30px;
     background: red;
     top: 65%;
     left: -100px;
-    z-index: 5;
-    border-radius: 4px;
-    box-shadow: 0 0 10px rgba(255,0,0,0.3);
+    z-index: 10;
+    border-radius: 5px;
 }
 
 /* 🚶 NPC */
@@ -59,21 +66,22 @@ body {
     width: 14px;
     height: 28px;
     background: white;
-    opacity: 0.8;
-    z-index: 5;
+    top: 70%;
+    z-index: 10;
+    opacity: 0.9;
 }
 
-/* 🌍 UI */
+/* 🧭 HUD */
 #hud {
     position: fixed;
     top: 10px;
     left: 10px;
     font-size: 11px;
     opacity: 0.6;
-    z-index: 10;
+    z-index: 20;
 }
 
-/* 🌆 ZONES */
+/* 🌍 ZONES */
 .zone {
     position: fixed;
     width: 100%;
@@ -82,7 +90,7 @@ body {
     justify-content: center;
     align-items: center;
     flex-direction: column;
-    z-index: 6;
+    z-index: 5;
 }
 
 #city { background: radial-gradient(circle, #2a1a0a, #000); }
@@ -112,14 +120,6 @@ iframe {
     height: 450px;
     border: 1px solid rgba(255,255,255,0.2);
 }
-
-/* FORCE RENDER LAYER */
-#worldFix {
-    position: fixed;
-    width: 100%;
-    height: 100%;
-    z-index: 2;
-}
 </style>
 </head>
 
@@ -127,9 +127,9 @@ iframe {
 
 <div id="sky"></div>
 <div id="fog"></div>
-<div id="hud">LAMBO CITY // ACTIVE WORLD SIMULATION</div>
+<div id="hud">LAMBO CITY // LIVE SIMULATION ACTIVE</div>
 
-<div id="worldFix"></div>
+<div id="world"></div>
 
 <!-- CITY -->
 <div id="city" class="zone">
@@ -147,14 +147,14 @@ iframe {
         allowfullscreen>
     </iframe>
 
-    <button onclick="exit()">BACK TO CITY</button>
+    <button onclick="exit()">BACK</button>
 </div>
 
 <!-- STORE -->
 <div id="store" class="zone">
     <div class="title">STORE</div>
     <button>HERO DROP</button>
-    <button onclick="exit()">BACK TO CITY</button>
+    <button onclick="exit()">BACK</button>
 </div>
 
 <script>
@@ -169,7 +169,7 @@ window.onload = () => {
     startWorld();
 };
 
-/* NAV */
+/* NAVIGATION */
 function enter(type) {
     city.style.display = "none";
 
@@ -183,15 +183,16 @@ function exit() {
     city.style.display = "flex";
 }
 
-/* 🚗 CAR SYSTEM (FIXED VISIBILITY + MOTION) */
+/* 🚗 GUARANTEED VISIBLE CAR SYSTEM */
 function spawnCar() {
 
     const car = document.createElement("div");
     car.className = "car";
+
     document.body.appendChild(car);
 
     let x = -120;
-    let speed = 4 + Math.random() * 3;
+    const speed = 4 + Math.random() * 3;
 
     function move() {
         x += speed;
@@ -207,29 +208,31 @@ function spawnCar() {
     move();
 }
 
-/* 🚶 NPC SYSTEM (VISIBLE ON SCREEN ALWAYS) */
+/* 🚶 GUARANTEED NPC SYSTEM */
 function spawnNPC() {
 
     const npc = document.createElement("div");
     npc.className = "npc";
 
     npc.style.left = Math.random() * window.innerWidth + "px";
-    npc.style.top = (55 + Math.random() * 20) + "%";
 
     document.body.appendChild(npc);
 
-    setTimeout(() => npc.remove(), 5000);
+    setTimeout(() => {
+        npc.remove();
+    }, 4000);
 }
 
 /* 🌍 WORLD LOOP (CONFIRMED RUNNING) */
 function startWorld() {
+
     setInterval(() => {
         spawnCar();
-    }, 900);
+    }, 800);
 
     setInterval(() => {
         spawnNPC();
-    }, 700);
+    }, 600);
 }
 
 </script>
