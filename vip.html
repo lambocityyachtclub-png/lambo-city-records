@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Lambo City VIP</title>
+<title>Lambo City Access</title>
 
 <style>
 body {
@@ -10,41 +10,43 @@ body {
   font-family: Arial;
   background: black;
   color: white;
+  text-align: center;
 }
 
 .container {
-  text-align: center;
   padding: 50px;
 }
 
 .box {
   border: 2px solid gold;
   padding: 30px;
-  margin-top: 100px;
+  margin-top: 80px;
+  display: inline-block;
+  width: 80%;
+  max-width: 600px;
 }
 
 input {
   padding: 12px;
-  width: 70%;
+  width: 80%;
   text-align: center;
 }
 
 button {
-  margin-top: 15px;
-  padding: 12px 20px;
+  margin-top: 10px;
+  padding: 12px;
   background: gold;
   border: none;
   font-weight: bold;
   cursor: pointer;
 }
 
-.vip {
-  display: none;
-  margin-top: 50px;
-}
-
 h1 {
   color: gold;
+}
+
+.locked {
+  display: none;
 }
 </style>
 </head>
@@ -53,42 +55,64 @@ h1 {
 
 <div class="container">
 
-<h1>LAMBO CITY VIP ACCESS</h1>
+<h1>LAMBO CITY BOARDING PORTAL</h1>
 
-<div id="lock" class="box">
-  <h2>Enter Boarding Pass Code</h2>
-  <input type="password" id="code" placeholder="Enter Code">
+<div class="box" id="loginBox">
+  <h3>Enter Boarding Code</h3>
+  <input id="code" placeholder="Enter Access Code">
   <br>
   <button onclick="unlock()">ENTER</button>
 </div>
 
-<div id="vip" class="vip">
-  <h2>WELCOME INSIDER</h2>
-  <p>You now have access to private drops and events.</p>
-  <button onclick="alert('VIP Drop Loading...')">View Drop</button>
+<div class="box locked" id="content">
+  <h2 id="levelTitle"></h2>
+  <p id="message"></p>
+
+  <button onclick="alert('Drop unlocked')">View Drop</button>
+  <button onclick="logout()">Logout</button>
 </div>
 
 </div>
 
 <script>
-const CODE = "LAMBO2026";
+const access = localStorage.getItem("accessLevel");
+
+const codes = {
+  guest: "GUEST123",
+  vip: "VIP2026",
+  founder: "FOUNDER777"
+};
 
 function unlock() {
-  const val = document.getElementById("code").value;
+  const input = document.getElementById("code").value;
 
-  if (val === CODE) {
-    localStorage.setItem("vip", "true");
-    document.getElementById("lock").style.display = "none";
-    document.getElementById("vip").style.display = "block";
+  if (input === codes[access]) {
+    showAccess(access);
+    localStorage.setItem("loggedIn", "true");
   } else {
-    alert("Invalid Boarding Pass");
+    alert("Invalid Boarding Pass Code");
   }
 }
 
+function showAccess(level) {
+  document.getElementById("loginBox").style.display = "none";
+  document.getElementById("content").style.display = "block";
+
+  document.getElementById("levelTitle").innerText =
+    level.toUpperCase() + " ACCESS GRANTED";
+
+  document.getElementById("message").innerText =
+    "Welcome to " + level + " zone of Lambo City";
+}
+
+function logout() {
+  localStorage.clear();
+  location.reload();
+}
+
 window.onload = function () {
-  if (localStorage.getItem("vip") === "true") {
-    document.getElementById("lock").style.display = "none";
-    document.getElementById("vip").style.display = "block";
+  if (localStorage.getItem("loggedIn") === "true") {
+    showAccess(access);
   }
 };
 </script>
