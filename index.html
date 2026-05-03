@@ -3,277 +3,146 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>LAMBO CITY | IMMERSION CORE FINAL</title>
+<title>LAMBO CITY | 3D ENGINE</title>
 
 <style>
-body {
-    margin: 0;
-    overflow: hidden;
-    font-family: Arial;
-    background: black;
-    color: white;
-    cursor: none;
-}
+body { margin: 0; overflow: hidden; background: black; }
 
-/* 🌌 WORLD LIGHTING LAYER */
-#sky {
-    position: fixed;
-    width: 100%;
-    height: 100%;
-    background: radial-gradient(circle at 30% 20%, #1a1a2e, #000);
-    transition: filter 0.3s;
-    z-index: 0;
-}
-
-/* 🎥 CAMERA SHAKE LAYER */
-#cameraFX {
-    position: fixed;
-    width: 100%;
-    height: 100%;
-    z-index: 1;
-    pointer-events: none;
-    mix-blend-mode: screen;
-}
-
-/* 🎮 WORLD */
-#world {
-    position: fixed;
-    width: 300%;
-    height: 100%;
-    display: flex;
-    transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
-    transform-origin: center;
-    z-index: 2;
-}
-
-/* 🌍 ZONES */
-.zone {
-    width: 100vw;
-    height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-}
-
-#city { background: radial-gradient(circle, #2a1a0a, #000); }
-#yacht { background: radial-gradient(circle, #0a0f1a, #000); }
-#store { background: radial-gradient(circle, #1a0a0a, #000); }
-
-/* 🚪 DOORS */
-.door {
-    padding: 12px 18px;
-    border: 1px solid white;
-    margin-top: 10px;
-    cursor: pointer;
-    opacity: 0.9;
-}
-
-/* 🎮 TITLE */
-.title {
-    font-size: 42px;
-    letter-spacing: 6px;
-}
-
-/* 📺 STREAM */
-iframe {
-    width: 80%;
-    height: 450px;
-}
-
-/* 🧍 NPC */
-.npc {
-    position: fixed;
-    width: 14px;
-    height: 28px;
-    background: white;
-    top: 70%;
-    z-index: 5;
-    opacity: 0.8;
-}
-
-/* 🚗 CAR */
-.car {
-    position: fixed;
-    width: 80px;
-    height: 30px;
-    background: red;
-    top: 65%;
-    left: -120px;
-    z-index: 5;
-}
-
-/* 🎯 HUD */
+/* HUD */
 #hud {
     position: fixed;
     top: 10px;
     left: 10px;
-    font-size: 11px;
-    opacity: 0.6;
+    color: white;
+    font-family: Arial;
+    font-size: 12px;
+    z-index: 10;
+    opacity: 0.7;
+}
+
+/* UI BUTTONS */
+#ui {
+    position: fixed;
+    bottom: 10px;
+    left: 10px;
     z-index: 10;
 }
 
-/* 🎧 AUDIO ZONES (SIMULATED) */
-.zoneAudio {
-    position: fixed;
-    bottom: 10px;
-    right: 10px;
-    font-size: 10px;
-    opacity: 0.4;
+button {
+    margin: 4px;
+    padding: 8px 12px;
+    background: transparent;
+    border: 1px solid white;
+    color: white;
+    cursor: pointer;
 }
 </style>
 </head>
 
 <body>
 
-<div id="sky"></div>
-<div id="cameraFX"></div>
-<div id="hud">LAMBO CITY // IMMERSION ENGINE ACTIVE</div>
-<div class="zoneAudio" id="audioLabel">CITY AMBIENCE</div>
+<div id="hud">LAMBO CITY // 3D ENGINE ACTIVE</div>
 
-<div id="world">
-
-    <!-- CITY -->
-    <div class="zone" id="city">
-        <div class="title">LAMBO CITY</div>
-
-        <div class="door" onmousedown="holdEnter(1)">ENTER YACHT CLUB</div>
-        <div class="door" onmousedown="holdEnter(2)">ENTER STORE</div>
-    </div>
-
-    <!-- YACHT -->
-    <div class="zone" id="yacht">
-        <div class="title">YACHT CLUB</div>
-
-        <iframe
-            src="https://player.twitch.tv/?channel=lambocityrecords&parent=lambocityrecords.com"
-            allowfullscreen>
-        </iframe>
-
-        <div class="door" onclick="move(0)">EXIT</div>
-    </div>
-
-    <!-- STORE -->
-    <div class="zone" id="store">
-        <div class="title">STORE</div>
-        <div class="door" onclick="move(0)">BACK</div>
-    </div>
-
+<div id="ui">
+    <button onclick="go('city')">CITY</button>
+    <button onclick="go('yacht')">YACHT</button>
+    <button onclick="go('store')">STORE</button>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
 
 <script>
 
-const world = document.getElementById("world");
-const sky = document.getElementById("sky");
-const audioLabel = document.getElementById("audioLabel");
+/* =========================
+   🎮 BASIC 3D ENGINE SETUP
+========================= */
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x000000);
 
-let pos = 0;
-let holdTimer;
+const camera = new THREE.PerspectiveCamera(
+    75,
+    window.innerWidth/window.innerHeight,
+    0.1,
+    1000
+);
 
-/* 🎮 CAMERA INERTIA + ROTATION FEEL */
-function move(zone) {
+const renderer = new THREE.WebGLRenderer();
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
 
-    let start = pos;
-    let end = zone;
-    let t = 0;
+/* LIGHT */
+const light = new THREE.AmbientLight(0xffffff, 1);
+scene.add(light);
 
-    function animate() {
-        t += 0.02;
+/* =========================
+   🌍 ZONES (3D ROOMS)
+========================= */
+const zones = {};
 
-        let smooth = start + (end - start) * t;
-
-        world.style.transform = `
-            translateX(-${smooth * 100}vw)
-            scale(1.02)
-        `;
-
-        sky.style.filter = `brightness(${0.7 + Math.abs(Math.sin(t * 3)) * 0.3})`;
-
-        if (t < 1) requestAnimationFrame(animate);
-        else pos = zone;
-    }
-
-    animate();
-
-    updateAudio(zone);
+function createZone(color, x) {
+    const geo = new THREE.BoxGeometry(20, 10, 20);
+    const mat = new THREE.MeshBasicMaterial({ color });
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.position.x = x;
+    scene.add(mesh);
+    return mesh;
 }
 
-/* 🚪 HOLD TO ENTER (GTA STYLE INTERACTION) */
-function holdEnter(zone) {
+zones.city = createZone(0x3a1f0a, 0);
+zones.yacht = createZone(0x0a1a3a, 30);
+zones.store = createZone(0x3a0a0a, -30);
 
-    let progress = 0;
+/* CAMERA START */
+camera.position.z = 10;
 
-    holdTimer = setInterval(() => {
+/* =========================
+   🎮 WORLD NAVIGATION
+========================= */
+function go(zone) {
 
-        progress++;
-
-        if (progress > 40) {
-            clearInterval(holdTimer);
-            move(zone);
-        }
-
-    }, 20);
-
-    document.onmouseup = () => clearInterval(holdTimer);
-}
-
-/* 🎧 AUDIO ZONE SYSTEM (SIMULATED) */
-function updateAudio(zone) {
-
-    if (zone === 0) {
-        audioLabel.innerText = "CITY AMBIENCE";
+    if (zone === "city") {
+        camera.position.x = 0;
     }
 
-    if (zone === 1) {
-        audioLabel.innerText = "OCEAN + YACHT AMBIENCE";
+    if (zone === "yacht") {
+        camera.position.x = 30;
     }
 
-    if (zone === 2) {
-        audioLabel.innerText = "INDOOR STORE AMBIENCE";
+    if (zone === "store") {
+        camera.position.x = -30;
     }
 }
 
-/* 🚗 WORLD LIFE */
-function spawnCar() {
-    const c = document.createElement("div");
-    c.className = "car";
-    document.body.appendChild(c);
+/* =========================
+   🧠 MOUSE LOOK (GTA FEEL)
+========================= */
+let mouseX = 0;
 
-    let x = -120;
-    let speed = 3 + Math.random() * 3;
+document.addEventListener("mousemove", (e) => {
+    mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
+});
 
-    function run() {
-        x += speed;
-        c.style.left = x + "px";
+/* =========================
+   🎮 ANIMATION LOOP
+========================= */
+function animate() {
 
-        if (x < window.innerWidth + 120) requestAnimationFrame(run);
-        else c.remove();
-    }
+    requestAnimationFrame(animate);
 
-    run();
+    camera.position.y = 2;
+    camera.rotation.y = mouseX * 0.2;
+
+    renderer.render(scene, camera);
 }
 
-/* 🧍 NPC LIFE */
-function spawnNPC() {
-    const n = document.createElement("div");
-    n.className = "npc";
-    n.style.left = Math.random() * window.innerWidth + "px";
-    document.body.appendChild(n);
-    setTimeout(() => n.remove(), 4000);
-}
+animate();
 
-/* 🌍 DENSITY SYSTEM */
-setInterval(() => {
-
-    spawnCar();
-
-    let density = pos === 0 ? 3 : 1;
-
-    for (let i = 0; i < density; i++) {
-        spawnNPC();
-    }
-
-}, 800);
+/* RESIZE */
+window.addEventListener("resize", () => {
+    camera.aspect = window.innerWidth/window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+});
 
 </script>
 
