@@ -3,140 +3,117 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>LAMBO CITY | YACHT CLUB</title>
+<title>LAMBO CITY | VIP YACHT CLUB</title>
 
 <style>
-    body {
-        margin: 0;
-        background: black;
-        color: white;
-        font-family: Arial, sans-serif;
-        overflow: hidden;
-    }
+body {
+    margin: 0;
+    background: black;
+    color: white;
+    font-family: Arial, sans-serif;
+    overflow: hidden;
+}
 
-    /* LOADING SCREEN */
-    .loading {
-        position: absolute;
-        width: 100%;
-        height: 100%;
-        background: black;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        letter-spacing: 3px;
-        transition: opacity 1.2s ease;
-        z-index: 10;
-    }
+/* LOADING SCREEN */
+#loading {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: black;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    letter-spacing: 3px;
+    transition: opacity 1.2s ease;
+    z-index: 10;
+}
 
-    .loading h1 {
-        font-size: 18px;
-        opacity: 0.8;
-    }
+/* VIP ROOM */
+#vip {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at top, #111, #000);
+    opacity: 0;
+    transition: opacity 1.5s ease;
+}
 
-    .dots::after {
-        content: '';
-        animation: dots 1.2s infinite;
-    }
+.hud {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    font-size: 12px;
+    opacity: 0.6;
+    letter-spacing: 3px;
+}
 
-    @keyframes dots {
-        0% { content: ''; }
-        33% { content: '.'; }
-        66% { content: '..'; }
-        100% { content: '...'; }
-    }
+.title {
+    text-align: center;
+    margin-top: 60px;
+    font-size: 28px;
+    letter-spacing: 6px;
+    color: gold;
+}
 
-    /* MAIN VIP ROOM */
-    .vip {
-        position: absolute;
-        width: 100%;
-        height: 100%;
-        background: radial-gradient(circle at top, #111, #000);
-        opacity: 0;
-        transition: opacity 1.5s ease;
-    }
+.stream {
+    display: flex;
+    justify-content: center;
+    margin-top: 40px;
+}
 
-    /* HUD */
-    .hud {
-        position: absolute;
-        top: 20px;
-        left: 20px;
-        font-size: 12px;
-        letter-spacing: 3px;
-        opacity: 0.6;
-    }
+iframe {
+    width: 85%;
+    max-width: 1000px;
+    height: 520px;
+    border: 1px solid rgba(255,255,255,0.2);
+}
 
-    /* TITLE */
-    .title {
-        text-align: center;
-        font-size: 28px;
-        letter-spacing: 6px;
-        margin-top: 60px;
-        color: gold;
-    }
+.controls {
+    position: absolute;
+    bottom: 40px;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
 
-    /* STREAM */
-    .stream {
-        display: flex;
-        justify-content: center;
-        margin-top: 40px;
-    }
+button {
+    background: transparent;
+    border: 1px solid white;
+    color: white;
+    padding: 10px 18px;
+    cursor: pointer;
+    letter-spacing: 2px;
+}
 
-    iframe {
-        width: 85%;
-        max-width: 1000px;
-        height: 520px;
-        border: 1px solid rgba(255,255,255,0.2);
-        box-shadow: 0 0 60px rgba(255,215,0,0.08);
-    }
+button:hover {
+    background: white;
+    color: black;
+}
 
-    /* BUTTONS */
-    .controls {
-        position: absolute;
-        bottom: 40px;
-        width: 100%;
-        display: flex;
-        justify-content: center;
-        gap: 15px;
-    }
-
-    button {
-        background: transparent;
-        border: 1px solid white;
-        color: white;
-        padding: 10px 18px;
-        cursor: pointer;
-        letter-spacing: 2px;
-    }
-
-    button:hover {
-        background: white;
-        color: black;
-    }
-
-    /* GLOW */
-    .glow {
-        position: absolute;
-        width: 100%;
-        height: 100%;
-        background: radial-gradient(circle at bottom, rgba(255,0,120,0.08), transparent);
-        pointer-events: none;
-    }
+.glow {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at bottom, rgba(255,0,120,0.08), transparent);
+    pointer-events: none;
+}
 </style>
 </head>
 
 <body>
 
-<!-- CINEMATIC LOADING -->
-<div class="loading" id="loading">
-    <h1>CONNECTING TO LAMBO CITY NETWORK<span class="dots"></span></h1>
+<!-- LOADING -->
+<div id="loading">
+    CONNECTING TO LAMBO CITY...
 </div>
 
-<!-- VIP ROOM -->
-<div class="vip" id="vip">
+<!-- VIP -->
+<div id="vip">
     <div class="glow"></div>
 
-    <div class="hud">VIP ACCESS // VERIFIED</div>
+    <div class="hud">VIP ACCESS GRANTED</div>
 
     <div class="title">YACHT CLUB</div>
 
@@ -149,12 +126,11 @@
 
     <div class="controls">
         <button onclick="exitCity()">EXIT TO CITY</button>
-        <button onclick="reload()">REFRESH STREAM</button>
+        <button onclick="reload()">REFRESH</button>
     </div>
 </div>
 
 <script>
-/* CINEMATIC ENTRY SEQUENCE */
 window.onload = function () {
     setTimeout(() => {
         document.getElementById("loading").style.opacity = "0";
@@ -164,12 +140,11 @@ window.onload = function () {
             document.getElementById("vip").style.opacity = "1";
         }, 1200);
 
-    }, 2000);
+    }, 1800);
 };
 
-/* BUTTONS */
 function exitCity() {
-    window.location.href = "window.location.href = "portal.html";
+    window.location.href = "portal.html";
 }
 
 function reload() {
