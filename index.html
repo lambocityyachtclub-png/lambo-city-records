@@ -3,15 +3,15 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>LAMBO CITY</title>
+<title>LAMBO CITY | LIVING WORLD</title>
 
 <style>
 body {
     margin: 0;
-    background: radial-gradient(circle at top, #111, #000);
-    color: white;
     font-family: Arial;
     overflow: hidden;
+    background: black;
+    color: white;
 }
 
 /* GLOBAL FADE */
@@ -21,24 +21,40 @@ body {
     height: 100%;
     background: black;
     opacity: 1;
-    transition: 1.2s ease;
-    z-index: 10;
+    transition: 1s ease;
+    z-index: 99;
 }
 
-/* CITY UI */
-.center {
+/* WORLD CONTAINER */
+.screen {
     position: absolute;
     width: 100%;
     height: 100%;
-    display: flex;
-    flex-direction: column;
+    display: none;
     justify-content: center;
     align-items: center;
+    flex-direction: column;
+}
+
+/* PORTAL */
+#portal {
+    background: radial-gradient(circle, #111, #000);
+}
+
+/* CITY */
+#city {
+    background: radial-gradient(circle at top, #111, #000);
+}
+
+/* VIP */
+#vip {
+    background: black;
 }
 
 .title {
-    font-size: 40px;
+    font-size: 34px;
     letter-spacing: 6px;
+    margin-bottom: 20px;
 }
 
 button {
@@ -54,6 +70,13 @@ button:hover {
     background: white;
     color: black;
 }
+
+iframe {
+    width: 80%;
+    max-width: 900px;
+    height: 500px;
+    margin-top: 20px;
+}
 </style>
 </head>
 
@@ -61,27 +84,76 @@ button:hover {
 
 <div id="fade"></div>
 
-<div class="center">
-    <div class="title">LAMBO CITY</div>
+<!-- PORTAL -->
+<div id="portal" class="screen">
+    <div class="title">LAMBO CITY GATE</div>
+    <button onclick="enterCity()">ENTER CITY</button>
+</div>
 
-    <button onclick="go('portal.html')">EXIT WORLD</button>
-    <button onclick="go('vip.html')">YACHT CLUB</button>
+<!-- CITY -->
+<div id="city" class="screen">
+    <div class="title">LAMBO CITY</div>
+    <button onclick="goVip()">YACHT CLUB</button>
+    <button onclick="goPortal()">EXIT WORLD</button>
+</div>
+
+<!-- VIP -->
+<div id="vip" class="screen">
+    <div class="title">YACHT CLUB VIP</div>
+
+    <iframe
+        src="https://player.twitch.tv/?channel=lambocityrecords&parent=lambocityrecords.com"
+        allowfullscreen>
+    </iframe>
+
+    <button onclick="goCity()">BACK TO CITY</button>
 </div>
 
 <script>
+
+let fade = document.getElementById("fade");
+
+/* START WORLD */
 window.onload = () => {
     setTimeout(() => {
-        document.getElementById("fade").style.opacity = "0";
-    }, 500);
+        fade.style.opacity = "0";
+        show("portal");
+    }, 600);
 };
 
-function go(page) {
-    document.getElementById("fade").style.opacity = "1";
+/* WORLD ENGINE */
+function show(id) {
+    document.querySelectorAll(".screen").forEach(s => s.style.display = "none");
+    document.getElementById(id).style.display = "flex";
+}
+
+/* TRANSITION WRAPPER */
+function transition(callback) {
+    fade.style.opacity = "1";
 
     setTimeout(() => {
-        window.location.href = page;
-    }, 900);
+        callback();
+        fade.style.opacity = "0";
+    }, 800);
 }
+
+/* NAVIGATION */
+function enterCity() {
+    transition(() => show("city"));
+}
+
+function goVip() {
+    transition(() => show("vip"));
+}
+
+function goCity() {
+    transition(() => show("city"));
+}
+
+function goPortal() {
+    transition(() => show("portal"));
+}
+
 </script>
 
 </body>
