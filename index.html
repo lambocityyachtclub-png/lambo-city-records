@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Lambo City Lounge</title>
+<title>Lambo City</title>
 
 <style>
 body {
@@ -13,22 +13,20 @@ body {
   color: white;
 }
 
-/* BACKGROUND (Penthouse + Yacht vibe) */
+/* BACKGROUND - Miami Yacht Penthouse */
 .bg {
   position: fixed;
   width: 100%;
   height: 100%;
-  background:
-    url('https://images.unsplash.com/photo-1500375592092-40eb2168fd21?auto=format&fit=crop&w=1950&q=80')
-    no-repeat center center/cover;
-  filter: brightness(0.55) contrast(1.1);
+  background: url('https://images.unsplash.com/photo-1500375592092-40eb2168fd21?auto=format&fit=crop&w=1950&q=80') no-repeat center center/cover;
+  filter: brightness(0.55);
   z-index: -3;
 }
 
-/* NEON OVERLAY */
+/* OVERLAY */
 .overlay {
   min-height: 100vh;
-  background: radial-gradient(circle at top, rgba(0,0,0,0.3), rgba(0,0,0,0.85));
+  background: radial-gradient(circle at top, rgba(0,0,0,0.3), rgba(0,0,0,0.9));
   padding: 20px;
 }
 
@@ -41,7 +39,6 @@ body {
   letter-spacing: 3px;
 }
 
-/* SUBTITLE */
 .subtitle {
   text-align: center;
   max-width: 800px;
@@ -58,15 +55,14 @@ body {
   margin: auto;
 }
 
-/* TV AREA (TWITCH AS LIVING ROOM TV) */
+/* TV (TWITCH) */
 .tv {
   border: 2px solid rgba(255,215,0,0.4);
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 0 40px rgba(0,0,0,0.6);
 }
 
-/* SIDE PANEL */
+/* PANEL */
 .panel {
   background: rgba(0,0,0,0.5);
   border: 1px solid gold;
@@ -85,19 +81,17 @@ button {
   font-weight: bold;
   cursor: pointer;
   border-radius: 8px;
+  color: black;
 }
 
-/* WINDOW VIEW (YACHT OUTSIDE FEEL) */
+/* YACHT WINDOW VIEW */
 .window {
-  margin-top: 20px;
+  margin-top: 15px;
   height: 120px;
-  background:
-    url('https://images.unsplash.com/photo-1500375592092-40eb2168fd21?auto=format&fit=crop&w=1950&q=80')
-    no-repeat center center/cover;
-  border: 1px solid rgba(255,215,0,0.3);
+  background: url('https://images.unsplash.com/photo-1500375592092-40eb2168fd21?auto=format&fit=crop&w=1950&q=80') no-repeat center center/cover;
   border-radius: 10px;
+  border: 1px solid rgba(255,215,0,0.3);
   position: relative;
-  overflow: hidden;
 }
 
 .window::after {
@@ -105,35 +99,34 @@ button {
   position: absolute;
   bottom: 5px;
   right: 10px;
-  font-size: 12px;
+  font-size: 11px;
   color: gold;
-  opacity: 0.8;
 }
 
-/* AVATAR (simple animated presence) */
+/* FLOATING AVATAR */
 .avatar {
-  width: 60px;
-  height: 60px;
+  width: 55px;
+  height: 55px;
   background: gold;
   border-radius: 50%;
   position: absolute;
   bottom: 80px;
   left: 40px;
-  animation: float 3s infinite ease-in-out;
   box-shadow: 0 0 20px gold;
+  animation: float 3s infinite ease-in-out;
 }
 
 @keyframes float {
-  0% { transform: translateY(0px); }
+  0% { transform: translateY(0); }
   50% { transform: translateY(-10px); }
-  100% { transform: translateY(0px); }
+  100% { transform: translateY(0); }
 }
 
-/* DOOR (VIP PORTAL) */
+/* DOOR */
 .door {
   margin-top: 15px;
+  padding: 12px;
   text-align: center;
-  padding: 15px;
   background: rgba(255,215,0,0.2);
   border: 1px solid gold;
   cursor: pointer;
@@ -151,12 +144,12 @@ button {
 <div class="title">LAMBO CITY</div>
 
 <div class="subtitle">
-Miami Penthouse Lounge • Music • Streams • Yacht Energy • Exclusive Access
+Miami Penthouse Lounge • Music • Live Streams • Yacht Club • Digital Luxury World
 </div>
 
 <div class="lounge">
 
-<!-- TV / TWITCH -->
+<!-- TWITCH TV -->
 <div class="tv">
 <iframe
 src="https://player.twitch.tv/?channel=LamboCityRecords&parent=lambocityrecords.com"
@@ -166,17 +159,17 @@ allowfullscreen>
 </iframe>
 </div>
 
-<!-- SIDE PANEL -->
+<!-- CONTROL PANEL -->
 <div class="panel">
 
-<h3>LOUNGE CONTROL</h3>
+<h3>LOUNGE ACCESS</h3>
 
 <button onclick="location.href='map.html'">ENTER CITY MAP</button>
 
 <button onclick="location.href='vip.html'">ENTER YACHT CLUB</button>
 
 <div class="door" onclick="location.href='vip.html'">
-🚪 PRIVATE CLUB DOOR
+🚪 ENTER PRIVATE DOCK
 </div>
 
 <div class="window"></div>
