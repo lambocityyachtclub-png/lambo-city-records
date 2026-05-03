@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>LAMBO CITY | GTA ONLINE FEEL v23</title>
+<title>LAMBO CITY | WORLD SYSTEM</title>
 
 <style>
 body {
@@ -14,9 +14,7 @@ body {
     color: white;
 }
 
-/* =========================
-   🎮 LOADING SESSION
-========================= */
+/* LOBBY */
 #lobby {
     position: fixed;
     width: 100%;
@@ -39,27 +37,16 @@ body {
     cursor: pointer;
 }
 
-/* =========================
-   🎥 CAMERA (SHAKE + DEPTH)
-========================= */
+/* CAMERA EFFECT */
 #camera {
     position: fixed;
     width: 100%;
     height: 100%;
     background: black;
     opacity: 0;
-    transform: scale(1.2);
-    filter: blur(0px);
-    transition: 0.4s ease;
+    transform: scale(1.3);
+    transition: 0.5s ease;
     z-index: 999;
-}
-
-/* =========================
-   🌆 WORLD FEEL
-========================= */
-#world {
-    width: 100%;
-    height: 100%;
 }
 
 /* CITY */
@@ -82,9 +69,9 @@ body {
     justify-content: center;
     align-items: center;
     flex-direction: column;
+    z-index: 2000;
 }
 
-/* ENVIRONMENTS */
 #yacht {
     background: radial-gradient(circle, #0a0f1a, #000);
 }
@@ -93,18 +80,13 @@ body {
     background: radial-gradient(circle, #1a0a0a, #000);
 }
 
-/* =========================
-   🎯 UI TEXT
-========================= */
+/* UI */
 .title {
-    font-size: 44px;
+    font-size: 42px;
     letter-spacing: 6px;
     margin-bottom: 20px;
 }
 
-/* =========================
-   🔘 INTERACTION
-========================= */
 button {
     margin: 8px;
     padding: 10px 18px;
@@ -114,34 +96,30 @@ button {
     cursor: pointer;
 }
 
-/* =========================
-   🔊 AUDIO (HIDDEN)
-========================= */
-audio {
-    display: none;
-}
+/* AUDIO */
+audio { display: none; }
 </style>
 </head>
 
 <body>
 
-<!-- 🎮 LOBBY -->
+<!-- LOBBY -->
 <div id="lobby">
-    <div>STARTING LAMBO CITY ONLINE SESSION...</div>
-    <button id="enterBtn" onclick="enterWorld()">ENTER SESSION</button>
+    <div>CONNECTING TO LAMBO CITY...</div>
+    <button id="enterBtn" onclick="enterWorld()">ENTER CITY</button>
 </div>
 
 <div id="camera"></div>
 
-<!-- 🌆 CITY -->
+<!-- CITY -->
 <div id="city">
     <div class="title">LAMBO CITY</div>
 
-    <button onclick="enter('yacht')">ENTER YACHT CLUB</button>
-    <button onclick="enter('store')">ENTER STORE</button>
+    <button onclick="enter('yacht')">YACHT CLUB</button>
+    <button onclick="enter('store')">STORE</button>
 </div>
 
-<!-- 🚤 YACHT -->
+<!-- YACHT -->
 <div id="yacht" class="interior">
     <div class="title">YACHT CLUB</div>
 
@@ -154,7 +132,7 @@ audio {
     <button onclick="exitInterior()">BACK TO CITY</button>
 </div>
 
-<!-- 🛍 STORE -->
+<!-- STORE -->
 <div id="store" class="interior">
     <div class="title">STORE</div>
 
@@ -164,13 +142,13 @@ audio {
     <button onclick="exitInterior()">BACK TO CITY</button>
 </div>
 
-<!-- 🔊 AMBIENCE AUDIO LAYERS -->
+<!-- AUDIO (SAFE TEST SO YOU HEAR IT) -->
 <audio id="cityAudio" loop>
-    <source src="https://cdn.pixabay.com/download/audio/2022/10/25/audio_2b6b5c6c5b.mp3" type="audio/mp3">
+    <source src="https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3">
 </audio>
 
 <audio id="interiorAudio" loop>
-    <source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c8c7f1c3.mp3" type="audio/mp3">
+    <source src="https://www.soundjay.com/misc/sounds/bell-ringing-01.mp3">
 </audio>
 
 <script>
@@ -185,69 +163,69 @@ const store = document.getElementById("store");
 const cityAudio = document.getElementById("cityAudio");
 const interiorAudio = document.getElementById("interiorAudio");
 
-/* =========================
-   🎮 ENTER SESSION (GTA STYLE START)
-========================= */
+/* CAMERA EFFECT */
+function flash() {
+    camera.style.opacity = "1";
+    camera.style.transform = "scale(1.5)";
+    document.body.style.filter = "brightness(2)";
+
+    setTimeout(() => {
+        camera.style.opacity = "0";
+        document.body.style.filter = "none";
+    }, 400);
+}
+
+/* ENTER WORLD */
 function enterWorld() {
 
     lobby.style.opacity = "0";
 
     setTimeout(() => {
         lobby.style.display = "none";
-
         city.style.display = "flex";
 
-        cityAudio.volume = 0.3;
-        cityAudio.play();
+        flash();
 
-        showCameraBurst();
+        cityAudio.currentTime = 0;
+        cityAudio.volume = 0.4;
+
+        cityAudio.play().then(() => {
+            console.log("CITY AUDIO PLAYING");
+        }).catch(err => {
+            console.log("AUDIO BLOCKED:", err);
+        });
 
     }, 1000);
 }
 
-/* =========================
-   🎬 CAMERA IMPACT (FEEL CHANGE)
-========================= */
-function showCameraBurst() {
-
-    camera.style.opacity = "1";
-    camera.style.transform = "scale(1.4)";
-    document.body.style.filter = "contrast(1.4) brightness(1.2)";
-
-    setTimeout(() => {
-        camera.style.opacity = "0";
-        camera.style.transform = "scale(1.2)";
-        document.body.style.filter = "none";
-    }, 500);
-}
-
-/* =========================
-   🚪 ENTER INTERIOR
-========================= */
+/* ENTER INTERIOR */
 function enter(type) {
 
-    showCameraBurst();
+    flash();
 
     setTimeout(() => {
 
         city.style.display = "none";
 
         cityAudio.pause();
+
+        interiorAudio.currentTime = 0;
         interiorAudio.volume = 0.4;
-        interiorAudio.play();
+
+        interiorAudio.play().catch(err => console.log(err));
 
         if (type === "yacht") yacht.style.display = "flex";
         if (type === "store") store.style.display = "flex";
 
+        console.log("ENTERED:", type);
+
     }, 300);
 }
 
-/* =========================
-   🚪 EXIT INTERIOR
-========================= */
+/* EXIT INTERIOR */
 function exitInterior() {
 
-    showCameraBurst();
+    flash();
 
     setTimeout(() => {
 
@@ -257,7 +235,10 @@ function exitInterior() {
         interiorAudio.pause();
 
         city.style.display = "flex";
+
         cityAudio.play();
+
+        console.log("BACK TO CITY");
 
     }, 300);
 }
