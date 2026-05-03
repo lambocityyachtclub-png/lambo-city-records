@@ -13,105 +13,103 @@
       overflow: hidden;
     }
 
+    /* CINEMATIC BACKGROUND */
     .background {
       position: fixed;
+      top: 0;
+      left: 0;
       width: 100%;
       height: 100%;
       background: url('https://images.unsplash.com/photo-1508057198894-247b23fe5ade') center/cover no-repeat;
-      filter: brightness(0.4);
+      filter: brightness(0.35);
+      z-index: 0;
     }
 
+    /* TITLE */
     .title {
       position: absolute;
-      top: 10%;
+      top: 8%;
       width: 100%;
       text-align: center;
       font-size: 3rem;
-      letter-spacing: 5px;
+      letter-spacing: 6px;
+      z-index: 2;
     }
 
+    /* PANEL */
+    #panel {
+      position: absolute;
+      top: 40%;
+      width: 100%;
+      text-align: center;
+      font-size: 1.2rem;
+      z-index: 2;
+    }
+
+    /* MENU */
     .menu {
       position: absolute;
-      bottom: 15%;
+      bottom: 12%;
       width: 100%;
       display: flex;
       justify-content: center;
       gap: 20px;
+      z-index: 2;
     }
 
     .btn {
-      padding: 15px 25px;
+      padding: 14px 22px;
       border: 1px solid white;
+      background: transparent;
+      color: white;
       cursor: pointer;
-      transition: 0.3s;
+      transition: 0.25s;
+      font-size: 14px;
     }
 
     .btn:hover {
       background: white;
       color: black;
     }
-
-    #panel {
-      position:absolute;
-      top:40%;
-      width:100%;
-      text-align:center;
-      font-size:1.2rem;
-      opacity:0.9;
-    }
   </style>
 </head>
 <body>
-<video autoplay muted loop playsinline style="
-  position:fixed;
-  width:100%;
-  height:100%;
-  object-fit:cover;
-  z-index:-1;
-">
-  <source src="https://www.w3schools.com/howto/rain.mp4" type="video/mp4">
-</video>
+<div class="background"></div>
 <div class="title">LAMBO CITY</div>
 <div id="panel">
-  <p>System ready...</p>
+  SYSTEM: Welcome to Lambo City<br>
+  USER: Ready to board
 </div>
-<div id="panel">
-  <p>SYSTEM: Welcome to Lambo City</p>
-  <p>USER: Ready to board</p>
 <div class="menu">
   <button class="btn" onclick="enterCity()">ENTER CITY</button>
   <button class="btn" onclick="openYacht()">YACHT CLUB</button>
   <button class="btn" onclick="openRadio()">RADIO</button>
 </div>
-
-<audio autoplay loop>
-  <source src="" type="audio/mpeg">
-</audio>
-<script><script>
+<script>
 function enterCity() {
   document.getElementById("panel").innerHTML = `
-    <h2>ENTERING LAMBO CITY...</h2>
-    <p>Loading environment...</p>
-    <p>Citizens active</p>
+    SYSTEM: Entering Lambo City...<br>
+    STATUS: World loading<br>
+    CITIZENS: Active
   `;
 }
 
 function openYacht() {
   document.getElementById("panel").innerHTML = `
-    <h2>YACHT CLUB TERMINAL</h2>
-    <p>🔒 ACCESS DENIED</p>
-    <p>Status: Not a member</p>
+    YACHT CLUB<br><br>
+    STATUS: LOCKED 🔒<br>
+    REQUIREMENTS: Access Protocol Needed
   `;
 }
 
 function openRadio() {
   document.getElementById("panel").innerHTML = `
-    <h2>LAMBO CITY RADIO</h2>
-    <p>Streaming...</p>
-    <p>Stay tuned</p>
+    LAMBO CITY RADIO<br><br>
+    STATUS: Streaming Live Atmosphere<br>
+    CHANNEL: Lambo City Records
   `;
 }
 </script>
-</script>
 </body>
 </html>
+
