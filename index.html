@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>LAMBO CITY | FIRST PERSON WORLD</title>
+<title>LAMBO CITY | IMMERSIVE WORLD v2</title>
 
 <style>
-body { margin: 0; overflow: hidden; font-family: Arial; background: black; }
+body { margin: 0; overflow: hidden; font-family: Arial; background: #000; }
 
 /* HUD */
 #hud {
@@ -19,16 +19,6 @@ body { margin: 0; overflow: hidden; font-family: Arial; background: black; }
     z-index: 10;
 }
 
-/* INSTRUCTION */
-#hint {
-    position: fixed;
-    bottom: 10px;
-    left: 10px;
-    color: white;
-    font-size: 11px;
-    opacity: 0.6;
-}
-
 /* CROSSHAIR */
 #crosshair {
     position: fixed;
@@ -38,27 +28,41 @@ body { margin: 0; overflow: hidden; font-family: Arial; background: black; }
     height: 6px;
     background: white;
     transform: translate(-50%, -50%);
-    z-index: 10;
     border-radius: 50%;
+    z-index: 10;
+}
+
+/* FADE */
+#fade {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    background: black;
+    opacity: 0;
+    transition: 0.4s;
+    z-index: 20;
+    pointer-events: none;
 }
 </style>
 </head>
 
 <body>
 
-<div id="hud">LAMBO CITY // FPS MODE ACTIVE</div>
-<div id="hint">CLICK TO LOCK MOUSE • WASD TO MOVE • E TO INTERACT</div>
+<div id="hud">LAMBO CITY // IMMERSIVE v2 ACTIVE</div>
 <div id="crosshair"></div>
+<div id="fade"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
 
 <script>
 
 /* =========================
-   🌍 BASIC WORLD
+   🌍 WORLD SETUP
 ========================= */
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x000000);
+
+/* SKY GRADIENT (fake atmosphere) */
+scene.background = new THREE.Color(0x0a0a0f);
 
 const camera = new THREE.PerspectiveCamera(
     75,
@@ -67,7 +71,7 @@ const camera = new THREE.PerspectiveCamera(
     1000
 );
 
-const renderer = new THREE.WebGLRenderer();
+const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
@@ -75,127 +79,183 @@ document.body.appendChild(renderer.domElement);
 const light = new THREE.AmbientLight(0xffffff, 1);
 scene.add(light);
 
-/* FLOOR */
-const floorGeo = new THREE.PlaneGeometry(200, 200);
-const floorMat = new THREE.MeshBasicMaterial({ color: 0x111111 });
+/* =========================
+   🌆 STREET FLOOR GRID
+========================= */
+const floorGeo = new THREE.PlaneGeometry(200, 200, 20, 20);
+const floorMat = new THREE.MeshBasicMaterial({
+    color: 0x111111,
+    wireframe: true
+});
+
 const floor = new THREE.Mesh(floorGeo, floorMat);
 floor.rotation.x = -Math.PI / 2;
 scene.add(floor);
 
 /* =========================
-   🏙 ROOMS / INTERIORS
+   🏙 BUILDINGS (CITY DEPTH)
 ========================= */
-function room(color, x, z) {
-    const geo = new THREE.BoxGeometry(10, 6, 10);
+function building(x,z,color) {
+    const geo = new THREE.BoxGeometry(4, Math.random()*10+5, 4);
     const mat = new THREE.MeshBasicMaterial({ color });
-    const mesh = new THREE.Mesh(geo, mat);
-    mesh.position.set(x, 3, z);
-    scene.add(mesh);
-    return mesh;
+    const b = new THREE.Mesh(geo, mat);
+    b.position.set(x, geo.parameters.height/2, z);
+    scene.add(b);
+    return b;
 }
 
-const cityDoor = room(0x3a1f0a, 0, -20);
-const yachtDoor = room(0x0a1a3a, 20, 0);
-const storeDoor = room(0x3a0a0a, -20, 0);
+/* scatter buildings */
+for(let i=0;i<40;i++){
+    building(
+        (Math.random()-0.5)*80,
+        (Math.random()-0.5)*80,
+        0x222222
+    );
+}
 
 /* =========================
-   🎮 PLAYER SYSTEM
+   🚗 MOVING TRAFFIC (LOOPS)
+========================= */
+const cars = [];
+
+function createCar(x,z) {
+    const geo = new THREE.BoxGeometry(1,1,2);
+    const mat = new THREE.MeshBasicMaterial({ color: 0xff4444 });
+    const car = new THREE.Mesh(geo, mat);
+    car.position.set(x, 0.5, z);
+    scene.add(car);
+
+    cars.push({
+        mesh: car,
+        speed: 0.05 + Math.random()*0.05
+    });
+}
+
+/* spawn cars */
+for(let i=0;i<10;i++){
+    createCar(-20 + i*4, -10);
+}
+
+/* =========================
+   🧍 NPC WALKERS
+========================= */
+const npcs = [];
+
+function createNPC(x,z) {
+    const geo = new THREE.BoxGeometry(0.5,1.5,0.5);
+    const mat = new THREE.MeshBasicMaterial({ color: 0x00ffcc });
+    const npc = new THREE.Mesh(geo, mat);
+    npc.position.set(x, 0.75, z);
+    scene.add(npc);
+
+    npcs.push({
+        mesh: npc,
+        dir: Math.random()*Math.PI*2
+    });
+}
+
+for(let i=0;i<15;i++){
+    createNPC((Math.random()-0.5)*50,(Math.random()-0.5)*50);
+}
+
+/* =========================
+   🚪 PLAYER SYSTEM
 ========================= */
 const player = {
-    x: 0,
-    y: 2,
-    z: 5,
-    speed: 0.15,
-    rotX: 0,
-    rotY: 0
+    pos: new THREE.Vector3(0,2,5),
+    rotY: 0,
+    speed: 0.12
 };
 
-/* CAMERA START */
-camera.position.set(player.x, player.y, player.z);
+camera.position.copy(player.pos);
 
 /* =========================
    🎮 CONTROLS
 ========================= */
 let keys = {};
+document.addEventListener("keydown",(e)=>keys[e.key.toLowerCase()]=true);
+document.addEventListener("keyup",(e)=>keys[e.key.toLowerCase()]=false);
 
-document.addEventListener("keydown", (e) => keys[e.key.toLowerCase()] = true);
-document.addEventListener("keyup", (e) => keys[e.key.toLowerCase()] = false);
+/* mouse look */
+document.body.addEventListener("click",()=>document.body.requestPointerLock());
 
-/* MOUSE LOOK */
-let isLocked = false;
-
-document.body.addEventListener("click", () => {
-    document.body.requestPointerLock();
-});
-
-document.addEventListener("mousemove", (e) => {
-    if (document.pointerLockElement === document.body) {
+document.addEventListener("mousemove",(e)=>{
+    if(document.pointerLockElement===document.body){
         player.rotY -= e.movementX * 0.002;
-        player.rotX -= e.movementY * 0.002;
     }
 });
 
 /* =========================
-   🚪 INTERACTION SYSTEM
+   🚶 PLAYER MOVEMENT
 ========================= */
-function checkDoor() {
+function movePlayer(){
 
-    let distCity = camera.position.distanceTo(cityDoor.position);
-    let distYacht = camera.position.distanceTo(yachtDoor.position);
-    let distStore = camera.position.distanceTo(storeDoor.position);
-
-    if (distCity < 3 && keys["e"]) {
-        camera.position.set(0, 2, 10);
-    }
-
-    if (distYacht < 3 && keys["e"]) {
-        camera.position.set(20, 2, 10);
-    }
-
-    if (distStore < 3 && keys["e"]) {
-        camera.position.set(-20, 2, 10);
-    }
-}
-
-/* =========================
-   🎮 GAME LOOP
-========================= */
-function animate() {
-    requestAnimationFrame(animate);
-
-    /* MOVEMENT */
-    let forward = new THREE.Vector3(
+    const forward = new THREE.Vector3(
         -Math.sin(player.rotY),
         0,
         -Math.cos(player.rotY)
     );
 
-    let right = new THREE.Vector3(
+    const right = new THREE.Vector3(
         Math.cos(player.rotY),
         0,
         -Math.sin(player.rotY)
     );
 
-    if (keys["w"]) camera.position.addScaledVector(forward, player.speed);
-    if (keys["s"]) camera.position.addScaledVector(forward, -player.speed);
-    if (keys["a"]) camera.position.addScaledVector(right, -player.speed);
-    if (keys["d"]) camera.position.addScaledVector(right, player.speed);
+    if(keys["w"]) camera.position.addScaledVector(forward, player.speed);
+    if(keys["s"]) camera.position.addScaledVector(forward, -player.speed);
+    if(keys["a"]) camera.position.addScaledVector(right, -player.speed);
+    if(keys["d"]) camera.position.addScaledVector(right, player.speed);
 
-    /* CAMERA ROTATION */
-    camera.rotation.set(player.rotX, player.rotY, 0);
-
-    checkDoor();
-
-    renderer.render(scene, camera);
+    camera.rotation.y = player.rotY;
 }
 
+/* =========================
+   🚗 CAR LOOP MOTION
+========================= */
+function updateCars(){
+    cars.forEach(c=>{
+        c.mesh.position.x += c.speed;
+
+        if(c.mesh.position.x > 40){
+            c.mesh.position.x = -40;
+        }
+    });
+}
+
+/* =========================
+   🧍 NPC MOTION
+========================= */
+function updateNPCs(){
+    npcs.forEach(n=>{
+        n.mesh.position.x += Math.cos(n.dir)*0.02;
+        n.mesh.position.z += Math.sin(n.dir)*0.02;
+
+        if(Math.random()<0.01){
+            n.dir = Math.random()*Math.PI*2;
+        }
+    });
+}
+
+/* =========================
+   🎬 GAME LOOP
+========================= */
+function animate(){
+    requestAnimationFrame(animate);
+
+    movePlayer();
+    updateCars();
+    updateNPCs();
+
+    renderer.render(scene,camera);
+}
 animate();
 
 /* RESIZE */
-window.addEventListener("resize", () => {
+window.addEventListener("resize",()=>{
     camera.aspect = window.innerWidth/window.innerHeight;
     camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setSize(window.innerWidth,window.innerHeight);
 });
 
 </script>
