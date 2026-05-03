@@ -8,23 +8,19 @@
 <style>
 body {
   margin: 0;
-  font-family: Arial, sans-serif;
+  font-family: Arial;
   background: black;
   color: white;
 }
 
-/* BACKGROUND */
 .bg {
   position: fixed;
-  top: 0;
-  left: 0;
   width: 100%;
   height: 100%;
   background: url('https://raw.githubusercontent.com/YOURUSERNAME/YOURREPO/main/yourimage.jpg') no-repeat center center/cover;
   z-index: -1;
 }
 
-/* OVERLAY */
 .overlay {
   background: rgba(0,0,0,0.75);
   min-height: 100vh;
@@ -32,69 +28,60 @@ body {
 }
 
 .container {
-  max-width: 1200px;
+  max-width: 1100px;
   margin: auto;
 }
 
 .title {
   text-align: center;
-  font-size: 48px;
+  font-size: 52px;
   font-weight: bold;
-  margin-bottom: 20px;
+  color: gold;
 }
 
-/* LAYOUT */
 .grid {
   display: grid;
   grid-template-columns: 2fr 1fr;
   gap: 20px;
+  margin-top: 20px;
 }
 
-/* STREAM */
-.stream {
-  border: 2px solid gold;
-}
-
-/* PANEL */
 .panel {
-  background: rgba(0,0,0,0.6);
-  padding: 15px;
   border: 1px solid gold;
+  padding: 15px;
+  background: rgba(0,0,0,0.5);
 }
 
-.panel button {
-  display: block;
+button {
   width: 100%;
-  margin: 10px 0;
-  padding: 10px;
+  padding: 12px;
+  margin-top: 10px;
   background: gold;
   border: none;
-  cursor: pointer;
   font-weight: bold;
+  cursor: pointer;
 }
 
-/* VIP BUTTON */
-.enter-btn {
+.enter {
   display: block;
   text-align: center;
   margin: 30px auto;
-  padding: 15px 30px;
+  padding: 15px;
+  width: 300px;
   background: gold;
   color: black;
-  font-weight: bold;
   text-decoration: none;
-  width: 300px;
+  font-weight: bold;
   border-radius: 10px;
 }
 
-/* FEED */
 .feed {
   margin-top: 20px;
-  background: rgba(0,0,0,0.6);
-  padding: 15px;
   border: 1px solid gold;
+  padding: 10px;
   height: 120px;
   overflow: auto;
+  background: rgba(0,0,0,0.5);
 }
 </style>
 </head>
@@ -110,38 +97,31 @@ body {
 
 <div class="grid">
 
-<!-- TWITCH -->
-<div class="stream">
+<div>
 <iframe
-  src="https://player.twitch.tv/?channel=LamboCityRecords&parent=lambocityrecords.com"
-  height="400"
-  width="100%"
-  allowfullscreen>
+src="https://player.twitch.tv/?channel=LamboCityRecords&parent=lambocityrecords.com"
+width="100%" height="420" allowfullscreen>
 </iframe>
 </div>
 
-<!-- PANEL -->
 <div class="panel">
-<h3>ACTIVITY</h3>
+<h3>ACCESS PORTAL</h3>
 
-<button onclick="alert('HERO joined Lambo City')">HERO Joined</button>
-<button onclick="alert('Drop loading...')">Next Drop Soon</button>
-<button onclick="goVIP()">Boarding Pass Available</button>
+<button onclick="enter('guest')">Enter Guest Zone</button>
+<button onclick="enter('vip')">Enter VIP Zone</button>
+<button onclick="enter('founder')">Enter Founder Zone</button>
 
 <hr>
 
-<h3>DROPS</h3>
-<button onclick="alert('Preview coming soon')">Yacht Event Preview</button>
+<button onclick="alert('Drop loading...')">Next Drop</button>
 </div>
 
 </div>
 
-<!-- VIP ENTRY -->
-<a href="/vip.html" class="enter-btn">ENTER LAMBO CITY VIP</a>
+<a class="enter" href="/vip.html">OPEN BOARDING PASS PORTAL</a>
 
-<!-- FEED -->
 <div class="feed" id="feed">
-<p>SYSTEM: Welcome to Lambo City</p>
+<p>SYSTEM: Lambo City Network Online</p>
 </div>
 
 </div>
@@ -150,24 +130,24 @@ body {
 <script>
 const feed = document.getElementById("feed");
 
-setInterval(() => {
-  const items = [
-    "SYSTEM: HERO entered Lambo City",
-    "SYSTEM: Boarding Pass syncing...",
-    "SYSTEM: VIP portal ready...",
-    "SYSTEM: Yacht drop loading...",
-    "USER: Waiting for access"
-  ];
-
-  const msg = document.createElement("p");
-  msg.textContent = items[Math.floor(Math.random() * items.length)];
-  feed.appendChild(msg);
-  feed.scrollTop = feed.scrollHeight;
-}, 4000);
-
-function goVIP() {
+function enter(level) {
+  localStorage.setItem("accessLevel", level);
   window.location.href = "/vip.html";
 }
+
+setInterval(() => {
+  const msgs = [
+    "SYSTEM: VIP nodes syncing...",
+    "SYSTEM: Yacht protocol active...",
+    "SYSTEM: Boarding passes scanning...",
+    "USER: Awaiting access level"
+  ];
+
+  const p = document.createElement("p");
+  p.textContent = msgs[Math.floor(Math.random() * msgs.length)];
+  feed.appendChild(p);
+  feed.scrollTop = feed.scrollHeight;
+}, 4000);
 </script>
 
 </body>
