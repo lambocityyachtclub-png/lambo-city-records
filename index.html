@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>LAMBO CITY | WORLD SYSTEM</title>
+<title>LAMBO CITY | WORLD ENGINE v30</title>
 
 <style>
 body {
@@ -14,7 +14,9 @@ body {
     color: white;
 }
 
-/* LOBBY */
+/* =========================
+   🎮 LOBBY (ENTRY)
+========================= */
 #lobby {
     position: fixed;
     width: 100%;
@@ -28,16 +30,9 @@ body {
     transition: opacity 1s ease;
 }
 
-#enterBtn {
-    margin-top: 20px;
-    padding: 10px 18px;
-    border: 1px solid white;
-    background: transparent;
-    color: white;
-    cursor: pointer;
-}
-
-/* CAMERA EFFECT */
+/* =========================
+   🎥 CAMERA FX LAYER
+========================= */
 #camera {
     position: fixed;
     width: 100%;
@@ -49,7 +44,9 @@ body {
     z-index: 999;
 }
 
-/* CITY */
+/* =========================
+   🌆 CITY HUB
+========================= */
 #city {
     width: 100%;
     height: 100%;
@@ -60,7 +57,9 @@ body {
     background: radial-gradient(circle at top, #3a1f0a, #000);
 }
 
-/* INTERIORS */
+/* =========================
+   🏠 INTERIORS
+========================= */
 .interior {
     position: fixed;
     width: 100%;
@@ -69,18 +68,21 @@ body {
     justify-content: center;
     align-items: center;
     flex-direction: column;
-    z-index: 2000;
 }
 
+/* Yacht */
 #yacht {
     background: radial-gradient(circle, #0a0f1a, #000);
 }
 
+/* Store */
 #store {
     background: radial-gradient(circle, #1a0a0a, #000);
 }
 
-/* UI */
+/* =========================
+   🎯 UI
+========================= */
 .title {
     font-size: 42px;
     letter-spacing: 6px;
@@ -96,22 +98,52 @@ button {
     cursor: pointer;
 }
 
-/* AUDIO */
+/* =========================
+   🎥 STREAM
+========================= */
+iframe {
+    width: 80%;
+    max-width: 900px;
+    height: 450px;
+    margin-top: 20px;
+    border: 1px solid rgba(255,255,255,0.2);
+}
+
+/* =========================
+   🔊 AUDIO (hidden)
+========================= */
 audio { display: none; }
+
+/* =========================
+   🌐 WORLD CHAT (ambient feel)
+========================= */
+#chat {
+    position: fixed;
+    right: 12px;
+    bottom: 12px;
+    width: 240px;
+    height: 150px;
+    font-size: 10px;
+    background: rgba(0,0,0,0.4);
+    border: 1px solid rgba(255,255,255,0.2);
+    padding: 8px;
+    overflow: hidden;
+}
 </style>
 </head>
 
 <body>
 
-<!-- LOBBY -->
+<!-- 🎮 LOBBY -->
 <div id="lobby">
-    <div>CONNECTING TO LAMBO CITY...</div>
-    <button id="enterBtn" onclick="enterWorld()">ENTER CITY</button>
+    <div>CONNECTING TO LAMBO CITY ONLINE SESSION...</div>
+    <button onclick="enterWorld()">ENTER CITY</button>
 </div>
 
 <div id="camera"></div>
+<div id="chat"></div>
 
-<!-- CITY -->
+<!-- 🌆 CITY -->
 <div id="city">
     <div class="title">LAMBO CITY</div>
 
@@ -119,20 +151,19 @@ audio { display: none; }
     <button onclick="enter('store')">STORE</button>
 </div>
 
-<!-- YACHT -->
+<!-- 🚤 YACHT -->
 <div id="yacht" class="interior">
     <div class="title">YACHT CLUB</div>
 
     <iframe
         src="https://player.twitch.tv/?channel=lambocityrecords&parent=lambocityrecords.com"
-        width="80%" height="450"
         allowfullscreen>
     </iframe>
 
     <button onclick="exitInterior()">BACK TO CITY</button>
 </div>
 
-<!-- STORE -->
+<!-- 🛍 STORE -->
 <div id="store" class="interior">
     <div class="title">STORE</div>
 
@@ -142,12 +173,12 @@ audio { display: none; }
     <button onclick="exitInterior()">BACK TO CITY</button>
 </div>
 
-<!-- AUDIO (SAFE TEST SO YOU HEAR IT) -->
+<!-- 🔊 AUDIO -->
 <audio id="cityAudio" loop>
     <source src="https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3">
 </audio>
 
-<audio id="interiorAudio" loop>
+<audio id="insideAudio" loop>
     <source src="https://www.soundjay.com/misc/sounds/bell-ringing-01.mp3">
 </audio>
 
@@ -155,27 +186,17 @@ audio { display: none; }
 
 const lobby = document.getElementById("lobby");
 const camera = document.getElementById("camera");
-
 const city = document.getElementById("city");
 const yacht = document.getElementById("yacht");
 const store = document.getElementById("store");
 
 const cityAudio = document.getElementById("cityAudio");
-const interiorAudio = document.getElementById("interiorAudio");
+const insideAudio = document.getElementById("insideAudio");
+const chat = document.getElementById("chat");
 
-/* CAMERA EFFECT */
-function flash() {
-    camera.style.opacity = "1";
-    camera.style.transform = "scale(1.5)";
-    document.body.style.filter = "brightness(2)";
-
-    setTimeout(() => {
-        camera.style.opacity = "0";
-        document.body.style.filter = "none";
-    }, 400);
-}
-
-/* ENTER WORLD */
+/* =========================
+   🎮 ENTER WORLD
+========================= */
 function enterWorld() {
 
     lobby.style.opacity = "0";
@@ -188,17 +209,30 @@ function enterWorld() {
 
         cityAudio.currentTime = 0;
         cityAudio.volume = 0.4;
+        cityAudio.play().catch(()=>{});
 
-        cityAudio.play().then(() => {
-            console.log("CITY AUDIO PLAYING");
-        }).catch(err => {
-            console.log("AUDIO BLOCKED:", err);
-        });
+        startChat();
 
     }, 1000);
 }
 
-/* ENTER INTERIOR */
+/* =========================
+   🎬 CAMERA FX (GTA SNAP FEEL)
+========================= */
+function flash() {
+    camera.style.opacity = "1";
+    camera.style.transform = "scale(1.5)";
+    document.body.style.filter = "brightness(2)";
+
+    setTimeout(() => {
+        camera.style.opacity = "0";
+        document.body.style.filter = "none";
+    }, 400);
+}
+
+/* =========================
+   🚪 ENTER INTERIOR
+========================= */
 function enter(type) {
 
     flash();
@@ -209,20 +243,19 @@ function enter(type) {
 
         cityAudio.pause();
 
-        interiorAudio.currentTime = 0;
-        interiorAudio.volume = 0.4;
-
-        interiorAudio.play().catch(err => console.log(err));
+        insideAudio.currentTime = 0;
+        insideAudio.volume = 0.4;
+        insideAudio.play().catch(()=>{});
 
         if (type === "yacht") yacht.style.display = "flex";
         if (type === "store") store.style.display = "flex";
 
-        console.log("ENTERED:", type);
-
     }, 300);
 }
 
-/* EXIT INTERIOR */
+/* =========================
+   🚪 EXIT INTERIOR
+========================= */
 function exitInterior() {
 
     flash();
@@ -232,15 +265,31 @@ function exitInterior() {
         yacht.style.display = "none";
         store.style.display = "none";
 
-        interiorAudio.pause();
+        insideAudio.pause();
 
         city.style.display = "flex";
 
         cityAudio.play();
 
-        console.log("BACK TO CITY");
-
     }, 300);
+}
+
+/* =========================
+   💬 AMBIENT WORLD CHAT
+========================= */
+function startChat() {
+
+    const users = ["HERO", "CITY_RUNNER", "VIP_GUEST", "LONG_BEACH_LOCAL"];
+    const msgs = ["is in Lambo City", "entered Yacht Club", "is shopping", "is driving around"];
+
+    setInterval(() => {
+
+        const u = users[Math.floor(Math.random()*users.length)];
+        const m = msgs[Math.floor(Math.random()*msgs.length)];
+
+        chat.innerHTML = u + ": " + m + "<br>" + chat.innerHTML;
+
+    }, 2500);
 }
 
 </script>
