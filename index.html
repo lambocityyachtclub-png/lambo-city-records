@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>LAMBO CITY | LIVE WORLD v22</title>
+<title>LAMBO CITY | GTA ONLINE FEEL v23</title>
 
 <style>
 body {
@@ -15,7 +15,7 @@ body {
 }
 
 /* =========================
-   🎮 LOBBY
+   🎮 LOADING SESSION
 ========================= */
 #lobby {
     position: fixed;
@@ -40,7 +40,7 @@ body {
 }
 
 /* =========================
-   🎥 TRANSITION CAMERA
+   🎥 CAMERA (SHAKE + DEPTH)
 ========================= */
 #camera {
     position: fixed;
@@ -48,35 +48,32 @@ body {
     height: 100%;
     background: black;
     opacity: 0;
-    transform: scale(1.3);
-    transition: 0.5s ease;
+    transform: scale(1.2);
+    filter: blur(0px);
+    transition: 0.4s ease;
     z-index: 999;
 }
 
 /* =========================
-   🌆 WORLD
+   🌆 WORLD FEEL
 ========================= */
 #world {
-    position: absolute;
     width: 100%;
     height: 100%;
-    display: flex;
 }
 
-/* HUB */
+/* CITY */
 #city {
     width: 100%;
     height: 100%;
-    display: flex;
+    display: none;
     justify-content: center;
     align-items: center;
     flex-direction: column;
     background: radial-gradient(circle at top, #3a1f0a, #000);
 }
 
-/* =========================
-   🏙 INTERIORS
-========================= */
+/* INTERIORS */
 .interior {
     position: fixed;
     width: 100%;
@@ -85,9 +82,9 @@ body {
     justify-content: center;
     align-items: center;
     flex-direction: column;
-    z-index: 2000;
 }
 
+/* ENVIRONMENTS */
 #yacht {
     background: radial-gradient(circle, #0a0f1a, #000);
 }
@@ -97,16 +94,16 @@ body {
 }
 
 /* =========================
-   🎯 TITLE
+   🎯 UI TEXT
 ========================= */
 .title {
-    font-size: 42px;
+    font-size: 44px;
     letter-spacing: 6px;
     margin-bottom: 20px;
 }
 
 /* =========================
-   🔘 BUTTONS
+   🔘 INTERACTION
 ========================= */
 button {
     margin: 8px;
@@ -118,30 +115,10 @@ button {
 }
 
 /* =========================
-   🎥 STREAM
+   🔊 AUDIO (HIDDEN)
 ========================= */
-iframe {
-    width: 80%;
-    max-width: 900px;
-    height: 450px;
-    margin-top: 20px;
-    border: 1px solid rgba(255,255,255,0.2);
-}
-
-/* =========================
-   💬 CHAT
-========================= */
-#chat {
-    position: fixed;
-    right: 12px;
-    bottom: 12px;
-    width: 240px;
-    height: 160px;
-    font-size: 10px;
-    background: rgba(0,0,0,0.4);
-    border: 1px solid rgba(255,255,255,0.2);
-    padding: 8px;
-    overflow: hidden;
+audio {
+    display: none;
 }
 </style>
 </head>
@@ -150,27 +127,27 @@ iframe {
 
 <!-- 🎮 LOBBY -->
 <div id="lobby">
-    <div>CONNECTING TO LAMBO CITY...</div>
-    <button id="enterBtn" onclick="enterWorld()">ENTER CITY</button>
+    <div>STARTING LAMBO CITY ONLINE SESSION...</div>
+    <button id="enterBtn" onclick="enterWorld()">ENTER SESSION</button>
 </div>
 
 <div id="camera"></div>
-<div id="chat"></div>
 
-<!-- 🌆 CITY HUB -->
+<!-- 🌆 CITY -->
 <div id="city">
     <div class="title">LAMBO CITY</div>
 
-    <button onclick="enter('yacht')">YACHT CLUB</button>
-    <button onclick="enter('store')">STORE</button>
+    <button onclick="enter('yacht')">ENTER YACHT CLUB</button>
+    <button onclick="enter('store')">ENTER STORE</button>
 </div>
 
-<!-- 🚤 YACHT CLUB -->
+<!-- 🚤 YACHT -->
 <div id="yacht" class="interior">
     <div class="title">YACHT CLUB</div>
 
     <iframe
         src="https://player.twitch.tv/?channel=lambocityrecords&parent=lambocityrecords.com"
+        width="80%" height="450"
         allowfullscreen>
     </iframe>
 
@@ -187,27 +164,61 @@ iframe {
     <button onclick="exitInterior()">BACK TO CITY</button>
 </div>
 
+<!-- 🔊 AMBIENCE AUDIO LAYERS -->
+<audio id="cityAudio" loop>
+    <source src="https://cdn.pixabay.com/download/audio/2022/10/25/audio_2b6b5c6c5b.mp3" type="audio/mp3">
+</audio>
+
+<audio id="interiorAudio" loop>
+    <source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c8c7f1c3.mp3" type="audio/mp3">
+</audio>
+
 <script>
 
 const lobby = document.getElementById("lobby");
 const camera = document.getElementById("camera");
-const city = document.getElementById("city");
 
+const city = document.getElementById("city");
 const yacht = document.getElementById("yacht");
 const store = document.getElementById("store");
 
-let current = "city";
+const cityAudio = document.getElementById("cityAudio");
+const interiorAudio = document.getElementById("interiorAudio");
 
 /* =========================
-   🎮 ENTER WORLD
+   🎮 ENTER SESSION (GTA STYLE START)
 ========================= */
 function enterWorld() {
+
     lobby.style.opacity = "0";
 
     setTimeout(() => {
         lobby.style.display = "none";
+
         city.style.display = "flex";
+
+        cityAudio.volume = 0.3;
+        cityAudio.play();
+
+        showCameraBurst();
+
     }, 1000);
+}
+
+/* =========================
+   🎬 CAMERA IMPACT (FEEL CHANGE)
+========================= */
+function showCameraBurst() {
+
+    camera.style.opacity = "1";
+    camera.style.transform = "scale(1.4)";
+    document.body.style.filter = "contrast(1.4) brightness(1.2)";
+
+    setTimeout(() => {
+        camera.style.opacity = "0";
+        camera.style.transform = "scale(1.2)";
+        document.body.style.filter = "none";
+    }, 500);
 }
 
 /* =========================
@@ -215,21 +226,18 @@ function enterWorld() {
 ========================= */
 function enter(type) {
 
-    camera.style.opacity = "1";
-    camera.style.transform = "scale(1.5)";
-    document.body.style.filter = "brightness(2)";
+    showCameraBurst();
 
     setTimeout(() => {
 
         city.style.display = "none";
 
+        cityAudio.pause();
+        interiorAudio.volume = 0.4;
+        interiorAudio.play();
+
         if (type === "yacht") yacht.style.display = "flex";
         if (type === "store") store.style.display = "flex";
-
-        setTimeout(() => {
-            camera.style.opacity = "0";
-            document.body.style.filter = "brightness(1)";
-        }, 400);
 
     }, 300);
 }
@@ -239,19 +247,17 @@ function enter(type) {
 ========================= */
 function exitInterior() {
 
-    camera.style.opacity = "1";
-    document.body.style.filter = "brightness(2)";
+    showCameraBurst();
 
     setTimeout(() => {
 
         yacht.style.display = "none";
         store.style.display = "none";
-        city.style.display = "flex";
 
-        setTimeout(() => {
-            camera.style.opacity = "0";
-            document.body.style.filter = "brightness(1)";
-        }, 400);
+        interiorAudio.pause();
+
+        city.style.display = "flex";
+        cityAudio.play();
 
     }, 300);
 }
