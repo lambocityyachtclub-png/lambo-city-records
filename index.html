@@ -3,73 +3,25 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>LAMBO CITY | GTA WORLD v40</title>
+<title>LAMBO CITY | LIVING STREETS v50</title>
 
 <style>
 body {
     margin: 0;
-    font-family: Arial;
     overflow: hidden;
     background: black;
+    font-family: Arial;
     color: white;
 }
 
-/* 🌌 WORLD ATMOSPHERE (THIS IS WHAT WAS MISSING) */
-body::before {
-    content: "";
-    position: fixed;
-    width: 100%;
-    height: 100%;
-    background: radial-gradient(circle at 30% 20%, rgba(255,140,0,0.08), transparent 50%),
-                radial-gradient(circle at 70% 80%, rgba(0,140,255,0.08), transparent 60%);
-    animation: pulse 6s infinite alternate;
-    z-index: 0;
-}
-
-@keyframes pulse {
-    0% { transform: scale(1); opacity: 0.6; }
-    100% { transform: scale(1.05); opacity: 1; }
-}
-
-/* 🌫 LIGHT FOG LAYER */
-#fog {
-    position: fixed;
-    width: 100%;
-    height: 100%;
-    background: radial-gradient(circle, transparent 40%, rgba(0,0,0,0.7));
-    z-index: 10;
-    pointer-events: none;
-}
-
-/* 🎥 CAMERA EFFECT */
-#camera {
-    position: fixed;
-    width: 100%;
-    height: 100%;
-    background: white;
-    opacity: 0;
-    transform: scale(1.2);
-    transition: 0.4s ease;
-    z-index: 999;
-}
-
-/* 🏙 CITY */
-#city, .interior {
-    position: fixed;
-    width: 100%;
-    height: 100%;
-    display: none;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-    z-index: 5;
-}
-
-/* 🌆 CITY LOOK (NOW MOVES LIGHT) */
+/* 🌆 CITY BACKGROUND */
 #city {
-    background: linear-gradient(120deg, #1a0f0a, #000, #0a0a1a);
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(120deg, #120a08, #000, #0a0f1a);
     background-size: 400% 400%;
-    animation: cityMove 10s ease infinite;
+    animation: cityMove 12s ease infinite;
 }
 
 @keyframes cityMove {
@@ -78,153 +30,133 @@ body::before {
     100% { background-position: 0% 50%; }
 }
 
-/* 🏠 INTERIORS */
-#yacht { background: radial-gradient(circle, #0a0f1a, #000); }
-#store { background: radial-gradient(circle, #1a0a0a, #000); }
-
-/* 🎮 UI */
-.title {
-    font-size: 42px;
-    letter-spacing: 6px;
-    margin-bottom: 20px;
-    text-shadow: 0 0 10px rgba(255,255,255,0.2);
-}
-
-button {
-    margin: 8px;
-    padding: 10px 18px;
-    border: 1px solid rgba(255,255,255,0.6);
-    background: transparent;
-    color: white;
-    cursor: pointer;
-}
-
-button:hover {
-    background: white;
-    color: black;
-}
-
-/* 📺 STREAM */
-iframe {
-    width: 80%;
-    max-width: 900px;
-    height: 450px;
-}
-
-/* 💬 CHAT */
-#chat {
-    position: fixed;
-    right: 12px;
-    bottom: 12px;
-    width: 240px;
-    height: 160px;
-    font-size: 10px;
+/* 🚗 ROAD LAYER */
+.road {
+    position: absolute;
+    width: 100%;
+    height: 200px;
+    top: 60%;
     background: rgba(0,0,0,0.4);
-    border: 1px solid rgba(255,255,255,0.2);
-    padding: 8px;
-    overflow: hidden;
-    z-index: 100;
+    transform: skewY(-2deg);
+}
+
+/* 🚗 CARS */
+.car {
+    position: absolute;
+    width: 60px;
+    height: 30px;
+    background: red;
+    border-radius: 4px;
+    opacity: 0.9;
+}
+
+/* NPCS */
+.npc {
+    position: absolute;
+    width: 15px;
+    height: 30px;
+    background: white;
+    opacity: 0.7;
+    border-radius: 2px;
+}
+
+/* 🌫 ATMOSPHERE */
+#fog {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle, transparent 40%, rgba(0,0,0,0.8));
+    pointer-events: none;
+}
+
+/* HUD */
+#hud {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    font-size: 11px;
+    opacity: 0.6;
 }
 </style>
 </head>
 
 <body>
 
-<div id="camera"></div>
+<div id="city"></div>
+<div class="road"></div>
 <div id="fog"></div>
-<div id="chat"></div>
-
-<!-- CITY -->
-<div id="city">
-    <div class="title">LAMBO CITY</div>
-    <button onclick="enter('yacht')">YACHT CLUB</button>
-    <button onclick="enter('store')">STORE</button>
-</div>
-
-<!-- YACHT -->
-<div id="yacht" class="interior">
-    <div class="title">YACHT CLUB</div>
-
-    <iframe
-        src="https://player.twitch.tv/?channel=lambocityrecords&parent=lambocityrecords.com"
-        allowfullscreen>
-    </iframe>
-
-    <button onclick="exitInterior()">BACK</button>
-</div>
-
-<!-- STORE -->
-<div id="store" class="interior">
-    <div class="title">STORE</div>
-    <button>HERO DROP</button>
-    <button onclick="exitInterior()">BACK</button>
-</div>
+<div id="hud">LAMBO CITY // STREET LIFE ACTIVE</div>
 
 <script>
 
 const city = document.getElementById("city");
-const yacht = document.getElementById("yacht");
-const store = document.getElementById("store");
-const camera = document.getElementById("camera");
-const chat = document.getElementById("chat");
 
-/* START */
-window.onload = () => {
-    city.style.display = "flex";
-    startChat();
-};
+/* =========================
+   🚗 SPAWN CARS (LOOPING TRAFFIC)
+========================= */
+function spawnCar() {
 
-/* 🎥 CAMERA FLASH (NOW MORE NOTICEABLE) */
-function flash() {
-    camera.style.opacity = "0.7";
-    camera.style.transform = "scale(1.4)";
-    setTimeout(() => {
-        camera.style.opacity = "0";
-    }, 300);
+    const car = document.createElement("div");
+    car.className = "car";
+
+    const y = 55 + Math.random() * 10;
+    car.style.top = y + "%";
+    car.style.left = "-80px";
+
+    document.body.appendChild(car);
+
+    let pos = -80;
+
+    let speed = 2 + Math.random() * 3;
+
+    function move() {
+        pos += speed;
+        car.style.left = pos + "px";
+
+        if (pos > window.innerWidth + 100) {
+            car.remove();
+        } else {
+            requestAnimationFrame(move);
+        }
+    }
+
+    move();
 }
 
-/* 🚪 ENTER INTERIOR */
-function enter(type) {
+/* =========================
+   🚶 NPC WALKERS
+========================= */
+function spawnNPC() {
 
-    flash();
+    const npc = document.createElement("div");
+    npc.className = "npc";
 
-    setTimeout(() => {
-        city.style.display = "none";
+    npc.style.left = Math.random() * window.innerWidth + "px";
+    npc.style.top = (60 + Math.random() * 20) + "%";
 
-        if (type === "yacht") yacht.style.display = "flex";
-        if (type === "store") store.style.display = "flex";
+    document.body.appendChild(npc);
 
-    }, 250);
+    let drift = 0;
+
+    function walk() {
+        drift += (Math.random() - 0.5) * 2;
+        npc.style.transform = `translateX(${drift}px)`;
+
+        if (Math.random() < 0.01) {
+            npc.remove();
+        } else {
+            requestAnimationFrame(walk);
+        }
+    }
+
+    walk();
 }
 
-/* 🚪 EXIT */
-function exitInterior() {
-
-    flash();
-
-    setTimeout(() => {
-        yacht.style.display = "none";
-        store.style.display = "none";
-        city.style.display = "flex";
-    }, 250);
-}
-
-/* 💬 LIFE CHAT */
-function startChat() {
-
-    const users = ["HERO", "LONG BEACH", "VIP", "DRIVER"];
-    const msgs = ["is cruising", "entered Yacht Club", "is shopping", "is online"];
-
-    setInterval(() => {
-
-        chat.innerHTML =
-        users[Math.floor(Math.random()*users.length)] +
-        ": " +
-        msgs[Math.floor(Math.random()*msgs.length)] +
-        "<br>" + chat.innerHTML;
-
-    }, 2500);
-}
+/* =========================
+   🌆 WORLD LOOP (THIS IS THE "LIVING CITY")
+========================= */
+setInterval(spawnCar, 1200);   // cars every 1.2 sec
+setInterval(spawnNPC, 900);    // NPCs constantly spawning
 
 </script>
 
