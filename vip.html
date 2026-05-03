@@ -14,28 +14,56 @@
         overflow: hidden;
     }
 
-    /* CINEMATIC BACKGROUND */
-    .bg {
+    /* LOADING SCREEN */
+    .loading {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        background: black;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        letter-spacing: 3px;
+        transition: opacity 1.2s ease;
+        z-index: 10;
+    }
+
+    .loading h1 {
+        font-size: 18px;
+        opacity: 0.8;
+    }
+
+    .dots::after {
+        content: '';
+        animation: dots 1.2s infinite;
+    }
+
+    @keyframes dots {
+        0% { content: ''; }
+        33% { content: '.'; }
+        66% { content: '..'; }
+        100% { content: '...'; }
+    }
+
+    /* MAIN VIP ROOM */
+    .vip {
         position: absolute;
         width: 100%;
         height: 100%;
         background: radial-gradient(circle at top, #111, #000);
-        animation: fadeIn 1s ease;
+        opacity: 0;
+        transition: opacity 1.5s ease;
     }
 
-    @keyframes fadeIn {
-        from {opacity: 0;}
-        to {opacity: 1;}
-    }
-
-    /* TOP HUD */
+    /* HUD */
     .hud {
         position: absolute;
         top: 20px;
         left: 20px;
-        letter-spacing: 4px;
-        font-size: 14px;
-        opacity: 0.7;
+        font-size: 12px;
+        letter-spacing: 3px;
+        opacity: 0.6;
     }
 
     /* TITLE */
@@ -47,7 +75,7 @@
         color: gold;
     }
 
-    /* STREAM FRAME */
+    /* STREAM */
     .stream {
         display: flex;
         justify-content: center;
@@ -55,19 +83,11 @@
     }
 
     iframe {
-        border: 1px solid rgba(255,255,255,0.2);
-        box-shadow: 0 0 60px rgba(255,215,0,0.08);
         width: 85%;
         max-width: 1000px;
         height: 520px;
-    }
-
-    /* STATUS BAR */
-    .status {
-        text-align: center;
-        margin-top: 15px;
-        font-size: 12px;
-        opacity: 0.6;
+        border: 1px solid rgba(255,255,255,0.2);
+        box-shadow: 0 0 60px rgba(255,215,0,0.08);
     }
 
     /* BUTTONS */
@@ -87,7 +107,6 @@
         padding: 10px 18px;
         cursor: pointer;
         letter-spacing: 2px;
-        transition: 0.3s;
     }
 
     button:hover {
@@ -95,7 +114,7 @@
         color: black;
     }
 
-    /* LIGHT GLOW EFFECT */
+    /* GLOW */
     .glow {
         position: absolute;
         width: 100%;
@@ -108,35 +127,52 @@
 
 <body>
 
-<div class="bg"></div>
-<div class="glow"></div>
-
-<div class="hud">LAMBO CITY // YACHT CLUB ACCESS GRANTED</div>
-
-<div class="title">VIP YACHT CLUB</div>
-
-<div class="stream">
-    <iframe
-        src="https://player.twitch.tv/?channel=lambocityrecords&parent=lambocityrecords.com"
-        allowfullscreen>
-    </iframe>
+<!-- CINEMATIC LOADING -->
+<div class="loading" id="loading">
+    <h1>CONNECTING TO LAMBO CITY NETWORK<span class="dots"></span></h1>
 </div>
 
-<div class="status">
-    LIVE STREAM ACTIVE • LAMBO CITY RADIO FEED LINKED
-</div>
+<!-- VIP ROOM -->
+<div class="vip" id="vip">
+    <div class="glow"></div>
 
-<div class="controls">
-    <button onclick="goCity()">EXIT TO CITY</button>
-    <button onclick="refreshStream()">REFRESH STREAM</button>
+    <div class="hud">VIP ACCESS // VERIFIED</div>
+
+    <div class="title">YACHT CLUB</div>
+
+    <div class="stream">
+        <iframe
+            src="https://player.twitch.tv/?channel=lambocityrecords&parent=lambocityrecords.com"
+            allowfullscreen>
+        </iframe>
+    </div>
+
+    <div class="controls">
+        <button onclick="exitCity()">EXIT TO CITY</button>
+        <button onclick="reload()">REFRESH STREAM</button>
+    </div>
 </div>
 
 <script>
-function goCity() {
+/* CINEMATIC ENTRY SEQUENCE */
+window.onload = function () {
+    setTimeout(() => {
+        document.getElementById("loading").style.opacity = "0";
+
+        setTimeout(() => {
+            document.getElementById("loading").style.display = "none";
+            document.getElementById("vip").style.opacity = "1";
+        }, 1200);
+
+    }, 2000);
+};
+
+/* BUTTONS */
+function exitCity() {
     window.location.href = "index.html";
 }
 
-function refreshStream() {
+function reload() {
     location.reload();
 }
 </script>
