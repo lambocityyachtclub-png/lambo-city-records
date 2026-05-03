@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Lambo City Map</title>
+<title>Lambo City OS</title>
 
 <style>
 body {
@@ -11,10 +11,36 @@ body {
   font-family: Arial;
   background: black;
   color: white;
-  overflow-x: hidden;
+  overflow: hidden;
 }
 
-/* BACKGROUND */
+/* LOADING SCREEN */
+#loading {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  background: black;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  z-index: 10;
+}
+
+.loader-text {
+  color: gold;
+  font-size: 28px;
+  letter-spacing: 2px;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.3; }
+  50% { opacity: 1; }
+  100% { opacity: 0.3; }
+}
+
+/* MAIN BACKGROUND */
 .bg {
   position: fixed;
   width: 100%;
@@ -29,6 +55,7 @@ body {
   min-height: 100vh;
   background: rgba(0,0,0,0.75);
   padding: 20px;
+  display: none;
 }
 
 /* TITLE */
@@ -37,33 +64,24 @@ body {
   font-size: 55px;
   color: gold;
   font-weight: bold;
-  letter-spacing: 3px;
 }
 
-.subtitle {
-  text-align: center;
-  color: #ccc;
-  margin-bottom: 20px;
-}
-
-/* MAP GRID */
+/* MAP */
 .map {
-  max-width: 1000px;
-  margin: auto;
+  max-width: 900px;
+  margin: 30px auto;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 15px;
 }
 
-/* DISTRICTS */
 .zone {
   border: 1px solid rgba(255,215,0,0.5);
   padding: 30px;
   text-align: center;
   cursor: pointer;
-  background: rgba(0,0,0,0.5);
+  background: rgba(0,0,0,0.6);
   transition: 0.3s;
-  border-radius: 10px;
 }
 
 .zone:hover {
@@ -74,11 +92,10 @@ body {
 /* PANEL */
 .panel {
   max-width: 900px;
-  margin: 30px auto;
-  border: 1px solid gold;
+  margin: auto;
   padding: 20px;
+  border: 1px solid gold;
   background: rgba(0,0,0,0.6);
-  border-radius: 10px;
 }
 
 /* ENTER BUTTON */
@@ -86,25 +103,33 @@ body {
   display: block;
   width: 300px;
   margin: 30px auto;
-  text-align: center;
   padding: 15px;
   background: gold;
   color: black;
   font-weight: bold;
+  text-align: center;
   text-decoration: none;
-  border-radius: 10px;
 }
 </style>
 </head>
 
 <body>
 
+<!-- LOADING SCREEN -->
+<div id="loading">
+  <div class="loader-text">LAMBO CITY OS BOOTING...</div>
+  <div class="loader-text" style="font-size:14px;margin-top:10px;">
+    syncing yacht club • loading studio grid • initializing drops
+  </div>
+</div>
+
+<!-- BACKGROUND -->
 <div class="bg"></div>
 
-<div class="overlay">
+<!-- MAIN -->
+<div class="overlay" id="main">
 
-<div class="title">LAMBO CITY MAP</div>
-<div class="subtitle">Click a district to enter different parts of the city</div>
+<div class="title">LAMBO CITY OS</div>
 
 <div class="map">
 
@@ -116,7 +141,7 @@ body {
 </div>
 
 <div class="panel" id="panel">
-Welcome to the Lambo City Map. Select a district to explore.
+Welcome to Lambo City OS. Select a district to enter the system.
 </div>
 
 <a class="enter" href="/vip.html">ENTER YACHT CLUB PORTAL</a>
@@ -125,23 +150,30 @@ Welcome to the Lambo City Map. Select a district to explore.
 
 <script>
 
+/* BOOT SEQUENCE */
+setTimeout(() => {
+  document.getElementById("loading").style.display = "none";
+  document.getElementById("main").style.display = "block";
+}, 2500);
+
+/* ZONES */
 function openZone(zone) {
   const panel = document.getElementById("panel");
 
   if (zone === "studio") {
-    panel.innerHTML = "🎵 Studio District: HERO is recording new records in Lambo City Studios.";
+    panel.innerHTML = "🎵 Studio District: HERO is recording new Lambo City records.";
   }
 
   if (zone === "yacht") {
-    panel.innerHTML = "🛥 Yacht Club: Private luxury events and invite-only gatherings.";
+    panel.innerHTML = "🛥 Yacht Club: Exclusive events, invite-only experiences, luxury access.";
   }
 
   if (zone === "drops") {
-    panel.innerHTML = "🔥 Drop Zone: Upcoming releases, NFTs, and exclusive content loading soon.";
+    panel.innerHTML = "🔥 Drop Zone: Music drops, NFT releases, and upcoming launches.";
   }
 
   if (zone === "vip") {
-    panel.innerHTML = "🔐 VIP Vault: Access restricted. Boarding pass required in Yacht Club portal.";
+    panel.innerHTML = "🔐 VIP Vault: Locked. Access requires Yacht Club boarding pass.";
   }
 }
 
