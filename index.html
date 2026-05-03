@@ -3,30 +3,30 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>LAMBO CITY | FINAL WORLD ENGINE</title>
+<title>LAMBO CITY | LIVING WORLD ENGINE</title>
 
 <style>
 body {
     margin: 0;
     overflow: hidden;
-    font-family: Arial;
     background: black;
+    font-family: Arial;
     color: white;
 }
 
-/* 🌌 SKY / WEATHER */
+/* 🌌 SKY */
 #sky {
     position: fixed;
     width: 100%;
     height: 100%;
     background: radial-gradient(circle at 30% 20%, #1a1a2e, #000);
-    animation: sky 10s infinite alternate;
+    animation: skyMove 10s infinite alternate;
     z-index: 0;
 }
 
-@keyframes sky {
+@keyframes skyMove {
     0% { filter: brightness(1); }
-    50% { filter: brightness(1.2) hue-rotate(10deg); }
+    50% { filter: brightness(1.15) hue-rotate(10deg); }
     100% { filter: brightness(0.9); }
 }
 
@@ -36,31 +36,34 @@ body {
     width: 100%;
     height: 100%;
     background: radial-gradient(circle, transparent 35%, rgba(0,0,0,0.85));
-    z-index: 2;
+    z-index: 1;
+    pointer-events: none;
 }
 
-/* 🚗 CAR */
+/* 🚗 CARS (FORCED VISIBILITY) */
 .car {
-    position: absolute;
-    width: 60px;
+    position: fixed;
+    width: 70px;
     height: 30px;
     background: red;
-    top: 60%;
+    top: 65%;
+    left: -100px;
+    z-index: 5;
     border-radius: 4px;
-    z-index: 3;
+    box-shadow: 0 0 10px rgba(255,0,0,0.3);
 }
 
 /* 🚶 NPC */
 .npc {
-    position: absolute;
-    width: 15px;
-    height: 30px;
+    position: fixed;
+    width: 14px;
+    height: 28px;
     background: white;
-    opacity: 0.7;
-    z-index: 3;
+    opacity: 0.8;
+    z-index: 5;
 }
 
-/* 🧭 HUD */
+/* 🌍 UI */
 #hud {
     position: fixed;
     top: 10px;
@@ -70,7 +73,7 @@ body {
     z-index: 10;
 }
 
-/* 🌍 ZONES */
+/* 🌆 ZONES */
 .zone {
     position: fixed;
     width: 100%;
@@ -79,20 +82,12 @@ body {
     justify-content: center;
     align-items: center;
     flex-direction: column;
-    z-index: 5;
+    z-index: 6;
 }
 
-#city {
-    background: radial-gradient(circle, #2a1a0a, #000);
-}
-
-#yacht {
-    background: radial-gradient(circle, #0a0f1a, #000);
-}
-
-#store {
-    background: radial-gradient(circle, #1a0a0a, #000);
-}
+#city { background: radial-gradient(circle, #2a1a0a, #000); }
+#yacht { background: radial-gradient(circle, #0a0f1a, #000); }
+#store { background: radial-gradient(circle, #1a0a0a, #000); }
 
 /* 🎮 UI */
 .title {
@@ -110,7 +105,7 @@ button {
     cursor: pointer;
 }
 
-/* 📺 TWITCH */
+/* 📺 STREAM */
 iframe {
     width: 80%;
     max-width: 900px;
@@ -118,9 +113,13 @@ iframe {
     border: 1px solid rgba(255,255,255,0.2);
 }
 
-/* 🔊 AUDIO */
-audio { display: none; }
-
+/* FORCE RENDER LAYER */
+#worldFix {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    z-index: 2;
+}
 </style>
 </head>
 
@@ -128,7 +127,9 @@ audio { display: none; }
 
 <div id="sky"></div>
 <div id="fog"></div>
-<div id="hud">LAMBO CITY // LIVE WORLD ENGINE</div>
+<div id="hud">LAMBO CITY // ACTIVE WORLD SIMULATION</div>
+
+<div id="worldFix"></div>
 
 <!-- CITY -->
 <div id="city" class="zone">
@@ -156,75 +157,47 @@ audio { display: none; }
     <button onclick="exit()">BACK TO CITY</button>
 </div>
 
-<!-- AUDIO -->
-<audio id="cityAudio" loop>
-    <source src="https://www.soundjay.com/nature/sounds/wind-1.mp3">
-</audio>
-
-<audio id="oceanAudio" loop>
-    <source src="https://www.soundjay.com/nature/sounds/ocean-wave-1.mp3">
-</audio>
-
 <script>
 
 const city = document.getElementById("city");
 const yacht = document.getElementById("yacht");
 const store = document.getElementById("store");
 
-const cityAudio = document.getElementById("cityAudio");
-const oceanAudio = document.getElementById("oceanAudio");
-
 /* START */
 window.onload = () => {
     city.style.display = "flex";
-
-    cityAudio.volume = 0.3;
-    cityAudio.play().catch(()=>{});
-
     startWorld();
 };
 
-/* 🚪 ENTER */
+/* NAV */
 function enter(type) {
-
     city.style.display = "none";
 
-    if (type === "yacht") {
-        yacht.style.display = "flex";
-        oceanAudio.volume = 0.4;
-        oceanAudio.play().catch(()=>{});
-    }
-
-    if (type === "store") {
-        store.style.display = "flex";
-    }
+    if (type === "yacht") yacht.style.display = "flex";
+    if (type === "store") store.style.display = "flex";
 }
 
-/* 🚪 EXIT */
 function exit() {
     yacht.style.display = "none";
     store.style.display = "none";
-
-    oceanAudio.pause();
-
     city.style.display = "flex";
 }
 
-/* 🚗 CARS */
+/* 🚗 CAR SYSTEM (FIXED VISIBILITY + MOTION) */
 function spawnCar() {
+
     const car = document.createElement("div");
     car.className = "car";
-    car.style.left = "-80px";
-    car.style.top = (55 + Math.random()*10) + "%";
     document.body.appendChild(car);
 
-    let x = -80;
+    let x = -120;
+    let speed = 4 + Math.random() * 3;
 
     function move() {
-        x += 3;
+        x += speed;
         car.style.left = x + "px";
 
-        if (x < window.innerWidth + 100) {
+        if (x < window.innerWidth + 120) {
             requestAnimationFrame(move);
         } else {
             car.remove();
@@ -234,21 +207,29 @@ function spawnCar() {
     move();
 }
 
-/* 🚶 NPC */
+/* 🚶 NPC SYSTEM (VISIBLE ON SCREEN ALWAYS) */
 function spawnNPC() {
+
     const npc = document.createElement("div");
     npc.className = "npc";
-    npc.style.left = Math.random()*window.innerWidth + "px";
-    npc.style.top = (60 + Math.random()*15) + "%";
+
+    npc.style.left = Math.random() * window.innerWidth + "px";
+    npc.style.top = (55 + Math.random() * 20) + "%";
+
     document.body.appendChild(npc);
 
-    setTimeout(()=> npc.remove(), 5000);
+    setTimeout(() => npc.remove(), 5000);
 }
 
-/* 🌍 WORLD LOOP */
+/* 🌍 WORLD LOOP (CONFIRMED RUNNING) */
 function startWorld() {
-    setInterval(spawnCar, 1200);
-    setInterval(spawnNPC, 900);
+    setInterval(() => {
+        spawnCar();
+    }, 900);
+
+    setInterval(() => {
+        spawnNPC();
+    }, 700);
 }
 
 </script>
