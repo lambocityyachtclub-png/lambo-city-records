@@ -21,6 +21,7 @@ body {
   align-items:center;
   height:100vh;
   flex-direction:column;
+  background:black;
 }
 
 #enterBtn {
@@ -28,7 +29,6 @@ body {
   background:gold;
   border:none;
   cursor:pointer;
-  font-size:16px;
 }
 
 / WORLD /
@@ -39,24 +39,36 @@ body {
   width:100%;
   height:100%;
   display:none;
-  overflow:hidden;
 }
 
-/ VIDEO BG /
+/ VIDEO /
 #bgVideo {
   position:absolute;
   width:100%;
   height:100%;
   object-fit:cover;
-  z-index:-1;
+  z-index:-2;
 }
 
-/ OVERLAY /
+/ DARK OVERLAY /
 #overlay {
   position:absolute;
   width:100%;
   height:100%;
-  background:rgba(0,0,0,0.6);
+  background:rgba(0,0,0,0.7);
+  z-index:-1;
+}
+
+/ GLOW /
+.glow {
+  text-shadow:0 0 10px gold, 0 0 20px gold;
+}
+
+/ HUD /
+#hud {
+  position:absolute;
+  width:100%;
+  height:100%;
 }
 
 / ACTIVITY /
@@ -67,36 +79,38 @@ body {
   font-size:14px;
 }
 
-/ BUTTONS /
+/ TOP RIGHT /
 #exitBtn {
   position:absolute;
   top:20px;
   right:20px;
 }
 
-#audioBtn {
+/ BOTTOM LEFT CONTROLS /
+#controls {
   position:absolute;
   bottom:20px;
   left:20px;
 }
 
-#vipBtn {
-  position:absolute;
-  bottom:20px;
-  right:20px;
-  background:gold;
-  border:none;
+button {
+  margin:5px;
   padding:10px;
+  background:black;
+  color:white;
+  border:1px solid gold;
+  cursor:pointer;
 }
 
-/ TWITCH /
-#twitch {
+/ TWITCH SCREEN /
+#twitchBox {
   position:absolute;
   top:20%;
   left:25%;
   width:50%;
   height:50%;
   border:2px solid gold;
+  box-shadow:0 0 20px gold;
 }
 
 / VIP */
@@ -118,8 +132,8 @@ body {
 <body>
 
 <div id="main">
-  <h1>LAMBO CITY</h1>
-  <button id="enterBtn" onclick="openWorld()">ENTER LAMBO CITY</button>
+  <h1 class="glow">LAMBO CITY</h1>
+  <button id="enterBtn" onclick="openWorld()">ENTER</button>
 </div>
 
 <div id="world">
@@ -130,27 +144,36 @@ body {
 
   <div id="overlay"></div>
 
-  <button id="exitBtn" onclick="closeWorld()">EXIT</button>
+  <div id="hud">
 
-  <div id="activity">Initializing city...</div>
+    <div id="activity">City initializing...</div>
 
-  <iframe id="twitch"
-    src="https://player.twitch.tv/?channel=twitch&parent=lambocityrecords.com"
-    frameborder="0"
-    allowfullscreen="true">
-  </iframe>
+    <button id="exitBtn" onclick="closeWorld()">EXIT</button>
 
-  <audio id="radio" autoplay loop>
+    <div id="controls">
+      <button onclick="playRadio()">RADIO</button>
+      <button onclick="playLive()">LIVE</button>
+      <button onclick="openVIP()">YACHT CLUB</button>
+    </div>
+
+    <div id="twitchBox">
+      <iframe id="twitch"
+        src="https://player.twitch.tv/?channel=twitch&parent=lambocityrecords.com"
+        width="100%" height="100%"
+        frameborder="0"
+        allowfullscreen="true">
+      </iframe>
+    </div>
+
+  </div>
+
+  <audio id="radio" loop>
     <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
   </audio>
 
-  <button id="audioBtn" onclick="toggleAudio()">TOGGLE RADIO</button>
-
-  <button id="vipBtn" onclick="openVIP()">ENTER YACHT CLUB</button>
-
   <div id="vip">
     <button id="exitBtn" onclick="closeVIP()">EXIT VIP</button>
-    <h2>YACHT CLUB ACCESS GRANTED</h2>
+    <h2 class="glow">YACHT CLUB ACCESS GRANTED</h2>
   </div>
 
 </div>
@@ -159,15 +182,19 @@ body {
 function openWorld(){
   document.getElementById("world").style.display="block";
   startActivity();
+  playRadio();
 }
 
 function closeWorld(){
   document.getElementById("world").style.display="none";
 }
 
-function toggleAudio(){
-  const audio=document.getElementById("radio");
-  if(audio.paused){audio.play();}else{audio.pause();}
+function playRadio(){
+  document.getElementById("radio").play();
+}
+
+function playLive(){
+  document.getElementById("radio").pause();
 }
 
 function openVIP(){
@@ -181,11 +208,11 @@ function closeVIP(){
 function startActivity(){
   const messages=[
     "DJ HERO live now",
-    "Yacht access granted",
+    "Dock lights active",
+    "Yacht club preparing access",
+    "Live broadcast running",
     "Members entering lounge",
-    "Live stream active",
-    "Radio synced",
-    "Dock traffic increasing"
+    "Radio synced"
   ];
   let i=0;
   setInterval(()=>{
