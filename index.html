@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>LAMBO CITY</title>
 
 <style>
 body {
   margin: 0;
-  font-family: Arial, sans-serif;
+  font-family: Arial;
   background: black;
   color: white;
   overflow: hidden;
@@ -17,136 +17,147 @@ body {
 /* ENTRY */
 #home {
   height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-direction: column;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  flex-direction:column;
   background: radial-gradient(circle, #111, #000);
 }
 
 #enterBtn {
-  padding: 14px 26px;
+  padding:14px 26px;
   background: gold;
-  border: none;
-  cursor: pointer;
-  font-weight: bold;
+  border:none;
+  cursor:pointer;
+  font-weight:bold;
 }
 
 /* WORLD */
 #world {
-  display: none;
-  position: fixed;
-  inset: 0;
-  overflow: hidden;
+  display:none;
+  position:fixed;
+  inset:0;
+  overflow:hidden;
 }
 
-/* LIVING BACKGROUND */
+/* OCEAN LIGHT BASE */
 #bg {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(120deg, #050505, #0b0b0b, #000);
-  animation: pulse 8s infinite alternate;
-  z-index: -3;
+  position:absolute;
+  inset:0;
+  background: radial-gradient(circle at 50% 20%, rgba(0,180,255,0.15), transparent 60%),
+              linear-gradient(120deg, #020202, #050505, #000);
+  animation: oceanPulse 6s infinite alternate;
+  z-index:-3;
 }
 
-@keyframes pulse {
-  0% { filter: brightness(1); }
-  100% { filter: brightness(1.3); }
+@keyframes oceanPulse {
+  0% { filter: brightness(1); transform: scale(1); }
+  100% { filter: brightness(1.25); transform: scale(1.02); }
+}
+
+/* MOVING FOG LAYER */
+#fog {
+  position:absolute;
+  inset:0;
+  background: url("https://www.transparenttextures.com/patterns/clouds.png");
+  opacity:0.05;
+  animation: drift 30s linear infinite;
+  z-index:-2;
+}
+
+@keyframes drift {
+  from { transform: translateX(0); }
+  to { transform: translateX(-200px); }
 }
 
 /* OVERLAY DEPTH */
 #overlay {
-  position: absolute;
-  inset: 0;
+  position:absolute;
+  inset:0;
   background: radial-gradient(circle at top, rgba(255,215,0,0.08), transparent 60%),
               rgba(0,0,0,0.65);
-  z-index: -2;
+  z-index:-1;
 }
 
 /* HUD */
 #hud {
-  position: absolute;
-  inset: 0;
+  position:absolute;
+  inset:0;
 }
 
-/* ACTIVITY FEED */
+/* ACTIVITY */
 #activity {
-  position: absolute;
-  top: 20px;
-  left: 20px;
-  font-size: 14px;
-  opacity: 0.85;
+  position:absolute;
+  top:20px;
+  left:20px;
+  font-size:14px;
+  opacity:0.85;
 }
 
 /* CONTROLS */
 #controls {
-  position: absolute;
-  bottom: 20px;
-  left: 20px;
-  display: flex;
-  gap: 8px;
+  position:absolute;
+  bottom:20px;
+  left:20px;
+  display:flex;
+  gap:8px;
 }
 
 button {
-  padding: 10px;
-  background: black;
-  border: 1px solid gold;
-  color: white;
-  cursor: pointer;
+  padding:10px;
+  background:black;
+  border:1px solid gold;
+  color:white;
+  cursor:pointer;
 }
 
 /* EXIT */
 #exitBtn {
-  position: absolute;
-  top: 20px;
-  right: 20px;
+  position:absolute;
+  top:20px;
+  right:20px;
 }
 
 /* TWITCH */
 #twitchBox {
-  position: absolute;
-  top: 18%;
-  left: 25%;
-  width: 50%;
-  height: 50%;
-  border: 2px solid gold;
-  box-shadow: 0 0 25px rgba(255,215,0,0.5);
+  position:absolute;
+  top:18%;
+  left:25%;
+  width:50%;
+  height:50%;
+  border:2px solid gold;
+  box-shadow:0 0 30px rgba(255,215,0,0.4);
 }
 
-/* VIP LAYER */
+/* VIP */
 #vip {
-  display: none;
-  position: absolute;
-  inset: 0;
+  display:none;
+  position:absolute;
+  inset:0;
   background: rgba(0,0,0,0.96);
-  z-index: 10;
-  text-align: center;
-  padding-top: 120px;
+  text-align:center;
+  padding-top:120px;
 }
-
-#vip h1 {
-  color: gold;
-}
+#vip h1 { color: gold; }
 </style>
 </head>
 
 <body>
 
-<!-- ENTRY -->
 <div id="home">
   <h1>LAMBO CITY</h1>
   <button id="enterBtn" onclick="enterWorld()">ENTER WORLD</button>
 </div>
 
-<!-- WORLD -->
 <div id="world">
 
   <div id="bg"></div>
+  <div id="fog"></div>
   <div id="overlay"></div>
 
   <div id="hud">
 
-    <div id="activity">Initializing LAMBO CITY...</div>
+    <div id="activity">Initializing ocean systems...</div>
 
     <button id="exitBtn" onclick="exitWorld()">EXIT</button>
 
@@ -156,7 +167,6 @@ button {
       <button onclick="openVIP()">VIP</button>
     </div>
 
-    <!-- TWITCH -->
     <div id="twitchBox">
       <iframe
         src="https://player.twitch.tv/?channel=twitch&parent=lambocityrecords.com"
@@ -168,32 +178,42 @@ button {
 
   </div>
 
-  <!-- AUDIO -->
   <audio id="radio" loop>
     <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3">
   </audio>
 
-  <!-- VIP -->
   <div id="vip">
-    <button onclick="closeVIP()" style="position:absolute; top:20px; right:20px;">EXIT VIP</button>
+    <button onclick="closeVIP()" style="position:absolute;top:20px;right:20px;">EXIT VIP</button>
     <h1>YACHT CLUB ACCESS</h1>
-    <p>Welcome to the private layer of LAMBO CITY</p>
   </div>
 
 </div>
 
 <script>
 
-let activityLoop = null;
-let worldActive = false;
+let loop = null;
 
 function enterWorld() {
   document.getElementById("home").style.display = "none";
   document.getElementById("world").style.display = "block";
 
-  if (!worldActive) {
-    worldActive = true;
-    startActivity();
+  if (!loop) {
+    const messages = [
+      "Ocean systems online",
+      "DJ HERO LIVE",
+      "Dock lights syncing",
+      "Yacht approaching",
+      "Radio connected",
+      "City is alive"
+    ];
+
+    let i = 0;
+
+    loop = setInterval(() => {
+      document.getElementById("activity").innerText =
+        messages[i % messages.length];
+      i++;
+    }, 2000);
   }
 
   document.getElementById("radio").play().catch(()=>{});
@@ -203,9 +223,9 @@ function exitWorld() {
   document.getElementById("world").style.display = "none";
   document.getElementById("home").style.display = "flex";
 
-  if (activityLoop) {
-    clearInterval(activityLoop);
-    activityLoop = null;
+  if (loop) {
+    clearInterval(loop);
+    loop = null;
   }
 
   closeVIP();
@@ -225,28 +245,6 @@ function openVIP() {
 
 function closeVIP() {
   document.getElementById("vip").style.display = "none";
-}
-
-function startActivity() {
-
-  if (activityLoop) return;
-
-  const messages = [
-    "DJ HERO LIVE",
-    "Dock systems active",
-    "Yacht approaching harbor",
-    "Radio synced",
-    "VIP systems online",
-    "City is alive"
-  ];
-
-  let i = 0;
-
-  activityLoop = setInterval(() => {
-    document.getElementById("activity").innerText =
-      messages[i % messages.length];
-    i++;
-  }, 2200);
 }
 
 </script>
