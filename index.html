@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LAMBO CITY</title>
+<title>LAMBO CITY RECORDS</title>
 
 <style>
 body {
@@ -11,121 +11,143 @@ body {
   font-family: Arial, sans-serif;
   background: black;
   color: white;
-  overflow: hidden;
 }
 
-.screen {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  display: none;
-}
-
-.active {
+/* MAIN SITE /
+#main {
   display: flex;
-}
-
-/* ENTRY /
-#entry {
   justify-content: center;
   align-items: center;
+  height: 100vh;
   flex-direction: column;
+  text-align: center;
 }
 
-#entry h1 {
-  font-size: 32px;
-  letter-spacing: 2px;
+#main h1 {
+  font-size: 40px;
+  letter-spacing: 3px;
 }
 
-button {
+/ ENTER BUTTON /
+#enterBtn {
+  margin-top: 20px;
   padding: 15px 30px;
   background: gold;
   border: none;
-  font-size: 16px;
   cursor: pointer;
+  font-size: 16px;
 }
 
-/ DOCK /
-#dock {
-  flex-direction: column;
-  background: linear-gradient(to top, #000000, #111111);
+/ WORLD OVERLAY /
+#world {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: black;
+  display: none;
+  overflow: hidden;
 }
 
+/ ACTIVITY /
 #activity {
   position: absolute;
   top: 20px;
   left: 20px;
-  font-size: 14px;
   opacity: 0.8;
 }
 
-/ YACHT /
-#yacht {
-  flex-direction: column;
-  align-items: center;
-  background: radial-gradient(circle, #111, #000);
+/ EXIT /
+#exitBtn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 10;
 }
 
-#yacht h2 {
-  margin-top: 40px;
-}
-
-/ TWITCH */
+/ TWITCH /
 #twitch {
-  width: 60%;
+  position: absolute;
+  top: 20%;
+  left: 25%;
+  width: 50%;
   height: 50%;
   border: 2px solid gold;
-  margin-top: 40px;
+}
+
+/ AUDIO TOGGLE */
+#audioBtn {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
 }
 </style>
+
 </head>
 
 <body>
 
-<div id="entry" class="screen active">
-  <h1>WELCOME TO LAMBO CITY</h1>
-  <button onclick="enterCity()">ENTER</button>
+<!-- MAIN SITE -->
+<div id="main">
+  <h1>LAMBO CITY RECORDS</h1>
+  <button id="enterBtn" onclick="openWorld()">ENTER LAMBO CITY</button>
 </div>
 
-<div id="dock" class="screen">
+<!-- WORLD -->
+<div id="world">
+
+  <button id="exitBtn" onclick="closeWorld()">EXIT</button>
+
   <div id="activity">Initializing...</div>
-</div>
 
-<div id="yacht" class="screen">
-  <h2>YACHT CLUB</h2>
   <iframe id="twitch"
     src="https://player.twitch.tv/?channel=twitch&parent=lambocityrecords.com"
     frameborder="0"
     allowfullscreen="true">
   </iframe>
+
+  <audio id="radio" autoplay loop>
+    <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
+  </audio>
+
+  <button id="audioBtn" onclick="toggleAudio()">TOGGLE RADIO</button>
+
 </div>
 
 <script>
-function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
+function openWorld() {
+  document.getElementById("world").style.display = "block";
+  startActivity();
 }
 
-function enterCity() {
-  showScreen('dock');
-  startActivity();
-  setTimeout(() => {
-    showScreen('yacht');
-  }, 4000);
+function closeWorld() {
+  document.getElementById("world").style.display = "none";
+}
+
+function toggleAudio() {
+  const audio = document.getElementById("radio");
+  if (audio.paused) {
+    audio.play();
+  } else {
+    audio.pause();
+  }
 }
 
 function startActivity() {
   const messages = [
-    "DJ HERO joined the city",
-    "Boarding pass verified",
-    "Yacht access initializing",
-    "Live broadcast starting",
-    "3 members in lounge",
-    "Dock activity detected"
+    "DJ HERO live now",
+    "Yacht access granted",
+    "Members entering lounge",
+    "Live stream active",
+    "Radio synced",
+    "Dock traffic increasing"
   ];
+
   let i = 0;
+
   setInterval(() => {
-    document.getElementById('activity').innerText = messages[i % messages.length];
+    document.getElementById("activity").innerText = messages[i % messages.length];
     i++;
   }, 2000);
 }
