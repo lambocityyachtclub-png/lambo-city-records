@@ -3,45 +3,28 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>LAMBO CITY - OCEAN WORLD</title>
+<title>LAMBO CITY - DOCK SYSTEM</title>
 
 <style>
 body {
   margin: 0;
   overflow: hidden;
-  font-family: Arial, sans-serif;
+  font-family: Arial;
   background: black;
   color: white;
 }
 
-/* UI LAYER */
+/* CANVAS */
+canvas {
+  display: block;
+}
+
+/* UI */
 #ui {
   position: absolute;
+  inset: 0;
   z-index: 10;
-  width: 100%;
-  height: 100%;
   pointer-events: none;
-}
-
-/* ENTRY */
-#home {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  flex-direction:column;
-  background: rgba(0,0,0,0.5);
-  pointer-events: auto;
-}
-
-#enterBtn {
-  padding: 14px 26px;
-  background: gold;
-  border: none;
-  cursor: pointer;
-  font-weight: bold;
 }
 
 /* HUD */
@@ -60,8 +43,8 @@ button {
   border: 1px solid gold;
   color: white;
   cursor: pointer;
-  margin-right: 5px;
   pointer-events: auto;
+  margin-right: 6px;
 }
 
 /* VIP */
@@ -74,115 +57,134 @@ button {
   text-align:center;
   padding-top:120px;
 }
+
+/* ENTRY */
+#home {
+  position:absolute;
+  inset:0;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  flex-direction:column;
+  background: rgba(0,0,0,0.6);
+  pointer-events:auto;
+}
 </style>
 </head>
 
 <body>
 
-<!-- THREE.JS CANVAS -->
 <canvas id="c"></canvas>
 
-<!-- UI -->
 <div id="ui">
 
-  <!-- ENTRY -->
   <div id="home">
     <h1>LAMBO CITY</h1>
-    <button id="enterBtn" onclick="enterWorld()">ENTER WORLD</button>
+    <button onclick="enterWorld()">ENTER WORLD</button>
   </div>
 
-  <!-- HUD -->
   <div id="hud">
-    <div id="status">Ocean systems offline</div>
-    <button onclick="openVIP()">VIP</button>
-    <button onclick="toggleAudio()">RADIO</button>
+    <div id="status">SYSTEM OFFLINE</div>
+    <button onclick="toggleVIP()">VIP</button>
   </div>
 
-  <!-- VIP -->
   <div id="vip">
     <button onclick="closeVIP()" style="position:absolute;top:20px;right:20px;">EXIT VIP</button>
-    <h1>YACHT CLUB</h1>
+    <h1>YACHT CLUB INTERIOR</h1>
   </div>
 
 </div>
 
-<!-- AUDIO -->
 <audio id="radio" loop>
   <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3">
 </audio>
 
-<!-- THREE.JS -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
 <script>
 
-// ===== THREE.JS OCEAN WORLD =====
-let scene, camera, renderer, water, time = 0;
+// ===== SCENE SETUP =====
+let scene, camera, renderer;
+let ocean, yacht;
+let mode = "idle";
+let t = 0;
 
-function initOcean() {
+// yacht position (target dock)
+const dockTarget = new THREE.Vector3(0, 0, -10);
+
+init();
+
+function init() {
 
   scene = new THREE.Scene();
 
-  camera = new THREE.PerspectiveCamera(
-    75,
-    window.innerWidth/window.innerHeight,
-    0.1,
-    1000
-  );
+  camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+  camera.position.set(0, 8, 25);
 
-  camera.position.set(0, 10, 20);
-
-  renderer = new THREE.WebGLRenderer({
-    canvas: document.getElementById("c"),
-    alpha: true
-  });
-
+  renderer = new THREE.WebGLRenderer({ canvas: document.getElementById("c"), alpha: true });
   renderer.setSize(window.innerWidth, window.innerHeight);
 
-  // WATER PLANE
-  const geometry = new THREE.PlaneGeometry(200, 200, 100, 100);
+  // 🌊 OCEAN
+  const geo = new THREE.PlaneGeometry(200, 200, 80, 80);
+  const mat = new THREE.MeshBasicMaterial({ color: 0x001a33, wireframe: true });
+  ocean = new THREE.Mesh(geo, mat);
+  ocean.rotation.x = -Math.PI / 2;
+  scene.add(ocean);
 
-  const material = new THREE.MeshBasicMaterial({
-    color: 0x001a33,
-    wireframe: true
-  });
-
-  water = new THREE.Mesh(geometry, material);
-  water.rotation.x = -Math.PI / 2;
-
-  scene.add(water);
+  // 🛥 YACHT (simple block representation)
+  const yachtGeo = new THREE.BoxGeometry(2, 1, 6);
+  const yachtMat = new THREE.MeshBasicMaterial({ color: 0xd4af37 });
+  yacht = new THREE.Mesh(yachtGeo, yachtMat);
+  yacht.position.set(0, 0.5, -10);
+  scene.add(yacht);
 
   animate();
 }
 
+// ===== ANIMATION LOOP =====
 function animate() {
-
   requestAnimationFrame(animate);
 
-  time += 0.02;
+  t += 0.02;
 
-  // wave motion
-  const vertices = water.geometry.attributes.position.array;
+  // ocean wave illusion
+  const pos = ocean.geometry.attributes.position.array;
 
-  for (let i = 0; i < vertices.length; i += 3) {
-    vertices[i + 2] = Math.sin((i + time) * 0.1) * 1.5;
+  for (let i = 0; i < pos.length; i += 3) {
+    pos[i + 2] = Math.sin((i + t) * 0.05) * 1.2;
   }
 
-  water.geometry.attributes.position.needsUpdate = true;
+  ocean.geometry.attributes.position.needsUpdate = true;
 
-  camera.position.x = Math.sin(time * 0.2) * 5;
-  camera.lookAt(0, 0, 0);
+  // camera behavior
+  if (mode === "approach") {
+
+    camera.position.x += (yacht.position.x - camera.position.x) * 0.02;
+    camera.position.z += (yacht.position.z + 8 - camera.position.z) * 0.02;
+    camera.position.y += (5 - camera.position.y) * 0.02;
+
+    camera.lookAt(yacht.position);
+
+    // trigger VIP when close
+    if (camera.position.distanceTo(yacht.position) < 6) {
+      openVIP();
+      mode = "vip";
+    }
+
+  } else {
+    camera.lookAt(0, 0, 0);
+  }
 
   renderer.render(scene, camera);
 }
 
-// ===== GAME SYSTEM =====
+// ===== GAME FLOW =====
 
 function enterWorld() {
   document.getElementById("home").style.display = "none";
-  document.getElementById("status").innerText = "Ocean systems online";
+  document.getElementById("status").innerText = "Ocean online - Yacht detected";
 
-  initOcean();
+  mode = "approach";
 
   document.getElementById("radio").play().catch(()=>{});
 }
@@ -193,12 +195,12 @@ function openVIP() {
 
 function closeVIP() {
   document.getElementById("vip").style.display = "none";
+  mode = "idle";
 }
 
-function toggleAudio() {
-  let audio = document.getElementById("radio");
-  if (audio.paused) audio.play();
-  else audio.pause();
+function toggleVIP() {
+  const vip = document.getElementById("vip");
+  vip.style.display = vip.style.display === "block" ? "none" : "block";
 }
 
 </script>
