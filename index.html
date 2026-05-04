@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>LAMBO CITY - GAME LOOP</title>
+<title>LAMBO CITY - ZONES</title>
 
 <style>
 body {
@@ -14,42 +14,27 @@ body {
   color: white;
 }
 
-/* CANVAS */
-canvas {
-  display: block;
-}
+canvas { display:block; }
 
-/* UI */
 #ui {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
+  position:absolute;
+  inset:0;
+  pointer-events:none;
 }
 
 /* HUD */
 #hud {
-  position: absolute;
-  top: 20px;
-  left: 20px;
-  font-size: 14px;
-  opacity: 0.85;
-}
-
-/* BUTTONS */
-button {
-  padding: 10px;
-  background: black;
-  border: 1px solid gold;
-  color: white;
-  cursor: pointer;
-  pointer-events: auto;
-  margin-right: 6px;
+  position:absolute;
+  top:20px;
+  left:20px;
+  font-size:14px;
+  opacity:0.85;
 }
 
 /* ENTRY */
 #home {
-  position: absolute;
-  inset: 0;
+  position:absolute;
+  inset:0;
   display:flex;
   justify-content:center;
   align-items:center;
@@ -64,9 +49,17 @@ button {
   position:absolute;
   inset:0;
   background: rgba(0,0,0,0.95);
-  z-index: 20;
+  z-index:10;
   text-align:center;
   padding-top:120px;
+}
+
+button {
+  padding:10px;
+  background:black;
+  border:1px solid gold;
+  color:white;
+  cursor:pointer;
 }
 </style>
 </head>
@@ -78,13 +71,14 @@ button {
 <div id="ui">
 
   <div id="home">
-    <h1>LAMBO CITY</h1>
+    <h1>LAMBO CITY ZONES</h1>
     <button onclick="enterWorld()">ENTER WORLD</button>
   </div>
 
   <div id="hud">
     <div id="status">SYSTEM OFFLINE</div>
-    <div>Move: WASD | Reach Yacht → VIP</div>
+    <div id="zone">ZONE: NONE</div>
+    <div>WASD to move</div>
   </div>
 
   <div id="vip">
@@ -103,14 +97,17 @@ button {
 <script>
 
 let scene, camera, renderer;
-let player, ocean, yacht;
+let player, yacht, ocean;
 
 let keys = {};
 let mode = "idle";
 
-// positions
-let speed = 0.15;
-let targetYacht = { x: 0, y: 0, z: -15 };
+// ZONES
+const zones = {
+  dock:   { x: 0, z: 5,  radius: 6 },
+  ocean:  { x: 0, z: 0,  radius: 20 },
+  yacht:  { x: 0, z: -15, radius: 4 }
+};
 
 init();
 
@@ -118,30 +115,32 @@ function init() {
 
   scene = new THREE.Scene();
 
-  camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-  camera.position.set(0, 6, 12);
+  camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 1000);
+  camera.position.set(0,6,12);
 
   renderer = new THREE.WebGLRenderer({ canvas: document.getElementById("c"), alpha:true });
-  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setSize(innerWidth, innerHeight);
 
-  // 🌊 OCEAN
-  const oceanGeo = new THREE.PlaneGeometry(200, 200);
-  const oceanMat = new THREE.MeshBasicMaterial({ color: 0x001a33, wireframe: true });
-  ocean = new THREE.Mesh(oceanGeo, oceanMat);
-  ocean.rotation.x = -Math.PI / 2;
+  // 🌊 ocean plane
+  const geo = new THREE.PlaneGeometry(200,200);
+  const mat = new THREE.MeshBasicMaterial({ color:0x001a33, wireframe:true });
+  ocean = new THREE.Mesh(geo, mat);
+  ocean.rotation.x = -Math.PI/2;
   scene.add(ocean);
 
-  // 🧍 PLAYER (cube)
-  const playerGeo = new THREE.BoxGeometry(1,1,1);
-  const playerMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
-  player = new THREE.Mesh(playerGeo, playerMat);
+  // 🧍 player
+  player = new THREE.Mesh(
+    new THREE.BoxGeometry(1,1,1),
+    new THREE.MeshBasicMaterial({ color:0xffffff })
+  );
   player.position.set(0,0.5,5);
   scene.add(player);
 
-  // 🛥 YACHT (dock target)
-  const yachtGeo = new THREE.BoxGeometry(2,1,6);
-  const yachtMat = new THREE.MeshBasicMaterial({ color: 0xd4af37 });
-  yacht = new THREE.Mesh(yachtGeo, yachtMat);
+  // 🛥 yacht (VIP target)
+  yacht = new THREE.Mesh(
+    new THREE.BoxGeometry(2,1,6),
+    new THREE.MeshBasicMaterial({ color:0xd4af37 })
+  );
   yacht.position.set(0,0.5,-15);
   scene.add(yacht);
 
@@ -151,53 +150,71 @@ function init() {
   animate();
 }
 
-// GAME LOOP
 function animate() {
   requestAnimationFrame(animate);
 
-  // 🌊 wave motion
-  ocean.rotation.z += 0.0005;
+  ocean.rotation.z += 0.0004;
 
-  // 🧍 movement
   if (mode === "play") {
 
-    if (keys["w"]) player.position.z -= speed;
-    if (keys["s"]) player.position.z += speed;
-    if (keys["a"]) player.position.x -= speed;
-    if (keys["d"]) player.position.x += speed;
+    // movement
+    if (keys["w"]) player.position.z -= 0.15;
+    if (keys["s"]) player.position.z += 0.15;
+    if (keys["a"]) player.position.x -= 0.15;
+    if (keys["d"]) player.position.x += 0.15;
 
-    // 🎯 camera follow
+    // camera follow
     camera.position.x += (player.position.x - camera.position.x) * 0.08;
     camera.position.z += (player.position.z + 10 - camera.position.z) * 0.08;
     camera.lookAt(player.position);
 
-    // 🛥 yacht trigger
-    let dist = player.position.distanceTo(yacht.position);
-
-    if (dist < 2.5) {
-      openVIP();
-      mode = "vip";
-    }
+    updateZone();
   }
 
   renderer.render(scene, camera);
 }
 
-// START WORLD
+// 🌍 ZONE SYSTEM
+function updateZone() {
+
+  let dDock = dist(player, zones.dock);
+  let dOcean = dist(player, zones.ocean);
+  let dYacht = dist(player, zones.yacht);
+
+  if (dYacht < zones.yacht.radius) {
+    document.getElementById("zone").innerText = "ZONE: YACHT (VIP ENTRY)";
+    openVIP();
+    mode = "vip";
+  }
+  else if (dOcean < zones.ocean.radius) {
+    document.getElementById("zone").innerText = "ZONE: OCEAN";
+  }
+  else if (dDock < zones.dock.radius) {
+    document.getElementById("zone").innerText = "ZONE: DOCK";
+  }
+}
+
+// distance helper
+function dist(a,b){
+  return Math.sqrt(
+    (a.position.x-b.x)**2 +
+    (a.position.z-b.z)**2
+  );
+}
+
+// START
 function enterWorld() {
   document.getElementById("home").style.display = "none";
   document.getElementById("status").innerText = "LAMBO CITY ONLINE";
   mode = "play";
-
   document.getElementById("radio").play().catch(()=>{});
 }
 
 // VIP
-function openVIP() {
+function openVIP(){
   document.getElementById("vip").style.display = "block";
 }
-
-function closeVIP() {
+function closeVIP(){
   document.getElementById("vip").style.display = "none";
   mode = "play";
 }
