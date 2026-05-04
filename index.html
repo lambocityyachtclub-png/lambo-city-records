@@ -14,212 +14,229 @@ body {
   overflow: hidden;
 }
 
-/* MAIN /
+/* MAIN HOME /
 #main {
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  height:100vh;
-  flex-direction:column;
-  background:black;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  flex-direction: column;
 }
 
 #enterBtn {
-  padding:15px 30px;
-  background:gold;
-  border:none;
-  cursor:pointer;
+  padding: 15px 30px;
+  background: gold;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
 }
 
 / WORLD /
 #world {
-  position:fixed;
-  top:0;
-  left:0;
-  width:100%;
-  height:100%;
-  display:none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: none;
+  background: radial-gradient(circle, #111, #000);
+  overflow: hidden;
 }
 
-/ VIDEO /
-#bgVideo {
-  position:absolute;
-  width:100%;
-  height:100%;
-  object-fit:cover;
-  z-index:-2;
+/ SAFE BACKGROUND (NO BLACK SCREEN BUG) /
+#bg {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(120deg, #050505, #0d0d0d, #000000);
+  animation: glowShift 10s infinite alternate;
+  z-index: -2;
 }
 
-/ DARK OVERLAY /
+@keyframes glowShift {
+  0% { filter: brightness(1); }
+  100% { filter: brightness(1.4); }
+}
+
+/ OVERLAY /
 #overlay {
-  position:absolute;
-  width:100%;
-  height:100%;
-  background:rgba(0,0,0,0.7);
-  z-index:-1;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.55);
+  z-index: -1;
 }
 
-/ GLOW /
-.glow {
-  text-shadow:0 0 10px gold, 0 0 20px gold;
-}
-
-/ HUD /
-#hud {
-  position:absolute;
-  width:100%;
-  height:100%;
-}
-
-/ ACTIVITY /
+/ ACTIVITY FEED /
 #activity {
-  position:absolute;
-  top:20px;
-  left:20px;
-  font-size:14px;
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  font-size: 14px;
+  opacity: 0.85;
 }
 
-/ TOP RIGHT /
-#exitBtn {
-  position:absolute;
-  top:20px;
-  right:20px;
-}
-
-/ BOTTOM LEFT CONTROLS /
-#controls {
-  position:absolute;
-  bottom:20px;
-  left:20px;
-}
-
+/ BUTTONS /
 button {
-  margin:5px;
-  padding:10px;
-  background:black;
-  color:white;
-  border:1px solid gold;
-  cursor:pointer;
+  cursor: pointer;
 }
 
-/ TWITCH SCREEN /
+#exitBtn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+}
+
+#controls {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+}
+
+#controls button {
+  margin-right: 8px;
+  padding: 10px;
+  background: black;
+  color: white;
+  border: 1px solid gold;
+}
+
+/ TWITCH /
 #twitchBox {
-  position:absolute;
-  top:20%;
-  left:25%;
-  width:50%;
-  height:50%;
-  border:2px solid gold;
-  box-shadow:0 0 20px gold;
+  position: absolute;
+  top: 20%;
+  left: 25%;
+  width: 50%;
+  height: 50%;
+  border: 2px solid gold;
+  box-shadow: 0 0 25px gold;
 }
 
 / VIP */
 #vip {
-  position:absolute;
-  width:100%;
-  height:100%;
-  background:rgba(0,0,0,0.95);
-  display:none;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.96);
+  display: none;
 }
 
 #vip h2 {
-  text-align:center;
-  margin-top:100px;
+  text-align: center;
+  margin-top: 120px;
+  color: gold;
 }
 </style>
+
 </head>
 
 <body>
 
+<!-- MAIN -->
 <div id="main">
-  <h1 class="glow">LAMBO CITY</h1>
-  <button id="enterBtn" onclick="openWorld()">ENTER</button>
+  <h1>LAMBO CITY</h1>
+  <button id="enterBtn" onclick="openWorld()">ENTER LAMBO CITY</button>
 </div>
 
+<!-- WORLD -->
 <div id="world">
 
-  <video id="bgVideo" autoplay muted loop>
-    <source src="https://cdn.coverr.co/videos/coverr-ocean-waves-1600.mp4" type="video/mp4">
-  </video>
-
+  <div id="bg"></div>
   <div id="overlay"></div>
 
-  <div id="hud">
+  <div id="activity">Initializing city...</div>
 
-    <div id="activity">City initializing...</div>
+  <button id="exitBtn" onclick="closeWorld()">EXIT</button>
 
-    <button id="exitBtn" onclick="closeWorld()">EXIT</button>
+  <div id="controls">
+    <button onclick="playRadio()">RADIO</button>
+    <button onclick="playLive()">LIVE</button>
+    <button onclick="openVIP()">YACHT CLUB</button>
+  </div>
 
-    <div id="controls">
-      <button onclick="playRadio()">RADIO</button>
-      <button onclick="playLive()">LIVE</button>
-      <button onclick="openVIP()">YACHT CLUB</button>
-    </div>
-
-    <div id="twitchBox">
-      <iframe id="twitch"
-        src="https://player.twitch.tv/?channel=twitch&parent=lambocityrecords.com"
-        width="100%" height="100%"
-        frameborder="0"
-        allowfullscreen="true">
-      </iframe>
-    </div>
-
+  <div id="twitchBox">
+    <iframe
+      src="https://player.twitch.tv/?channel=twitch&parent=lambocityrecords.com"
+      width="100%" height="100%"
+      frameborder="0"
+      allowfullscreen="true">
+    </iframe>
   </div>
 
   <audio id="radio" loop>
     <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
   </audio>
 
+  <!-- VIP -->
   <div id="vip">
-    <button id="exitBtn" onclick="closeVIP()">EXIT VIP</button>
-    <h2 class="glow">YACHT CLUB ACCESS GRANTED</h2>
+    <button onclick="closeVIP()" style="position:absolute; top:20px; right:20px;">EXIT VIP</button>
+    <h2>YACHT CLUB ACCESS GRANTED</h2>
   </div>
 
 </div>
 
 <script>
-function openWorld(){
-  document.getElementById("world").style.display="block";
+
+let activityLoop = null;
+
+function openWorld() {
+  document.getElementById("world").style.display = "block";
+
   startActivity();
-  playRadio();
+
+  const radio = document.getElementById("radio");
+  if (radio) radio.play().catch(()=>{});
 }
 
-function closeWorld(){
-  document.getElementById("world").style.display="none";
+function closeWorld() {
+  document.getElementById("world").style.display = "none";
+
+  if (activityLoop) {
+    clearInterval(activityLoop);
+    activityLoop = null;
+  }
 }
 
-function playRadio(){
-  document.getElementById("radio").play();
+function playRadio() {
+  document.getElementById("radio").play().catch(()=>{});
 }
 
-function playLive(){
+function playLive() {
   document.getElementById("radio").pause();
 }
 
-function openVIP(){
-  document.getElementById("vip").style.display="block";
+function openVIP() {
+  document.getElementById("vip").style.display = "block";
 }
 
-function closeVIP(){
-  document.getElementById("vip").style.display="none";
+function closeVIP() {
+  document.getElementById("vip").style.display = "none";
 }
 
-function startActivity(){
-  const messages=[
+function startActivity() {
+  if (activityLoop) return;
+
+  const messages = [
     "DJ HERO live now",
     "Dock lights active",
-    "Yacht club preparing access",
-    "Live broadcast running",
+    "Yacht club initializing",
+    "Live stream running",
     "Members entering lounge",
-    "Radio synced"
+    "Radio synced",
+    "City is alive"
   ];
-  let i=0;
-  setInterval(()=>{
-    document.getElementById("activity").innerText=messages[i%messages.length];
-    i++;
-  },2000);
+
+  let i = 0;
+
+  activityLoop = setInterval(() => {
+    const el = document.getElementById("activity");
+    if (el) {
+      el.innerText = messages[i % messages.length];
+      i++;
+    }
+  }, 2000);
 }
+
 </script>
 
 </body>
