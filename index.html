@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
+<meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>LAMBO CITY</title>
 
@@ -14,7 +14,7 @@ body {
   overflow: hidden;
 }
 
-/* ENTRY SCREEN */
+/* ENTRY */
 #home {
   height: 100vh;
   display: flex;
@@ -40,36 +40,37 @@ body {
   overflow: hidden;
 }
 
-/* BACKGROUND LAYERS */
+/* ATMOSPHERE */
 #bg {
   position: absolute;
   inset: 0;
-  background: linear-gradient(120deg, #020202, #050505, #000);
+  background: radial-gradient(circle at 30% 20%, rgba(0,180,255,0.15), transparent 60%),
+              linear-gradient(120deg, #020202, #050505, #000);
   animation: pulse 8s infinite alternate;
   z-index: -3;
 }
 
 @keyframes pulse {
-  0% { filter: brightness(1); }
-  100% { filter: brightness(1.25); }
+  0% { filter: brightness(1); transform: scale(1); }
+  100% { filter: brightness(1.2); transform: scale(1.02); }
 }
 
-/* FOG / DEPTH */
+/* FOG */
 #fog {
   position: absolute;
   inset: 0;
   background: url("https://www.transparenttextures.com/patterns/clouds.png");
-  opacity: 0.06;
-  animation: drift 40s linear infinite;
+  opacity: 0.05;
+  animation: drift 35s linear infinite;
   z-index: -2;
 }
 
 @keyframes drift {
   from { transform: translateX(0); }
-  to { transform: translateX(-300px); }
+  to { transform: translateX(-250px); }
 }
 
-/* OVERLAY */
+/* DARK OVERLAY */
 #overlay {
   position: absolute;
   inset: 0;
@@ -83,7 +84,7 @@ body {
   inset: 0;
 }
 
-/* ACTIVITY FEED */
+/* STATUS */
 #activity {
   position: absolute;
   top: 20px;
@@ -123,7 +124,7 @@ button {
   width: 50%;
   height: 50%;
   border: 2px solid gold;
-  box-shadow: 0 0 25px rgba(255,215,0,0.4);
+  box-shadow: 0 0 25px rgba(255,215,0,0.35);
 }
 
 /* VIP */
@@ -131,7 +132,7 @@ button {
   display: none;
   position: absolute;
   inset: 0;
-  background: rgba(0,0,0,0.96);
+  background: rgba(0,0,0,0.97);
   text-align: center;
   padding-top: 120px;
   z-index: 10;
@@ -191,7 +192,7 @@ button {
   <div id="vip">
     <button onclick="closeVIP()" style="position:absolute;top:20px;right:20px;">EXIT VIP</button>
     <h1>YACHT CLUB ACCESS</h1>
-    <p>Private LAMBO CITY Layer</p>
+    <p>Private Layer Unlocked</p>
   </div>
 
 </div>
@@ -209,9 +210,9 @@ function enterWorld() {
       "DJ HERO LIVE",
       "Dock systems online",
       "Yacht approaching harbor",
-      "Radio connected",
-      "VIP layer ready",
-      "City is alive"
+      "Radio synced",
+      "City is alive",
+      "VIP systems ready"
     ];
 
     let i = 0;
