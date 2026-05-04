@@ -3,26 +3,37 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>LAMBO CITY</title>
+<title>LAMBO CITY - OCEAN WORLD</title>
 
 <style>
 body {
   margin: 0;
+  overflow: hidden;
   font-family: Arial, sans-serif;
   background: black;
   color: white;
-  overflow: hidden;
 }
 
-/* ENTRY LAYER */
+/* UI LAYER */
+#ui {
+  position: absolute;
+  z-index: 10;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* ENTRY */
 #home {
-  height: 100vh;
+  position: absolute;
+  width: 100%;
+  height: 100%;
   display:flex;
   justify-content:center;
   align-items:center;
   flex-direction:column;
-  background: radial-gradient(circle at center, #111, #000);
-  transition: opacity 1.2s ease;
+  background: rgba(0,0,0,0.5);
+  pointer-events: auto;
 }
 
 #enterBtn {
@@ -33,239 +44,147 @@ body {
   font-weight: bold;
 }
 
-/* WORLD ROOT */
-#world {
-  display:none;
-  position:fixed;
-  inset:0;
-  overflow:hidden;
-}
-
-/* GTA STYLE DEPTH STACK */
-.layer {
-  position:absolute;
-  inset:0;
-}
-
-/* BASE AMBIENT LIGHT */
-#bg {
-  background: radial-gradient(circle at 50% 30%, rgba(0,140,255,0.18), transparent 60%),
-              linear-gradient(120deg, #010101, #040404, #000);
-  animation: breathe 6s infinite alternate;
-  z-index:-5;
-}
-
-@keyframes breathe {
-  0% { transform: scale(1); filter: brightness(1); }
-  100% { transform: scale(1.03); filter: brightness(1.25); }
-}
-
-/* MOTION FOG */
-#fog {
-  background: url("https://www.transparenttextures.com/patterns/clouds.png");
-  opacity:0.05;
-  animation: drift 45s linear infinite;
-  z-index:-4;
-}
-
-@keyframes drift {
-  from { transform: translateX(0); }
-  to { transform: translateX(-400px); }
-}
-
-/* LIGHT PULSE (CITY ENERGY) */
-#lightPulse {
-  background: radial-gradient(circle at 60% 40%, rgba(255,215,0,0.08), transparent 60%);
-  animation: pulse 4s infinite alternate;
-  z-index:-3;
-}
-
-@keyframes pulse {
-  0% { opacity:0.3; }
-  100% { opacity:0.8; }
-}
-
-/* DARK OVERLAY */
-#overlay {
-  background: rgba(0,0,0,0.55);
-  z-index:-2;
-}
-
 /* HUD */
 #hud {
-  position:absolute;
-  inset:0;
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  font-size: 14px;
+  opacity: 0.85;
 }
 
-/* CITY FEED */
-#activity {
-  position:absolute;
-  top:20px;
-  left:20px;
-  font-size:14px;
-  opacity:0.85;
-  letter-spacing:1px;
-}
-
-/* CONTROLS */
-#controls {
-  position:absolute;
-  bottom:20px;
-  left:20px;
-  display:flex;
-  gap:10px;
-}
-
+/* BUTTONS */
 button {
-  padding:10px;
-  background:black;
-  border:1px solid gold;
-  color:white;
-  cursor:pointer;
+  padding: 10px;
+  background: black;
+  border: 1px solid gold;
+  color: white;
+  cursor: pointer;
+  margin-right: 5px;
+  pointer-events: auto;
 }
 
-/* EXIT */
-#exitBtn {
-  position:absolute;
-  top:20px;
-  right:20px;
-}
-
-/* TWITCH (ENVIRONMENT WINDOW) */
-#twitchBox {
-  position:absolute;
-  top:18%;
-  left:25%;
-  width:50%;
-  height:50%;
-  border:2px solid gold;
-  box-shadow:0 0 30px rgba(255,215,0,0.3);
-  opacity:0.95;
-}
-
-/* VIP (SEPARATE ZONE FEEL) */
+/* VIP */
 #vip {
   display:none;
   position:absolute;
   inset:0;
-  background: radial-gradient(circle at center, rgba(0,0,0,0.98), #000);
+  background: rgba(0,0,0,0.95);
+  z-index: 20;
   text-align:center;
   padding-top:120px;
-  z-index:10;
-}
-
-#vip h1 {
-  color: gold;
-  letter-spacing:2px;
 }
 </style>
 </head>
 
 <body>
 
-<!-- ENTRY -->
-<div id="home">
-  <h1>LAMBO CITY</h1>
-  <button id="enterBtn" onclick="enterWorld()">ENTER WORLD</button>
-</div>
+<!-- THREE.JS CANVAS -->
+<canvas id="c"></canvas>
 
-<!-- WORLD -->
-<div id="world">
+<!-- UI -->
+<div id="ui">
 
-  <div id="bg" class="layer"></div>
-  <div id="fog" class="layer"></div>
-  <div id="lightPulse" class="layer"></div>
-  <div id="overlay" class="layer"></div>
-
-  <div id="hud">
-
-    <div id="activity">Loading city systems...</div>
-
-    <button id="exitBtn" onclick="exitWorld()">EXIT</button>
-
-    <div id="controls">
-      <button onclick="playRadio()">RADIO</button>
-      <button onclick="playLive()">LIVE</button>
-      <button onclick="openVIP()">VIP</button>
-    </div>
-
-    <div id="twitchBox">
-      <iframe
-        src="https://player.twitch.tv/?channel=twitch&parent=lambocityrecords.com"
-        width="100%" height="100%"
-        frameborder="0"
-        allowfullscreen>
-      </iframe>
-    </div>
-
+  <!-- ENTRY -->
+  <div id="home">
+    <h1>LAMBO CITY</h1>
+    <button id="enterBtn" onclick="enterWorld()">ENTER WORLD</button>
   </div>
 
-  <!-- AUDIO -->
-  <audio id="radio" loop>
-    <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3">
-  </audio>
+  <!-- HUD -->
+  <div id="hud">
+    <div id="status">Ocean systems offline</div>
+    <button onclick="openVIP()">VIP</button>
+    <button onclick="toggleAudio()">RADIO</button>
+  </div>
 
-  <!-- VIP ZONE -->
+  <!-- VIP -->
   <div id="vip">
     <button onclick="closeVIP()" style="position:absolute;top:20px;right:20px;">EXIT VIP</button>
-    <h1>YACHT CLUB ACCESS</h1>
-    <p>Private World Layer Active</p>
+    <h1>YACHT CLUB</h1>
   </div>
 
 </div>
+
+<!-- AUDIO -->
+<audio id="radio" loop>
+  <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3">
+</audio>
+
+<!-- THREE.JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
 <script>
 
-let loop = null;
+// ===== THREE.JS OCEAN WORLD =====
+let scene, camera, renderer, water, time = 0;
+
+function initOcean() {
+
+  scene = new THREE.Scene();
+
+  camera = new THREE.PerspectiveCamera(
+    75,
+    window.innerWidth/window.innerHeight,
+    0.1,
+    1000
+  );
+
+  camera.position.set(0, 10, 20);
+
+  renderer = new THREE.WebGLRenderer({
+    canvas: document.getElementById("c"),
+    alpha: true
+  });
+
+  renderer.setSize(window.innerWidth, window.innerHeight);
+
+  // WATER PLANE
+  const geometry = new THREE.PlaneGeometry(200, 200, 100, 100);
+
+  const material = new THREE.MeshBasicMaterial({
+    color: 0x001a33,
+    wireframe: true
+  });
+
+  water = new THREE.Mesh(geometry, material);
+  water.rotation.x = -Math.PI / 2;
+
+  scene.add(water);
+
+  animate();
+}
+
+function animate() {
+
+  requestAnimationFrame(animate);
+
+  time += 0.02;
+
+  // wave motion
+  const vertices = water.geometry.attributes.position.array;
+
+  for (let i = 0; i < vertices.length; i += 3) {
+    vertices[i + 2] = Math.sin((i + time) * 0.1) * 1.5;
+  }
+
+  water.geometry.attributes.position.needsUpdate = true;
+
+  camera.position.x = Math.sin(time * 0.2) * 5;
+  camera.lookAt(0, 0, 0);
+
+  renderer.render(scene, camera);
+}
+
+// ===== GAME SYSTEM =====
 
 function enterWorld() {
-  document.getElementById("home").style.opacity = "0";
-  setTimeout(()=>{
-    document.getElementById("home").style.display = "none";
-    document.getElementById("world").style.display = "block";
-  }, 800);
+  document.getElementById("home").style.display = "none";
+  document.getElementById("status").innerText = "Ocean systems online";
 
-  if (!loop) {
-    const messages = [
-      "CITY ONLINE",
-      "DOCK SYSTEMS ACTIVE",
-      "YACHT APPROACHING",
-      "RADIO SYNCED",
-      "VIP LAYER READY",
-      "LAMBO CITY LIVE"
-    ];
-
-    let i = 0;
-
-    loop = setInterval(()=>{
-      document.getElementById("activity").innerText =
-        messages[i % messages.length];
-      i++;
-    }, 1800);
-  }
+  initOcean();
 
   document.getElementById("radio").play().catch(()=>{});
-}
-
-function exitWorld() {
-  document.getElementById("world").style.display = "none";
-  document.getElementById("home").style.display = "flex";
-  document.getElementById("home").style.opacity = "1";
-
-  if (loop) {
-    clearInterval(loop);
-    loop = null;
-  }
-
-  closeVIP();
-}
-
-function playRadio() {
-  document.getElementById("radio").play();
-}
-
-function playLive() {
-  document.getElementById("radio").pause();
 }
 
 function openVIP() {
@@ -274,6 +193,12 @@ function openVIP() {
 
 function closeVIP() {
   document.getElementById("vip").style.display = "none";
+}
+
+function toggleAudio() {
+  let audio = document.getElementById("radio");
+  if (audio.paused) audio.play();
+  else audio.pause();
 }
 
 </script>
