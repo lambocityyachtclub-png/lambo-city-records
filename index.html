@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LAMBO CITY RECORDS</title>
+<title>LAMBO CITY</title>
 
 <style>
 body {
@@ -11,95 +11,128 @@ body {
   font-family: Arial, sans-serif;
   background: black;
   color: white;
-}
-
-/* MAIN SITE /
-#main {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  flex-direction: column;
-  text-align: center;
-}
-
-#main h1 {
-  font-size: 40px;
-  letter-spacing: 3px;
-}
-
-/ ENTER BUTTON /
-#enterBtn {
-  margin-top: 20px;
-  padding: 15px 30px;
-  background: gold;
-  border: none;
-  cursor: pointer;
-  font-size: 16px;
-}
-
-/ WORLD OVERLAY /
-#world {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: black;
-  display: none;
   overflow: hidden;
+}
+
+/* MAIN /
+#main {
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+  flex-direction:column;
+}
+
+#enterBtn {
+  padding:15px 30px;
+  background:gold;
+  border:none;
+  cursor:pointer;
+  font-size:16px;
+}
+
+/ WORLD /
+#world {
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  display:none;
+  overflow:hidden;
+}
+
+/ VIDEO BG /
+#bgVideo {
+  position:absolute;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  z-index:-1;
+}
+
+/ OVERLAY /
+#overlay {
+  position:absolute;
+  width:100%;
+  height:100%;
+  background:rgba(0,0,0,0.6);
 }
 
 / ACTIVITY /
 #activity {
-  position: absolute;
-  top: 20px;
-  left: 20px;
-  opacity: 0.8;
+  position:absolute;
+  top:20px;
+  left:20px;
+  font-size:14px;
 }
 
-/ EXIT /
+/ BUTTONS /
 #exitBtn {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  z-index: 10;
+  position:absolute;
+  top:20px;
+  right:20px;
+}
+
+#audioBtn {
+  position:absolute;
+  bottom:20px;
+  left:20px;
+}
+
+#vipBtn {
+  position:absolute;
+  bottom:20px;
+  right:20px;
+  background:gold;
+  border:none;
+  padding:10px;
 }
 
 / TWITCH /
 #twitch {
-  position: absolute;
-  top: 20%;
-  left: 25%;
-  width: 50%;
-  height: 50%;
-  border: 2px solid gold;
+  position:absolute;
+  top:20%;
+  left:25%;
+  width:50%;
+  height:50%;
+  border:2px solid gold;
 }
 
-/ AUDIO TOGGLE */
-#audioBtn {
-  position: absolute;
-  bottom: 20px;
-  left: 20px;
+/ VIP */
+#vip {
+  position:absolute;
+  width:100%;
+  height:100%;
+  background:rgba(0,0,0,0.95);
+  display:none;
+}
+
+#vip h2 {
+  text-align:center;
+  margin-top:100px;
 }
 </style>
-
 </head>
 
 <body>
 
-<!-- MAIN SITE -->
 <div id="main">
-  <h1>LAMBO CITY RECORDS</h1>
+  <h1>LAMBO CITY</h1>
   <button id="enterBtn" onclick="openWorld()">ENTER LAMBO CITY</button>
 </div>
 
-<!-- WORLD -->
 <div id="world">
+
+  <video id="bgVideo" autoplay muted loop>
+    <source src="https://cdn.coverr.co/videos/coverr-ocean-waves-1600.mp4" type="video/mp4">
+  </video>
+
+  <div id="overlay"></div>
 
   <button id="exitBtn" onclick="closeWorld()">EXIT</button>
 
-  <div id="activity">Initializing...</div>
+  <div id="activity">Initializing city...</div>
 
   <iframe id="twitch"
     src="https://player.twitch.tv/?channel=twitch&parent=lambocityrecords.com"
@@ -113,29 +146,40 @@ body {
 
   <button id="audioBtn" onclick="toggleAudio()">TOGGLE RADIO</button>
 
+  <button id="vipBtn" onclick="openVIP()">ENTER YACHT CLUB</button>
+
+  <div id="vip">
+    <button id="exitBtn" onclick="closeVIP()">EXIT VIP</button>
+    <h2>YACHT CLUB ACCESS GRANTED</h2>
+  </div>
+
 </div>
 
 <script>
-function openWorld() {
-  document.getElementById("world").style.display = "block";
+function openWorld(){
+  document.getElementById("world").style.display="block";
   startActivity();
 }
 
-function closeWorld() {
-  document.getElementById("world").style.display = "none";
+function closeWorld(){
+  document.getElementById("world").style.display="none";
 }
 
-function toggleAudio() {
-  const audio = document.getElementById("radio");
-  if (audio.paused) {
-    audio.play();
-  } else {
-    audio.pause();
-  }
+function toggleAudio(){
+  const audio=document.getElementById("radio");
+  if(audio.paused){audio.play();}else{audio.pause();}
 }
 
-function startActivity() {
-  const messages = [
+function openVIP(){
+  document.getElementById("vip").style.display="block";
+}
+
+function closeVIP(){
+  document.getElementById("vip").style.display="none";
+}
+
+function startActivity(){
+  const messages=[
     "DJ HERO live now",
     "Yacht access granted",
     "Members entering lounge",
@@ -143,13 +187,11 @@ function startActivity() {
     "Radio synced",
     "Dock traffic increasing"
   ];
-
-  let i = 0;
-
-  setInterval(() => {
-    document.getElementById("activity").innerText = messages[i % messages.length];
+  let i=0;
+  setInterval(()=>{
+    document.getElementById("activity").innerText=messages[i%messages.length];
     i++;
-  }, 2000);
+  },2000);
 }
 </script>
 
