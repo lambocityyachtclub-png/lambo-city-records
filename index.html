@@ -1,92 +1,222 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>LAMBO CITY</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
 body {
   margin: 0;
+  font-family: Arial, sans-serif;
   background: black;
   color: white;
-  font-family: Arial;
   overflow: hidden;
 }
 
-/* HOME /
+/* ENTRY */
 #home {
   height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
   flex-direction: column;
-}
-
-button {
-  padding: 12px 20px;
-  background: gold;
-  border: none;
-  cursor: pointer;
-}
-
-/ WORLD /
-#world {
-  display: none;
-  position: fixed;
-  width: 100%;
-  height: 100%;
-  top: 0;
-  left: 0;
   background: radial-gradient(circle, #111, #000);
 }
 
-/ VIP (IMPORTANT FIX) */
+#enterBtn {
+  padding: 14px 26px;
+  background: gold;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+/* WORLD */
+#world {
+  display: none;
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+}
+
+/* LIVING BACKGROUND */
+#bg {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, #050505, #0b0b0b, #000);
+  animation: pulse 8s infinite alternate;
+  z-index: -3;
+}
+
+@keyframes pulse {
+  0% { filter: brightness(1); }
+  100% { filter: brightness(1.3); }
+}
+
+/* OVERLAY DEPTH */
+#overlay {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at top, rgba(255,215,0,0.08), transparent 60%),
+              rgba(0,0,0,0.65);
+  z-index: -2;
+}
+
+/* HUD */
+#hud {
+  position: absolute;
+  inset: 0;
+}
+
+/* ACTIVITY FEED */
+#activity {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  font-size: 14px;
+  opacity: 0.85;
+}
+
+/* CONTROLS */
+#controls {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  display: flex;
+  gap: 8px;
+}
+
+button {
+  padding: 10px;
+  background: black;
+  border: 1px solid gold;
+  color: white;
+  cursor: pointer;
+}
+
+/* EXIT */
+#exitBtn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+}
+
+/* TWITCH */
+#twitchBox {
+  position: absolute;
+  top: 18%;
+  left: 25%;
+  width: 50%;
+  height: 50%;
+  border: 2px solid gold;
+  box-shadow: 0 0 25px rgba(255,215,0,0.5);
+}
+
+/* VIP LAYER */
 #vip {
   display: none;
   position: absolute;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.95);
-  top: 0;
-  left: 0;
+  inset: 0;
+  background: rgba(0,0,0,0.96);
+  z-index: 10;
   text-align: center;
-  padding-top: 100px;
+  padding-top: 120px;
+}
+
+#vip h1 {
+  color: gold;
 }
 </style>
 </head>
 
 <body>
 
-<!-- HOME -->
+<!-- ENTRY -->
 <div id="home">
   <h1>LAMBO CITY</h1>
-  <button onclick="enterWorld()">ENTER</button>
+  <button id="enterBtn" onclick="enterWorld()">ENTER WORLD</button>
 </div>
 
 <!-- WORLD -->
 <div id="world">
 
-  <h2 style="padding:20px;">WORLD ACTIVE</h2>
+  <div id="bg"></div>
+  <div id="overlay"></div>
 
-  <button onclick="openVIP()">ENTER VIP</button>
-  <button onclick="exitWorld()">EXIT</button>
+  <div id="hud">
+
+    <div id="activity">Initializing LAMBO CITY...</div>
+
+    <button id="exitBtn" onclick="exitWorld()">EXIT</button>
+
+    <div id="controls">
+      <button onclick="playRadio()">RADIO</button>
+      <button onclick="playLive()">LIVE</button>
+      <button onclick="openVIP()">VIP</button>
+    </div>
+
+    <!-- TWITCH -->
+    <div id="twitchBox">
+      <iframe
+        src="https://player.twitch.tv/?channel=twitch&parent=lambocityrecords.com"
+        width="100%" height="100%"
+        frameborder="0"
+        allowfullscreen>
+      </iframe>
+    </div>
+
+  </div>
+
+  <!-- AUDIO -->
+  <audio id="radio" loop>
+    <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3">
+  </audio>
 
   <!-- VIP -->
   <div id="vip">
-    <h1>YACHT CLUB VIP</h1>
-    <button onclick="closeVIP()">CLOSE VIP</button>
+    <button onclick="closeVIP()" style="position:absolute; top:20px; right:20px;">EXIT VIP</button>
+    <h1>YACHT CLUB ACCESS</h1>
+    <p>Welcome to the private layer of LAMBO CITY</p>
   </div>
 
 </div>
 
 <script>
+
+let activityLoop = null;
+let worldActive = false;
+
 function enterWorld() {
+  document.getElementById("home").style.display = "none";
   document.getElementById("world").style.display = "block";
+
+  if (!worldActive) {
+    worldActive = true;
+    startActivity();
+  }
+
+  document.getElementById("radio").play().catch(()=>{});
 }
 
 function exitWorld() {
   document.getElementById("world").style.display = "none";
+  document.getElementById("home").style.display = "flex";
+
+  if (activityLoop) {
+    clearInterval(activityLoop);
+    activityLoop = null;
+  }
+
+  closeVIP();
+}
+
+function playRadio() {
+  document.getElementById("radio").play();
+}
+
+function playLive() {
+  document.getElementById("radio").pause();
 }
 
 function openVIP() {
@@ -96,6 +226,29 @@ function openVIP() {
 function closeVIP() {
   document.getElementById("vip").style.display = "none";
 }
+
+function startActivity() {
+
+  if (activityLoop) return;
+
+  const messages = [
+    "DJ HERO LIVE",
+    "Dock systems active",
+    "Yacht approaching harbor",
+    "Radio synced",
+    "VIP systems online",
+    "City is alive"
+  ];
+
+  let i = 0;
+
+  activityLoop = setInterval(() => {
+    document.getElementById("activity").innerText =
+      messages[i % messages.length];
+    i++;
+  }, 2200);
+}
+
 </script>
 
 </body>
