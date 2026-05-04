@@ -14,14 +14,15 @@ body {
   overflow: hidden;
 }
 
-/* ENTRY */
+/* ENTRY LAYER */
 #home {
   height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-direction: column;
-  background: radial-gradient(circle, #111, #000);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  flex-direction:column;
+  background: radial-gradient(circle at center, #111, #000);
+  transition: opacity 1.2s ease;
 }
 
 #enterBtn {
@@ -32,114 +33,130 @@ body {
   font-weight: bold;
 }
 
-/* WORLD */
+/* WORLD ROOT */
 #world {
-  display: none;
-  position: fixed;
-  inset: 0;
-  overflow: hidden;
+  display:none;
+  position:fixed;
+  inset:0;
+  overflow:hidden;
 }
 
-/* ATMOSPHERE */
+/* GTA STYLE DEPTH STACK */
+.layer {
+  position:absolute;
+  inset:0;
+}
+
+/* BASE AMBIENT LIGHT */
 #bg {
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(circle at 30% 20%, rgba(0,180,255,0.15), transparent 60%),
-              linear-gradient(120deg, #020202, #050505, #000);
-  animation: pulse 8s infinite alternate;
-  z-index: -3;
+  background: radial-gradient(circle at 50% 30%, rgba(0,140,255,0.18), transparent 60%),
+              linear-gradient(120deg, #010101, #040404, #000);
+  animation: breathe 6s infinite alternate;
+  z-index:-5;
 }
 
-@keyframes pulse {
-  0% { filter: brightness(1); transform: scale(1); }
-  100% { filter: brightness(1.2); transform: scale(1.02); }
+@keyframes breathe {
+  0% { transform: scale(1); filter: brightness(1); }
+  100% { transform: scale(1.03); filter: brightness(1.25); }
 }
 
-/* FOG */
+/* MOTION FOG */
 #fog {
-  position: absolute;
-  inset: 0;
   background: url("https://www.transparenttextures.com/patterns/clouds.png");
-  opacity: 0.05;
-  animation: drift 35s linear infinite;
-  z-index: -2;
+  opacity:0.05;
+  animation: drift 45s linear infinite;
+  z-index:-4;
 }
 
 @keyframes drift {
   from { transform: translateX(0); }
-  to { transform: translateX(-250px); }
+  to { transform: translateX(-400px); }
+}
+
+/* LIGHT PULSE (CITY ENERGY) */
+#lightPulse {
+  background: radial-gradient(circle at 60% 40%, rgba(255,215,0,0.08), transparent 60%);
+  animation: pulse 4s infinite alternate;
+  z-index:-3;
+}
+
+@keyframes pulse {
+  0% { opacity:0.3; }
+  100% { opacity:0.8; }
 }
 
 /* DARK OVERLAY */
 #overlay {
-  position: absolute;
-  inset: 0;
-  background: rgba(0,0,0,0.6);
-  z-index: -1;
+  background: rgba(0,0,0,0.55);
+  z-index:-2;
 }
 
 /* HUD */
 #hud {
-  position: absolute;
-  inset: 0;
+  position:absolute;
+  inset:0;
 }
 
-/* STATUS */
+/* CITY FEED */
 #activity {
-  position: absolute;
-  top: 20px;
-  left: 20px;
-  font-size: 14px;
-  opacity: 0.85;
+  position:absolute;
+  top:20px;
+  left:20px;
+  font-size:14px;
+  opacity:0.85;
+  letter-spacing:1px;
 }
 
-/* BUTTONS */
-button {
-  padding: 10px;
-  background: black;
-  border: 1px solid gold;
-  color: white;
-  cursor: pointer;
-}
-
+/* CONTROLS */
 #controls {
-  position: absolute;
-  bottom: 20px;
-  left: 20px;
-  display: flex;
-  gap: 8px;
+  position:absolute;
+  bottom:20px;
+  left:20px;
+  display:flex;
+  gap:10px;
 }
 
+button {
+  padding:10px;
+  background:black;
+  border:1px solid gold;
+  color:white;
+  cursor:pointer;
+}
+
+/* EXIT */
 #exitBtn {
-  position: absolute;
-  top: 20px;
-  right: 20px;
+  position:absolute;
+  top:20px;
+  right:20px;
 }
 
-/* TWITCH */
+/* TWITCH (ENVIRONMENT WINDOW) */
 #twitchBox {
-  position: absolute;
-  top: 18%;
-  left: 25%;
-  width: 50%;
-  height: 50%;
-  border: 2px solid gold;
-  box-shadow: 0 0 25px rgba(255,215,0,0.35);
+  position:absolute;
+  top:18%;
+  left:25%;
+  width:50%;
+  height:50%;
+  border:2px solid gold;
+  box-shadow:0 0 30px rgba(255,215,0,0.3);
+  opacity:0.95;
 }
 
-/* VIP */
+/* VIP (SEPARATE ZONE FEEL) */
 #vip {
-  display: none;
-  position: absolute;
-  inset: 0;
-  background: rgba(0,0,0,0.97);
-  text-align: center;
-  padding-top: 120px;
-  z-index: 10;
+  display:none;
+  position:absolute;
+  inset:0;
+  background: radial-gradient(circle at center, rgba(0,0,0,0.98), #000);
+  text-align:center;
+  padding-top:120px;
+  z-index:10;
 }
 
 #vip h1 {
   color: gold;
+  letter-spacing:2px;
 }
 </style>
 </head>
@@ -155,13 +172,14 @@ button {
 <!-- WORLD -->
 <div id="world">
 
-  <div id="bg"></div>
-  <div id="fog"></div>
-  <div id="overlay"></div>
+  <div id="bg" class="layer"></div>
+  <div id="fog" class="layer"></div>
+  <div id="lightPulse" class="layer"></div>
+  <div id="overlay" class="layer"></div>
 
   <div id="hud">
 
-    <div id="activity">Initializing LAMBO CITY...</div>
+    <div id="activity">Loading city systems...</div>
 
     <button id="exitBtn" onclick="exitWorld()">EXIT</button>
 
@@ -171,7 +189,6 @@ button {
       <button onclick="openVIP()">VIP</button>
     </div>
 
-    <!-- TWITCH -->
     <div id="twitchBox">
       <iframe
         src="https://player.twitch.tv/?channel=twitch&parent=lambocityrecords.com"
@@ -188,11 +205,11 @@ button {
     <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3">
   </audio>
 
-  <!-- VIP -->
+  <!-- VIP ZONE -->
   <div id="vip">
     <button onclick="closeVIP()" style="position:absolute;top:20px;right:20px;">EXIT VIP</button>
     <h1>YACHT CLUB ACCESS</h1>
-    <p>Private Layer Unlocked</p>
+    <p>Private World Layer Active</p>
   </div>
 
 </div>
@@ -202,26 +219,29 @@ button {
 let loop = null;
 
 function enterWorld() {
-  document.getElementById("home").style.display = "none";
-  document.getElementById("world").style.display = "block";
+  document.getElementById("home").style.opacity = "0";
+  setTimeout(()=>{
+    document.getElementById("home").style.display = "none";
+    document.getElementById("world").style.display = "block";
+  }, 800);
 
   if (!loop) {
     const messages = [
-      "DJ HERO LIVE",
-      "Dock systems online",
-      "Yacht approaching harbor",
-      "Radio synced",
-      "City is alive",
-      "VIP systems ready"
+      "CITY ONLINE",
+      "DOCK SYSTEMS ACTIVE",
+      "YACHT APPROACHING",
+      "RADIO SYNCED",
+      "VIP LAYER READY",
+      "LAMBO CITY LIVE"
     ];
 
     let i = 0;
 
-    loop = setInterval(() => {
+    loop = setInterval(()=>{
       document.getElementById("activity").innerText =
         messages[i % messages.length];
       i++;
-    }, 2000);
+    }, 1800);
   }
 
   document.getElementById("radio").play().catch(()=>{});
@@ -230,6 +250,7 @@ function enterWorld() {
 function exitWorld() {
   document.getElementById("world").style.display = "none";
   document.getElementById("home").style.display = "flex";
+  document.getElementById("home").style.opacity = "1";
 
   if (loop) {
     clearInterval(loop);
