@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>LAMBO CITY — V3</title>
+<title>LAMBO CITY — V4.1</title>
 
 <style>
 body { margin:0; overflow:hidden; background:black; font-family:Arial; }
@@ -13,9 +13,9 @@ canvas { display:block; }
   position:absolute;
   inset:0;
   display:flex;
-  flex-direction:column;
   align-items:center;
   justify-content:center;
+  flex-direction:column;
   color:white;
   background:black;
   z-index:999;
@@ -23,13 +23,7 @@ canvas { display:block; }
   text-align:center;
 }
 
-#hud {
-  position:absolute;
-  top:20px;
-  left:20px;
-  color:white;
-  font-size:13px;
-}
+#hud { position:absolute; top:20px; left:20px; color:white; font-size:13px; }
 
 #prompt {
   position:absolute;
@@ -40,7 +34,6 @@ canvas { display:block; }
   border:1px solid gold;
   display:none;
 }
-
 </style>
 </head>
 
@@ -51,7 +44,8 @@ LAMBO CITY<br><span style="font-size:12px;">ENTER THE EXPERIENCE</span>
 </div>
 
 <div id="vip" class="screen" style="display:none;">
-VIP ACCESS<br><span style="font-size:12px;">LAMBO CITY YACHT CLUB</span>
+YACHT CLUB LIVE<br>
+<span style="font-size:12px;">ENERGY ACTIVE</span>
 </div>
 
 <div id="hud">ZONE: CABIN</div>
@@ -63,7 +57,7 @@ VIP ACCESS<br><span style="font-size:12px;">LAMBO CITY YACHT CLUB</span>
 
 <script>
 
-// STATE
+// ===== STATE =====
 let scene = new THREE.Scene();
 scene.fog = new THREE.FogExp2(0x02030a, 0.02);
 
@@ -74,19 +68,20 @@ let renderer = new THREE.WebGLRenderer({canvas:c, antialias:true});
 renderer.setSize(innerWidth, innerHeight);
 
 let keys = {};
-let started = false;
-let hasPass = false;
-let doorOpen = false;
-let boarding = false;
-let inVIP = false;
+let started=false, hasPass=false, doorOpen=false, boarding=false, inVIP=false;
 
-// LIGHTS
+// ===== LIGHTS =====
 scene.add(new THREE.AmbientLight(0x1a1a2a,1.2));
-let light = new THREE.PointLight(0x00aaff,2);
-light.position.set(0,6,5);
-scene.add(light);
 
-// PLAYER
+let mainLight = new THREE.PointLight(0x00aaff,2);
+mainLight.position.set(0,6,5);
+scene.add(mainLight);
+
+let clubLight = new THREE.PointLight(0xff00ff,0);
+clubLight.position.set(0,5,-22);
+scene.add(clubLight);
+
+// ===== PLAYER =====
 let player = new THREE.Mesh(
   new THREE.BoxGeometry(1,1,1),
   new THREE.MeshStandardMaterial({color:0xffffff})
@@ -94,15 +89,15 @@ let player = new THREE.Mesh(
 player.position.y = 0.5;
 scene.add(player);
 
-// FLOOR
+// ===== FLOOR =====
 let floor = new THREE.Mesh(
-  new THREE.PlaneGeometry(200,200),
+  new THREE.PlaneGeometry(300,300),
   new THREE.MeshStandardMaterial({color:0x111111})
 );
 floor.rotation.x = -Math.PI/2;
 scene.add(floor);
 
-// DOOR
+// ===== DOOR =====
 let door = new THREE.Mesh(
   new THREE.BoxGeometry(2,3,0.2),
   new THREE.MeshStandardMaterial({color:0x333333})
@@ -110,7 +105,7 @@ let door = new THREE.Mesh(
 door.position.set(0,1.5,-5);
 scene.add(door);
 
-// DOCK
+// ===== DOCK =====
 let dock = new THREE.Mesh(
   new THREE.BoxGeometry(20,0.3,20),
   new THREE.MeshStandardMaterial({color:0x222222})
@@ -118,7 +113,7 @@ let dock = new THREE.Mesh(
 dock.position.z = -15;
 scene.add(dock);
 
-// YACHT
+// ===== YACHT =====
 let yacht = new THREE.Mesh(
   new THREE.BoxGeometry(2,1,5),
   new THREE.MeshStandardMaterial({color:0xffd700})
@@ -126,95 +121,135 @@ let yacht = new THREE.Mesh(
 yacht.position.set(0,0.5,-22);
 scene.add(yacht);
 
-// INPUT
-document.addEventListener("keydown", e=>{
+// ===== STARS =====
+let starGeo = new THREE.BufferGeometry();
+let starArr = [];
+for(let i=0;i<1500;i++){
+  starArr.push(
+    (Math.random()-0.5)*300,
+    Math.random()*150,
+    (Math.random()-0.5)*300
+  );
+}
+starGeo.setAttribute("position", new THREE.Float32BufferAttribute(starArr,3));
+let stars = new THREE.Points(starGeo, new THREE.PointsMaterial({color:0xffffff, size:0.7}));
+scene.add(stars);
+
+// ===== CITY =====
+for(let i=0;i<40;i++){
+  let b = new THREE.Mesh(
+    new THREE.BoxGeometry(2, Math.random()*8+2, 2),
+    new THREE.MeshStandardMaterial({color:0x0a0a0a})
+  );
+  b.position.set(
+    (Math.random()-0.5)*100,
+    b.geometry.parameters.height/2,
+    (Math.random()-0.5)*100 - 20
+  );
+  scene.add(b);
+}
+
+// ===== CROWD =====
+let crowd=[];
+for(let i=0;i<20;i++){
+  let c = new THREE.Mesh(
+    new THREE.BoxGeometry(0.5,1.5,0.5),
+    new THREE.MeshStandardMaterial({color:0x000000})
+  );
+  c.position.set((Math.random()-0.5)*8,0.75,-22+(Math.random()-0.5)*4);
+  scene.add(c);
+  crowd.push(c);
+}
+
+// ===== INPUT =====
+document.addEventListener("keydown",e=>{
   keys[e.key.toLowerCase()] = true;
 
   if(e.key.toLowerCase()==="e"){
 
-    let doorDist = player.position.distanceTo(door.position);
-    let yachtDist = player.position.distanceTo(yacht.position);
+    let d1 = player.position.distanceTo(door.position);
+    let d2 = player.position.distanceTo(yacht.position);
 
-    // GET PASS
     if(!hasPass){
-      hasPass = true;
-      hud.innerHTML = "ACCESS GRANTED — FIND EXIT";
+      hasPass=true;
+      hud.innerHTML="ACCESS GRANTED — FIND EXIT";
     }
 
-    // OPEN DOOR
-    if(hasPass && doorDist < 3 && !doorOpen){
-      doorOpen = true;
+    if(hasPass && d1<3 && !doorOpen){
+      doorOpen=true;
     }
 
-    // BOARD YACHT (TRANSACTION)
-    if(doorOpen && yachtDist < 3 && !boarding){
-      boarding = true;
-      prompt.style.display = "block";
-      prompt.innerHTML = "VERIFYING ACCESS...";
+    if(doorOpen && d2<3 && !boarding){
+      boarding=true;
+      prompt.style.display="block";
+      prompt.innerHTML="VERIFYING ACCESS...";
 
       setTimeout(()=>{
-        prompt.innerHTML = "BOARDING CONFIRMED";
+        prompt.innerHTML="BOARDING CONFIRMED";
 
         setTimeout(()=>{
-          inVIP = true;
-          vip.style.display = "flex";
-          prompt.style.display = "none";
-        },1500);
+          inVIP=true;
+          vip.style.display="flex";
+          prompt.style.display="none";
+        },1200);
 
-      },1500);
+      },1200);
     }
   }
 });
 
-document.addEventListener("keyup", e=>{
+document.addEventListener("keyup",e=>{
   keys[e.key.toLowerCase()] = false;
 });
 
-// INTRO
+// ===== INTRO =====
 setTimeout(()=>{
-  intro.style.display = "none";
-  started = true;
+  intro.style.display="none";
+  started=true;
 },2000);
 
-// LOOP
+// ===== LOOP =====
 function animate(){
   requestAnimationFrame(animate);
 
   if(started && !inVIP){
 
-    // MOVE
     if(keys["w"]) player.position.z -= 0.08;
     if(keys["s"]) player.position.z += 0.08;
     if(keys["a"]) player.position.x -= 0.08;
     if(keys["d"]) player.position.x += 0.08;
 
-    // CAMERA
     camera.position.x += (player.position.x - camera.position.x)*0.05;
     camera.position.z += (player.position.z + 5 - camera.position.z)*0.05;
     camera.lookAt(player.position);
 
-    // DOOR OPEN ANIMATION
     if(doorOpen && door.rotation.y > -Math.PI/2){
       door.rotation.y -= 0.05;
     }
 
-    // PROMPTS
-    let doorDist = player.position.distanceTo(door.position);
-    let yachtDist = player.position.distanceTo(yacht.position);
+    let d1 = player.position.distanceTo(door.position);
+    let d2 = player.position.distanceTo(yacht.position);
 
-    if(hasPass && !doorOpen && doorDist < 3){
-      prompt.style.display = "block";
-      prompt.innerHTML = "PRESS E TO OPEN DOOR";
-      hud.innerHTML = "ZONE: CABIN";
+    if(hasPass && !doorOpen && d1<3){
+      prompt.style.display="block";
+      prompt.innerHTML="PRESS E TO OPEN DOOR";
     }
-    else if(doorOpen && yachtDist < 3 && !boarding){
-      prompt.style.display = "block";
-      prompt.innerHTML = "PRESS E TO BOARD";
-      hud.innerHTML = "ZONE: DOCK";
+    else if(doorOpen && d2<3 && !boarding){
+      prompt.style.display="block";
+      prompt.innerHTML="PRESS E TO BOARD";
     }
     else{
-      prompt.style.display = "none";
+      prompt.style.display="none";
     }
+  }
+
+  // VIP MODE
+  if(inVIP){
+    clubLight.intensity = 3 + Math.sin(Date.now()*0.02)*2;
+
+    crowd.forEach(c=>{
+      c.position.y = 0.75 + Math.sin(Date.now()*0.005 + c.position.x)*0.2;
+    });
   }
 
   renderer.render(scene,camera);
