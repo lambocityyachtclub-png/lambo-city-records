@@ -2,13 +2,12 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LAMBO CITY — ALL DEVICES</title>
+<title>LAMBO CITY — YACHT CLUB LIVE</title>
 
 <style>
 body { margin:0; overflow:hidden; background:black; font-family:Arial; }
 canvas { display:block; }
 
-/* UI */
 #ui {
   position:absolute;
   top:20px;
@@ -28,27 +27,6 @@ canvas { display:block; }
   display:none;
   background:rgba(0,0,0,0.6);
 }
-
-/* TOUCH JOYSTICK */
-#joystick {
-  position:absolute;
-  bottom:40px;
-  left:40px;
-  width:120px;
-  height:120px;
-  background:rgba(255,255,255,0.05);
-  border-radius:50%;
-}
-
-#stick {
-  position:absolute;
-  width:60px;
-  height:60px;
-  background:rgba(255,255,255,0.2);
-  border-radius:50%;
-  top:30px;
-  left:30px;
-}
 </style>
 </head>
 
@@ -56,8 +34,6 @@ canvas { display:block; }
 
 <div id="ui">ZONE: CABIN</div>
 <div id="prompt">PRESS E / TAP</div>
-
-<div id="joystick"><div id="stick"></div></div>
 
 <canvas id="c"></canvas>
 
@@ -116,9 +92,9 @@ let door = new THREE.Mesh(
 door.position.set(0,1.5,-9.9);
 scene.add(door);
 
-// DOCK WORLD
+// DOCK + CLUB
 let dock = new THREE.Mesh(
-  new THREE.BoxGeometry(60,1,20),
+  new THREE.BoxGeometry(80,1,40),
   new THREE.MeshStandardMaterial({color:0x0a0a0a})
 );
 dock.position.set(0,-0.5,-40);
@@ -126,15 +102,71 @@ dock.visible = false;
 scene.add(dock);
 
 let yacht = new THREE.Mesh(
-  new THREE.BoxGeometry(12,3,12),
+  new THREE.BoxGeometry(20,4,20),
   new THREE.MeshStandardMaterial({color:0x111122})
 );
-yacht.position.set(0,1,-60);
+yacht.position.set(0,2,-60);
 yacht.visible = false;
 scene.add(yacht);
 
-// KEYBOARD
+// 🎧 MUSIC
+const music = new Audio("https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c8a3c5c4.mp3");
+music.loop = true;
+music.volume = 0.5;
+
+// 🎉 CROWD
+let crowd = [];
+for(let i=0;i<25;i++){
+  let p = new THREE.Mesh(
+    new THREE.BoxGeometry(0.5,1,0.5),
+    new THREE.MeshStandardMaterial({color:0xffffff})
+  );
+  p.position.set(
+    (Math.random()-0.5)*10,
+    0.5,
+    -60 + (Math.random()-0.5)*10
+  );
+  p.visible = false;
+  scene.add(p);
+  crowd.push(p);
+}
+
+// 💡 CLUB LIGHTS
+let lights = [];
+
+for(let i=0;i<6;i++){
+  let l = new THREE.PointLight(0x00aaff, 2, 30);
+  l.position.set((i-3)*3,3,-60);
+  l.visible = false;
+  scene.add(l);
+  lights.push(l);
+}
+
+// ✨ PARTICLES
+let geo = new THREE.BufferGeometry();
+let arr = [];
+
+for(let i=0;i<800;i++){
+  arr.push(
+    (Math.random()-0.5)*80,
+    Math.random()*20,
+    -60 + (Math.random()-0.5)*40
+  );
+}
+
+geo.setAttribute("position", new THREE.Float32BufferAttribute(arr,3));
+
+let particles = new THREE.Points(
+  geo,
+  new THREE.PointsMaterial({color:0xffffff, size:0.3})
+);
+particles.visible = false;
+scene.add(particles);
+
+// INPUT
 let keys = {};
+let inDock = false;
+
 document.addEventListener("keydown", e=>{
   keys[e.key.toLowerCase()] = true;
   if(e.key.toLowerCase()==="e") interact();
@@ -143,52 +175,20 @@ document.addEventListener("keyup", e=>{
   keys[e.key.toLowerCase()] = false;
 });
 
-// TOUCH JOYSTICK
-let joy = document.getElementById("joystick");
-let stick = document.getElementById("stick");
-
-let touchActive = false;
-let joyX = 0;
-let joyY = 0;
-
-joy.addEventListener("touchstart", ()=> touchActive = true);
-
-joy.addEventListener("touchmove", e=>{
-  let rect = joy.getBoundingClientRect();
-  let x = e.touches[0].clientX - rect.left - 60;
-  let y = e.touches[0].clientY - rect.top - 60;
-
-  joyX = x / 60;
-  joyY = y / 60;
-
-  stick.style.left = (x + 60) + "px";
-  stick.style.top = (y + 60) + "px";
-});
-
-joy.addEventListener("touchend", ()=>{
-  touchActive = false;
-  joyX = 0;
-  joyY = 0;
-  stick.style.left = "30px";
-  stick.style.top = "30px";
-});
-
-// TAP INTERACT
-document.addEventListener("touchstart", ()=>{
-  interact();
-});
-
-let inDock = false;
+document.addEventListener("click", ()=> music.play());
 
 // INTERACT
 function interact(){
+
 let dist = player.position.distanceTo(door.position);
 
 if(dist < 3 && !inDock){
+
   inDock = true;
 
+  // hide cabin
   scene.children.forEach(obj=>{
-    if(obj !== player && obj !== dock && obj !== yacht){
+    if(obj !== player && obj !== dock && obj !== yacht && !crowd.includes(obj) && !lights.includes(obj) && obj !== particles){
       obj.visible = false;
     }
   });
@@ -196,32 +196,43 @@ if(dist < 3 && !inDock){
   dock.visible = true;
   yacht.visible = true;
 
+  crowd.forEach(p=> p.visible = true);
+  lights.forEach(l=> l.visible = true);
+  particles.visible = true;
+
   player.position.set(0,1,-30);
 
-  document.getElementById("ui").innerText = "ZONE: DOCK";
+  document.getElementById("ui").innerText = "ZONE: YACHT CLUB";
+
+  music.play();
 }
+
 }
 
 // LOOP
 function animate(){
 requestAnimationFrame(animate);
 
-// KEYBOARD MOVE
+// MOVE
 if(keys["w"]) player.position.z -= 0.1;
 if(keys["s"]) player.position.z += 0.1;
 if(keys["a"]) player.position.x -= 0.1;
 if(keys["d"]) player.position.x += 0.1;
 
-// TOUCH MOVE
-if(touchActive){
-  player.position.x += joyX * 0.1;
-  player.position.z += joyY * 0.1;
-}
-
 // CAMERA
 camera.position.x += (player.position.x - camera.position.x)*0.05;
 camera.position.z += (player.position.z + 5 - camera.position.z)*0.05;
 camera.lookAt(player.position);
+
+// 🎉 CROWD ANIMATION
+crowd.forEach(p=>{
+  p.position.y = 0.5 + Math.sin(Date.now()*0.005)*0.2;
+});
+
+// 💡 LIGHT ANIMATION
+lights.forEach((l,i)=>{
+  l.intensity = 2 + Math.sin(Date.now()*0.003 + i)*1.5;
+});
 
 // PROMPT
 let dist = player.position.distanceTo(door.position);
