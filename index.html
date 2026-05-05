@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LAMBO CITY — YACHT PARTY MODE</title>
+<title>LAMBO CITY — YACHT INTERIOR TRANSITION</title>
 
 <style>
 body { margin:0; overflow:hidden; background:black; font-family:Arial; }
@@ -27,6 +27,17 @@ canvas { display:block; }
   color:white;
   display:none;
   background:rgba(0,0,0,0.6);
+  text-align:center;
+}
+
+#fade {
+  position:absolute;
+  inset:0;
+  background:black;
+  opacity:0;
+  pointer-events:none;
+  transition: opacity 1.5s ease;
+  z-index:999;
 }
 
 #login {
@@ -38,7 +49,7 @@ canvas { display:block; }
   align-items:center;
   justify-content:center;
   flex-direction:column;
-  z-index:999;
+  z-index:1000;
 }
 </style>
 </head>
@@ -50,8 +61,9 @@ canvas { display:block; }
 <button onclick="start()">ENTER EXPERIENCE</button>
 </div>
 
-<div id="hud">YACHT STATUS: IDLE</div>
-<div id="prompt">PRESS E</div>
+<div id="hud">ZONE: DOCK</div>
+<div id="prompt">PRESS E TO ENTER YACHT</div>
+<div id="fade"></div>
 
 <canvas id="c"></canvas>
 
@@ -62,9 +74,11 @@ canvas { display:block; }
 let scene, camera, renderer;
 let player, yacht;
 let keys = {};
-let hasPass = false;
-let inParty = false;
 
+let state = "OUTSIDE"; // OUTSIDE → TRANSITION → INTERIOR
+let insideYacht = false;
+
+// ================= START =================
 function start(){
 
 document.getElementById("login").style.display = "none";
@@ -81,16 +95,12 @@ camera.position.set(0,2.5,5);
 renderer = new THREE.WebGLRenderer({canvas:c});
 renderer.setSize(innerWidth, innerHeight);
 
-// LIGHTS (PARTY MODE)
+// LIGHTS
 scene.add(new THREE.AmbientLight(0x1a1a2a, 0.8));
 
-const light1 = new THREE.PointLight(0x00aaff, 2);
-light1.position.set(0,5,-10);
-scene.add(light1);
-
-const light2 = new THREE.PointLight(0xffd700, 1.5);
-light2.position.set(3,3,-12);
-scene.add(light2);
+const light = new THREE.PointLight(0x00aaff, 2);
+light.position.set(0,5,-10);
+scene.add(light);
 
 // PLAYER
 player = new THREE.Mesh(
@@ -100,7 +110,7 @@ player = new THREE.Mesh(
 player.position.y = 0.5;
 scene.add(player);
 
-// YACHT
+// YACHT (OUTSIDE)
 yacht = new THREE.Mesh(
   new THREE.BoxGeometry(3,1,6),
   new THREE.MeshStandardMaterial({color:0xffd700})
@@ -108,7 +118,7 @@ yacht = new THREE.Mesh(
 yacht.position.set(0,0.5,-15);
 scene.add(yacht);
 
-// FLOOR
+// FLOOR OUTSIDE
 const floor = new THREE.Mesh(
   new THREE.PlaneGeometry(200,200),
   new THREE.MeshStandardMaterial({color:0x111111})
@@ -130,80 +140,135 @@ for(let i=0;i<2000;i++){
 
 geo.setAttribute("position", new THREE.Float32BufferAttribute(arr,3));
 
-const stars = new THREE.Points(
+scene.add(new THREE.Points(
   geo,
   new THREE.PointsMaterial({color:0xffffff, size:0.7})
-);
-
-scene.add(stars);
-
-// CROWD LIGHTS (FAKE PEOPLE ENERGY)
-for(let i=0;i<10;i++){
-  const glow = new THREE.PointLight(0xffffff, 0.6, 8);
-  glow.position.set(
-    (Math.random()-0.5)*6,
-    1,
-    -15 + (Math.random()-0.5)*4
-  );
-  scene.add(glow);
-}
-
-// MUSIC (auto play on click)
-const music = new Audio("https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c8a3c5c4.mp3?filename=deep-house-ambient-110397.mp3");
-music.loop = true;
-music.volume = 0.35;
-document.addEventListener("click", ()=> music.play());
+));
 
 // INPUT
 document.addEventListener("keydown", e=>{
   keys[e.key.toLowerCase()] = true;
-  if(e.key.toLowerCase()==="e") action();
+  if(e.key.toLowerCase()==="e") trigger();
 });
 
 document.addEventListener("keyup", e=>{
   keys[e.key.toLowerCase()] = false;
 });
 
-// ACTION
-function action(){
+// LOOP
+animate();
 
-  let dist = player.position.distanceTo(yacht.position);
-
-  if(!hasPass){
-    hasPass = true;
-    hud.innerText = "PASS GRANTED — GO TO YACHT";
-    return;
-  }
-
-  if(hasPass && dist < 3){
-    inParty = true;
-    hud.innerText = "VIP PARTY ACTIVE 🔥";
-  }
 }
 
-// LOOP
+// ================= TRANSITION =================
+function trigger(){
+
+let dist = player.position.distanceTo(yacht.position);
+
+if(state === "OUTSIDE" && dist < 3){
+
+  state = "TRANSITION";
+
+  document.getElementById("fade").style.opacity = 1;
+  document.getElementById("prompt").innerText = "ENTERING YACHT...";
+
+  setTimeout(()=>{
+
+    loadInterior();
+
+    document.getElementById("fade").style.opacity = 0;
+
+  },1500);
+}
+
+}
+
+// ================= INTERIOR (GTA STYLE SWAP) =================
+function loadInterior(){
+
+state = "INSIDE";
+insideYacht = true;
+
+document.getElementById("hud").innerText = "ZONE: YACHT INTERIOR";
+
+// CLEAR WORLD
+scene.clear();
+
+// LIGHTS (INTERIOR CLUB FEEL)
+scene.add(new THREE.AmbientLight(0x222244, 1));
+
+const neon1 = new THREE.PointLight(0x00aaff, 3);
+neon1.position.set(2,3,2);
+scene.add(neon1);
+
+const neon2 = new THREE.PointLight(0xff00ff, 2);
+neon2.position.set(-2,3,-2);
+scene.add(neon2);
+
+// FLOOR INTERIOR
+const floor = new THREE.Mesh(
+  new THREE.PlaneGeometry(20,20),
+  new THREE.MeshStandardMaterial({color:0x111122})
+);
+floor.rotation.x = -Math.PI/2;
+scene.add(floor);
+
+// PLAYER (RESET POSITION)
+player.position.set(0,0.5,2);
+scene.add(player);
+
+// INTERIOR YACHT SPACE
+const bar = new THREE.Mesh(
+  new THREE.BoxGeometry(6,2,1),
+  new THREE.MeshStandardMaterial({color:0x333333})
+);
+bar.position.set(0,1,-4);
+scene.add(bar);
+
+// DJ BOOTH
+const dj = new THREE.Mesh(
+  new THREE.BoxGeometry(2,1,2),
+  new THREE.MeshStandardMaterial({color:0x00aaff})
+);
+dj.position.set(0,0.5,3);
+scene.add(dj);
+
+}
+
+// ================= LOOP =================
 function animate(){
-  requestAnimationFrame(animate);
 
-  // movement
-  if(keys["w"]) player.position.z -= 0.08;
-  if(keys["s"]) player.position.z += 0.08;
-  if(keys["a"]) player.position.x -= 0.08;
-  if(keys["d"]) player.position.x += 0.08;
+requestAnimationFrame(animate);
 
-  // camera smooth
-  camera.position.x += (player.position.x - camera.position.x)*0.03;
-  camera.position.z += (player.position.z + 6 - camera.position.z)*0.03;
-  camera.lookAt(player.position);
+// movement
+if(keys["w"]) player.position.z -= 0.08;
+if(keys["s"]) player.position.z += 0.08;
+if(keys["a"]) player.position.x -= 0.08;
+if(keys["d"]) player.position.x += 0.08;
 
-  // yacht float = life feeling
+// camera follow (smooth GTA feel)
+camera.position.x += (player.position.x - camera.position.x)*0.04;
+camera.position.z += (player.position.z + 6 - camera.position.z)*0.04;
+camera.lookAt(player.position);
+
+// yacht float (only outside)
+if(state === "OUTSIDE"){
   yacht.position.y = 0.5 + Math.sin(Date.now()*0.002)*0.15;
   yacht.rotation.y += 0.002;
-
-  renderer.render(scene,camera);
 }
 
-animate();
+// prompt logic
+if(state === "OUTSIDE"){
+  let dist = player.position.distanceTo(yacht.position);
+
+  if(dist < 3){
+    document.getElementById("prompt").style.display = "block";
+  } else {
+    document.getElementById("prompt").style.display = "none";
+  }
+}
+
+renderer.render(scene,camera);
 
 }
 
