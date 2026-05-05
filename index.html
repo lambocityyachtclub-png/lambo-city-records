@@ -3,14 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>LAMBO CITY — FINAL PROTOTYPE</title>
+<title>LAMBO CITY — EXPERIENCE</title>
 
 <style>
 body { margin:0; overflow:hidden; background:black; font-family:Arial; }
-
 canvas { display:block; }
 
-#intro {
+#intro, #vipScreen {
   position:absolute;
   inset:0;
   display:flex;
@@ -31,6 +30,15 @@ canvas { display:block; }
   color:white;
   font-size:13px;
   z-index:10;
+}
+
+#centerUI {
+  position:absolute;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  color:white;
+  text-align:center;
 }
 
 #prompt {
@@ -54,12 +62,21 @@ LAMBO CITY<br>
 <span style="font-size:12px; opacity:0.7;">ENTER THE EXPERIENCE</span>
 </div>
 
-<div id="hud">
-ZONE: CABIN<br>
-STATUS: ACTIVE
+<div id="vipScreen" style="display:none;">
+WELCOME TO VIP<br>
+<span style="font-size:12px; opacity:0.7;">LAMBO CITY YACHT CLUB</span>
 </div>
 
-<div id="prompt">ENTER YACHT</div>
+<div id="hud">
+ZONE: CABIN<br>
+STATUS: WAITING
+</div>
+
+<div id="centerUI">
+PRESS E TO ENTER BOARDING PASS
+</div>
+
+<div id="prompt">PRESS E TO BOARD YACHT</div>
 
 <canvas id="c"></canvas>
 
@@ -68,26 +85,27 @@ STATUS: ACTIVE
 <script>
 
 // =========================
-// CORE WORLD
+// STATE
 // =========================
 let scene, camera, renderer;
 let player, yacht;
 let keys = {};
 let started = false;
+let hasPass = false;
+let inVIP = false;
 
-// SCENE
+// =========================
+// WORLD
+// =========================
 scene = new THREE.Scene();
 scene.fog = new THREE.FogExp2(0x02030a, 0.02);
 
-// CAMERA
 camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 1000);
 camera.position.set(0,2.5,5);
 
-// RENDERER
 renderer = new THREE.WebGLRenderer({ canvas:document.getElementById("c"), antialias:true });
 renderer.setSize(innerWidth, innerHeight);
 
-// LIGHT
 scene.add(new THREE.AmbientLight(0x1a1a2a, 1.2));
 
 const light = new THREE.PointLight(0x00aaff, 2.5);
@@ -129,21 +147,43 @@ scene.add(yacht);
 // STARS
 const geo = new THREE.BufferGeometry();
 const arr = [];
-
 for(let i=0;i<1500;i++){
   arr.push((Math.random()-0.5)*300, Math.random()*150, (Math.random()-0.5)*300);
 }
-
 geo.setAttribute("position", new THREE.Float32BufferAttribute(arr,3));
-
 scene.add(new THREE.Points(
   geo,
   new THREE.PointsMaterial({color:0xffffff, size:0.6})
 ));
 
+// =========================
 // INPUT
-document.addEventListener("keydown",e=>keys[e.key.toLowerCase()]=true);
-document.addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
+// =========================
+document.addEventListener("keydown",e=>{
+  keys[e.key.toLowerCase()] = true;
+
+  if(e.key.toLowerCase() === "e"){
+
+    // GET BOARDING PASS
+    if(!hasPass){
+      hasPass = true;
+      document.getElementById("centerUI").innerHTML = "ACCESS GRANTED — PROCEED TO DOCK";
+      document.getElementById("hud").innerHTML = "ZONE: CABIN<br>STATUS: ACCESS GRANTED";
+    }
+
+    // ENTER YACHT
+    let dist = player.position.distanceTo(yacht.position);
+    if(hasPass && dist < 3){
+      inVIP = true;
+      document.getElementById("vipScreen").style.display = "flex";
+    }
+  }
+
+});
+
+document.addEventListener("keyup",e=>{
+  keys[e.key.toLowerCase()] = false;
+});
 
 // INTRO
 setTimeout(()=>{
@@ -152,13 +192,13 @@ setTimeout(()=>{
 },2500);
 
 // =========================
-// GAME LOOP
+// LOOP
 // =========================
 function animate(){
 
   requestAnimationFrame(animate);
 
-  if(started){
+  if(started && !inVIP){
 
     // MOVE
     if(keys["w"]) player.position.z -= 0.08;
@@ -171,11 +211,12 @@ function animate(){
     camera.position.z += (player.position.z + 5 - camera.position.z)*0.06;
     camera.lookAt(player.position);
 
-    // INTERACTION
+    // PROMPT
     let dist = player.position.distanceTo(yacht.position);
 
-    if(dist < 3){
+    if(hasPass && dist < 3){
       document.getElementById("prompt").style.display = "block";
+      document.getElementById("hud").innerHTML = "ZONE: DOCK<br>STATUS: READY TO BOARD";
     } else {
       document.getElementById("prompt").style.display = "none";
     }
