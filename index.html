@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LAMBO CITY — LIVE PLATFORM</title>
+<title>LAMBO CITY — V8 LIVE LOOP</title>
 <style>
 body { margin:0; overflow:hidden; background:black; font-family:Arial; }
 canvas { display:block; }
@@ -13,6 +13,7 @@ canvas { display:block; }
   left:20px;
   color:white;
   font-size:13px;
+  z-index:10;
 }
 
 #prompt {
@@ -20,10 +21,11 @@ canvas { display:block; }
   bottom:80px;
   left:50%;
   transform:translateX(-50%);
-  padding:10px;
+  padding:10px 14px;
   border:1px solid gold;
   color:white;
   display:none;
+  background:rgba(0,0,0,0.6);
 }
 
 #login {
@@ -44,10 +46,10 @@ canvas { display:block; }
 
 <div id="login">
 <h2>LAMBO CITY</h2>
-<button onclick="login()">ENTER WORLD</button>
+<button onclick="login()">ENTER EXPERIENCE</button>
 </div>
 
-<div id="hud">ZONE: LOADING...</div>
+<div id="hud">ZONE: INIT</div>
 <div id="prompt">PRESS E</div>
 
 <canvas id="c"></canvas>
@@ -61,12 +63,11 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-// 🔑 YOUR CONFIG (YOU ALREADY HAVE THIS)
 const firebaseConfig = {
   apiKey: "AIzaSyB-HyCPaB0gR9-VMGovh-VByajOkrEyGTs",
   authDomain: "lambocityrecords-2fee2.firebaseapp.com",
   projectId: "lambocityrecords-2fee2",
-  storageBucket: "lambocityrecords-2fee2.firebaseapp.com",
+  storageBucket: "lambocityrecords-2fee2.firebasestorage.app",
   messagingSenderId: "78498268542",
   appId: "1:78498268542:web:9b60b8f87488af40c29f2f"
 };
@@ -86,18 +87,57 @@ window.login = async function(){
   startWorld();
 }
 
+// ================= LOOP SYSTEM =================
+const userRef = (uid) => doc(db, "users", uid);
+const COOLDOWN = 60 * 1000; // 1 min test
+
+async function getUser(uid){
+  const snap = await getDoc(userRef(uid));
+  return snap.exists() ? snap.data() : null;
+}
+
+async function canGetPass(uid){
+  const data = await getUser(uid);
+  if(!data || !data.lastPass) return true;
+  return (Date.now() - data.lastPass) > COOLDOWN;
+}
+
+async function grantPass(uid){
+  await setDoc(userRef(uid), {
+    pass: true,
+    lastPass: Date.now()
+  }, { merge:true });
+}
+
+async function giveDrop(uid){
+  const data = await getUser(uid);
+  const drops = data?.drops || [];
+
+  drops.push({
+    id: Date.now(),
+    type: "VIP_DROP",
+    time: Date.now()
+  });
+
+  await setDoc(userRef(uid), { drops }, { merge:true });
+}
+
 // ================= WORLD =================
 function startWorld(){
 
 let scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(0x02030a, 0.02);
+
 let camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 1000);
 camera.position.set(0,2.5,5);
 
-let renderer = new THREE.WebGLRenderer({canvas:c});
+let renderer = new THREE.WebGLRenderer({canvas:c, antialias:true});
 renderer.setSize(innerWidth, innerHeight);
 
 let keys = {};
-let player, yacht, hasPass=false, inVIP=false;
+let player, yacht;
+let hasPass=false;
+let inVIP=false;
 
 // LIGHT
 scene.add(new THREE.AmbientLight(0x1a1a2a,1.2));
@@ -127,48 +167,48 @@ floor.rotation.x = -Math.PI/2;
 scene.add(floor);
 
 // INPUT
-document.addEventListener("keydown",e=>{
+document.addEventListener("keydown", e=>{
   keys[e.key.toLowerCase()] = true;
-
-  if(e.key.toLowerCase()==="e"){
-    interact();
-  }
+  if(e.key.toLowerCase()==="e") interact();
 });
-
-document.addEventListener("keyup",e=>{
+document.addEventListener("keyup", e=>{
   keys[e.key.toLowerCase()] = false;
 });
 
-// ================= INTERACTION =================
+// ================= INTERACT =================
 async function interact(){
 
   let dist = player.position.distanceTo(yacht.position);
 
-  // GET PASS (SAVE TO FIREBASE)
+  // GET PASS (COOLDOWN SYSTEM)
   if(!hasPass){
-    hasPass = true;
 
-    await setDoc(doc(db,"users",userId),{
-      pass:true,
-      created:Date.now()
-    });
+    const allowed = await canGetPass(userId);
 
-    hud.innerText = "PASS SAVED — GO TO YACHT";
+    if(allowed){
+      hasPass = true;
+      await grantPass(userId);
+      hud.innerText = "PASS GRANTED — GO TO YACHT";
+    } else {
+      hud.innerText = "COOLDOWN ACTIVE — COME BACK LATER";
+    }
+
+    return;
   }
 
-  // CHECK PASS + BOARD
-  if(hasPass && dist < 3){
+  // BOARD + DROP
+  if(hasPass && dist < 3 && !inVIP){
 
-    const ref = doc(db,"users",userId);
-    const snap = await getDoc(ref);
+    inVIP = true;
 
-    if(snap.exists() && snap.data().pass){
-      await setDoc(ref,{ boarded:true },{ merge:true });
+    await setDoc(userRef(userId), {
+      boarded: true
+    }, { merge:true });
 
-      inVIP = true;
-      hud.innerText = "WELCOME TO VIP";
-      document.getElementById("prompt").style.display = "none";
-    }
+    await giveDrop(userId);
+
+    hud.innerText = "VIP ACCESS + DROP RECEIVED";
+    document.getElementById("prompt").style.display = "none";
   }
 }
 
@@ -188,9 +228,9 @@ function animate(){
   let dist = player.position.distanceTo(yacht.position);
 
   if(dist < 3 && hasPass && !inVIP){
-    document.getElementById("prompt").style.display = "block";
+    prompt.style.display = "block";
   } else {
-    document.getElementById("prompt").style.display = "none";
+    prompt.style.display = "none";
   }
 
   renderer.render(scene,camera);
