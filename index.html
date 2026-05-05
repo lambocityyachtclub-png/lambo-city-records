@@ -2,12 +2,13 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LAMBO CITY — CABIN → DOCK</title>
+<title>LAMBO CITY — ALL DEVICES</title>
 
 <style>
 body { margin:0; overflow:hidden; background:black; font-family:Arial; }
 canvas { display:block; }
 
+/* UI */
 #ui {
   position:absolute;
   top:20px;
@@ -18,7 +19,7 @@ canvas { display:block; }
 
 #prompt {
   position:absolute;
-  bottom:80px;
+  bottom:120px;
   left:50%;
   transform:translateX(-50%);
   padding:10px;
@@ -28,13 +29,25 @@ canvas { display:block; }
   background:rgba(0,0,0,0.6);
 }
 
-#fade {
+/* TOUCH JOYSTICK */
+#joystick {
   position:absolute;
-  inset:0;
-  background:black;
-  opacity:0;
-  pointer-events:none;
-  transition:1s ease;
+  bottom:40px;
+  left:40px;
+  width:120px;
+  height:120px;
+  background:rgba(255,255,255,0.05);
+  border-radius:50%;
+}
+
+#stick {
+  position:absolute;
+  width:60px;
+  height:60px;
+  background:rgba(255,255,255,0.2);
+  border-radius:50%;
+  top:30px;
+  left:30px;
 }
 </style>
 </head>
@@ -42,8 +55,9 @@ canvas { display:block; }
 <body>
 
 <div id="ui">ZONE: CABIN</div>
-<div id="prompt">PRESS E AT DOOR</div>
-<div id="fade"></div>
+<div id="prompt">PRESS E / TAP</div>
+
+<div id="joystick"><div id="stick"></div></div>
 
 <canvas id="c"></canvas>
 
@@ -60,7 +74,6 @@ camera.position.set(0,2,5);
 let renderer = new THREE.WebGLRenderer({canvas:c});
 renderer.setSize(innerWidth, innerHeight);
 
-// LIGHT
 scene.add(new THREE.AmbientLight(0x404040, 1.5));
 
 // PLAYER
@@ -78,15 +91,6 @@ let floor = new THREE.Mesh(
 );
 floor.rotation.x = -Math.PI/2;
 scene.add(floor);
-
-// CEILING
-let ceiling = new THREE.Mesh(
-  new THREE.PlaneGeometry(20,20),
-  new THREE.MeshStandardMaterial({color:0x111122, side:THREE.DoubleSide})
-);
-ceiling.rotation.x = Math.PI/2;
-ceiling.position.y = 4;
-scene.add(ceiling);
 
 // WALLS
 function wall(x,y,z,ry){
@@ -112,7 +116,7 @@ let door = new THREE.Mesh(
 door.position.set(0,1.5,-9.9);
 scene.add(door);
 
-// 🌊 DOCK WORLD (HIDDEN UNTIL ENTER)
+// DOCK WORLD
 let dock = new THREE.Mesh(
   new THREE.BoxGeometry(60,1,20),
   new THREE.MeshStandardMaterial({color:0x0a0a0a})
@@ -129,65 +133,90 @@ yacht.position.set(0,1,-60);
 yacht.visible = false;
 scene.add(yacht);
 
-// INPUT
+// KEYBOARD
 let keys = {};
-let inDock = false;
-
 document.addEventListener("keydown", e=>{
   keys[e.key.toLowerCase()] = true;
-
-  if(e.key.toLowerCase()==="e"){
-    interact();
-  }
+  if(e.key.toLowerCase()==="e") interact();
 });
-
 document.addEventListener("keyup", e=>{
   keys[e.key.toLowerCase()] = false;
 });
 
+// TOUCH JOYSTICK
+let joy = document.getElementById("joystick");
+let stick = document.getElementById("stick");
+
+let touchActive = false;
+let joyX = 0;
+let joyY = 0;
+
+joy.addEventListener("touchstart", ()=> touchActive = true);
+
+joy.addEventListener("touchmove", e=>{
+  let rect = joy.getBoundingClientRect();
+  let x = e.touches[0].clientX - rect.left - 60;
+  let y = e.touches[0].clientY - rect.top - 60;
+
+  joyX = x / 60;
+  joyY = y / 60;
+
+  stick.style.left = (x + 60) + "px";
+  stick.style.top = (y + 60) + "px";
+});
+
+joy.addEventListener("touchend", ()=>{
+  touchActive = false;
+  joyX = 0;
+  joyY = 0;
+  stick.style.left = "30px";
+  stick.style.top = "30px";
+});
+
+// TAP INTERACT
+document.addEventListener("touchstart", ()=>{
+  interact();
+});
+
+let inDock = false;
+
 // INTERACT
 function interact(){
-
 let dist = player.position.distanceTo(door.position);
 
-// ENTER DOCK
 if(dist < 3 && !inDock){
-
   inDock = true;
 
-  document.getElementById("fade").style.opacity = 1;
+  scene.children.forEach(obj=>{
+    if(obj !== player && obj !== dock && obj !== yacht){
+      obj.visible = false;
+    }
+  });
 
-  setTimeout(()=>{
+  dock.visible = true;
+  yacht.visible = true;
 
-    // hide cabin walls
-    scene.children.forEach(obj=>{
-      if(obj !== player && obj !== dock && obj !== yacht){
-        obj.visible = false;
-      }
-    });
+  player.position.set(0,1,-30);
 
-    dock.visible = true;
-    yacht.visible = true;
-
-    player.position.set(0,1,-30);
-
-    document.getElementById("ui").innerText = "ZONE: DOCK";
-    document.getElementById("fade").style.opacity = 0;
-
-  },1000);
+  document.getElementById("ui").innerText = "ZONE: DOCK";
 }
-
 }
 
 // LOOP
 function animate(){
 requestAnimationFrame(animate);
 
-// MOVE
+// KEYBOARD MOVE
 if(keys["w"]) player.position.z -= 0.1;
 if(keys["s"]) player.position.z += 0.1;
 if(keys["a"]) player.position.x -= 0.1;
 if(keys["d"]) player.position.x += 0.1;
+
+// TOUCH MOVE
+if(touchActive){
+  player.position.x += joyX * 0.1;
+  player.position.z += joyY * 0.1;
+}
 
 // CAMERA
 camera.position.x += (player.position.x - camera.position.x)*0.05;
@@ -196,12 +225,7 @@ camera.lookAt(player.position);
 
 // PROMPT
 let dist = player.position.distanceTo(door.position);
-
-if(!inDock && dist < 3){
-  document.getElementById("prompt").style.display = "block";
-} else {
-  document.getElementById("prompt").style.display = "none";
-}
+document.getElementById("prompt").style.display = (!inDock && dist < 3) ? "block" : "none";
 
 renderer.render(scene,camera);
 
