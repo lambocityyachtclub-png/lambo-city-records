@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LAMBO CITY — LIVE FIXED</title>
+<title>LAMBO CITY YACHT CLUB</title>
 
 <style>
 body { margin:0; overflow:hidden; background:black; font-family:Arial; }
@@ -25,7 +25,6 @@ canvas { display:block; }
   top:20px;
   left:20px;
   color:white;
-  font-size:14px;
 }
 
 #prompt {
@@ -35,9 +34,8 @@ canvas { display:block; }
   transform:translateX(-50%);
   padding:10px;
   border:1px solid gold;
-  color:white;
   display:none;
-  background:rgba(0,0,0,0.6);
+  color:white;
 }
 </style>
 </head>
@@ -45,11 +43,11 @@ canvas { display:block; }
 <body>
 
 <div id="start">
-  <h1>LAMBO CITY YACHT CLUB</h1>
-  <button onclick="enterWorld()">ENTER WORLD</button>
+<h1>LAMBO CITY YACHT CLUB</h1>
+<button onclick="enterWorld()">ENTER WORLD</button>
 </div>
 
-<div id="ui">EXPLORE — INTERACT — DISCOVER</div>
+<div id="ui">ENTER → MOVE → EXPLORE</div>
 <div id="prompt">PRESS E</div>
 
 <canvas id="c"></canvas>
@@ -58,6 +56,7 @@ canvas { display:block; }
 
 <script>
 
+// SCENE
 let scene = new THREE.Scene();
 scene.background = new THREE.Color(0x000000);
 scene.fog = new THREE.FogExp2(0x000000, 0.01);
@@ -68,8 +67,7 @@ camera.position.set(0,2,5);
 let renderer = new THREE.WebGLRenderer({canvas:c});
 renderer.setSize(innerWidth, innerHeight);
 
-// LIGHT
-scene.add(new THREE.AmbientLight(0xffffff, 1));
+scene.add(new THREE.AmbientLight(0xffffff,1));
 
 // PLAYER
 let player = new THREE.Mesh(
@@ -79,7 +77,7 @@ let player = new THREE.Mesh(
 player.position.y = 0.5;
 scene.add(player);
 
-// FLOOR
+// CABIN FLOOR
 let floor = new THREE.Mesh(
   new THREE.PlaneGeometry(20,20),
   new THREE.MeshStandardMaterial({color:0x111111})
@@ -95,13 +93,13 @@ let door = new THREE.Mesh(
 door.position.set(0,1.5,-8);
 scene.add(door);
 
-// DOCK WORLD
+// DOCK
 let dock = new THREE.Mesh(
   new THREE.BoxGeometry(200,1,200),
   new THREE.MeshStandardMaterial({color:0x050505})
 );
 dock.position.set(0,-0.5,-50);
-dock.visible = false;
+dock.visible=false;
 scene.add(dock);
 
 // WATER
@@ -111,34 +109,51 @@ let water = new THREE.Mesh(
 );
 water.rotation.x = -Math.PI/2;
 water.position.y = -1;
-water.visible = false;
+water.visible=false;
 scene.add(water);
 
-// BIG STAR FIELD (VERY VISIBLE)
+// ⭐ STARS
 const starGeo = new THREE.BufferGeometry();
-const starArr = [];
-
+const starArr=[];
 for(let i=0;i<4000;i++){
   starArr.push(
     (Math.random()-0.5)*800,
     Math.random()*300,
-    -50 + (Math.random()-0.5)*800
+    -50+(Math.random()-0.5)*800
   );
 }
-
 starGeo.setAttribute("position", new THREE.Float32BufferAttribute(starArr,3));
 
-const stars = new THREE.Points(
+let stars = new THREE.Points(
   starGeo,
-  new THREE.PointsMaterial({color:0xffffff, size:1.2})
+  new THREE.PointsMaterial({color:0xffffff,size:1.2})
 );
-stars.visible = false;
+stars.visible=false;
 scene.add(stars);
+
+// 🚤 YACHT (MAIN PIECE)
+let yacht = new THREE.Mesh(
+  new THREE.BoxGeometry(40,8,18),
+  new THREE.MeshStandardMaterial({color:0x111122})
+);
+yacht.position.set(0,4,-70);
+yacht.visible=false;
+scene.add(yacht);
+
+// YACHT LIGHTS
+let yachtLights=[];
+for(let i=0;i<8;i++){
+  let l=new THREE.PointLight(0x00ffff,3,120);
+  l.position.set((i-4)*8,6,-70);
+  l.visible=false;
+  scene.add(l);
+  yachtLights.push(l);
+}
 
 // CROWD
 let crowd=[];
 for(let i=0;i<30;i++){
-  let p = new THREE.Mesh(
+  let p=new THREE.Mesh(
     new THREE.BoxGeometry(0.6,1.2,0.6),
     new THREE.MeshStandardMaterial({color:0xffffff})
   );
@@ -146,15 +161,15 @@ for(let i=0;i<30;i++){
   p.position.set(
     (Math.random()-0.5)*40,
     0.6,
-    -50 + (Math.random()-0.5)*40
+    -50+(Math.random()-0.5)*40
   );
 
-  p.userData = {
-    dir: Math.random()*Math.PI*2,
-    speed: 0.02 + Math.random()*0.03
+  p.userData={
+    dir:Math.random()*Math.PI*2,
+    speed:0.02+Math.random()*0.03
   };
 
-  p.visible = false;
+  p.visible=false;
   scene.add(p);
   crowd.push(p);
 }
@@ -162,56 +177,51 @@ for(let i=0;i<30;i++){
 // LIGHT FX
 let lights=[];
 for(let i=0;i<10;i++){
-  let l = new THREE.PointLight(0x00aaff, 3, 100);
-  l.position.set((i-5)*8, 5, -50);
-  l.visible = false;
+  let l=new THREE.PointLight(0x00aaff,3,100);
+  l.position.set((i-5)*8,5,-50);
+  l.visible=false;
   scene.add(l);
   lights.push(l);
 }
 
 // INPUT
-let keys={}, inDock=false;
+let keys={},inDock=false;
 
 document.addEventListener("keydown",e=>{
-  keys[e.key.toLowerCase()] = true;
+  keys[e.key.toLowerCase()]=true;
   if(e.key.toLowerCase()==="e") interact();
 });
-
 document.addEventListener("keyup",e=>{
-  keys[e.key.toLowerCase()] = false;
+  keys[e.key.toLowerCase()]=false;
 });
 
-// ENTER
 function enterWorld(){
   document.getElementById("start").style.display="none";
 }
 
-// INTERACT (FIXED)
+// INTERACT
 function interact(){
 
-// 🚀 ENTER DOCK (FORCED LOAD)
 if(!inDock && player.position.distanceTo(door.position)<3){
 
-  inDock = true;
+  inDock=true;
 
-  // hide cabin
-  floor.visible = false;
-  door.visible = false;
+  floor.visible=false;
+  door.visible=false;
 
-  // show dock world
-  dock.visible = true;
-  water.visible = true;
-  stars.visible = true;
+  dock.visible=true;
+  water.visible=true;
+  stars.visible=true;
+  yacht.visible=true;
 
   crowd.forEach(p=>p.visible=true);
   lights.forEach(l=>l.visible=true);
+  yachtLights.forEach(l=>l.visible=true);
 
-  // MOVE PLAYER INTO SCENE (KEY FIX)
   player.position.set(0,1,-40);
 
-  document.getElementById("ui").innerText = "YACHT CLUB — LIVE";
+  document.getElementById("ui").innerText="YACHT CLUB — LIVE";
 
-  return;
 }
 
 }
@@ -233,30 +243,39 @@ camera.lookAt(player.position);
 
 // LIFE
 if(inDock){
-  water.position.z = Math.sin(Date.now()*0.001)*1;
 
-  stars.rotation.y += 0.001;
+  water.position.z=Math.sin(Date.now()*0.001)*1;
+
+  stars.rotation.y+=0.001;
+
+  yacht.rotation.y+=0.0008;
 
   crowd.forEach(p=>{
-    p.position.x += Math.cos(p.userData.dir)*p.userData.speed;
-    p.position.z += Math.sin(p.userData.dir)*p.userData.speed;
+    p.position.x+=Math.cos(p.userData.dir)*p.userData.speed;
+    p.position.z+=Math.sin(p.userData.dir)*p.userData.speed;
 
     if(Math.random()<0.02){
-      p.userData.dir += (Math.random()-0.5);
+      p.userData.dir+=(Math.random()-0.5);
     }
   });
 
   lights.forEach((l,i)=>{
-    l.intensity = 3 + Math.sin(Date.now()*0.003+i)*3;
+    l.intensity=3+Math.sin(Date.now()*0.003+i)*3;
   });
+
+  yachtLights.forEach((l,i)=>{
+    l.intensity=2+Math.sin(Date.now()*0.002+i)*2;
+  });
+
 }
 
 // PROMPT
 document.getElementById("prompt").style.display =
-  player.position.distanceTo(door.position)<3 && !inDock
-  ? "block" : "none";
+player.position.distanceTo(door.position)<3 && !inDock
+? "block":"none";
 
 renderer.render(scene,camera);
+
 }
 
 animate();
