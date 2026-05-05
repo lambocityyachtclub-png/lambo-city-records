@@ -34,7 +34,6 @@ canvas { display:block; }
   inset:0;
   background:black;
   opacity:0;
-  pointer-events:none;
   transition:opacity 0.8s;
 }
 
@@ -44,7 +43,7 @@ canvas { display:block; }
   display:none;
   background:black;
   text-align:center;
-  padding-top:120px;
+  padding-top:100px;
   pointer-events:auto;
 }
 
@@ -78,10 +77,23 @@ button {
 
 <div id="fade"></div>
 
+<!-- VIP EXPERIENCE -->
 <div id="vip">
-  <h1>YACHT CLUB</h1>
-  <p>VIP ACCESS GRANTED</p>
-  <button onclick="exitVIP()">RETURN TO CITY</button>
+  <h1 style="color:gold;">LAMBO CITY YACHT CLUB</h1>
+
+  <p id="vipStatus" style="opacity:0.7;">CONNECTING TO LIVE EVENT...</p>
+
+  <div style="margin-top:30px;">
+    <button onclick="toggleMusic()">TOGGLE MUSIC</button>
+    <button onclick="simulateLive()">GO LIVE</button>
+  </div>
+
+  <div style="margin-top:40px; font-size:14px; opacity:0.8;">
+    <p>🎧 NOW PLAYING: <span id="track">OFFLINE</span></p>
+    <p>📡 STATUS: <span id="liveStatus">STANDBY</span></p>
+  </div>
+
+  <button onclick="exitVIP()" style="margin-top:40px;">RETURN TO CITY</button>
 </div>
 
 </div>
@@ -94,6 +106,15 @@ let scene, camera, renderer;
 let player, yacht;
 let mode = "idle";
 let keys = {};
+
+const tracks = [
+  "LAMBO CITY RADIO",
+  "NIGHT DRIVE",
+  "AFTER HOURS",
+  "YACHT VIBES"
+];
+
+let musicOn = false;
 
 init();
 
@@ -222,11 +243,8 @@ function start(){
 }
 
 function enterVIP(){
-
   mode="transition";
-
-  const fade = document.getElementById("fade");
-  fade.style.opacity = 1;
+  document.getElementById("fade").style.opacity = 1;
 
   setTimeout(()=>{
     document.getElementById("vip").style.display="block";
@@ -235,16 +253,35 @@ function enterVIP(){
 }
 
 function exitVIP(){
-
-  const fade = document.getElementById("fade");
-  fade.style.opacity = 1;
+  document.getElementById("fade").style.opacity = 1;
 
   setTimeout(()=>{
     document.getElementById("vip").style.display="none";
-    fade.style.opacity = 0;
+    document.getElementById("fade").style.opacity = 0;
     document.getElementById("radio").innerText="RADIO: AMBIENT";
     mode="play";
   },800);
+}
+
+function toggleMusic(){
+  musicOn = !musicOn;
+
+  if(musicOn){
+    const t = tracks[Math.floor(Math.random()*tracks.length)];
+    document.getElementById("track").innerText = t;
+  } else {
+    document.getElementById("track").innerText = "OFF";
+  }
+}
+
+function simulateLive(){
+  document.getElementById("liveStatus").innerText = "LIVE";
+  document.getElementById("vipStatus").innerText = "DJ HERO STREAMING LIVE";
+
+  setTimeout(()=>{
+    document.getElementById("liveStatus").innerText = "STANDBY";
+    document.getElementById("vipStatus").innerText = "NEXT EVENT LOADING...";
+  },5000);
 }
 
 </script>
