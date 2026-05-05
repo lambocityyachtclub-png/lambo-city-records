@@ -1,101 +1,174 @@
-let audioContext;
-let masterGain;
-let noiseNode;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>LAMBO CITY — RECOVERY BUILD</title>
 
-function initAudio(){
+<style>
+body { margin:0; overflow:hidden; background:black; font-family:Arial; }
+canvas { display:block; }
 
-  audioContext = new (window.AudioContext || window.webkitAudioContext)();
+#hud {
+  position:absolute;
+  top:20px;
+  left:20px;
+  color:white;
+  font-size:13px;
+  z-index:10;
+}
 
-  masterGain = audioContext.createGain();
-  masterGain.gain.value = 0.05;
-  masterGain.connect(audioContext.destination);
+#prompt {
+  position:absolute;
+  bottom:80px;
+  left:50%;
+  transform:translateX(-50%);
+  padding:10px 14px;
+  border:1px solid gold;
+  color:white;
+  display:none;
+  background:rgba(0,0,0,0.7);
+}
+</style>
+</head>
 
-  // simple noise generator (ambient base layer)
-  const bufferSize = 2 * audioContext.sampleRate;
-  const noiseBuffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
-  const output = noiseBuffer.getChannelData(0);
+<body>
 
-  for (let i = 0; i < bufferSize; i++) {
-    output[i] = (Math.random() * 2 - 1) * 0.3;
-  }
+<canvas id="c"></canvas>
 
-  noiseNode = audioContext.createBufferSource();
-  noiseNode.buffer = noiseBuffer;
-  noiseNode.loop = true;
+<div id="hud">
+  LAMBO CITY<br>
+  ZONE: LOADING<br>
+  STATE: ACTIVE
+</div>
 
-  const filter = audioContext.createBiquadFilter();
-  filter.type = "lowpass";
-  filter.frequency.value = 800;
+<div id="prompt">
+  ENTER DOCK
+</div>
 
-  noiseNode.connect(filter);
-  filter.connect(masterGain);
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
-  noiseNode.start();
+<script>
+
+// ===============================
+// CORE SETUP (CLEAN SAFE VERSION)
+// ===============================
+let scene, camera, renderer;
+let player, yacht;
+let keys = {};
+
+// ===============================
+// INIT
+// ===============================
+init();
+
+function init(){
+
+  scene = new THREE.Scene();
+  scene.fog = new THREE.Fog(0x000000, 10, 100);
+
+  camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 1000);
+  camera.position.set(0,2,5);
+
+  renderer = new THREE.WebGLRenderer({ canvas:document.getElementById("c"), antialias:true });
+  renderer.setSize(innerWidth, innerHeight);
+
+  // LIGHT
+  scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+
+  const light = new THREE.PointLight(0x00aaff, 2);
+  light.position.set(0,5,5);
+  scene.add(light);
+
+  // PLAYER
+  player = new THREE.Mesh(
+    new THREE.BoxGeometry(1,1,1),
+    new THREE.MeshStandardMaterial({color:0xffffff})
+  );
+  player.position.y = 0.5;
+  scene.add(player);
+
+  // CABIN FLOOR
+  const floor = new THREE.Mesh(
+    new THREE.PlaneGeometry(100,100),
+    new THREE.MeshStandardMaterial({color:0x111111})
+  );
+  floor.rotation.x = -Math.PI/2;
+  scene.add(floor);
+
+  // DOCK
+  const dock = new THREE.Mesh(
+    new THREE.BoxGeometry(20,0.2,20),
+    new THREE.MeshStandardMaterial({color:0x222222})
+  );
+  dock.position.z = -10;
+  scene.add(dock);
+
+  // YACHT
+  yacht = new THREE.Mesh(
+    new THREE.BoxGeometry(2,1,4),
+    new THREE.MeshStandardMaterial({color:0xffd700})
+  );
+  yacht.position.set(0,0.5,-15);
+  scene.add(yacht);
+
+  document.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
+  document.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
+
+  animate();
 }
 
 // ===============================
-// AUDIO STATE SYSTEM
+// MOVEMENT
 // ===============================
-function updateAudio(){
+function updatePlayer(){
 
-  if(!audioContext) return;
+  let speed = 0.08;
 
-  let speed = Math.abs(Player.velocity.x) + Math.abs(Player.velocity.z);
-
-  let zone = GameState.currentZone;
-
-  if(zone === "cabin"){
-    masterGain.gain.value = 0.04 + Math.sin(Date.now()*0.001)*0.01;
-  }
-
-  if(zone === "dock"){
-    masterGain.gain.value = 0.07 + speed * 0.2;
-  }
-
-  if(zone === "yacht"){
-    masterGain.gain.value = 0.1 + Math.sin(Date.now()*0.002)*0.05;
-  }
+  if(keys["w"]) player.position.z -= speed;
+  if(keys["s"]) player.position.z += speed;
+  if(keys["a"]) player.position.x -= speed;
+  if(keys["d"]) player.position.x += speed;
 }
 
 // ===============================
-// VISUAL ATMOSPHERE SYSTEM
+// CAMERA
 // ===============================
-function updateAtmosphere(){
+function updateCamera(){
+  camera.position.x += (player.position.x - camera.position.x) * 0.08;
+  camera.position.z += (player.position.z + 5 - camera.position.z) * 0.08;
+  camera.lookAt(player.position);
+}
 
-  let speed = Math.abs(Player.velocity.x) + Math.abs(Player.velocity.z);
+// ===============================
+// INTERACTION
+// ===============================
+function updatePrompt(){
 
-  // fog breathing effect
-  scene.fog.density = 0.03 + Math.sin(Date.now()*0.0005)*0.002;
+  let dist = player.position.distanceTo(yacht.position);
 
-  // subtle camera float (alive feeling)
-  camera.position.y = 2.5 + Math.sin(Date.now()*0.001)*0.05;
-
-  // motion intensity feel
-  if(speed > 0.01){
-    document.getElementById("state").style.opacity = 1;
+  if(dist < 3){
+    document.getElementById("prompt").style.display = "block";
   } else {
-    document.getElementById("state").style.opacity = 0.8;
+    document.getElementById("prompt").style.display = "none";
   }
 }
 
 // ===============================
-// UPDATED GAME LOOP
+// LOOP (CRITICAL FIX)
 // ===============================
-function gameLoop(){
+function animate(){
 
-  requestAnimationFrame(gameLoop);
+  requestAnimationFrame(animate);
 
   updatePlayer();
   updateCamera();
-  updateGameState();
-  updateAudio();
-  updateAtmosphere();
+  updatePrompt();
 
   renderer.render(scene, camera);
 }
 
-// ===============================
-// START GAME
-// ===============================
-initAudio();
-gameLoop();
+</script>
+
+</body>
+</html>
