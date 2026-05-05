@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LAMBO CITY — YACHT PARTY</title>
+<title>LAMBO CITY — YACHT PARTY MODE</title>
 
 <style>
 body { margin:0; overflow:hidden; background:black; font-family:Arial; }
@@ -47,80 +47,52 @@ canvas { display:block; }
 
 <div id="login">
 <h2>LAMBO CITY</h2>
-<button onclick="login()">ENTER EXPERIENCE</button>
+<button onclick="start()">ENTER EXPERIENCE</button>
 </div>
 
-<div id="hud">ZONE: INIT</div>
+<div id="hud">YACHT STATUS: IDLE</div>
 <div id="prompt">PRESS E</div>
 
 <canvas id="c"></canvas>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
-<script type="module">
+<script>
 
-// ================= FIREBASE =================
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+let scene, camera, renderer;
+let player, yacht;
+let keys = {};
+let hasPass = false;
+let inParty = false;
 
-const firebaseConfig = {
-  apiKey: "AIzaSyB-HyCPaB0gR9-VMGovh-VByajOkrEyGTs",
-  authDomain: "lambocityrecords-2fee2.firebaseapp.com",
-  projectId: "lambocityrecords-2fee2",
-  storageBucket: "lambocityrecords-2fee2.firebasestorage.app",
-  messagingSenderId: "78498268542",
-  appId: "1:78498268542:web:9b60b8f87488af40c29f2f"
-};
+function start(){
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+document.getElementById("login").style.display = "none";
 
-let userId;
-
-// ================= LOGIN =================
-window.login = async function(){
-  const user = await signInAnonymously(auth);
-  userId = user.user.uid;
-
-  document.getElementById("login").style.display = "none";
-  startWorld();
-}
-
-// ================= WORLD =================
-function startWorld(){
-
-const hud = document.getElementById("hud");
-const promptEl = document.getElementById("prompt");
-
-let scene = new THREE.Scene();
+// SCENE
+scene = new THREE.Scene();
 scene.background = new THREE.Color(0x02030a);
-scene.fog = new THREE.FogExp2(0x02030a, 0.02);
 
-let camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 1000);
+// CAMERA
+camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 1000);
 camera.position.set(0,2.5,5);
 
-let renderer = new THREE.WebGLRenderer({canvas:c, antialias:true});
+// RENDERER
+renderer = new THREE.WebGLRenderer({canvas:c});
 renderer.setSize(innerWidth, innerHeight);
 
-let keys = {};
-let player, yacht;
-let hasPass=false;
-let inVIP=false;
-
-// ================= LIGHTS (YACHT PARTY FEEL) =================
+// LIGHTS (PARTY MODE)
 scene.add(new THREE.AmbientLight(0x1a1a2a, 0.8));
 
-const yachtLight = new THREE.PointLight(0x00aaff, 3);
-yachtLight.position.set(0,6,-15);
-scene.add(yachtLight);
+const light1 = new THREE.PointLight(0x00aaff, 2);
+light1.position.set(0,5,-10);
+scene.add(light1);
 
-const goldLight = new THREE.PointLight(0xffd700, 1.5);
-goldLight.position.set(2,3,-10);
-scene.add(goldLight);
+const light2 = new THREE.PointLight(0xffd700, 1.5);
+light2.position.set(3,3,-12);
+scene.add(light2);
 
-// ================= PLAYER =================
+// PLAYER
 player = new THREE.Mesh(
   new THREE.BoxGeometry(1,1,1),
   new THREE.MeshStandardMaterial({color:0xffffff})
@@ -128,153 +100,105 @@ player = new THREE.Mesh(
 player.position.y = 0.5;
 scene.add(player);
 
-// ================= YACHT =================
+// YACHT
 yacht = new THREE.Mesh(
-  new THREE.BoxGeometry(2,1,5),
+  new THREE.BoxGeometry(3,1,6),
   new THREE.MeshStandardMaterial({color:0xffd700})
 );
 yacht.position.set(0,0.5,-15);
 scene.add(yacht);
 
-// floating yacht
-function floatYacht(){
-  yacht.position.y = 0.5 + Math.sin(Date.now()*0.002)*0.15;
-  yacht.rotation.y += 0.002;
-}
-
-// ================= FLOOR =================
-let floor = new THREE.Mesh(
+// FLOOR
+const floor = new THREE.Mesh(
   new THREE.PlaneGeometry(200,200),
   new THREE.MeshStandardMaterial({color:0x111111})
 );
 floor.rotation.x = -Math.PI/2;
 scene.add(floor);
 
-// ================= STARS =================
-const starGeo = new THREE.BufferGeometry();
-const starArray = [];
+// STARS
+const geo = new THREE.BufferGeometry();
+const arr = [];
 
 for(let i=0;i<2000;i++){
-  starArray.push(
+  arr.push(
     (Math.random()-0.5)*400,
     Math.random()*200,
     (Math.random()-0.5)*400
   );
 }
 
-starGeo.setAttribute("position", new THREE.Float32BufferAttribute(starArray,3));
+geo.setAttribute("position", new THREE.Float32BufferAttribute(arr,3));
 
 const stars = new THREE.Points(
-  starGeo,
+  geo,
   new THREE.PointsMaterial({color:0xffffff, size:0.7})
 );
 
 scene.add(stars);
 
-// ================= INPUT =================
+// CROWD LIGHTS (FAKE PEOPLE ENERGY)
+for(let i=0;i<10;i++){
+  const glow = new THREE.PointLight(0xffffff, 0.6, 8);
+  glow.position.set(
+    (Math.random()-0.5)*6,
+    1,
+    -15 + (Math.random()-0.5)*4
+  );
+  scene.add(glow);
+}
+
+// MUSIC (auto play on click)
+const music = new Audio("https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c8a3c5c4.mp3?filename=deep-house-ambient-110397.mp3");
+music.loop = true;
+music.volume = 0.35;
+document.addEventListener("click", ()=> music.play());
+
+// INPUT
 document.addEventListener("keydown", e=>{
   keys[e.key.toLowerCase()] = true;
-  if(e.key.toLowerCase()==="e") interact();
+  if(e.key.toLowerCase()==="e") action();
 });
 
 document.addEventListener("keyup", e=>{
   keys[e.key.toLowerCase()] = false;
 });
 
-// ================= FIREBASE =================
-const userRef = (uid) => doc(db, "users", uid);
-const COOLDOWN = 60 * 1000;
-
-async function getUser(uid){
-  const snap = await getDoc(userRef(uid));
-  return snap.exists() ? snap.data() : null;
-}
-
-async function canGetPass(uid){
-  const data = await getUser(uid);
-  if(!data || !data.lastPass) return true;
-  return (Date.now() - data.lastPass) > COOLDOWN;
-}
-
-async function grantPass(uid){
-  await setDoc(userRef(uid), {
-    pass: true,
-    lastPass: Date.now()
-  }, { merge:true });
-}
-
-async function giveDrop(uid){
-  const data = await getUser(uid);
-  const drops = data?.drops || [];
-
-  drops.push({
-    id: Date.now(),
-    type: "VIP_DROP",
-    time: Date.now()
-  });
-
-  await setDoc(userRef(uid), { drops }, { merge:true });
-}
-
-// ================= INTERACT =================
-async function interact(){
+// ACTION
+function action(){
 
   let dist = player.position.distanceTo(yacht.position);
 
   if(!hasPass){
-
-    const allowed = await canGetPass(userId);
-
-    if(allowed){
-      hasPass = true;
-      await grantPass(userId);
-      hud.innerText = "PASS GRANTED — GO TO YACHT";
-    } else {
-      hud.innerText = "COOLDOWN ACTIVE — COME BACK LATER";
-    }
-
+    hasPass = true;
+    hud.innerText = "PASS GRANTED — GO TO YACHT";
     return;
   }
 
-  if(hasPass && dist < 3 && !inVIP){
-
-    inVIP = true;
-
-    await setDoc(userRef(userId), {
-      boarded: true
-    }, { merge:true });
-
-    await giveDrop(userId);
-
-    hud.innerText = "VIP ACCESS + DROP RECEIVED";
-    promptEl.style.display = "none";
+  if(hasPass && dist < 3){
+    inParty = true;
+    hud.innerText = "VIP PARTY ACTIVE 🔥";
   }
 }
 
-// ================= LOOP =================
+// LOOP
 function animate(){
   requestAnimationFrame(animate);
 
+  // movement
   if(keys["w"]) player.position.z -= 0.08;
   if(keys["s"]) player.position.z += 0.08;
   if(keys["a"]) player.position.x -= 0.08;
   if(keys["d"]) player.position.x += 0.08;
 
-  // smooth cinematic camera
+  // camera smooth
   camera.position.x += (player.position.x - camera.position.x)*0.03;
-  camera.position.y += (2.5 - camera.position.y)*0.03;
   camera.position.z += (player.position.z + 6 - camera.position.z)*0.03;
   camera.lookAt(player.position);
 
-  floatYacht();
-
-  let dist = player.position.distanceTo(yacht.position);
-
-  if(dist < 3 && hasPass && !inVIP){
-    promptEl.style.display = "block";
-  } else {
-    promptEl.style.display = "none";
-  }
+  // yacht float = life feeling
+  yacht.position.y = 0.5 + Math.sin(Date.now()*0.002)*0.15;
+  yacht.rotation.y += 0.002;
 
   renderer.render(scene,camera);
 }
