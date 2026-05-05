@@ -35,6 +35,7 @@ canvas { display:block; }
   background:black;
   opacity:0;
   transition:opacity 0.8s;
+  pointer-events:none;
 }
 
 #vip {
@@ -43,7 +44,7 @@ canvas { display:block; }
   display:none;
   background:black;
   text-align:center;
-  padding-top:100px;
+  padding-top:90px;
   pointer-events:auto;
 }
 
@@ -54,6 +55,19 @@ button {
   border:1px solid gold;
   color:white;
   cursor:pointer;
+}
+
+#boardUI {
+  position:absolute;
+  bottom:100px;
+  left:50%;
+  transform:translateX(-50%);
+  background:black;
+  border:1px solid gold;
+  padding:12px 18px;
+  display:none;
+  pointer-events:auto;
+  text-align:center;
 }
 </style>
 </head>
@@ -66,7 +80,7 @@ button {
 
 <div id="home">
   <h1>LAMBO CITY</h1>
-  <button onclick="start()">ENTER</button>
+  <button onclick="start()">ENTER WORLD</button>
 </div>
 
 <div id="hud">
@@ -77,11 +91,14 @@ button {
 
 <div id="fade"></div>
 
-<!-- VIP EXPERIENCE -->
+<div id="boardUI">
+  <p>🛥 YACHT DOCK</p>
+  <button onclick="boardYacht()">BOARD YACHT</button>
+</div>
+
 <div id="vip">
   <h1 style="color:gold;">LAMBO CITY YACHT CLUB</h1>
-
-  <p id="vipStatus" style="opacity:0.7;">CONNECTING TO LIVE EVENT...</p>
+  <p id="vipStatus" style="opacity:0.7;">CONNECTING...</p>
 
   <div style="margin-top:30px;">
     <button onclick="toggleMusic()">TOGGLE MUSIC</button>
@@ -93,7 +110,7 @@ button {
     <p>📡 STATUS: <span id="liveStatus">STANDBY</span></p>
   </div>
 
-  <button onclick="exitVIP()" style="margin-top:40px;">RETURN TO CITY</button>
+  <button onclick="exitVIP()" style="margin-top:40px;">RETURN</button>
 </div>
 
 </div>
@@ -106,14 +123,9 @@ let scene, camera, renderer;
 let player, yacht;
 let mode = "idle";
 let keys = {};
+let nearYacht = false;
 
-const tracks = [
-  "LAMBO CITY RADIO",
-  "NIGHT DRIVE",
-  "AFTER HOURS",
-  "YACHT VIBES"
-];
-
+const tracks = ["LAMBO CITY RADIO","NIGHT DRIVE","AFTER HOURS","YACHT VIBES"];
 let musicOn = false;
 
 init();
@@ -130,27 +142,26 @@ function init(){
   renderer.setSize(innerWidth, innerHeight);
 
   // stars
-  const starGeo = new THREE.BufferGeometry();
-  const starPos = [];
+  const geo = new THREE.BufferGeometry();
+  const pos = [];
   for(let i=0;i<2000;i++){
-    starPos.push((Math.random()-0.5)*200, Math.random()*80, (Math.random()-0.5)*200);
+    pos.push((Math.random()-0.5)*200, Math.random()*80, (Math.random()-0.5)*200);
   }
-  starGeo.setAttribute('position', new THREE.Float32BufferAttribute(starPos,3));
-  scene.add(new THREE.Points(starGeo, new THREE.PointsMaterial({color:0xffffff,size:0.6})));
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(pos,3));
+  scene.add(new THREE.Points(geo, new THREE.PointsMaterial({color:0xffffff,size:0.6})));
 
   // ocean
   const ocean = new THREE.Mesh(
     new THREE.PlaneGeometry(600,600),
-    new THREE.MeshPhongMaterial({color:0x001a33, shininess:100})
+    new THREE.MeshPhongMaterial({color:0x001a33})
   );
   ocean.rotation.x = -Math.PI/2;
   scene.add(ocean);
 
-  // lights
   scene.add(new THREE.AmbientLight(0x222244));
-  const mainLight = new THREE.PointLight(0x00aaff,2,120);
-  mainLight.position.set(0,15,0);
-  scene.add(mainLight);
+  const light = new THREE.PointLight(0x00aaff,2,120);
+  light.position.set(0,15,0);
+  scene.add(light);
 
   // player
   player = new THREE.Mesh(
@@ -168,18 +179,18 @@ function init(){
   yacht.position.set(0,1,-30);
   scene.add(yacht);
 
-  const yachtLight = new THREE.PointLight(0xffaa00,3,60);
-  yachtLight.position.set(0,5,-30);
-  scene.add(yachtLight);
+  const yLight = new THREE.PointLight(0xffaa00,3,60);
+  yLight.position.set(0,5,-30);
+  scene.add(yLight);
 
   // street
   for(let i=0;i<20;i++){
-    let tile = new THREE.Mesh(
+    let t = new THREE.Mesh(
       new THREE.BoxGeometry(4,0.1,6),
       new THREE.MeshStandardMaterial({color:0x111111})
     );
-    tile.position.set(0,0.05,-i*6);
-    scene.add(tile);
+    t.position.set(0,0.05,-i*6);
+    scene.add(t);
   }
 
   // city
@@ -191,16 +202,16 @@ function init(){
         new THREE.MeshStandardMaterial({
           color:0x0a0a1a,
           emissive:0x0000ff,
-          emissiveIntensity:0.2 + Math.random()*0.5
+          emissiveIntensity:0.3
         })
       );
-      b.position.set(i*6, h/2, -40 - j*10);
+      b.position.set(i*6,h/2,-40-j*10);
       scene.add(b);
     }
   }
 
-  document.addEventListener("keydown", e=>keys[e.key.toLowerCase()]=true);
-  document.addEventListener("keyup", e=>keys[e.key.toLowerCase()]=false);
+  document.addEventListener("keydown",e=>keys[e.key.toLowerCase()]=true);
+  document.addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
 
   animate();
 }
@@ -226,29 +237,32 @@ function animate(){
 }
 
 function checkYacht(){
-  const dist = Math.sqrt(
-    (player.position.x - yacht.position.x)**2 +
-    (player.position.z - yacht.position.z)**2
+  const dist = Math.hypot(
+    player.position.x - yacht.position.x,
+    player.position.z - yacht.position.z
   );
 
   if(dist < 5){
-    enterVIP();
+    nearYacht = true;
+    document.getElementById("boardUI").style.display="block";
+  } else {
+    nearYacht = false;
+    document.getElementById("boardUI").style.display="none";
   }
 }
 
 function start(){
   document.getElementById("home").style.display="none";
-  document.getElementById("status").innerText="LAMBO CITY ONLINE";
+  document.getElementById("status").innerText="ONLINE";
   mode="play";
 }
 
-function enterVIP(){
-  mode="transition";
+function boardYacht(){
   document.getElementById("fade").style.opacity = 1;
 
   setTimeout(()=>{
     document.getElementById("vip").style.display="block";
-    document.getElementById("radio").innerText="RADIO: VIP MODE";
+    document.getElementById("radio").innerText="VIP MODE";
   },800);
 }
 
@@ -258,30 +272,20 @@ function exitVIP(){
   setTimeout(()=>{
     document.getElementById("vip").style.display="none";
     document.getElementById("fade").style.opacity = 0;
-    document.getElementById("radio").innerText="RADIO: AMBIENT";
+    document.getElementById("radio").innerText="AMBIENT";
     mode="play";
   },800);
 }
 
 function toggleMusic(){
   musicOn = !musicOn;
-
-  if(musicOn){
-    const t = tracks[Math.floor(Math.random()*tracks.length)];
-    document.getElementById("track").innerText = t;
-  } else {
-    document.getElementById("track").innerText = "OFF";
-  }
+  document.getElementById("track").innerText =
+    musicOn ? tracks[Math.floor(Math.random()*tracks.length)] : "OFF";
 }
 
 function simulateLive(){
   document.getElementById("liveStatus").innerText = "LIVE";
-  document.getElementById("vipStatus").innerText = "DJ HERO STREAMING LIVE";
-
-  setTimeout(()=>{
-    document.getElementById("liveStatus").innerText = "STANDBY";
-    document.getElementById("vipStatus").innerText = "NEXT EVENT LOADING...";
-  },5000);
+  setTimeout(()=>document.getElementById("liveStatus").innerText="STANDBY",4000);
 }
 
 </script>
