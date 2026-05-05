@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LAMBO CITY — FULL WORLD RESTORE</title>
+<title>LAMBO CITY — STABLE WORLD CORE</title>
 
 <style>
 body { margin:0; overflow:hidden; background:black; font-family:Arial; }
@@ -26,6 +26,7 @@ canvas { display:block; }
   left:20px;
   color:white;
   font-size:13px;
+  line-height:1.4em;
 }
 
 #zone {
@@ -33,6 +34,7 @@ canvas { display:block; }
   top:20px;
   right:20px;
   color:gold;
+  font-size:13px;
 }
 </style>
 </head>
@@ -44,8 +46,14 @@ canvas { display:block; }
   <button onclick="start()">ENTER WORLD</button>
 </div>
 
-<div id="ui">MOVE → EXPLORE → PROGRESS</div>
-<div id="zone">ZONE: CABIN</div>
+<div id="ui">
+🏠 Cabin = Control Hub<br>
+🌉 Dock = Real Estate<br>
+🎤 Stage = Festival Zone<br>
+🚤 Yacht = VIP Layer
+</div>
+
+<div id="zone">ZONE: LOADING</div>
 
 <canvas id="c"></canvas>
 
@@ -58,23 +66,21 @@ scene.background = new THREE.Color(0x000000);
 scene.fog = new THREE.FogExp2(0x000000, 0.01);
 
 let camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 1000);
-
 let renderer = new THREE.WebGLRenderer({canvas:document.getElementById("c")});
 renderer.setSize(innerWidth, innerHeight);
 
-// LIGHTS
-scene.add(new THREE.AmbientLight(0xffffff,1.3));
+// LIGHT
+scene.add(new THREE.AmbientLight(0xffffff,1.4));
+let mainLight = new THREE.PointLight(0x00aaff,2);
+mainLight.position.set(0,5,5);
+scene.add(mainLight);
 
-let light = new THREE.PointLight(0x00aaff,2);
-light.position.set(0,5,0);
-scene.add(light);
-
-// PLAYER (START INSIDE CABIN)
+// PLAYER
 let player = new THREE.Mesh(
   new THREE.BoxGeometry(1,1,1),
   new THREE.MeshStandardMaterial({color:0xffffff})
 );
-player.position.set(0,0.5,2);
+player.position.set(0,0.5,5);
 scene.add(player);
 
 // ================= CABIN =================
@@ -86,50 +92,12 @@ cabin.position.set(0,5,0);
 scene.add(cabin);
 
 // WINDOW VIEW (YACHT FAR)
-let yachtFar = new THREE.Mesh(
+let yachtView = new THREE.Mesh(
   new THREE.BoxGeometry(12,4,10),
   new THREE.MeshStandardMaterial({color:0x222244})
 );
-yachtFar.position.set(0,3,-120);
-scene.add(yachtFar);
-
-// ================= BRIDGE =================
-let bridge = new THREE.Mesh(
-  new THREE.BoxGeometry(6,1,40),
-  new THREE.MeshStandardMaterial({color:0x222222})
-);
-bridge.position.set(0,0,-30);
-scene.add(bridge);
-
-// ================= WATER (RESTORED) =================
-let water = new THREE.Mesh(
-  new THREE.PlaneGeometry(600,600),
-  new THREE.MeshStandardMaterial({color:0x02121f})
-);
-water.rotation.x = -Math.PI/2;
-water.position.y = -1;
-scene.add(water);
-
-// ================= STARS (RESTORED) =================
-const starGeo = new THREE.BufferGeometry();
-const starArr = [];
-
-for(let i=0;i<3000;i++){
-  starArr.push(
-    (Math.random()-0.5)*800,
-    Math.random()*300,
-    -100 + (Math.random()-0.5)*800
-  );
-}
-
-starGeo.setAttribute("position", new THREE.Float32BufferAttribute(starArr,3));
-
-let stars = new THREE.Points(
-  starGeo,
-  new THREE.PointsMaterial({color:0xffffff,size:1})
-);
-
-scene.add(stars);
+yachtView.position.set(0,3,-120);
+scene.add(yachtView);
 
 // ================= DOCK =================
 let dock = new THREE.Mesh(
@@ -161,27 +129,30 @@ let stage = new THREE.Mesh(
 stage.position.set(-20,1,-130);
 scene.add(stage);
 
-// ================= YACHT =================
-let yacht = new THREE.Mesh(
-  new THREE.BoxGeometry(35,10,18),
+// ================= YACHT (3 LAYERS) =================
+let yachtBase = new THREE.Mesh(
+  new THREE.BoxGeometry(35,4,18),
   new THREE.MeshStandardMaterial({color:0x222255})
 );
-yacht.position.set(0,5,-170);
-scene.add(yacht);
+yachtBase.position.set(0,2,-170);
+scene.add(yachtBase);
 
-// ================= CROWD =================
-let crowd = [];
-for(let i=0;i<25;i++){
-  let c = new THREE.Mesh(
-    new THREE.BoxGeometry(0.6,1.2,0.6),
-    new THREE.MeshStandardMaterial({color:0xffffff})
-  );
-  c.position.set((Math.random()-0.5)*50,0.6,-80-(Math.random()*70));
-  scene.add(c);
-  crowd.push(c);
-}
+let yachtTop = new THREE.Mesh(
+  new THREE.BoxGeometry(25,4,12),
+  new THREE.MeshStandardMaterial({color:0x111144})
+);
+yachtTop.position.set(0,6,-170);
+scene.add(yachtTop);
 
-// INPUT
+// WATER STAGE (OUTSIDE VIP)
+let waterStage = new THREE.Mesh(
+  new THREE.BoxGeometry(20,1,12),
+  new THREE.MeshStandardMaterial({color:0x5500aa})
+);
+waterStage.position.set(10,0.5,-160);
+scene.add(waterStage);
+
+// ================= INPUT =================
 let keys={};
 
 document.addEventListener("keydown",e=>{
@@ -193,10 +164,10 @@ document.addEventListener("keyup",e=>{
 });
 
 function start(){
-  document.getElementById("start").style.display="none";
+document.getElementById("start").style.display="none";
 }
 
-// LOOP
+// ================= LOOP =================
 function animate(){
 requestAnimationFrame(animate);
 
@@ -211,25 +182,15 @@ camera.position.x += (player.position.x - camera.position.x)*0.08;
 camera.position.z += (player.position.z + 8 - camera.position.z)*0.08;
 camera.lookAt(player.position);
 
-// LIFE
-water.position.z = Math.sin(Date.now()*0.001)*1;
-stars.rotation.y += 0.0005;
-
-// CROWD
-crowd.forEach(c=>{
-  c.position.x += Math.sin(Date.now()*0.001 + c.position.z)*0.01;
-});
-
 // ZONES
 let z = player.position.z;
 
-if(z > -10) document.getElementById("zone").innerText="ZONE: CABIN";
-else if(z > -60) document.getElementById("zone").innerText="ZONE: DOCK";
-else if(z > -120) document.getElementById("zone").innerText="ZONE: STAGE";
-else document.getElementById("zone").innerText="ZONE: YACHT";
+if(z > -10) document.getElementById("zone").innerText="CABIN (CONTROL)";
+else if(z > -60) document.getElementById("zone").innerText="DOCK (REAL ESTATE)";
+else if(z > -120) document.getElementById("zone").innerText="STAGE (FESTIVAL)";
+else document.getElementById("zone").innerText="YACHT (VIP)";
 
 renderer.render(scene,camera);
-
 }
 
 animate();
