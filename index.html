@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>LAMBO CITY — YACHT PARTY</title>
+<title>LAMBO CITY PLATFORM</title>
 
 <style>
 body { margin:0; overflow:hidden; background:black; font-family:Arial; }
@@ -13,13 +13,12 @@ canvas { display:block; }
   position:absolute;
   inset:0;
   display:flex;
+  flex-direction:column;
   align-items:center;
   justify-content:center;
-  flex-direction:column;
   color:white;
   background:black;
   z-index:999;
-  letter-spacing:4px;
   text-align:center;
 }
 
@@ -35,36 +34,52 @@ canvas { display:block; }
   display:none;
 }
 
-#djScreen {
+#menu {
   position:absolute;
-  top:20px;
-  right:20px;
-  width:300px;
-  height:170px;
-  border:2px solid gold;
+  bottom:20px;
+  left:50%;
+  transform:translateX(-50%);
   display:none;
-  z-index:1000;
+  gap:10px;
+}
+
+.btn {
+  padding:10px 15px;
+  border:1px solid gold;
+  color:white;
+  cursor:pointer;
+}
+
+input {
+  padding:10px;
+  margin-top:10px;
+  background:black;
+  border:1px solid gold;
+  color:white;
 }
 </style>
 </head>
 
 <body>
 
-<div id="intro" class="screen">
-LAMBO CITY<br><span style="font-size:12px;">ENTER THE EXPERIENCE</span>
+<div id="login" class="screen">
+LAMBO CITY<br>
+<input id="nameInput" placeholder="ENTER NAME"/>
+<div class="btn" onclick="enter()">ENTER</div>
 </div>
 
 <div id="vip" class="screen" style="display:none;">
-YACHT PARTY ACTIVE<br>
-<span style="font-size:12px;">WELCOME TO VIP ENERGY</span>
+WELCOME TO VIP<br><span id="userName"></span>
 </div>
 
 <div id="hud">ZONE: CABIN</div>
 <div id="prompt">PRESS E</div>
 
-<video id="djScreen" autoplay muted loop>
-  <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4">
-</video>
+<div id="menu">
+  <div class="btn" onclick="alert('DJ SET STARTED')">JOIN DJ</div>
+  <div class="btn" onclick="alert('DROP OPENED')">OPEN DROP</div>
+  <div class="btn" onclick="alert('ENTERING CLUB')">ENTER CLUB</div>
+</div>
 
 <canvas id="c"></canvas>
 
@@ -72,7 +87,27 @@ YACHT PARTY ACTIVE<br>
 
 <script>
 
-// ===== STATE =====
+// LOGIN
+function enter(){
+  let name = document.getElementById("nameInput").value || "GUEST";
+  localStorage.setItem("lamboUser", name);
+  document.getElementById("login").style.display="none";
+  start();
+}
+
+// AUTO LOGIN
+let saved = localStorage.getItem("lamboUser");
+if(saved){
+  document.getElementById("login").style.display="none";
+  start();
+}
+
+// ===== MAIN =====
+function start(){
+
+let user = localStorage.getItem("lamboUser");
+document.getElementById("userName").innerText = user;
+
 let scene = new THREE.Scene();
 scene.fog = new THREE.FogExp2(0x02030a, 0.02);
 
@@ -82,91 +117,48 @@ camera.position.set(0,2.5,5);
 let renderer = new THREE.WebGLRenderer({canvas:c, antialias:true});
 renderer.setSize(innerWidth, innerHeight);
 
-let keys = {};
-let started=false, hasPass=false, doorOpen=false, boarding=false, inVIP=false;
+let keys={}, started=true, hasPass=false, doorOpen=false, boarding=false, inVIP=false;
 
-// AUDIO
-let music = new Audio("https://cdn.pixabay.com/audio/2023/06/15/audio_45f5b1.mp3");
-music.loop = true;
-
-// ===== LIGHTS =====
+// LIGHT
 scene.add(new THREE.AmbientLight(0x1a1a2a,1.2));
-
 let clubLight = new THREE.PointLight(0xff00ff,0);
 clubLight.position.set(0,5,-22);
 scene.add(clubLight);
 
-// ===== PLAYER =====
-let player = new THREE.Mesh(
-  new THREE.BoxGeometry(1,1,1),
-  new THREE.MeshStandardMaterial({color:0xffffff})
-);
+// PLAYER
+let player = new THREE.Mesh(new THREE.BoxGeometry(1,1,1), new THREE.MeshStandardMaterial({color:0xffffff}));
 player.position.y = 0.5;
 scene.add(player);
 
-// ===== FLOOR =====
-let floor = new THREE.Mesh(
-  new THREE.PlaneGeometry(300,300),
-  new THREE.MeshStandardMaterial({color:0x111111})
-);
+// FLOOR
+let floor = new THREE.Mesh(new THREE.PlaneGeometry(300,300), new THREE.MeshStandardMaterial({color:0x111111}));
 floor.rotation.x = -Math.PI/2;
 scene.add(floor);
 
-// ===== WATER EFFECT =====
-let water = new THREE.Mesh(
-  new THREE.PlaneGeometry(300,300),
-  new THREE.MeshStandardMaterial({color:0x001a2d, transparent:true, opacity:0.5})
-);
-water.rotation.x = -Math.PI/2;
-water.position.y = -0.2;
-scene.add(water);
-
-// ===== DOOR =====
-let door = new THREE.Mesh(
-  new THREE.BoxGeometry(2,3,0.2),
-  new THREE.MeshStandardMaterial({color:0x333333})
-);
+// DOOR
+let door = new THREE.Mesh(new THREE.BoxGeometry(2,3,0.2), new THREE.MeshStandardMaterial({color:0x333333}));
 door.position.set(0,1.5,-5);
 scene.add(door);
 
-// ===== DOCK =====
-let dock = new THREE.Mesh(
-  new THREE.BoxGeometry(20,0.3,20),
-  new THREE.MeshStandardMaterial({color:0x222222})
-);
+// DOCK
+let dock = new THREE.Mesh(new THREE.BoxGeometry(20,0.3,20), new THREE.MeshStandardMaterial({color:0x222222}));
 dock.position.z = -15;
 scene.add(dock);
 
-// ===== YACHT (GLOW) =====
-let yacht = new THREE.Mesh(
-  new THREE.BoxGeometry(2,1,5),
-  new THREE.MeshStandardMaterial({color:0xffd700, emissive:0xffaa00, emissiveIntensity:0.5})
-);
+// YACHT
+let yacht = new THREE.Mesh(new THREE.BoxGeometry(2,1,5), new THREE.MeshStandardMaterial({color:0xffd700}));
 yacht.position.set(0,0.5,-22);
 scene.add(yacht);
 
-// ===== STARS =====
-let starGeo = new THREE.BufferGeometry();
-let starArr = [];
+// STARS
+let geo = new THREE.BufferGeometry(), arr=[];
 for(let i=0;i<1500;i++){
-  starArr.push((Math.random()-0.5)*300, Math.random()*150, (Math.random()-0.5)*300);
+  arr.push((Math.random()-0.5)*300, Math.random()*150, (Math.random()-0.5)*300);
 }
-starGeo.setAttribute("position", new THREE.Float32BufferAttribute(starArr,3));
-scene.add(new THREE.Points(starGeo, new THREE.PointsMaterial({color:0xffffff, size:0.7})));
+geo.setAttribute("position", new THREE.Float32BufferAttribute(arr,3));
+scene.add(new THREE.Points(geo, new THREE.PointsMaterial({color:0xffffff, size:0.7})));
 
-// ===== CROWD =====
-let crowd=[];
-for(let i=0;i<25;i++){
-  let c = new THREE.Mesh(
-    new THREE.BoxGeometry(0.5,1.5,0.5),
-    new THREE.MeshStandardMaterial({color:0x000000})
-  );
-  c.position.set((Math.random()-0.5)*8,0.75,-22+(Math.random()-0.5)*4);
-  scene.add(c);
-  crowd.push(c);
-}
-
-// ===== INPUT =====
+// INPUT
 document.addEventListener("keydown",e=>{
   keys[e.key.toLowerCase()] = true;
 
@@ -175,14 +167,9 @@ document.addEventListener("keydown",e=>{
     let d1 = player.position.distanceTo(door.position);
     let d2 = player.position.distanceTo(yacht.position);
 
-    if(!hasPass){
-      hasPass=true;
-      hud.innerHTML="ACCESS GRANTED";
-    }
+    if(!hasPass){ hasPass=true; }
 
-    if(hasPass && d1<3 && !doorOpen){
-      doorOpen=true;
-    }
+    if(hasPass && d1<3 && !doorOpen){ doorOpen=true; }
 
     if(doorOpen && d2<3 && !boarding){
       boarding=true;
@@ -190,16 +177,13 @@ document.addEventListener("keydown",e=>{
       prompt.innerHTML="VERIFYING...";
 
       setTimeout(()=>{
-        prompt.innerHTML="WELCOME TO PARTY";
-
+        prompt.innerHTML="ACCESS GRANTED";
         setTimeout(()=>{
           inVIP=true;
           vip.style.display="flex";
-          djScreen.style.display="block";
-          music.play();
-        },1200);
-
-      },1200);
+          menu.style.display="flex";
+        },1000);
+      },1000);
     }
   }
 });
@@ -208,18 +192,11 @@ document.addEventListener("keyup",e=>{
   keys[e.key.toLowerCase()] = false;
 });
 
-// ===== INTRO =====
-setTimeout(()=>{
-  intro.style.display="none";
-  started=true;
-},2000);
-
-// ===== LOOP =====
+// LOOP
 function animate(){
   requestAnimationFrame(animate);
 
-  if(started && !inVIP){
-
+  if(!inVIP){
     if(keys["w"]) player.position.z -= 0.08;
     if(keys["s"]) player.position.z += 0.08;
     if(keys["a"]) player.position.x -= 0.08;
@@ -232,44 +209,17 @@ function animate(){
     if(doorOpen && door.rotation.y > -Math.PI/2){
       door.rotation.y -= 0.05;
     }
-
-    let d1 = player.position.distanceTo(door.position);
-    let d2 = player.position.distanceTo(yacht.position);
-
-    if(hasPass && !doorOpen && d1<3){
-      prompt.style.display="block";
-      prompt.innerHTML="OPEN DOOR";
-    }
-    else if(doorOpen && d2<3 && !boarding){
-      prompt.style.display="block";
-      prompt.innerHTML="BOARD YACHT";
-    }
-    else{
-      prompt.style.display="none";
-    }
   }
 
-  // VIP MODE
   if(inVIP){
-
-    // COLOR LIGHTS
-    let t = Date.now()*0.002;
-    clubLight.color.setHSL((t%1),1,0.5);
-    clubLight.intensity = 4;
-
-    // CROWD MOVEMENT
-    crowd.forEach(c=>{
-      c.position.y = 0.75 + Math.sin(Date.now()*0.005 + c.position.x)*0.25;
-    });
-
-    // WATER MOTION
-    water.material.opacity = 0.4 + Math.sin(Date.now()*0.002)*0.1;
+    clubLight.intensity = 4 + Math.sin(Date.now()*0.02)*2;
   }
 
   renderer.render(scene,camera);
 }
 
 animate();
+}
 
 </script>
 
