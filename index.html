@@ -2,13 +2,12 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LAMBO CITY — LIVE WORLD</title>
+<title>LAMBO CITY — LIVE FIXED</title>
 
 <style>
 body { margin:0; overflow:hidden; background:black; font-family:Arial; }
 canvas { display:block; }
 
-/* INTRO */
 #start {
   position:absolute;
   inset:0;
@@ -21,7 +20,6 @@ canvas { display:block; }
   z-index:1000;
 }
 
-/* UI */
 #ui {
   position:absolute;
   top:20px;
@@ -41,32 +39,6 @@ canvas { display:block; }
   display:none;
   background:rgba(0,0,0,0.6);
 }
-
-/* REAL WORLD PANELS */
-#streamPanel, #storePanel {
-  position:absolute;
-  inset:0;
-  background:black;
-  display:none;
-  z-index:2000;
-}
-
-iframe {
-  width:100%;
-  height:100%;
-  border:none;
-}
-
-.closeBtn {
-  position:absolute;
-  top:20px;
-  right:20px;
-  padding:10px;
-  background:red;
-  color:white;
-  cursor:pointer;
-  z-index:2100;
-}
 </style>
 </head>
 
@@ -80,18 +52,6 @@ iframe {
 <div id="ui">EXPLORE — INTERACT — DISCOVER</div>
 <div id="prompt">PRESS E</div>
 
-<!-- STREAM PANEL -->
-<div id="streamPanel">
-  <div class="closeBtn" onclick="closePanels()">CLOSE</div>
-  <iframe src="https://player.twitch.tv/?channel=monstercat&parent=lambocityrecords.com"></iframe>
-</div>
-
-<!-- STORE PANEL -->
-<div id="storePanel">
-  <div class="closeBtn" onclick="closePanels()">CLOSE</div>
-  <iframe src="https://lambocityrecords.com"></iframe>
-</div>
-
 <canvas id="c"></canvas>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -99,7 +59,8 @@ iframe {
 <script>
 
 let scene = new THREE.Scene();
-scene.background = new THREE.Color(0x05060a);
+scene.background = new THREE.Color(0x000000);
+scene.fog = new THREE.FogExp2(0x000000, 0.01);
 
 let camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 1000);
 camera.position.set(0,2,5);
@@ -107,7 +68,8 @@ camera.position.set(0,2,5);
 let renderer = new THREE.WebGLRenderer({canvas:c});
 renderer.setSize(innerWidth, innerHeight);
 
-scene.add(new THREE.AmbientLight(0x404040, 1.5));
+// LIGHT
+scene.add(new THREE.AmbientLight(0xffffff, 1));
 
 // PLAYER
 let player = new THREE.Mesh(
@@ -120,7 +82,7 @@ scene.add(player);
 // FLOOR
 let floor = new THREE.Mesh(
   new THREE.PlaneGeometry(20,20),
-  new THREE.MeshStandardMaterial({color:0x111122})
+  new THREE.MeshStandardMaterial({color:0x111111})
 );
 floor.rotation.x = -Math.PI/2;
 scene.add(floor);
@@ -130,29 +92,21 @@ let door = new THREE.Mesh(
   new THREE.BoxGeometry(2,3,0.2),
   new THREE.MeshStandardMaterial({color:0x444444})
 );
-door.position.set(0,1.5,-9.9);
+door.position.set(0,1.5,-8);
 scene.add(door);
 
-// DOCK + YACHT
+// DOCK WORLD
 let dock = new THREE.Mesh(
-  new THREE.BoxGeometry(80,1,40),
-  new THREE.MeshStandardMaterial({color:0x0a0a0a})
+  new THREE.BoxGeometry(200,1,200),
+  new THREE.MeshStandardMaterial({color:0x050505})
 );
-dock.position.set(0,-0.5,-40);
+dock.position.set(0,-0.5,-50);
 dock.visible = false;
 scene.add(dock);
 
-let yacht = new THREE.Mesh(
-  new THREE.BoxGeometry(20,4,20),
-  new THREE.MeshStandardMaterial({color:0x111122})
-);
-yacht.position.set(0,2,-60);
-yacht.visible = false;
-scene.add(yacht);
-
 // WATER
 let water = new THREE.Mesh(
-  new THREE.PlaneGeometry(200,200),
+  new THREE.PlaneGeometry(400,400),
   new THREE.MeshStandardMaterial({color:0x020b1a})
 );
 water.rotation.x = -Math.PI/2;
@@ -160,62 +114,57 @@ water.position.y = -1;
 water.visible = false;
 scene.add(water);
 
-// STARS
+// BIG STAR FIELD (VERY VISIBLE)
 const starGeo = new THREE.BufferGeometry();
 const starArr = [];
-for(let i=0;i<2000;i++){
-  starArr.push((Math.random()-0.5)*300, Math.random()*150, -60+(Math.random()-0.5)*300);
+
+for(let i=0;i<4000;i++){
+  starArr.push(
+    (Math.random()-0.5)*800,
+    Math.random()*300,
+    -50 + (Math.random()-0.5)*800
+  );
 }
+
 starGeo.setAttribute("position", new THREE.Float32BufferAttribute(starArr,3));
-const stars = new THREE.Points(starGeo, new THREE.PointsMaterial({color:0xffffff, size:0.6}));
+
+const stars = new THREE.Points(
+  starGeo,
+  new THREE.PointsMaterial({color:0xffffff, size:1.2})
+);
 stars.visible = false;
 scene.add(stars);
 
-// MUSIC
-let track = new Audio("https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c8a3c5c4.mp3");
-track.loop = true;
-
-// OBJECTS
-function createObj(color,x,y,z){
-  let m = new THREE.Mesh(
-    new THREE.BoxGeometry(2,2,2),
-    new THREE.MeshStandardMaterial({color})
-  );
-  m.position.set(x,y,z);
-  m.visible = false;
-  scene.add(m);
-  return m;
-}
-
-let radio = createObj(0xffff00,6,1,-60);
-let screen = createObj(0x00aaff,0,2,-55);
-let merch = createObj(0xff0000,-6,1.5,-60);
-
 // CROWD
 let crowd=[];
-for(let i=0;i<25;i++){
+for(let i=0;i<30;i++){
   let p = new THREE.Mesh(
-    new THREE.BoxGeometry(0.5,1,0.5),
+    new THREE.BoxGeometry(0.6,1.2,0.6),
     new THREE.MeshStandardMaterial({color:0xffffff})
   );
-  p.position.set((Math.random()-0.5)*15,0.5,-60+(Math.random()-0.5)*15);
+
+  p.position.set(
+    (Math.random()-0.5)*40,
+    0.6,
+    -50 + (Math.random()-0.5)*40
+  );
 
   p.userData = {
     dir: Math.random()*Math.PI*2,
-    speed: 0.01 + Math.random()*0.02
+    speed: 0.02 + Math.random()*0.03
   };
 
-  p.visible=false;
+  p.visible = false;
   scene.add(p);
   crowd.push(p);
 }
 
-// LIGHTS
+// LIGHT FX
 let lights=[];
-for(let i=0;i<8;i++){
-  let l=new THREE.PointLight(0x00aaff,2,40);
-  l.position.set((i-4)*4,3,-60);
-  l.visible=false;
+for(let i=0;i<10;i++){
+  let l = new THREE.PointLight(0x00aaff, 3, 100);
+  l.position.set((i-5)*8, 5, -50);
+  l.visible = false;
   scene.add(l);
   lights.push(l);
 }
@@ -224,64 +173,45 @@ for(let i=0;i<8;i++){
 let keys={}, inDock=false;
 
 document.addEventListener("keydown",e=>{
-  keys[e.key.toLowerCase()]=true;
+  keys[e.key.toLowerCase()] = true;
   if(e.key.toLowerCase()==="e") interact();
 });
-document.addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
+
+document.addEventListener("keyup",e=>{
+  keys[e.key.toLowerCase()] = false;
+});
 
 // ENTER
 function enterWorld(){
   document.getElementById("start").style.display="none";
-  track.play();
 }
 
-// PANELS
-function closePanels(){
-  document.getElementById("streamPanel").style.display="none";
-  document.getElementById("storePanel").style.display="none";
-}
-
-// INTERACT
+// INTERACT (FIXED)
 function interact(){
 
+// 🚀 ENTER DOCK (FORCED LOAD)
 if(!inDock && player.position.distanceTo(door.position)<3){
-  inDock=true;
 
-  dock.visible=true;
-  yacht.visible=true;
-  stars.visible=true;
-  water.visible=true;
-  radio.visible=true;
-  screen.visible=true;
-  merch.visible=true;
+  inDock = true;
+
+  // hide cabin
+  floor.visible = false;
+  door.visible = false;
+
+  // show dock world
+  dock.visible = true;
+  water.visible = true;
+  stars.visible = true;
 
   crowd.forEach(p=>p.visible=true);
   lights.forEach(l=>l.visible=true);
 
-  player.position.set(0,1,-30);
-  document.getElementById("ui").innerText="YACHT CLUB — LIVE";
+  // MOVE PLAYER INTO SCENE (KEY FIX)
+  player.position.set(0,1,-40);
+
+  document.getElementById("ui").innerText = "YACHT CLUB — LIVE";
+
   return;
-}
-
-// RADIO (TOGGLE)
-if(player.position.distanceTo(radio.position)<3){
-  if(track.paused){
-    track.play();
-    document.getElementById("ui").innerText="MUSIC ON";
-  } else {
-    track.pause();
-    document.getElementById("ui").innerText="MUSIC OFF";
-  }
-}
-
-// STREAM (IN WORLD)
-if(player.position.distanceTo(screen.position)<4){
-  document.getElementById("streamPanel").style.display="block";
-}
-
-// MERCH (IN WORLD)
-if(player.position.distanceTo(merch.position)<3){
-  document.getElementById("storePanel").style.display="block";
 }
 
 }
@@ -290,44 +220,43 @@ if(player.position.distanceTo(merch.position)<3){
 function animate(){
 requestAnimationFrame(animate);
 
-if(keys["w"]) player.position.z-=0.1;
-if(keys["s"]) player.position.z+=0.1;
-if(keys["a"]) player.position.x-=0.1;
-if(keys["d"]) player.position.x+=0.1;
+// MOVE
+if(keys["w"]) player.position.z-=0.15;
+if(keys["s"]) player.position.z+=0.15;
+if(keys["a"]) player.position.x-=0.15;
+if(keys["d"]) player.position.x+=0.15;
 
-camera.position.x+=(player.position.x-camera.position.x)*0.05;
-camera.position.z+=(player.position.z+5-camera.position.z)*0.05;
+// CAMERA
+camera.position.x+=(player.position.x-camera.position.x)*0.08;
+camera.position.z+=(player.position.z+8-camera.position.z)*0.08;
 camera.lookAt(player.position);
 
 // LIFE
-water.position.z = Math.sin(Date.now()*0.001)*0.5;
-stars.rotation.y+=0.0007;
+if(inDock){
+  water.position.z = Math.sin(Date.now()*0.001)*1;
 
-crowd.forEach(p=>{
-  p.position.x += Math.cos(p.userData.dir)*p.userData.speed;
-  p.position.z += Math.sin(p.userData.dir)*p.userData.speed;
+  stars.rotation.y += 0.001;
 
-  if(Math.random()<0.01){
-    p.userData.dir += (Math.random()-0.5);
-  }
-});
+  crowd.forEach(p=>{
+    p.position.x += Math.cos(p.userData.dir)*p.userData.speed;
+    p.position.z += Math.sin(p.userData.dir)*p.userData.speed;
 
-lights.forEach((l,i)=>{
-  l.intensity = 2 + Math.sin(Date.now()*0.002+i)*2;
-});
+    if(Math.random()<0.02){
+      p.userData.dir += (Math.random()-0.5);
+    }
+  });
+
+  lights.forEach((l,i)=>{
+    l.intensity = 3 + Math.sin(Date.now()*0.003+i)*3;
+  });
+}
 
 // PROMPT
-let near=(
-  player.position.distanceTo(door.position)<3||
-  player.position.distanceTo(radio.position)<3||
-  player.position.distanceTo(screen.position)<4||
-  player.position.distanceTo(merch.position)<3
-);
-
-document.getElementById("prompt").style.display=near?"block":"none";
+document.getElementById("prompt").style.display =
+  player.position.distanceTo(door.position)<3 && !inDock
+  ? "block" : "none";
 
 renderer.render(scene,camera);
-
 }
 
 animate();
