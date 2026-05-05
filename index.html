@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LAMBO CITY — YACHT INTERIOR TRANSITION</title>
+<title>LAMBO CITY — FINAL EXPERIENCE</title>
 
 <style>
 body { margin:0; overflow:hidden; background:black; font-family:Arial; }
@@ -36,7 +36,7 @@ canvas { display:block; }
   background:black;
   opacity:0;
   pointer-events:none;
-  transition: opacity 1.5s ease;
+  transition:opacity 1.2s ease;
   z-index:999;
 }
 
@@ -75,32 +75,37 @@ let scene, camera, renderer;
 let player, yacht;
 let keys = {};
 
-let state = "OUTSIDE"; // OUTSIDE → TRANSITION → INTERIOR
-let insideYacht = false;
+let state = "OUTSIDE";
 
-// ================= START =================
+// AUDIO (simple party vibe)
+const music = new Audio("https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c8a3c5c4.mp3");
+music.loop = true;
+music.volume = 0.35;
+
+// START
 function start(){
 
 document.getElementById("login").style.display = "none";
 
-// SCENE
 scene = new THREE.Scene();
 scene.background = new THREE.Color(0x02030a);
 
-// CAMERA
 camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 1000);
 camera.position.set(0,2.5,5);
 
-// RENDERER
 renderer = new THREE.WebGLRenderer({canvas:c});
 renderer.setSize(innerWidth, innerHeight);
 
 // LIGHTS
 scene.add(new THREE.AmbientLight(0x1a1a2a, 0.8));
 
-const light = new THREE.PointLight(0x00aaff, 2);
-light.position.set(0,5,-10);
-scene.add(light);
+const light1 = new THREE.PointLight(0x00aaff, 2);
+light1.position.set(0,5,-10);
+scene.add(light1);
+
+const light2 = new THREE.PointLight(0xff00ff, 1.5);
+light2.position.set(2,3,-12);
+scene.add(light2);
 
 // PLAYER
 player = new THREE.Mesh(
@@ -110,7 +115,7 @@ player = new THREE.Mesh(
 player.position.y = 0.5;
 scene.add(player);
 
-// YACHT (OUTSIDE)
+// YACHT
 yacht = new THREE.Mesh(
   new THREE.BoxGeometry(3,1,6),
   new THREE.MeshStandardMaterial({color:0xffd700})
@@ -118,7 +123,7 @@ yacht = new THREE.Mesh(
 yacht.position.set(0,0.5,-15);
 scene.add(yacht);
 
-// FLOOR OUTSIDE
+// FLOOR
 const floor = new THREE.Mesh(
   new THREE.PlaneGeometry(200,200),
   new THREE.MeshStandardMaterial({color:0x111111})
@@ -145,67 +150,60 @@ scene.add(new THREE.Points(
   new THREE.PointsMaterial({color:0xffffff, size:0.7})
 ));
 
+// CROWD LIGHTS (fake people energy)
+for(let i=0;i<10;i++){
+  const glow = new THREE.PointLight(0xffffff, 0.5, 10);
+  glow.position.set((Math.random()-0.5)*6,1,-15+(Math.random()-0.5)*4);
+  scene.add(glow);
+}
+
 // INPUT
 document.addEventListener("keydown", e=>{
   keys[e.key.toLowerCase()] = true;
-  if(e.key.toLowerCase()==="e") trigger();
+
+  if(e.key.toLowerCase()==="e") interact();
 });
 
 document.addEventListener("keyup", e=>{
   keys[e.key.toLowerCase()] = false;
 });
 
-// LOOP
-animate();
-
-}
-
-// ================= TRANSITION =================
-function trigger(){
+// INTERACT
+function interact(){
 
 let dist = player.position.distanceTo(yacht.position);
 
 if(state === "OUTSIDE" && dist < 3){
-
   state = "TRANSITION";
 
   document.getElementById("fade").style.opacity = 1;
   document.getElementById("prompt").innerText = "ENTERING YACHT...";
 
-  setTimeout(()=>{
-
-    loadInterior();
-
-    document.getElementById("fade").style.opacity = 0;
-
-  },1500);
+  setTimeout(()=> loadInterior(), 1200);
 }
 
 }
 
-// ================= INTERIOR (GTA STYLE SWAP) =================
+// INTERIOR SWAP
 function loadInterior(){
 
 state = "INSIDE";
-insideYacht = true;
-
 document.getElementById("hud").innerText = "ZONE: YACHT INTERIOR";
 
-// CLEAR WORLD
 scene.clear();
 
-// LIGHTS (INTERIOR CLUB FEEL)
+// LIGHTS
 scene.add(new THREE.AmbientLight(0x222244, 1));
 
-const neon1 = new THREE.PointLight(0x00aaff, 3);
-neon1.position.set(2,3,2);
-scene.add(neon1);
+const n1 = new THREE.PointLight(0x00aaff, 3);
+n1.position.set(2,3,2);
+scene.add(n1);
 
-const neon2 = new THREE.PointLight(0xff00ff, 2);
-neon2.position.set(-2,3,-2);
-scene.add(neon2);
+const n2 = new THREE.PointLight(0xff00ff, 2);
+n2.position.set(-2,3,-2);
+scene.add(n2);
 
-// FLOOR INTERIOR
+// FLOOR
 const floor = new THREE.Mesh(
   new THREE.PlaneGeometry(20,20),
   new THREE.MeshStandardMaterial({color:0x111122})
@@ -213,19 +211,11 @@ const floor = new THREE.Mesh(
 floor.rotation.x = -Math.PI/2;
 scene.add(floor);
 
-// PLAYER (RESET POSITION)
+// PLAYER
 player.position.set(0,0.5,2);
 scene.add(player);
 
-// INTERIOR YACHT SPACE
-const bar = new THREE.Mesh(
-  new THREE.BoxGeometry(6,2,1),
-  new THREE.MeshStandardMaterial({color:0x333333})
-);
-bar.position.set(0,1,-4);
-scene.add(bar);
-
-// DJ BOOTH
+// DJ AREA
 const dj = new THREE.Mesh(
   new THREE.BoxGeometry(2,1,2),
   new THREE.MeshStandardMaterial({color:0x00aaff})
@@ -233,11 +223,23 @@ const dj = new THREE.Mesh(
 dj.position.set(0,0.5,3);
 scene.add(dj);
 
+// BAR
+const bar = new THREE.Mesh(
+  new THREE.BoxGeometry(6,2,1),
+  new THREE.MeshStandardMaterial({color:0x333333})
+);
+bar.position.set(0,1,-4);
+scene.add(bar);
+
+document.getElementById("fade").style.opacity = 0;
+
+// start music
+music.play();
+
 }
 
-// ================= LOOP =================
+// LOOP
 function animate(){
-
 requestAnimationFrame(animate);
 
 // movement
@@ -246,29 +248,27 @@ if(keys["s"]) player.position.z += 0.08;
 if(keys["a"]) player.position.x -= 0.08;
 if(keys["d"]) player.position.x += 0.08;
 
-// camera follow (smooth GTA feel)
-camera.position.x += (player.position.x - camera.position.x)*0.04;
-camera.position.z += (player.position.z + 6 - camera.position.z)*0.04;
+// camera
+camera.position.x += (player.position.x - camera.position.x)*0.03;
+camera.position.z += (player.position.z + 6 - camera.position.z)*0.03;
 camera.lookAt(player.position);
 
-// yacht float (only outside)
+// yacht motion (outside only)
 if(state === "OUTSIDE"){
   yacht.position.y = 0.5 + Math.sin(Date.now()*0.002)*0.15;
   yacht.rotation.y += 0.002;
 }
 
-// prompt logic
+// prompt
 if(state === "OUTSIDE"){
   let dist = player.position.distanceTo(yacht.position);
-
-  if(dist < 3){
-    document.getElementById("prompt").style.display = "block";
-  } else {
-    document.getElementById("prompt").style.display = "none";
-  }
+  document.getElementById("prompt").style.display = dist < 3 ? "block" : "none";
 }
 
 renderer.render(scene,camera);
+}
+
+animate();
 
 }
 
