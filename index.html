@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>LAMBO CITY - PROGRESSION CORE</title>
+<title>LAMBO CITY</title>
 
 <style>
 body {
@@ -40,18 +40,18 @@ canvas { display:block; }
   top:20px;
   left:20px;
   font-size:13px;
-  opacity:0.8;
-  line-height:1.5;
+  opacity:0.85;
+  line-height:1.6;
 }
 
-/* PROFILE PANEL */
-#profile {
+#zoneAlert {
   position:absolute;
-  bottom:20px;
-  left:20px;
-  padding:10px;
-  border:1px solid rgba(255,255,255,0.2);
-  background:rgba(0,0,0,0.4);
+  top:50%;
+  width:100%;
+  text-align:center;
+  font-size:22px;
+  opacity:0;
+  transition:opacity 0.5s;
 }
 
 /* VIP */
@@ -65,16 +65,6 @@ canvas { display:block; }
   padding-top:120px;
 }
 
-/* INPUT */
-input {
-  padding:10px;
-  margin-top:10px;
-  background:black;
-  border:1px solid white;
-  color:white;
-}
-
-/* BUTTON */
 button {
   padding:12px 16px;
   margin-top:10px;
@@ -92,31 +82,25 @@ button {
 
 <div id="ui">
 
-<!-- START -->
 <div id="home">
   <h1>LAMBO CITY</h1>
-  <p>Create Identity</p>
-  <input id="nameInput" placeholder="Enter Name"/>
-  <button onclick="start()">ENTER WORLD</button>
+  <p style="opacity:0.6">Enter the world</p>
+  <button onclick="enterWorld()">ENTER</button>
 </div>
 
-<!-- HUD -->
 <div id="hud">
   <div id="status">OFFLINE</div>
+  <div id="activity">...</div>
+  <div id="radioUI">RADIO: OFF</div>
   <div id="zone">ZONE: NONE</div>
-  <div id="xp">XP: 0</div>
+  <div>WASD MOVE</div>
 </div>
 
-<!-- PROFILE -->
-<div id="profile">
-  <div id="playerName">NAME: NONE</div>
-  <div id="level">LEVEL: 1</div>
-</div>
+<div id="zoneAlert"></div>
 
-<!-- VIP -->
 <div id="vip">
   <h1>YACHT CLUB</h1>
-  <button onclick="exitVIP()">EXIT</button>
+  <button onclick="closeVIP()">EXIT</button>
 </div>
 
 </div>
@@ -135,9 +119,20 @@ let player, ocean, yacht;
 let mode = "idle";
 let keys = {};
 
-let xp = 0;
-let level = 1;
-let playerName = "Unknown";
+const activities = [
+  "TRAFFIC FLOWING",
+  "DJ HERO LIVE",
+  "YACHT EVENT PREPARING",
+  "CITIZENS ONLINE",
+  "CITY LIGHTS ACTIVE"
+];
+
+const tracks = [
+  "NIGHT DRIVE",
+  "LAMBO CITY RADIO",
+  "AFTER HOURS",
+  "MIDNIGHT ENERGY"
+];
 
 const zones = {
   yacht: { x:0, z:-18, r:4 },
@@ -191,7 +186,11 @@ function init(){
 function animate(){
   requestAnimationFrame(animate);
 
-  ocean.rotation.z += 0.0002;
+  // ocean motion
+  ocean.rotation.z += 0.0003;
+
+  // subtle camera sway
+  camera.position.y += Math.sin(Date.now()*0.001) * 0.002;
 
   if(mode === "play"){
 
@@ -215,15 +214,20 @@ function checkZones(){
   let d = dist(zones.yacht);
 
   if(d < zones.yacht.r){
-    document.getElementById("zone").innerText = "ZONE: YACHT (VIP)";
+    showZone("ENTERING YACHT CLUB");
     document.getElementById("vip").style.display = "block";
     mode = "vip";
-    addXP(50);
   }
   else {
     document.getElementById("zone").innerText = "ZONE: WORLD";
-    addXP(1);
   }
+}
+
+function showZone(text){
+  const el = document.getElementById("zoneAlert");
+  el.innerText = text;
+  el.style.opacity = 1;
+  setTimeout(()=> el.style.opacity = 0, 2000);
 }
 
 function dist(z){
@@ -233,36 +237,38 @@ function dist(z){
   );
 }
 
-/* IDENTITY SYSTEM */
-function start(){
-  playerName = document.getElementById("nameInput").value || "Citizen";
-
+function enterWorld(){
   document.getElementById("home").style.display = "none";
   document.getElementById("status").innerText = "LAMBO CITY ONLINE";
-
-  document.getElementById("playerName").innerText = "NAME: " + playerName;
-
   mode = "play";
-  document.getElementById("radio").play().catch(()=>{});
+
+  const radio = document.getElementById("radio");
+  radio.play().catch(()=>{});
+
+  // start systems
+  cycleActivity();
+  cycleRadio();
 }
 
-/* PROGRESSION */
-function addXP(amount){
-  xp += amount;
-
-  if(xp > 100){
-    level++;
-    xp = 0;
-  }
-
-  document.getElementById("xp").innerText = "XP: " + xp;
-  document.getElementById("level").innerText = "LEVEL: " + level;
-}
-
-/* VIP */
-function exitVIP(){
+function closeVIP(){
   document.getElementById("vip").style.display = "none";
   mode = "play";
+}
+
+// 🌍 world activity loop
+function cycleActivity(){
+  setInterval(()=>{
+    const a = activities[Math.floor(Math.random()*activities.length)];
+    document.getElementById("activity").innerText = a;
+  }, 3000);
+}
+
+// 🎧 radio system UI
+function cycleRadio(){
+  setInterval(()=>{
+    const t = tracks[Math.floor(Math.random()*tracks.length)];
+    document.getElementById("radioUI").innerText = "NOW PLAYING: " + t;
+  }, 5000);
 }
 
 </script>
