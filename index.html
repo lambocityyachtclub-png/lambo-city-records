@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>LAMBO CITY - FINAL EXPERIENCE</title>
+<title>LAMBO CITY</title>
 
 <style>
 body {
@@ -32,7 +32,7 @@ canvas { display:block; }
   justify-content:center;
   align-items:center;
   flex-direction:column;
-  background: radial-gradient(circle at center, rgba(0,0,30,0.7), black);
+  background: radial-gradient(circle at center, rgba(0,10,30,0.75), black);
   pointer-events:auto;
 }
 
@@ -42,7 +42,7 @@ canvas { display:block; }
   top:20px;
   left:20px;
   font-size:14px;
-  opacity:0.85;
+  opacity:0.75;
 }
 
 /* VIP */
@@ -50,7 +50,7 @@ canvas { display:block; }
   display:none;
   position:absolute;
   inset:0;
-  background: rgba(0,0,0,0.95);
+  background: rgba(0,0,0,0.92);
   z-index:10;
   text-align:center;
   padding-top:120px;
@@ -58,7 +58,7 @@ canvas { display:block; }
 
 /* BUTTON */
 button {
-  padding:12px 18px;
+  padding:12px 16px;
   background:black;
   border:1px solid gold;
   color:white;
@@ -76,19 +76,19 @@ button {
 
   <div id="home">
     <h1>LAMBO CITY</h1>
-    <p style="opacity:0.7">Enter the world</p>
-    <button onclick="enterWorld()">ENTER WORLD</button>
+    <p style="opacity:0.6">Enter the world</p>
+    <button onclick="enterWorld()">ENTER</button>
   </div>
 
   <div id="hud">
     <div id="status">OFFLINE</div>
     <div id="zone">ZONE: NONE</div>
-    <div>WASD MOVE • REACH YACHT FOR VIP</div>
+    <div>WASD MOVE • YACHT = VIP</div>
   </div>
 
   <div id="vip">
     <h1>YACHT CLUB</h1>
-    <button onclick="exitVIP()" style="position:absolute;top:20px;right:20px;">EXIT</button>
+    <button onclick="closeVIP()" style="position:absolute;top:20px;right:20px;">EXIT</button>
   </div>
 
 </div>
@@ -107,6 +107,7 @@ let player, ocean, yacht, city;
 let mode = "idle";
 let keys = {};
 
+// ZONES
 const zones = {
   yacht: { x: 0, z: -18, r: 4 },
   city:  { x: 18, z: 10, r: 14 },
@@ -119,8 +120,8 @@ function init() {
 
   scene = new THREE.Scene();
 
-  // 🌫 cinematic fog (THIS is what was missing visually)
-  scene.fog = new THREE.Fog(0x000814, 10, 70);
+  // 🌫 atmosphere (important for immersion)
+  scene.fog = new THREE.Fog(0x000814, 10, 75);
 
   camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 1000);
   camera.position.set(0,6,12);
@@ -132,7 +133,7 @@ function init() {
   // 🌊 ocean
   ocean = new THREE.Mesh(
     new THREE.PlaneGeometry(300,300),
-    new THREE.MeshBasicMaterial({ color:0x003b6f })
+    new THREE.MeshBasicMaterial({ color:0x002f5c })
   );
   ocean.rotation.x = -Math.PI/2;
   scene.add(ocean);
@@ -170,7 +171,7 @@ function init() {
 function animate() {
   requestAnimationFrame(animate);
 
-  ocean.rotation.z += 0.0003;
+  ocean.rotation.z += 0.00025;
 
   if (mode === "play") {
 
@@ -179,8 +180,9 @@ function animate() {
     if (keys["a"]) player.position.x -= 0.15;
     if (keys["d"]) player.position.x += 0.15;
 
-    camera.position.x += (player.position.x - camera.position.x) * 0.08;
-    camera.position.z += (player.position.z + 10 - camera.position.z) * 0.08;
+    // smooth cinematic camera follow
+    camera.position.x += (player.position.x - camera.position.x) * 0.07;
+    camera.position.z += (player.position.z + 10 - camera.position.z) * 0.07;
     camera.lookAt(player.position);
 
     updateZones();
@@ -191,15 +193,16 @@ function animate() {
 
 function updateZones() {
 
-  let dz = dist(zones.yacht);
-  let cz = dist(zones.city);
+  let dy = dist(zones.yacht);
+  let dc = dist(zones.city);
+  let dd = dist(zones.dock);
 
-  if (dz < zones.yacht.r) {
+  if (dy < zones.yacht.r) {
     document.getElementById("zone").innerText = "ZONE: YACHT (VIP)";
     document.getElementById("vip").style.display = "block";
     mode = "vip";
   }
-  else if (cz < zones.city.r) {
+  else if (dc < zones.city.r) {
     document.getElementById("zone").innerText = "ZONE: CITY";
   }
   else {
@@ -221,7 +224,7 @@ function enterWorld(){
   document.getElementById("radio").play().catch(()=>{});
 }
 
-function exitVIP(){
+function closeVIP(){
   document.getElementById("vip").style.display = "none";
   mode = "play";
 }
