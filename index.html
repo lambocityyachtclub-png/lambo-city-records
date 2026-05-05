@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>LAMBO CITY — V4.1</title>
+<title>LAMBO CITY — YACHT PARTY</title>
 
 <style>
 body { margin:0; overflow:hidden; background:black; font-family:Arial; }
@@ -34,6 +34,17 @@ canvas { display:block; }
   border:1px solid gold;
   display:none;
 }
+
+#djScreen {
+  position:absolute;
+  top:20px;
+  right:20px;
+  width:300px;
+  height:170px;
+  border:2px solid gold;
+  display:none;
+  z-index:1000;
+}
 </style>
 </head>
 
@@ -44,12 +55,16 @@ LAMBO CITY<br><span style="font-size:12px;">ENTER THE EXPERIENCE</span>
 </div>
 
 <div id="vip" class="screen" style="display:none;">
-YACHT CLUB LIVE<br>
-<span style="font-size:12px;">ENERGY ACTIVE</span>
+YACHT PARTY ACTIVE<br>
+<span style="font-size:12px;">WELCOME TO VIP ENERGY</span>
 </div>
 
 <div id="hud">ZONE: CABIN</div>
 <div id="prompt">PRESS E</div>
+
+<video id="djScreen" autoplay muted loop>
+  <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4">
+</video>
 
 <canvas id="c"></canvas>
 
@@ -70,12 +85,12 @@ renderer.setSize(innerWidth, innerHeight);
 let keys = {};
 let started=false, hasPass=false, doorOpen=false, boarding=false, inVIP=false;
 
+// AUDIO
+let music = new Audio("https://cdn.pixabay.com/audio/2023/06/15/audio_45f5b1.mp3");
+music.loop = true;
+
 // ===== LIGHTS =====
 scene.add(new THREE.AmbientLight(0x1a1a2a,1.2));
-
-let mainLight = new THREE.PointLight(0x00aaff,2);
-mainLight.position.set(0,6,5);
-scene.add(mainLight);
 
 let clubLight = new THREE.PointLight(0xff00ff,0);
 clubLight.position.set(0,5,-22);
@@ -97,6 +112,15 @@ let floor = new THREE.Mesh(
 floor.rotation.x = -Math.PI/2;
 scene.add(floor);
 
+// ===== WATER EFFECT =====
+let water = new THREE.Mesh(
+  new THREE.PlaneGeometry(300,300),
+  new THREE.MeshStandardMaterial({color:0x001a2d, transparent:true, opacity:0.5})
+);
+water.rotation.x = -Math.PI/2;
+water.position.y = -0.2;
+scene.add(water);
+
 // ===== DOOR =====
 let door = new THREE.Mesh(
   new THREE.BoxGeometry(2,3,0.2),
@@ -113,10 +137,10 @@ let dock = new THREE.Mesh(
 dock.position.z = -15;
 scene.add(dock);
 
-// ===== YACHT =====
+// ===== YACHT (GLOW) =====
 let yacht = new THREE.Mesh(
   new THREE.BoxGeometry(2,1,5),
-  new THREE.MeshStandardMaterial({color:0xffd700})
+  new THREE.MeshStandardMaterial({color:0xffd700, emissive:0xffaa00, emissiveIntensity:0.5})
 );
 yacht.position.set(0,0.5,-22);
 scene.add(yacht);
@@ -125,33 +149,14 @@ scene.add(yacht);
 let starGeo = new THREE.BufferGeometry();
 let starArr = [];
 for(let i=0;i<1500;i++){
-  starArr.push(
-    (Math.random()-0.5)*300,
-    Math.random()*150,
-    (Math.random()-0.5)*300
-  );
+  starArr.push((Math.random()-0.5)*300, Math.random()*150, (Math.random()-0.5)*300);
 }
 starGeo.setAttribute("position", new THREE.Float32BufferAttribute(starArr,3));
-let stars = new THREE.Points(starGeo, new THREE.PointsMaterial({color:0xffffff, size:0.7}));
-scene.add(stars);
-
-// ===== CITY =====
-for(let i=0;i<40;i++){
-  let b = new THREE.Mesh(
-    new THREE.BoxGeometry(2, Math.random()*8+2, 2),
-    new THREE.MeshStandardMaterial({color:0x0a0a0a})
-  );
-  b.position.set(
-    (Math.random()-0.5)*100,
-    b.geometry.parameters.height/2,
-    (Math.random()-0.5)*100 - 20
-  );
-  scene.add(b);
-}
+scene.add(new THREE.Points(starGeo, new THREE.PointsMaterial({color:0xffffff, size:0.7})));
 
 // ===== CROWD =====
 let crowd=[];
-for(let i=0;i<20;i++){
+for(let i=0;i<25;i++){
   let c = new THREE.Mesh(
     new THREE.BoxGeometry(0.5,1.5,0.5),
     new THREE.MeshStandardMaterial({color:0x000000})
@@ -172,7 +177,7 @@ document.addEventListener("keydown",e=>{
 
     if(!hasPass){
       hasPass=true;
-      hud.innerHTML="ACCESS GRANTED — FIND EXIT";
+      hud.innerHTML="ACCESS GRANTED";
     }
 
     if(hasPass && d1<3 && !doorOpen){
@@ -182,15 +187,16 @@ document.addEventListener("keydown",e=>{
     if(doorOpen && d2<3 && !boarding){
       boarding=true;
       prompt.style.display="block";
-      prompt.innerHTML="VERIFYING ACCESS...";
+      prompt.innerHTML="VERIFYING...";
 
       setTimeout(()=>{
-        prompt.innerHTML="BOARDING CONFIRMED";
+        prompt.innerHTML="WELCOME TO PARTY";
 
         setTimeout(()=>{
           inVIP=true;
           vip.style.display="flex";
-          prompt.style.display="none";
+          djScreen.style.display="block";
+          music.play();
         },1200);
 
       },1200);
@@ -232,11 +238,11 @@ function animate(){
 
     if(hasPass && !doorOpen && d1<3){
       prompt.style.display="block";
-      prompt.innerHTML="PRESS E TO OPEN DOOR";
+      prompt.innerHTML="OPEN DOOR";
     }
     else if(doorOpen && d2<3 && !boarding){
       prompt.style.display="block";
-      prompt.innerHTML="PRESS E TO BOARD";
+      prompt.innerHTML="BOARD YACHT";
     }
     else{
       prompt.style.display="none";
@@ -245,11 +251,19 @@ function animate(){
 
   // VIP MODE
   if(inVIP){
-    clubLight.intensity = 3 + Math.sin(Date.now()*0.02)*2;
 
+    // COLOR LIGHTS
+    let t = Date.now()*0.002;
+    clubLight.color.setHSL((t%1),1,0.5);
+    clubLight.intensity = 4;
+
+    // CROWD MOVEMENT
     crowd.forEach(c=>{
-      c.position.y = 0.75 + Math.sin(Date.now()*0.005 + c.position.x)*0.2;
+      c.position.y = 0.75 + Math.sin(Date.now()*0.005 + c.position.x)*0.25;
     });
+
+    // WATER MOTION
+    water.material.opacity = 0.4 + Math.sin(Date.now()*0.002)*0.1;
   }
 
   renderer.render(scene,camera);
