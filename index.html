@@ -2,23 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LAMBO CITY YACHT CLUB WORLD — STABLE</title>
+<title>LAMBO CITY YACHT CLUB — LIVE</title>
 
 <style>
 body { margin:0; overflow:hidden; background:black; font-family:Arial; }
 canvas { display:block; }
-
-#start {
-  position:absolute;
-  inset:0;
-  background:black;
-  color:white;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  z-index:1000;
-}
 
 #ui {
   position:absolute;
@@ -26,6 +14,7 @@ canvas { display:block; }
   left:20px;
   color:white;
   font-size:13px;
+  z-index:10;
 }
 
 #prompt {
@@ -44,13 +33,8 @@ canvas { display:block; }
 
 <body>
 
-<div id="start">
-<h2>LAMBO CITY YACHT CLUB</h2>
-<button onclick="start()">ENTER WORLD</button>
-</div>
-
-<div id="ui">ZONE: READY</div>
-<div id="prompt">PRESS E TO INTERACT</div>
+<div id="ui">ZONE: ENTRY</div>
+<div id="prompt">PRESS E</div>
 
 <canvas id="c"></canvas>
 
@@ -59,14 +43,15 @@ canvas { display:block; }
 <script>
 
 let scene, camera, renderer;
-let player, yacht, dock, water;
+let player, yacht;
 let keys = {};
-let started = false;
 
-function start(){
+// 🎵 MUSIC (life layer)
+const music = new Audio("https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c8a3c5c4.mp3");
+music.loop = true;
+music.volume = 0.35;
 
-document.getElementById("start").style.display = "none";
-
+// START WORLD
 scene = new THREE.Scene();
 scene.background = new THREE.Color(0x01020a);
 scene.fog = new THREE.FogExp2(0x01020a, 0.03);
@@ -88,24 +73,7 @@ player = new THREE.Mesh(
 player.position.y = 0.5;
 scene.add(player);
 
-// DOCK
-dock = new THREE.Mesh(
-  new THREE.BoxGeometry(60,1,15),
-  new THREE.MeshStandardMaterial({color:0x0a0a0a})
-);
-dock.position.set(0,-0.5,-15);
-scene.add(dock);
-
-// WATER
-water = new THREE.Mesh(
-  new THREE.PlaneGeometry(200,200),
-  new THREE.MeshStandardMaterial({color:0x020b1a})
-);
-water.rotation.x = -Math.PI/2;
-water.position.y = -1;
-scene.add(water);
-
-// YACHT ZONE
+// YACHT CLUB
 yacht = new THREE.Mesh(
   new THREE.BoxGeometry(12,2,12),
   new THREE.MeshStandardMaterial({color:0x111122})
@@ -113,66 +81,83 @@ yacht = new THREE.Mesh(
 yacht.position.set(0,1,-45);
 scene.add(yacht);
 
+// DOCK
+const dock = new THREE.Mesh(
+  new THREE.BoxGeometry(60,1,15),
+  new THREE.MeshStandardMaterial({color:0x0a0a0a})
+);
+dock.position.set(0,-0.5,-15);
+scene.add(dock);
+
+// WATER
+const water = new THREE.Mesh(
+  new THREE.PlaneGeometry(200,200),
+  new THREE.MeshStandardMaterial({color:0x020b1a})
+);
+water.rotation.x = -Math.PI/2;
+water.position.y = -1;
+scene.add(water);
+
+// 🌟 LIFE STARS
+const geo = new THREE.BufferGeometry();
+const arr = [];
+
+for(let i=0;i<1200;i++){
+  arr.push(
+    (Math.random()-0.5)*200,
+    Math.random()*80,
+    (Math.random()-0.5)*200
+  );
+}
+
+geo.setAttribute("position", new THREE.Float32BufferAttribute(arr,3));
+
+scene.add(new THREE.Points(
+  geo,
+  new THREE.PointsMaterial({color:0xffffff, size:0.4})
+));
+
 // INPUT
 document.addEventListener("keydown", e=>{
   keys[e.key.toLowerCase()] = true;
-
-  if(e.key.toLowerCase()==="e"){
-    interact();
-  }
 });
 
 document.addEventListener("keyup", e=>{
   keys[e.key.toLowerCase()] = false;
 });
 
-animate();
-
-started = true;
-
-}
-
-// FIXED INTERACTION (more forgiving)
-function interact(){
-
-const dist = player.position.distanceTo(yacht.position);
-
-if(dist < 10){
-  document.getElementById("ui").innerText = "YACHT CLUB ACTIVE — YOU'RE INSIDE THE ZONE";
-  document.getElementById("prompt").innerText = "INTERACTION SUCCESS";
-  document.getElementById("prompt").style.display = "block";
-}
-
-}
+// start music on click (browser rule)
+document.addEventListener("click", ()=> music.play());
 
 // LOOP
 function animate(){
-
 requestAnimationFrame(animate);
 
-// MOVEMENT (always active once started)
-if(started){
-  if(keys["w"]) player.position.z -= 0.12;
-  if(keys["s"]) player.position.z += 0.12;
-  if(keys["a"]) player.position.x -= 0.12;
-  if(keys["d"]) player.position.x += 0.12;
-}
+// MOVE PLAYER
+if(keys["w"]) player.position.z -= 0.12;
+if(keys["s"]) player.position.z += 0.12;
+if(keys["a"]) player.position.x -= 0.12;
+if(keys["d"]) player.position.x += 0.12;
 
 // CAMERA FOLLOW
 camera.position.x += (player.position.x - camera.position.x)*0.05;
-camera.position.z += (player.position.z + 7 - camera.position.z)*0.05;
+camera.position.z += (player.position.z + 6 - camera.position.z)*0.05;
 camera.lookAt(player.position);
 
 // WATER MOTION
 water.position.z = Math.sin(Date.now()*0.001)*0.5;
 
-// PROMPT RANGE (WIDER = FEELS LESS BROKEN)
-const dist = player.position.distanceTo(yacht.position);
+// 🌊 LIFE LAYER EFFECT (IMPORTANT)
+scene.fog.density = 0.03 + Math.sin(Date.now()*0.002)*0.005;
 
-if(dist < 12){
+// ZONE SYSTEM
+let dist = player.position.distanceTo(yacht.position);
+
+if(dist < 10){
+  document.getElementById("ui").innerText = "ZONE: YACHT CLUB ACTIVE";
   document.getElementById("prompt").style.display = "block";
-  document.getElementById("prompt").innerText = "PRESS E TO ENTER YACHT ZONE";
 } else {
+  document.getElementById("ui").innerText = "ZONE: ENTRY";
   document.getElementById("prompt").style.display = "none";
 }
 
@@ -180,6 +165,8 @@ if(dist < 12){
 renderer.render(scene,camera);
 
 }
+
+animate();
 
 </script>
 
