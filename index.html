@@ -11,17 +11,6 @@ canvas { display:block; }
 
 #ui { position:absolute; inset:0; pointer-events:none; }
 
-#home {
-  position:absolute;
-  inset:0;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  flex-direction:column;
-  background:black;
-  pointer-events:auto;
-}
-
 #hud {
   position:absolute;
   top:20px;
@@ -35,7 +24,6 @@ canvas { display:block; }
   background:black;
   opacity:0;
   transition:opacity 0.8s;
-  pointer-events:none;
 }
 
 #vip {
@@ -48,16 +36,7 @@ canvas { display:block; }
   pointer-events:auto;
 }
 
-button {
-  padding:12px 16px;
-  margin-top:10px;
-  background:black;
-  border:1px solid gold;
-  color:white;
-  cursor:pointer;
-}
-
-#boardUI {
+#prompt {
   position:absolute;
   bottom:100px;
   left:50%;
@@ -67,7 +46,15 @@ button {
   padding:12px 18px;
   display:none;
   pointer-events:auto;
-  text-align:center;
+}
+
+button {
+  padding:12px 16px;
+  margin-top:10px;
+  background:black;
+  border:1px solid gold;
+  color:white;
+  cursor:pointer;
 }
 </style>
 </head>
@@ -78,39 +65,23 @@ button {
 
 <div id="ui">
 
-<div id="home">
-  <h1>LAMBO CITY</h1>
-  <button onclick="start()">ENTER WORLD</button>
-</div>
-
 <div id="hud">
-  <div id="status">OFFLINE</div>
-  <div id="zone">ZONE: DOCK</div>
+  <div id="status">CABIN LOBBY</div>
+  <div id="zone">ZONE: LOBBY</div>
   <div id="radio">RADIO: AMBIENT</div>
 </div>
 
 <div id="fade"></div>
 
-<div id="boardUI">
-  <p>🛥 YACHT DOCK</p>
-  <button onclick="boardYacht()">BOARD YACHT</button>
+<div id="prompt">
+  <p>🚪 EXIT CABIN → DOCK AREA</p>
+  <button onclick="enterDock()">GO OUTSIDE</button>
 </div>
 
 <div id="vip">
-  <h1 style="color:gold;">LAMBO CITY YACHT CLUB</h1>
-  <p id="vipStatus" style="opacity:0.7;">CONNECTING...</p>
-
-  <div style="margin-top:30px;">
-    <button onclick="toggleMusic()">TOGGLE MUSIC</button>
-    <button onclick="simulateLive()">GO LIVE</button>
-  </div>
-
-  <div style="margin-top:40px; font-size:14px; opacity:0.8;">
-    <p>🎧 NOW PLAYING: <span id="track">OFFLINE</span></p>
-    <p>📡 STATUS: <span id="liveStatus">STANDBY</span></p>
-  </div>
-
-  <button onclick="exitVIP()" style="margin-top:40px;">RETURN</button>
+  <h1 style="color:gold;">YACHT CLUB VIP</h1>
+  <p>ACCESS GRANTED</p>
+  <button onclick="exitVIP()">RETURN</button>
 </div>
 
 </div>
@@ -121,94 +92,83 @@ button {
 
 let scene, camera, renderer;
 let player, yacht;
-let mode = "idle";
+let mode = "lobby";
 let keys = {};
+let nearDoor = false;
 let nearYacht = false;
-
-const tracks = ["LAMBO CITY RADIO","NIGHT DRIVE","AFTER HOURS","YACHT VIBES"];
-let musicOn = false;
 
 init();
 
 function init(){
 
   scene = new THREE.Scene();
-  scene.fog = new THREE.Fog(0x000000, 15, 140);
+  scene.fog = new THREE.Fog(0x000000, 10, 120);
 
   camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 1000);
-  camera.position.set(0,6,14);
+  camera.position.set(0,3,6);
 
   renderer = new THREE.WebGLRenderer({ canvas: document.getElementById("c"), antialias:true });
   renderer.setSize(innerWidth, innerHeight);
 
-  // stars
-  const geo = new THREE.BufferGeometry();
-  const pos = [];
-  for(let i=0;i<2000;i++){
-    pos.push((Math.random()-0.5)*200, Math.random()*80, (Math.random()-0.5)*200);
-  }
-  geo.setAttribute('position', new THREE.Float32BufferAttribute(pos,3));
-  scene.add(new THREE.Points(geo, new THREE.PointsMaterial({color:0xffffff,size:0.6})));
+  // LIGHT
+  scene.add(new THREE.AmbientLight(0x333355));
 
-  // ocean
-  const ocean = new THREE.Mesh(
-    new THREE.PlaneGeometry(600,600),
-    new THREE.MeshPhongMaterial({color:0x001a33})
-  );
-  ocean.rotation.x = -Math.PI/2;
-  scene.add(ocean);
-
-  scene.add(new THREE.AmbientLight(0x222244));
-  const light = new THREE.PointLight(0x00aaff,2,120);
-  light.position.set(0,15,0);
+  const light = new THREE.PointLight(0x00aaff,2,100);
+  light.position.set(0,10,0);
   scene.add(light);
 
-  // player
+  // PLAYER (inside cabin)
   player = new THREE.Mesh(
     new THREE.BoxGeometry(1,1,1),
     new THREE.MeshStandardMaterial({color:0xffffff})
   );
-  player.position.set(0,0.5,5);
+  player.position.set(0,0.5,0);
   scene.add(player);
 
-  // yacht
+  // CABIN (lobby walls feel)
+  const cabin = new THREE.Mesh(
+    new THREE.BoxGeometry(10,5,10),
+    new THREE.MeshStandardMaterial({color:0x111122, side:THREE.BackSide})
+  );
+  cabin.position.set(0,2.5,0);
+  scene.add(cabin);
+
+  // DOOR EXIT (towards dock)
+  const door = new THREE.Mesh(
+    new THREE.BoxGeometry(2,3,0.2),
+    new THREE.MeshStandardMaterial({color:0x444444})
+  );
+  door.position.set(0,1.5,-5);
+  scene.add(door);
+
+  // DOCK PLATFORM OUTSIDE
+  const dock = new THREE.Mesh(
+    new THREE.BoxGeometry(20,0.2,20),
+    new THREE.MeshStandardMaterial({color:0x222222})
+  );
+  dock.position.set(0,0,-20);
+  scene.add(dock);
+
+  // YACHT (far end)
   yacht = new THREE.Mesh(
     new THREE.BoxGeometry(4,1.5,10),
     new THREE.MeshStandardMaterial({color:0xffd700, emissive:0x553300})
   );
-  yacht.position.set(0,1,-30);
+  yacht.position.set(0,1,-35);
   scene.add(yacht);
 
-  const yLight = new THREE.PointLight(0xffaa00,3,60);
-  yLight.position.set(0,5,-30);
-  scene.add(yLight);
+  const yachtLight = new THREE.PointLight(0xffaa00,3,60);
+  yachtLight.position.set(0,5,-35);
+  scene.add(yachtLight);
 
-  // street
-  for(let i=0;i<20;i++){
-    let t = new THREE.Mesh(
-      new THREE.BoxGeometry(4,0.1,6),
-      new THREE.MeshStandardMaterial({color:0x111111})
-    );
-    t.position.set(0,0.05,-i*6);
-    scene.add(t);
+  // STAR FIELD
+  const geo = new THREE.BufferGeometry();
+  const pos = [];
+  for(let i=0;i<1500;i++){
+    pos.push((Math.random()-0.5)*200, Math.random()*80, (Math.random()-0.5)*200);
   }
-
-  // city
-  for(let i=-5;i<=5;i++){
-    for(let j=0;j<6;j++){
-      let h = Math.random()*10+8;
-      let b = new THREE.Mesh(
-        new THREE.BoxGeometry(3,h,3),
-        new THREE.MeshStandardMaterial({
-          color:0x0a0a1a,
-          emissive:0x0000ff,
-          emissiveIntensity:0.3
-        })
-      );
-      b.position.set(i*6,h/2,-40-j*10);
-      scene.add(b);
-    }
-  }
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(pos,3));
+  scene.add(new THREE.Points(geo,new THREE.PointsMaterial({color:0xffffff,size:0.6})));
 
   document.addEventListener("keydown",e=>keys[e.key.toLowerCase()]=true);
   document.addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
@@ -219,21 +179,41 @@ function init(){
 function animate(){
   requestAnimationFrame(animate);
 
-  if(mode==="play"){
+  if(keys["w"]) player.position.z -= 0.15;
+  if(keys["s"]) player.position.z += 0.15;
+  if(keys["a"]) player.position.x -= 0.15;
+  if(keys["d"]) player.position.x += 0.15;
 
-    if(keys["w"]) player.position.z -= 0.25;
-    if(keys["s"]) player.position.z += 0.25;
-    if(keys["a"]) player.position.x -= 0.25;
-    if(keys["d"]) player.position.x += 0.25;
+  camera.position.x += (player.position.x - camera.position.x)*0.08;
+  camera.position.z += (player.position.z + 6 - camera.position.z)*0.08;
+  camera.lookAt(player.position);
 
-    camera.position.x += (player.position.x - camera.position.x)*0.06;
-    camera.position.z += (player.position.z + 14 - camera.position.z)*0.06;
-    camera.lookAt(player.position);
-
-    checkYacht();
-  }
+  checkDoor();
+  checkYacht();
 
   renderer.render(scene,camera);
+}
+
+function checkDoor(){
+  const dist = Math.hypot(player.position.x, player.position.z + 5);
+
+  if(dist < 2.5){
+    nearDoor = true;
+    document.getElementById("prompt").style.display="block";
+  } else {
+    nearDoor = false;
+    document.getElementById("prompt").style.display="none";
+  }
+}
+
+function enterDock(){
+  document.getElementById("fade").style.opacity = 1;
+
+  setTimeout(()=>{
+    document.getElementById("status").innerText="DOCK AREA";
+    document.getElementById("radio").innerText="OUTDOOR AMBIENT";
+    document.getElementById("fade").style.opacity = 0;
+  },800);
 }
 
 function checkYacht(){
@@ -243,49 +223,12 @@ function checkYacht(){
   );
 
   if(dist < 5){
-    nearYacht = true;
-    document.getElementById("boardUI").style.display="block";
-  } else {
-    nearYacht = false;
-    document.getElementById("boardUI").style.display="none";
+    document.getElementById("vip").style.display="block";
   }
 }
 
-function start(){
-  document.getElementById("home").style.display="none";
-  document.getElementById("status").innerText="ONLINE";
-  mode="play";
-}
-
-function boardYacht(){
-  document.getElementById("fade").style.opacity = 1;
-
-  setTimeout(()=>{
-    document.getElementById("vip").style.display="block";
-    document.getElementById("radio").innerText="VIP MODE";
-  },800);
-}
-
 function exitVIP(){
-  document.getElementById("fade").style.opacity = 1;
-
-  setTimeout(()=>{
-    document.getElementById("vip").style.display="none";
-    document.getElementById("fade").style.opacity = 0;
-    document.getElementById("radio").innerText="AMBIENT";
-    mode="play";
-  },800);
-}
-
-function toggleMusic(){
-  musicOn = !musicOn;
-  document.getElementById("track").innerText =
-    musicOn ? tracks[Math.floor(Math.random()*tracks.length)] : "OFF";
-}
-
-function simulateLive(){
-  document.getElementById("liveStatus").innerText = "LIVE";
-  setTimeout(()=>document.getElementById("liveStatus").innerText="STANDBY",4000);
+  document.getElementById("vip").style.display="none";
 }
 
 </script>
