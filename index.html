@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LAMBO CITY — FINAL WORLD BUILD</title>
+<title>LAMBO CITY — VIP SYSTEM</title>
 
 <style>
 body { margin:0; overflow:hidden; background:black; font-family:Arial; }
@@ -33,7 +33,6 @@ canvas { display:block; }
   top:20px;
   right:20px;
   color:gold;
-  font-size:13px;
 }
 
 #hint {
@@ -47,19 +46,32 @@ canvas { display:block; }
   background:rgba(0,0,0,0.5);
   display:none;
 }
+
+#vip {
+  position:absolute;
+  bottom:140px;
+  left:50%;
+  transform:translateX(-50%);
+  color:#00ffff;
+  padding:8px 12px;
+  border:1px solid #00ffff;
+  background:rgba(0,0,0,0.5);
+  display:none;
+}
 </style>
 </head>
 
 <body>
 
 <div id="start">
-  <h1>LAMBO CITY YACHT CLUB</h1>
+  <h1>LAMBO CITY — VIP WORLD</h1>
   <button onclick="start()">ENTER WORLD</button>
 </div>
 
 <div id="ui">🏠 Cabin → 🌉 Dock → 🎤 Stage → 🚤 Yacht</div>
 <div id="zone">LOADING</div>
 <div id="hint">WALK FORWARD</div>
+<div id="vip">VIP REQUIRED FOR YACHT</div>
 
 <canvas id="c"></canvas>
 
@@ -67,6 +79,7 @@ canvas { display:block; }
 
 <script>
 
+// ================= WORLD =================
 let scene = new THREE.Scene();
 scene.background = new THREE.Color(0x000000);
 scene.fog = new THREE.FogExp2(0x000000, 0.01);
@@ -75,7 +88,7 @@ let camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 1000);
 let renderer = new THREE.WebGLRenderer({canvas:c});
 renderer.setSize(innerWidth, innerHeight);
 
-// LIGHTS
+// LIGHT
 scene.add(new THREE.AmbientLight(0xffffff, 1.2));
 let light = new THREE.PointLight(0x00aaff, 2);
 light.position.set(0,5,5);
@@ -89,7 +102,17 @@ let player = new THREE.Mesh(
 player.position.set(0,0.5,10);
 scene.add(player);
 
-// ================= WORLD STRUCTURE =================
+// ================= VIP STATE =================
+let hasVIP = false;
+
+// simulate boarding pass pickup (auto unlock for now near stage)
+function grantVIP(){
+  hasVIP = true;
+  document.getElementById("vip").innerText = "VIP ACCESS GRANTED";
+  document.getElementById("vip").style.color = "#00ff88";
+}
+
+// ================= STRUCTURE =================
 
 // DOCK
 let dock = new THREE.Mesh(
@@ -99,7 +122,7 @@ let dock = new THREE.Mesh(
 dock.position.set(0,-0.5,-140);
 scene.add(dock);
 
-// CABIN (LEFT EDGE HOME)
+// CABIN
 let cabin = new THREE.Mesh(
   new THREE.BoxGeometry(10,6,10),
   new THREE.MeshStandardMaterial({color:0x111111})
@@ -107,7 +130,7 @@ let cabin = new THREE.Mesh(
 cabin.position.set(-35,3,20);
 scene.add(cabin);
 
-// WINDOW VIEW FRAME
+// WINDOW
 let windowFrame = new THREE.Mesh(
   new THREE.BoxGeometry(6,2,1),
   new THREE.MeshStandardMaterial({color:0x223344})
@@ -115,7 +138,7 @@ let windowFrame = new THREE.Mesh(
 windowFrame.position.set(-35,4,15);
 scene.add(windowFrame);
 
-// STAGE (LEFT SIDE MID DOCK)
+// STAGE (LEFT SIDE)
 let stage = new THREE.Mesh(
   new THREE.BoxGeometry(20,2,14),
   new THREE.MeshStandardMaterial({color:0x6600aa})
@@ -123,7 +146,7 @@ let stage = new THREE.Mesh(
 stage.position.set(-30,1,-90);
 scene.add(stage);
 
-// YACHT (END GOAL)
+// YACHT (VIP ZONE)
 let yacht = new THREE.Mesh(
   new THREE.BoxGeometry(45,6,20),
   new THREE.MeshStandardMaterial({color:0x222244})
@@ -142,26 +165,22 @@ scene.add(water);
 
 // STARS
 const starGeo = new THREE.BufferGeometry();
-let starArr = [];
+let arr=[];
 for(let i=0;i<3000;i++){
-  starArr.push(
-    (Math.random()-0.5)*800,
-    Math.random()*300,
-    (Math.random()-0.5)*800
-  );
+  arr.push((Math.random()-0.5)*800,Math.random()*300,(Math.random()-0.5)*800);
 }
-starGeo.setAttribute("position", new THREE.Float32BufferAttribute(starArr,3));
+starGeo.setAttribute("position",new THREE.Float32BufferAttribute(arr,3));
 
 let stars = new THREE.Points(
   starGeo,
-  new THREE.PointsMaterial({color:0xffffff, size:0.8})
+  new THREE.PointsMaterial({color:0xffffff,size:0.8})
 );
 scene.add(stars);
 
-// CROWD (LIFE LAYER)
-let crowd = [];
+// CROWD
+let crowd=[];
 for(let i=0;i<25;i++){
-  let p = new THREE.Mesh(
+  let p=new THREE.Mesh(
     new THREE.BoxGeometry(0.6,1.2,0.6),
     new THREE.MeshStandardMaterial({color:0xffffff})
   );
@@ -171,24 +190,21 @@ for(let i=0;i<25;i++){
 }
 
 // ================= INPUT =================
-let keys = {};
-let inWorld = false;
-let transition = 0;
+let keys={},inWorld=false,transition=0;
 
 document.addEventListener("keydown",e=>{
-  keys[e.key.toLowerCase()] = true;
+  keys[e.key.toLowerCase()]=true;
 });
-
 document.addEventListener("keyup",e=>{
-  keys[e.key.toLowerCase()] = false;
+  keys[e.key.toLowerCase()]=false;
 });
 
 function start(){
   document.getElementById("start").style.display="none";
-  inWorld = true;
+  inWorld=true;
 }
 
-// ================= TRANSITION ENGINE =================
+// ================= TRANSITION =================
 function updateTransition(){
 
 let dist = player.position.distanceTo(cabin.position);
@@ -197,64 +213,64 @@ let target = dist < 10 ? 0 : 1;
 transition += (target - transition) * 0.03;
 
 if(transition < 0.3){
-  document.getElementById("zone").innerText = "🏠 CABIN CONTROL HUB";
+  document.getElementById("zone").innerText="🏠 CABIN HUB";
 }
 else if(transition < 0.7){
-  document.getElementById("zone").innerText = "🌉 WALKING DOCK";
+  document.getElementById("zone").innerText="🌉 DOCK WORLD";
 }
 else{
-  document.getElementById("zone").innerText = "🚤 YACHT CLUB WORLD";
+  document.getElementById("zone").innerText="🚤 APPROACHING YACHT";
 }
 
 }
 
-// ================= ANIMATE =================
+// ================= LOOP =================
 function animate(){
 requestAnimationFrame(animate);
 
 if(!inWorld) return;
 
-// MOVEMENT
-if(keys["w"]) player.position.z -= 0.15;
-if(keys["s"]) player.position.z += 0.15;
-if(keys["a"]) player.position.x -= 0.15;
-if(keys["d"]) player.position.x += 0.15;
+// MOVE
+if(keys["w"]) player.position.z-=0.15;
+if(keys["s"]) player.position.z+=0.15;
+if(keys["a"]) player.position.x-=0.15;
+if(keys["d"]) player.position.x+=0.15;
+
+// VIP TRIGGER ZONE (simple gameplay hook)
+if(player.position.distanceTo(stage.position)<6 && !hasVIP){
+  document.getElementById("vip").style.display="block";
+  grantVIP(); // auto unlock for now (we can change to real pass later)
+} else {
+  document.getElementById("vip").style.display="none";
+}
 
 // TRANSITION
 updateTransition();
 
-// ================= CINEMATIC CAMERA (FIXED HEIGHT + HYBRID FEEL) =================
+// ================= CINEMATIC CAMERA =================
 let targetX = player.position.x;
 let targetZ = player.position.z + 10;
 let targetY = 3 + transition * 3;
 
-camera.position.x += (targetX - camera.position.x) * (0.04 + transition * 0.05);
-camera.position.y += (targetY - camera.position.y) * 0.04;
-camera.position.z += (targetZ - camera.position.z) * (0.04 + transition * 0.05);
+camera.position.x += (targetX-camera.position.x)*(0.04+transition*0.05);
+camera.position.y += (targetY-camera.position.y)*0.04;
+camera.position.z += (targetZ-camera.position.z)*(0.04+transition*0.05);
 
-camera.lookAt(
-  player.position.x,
-  player.position.y + 1.2,
-  player.position.z
-);
+camera.lookAt(player.position.x,player.position.y+1.2,player.position.z);
 
-// ================= LIFE SYSTEM =================
-stars.rotation.y += 0.0005;
+// LIFE
+stars.rotation.y+=0.0005;
 
 crowd.forEach(p=>{
-  p.position.x += Math.sin(Date.now()*0.001 + p.position.z) * 0.01;
-  p.position.z += Math.cos(Date.now()*0.001 + p.position.x) * 0.01;
+  p.position.x+=Math.sin(Date.now()*0.001)*0.01;
 });
 
-// stage energy
-stage.position.y = 1 + Math.sin(Date.now()*0.002) * 0.3;
+// WATER
+water.position.z=Math.sin(Date.now()*0.001)*1;
 
-// water motion
-water.position.z = Math.sin(Date.now()*0.001) * 1;
-
-// UI hint
-document.getElementById("hint").style.display =
-player.position.distanceTo(cabin.position) < 10 ? "block" : "none";
+// UI
+document.getElementById("hint").style.display=
+player.position.distanceTo(cabin.position)<10?"block":"none";
 
 renderer.render(scene,camera);
 }
