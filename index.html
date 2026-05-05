@@ -2,27 +2,18 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>LAMBO CITY PLATFORM</title>
-
+<title>LAMBO CITY — LIVE PLATFORM</title>
 <style>
 body { margin:0; overflow:hidden; background:black; font-family:Arial; }
 canvas { display:block; }
 
-.screen {
+#hud {
   position:absolute;
-  inset:0;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
+  top:20px;
+  left:20px;
   color:white;
-  background:black;
-  z-index:999;
-  text-align:center;
+  font-size:13px;
 }
-
-#hud { position:absolute; top:20px; left:20px; color:white; font-size:13px; }
 
 #prompt {
   position:absolute;
@@ -31,160 +22,116 @@ canvas { display:block; }
   transform:translateX(-50%);
   padding:10px;
   border:1px solid gold;
+  color:white;
   display:none;
 }
 
-#menu {
+#login {
   position:absolute;
-  bottom:20px;
-  left:50%;
-  transform:translateX(-50%);
-  display:none;
-  gap:10px;
-}
-
-.btn {
-  padding:10px 15px;
-  border:1px solid gold;
-  color:white;
-  cursor:pointer;
-}
-
-input {
-  padding:10px;
-  margin-top:10px;
+  inset:0;
   background:black;
-  border:1px solid gold;
   color:white;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-direction:column;
+  z-index:999;
 }
 </style>
 </head>
 
 <body>
 
-<div id="login" class="screen">
-LAMBO CITY<br>
-<input id="nameInput" placeholder="ENTER NAME"/>
-<div class="btn" onclick="enter()">ENTER</div>
+<div id="login">
+<h2>LAMBO CITY</h2>
+<button onclick="login()">ENTER WORLD</button>
 </div>
 
-<div id="vip" class="screen" style="display:none;">
-WELCOME TO VIP<br><span id="userName"></span>
-</div>
-
-<div id="hud">ZONE: CABIN</div>
+<div id="hud">ZONE: LOADING...</div>
 <div id="prompt">PRESS E</div>
-
-<div id="menu">
-  <div class="btn" onclick="alert('DJ SET STARTED')">JOIN DJ</div>
-  <div class="btn" onclick="alert('DROP OPENED')">OPEN DROP</div>
-  <div class="btn" onclick="alert('ENTERING CLUB')">ENTER CLUB</div>
-</div>
 
 <canvas id="c"></canvas>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
-<script>
+<script type="module">
 
-// LOGIN
-function enter(){
-  let name = document.getElementById("nameInput").value || "GUEST";
-  localStorage.setItem("lamboUser", name);
-  document.getElementById("login").style.display="none";
-  start();
+// ================= FIREBASE =================
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+// 🔑 YOUR CONFIG (YOU ALREADY HAVE THIS)
+const firebaseConfig = {
+  apiKey: "AIzaSyB-HyCPaB0gR9-VMGovh-VByajOkrEyGTs",
+  authDomain: "lambocityrecords-2fee2.firebaseapp.com",
+  projectId: "lambocityrecords-2fee2",
+  storageBucket: "lambocityrecords-2fee2.firebaseapp.com",
+  messagingSenderId: "78498268542",
+  appId: "1:78498268542:web:9b60b8f87488af40c29f2f"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+let userId;
+
+// ================= LOGIN =================
+window.login = async function(){
+  const user = await signInAnonymously(auth);
+  userId = user.user.uid;
+
+  document.getElementById("login").style.display = "none";
+  startWorld();
 }
 
-// AUTO LOGIN
-let saved = localStorage.getItem("lamboUser");
-if(saved){
-  document.getElementById("login").style.display="none";
-  start();
-}
-
-// ===== MAIN =====
-function start(){
-
-let user = localStorage.getItem("lamboUser");
-document.getElementById("userName").innerText = user;
+// ================= WORLD =================
+function startWorld(){
 
 let scene = new THREE.Scene();
-scene.fog = new THREE.FogExp2(0x02030a, 0.02);
-
 let camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 1000);
 camera.position.set(0,2.5,5);
 
-let renderer = new THREE.WebGLRenderer({canvas:c, antialias:true});
+let renderer = new THREE.WebGLRenderer({canvas:c});
 renderer.setSize(innerWidth, innerHeight);
 
-let keys={}, started=true, hasPass=false, doorOpen=false, boarding=false, inVIP=false;
+let keys = {};
+let player, yacht, hasPass=false, inVIP=false;
 
 // LIGHT
 scene.add(new THREE.AmbientLight(0x1a1a2a,1.2));
-let clubLight = new THREE.PointLight(0xff00ff,0);
-clubLight.position.set(0,5,-22);
-scene.add(clubLight);
 
 // PLAYER
-let player = new THREE.Mesh(new THREE.BoxGeometry(1,1,1), new THREE.MeshStandardMaterial({color:0xffffff}));
+player = new THREE.Mesh(
+  new THREE.BoxGeometry(1,1,1),
+  new THREE.MeshStandardMaterial({color:0xffffff})
+);
 player.position.y = 0.5;
 scene.add(player);
 
-// FLOOR
-let floor = new THREE.Mesh(new THREE.PlaneGeometry(300,300), new THREE.MeshStandardMaterial({color:0x111111}));
-floor.rotation.x = -Math.PI/2;
-scene.add(floor);
-
-// DOOR
-let door = new THREE.Mesh(new THREE.BoxGeometry(2,3,0.2), new THREE.MeshStandardMaterial({color:0x333333}));
-door.position.set(0,1.5,-5);
-scene.add(door);
-
-// DOCK
-let dock = new THREE.Mesh(new THREE.BoxGeometry(20,0.3,20), new THREE.MeshStandardMaterial({color:0x222222}));
-dock.position.z = -15;
-scene.add(dock);
-
 // YACHT
-let yacht = new THREE.Mesh(new THREE.BoxGeometry(2,1,5), new THREE.MeshStandardMaterial({color:0xffd700}));
-yacht.position.set(0,0.5,-22);
+yacht = new THREE.Mesh(
+  new THREE.BoxGeometry(2,1,5),
+  new THREE.MeshStandardMaterial({color:0xffd700})
+);
+yacht.position.set(0,0.5,-15);
 scene.add(yacht);
 
-// STARS
-let geo = new THREE.BufferGeometry(), arr=[];
-for(let i=0;i<1500;i++){
-  arr.push((Math.random()-0.5)*300, Math.random()*150, (Math.random()-0.5)*300);
-}
-geo.setAttribute("position", new THREE.Float32BufferAttribute(arr,3));
-scene.add(new THREE.Points(geo, new THREE.PointsMaterial({color:0xffffff, size:0.7})));
+// FLOOR
+let floor = new THREE.Mesh(
+  new THREE.PlaneGeometry(200,200),
+  new THREE.MeshStandardMaterial({color:0x111111})
+);
+floor.rotation.x = -Math.PI/2;
+scene.add(floor);
 
 // INPUT
 document.addEventListener("keydown",e=>{
   keys[e.key.toLowerCase()] = true;
 
   if(e.key.toLowerCase()==="e"){
-
-    let d1 = player.position.distanceTo(door.position);
-    let d2 = player.position.distanceTo(yacht.position);
-
-    if(!hasPass){ hasPass=true; }
-
-    if(hasPass && d1<3 && !doorOpen){ doorOpen=true; }
-
-    if(doorOpen && d2<3 && !boarding){
-      boarding=true;
-      prompt.style.display="block";
-      prompt.innerHTML="VERIFYING...";
-
-      setTimeout(()=>{
-        prompt.innerHTML="ACCESS GRANTED";
-        setTimeout(()=>{
-          inVIP=true;
-          vip.style.display="flex";
-          menu.style.display="flex";
-        },1000);
-      },1000);
-    }
+    interact();
   }
 });
 
@@ -192,33 +139,65 @@ document.addEventListener("keyup",e=>{
   keys[e.key.toLowerCase()] = false;
 });
 
-// LOOP
+// ================= INTERACTION =================
+async function interact(){
+
+  let dist = player.position.distanceTo(yacht.position);
+
+  // GET PASS (SAVE TO FIREBASE)
+  if(!hasPass){
+    hasPass = true;
+
+    await setDoc(doc(db,"users",userId),{
+      pass:true,
+      created:Date.now()
+    });
+
+    hud.innerText = "PASS SAVED — GO TO YACHT";
+  }
+
+  // CHECK PASS + BOARD
+  if(hasPass && dist < 3){
+
+    const ref = doc(db,"users",userId);
+    const snap = await getDoc(ref);
+
+    if(snap.exists() && snap.data().pass){
+      await setDoc(ref,{ boarded:true },{ merge:true });
+
+      inVIP = true;
+      hud.innerText = "WELCOME TO VIP";
+      document.getElementById("prompt").style.display = "none";
+    }
+  }
+}
+
+// ================= LOOP =================
 function animate(){
   requestAnimationFrame(animate);
 
-  if(!inVIP){
-    if(keys["w"]) player.position.z -= 0.08;
-    if(keys["s"]) player.position.z += 0.08;
-    if(keys["a"]) player.position.x -= 0.08;
-    if(keys["d"]) player.position.x += 0.08;
+  if(keys["w"]) player.position.z -= 0.08;
+  if(keys["s"]) player.position.z += 0.08;
+  if(keys["a"]) player.position.x -= 0.08;
+  if(keys["d"]) player.position.x += 0.08;
 
-    camera.position.x += (player.position.x - camera.position.x)*0.05;
-    camera.position.z += (player.position.z + 5 - camera.position.z)*0.05;
-    camera.lookAt(player.position);
+  camera.position.x += (player.position.x - camera.position.x)*0.05;
+  camera.position.z += (player.position.z + 5 - camera.position.z)*0.05;
+  camera.lookAt(player.position);
 
-    if(doorOpen && door.rotation.y > -Math.PI/2){
-      door.rotation.y -= 0.05;
-    }
-  }
+  let dist = player.position.distanceTo(yacht.position);
 
-  if(inVIP){
-    clubLight.intensity = 4 + Math.sin(Date.now()*0.02)*2;
+  if(dist < 3 && hasPass && !inVIP){
+    document.getElementById("prompt").style.display = "block";
+  } else {
+    document.getElementById("prompt").style.display = "none";
   }
 
   renderer.render(scene,camera);
 }
 
 animate();
+
 }
 
 </script>
