@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LAMBO CITY — TRANSITION ENGINE</title>
+<title>LAMBO CITY — FINAL WORLD BUILD</title>
 
 <style>
 body { margin:0; overflow:hidden; background:black; font-family:Arial; }
@@ -28,9 +28,17 @@ canvas { display:block; }
   font-size:13px;
 }
 
+#zone {
+  position:absolute;
+  top:20px;
+  right:20px;
+  color:gold;
+  font-size:13px;
+}
+
 #hint {
   position:absolute;
-  bottom:80px;
+  bottom:70px;
   left:50%;
   transform:translateX(-50%);
   color:white;
@@ -38,13 +46,6 @@ canvas { display:block; }
   border:1px solid gold;
   background:rgba(0,0,0,0.5);
   display:none;
-}
-
-#zone {
-  position:absolute;
-  top:20px;
-  right:20px;
-  color:gold;
 }
 </style>
 </head>
@@ -57,7 +58,7 @@ canvas { display:block; }
 </div>
 
 <div id="ui">🏠 Cabin → 🌉 Dock → 🎤 Stage → 🚤 Yacht</div>
-<div id="zone">ZONE: LOADING</div>
+<div id="zone">LOADING</div>
 <div id="hint">WALK FORWARD</div>
 
 <canvas id="c"></canvas>
@@ -88,54 +89,86 @@ let player = new THREE.Mesh(
 player.position.set(0,0.5,10);
 scene.add(player);
 
-// ================= DOCK =================
+// ================= WORLD STRUCTURE =================
+
+// DOCK
 let dock = new THREE.Mesh(
-  new THREE.BoxGeometry(200,1,300),
+  new THREE.BoxGeometry(220,1,320),
   new THREE.MeshStandardMaterial({color:0x050505})
 );
-dock.position.set(0,-0.5,-120);
+dock.position.set(0,-0.5,-140);
 scene.add(dock);
 
-// ================= CABIN (LEFT EDGE PROPERTY) =================
+// CABIN (LEFT EDGE HOME)
 let cabin = new THREE.Mesh(
   new THREE.BoxGeometry(10,6,10),
   new THREE.MeshStandardMaterial({color:0x111111})
 );
-cabin.position.set(-30,3,20);
+cabin.position.set(-35,3,20);
 scene.add(cabin);
 
-// WINDOW FRAME (IMPORTANT VISUAL)
-let windowView = new THREE.Mesh(
+// WINDOW VIEW FRAME
+let windowFrame = new THREE.Mesh(
   new THREE.BoxGeometry(6,2,1),
   new THREE.MeshStandardMaterial({color:0x223344})
 );
-windowView.position.set(-30,4,15);
-scene.add(windowView);
+windowFrame.position.set(-35,4,15);
+scene.add(windowFrame);
 
-// ================= STAGE (LEFT MID DOCK) =================
+// STAGE (LEFT SIDE MID DOCK)
 let stage = new THREE.Mesh(
-  new THREE.BoxGeometry(18,2,12),
+  new THREE.BoxGeometry(20,2,14),
   new THREE.MeshStandardMaterial({color:0x6600aa})
 );
-stage.position.set(-25,1,-80);
+stage.position.set(-30,1,-90);
 scene.add(stage);
 
-// ================= YACHT (END FOCUS) =================
+// YACHT (END GOAL)
 let yacht = new THREE.Mesh(
-  new THREE.BoxGeometry(40,6,18),
+  new THREE.BoxGeometry(45,6,20),
   new THREE.MeshStandardMaterial({color:0x222244})
 );
-yacht.position.set(0,3,-180);
+yacht.position.set(0,3,-200);
 scene.add(yacht);
 
-// WATER (VISUAL DEPTH)
+// WATER
 let water = new THREE.Mesh(
-  new THREE.PlaneGeometry(500,500),
+  new THREE.PlaneGeometry(600,600),
   new THREE.MeshStandardMaterial({color:0x020b1a})
 );
 water.rotation.x = -Math.PI/2;
 water.position.y = -1;
 scene.add(water);
+
+// STARS
+const starGeo = new THREE.BufferGeometry();
+let starArr = [];
+for(let i=0;i<3000;i++){
+  starArr.push(
+    (Math.random()-0.5)*800,
+    Math.random()*300,
+    (Math.random()-0.5)*800
+  );
+}
+starGeo.setAttribute("position", new THREE.Float32BufferAttribute(starArr,3));
+
+let stars = new THREE.Points(
+  starGeo,
+  new THREE.PointsMaterial({color:0xffffff, size:0.8})
+);
+scene.add(stars);
+
+// CROWD (LIFE LAYER)
+let crowd = [];
+for(let i=0;i<25;i++){
+  let p = new THREE.Mesh(
+    new THREE.BoxGeometry(0.6,1.2,0.6),
+    new THREE.MeshStandardMaterial({color:0xffffff})
+  );
+  p.position.set((Math.random()-0.5)*40,0.6,-80+(Math.random()-0.5)*60);
+  scene.add(p);
+  crowd.push(p);
+}
 
 // ================= INPUT =================
 let keys = {};
@@ -159,49 +192,69 @@ function start(){
 function updateTransition(){
 
 let dist = player.position.distanceTo(cabin.position);
+let target = dist < 10 ? 0 : 1;
 
-// start expansion when leaving cabin zone
-if(dist < 8){
-  transition = Math.max(transition - 0.02, 0);
-  document.getElementById("zone").innerText = "CABIN (CONTROL HUB)";
-} else {
-  transition = Math.min(transition + 0.02, 1);
+transition += (target - transition) * 0.03;
+
+if(transition < 0.3){
+  document.getElementById("zone").innerText = "🏠 CABIN CONTROL HUB";
+}
+else if(transition < 0.7){
+  document.getElementById("zone").innerText = "🌉 WALKING DOCK";
+}
+else{
+  document.getElementById("zone").innerText = "🚤 YACHT CLUB WORLD";
 }
 
 }
 
-// ================= LOOP =================
+// ================= ANIMATE =================
 function animate(){
 requestAnimationFrame(animate);
 
 if(!inWorld) return;
 
-// movement
+// MOVEMENT
 if(keys["w"]) player.position.z -= 0.15;
 if(keys["s"]) player.position.z += 0.15;
 if(keys["a"]) player.position.x -= 0.15;
 if(keys["d"]) player.position.x += 0.15;
 
-// transition engine
+// TRANSITION
 updateTransition();
 
-// CAMERA HYBRID SYSTEM
-camera.position.x += (player.position.x - camera.position.x) * (0.05 + transition*0.05);
-camera.position.z += (player.position.z + 6 - camera.position.z) * (0.05 + transition*0.05);
-camera.lookAt(player.position);
+// ================= CINEMATIC CAMERA (FIXED HEIGHT + HYBRID FEEL) =================
+let targetX = player.position.x;
+let targetZ = player.position.z + 10;
+let targetY = 3 + transition * 3;
 
-// VISUAL EXPANSION EFFECT (KEY PART)
-scene.fog.density = 0.015 - transition*0.008;
+camera.position.x += (targetX - camera.position.x) * (0.04 + transition * 0.05);
+camera.position.y += (targetY - camera.position.y) * 0.04;
+camera.position.z += (targetZ - camera.position.z) * (0.04 + transition * 0.05);
 
-// hint
-document.getElementById("hint").style.display =
-player.position.distanceTo(cabin.position) < 8 ? "block" : "none";
+camera.lookAt(
+  player.position.x,
+  player.position.y + 1.2,
+  player.position.z
+);
 
-// yacht always visible
-yacht.rotation.y += 0.001;
+// ================= LIFE SYSTEM =================
+stars.rotation.y += 0.0005;
+
+crowd.forEach(p=>{
+  p.position.x += Math.sin(Date.now()*0.001 + p.position.z) * 0.01;
+  p.position.z += Math.cos(Date.now()*0.001 + p.position.x) * 0.01;
+});
 
 // stage energy
-stage.position.y = 1 + Math.sin(Date.now()*0.002)*0.2;
+stage.position.y = 1 + Math.sin(Date.now()*0.002) * 0.3;
+
+// water motion
+water.position.z = Math.sin(Date.now()*0.001) * 1;
+
+// UI hint
+document.getElementById("hint").style.display =
+player.position.distanceTo(cabin.position) < 10 ? "block" : "none";
 
 renderer.render(scene,camera);
 }
