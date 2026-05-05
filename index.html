@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LAMBO CITY — FINAL YACHT CLUB</title>
+<title>LAMBO CITY — LIVE</title>
 
 <style>
 body { margin:0; overflow:hidden; background:black; font-family:Arial; }
@@ -40,6 +40,10 @@ canvas { display:block; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
 <script>
+
+// 🔗 ALREADY SET (NO TOUCH NEEDED)
+const STREAM_LINK = "https://lambocityrecords.com";
+const MERCH_LINK = "https://lambocityrecords.com";
 
 let scene = new THREE.Scene();
 scene.background = new THREE.Color(0x05060a);
@@ -110,7 +114,7 @@ yacht.position.set(0,2,-60);
 yacht.visible = false;
 scene.add(yacht);
 
-// ⭐ STARS (RESTORED)
+// ⭐ STARS
 const starGeo = new THREE.BufferGeometry();
 const starArr = [];
 
@@ -164,7 +168,7 @@ merch.position.set(-6,1.5,-60);
 merch.visible = false;
 scene.add(merch);
 
-// 🧍 CROWD
+// CROWD
 let crowd = [];
 for(let i=0;i<25;i++){
   let p = new THREE.Mesh(
@@ -177,7 +181,7 @@ for(let i=0;i<25;i++){
   crowd.push(p);
 }
 
-// 💡 LIGHTS
+// LIGHTS
 let lights = [];
 for(let i=0;i<6;i++){
   let l = new THREE.PointLight(0x00aaff, 2, 30);
@@ -204,7 +208,6 @@ document.addEventListener("click", ()=> track.play());
 // INTERACT
 function interact(){
 
-// ENTER DOCK
 if(!inDock && player.position.distanceTo(door.position) < 3){
 
   inDock = true;
@@ -239,17 +242,16 @@ if(!inDock && player.position.distanceTo(door.position) < 3){
 if(player.position.distanceTo(radio.position) < 3){
   track.currentTime = 0;
   track.play();
-  document.getElementById("ui").innerText = "RADIO PLAYING";
 }
 
-// SCREEN
+// SCREEN → YOUR SITE
 if(player.position.distanceTo(screen.position) < 4){
-  document.getElementById("ui").innerText = "SCREEN (CONNECT YOUR STREAM)";
+  window.open(STREAM_LINK, "_blank");
 }
 
-// MERCH
+// MERCH → YOUR SITE
 if(player.position.distanceTo(merch.position) < 3){
-  document.getElementById("ui").innerText = "MERCH STORE";
+  window.open(MERCH_LINK, "_blank");
 }
 
 }
@@ -258,31 +260,25 @@ if(player.position.distanceTo(merch.position) < 3){
 function animate(){
 requestAnimationFrame(animate);
 
-// MOVE
 if(keys["w"]) player.position.z -= 0.1;
 if(keys["s"]) player.position.z += 0.1;
 if(keys["a"]) player.position.x -= 0.1;
 if(keys["d"]) player.position.x += 0.1;
 
-// CAMERA
 camera.position.x += (player.position.x - camera.position.x)*0.05;
 camera.position.z += (player.position.z + 5 - camera.position.z)*0.05;
 camera.lookAt(player.position);
 
-// CROWD ANIMATION
 crowd.forEach(p=>{
   p.position.y = 0.5 + Math.sin(Date.now()*0.005)*0.2;
 });
 
-// LIGHT ANIMATION
 lights.forEach((l,i)=>{
   l.intensity = 2 + Math.sin(Date.now()*0.003 + i)*1.5;
 });
 
-// STARS MOVE
 stars.rotation.y += 0.0005;
 
-// PROMPT
 let near = (
   player.position.distanceTo(door.position) < 3 ||
   player.position.distanceTo(radio.position) < 3 ||
