@@ -6,17 +6,17 @@
 <title>LAMBO CITY</title>
 
 <style>
-body { margin:0; overflow:hidden; background:black; font-family:Arial; color:white; }
+body { margin:0; overflow:hidden; background:black; font-family:Arial; }
 canvas { display:block; }
-
-#ui { position:absolute; inset:0; pointer-events:none; }
 
 #hud {
   position:absolute;
   top:20px;
   left:20px;
+  color:white;
   font-size:13px;
   opacity:0.9;
+  text-shadow:0 0 10px black;
 }
 
 #prompt {
@@ -24,11 +24,11 @@ canvas { display:block; }
   bottom:90px;
   left:50%;
   transform:translateX(-50%);
-  background:rgba(0,0,0,0.8);
+  background:rgba(0,0,0,0.7);
   border:1px solid gold;
   padding:12px 16px;
   display:none;
-  pointer-events:auto;
+  color:white;
 }
 
 #fade {
@@ -36,15 +36,14 @@ canvas { display:block; }
   inset:0;
   background:black;
   opacity:0;
-  transition:opacity 0.8s;
+  transition:opacity 1.2s;
 }
 
 button {
-  padding:12px 16px;
-  margin-top:10px;
   background:black;
   border:1px solid gold;
   color:white;
+  padding:10px 14px;
   cursor:pointer;
 }
 </style>
@@ -54,22 +53,17 @@ button {
 
 <canvas id="c"></canvas>
 
-<div id="ui">
-
 <div id="hud">
-  <div id="status">CABIN LOBBY</div>
-  <div id="zone">ZONE: BOARDING CABIN</div>
-  <div id="radio">RADIO: AMBIENT</div>
+  🌍 LAMBO CITY<br>
+  <span id="zone">CABIN LOBBY</span>
 </div>
 
 <div id="prompt">
-  <p>🚪 EXIT TO DOCK</p>
-  <button onclick="enterDock()">GO OUTSIDE</button>
+  🚪 EXIT TO DOCK<br>
+  <button onclick="enterDock()">ENTER TRANSITION</button>
 </div>
 
 <div id="fade"></div>
-
-</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
@@ -78,25 +72,27 @@ button {
 let scene, camera, renderer;
 let player, yacht;
 let keys = {};
+let time = 0;
 
 init();
 
 function init(){
 
   scene = new THREE.Scene();
-  scene.fog = new THREE.Fog(0x050510, 5, 100);
+  scene.fog = new THREE.FogExp2(0x03030a, 0.03);
 
   camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 1000);
   camera.position.set(0,2.5,5);
 
-  renderer = new THREE.WebGLRenderer({ canvas: document.getElementById("c"), antialias:true });
+  renderer = new THREE.WebGLRenderer({ canvas:document.getElementById("c"), antialias:true });
   renderer.setSize(innerWidth, innerHeight);
 
-  // LIGHTING
-  scene.add(new THREE.AmbientLight(0x2a2a40));
-  const light = new THREE.PointLight(0x00aaff, 2, 100);
-  light.position.set(0,8,0);
-  scene.add(light);
+  // 🌑 cinematic lighting (low-key contrast)
+  scene.add(new THREE.AmbientLight(0x151522, 1));
+
+  const keyLight = new THREE.PointLight(0x00aaff, 2.5, 120);
+  keyLight.position.set(0,8,0);
+  scene.add(keyLight);
 
   // PLAYER
   player = new THREE.Mesh(
@@ -106,56 +102,57 @@ function init(){
   player.position.set(0,0.5,0);
   scene.add(player);
 
-  // 🟦 CABIN ROOM (NOW WITH WINDOW OPENING)
+  // 🟦 CABIN (dark cinematic interior)
   const cabin = new THREE.Mesh(
     new THREE.BoxGeometry(14,6,14),
     new THREE.MeshStandardMaterial({
-      color:0x0b0b1a,
+      color:0x060612,
       side:THREE.BackSide
     })
   );
   cabin.position.y = 3;
   scene.add(cabin);
 
-  // 🪟 WINDOW VIEW FRAME (this is the upgrade)
+  // 🪟 WINDOW FRAME (film framing)
   const windowFrame = new THREE.Mesh(
     new THREE.BoxGeometry(8,3,0.2),
-    new THREE.MeshStandardMaterial({color:0x222233})
+    new THREE.MeshStandardMaterial({color:0x111122})
   );
   windowFrame.position.set(0,3,-6.8);
   scene.add(windowFrame);
 
-  // DOCK PLATFORM OUTSIDE WINDOW
-  const dock = new THREE.Mesh(
-    new THREE.BoxGeometry(40,0.2,40),
-    new THREE.MeshStandardMaterial({color:0x111111})
-  );
-  dock.position.set(0,0,-30);
-  scene.add(dock);
+  // 🌊 OCEAN PLANE (animated illusion)
+  const oceanGeo = new THREE.PlaneGeometry(80,80,30,30);
+  const oceanMat = new THREE.MeshStandardMaterial({color:0x06121f});
+  const ocean = new THREE.Mesh(oceanGeo,oceanMat);
+  ocean.rotation.x = -Math.PI/2;
+  ocean.position.z = -35;
+  scene.add(ocean);
 
-  // YACHT IN DISTANCE (visible through window)
+  // 🛥 YACHT (cinematic focus point)
   yacht = new THREE.Mesh(
     new THREE.BoxGeometry(5,2,12),
     new THREE.MeshStandardMaterial({
       color:0xffd700,
-      emissive:0x553300
+      emissive:0x332200,
+      emissiveIntensity:1
     })
   );
-  yacht.position.set(0,1,-55);
+  yacht.position.set(0,1,-50);
   scene.add(yacht);
 
-  const yachtLight = new THREE.PointLight(0xffaa00, 3, 120);
-  yachtLight.position.set(0,6,-55);
+  const yachtLight = new THREE.PointLight(0xffaa00, 4, 140);
+  yachtLight.position.set(0,6,-50);
   scene.add(yachtLight);
 
-  // STARS
+  // ✨ STAR FIELD (depth layer)
   const geo = new THREE.BufferGeometry();
   const pos = [];
-  for(let i=0;i<1500;i++){
-    pos.push((Math.random()-0.5)*250, Math.random()*80, (Math.random()-0.5)*250);
+  for(let i=0;i<2000;i++){
+    pos.push((Math.random()-0.5)*300, Math.random()*140, (Math.random()-0.5)*300);
   }
   geo.setAttribute('position', new THREE.Float32BufferAttribute(pos,3));
-  scene.add(new THREE.Points(geo, new THREE.PointsMaterial({color:0xffffff,size:0.5})));
+  scene.add(new THREE.Points(geo,new THREE.PointsMaterial({color:0xffffff,size:0.6})));
 
   document.addEventListener("keydown",e=>keys[e.key.toLowerCase()]=true);
   document.addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
@@ -166,21 +163,32 @@ function init(){
 function animate(){
   requestAnimationFrame(animate);
 
-  if(keys["w"]) player.position.z -= 0.12;
-  if(keys["s"]) player.position.z += 0.12;
-  if(keys["a"]) player.position.x -= 0.12;
-  if(keys["d"]) player.position.x += 0.12;
+  time += 0.01;
 
-  camera.position.x += (player.position.x - camera.position.x)*0.05;
-  camera.position.z += (player.position.z + 5 - camera.position.z)*0.05;
+  // 🚶 movement
+  if(keys["w"]) player.position.z -= 0.1;
+  if(keys["s"]) player.position.z += 0.1;
+  if(keys["a"]) player.position.x -= 0.1;
+  if(keys["d"]) player.position.x += 0.1;
+
+  // 🎥 cinematic camera drift (handheld feel)
+  camera.position.x += (player.position.x - camera.position.x)*0.04;
+  camera.position.z += (player.position.z + 5 - camera.position.z)*0.04;
+  camera.position.y = 2.5 + Math.sin(time)*0.05;
+
   camera.lookAt(player.position);
 
-  checkExit();
+  // 🌊 ocean motion illusion
+  const positions = scene.children.find(o=>o.isPoints);
+  if(positions){
+    positions.rotation.y += 0.0005;
+  }
 
+  checkPrompt();
   renderer.render(scene,camera);
 }
 
-function checkExit(){
+function checkPrompt(){
   const dist = Math.hypot(player.position.x, player.position.z + 6);
 
   if(dist < 2.5){
@@ -194,9 +202,9 @@ function enterDock(){
   document.getElementById("fade").style.opacity = 1;
 
   setTimeout(()=>{
-    document.getElementById("zone").innerText = "DOCK AREA";
+    document.getElementById("zone").innerText = "DOCK TRANSITION";
     document.getElementById("fade").style.opacity = 0;
-  },800);
+  },1000);
 }
 
 </script>
