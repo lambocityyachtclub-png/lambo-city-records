@@ -30,16 +30,6 @@ canvas { display:block; }
   opacity:0.9;
 }
 
-#zonePopup {
-  position:absolute;
-  top:40%;
-  width:100%;
-  text-align:center;
-  font-size:24px;
-  opacity:0;
-  transition:opacity 0.4s;
-}
-
 button {
   padding:12px 16px;
   background:black;
@@ -64,10 +54,7 @@ button {
 <div id="hud">
   <div id="status">OFFLINE</div>
   <div id="zone">ZONE: DOCK</div>
-  <div id="radio">RADIO: OFF</div>
 </div>
-
-<div id="zonePopup"></div>
 
 </div>
 
@@ -80,53 +67,44 @@ let player;
 let mode = "idle";
 let keys = {};
 
-let currentZone = "dock";
-
-const zones = {
-  dock: { x:0, z:5, r:10 },
-  city: { x:0, z:-40, r:30 },
-  yacht: { x:0, z:-20, r:5 }
-};
-
 init();
 
 function init(){
 
   scene = new THREE.Scene();
-  scene.fog = new THREE.Fog(0x000000, 10, 120);
+  scene.fog = new THREE.Fog(0x000000, 15, 140);
 
   camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 1000);
-  camera.position.set(0,6,12);
+  camera.position.set(0,6,14);
 
   renderer = new THREE.WebGLRenderer({ canvas: document.getElementById("c"), antialias:true });
   renderer.setSize(innerWidth, innerHeight);
 
-  // 🌌 stars
-  const stars = new THREE.Points(
-    new THREE.BufferGeometry().setAttribute(
-      'position',
-      new THREE.Float32BufferAttribute(
-        Array.from({length:3000},()=> (Math.random()-0.5)*200),3)
-    ),
-    new THREE.PointsMaterial({color:0xffffff,size:0.6})
-  );
+  // 🌌 STARS
+  const starGeo = new THREE.BufferGeometry();
+  const starPos = [];
+  for(let i=0;i<2000;i++){
+    starPos.push((Math.random()-0.5)*200, Math.random()*80, (Math.random()-0.5)*200);
+  }
+  starGeo.setAttribute('position', new THREE.Float32BufferAttribute(starPos,3));
+  const stars = new THREE.Points(starGeo, new THREE.PointsMaterial({color:0xffffff,size:0.6}));
   scene.add(stars);
 
-  // 🌊 ocean
+  // 🌊 OCEAN
   const ocean = new THREE.Mesh(
-    new THREE.PlaneGeometry(500,500),
-    new THREE.MeshPhongMaterial({color:0x001f3f, shininess:80})
+    new THREE.PlaneGeometry(600,600),
+    new THREE.MeshPhongMaterial({color:0x001a33, shininess:100})
   );
   ocean.rotation.x = -Math.PI/2;
   scene.add(ocean);
 
-  // 💡 lighting
+  // 💡 LIGHTS
   scene.add(new THREE.AmbientLight(0x222244));
-  const light = new THREE.PointLight(0x00aaff,2,100);
-  light.position.set(0,10,0);
-  scene.add(light);
+  const mainLight = new THREE.PointLight(0x00aaff,2,120);
+  mainLight.position.set(0,15,0);
+  scene.add(mainLight);
 
-  // 🧍 player
+  // 🧍 PLAYER
   player = new THREE.Mesh(
     new THREE.BoxGeometry(1,1,1),
     new THREE.MeshStandardMaterial({color:0xffffff})
@@ -134,27 +112,47 @@ function init(){
   player.position.set(0,0.5,5);
   scene.add(player);
 
-  // 🛥 yacht
+  // 🛥 YACHT (highlighted)
   const yacht = new THREE.Mesh(
-    new THREE.BoxGeometry(3,1,8),
+    new THREE.BoxGeometry(4,1.5,10),
     new THREE.MeshStandardMaterial({color:0xffd700, emissive:0x553300})
   );
-  yacht.position.set(0,0.5,-20);
+  yacht.position.set(0,1,-30);
   scene.add(yacht);
 
-  // 🏙 city
-  for(let i=0;i<50;i++){
-    let h = Math.random()*12+5;
-    let b = new THREE.Mesh(
-      new THREE.BoxGeometry(2,h,2),
-      new THREE.MeshStandardMaterial({
-        color:0x111122,
-        emissive:0x0000ff,
-        emissiveIntensity:Math.random()*0.6
-      })
+  // 🛥 spotlight on yacht
+  const yachtLight = new THREE.PointLight(0xffaa00, 3, 60);
+  yachtLight.position.set(0,5,-30);
+  scene.add(yachtLight);
+
+  // 🛣 STREET (path to city)
+  for(let i=0;i<20;i++){
+    let tile = new THREE.Mesh(
+      new THREE.BoxGeometry(4,0.1,6),
+      new THREE.MeshStandardMaterial({color:0x111111})
     );
-    b.position.set((Math.random()-0.5)*60,h/2,-50-Math.random()*50);
-    scene.add(b);
+    tile.position.set(0,0.05,-i*6);
+    scene.add(tile);
+  }
+
+  // 🌇 CITY (organized skyline)
+  for(let i=-5;i<=5;i++){
+    for(let j=0;j<6;j++){
+
+      let height = Math.random()*10 + 8;
+
+      let building = new THREE.Mesh(
+        new THREE.BoxGeometry(3,height,3),
+        new THREE.MeshStandardMaterial({
+          color:0x0a0a1a,
+          emissive:0x0000ff,
+          emissiveIntensity:0.2 + Math.random()*0.5
+        })
+      );
+
+      building.position.set(i*6, height/2, -40 - j*10);
+      scene.add(building);
+    }
   }
 
   document.addEventListener("keydown", e=>keys[e.key.toLowerCase()]=true);
@@ -168,64 +166,20 @@ function animate(){
 
   if(mode==="play"){
 
-    if(keys["w"]) player.position.z -= 0.2;
-    if(keys["s"]) player.position.z += 0.2;
-    if(keys["a"]) player.position.x -= 0.2;
-    if(keys["d"]) player.position.x += 0.2;
+    if(keys["w"]) player.position.z -= 0.25;
+    if(keys["s"]) player.position.z += 0.25;
+    if(keys["a"]) player.position.x -= 0.25;
+    if(keys["d"]) player.position.x += 0.25;
 
-    camera.position.x += (player.position.x - camera.position.x)*0.05;
-    camera.position.z += (player.position.z + 12 - camera.position.z)*0.05;
+    // 🎥 cinematic follow
+    camera.position.x += (player.position.x - camera.position.x)*0.06;
+    camera.position.z += (player.position.z + 14 - camera.position.z)*0.06;
+    camera.position.y += (6 + Math.sin(Date.now()*0.002)*0.2 - camera.position.y)*0.05;
+
     camera.lookAt(player.position);
-
-    checkZones();
   }
 
   renderer.render(scene,camera);
-}
-
-function checkZones(){
-  let newZone = "dock";
-
-  if(dist(zones.yacht) < zones.yacht.r) newZone = "yacht";
-  else if(dist(zones.city) < zones.city.r) newZone = "city";
-
-  if(newZone !== currentZone){
-    currentZone = newZone;
-    updateZone();
-  }
-}
-
-function updateZone(){
-
-  const zoneText = {
-    dock: "DOCK ZONE",
-    city: "CITY DISTRICT",
-    yacht: "YACHT CLUB (VIP)"
-  };
-
-  document.getElementById("zone").innerText = "ZONE: " + zoneText[currentZone];
-
-  const popup = document.getElementById("zonePopup");
-  popup.innerText = "ENTERING " + zoneText[currentZone];
-  popup.style.opacity = 1;
-
-  setTimeout(()=> popup.style.opacity = 0, 2000);
-
-  // 🎧 radio reaction
-  if(currentZone==="yacht"){
-    document.getElementById("radio").innerText = "RADIO: VIP MODE";
-  } else if(currentZone==="city"){
-    document.getElementById("radio").innerText = "RADIO: CITY LIVE";
-  } else {
-    document.getElementById("radio").innerText = "RADIO: AMBIENT";
-  }
-}
-
-function dist(z){
-  return Math.sqrt(
-    (player.position.x - z.x)**2 +
-    (player.position.z - z.z)**2
-  );
 }
 
 function start(){
