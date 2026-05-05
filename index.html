@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LAMBO CITY — V8 LIVE LOOP</title>
+<title>LAMBO CITY — V8 CLEAN</title>
+
 <style>
 body { margin:0; overflow:hidden; background:black; font-family:Arial; }
 canvas { display:block; }
@@ -87,43 +88,12 @@ window.login = async function(){
   startWorld();
 }
 
-// ================= LOOP SYSTEM =================
-const userRef = (uid) => doc(db, "users", uid);
-const COOLDOWN = 60 * 1000; // 1 min test
-
-async function getUser(uid){
-  const snap = await getDoc(userRef(uid));
-  return snap.exists() ? snap.data() : null;
-}
-
-async function canGetPass(uid){
-  const data = await getUser(uid);
-  if(!data || !data.lastPass) return true;
-  return (Date.now() - data.lastPass) > COOLDOWN;
-}
-
-async function grantPass(uid){
-  await setDoc(userRef(uid), {
-    pass: true,
-    lastPass: Date.now()
-  }, { merge:true });
-}
-
-async function giveDrop(uid){
-  const data = await getUser(uid);
-  const drops = data?.drops || [];
-
-  drops.push({
-    id: Date.now(),
-    type: "VIP_DROP",
-    time: Date.now()
-  });
-
-  await setDoc(userRef(uid), { drops }, { merge:true });
-}
-
 // ================= WORLD =================
 function startWorld(){
+
+// UI refs (FIXED)
+const hud = document.getElementById("hud");
+const promptEl = document.getElementById("prompt");
 
 let scene = new THREE.Scene();
 scene.fog = new THREE.FogExp2(0x02030a, 0.02);
@@ -136,8 +106,9 @@ renderer.setSize(innerWidth, innerHeight);
 
 let keys = {};
 let player, yacht;
-let hasPass=false;
-let inVIP=false;
+
+let hasPass = false;
+let inVIP = false;
 
 // LIGHT
 scene.add(new THREE.AmbientLight(0x1a1a2a,1.2));
@@ -171,16 +142,52 @@ document.addEventListener("keydown", e=>{
   keys[e.key.toLowerCase()] = true;
   if(e.key.toLowerCase()==="e") interact();
 });
+
 document.addEventListener("keyup", e=>{
   keys[e.key.toLowerCase()] = false;
 });
+
+// ================= FIREBASE HELPERS =================
+const userRef = (uid) => doc(db, "users", uid);
+const COOLDOWN = 60 * 1000;
+
+async function getUser(uid){
+  const snap = await getDoc(userRef(uid));
+  return snap.exists() ? snap.data() : null;
+}
+
+async function canGetPass(uid){
+  const data = await getUser(uid);
+  if(!data || !data.lastPass) return true;
+  return (Date.now() - data.lastPass) > COOLDOWN;
+}
+
+async function grantPass(uid){
+  await setDoc(userRef(uid), {
+    pass: true,
+    lastPass: Date.now()
+  }, { merge:true });
+}
+
+async function giveDrop(uid){
+  const data = await getUser(uid);
+  const drops = data?.drops || [];
+
+  drops.push({
+    id: Date.now(),
+    type: "VIP_DROP",
+    time: Date.now()
+  });
+
+  await setDoc(userRef(uid), { drops }, { merge:true });
+}
 
 // ================= INTERACT =================
 async function interact(){
 
   let dist = player.position.distanceTo(yacht.position);
 
-  // GET PASS (COOLDOWN SYSTEM)
+  // GET PASS
   if(!hasPass){
 
     const allowed = await canGetPass(userId);
@@ -208,7 +215,7 @@ async function interact(){
     await giveDrop(userId);
 
     hud.innerText = "VIP ACCESS + DROP RECEIVED";
-    document.getElementById("prompt").style.display = "none";
+    promptEl.style.display = "none";
   }
 }
 
@@ -228,9 +235,9 @@ function animate(){
   let dist = player.position.distanceTo(yacht.position);
 
   if(dist < 3 && hasPass && !inVIP){
-    prompt.style.display = "block";
+    promptEl.style.display = "block";
   } else {
-    prompt.style.display = "none";
+    promptEl.style.display = "none";
   }
 
   renderer.render(scene,camera);
