@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LAMBO CITY YACHT CLUB — JOURNEY</title>
+<title>LAMBO CITY YACHT CLUB — FINAL</title>
 
 <style>
 body { margin:0; overflow:hidden; background:black; font-family:Arial; }
@@ -26,7 +26,6 @@ canvas { display:block; }
   left:20px;
   color:white;
 }
-
 </style>
 </head>
 
@@ -37,7 +36,7 @@ canvas { display:block; }
 <button onclick="enterWorld()">ENTER WORLD</button>
 </div>
 
-<div id="ui">MOVE FORWARD → REACH THE YACHT</div>
+<div id="ui">START IN CABIN → WALK TO YACHT</div>
 
 <canvas id="c"></canvas>
 
@@ -56,7 +55,6 @@ camera.position.set(0,2,5);
 let renderer = new THREE.WebGLRenderer({canvas:c});
 renderer.setSize(innerWidth, innerHeight);
 
-// LIGHT
 scene.add(new THREE.AmbientLight(0xffffff,1.2));
 
 // PLAYER
@@ -64,17 +62,58 @@ let player = new THREE.Mesh(
   new THREE.BoxGeometry(1,1,1),
   new THREE.MeshStandardMaterial({color:0xffffff})
 );
-player.position.y = 0.5;
+player.position.set(0,0.5,0);
 scene.add(player);
 
-// FLOOR (extends forward now)
-let floor = new THREE.Mesh(
+// ================= CABIN =================
+
+// FLOOR
+let cabinFloor = new THREE.Mesh(
+  new THREE.PlaneGeometry(20,20),
+  new THREE.MeshStandardMaterial({color:0x111111})
+);
+cabinFloor.rotation.x = -Math.PI/2;
+scene.add(cabinFloor);
+
+// WALL (FRONT OPENING)
+let backWall = new THREE.Mesh(
+  new THREE.BoxGeometry(20,10,0.5),
+  new THREE.MeshStandardMaterial({color:0x222222})
+);
+backWall.position.set(0,5,5);
+scene.add(backWall);
+
+// SIDE WALLS
+let leftWall = new THREE.Mesh(
+  new THREE.BoxGeometry(0.5,10,20),
+  new THREE.MeshStandardMaterial({color:0x222222})
+);
+leftWall.position.set(-10,5,-5);
+scene.add(leftWall);
+
+let rightWall = leftWall.clone();
+rightWall.position.set(10,5,-5);
+scene.add(rightWall);
+
+// CEILING
+let ceiling = new THREE.Mesh(
+  new THREE.PlaneGeometry(20,20),
+  new THREE.MeshStandardMaterial({color:0x111111})
+);
+ceiling.rotation.x = Math.PI/2;
+ceiling.position.y = 10;
+scene.add(ceiling);
+
+// ================= OUTSIDE WORLD =================
+
+// EXTENDED FLOOR / WALKWAY
+let walkway = new THREE.Mesh(
   new THREE.PlaneGeometry(40,200),
   new THREE.MeshStandardMaterial({color:0x111111})
 );
-floor.rotation.x = -Math.PI/2;
-floor.position.z = -80;
-scene.add(floor);
+walkway.rotation.x = -Math.PI/2;
+walkway.position.z = -80;
+scene.add(walkway);
 
 // WATER
 let water = new THREE.Mesh(
@@ -103,7 +142,7 @@ let stars = new THREE.Points(
 );
 scene.add(stars);
 
-// 🌊 FAR YACHT (VISIBLE FROM START)
+// 🌊 FAR YACHT (VISIBLE FROM CABIN)
 let farYacht = new THREE.Mesh(
   new THREE.BoxGeometry(20,5,10),
   new THREE.MeshStandardMaterial({color:0x222244})
@@ -111,7 +150,7 @@ let farYacht = new THREE.Mesh(
 farYacht.position.set(0,3,-120);
 scene.add(farYacht);
 
-// 🚤 MAIN YACHT (REVEAL LATER)
+// 🚤 MAIN YACHT
 let yacht = new THREE.Mesh(
   new THREE.BoxGeometry(40,10,20),
   new THREE.MeshStandardMaterial({color:0x333366, emissive:0x111133})
@@ -183,26 +222,23 @@ camera.position.x+=(player.position.x-camera.position.x)*0.08;
 camera.position.z+=(player.position.z+8-camera.position.z)*0.08;
 camera.lookAt(player.position);
 
-// 🌊 WORLD LIFE
+// WORLD LIFE
 water.position.z = Math.sin(Date.now()*0.001)*1;
 stars.rotation.y += 0.0005;
 
-// 🎯 DISTANCE LOGIC
-let dist = player.position.z;
+// DISTANCE LOGIC
+let z = player.position.z;
 
 // REVEAL MAIN YACHT
-if(dist < -40){
+if(z < -40){
   yacht.visible = true;
 }
 
 // ACTIVATE FULL CLUB
-if(dist < -55){
-
+if(z < -55){
   crowd.forEach(p=>p.visible=true);
   lights.forEach(l=>l.visible=true);
-
   document.getElementById("ui").innerText = "YACHT CLUB — LIVE";
-
 }
 
 // CROWD MOVEMENT
