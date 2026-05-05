@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>LAMBO CITY — PHASE 3</title>
+<title>LAMBO CITY — PHASE 4</title>
 
 <style>
 body { margin:0; overflow:hidden; background:black; font-family:Arial; }
@@ -24,11 +24,12 @@ canvas { display:block; }
   bottom:80px;
   left:50%;
   transform:translateX(-50%);
-  background:rgba(0,0,0,0.7);
+  background:rgba(0,0,0,0.75);
   border:1px solid gold;
   padding:12px 16px;
   display:none;
   color:white;
+  text-align:center;
 }
 
 button {
@@ -56,12 +57,12 @@ button {
 <div id="hud">
   🌍 LAMBO CITY<br>
   <span id="zone">ZONE: CABIN LOBBY</span><br>
-  <span id="state">WORLD: QUIET</span>
+  <span id="state">STATE: STABLE</span>
 </div>
 
 <div id="prompt">
-  🚪 ENTER DOCK ZONE<br>
-  <button onclick="enterDock()">TRANSITION</button>
+  <div id="promptText">INTERACT</div>
+  <button onclick="interact()">ENTER</button>
 </div>
 
 <div id="fade"></div>
@@ -73,15 +74,16 @@ button {
 let scene, camera, renderer;
 let player, yacht;
 let keys = {};
-let time = 0;
+
 let state = "cabin";
+let velocity = {x:0,z:0};
 
 init();
 
 function init(){
 
   scene = new THREE.Scene();
-  scene.fog = new THREE.FogExp2(0x04040a, 0.03);
+  scene.fog = new THREE.FogExp2(0x050510, 0.03);
 
   camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 1000);
   camera.position.set(0,2.5,5);
@@ -89,14 +91,14 @@ function init(){
   renderer = new THREE.WebGLRenderer({ canvas:document.getElementById("c"), antialias:true });
   renderer.setSize(innerWidth, innerHeight);
 
-  // LIGHTING
-  scene.add(new THREE.AmbientLight(0x15152a, 1.2));
+  // LIGHT
+  scene.add(new THREE.AmbientLight(0x1a1a2a, 1.2));
 
   const light = new THREE.PointLight(0x00aaff, 2.5, 130);
   light.position.set(0,8,0);
   scene.add(light);
 
-  // PLAYER (weighted feel)
+  // PLAYER
   player = new THREE.Mesh(
     new THREE.BoxGeometry(1,1,1),
     new THREE.MeshStandardMaterial({color:0xffffff})
@@ -112,7 +114,7 @@ function init(){
   cabin.position.y = 3;
   scene.add(cabin);
 
-  // WINDOW FRAME
+  // WINDOW
   const windowFrame = new THREE.Mesh(
     new THREE.BoxGeometry(8,3,0.2),
     new THREE.MeshStandardMaterial({color:0x111122})
@@ -162,57 +164,59 @@ function init(){
 function animate(){
   requestAnimationFrame(animate);
 
-  time += 0.01;
+  // 🎮 ACCELERATION MOVEMENT (Phase 4 feel)
+  let targetX = 0;
+  let targetZ = 0;
 
-  // 🚶 WEIGHTED MOVEMENT (Phase 3 feel)
-  let speed = 0.085;
+  if(keys["w"]) targetZ -= 0.12;
+  if(keys["s"]) targetZ += 0.12;
+  if(keys["a"]) targetX -= 0.12;
+  if(keys["d"]) targetX += 0.12;
 
-  if(keys["w"]) player.position.z -= speed;
-  if(keys["s"]) player.position.z += speed;
-  if(keys["a"]) player.position.x -= speed;
-  if(keys["d"]) player.position.x += speed;
+  velocity.x += (targetX - velocity.x) * 0.2;
+  velocity.z += (targetZ - velocity.z) * 0.2;
 
-  // 🎥 CAMERA SMOOTH + BREATH
-  camera.position.x += (player.position.x - camera.position.x)*0.045;
-  camera.position.z += (player.position.z + 5 - camera.position.z)*0.045;
-  camera.position.y = 2.5 + Math.sin(time)*0.05;
+  player.position.x += velocity.x;
+  player.position.z += velocity.z;
 
+  // 🎥 CAMERA FOLLOW
+  camera.position.x += (player.position.x - camera.position.x)*0.05;
+  camera.position.z += (player.position.z + 5 - camera.position.z)*0.05;
   camera.lookAt(player.position);
 
-  updateWorldState();
+  updateWorld();
   renderer.render(scene,camera);
 }
 
-function updateWorldState(){
+function updateWorld(){
 
   const dist = Math.hypot(player.position.x, player.position.z + 6);
 
+  let prompt = document.getElementById("prompt");
+
   if(state === "cabin" && dist < 2.5){
-    document.getElementById("prompt").style.display="block";
+    prompt.style.display = "block";
+    document.getElementById("promptText").innerText = "ENTER DOCK";
   } else {
-    document.getElementById("prompt").style.display="none";
+    prompt.style.display = "none";
   }
 
-  // subtle world feeling changes
-  if(state === "cabin"){
-    document.getElementById("state").innerText = "WORLD: QUIET LOBBY";
-  } else {
-    document.getElementById("state").innerText = "WORLD: ACTIVE DOCK";
-  }
+  document.getElementById("state").innerText =
+    state === "cabin" ? "STATE: SAFE ZONE" : "STATE: ACTIVE WORLD";
 }
 
-function enterDock(){
+function interact(){
 
   document.getElementById("fade").style.opacity = 1;
 
   setTimeout(()=>{
 
     state = "dock";
+    document.getElementById("zone").innerText = "ZONE: DOCK";
 
-    document.getElementById("zone").innerText = "ZONE: DOCK TRANSITION";
     document.getElementById("fade").style.opacity = 0;
 
-  },1000);
+  },900);
 }
 
 </script>
