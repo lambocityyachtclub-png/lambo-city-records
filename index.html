@@ -1,244 +1,123 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>LAMBO CITY — PHASE 6</title>
+// ===============================
+// LAMBO CITY — SYSTEM CORE (PHASE 7.5)
+// ===============================
 
-<style>
-body { margin:0; overflow:hidden; background:black; font-family:Arial; }
+// 🎮 CORE STATE
+const GameState = {
+  currentZone: "cabin",
+  playerState: "idle",
+  isTransitioning: false
+};
 
-canvas { display:block; }
+// 🧍 PLAYER SYSTEM
+const Player = {
+  velocity: { x: 0, z: 0 },
+  speed: 0.1,
+  position: null
+};
 
-#title {
-  position:absolute;
-  top:50%;
-  left:50%;
-  transform:translate(-50%,-50%);
-  color:white;
-  font-size:28px;
-  letter-spacing:4px;
-  opacity:0;
-  transition:2s;
-  text-align:center;
+// 🌍 WORLD SYSTEM
+const World = {
+  yachtFocus: null,
+  dockActive: false
+};
+
+// 🎮 INPUT SYSTEM
+const Input = {
+  keys: {}
+};
+
+document.addEventListener("keydown", e => {
+  Input.keys[e.key.toLowerCase()] = true;
+});
+
+document.addEventListener("keyup", e => {
+  Input.keys[e.key.toLowerCase()] = false;
+});
+
+// ===============================
+// PLAYER UPDATE SYSTEM
+// ===============================
+function updatePlayer() {
+
+  let targetX = 0;
+  let targetZ = 0;
+
+  if (Input.keys["w"]) targetZ -= Player.speed;
+  if (Input.keys["s"]) targetZ += Player.speed;
+  if (Input.keys["a"]) targetX -= Player.speed;
+  if (Input.keys["d"]) targetX += Player.speed;
+
+  Player.velocity.x += (targetX - Player.velocity.x) * 0.2;
+  Player.velocity.z += (targetZ - Player.velocity.z) * 0.2;
+
+  player.position.x += Player.velocity.x;
+  player.position.z += Player.velocity.z;
+
+  Player.position = player.position;
 }
 
-#hud {
-  position:absolute;
-  top:20px;
-  left:20px;
-  color:white;
-  font-size:13px;
-  text-shadow:0 0 10px black;
-  opacity:0;
-  transition:2s;
-}
-
-#prompt {
-  position:absolute;
-  bottom:80px;
-  left:50%;
-  transform:translateX(-50%);
-  background:rgba(0,0,0,0.8);
-  border:1px solid gold;
-  padding:12px 16px;
-  display:none;
-  color:white;
-}
-
-button {
-  background:black;
-  border:1px solid gold;
-  color:white;
-  padding:10px 14px;
-  cursor:pointer;
-}
-
-#fade {
-  position:absolute;
-  inset:0;
-  background:black;
-  opacity:1;
-  transition:2s;
-}
-</style>
-</head>
-
-<body>
-
-<canvas id="c"></canvas>
-
-<div id="title">LAMBO CITY<br><span style="font-size:12px;">ENTERING WORLD</span></div>
-
-<div id="hud">
-  🌍 LAMBO CITY<br>
-  <span id="zone">INITIALIZING...</span><br>
-  <span id="state">LOADING WORLD</span>
-</div>
-
-<div id="prompt">
-  🚪 INTERACT<br>
-  <button onclick="enterDock()">ENTER DOCK</button>
-</div>
-
-<div id="fade"></div>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-
-<script>
-
-let scene, camera, renderer;
-let player, yacht;
-let keys = {};
-let time = 0;
-let state = "intro";
-
-init();
-
-function init(){
-
-  scene = new THREE.Scene();
-  scene.fog = new THREE.FogExp2(0x04040a, 0.03);
-
-  camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 1000);
-  camera.position.set(0,2.5,5);
-
-  renderer = new THREE.WebGLRenderer({ canvas:document.getElementById("c"), antialias:true });
-  renderer.setSize(innerWidth, innerHeight);
-
-  // LIGHT
-  scene.add(new THREE.AmbientLight(0x15152a, 1.3));
-
-  const light = new THREE.PointLight(0x00aaff, 2.5, 130);
-  light.position.set(0,8,0);
-  scene.add(light);
-
-  // PLAYER
-  player = new THREE.Mesh(
-    new THREE.BoxGeometry(1,1,1),
-    new THREE.MeshStandardMaterial({color:0xffffff})
-  );
-  player.position.set(0,0.5,0);
-  scene.add(player);
-
-  // CABIN
-  const cabin = new THREE.Mesh(
-    new THREE.BoxGeometry(14,6,14),
-    new THREE.MeshStandardMaterial({color:0x070717, side:THREE.BackSide})
-  );
-  cabin.position.y = 3;
-  scene.add(cabin);
-
-  // WINDOW
-  const windowFrame = new THREE.Mesh(
-    new THREE.BoxGeometry(8,3,0.2),
-    new THREE.MeshStandardMaterial({color:0x111122})
-  );
-  windowFrame.position.set(0,3,-6.8);
-  scene.add(windowFrame);
-
-  // DOCK
-  const dock = new THREE.Mesh(
-    new THREE.BoxGeometry(90,0.2,90),
-    new THREE.MeshStandardMaterial({color:0x0a0a0a})
-  );
-  dock.position.set(0,0,-30);
-  scene.add(dock);
-
-  // YACHT
-  yacht = new THREE.Mesh(
-    new THREE.BoxGeometry(5,2,12),
-    new THREE.MeshStandardMaterial({
-      color:0xffd700,
-      emissive:0x332200,
-      emissiveIntensity:1.2
-    })
-  );
-  yacht.position.set(0,1,-60);
-  scene.add(yacht);
-
-  const yachtLight = new THREE.PointLight(0xffaa00, 5, 160);
-  yachtLight.position.set(0,6,-60);
-  scene.add(yachtLight);
-
-  // STAR FIELD
-  const geo = new THREE.BufferGeometry();
-  const pos = [];
-  for(let i=0;i<2000;i++){
-    pos.push((Math.random()-0.5)*320, Math.random()*160, (Math.random()-0.5)*320);
-  }
-  geo.setAttribute('position', new THREE.Float32BufferAttribute(pos,3));
-  scene.add(new THREE.Points(geo,new THREE.PointsMaterial({color:0xffffff,size:0.6})));
-
-  document.addEventListener("keydown",e=>keys[e.key.toLowerCase()]=true);
-  document.addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
-
-  // 🎬 INTRO SEQUENCE
-  setTimeout(()=>{
-    document.getElementById("fade").style.opacity = 0;
-    document.getElementById("title").style.opacity = 1;
-  },500);
-
-  setTimeout(()=>{
-    document.getElementById("title").style.opacity = 0;
-    document.getElementById("hud").style.opacity = 1;
-    state = "active";
-  },3000);
-
-  animate();
-}
-
-function animate(){
-  requestAnimationFrame(animate);
-
-  time += 0.01;
-
-  if(state === "intro") return;
-
-  // MOVEMENT
-  if(keys["w"]) player.position.z -= 0.1;
-  if(keys["s"]) player.position.z += 0.1;
-  if(keys["a"]) player.position.x -= 0.1;
-  if(keys["d"]) player.position.x += 0.1;
-
-  // CAMERA INERTIA
-  camera.position.x += (player.position.x - camera.position.x)*0.05;
-  camera.position.z += (player.position.z + 5 - camera.position.z)*0.05;
-  camera.position.y = 2.5 + Math.sin(time)*0.04;
-
+// ===============================
+// CAMERA SYSTEM
+// ===============================
+function updateCamera() {
+  camera.position.x += (player.position.x - camera.position.x) * 0.05;
+  camera.position.z += (player.position.z + 5 - camera.position.z) * 0.05;
   camera.lookAt(player.position);
-
-  checkPrompt();
-  updateHUDPulse();
-
-  renderer.render(scene,camera);
 }
 
-function updateHUDPulse(){
-  let stateText = document.getElementById("state");
-  stateText.style.opacity = 0.85 + Math.sin(time)*0.1;
-}
+// ===============================
+// GAME STATE SYSTEM
+// ===============================
+function updateGameState() {
 
-function checkPrompt(){
-  const dist = Math.hypot(player.position.x, player.position.z + 6);
+  let dist = Math.hypot(player.position.x, player.position.z + 6);
 
-  if(dist < 2.5){
-    document.getElementById("prompt").style.display="block";
+  if (GameState.currentZone === "cabin" && dist < 2.5) {
+    document.getElementById("prompt").style.display = "block";
   } else {
-    document.getElementById("prompt").style.display="none";
+    document.getElementById("prompt").style.display = "none";
   }
+
+  document.getElementById("zone").innerText =
+    "ZONE: " + GameState.currentZone.toUpperCase();
+
+  document.getElementById("state").innerText =
+    "STATE: " + GameState.playerState.toUpperCase();
 }
 
-function enterDock(){
+// ===============================
+// TRANSITION SYSTEM
+// ===============================
+function enterDock() {
+
+  if (GameState.isTransitioning) return;
+
+  GameState.isTransitioning = true;
+
   document.getElementById("fade").style.opacity = 1;
 
-  setTimeout(()=>{
-    document.getElementById("zone").innerText = "DOCK AREA";
+  setTimeout(() => {
+
+    GameState.currentZone = "dock";
+
     document.getElementById("fade").style.opacity = 0;
-  },1200);
+
+    GameState.isTransitioning = false;
+
+  }, 1000);
 }
 
-</script>
+// ===============================
+// MAIN LOOP CLEAN STRUCTURE
+// ===============================
+function gameLoop() {
 
-</body>
-</html>
+  requestAnimationFrame(gameLoop);
+
+  updatePlayer();
+  updateCamera();
+  updateGameState();
+
+  renderer.render(scene, camera);
+}
