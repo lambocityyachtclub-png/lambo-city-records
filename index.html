@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LAMBO CITY — CABIN RESET</title>
+<title>LAMBO CITY — CABIN → DOCK</title>
 
 <style>
 body { margin:0; overflow:hidden; background:black; font-family:Arial; }
@@ -27,13 +27,23 @@ canvas { display:block; }
   display:none;
   background:rgba(0,0,0,0.6);
 }
+
+#fade {
+  position:absolute;
+  inset:0;
+  background:black;
+  opacity:0;
+  pointer-events:none;
+  transition:1s ease;
+}
 </style>
 </head>
 
 <body>
 
-<div id="ui">LAMBO CITY — CABIN</div>
-<div id="prompt">MOVE AROUND</div>
+<div id="ui">ZONE: CABIN</div>
+<div id="prompt">PRESS E AT DOOR</div>
+<div id="fade"></div>
 
 <canvas id="c"></canvas>
 
@@ -79,30 +89,22 @@ ceiling.position.y = 4;
 scene.add(ceiling);
 
 // WALLS
-function wall(x,y,z,rx,ry){
+function wall(x,y,z,ry){
   let w = new THREE.Mesh(
     new THREE.PlaneGeometry(20,4),
     new THREE.MeshStandardMaterial({color:0x222233, side:THREE.DoubleSide})
   );
   w.position.set(x,y,z);
   w.rotation.y = ry;
-  w.rotation.x = rx || 0;
   scene.add(w);
 }
 
-// BACK WALL
-wall(0,2,-10,0,0);
+wall(0,2,-10,0);
+wall(0,2,10,Math.PI);
+wall(-10,2,0,Math.PI/2);
+wall(10,2,0,-Math.PI/2);
 
-// FRONT WALL
-wall(0,2,10,0,Math.PI);
-
-// LEFT WALL
-wall(-10,2,0,0,Math.PI/2);
-
-// RIGHT WALL
-wall(10,2,0,0,-Math.PI/2);
-
-// SIMPLE DOOR (visual)
+// DOOR
 let door = new THREE.Mesh(
   new THREE.BoxGeometry(2,3,0.2),
   new THREE.MeshStandardMaterial({color:0x444444})
@@ -110,16 +112,72 @@ let door = new THREE.Mesh(
 door.position.set(0,1.5,-9.9);
 scene.add(door);
 
+// 🌊 DOCK WORLD (HIDDEN UNTIL ENTER)
+let dock = new THREE.Mesh(
+  new THREE.BoxGeometry(60,1,20),
+  new THREE.MeshStandardMaterial({color:0x0a0a0a})
+);
+dock.position.set(0,-0.5,-40);
+dock.visible = false;
+scene.add(dock);
+
+let yacht = new THREE.Mesh(
+  new THREE.BoxGeometry(12,3,12),
+  new THREE.MeshStandardMaterial({color:0x111122})
+);
+yacht.position.set(0,1,-60);
+yacht.visible = false;
+scene.add(yacht);
+
 // INPUT
 let keys = {};
+let inDock = false;
 
 document.addEventListener("keydown", e=>{
   keys[e.key.toLowerCase()] = true;
+
+  if(e.key.toLowerCase()==="e"){
+    interact();
+  }
 });
 
 document.addEventListener("keyup", e=>{
   keys[e.key.toLowerCase()] = false;
 });
+
+// INTERACT
+function interact(){
+
+let dist = player.position.distanceTo(door.position);
+
+// ENTER DOCK
+if(dist < 3 && !inDock){
+
+  inDock = true;
+
+  document.getElementById("fade").style.opacity = 1;
+
+  setTimeout(()=>{
+
+    // hide cabin walls
+    scene.children.forEach(obj=>{
+      if(obj !== player && obj !== dock && obj !== yacht){
+        obj.visible = false;
+      }
+    });
+
+    dock.visible = true;
+    yacht.visible = true;
+
+    player.position.set(0,1,-30);
+
+    document.getElementById("ui").innerText = "ZONE: DOCK";
+    document.getElementById("fade").style.opacity = 0;
+
+  },1000);
+}
+
+}
 
 // LOOP
 function animate(){
@@ -131,13 +189,19 @@ if(keys["s"]) player.position.z += 0.1;
 if(keys["a"]) player.position.x -= 0.1;
 if(keys["d"]) player.position.x += 0.1;
 
-// CAMERA FOLLOW
+// CAMERA
 camera.position.x += (player.position.x - camera.position.x)*0.05;
 camera.position.z += (player.position.z + 5 - camera.position.z)*0.05;
 camera.lookAt(player.position);
 
 // PROMPT
-document.getElementById("prompt").style.display = "block";
+let dist = player.position.distanceTo(door.position);
+
+if(!inDock && dist < 3){
+  document.getElementById("prompt").style.display = "block";
+} else {
+  document.getElementById("prompt").style.display = "none";
+}
 
 renderer.render(scene,camera);
 
