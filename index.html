@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LAMBO CITY — INTERACTIVE CLUB</title>
+<title>LAMBO CITY — FINAL YACHT CLUB</title>
 
 <style>
 body { margin:0; overflow:hidden; background:black; font-family:Arial; }
@@ -92,7 +92,7 @@ let door = new THREE.Mesh(
 door.position.set(0,1.5,-9.9);
 scene.add(door);
 
-// DOCK + CLUB
+// DOCK
 let dock = new THREE.Mesh(
   new THREE.BoxGeometry(80,1,40),
   new THREE.MeshStandardMaterial({color:0x0a0a0a})
@@ -101,6 +101,7 @@ dock.position.set(0,-0.5,-40);
 dock.visible = false;
 scene.add(dock);
 
+// YACHT
 let yacht = new THREE.Mesh(
   new THREE.BoxGeometry(20,4,20),
   new THREE.MeshStandardMaterial({color:0x111122})
@@ -109,13 +110,41 @@ yacht.position.set(0,2,-60);
 yacht.visible = false;
 scene.add(yacht);
 
-// 🎧 MUSIC TRACKS
-let tracks = [
-  new Audio("https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c8a3c5c4.mp3"),
-  new Audio("https://cdn.pixabay.com/download/audio/2022/03/14/audio_1f7cdb.mp3")
-];
-let currentTrack = 0;
-tracks.forEach(t=>{ t.loop=true; t.volume=0.5; });
+// ⭐ STARS (RESTORED)
+const starGeo = new THREE.BufferGeometry();
+const starArr = [];
+
+for(let i=0;i<1500;i++){
+  starArr.push(
+    (Math.random()-0.5)*200,
+    Math.random()*100,
+    -60 + (Math.random()-0.5)*200
+  );
+}
+
+starGeo.setAttribute("position", new THREE.Float32BufferAttribute(starArr,3));
+
+const stars = new THREE.Points(
+  starGeo,
+  new THREE.PointsMaterial({color:0xffffff, size:0.6})
+);
+
+stars.visible = false;
+scene.add(stars);
+
+// 🎧 MUSIC
+let track = new Audio("https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c8a3c5c4.mp3");
+track.loop = true;
+track.volume = 0.5;
+
+// 🎛 RADIO
+let radio = new THREE.Mesh(
+  new THREE.BoxGeometry(2,1,1),
+  new THREE.MeshStandardMaterial({color:0xffff00})
+);
+radio.position.set(6,1,-60);
+radio.visible = false;
+scene.add(radio);
 
 // 📺 SCREEN
 let screen = new THREE.Mesh(
@@ -135,18 +164,9 @@ merch.position.set(-6,1.5,-60);
 merch.visible = false;
 scene.add(merch);
 
-// 🎛 RADIO
-let radio = new THREE.Mesh(
-  new THREE.BoxGeometry(2,1,1),
-  new THREE.MeshStandardMaterial({color:0xffff00})
-);
-radio.position.set(6,1,-60);
-radio.visible = false;
-scene.add(radio);
-
-// CROWD
+// 🧍 CROWD
 let crowd = [];
-for(let i=0;i<20;i++){
+for(let i=0;i<25;i++){
   let p = new THREE.Mesh(
     new THREE.BoxGeometry(0.5,1,0.5),
     new THREE.MeshStandardMaterial({color:0xffffff})
@@ -155,6 +175,16 @@ for(let i=0;i<20;i++){
   p.visible = false;
   scene.add(p);
   crowd.push(p);
+}
+
+// 💡 LIGHTS
+let lights = [];
+for(let i=0;i<6;i++){
+  let l = new THREE.PointLight(0x00aaff, 2, 30);
+  l.position.set((i-3)*3,3,-60);
+  l.visible = false;
+  scene.add(l);
+  lights.push(l);
 }
 
 // INPUT
@@ -169,9 +199,9 @@ document.addEventListener("keyup", e=>{
   keys[e.key.toLowerCase()] = false;
 });
 
-document.addEventListener("click", ()=> interact());
+document.addEventListener("click", ()=> track.play());
 
-// INTERACT SYSTEM
+// INTERACT
 function interact(){
 
 // ENTER DOCK
@@ -181,43 +211,45 @@ if(!inDock && player.position.distanceTo(door.position) < 3){
 
   scene.children.forEach(obj=>{
     if(obj !== player && obj !== dock && obj !== yacht &&
-       obj !== screen && obj !== merch && obj !== radio &&
-       !crowd.includes(obj)){
+       obj !== radio && obj !== screen && obj !== merch &&
+       obj !== stars && !crowd.includes(obj) && !lights.includes(obj)){
       obj.visible = false;
     }
   });
 
   dock.visible = true;
   yacht.visible = true;
+  stars.visible = true;
+  radio.visible = true;
   screen.visible = true;
   merch.visible = true;
-  radio.visible = true;
 
   crowd.forEach(p=> p.visible = true);
+  lights.forEach(l=> l.visible = true);
 
   player.position.set(0,1,-30);
+
   document.getElementById("ui").innerText = "ZONE: YACHT CLUB";
 
-  tracks[0].play();
+  track.play();
   return;
 }
 
 // RADIO
 if(player.position.distanceTo(radio.position) < 3){
-  tracks[currentTrack].pause();
-  currentTrack = (currentTrack + 1) % tracks.length;
-  tracks[currentTrack].play();
-  document.getElementById("ui").innerText = "RADIO SWITCHED";
+  track.currentTime = 0;
+  track.play();
+  document.getElementById("ui").innerText = "RADIO PLAYING";
 }
 
 // SCREEN
 if(player.position.distanceTo(screen.position) < 4){
-  document.getElementById("ui").innerText = "SCREEN ACTIVE (LINK YOUR TWITCH)";
+  document.getElementById("ui").innerText = "SCREEN (CONNECT YOUR STREAM)";
 }
 
 // MERCH
 if(player.position.distanceTo(merch.position) < 3){
-  document.getElementById("ui").innerText = "MERCH STORE OPEN (CONNECT SITE)";
+  document.getElementById("ui").innerText = "MERCH STORE";
 }
 
 }
@@ -237,10 +269,18 @@ camera.position.x += (player.position.x - camera.position.x)*0.05;
 camera.position.z += (player.position.z + 5 - camera.position.z)*0.05;
 camera.lookAt(player.position);
 
-// CROWD MOVE
+// CROWD ANIMATION
 crowd.forEach(p=>{
   p.position.y = 0.5 + Math.sin(Date.now()*0.005)*0.2;
 });
+
+// LIGHT ANIMATION
+lights.forEach((l,i)=>{
+  l.intensity = 2 + Math.sin(Date.now()*0.003 + i)*1.5;
+});
+
+// STARS MOVE
+stars.rotation.y += 0.0005;
 
 // PROMPT
 let near = (
