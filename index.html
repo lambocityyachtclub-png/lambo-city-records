@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LAMBO CITY — V8 CLEAN</title>
+<title>LAMBO CITY — YACHT PARTY</title>
 
 <style>
 body { margin:0; overflow:hidden; background:black; font-family:Arial; }
@@ -91,11 +91,11 @@ window.login = async function(){
 // ================= WORLD =================
 function startWorld(){
 
-// UI refs (FIXED)
 const hud = document.getElementById("hud");
 const promptEl = document.getElementById("prompt");
 
 let scene = new THREE.Scene();
+scene.background = new THREE.Color(0x02030a);
 scene.fog = new THREE.FogExp2(0x02030a, 0.02);
 
 let camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 1000);
@@ -106,14 +106,21 @@ renderer.setSize(innerWidth, innerHeight);
 
 let keys = {};
 let player, yacht;
+let hasPass=false;
+let inVIP=false;
 
-let hasPass = false;
-let inVIP = false;
+// ================= LIGHTS (YACHT PARTY FEEL) =================
+scene.add(new THREE.AmbientLight(0x1a1a2a, 0.8));
 
-// LIGHT
-scene.add(new THREE.AmbientLight(0x1a1a2a,1.2));
+const yachtLight = new THREE.PointLight(0x00aaff, 3);
+yachtLight.position.set(0,6,-15);
+scene.add(yachtLight);
 
-// PLAYER
+const goldLight = new THREE.PointLight(0xffd700, 1.5);
+goldLight.position.set(2,3,-10);
+scene.add(goldLight);
+
+// ================= PLAYER =================
 player = new THREE.Mesh(
   new THREE.BoxGeometry(1,1,1),
   new THREE.MeshStandardMaterial({color:0xffffff})
@@ -121,7 +128,7 @@ player = new THREE.Mesh(
 player.position.y = 0.5;
 scene.add(player);
 
-// YACHT
+// ================= YACHT =================
 yacht = new THREE.Mesh(
   new THREE.BoxGeometry(2,1,5),
   new THREE.MeshStandardMaterial({color:0xffd700})
@@ -129,7 +136,13 @@ yacht = new THREE.Mesh(
 yacht.position.set(0,0.5,-15);
 scene.add(yacht);
 
-// FLOOR
+// floating yacht
+function floatYacht(){
+  yacht.position.y = 0.5 + Math.sin(Date.now()*0.002)*0.15;
+  yacht.rotation.y += 0.002;
+}
+
+// ================= FLOOR =================
 let floor = new THREE.Mesh(
   new THREE.PlaneGeometry(200,200),
   new THREE.MeshStandardMaterial({color:0x111111})
@@ -137,7 +150,28 @@ let floor = new THREE.Mesh(
 floor.rotation.x = -Math.PI/2;
 scene.add(floor);
 
-// INPUT
+// ================= STARS =================
+const starGeo = new THREE.BufferGeometry();
+const starArray = [];
+
+for(let i=0;i<2000;i++){
+  starArray.push(
+    (Math.random()-0.5)*400,
+    Math.random()*200,
+    (Math.random()-0.5)*400
+  );
+}
+
+starGeo.setAttribute("position", new THREE.Float32BufferAttribute(starArray,3));
+
+const stars = new THREE.Points(
+  starGeo,
+  new THREE.PointsMaterial({color:0xffffff, size:0.7})
+);
+
+scene.add(stars);
+
+// ================= INPUT =================
 document.addEventListener("keydown", e=>{
   keys[e.key.toLowerCase()] = true;
   if(e.key.toLowerCase()==="e") interact();
@@ -147,7 +181,7 @@ document.addEventListener("keyup", e=>{
   keys[e.key.toLowerCase()] = false;
 });
 
-// ================= FIREBASE HELPERS =================
+// ================= FIREBASE =================
 const userRef = (uid) => doc(db, "users", uid);
 const COOLDOWN = 60 * 1000;
 
@@ -187,7 +221,6 @@ async function interact(){
 
   let dist = player.position.distanceTo(yacht.position);
 
-  // GET PASS
   if(!hasPass){
 
     const allowed = await canGetPass(userId);
@@ -203,7 +236,6 @@ async function interact(){
     return;
   }
 
-  // BOARD + DROP
   if(hasPass && dist < 3 && !inVIP){
 
     inVIP = true;
@@ -228,9 +260,13 @@ function animate(){
   if(keys["a"]) player.position.x -= 0.08;
   if(keys["d"]) player.position.x += 0.08;
 
-  camera.position.x += (player.position.x - camera.position.x)*0.05;
-  camera.position.z += (player.position.z + 5 - camera.position.z)*0.05;
+  // smooth cinematic camera
+  camera.position.x += (player.position.x - camera.position.x)*0.03;
+  camera.position.y += (2.5 - camera.position.y)*0.03;
+  camera.position.z += (player.position.z + 6 - camera.position.z)*0.03;
   camera.lookAt(player.position);
+
+  floatYacht();
 
   let dist = player.position.distanceTo(yacht.position);
 
