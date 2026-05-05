@@ -15,9 +15,9 @@ canvas { display:block; }
   position:absolute;
   inset:0;
   display:flex;
-  flex-direction:column;
   justify-content:center;
   align-items:center;
+  flex-direction:column;
   background:black;
   pointer-events:auto;
 }
@@ -27,11 +27,30 @@ canvas { display:block; }
   top:20px;
   left:20px;
   font-size:13px;
-  opacity:0.9;
+}
+
+#fade {
+  position:absolute;
+  inset:0;
+  background:black;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity 0.8s;
+}
+
+#vip {
+  position:absolute;
+  inset:0;
+  display:none;
+  background:black;
+  text-align:center;
+  padding-top:120px;
+  pointer-events:auto;
 }
 
 button {
   padding:12px 16px;
+  margin-top:10px;
   background:black;
   border:1px solid gold;
   color:white;
@@ -54,6 +73,15 @@ button {
 <div id="hud">
   <div id="status">OFFLINE</div>
   <div id="zone">ZONE: DOCK</div>
+  <div id="radio">RADIO: AMBIENT</div>
+</div>
+
+<div id="fade"></div>
+
+<div id="vip">
+  <h1>YACHT CLUB</h1>
+  <p>VIP ACCESS GRANTED</p>
+  <button onclick="exitVIP()">RETURN TO CITY</button>
 </div>
 
 </div>
@@ -63,7 +91,7 @@ button {
 <script>
 
 let scene, camera, renderer;
-let player;
+let player, yacht;
 let mode = "idle";
 let keys = {};
 
@@ -80,17 +108,16 @@ function init(){
   renderer = new THREE.WebGLRenderer({ canvas: document.getElementById("c"), antialias:true });
   renderer.setSize(innerWidth, innerHeight);
 
-  // 🌌 STARS
+  // stars
   const starGeo = new THREE.BufferGeometry();
   const starPos = [];
   for(let i=0;i<2000;i++){
     starPos.push((Math.random()-0.5)*200, Math.random()*80, (Math.random()-0.5)*200);
   }
   starGeo.setAttribute('position', new THREE.Float32BufferAttribute(starPos,3));
-  const stars = new THREE.Points(starGeo, new THREE.PointsMaterial({color:0xffffff,size:0.6}));
-  scene.add(stars);
+  scene.add(new THREE.Points(starGeo, new THREE.PointsMaterial({color:0xffffff,size:0.6})));
 
-  // 🌊 OCEAN
+  // ocean
   const ocean = new THREE.Mesh(
     new THREE.PlaneGeometry(600,600),
     new THREE.MeshPhongMaterial({color:0x001a33, shininess:100})
@@ -98,13 +125,13 @@ function init(){
   ocean.rotation.x = -Math.PI/2;
   scene.add(ocean);
 
-  // 💡 LIGHTS
+  // lights
   scene.add(new THREE.AmbientLight(0x222244));
   const mainLight = new THREE.PointLight(0x00aaff,2,120);
   mainLight.position.set(0,15,0);
   scene.add(mainLight);
 
-  // 🧍 PLAYER
+  // player
   player = new THREE.Mesh(
     new THREE.BoxGeometry(1,1,1),
     new THREE.MeshStandardMaterial({color:0xffffff})
@@ -112,20 +139,19 @@ function init(){
   player.position.set(0,0.5,5);
   scene.add(player);
 
-  // 🛥 YACHT (highlighted)
-  const yacht = new THREE.Mesh(
+  // yacht
+  yacht = new THREE.Mesh(
     new THREE.BoxGeometry(4,1.5,10),
     new THREE.MeshStandardMaterial({color:0xffd700, emissive:0x553300})
   );
   yacht.position.set(0,1,-30);
   scene.add(yacht);
 
-  // 🛥 spotlight on yacht
-  const yachtLight = new THREE.PointLight(0xffaa00, 3, 60);
+  const yachtLight = new THREE.PointLight(0xffaa00,3,60);
   yachtLight.position.set(0,5,-30);
   scene.add(yachtLight);
 
-  // 🛣 STREET (path to city)
+  // street
   for(let i=0;i<20;i++){
     let tile = new THREE.Mesh(
       new THREE.BoxGeometry(4,0.1,6),
@@ -135,23 +161,20 @@ function init(){
     scene.add(tile);
   }
 
-  // 🌇 CITY (organized skyline)
+  // city
   for(let i=-5;i<=5;i++){
     for(let j=0;j<6;j++){
-
-      let height = Math.random()*10 + 8;
-
-      let building = new THREE.Mesh(
-        new THREE.BoxGeometry(3,height,3),
+      let h = Math.random()*10+8;
+      let b = new THREE.Mesh(
+        new THREE.BoxGeometry(3,h,3),
         new THREE.MeshStandardMaterial({
           color:0x0a0a1a,
           emissive:0x0000ff,
           emissiveIntensity:0.2 + Math.random()*0.5
         })
       );
-
-      building.position.set(i*6, height/2, -40 - j*10);
-      scene.add(building);
+      b.position.set(i*6, h/2, -40 - j*10);
+      scene.add(b);
     }
   }
 
@@ -171,21 +194,57 @@ function animate(){
     if(keys["a"]) player.position.x -= 0.25;
     if(keys["d"]) player.position.x += 0.25;
 
-    // 🎥 cinematic follow
     camera.position.x += (player.position.x - camera.position.x)*0.06;
     camera.position.z += (player.position.z + 14 - camera.position.z)*0.06;
-    camera.position.y += (6 + Math.sin(Date.now()*0.002)*0.2 - camera.position.y)*0.05;
-
     camera.lookAt(player.position);
+
+    checkYacht();
   }
 
   renderer.render(scene,camera);
+}
+
+function checkYacht(){
+  const dist = Math.sqrt(
+    (player.position.x - yacht.position.x)**2 +
+    (player.position.z - yacht.position.z)**2
+  );
+
+  if(dist < 5){
+    enterVIP();
+  }
 }
 
 function start(){
   document.getElementById("home").style.display="none";
   document.getElementById("status").innerText="LAMBO CITY ONLINE";
   mode="play";
+}
+
+function enterVIP(){
+
+  mode="transition";
+
+  const fade = document.getElementById("fade");
+  fade.style.opacity = 1;
+
+  setTimeout(()=>{
+    document.getElementById("vip").style.display="block";
+    document.getElementById("radio").innerText="RADIO: VIP MODE";
+  },800);
+}
+
+function exitVIP(){
+
+  const fade = document.getElementById("fade");
+  fade.style.opacity = 1;
+
+  setTimeout(()=>{
+    document.getElementById("vip").style.display="none";
+    fade.style.opacity = 0;
+    document.getElementById("radio").innerText="RADIO: AMBIENT";
+    mode="play";
+  },800);
 }
 
 </script>
