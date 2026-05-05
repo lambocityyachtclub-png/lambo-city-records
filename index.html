@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>LAMBO CITY — EXPERIENCE</title>
+<title>LAMBO CITY — V2</title>
 
 <style>
 body { margin:0; overflow:hidden; background:black; font-family:Arial; }
 canvas { display:block; }
 
-#intro, #vipScreen {
+#intro, #vipScreen, #djScreen {
   position:absolute;
   inset:0;
   display:flex;
@@ -63,8 +63,19 @@ LAMBO CITY<br>
 </div>
 
 <div id="vipScreen" style="display:none;">
-WELCOME TO VIP<br>
-<span style="font-size:12px; opacity:0.7;">LAMBO CITY YACHT CLUB</span>
+LAMBO CITY YACHT CLUB<br>
+<span style="font-size:12px; opacity:0.7;">
+PRIVATE ACCESS GRANTED<br>
+PRESS E TO ACTIVATE DJ
+</span>
+</div>
+
+<div id="djScreen" style="display:none;">
+LIVE DJ SET<br>
+<span style="font-size:12px; opacity:0.7;">
+DROP ACTIVE<br>
+WELCOME TO THE ENERGY
+</span>
 </div>
 
 <div id="hud">
@@ -88,11 +99,18 @@ PRESS E TO ENTER BOARDING PASS
 // STATE
 // =========================
 let scene, camera, renderer;
-let player, yacht;
+let player, yacht, vipLight;
 let keys = {};
 let started = false;
 let hasPass = false;
 let inVIP = false;
+let djActive = false;
+
+// AUDIO
+const ambient = new Audio("https://cdn.pixabay.com/audio/2023/03/28/audio_6f3c3b.mp3");
+ambient.loop = true;
+
+const vipSound = new Audio("https://cdn.pixabay.com/audio/2022/10/30/audio_7b0f.mp3");
 
 // =========================
 // WORLD
@@ -111,6 +129,11 @@ scene.add(new THREE.AmbientLight(0x1a1a2a, 1.2));
 const light = new THREE.PointLight(0x00aaff, 2.5);
 light.position.set(0,6,5);
 scene.add(light);
+
+// VIP FLASH LIGHT
+vipLight = new THREE.PointLight(0xffd700, 0);
+vipLight.position.set(0,3,-15);
+scene.add(vipLight);
 
 // PLAYER
 player = new THREE.Mesh(
@@ -164,18 +187,27 @@ document.addEventListener("keydown",e=>{
 
   if(e.key.toLowerCase() === "e"){
 
-    // GET BOARDING PASS
+    // GET PASS
     if(!hasPass){
       hasPass = true;
       document.getElementById("centerUI").innerHTML = "ACCESS GRANTED — PROCEED TO DOCK";
       document.getElementById("hud").innerHTML = "ZONE: CABIN<br>STATUS: ACCESS GRANTED";
     }
 
-    // ENTER YACHT
+    // ENTER VIP
     let dist = player.position.distanceTo(yacht.position);
-    if(hasPass && dist < 3){
+    if(hasPass && dist < 3 && !inVIP){
       inVIP = true;
       document.getElementById("vipScreen").style.display = "flex";
+      vipSound.play();
+      ambient.pause();
+    }
+
+    // DJ MODE
+    if(inVIP && !djActive){
+      djActive = true;
+      document.getElementById("vipScreen").style.display = "none";
+      document.getElementById("djScreen").style.display = "flex";
     }
   }
 
@@ -189,6 +221,7 @@ document.addEventListener("keyup",e=>{
 setTimeout(()=>{
   document.getElementById("intro").style.display = "none";
   started = true;
+  ambient.play();
 },2500);
 
 // =========================
@@ -200,18 +233,15 @@ function animate(){
 
   if(started && !inVIP){
 
-    // MOVE
     if(keys["w"]) player.position.z -= 0.08;
     if(keys["s"]) player.position.z += 0.08;
     if(keys["a"]) player.position.x -= 0.08;
     if(keys["d"]) player.position.x += 0.08;
 
-    // CAMERA
     camera.position.x += (player.position.x - camera.position.x)*0.06;
     camera.position.z += (player.position.z + 5 - camera.position.z)*0.06;
     camera.lookAt(player.position);
 
-    // PROMPT
     let dist = player.position.distanceTo(yacht.position);
 
     if(hasPass && dist < 3){
@@ -220,6 +250,11 @@ function animate(){
     } else {
       document.getElementById("prompt").style.display = "none";
     }
+  }
+
+  // VIP LIGHT PULSE
+  if(inVIP){
+    vipLight.intensity = 2 + Math.sin(Date.now()*0.01) * 1.5;
   }
 
   renderer.render(scene,camera);
