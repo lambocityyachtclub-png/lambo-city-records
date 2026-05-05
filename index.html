@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LAMBO CITY — YACHT CLUB LIVE</title>
+<title>LAMBO CITY — INTERACTIVE CLUB</title>
 
 <style>
 body { margin:0; overflow:hidden; background:black; font-family:Arial; }
@@ -33,7 +33,7 @@ canvas { display:block; }
 <body>
 
 <div id="ui">ZONE: CABIN</div>
-<div id="prompt">PRESS E / TAP</div>
+<div id="prompt">INTERACT</div>
 
 <canvas id="c"></canvas>
 
@@ -109,59 +109,53 @@ yacht.position.set(0,2,-60);
 yacht.visible = false;
 scene.add(yacht);
 
-// 🎧 MUSIC
-const music = new Audio("https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c8a3c5c4.mp3");
-music.loop = true;
-music.volume = 0.5;
+// 🎧 MUSIC TRACKS
+let tracks = [
+  new Audio("https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c8a3c5c4.mp3"),
+  new Audio("https://cdn.pixabay.com/download/audio/2022/03/14/audio_1f7cdb.mp3")
+];
+let currentTrack = 0;
+tracks.forEach(t=>{ t.loop=true; t.volume=0.5; });
 
-// 🎉 CROWD
+// 📺 SCREEN
+let screen = new THREE.Mesh(
+  new THREE.BoxGeometry(6,3,0.2),
+  new THREE.MeshStandardMaterial({color:0x00aaff})
+);
+screen.position.set(0,3,-55);
+screen.visible = false;
+scene.add(screen);
+
+// 🛍 MERCH
+let merch = new THREE.Mesh(
+  new THREE.BoxGeometry(3,3,3),
+  new THREE.MeshStandardMaterial({color:0xff0000})
+);
+merch.position.set(-6,1.5,-60);
+merch.visible = false;
+scene.add(merch);
+
+// 🎛 RADIO
+let radio = new THREE.Mesh(
+  new THREE.BoxGeometry(2,1,1),
+  new THREE.MeshStandardMaterial({color:0xffff00})
+);
+radio.position.set(6,1,-60);
+radio.visible = false;
+scene.add(radio);
+
+// CROWD
 let crowd = [];
-for(let i=0;i<25;i++){
+for(let i=0;i<20;i++){
   let p = new THREE.Mesh(
     new THREE.BoxGeometry(0.5,1,0.5),
     new THREE.MeshStandardMaterial({color:0xffffff})
   );
-  p.position.set(
-    (Math.random()-0.5)*10,
-    0.5,
-    -60 + (Math.random()-0.5)*10
-  );
+  p.position.set((Math.random()-0.5)*10,0.5,-60+(Math.random()-0.5)*10);
   p.visible = false;
   scene.add(p);
   crowd.push(p);
 }
-
-// 💡 CLUB LIGHTS
-let lights = [];
-
-for(let i=0;i<6;i++){
-  let l = new THREE.PointLight(0x00aaff, 2, 30);
-  l.position.set((i-3)*3,3,-60);
-  l.visible = false;
-  scene.add(l);
-  lights.push(l);
-}
-
-// ✨ PARTICLES
-let geo = new THREE.BufferGeometry();
-let arr = [];
-
-for(let i=0;i<800;i++){
-  arr.push(
-    (Math.random()-0.5)*80,
-    Math.random()*20,
-    -60 + (Math.random()-0.5)*40
-  );
-}
-
-geo.setAttribute("position", new THREE.Float32BufferAttribute(arr,3));
-
-let particles = new THREE.Points(
-  geo,
-  new THREE.PointsMaterial({color:0xffffff, size:0.3})
-);
-particles.visible = false;
-scene.add(particles);
 
 // INPUT
 let keys = {};
@@ -175,36 +169,55 @@ document.addEventListener("keyup", e=>{
   keys[e.key.toLowerCase()] = false;
 });
 
-document.addEventListener("click", ()=> music.play());
+document.addEventListener("click", ()=> interact());
 
-// INTERACT
+// INTERACT SYSTEM
 function interact(){
 
-let dist = player.position.distanceTo(door.position);
-
-if(dist < 3 && !inDock){
+// ENTER DOCK
+if(!inDock && player.position.distanceTo(door.position) < 3){
 
   inDock = true;
 
-  // hide cabin
   scene.children.forEach(obj=>{
-    if(obj !== player && obj !== dock && obj !== yacht && !crowd.includes(obj) && !lights.includes(obj) && obj !== particles){
+    if(obj !== player && obj !== dock && obj !== yacht &&
+       obj !== screen && obj !== merch && obj !== radio &&
+       !crowd.includes(obj)){
       obj.visible = false;
     }
   });
 
   dock.visible = true;
   yacht.visible = true;
+  screen.visible = true;
+  merch.visible = true;
+  radio.visible = true;
 
   crowd.forEach(p=> p.visible = true);
-  lights.forEach(l=> l.visible = true);
-  particles.visible = true;
 
   player.position.set(0,1,-30);
-
   document.getElementById("ui").innerText = "ZONE: YACHT CLUB";
 
-  music.play();
+  tracks[0].play();
+  return;
+}
+
+// RADIO
+if(player.position.distanceTo(radio.position) < 3){
+  tracks[currentTrack].pause();
+  currentTrack = (currentTrack + 1) % tracks.length;
+  tracks[currentTrack].play();
+  document.getElementById("ui").innerText = "RADIO SWITCHED";
+}
+
+// SCREEN
+if(player.position.distanceTo(screen.position) < 4){
+  document.getElementById("ui").innerText = "SCREEN ACTIVE (LINK YOUR TWITCH)";
+}
+
+// MERCH
+if(player.position.distanceTo(merch.position) < 3){
+  document.getElementById("ui").innerText = "MERCH STORE OPEN (CONNECT SITE)";
 }
 
 }
@@ -224,19 +237,20 @@ camera.position.x += (player.position.x - camera.position.x)*0.05;
 camera.position.z += (player.position.z + 5 - camera.position.z)*0.05;
 camera.lookAt(player.position);
 
-// 🎉 CROWD ANIMATION
+// CROWD MOVE
 crowd.forEach(p=>{
   p.position.y = 0.5 + Math.sin(Date.now()*0.005)*0.2;
 });
 
-// 💡 LIGHT ANIMATION
-lights.forEach((l,i)=>{
-  l.intensity = 2 + Math.sin(Date.now()*0.003 + i)*1.5;
-});
-
 // PROMPT
-let dist = player.position.distanceTo(door.position);
-document.getElementById("prompt").style.display = (!inDock && dist < 3) ? "block" : "none";
+let near = (
+  player.position.distanceTo(door.position) < 3 ||
+  player.position.distanceTo(radio.position) < 3 ||
+  player.position.distanceTo(merch.position) < 3 ||
+  player.position.distanceTo(screen.position) < 4
+);
+
+document.getElementById("prompt").style.display = near ? "block" : "none";
 
 renderer.render(scene,camera);
 
