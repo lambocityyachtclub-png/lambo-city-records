@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LAMBO CITY YACHT CLUB</title>
+<title>LAMBO CITY — LIVE WORLD</title>
 
 <style>
 body { margin:0; overflow:hidden; background:black; font-family:Arial; }
@@ -36,13 +36,22 @@ canvas { display:block; }
 <button onclick="enterWorld()">ENTER WORLD</button>
 </div>
 
-<div id="ui">CABIN → DOCK → YACHT CLUB</div>
+<div id="ui">CABIN → DOCK → YACHT</div>
 
 <canvas id="c"></canvas>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
 <script>
+
+// 🔗 YOUR REAL LINKS (EDIT THESE)
+const STREAM_LINK = "https://lambocityrecords.com";
+const MERCH_LINK = "https://lambocityrecords.com";
+const MUSIC_URL = "https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c8a3c5c4.mp3";
+
+// AUDIO
+let music = new Audio(MUSIC_URL);
+music.loop = true;
 
 // SCENE
 let scene = new THREE.Scene();
@@ -55,7 +64,6 @@ camera.position.set(0,3,8);
 let renderer = new THREE.WebGLRenderer({canvas:c});
 renderer.setSize(innerWidth, innerHeight);
 
-// LIGHT
 scene.add(new THREE.AmbientLight(0xffffff,1.2));
 
 // PLAYER
@@ -108,7 +116,7 @@ scene.add(farYacht);
 
 // ================= CONTROL OBJECTS =================
 
-// SCREEN
+// SCREEN (STREAM)
 let screen=new THREE.Mesh(
   new THREE.BoxGeometry(4,2,0.2),
   new THREE.MeshStandardMaterial({color:0x00aaff})
@@ -116,7 +124,7 @@ let screen=new THREE.Mesh(
 screen.position.set(0,3,6);
 scene.add(screen);
 
-// RADIO
+// RADIO (MUSIC)
 let radio=new THREE.Mesh(
   new THREE.BoxGeometry(2,1,1),
   new THREE.MeshStandardMaterial({color:0xffff00})
@@ -124,7 +132,7 @@ let radio=new THREE.Mesh(
 radio.position.set(-5,1,4);
 scene.add(radio);
 
-// MERCH
+// MERCH (STORE)
 let merch=new THREE.Mesh(
   new THREE.BoxGeometry(2,2,2),
   new THREE.MeshStandardMaterial({color:0xff0000})
@@ -151,8 +159,7 @@ water.rotation.x=-Math.PI/2;
 water.position.y=-1;
 scene.add(water);
 
-// REAL ESTATE CABINS (10)
-let properties=[];
+// PROPERTIES
 for(let i=0;i<5;i++){
   for(let side=-1;side<=1;side+=2){
     let p=new THREE.Mesh(
@@ -161,11 +168,10 @@ for(let i=0;i<5;i++){
     );
     p.position.set(side*10,2,-40-(i*20));
     scene.add(p);
-    properties.push(p);
   }
 }
 
-// MAIN YACHT
+// YACHT
 let yacht=new THREE.Mesh(
   new THREE.BoxGeometry(40,10,20),
   new THREE.MeshStandardMaterial({color:0x333366})
@@ -181,22 +187,35 @@ let stage=new THREE.Mesh(
 stage.position.set(0,1,-150);
 scene.add(stage);
 
-// CROWD
-let crowd=[];
-for(let i=0;i<40;i++){
-  let p=new THREE.Mesh(
-    new THREE.BoxGeometry(0.6,1.2,0.6),
-    new THREE.MeshStandardMaterial({color:0xffffff})
-  );
-  p.position.set((Math.random()-0.5)*30,0.6,-150+(Math.random()-0.5)*20);
-  scene.add(p);
-  crowd.push(p);
-}
-
 // INPUT
 let keys={};
-document.addEventListener("keydown",e=>keys[e.key.toLowerCase()]=true);
-document.addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
+
+document.addEventListener("keydown",e=>{
+  keys[e.key.toLowerCase()]=true;
+
+  // 🔥 INTERACTIONS
+  if(e.key.toLowerCase()==="e"){
+
+    if(player.position.distanceTo(screen.position)<3){
+      window.open(STREAM_LINK,"_blank");
+    }
+
+    if(player.position.distanceTo(radio.position)<3){
+      music.currentTime=0;
+      music.play();
+    }
+
+    if(player.position.distanceTo(merch.position)<3){
+      window.open(MERCH_LINK,"_blank");
+    }
+
+  }
+
+});
+
+document.addEventListener("keyup",e=>{
+  keys[e.key.toLowerCase()]=false;
+});
 
 function enterWorld(){
   document.getElementById("start").style.display="none";
@@ -229,18 +248,13 @@ water.position.z=Math.sin(Date.now()*0.001)*1;
 farYacht.rotation.y+=0.0005;
 yacht.rotation.y+=0.001;
 
-// CROWD MOVE
-crowd.forEach(p=>{
-  p.position.x+=Math.sin(Date.now()*0.001+p.position.z)*0.01;
-});
-
-// UI CHANGE
+// UI
 if(player.position.z < -120){
-  document.getElementById("ui").innerText="DOCK LIFE — PROPERTIES — EVENTS";
+  document.getElementById("ui").innerText="DOCK — SOCIAL WORLD";
 }
 
 if(player.position.z < -170){
-  document.getElementById("ui").innerText="YACHT CLUB — VIP ACCESS";
+  document.getElementById("ui").innerText="YACHT CLUB — VIP";
 }
 
 renderer.render(scene,camera);
