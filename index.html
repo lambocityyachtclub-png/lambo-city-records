@@ -1,123 +1,101 @@
-// ===============================
-// LAMBO CITY — SYSTEM CORE (PHASE 7.5)
-// ===============================
+let audioContext;
+let masterGain;
+let noiseNode;
 
-// 🎮 CORE STATE
-const GameState = {
-  currentZone: "cabin",
-  playerState: "idle",
-  isTransitioning: false
-};
+function initAudio(){
 
-// 🧍 PLAYER SYSTEM
-const Player = {
-  velocity: { x: 0, z: 0 },
-  speed: 0.1,
-  position: null
-};
+  audioContext = new (window.AudioContext || window.webkitAudioContext)();
 
-// 🌍 WORLD SYSTEM
-const World = {
-  yachtFocus: null,
-  dockActive: false
-};
+  masterGain = audioContext.createGain();
+  masterGain.gain.value = 0.05;
+  masterGain.connect(audioContext.destination);
 
-// 🎮 INPUT SYSTEM
-const Input = {
-  keys: {}
-};
+  // simple noise generator (ambient base layer)
+  const bufferSize = 2 * audioContext.sampleRate;
+  const noiseBuffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
+  const output = noiseBuffer.getChannelData(0);
 
-document.addEventListener("keydown", e => {
-  Input.keys[e.key.toLowerCase()] = true;
-});
-
-document.addEventListener("keyup", e => {
-  Input.keys[e.key.toLowerCase()] = false;
-});
-
-// ===============================
-// PLAYER UPDATE SYSTEM
-// ===============================
-function updatePlayer() {
-
-  let targetX = 0;
-  let targetZ = 0;
-
-  if (Input.keys["w"]) targetZ -= Player.speed;
-  if (Input.keys["s"]) targetZ += Player.speed;
-  if (Input.keys["a"]) targetX -= Player.speed;
-  if (Input.keys["d"]) targetX += Player.speed;
-
-  Player.velocity.x += (targetX - Player.velocity.x) * 0.2;
-  Player.velocity.z += (targetZ - Player.velocity.z) * 0.2;
-
-  player.position.x += Player.velocity.x;
-  player.position.z += Player.velocity.z;
-
-  Player.position = player.position;
-}
-
-// ===============================
-// CAMERA SYSTEM
-// ===============================
-function updateCamera() {
-  camera.position.x += (player.position.x - camera.position.x) * 0.05;
-  camera.position.z += (player.position.z + 5 - camera.position.z) * 0.05;
-  camera.lookAt(player.position);
-}
-
-// ===============================
-// GAME STATE SYSTEM
-// ===============================
-function updateGameState() {
-
-  let dist = Math.hypot(player.position.x, player.position.z + 6);
-
-  if (GameState.currentZone === "cabin" && dist < 2.5) {
-    document.getElementById("prompt").style.display = "block";
-  } else {
-    document.getElementById("prompt").style.display = "none";
+  for (let i = 0; i < bufferSize; i++) {
+    output[i] = (Math.random() * 2 - 1) * 0.3;
   }
 
-  document.getElementById("zone").innerText =
-    "ZONE: " + GameState.currentZone.toUpperCase();
+  noiseNode = audioContext.createBufferSource();
+  noiseNode.buffer = noiseBuffer;
+  noiseNode.loop = true;
 
-  document.getElementById("state").innerText =
-    "STATE: " + GameState.playerState.toUpperCase();
+  const filter = audioContext.createBiquadFilter();
+  filter.type = "lowpass";
+  filter.frequency.value = 800;
+
+  noiseNode.connect(filter);
+  filter.connect(masterGain);
+
+  noiseNode.start();
 }
 
 // ===============================
-// TRANSITION SYSTEM
+// AUDIO STATE SYSTEM
 // ===============================
-function enterDock() {
+function updateAudio(){
 
-  if (GameState.isTransitioning) return;
+  if(!audioContext) return;
 
-  GameState.isTransitioning = true;
+  let speed = Math.abs(Player.velocity.x) + Math.abs(Player.velocity.z);
 
-  document.getElementById("fade").style.opacity = 1;
+  let zone = GameState.currentZone;
 
-  setTimeout(() => {
+  if(zone === "cabin"){
+    masterGain.gain.value = 0.04 + Math.sin(Date.now()*0.001)*0.01;
+  }
 
-    GameState.currentZone = "dock";
+  if(zone === "dock"){
+    masterGain.gain.value = 0.07 + speed * 0.2;
+  }
 
-    document.getElementById("fade").style.opacity = 0;
-
-    GameState.isTransitioning = false;
-
-  }, 1000);
+  if(zone === "yacht"){
+    masterGain.gain.value = 0.1 + Math.sin(Date.now()*0.002)*0.05;
+  }
 }
 
 // ===============================
-// MAIN LOOP CLEAN STRUCTURE
+// VISUAL ATMOSPHERE SYSTEM
 // ===============================
-function gameLoop() {
+function updateAtmosphere(){
+
+  let speed = Math.abs(Player.velocity.x) + Math.abs(Player.velocity.z);
+
+  // fog breathing effect
+  scene.fog.density = 0.03 + Math.sin(Date.now()*0.0005)*0.002;
+
+  // subtle camera float (alive feeling)
+  camera.position.y = 2.5 + Math.sin(Date.now()*0.001)*0.05;
+
+  // motion intensity feel
+  if(speed > 0.01){
+    document.getElementById("state").style.opacity = 1;
+  } else {
+    document.getElementById("state").style.opacity = 0.8;
+  }
+}
+
+// ===============================
+// UPDATED GAME LOOP
+// ===============================
+function gameLoop(){
 
   requestAnimationFrame(gameLoop);
 
   updatePlayer();
   updateCamera();
   updateGameState();
+  updateAudio();
+  updateAtmosphere();
 
   renderer.render(scene, camera);
 }
+
+// ===============================
+// START GAME
+// ===============================
+initAudio();
+gameLoop();
