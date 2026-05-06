@@ -75,10 +75,9 @@ scene.add(light);
 // 2. PLAYER SYSTEM
 /////////////////////////////////////////////////////
 
-const player = new THREE.Mesh(
-new THREE.BoxGeometry(1,1.8,1),
-new THREE.MeshStandardMaterial({color:0xffffff})
-);
+const music = new Audio("https://cdn.pixabay.com/download/audio/2022/03/15/audio_115b9b7d3c.mp3");
+music.loop = true;
+music.volume = 0.5;
 scene.add(player);
 player.position.set(0,1,20);
 
@@ -92,8 +91,9 @@ function start(){
 document.getElementById("start").style.display="none";
 started = true;
 document.getElementById("zone").innerText="WELCOME TO LAMBO CITY";
-}
 
+music.play();
+}
 /////////////////////////////////////////////////////
 // 3. WORLD ASSETS
 /////////////////////////////////////////////////////
