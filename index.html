@@ -423,14 +423,12 @@ if(!started) return;
 
 move();
 updateCamera();
+updateStageEnergy(); // 🔥 ADD THIS LINE
 
 stars.rotation.y += 0.0003;
 
 renderer.render(scene,camera);
 }
-
-animate();
-
 </script>
 
 </body>
