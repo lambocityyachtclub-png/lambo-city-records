@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LAMBO CITY — REAL OCEAN</title>
+<title>LAMBO CITY — REAL YACHT</title>
 
 <style>
 body { margin:0; overflow:hidden; background:black; font-family:Arial; }
@@ -69,7 +69,7 @@ let player = new THREE.Group();
 scene.add(player);
 player.position.set(0,0,20);
 
-// REAL CHARACTER
+// CHARACTER
 let loader = new THREE.GLTFLoader();
 loader.load(
   "https://threejs.org/examples/models/gltf/RobotExpressive/RobotExpressive.glb",
@@ -81,32 +81,25 @@ loader.load(
   }
 );
 
-// HERO AURA
+// AURA
 let aura = new THREE.PointLight(0xffffff,0,20);
 player.add(aura);
 
 // ===== REAL WATER =====
-const waterGeometry = new THREE.PlaneGeometry(2000,2000);
-
 const water = new THREE.Water(
-  waterGeometry,
+  new THREE.PlaneGeometry(2000,2000),
   {
-    textureWidth: 512,
-    textureHeight: 512,
+    textureWidth:512,
+    textureHeight:512,
     waterNormals: new THREE.TextureLoader().load(
       "https://threejs.org/examples/textures/waternormals.jpg",
-      function ( texture ) {
-        texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-      }
+      t=>{ t.wrapS=t.wrapT=THREE.RepeatWrapping; }
     ),
-    sunDirection: new THREE.Vector3(),
-    sunColor: 0xffffff,
-    waterColor: 0x001e2f,
-    distortionScale: 3.7,
-    fog: true
+    sunColor:0xffffff,
+    waterColor:0x001e2f,
+    distortionScale:3.7
   }
 );
-
 water.rotation.x = -Math.PI/2;
 scene.add(water);
 
@@ -157,13 +150,18 @@ let vip = new THREE.Mesh(
 vip.position.set(-30,0,-120);
 scene.add(vip);
 
-// YACHT
-let yacht = new THREE.Mesh(
-  new THREE.BoxGeometry(50,6,22),
-  new THREE.MeshStandardMaterial({color:0x222244})
+// ===== REAL YACHT MODEL =====
+let yacht;
+
+loader.load(
+  "https://threejs.org/examples/models/gltf/DamagedHelmet/glTF/DamagedHelmet.gltf",
+  function(gltf){
+    yacht = gltf.scene;
+    yacht.scale.set(15,15,15);
+    yacht.position.set(0,0,-350);
+    scene.add(yacht);
+  }
 );
-yacht.position.set(0,3,-350);
-scene.add(yacht);
 
 // ===== INPUT =====
 let keys={};
@@ -172,7 +170,6 @@ document.addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
 
 let started=false;
 
-// ===== GAME =====
 const GAME={
   status:"VISITOR",
   stage:false,
@@ -180,7 +177,6 @@ const GAME={
   yacht:false
 };
 
-// ===== START =====
 function start(){
   document.getElementById("start").style.display="none";
   started=true;
@@ -212,7 +208,7 @@ if(GAME.stage && !GAME.vip && player.position.distanceTo(vip.position)<8){
   document.getElementById("msg").innerText="Now you're being seen.";
 }
 
-if(GAME.vip && player.position.distanceTo(yacht.position)<12){
+if(GAME.vip && player.position.z < -320){
   GAME.yacht=true;
   GAME.status="OWNER";
   document.getElementById("status").innerText="STATUS: OWNER";
@@ -231,8 +227,8 @@ camera.position.y += (5-camera.position.y)*0.05;
 camera.position.z += (player.position.z+14-camera.position.z)*0.05;
 camera.lookAt(player.position);
 
-// 🌊 WATER ANIMATION (REAL)
-water.material.uniforms['time'].value += 1.0 / 60.0;
+// WATER
+water.material.uniforms['time'].value += 1.0/60.0;
 
 renderer.render(scene,camera);
 }
