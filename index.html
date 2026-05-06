@@ -6,7 +6,7 @@
 
 <style>
 body { margin:0; overflow:hidden; background:black; }
-canvas { display:block; }
+canvas { display:block; } 
 
 #start {
 position:absolute; inset:0;
@@ -48,9 +48,10 @@ display:none;
 <button onclick="start()">ENTER WORLD</button>
 </div>
 
-<div id="ui">WASD MOVE • E ENTER / EXIT CABIN</div>
-<div id="zone">INITIALIZING...</div>
-<div id="msg">INTERIOR MODE</div>
+<div id="ui">
+WASD MOVE • E ENTER / EXIT CABIN<br>
+COINS: <span id="coins">0</span>
+</div>
 
 <canvas id="c"></canvas>
 
@@ -118,8 +119,11 @@ const WORLD_LIMIT = 120;
 
 let coins = 0;
 
-const Economy = {
+function updateHUD(){
+  document.getElementById("coins").innerText = coins;
+}
 
+const Economy = {
   getBalance: () => coins,
 
   earn: (amount) => {
