@@ -254,6 +254,30 @@ createCabin(20,-20-(i*25));
 }
 
 /////////////////////////////////////////////////////
+// 👥 CROWD SYSTEM (SAFE)
+/////////////////////////////////////////////////////
+
+const crowd = [];
+const crowdBaseY = [];
+
+for(let i=0;i<30;i++){
+
+  const npc = new THREE.Mesh(
+    new THREE.BoxGeometry(0.6,1.2,0.6),
+    new THREE.MeshStandardMaterial({color:0xffffff})
+  );
+
+  npc.position.set(
+    -15 + (Math.random()-0.5)*15,
+    0.6,
+    -80 + (Math.random()-0.5)*10
+  );
+
+  scene.add(npc);
+  crowd.push(npc);
+  crowdBaseY.push(npc.position.y);
+}
+/////////////////////////////////////////////////////
 // 🎮 CABIN SYSTEM
 /////////////////////////////////////////////////////
 
