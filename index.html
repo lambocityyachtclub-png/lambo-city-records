@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LAMBO CITY — FINAL BUILD</title>
+<title>LAMBO CITY — FINAL EXECUTION</title>
 
 <style>
 body { margin:0; overflow:hidden; background:black; font-family:Arial; }
@@ -57,8 +57,8 @@ canvas { display:block; }
 </div>
 
 <div id="ui">🏠 Cabin → 🌉 Dock → 🎤 Stage → 🚤 Yacht</div>
-<div id="zone">LOADING WORLD</div>
-<div id="hint">WALK FORWARD</div>
+<div id="zone">INITIALIZING</div>
+<div id="hint">MOVE FORWARD</div>
 
 <canvas id="c"></canvas>
 
@@ -85,32 +85,28 @@ light.position.set(0,5,5);
 scene.add(light);
 
 /////////////////////////////////////////////////////
-// 🧍 PLAYER (FIXED — NOT JUST A CUBE FEEL)
+// 🧍 PLAYER (UPGRADED IDENTITY)
 /////////////////////////////////////////////////////
 
 let player = new THREE.Group();
 
-// body
 let body = new THREE.Mesh(
   new THREE.BoxGeometry(0.8,1.2,0.5),
   new THREE.MeshStandardMaterial({color:0xffffff})
 );
 body.position.y = 0.6;
 
-// head
 let head = new THREE.Mesh(
   new THREE.SphereGeometry(0.35,16,16),
   new THREE.MeshStandardMaterial({color:0xffffff})
 );
 head.position.y = 1.4;
 
-// simple “identity aura”
 let aura = new THREE.Mesh(
   new THREE.RingGeometry(0.6,0.9,32),
   new THREE.MeshBasicMaterial({color:0x00aaff, side:THREE.DoubleSide})
 );
 aura.rotation.x = Math.PI/2;
-aura.position.y = 0.05;
 
 player.add(body);
 player.add(head);
@@ -131,7 +127,7 @@ dock.position.set(0,-0.5,-140);
 scene.add(dock);
 
 /////////////////////////////////////////////////////
-// 🏠 10 CABINS (REAL ESTATE)
+// 🏠 10 CABINS (REAL ESTATE SYSTEM)
 /////////////////////////////////////////////////////
 
 for(let i=0;i<10;i++){
@@ -148,7 +144,7 @@ for(let i=0;i<10;i++){
 }
 
 /////////////////////////////////////////////////////
-// 🎤 STAGE (LEFT SIDE)
+// 🎤 STAGE (LEFT SIDE PROGRESSION POINT)
 /////////////////////////////////////////////////////
 
 let stage = new THREE.Mesh(
@@ -159,7 +155,7 @@ stage.position.set(-30,1,-90);
 scene.add(stage);
 
 /////////////////////////////////////////////////////
-// 🚤 YACHT
+// 🚤 YACHT (END GAME)
 /////////////////////////////////////////////////////
 
 let yacht = new THREE.Mesh(
@@ -187,19 +183,22 @@ scene.add(water);
 
 const starGeo = new THREE.BufferGeometry();
 let arr=[];
+
 for(let i=0;i<2500;i++){
   arr.push((Math.random()-0.5)*800,Math.random()*300,(Math.random()-0.5)*800);
 }
+
 starGeo.setAttribute("position",new THREE.Float32BufferAttribute(arr,3));
 
 let stars = new THREE.Points(
   starGeo,
   new THREE.PointsMaterial({color:0xffffff,size:0.8})
 );
+
 scene.add(stars);
 
 /////////////////////////////////////////////////////
-// 🎮 STATE
+// 🎮 SYSTEM STATE
 /////////////////////////////////////////////////////
 
 let keys = {};
@@ -212,29 +211,35 @@ document.addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
 function start(){
   document.getElementById("start").style.display="none";
   inWorld=true;
+
+  // HERO onboarding moment
+  setTimeout(()=>{
+    document.getElementById("zone").innerText = "HERO: Welcome to LAMBO CITY";
+  },800);
 }
 
 /////////////////////////////////////////////////////
-// 🎯 STAGE TRIGGER
+// 🎯 STAGE TRIGGER (VIP SYSTEM)
 /////////////////////////////////////////////////////
 
 function checkStage(){
   if(player.position.distanceTo(stage.position)<6 && !hasPass){
     hasPass = true;
-    document.getElementById("zone").innerText = "🎟 STAGE PASS EARNED";
+    document.getElementById("zone").innerText = "🎟 STAGE PASS UNLOCKED";
 
     setTimeout(()=>{
-      alert("HERO: Welcome to VIP Networking Access.");
-    },500);
+      alert("VIP NETWORK ACCESS GRANTED");
+    },400);
   }
 }
 
 /////////////////////////////////////////////////////
-// 🎬 LOOP
+// 🎬 MAIN LOOP
 /////////////////////////////////////////////////////
 
 function animate(){
 requestAnimationFrame(animate);
+
 if(!inWorld) return;
 
 // movement
@@ -246,7 +251,7 @@ if(keys["d"]) player.position.x += 0.15;
 // stage logic
 checkStage();
 
-// camera (cinematic follow)
+// camera follow (cinematic)
 camera.position.x += (player.position.x-camera.position.x)*0.06;
 camera.position.y += (3-camera.position.y)*0.05;
 camera.position.z += (player.position.z+10-camera.position.z)*0.06;
