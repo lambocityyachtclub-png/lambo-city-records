@@ -227,10 +227,17 @@ if(keys["a"]) player.position.x -= 0.2;
 if(keys["d"]) player.position.x += 0.2;
 
 // CAMERA FOLLOW
+// CAMERA FOLLOW
 camera.position.x += (player.position.x - camera.position.x)*0.06;
 camera.position.y += (6 - camera.position.y)*0.05;
 camera.position.z += (player.position.z + 10 - camera.position.z)*0.06;
 camera.lookAt(player.position);
+
+// WORLD ANIMATION
+stars.rotation.y += 0.0003;
+
+// UI
+updateUI();
 
 // WORLD ANIMATION
 stars.rotation.y += 0.0003;
