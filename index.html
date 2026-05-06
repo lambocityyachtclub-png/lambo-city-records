@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LAMBO CITY — HERO SYSTEM</title>
+<title>LAMBO CITY — FINAL WORLD</title>
 
 <style>
 body { margin:0; overflow:hidden; background:black; font-family:Arial; }
@@ -14,8 +14,6 @@ canvas { display:block; }
   flex-direction:column; z-index:1000;
 }
 
-#ui { position:absolute; top:20px; left:20px; color:white; }
-
 #msg {
   position:absolute; bottom:40px; left:50%;
   transform:translateX(-50%);
@@ -24,7 +22,7 @@ canvas { display:block; }
   background:rgba(0,0,0,0.6);
 }
 
-#status {
+#vipNotice {
   position:absolute; bottom:90px; left:50%;
   transform:translateX(-50%);
   color:#00ffff;
@@ -41,15 +39,6 @@ canvas { display:block; }
   padding:8px 12px;
   display:none;
 }
-
-/* NAME TAG */
-#nameTag {
-  position:absolute;
-  color:white;
-  font-size:12px;
-  text-align:center;
-  pointer-events:none;
-}
 </style>
 </head>
 
@@ -60,15 +49,9 @@ canvas { display:block; }
   <button onclick="start()">ENTER</button>
 </div>
 
-<div id="ui">W A S D TO MOVE</div>
 <div id="msg">I brought you here.</div>
-<div id="status"></div>
-<div id="locked">ACCESS DENIED</div>
-
-<div id="nameTag">
-  <div style="font-weight:bold;">HERO</div>
-  <div style="font-size:10px; color:#aaa;">Founder — LAMBO CITY</div>
-</div>
+<div id="vipNotice">VIP ACCESS UNLOCKED</div>
+<div id="locked">YACHT ACCESS REQUIRED</div>
 
 <canvas id="c"></canvas>
 
@@ -76,7 +59,7 @@ canvas { display:block; }
 
 <script>
 
-// SCENE
+// ================= BASIC =================
 let scene = new THREE.Scene();
 scene.background = new THREE.Color(0x000000);
 
@@ -86,54 +69,28 @@ renderer.setSize(innerWidth, innerHeight);
 
 scene.add(new THREE.AmbientLight(0xffffff,1.2));
 
-// ================= CHARACTER =================
-let player = new THREE.Group();
-
-// BODY
-let torso = new THREE.Mesh(
-  new THREE.BoxGeometry(1,1.5,0.5),
-  new THREE.MeshStandardMaterial({color:0xdddddd})
-);
-torso.position.y = 1.2;
-
-// HEAD
-let head = new THREE.Mesh(
-  new THREE.BoxGeometry(0.6,0.6,0.6),
-  new THREE.MeshStandardMaterial({color:0xffe0bd})
-);
-head.position.y = 2.2;
-
-// LEGS
-let legL = new THREE.Mesh(
-  new THREE.BoxGeometry(0.3,1,0.3),
+// ================= PLAYER =================
+let player = new THREE.Mesh(
+  new THREE.BoxGeometry(1,1,1),
   new THREE.MeshStandardMaterial({color:0xffffff})
 );
-let legR = legL.clone();
-
-legL.position.set(-0.2,0.5,0);
-legR.position.set(0.2,0.5,0);
-
-player.add(torso, head, legL, legR);
 scene.add(player);
 
-// 👑 FOUNDER AURA (subtle luxury)
-let aura = new THREE.Mesh(
-  new THREE.RingGeometry(1.2,1.5,32),
-  new THREE.MeshBasicMaterial({color:0xffd700, side:THREE.DoubleSide})
-);
-aura.rotation.x = -Math.PI/2;
-aura.position.y = 0.05;
-aura.opacity = 0.4;
-aura.transparent = true;
-player.add(aura);
+// ================= STATE =================
+let keys={},inWorld=false;
+let hasVIP=false;
 
-// ================= ROOM =================
-let room = new THREE.Mesh(
-  new THREE.BoxGeometry(12,6,12),
-  new THREE.MeshStandardMaterial({color:0x111111, side:THREE.BackSide})
-);
-room.position.set(-35,3,20);
-scene.add(room);
+// ================= VOICE =================
+function speak(text){
+  document.getElementById("msg").innerText=text;
+}
+
+// ================= START =================
+function start(){
+  document.getElementById("start").style.display="none";
+  inWorld=true;
+  player.position.set(-35,0.5,20);
+}
 
 // ================= WORLD =================
 
@@ -168,24 +125,19 @@ dock.position.set(0,-0.5,-120);
 scene.add(dock);
 
 // CABINS
-function createCabin(x,z,isKing=false){
-  let size = isKing?14:8;
-  let base = new THREE.Mesh(
-    new THREE.BoxGeometry(size,5,size),
-    new THREE.MeshStandardMaterial({color:isKing?0x222244:0x111111})
+function cabin(x,z){
+  let c = new THREE.Mesh(
+    new THREE.BoxGeometry(10,5,10),
+    new THREE.MeshStandardMaterial({color:0x111111})
   );
-  base.position.set(x,2.5,z);
-  scene.add(base);
+  c.position.set(x,2.5,z);
+  scene.add(c);
 }
 
-for(let i=0;i<5;i++){
-  createCabin(-35,-20-(i*30),i===4);
-}
-for(let i=0;i<5;i++){
-  createCabin(35,-20-(i*30));
-}
+for(let i=0;i<5;i++){ cabin(-35,-20-(i*30)); }
+for(let i=0;i<5;i++){ cabin(35,-20-(i*30)); }
 
-// STAGE (upcoming artists)
+// STAGE (PUBLIC)
 let stage = new THREE.Mesh(
   new THREE.BoxGeometry(20,2,14),
   new THREE.MeshStandardMaterial({color:0x6600aa})
@@ -193,12 +145,20 @@ let stage = new THREE.Mesh(
 stage.position.set(-30,1,-90);
 scene.add(stage);
 
-// YACHT (elite stage world)
+// VIP NETWORK AREA (BEHIND STAGE)
+let vipZone = new THREE.Mesh(
+  new THREE.BoxGeometry(20,1,20),
+  new THREE.MeshStandardMaterial({color:0x001f2f})
+);
+vipZone.position.set(-30,0,-120);
+scene.add(vipZone);
+
+// YACHT (FINAL)
 let yacht = new THREE.Mesh(
   new THREE.BoxGeometry(45,6,20),
   new THREE.MeshStandardMaterial({color:0x222244})
 );
-yacht.position.set(0,3,-400);
+yacht.position.set(0,3,-350);
 scene.add(yacht);
 
 // CROWD
@@ -213,84 +173,61 @@ for(let i=0;i<30;i++){
   crowd.push(p);
 }
 
-// ================= SYSTEM =================
-let keys={},inWorld=false;
-
+// ================= INPUT =================
 document.addEventListener("keydown",e=>keys[e.key.toLowerCase()]=true);
 document.addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
 
-function start(){
-  document.getElementById("start").style.display="none";
-  inWorld=true;
-  player.position.set(-35,0,20);
-}
-
-// VOICE
-function speak(text){
-  document.getElementById("msg").innerText=text;
-}
-
-// LOOP
+// ================= LOOP =================
 function animate(){
 requestAnimationFrame(animate);
 if(!inWorld) return;
 
 // MOVE
-let moving=false;
-if(keys["w"]){ player.position.z-=0.12; moving=true; }
-if(keys["s"]){ player.position.z+=0.12; moving=true; }
-if(keys["a"]){ player.position.x-=0.12; moving=true; }
-if(keys["d"]){ player.position.x+=0.12; moving=true; }
+if(keys["w"]) player.position.z-=0.15;
+if(keys["s"]) player.position.z+=0.15;
+if(keys["a"]) player.position.x-=0.15;
+if(keys["d"]) player.position.x+=0.15;
 
-// ANIMATION
-let t=Date.now()*0.01;
-legL.rotation.x = moving ? Math.sin(t)*0.8 : 0;
-legR.rotation.x = moving ? -Math.sin(t)*0.8 : 0;
+// ================= STORY FLOW =================
 
-// EXIT ROOM
+// LEAVE CABIN
 if(player.position.z < 15){
-  room.visible=false;
   speak("This is a cool city… you’ll see.");
 }
 
 // STAGE MOMENT
-if(player.position.distanceTo(stage.position)<6){
-  speak("You’ll understand when you earn it.");
+if(player.position.distanceTo(stage.position)<6 && !hasVIP){
+  speak("Hey… you want some VIP tickets?");
+  hasVIP=true;
+  document.getElementById("vipNotice").style.display="block";
 }
 
-// YACHT LOCK (others feel this, not you)
+// VIP NETWORK ZONE
+if(player.position.distanceTo(vipZone.position)<8 && hasVIP){
+  speak("This is where connections are made.");
+}
+
+// YACHT LOCK
 if(player.position.z < -300){
   player.position.z=-300;
   document.getElementById("locked").style.display="block";
-}else{
+} else {
   document.getElementById("locked").style.display="none";
 }
 
-// CAMERA
-camera.position.x += (player.position.x-camera.position.x)*0.05;
-camera.position.y += (4-camera.position.y)*0.05;
-camera.position.z += (player.position.z+10-camera.position.z)*0.05;
-camera.lookAt(player.position.x,player.position.y+1.5,player.position.z);
-
-// NAME TAG FOLLOW
-let vector = player.position.clone();
-vector.y += 2.8;
-vector.project(camera);
-
-let x = (vector.x * 0.5 + 0.5) * innerWidth;
-let y = (-vector.y * 0.5 + 0.5) * innerHeight;
-
-let tag = document.getElementById("nameTag");
-tag.style.left = x + "px";
-tag.style.top = y + "px";
-
-// LIFE
+// ================= LIFE =================
 stars.rotation.y+=0.0005;
 water.position.z=Math.sin(Date.now()*0.001)*1;
 
 crowd.forEach(p=>{
   p.position.x+=Math.sin(Date.now()*0.001)*0.01;
 });
+
+// CAMERA
+camera.position.x += (player.position.x-camera.position.x)*0.05;
+camera.position.y += (4-camera.position.y)*0.05;
+camera.position.z += (player.position.z+10-camera.position.z)*0.05;
+camera.lookAt(player.position);
 
 renderer.render(scene,camera);
 }
