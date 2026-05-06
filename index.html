@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LAMBO CITY — STRUCTURE LOCKED WORLD</title>
+<title>LAMBO CITY — MASTER BUILD</title>
 
 <style>
 body { margin:0; overflow:hidden; background:black; }
@@ -46,7 +46,7 @@ background:rgba(0,0,0,0.6);
 
 <div id="ui">🏡 Villa → 🌊 Dock → 🎤 Stage → 🚤 Yacht</div>
 <div id="zone">INITIALIZING...</div>
-<div id="msg">World Locked & Ready</div>
+<div id="msg">World Locked</div>
 
 <canvas id="c"></canvas>
 
@@ -55,34 +55,34 @@ background:rgba(0,0,0,0.6);
 <script>
 
 /////////////////////////////////////////////////////
-// 1. WORLD CORE (DO NOT TOUCH)
+// 1. CORE ENGINE (DO NOT TOUCH)
 /////////////////////////////////////////////////////
 
-let scene = new THREE.Scene();
+const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x000000);
 scene.fog = new THREE.FogExp2(0x000000, 0.01);
 
-let camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 2000);
-let renderer = new THREE.WebGLRenderer({canvas:c});
+const camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 2000);
+const renderer = new THREE.WebGLRenderer({canvas:c});
 renderer.setSize(innerWidth, innerHeight);
 
 scene.add(new THREE.AmbientLight(0xffffff,1.2));
-let light = new THREE.PointLight(0x00ffff,2);
+const light = new THREE.PointLight(0x00ffff,2);
 light.position.set(0,10,10);
 scene.add(light);
 
 /////////////////////////////////////////////////////
-// 2. GAMEPLAY BLOCK (PLAYER + INPUT)
+// 2. PLAYER SYSTEM
 /////////////////////////////////////////////////////
 
-let player = new THREE.Mesh(
+const player = new THREE.Mesh(
 new THREE.BoxGeometry(1,1.8,1),
 new THREE.MeshStandardMaterial({color:0xffffff})
 );
 scene.add(player);
 player.position.set(0,1,20);
 
-let keys = {};
+const keys = {};
 let started = false;
 
 document.addEventListener("keydown",e=>keys[e.key.toLowerCase()]=true);
@@ -91,15 +91,15 @@ document.addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
 function start(){
 document.getElementById("start").style.display="none";
 started = true;
-document.getElementById("zone").innerText = "WELCOME TO LAMBO CITY";
+document.getElementById("zone").innerText="WELCOME TO LAMBO CITY";
 }
 
 /////////////////////////////////////////////////////
-// 3. ENVIRONMENT BLOCK (WORLD ASSETS)
+// 3. WORLD ASSETS
 /////////////////////////////////////////////////////
 
 // WATER
-let water = new THREE.Mesh(
+const water = new THREE.Mesh(
 new THREE.PlaneGeometry(2000,2000),
 new THREE.MeshStandardMaterial({color:0x020b1a})
 );
@@ -107,23 +107,27 @@ water.rotation.x = -Math.PI/2;
 scene.add(water);
 
 // STARS
-let starGeo = new THREE.BufferGeometry();
-let arr = [];
+const starGeo = new THREE.BufferGeometry();
+const arr = [];
 
 for(let i=0;i<3000;i++){
-arr.push((Math.random()-0.5)*1500,Math.random()*600,(Math.random()-0.5)*1500);
+arr.push(
+(Math.random()-0.5)*1500,
+Math.random()*600,
+(Math.random()-0.5)*1500
+);
 }
 
 starGeo.setAttribute("position", new THREE.Float32BufferAttribute(arr,3));
 
-let stars = new THREE.Points(
+const stars = new THREE.Points(
 starGeo,
 new THREE.PointsMaterial({color:0xffffff,size:1})
 );
 scene.add(stars);
 
 // DOCK
-let dock = new THREE.Mesh(
+const dock = new THREE.Mesh(
 new THREE.BoxGeometry(80,1,300),
 new THREE.MeshStandardMaterial({color:0x111111})
 );
@@ -131,7 +135,7 @@ dock.position.set(0,0,-100);
 scene.add(dock);
 
 // STAGE
-let stage = new THREE.Mesh(
+const stage = new THREE.Mesh(
 new THREE.BoxGeometry(20,2,12),
 new THREE.MeshStandardMaterial({color:0x6600aa})
 );
@@ -139,7 +143,7 @@ stage.position.set(-15,1,-80);
 scene.add(stage);
 
 // YACHT
-let yacht = new THREE.Mesh(
+const yacht = new THREE.Mesh(
 new THREE.BoxGeometry(40,6,20),
 new THREE.MeshStandardMaterial({color:0x00ffff})
 );
@@ -148,101 +152,108 @@ scene.add(yacht);
 
 // CABINS
 for(let i=0;i<5;i++){
-let left = new THREE.Mesh(
+const left = new THREE.Mesh(
 new THREE.BoxGeometry(8,5,8),
 new THREE.MeshStandardMaterial({color:0x222222})
 );
 left.position.set(-20,2.5,-20-(i*25));
 scene.add(left);
 
-let right = left.clone();
+const right = left.clone();
 right.position.x = 20;
 scene.add(right);
 }
 
 /////////////////////////////////////////////////////
-// 4. EXPERIENCE BLOCK (UI + ZONES)
+// 4. EXPERIENCE SYSTEM (SAFE ZONE)
 /////////////////////////////////////////////////////
+
 let introPlayed = false;
 let introTime = 0;
 
-let introCamera = {
-  x: 0,
-  y: 8,
-  z: 60
-};
+const introCamera = { x:0, y:8, z:60 };
 
-function playIntro(){
-  document.getElementById("zone").innerText = "🎬 LAMBO CITY INTRO";
+function setZone(text){
+document.getElementById("zone").innerText = text;
 }
+
 function updateUI(){
+
 if(player.position.distanceTo(stage.position)<8){
-document.getElementById("zone").innerText="🎤 STAGE ACTIVE";
+setZone("🎤 STAGE ACTIVE");
 }
 
 if(player.position.distanceTo(yacht.position)<15){
-document.getElementById("zone").innerText="🚤 YACHT IN VIEW";
+setZone("🚤 YACHT IN VIEW");
 }
+
 }
 
 /////////////////////////////////////////////////////
-// 5. LOOP (DO NOT TOUCH STRUCTURE BELOW)
+// 5. GAME LOOP (STABLE)
 /////////////////////////////////////////////////////
 
 function animate(){
 requestAnimationFrame(animate);
 if(!started) return;
 
+/////////////////////////////////////////////////////
+// INTRO SYSTEM
+/////////////////////////////////////////////////////
+
 if(!introPlayed){
-  introTime += 1;
+introTime++;
 
-  // cinematic camera push-in
-  camera.position.x += (introCamera.x - camera.position.x) * 0.02;
-  camera.position.y += (introCamera.y - camera.position.y) * 0.02;
-  camera.position.z += (introCamera.z - camera.position.z) * 0.02;
+// cinematic camera
+camera.position.x += (introCamera.x - camera.position.x)*0.02;
+camera.position.y += (introCamera.y - camera.position.y)*0.02;
+camera.position.z += (introCamera.z - camera.position.z)*0.02;
 
-  camera.lookAt(0,0,-100);
+camera.lookAt(0,0,-100);
 
-  // reveal message sequence
-  if(introTime < 120){
-    document.getElementById("zone").setZone("🌊 ARRIVING AT THE DOCKS");
-  else if(introTime < 240){
-    document.getElementById("zone").setZone("🏡 LAMBO CITY — PRIVATE WORLD");
-  }
-  else if(introTime < 360){
-    document.getElementById("zone").setZone("🎤 HERO PRESENTS THE EXPERIENCE");
-  }
-  else{
-    introPlayed = true;
-    document.getElementById("zone").innerText = "WELCOME";
-  }
-
-  renderer.render(scene,camera);
-  return;
+// intro flow
+if(introTime < 120){
+setZone("🌊 ARRIVING AT THE DOCKS");
 }
-// PLAYER MOVEMENT
+else if(introTime < 240){
+setZone("🏡 LAMBO CITY — PRIVATE WORLD");
+}
+else if(introTime < 360){
+setZone("🎤 HERO PRESENTS THE EXPERIENCE");
+}
+else{
+introPlayed = true;
+setZone("WELCOME");
+}
+
+renderer.render(scene,camera);
+return;
+}
+
+/////////////////////////////////////////////////////
+// PLAYER CONTROL
+/////////////////////////////////////////////////////
+
 if(keys["w"]) player.position.z -= 0.2;
 if(keys["s"]) player.position.z += 0.2;
 if(keys["a"]) player.position.x -= 0.2;
 if(keys["d"]) player.position.x += 0.2;
 
+/////////////////////////////////////////////////////
 // CAMERA FOLLOW
-// CAMERA FOLLOW
+/////////////////////////////////////////////////////
+
 camera.position.x += (player.position.x - camera.position.x)*0.06;
 camera.position.y += (6 - camera.position.y)*0.05;
 camera.position.z += (player.position.z + 10 - camera.position.z)*0.06;
 camera.lookAt(player.position);
 
+/////////////////////////////////////////////////////
 // WORLD ANIMATION
+/////////////////////////////////////////////////////
+
 stars.rotation.y += 0.0003;
 
-// UI
-updateUI();
-
-// WORLD ANIMATION
-stars.rotation.y += 0.0003;
-
-// UI
 updateUI();
 
 renderer.render(scene,camera);
