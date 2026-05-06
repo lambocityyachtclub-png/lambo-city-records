@@ -97,8 +97,8 @@ document.getElementById("start").style.display="none";
 started = true;
 document.getElementById("zone").innerText="WELCOME TO LAMBO CITY";
 
-music.play(); // 🔊 THIS IS STEP 2
-}
+music.currentTime = 0;
+music.play().catch(()=>{});
 /////////////////////////////////////////////////////
 // 🔊 AUDIO SYSTEM (SAFE)
 /////////////////////////////////////////////////////
