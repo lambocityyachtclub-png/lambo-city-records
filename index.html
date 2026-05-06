@@ -205,13 +205,12 @@ if(!introPlayed){
 
   // reveal message sequence
   if(introTime < 120){
-    document.getElementById("zone").innerText = "🌊 ARRIVING AT THE DOCKS";
-  }
+    document.getElementById("zone").setZone("🌊 ARRIVING AT THE DOCKS");
   else if(introTime < 240){
-    document.getElementById("zone").innerText = "🏡 LAMBO CITY — PRIVATE WORLD";
+    document.getElementById("zone").setZone("🏡 LAMBO CITY — PRIVATE WORLD");
   }
   else if(introTime < 360){
-    document.getElementById("zone").innerText = "🎤 HERO PRESENTS THE EXPERIENCE";
+    document.getElementById("zone").setZone("🎤 HERO PRESENTS THE EXPERIENCE");
   }
   else{
     introPlayed = true;
