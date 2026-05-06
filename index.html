@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LAMBO CITY — GTA INTRO</title>
+<title>LAMBO CITY — REAL CHARACTER</title>
 
 <style>
 body { margin:0; overflow:hidden; background:black; font-family:Arial; }
@@ -35,16 +35,17 @@ canvas { display:block; }
 <body>
 
 <div id="start">
-  <h1>LAMBO CITY YACHT CLUB</h1>
+  <h1>LAMBO CITY</h1>
   <button onclick="start()">ENTER WORLD</button>
 </div>
 
 <div id="status">STATUS: VISITOR</div>
-<div id="msg">...</div>
+<div id="msg">Loading experience...</div>
 
 <canvas id="c"></canvas>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128/examples/js/loaders/GLTFLoader.js"></script>
 
 <script>
 
@@ -56,19 +57,41 @@ let camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 1000);
 let renderer = new THREE.WebGLRenderer({canvas:c});
 renderer.setSize(innerWidth, innerHeight);
 
-scene.add(new THREE.AmbientLight(0xffffff,1.2));
+scene.add(new THREE.AmbientLight(0xffffff,1.3));
+
 let light = new THREE.PointLight(0x00aaff,2);
 light.position.set(0,5,5);
 scene.add(light);
 
-// ===== PLAYER =====
-let player = new THREE.Mesh(
-  new THREE.BoxGeometry(1,1,1),
-  new THREE.MeshStandardMaterial({color:0xffffff})
-);
-player.position.set(0,0.5,20);
-scene.add(player);
+// ===== GAME STATE =====
+const GAME = {
+  status:"VISITOR",
+  stage:false,
+  vip:false,
+  yacht:false
+};
 
+// ===== PLAYER CONTAINER =====
+let player = new THREE.Group();
+scene.add(player);
+player.position.set(0,0,20);
+
+// ===== LOAD REAL CHARACTER =====
+let loader = new THREE.GLTFLoader();
+let character;
+
+loader.load(
+  "https://threejs.org/examples/models/gltf/RobotExpressive/RobotExpressive.glb",
+  function(gltf){
+    character = gltf.scene;
+    character.scale.set(0.4,0.4,0.4);
+    player.add(character);
+
+    document.getElementById("msg").innerText="You are inside LAMBO CITY.";
+  }
+);
+
+// ===== HERO AURA =====
 let aura = new THREE.PointLight(0xffffff,0,15);
 player.add(aura);
 
@@ -77,7 +100,7 @@ player.add(aura);
 // WATER
 let water = new THREE.Mesh(
   new THREE.PlaneGeometry(900,900),
-  new THREE.MeshStandardMaterial({color:0x020b1a})
+  new THREE.MeshStandardMaterial({color:0x021424})
 );
 water.rotation.x = -Math.PI/2;
 water.position.y = -1;
@@ -90,7 +113,7 @@ for(let i=0;i<3000;i++){
   arr.push((Math.random()-0.5)*900,Math.random()*300,(Math.random()-0.5)*900);
 }
 starGeo.setAttribute("position",new THREE.Float32BufferAttribute(arr,3));
-scene.add(new THREE.Points(starGeo,new THREE.PointsMaterial({color:0xffffff,size:0.7})));
+scene.add(new THREE.Points(starGeo,new THREE.PointsMaterial({color:0xffffff,size:0.8})));
 
 // DOCK
 let dock = new THREE.Mesh(
@@ -143,17 +166,7 @@ let keys={};
 document.addEventListener("keydown",e=>keys[e.key.toLowerCase()]=true);
 document.addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
 
-// ===== STATE =====
 let started=false;
-let intro=true;
-let introTime=0;
-
-const GAME = {
-  stage:false,
-  vip:false,
-  yacht:false,
-  status:"VISITOR"
-};
 
 // ===== START =====
 function start(){
@@ -161,88 +174,54 @@ function start(){
   started=true;
 }
 
-// ===== HERO VOICE =====
-function speak(text){
-  document.getElementById("msg").innerText = text;
-}
-
 // ===== LOOP =====
 function animate(){
 requestAnimationFrame(animate);
 if(!started) return;
 
-// ===== GTA INTRO CUTSCENE =====
-if(intro){
-
-  introTime += 0.02;
-
-  // cinematic camera path
-  camera.position.x = Math.sin(introTime)*60;
-  camera.position.y = 25;
-  camera.position.z = -250 + Math.cos(introTime)*40;
-  camera.lookAt(0,0,-150);
-
-  // HERO dialogue timing
-  if(introTime < 2) speak("You made it...");
-  else if(introTime < 4) speak("This is a cool city.");
-  else if(introTime < 6) speak("You'll understand when you earn it.");
-  else if(introTime < 8) speak("For now... it's not yours.");
-
-  // end intro
-  if(introTime > 8){
-    intro = false;
-    speak("Walk.");
-  }
-
-  renderer.render(scene,camera);
-  return;
-}
-
-// ===== PLAYER CONTROL =====
-if(keys["w"]) player.position.z-=0.15;
-if(keys["s"]) player.position.z+=0.15;
-if(keys["a"]) player.position.x-=0.15;
-if(keys["d"]) player.position.x+=0.15;
-
-// ===== PROGRESSION =====
+// movement
+if(keys["w"]) player.position.z-=0.2;
+if(keys["s"]) player.position.z+=0.2;
+if(keys["a"]) player.position.x-=0.2;
+if(keys["d"]) player.position.x+=0.2;
 
 // STAGE
 if(!GAME.stage && player.position.distanceTo(stage.position)<6){
   GAME.stage=true;
   GAME.status="PERFORMER";
-  speak("Prove yourself.");
   document.getElementById("status").innerText="STATUS: PERFORMER";
+  document.getElementById("msg").innerText="You stepped into something bigger.";
 }
 
 // VIP
 if(GAME.stage && !GAME.vip && player.position.distanceTo(vip.position)<8){
   GAME.vip=true;
   GAME.status="VIP";
-  speak("Now you're in the room.");
   document.getElementById("status").innerText="STATUS: VIP MEMBER";
+  document.getElementById("msg").innerText="Now you're being seen.";
 }
 
 // YACHT
 if(GAME.vip && player.position.distanceTo(yacht.position)<10){
   GAME.yacht=true;
   GAME.status="OWNER";
-  speak("Now you understand.");
   document.getElementById("status").innerText="STATUS: OWNER";
+  document.getElementById("msg").innerText="You made it.";
 }
 
-// ===== AURA =====
+// AURA
 if(GAME.status==="VISITOR") aura.intensity=0.2;
 if(GAME.status==="PERFORMER") aura.intensity=0.6;
 if(GAME.status==="VIP") aura.intensity=1.3;
 if(GAME.status==="OWNER") aura.intensity=2;
 
-// ===== CAMERA FOLLOW =====
+// CAMERA
 camera.position.x += (player.position.x-camera.position.x)*0.05;
-camera.position.y += (4-camera.position.y)*0.05;
-camera.position.z += (player.position.z+10-camera.position.z)*0.05;
+camera.position.y += (5-camera.position.y)*0.05;
+camera.position.z += (player.position.z+12-camera.position.z)*0.05;
 camera.lookAt(player.position);
 
-// WATER
+// WATER MOTION
 water.position.z = Math.sin(Date.now()*0.001)*1;
 
 renderer.render(scene,camera);
