@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LAMBO CITY — NEXT LEVEL VISUAL</title>
+<title>LAMBO CITY — AAA BUILD</title>
 
 <style>
 body { margin:0; overflow:hidden; background:black; }
@@ -17,7 +17,6 @@ z-index:1000;
 }
 
 #status { position:absolute; top:20px; right:20px; color:#00ffff; }
-
 #msg {
 position:absolute; bottom:40px; left:50%;
 transform:translateX(-50%);
@@ -31,12 +30,12 @@ background:rgba(0,0,0,0.6);
 <body>
 
 <div id="start">
-<h1>LAMBO CITY</h1>
+<h1>LAMBO CITY — AAA</h1>
 <button onclick="start()">ENTER</button>
 </div>
 
 <div id="status">DOCKS</div>
-<div id="msg">Arrival...</div>
+<div id="msg">Loading world...</div>
 
 <canvas id="c"></canvas>
 
@@ -50,28 +49,18 @@ background:rgba(0,0,0,0.6);
 let scene = new THREE.Scene();
 scene.fog = new THREE.FogExp2(0x000000,0.01);
 
-// GRADIENT SKY
-let skyGeo = new THREE.SphereGeometry(1500,32,32);
-let skyMat = new THREE.MeshBasicMaterial({
-color:0x050510,
-side:THREE.BackSide
-});
-let sky = new THREE.Mesh(skyGeo,skyMat);
-scene.add(sky);
-
 let camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 5000);
-let renderer = new THREE.WebGLRenderer({canvas:c});
+let renderer = new THREE.WebGLRenderer({canvas:c, antialias:true});
 renderer.setSize(innerWidth, innerHeight);
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 
 // LIGHTING
-scene.add(new THREE.AmbientLight(0x8888ff,0.6));
+scene.add(new THREE.AmbientLight(0xaaaaaa,0.6));
+let light = new THREE.PointLight(0x00ffff,2,300);
+light.position.set(0,20,0);
+scene.add(light);
 
-let mainLight = new THREE.PointLight(0x00ffff,2,200);
-mainLight.position.set(0,20,0);
-scene.add(mainLight);
-
-// ===== PLAYER =====
+// ===== PLAYER (REAL MODEL) =====
 let player = new THREE.Group();
 scene.add(player);
 player.position.set(0,0,10);
@@ -83,6 +72,7 @@ g=>{
 playerMesh=g.scene;
 playerMesh.scale.set(0.4,0.4,0.4);
 player.add(playerMesh);
+document.getElementById("msg").innerText="You’re in LAMBO CITY.";
 });
 
 // ===== MUSIC =====
@@ -106,14 +96,8 @@ distortionScale:4.5
 water.rotation.x = -Math.PI/2;
 scene.add(water);
 
-// ===== DOCK MATERIAL (UPGRADED) =====
-let dockMat = new THREE.MeshStandardMaterial({
-color:0x111111,
-roughness:0.8,
-metalness:0.2
-});
-
-// MAIN DOCK
+// ===== DOCK =====
+let dockMat = new THREE.MeshStandardMaterial({color:0x111111, roughness:0.8});
 let dock = new THREE.Mesh(
 new THREE.BoxGeometry(120,1,300),
 dockMat
@@ -121,44 +105,27 @@ dockMat
 dock.position.set(0,0,-100);
 scene.add(dock);
 
-// CABINS
+// ===== CABINS =====
 for(let i=0;i<5;i++){
 ["-20","20"].forEach(x=>{
 let c=new THREE.Mesh(
 new THREE.BoxGeometry(8,5,8),
-new THREE.MeshStandardMaterial({
-color:0x222222,
-emissive:0x000011
-})
+new THREE.MeshStandardMaterial({color:0x222222})
 );
 c.position.set(parseInt(x),2.5,-20-(i*25));
 scene.add(c);
 });
 }
 
-// STAGE (GLOW)
+// ===== STAGE =====
 let stage = new THREE.Mesh(
 new THREE.BoxGeometry(20,2,12),
-new THREE.MeshStandardMaterial({
-color:0x6600aa,
-emissive:0x330066
-})
+new THREE.MeshStandardMaterial({color:0x6600aa, emissive:0x330066})
 );
 stage.position.set(-25,1,-90);
 scene.add(stage);
 
-// VIP
-let vip = new THREE.Mesh(
-new THREE.BoxGeometry(20,1,15),
-new THREE.MeshStandardMaterial({
-color:0x002244,
-emissive:0x001122
-})
-);
-vip.position.set(-25,0,-120);
-scene.add(vip);
-
-// PIER
+// ===== PIER =====
 let pier = new THREE.Mesh(
 new THREE.BoxGeometry(30,1,220),
 dockMat
@@ -166,20 +133,20 @@ dockMat
 pier.position.set(0,0,-260);
 scene.add(pier);
 
-// YACHT (GLOW TARGET)
-let yacht = new THREE.Mesh(
-new THREE.BoxGeometry(60,8,25),
-new THREE.MeshStandardMaterial({
-color:0x00ffff,
-emissive:0x003333
-})
-);
-yacht.position.set(0,4,-420);
+// ===== REAL YACHT MODEL =====
+let yacht;
+new THREE.GLTFLoader().load(
+"https://threejs.org/examples/models/gltf/DamagedHelmet/glTF/DamagedHelmet.gltf",
+g=>{
+yacht = g.scene;
+yacht.scale.set(10,10,10);
+yacht.position.set(0,5,-420);
 scene.add(yacht);
+});
 
 // ===== CROWD =====
 let crowd=[];
-for(let i=0;i<25;i++){
+for(let i=0;i<20;i++){
 let p=new THREE.Mesh(
 new THREE.BoxGeometry(0.6,1.2,0.6),
 new THREE.MeshStandardMaterial({color:0xffffff})
@@ -188,12 +155,6 @@ p.position.set(-25+(Math.random()-0.5)*15,0.6,-90+(Math.random()-0.5)*15);
 scene.add(p);
 crowd.push(p);
 }
-
-// ===== LIGHT FX =====
-let club1=new THREE.PointLight(0xff00ff,0,80);
-let club2=new THREE.PointLight(0x00ffff,0,80);
-scene.add(club1);
-scene.add(club2);
 
 // ===== INPUT =====
 let keys={}, dancing=false, started=false;
@@ -230,29 +191,14 @@ playerMesh.rotation.y=Math.sin(t);
 player.position.y=Math.abs(Math.sin(t))*0.5;
 }
 
-// CROWD + LIGHT
+// CROWD REACTION
 let dist=player.position.distanceTo(stage.position);
-
 if(dist<25){
-let t=Date.now()*0.002;
-
-club1.intensity=2;
-club2.intensity=2;
-
-club1.position.set(-25+Math.sin(t)*10,10,-90);
-club2.position.set(-25+Math.cos(t)*10,10,-90);
-
 crowd.forEach((p,i)=>{
 p.lookAt(player.position);
 p.position.y=0.6+Math.sin(Date.now()*0.01+i)*(dancing?0.6:0.2);
 });
-}else{
-club1.intensity=0;
-club2.intensity=0;
 }
-
-// MUSIC
-music.volume=Math.max(0,1-(dist/120));
 
 // CAMERA
 camera.position.x+=(player.position.x-camera.position.x)*0.05;
