@@ -109,7 +109,7 @@ function start(){
   music.currentTime = 0;
   music.play().catch(()=>{});
 }
-
+const WORLD_LIMIT = 120;
 
 /////////////////////////////////////////////////////
 // 🔊 AUDIO SYSTEM (SAFE)
@@ -426,14 +426,17 @@ if(dist < 25){
 
 function move(){
 
-if(inside) return;
+  if(inside) return;
 
-if(keys["w"]) player.position.z -= 0.25;
-if(keys["s"]) player.position.z += 0.25;
-if(keys["a"]) player.position.x -= 0.25;
-if(keys["d"]) player.position.x += 0.25;
+  if(keys["w"]) player.position.z -= 0.25;
+  if(keys["s"]) player.position.z += 0.25;
+  if(keys["a"]) player.position.x -= 0.25;
+  if(keys["d"]) player.position.x += 0.25;
+
+  // 🌍 WORLD BOUNDARY (MUST BE INSIDE MOVE)
+  player.position.x = Math.max(-WORLD_LIMIT, Math.min(WORLD_LIMIT, player.position.x));
+  player.position.z = Math.max(-WORLD_LIMIT, Math.min(WORLD_LIMIT, player.position.z));
 }
-
 /////////////////////////////////////////////////////
 // 🔁 LOOP
 /////////////////////////////////////////////////////
