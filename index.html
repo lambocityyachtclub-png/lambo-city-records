@@ -143,6 +143,17 @@ new THREE.MeshStandardMaterial({color:0x111111})
 dock.position.set(0,0,-100);
 scene.add(dock);
 
+  /////////////////////////////////////////////////////
+// 🎤 STAGE (REQUIRED FOR CROWD SYSTEM)
+/////////////////////////////////////////////////////
+
+const stage = new THREE.Mesh(
+new THREE.BoxGeometry(20,2,12),
+new THREE.MeshStandardMaterial({color:0x6600aa})
+);
+stage.position.set(-15,1,-80);
+scene.add(stage);
+
 /////////////////////////////////////////////////////
 // 🏡 CABINS
 /////////////////////////////////////////////////////
