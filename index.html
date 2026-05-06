@@ -2,12 +2,13 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LAMBO CITY — CHARACTER SYSTEM V2</title>
+<title>LAMBO CITY — CUSTOMIZATION UI</title>
 
 <style>
 body { margin:0; overflow:hidden; background:black; font-family:Arial; }
 canvas { display:block; }
 
+/* ================= START ================= */
 #start {
   position:absolute; inset:0;
   background:black; color:white;
@@ -16,23 +17,61 @@ canvas { display:block; }
   z-index:1000;
 }
 
+/* ================= UI ================= */
 #ui {
-  position:absolute; top:20px; left:20px;
-  color:white; font-size:13px;
+  position:absolute;
+  top:20px; left:20px;
+  color:white;
+  font-size:13px;
+}
+
+#status {
+  position:absolute;
+  top:20px; right:20px;
+  color:gold;
 }
 
 #msg {
-  position:absolute; bottom:40px; left:50%;
+  position:absolute;
+  bottom:40px; left:50%;
   transform:translateX(-50%);
   color:white;
-  padding:10px 14px;
+  padding:10px;
   border:1px solid gold;
   background:rgba(0,0,0,0.6);
 }
 
-#status {
-  position:absolute; top:20px; right:20px;
-  color:gold;
+/* ================= CUSTOM MENU ================= */
+#menu {
+  position:absolute;
+  top:50%; left:50%;
+  transform:translate(-50%,-50%);
+  width:300px;
+  padding:20px;
+  background:rgba(0,0,0,0.85);
+  border:1px solid #00ffff;
+  color:white;
+  display:none;
+  z-index:2000;
+}
+
+.menuTitle {
+  color:#00ffff;
+  margin-bottom:10px;
+}
+
+button {
+  width:100%;
+  margin:5px 0;
+  padding:8px;
+  background:#111;
+  color:white;
+  border:1px solid #333;
+  cursor:pointer;
+}
+
+button:hover {
+  border-color:#00ffff;
 }
 </style>
 </head>
@@ -45,8 +84,29 @@ canvas { display:block; }
 </div>
 
 <div id="ui">🏠 Cabin → 🌉 Dock → 🎤 Stage → 💼 VIP → 🚤 Yacht</div>
-<div id="msg">I brought you here.</div>
 <div id="status">STATUS: VISITOR</div>
+<div id="msg">Welcome to LAMBO CITY.</div>
+
+<!-- ================= CUSTOMIZATION MENU ================= -->
+<div id="menu">
+  <div class="menuTitle">CHARACTER CUSTOMIZATION</div>
+
+  <div>SKIN</div>
+  <button onclick="setSkin('visitor')">Visitor (White)</button>
+  <button onclick="setSkin('performer')">Performer (Blue)</button>
+  <button onclick="setSkin('vip')">VIP (Gold)</button>
+
+  <div style="margin-top:10px;">AURA</div>
+  <button onclick="setAura('none')">None</button>
+  <button onclick="setAura('blue')">Blue Glow</button>
+  <button onclick="setAura('gold')">Gold Glow</button>
+
+  <div style="margin-top:10px;">OUTFIT</div>
+  <button onclick="setOutfit('street')">Street</button>
+  <button onclick="setOutfit('luxury')">Luxury</button>
+
+  <button style="margin-top:10px;" onclick="toggleMenu()">Close</button>
+</div>
 
 <canvas id="c"></canvas>
 
@@ -54,7 +114,7 @@ canvas { display:block; }
 
 <script>
 
-// ================= SCENE =================
+/* ================= WORLD ================= */
 let scene = new THREE.Scene();
 scene.background = new THREE.Color(0x000000);
 
@@ -67,193 +127,155 @@ let light = new THREE.PointLight(0x00aaff,2);
 light.position.set(0,5,5);
 scene.add(light);
 
-// ================= INPUT =================
-let keys = {};
-document.addEventListener("keydown",e=>keys[e.key.toLowerCase()]=true);
-document.addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
-
-// ================= HERO CHECK =================
-let isHero = window.location.search.includes("hero=true");
-
-// ================= PLAYER =================
-let playerMaterial = new THREE.MeshStandardMaterial({color:0xffffff});
+/* ================= PLAYER ================= */
+let material = new THREE.MeshStandardMaterial({color:0xffffff});
 
 let player = new THREE.Mesh(
   new THREE.BoxGeometry(1,1,1),
-  playerMaterial
+  material
 );
 scene.add(player);
 
-// ================= CHARACTER SYSTEM =================
-let character = {
-  rank: "visitor", // visitor → performer → vip → hero
-  aura: null,
-  color: 0xffffff
-};
+/* ================= STATE ================= */
+let started=false;
+let keys={};
 
-// ================= VISUAL UPDATE SYSTEM =================
-function updateCharacterVisuals(){
+let skin="visitor";
+let aura="none";
+let outfit="street";
 
-  if(isHero){
-    character.rank = "hero";
-    character.color = 0x000000;
-    character.aura = 0xffd700;
-    document.getElementById("status").innerText = "STATUS: HERO";
-  }
+/* ================= HERO ================= */
+let isHero = window.location.search.includes("hero=true");
 
-  if(character.rank === "visitor"){
-    character.color = 0xffffff;
-    character.aura = null;
-    document.getElementById("status").innerText = "STATUS: VISITOR";
-  }
-
-  if(character.rank === "performer"){
-    character.color = 0x00aaff;
-    character.aura = 0x00ffff;
-    document.getElementById("status").innerText = "STATUS: PERFORMER";
-  }
-
-  if(character.rank === "vip"){
-    character.color = 0xffd700;
-    character.aura = 0xffd700;
-    document.getElementById("status").innerText = "STATUS: VIP MEMBER";
-  }
-
-  playerMaterial.color.setHex(character.color);
-}
-
-// ================= AURA OBJECT =================
-let aura = new THREE.PointLight(0xffffff,0,10);
-scene.add(aura);
-
-// ================= START =================
+/* ================= START ================= */
 function start(){
   document.getElementById("start").style.display="none";
+  started=true;
   player.position.set(-35,0.5,20);
-  updateCharacterVisuals();
+  speak("You are inside LAMBO CITY.");
 }
 
-// ================= WORLD =================
+/* ================= MENU ================= */
+function toggleMenu(){
+  let m=document.getElementById("menu");
+  m.style.display = (m.style.display==="none"||m.style.display==="")?"block":"none";
+}
 
-// WATER
-let water = new THREE.Mesh(
+document.addEventListener("keydown",e=>{
+  keys[e.key.toLowerCase()]=true;
+
+  if(e.key.toLowerCase()==="c"){
+    toggleMenu();
+  }
+});
+
+document.addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
+
+/* ================= CUSTOMIZATION ================= */
+function setSkin(type){
+  skin=type;
+
+  if(type==="visitor") material.color.setHex(0xffffff);
+  if(type==="performer") material.color.setHex(0x00aaff);
+  if(type==="vip") material.color.setHex(0xffd700);
+}
+
+function setAura(type){
+  aura=type;
+}
+
+function setOutfit(type){
+  outfit=type;
+  speak("Outfit set: " + type);
+}
+
+/* ================= WORLD ================= */
+
+/* WATER */
+let water=new THREE.Mesh(
   new THREE.PlaneGeometry(900,900),
   new THREE.MeshStandardMaterial({color:0x020b1a})
 );
-water.rotation.x = -Math.PI/2;
-water.position.y = -1;
+water.rotation.x=-Math.PI/2;
+water.position.y=-1;
 scene.add(water);
 
-// STARS
-const starGeo = new THREE.BufferGeometry();
+/* STARS */
+const starGeo=new THREE.BufferGeometry();
 let arr=[];
 for(let i=0;i<4000;i++){
   arr.push((Math.random()-0.5)*900,Math.random()*300,(Math.random()-0.5)*900);
 }
 starGeo.setAttribute("position",new THREE.Float32BufferAttribute(arr,3));
 
-let stars = new THREE.Points(
+let stars=new THREE.Points(
   starGeo,
   new THREE.PointsMaterial({color:0xffffff,size:1})
 );
 scene.add(stars);
 
-// DOCK
-let dock = new THREE.Mesh(
+/* DOCK */
+let dock=new THREE.Mesh(
   new THREE.BoxGeometry(240,1,320),
   new THREE.MeshStandardMaterial({color:0x050505})
 );
 dock.position.set(0,-0.5,-120);
 scene.add(dock);
 
-// CABINS
-function cabin(x,z){
-  let c = new THREE.Mesh(
-    new THREE.BoxGeometry(10,5,10),
-    new THREE.MeshStandardMaterial({color:0x111111})
-  );
-  c.position.set(x,2.5,z);
-  scene.add(c);
-}
-
-for(let i=0;i<5;i++){
-  cabin(-35,-20-(i*30));
-  cabin(35,-20-(i*30));
-}
-
-// STAGE
-let stage = new THREE.Mesh(
+/* STAGE */
+let stage=new THREE.Mesh(
   new THREE.BoxGeometry(22,2,14),
   new THREE.MeshStandardMaterial({color:0x6600aa})
 );
 stage.position.set(-30,1,-90);
 scene.add(stage);
 
-// VIP ZONE
-let vipZone = new THREE.Mesh(
+/* VIP */
+let vipZone=new THREE.Mesh(
   new THREE.BoxGeometry(22,1,20),
   new THREE.MeshStandardMaterial({color:0x001f2f})
 );
 vipZone.position.set(-30,0,-120);
 scene.add(vipZone);
 
-// YACHT
-let yacht = new THREE.Mesh(
+/* YACHT */
+let yacht=new THREE.Mesh(
   new THREE.BoxGeometry(50,6,22),
   new THREE.MeshStandardMaterial({color:0x222244})
 );
 yacht.position.set(0,3,-350);
 scene.add(yacht);
 
-// ================= LOOP =================
-let hasPerformer=false;
-let hasVIP=false;
+/* ================= VOICE ================= */
+function speak(text){
+  document.getElementById("msg").innerText=text;
+}
 
+/* ================= LOOP ================= */
 function animate(){
 requestAnimationFrame(animate);
+if(!started) return;
 
-// MOVE
+/* MOVE */
 if(keys["w"]) player.position.z-=0.15;
 if(keys["s"]) player.position.z+=0.15;
 if(keys["a"]) player.position.x-=0.15;
 if(keys["d"]) player.position.x+=0.15;
 
-// ================= PROGRESSION =================
-
-// STAGE → PERFORMER
-if(player.position.distanceTo(stage.position)<6 && !hasPerformer){
-  hasPerformer = true;
-  character.rank = "performer";
-  updateCharacterVisuals();
-  document.getElementById("msg").innerText = "You got something? This is your shot.";
+/* HERO LOCK */
+if(isHero){
+  material.color.setHex(0x000000);
 }
 
-// VIP ZONE → VIP
-if(player.position.distanceTo(vipZone.position)<8 && hasPerformer){
-  hasVIP = true;
-  character.rank = "vip";
-  updateCharacterVisuals();
-  document.getElementById("msg").innerText = "Connections start here.";
-}
-
-// ================= AURA SYSTEM =================
-if(character.aura){
-  aura.position.set(player.position.x,player.position.y+2,player.position.z);
-  aura.color.setHex(character.aura);
-  aura.intensity = 1.5;
-} else {
-  aura.intensity = 0;
-}
-
-// ================= CAMERA =================
-camera.position.x += (player.position.x-camera.position.x)*0.05;
-camera.position.y += (4-camera.position.y)*0.05;
-camera.position.z += (player.position.z+10-camera.position.z)*0.05;
+/* CAMERA */
+camera.position.x+=(player.position.x-camera.position.x)*0.05;
+camera.position.z+=(player.position.z+10-camera.position.z)*0.05;
+camera.position.y+=(4-camera.position.y)*0.05;
 camera.lookAt(player.position);
 
-// ================= ATMOSPHERE =================
-stars.rotation.y += 0.0005;
-water.position.z = Math.sin(Date.now()*0.001)*1;
+/* ATMOSPHERE */
+stars.rotation.y+=0.0005;
+water.position.z=Math.sin(Date.now()*0.001)*1;
 
 renderer.render(scene,camera);
 }
