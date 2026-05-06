@@ -128,22 +128,99 @@ dock.position.set(0,0,-100);
 scene.add(dock);
 
 /////////////////////////////////////////////////////
-// CABINS (INTERACTIVE ZONES)
+// 🏡 LUXURY PENTHOUSE INTERIORS (IMMERSION LAYER v6)
 /////////////////////////////////////////////////////
 
 const cabins = [];
+const cabinLights = [];
 
-for(let i=0;i<6;i++){
+function createCabin(i, x, z){
 
-const cabin = new THREE.Mesh(
-new THREE.BoxGeometry(8,5,8),
+// FLOOR (wood / marble vibe)
+const floor = new THREE.Mesh(
+new THREE.PlaneGeometry(8,8),
+new THREE.MeshStandardMaterial({
+color:0x1a1a1a,
+roughness:0.4
+})
+);
+floor.rotation.x = -Math.PI/2;
+floor.position.set(x,0,z);
+scene.add(floor);
+
+// WALLS (open front penthouse feel)
+const wallMat = new THREE.MeshStandardMaterial({
+color:0x111111,
+roughness:0.8
+});
+
+const backWall = new THREE.Mesh(
+new THREE.BoxGeometry(8,5,0.3),
+wallMat
+);
+backWall.position.set(x,2.5,z-4);
+scene.add(backWall);
+
+// SIDE WALLS
+const leftWall = new THREE.Mesh(
+new THREE.BoxGeometry(0.3,5,8),
+wallMat
+);
+leftWall.position.set(x-4,2.5,z);
+scene.add(leftWall);
+
+const rightWall = leftWall.clone();
+rightWall.position.x = x+4;
+scene.add(rightWall);
+
+// CEILING LIGHT PANEL (luxury glow)
+const ceilingLight = new THREE.PointLight(0xffcc88,1.2,20);
+ceilingLight.position.set(x,4.5,z);
+scene.add(ceilingLight);
+
+cabinLights.push(ceilingLight);
+
+// 🛋️ FURNITURE SET
+
+// couch
+const couch = new THREE.Mesh(
+new THREE.BoxGeometry(3,1,1),
+new THREE.MeshStandardMaterial({color:0x333333})
+);
+couch.position.set(x-1,0.5,z);
+scene.add(couch);
+
+// table
+const table = new THREE.Mesh(
+new THREE.BoxGeometry(1.5,0.6,1),
 new THREE.MeshStandardMaterial({color:0x222222})
 );
+table.position.set(x+1.5,0.3,z+1);
+scene.add(table);
 
-cabin.position.set((i%2===0?-20:20),2.5,-20-(i*25));
+// bed (VIP suite feel)
+const bed = new THREE.Mesh(
+new THREE.BoxGeometry(2.5,0.6,1.5),
+new THREE.MeshStandardMaterial({color:0x444444})
+);
+bed.position.set(x-1.5,0.3,z-2);
+scene.add(bed);
 
-scene.add(cabin);
-cabins.push(cabin);
+// ambient decor glow
+const decorLight = new THREE.PointLight(0x00ffff,0.4,10);
+decorLight.position.set(x,1,z);
+scene.add(decorLight);
+
+// cabin trigger
+const cabinCore = new THREE.Mesh(
+new THREE.BoxGeometry(2,2,2),
+new THREE.MeshBasicMaterial({visible:false})
+);
+
+cabinCore.position.set(x,1,z);
+scene.add(cabinCore);
+
+cabins.push(cabinCore);
 }
 
 /////////////////////////////////////////////////////
