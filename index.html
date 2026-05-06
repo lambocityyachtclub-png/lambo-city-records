@@ -418,21 +418,19 @@ if(keys["d"]) player.position.x += 0.25;
 /////////////////////////////////////////////////////
 
 function animate(){
-requestAnimationFrame(animate);
-if(!started) return;
+  requestAnimationFrame(animate);
+  if(!started) return;
 
-move();
-updateCamera();
-updateStageEnergy(); // 🔥 ADD THIS LINE
+  move();
+  updateCamera();
+  updateStageEnergy();
 
-stars.rotation.y += 0.0003;
+  stars.rotation.y += 0.0003;
 
-renderer.render(scene,camera);
+  renderer.render(scene,camera);
 }
-</script>
 
-<script>
-animate();
+animate(); // ✅ THIS WAS MISSING
 </script>
 
 </body>
