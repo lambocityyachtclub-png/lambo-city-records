@@ -69,6 +69,13 @@ const camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 2000
 const renderer = new THREE.WebGLRenderer({canvas:c, antialias:true});
 renderer.setSize(innerWidth, innerHeight);
 
+renderer.setPixelRatio(window.devicePixelRatio);
+window.addEventListener("resize", () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+
 scene.add(new THREE.AmbientLight(0xffffff,1.2));
 
 const light = new THREE.PointLight(0x00ffff,2);
