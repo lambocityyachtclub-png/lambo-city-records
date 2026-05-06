@@ -2,28 +2,38 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LAMBO CITY — COMPLETE WORLD</title>
+<title>LAMBO CITY — STABLE WORLD CORE</title>
 
 <style>
-body { margin:0; overflow:hidden; background:black; }
+body { margin:0; overflow:hidden; background:black; font-family:Arial; }
 canvas { display:block; }
 
+/* UI */
 #start {
-position:absolute; inset:0;
-display:flex; align-items:center; justify-content:center;
-flex-direction:column;
-background:black; color:white;
-z-index:1000;
+  position:absolute; inset:0;
+  background:black; color:white;
+  display:flex; flex-direction:column;
+  justify-content:center; align-items:center;
+  z-index:10;
 }
 
-#status { position:absolute; top:20px; right:20px; color:#00ffff; }
+#ui {
+  position:absolute; top:20px; left:20px;
+  color:white; font-size:13px;
+}
 
-#msg {
-position:absolute; bottom:40px; left:50%;
-transform:translateX(-50%);
-color:white; padding:10px;
-border:1px solid #00ffff;
-background:rgba(0,0,0,0.6);
+#zone {
+  position:absolute; top:20px; right:20px;
+  color:gold;
+}
+
+#hint {
+  position:absolute; bottom:40px; left:50%;
+  transform:translateX(-50%);
+  color:#00ffff;
+  border:1px solid #00ffff;
+  padding:8px 12px;
+  display:none;
 }
 </style>
 </head>
@@ -31,227 +41,173 @@ background:rgba(0,0,0,0.6);
 <body>
 
 <div id="start">
-<h1>LAMBO CITY</h1>
-<button onclick="start()">ENTER</button>
+  <h1>LAMBO CITY</h1>
+  <button onclick="start()">ENTER WORLD</button>
 </div>
 
-<div id="status">DOCKS</div>
-<div id="msg">Arrival...</div>
+<div id="ui">🏡 Villa → 🚶 Dock → 🎤 Stage → 🚤 Yacht</div>
+<div id="zone">INITIALIZING...</div>
+<div id="hint">INTERACTION READY</div>
 
 <canvas id="c"></canvas>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128/examples/js/loaders/GLTFLoader.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128/examples/js/objects/Water.js"></script>
 
 <script>
 
-// ===== SCENE =====
-let scene = new THREE.Scene();
-scene.fog = new THREE.FogExp2(0x000000,0.008);
+/////////////////////////////////////////////////////
+// 🌍 CORE WORLD
+/////////////////////////////////////////////////////
 
-let camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 5000);
+let scene = new THREE.Scene();
+scene.background = new THREE.Color(0x000000);
+scene.fog = new THREE.FogExp2(0x000000, 0.01);
+
+let camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 2000);
 let renderer = new THREE.WebGLRenderer({canvas:c, antialias:true});
 renderer.setSize(innerWidth, innerHeight);
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
 
-// LIGHTING
-scene.add(new THREE.AmbientLight(0x8888ff,0.6));
-let mainLight = new THREE.PointLight(0x00ffff,2,300);
-mainLight.position.set(0,20,0);
-scene.add(mainLight);
+// LIGHT
+scene.add(new THREE.AmbientLight(0xffffff, 1.2));
+let light = new THREE.PointLight(0x00aaff, 2);
+light.position.set(0,10,10);
+scene.add(light);
 
-// ===== PLAYER =====
-let player = new THREE.Group();
+/////////////////////////////////////////////////////
+// 🧍 PLAYER
+/////////////////////////////////////////////////////
+
+let player = new THREE.Mesh(
+  new THREE.BoxGeometry(1,1.8,1),
+  new THREE.MeshStandardMaterial({color:0xffffff})
+);
 scene.add(player);
-player.position.set(0,0,10);
+player.position.set(0,1,20);
 
-let playerMesh;
-new THREE.GLTFLoader().load(
-"https://threejs.org/examples/models/gltf/RobotExpressive/RobotExpressive.glb",
-g=>{
-playerMesh=g.scene;
-playerMesh.scale.set(0.4,0.4,0.4);
-player.add(playerMesh);
-});
+/////////////////////////////////////////////////////
+// 🌊 WATER
+/////////////////////////////////////////////////////
 
-// ===== MUSIC =====
-let music = new Audio("https://cdn.pixabay.com/download/audio/2022/03/15/audio_115b9b7d3c.mp3");
-music.loop=true;
-
-// ===== WATER =====
-const water = new THREE.Water(
-new THREE.PlaneGeometry(3000,3000),
-{
-textureWidth:512,
-textureHeight:512,
-waterNormals:new THREE.TextureLoader().load(
-"https://threejs.org/examples/textures/waternormals.jpg",
-t=>{t.wrapS=t.wrapT=THREE.RepeatWrapping;}
-),
-waterColor:0x001e2f,
-distortionScale:4.5
-}
+let water = new THREE.Mesh(
+  new THREE.PlaneGeometry(2000,2000),
+  new THREE.MeshStandardMaterial({color:0x020b1a})
 );
 water.rotation.x = -Math.PI/2;
+water.position.y = 0;
 scene.add(water);
 
-// ===== STARS (FULLY RESTORED) =====
+/////////////////////////////////////////////////////
+// 🌟 STARS
+/////////////////////////////////////////////////////
+
 let starGeo = new THREE.BufferGeometry();
-let starArr = [];
-for(let i=0;i<5000;i++){
-starArr.push(
-(Math.random()-0.5)*2000,
-Math.random()*800,
-(Math.random()-0.5)*2000
-);
+let arr = [];
+
+for(let i=0;i<3000;i++){
+  arr.push((Math.random()-0.5)*1500, Math.random()*600, (Math.random()-0.5)*1500);
 }
-starGeo.setAttribute("position", new THREE.Float32BufferAttribute(starArr,3));
+
+starGeo.setAttribute("position", new THREE.Float32BufferAttribute(arr,3));
 
 let stars = new THREE.Points(
-starGeo,
-new THREE.PointsMaterial({color:0xffffff,size:1})
+  starGeo,
+  new THREE.PointsMaterial({color:0xffffff, size:1})
 );
+
 scene.add(stars);
 
-// ===== DOCK =====
-let dockMat = new THREE.MeshStandardMaterial({color:0x111111, roughness:0.8});
+/////////////////////////////////////////////////////
+// 🏡 HERO VILLA
+/////////////////////////////////////////////////////
+
+let villa = new THREE.Mesh(
+  new THREE.BoxGeometry(10,6,10),
+  new THREE.MeshStandardMaterial({color:0x111111})
+);
+scene.add(villa);
+villa.position.set(0,3,10);
+
+/////////////////////////////////////////////////////
+// 🚶 DOCK
+/////////////////////////////////////////////////////
 
 let dock = new THREE.Mesh(
-new THREE.BoxGeometry(120,1,300),
-dockMat
+  new THREE.BoxGeometry(80,1,300),
+  new THREE.MeshStandardMaterial({color:0x0a0a0a})
 );
 dock.position.set(0,0,-100);
 scene.add(dock);
 
-// CABINS
-for(let i=0;i<5;i++){
-["-20","20"].forEach(x=>{
-let c=new THREE.Mesh(
-new THREE.BoxGeometry(8,5,8),
-new THREE.MeshStandardMaterial({color:0x222222})
-);
-c.position.set(parseInt(x),2.5,-20-(i*25));
-scene.add(c);
-});
-}
+/////////////////////////////////////////////////////
+// 🎤 STAGE
+/////////////////////////////////////////////////////
 
-// STAGE
 let stage = new THREE.Mesh(
-new THREE.BoxGeometry(20,2,12),
-new THREE.MeshStandardMaterial({
-color:0x6600aa,
-emissive:0x330066
-})
+  new THREE.BoxGeometry(20,2,12),
+  new THREE.MeshStandardMaterial({color:0x6600aa})
 );
-stage.position.set(-25,1,-90);
+stage.position.set(-15,1,-80);
 scene.add(stage);
 
-// PIER
-let pier = new THREE.Mesh(
-new THREE.BoxGeometry(30,1,220),
-dockMat
-);
-pier.position.set(0,0,-260);
-scene.add(pier);
+/////////////////////////////////////////////////////
+// 🚤 YACHT (DISTANT)
+/////////////////////////////////////////////////////
 
-// YACHT
 let yacht = new THREE.Mesh(
-new THREE.BoxGeometry(60,8,25),
-new THREE.MeshStandardMaterial({
-color:0x00ffff,
-emissive:0x003333
-})
+  new THREE.BoxGeometry(40,6,20),
+  new THREE.MeshStandardMaterial({color:0x00ffff})
 );
-yacht.position.set(0,4,-420);
+yacht.position.set(0,3,-250);
 scene.add(yacht);
 
-// ===== CROWD =====
-let crowd=[];
-for(let i=0;i<25;i++){
-let p=new THREE.Mesh(
-new THREE.BoxGeometry(0.6,1.2,0.6),
-new THREE.MeshStandardMaterial({color:0xffffff})
-);
-p.position.set(-25+(Math.random()-0.5)*15,0.6,-90+(Math.random()-0.5)*15);
-scene.add(p);
-crowd.push(p);
-}
+/////////////////////////////////////////////////////
+// 🎮 STATE
+/////////////////////////////////////////////////////
 
-// LIGHT FX
-let club1=new THREE.PointLight(0xff00ff,0,80);
-let club2=new THREE.PointLight(0x00ffff,0,80);
-scene.add(club1);
-scene.add(club2);
+let keys = {};
+let started = false;
 
-// ===== INPUT =====
-let keys={}, dancing=false, started=false;
-
-document.addEventListener("keydown",e=>{
-keys[e.key.toLowerCase()]=true;
-if(e.key==="e") dancing=!dancing;
-});
+document.addEventListener("keydown",e=>keys[e.key.toLowerCase()]=true);
 document.addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
 
 function start(){
-document.getElementById("start").style.display="none";
-started=true;
-music.play();
+  document.getElementById("start").style.display="none";
+  started = true;
+  document.getElementById("zone").innerText = "WELCOME TO LAMBO CITY";
 }
 
-// ===== LOOP =====
+/////////////////////////////////////////////////////
+// 🎬 LOOP
+/////////////////////////////////////////////////////
+
 function animate(){
 requestAnimationFrame(animate);
 if(!started) return;
 
 // MOVE
-if(!dancing){
-if(keys["w"]) player.position.z-=0.4;
-if(keys["s"]) player.position.z+=0.4;
-if(keys["a"]) player.position.x-=0.4;
-if(keys["d"]) player.position.x+=0.4;
+if(keys["w"]) player.position.z -= 0.2;
+if(keys["s"]) player.position.z += 0.2;
+if(keys["a"]) player.position.x -= 0.2;
+if(keys["d"]) player.position.x += 0.2;
+
+// ZONE DETECTION
+if(player.position.distanceTo(stage.position) < 8){
+  document.getElementById("zone").innerText = "🎤 STAGE ACTIVE";
+  document.getElementById("hint").style.display = "block";
 }
 
-// DANCE
-if(dancing && playerMesh){
-let t=Date.now()*0.01;
-playerMesh.rotation.y=Math.sin(t);
-player.position.y=Math.abs(Math.sin(t))*0.5;
+if(player.position.distanceTo(yacht.position) < 15){
+  document.getElementById("zone").innerText = "🚤 YACHT IN VIEW";
 }
-
-// CROWD + LIGHT
-let dist=player.position.distanceTo(stage.position);
-
-if(dist<25){
-let t=Date.now()*0.002;
-
-club1.intensity=2;
-club2.intensity=2;
-
-club1.position.set(-25+Math.sin(t)*10,10,-90);
-club2.position.set(-25+Math.cos(t)*10,10,-90);
-
-crowd.forEach((p,i)=>{
-p.lookAt(player.position);
-p.position.y=0.6+Math.sin(Date.now()*0.01+i)*(dancing?0.6:0.2);
-});
-}else{
-club1.intensity=0;
-club2.intensity=0;
-}
-
-// MUSIC
-music.volume=Math.max(0,1-(dist/120));
 
 // CAMERA
-camera.position.x+=(player.position.x-camera.position.x)*0.05;
-camera.position.y+=(7-camera.position.y)*0.05;
-camera.position.z+=(player.position.z+18-camera.position.z)*0.05;
+camera.position.x += (player.position.x - camera.position.x)*0.06;
+camera.position.y += (6 - camera.position.y)*0.05;
+camera.position.z += (player.position.z + 10 - camera.position.z)*0.06;
 camera.lookAt(player.position);
 
-// WORLD MOTION
+// ATMOSPHERE
 stars.rotation.y += 0.0003;
-water.material.uniforms['time'].value+=1/60;
 
 renderer.render(scene,camera);
 }
