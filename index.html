@@ -163,7 +163,18 @@ scene.add(right);
 /////////////////////////////////////////////////////
 // 4. EXPERIENCE BLOCK (UI + ZONES)
 /////////////////////////////////////////////////////
+let introPlayed = false;
+let introTime = 0;
 
+let introCamera = {
+  x: 0,
+  y: 8,
+  z: 60
+};
+
+function playIntro(){
+  document.getElementById("zone").innerText = "🎬 LAMBO CITY INTRO";
+}
 function updateUI(){
 if(player.position.distanceTo(stage.position)<8){
 document.getElementById("zone").innerText="🎤 STAGE ACTIVE";
