@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LAMBO CITY — IMMERSION LAYER v5</title>
+<title>LAMBO CITY — STRUCTURE LOCKED UPGRADE</title>
 
 <style>
 body { margin:0; overflow:hidden; background:black; }
@@ -10,24 +10,32 @@ canvas { display:block; }
 
 #start {
 position:absolute; inset:0;
-display:flex; justify-content:center; align-items:center;
+display:flex;
+justify-content:center;
+align-items:center;
 flex-direction:column;
-background:black; color:white;
+background:black;
+color:white;
 z-index:10;
 }
 
 #ui {
-position:absolute; top:20px; left:20px;
-color:white; font-size:13px;
+position:absolute;
+top:20px; left:20px;
+color:white;
+font-size:13px;
 }
 
 #zone {
-position:absolute; top:20px; right:20px;
+position:absolute;
+top:20px; right:20px;
 color:#00ffff;
 }
 
 #msg {
-position:absolute; bottom:30px; left:50%;
+position:absolute;
+bottom:30px;
+left:50%;
 transform:translateX(-50%);
 color:white;
 padding:10px;
@@ -45,7 +53,7 @@ display:none;
 <button onclick="start()">ENTER WORLD</button>
 </div>
 
-<div id="ui">WASD MOVE • E ENTER CABIN</div>
+<div id="ui">🏡 Villa → 🌊 Dock → 🎤 Stage → 🚤 Yacht</div>
 <div id="zone">INITIALIZING...</div>
 <div id="msg">INTERIOR MODE</div>
 
@@ -73,7 +81,7 @@ light.position.set(0,10,10);
 scene.add(light);
 
 /////////////////////////////////////////////////////
-// PLAYER (FIRST PERSON READY)
+// PLAYER (FIRST PERSON BASE)
 /////////////////////////////////////////////////////
 
 const player = new THREE.Group();
@@ -88,7 +96,7 @@ player.add(body);
 player.position.set(0,1,20);
 
 /////////////////////////////////////////////////////
-// WORLD
+// WORLD BASE
 /////////////////////////////////////////////////////
 
 // WATER
@@ -128,107 +136,74 @@ dock.position.set(0,0,-100);
 scene.add(dock);
 
 /////////////////////////////////////////////////////
-// 🏡 LUXURY PENTHOUSE INTERIORS (IMMERSION LAYER v6)
+// CABIN SYSTEM (FIXED STRUCTURE)
 /////////////////////////////////////////////////////
 
 const cabins = [];
-const cabinLights = [];
+let insideCabin = false;
+let currentCabin = null;
 
-function createCabin(i, x, z){
+function createCabin(x, z, color){
 
-// FLOOR (wood / marble vibe)
+const group = new THREE.Group();
+
+// FLOOR
 const floor = new THREE.Mesh(
 new THREE.PlaneGeometry(8,8),
-new THREE.MeshStandardMaterial({
-color:0x1a1a1a,
-roughness:0.4
-})
+new THREE.MeshStandardMaterial({color:0x1a1a1a})
 );
 floor.rotation.x = -Math.PI/2;
-floor.position.set(x,0,z);
-scene.add(floor);
+group.add(floor);
 
-// WALLS (open front penthouse feel)
-const wallMat = new THREE.MeshStandardMaterial({
-color:0x111111,
-roughness:0.8
-});
-
-const backWall = new THREE.Mesh(
+// BACK WALL
+const wall = new THREE.Mesh(
 new THREE.BoxGeometry(8,5,0.3),
-wallMat
+new THREE.MeshStandardMaterial({color:0x111111})
 );
-backWall.position.set(x,2.5,z-4);
-scene.add(backWall);
+wall.position.z = -4;
+wall.position.y = 2.5;
+group.add(wall);
 
-// SIDE WALLS
-const leftWall = new THREE.Mesh(
-new THREE.BoxGeometry(0.3,5,8),
-wallMat
-);
-leftWall.position.set(x-4,2.5,z);
-scene.add(leftWall);
+// LIGHT
+const light = new THREE.PointLight(color,1.2,20);
+light.position.set(0,4,0);
+group.add(light);
 
-const rightWall = leftWall.clone();
-rightWall.position.x = x+4;
-scene.add(rightWall);
-
-// CEILING LIGHT PANEL (luxury glow)
-const ceilingLight = new THREE.PointLight(0xffcc88,1.2,20);
-ceilingLight.position.set(x,4.5,z);
-scene.add(ceilingLight);
-
-cabinLights.push(ceilingLight);
-
-// 🛋️ FURNITURE SET
-
-// couch
+// FURNITURE
 const couch = new THREE.Mesh(
 new THREE.BoxGeometry(3,1,1),
 new THREE.MeshStandardMaterial({color:0x333333})
 );
-couch.position.set(x-1,0.5,z);
-scene.add(couch);
+couch.position.set(-1,0.5,0);
+group.add(couch);
 
-// table
-const table = new THREE.Mesh(
-new THREE.BoxGeometry(1.5,0.6,1),
-new THREE.MeshStandardMaterial({color:0x222222})
-);
-table.position.set(x+1.5,0.3,z+1);
-scene.add(table);
-
-// bed (VIP suite feel)
 const bed = new THREE.Mesh(
 new THREE.BoxGeometry(2.5,0.6,1.5),
 new THREE.MeshStandardMaterial({color:0x444444})
 );
-bed.position.set(x-1.5,0.3,z-2);
-scene.add(bed);
+bed.position.set(1,0.3,-2);
+group.add(bed);
 
-// ambient decor glow
-const decorLight = new THREE.PointLight(0x00ffff,0.4,10);
-decorLight.position.set(x,1,z);
-scene.add(decorLight);
+// POSITION GROUP
+group.position.set(x,0,z);
+scene.add(group);
 
-// cabin trigger
-const cabinCore = new THREE.Mesh(
+// TRIGGER ZONE
+const trigger = new THREE.Mesh(
 new THREE.BoxGeometry(2,2,2),
 new THREE.MeshBasicMaterial({visible:false})
 );
+trigger.position.set(x,1,z);
+scene.add(trigger);
 
-cabinCore.position.set(x,1,z);
-scene.add(cabinCore);
-
-cabins.push(cabinCore);
+cabins.push({group, trigger});
 }
 
-/////////////////////////////////////////////////////
-// INTERIOR STATE
-/////////////////////////////////////////////////////
-
-let insideCabin = false;
-let currentCabin = null;
+// spawn cabins
+for(let i=0;i<5;i++){
+createCabin(-20, -20-(i*25), 0x00ffff);
+createCabin(20, -20-(i*25), 0xff00ff);
+}
 
 /////////////////////////////////////////////////////
 // INPUT
@@ -239,10 +214,7 @@ let started = false;
 
 document.addEventListener("keydown",e=>{
 keys[e.key.toLowerCase()] = true;
-
-if(e.key.toLowerCase()==="e"){
-tryEnterCabin();
-}
+if(e.key.toLowerCase()==="e") toggleCabin();
 });
 
 document.addEventListener("keyup",e=>keys[e.key.toLowerCase()] = false);
@@ -254,19 +226,20 @@ document.getElementById("zone").innerText="WELCOME TO LAMBO CITY";
 }
 
 /////////////////////////////////////////////////////
-// CABIN SYSTEM
+// CABIN ENTRY SYSTEM
 /////////////////////////////////////////////////////
 
-function tryEnterCabin(){
+function toggleCabin(){
 
 if(insideCabin){
 insideCabin = false;
+currentCabin = null;
 document.getElementById("msg").style.display="none";
 return;
 }
 
 for(let c of cabins){
-if(player.position.distanceTo(c.position) < 4){
+if(player.position.distanceTo(c.trigger.position) < 4){
 insideCabin = true;
 currentCabin = c;
 document.getElementById("msg").style.display="block";
@@ -277,23 +250,33 @@ break;
 }
 
 /////////////////////////////////////////////////////
-// CAMERA SYSTEM
+// CAMERA SYSTEM (SMOOTH)
 /////////////////////////////////////////////////////
 
 function updateCamera(){
 
-if(insideCabin){
-camera.position.x = currentCabin.position.x;
-camera.position.y = 3;
-camera.position.z = currentCabin.position.z;
-camera.lookAt(currentCabin.position);
+if(insideCabin && currentCabin){
+camera.position.lerp(
+new THREE.Vector3(
+currentCabin.group.position.x,
+3,
+currentCabin.group.position.z + 3
+),
+0.08
+);
+camera.lookAt(currentCabin.group.position);
 return;
 }
 
-// FIRST PERSON FOLLOW
-camera.position.x = player.position.x;
-camera.position.y = player.position.y + 2;
-camera.position.z = player.position.z + 5;
+camera.position.lerp(
+new THREE.Vector3(
+player.position.x,
+player.position.y + 2,
+player.position.z + 6
+),
+0.08
+);
+
 camera.lookAt(player.position);
 }
 
