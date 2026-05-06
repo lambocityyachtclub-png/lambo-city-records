@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LAMBO CITY — CHARACTER SYSTEM</title>
+<title>LAMBO CITY — HERO SYSTEM</title>
 
 <style>
 body { margin:0; overflow:hidden; background:black; font-family:Arial; }
@@ -41,6 +41,15 @@ canvas { display:block; }
   padding:8px 12px;
   display:none;
 }
+
+/* NAME TAG */
+#nameTag {
+  position:absolute;
+  color:white;
+  font-size:12px;
+  text-align:center;
+  pointer-events:none;
+}
 </style>
 </head>
 
@@ -51,10 +60,15 @@ canvas { display:block; }
   <button onclick="start()">ENTER</button>
 </div>
 
-<div id="ui">MOVE: W A S D</div>
-<div id="msg">You were invited…</div>
+<div id="ui">W A S D TO MOVE</div>
+<div id="msg">I brought you here.</div>
 <div id="status"></div>
 <div id="locked">ACCESS DENIED</div>
+
+<div id="nameTag">
+  <div style="font-weight:bold;">HERO</div>
+  <div style="font-size:10px; color:#aaa;">Founder — LAMBO CITY</div>
+</div>
 
 <canvas id="c"></canvas>
 
@@ -78,7 +92,7 @@ let player = new THREE.Group();
 // BODY
 let torso = new THREE.Mesh(
   new THREE.BoxGeometry(1,1.5,0.5),
-  new THREE.MeshStandardMaterial({color:0xffffff})
+  new THREE.MeshStandardMaterial({color:0xdddddd})
 );
 torso.position.y = 1.2;
 
@@ -102,14 +116,15 @@ legR.position.set(0.2,0.5,0);
 player.add(torso, head, legL, legR);
 scene.add(player);
 
-// AURA (STATUS)
+// 👑 FOUNDER AURA (subtle luxury)
 let aura = new THREE.Mesh(
-  new THREE.RingGeometry(1,1.3,32),
-  new THREE.MeshBasicMaterial({color:0x00ffff, side:THREE.DoubleSide})
+  new THREE.RingGeometry(1.2,1.5,32),
+  new THREE.MeshBasicMaterial({color:0xffd700, side:THREE.DoubleSide})
 );
 aura.rotation.x = -Math.PI/2;
 aura.position.y = 0.05;
-aura.visible = false;
+aura.opacity = 0.4;
+aura.transparent = true;
 player.add(aura);
 
 // ================= ROOM =================
@@ -170,7 +185,7 @@ for(let i=0;i<5;i++){
   createCabin(35,-20-(i*30));
 }
 
-// STAGE
+// STAGE (upcoming artists)
 let stage = new THREE.Mesh(
   new THREE.BoxGeometry(20,2,14),
   new THREE.MeshStandardMaterial({color:0x6600aa})
@@ -178,15 +193,7 @@ let stage = new THREE.Mesh(
 stage.position.set(-30,1,-90);
 scene.add(stage);
 
-// BACKSTAGE
-let backstage = new THREE.Mesh(
-  new THREE.BoxGeometry(20,2,14),
-  new THREE.MeshStandardMaterial({color:0x220044})
-);
-backstage.position.set(-30,1,-110);
-scene.add(backstage);
-
-// YACHT
+// YACHT (elite stage world)
 let yacht = new THREE.Mesh(
   new THREE.BoxGeometry(45,6,20),
   new THREE.MeshStandardMaterial({color:0x222244})
@@ -208,7 +215,6 @@ for(let i=0;i<30;i++){
 
 // ================= SYSTEM =================
 let keys={},inWorld=false;
-let hasBackstage=false;
 
 document.addEventListener("keydown",e=>keys[e.key.toLowerCase()]=true);
 document.addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
@@ -229,52 +235,33 @@ function animate(){
 requestAnimationFrame(animate);
 if(!inWorld) return;
 
-// MOVEMENT
-let moving = false;
-
+// MOVE
+let moving=false;
 if(keys["w"]){ player.position.z-=0.12; moving=true; }
 if(keys["s"]){ player.position.z+=0.12; moving=true; }
 if(keys["a"]){ player.position.x-=0.12; moving=true; }
 if(keys["d"]){ player.position.x+=0.12; moving=true; }
 
 // ANIMATION
-let t = Date.now()*0.01;
-if(moving){
-  legL.rotation.x = Math.sin(t)*0.8;
-  legR.rotation.x = -Math.sin(t)*0.8;
-}else{
-  legL.rotation.x = 0;
-  legR.rotation.x = 0;
-}
+let t=Date.now()*0.01;
+legL.rotation.x = moving ? Math.sin(t)*0.8 : 0;
+legR.rotation.x = moving ? -Math.sin(t)*0.8 : 0;
 
 // EXIT ROOM
 if(player.position.z < 15){
   room.visible=false;
-  speak("Go see what they built…");
+  speak("This is a cool city… you’ll see.");
 }
 
-// STAGE → BACKSTAGE PASS
-if(player.position.distanceTo(stage.position)<6 && !hasBackstage){
-  hasBackstage=true;
-  aura.visible=true;
-
-  document.getElementById("status").style.display="block";
-  document.getElementById("status").innerText="BACKSTAGE PASS UNLOCKED";
-
-  speak("You moved different… take this.");
+// STAGE MOMENT
+if(player.position.distanceTo(stage.position)<6){
+  speak("You’ll understand when you earn it.");
 }
 
-// BACKSTAGE LOCK
-if(player.position.distanceTo(backstage.position)<6 && !hasBackstage){
-  player.position.z=-100;
-  speak("You don’t belong back here.");
-}
-
-// YACHT LOCK
+// YACHT LOCK (others feel this, not you)
 if(player.position.z < -300){
   player.position.z=-300;
   document.getElementById("locked").style.display="block";
-  speak("You’re not ready.");
 }else{
   document.getElementById("locked").style.display="none";
 }
@@ -284,6 +271,18 @@ camera.position.x += (player.position.x-camera.position.x)*0.05;
 camera.position.y += (4-camera.position.y)*0.05;
 camera.position.z += (player.position.z+10-camera.position.z)*0.05;
 camera.lookAt(player.position.x,player.position.y+1.5,player.position.z);
+
+// NAME TAG FOLLOW
+let vector = player.position.clone();
+vector.y += 2.8;
+vector.project(camera);
+
+let x = (vector.x * 0.5 + 0.5) * innerWidth;
+let y = (-vector.y * 0.5 + 0.5) * innerHeight;
+
+let tag = document.getElementById("nameTag");
+tag.style.left = x + "px";
+tag.style.top = y + "px";
 
 // LIFE
 stars.rotation.y+=0.0005;
