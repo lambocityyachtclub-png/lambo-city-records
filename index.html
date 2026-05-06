@@ -1,288 +1,39 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>LAMBO CITY — CUSTOMIZATION UI</title>
+/////////////////////////////////////////////////////
+// 🎟️ LAMBO CITY — VIP BOARDING PASS SYSTEM
+/////////////////////////////////////////////////////
 
-<style>
-body { margin:0; overflow:hidden; background:black; font-family:Arial; }
-canvas { display:block; }
+let inventory = {
+  dockPass: false,
+  stagePass: false,
+  vipPass: false
+};
 
-/* ================= START ================= */
-#start {
-  position:absolute; inset:0;
-  background:black; color:white;
-  display:flex; flex-direction:column;
-  align-items:center; justify-content:center;
-  z-index:1000;
+function givePass(type){
+  inventory[type] = true;
+  speak("You received: " + type);
 }
 
-/* ================= UI ================= */
-#ui {
-  position:absolute;
-  top:20px; left:20px;
-  color:white;
-  font-size:13px;
+/* ================= PASS EVENTS ================= */
+
+// 🎤 STAGE REWARD (FIRST ACCESS MOMENT)
+function stageReward(){
+  givePass("stagePass");
+  givePass("dockPass");
+  character.rank = "performer";
+  updateCharacterVisuals?.();
 }
 
-#status {
-  position:absolute;
-  top:20px; right:20px;
-  color:gold;
-}
-
-#msg {
-  position:absolute;
-  bottom:40px; left:50%;
-  transform:translateX(-50%);
-  color:white;
-  padding:10px;
-  border:1px solid gold;
-  background:rgba(0,0,0,0.6);
-}
-
-/* ================= CUSTOM MENU ================= */
-#menu {
-  position:absolute;
-  top:50%; left:50%;
-  transform:translate(-50%,-50%);
-  width:300px;
-  padding:20px;
-  background:rgba(0,0,0,0.85);
-  border:1px solid #00ffff;
-  color:white;
-  display:none;
-  z-index:2000;
-}
-
-.menuTitle {
-  color:#00ffff;
-  margin-bottom:10px;
-}
-
-button {
-  width:100%;
-  margin:5px 0;
-  padding:8px;
-  background:#111;
-  color:white;
-  border:1px solid #333;
-  cursor:pointer;
-}
-
-button:hover {
-  border-color:#00ffff;
-}
-</style>
-</head>
-
-<body>
-
-<div id="start">
-  <h1>LAMBO CITY</h1>
-  <button onclick="start()">ENTER WORLD</button>
-</div>
-
-<div id="ui">🏠 Cabin → 🌉 Dock → 🎤 Stage → 💼 VIP → 🚤 Yacht</div>
-<div id="status">STATUS: VISITOR</div>
-<div id="msg">Welcome to LAMBO CITY.</div>
-
-<!-- ================= CUSTOMIZATION MENU ================= -->
-<div id="menu">
-  <div class="menuTitle">CHARACTER CUSTOMIZATION</div>
-
-  <div>SKIN</div>
-  <button onclick="setSkin('visitor')">Visitor (White)</button>
-  <button onclick="setSkin('performer')">Performer (Blue)</button>
-  <button onclick="setSkin('vip')">VIP (Gold)</button>
-
-  <div style="margin-top:10px;">AURA</div>
-  <button onclick="setAura('none')">None</button>
-  <button onclick="setAura('blue')">Blue Glow</button>
-  <button onclick="setAura('gold')">Gold Glow</button>
-
-  <div style="margin-top:10px;">OUTFIT</div>
-  <button onclick="setOutfit('street')">Street</button>
-  <button onclick="setOutfit('luxury')">Luxury</button>
-
-  <button style="margin-top:10px;" onclick="toggleMenu()">Close</button>
-</div>
-
-<canvas id="c"></canvas>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-
-<script>
-
-/* ================= WORLD ================= */
-let scene = new THREE.Scene();
-scene.background = new THREE.Color(0x000000);
-
-let camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 1000);
-let renderer = new THREE.WebGLRenderer({canvas:c});
-renderer.setSize(innerWidth, innerHeight);
-
-scene.add(new THREE.AmbientLight(0xffffff,1.2));
-let light = new THREE.PointLight(0x00aaff,2);
-light.position.set(0,5,5);
-scene.add(light);
-
-/* ================= PLAYER ================= */
-let material = new THREE.MeshStandardMaterial({color:0xffffff});
-
-let player = new THREE.Mesh(
-  new THREE.BoxGeometry(1,1,1),
-  material
-);
-scene.add(player);
-
-/* ================= STATE ================= */
-let started=false;
-let keys={};
-
-let skin="visitor";
-let aura="none";
-let outfit="street";
-
-/* ================= HERO ================= */
-let isHero = window.location.search.includes("hero=true");
-
-/* ================= START ================= */
-function start(){
-  document.getElementById("start").style.display="none";
-  started=true;
-  player.position.set(-35,0.5,20);
-  speak("You are inside LAMBO CITY.");
-}
-
-/* ================= MENU ================= */
-function toggleMenu(){
-  let m=document.getElementById("menu");
-  m.style.display = (m.style.display==="none"||m.style.display==="")?"block":"none";
-}
-
-document.addEventListener("keydown",e=>{
-  keys[e.key.toLowerCase()]=true;
-
-  if(e.key.toLowerCase()==="c"){
-    toggleMenu();
+// 💼 VIP UNLOCK LOGIC
+function checkVIPAccess(){
+  if(inventory.stagePass && inventory.vipPass){
+    return true;
   }
-});
-
-document.addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
-
-/* ================= CUSTOMIZATION ================= */
-function setSkin(type){
-  skin=type;
-
-  if(type==="visitor") material.color.setHex(0xffffff);
-  if(type==="performer") material.color.setHex(0x00aaff);
-  if(type==="vip") material.color.setHex(0xffd700);
+  return false;
 }
 
-function setAura(type){
-  aura=type;
+// 🚤 YACHT ACCESS RULE
+function canEnterYacht(){
+  return inventory.vipPass === true;
 }
 
-function setOutfit(type){
-  outfit=type;
-  speak("Outfit set: " + type);
-}
-
-/* ================= WORLD ================= */
-
-/* WATER */
-let water=new THREE.Mesh(
-  new THREE.PlaneGeometry(900,900),
-  new THREE.MeshStandardMaterial({color:0x020b1a})
-);
-water.rotation.x=-Math.PI/2;
-water.position.y=-1;
-scene.add(water);
-
-/* STARS */
-const starGeo=new THREE.BufferGeometry();
-let arr=[];
-for(let i=0;i<4000;i++){
-  arr.push((Math.random()-0.5)*900,Math.random()*300,(Math.random()-0.5)*900);
-}
-starGeo.setAttribute("position",new THREE.Float32BufferAttribute(arr,3));
-
-let stars=new THREE.Points(
-  starGeo,
-  new THREE.PointsMaterial({color:0xffffff,size:1})
-);
-scene.add(stars);
-
-/* DOCK */
-let dock=new THREE.Mesh(
-  new THREE.BoxGeometry(240,1,320),
-  new THREE.MeshStandardMaterial({color:0x050505})
-);
-dock.position.set(0,-0.5,-120);
-scene.add(dock);
-
-/* STAGE */
-let stage=new THREE.Mesh(
-  new THREE.BoxGeometry(22,2,14),
-  new THREE.MeshStandardMaterial({color:0x6600aa})
-);
-stage.position.set(-30,1,-90);
-scene.add(stage);
-
-/* VIP */
-let vipZone=new THREE.Mesh(
-  new THREE.BoxGeometry(22,1,20),
-  new THREE.MeshStandardMaterial({color:0x001f2f})
-);
-vipZone.position.set(-30,0,-120);
-scene.add(vipZone);
-
-/* YACHT */
-let yacht=new THREE.Mesh(
-  new THREE.BoxGeometry(50,6,22),
-  new THREE.MeshStandardMaterial({color:0x222244})
-);
-yacht.position.set(0,3,-350);
-scene.add(yacht);
-
-/* ================= VOICE ================= */
-function speak(text){
-  document.getElementById("msg").innerText=text;
-}
-
-/* ================= LOOP ================= */
-function animate(){
-requestAnimationFrame(animate);
-if(!started) return;
-
-/* MOVE */
-if(keys["w"]) player.position.z-=0.15;
-if(keys["s"]) player.position.z+=0.15;
-if(keys["a"]) player.position.x-=0.15;
-if(keys["d"]) player.position.x+=0.15;
-
-/* HERO LOCK */
-if(isHero){
-  material.color.setHex(0x000000);
-}
-
-/* CAMERA */
-camera.position.x+=(player.position.x-camera.position.x)*0.05;
-camera.position.z+=(player.position.z+10-camera.position.z)*0.05;
-camera.position.y+=(4-camera.position.y)*0.05;
-camera.lookAt(player.position);
-
-/* ATMOSPHERE */
-stars.rotation.y+=0.0005;
-water.position.z=Math.sin(Date.now()*0.001)*1;
-
-renderer.render(scene,camera);
-}
-
-animate();
-
-</script>
-
-</body>
-</html>
+/////////////////////////////////////////////////////
