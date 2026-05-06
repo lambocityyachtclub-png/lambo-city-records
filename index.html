@@ -67,7 +67,7 @@ canvas { display:block; }
 <script>
 
 /////////////////////////////////////////////////////
-// 🌍 CORE SETUP
+// WORLD
 /////////////////////////////////////////////////////
 
 let scene = new THREE.Scene();
@@ -85,7 +85,7 @@ light.position.set(0,5,5);
 scene.add(light);
 
 /////////////////////////////////////////////////////
-// 🧍 PLAYER (HERO SPAWN CORRECTED)
+// PLAYER
 /////////////////////////////////////////////////////
 
 let player = new THREE.Group();
@@ -112,12 +112,11 @@ player.add(body);
 player.add(head);
 player.add(aura);
 
-// 🏠 HERO STARTS INSIDE LEFT MOST CABIN AREA
 player.position.set(-20, 0, 10);
 scene.add(player);
 
 /////////////////////////////////////////////////////
-// 🌉 DOCK
+// WORLD OBJECTS
 /////////////////////////////////////////////////////
 
 let dock = new THREE.Mesh(
@@ -127,10 +126,7 @@ let dock = new THREE.Mesh(
 dock.position.set(0,-0.5,-140);
 scene.add(dock);
 
-/////////////////////////////////////////////////////
-// 🏠 10 CABINS (REAL ESTATE LAYOUT)
-/////////////////////////////////////////////////////
-
+// cabins
 for(let i=0;i<10;i++){
   let cabin = new THREE.Mesh(
     new THREE.BoxGeometry(8,5,8),
@@ -144,10 +140,6 @@ for(let i=0;i<10;i++){
   scene.add(cabin);
 }
 
-/////////////////////////////////////////////////////
-// 🎤 STAGE
-/////////////////////////////////////////////////////
-
 let stage = new THREE.Mesh(
   new THREE.BoxGeometry(22,2,14),
   new THREE.MeshStandardMaterial({color:0x6600aa})
@@ -155,20 +147,12 @@ let stage = new THREE.Mesh(
 stage.position.set(-30,1,-90);
 scene.add(stage);
 
-/////////////////////////////////////////////////////
-// 🚤 YACHT
-/////////////////////////////////////////////////////
-
 let yacht = new THREE.Mesh(
   new THREE.BoxGeometry(50,6,22),
   new THREE.MeshStandardMaterial({color:0x222244})
 );
 yacht.position.set(0,3,-200);
 scene.add(yacht);
-
-/////////////////////////////////////////////////////
-// 🌊 WATER
-/////////////////////////////////////////////////////
 
 let water = new THREE.Mesh(
   new THREE.PlaneGeometry(600,600),
@@ -179,7 +163,7 @@ water.position.y = -1;
 scene.add(water);
 
 /////////////////////////////////////////////////////
-// ⭐ STARS
+// STARS
 /////////////////////////////////////////////////////
 
 const starGeo = new THREE.BufferGeometry();
@@ -199,7 +183,7 @@ let stars = new THREE.Points(
 scene.add(stars);
 
 /////////////////////////////////////////////////////
-// 🎮 STATE
+// STATE
 /////////////////////////////////////////////////////
 
 let keys = {};
@@ -214,32 +198,32 @@ function start(){
   inWorld=true;
 
   setTimeout(()=>{
-    document.getElementById("zone").innerText = "HERO: Welcome to LAMBO CITY";
+    document.getElementById("zone").innerText =
+    "HERO: You are inside LAMBO CITY";
   },800);
 }
 
 /////////////////////////////////////////////////////
-// 🎯 GAME LOGIC (FIXED — ONLY ONCE)
+// GAME LOGIC
 /////////////////////////////////////////////////////
 
 function checkStage(){
 
-  // 🎤 STAGE
   if(player.position.distanceTo(stage.position) < 6 && !hasPass){
     hasPass = true;
-    document.getElementById("zone").innerText = "🎟 STAGE PASS UNLOCKED";
+    document.getElementById("zone").innerText =
+    "🎟 STAGE PASS UNLOCKED";
     stage.material.color.set(0x00ffcc);
   }
 
-  // 🚤 YACHT
   if(player.position.distanceTo(yacht.position) < 10 && hasPass){
-    document.getElementById("zone").innerText = "🚤 VIP YACHT ACCESS";
-    yacht.material.color.set(0x00ffff);
+    document.getElementById("zone").innerText =
+    "🚤 YACHT CLUB OPENED — YOU MADE IT";
   }
 }
 
 /////////////////////////////////////////////////////
-// 🎬 LOOP
+// LOOP
 /////////////////////////////////////////////////////
 
 function animate(){
@@ -253,7 +237,7 @@ if(keys["s"]) player.position.z += 0.15;
 if(keys["a"]) player.position.x -= 0.15;
 if(keys["d"]) player.position.x += 0.15;
 
-// logic
+// GAME LOGIC (FIXED)
 checkStage();
 
 // camera
@@ -263,11 +247,10 @@ camera.position.z += (player.position.z+10-camera.position.z)*0.06;
 
 camera.lookAt(player.position);
 
-// world motion
+// motion
 stars.rotation.y += 0.0004;
 water.position.z = Math.sin(Date.now()*0.001)*1;
 
-// UI hint
 document.getElementById("hint").style.display =
 player.position.distanceTo(stage.position)<6 ? "block" : "none";
 
