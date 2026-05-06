@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LAMBO CITY — STRUCTURE LOCKED UPGRADE</title>
+<title>LAMBO CITY — IMMERSION LAYER v7</title>
 
 <style>
 body { margin:0; overflow:hidden; background:black; }
@@ -20,22 +20,17 @@ z-index:10;
 }
 
 #ui {
-position:absolute;
-top:20px; left:20px;
-color:white;
-font-size:13px;
+position:absolute; top:20px; left:20px;
+color:white; font-size:13px;
 }
 
 #zone {
-position:absolute;
-top:20px; right:20px;
+position:absolute; top:20px; right:20px;
 color:#00ffff;
 }
 
 #msg {
-position:absolute;
-bottom:30px;
-left:50%;
+position:absolute; bottom:30px; left:50%;
 transform:translateX(-50%);
 color:white;
 padding:10px;
@@ -53,7 +48,7 @@ display:none;
 <button onclick="start()">ENTER WORLD</button>
 </div>
 
-<div id="ui">🏡 Villa → 🌊 Dock → 🎤 Stage → 🚤 Yacht</div>
+<div id="ui">WASD MOVE • E ENTER / EXIT CABIN</div>
 <div id="zone">INITIALIZING...</div>
 <div id="msg">INTERIOR MODE</div>
 
@@ -64,42 +59,49 @@ display:none;
 <script>
 
 /////////////////////////////////////////////////////
-// CORE WORLD
+// 🌍 CORE WORLD
 /////////////////////////////////////////////////////
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x000000);
 
 const camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 2000);
-const renderer = new THREE.WebGLRenderer({canvas:c});
+const renderer = new THREE.WebGLRenderer({canvas:c, antialias:true});
 renderer.setSize(innerWidth, innerHeight);
 
-// LIGHT
 scene.add(new THREE.AmbientLight(0xffffff,1.2));
+
 const light = new THREE.PointLight(0x00ffff,2);
 light.position.set(0,10,10);
 scene.add(light);
 
 /////////////////////////////////////////////////////
-// PLAYER (FIRST PERSON BASE)
+// 🧍 PLAYER
 /////////////////////////////////////////////////////
 
-const player = new THREE.Group();
-scene.add(player);
-
-const body = new THREE.Mesh(
+const player = new THREE.Mesh(
 new THREE.BoxGeometry(1,1.8,1),
 new THREE.MeshStandardMaterial({color:0xffffff})
 );
-player.add(body);
-
+scene.add(player);
 player.position.set(0,1,20);
 
+const keys = {};
+let started = false;
+
+document.addEventListener("keydown",e=>keys[e.key.toLowerCase()]=true);
+document.addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
+
+function start(){
+document.getElementById("start").style.display="none";
+started = true;
+document.getElementById("zone").innerText="WELCOME TO LAMBO CITY";
+}
+
 /////////////////////////////////////////////////////
-// WORLD BASE
+// 🌊 WORLD FLOOR
 /////////////////////////////////////////////////////
 
-// WATER
 const water = new THREE.Mesh(
 new THREE.PlaneGeometry(2000,2000),
 new THREE.MeshStandardMaterial({color:0x020b1a})
@@ -107,7 +109,10 @@ new THREE.MeshStandardMaterial({color:0x020b1a})
 water.rotation.x = -Math.PI/2;
 scene.add(water);
 
-// STARS
+/////////////////////////////////////////////////////
+// 🌟 STARS
+/////////////////////////////////////////////////////
+
 const starGeo = new THREE.BufferGeometry();
 const arr = [];
 
@@ -127,7 +132,10 @@ new THREE.PointsMaterial({color:0xffffff,size:1})
 );
 scene.add(stars);
 
-// DOCK
+/////////////////////////////////////////////////////
+// 🚤 DOCK
+/////////////////////////////////////////////////////
+
 const dock = new THREE.Mesh(
 new THREE.BoxGeometry(80,1,300),
 new THREE.MeshStandardMaterial({color:0x111111})
@@ -136,112 +144,111 @@ dock.position.set(0,0,-100);
 scene.add(dock);
 
 /////////////////////////////////////////////////////
-// CABIN SYSTEM (FIXED STRUCTURE)
+// 🏡 CABINS (REGISTERED WORLD ZONES)
 /////////////////////////////////////////////////////
 
 const cabins = [];
-let insideCabin = false;
-let currentCabin = null;
 
-function createCabin(x, z, color){
+function createCabin(x,z){
 
-const group = new THREE.Group();
+const base = new THREE.Group();
 
-// FLOOR
+// floor
 const floor = new THREE.Mesh(
 new THREE.PlaneGeometry(8,8),
 new THREE.MeshStandardMaterial({color:0x1a1a1a})
 );
 floor.rotation.x = -Math.PI/2;
-group.add(floor);
+base.add(floor);
 
-// BACK WALL
-const wall = new THREE.Mesh(
+// walls (open front)
+const back = new THREE.Mesh(
 new THREE.BoxGeometry(8,5,0.3),
 new THREE.MeshStandardMaterial({color:0x111111})
 );
-wall.position.z = -4;
-wall.position.y = 2.5;
-group.add(wall);
+back.position.set(0,2.5,-4);
+base.add(back);
 
-// LIGHT
-const light = new THREE.PointLight(color,1.2,20);
+const left = new THREE.Mesh(
+new THREE.BoxGeometry(0.3,5,8),
+new THREE.MeshStandardMaterial({color:0x111111})
+);
+left.position.set(-4,2.5,0);
+base.add(left);
+
+const right = left.clone();
+right.position.x = 4;
+base.add(right);
+
+// lighting
+const light = new THREE.PointLight(0xffcc88,1.2,20);
 light.position.set(0,4,0);
-group.add(light);
+base.add(light);
 
-// FURNITURE
+// furniture
 const couch = new THREE.Mesh(
 new THREE.BoxGeometry(3,1,1),
 new THREE.MeshStandardMaterial({color:0x333333})
 );
 couch.position.set(-1,0.5,0);
-group.add(couch);
+base.add(couch);
 
 const bed = new THREE.Mesh(
 new THREE.BoxGeometry(2.5,0.6,1.5),
 new THREE.MeshStandardMaterial({color:0x444444})
 );
-bed.position.set(1,0.3,-2);
-group.add(bed);
+bed.position.set(1.5,0.3,-2);
+base.add(bed);
 
-// POSITION GROUP
-group.position.set(x,0,z);
-scene.add(group);
-
-// TRIGGER ZONE
+// interaction core
 const trigger = new THREE.Mesh(
 new THREE.BoxGeometry(2,2,2),
 new THREE.MeshBasicMaterial({visible:false})
 );
-trigger.position.set(x,1,z);
-scene.add(trigger);
+trigger.position.set(0,1,0);
+base.add(trigger);
 
-cabins.push({group, trigger});
+base.position.set(x,0,z);
+
+scene.add(base);
+cabins.push({group:base, trigger:trigger});
 }
 
-// spawn cabins
 for(let i=0;i<5;i++){
-createCabin(-20, -20-(i*25), 0x00ffff);
-createCabin(20, -20-(i*25), 0xff00ff);
+createCabin(-20,-20-(i*25));
+createCabin(20,-20-(i*25));
 }
 
 /////////////////////////////////////////////////////
-// INPUT
+// 🎮 GAME STATE
 /////////////////////////////////////////////////////
 
-const keys = {};
-let started = false;
+let inside = false;
+let activeCabin = null;
+
+/////////////////////////////////////////////////////
+// 🎮 INPUT
+/////////////////////////////////////////////////////
 
 document.addEventListener("keydown",e=>{
-keys[e.key.toLowerCase()] = true;
-if(e.key.toLowerCase()==="e") toggleCabin();
-});
-
-document.addEventListener("keyup",e=>keys[e.key.toLowerCase()] = false);
-
-function start(){
-document.getElementById("start").style.display="none";
-started = true;
-document.getElementById("zone").innerText="WELCOME TO LAMBO CITY";
+if(e.key.toLowerCase()==="e"){
+toggleCabin();
 }
-
-/////////////////////////////////////////////////////
-// CABIN ENTRY SYSTEM
-/////////////////////////////////////////////////////
+});
 
 function toggleCabin(){
 
-if(insideCabin){
-insideCabin = false;
-currentCabin = null;
+if(inside){
+inside = false;
 document.getElementById("msg").style.display="none";
+document.getElementById("zone").innerText="OUTSIDE WORLD";
 return;
 }
 
 for(let c of cabins){
-if(player.position.distanceTo(c.trigger.position) < 4){
-insideCabin = true;
-currentCabin = c;
+if(player.position.distanceTo(c.trigger.position)<4){
+inside = true;
+activeCabin = c;
 document.getElementById("msg").style.display="block";
 document.getElementById("zone").innerText="INSIDE CABIN";
 break;
@@ -250,43 +257,32 @@ break;
 }
 
 /////////////////////////////////////////////////////
-// CAMERA SYSTEM (SMOOTH)
+// 🎥 CAMERA
 /////////////////////////////////////////////////////
 
 function updateCamera(){
 
-if(insideCabin && currentCabin){
-camera.position.lerp(
-new THREE.Vector3(
-currentCabin.group.position.x,
-3,
-currentCabin.group.position.z + 3
-),
-0.08
-);
-camera.lookAt(currentCabin.group.position);
+if(inside && activeCabin){
+camera.position.x = activeCabin.group.position.x;
+camera.position.y = 3;
+camera.position.z = activeCabin.group.position.z;
+camera.lookAt(activeCabin.group.position);
 return;
 }
 
-camera.position.lerp(
-new THREE.Vector3(
-player.position.x,
-player.position.y + 2,
-player.position.z + 6
-),
-0.08
-);
-
+camera.position.x = player.position.x;
+camera.position.y = 6;
+camera.position.z = player.position.z + 10;
 camera.lookAt(player.position);
 }
 
 /////////////////////////////////////////////////////
-// MOVEMENT
+// 🚶 MOVEMENT
 /////////////////////////////////////////////////////
 
-function movePlayer(){
+function move(){
 
-if(insideCabin) return;
+if(inside) return;
 
 if(keys["w"]) player.position.z -= 0.25;
 if(keys["s"]) player.position.z += 0.25;
@@ -302,7 +298,7 @@ function animate(){
 requestAnimationFrame(animate);
 if(!started) return;
 
-movePlayer();
+move();
 updateCamera();
 
 stars.rotation.y += 0.0003;
