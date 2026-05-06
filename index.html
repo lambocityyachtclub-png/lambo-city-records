@@ -359,9 +359,15 @@ camera.lookAt(player.position);
 // 🎧 STAGE ENERGY SYSTEM
 /////////////////////////////////////////////////////
 
-const distToStage = player.position.distanceTo(new THREE.Vector3(-15,1,-80));
+/////////////////////////////////////////////////////
+// 🎧 STAGE ENERGY SYSTEM (FIXED)
+/////////////////////////////////////////////////////
 
-if(distToStage < 25){
+function updateStageEnergy(){
+
+const dist = player.position.distanceTo(stage.position);
+
+if(dist < 25){
 
   let t = Date.now()*0.002;
 
@@ -380,6 +386,8 @@ if(distToStage < 25){
 
   stageLight1.intensity = 0;
   stageLight2.intensity = 0;
+
+}
 
 }
   
