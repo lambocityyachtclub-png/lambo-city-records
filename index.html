@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LAMBO CITY — IMMERSION LAYER v4</title>
+<title>LAMBO CITY — IMMERSION LAYER v5</title>
 
 <style>
 body { margin:0; overflow:hidden; background:black; }
@@ -19,13 +19,11 @@ z-index:10;
 #ui {
 position:absolute; top:20px; left:20px;
 color:white; font-size:13px;
-font-family:Arial;
 }
 
 #zone {
 position:absolute; top:20px; right:20px;
 color:#00ffff;
-font-family:Arial;
 }
 
 #msg {
@@ -35,7 +33,7 @@ color:white;
 padding:10px;
 border:1px solid #00ffff;
 background:rgba(0,0,0,0.6);
-font-family:Arial;
+display:none;
 }
 </style>
 </head>
@@ -47,9 +45,9 @@ font-family:Arial;
 <button onclick="start()">ENTER WORLD</button>
 </div>
 
-<div id="ui">🏡 Villas → 🌊 Dock → 🎤 Stage → 🚤 Yacht</div>
+<div id="ui">WASD MOVE • E ENTER CABIN</div>
 <div id="zone">INITIALIZING...</div>
-<div id="msg">IMMERSION LAYER v4 ACTIVE</div>
+<div id="msg">INTERIOR MODE</div>
 
 <canvas id="c"></canvas>
 
@@ -58,52 +56,39 @@ font-family:Arial;
 <script>
 
 /////////////////////////////////////////////////////
-// 1. CORE ENGINE
+// CORE WORLD
 /////////////////////////////////////////////////////
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x000000);
-scene.fog = new THREE.FogExp2(0x000000, 0.01);
 
 const camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 2000);
 const renderer = new THREE.WebGLRenderer({canvas:c});
 renderer.setSize(innerWidth, innerHeight);
 
-scene.add(new THREE.AmbientLight(0xffffff,1.1));
-
+// LIGHT
+scene.add(new THREE.AmbientLight(0xffffff,1.2));
 const light = new THREE.PointLight(0x00ffff,2);
 light.position.set(0,10,10);
 scene.add(light);
 
 /////////////////////////////////////////////////////
-// 2. PLAYER SYSTEM
+// PLAYER (FIRST PERSON READY)
 /////////////////////////////////////////////////////
 
-const player = new THREE.Mesh(
+const player = new THREE.Group();
+scene.add(player);
+
+const body = new THREE.Mesh(
 new THREE.BoxGeometry(1,1.8,1),
 new THREE.MeshStandardMaterial({color:0xffffff})
 );
-scene.add(player);
+player.add(body);
+
 player.position.set(0,1,20);
 
-const keys = {};
-let started = false;
-
-document.addEventListener("keydown",e=>keys[e.key.toLowerCase()]=true);
-document.addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
-
-function start(){
-document.getElementById("start").style.display="none";
-started = true;
-setZone("WELCOME TO LAMBO CITY");
-}
-
-function setZone(t){
-document.getElementById("zone").innerText = t;
-}
-
 /////////////////////////////////////////////////////
-// 3. WORLD ASSETS
+// WORLD
 /////////////////////////////////////////////////////
 
 // WATER
@@ -142,92 +127,123 @@ new THREE.MeshStandardMaterial({color:0x111111})
 dock.position.set(0,0,-100);
 scene.add(dock);
 
-// STAGE
-const stage = new THREE.Mesh(
-new THREE.BoxGeometry(20,2,12),
-new THREE.MeshStandardMaterial({color:0x6600aa, emissive:0x220022})
-);
-stage.position.set(-15,1,-80);
-scene.add(stage);
-
-// YACHT
-const yacht = new THREE.Mesh(
-new THREE.BoxGeometry(40,6,20),
-new THREE.MeshStandardMaterial({color:0x00ffff, emissive:0x002222})
-);
-yacht.position.set(0,3,-250);
-scene.add(yacht);
-
 /////////////////////////////////////////////////////
-// 4. CABINS (IMMERSION LAYER v4 UPGRADE)
+// CABINS (INTERACTIVE ZONES)
 /////////////////////////////////////////////////////
 
 const cabins = [];
-const cabinInteriorLights = [];
 
-for(let i=0;i<5;i++){
+for(let i=0;i<6;i++){
 
-// LEFT CABIN
-const left = new THREE.Mesh(
+const cabin = new THREE.Mesh(
 new THREE.BoxGeometry(8,5,8),
-new THREE.MeshStandardMaterial({color:0x1a1a1a})
+new THREE.MeshStandardMaterial({color:0x222222})
 );
-left.position.set(-20,2.5,-20-(i*25));
-scene.add(left);
-cabins.push(left);
 
-// RIGHT CABIN
-const right = left.clone();
-right.position.x = 20;
-scene.add(right);
-cabins.push(right);
+cabin.position.set((i%2===0?-20:20),2.5,-20-(i*25));
 
-// INTERIOR LIGHT GLOW (simple immersion upgrade)
-const glow = new THREE.PointLight(0x00ffff,0.3,20);
-glow.position.set(left.position.x,3,left.position.z);
-scene.add(glow);
-
-cabinInteriorLights.push(glow);
+scene.add(cabin);
+cabins.push(cabin);
 }
 
 /////////////////////////////////////////////////////
-// 5. STARS ATMOSPHERE
+// INTERIOR STATE
 /////////////////////////////////////////////////////
 
+let insideCabin = false;
+let currentCabin = null;
+
 /////////////////////////////////////////////////////
-// 6. INPUT LOOP
+// INPUT
+/////////////////////////////////////////////////////
+
+const keys = {};
+let started = false;
+
+document.addEventListener("keydown",e=>{
+keys[e.key.toLowerCase()] = true;
+
+if(e.key.toLowerCase()==="e"){
+tryEnterCabin();
+}
+});
+
+document.addEventListener("keyup",e=>keys[e.key.toLowerCase()] = false);
+
+function start(){
+document.getElementById("start").style.display="none";
+started = true;
+document.getElementById("zone").innerText="WELCOME TO LAMBO CITY";
+}
+
+/////////////////////////////////////////////////////
+// CABIN SYSTEM
+/////////////////////////////////////////////////////
+
+function tryEnterCabin(){
+
+if(insideCabin){
+insideCabin = false;
+document.getElementById("msg").style.display="none";
+return;
+}
+
+for(let c of cabins){
+if(player.position.distanceTo(c.position) < 4){
+insideCabin = true;
+currentCabin = c;
+document.getElementById("msg").style.display="block";
+document.getElementById("zone").innerText="INSIDE CABIN";
+break;
+}
+}
+}
+
+/////////////////////////////////////////////////////
+// CAMERA SYSTEM
+/////////////////////////////////////////////////////
+
+function updateCamera(){
+
+if(insideCabin){
+camera.position.x = currentCabin.position.x;
+camera.position.y = 3;
+camera.position.z = currentCabin.position.z;
+camera.lookAt(currentCabin.position);
+return;
+}
+
+// FIRST PERSON FOLLOW
+camera.position.x = player.position.x;
+camera.position.y = player.position.y + 2;
+camera.position.z = player.position.z + 5;
+camera.lookAt(player.position);
+}
+
+/////////////////////////////////////////////////////
+// MOVEMENT
+/////////////////////////////////////////////////////
+
+function movePlayer(){
+
+if(insideCabin) return;
+
+if(keys["w"]) player.position.z -= 0.25;
+if(keys["s"]) player.position.z += 0.25;
+if(keys["a"]) player.position.x -= 0.25;
+if(keys["d"]) player.position.x += 0.25;
+}
+
+/////////////////////////////////////////////////////
+// LOOP
 /////////////////////////////////////////////////////
 
 function animate(){
 requestAnimationFrame(animate);
 if(!started) return;
 
-// movement
-if(keys["w"]) player.position.z -= 0.25;
-if(keys["s"]) player.position.z += 0.25;
-if(keys["a"]) player.position.x -= 0.25;
-if(keys["d"]) player.position.x += 0.25;
-
-// camera follow
-camera.position.x += (player.position.x - camera.position.x)*0.06;
-camera.position.y += (6 - camera.position.y)*0.05;
-camera.position.z += (player.position.z + 12 - camera.position.z)*0.06;
-camera.lookAt(player.position);
-
-// zone detection
-if(player.position.distanceTo(stage.position)<8){
-setZone("🎤 STAGE ACTIVE");
-}
-
-if(player.position.distanceTo(yacht.position)<15){
-setZone("🚤 YACHT VIEW");
-}
-
-// cabin vibe pulse
-const t = Date.now()*0.001;
-cabinInteriorLights.forEach((l,i)=>{
-l.intensity = 0.2 + Math.sin(t + i)*0.1;
-});
+movePlayer();
+updateCamera();
 
 stars.rotation.y += 0.0003;
 
