@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LAMBO CITY — LIVE WORLD</title>
+<title>LAMBO CITY — CHARACTER SYSTEM</title>
 
 <style>
 body { margin:0; overflow:hidden; background:black; font-family:Arial; }
@@ -51,7 +51,7 @@ canvas { display:block; }
   <button onclick="start()">ENTER</button>
 </div>
 
-<div id="ui">W A S D TO MOVE</div>
+<div id="ui">MOVE: W A S D</div>
 <div id="msg">You were invited…</div>
 <div id="status"></div>
 <div id="locked">ACCESS DENIED</div>
@@ -72,12 +72,45 @@ renderer.setSize(innerWidth, innerHeight);
 
 scene.add(new THREE.AmbientLight(0xffffff,1.2));
 
-// PLAYER
-let player = new THREE.Mesh(
-  new THREE.BoxGeometry(1,1,1),
+// ================= CHARACTER =================
+let player = new THREE.Group();
+
+// BODY
+let torso = new THREE.Mesh(
+  new THREE.BoxGeometry(1,1.5,0.5),
   new THREE.MeshStandardMaterial({color:0xffffff})
 );
+torso.position.y = 1.2;
+
+// HEAD
+let head = new THREE.Mesh(
+  new THREE.BoxGeometry(0.6,0.6,0.6),
+  new THREE.MeshStandardMaterial({color:0xffe0bd})
+);
+head.position.y = 2.2;
+
+// LEGS
+let legL = new THREE.Mesh(
+  new THREE.BoxGeometry(0.3,1,0.3),
+  new THREE.MeshStandardMaterial({color:0xffffff})
+);
+let legR = legL.clone();
+
+legL.position.set(-0.2,0.5,0);
+legR.position.set(0.2,0.5,0);
+
+player.add(torso, head, legL, legR);
 scene.add(player);
+
+// AURA (STATUS)
+let aura = new THREE.Mesh(
+  new THREE.RingGeometry(1,1.3,32),
+  new THREE.MeshBasicMaterial({color:0x00ffff, side:THREE.DoubleSide})
+);
+aura.rotation.x = -Math.PI/2;
+aura.position.y = 0.05;
+aura.visible = false;
+player.add(aura);
 
 // ================= ROOM =================
 let room = new THREE.Mesh(
@@ -86,14 +119,6 @@ let room = new THREE.Mesh(
 );
 room.position.set(-35,3,20);
 scene.add(room);
-
-// WINDOW
-let windowView = new THREE.Mesh(
-  new THREE.PlaneGeometry(6,3),
-  new THREE.MeshBasicMaterial({color:0x000000})
-);
-windowView.position.set(-35,3,14);
-scene.add(windowView);
 
 // ================= WORLD =================
 
@@ -130,7 +155,6 @@ scene.add(dock);
 // CABINS
 function createCabin(x,z,isKing=false){
   let size = isKing?14:8;
-
   let base = new THREE.Mesh(
     new THREE.BoxGeometry(size,5,size),
     new THREE.MeshStandardMaterial({color:isKing?0x222244:0x111111})
@@ -139,16 +163,14 @@ function createCabin(x,z,isKing=false){
   scene.add(base);
 }
 
-// LEFT (last = YOURS)
 for(let i=0;i<5;i++){
   createCabin(-35,-20-(i*30),i===4);
 }
-// RIGHT
 for(let i=0;i<5;i++){
   createCabin(35,-20-(i*30));
 }
 
-// STAGE (LEFT)
+// STAGE
 let stage = new THREE.Mesh(
   new THREE.BoxGeometry(20,2,14),
   new THREE.MeshStandardMaterial({color:0x6600aa})
@@ -156,7 +178,7 @@ let stage = new THREE.Mesh(
 stage.position.set(-30,1,-90);
 scene.add(stage);
 
-// BACKSTAGE ZONE
+// BACKSTAGE
 let backstage = new THREE.Mesh(
   new THREE.BoxGeometry(20,2,14),
   new THREE.MeshStandardMaterial({color:0x220044})
@@ -185,23 +207,21 @@ for(let i=0;i<30;i++){
 }
 
 // ================= SYSTEM =================
-
 let keys={},inWorld=false;
 let hasBackstage=false;
 
-// INPUT
 document.addEventListener("keydown",e=>keys[e.key.toLowerCase()]=true);
 document.addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
 
 function start(){
   document.getElementById("start").style.display="none";
   inWorld=true;
-  player.position.set(-35,1,20);
+  player.position.set(-35,0,20);
 }
 
-// VOICE SYSTEM
+// VOICE
 function speak(text){
-  document.getElementById("msg").innerText = text;
+  document.getElementById("msg").innerText=text;
 }
 
 // LOOP
@@ -209,11 +229,23 @@ function animate(){
 requestAnimationFrame(animate);
 if(!inWorld) return;
 
-// MOVE
-if(keys["w"]) player.position.z-=0.12;
-if(keys["s"]) player.position.z+=0.12;
-if(keys["a"]) player.position.x-=0.12;
-if(keys["d"]) player.position.x+=0.12;
+// MOVEMENT
+let moving = false;
+
+if(keys["w"]){ player.position.z-=0.12; moving=true; }
+if(keys["s"]){ player.position.z+=0.12; moving=true; }
+if(keys["a"]){ player.position.x-=0.12; moving=true; }
+if(keys["d"]){ player.position.x+=0.12; moving=true; }
+
+// ANIMATION
+let t = Date.now()*0.01;
+if(moving){
+  legL.rotation.x = Math.sin(t)*0.8;
+  legR.rotation.x = -Math.sin(t)*0.8;
+}else{
+  legL.rotation.x = 0;
+  legR.rotation.x = 0;
+}
 
 // EXIT ROOM
 if(player.position.z < 15){
@@ -221,23 +253,26 @@ if(player.position.z < 15){
   speak("Go see what they built…");
 }
 
-// STAGE TRIGGER → BACKSTAGE PASS
+// STAGE → BACKSTAGE PASS
 if(player.position.distanceTo(stage.position)<6 && !hasBackstage){
   hasBackstage=true;
+  aura.visible=true;
+
   document.getElementById("status").style.display="block";
   document.getElementById("status").innerText="BACKSTAGE PASS UNLOCKED";
+
   speak("You moved different… take this.");
 }
 
-// BACKSTAGE ACCESS
+// BACKSTAGE LOCK
 if(player.position.distanceTo(backstage.position)<6 && !hasBackstage){
-  player.position.z = -100;
+  player.position.z=-100;
   speak("You don’t belong back here.");
 }
 
 // YACHT LOCK
 if(player.position.z < -300){
-  player.position.z = -300;
+  player.position.z=-300;
   document.getElementById("locked").style.display="block";
   speak("You’re not ready.");
 }else{
@@ -246,9 +281,9 @@ if(player.position.z < -300){
 
 // CAMERA
 camera.position.x += (player.position.x-camera.position.x)*0.05;
-camera.position.y += (3-camera.position.y)*0.05;
+camera.position.y += (4-camera.position.y)*0.05;
 camera.position.z += (player.position.z+10-camera.position.z)*0.05;
-camera.lookAt(player.position);
+camera.lookAt(player.position.x,player.position.y+1.5,player.position.z);
 
 // LIFE
 stars.rotation.y+=0.0005;
