@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LAMBO CITY — FINAL WORLD</title>
+<title>LAMBO CITY — EMOTES LIVE</title>
 
 <style>
 body { margin:0; overflow:hidden; background:black; font-family:Arial; }
@@ -17,6 +17,7 @@ canvas { display:block; }
 }
 
 #status { position:absolute; top:20px; right:20px; color:gold; }
+
 #msg {
   position:absolute; bottom:40px; left:50%;
   transform:translateX(-50%);
@@ -24,6 +25,16 @@ canvas { display:block; }
   padding:10px 14px;
   border:1px solid gold;
   background:rgba(0,0,0,0.6);
+}
+
+#hint {
+  position:absolute;
+  bottom:90px;
+  left:50%;
+  transform:translateX(-50%);
+  color:#00ffff;
+  border:1px solid #00ffff;
+  padding:6px 10px;
 }
 </style>
 </head>
@@ -37,6 +48,7 @@ canvas { display:block; }
 
 <div id="status">STATUS: VISITOR</div>
 <div id="msg">Loading experience...</div>
+<div id="hint">WASD = MOVE | E = DANCE</div>
 
 <canvas id="c"></canvas>
 
@@ -65,14 +77,16 @@ let player = new THREE.Group();
 scene.add(player);
 player.position.set(-35,0,20);
 
-// REAL CHARACTER
+let playerMesh;
+
+// CHARACTER
 let loader = new THREE.GLTFLoader();
 loader.load(
   "https://threejs.org/examples/models/gltf/RobotExpressive/RobotExpressive.glb",
   gltf=>{
-    let char = gltf.scene;
-    char.scale.set(0.4,0.4,0.4);
-    player.add(char);
+    playerMesh = gltf.scene;
+    playerMesh.scale.set(0.4,0.4,0.4);
+    player.add(playerMesh);
     document.getElementById("msg").innerText="You are inside LAMBO CITY.";
   }
 );
@@ -130,7 +144,7 @@ for(let i=0;i<5;i++){
   cabin(35,-20-(i*30));
 }
 
-// ===== STAGE (LEFT — PRESERVED) =====
+// ===== STAGE =====
 let stage = new THREE.Mesh(
   new THREE.BoxGeometry(22,2,14),
   new THREE.MeshStandardMaterial({color:0x6600aa})
@@ -138,29 +152,13 @@ let stage = new THREE.Mesh(
 stage.position.set(-30,1,-90);
 scene.add(stage);
 
-// ===== VIP (BEHIND STAGE — PRESERVED) =====
-let vip = new THREE.Mesh(
-  new THREE.BoxGeometry(22,1,20),
-  new THREE.MeshStandardMaterial({color:0x001f2f})
-);
-vip.position.set(-30,0,-120);
-scene.add(vip);
-
-// ===== YACHT (END GOAL — PRESERVED) =====
-let yacht = new THREE.Mesh(
-  new THREE.BoxGeometry(50,6,22),
-  new THREE.MeshStandardMaterial({color:0x222244})
-);
-yacht.position.set(0,3,-350);
-scene.add(yacht);
-
-// ===== CLUB LIGHTS (ONLY AT STAGE) =====
+// ===== CLUB LIGHTS =====
 let clubLight1 = new THREE.PointLight(0xff00ff,0,80);
 let clubLight2 = new THREE.PointLight(0x00ffff,0,80);
 scene.add(clubLight1);
 scene.add(clubLight2);
 
-// ===== CROWD (ONLY AT STAGE) =====
+// ===== CROWD =====
 let crowd=[];
 for(let i=0;i<25;i++){
   let p=new THREE.Mesh(
@@ -174,17 +172,19 @@ for(let i=0;i<25;i++){
 
 // ===== INPUT =====
 let keys={};
-document.addEventListener("keydown",e=>keys[e.key.toLowerCase()]=true);
+let dancing=false;
+
+document.addEventListener("keydown",e=>{
+  keys[e.key.toLowerCase()]=true;
+
+  if(e.key.toLowerCase()==="e"){
+    dancing = !dancing;
+  }
+});
+
 document.addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
 
 let started=false;
-
-const GAME={
-  status:"VISITOR",
-  stage:false,
-  vip:false,
-  yacht:false
-};
 
 function start(){
   document.getElementById("start").style.display="none";
@@ -198,39 +198,35 @@ requestAnimationFrame(animate);
 if(!started) return;
 
 // MOVE
-if(keys["w"]) player.position.z-=0.2;
-if(keys["s"]) player.position.z+=0.2;
-if(keys["a"]) player.position.x-=0.2;
-if(keys["d"]) player.position.x+=0.2;
-
-// ===== PROGRESSION =====
-if(!GAME.stage && player.position.distanceTo(stage.position)<6){
-  GAME.stage=true;
-  GAME.status="PERFORMER";
-  document.getElementById("status").innerText="STATUS: PERFORMER";
-  document.getElementById("msg").innerText="You got something? Show it.";
+if(!dancing){
+  if(keys["w"]) player.position.z-=0.2;
+  if(keys["s"]) player.position.z+=0.2;
+  if(keys["a"]) player.position.x-=0.2;
+  if(keys["d"]) player.position.x+=0.2;
 }
 
-if(GAME.stage && !GAME.vip && player.position.distanceTo(vip.position)<8){
-  GAME.vip=true;
-  GAME.status="VIP";
-  document.getElementById("status").innerText="STATUS: VIP MEMBER";
-  document.getElementById("msg").innerText="Now you’re networking.";
+// ===== DANCE SYSTEM =====
+if(dancing && playerMesh){
+  let t = Date.now()*0.01;
+
+  playerMesh.rotation.y = Math.sin(t)*0.5;
+  player.position.y = Math.abs(Math.sin(t))*0.5;
+
+  document.getElementById("msg").innerText="🔥 You’re vibing with the crowd";
+
+}else if(playerMesh){
+  playerMesh.rotation.y = 0;
+  player.position.y = 0;
 }
 
-if(GAME.vip && player.position.distanceTo(yacht.position)<12){
-  GAME.yacht=true;
-  GAME.status="OWNER";
-  document.getElementById("status").innerText="STATUS: OWNER";
-  document.getElementById("msg").innerText="You made it.";
-}
-
-// ===== CLUB ACTIVATES ONLY AT STAGE =====
+// ===== STAGE ENERGY =====
 if(player.position.distanceTo(stage.position)<20){
+
+  let t = Date.now()*0.002;
+
   clubLight1.intensity = 2;
   clubLight2.intensity = 2;
 
-  let t = Date.now()*0.002;
   clubLight1.position.set(-30+Math.sin(t)*10,10,-90);
   clubLight2.position.set(-30+Math.cos(t)*10,10,-90);
 
