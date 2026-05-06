@@ -140,6 +140,76 @@ const Economy = {
     return false;
   }
 };
+  /////////////////////////////////////////////////////
+// 🎯 STAGE EVENT SYSTEM (ONE-TIME TRIGGERS)
+/////////////////////////////////////////////////////
+
+let stageInside = false;
+
+function checkStageEvents(){
+
+  const dist = player.position.distanceTo(stage.position);
+
+  if(dist < 25 && !stageInside){
+
+    stageInside = true;
+
+    console.log("ENTERED STAGE");
+
+    rewardPlayer("stage_entry"); // temporary hook
+
+  }
+
+  if(dist >= 25){
+
+    stageInside = false;
+
+  }
+}
+  /////////////////////////////////////////////////////
+// 🪙 REWARD SYSTEM (PLACEHOLDER - NOT BALANCED YET)
+/////////////////////////////////////////////////////
+
+function rewardPlayer(reason){
+
+  console.log("Reward triggered:", reason);
+
+  // TEMP TEST VALUE ONLY
+  Economy.earn(1);
+
+}
+  /////////////////////////////////////////////////////
+// 🎯 EVENT SYSTEM (FOUNDATION LAYER)
+/////////////////////////////////////////////////////
+
+const Events = {
+
+  emit: (type, data = {}) => {
+    handleEvent(type, data);
+  }
+
+};
+
+function handleEvent(type, data){
+
+  switch(type){
+
+    case "ENTER_STAGE_ZONE":
+      console.log("Player entered stage zone");
+      rewardPlayer("stage_visit");
+      break;
+
+    case "ENTER_CABIN":
+      console.log("Player entered cabin");
+      rewardPlayer("cabin_entry");
+      break;
+
+    case "DOCK_TOUCH":
+      console.log("Player at dock");
+      rewardPlayer("dock_visit");
+      break;
+  }
+}
 /////////////////////////////////////////////////////
 // 🔊 AUDIO SYSTEM (SAFE)
 /////////////////////////////////////////////////////
@@ -421,32 +491,31 @@ camera.lookAt(lookTarget);
 // 🎧 STAGE ENERGY SYSTEM (FIXED)
 /////////////////////////////////////////////////////
 
+
 function updateStageEnergy(){
+  const dist = player.position.distanceTo(stage.position);
 
-const dist = player.position.distanceTo(stage.position);
+  if(dist < 25){
 
-if(dist < 25){
+    let t = Date.now()*0.002;
 
-  let t = Date.now()*0.002;
+    stageLight1.intensity = 2;
+    stageLight2.intensity = 2;
 
-  stageLight1.intensity = 2;
-  stageLight2.intensity = 2;
+    stageLight1.position.set(-15 + Math.sin(t)*10, 10, -80);
+    stageLight2.position.set(-15 + Math.cos(t)*10, 10, -80);
 
-  stageLight1.position.set(-15 + Math.sin(t)*10, 10, -80);
-  stageLight2.position.set(-15 + Math.cos(t)*10, 10, -80);
+    crowd.forEach((p,i)=>{
+      p.lookAt(player.position);
+      p.position.y = crowdBaseY[i] + Math.sin(Date.now()*0.005 + i)*0.25;
+    });
 
-  crowd.forEach((p,i)=>{
-    p.lookAt(player.position);
-    p.position.y = crowdBaseY[i] + Math.sin(Date.now()*0.005 + i)*0.25;
-  });
+  } else {
 
-}else{
+    stageLight1.intensity = 0;
+    stageLight2.intensity = 0;
 
-  stageLight1.intensity = 0;
-  stageLight2.intensity = 0;
-
-}
-
+  }
 }
   
 /////////////////////////////////////////////////////
