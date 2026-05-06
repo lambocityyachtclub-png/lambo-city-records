@@ -306,7 +306,13 @@ stars.rotation.y += 0.0003;
 renderer.render(scene,camera);
 }
 
-animate();
+animate(if(GAME_STATE === "EXPLORING"){
+  movePlayer();
+}
+
+if(GAME_STATE === "CABIN_INTERIOR"){
+  updateInteriorCamera();
+});
 
 </script>
 
