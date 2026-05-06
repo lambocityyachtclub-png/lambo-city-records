@@ -193,6 +193,34 @@ function animate(){
 requestAnimationFrame(animate);
 if(!started) return;
 
+if(!introPlayed){
+  introTime += 1;
+
+  // cinematic camera push-in
+  camera.position.x += (introCamera.x - camera.position.x) * 0.02;
+  camera.position.y += (introCamera.y - camera.position.y) * 0.02;
+  camera.position.z += (introCamera.z - camera.position.z) * 0.02;
+
+  camera.lookAt(0,0,-100);
+
+  // reveal message sequence
+  if(introTime < 120){
+    document.getElementById("zone").innerText = "🌊 ARRIVING AT THE DOCKS";
+  }
+  else if(introTime < 240){
+    document.getElementById("zone").innerText = "🏡 LAMBO CITY — PRIVATE WORLD";
+  }
+  else if(introTime < 360){
+    document.getElementById("zone").innerText = "🎤 HERO PRESENTS THE EXPERIENCE";
+  }
+  else{
+    introPlayed = true;
+    document.getElementById("zone").innerText = "WELCOME";
+  }
+
+  renderer.render(scene,camera);
+  return;
+}
 // PLAYER MOVEMENT
 if(keys["w"]) player.position.z -= 0.2;
 if(keys["s"]) player.position.z += 0.2;
