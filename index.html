@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LAMBO CITY — COMPLETE WORLD</title>
+<title>LAMBO CITY — HERO WORLD</title>
 
 <style>
 body { margin:0; overflow:hidden; background:black; font-family:Arial; }
@@ -68,7 +68,7 @@ let light = new THREE.PointLight(0x00aaff,2);
 light.position.set(0,5,5);
 scene.add(light);
 
-// ================= GAME STATE =================
+// ================= STATE =================
 const GAME = {
   stage:false,
   vip:false,
@@ -81,10 +81,14 @@ let player = new THREE.Mesh(
   new THREE.BoxGeometry(1,1,1),
   new THREE.MeshStandardMaterial({color:0xffffff})
 );
-scene.add(player);
 player.position.set(0,0.5,20);
+scene.add(player);
 
-// ================= WORLD ELEMENTS =================
+// HERO AURA (GTA FEEL)
+let aura = new THREE.PointLight(0xffffff,0,15);
+player.add(aura);
+
+// ================= ENVIRONMENT =================
 
 // WATER
 let water = new THREE.Mesh(
@@ -121,7 +125,6 @@ function cabin(x,z){
   c.position.set(x,2.5,z);
   scene.add(c);
 }
-
 for(let i=0;i<5;i++){
   cabin(-35,-20-(i*30));
   cabin(35,-20-(i*30));
@@ -181,7 +184,7 @@ if(!GAME.stage && player.position.distanceTo(stage.position)<6){
   GAME.stage=true;
   GAME.status="PERFORMER";
   document.getElementById("status").innerText="STATUS: PERFORMER";
-  document.getElementById("msg").innerText="You stepped into something bigger.";
+  document.getElementById("msg").innerText="MISSION: Prove yourself at the stage.";
 }
 
 // VIP
@@ -189,7 +192,7 @@ if(GAME.stage && !GAME.vip && player.position.distanceTo(vip.position)<8){
   GAME.vip=true;
   GAME.status="VIP";
   document.getElementById("status").innerText="STATUS: VIP MEMBER";
-  document.getElementById("msg").innerText="Now you’re being seen.";
+  document.getElementById("msg").innerText="MISSION: Enter the network.";
 }
 
 // YACHT
@@ -197,16 +200,22 @@ if(GAME.vip && player.position.distanceTo(yacht.position)<10){
   GAME.yacht=true;
   GAME.status="OWNER";
   document.getElementById("status").innerText="STATUS: OWNER";
-  document.getElementById("msg").innerText="You made it.";
+  document.getElementById("msg").innerText="MISSION COMPLETE: You belong here.";
 }
 
-// CAMERA
-camera.position.x += (player.position.x-camera.position.x)*0.05;
-camera.position.y += (4-camera.position.y)*0.05;
-camera.position.z += (player.position.z+10-camera.position.z)*0.05;
+// GTA AURA FEEL
+if(GAME.status==="VISITOR") aura.intensity=0.2;
+if(GAME.status==="PERFORMER") aura.intensity=0.5;
+if(GAME.status==="VIP") aura.intensity=1.2;
+if(GAME.status==="OWNER") aura.intensity=1.8;
+
+// CAMERA (GTA STYLE)
+camera.position.x += (player.position.x-camera.position.x)*0.04;
+camera.position.y += (4.5-camera.position.y)*0.03;
+camera.position.z += (player.position.z+12-camera.position.z)*0.04;
 camera.lookAt(player.position);
 
-// WATER MOVE
+// WATER MOTION
 water.position.z = Math.sin(Date.now()*0.001)*1;
 
 renderer.render(scene,camera);
