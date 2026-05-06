@@ -112,7 +112,30 @@ function start(){
   music.play().catch(()=>{});
 }
 const WORLD_LIMIT = 120;
+/////////////////////////////////////////////////////
+// 🪙 ECONOMY CORE (LAMBO COIN SYSTEM)
+/////////////////////////////////////////////////////
 
+let coins = 0;
+
+const Economy = {
+
+  getBalance: () => coins,
+
+  earn: (amount) => {
+    coins += amount;
+    updateHUD();
+  },
+
+  spend: (amount) => {
+    if (coins >= amount) {
+      coins -= amount;
+      updateHUD();
+      return true;
+    }
+    return false;
+  }
+};
 /////////////////////////////////////////////////////
 // 🔊 AUDIO SYSTEM (SAFE)
 /////////////////////////////////////////////////////
