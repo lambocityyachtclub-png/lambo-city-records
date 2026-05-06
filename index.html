@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LAMBO CITY — RESTORED WORLD</title>
+<title>LAMBO CITY — STRUCTURE LOCKED WORLD</title>
 
 <style>
 body { margin:0; overflow:hidden; background:black; }
@@ -46,7 +46,7 @@ background:rgba(0,0,0,0.6);
 
 <div id="ui">🏡 Villa → 🌊 Dock → 🎤 Stage → 🚤 Yacht</div>
 <div id="zone">INITIALIZING...</div>
-<div id="msg">Welcome back.</div>
+<div id="msg">World Locked & Ready</div>
 
 <canvas id="c"></canvas>
 
@@ -54,7 +54,10 @@ background:rgba(0,0,0,0.6);
 
 <script>
 
-// ===== SCENE =====
+/////////////////////////////////////////////////////
+// 1. WORLD CORE (DO NOT TOUCH)
+/////////////////////////////////////////////////////
+
 let scene = new THREE.Scene();
 scene.background = new THREE.Color(0x000000);
 scene.fog = new THREE.FogExp2(0x000000, 0.01);
@@ -63,13 +66,15 @@ let camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 2000);
 let renderer = new THREE.WebGLRenderer({canvas:c});
 renderer.setSize(innerWidth, innerHeight);
 
-// LIGHT
 scene.add(new THREE.AmbientLight(0xffffff,1.2));
 let light = new THREE.PointLight(0x00ffff,2);
 light.position.set(0,10,10);
 scene.add(light);
 
-// ===== PLAYER =====
+/////////////////////////////////////////////////////
+// 2. GAMEPLAY BLOCK (PLAYER + INPUT)
+/////////////////////////////////////////////////////
+
 let player = new THREE.Mesh(
 new THREE.BoxGeometry(1,1.8,1),
 new THREE.MeshStandardMaterial({color:0xffffff})
@@ -77,79 +82,6 @@ new THREE.MeshStandardMaterial({color:0xffffff})
 scene.add(player);
 player.position.set(0,1,20);
 
-// ===== WATER =====
-let water = new THREE.Mesh(
-new THREE.PlaneGeometry(2000,2000),
-new THREE.MeshStandardMaterial({color:0x020b1a})
-);
-water.rotation.x = -Math.PI/2;
-scene.add(water);
-
-// ===== STARS =====
-let starGeo = new THREE.BufferGeometry();
-let arr=[];
-for(let i=0;i<3000;i++){
-arr.push((Math.random()-0.5)*1500,Math.random()*600,(Math.random()-0.5)*1500);
-}
-starGeo.setAttribute("position", new THREE.Float32BufferAttribute(arr,3));
-
-let stars = new THREE.Points(
-starGeo,
-new THREE.PointsMaterial({color:0xffffff,size:1})
-);
-scene.add(stars);
-
-// ===== DOCK =====
-let dock = new THREE.Mesh(
-new THREE.BoxGeometry(80,1,300),
-new THREE.MeshStandardMaterial({color:0x111111})
-);
-dock.position.set(0,0,-100);
-scene.add(dock);
-
-// ===== CABINS =====
-for(let i=0;i<5;i++){
-let c1 = new THREE.Mesh(
-new THREE.BoxGeometry(8,5,8),
-new THREE.MeshStandardMaterial({color:0x222222})
-);
-c1.position.set(-20,2.5,-20-(i*25));
-scene.add(c1);
-
-let c2 = c1.clone();
-c2.position.x = 20;
-scene.add(c2);
-}
-
-// ===== STAGE =====
-let stage = new THREE.Mesh(
-new THREE.BoxGeometry(20,2,12),
-new THREE.MeshStandardMaterial({color:0x6600aa})
-);
-stage.position.set(-15,1,-80);
-scene.add(stage);
-
-// ===== YACHT =====
-let yacht = new THREE.Mesh(
-new THREE.BoxGeometry(40,6,20),
-new THREE.MeshStandardMaterial({color:0x00ffff})
-);
-yacht.position.set(0,3,-250);
-scene.add(yacht);
-
-// ===== CROWD =====
-let crowd=[];
-for(let i=0;i<20;i++){
-let p=new THREE.Mesh(
-new THREE.BoxGeometry(0.6,1.2,0.6),
-new THREE.MeshStandardMaterial({color:0xffffff})
-);
-p.position.set((Math.random()-0.5)*20,0.6,-80+(Math.random()-0.5)*20);
-scene.add(p);
-crowd.push(p);
-}
-
-// ===== STATE =====
 let keys = {};
 let started = false;
 
@@ -158,22 +90,81 @@ document.addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
 
 function start(){
 document.getElementById("start").style.display="none";
-started=true;
-document.getElementById("zone").innerText="WELCOME TO LAMBO CITY";
+started = true;
+document.getElementById("zone").innerText = "WELCOME TO LAMBO CITY";
 }
 
-// ===== LOOP =====
-function animate(){
-requestAnimationFrame(animate);
-if(!started) return;
+/////////////////////////////////////////////////////
+// 3. ENVIRONMENT BLOCK (WORLD ASSETS)
+/////////////////////////////////////////////////////
 
-// MOVE
-if(keys["w"]) player.position.z-=0.2;
-if(keys["s"]) player.position.z+=0.2;
-if(keys["a"]) player.position.x-=0.2;
-if(keys["d"]) player.position.x+=0.2;
+// WATER
+let water = new THREE.Mesh(
+new THREE.PlaneGeometry(2000,2000),
+new THREE.MeshStandardMaterial({color:0x020b1a})
+);
+water.rotation.x = -Math.PI/2;
+scene.add(water);
 
-// ZONES
+// STARS
+let starGeo = new THREE.BufferGeometry();
+let arr = [];
+
+for(let i=0;i<3000;i++){
+arr.push((Math.random()-0.5)*1500,Math.random()*600,(Math.random()-0.5)*1500);
+}
+
+starGeo.setAttribute("position", new THREE.Float32BufferAttribute(arr,3));
+
+let stars = new THREE.Points(
+starGeo,
+new THREE.PointsMaterial({color:0xffffff,size:1})
+);
+scene.add(stars);
+
+// DOCK
+let dock = new THREE.Mesh(
+new THREE.BoxGeometry(80,1,300),
+new THREE.MeshStandardMaterial({color:0x111111})
+);
+dock.position.set(0,0,-100);
+scene.add(dock);
+
+// STAGE
+let stage = new THREE.Mesh(
+new THREE.BoxGeometry(20,2,12),
+new THREE.MeshStandardMaterial({color:0x6600aa})
+);
+stage.position.set(-15,1,-80);
+scene.add(stage);
+
+// YACHT
+let yacht = new THREE.Mesh(
+new THREE.BoxGeometry(40,6,20),
+new THREE.MeshStandardMaterial({color:0x00ffff})
+);
+yacht.position.set(0,3,-250);
+scene.add(yacht);
+
+// CABINS
+for(let i=0;i<5;i++){
+let left = new THREE.Mesh(
+new THREE.BoxGeometry(8,5,8),
+new THREE.MeshStandardMaterial({color:0x222222})
+);
+left.position.set(-20,2.5,-20-(i*25));
+scene.add(left);
+
+let right = left.clone();
+right.position.x = 20;
+scene.add(right);
+}
+
+/////////////////////////////////////////////////////
+// 4. EXPERIENCE BLOCK (UI + ZONES)
+/////////////////////////////////////////////////////
+
+function updateUI(){
 if(player.position.distanceTo(stage.position)<8){
 document.getElementById("zone").innerText="🎤 STAGE ACTIVE";
 }
@@ -181,23 +172,33 @@ document.getElementById("zone").innerText="🎤 STAGE ACTIVE";
 if(player.position.distanceTo(yacht.position)<15){
 document.getElementById("zone").innerText="🚤 YACHT IN VIEW";
 }
-
-// CROWD
-if(player.position.distanceTo(stage.position)<25){
-crowd.forEach(p=>{
-p.lookAt(player.position);
-p.position.y=0.6+Math.sin(Date.now()*0.01)*0.2;
-});
 }
 
-// CAMERA
-camera.position.x+=(player.position.x-camera.position.x)*0.06;
-camera.position.y+=(6-camera.position.y)*0.05;
-camera.position.z+=(player.position.z+10-camera.position.z)*0.06;
+/////////////////////////////////////////////////////
+// 5. LOOP (DO NOT TOUCH STRUCTURE BELOW)
+/////////////////////////////////////////////////////
+
+function animate(){
+requestAnimationFrame(animate);
+if(!started) return;
+
+// PLAYER MOVEMENT
+if(keys["w"]) player.position.z -= 0.2;
+if(keys["s"]) player.position.z += 0.2;
+if(keys["a"]) player.position.x -= 0.2;
+if(keys["d"]) player.position.x += 0.2;
+
+// CAMERA FOLLOW
+camera.position.x += (player.position.x - camera.position.x)*0.06;
+camera.position.y += (6 - camera.position.y)*0.05;
+camera.position.z += (player.position.z + 10 - camera.position.z)*0.06;
 camera.lookAt(player.position);
 
-// ATMOSPHERE
+// WORLD ANIMATION
 stars.rotation.y += 0.0003;
+
+// UI
+updateUI();
 
 renderer.render(scene,camera);
 }
