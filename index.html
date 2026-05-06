@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LAMBO CITY — EMOTES LIVE</title>
+<title>LAMBO CITY — LAUNCH BUILD</title>
 
 <style>
 body { margin:0; overflow:hidden; background:black; font-family:Arial; }
@@ -16,6 +16,13 @@ canvas { display:block; }
   z-index:1000;
 }
 
+#logo {
+  position:absolute;
+  top:20px; left:20px;
+  font-size:18px;
+  color:#00ffff;
+}
+
 #status { position:absolute; top:20px; right:20px; color:gold; }
 
 #msg {
@@ -26,16 +33,6 @@ canvas { display:block; }
   border:1px solid gold;
   background:rgba(0,0,0,0.6);
 }
-
-#hint {
-  position:absolute;
-  bottom:90px;
-  left:50%;
-  transform:translateX(-50%);
-  color:#00ffff;
-  border:1px solid #00ffff;
-  padding:6px 10px;
-}
 </style>
 </head>
 
@@ -43,12 +40,12 @@ canvas { display:block; }
 
 <div id="start">
   <h1>LAMBO CITY</h1>
-  <button onclick="start()">ENTER WORLD</button>
+  <button onclick="start()">ENTER EXPERIENCE</button>
 </div>
 
+<div id="logo">LAMBO CITY</div>
 <div id="status">STATUS: VISITOR</div>
-<div id="msg">Loading experience...</div>
-<div id="hint">WASD = MOVE | E = DANCE</div>
+<div id="msg">Welcome...</div>
 
 <canvas id="c"></canvas>
 
@@ -62,192 +59,184 @@ canvas { display:block; }
 let scene = new THREE.Scene();
 scene.background = new THREE.Color(0x000000);
 
-let camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 2000);
+let camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 3000);
 let renderer = new THREE.WebGLRenderer({canvas:c});
 renderer.setSize(innerWidth, innerHeight);
 
 scene.add(new THREE.AmbientLight(0xffffff,1.2));
-
 let light = new THREE.PointLight(0x00aaff,2);
-light.position.set(0,10,5);
+light.position.set(0,15,10);
 scene.add(light);
 
 // ===== PLAYER =====
 let player = new THREE.Group();
 scene.add(player);
-player.position.set(-35,0,20);
+player.position.set(-35,0,40);
 
 let playerMesh;
+new THREE.GLTFLoader().load(
+"https://threejs.org/examples/models/gltf/RobotExpressive/RobotExpressive.glb",
+g=>{
+  playerMesh=g.scene;
+  playerMesh.scale.set(0.4,0.4,0.4);
+  player.add(playerMesh);
+});
 
-// CHARACTER
-let loader = new THREE.GLTFLoader();
-loader.load(
-  "https://threejs.org/examples/models/gltf/RobotExpressive/RobotExpressive.glb",
-  gltf=>{
-    playerMesh = gltf.scene;
-    playerMesh.scale.set(0.4,0.4,0.4);
-    player.add(playerMesh);
-    document.getElementById("msg").innerText="You are inside LAMBO CITY.";
-  }
-);
-
-// ===== AUDIO =====
-let music = new Audio("https://cdn.pixabay.com/download/audio/2022/03/15/audio_115b9b7d3c.mp3?filename=nightclub-ambient-110624.mp3");
-music.loop = true;
-music.volume = 0.6;
+// ===== MUSIC =====
+let music = new Audio("https://cdn.pixabay.com/download/audio/2022/03/15/audio_115b9b7d3c.mp3");
+music.loop=true;
 
 // ===== WATER =====
 const water = new THREE.Water(
-  new THREE.PlaneGeometry(2000,2000),
-  {
-    textureWidth:512,
-    textureHeight:512,
-    waterNormals: new THREE.TextureLoader().load(
-      "https://threejs.org/examples/textures/waternormals.jpg",
-      t=>{ t.wrapS=t.wrapT=THREE.RepeatWrapping; }
-    ),
-    waterColor:0x001e2f,
-    distortionScale:3.7
-  }
+new THREE.PlaneGeometry(3000,3000),
+{
+textureWidth:512,
+textureHeight:512,
+waterNormals:new THREE.TextureLoader().load(
+"https://threejs.org/examples/textures/waternormals.jpg",
+t=>{t.wrapS=t.wrapT=THREE.RepeatWrapping;}
+),
+waterColor:0x001e2f,
+distortionScale:3.7
+}
 );
-water.rotation.x = -Math.PI/2;
+water.rotation.x=-Math.PI/2;
 scene.add(water);
 
-// ===== STARS =====
-let starGeo = new THREE.BufferGeometry();
-let arr=[];
-for(let i=0;i<4000;i++){
-  arr.push((Math.random()-0.5)*1200,Math.random()*400,(Math.random()-0.5)*1200);
-}
-starGeo.setAttribute("position",new THREE.Float32BufferAttribute(arr,3));
-scene.add(new THREE.Points(starGeo,new THREE.PointsMaterial({color:0xffffff,size:0.8})));
-
-// ===== DOCK =====
+// ===== WORLD =====
 let dock = new THREE.Mesh(
-  new THREE.BoxGeometry(240,1,320),
-  new THREE.MeshStandardMaterial({color:0x050505})
+new THREE.BoxGeometry(300,1,400),
+new THREE.MeshStandardMaterial({color:0x050505})
 );
 dock.position.set(0,-0.5,-120);
 scene.add(dock);
 
-// ===== CABINS =====
-function cabin(x,z){
-  let c = new THREE.Mesh(
-    new THREE.BoxGeometry(10,5,10),
-    new THREE.MeshStandardMaterial({color:0x111111})
-  );
-  c.position.set(x,2.5,z);
-  scene.add(c);
-}
+// CABINS
 for(let i=0;i<5;i++){
-  cabin(-35,-20-(i*30));
-  cabin(35,-20-(i*30));
+["-35","35"].forEach(x=>{
+let c=new THREE.Mesh(
+new THREE.BoxGeometry(10,5,10),
+new THREE.MeshStandardMaterial({color:0x111111})
+);
+c.position.set(parseInt(x),2.5,-20-(i*30));
+scene.add(c);
+});
 }
 
-// ===== STAGE =====
-let stage = new THREE.Mesh(
-  new THREE.BoxGeometry(22,2,14),
-  new THREE.MeshStandardMaterial({color:0x6600aa})
+// STAGE
+let stage=new THREE.Mesh(
+new THREE.BoxGeometry(22,2,14),
+new THREE.MeshStandardMaterial({color:0x6600aa})
 );
 stage.position.set(-30,1,-90);
 scene.add(stage);
 
-// ===== CLUB LIGHTS =====
-let clubLight1 = new THREE.PointLight(0xff00ff,0,80);
-let clubLight2 = new THREE.PointLight(0x00ffff,0,80);
-scene.add(clubLight1);
-scene.add(clubLight2);
+// VIP
+let vip=new THREE.Mesh(
+new THREE.BoxGeometry(22,1,20),
+new THREE.MeshStandardMaterial({color:0x001f2f})
+);
+vip.position.set(-30,0,-120);
+scene.add(vip);
+
+// ===== REAL YACHT MODEL =====
+let yacht;
+new THREE.GLTFLoader().load(
+"https://threejs.org/examples/models/gltf/Flamingo.glb",
+g=>{
+  yacht=g.scene;
+  yacht.scale.set(0.1,0.1,0.1);
+  yacht.position.set(0,2,-350);
+  scene.add(yacht);
+});
 
 // ===== CROWD =====
 let crowd=[];
 for(let i=0;i<25;i++){
-  let p=new THREE.Mesh(
-    new THREE.BoxGeometry(0.6,1.2,0.6),
-    new THREE.MeshStandardMaterial({color:0xffffff})
-  );
-  p.position.set(-30+(Math.random()-0.5)*20,0.6,-90+(Math.random()-0.5)*20);
-  scene.add(p);
-  crowd.push(p);
+let p=new THREE.Mesh(
+new THREE.BoxGeometry(0.6,1.2,0.6),
+new THREE.MeshStandardMaterial({color:0xffffff})
+);
+p.position.set(-30+(Math.random()-0.5)*20,0.6,-90+(Math.random()-0.5)*20);
+scene.add(p);
+crowd.push(p);
 }
 
 // ===== INPUT =====
-let keys={};
-let dancing=false;
-
+let keys={},dancing=false;
 document.addEventListener("keydown",e=>{
-  keys[e.key.toLowerCase()]=true;
-
-  if(e.key.toLowerCase()==="e"){
-    dancing = !dancing;
-  }
+keys[e.key.toLowerCase()]=true;
+if(e.key==="e") dancing=!dancing;
 });
-
 document.addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
 
-let started=false;
+// ===== INTRO =====
+let intro=true;
+let introTime=0;
 
 function start(){
-  document.getElementById("start").style.display="none";
-  started=true;
-  music.play();
+document.getElementById("start").style.display="none";
+music.play();
 }
 
 // ===== LOOP =====
 function animate(){
 requestAnimationFrame(animate);
-if(!started) return;
+
+// 🎬 CINEMATIC INTRO
+if(intro){
+introTime+=0.01;
+
+camera.position.set(
+-35 + Math.sin(introTime)*10,
+8,
+50 - introTime*20
+);
+camera.lookAt(player.position);
+
+if(introTime>3){
+intro=false;
+document.getElementById("msg").innerText="I brought you here for a reason.";
+}
+}else{
 
 // MOVE
 if(!dancing){
-  if(keys["w"]) player.position.z-=0.2;
-  if(keys["s"]) player.position.z+=0.2;
-  if(keys["a"]) player.position.x-=0.2;
-  if(keys["d"]) player.position.x+=0.2;
+if(keys["w"]) player.position.z-=0.4;
+if(keys["s"]) player.position.z+=0.4;
+if(keys["a"]) player.position.x-=0.4;
+if(keys["d"]) player.position.x+=0.4;
 }
 
-// ===== DANCE SYSTEM =====
+// DANCE
 if(dancing && playerMesh){
-  let t = Date.now()*0.01;
-
-  playerMesh.rotation.y = Math.sin(t)*0.5;
-  player.position.y = Math.abs(Math.sin(t))*0.5;
-
-  document.getElementById("msg").innerText="🔥 You’re vibing with the crowd";
-
-}else if(playerMesh){
-  playerMesh.rotation.y = 0;
-  player.position.y = 0;
+let t=Date.now()*0.01;
+playerMesh.rotation.y=Math.sin(t)*1;
+player.position.y=Math.abs(Math.sin(t))*0.5;
 }
 
-// ===== STAGE ENERGY =====
-if(player.position.distanceTo(stage.position)<20){
-
-  let t = Date.now()*0.002;
-
-  clubLight1.intensity = 2;
-  clubLight2.intensity = 2;
-
-  clubLight1.position.set(-30+Math.sin(t)*10,10,-90);
-  clubLight2.position.set(-30+Math.cos(t)*10,10,-90);
-
-  crowd.forEach((p,i)=>{
-    p.rotation.y += 0.05;
-    p.position.y = 0.6 + Math.sin(Date.now()*0.005+i)*0.3;
-  });
-
-}else{
-  clubLight1.intensity = 0;
-  clubLight2.intensity = 0;
+// CROWD REACTION
+let dist=player.position.distanceTo(stage.position);
+if(dist<25){
+crowd.forEach((p,i)=>{
+p.lookAt(player.position);
+p.position.y=0.6+Math.sin(Date.now()*0.01+i)*(dancing?0.6:0.2);
+});
 }
 
-// CAMERA
-camera.position.x += (player.position.x-camera.position.x)*0.05;
-camera.position.y += (5-camera.position.y)*0.05;
-camera.position.z += (player.position.z+14-camera.position.z)*0.05;
+// CAMERA FOLLOW
+camera.position.x+=(player.position.x-camera.position.x)*0.05;
+camera.position.y+=(6-camera.position.y)*0.05;
+camera.position.z+=(player.position.z+16-camera.position.z)*0.05;
 camera.lookAt(player.position);
 
+// MUSIC DISTANCE
+music.volume=Math.max(0,1-(dist/120));
+
+}
+
 // WATER
-water.material.uniforms['time'].value += 1.0/60.0;
+water.material.uniforms['time'].value+=1/60;
 
 renderer.render(scene,camera);
 }
