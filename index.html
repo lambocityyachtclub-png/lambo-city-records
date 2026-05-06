@@ -2,10 +2,10 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LAMBO CITY — DOCK WORLD</title>
+<title>LAMBO CITY — DOCK WORLD FINAL</title>
 
 <style>
-body { margin:0; overflow:hidden; background:black; }
+body { margin:0; overflow:hidden; background:black; font-family:Arial; }
 canvas { display:block; }
 
 #start {
@@ -13,9 +13,11 @@ position:absolute; inset:0;
 display:flex; align-items:center; justify-content:center;
 flex-direction:column;
 background:black; color:white;
+z-index:1000;
 }
 
 #status { position:absolute; top:20px; right:20px; color:gold; }
+
 #msg {
 position:absolute; bottom:40px; left:50%;
 transform:translateX(-50%);
@@ -33,12 +35,14 @@ background:rgba(0,0,0,0.6);
 <button onclick="start()">ENTER</button>
 </div>
 
-<div id="status">VISITOR</div>
+<div id="status">STATUS: VISITOR</div>
 <div id="msg">Welcome to the docks.</div>
 
 <canvas id="c"></canvas>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128/examples/js/loaders/GLTFLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128/examples/js/objects/Water.js"></script>
 
 <script>
 
@@ -46,25 +50,62 @@ background:rgba(0,0,0,0.6);
 let scene = new THREE.Scene();
 scene.background = new THREE.Color(0x000000);
 
-let camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 2000);
+let camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 3000);
 let renderer = new THREE.WebGLRenderer({canvas:c});
 renderer.setSize(innerWidth, innerHeight);
 
 scene.add(new THREE.AmbientLight(0xffffff,1.2));
 
 let light = new THREE.PointLight(0x00aaff,2);
-light.position.set(0,10,5);
+light.position.set(0,15,10);
 scene.add(light);
 
 // ===== PLAYER =====
-let player = new THREE.Mesh(
-new THREE.BoxGeometry(1,2,1),
-new THREE.MeshStandardMaterial({color:0xffffff})
-);
-player.position.set(0,1,10);
+let player = new THREE.Group();
 scene.add(player);
+player.position.set(0,0,10);
 
-// ===== MAIN DOCK FLOOR =====
+let playerMesh;
+
+new THREE.GLTFLoader().load(
+"https://threejs.org/examples/models/gltf/RobotExpressive/RobotExpressive.glb",
+g=>{
+  playerMesh=g.scene;
+  playerMesh.scale.set(0.4,0.4,0.4);
+  player.add(playerMesh);
+});
+
+// ===== MUSIC =====
+let music = new Audio("https://cdn.pixabay.com/download/audio/2022/03/15/audio_115b9b7d3c.mp3");
+music.loop = true;
+
+// ===== WATER =====
+const water = new THREE.Water(
+new THREE.PlaneGeometry(2000,2000),
+{
+textureWidth:512,
+textureHeight:512,
+waterNormals:new THREE.TextureLoader().load(
+"https://threejs.org/examples/textures/waternormals.jpg",
+t=>{t.wrapS=t.wrapT=THREE.RepeatWrapping;}
+),
+waterColor:0x001e2f,
+distortionScale:3.7
+}
+);
+water.rotation.x = -Math.PI/2;
+scene.add(water);
+
+// ===== STARS =====
+let starGeo = new THREE.BufferGeometry();
+let arr=[];
+for(let i=0;i<3000;i++){
+arr.push((Math.random()-0.5)*1200,Math.random()*400,(Math.random()-0.5)*1200);
+}
+starGeo.setAttribute("position",new THREE.Float32BufferAttribute(arr,3));
+scene.add(new THREE.Points(starGeo,new THREE.PointsMaterial({color:0xffffff,size:0.8})));
+
+// ===== MAIN DOCK =====
 let dock = new THREE.Mesh(
 new THREE.BoxGeometry(120,1,300),
 new THREE.MeshStandardMaterial({color:0x111111})
@@ -72,23 +113,19 @@ new THREE.MeshStandardMaterial({color:0x111111})
 dock.position.set(0,0,-100);
 scene.add(dock);
 
-// ===== SIDE CABINS ON DOCK =====
+// CABINS
 for(let i=0;i<5;i++){
-
-let leftCabin = new THREE.Mesh(
+["-20","20"].forEach(x=>{
+let c=new THREE.Mesh(
 new THREE.BoxGeometry(8,5,8),
 new THREE.MeshStandardMaterial({color:0x222222})
 );
-leftCabin.position.set(-20,2.5,-20-(i*25));
-scene.add(leftCabin);
-
-let rightCabin = leftCabin.clone();
-rightCabin.position.x = 20;
-scene.add(rightCabin);
-
+c.position.set(parseInt(x),2.5,-20-(i*25));
+scene.add(c);
+});
 }
 
-// ===== WALKWAY LINES (visual guidance) =====
+// WALKWAY LINES
 for(let i=0;i<20;i++){
 let plank = new THREE.Mesh(
 new THREE.BoxGeometry(100,0.2,1),
@@ -98,56 +135,69 @@ plank.position.set(0,0.6,-i*15);
 scene.add(plank);
 }
 
-// ===== STAGE (ON DOCK LEFT) =====
-let stage = new THREE.Mesh(
+// STAGE
+let stage=new THREE.Mesh(
 new THREE.BoxGeometry(20,2,12),
 new THREE.MeshStandardMaterial({color:0x6600aa})
 );
 stage.position.set(-25,1,-90);
 scene.add(stage);
 
-// ===== VIP AREA (ON DOCK) =====
-let vip = new THREE.Mesh(
+// VIP
+let vip=new THREE.Mesh(
 new THREE.BoxGeometry(20,1,15),
 new THREE.MeshStandardMaterial({color:0x002244})
 );
 vip.position.set(-25,0,-120);
 scene.add(vip);
 
-// ===== LONG PIER EXTENSION =====
-let pier = new THREE.Mesh(
+// PIER
+let pier=new THREE.Mesh(
 new THREE.BoxGeometry(30,1,220),
 new THREE.MeshStandardMaterial({color:0x222222})
 );
 pier.position.set(0,0,-260);
 scene.add(pier);
 
-// ===== YACHT END POINT =====
-let yacht = new THREE.Mesh(
+// YACHT
+let yacht=new THREE.Mesh(
 new THREE.BoxGeometry(60,8,25),
 new THREE.MeshStandardMaterial({color:0x4444ff})
 );
 yacht.position.set(0,4,-420);
 scene.add(yacht);
 
-// ===== WATER =====
-let water = new THREE.Mesh(
-new THREE.PlaneGeometry(1000,1000),
-new THREE.MeshStandardMaterial({color:0x020b1a})
+// ===== CROWD =====
+let crowd=[];
+for(let i=0;i<25;i++){
+let p=new THREE.Mesh(
+new THREE.BoxGeometry(0.6,1.2,0.6),
+new THREE.MeshStandardMaterial({color:0xffffff})
 );
-water.rotation.x = -Math.PI/2;
-water.position.y = -1;
-scene.add(water);
+p.position.set(-25+(Math.random()-0.5)*15,0.6,-90+(Math.random()-0.5)*15);
+scene.add(p);
+crowd.push(p);
+}
+
+// ===== LIGHTS =====
+let clubLight1=new THREE.PointLight(0xff00ff,0,80);
+let clubLight2=new THREE.PointLight(0x00ffff,0,80);
+scene.add(clubLight1);
+scene.add(clubLight2);
 
 // ===== INPUT =====
-let keys={}, started=false;
+let keys={}, dancing=false, started=false;
 
-document.addEventListener("keydown",e=>keys[e.key.toLowerCase()]=true);
+document.addEventListener("keydown",e=>{
+keys[e.key.toLowerCase()]=true;
+if(e.key==="e") dancing=!dancing;
+});
 document.addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
 
 function start(){
 document.getElementById("start").style.display="none";
 started=true;
+music.play();
 }
 
 // ===== LOOP =====
@@ -155,17 +205,58 @@ function animate(){
 requestAnimationFrame(animate);
 if(!started) return;
 
-// MOVEMENT
+// MOVE
+if(!dancing){
 if(keys["w"]) player.position.z-=0.4;
 if(keys["s"]) player.position.z+=0.4;
 if(keys["a"]) player.position.x-=0.4;
 if(keys["d"]) player.position.x+=0.4;
+}
 
-// CAMERA FOLLOW
-camera.position.x += (player.position.x-camera.position.x)*0.05;
-camera.position.y += (6-camera.position.y)*0.05;
-camera.position.z += (player.position.z+12-camera.position.z)*0.05;
+// DANCE
+if(dancing && playerMesh){
+let t=Date.now()*0.01;
+playerMesh.rotation.y=Math.sin(t);
+player.position.y=Math.abs(Math.sin(t))*0.5;
+document.getElementById("msg").innerText="🔥 You’re performing";
+}else{
+if(playerMesh) playerMesh.rotation.y=0;
+player.position.y=0;
+}
+
+// CROWD REACTION
+let dist=player.position.distanceTo(stage.position);
+
+if(dist<25){
+let t=Date.now()*0.002;
+
+clubLight1.intensity=2;
+clubLight2.intensity=2;
+
+clubLight1.position.set(-25+Math.sin(t)*10,10,-90);
+clubLight2.position.set(-25+Math.cos(t)*10,10,-90);
+
+crowd.forEach((p,i)=>{
+p.lookAt(player.position);
+p.position.y=0.6+Math.sin(Date.now()*0.01+i)*(dancing?0.6:0.2);
+});
+
+}else{
+clubLight1.intensity=0;
+clubLight2.intensity=0;
+}
+
+// MUSIC DISTANCE
+music.volume=Math.max(0,1-(dist/120));
+
+// CAMERA
+camera.position.x+=(player.position.x-camera.position.x)*0.05;
+camera.position.y+=(6-camera.position.y)*0.05;
+camera.position.z+=(player.position.z+14-camera.position.z)*0.05;
 camera.lookAt(player.position);
+
+// WATER
+water.material.uniforms['time'].value+=1/60;
 
 renderer.render(scene,camera);
 }
