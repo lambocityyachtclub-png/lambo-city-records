@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LAMBO CITY — CLUB EXPERIENCE</title>
+<title>LAMBO CITY — FINAL WORLD</title>
 
 <style>
 body { margin:0; overflow:hidden; background:black; font-family:Arial; }
@@ -16,11 +16,7 @@ canvas { display:block; }
   z-index:1000;
 }
 
-#status {
-  position:absolute; top:20px; right:20px;
-  color:gold;
-}
-
+#status { position:absolute; top:20px; right:20px; color:gold; }
 #msg {
   position:absolute; bottom:40px; left:50%;
   transform:translateX(-50%);
@@ -50,7 +46,7 @@ canvas { display:block; }
 
 <script>
 
-// ===== WORLD =====
+// ===== SCENE =====
 let scene = new THREE.Scene();
 scene.background = new THREE.Color(0x000000);
 
@@ -60,18 +56,16 @@ renderer.setSize(innerWidth, innerHeight);
 
 scene.add(new THREE.AmbientLight(0xffffff,1.2));
 
-// CLUB LIGHTS
-let clubLight1 = new THREE.PointLight(0xff00ff,2,80);
-let clubLight2 = new THREE.PointLight(0x00ffff,2,80);
-scene.add(clubLight1);
-scene.add(clubLight2);
+let light = new THREE.PointLight(0x00aaff,2);
+light.position.set(0,10,5);
+scene.add(light);
 
 // ===== PLAYER =====
 let player = new THREE.Group();
 scene.add(player);
-player.position.set(0,0,20);
+player.position.set(-35,0,20);
 
-// CHARACTER
+// REAL CHARACTER
 let loader = new THREE.GLTFLoader();
 loader.load(
   "https://threejs.org/examples/models/gltf/RobotExpressive/RobotExpressive.glb",
@@ -79,16 +73,16 @@ loader.load(
     let char = gltf.scene;
     char.scale.set(0.4,0.4,0.4);
     player.add(char);
-    document.getElementById("msg").innerText="Welcome to LAMBO CITY.";
+    document.getElementById("msg").innerText="You are inside LAMBO CITY.";
   }
 );
 
-// ===== AUDIO SYSTEM =====
+// ===== AUDIO =====
 let music = new Audio("https://cdn.pixabay.com/download/audio/2022/03/15/audio_115b9b7d3c.mp3?filename=nightclub-ambient-110624.mp3");
 music.loop = true;
 music.volume = 0.6;
 
-// ===== REAL WATER =====
+// ===== WATER =====
 const water = new THREE.Water(
   new THREE.PlaneGeometry(2000,2000),
   {
@@ -122,22 +116,58 @@ let dock = new THREE.Mesh(
 dock.position.set(0,-0.5,-120);
 scene.add(dock);
 
-// ===== STAGE =====
+// ===== CABINS =====
+function cabin(x,z){
+  let c = new THREE.Mesh(
+    new THREE.BoxGeometry(10,5,10),
+    new THREE.MeshStandardMaterial({color:0x111111})
+  );
+  c.position.set(x,2.5,z);
+  scene.add(c);
+}
+for(let i=0;i<5;i++){
+  cabin(-35,-20-(i*30));
+  cabin(35,-20-(i*30));
+}
+
+// ===== STAGE (LEFT — PRESERVED) =====
 let stage = new THREE.Mesh(
   new THREE.BoxGeometry(22,2,14),
-  new THREE.MeshStandardMaterial({color:0x111111})
+  new THREE.MeshStandardMaterial({color:0x6600aa})
 );
-stage.position.set(0,1,-100);
+stage.position.set(-30,1,-90);
 scene.add(stage);
 
-// ===== CROWD =====
+// ===== VIP (BEHIND STAGE — PRESERVED) =====
+let vip = new THREE.Mesh(
+  new THREE.BoxGeometry(22,1,20),
+  new THREE.MeshStandardMaterial({color:0x001f2f})
+);
+vip.position.set(-30,0,-120);
+scene.add(vip);
+
+// ===== YACHT (END GOAL — PRESERVED) =====
+let yacht = new THREE.Mesh(
+  new THREE.BoxGeometry(50,6,22),
+  new THREE.MeshStandardMaterial({color:0x222244})
+);
+yacht.position.set(0,3,-350);
+scene.add(yacht);
+
+// ===== CLUB LIGHTS (ONLY AT STAGE) =====
+let clubLight1 = new THREE.PointLight(0xff00ff,0,80);
+let clubLight2 = new THREE.PointLight(0x00ffff,0,80);
+scene.add(clubLight1);
+scene.add(clubLight2);
+
+// ===== CROWD (ONLY AT STAGE) =====
 let crowd=[];
-for(let i=0;i<30;i++){
+for(let i=0;i<25;i++){
   let p=new THREE.Mesh(
     new THREE.BoxGeometry(0.6,1.2,0.6),
     new THREE.MeshStandardMaterial({color:0xffffff})
   );
-  p.position.set((Math.random()-0.5)*40,0.6,-90+(Math.random()-0.5)*40);
+  p.position.set(-30+(Math.random()-0.5)*20,0.6,-90+(Math.random()-0.5)*20);
   scene.add(p);
   crowd.push(p);
 }
@@ -148,6 +178,13 @@ document.addEventListener("keydown",e=>keys[e.key.toLowerCase()]=true);
 document.addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
 
 let started=false;
+
+const GAME={
+  status:"VISITOR",
+  stage:false,
+  vip:false,
+  yacht:false
+};
 
 function start(){
   document.getElementById("start").style.display="none";
@@ -166,16 +203,46 @@ if(keys["s"]) player.position.z+=0.2;
 if(keys["a"]) player.position.x-=0.2;
 if(keys["d"]) player.position.x+=0.2;
 
-// CLUB LIGHT ANIMATION
-let t = Date.now()*0.002;
-clubLight1.position.set(Math.sin(t)*20,10,-100);
-clubLight2.position.set(Math.cos(t)*20,10,-100);
+// ===== PROGRESSION =====
+if(!GAME.stage && player.position.distanceTo(stage.position)<6){
+  GAME.stage=true;
+  GAME.status="PERFORMER";
+  document.getElementById("status").innerText="STATUS: PERFORMER";
+  document.getElementById("msg").innerText="You got something? Show it.";
+}
 
-// CROWD DANCE
-crowd.forEach((p,i)=>{
-  p.rotation.y += 0.05;
-  p.position.y = 0.6 + Math.sin(Date.now()*0.005+i)*0.3;
-});
+if(GAME.stage && !GAME.vip && player.position.distanceTo(vip.position)<8){
+  GAME.vip=true;
+  GAME.status="VIP";
+  document.getElementById("status").innerText="STATUS: VIP MEMBER";
+  document.getElementById("msg").innerText="Now you’re networking.";
+}
+
+if(GAME.vip && player.position.distanceTo(yacht.position)<12){
+  GAME.yacht=true;
+  GAME.status="OWNER";
+  document.getElementById("status").innerText="STATUS: OWNER";
+  document.getElementById("msg").innerText="You made it.";
+}
+
+// ===== CLUB ACTIVATES ONLY AT STAGE =====
+if(player.position.distanceTo(stage.position)<20){
+  clubLight1.intensity = 2;
+  clubLight2.intensity = 2;
+
+  let t = Date.now()*0.002;
+  clubLight1.position.set(-30+Math.sin(t)*10,10,-90);
+  clubLight2.position.set(-30+Math.cos(t)*10,10,-90);
+
+  crowd.forEach((p,i)=>{
+    p.rotation.y += 0.05;
+    p.position.y = 0.6 + Math.sin(Date.now()*0.005+i)*0.3;
+  });
+
+}else{
+  clubLight1.intensity = 0;
+  clubLight2.intensity = 0;
+}
 
 // CAMERA
 camera.position.x += (player.position.x-camera.position.x)*0.05;
