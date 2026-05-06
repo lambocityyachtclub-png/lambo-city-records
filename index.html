@@ -176,6 +176,43 @@ const right = left.clone();
 right.position.x = 4;
 base.add(right);
 
+  // GLASS FRONT
+const glass = new THREE.Mesh(
+new THREE.BoxGeometry(8,5,0.1),
+new THREE.MeshStandardMaterial({
+  color:0x99ccff,
+  transparent:true,
+  opacity:0.25
+})
+);
+glass.position.set(0,2.5,4);
+base.add(glass);
+
+  // BALCONY FLOOR
+const balcony = new THREE.Mesh(
+new THREE.BoxGeometry(8,0.2,3),
+new THREE.MeshStandardMaterial({color:0x222222})
+);
+balcony.position.set(0,0.1,5.5);
+base.add(balcony);
+
+  // BALCONY RAIL
+const rail = new THREE.Mesh(
+new THREE.BoxGeometry(8,1,0.1),
+new THREE.MeshStandardMaterial({
+  color:0x99ccff,
+  transparent:true,
+  opacity:0.3
+})
+);
+rail.position.set(0,0.8,7);
+base.add(rail);
+
+  // OCEAN REFLECTION LIGHT
+const oceanGlow = new THREE.PointLight(0x00aaff,0.5,15);
+oceanGlow.position.set(0,1,6);
+base.add(oceanGlow);
+
 // LIGHT
 const light = new THREE.PointLight(0xffcc88,1.2,20);
 light.position.set(0,4,0);
