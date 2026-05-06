@@ -344,6 +344,34 @@ camera.position.z = player.position.z + 8;
 camera.lookAt(player.position);
 }
 
+  /////////////////////////////////////////////////////
+// 🎧 STAGE ENERGY SYSTEM
+/////////////////////////////////////////////////////
+
+const distToStage = player.position.distanceTo(new THREE.Vector3(-15,1,-80));
+
+if(distToStage < 25){
+
+  let t = Date.now()*0.002;
+
+  stageLight1.intensity = 2;
+  stageLight2.intensity = 2;
+
+  stageLight1.position.set(-15 + Math.sin(t)*10, 10, -80);
+  stageLight2.position.set(-15 + Math.cos(t)*10, 10, -80);
+
+  crowd.forEach((p,i)=>{
+    p.lookAt(player.position);
+    p.position.y = crowdBaseY[i] + Math.sin(Date.now()*0.005 + i)*0.25;
+  });
+
+}else{
+
+  stageLight1.intensity = 0;
+  stageLight2.intensity = 0;
+
+}
+  
 /////////////////////////////////////////////////////
 // 🚶 MOVEMENT
 /////////////////////////////////////////////////////
