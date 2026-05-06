@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LAMBO CITY — HERO WORLD</title>
+<title>LAMBO CITY — GTA INTRO</title>
 
 <style>
 body { margin:0; overflow:hidden; background:black; font-family:Arial; }
@@ -14,11 +14,6 @@ canvas { display:block; }
   display:flex; flex-direction:column;
   align-items:center; justify-content:center;
   z-index:1000;
-}
-
-#ui {
-  position:absolute; top:20px; left:20px;
-  color:white; font-size:13px;
 }
 
 #status {
@@ -44,9 +39,8 @@ canvas { display:block; }
   <button onclick="start()">ENTER WORLD</button>
 </div>
 
-<div id="ui">🏠 Cabin → 🌉 Dock → 🎤 Stage → 💼 VIP → 🚤 Yacht</div>
 <div id="status">STATUS: VISITOR</div>
-<div id="msg">I brought you here.</div>
+<div id="msg">...</div>
 
 <canvas id="c"></canvas>
 
@@ -54,7 +48,7 @@ canvas { display:block; }
 
 <script>
 
-// ================= WORLD =================
+// ===== WORLD =====
 let scene = new THREE.Scene();
 scene.background = new THREE.Color(0x000000);
 
@@ -63,20 +57,11 @@ let renderer = new THREE.WebGLRenderer({canvas:c});
 renderer.setSize(innerWidth, innerHeight);
 
 scene.add(new THREE.AmbientLight(0xffffff,1.2));
-
 let light = new THREE.PointLight(0x00aaff,2);
 light.position.set(0,5,5);
 scene.add(light);
 
-// ================= STATE =================
-const GAME = {
-  stage:false,
-  vip:false,
-  yacht:false,
-  status:"VISITOR"
-};
-
-// ================= PLAYER =================
+// ===== PLAYER =====
 let player = new THREE.Mesh(
   new THREE.BoxGeometry(1,1,1),
   new THREE.MeshStandardMaterial({color:0xffffff})
@@ -84,11 +69,10 @@ let player = new THREE.Mesh(
 player.position.set(0,0.5,20);
 scene.add(player);
 
-// HERO AURA (GTA FEEL)
 let aura = new THREE.PointLight(0xffffff,0,15);
 player.add(aura);
 
-// ================= ENVIRONMENT =================
+// ===== ENVIRONMENT =====
 
 // WATER
 let water = new THREE.Mesh(
@@ -154,68 +138,111 @@ let yacht = new THREE.Mesh(
 yacht.position.set(0,3,-350);
 scene.add(yacht);
 
-// ================= INPUT =================
+// ===== INPUT =====
 let keys={};
 document.addEventListener("keydown",e=>keys[e.key.toLowerCase()]=true);
 document.addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
 
+// ===== STATE =====
 let started=false;
+let intro=true;
+let introTime=0;
 
-// ================= START =================
+const GAME = {
+  stage:false,
+  vip:false,
+  yacht:false,
+  status:"VISITOR"
+};
+
+// ===== START =====
 function start(){
   document.getElementById("start").style.display="none";
   started=true;
-  document.getElementById("msg").innerText="This city reacts to you.";
 }
 
-// ================= LOOP =================
+// ===== HERO VOICE =====
+function speak(text){
+  document.getElementById("msg").innerText = text;
+}
+
+// ===== LOOP =====
 function animate(){
 requestAnimationFrame(animate);
 if(!started) return;
 
-// movement
+// ===== GTA INTRO CUTSCENE =====
+if(intro){
+
+  introTime += 0.02;
+
+  // cinematic camera path
+  camera.position.x = Math.sin(introTime)*60;
+  camera.position.y = 25;
+  camera.position.z = -250 + Math.cos(introTime)*40;
+  camera.lookAt(0,0,-150);
+
+  // HERO dialogue timing
+  if(introTime < 2) speak("You made it...");
+  else if(introTime < 4) speak("This is a cool city.");
+  else if(introTime < 6) speak("You'll understand when you earn it.");
+  else if(introTime < 8) speak("For now... it's not yours.");
+
+  // end intro
+  if(introTime > 8){
+    intro = false;
+    speak("Walk.");
+  }
+
+  renderer.render(scene,camera);
+  return;
+}
+
+// ===== PLAYER CONTROL =====
 if(keys["w"]) player.position.z-=0.15;
 if(keys["s"]) player.position.z+=0.15;
 if(keys["a"]) player.position.x-=0.15;
 if(keys["d"]) player.position.x+=0.15;
 
+// ===== PROGRESSION =====
+
 // STAGE
 if(!GAME.stage && player.position.distanceTo(stage.position)<6){
   GAME.stage=true;
   GAME.status="PERFORMER";
+  speak("Prove yourself.");
   document.getElementById("status").innerText="STATUS: PERFORMER";
-  document.getElementById("msg").innerText="MISSION: Prove yourself at the stage.";
 }
 
 // VIP
 if(GAME.stage && !GAME.vip && player.position.distanceTo(vip.position)<8){
   GAME.vip=true;
   GAME.status="VIP";
+  speak("Now you're in the room.");
   document.getElementById("status").innerText="STATUS: VIP MEMBER";
-  document.getElementById("msg").innerText="MISSION: Enter the network.";
 }
 
 // YACHT
 if(GAME.vip && player.position.distanceTo(yacht.position)<10){
   GAME.yacht=true;
   GAME.status="OWNER";
+  speak("Now you understand.");
   document.getElementById("status").innerText="STATUS: OWNER";
-  document.getElementById("msg").innerText="MISSION COMPLETE: You belong here.";
 }
 
-// GTA AURA FEEL
+// ===== AURA =====
 if(GAME.status==="VISITOR") aura.intensity=0.2;
-if(GAME.status==="PERFORMER") aura.intensity=0.5;
-if(GAME.status==="VIP") aura.intensity=1.2;
-if(GAME.status==="OWNER") aura.intensity=1.8;
+if(GAME.status==="PERFORMER") aura.intensity=0.6;
+if(GAME.status==="VIP") aura.intensity=1.3;
+if(GAME.status==="OWNER") aura.intensity=2;
 
-// CAMERA (GTA STYLE)
-camera.position.x += (player.position.x-camera.position.x)*0.04;
-camera.position.y += (4.5-camera.position.y)*0.03;
-camera.position.z += (player.position.z+12-camera.position.z)*0.04;
+// ===== CAMERA FOLLOW =====
+camera.position.x += (player.position.x-camera.position.x)*0.05;
+camera.position.y += (4-camera.position.y)*0.05;
+camera.position.z += (player.position.z+10-camera.position.z)*0.05;
 camera.lookAt(player.position);
 
-// WATER MOTION
+// WATER
 water.position.z = Math.sin(Date.now()*0.001)*1;
 
 renderer.render(scene,camera);
