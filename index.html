@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LAMBO CITY — WORLD V1</title>
+<title>LAMBO CITY — WORLD V1 FINAL</title>
 
 <style>
 body { margin:0; overflow:hidden; background:black; font-family:Arial; }
@@ -35,7 +35,7 @@ canvas { display:block; }
   color:gold;
 }
 
-#vip {
+#hint {
   position:absolute; bottom:90px; left:50%;
   transform:translateX(-50%);
   color:#00ffff;
@@ -49,14 +49,14 @@ canvas { display:block; }
 <body>
 
 <div id="start">
-  <h1>LAMBO CITY</h1>
+  <h1>LAMBO CITY YACHT CLUB</h1>
   <button onclick="start()">ENTER WORLD</button>
 </div>
 
 <div id="ui">🏠 Cabin → 🌉 Dock → 🎤 Stage → 💼 VIP → 🚤 Yacht</div>
 <div id="msg">I brought you here.</div>
 <div id="status">STATUS: VISITOR</div>
-<div id="vip">VIP ACCESS MOMENT</div>
+<div id="hint">INTERACTION AVAILABLE</div>
 
 <canvas id="c"></canvas>
 
@@ -77,24 +77,23 @@ let light = new THREE.PointLight(0x00aaff,2);
 light.position.set(0,5,5);
 scene.add(light);
 
-// ================= HERO / PLAYER =================
+// ================= HERO SYSTEM =================
+let isHero = window.location.search.includes("hero=true");
+
+// ================= PLAYER =================
 let player = new THREE.Mesh(
   new THREE.BoxGeometry(1,1,1),
   new THREE.MeshStandardMaterial({color:0xffffff})
 );
 scene.add(player);
 
-// HERO IDENTITY (simple rule system)
-let isHero = false;
-let hasVIP = false;
+// ================= STATE =================
 let hasPerformer = false;
+let hasVIP = false;
+let keys = {};
+let inWorld = false;
 
-// URL CHECK (identity switch)
-if(window.location.search.includes("hero=true")){
-  isHero = true;
-}
-
-// ================= VOICE SYSTEM =================
+// ================= VOICE =================
 function speak(text){
   document.getElementById("msg").innerText = text;
 }
@@ -102,34 +101,30 @@ function speak(text){
 // ================= START =================
 function start(){
   document.getElementById("start").style.display="none";
+  inWorld = true;
+
+  player.position.set(-35,0.5,20);
 
   if(isHero){
-    player.position.set(-35,0.5,20);
     document.getElementById("status").innerText="STATUS: HERO (OWNER)";
-    speak("Welcome back.");
-  } else {
-    player.position.set(-35,0.5,20);
-    document.getElementById("status").innerText="STATUS: VISITOR";
-    speak("I brought you here.");
+    speak("Welcome back, HERO.");
   }
 }
 
-// ================= WORLD =================
-
-// WATER
+// ================= WATER =================
 let water = new THREE.Mesh(
-  new THREE.PlaneGeometry(800,800),
+  new THREE.PlaneGeometry(900,900),
   new THREE.MeshStandardMaterial({color:0x020b1a})
 );
 water.rotation.x = -Math.PI/2;
 water.position.y = -1;
 scene.add(water);
 
-// STARS
+// ================= STARS =================
 const starGeo = new THREE.BufferGeometry();
 let arr=[];
 for(let i=0;i<4000;i++){
-  arr.push((Math.random()-0.5)*800,Math.random()*300,(Math.random()-0.5)*800);
+  arr.push((Math.random()-0.5)*900,Math.random()*300,(Math.random()-0.5)*900);
 }
 starGeo.setAttribute("position",new THREE.Float32BufferAttribute(arr,3));
 let stars = new THREE.Points(
@@ -146,7 +141,7 @@ let dock = new THREE.Mesh(
 dock.position.set(0,-0.5,-120);
 scene.add(dock);
 
-// ================= 10 CABINS (REAL ESTATE) =================
+// ================= CABINS (10 PROPERTIES) =================
 function cabin(x,z){
   let c = new THREE.Mesh(
     new THREE.BoxGeometry(10,5,10),
@@ -169,7 +164,7 @@ let stage = new THREE.Mesh(
 stage.position.set(-30,1,-90);
 scene.add(stage);
 
-// ================= VIP ZONE (BEHIND STAGE) =================
+// ================= VIP ZONE =================
 let vipZone = new THREE.Mesh(
   new THREE.BoxGeometry(22,1,20),
   new THREE.MeshStandardMaterial({color:0x001f2f})
@@ -198,13 +193,13 @@ for(let i=0;i<25;i++){
 }
 
 // ================= INPUT =================
-let keys={};
 document.addEventListener("keydown",e=>keys[e.key.toLowerCase()]=true);
 document.addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
 
-// ================= GAME LOOP =================
+// ================= LOOP =================
 function animate(){
 requestAnimationFrame(animate);
+if(!inWorld) return;
 
 // MOVE
 if(keys["w"]) player.position.z-=0.15;
@@ -212,34 +207,34 @@ if(keys["s"]) player.position.z+=0.15;
 if(keys["a"]) player.position.x-=0.15;
 if(keys["d"]) player.position.x+=0.15;
 
-// ================= PROGRESSION FLOW =================
+// ================= STORY FLOW =================
 
-// CABIN EXIT
+// EXIT CABIN MOMENT
 if(player.position.z < 10){
   speak("This is a cool city… you’ll see.");
 }
 
-// STAGE EVENT
+// STAGE TRIGGER
 if(player.position.distanceTo(stage.position)<6 && !hasPerformer){
   hasPerformer = true;
-  document.getElementById("vip").style.display="block";
-  speak("You want some VIP tickets?");
+  speak("You got something? This is your shot.");
+  document.getElementById("hint").style.display="block";
 }
 
-// VIP ZONE
+// VIP UNLOCK
 if(player.position.distanceTo(vipZone.position)<8 && hasPerformer){
   hasVIP = true;
   document.getElementById("status").innerText="STATUS: VIP MEMBER";
-  speak("This is where connections happen.");
+  speak("Connections start here.");
 }
 
 // YACHT LOCK
 if(player.position.z < -320){
   player.position.z = -320;
-  speak("You’re not there yet.");
+  speak("Not yet… earn it.");
 }
 
-// ================= LIFE =================
+// ================= ATMOSPHERE =================
 stars.rotation.y += 0.0005;
 water.position.z = Math.sin(Date.now()*0.001)*1;
 
@@ -249,16 +244,11 @@ camera.position.y += (4-camera.position.y)*0.05;
 camera.position.z += (player.position.z+10-camera.position.z)*0.05;
 camera.lookAt(player.position);
 
-// UI CLEANUP
-document.getElementById("vip").style.display =
-(hasPerformer && !hasVIP) ? "block" : "none";
-
 renderer.render(scene,camera);
 }
 
 animate();
 
 </script>
-
 </body>
 </html>
