@@ -55,7 +55,7 @@ background:rgba(0,0,0,0.6);
 <script>
 
 /////////////////////////////////////////////////////
-// 1. CORE ENGINE (DO NOT TOUCH)
+// 1. CORE ENGINE
 /////////////////////////////////////////////////////
 
 const scene = new THREE.Scene();
@@ -63,21 +63,23 @@ scene.background = new THREE.Color(0x000000);
 scene.fog = new THREE.FogExp2(0x000000, 0.01);
 
 const camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 2000);
-const renderer = new THREE.WebGLRenderer({canvas:c});
+const renderer = new THREE.WebGLRenderer({canvas:c, antialias:true});
 renderer.setSize(innerWidth, innerHeight);
 
 scene.add(new THREE.AmbientLight(0xffffff,1.2));
+
 const light = new THREE.PointLight(0x00ffff,2);
 light.position.set(0,10,10);
 scene.add(light);
 
 /////////////////////////////////////////////////////
-// 2. PLAYER SYSTEM
+// 2. PLAYER (FIXED)
 /////////////////////////////////////////////////////
 
-const music = new Audio("https://cdn.pixabay.com/download/audio/2022/03/15/audio_115b9b7d3c.mp3");
-music.loop = true;
-music.volume = 0.5;
+const player = new THREE.Mesh(
+new THREE.BoxGeometry(1,1.8,1),
+new THREE.MeshStandardMaterial({color:0xffffff})
+);
 scene.add(player);
 player.position.set(0,1,20);
 
@@ -91,11 +93,10 @@ function start(){
 document.getElementById("start").style.display="none";
 started = true;
 document.getElementById("zone").innerText="WELCOME TO LAMBO CITY";
-
-music.play();
 }
+
 /////////////////////////////////////////////////////
-// 3. WORLD ASSETS
+// 3. WORLD ASSETS (CLEAN)
 /////////////////////////////////////////////////////
 
 // WATER
@@ -165,7 +166,7 @@ scene.add(right);
 }
 
 /////////////////////////////////////////////////////
-// 4. EXPERIENCE SYSTEM (SAFE ZONE)
+// 4. EXPERIENCE SYSTEM (SAFE)
 /////////////////////////////////////////////////////
 
 let introPlayed = false;
@@ -190,7 +191,7 @@ setZone("🚤 YACHT IN VIEW");
 }
 
 /////////////////////////////////////////////////////
-// 5. GAME LOOP (STABLE)
+// 5. LOOP (STABLE)
 /////////////////////////////////////////////////////
 
 function animate(){
@@ -198,20 +199,18 @@ requestAnimationFrame(animate);
 if(!started) return;
 
 /////////////////////////////////////////////////////
-// INTRO SYSTEM
+// INTRO
 /////////////////////////////////////////////////////
 
 if(!introPlayed){
 introTime++;
 
-// cinematic camera
 camera.position.x += (introCamera.x - camera.position.x)*0.02;
 camera.position.y += (introCamera.y - camera.position.y)*0.02;
 camera.position.z += (introCamera.z - camera.position.z)*0.02;
 
 camera.lookAt(0,0,-100);
 
-// intro flow
 if(introTime < 120){
 setZone("🌊 ARRIVING AT THE DOCKS");
 }
@@ -231,7 +230,7 @@ return;
 }
 
 /////////////////////////////////////////////////////
-// PLAYER CONTROL
+// MOVEMENT
 /////////////////////////////////////////////////////
 
 if(keys["w"]) player.position.z -= 0.2;
@@ -249,7 +248,7 @@ camera.position.z += (player.position.z + 10 - camera.position.z)*0.06;
 camera.lookAt(player.position);
 
 /////////////////////////////////////////////////////
-// WORLD ANIMATION
+// WORLD
 /////////////////////////////////////////////////////
 
 stars.rotation.y += 0.0003;
