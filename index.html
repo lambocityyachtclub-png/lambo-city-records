@@ -847,28 +847,34 @@ function animate(){
 
   checkStageEvents();
 
-  /////////////////////////////////////////////////////
-  // 🌟 HERO ANIMATION SYSTEM
-  /////////////////////////////////////////////////////
+/////////////////////////////////////////////////////
+// 🌟 HERO ANIMATION SYSTEM
+/////////////////////////////////////////////////////
 
-  hero.position.y =
-    1 + Math.sin(Date.now() * 0.003) * 0.15;
+hero.position.y =
+  1 + Math.sin(Date.now() * 0.003) * 0.15;
 
-  marker.rotation.y += 0.03;
-  /////////////////////////////////////////////////////
-  // 👤 HERO PROXIMITY SYSTEM
-  /////////////////////////////////////////////////////
+marker.rotation.y += 0.03;
 
-  const heroDist = player.position.distanceTo(hero.position);
+/////////////////////////////////////////////////////
+// 👤 HERO PROXIMITY SYSTEM
+/////////////////////////////////////////////////////
+
+const heroDist = player.position.distanceTo(hero.position);
+const stageDist = player.position.distanceTo(stage.position);
 
 if (heroDist < 10) {
-  document.getElementById("zone").innerText = "👤 HERO NEARBY";
+  WorldManager.setZone("👤 HERO NEARBY");
+} else if (stageDist < 45) {
+  WorldManager.setZone("🔥 STAGE ACTIVE");
+} else {
+  WorldManager.setZone("OUTSIDE WORLD");
 }
-  /////////////////////////////////////////////////////
+/////////////////////////////////////////////////////
 
-  stars.rotation.y += 0.0003;
+stars.rotation.y += 0.0003;
 
-  renderer.render(scene,camera);
+renderer.render(scene, camera);
 }
 
 animate();
