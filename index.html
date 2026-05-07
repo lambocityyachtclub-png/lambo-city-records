@@ -99,7 +99,7 @@ new THREE.BoxGeometry(1,1.8,1),
 new THREE.MeshStandardMaterial({color:0xffffff})
 );
 scene.add(player);
-player.position.set(0,1,60);
+player.position.set(0,1,10);
 const keys = {};
 let started = false;
 let coins = 0;
@@ -586,11 +586,11 @@ const targetX = inside && activeCabin
 
 const targetY = inside && activeCabin
 ? 3
-: 6;
+: 10;
 
 const targetZ = inside && activeCabin
 ? activeCabin.group.position.z
-: player.position.z + 8;
+: player.position.z + 14;
 
 // smooth follow (LERP)
 camera.position.x += (targetX - camera.position.x) * 0.08;
