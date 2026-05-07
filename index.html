@@ -541,18 +541,23 @@ function move(){
 
 function animate(){
   requestAnimationFrame(animate);
+
   if(!started) return;
 
   move();
+
   updateCamera();
+
   updateStageEnergy();
+
+  checkStageEvents();
 
   stars.rotation.y += 0.0003;
 
   renderer.render(scene,camera);
 }
 
-animate(); // ✅ THIS WAS MISSING
+animate();
 </script>
 
 </body>
