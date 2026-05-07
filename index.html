@@ -107,7 +107,7 @@ let inside = false;
 let activeCabin = null;
 let stageInside = false;
 
-const WORLD_LIMIT = 120;
+const WORLD_LIMIT = 90;
 const STAGE_RADIUS = 45;
 document.addEventListener("keydown",e=>keys[e.key.toLowerCase()]=true);
 document.addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
@@ -370,7 +370,23 @@ new THREE.MeshStandardMaterial({
 
 stage.position.set(0,6,-135);
 scene.add(stage);
+/////////////////////////////////////////////////////
+// 🥂 BACKSTAGE VIP LOUNGE
+/////////////////////////////////////////////////////
 
+const vipDeck = new THREE.Mesh(
+
+new THREE.BoxGeometry(55,1,26),
+
+new THREE.MeshStandardMaterial({
+  color:0x111111
+})
+
+);
+
+vipDeck.position.set(0,0,-165);
+
+scene.add(vipDeck);
 
 /////////////////////////////////////////////////////
 // 🏡 CABINS
