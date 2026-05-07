@@ -503,27 +503,32 @@ function updateStageEnergy(){
   const dist = player.position.distanceTo(stage.position);
 
   if(dist < 25){
-document.getElementById("zone").innerText = "🔥 STAGE ACTIVE";
+
+    document.getElementById("zone").innerText = "🔥 STAGE ACTIVE";
+
     let t = Date.now()*0.002;
 
     stageLight1.intensity = 2;
     stageLight2.intensity = 2;
 
     stageLight1.position.set(0 + Math.sin(t)*10, 10, -20);
-stageLight2.position.set(0 + Math.cos(t)*10, 10, -20);
+    stageLight2.position.set(0 + Math.cos(t)*10, 10, -20);
 
     crowd.forEach((p,i)=>{
       p.lookAt(player.position);
       p.position.y = crowdBaseY[i] + Math.sin(Date.now()*0.005 + i)*0.25;
     });
 
-  } document.getElementById("zone").innerText = "OUTSIDE STAGE"; {
+  } else {
+
+    document.getElementById("zone").innerText = "OUTSIDE STAGE";
 
     stageLight1.intensity = 0;
     stageLight2.intensity = 0;
-crowd.forEach((p,i)=>{
-  p.position.y = crowdBaseY[i];
-});
+
+    crowd.forEach((p,i)=>{
+      p.position.y = crowdBaseY[i];
+    });
   }
 }
   
