@@ -284,13 +284,8 @@ new THREE.MeshStandardMaterial({
 })
 );
 
-stageDeck.position.set(0,0,-170);
+stageDeck.position.set(0,7,-170);
 scene.add(stageDeck);
-
-/////////////////////////////////////////////////////
-// 🎤 FESTIVAL STAGE  👈 PUT IT RIGHT HERE
-/////////////////////////////////////////////////////
-
 const stage = new THREE.Mesh(
 new THREE.BoxGeometry(45,12,20),
 new THREE.MeshStandardMaterial({
@@ -299,13 +294,13 @@ new THREE.MeshStandardMaterial({
   emissiveIntensity:1
 })
 );
+/////////////////////////////////////////////////////
+// 🎤 FESTIVAL STAGE  👈 PUT IT RIGHT HERE
+/////////////////////////////////////////////////////
 
 stage.position.set(0,6,-170);
 scene.add(stage);
 
-stage.position.set(0,6,-170);
-
-scene.add(stage);
 
 /////////////////////////////////////////////////////
 // 🏡 CABINS
