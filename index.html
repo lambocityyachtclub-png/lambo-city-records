@@ -156,7 +156,7 @@ function checkStageEvents(){
 
   const dist = player.position.distanceTo(stage.position);
 
-  if(dist < 25 && !stageInside){
+  if(dist < 45 && !stageInside){
 
     stageInside = true;
 
@@ -166,7 +166,7 @@ function checkStageEvents(){
 
   }
 
-  if(dist >= 25){
+  if(dist >= 45){
 
     stageInside = false;
 
