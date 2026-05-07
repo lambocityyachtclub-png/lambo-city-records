@@ -225,9 +225,47 @@ function handleEvent(type, data){
 /////////////////////////////////////////////////////
 // 🔊 AUDIO SYSTEM (SAFE)
 /////////////////////////////////////////////////////
-const music = new Audio("https://cdn.pixabay.com/download/audio/2022/03/15/audio_115b9b7d3c.mp3");
-music.loop = true;
-music.volume = 0.4;
+const AudioSystem = {
+  mode: "playlist", // "playlist" | "stream"
+
+  playlist: [
+    "https://cdn.pixabay.com/download/audio/2022/03/15/audio_115b9b7d3c.mp3"
+  ],
+
+  streamURL: "",
+
+  current: null,
+
+  play(index = 0) {
+    this.stop();
+
+    this.mode = "playlist";
+
+    this.current = new Audio(this.playlist[index]);
+    this.current.loop = true;
+    this.current.volume = 0.4;
+    this.current.play().catch(()=>{});
+  },
+
+  playStream(url) {
+    this.stop();
+
+    this.mode = "stream";
+
+    this.streamURL = url;
+    this.current = new Audio(url);
+    this.current.loop = true;
+    this.current.volume = 0.6;
+    this.current.play().catch(()=>{});
+  },
+
+  stop() {
+    if (this.current) {
+      this.current.pause();
+      this.current = null;
+    }
+  }
+};
 
 /////////////////////////////////////////////////////
 // 🌊 WORLD FLOOR
