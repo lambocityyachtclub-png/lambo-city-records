@@ -397,9 +397,12 @@ const crowdBaseY = [];
 for(let i=0;i<30;i++){
 
   const npc = new THREE.Mesh(
-    new THREE.BoxGeometry(0.6,1.2,0.6),
-    new THREE.MeshStandardMaterial({color:0xffffff})
-  );
+    new THREE.BoxGeometry(1,2,1)
+    new THREE.MeshStandardMaterial({
+  color:0x00ffff,
+  emissive:0x00ffff,
+  emissiveIntensity:2
+})
 
  npc.position.set(
   0 + (Math.random()-0.5)*15,
