@@ -513,8 +513,8 @@ function updateStageEnergy(){
     stageLight1.intensity = 2;
     stageLight2.intensity = 2;
 
-    stageLight1.position.set(0 + Math.sin(t)*10, 10, -20);
-    stageLight2.position.set(0 + Math.cos(t)*10, 10, -20);
+    stageLight1.position.set(0 + Math.sin(t)*10, 10, -140);
+    stageLight2.position.set(0 + Math.cos(t)*10, 10, -140);
 
     crowd.forEach((p,i)=>{
       p.lookAt(player.position);
