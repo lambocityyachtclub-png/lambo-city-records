@@ -104,7 +104,13 @@ player.position.set(0,1,20);
 
 const keys = {};
 let started = false;
+let coins = 0;
+let inside = false;
+let activeCabin = null;
+let stageInside = false;
 
+const WORLD_LIMIT = 120;
+const STAGE_RADIUS = 45;
 document.addEventListener("keydown",e=>keys[e.key.toLowerCase()]=true);
 document.addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
 
@@ -119,6 +125,7 @@ function start(){
   music.play().catch(()=>{});
 }
 const WORLD_LIMIT = 120;
+  let stageInside = false;
 /////////////////////////////////////////////////////
 // 🪙 ECONOMY CORE (LAMBO COIN SYSTEM)
 /////////////////////////////////////////////////////
@@ -146,31 +153,30 @@ const Economy = {
     return false;
   }
 };
-  /////////////////////////////////////////////////////
+ /////////////////////////////////////////////////////
 // 🎯 STAGE EVENT SYSTEM (ONE-TIME TRIGGERS)
 /////////////////////////////////////////////////////
 
-let stageInside = false;
+const STAGE_RADIUS = 45; // define this once (important)
 
-function checkStageEvents(){
+function checkStageEvents() {
 
   const dist = player.position.distanceTo(stage.position);
 
-  if(dist < STAGE_RADIUS && !stageInside)
-
+  // ENTER STAGE
+  if (dist < STAGE_RADIUS && !stageInside) {
     stageInside = true;
 
     console.log("ENTERED STAGE");
 
-    rewardPlayer("stage_entry"); // temporary hook
-
+    rewardPlayer("stage_entry");
   }
 
-  if(dist >= STAGE_RADIUS)
-
+  // EXIT STAGE
+  if (dist >= STAGE_RADIUS && stageInside) {
     stageInside = false;
-
   }
+
 }
   /////////////////////////////////////////////////////
 // 🪙 REWARD SYSTEM (PLACEHOLDER - NOT BALANCED YET)
