@@ -267,7 +267,20 @@ new THREE.MeshStandardMaterial({color:0x111111})
 );
 dock.position.set(0,0,-100);
 scene.add(dock);
+/////////////////////////////////////////////////////
+// 🌊 MAIN STAGE ROUNDABOUT
+/////////////////////////////////////////////////////
 
+const stageDeck = new THREE.Mesh(
+new THREE.CylinderGeometry(45,45,1,64),
+new THREE.MeshStandardMaterial({
+  color:0x151515
+})
+);
+
+stageDeck.position.set(0,0,-140);
+
+scene.add(stageDeck);
   /////////////////////////////////////////////////////
 // 🎤 STAGE (REQUIRED FOR CROWD SYSTEM)
 /////////////////////////////////////////////////////
