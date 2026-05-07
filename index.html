@@ -602,7 +602,74 @@ createCabin(-14,-10-(i*20));
 createCabin(14,-10-(i*20));
 
 }
+/////////////////////////////////////////////////////
+// 🌟 HERO NPC SYSTEM
+/////////////////////////////////////////////////////
 
+const hero = new THREE.Group();
+
+/////////////////////////////////////////////////////
+// HERO BODY
+/////////////////////////////////////////////////////
+
+const heroBody = new THREE.Mesh(
+
+  new THREE.BoxGeometry(1.2,2.2,1),
+
+  new THREE.MeshStandardMaterial({
+    color:0xffffff,
+    emissive:0x00ffff,
+    emissiveIntensity:1.5
+  })
+
+);
+
+heroBody.position.y = 1.1;
+
+hero.add(heroBody);
+
+/////////////////////////////////////////////////////
+// HERO GLOW LIGHT
+/////////////////////////////////////////////////////
+
+const heroLight = new THREE.PointLight(
+  0x00ffff,
+  3,
+  25
+);
+
+heroLight.position.set(0,4,0);
+
+hero.add(heroLight);
+
+/////////////////////////////////////////////////////
+// HERO MARKER
+/////////////////////////////////////////////////////
+
+const marker = new THREE.Mesh(
+
+  new THREE.ConeGeometry(0.8,1.5,12),
+
+  new THREE.MeshStandardMaterial({
+    color:0x00ffff,
+    emissive:0x00ffff,
+    emissiveIntensity:2
+  })
+
+);
+
+marker.rotation.x = Math.PI;
+marker.position.y = 5;
+
+hero.add(marker);
+
+/////////////////////////////////////////////////////
+// HERO POSITION
+/////////////////////////////////////////////////////
+
+hero.position.set(0,1,-118);
+
+scene.add(hero);
 /////////////////////////////////////////////////////
 // CROWD SYSTEM
 /////////////////////////////////////////////////////
@@ -766,6 +833,7 @@ function move(){
 /////////////////////////////////////////////////////
 // MAIN GAME LOOP
 /////////////////////////////////////////////////////
+
 function animate(){
   requestAnimationFrame(animate);
 
@@ -779,13 +847,28 @@ function animate(){
 
   checkStageEvents();
 
+  /////////////////////////////////////////////////////
+  // 🌟 HERO ANIMATION SYSTEM
+  /////////////////////////////////////////////////////
+
+  hero.position.y =
+    1 + Math.sin(Date.now() * 0.003) * 0.15;
+
+  marker.rotation.y += 0.03;
+  /////////////////////////////////////////////////////
+  // 👤 HERO PROXIMITY SYSTEM
+  /////////////////////////////////////////////////////
+
+  const heroDist = player.position.distanceTo(hero.position);
+
+if (heroDist < 10) {
+  document.getElementById("zone").innerText = "👤 HERO NEARBY";
+}
+  /////////////////////////////////////////////////////
+
   stars.rotation.y += 0.0003;
 
   renderer.render(scene,camera);
 }
 
 animate();
-</script>
-
-</body>
-</html> 
