@@ -865,9 +865,11 @@ const stageDist = player.position.distanceTo(stage.position);
 
 if (heroDist < 10) {
   WorldManager.setZone("👤 HERO NEARBY");
-} else if (stageDist < 45) {
+} 
+else if (stageDist < 45) {
   WorldManager.setZone("🔥 STAGE ACTIVE");
-} else {
+} 
+else {
   WorldManager.setZone("OUTSIDE WORLD");
 }
 /////////////////////////////////////////////////////
