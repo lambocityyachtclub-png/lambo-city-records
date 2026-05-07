@@ -277,7 +277,27 @@ const AudioSystem = {
 /////////////////////////////////////////////////////
 // WORLD SYSTEM
 /////////////////////////////////////////////////////
+/////////////////////////////////////////////////////
+// 🌍 WORLD MANAGER
+/////////////////////////////////////////////////////
 
+const WorldManager = {
+
+  currentZone: "DOCK",
+
+  setZone(zone){
+
+    if(this.currentZone === zone) return;
+
+    this.currentZone = zone;
+
+    document.getElementById("zone").innerText = zone;
+
+    console.log("ZONE CHANGED:", zone);
+
+  }
+
+};
 const water = new THREE.Mesh(
 new THREE.PlaneGeometry(2000,2000),
 new THREE.MeshStandardMaterial({color:0x020b1a})
