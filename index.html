@@ -536,16 +536,30 @@ new THREE.MeshStandardMaterial({color:0x222222})
 balcony.position.set(0,0.1,5.5);
 base.add(balcony);
 
-  // BALCONY RAIL
+// WRAPAROUND BALCONY
+const balcony = new THREE.Mesh(
+new THREE.BoxGeometry(22,0.2,8),
+new THREE.MeshStandardMaterial({
+  color:0x222222
+})
+);
+
+balcony.position.set(0,5.2,10);
+
+base.add(balcony);
+
+// GLASS RAIL
 const rail = new THREE.Mesh(
-new THREE.BoxGeometry(8,1,0.1),
+new THREE.BoxGeometry(22,1.2,0.15),
 new THREE.MeshStandardMaterial({
   color:0x99ccff,
   transparent:true,
-  opacity:0.3
+  opacity:0.35
 })
 );
-rail.position.set(0,0.8,7);
+
+rail.position.set(0,6,14);
+
 base.add(rail);
 
   // OCEAN REFLECTION LIGHT
