@@ -436,28 +436,85 @@ function createCabin(x,z){
 
 const base = new THREE.Group();
 
-// FLOOR
+// MAIN FLOOR
 const floor = new THREE.Mesh(
-new THREE.PlaneGeometry(8,8),
-new THREE.MeshStandardMaterial({color:0x1a1a1a})
+new THREE.BoxGeometry(16,0.4,16),
+new THREE.MeshStandardMaterial({
+  color:0x1a1a1a
+})
 );
-floor.rotation.x = -Math.PI/2;
+
+floor.position.y = 0.2;
+
 base.add(floor);
 
-// WALLS
-const wallMat = new THREE.MeshStandardMaterial({color:0x111111});
+// SECOND FLOOR
+const upperFloor = new THREE.Mesh(
+new THREE.BoxGeometry(14,0.4,14),
+new THREE.MeshStandardMaterial({
+  color:0x202020
+})
+);
 
-const back = new THREE.Mesh(new THREE.BoxGeometry(8,5,0.3), wallMat);
-back.position.set(0,2.5,-4);
+upperFloor.position.y = 5;
+
+base.add(upperFloor);
+
+// WALLS
+// WALL MATERIAL
+const wallMat = new THREE.MeshStandardMaterial({
+  color:0x111111
+});
+
+// LOWER WALLS
+const back = new THREE.Mesh(
+new THREE.BoxGeometry(16,6,0.5),
+wallMat
+);
+
+back.position.set(0,3,-8);
+
 base.add(back);
 
-const left = new THREE.Mesh(new THREE.BoxGeometry(0.3,5,8), wallMat);
-left.position.set(-4,2.5,0);
+const left = new THREE.Mesh(
+new THREE.BoxGeometry(0.5,6,16),
+wallMat
+);
+
+left.position.set(-8,3,0);
+
 base.add(left);
 
 const right = left.clone();
-right.position.x = 4;
+
+right.position.x = 8;
+
 base.add(right);
+
+// UPPER WALLS
+const upperBack = new THREE.Mesh(
+new THREE.BoxGeometry(14,5,0.5),
+wallMat
+);
+
+upperBack.position.set(0,7.5,-7);
+
+base.add(upperBack);
+
+const upperLeft = new THREE.Mesh(
+new THREE.BoxGeometry(0.5,5,14),
+wallMat
+);
+
+upperLeft.position.set(-7,7.5,0);
+
+base.add(upperLeft);
+
+const upperRight = upperLeft.clone();
+
+upperRight.position.x = 7;
+
+base.add(upperRight);
 
   // GLASS FRONT
 const glass = new THREE.Mesh(
