@@ -68,7 +68,7 @@ CABIN ACCESS ENABLED
 /////////////////////////////////////////////////////
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x000000);
-
+scene.fog = new THREE.FogExp2(0x050510, 0.012);
 const camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 2000);
 const canvas = document.getElementById("c");
 const renderer = new THREE.WebGLRenderer({canvas, antialias:true});
@@ -326,7 +326,45 @@ starGeo,
 new THREE.PointsMaterial({color:0xffffff,size:1})
 );
 scene.add(stars);
+/////////////////////////////////////////////////////
+// 🌆 SKYLINE SYSTEM
+/////////////////////////////////////////////////////
 
+const skyline = new THREE.Group();
+
+for(let i = 0; i < 80; i++){
+
+  const height = 20 + Math.random() * 120;
+
+  const building = new THREE.Mesh(
+
+    new THREE.BoxGeometry(
+      12 + Math.random()*10,
+      height,
+      12 + Math.random()*10
+    ),
+
+    new THREE.MeshStandardMaterial({
+      color:0x050505,
+      emissive:0x111133,
+      emissiveIntensity:0.4
+    })
+
+  );
+
+  // FAR DISTANCE RING
+  const angle = Math.random() * Math.PI * 2;
+  const radius = 500 + Math.random() * 250;
+
+  building.position.x = Math.cos(angle) * radius;
+  building.position.z = Math.sin(angle) * radius;
+  building.position.y = height / 2;
+
+  skyline.add(building);
+
+}
+
+scene.add(skyline);
 /////////////////////////////////////////////////////
 // 🚤 DOCK
 /////////////////////////////////////////////////////
