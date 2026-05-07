@@ -124,8 +124,8 @@ function start(){
   music.currentTime = 0;
   music.play().catch(()=>{});
 }
-const WORLD_LIMIT = 120;
-  let stageInside = false;
+
+  
 /////////////////////////////////////////////////////
 // 🪙 ECONOMY CORE (LAMBO COIN SYSTEM)
 /////////////////////////////////////////////////////
@@ -284,8 +284,8 @@ new THREE.MeshStandardMaterial({
 })
 );
 
-stageDeck.position.set(0,7,-170);
-scene.add(stageDeck);
+
+
 const stage = new THREE.Mesh(
 new THREE.BoxGeometry(45,12,20),
 new THREE.MeshStandardMaterial({
@@ -294,18 +294,12 @@ new THREE.MeshStandardMaterial({
   emissiveIntensity:1
 })
 );
+
+
 /////////////////////////////////////////////////////
 // 🎤 FESTIVAL STAGE  👈 PUT IT RIGHT HERE
 /////////////////////////////////////////////////////
 
-const stage = new THREE.Mesh(
-  new THREE.BoxGeometry(45,12,20),
-  new THREE.MeshStandardMaterial({
-    color:0x111111,
-    emissive:0x220033,
-    emissiveIntensity:1
-  })
-);
 
 stage.position.set(0,6,-170);
 scene.add(stage);
