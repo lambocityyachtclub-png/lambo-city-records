@@ -298,6 +298,15 @@ new THREE.MeshStandardMaterial({
 // 🎤 FESTIVAL STAGE  👈 PUT IT RIGHT HERE
 /////////////////////////////////////////////////////
 
+const stage = new THREE.Mesh(
+  new THREE.BoxGeometry(45,12,20),
+  new THREE.MeshStandardMaterial({
+    color:0x111111,
+    emissive:0x220033,
+    emissiveIntensity:1
+  })
+);
+
 stage.position.set(0,6,-170);
 scene.add(stage);
 
