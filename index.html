@@ -121,7 +121,21 @@ function start(){
 
   updateHUD(); // ✅ ADD THIS
 
+function start(){
+
+  document.getElementById("start").style.display = "none";
+
+  started = true;
+
+  document.getElementById("zone").innerText =
+    "WELCOME TO LAMBO CITY";
+
+  updateHUD();
+
+  // START PLAYLIST
   AudioSystem.play();
+
+}
 
   
 /////////////////////////////////////////////////////
