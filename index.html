@@ -781,19 +781,22 @@ camera.lookAt(lookTarget);
 
 
 function updateStageEnergy(){
+
   const dist = player.position.distanceTo(stage.position);
 
-  if(dist < 45){
+  // ONLY UPDATE GAME STATE (NO UI HERE)
+  GameState.stageActive = dist < 45;
 
-    document.getElementById("zone").innerText = "🔥 STAGE ACTIVE";
+  // LIGHTS ONLY (visual feedback)
+  if(GameState.stageActive){
 
     let t = Date.now()*0.002;
 
     stageLight1.intensity = 2;
     stageLight2.intensity = 2;
 
-    stageLight1.position.set(0 + Math.sin(t)*10, 10, -135);
-    stageLight2.position.set(0 + Math.cos(t)*10, 10, -135);
+    stageLight1.position.set(Math.sin(t)*10, 10, -135);
+    stageLight2.position.set(Math.cos(t)*10, 10, -135);
 
     crowd.forEach((p,i)=>{
       p.lookAt(player.position);
@@ -801,8 +804,6 @@ function updateStageEnergy(){
     });
 
   } else {
-
-    document.getElementById("zone").innerText = "OUTSIDE STAGE";
 
     stageLight1.intensity = 0;
     stageLight2.intensity = 0;
@@ -812,7 +813,6 @@ function updateStageEnergy(){
     });
   }
 }
-  
 /////////////////////////////////////////////////////
 // 🚶 MOVEMENT
 /////////////////////////////////////////////////////
