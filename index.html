@@ -281,15 +281,21 @@ new THREE.MeshStandardMaterial({
 stageDeck.position.set(0,0,-170);
 
 scene.add(stageDeck);
-  /////////////////////////////////////////////////////
-// 🎤 STAGE (REQUIRED FOR CROWD SYSTEM)
+/////////////////////////////////////////////////////
+// 🎤 FESTIVAL STAGE
 /////////////////////////////////////////////////////
 
 const stage = new THREE.Mesh(
-new THREE.BoxGeometry(20,2,12),
-new THREE.MeshStandardMaterial({color:0x6600aa})
+new THREE.BoxGeometry(45,12,20),
+new THREE.MeshStandardMaterial({
+  color:0x111111,
+  emissive:0x220033,
+  emissiveIntensity:1
+})
 );
-stage.position.set(0,1,-140);
+
+stage.position.set(0,6,-170);
+
 scene.add(stage);
 
 /////////////////////////////////////////////////////
