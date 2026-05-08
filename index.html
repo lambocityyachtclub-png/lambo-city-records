@@ -301,10 +301,15 @@ const WorldManager = {
 
 };
 const water = new THREE.Mesh(
-new THREE.PlaneGeometry(2000,2000),
-new THREE.MeshStandardMaterial({color:0x020b1a})
+  new THREE.PlaneGeometry(2000,2000),
+  new THREE.MeshStandardMaterial({
+    color:0x020b1a,
+    emissive:0x001122,
+    emissiveIntensity:0.4
+  })
 );
-water.rotation.x = -Math.PI/2;
+
+water.rotation.x = -Math.PI / 2;
 scene.add(water);
 
 /////////////////////////////////////////////////////
@@ -806,9 +811,15 @@ if(e.key.toLowerCase()==="e"){
 
   // PRIORITY 1: HERO TALK
   if(heroDist < 8){
+
+  if(!talkingToHero){
     startHeroDialogue();
-    return;
+  } else {
+    nextHeroDialogue();
   }
+
+  return;
+}
 
   // PRIORITY 2: CABIN SYSTEM
   toggleCabin();
@@ -1095,7 +1106,7 @@ function animate(){
   0,
   0
 );
-  water.material.emissive = new THREE.Color(0x001122);
+  
 /////////////////////////////////////////////////////
 // 🌟 HERO ANIMATION SYSTEM
 /////////////////////////////////////////////////////
