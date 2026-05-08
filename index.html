@@ -710,9 +710,25 @@ crowdBaseY.push(npc.position.y);
 
 const stageLight1 = new THREE.PointLight(0xff00ff, 2, 80);
 const stageLight2 = new THREE.PointLight(0x00ffff, 2, 80);
+  
 scene.add(stageLight1);
 scene.add(stageLight2);
-  
+
+const screen = new THREE.Mesh(
+
+  new THREE.BoxGeometry(30,8,0.5),
+
+  new THREE.MeshStandardMaterial({
+    color:0x00ffff,
+    emissive:0x00ffff,
+    emissiveIntensity:2
+  })
+
+);
+
+screen.position.set(0,10,-144);
+
+scene.add(screen);  
 /////////////////////////////////////////////////////
 // 🎮 CABIN SYSTEM
 /////////////////////////////////////////////////////
@@ -875,6 +891,11 @@ function animate(){
 
   checkStageEvents();
 
+  water.material.color.offsetHSL(
+  Math.sin(Date.now()*0.0003)*0.0005,
+  0,
+  0
+);
 /////////////////////////////////////////////////////
 // 🌟 HERO ANIMATION SYSTEM
 /////////////////////////////////////////////////////
@@ -890,7 +911,11 @@ marker.rotation.y += 0.03;
 
 const heroDist = player.position.distanceTo(hero.position);
 const stageDist = player.position.distanceTo(stage.position);
-
+if(heroDist < 8){
+  showInteraction("PRESS E TO TALK TO HERO");
+} else {
+  hideInteraction();
+}
 if (heroDist < 10) {
   WorldManager.setZone("👤 HERO NEARBY");
 } 
