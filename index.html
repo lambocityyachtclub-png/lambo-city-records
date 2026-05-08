@@ -1172,6 +1172,7 @@ for(let i = 0; i < waterPositions.count; i++){
 }
 
 waterPositions.needsUpdate = true;
+water.geometry.computeVertexNormals();
   if(water.material.color){
   water.material.color.offsetHSL(0.00002,0,0);
 }
