@@ -107,6 +107,9 @@ let inside = false;
 let activeCabin = null;
 let stageInside = false;
 
+  const GameState = {
+  stageActive: false
+};
 const WORLD_LIMIT = 90;
 const STAGE_RADIUS = 45;
 document.addEventListener("keydown",e=>keys[e.key.toLowerCase()]=true);
@@ -667,8 +670,7 @@ hero.add(marker);
 // HERO POSITION
 /////////////////////////////////////////////////////
 
-hero.position.set(0,1,-118);
-
+hero.position.set(40,1,-110);
 scene.add(hero);
 /////////////////////////////////////////////////////
 // CROWD SYSTEM
@@ -728,7 +730,7 @@ if(inside){
 inside = false;
 activeCabin = null;
 document.getElementById("msg").style.display="none";
-document.getElementById("zone").innerText="OUTSIDE WORLD";
+document.getElementById("zone").innerText="LAMBO CITY";
 return;
 }
 
