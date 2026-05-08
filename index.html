@@ -162,22 +162,18 @@ const Economy = {
 // 🎯 STAGE EVENT SYSTEM (ONE-TIME TRIGGERS)
 /////////////////////////////////////////////////////
 
- // define this once (important)
-
 function checkStageEvents() {
 
   const dist = player.position.distanceTo(stage.position);
 
-  // ENTER STAGE
   if (dist < STAGE_RADIUS && !stageInside) {
     stageInside = true;
 
     console.log("ENTERED STAGE");
 
-    rewardPlayer("stage_entry");
+    Events.emit("ENTER_STAGE_ZONE");
   }
 
-  // EXIT STAGE
   if (dist >= STAGE_RADIUS && stageInside) {
     stageInside = false;
   }
@@ -217,9 +213,21 @@ function handleEvent(type, data){
       break;
 
     case "ENTER_CABIN":
-      console.log("Player entered cabin");
-      rewardPlayer("cabin_entry");
-      break;
+
+  console.log("Player entered cabin");
+
+  inside = true;
+
+  activeCabin = data.cabin;
+
+  document.getElementById("msg").style.display = "block";
+
+  document.getElementById("zone").innerText =
+    "INSIDE CABIN";
+
+  rewardPlayer("cabin_entry");
+
+  break;
 
     case "DOCK_TOUCH":
       console.log("Player at dock");
@@ -646,6 +654,7 @@ yacht.add(yachtGlow);
 yacht.position.set(42,0,-120);
 
 scene.add(yacht);
+
   /////////////////////////////////////////////////////
 // 🛥️ YACHT INTERIOR SYSTEM
 /////////////////////////////////////////////////////
@@ -781,6 +790,65 @@ yachtInterior.add(vipLight);
 yachtInterior.position.set(42,0,-120);
 
 scene.add(yachtInterior);
+  /////////////////////////////////////////////////////
+// 🚪 YACHT ACCESS SYSTEM
+/////////////////////////////////////////////////////
+
+let insideYacht = false;
+
+const yachtTrigger = new THREE.Vector3(
+  42,
+  0,
+  -120
+);
+
+// HIDE INTERIOR AT START
+yachtInterior.visible = false;
+
+function toggleYachtInterior(){
+
+  const dist =
+    player.position.distanceTo(yachtTrigger);
+
+  // ENTER YACHT
+  if(!insideYacht && dist < 12){
+
+    insideYacht = true;
+
+    yachtInterior.visible = true;
+
+    // MOVE PLAYER INSIDE
+    player.position.set(
+      42,
+      2,
+      -120
+    );
+
+    document.getElementById("zone").innerText =
+      "YACHT INTERIOR";
+
+    return;
+  }
+
+  // EXIT YACHT
+  if(insideYacht){
+
+    insideYacht = false;
+
+    yachtInterior.visible = false;
+
+    // MOVE PLAYER OUTSIDE
+    player.position.set(
+      42,
+      1,
+      -100
+    );
+
+    document.getElementById("zone").innerText =
+      "MEGA YACHT DISTRICT";
+  }
+
+}
 /////////////////////////////////////////////////////
 // 🏡 CABINS
 /////////////////////////////////////////////////////
@@ -1122,30 +1190,41 @@ if(e.key.toLowerCase()==="e"){
   return;
 }
 
-  // PRIORITY 2: CABIN SYSTEM
+    // PRIORITY 2: YACHT SYSTEM
+  const yachtDist =
+    player.position.distanceTo(yacht.position);
+
+  if(yachtDist < 18){
+    toggleYachtInterior();
+    return;
+  }
+
+  // PRIORITY 3: CABIN SYSTEM
   toggleCabin();
 }
 });
 
 function toggleCabin(){
 
-if(inside){
-inside = false;
-activeCabin = null;
-document.getElementById("msg").style.display="none";
-document.getElementById("zone").innerText="LAMBO CITY";
-return;
-}
+  if(inside){
+    inside = false;
+    activeCabin = null;
+    document.getElementById("msg").style.display = "none";
+    document.getElementById("zone").innerText = "LAMBO CITY";
+    return;
+  }
 
-for(let c of cabins){
-if(player.position.distanceTo(c.group.position)<5){
-inside = true;
-activeCabin = c;
-document.getElementById("msg").style.display="block";
-document.getElementById("zone").innerText="INSIDE CABIN";
-break;
-}
-}
+  for(let c of cabins){
+
+    if(player.position.distanceTo(c.group.position) < 5){
+
+      Events.emit("ENTER_CABIN", {
+        cabin: c
+      });
+
+      break;
+    }
+  }
 }
 /////////////////////////////////////////////////////
 // 💬 INTERACTION SYSTEM (FIXED)
@@ -1499,11 +1578,13 @@ helipad.material.emissiveIntensity =
 const yachtDist =
   player.position.distanceTo(yacht.position);
 
-if(yachtDist < 18){
-
+if(
+  yachtDist < 18 &&
+  !inside &&
+  !insideYacht
+){
   document.getElementById("zone").innerText =
     "MEGA YACHT DISTRICT";
-
 }
 renderer.render(scene, camera);
 }
