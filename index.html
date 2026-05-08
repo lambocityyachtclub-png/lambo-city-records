@@ -300,17 +300,54 @@ const WorldManager = {
   }
 
 };
+/////////////////////////////////////////////////////
+// 🌊 OCEAN SYSTEM
+/////////////////////////////////////////////////////
+
+const waterGeometry = new THREE.PlaneGeometry(
+  2000,
+  2000,
+  220,
+  220
+);
+
+const waterMaterial = new THREE.MeshStandardMaterial({
+  color:0x020b1a,
+  emissive:0x001122,
+  emissiveIntensity:0.45,
+  metalness:0.85,
+  roughness:0.2
+});
+
 const water = new THREE.Mesh(
-  new THREE.PlaneGeometry(2000,2000),
-  new THREE.MeshStandardMaterial({
-    color:0x020b1a,
-    emissive:0x001122,
-    emissiveIntensity:0.4
-  })
+  waterGeometry,
+  waterMaterial
 );
 
 water.rotation.x = -Math.PI / 2;
+
 scene.add(water);
+
+/////////////////////////////////////////////////////
+// 🌊 WATER DATA CACHE
+/////////////////////////////////////////////////////
+
+const waterPositions =
+  water.geometry.attributes.position;
+
+const waterBase = [];
+
+for(let i = 0; i < waterPositions.count; i++){
+
+  waterBase.push({
+
+    x: waterPositions.getX(i),
+    y: waterPositions.getY(i),
+    z: waterPositions.getZ(i)
+
+  });
+
+}
 
 /////////////////////////////////////////////////////
 // 🌟 STARS
@@ -1111,7 +1148,30 @@ function animate(){
   updateStageEnergy();
 
   checkStageEvents();
+/////////////////////////////////////////////////////
+// 🌊 DYNAMIC OCEAN MOTION
+/////////////////////////////////////////////////////
 
+const time = Date.now() * 0.001;
+
+for(let i = 0; i < waterPositions.count; i++){
+
+  const v = waterBase[i];
+
+  const waveX =
+    Math.sin(v.x * 0.02 + time) * 0.35;
+
+  const waveZ =
+    Math.cos(v.z * 0.02 + time * 1.4) * 0.35;
+
+  waterPositions.setY(
+    i,
+    waveX + waveZ
+  );
+
+}
+
+waterPositions.needsUpdate = true;
   if(water.material.color){
   water.material.color.offsetHSL(0.00002,0,0);
 }
