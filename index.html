@@ -1303,29 +1303,38 @@ function nextHeroDialogue() {
 
 function updateCamera(){
 
-const targetX = inside && activeCabin
-? activeCabin.group.position.x
-: player.position.x;
+let targetX = player.position.x;
+let targetY = 10;
+let targetZ = player.position.z + 14;
+let lookTarget = player.position;
 
-const targetY = inside && activeCabin
-? 3
-: 10;
+// CABIN CAMERA
+if(inside && activeCabin){
 
-const targetZ = inside && activeCabin
-? activeCabin.group.position.z
-: player.position.z + 14;
+  targetX = activeCabin.group.position.x;
+  targetY = 3;
+  targetZ = activeCabin.group.position.z;
 
-// smooth follow (LERP)
+  lookTarget = activeCabin.group.position;
+}
+
+// YACHT CAMERA
+if(insideYacht){
+
+  targetX = 42;
+  targetY = 5;
+  targetZ = -105;
+
+  lookTarget = yachtInterior.position;
+}
+
+// SMOOTH FOLLOW
 camera.position.x += (targetX - camera.position.x) * 0.08;
 camera.position.y += (targetY - camera.position.y) * 0.08;
 camera.position.z += (targetZ - camera.position.z) * 0.08;
 
-// look target
-const lookTarget = inside && activeCabin
-? activeCabin.group.position
-: player.position;
-
 camera.lookAt(lookTarget);
+
 }
 
 
