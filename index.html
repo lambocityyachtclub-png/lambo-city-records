@@ -788,7 +788,7 @@ break;
 }
 }
 /////////////////////////////////////////////////////
-// 💬 INTERACTION SYSTEM
+// 💬 INTERACTION SYSTEM (FIXED)
 /////////////////////////////////////////////////////
 
 const interactionUI = document.createElement("div");
@@ -797,12 +797,12 @@ interactionUI.style.position = "absolute";
 interactionUI.style.bottom = "80px";
 interactionUI.style.left = "50%";
 interactionUI.style.transform = "translateX(-50%)";
-interactionUI.style.color = "#00ffff";
-interactionUI.style.fontSize = "14px";
-interactionUI.style.padding = "8px 14px";
-interactionUI.style.border = "1px solid #00ffff";
+interactionUI.style.padding = "10px 20px";
 interactionUI.style.background = "rgba(0,0,0,0.7)";
+interactionUI.style.border = "1px solid #00ffff";
+interactionUI.style.color = "white";
 interactionUI.style.display = "none";
+interactionUI.style.zIndex = "100";
 
 document.body.appendChild(interactionUI);
 
@@ -814,7 +814,38 @@ function showInteraction(text){
 function hideInteraction(){
   interactionUI.style.display = "none";
 }
-  function startHeroDialogue(){ ... }
+
+/////////////////////////////////////////////////////
+// 💬 HERO DIALOGUE SYSTEM (STEP 3B)
+/////////////////////////////////////////////////////
+
+
+document.body.appendChild(dialogueUI);
+
+function startHeroDialogue() {
+  talkingToHero = true;
+  heroStage = 0;
+
+  dialogueUI.style.display = "block";
+  dialogueUI.innerText = "HERO: Welcome to LAMBO CITY.";
+}
+
+function nextHeroDialogue() {
+  heroStage++;
+
+  if (heroStage === 1) {
+    dialogueUI.innerText = "HERO: This world is still being built...";
+  }
+
+  if (heroStage === 2) {
+    dialogueUI.innerText = "HERO: Explore the Yacht Club and dock.";
+  }
+
+  if (heroStage > 2) {
+    dialogueUI.style.display = "none";
+    talkingToHero = false;
+  }
+}
 /////////////////////////////////////////////////////
 // 🎥 CAMERA
 /////////////////////////////////////////////////////
@@ -1024,39 +1055,7 @@ if(heroDist < 8){
 } else {
   hideInteraction();
 }
-  /////////////////////////////////////////////////////
-// 💬 HERO DIALOGUE SYSTEM (STEP 3 ADDITION)
-/////////////////////////////////////////////////////
 
-let talkingToHero = false;
-let heroStage = 0;
-
-const dialogueUI = document.createElement("div");
-dialogueUI.style.position = "absolute";
-dialogueUI.style.bottom = "140px";
-dialogueUI.style.left = "50%";
-dialogueUI.style.transform = "translateX(-50%)";
-dialogueUI.style.color = "#ffffff";
-dialogueUI.style.fontSize = "14px";
-dialogueUI.style.padding = "12px 16px";
-dialogueUI.style.border = "1px solid #00ffff";
-dialogueUI.style.background = "rgba(0,0,0,0.8)";
-dialogueUI.style.display = "none";
-dialogueUI.style.maxWidth = "300px";
-dialogueUI.style.textAlign = "center";
-
-document.body.appendChild(dialogueUI);
-
-if (heroDist < 10) {
-  WorldManager.setZone("👤 HERO NEARBY");
-} 
-else if (stageDist < 45) {
-  WorldManager.setZone("🔥 STAGE ACTIVE");
-} 
-else {
-  WorldManager.setZone("OUTSIDE WORLD");
-}
-/////////////////////////////////////////////////////
 /////////////////////////////////////////////////////
 // 🌌 CINEMATIC LIGHT MOTION
 /////////////////////////////////////////////////////
