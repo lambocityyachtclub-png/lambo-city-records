@@ -753,7 +753,17 @@ scene.add(screen);
 
 document.addEventListener("keydown",e=>{
 if(e.key.toLowerCase()==="e"){
-toggleCabin();
+
+  const heroDist = player.position.distanceTo(hero.position);
+
+  // PRIORITY 1: HERO TALK
+  if(heroDist < 8){
+    startHeroDialogue();
+    return;
+  }
+
+  // PRIORITY 2: CABIN SYSTEM
+  toggleCabin();
 }
 });
 
@@ -804,6 +814,7 @@ function showInteraction(text){
 function hideInteraction(){
   interactionUI.style.display = "none";
 }
+  function startHeroDialogue(){ ... }
 /////////////////////////////////////////////////////
 // 🎥 CAMERA
 /////////////////////////////////////////////////////
@@ -1013,6 +1024,29 @@ if(heroDist < 8){
 } else {
   hideInteraction();
 }
+  /////////////////////////////////////////////////////
+// 💬 HERO DIALOGUE SYSTEM (STEP 3 ADDITION)
+/////////////////////////////////////////////////////
+
+let talkingToHero = false;
+let heroStage = 0;
+
+const dialogueUI = document.createElement("div");
+dialogueUI.style.position = "absolute";
+dialogueUI.style.bottom = "140px";
+dialogueUI.style.left = "50%";
+dialogueUI.style.transform = "translateX(-50%)";
+dialogueUI.style.color = "#ffffff";
+dialogueUI.style.fontSize = "14px";
+dialogueUI.style.padding = "12px 16px";
+dialogueUI.style.border = "1px solid #00ffff";
+dialogueUI.style.background = "rgba(0,0,0,0.8)";
+dialogueUI.style.display = "none";
+dialogueUI.style.maxWidth = "300px";
+dialogueUI.style.textAlign = "center";
+
+document.body.appendChild(dialogueUI);
+
 if (heroDist < 10) {
   WorldManager.setZone("👤 HERO NEARBY");
 } 
