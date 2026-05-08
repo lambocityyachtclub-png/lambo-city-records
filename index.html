@@ -67,7 +67,7 @@ CABIN ACCESS ENABLED
 /////////////////////////////////////////////////////
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x000000);
-scene.fog = new THREE.FogExp2(0x050510, 0.012);
+scene.fog = new THREE.FogExp2(0x050510, 0.02);
 const camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 2000);
 const canvas = document.getElementById("c");
 const renderer = new THREE.WebGLRenderer({canvas, antialias:true});
@@ -99,7 +99,7 @@ new THREE.BoxGeometry(1,1.8,1),
 new THREE.MeshStandardMaterial({color:0xffffff})
 );
 scene.add(player);
-player.position.set(0,1,10);
+player.position.set(0,1,-40);
 const keys = {};
 let started = false;
 let coins = 0;
@@ -713,7 +713,24 @@ const stageLight2 = new THREE.PointLight(0x00ffff, 2, 80);
   
 scene.add(stageLight1);
 scene.add(stageLight2);
+/////////////////////////////////////////////////////
+// 🌌 SKY BEAM LIGHTS
+/////////////////////////////////////////////////////
 
+const beam1 = new THREE.SpotLight(0x00ffff, 4, 300, 0.3);
+beam1.position.set(-40,60,-120);
+scene.add(beam1);
+
+const beam2 = new THREE.SpotLight(0xff00ff, 4, 300, 0.3);
+beam2.position.set(40,60,-120);
+scene.add(beam2);
+
+beam1.target = stage;
+beam2.target = stage;
+
+scene.add(beam1.target);
+scene.add(beam2.target);
+  
 const screen = new THREE.Mesh(
 
   new THREE.BoxGeometry(30,8,0.5),
@@ -1006,7 +1023,13 @@ else {
   WorldManager.setZone("OUTSIDE WORLD");
 }
 /////////////////////////////////////////////////////
+/////////////////////////////////////////////////////
+// 🌌 CINEMATIC LIGHT MOTION
+/////////////////////////////////////////////////////
 
+beam1.position.x = Math.sin(Date.now()*0.001)*80;
+beam2.position.x = Math.cos(Date.now()*0.001)*80;
+  
 stars.rotation.y += 0.0003;
 
 renderer.render(scene, camera);
