@@ -110,7 +110,7 @@ let stageInside = false;
   const GameState = {
   stageActive: false
 };
-const WORLD_LIMIT = 90;
+const WORLD_LIMIT = 220;
 const STAGE_RADIUS = 45;
 document.addEventListener("keydown",e=>keys[e.key.toLowerCase()]=true);
 document.addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
@@ -469,7 +469,51 @@ scene.add(dock);
 /////////////////////////////////////////////////////
 
 const stageDeck = new THREE.Mesh(
-new THREE.CylinderGeometry(90,90,1,64),
+
+new THREE.CylinderGeometry(
+  140,
+  140,
+  1,
+  80
+),
+
+new THREE.MeshStandardMaterial({
+  color:0x111111,
+  emissive:0x220044,
+  emissiveIntensity:0.5
+})
+
+);
+
+stageDeck.position.set(0,0,-135);
+
+scene.add(stageDeck);
+  /////////////////////////////////////////////////////
+// 🌴 MARINA EDGE LIGHTS
+/////////////////////////////////////////////////////
+
+for(let i = 0; i < 24; i++){
+
+  const angle =
+    (i / 24) * Math.PI * 2;
+
+  const radius = 120;
+
+  const lamp = new THREE.PointLight(
+    0x00ffff,
+    1.2,
+    25
+  );
+
+  lamp.position.set(
+    Math.cos(angle) * radius,
+    4,
+    -135 + Math.sin(angle) * radius
+  );
+
+  scene.add(lamp);
+
+}
 new THREE.MeshStandardMaterial({
   color:0x111111,
 emissive:0x220044,
@@ -1194,7 +1238,14 @@ if(e.key.toLowerCase()==="e"){
   const yachtDist =
     player.position.distanceTo(yacht.position);
 
-  if(yachtDist < 18){
+ if(yachtDist < 18){
+
+  showInteraction(
+    "VIP BOARDING — ACCESS LOCKED"
+  );
+
+  return;
+}
     toggleYachtInterior();
     return;
   }
@@ -1311,9 +1362,8 @@ let lookTarget = player.position;
 // CABIN CAMERA
 if(inside && activeCabin){
 
-  targetX = activeCabin.group.position.x;
-  targetY = 3;
-  targetZ = activeCabin.group.position.z;
+  targetY = 2.2;
+targetZ = activeCabin.group.position.z + 6;
 
   lookTarget = activeCabin.group.position;
 }
