@@ -517,6 +517,135 @@ const vipGlow = new THREE.PointLight(
 vipGlow.position.set(0,8,-165);
 
 scene.add(vipGlow);
+  /////////////////////////////////////////////////////
+// 🚤 MEGA YACHT SYSTEM
+/////////////////////////////////////////////////////
+
+const yacht = new THREE.Group();
+
+/////////////////////////////////////////////////////
+// MAIN BODY
+/////////////////////////////////////////////////////
+
+const yachtBase = new THREE.Mesh(
+
+  new THREE.BoxGeometry(18,4,60),
+
+  new THREE.MeshStandardMaterial({
+    color:0xf5f5f5,
+    metalness:0.4,
+    roughness:0.3
+  })
+
+);
+
+yachtBase.position.y = 3;
+
+yacht.add(yachtBase);
+
+/////////////////////////////////////////////////////
+// LOWER HULL
+/////////////////////////////////////////////////////
+
+const hull = new THREE.Mesh(
+
+  new THREE.BoxGeometry(16,3,58),
+
+  new THREE.MeshStandardMaterial({
+    color:0x111111,
+    metalness:0.8,
+    roughness:0.2
+  })
+
+);
+
+hull.position.y = 1;
+
+yacht.add(hull);
+
+/////////////////////////////////////////////////////
+// UPPER DECK
+/////////////////////////////////////////////////////
+
+const upperDeck = new THREE.Mesh(
+
+  new THREE.BoxGeometry(14,2.5,28),
+
+  new THREE.MeshStandardMaterial({
+    color:0xffffff
+  })
+
+);
+
+upperDeck.position.set(0,6,0);
+
+yacht.add(upperDeck);
+
+/////////////////////////////////////////////////////
+// GLASS WINDOWS
+/////////////////////////////////////////////////////
+
+const yachtGlass = new THREE.Mesh(
+
+  new THREE.BoxGeometry(12,1.2,18),
+
+  new THREE.MeshStandardMaterial({
+    color:0x99ddff,
+    transparent:true,
+    opacity:0.35,
+    emissive:0x2266aa,
+    emissiveIntensity:0.5
+  })
+
+);
+
+yachtGlass.position.set(0,6.2,2);
+
+yacht.add(yachtGlass);
+
+/////////////////////////////////////////////////////
+// HELIPAD
+/////////////////////////////////////////////////////
+
+const helipad = new THREE.Mesh(
+
+  new THREE.CylinderGeometry(6,6,0.3,32),
+
+  new THREE.MeshStandardMaterial({
+    color:0x222222,
+    emissive:0x00ffff,
+    emissiveIntensity:0.4
+  })
+
+);
+
+helipad.rotation.x = -Math.PI / 2;
+
+helipad.position.set(0,7.5,-18);
+
+yacht.add(helipad);
+
+/////////////////////////////////////////////////////
+// YACHT LIGHTS
+/////////////////////////////////////////////////////
+
+const yachtGlow = new THREE.PointLight(
+  0x00ffff,
+  2,
+  80
+);
+
+yachtGlow.position.set(0,8,0);
+
+yacht.add(yachtGlow);
+
+/////////////////////////////////////////////////////
+// POSITION
+/////////////////////////////////////////////////////
+
+yacht.position.set(42,0,-120);
+
+scene.add(yacht);
 /////////////////////////////////////////////////////
 // 🏡 CABINS
 /////////////////////////////////////////////////////
