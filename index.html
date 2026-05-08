@@ -1447,7 +1447,7 @@ joystick.addEventListener("touchend", () => {
 
 function move(){
 
-  if(inside) return;
+  if(inside || insideYacht) return;
 
   // KEYBOARD
   if(keys["w"]) player.position.z -= 0.25;
