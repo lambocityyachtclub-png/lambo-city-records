@@ -459,8 +459,15 @@ scene.add(skyline);
 /////////////////////////////////////////////////////
 
 const dock = new THREE.Mesh(
-new THREE.BoxGeometry(28,1,240),
-new THREE.MeshStandardMaterial({color:0x111111})
+new THREE.CylinderGeometry(
+  180,
+  180,
+  1,
+  80
+),
+new THREE.MeshStandardMaterial({
+  color:0x111111
+})
 );
 dock.position.set(0,0,-100);
 scene.add(dock);
@@ -470,25 +477,26 @@ scene.add(dock);
 
 const stageDeck = new THREE.Mesh(
 
-new THREE.CylinderGeometry(
-  140,
-  140,
-  1,
-  80
-),
+  new THREE.CylinderGeometry(
+    140,
+    140,
+    1,
+    80
+  ),
 
-new THREE.MeshStandardMaterial({
-  color:0x111111,
-  emissive:0x220044,
-  emissiveIntensity:0.5
-})
+  new THREE.MeshStandardMaterial({
+    color:0x111111,
+    emissive:0x220044,
+    emissiveIntensity:0.5
+  })
 
 );
 
 stageDeck.position.set(0,0,-135);
 
 scene.add(stageDeck);
-  /////////////////////////////////////////////////////
+
+/////////////////////////////////////////////////////
 // 🌴 MARINA EDGE LIGHTS
 /////////////////////////////////////////////////////
 
@@ -514,34 +522,24 @@ for(let i = 0; i < 24; i++){
   scene.add(lamp);
 
 }
-new THREE.MeshStandardMaterial({
-  color:0x111111,
-emissive:0x220044,
-emissiveIntensity:0.5
-})
-);
-
-stageDeck.position.set(0,0,-135);
-scene.add(stageDeck);
-
-
+/////////////////////////////////////////////////////
+// 🎤 FESTIVAL STAGE
+/////////////////////////////////////////////////////
 
 const stage = new THREE.Mesh(
-new THREE.BoxGeometry(45,12,20),
-new THREE.MeshStandardMaterial({
-  color:0x111111,
-  emissive:0x220033,
-  emissiveIntensity:1
-})
+
+  new THREE.BoxGeometry(40,12,12),
+
+  new THREE.MeshStandardMaterial({
+    color:0x111111,
+    emissive:0x00ffff,
+    emissiveIntensity:0.6
+  })
+
 );
 
-
-/////////////////////////////////////////////////////
-// 🎤 FESTIVAL STAGE  👈 PUT IT RIGHT HERE
-/////////////////////////////////////////////////////
-
-
 stage.position.set(0,6,-135);
+
 scene.add(stage);
 /////////////////////////////////////////////////////
 // 🥂 BACKSTAGE VIP LOUNGE
@@ -1246,8 +1244,6 @@ if(e.key.toLowerCase()==="e"){
 
   return;
 }
-    toggleYachtInterior();
-    return;
   }
 
   // PRIORITY 3: CABIN SYSTEM
