@@ -646,6 +646,141 @@ yacht.add(yachtGlow);
 yacht.position.set(42,0,-120);
 
 scene.add(yacht);
+  /////////////////////////////////////////////////////
+// 🛥️ YACHT INTERIOR SYSTEM
+/////////////////////////////////////////////////////
+
+const yachtInterior = new THREE.Group();
+
+/////////////////////////////////////////////////////
+// INTERIOR FLOOR
+/////////////////////////////////////////////////////
+
+const yachtFloor = new THREE.Mesh(
+
+  new THREE.BoxGeometry(14,0.5,40),
+
+  new THREE.MeshStandardMaterial({
+    color:0x111111,
+    metalness:0.4,
+    roughness:0.6
+  })
+
+);
+
+yachtFloor.position.y = 1;
+
+yachtInterior.add(yachtFloor);
+
+/////////////////////////////////////////////////////
+// INTERIOR WALLS
+/////////////////////////////////////////////////////
+
+const wallMat = new THREE.MeshStandardMaterial({
+  color:0x181818
+});
+
+const backWall = new THREE.Mesh(
+  new THREE.BoxGeometry(14,6,0.5),
+  wallMat
+);
+
+backWall.position.set(0,4,-20);
+
+yachtInterior.add(backWall);
+
+const leftWall = new THREE.Mesh(
+  new THREE.BoxGeometry(0.5,6,40),
+  wallMat
+);
+
+leftWall.position.set(-7,4,0);
+
+yachtInterior.add(leftWall);
+
+const rightWall = leftWall.clone();
+
+rightWall.position.x = 7;
+
+yachtInterior.add(rightWall);
+
+/////////////////////////////////////////////////////
+// DJ BOOTH
+/////////////////////////////////////////////////////
+
+const djBooth = new THREE.Mesh(
+
+  new THREE.BoxGeometry(6,2,2),
+
+  new THREE.MeshStandardMaterial({
+    color:0x222222,
+    emissive:0x00ffff,
+    emissiveIntensity:0.5
+  })
+
+);
+
+djBooth.position.set(0,2,-12);
+
+yachtInterior.add(djBooth);
+
+/////////////////////////////////////////////////////
+// LOUNGE COUCHES
+/////////////////////////////////////////////////////
+
+for(let i = -1; i <= 1; i++){
+
+  const couch = new THREE.Mesh(
+
+    new THREE.BoxGeometry(4,1,2),
+
+    new THREE.MeshStandardMaterial({
+      color:0x333333
+    })
+
+  );
+
+  couch.position.set(i * 5,1.2,6);
+
+  yachtInterior.add(couch);
+
+}
+
+/////////////////////////////////////////////////////
+// INTERIOR LIGHTING
+/////////////////////////////////////////////////////
+
+const interiorGlow = new THREE.PointLight(
+  0x00ffff,
+  2,
+  40
+);
+
+interiorGlow.position.set(0,5,0);
+
+yachtInterior.add(interiorGlow);
+
+/////////////////////////////////////////////////////
+// VIP LIGHT
+/////////////////////////////////////////////////////
+
+const vipLight = new THREE.PointLight(
+  0xff00ff,
+  2,
+  30
+);
+
+vipLight.position.set(0,4,-10);
+
+yachtInterior.add(vipLight);
+
+/////////////////////////////////////////////////////
+// POSITION INSIDE YACHT
+/////////////////////////////////////////////////////
+
+yachtInterior.position.set(42,0,-120);
+
+scene.add(yachtInterior);
 /////////////////////////////////////////////////////
 // 🏡 CABINS
 /////////////////////////////////////////////////////
