@@ -744,7 +744,33 @@ break;
 }
 }
 }
+/////////////////////////////////////////////////////
+// 💬 INTERACTION SYSTEM
+/////////////////////////////////////////////////////
 
+const interactionUI = document.createElement("div");
+
+interactionUI.style.position = "absolute";
+interactionUI.style.bottom = "80px";
+interactionUI.style.left = "50%";
+interactionUI.style.transform = "translateX(-50%)";
+interactionUI.style.color = "#00ffff";
+interactionUI.style.fontSize = "14px";
+interactionUI.style.padding = "8px 14px";
+interactionUI.style.border = "1px solid #00ffff";
+interactionUI.style.background = "rgba(0,0,0,0.7)";
+interactionUI.style.display = "none";
+
+document.body.appendChild(interactionUI);
+
+function showInteraction(text){
+  interactionUI.innerText = text;
+  interactionUI.style.display = "block";
+}
+
+function hideInteraction(){
+  interactionUI.style.display = "none";
+}
 /////////////////////////////////////////////////////
 // 🎥 CAMERA
 /////////////////////////////////////////////////////
