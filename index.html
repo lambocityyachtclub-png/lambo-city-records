@@ -75,8 +75,8 @@ renderer.setSize(innerWidth, innerHeight);
 
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.outputColorSpace = THREE.SRGBColorSpace;
-renderer.physicallyCorrectLights = true;  
-  document.body.appendChild(renderer.domElement);
+renderer.useLegacyLights = false; 
+  
 const size = () => {
   camera.aspect = innerWidth / innerHeight;
   camera.updateProjectionMatrix();
@@ -890,7 +890,7 @@ function hideInteraction(){
 /////////////////////////////////////////////////////
 
 
-document.body.appendChild(dialogueUI);
+
 let talkingToHero = false;
 let heroStage = 0;
 function startHeroDialogue() {
@@ -991,7 +991,12 @@ function updateStageEnergy(){
 // 📱 MOBILE JOYSTICK SYSTEM
 /////////////////////////////////////////////////////
 
+/////////////////////////////////////////////////////
+// 📱 MOBILE JOYSTICK SYSTEM
+/////////////////////////////////////////////////////
+
 const joystick = document.createElement("div");
+
 joystick.style.position = "absolute";
 joystick.style.left = "30px";
 joystick.style.bottom = "30px";
@@ -1003,14 +1008,17 @@ joystick.style.display = "flex";
 joystick.style.justifyContent = "center";
 joystick.style.alignItems = "center";
 joystick.style.zIndex = "20";
+
 document.body.appendChild(joystick);
 
 const stick = document.createElement("div");
+
 stick.style.width = "50px";
 stick.style.height = "50px";
 stick.style.background = "rgba(0,255,255,0.7)";
 stick.style.borderRadius = "50%";
 stick.style.position = "absolute";
+
 joystick.appendChild(stick);
 
 let joyActive = false;
@@ -1018,18 +1026,24 @@ let joyX = 0;
 let joyY = 0;
 
 joystick.addEventListener("touchstart", e => {
+
   joyActive = true;
+
 });
 
 joystick.addEventListener("touchmove", e => {
 
+  e.preventDefault();
+
   const touch = e.touches[0];
+
   const rect = joystick.getBoundingClientRect();
 
   const x = touch.clientX - rect.left - 60;
   const y = touch.clientY - rect.top - 60;
 
   const dist = Math.min(Math.sqrt(x*x + y*y), 40);
+
   const angle = Math.atan2(y, x);
 
   joyX = Math.cos(angle) * (dist / 40);
@@ -1038,7 +1052,7 @@ joystick.addEventListener("touchmove", e => {
   stick.style.transform =
     `translate(${joyX*35}px, ${joyY*35}px)`;
 
-});
+}, { passive:false });
 
 joystick.addEventListener("touchend", () => {
 
@@ -1101,11 +1115,9 @@ function animate(){
 
   checkStageEvents();
 
-  water.material.color.offsetHSL(
-  Math.sin(Date.now()*0.0003)*0.0005,
-  0,
-  0
-);
+  if(water.material.color){
+  water.material.color.offsetHSL(0.00002,0,0);
+}
   
 /////////////////////////////////////////////////////
 // 🌟 HERO ANIMATION SYSTEM
