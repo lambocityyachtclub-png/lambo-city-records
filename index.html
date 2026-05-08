@@ -832,7 +832,8 @@ function hideInteraction(){
 
 
 document.body.appendChild(dialogueUI);
-
+let talkingToHero = false;
+let heroStage = 0;
 function startHeroDialogue() {
   talkingToHero = true;
   heroStage = 0;
