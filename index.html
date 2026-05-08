@@ -791,9 +791,9 @@ break;
 // 💬 INTERACTION SYSTEM (FIXED)
 /////////////////////////////////////////////////////
 
+  
 const interactionUI = document.createElement("div");
-
-interactionUI.style.position = "absolute";
+  interactionUI.style.position = "absolute";
 interactionUI.style.bottom = "80px";
 interactionUI.style.left = "50%";
 interactionUI.style.transform = "translateX(-50%)";
@@ -802,8 +802,19 @@ interactionUI.style.background = "rgba(0,0,0,0.7)";
 interactionUI.style.border = "1px solid #00ffff";
 interactionUI.style.color = "white";
 interactionUI.style.display = "none";
-interactionUI.style.zIndex = "100";
-
+  
+  const dialogueUI = document.createElement("div");
+  dialogueUI.style.position = "absolute";
+dialogueUI.style.bottom = "140px";
+dialogueUI.style.left = "50%";
+dialogueUI.style.transform = "translateX(-50%)";
+dialogueUI.style.padding = "12px 18px";
+dialogueUI.style.background = "rgba(0,0,0,0.8)";
+dialogueUI.style.border = "1px solid #00ffff";
+dialogueUI.style.color = "white";
+dialogueUI.style.display = "none";
+  document.body.appendChild(dialogueUI);
+  
 document.body.appendChild(interactionUI);
 
 function showInteraction(text){
