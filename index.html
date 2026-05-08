@@ -1344,6 +1344,32 @@ screen.rotation.y =
   Math.sin(Date.now()*0.001) * 0.03;
 stars.rotation.y += 0.0003;
 particles.rotation.y += 0.0005;
+  /////////////////////////////////////////////////////
+// 🛥️ YACHT ENERGY SYSTEM
+/////////////////////////////////////////////////////
+
+// FLOATING MOTION
+yacht.position.y =
+  Math.sin(Date.now() * 0.0015) * 0.4;
+
+// YACHT GLOW PULSE
+yachtGlow.intensity =
+  1.8 + Math.sin(Date.now() * 0.004) * 0.6;
+
+// HELIPAD ENERGY
+helipad.material.emissiveIntensity =
+  0.3 + Math.sin(Date.now() * 0.003) * 0.4;
+
+// PROXIMITY DETECTION
+const yachtDist =
+  player.position.distanceTo(yacht.position);
+
+if(yachtDist < 18){
+
+  document.getElementById("zone").innerText =
+    "MEGA YACHT DISTRICT";
+
+}
 renderer.render(scene, camera);
 }
 
