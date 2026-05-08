@@ -731,15 +731,17 @@ beam2.target = stage;
 scene.add(beam1.target);
 scene.add(beam2.target);
   
+const screenMat = new THREE.MeshStandardMaterial({
+  color:0xffffff,
+  emissive:0x00ffff,
+  emissiveIntensity:2
+});
+
 const screen = new THREE.Mesh(
 
   new THREE.BoxGeometry(30,8,0.5),
 
-  new THREE.MeshStandardMaterial({
-    color:0x00ffff,
-    emissive:0x00ffff,
-    emissiveIntensity:2
-  })
+  screenMat
 
 );
 
@@ -1074,7 +1076,15 @@ if(heroDist < 8){
 
 beam1.position.x = Math.sin(Date.now()*0.001)*80;
 beam2.position.x = Math.cos(Date.now()*0.001)*80;
-  
+  /////////////////////////////////////////////////////
+// 📺 DJ SCREEN ANIMATION
+/////////////////////////////////////////////////////
+
+screenMat.emissiveIntensity =
+  1.5 + Math.sin(Date.now()*0.005) * 1.2;
+
+screen.rotation.y =
+  Math.sin(Date.now()*0.001) * 0.03;
 stars.rotation.y += 0.0003;
 
 renderer.render(scene, camera);
