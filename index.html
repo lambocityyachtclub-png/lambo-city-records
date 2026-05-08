@@ -858,6 +858,69 @@ function updateStageEnergy(){
   }
 }
 /////////////////////////////////////////////////////
+// 📱 MOBILE JOYSTICK SYSTEM
+/////////////////////////////////////////////////////
+
+const joystick = document.createElement("div");
+joystick.style.position = "absolute";
+joystick.style.left = "30px";
+joystick.style.bottom = "30px";
+joystick.style.width = "120px";
+joystick.style.height = "120px";
+joystick.style.border = "2px solid rgba(255,255,255,0.3)";
+joystick.style.borderRadius = "50%";
+joystick.style.display = "flex";
+joystick.style.justifyContent = "center";
+joystick.style.alignItems = "center";
+joystick.style.zIndex = "20";
+document.body.appendChild(joystick);
+
+const stick = document.createElement("div");
+stick.style.width = "50px";
+stick.style.height = "50px";
+stick.style.background = "rgba(0,255,255,0.7)";
+stick.style.borderRadius = "50%";
+stick.style.position = "absolute";
+joystick.appendChild(stick);
+
+let joyActive = false;
+let joyX = 0;
+let joyY = 0;
+
+joystick.addEventListener("touchstart", e => {
+  joyActive = true;
+});
+
+joystick.addEventListener("touchmove", e => {
+
+  const touch = e.touches[0];
+  const rect = joystick.getBoundingClientRect();
+
+  const x = touch.clientX - rect.left - 60;
+  const y = touch.clientY - rect.top - 60;
+
+  const dist = Math.min(Math.sqrt(x*x + y*y), 40);
+  const angle = Math.atan2(y, x);
+
+  joyX = Math.cos(angle) * (dist / 40);
+  joyY = Math.sin(angle) * (dist / 40);
+
+  stick.style.transform =
+    `translate(${joyX*35}px, ${joyY*35}px)`;
+
+});
+
+joystick.addEventListener("touchend", () => {
+
+  joyActive = false;
+
+  joyX = 0;
+  joyY = 0;
+
+  stick.style.transform = `translate(0px,0px)`;
+
+});
+/////////////////////////////////////////////////////
 // 🚶 MOVEMENT
 /////////////////////////////////////////////////////
 
@@ -865,14 +928,31 @@ function move(){
 
   if(inside) return;
 
+  // KEYBOARD
   if(keys["w"]) player.position.z -= 0.25;
   if(keys["s"]) player.position.z += 0.25;
   if(keys["a"]) player.position.x -= 0.25;
   if(keys["d"]) player.position.x += 0.25;
 
-  // 🌍 WORLD BOUNDARY (MUST BE INSIDE MOVE)
-  player.position.x = Math.max(-WORLD_LIMIT, Math.min(WORLD_LIMIT, player.position.x));
-  player.position.z = Math.max(-WORLD_LIMIT, Math.min(WORLD_LIMIT, player.position.z));
+  // MOBILE JOYSTICK
+  if(joyActive){
+
+    player.position.x += joyX * 0.25;
+    player.position.z += joyY * 0.25;
+
+  }
+
+  // WORLD LIMITS
+  player.position.x = Math.max(
+    -WORLD_LIMIT,
+    Math.min(WORLD_LIMIT, player.position.x)
+  );
+
+  player.position.z = Math.max(
+    -WORLD_LIMIT,
+    Math.min(WORLD_LIMIT, player.position.z)
+  );
+
 }
 /////////////////////////////////////////////////////
 // MAIN GAME LOOP
