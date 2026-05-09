@@ -226,7 +226,9 @@ function handleEvent(type, data){
 
     case "ENTER_STAGE_ZONE":
       console.log("Player entered stage zone");
-      rewardPlayer("stage_visit");
+      if(FEATURES.rewards){
+  rewardPlayer("stage_visit");
+}
       break;
 
     case "ENTER_CABIN":
@@ -873,7 +875,7 @@ function toggleYachtInterior(){
   if(!insideYacht && dist < 12){
 
     insideYacht = true;
-
+    hideInteraction();
     yachtInterior.visible = true;
 
     // MOVE PLAYER INSIDE
@@ -893,7 +895,7 @@ function toggleYachtInterior(){
   if(insideYacht){
 
     insideYacht = false;
-
+    hideInteraction();
     yachtInterior.visible = false;
 
     // MOVE PLAYER OUTSIDE
@@ -926,15 +928,19 @@ function toggleYachtInterior(){
     return;
   }
 
-  if(inside){
+ if(inside){
 
-    inside = false;
+  inside = false;
 
-    player.position.z += 8;
+  player.position.set(
+    activeCabin.group.position.x,
+    1,
+    activeCabin.group.position.z + 10
+  );
 
-    document.getElementById("zone").innerText =
-      "MARINA DISTRICT";
-  }
+  document.getElementById("zone").innerText =
+    "MARINA DISTRICT";
+}
 
 }
 /////////////////////////////////////////////////////
@@ -1112,17 +1118,32 @@ for(let i=0;i<5;i++){
 }
 
 function checkCabins(){
+
   activeCabin = null;
+
   for(const c of cabins){
+
     const worldPos = new THREE.Vector3();
-c.trigger.getWorldPosition(worldPos);
-const dist = player.position.distanceTo(worldPos);
-    if(dist < 3){
-      activeCabin = c;
-      if(!talkingToHero){
-  showInteraction("PRESS E TO ENTER CABIN");
-}
+
+    c.trigger.getWorldPosition(worldPos);
+
+    const dist = player.position.distanceTo(worldPos);
+
+if(dist < 3){
+
+  activeCabin = c;
+
+  const heroDist =
+    player.position.distanceTo(hero.position);
+
+  if(!talkingToHero && heroDist >= 8){
+    showInteraction("PRESS E TO ENTER CABIN");
   }
+
+}
+
+  }
+
 }
 /////////////////////////////////////////////////////
 // 🌟 HERO NPC SYSTEM
@@ -1536,8 +1557,7 @@ joystick.addEventListener("touchend", () => {
 
 function move(){
 
-  if(false && insideYacht) return;
-
+  if(insideYacht) return;
   // KEYBOARD
   if(keys["w"]) player.position.z -= 0.25;
   if(keys["s"]) player.position.z += 0.25;
