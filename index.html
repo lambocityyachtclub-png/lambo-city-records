@@ -1112,15 +1112,16 @@ for(let i=0;i<5;i++){
 }
 
 function checkCabins(){
+  activeCabin = null;
   for(const c of cabins){
     const worldPos = new THREE.Vector3();
 c.trigger.getWorldPosition(worldPos);
 const dist = player.position.distanceTo(worldPos);
     if(dist < 3){
       activeCabin = c;
-      showInteraction("PRESS E TO ENTER CABIN");
-      return;
-    }
+      if(!talkingToHero){
+  showInteraction("PRESS E TO ENTER CABIN");
+}
   }
 }
 /////////////////////////////////////////////////////
@@ -1295,15 +1296,15 @@ document.addEventListener("keydown", e => {
 
   if(yachtDist < 18){
 
-    showInteraction(
-      "VIP BOARDING — ACCESS LOCKED"
-    );
+  toggleYachtInterior();
 
-    return;
-  }
+  return;
+}
 
   // CABIN SYSTEM
+if(activeCabin){
   toggleCabin();
+}
 
 });
 /////////////////////////////////////////////////////
@@ -1535,7 +1536,7 @@ joystick.addEventListener("touchend", () => {
 
 function move(){
 
-  if(inside || insideYacht) return;
+  if(false && insideYacht) return;
 
   // KEYBOARD
   if(keys["w"]) player.position.z -= 0.25;
@@ -1678,14 +1679,6 @@ helipad.material.emissiveIntensity =
 const yachtDist =
   player.position.distanceTo(yacht.position);
 
-if(
-  yachtDist < 18 &&
-  !inside &&
-  !insideYacht
-){
-  document.getElementById("zone").innerText =
-    "MEGA YACHT DISTRICT";
-}
 
 renderer.render(scene, camera);
 
