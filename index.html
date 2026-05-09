@@ -183,13 +183,18 @@ function checkStageEvents() {
 // 🪙 REWARD SYSTEM (PLACEHOLDER - NOT BALANCED YET)
 /////////////////////////////////////////////////////
 
+let stageRewarded = false;
+
 function rewardPlayer(reason){
 
   console.log("Reward triggered:", reason);
 
-  // TEMP TEST VALUE ONLY
-  Economy.earn(1);
+  // prevent spam reward from stage zone
+  if(reason === "stage_visit" && stageRewarded) return;
 
+  if(reason === "stage_visit") stageRewarded = true;
+
+  Economy.earn(1);
 }
   /////////////////////////////////////////////////////
 // 🎯 EVENT SYSTEM (FOUNDATION LAYER)
@@ -364,7 +369,7 @@ for(let i = 0; i < waterPositions.count; i++){
 const starGeo = new THREE.BufferGeometry();
 const arr = [];
 
-for(let i=0;i<3000;i++){
+for(let i=0;i<1000;i++){
 arr.push(
 (Math.random()-0.5)*1500,
 Math.random()*600,
@@ -386,7 +391,7 @@ scene.add(stars);
 const particleGeo = new THREE.BufferGeometry();
 const particleArr = [];
 
-for(let i=0;i<1200;i++){
+for(let i=0;i<300;i++){
 
   particleArr.push(
     (Math.random()-0.5)*400,
@@ -891,6 +896,9 @@ function toggleYachtInterior(){
   }
 
 }
+  function toggleCabin(){
+  console.log("CABIN TOGGLE MISSING LOGIC");
+}
 /////////////////////////////////////////////////////
 // 🏡 CABINS
 /////////////////////////////////////////////////////
@@ -1061,11 +1069,21 @@ cabins.push({group:base, trigger:trigger});
 
 // SPAWN CABINS
 for(let i=0;i<5;i++){
+  createCabin(-14,-10-(i*20));
+  createCabin(14,-10-(i*20));
+}
 
-createCabin(-14,-10-(i*20));
-
-createCabin(14,-10-(i*20));
-
+function checkCabins(){
+  for(const c of cabins){
+    const worldPos = new THREE.Vector3();
+c.trigger.getWorldPosition(worldPos);
+const dist = player.position.distanceTo(worldPos);
+    if(dist < 3){
+      activeCabin = c;
+      showInteraction("PRESS E TO ENTER CABIN");
+      return;
+    }
+  }
 }
 /////////////////////////////////////////////////////
 // 🌟 HERO NPC SYSTEM
@@ -1211,68 +1229,45 @@ screen.position.set(0,10,-144);
 
 scene.add(screen);  
 /////////////////////////////////////////////////////
-// 🎮 CABIN SYSTEM
+// 🎮 CABIN + INTERACTION SYSTEM
 /////////////////////////////////////////////////////
 
+document.addEventListener("keydown", e => {
 
-document.addEventListener("keydown",e=>{
-if(e.key.toLowerCase()==="e"){
+  if(e.key.toLowerCase() !== "e") return;
 
-  const heroDist = player.position.distanceTo(hero.position);
+  const heroDist =
+    player.position.distanceTo(hero.position);
 
-  // PRIORITY 1: HERO TALK
+  // HERO TALK
   if(heroDist < 8){
 
-  if(!talkingToHero){
-    startHeroDialogue();
-  } else {
-    nextHeroDialogue();
-  }
+    if(!talkingToHero){
+      startHeroDialogue();
+    } else {
+      nextHeroDialogue();
+    }
 
-  return;
-}
-
-    // PRIORITY 2: YACHT SYSTEM
-  const yachtDist =
-    player.position.distanceTo(yacht.position);
-
- if(yachtDist < 18){
-
-  showInteraction(
-    "VIP BOARDING — ACCESS LOCKED"
-  );
-
-  return;
-}
-  }
-
-  // PRIORITY 3: CABIN SYSTEM
-  toggleCabin();
-}
-});
-
-function toggleCabin(){
-
-  if(inside){
-    inside = false;
-    activeCabin = null;
-    document.getElementById("msg").style.display = "none";
-    document.getElementById("zone").innerText = "LAMBO CITY";
     return;
   }
 
-  for(let c of cabins){
+  // YACHT SYSTEM
+  const yachtDist =
+    player.position.distanceTo(yacht.position);
 
-    if(player.position.distanceTo(c.group.position) < 5){
+  if(yachtDist < 18){
 
-      Events.emit("ENTER_CABIN", {
-        cabin: c
-      });
+    showInteraction(
+      "VIP BOARDING — ACCESS LOCKED"
+    );
 
-      break;
-    }
+    return;
   }
-}
+
+  // CABIN SYSTEM
+  toggleCabin();
+
+});
 /////////////////////////////////////////////////////
 // 💬 INTERACTION SYSTEM (FIXED)
 /////////////////////////////////////////////////////
@@ -1537,8 +1532,13 @@ function move(){
 function animate(){
   requestAnimationFrame(animate);
 
-  if(!started) return;
+  if(!started){
 
+  renderer.render(scene, camera);
+
+  return;
+
+}
   move();
 
   updateCamera();
@@ -1546,6 +1546,8 @@ function animate(){
   updateStageEnergy();
 
   checkStageEvents();
+
+  checkCabins();
 /////////////////////////////////////////////////////
 // 🌊 DYNAMIC OCEAN MOTION
 /////////////////////////////////////////////////////
@@ -1570,7 +1572,6 @@ for(let i = 0; i < waterPositions.count; i++){
 }
 
 waterPositions.needsUpdate = true;
-water.geometry.computeVertexNormals();
   if(water.material.color){
   water.material.color.offsetHSL(0.00002,0,0);
 }
