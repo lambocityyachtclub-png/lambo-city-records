@@ -85,10 +85,10 @@ const canvas = document.getElementById("c");
 const renderer = new THREE.WebGLRenderer({canvas, antialias:true});
 renderer.setSize(innerWidth, innerHeight);
 
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setPixelRatio(1);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.useLegacyLights = false; 
-  
+renderer.powerPreference = "high-performance";  
 const size = () => {
   camera.aspect = innerWidth / innerHeight;
   camera.updateProjectionMatrix();
@@ -96,7 +96,7 @@ const size = () => {
 };
 window.addEventListener("resize", size);
 
-scene.add(new THREE.AmbientLight(0xffffff,1.2));
+scene.add(new THREE.AmbientLight(0xffffff,0.7));
 
 const light = new THREE.PointLight(0x66ccff,1.5);
 light.position.set(0,25,40);
@@ -332,8 +332,8 @@ const WorldManager = {
 const waterGeometry = new THREE.PlaneGeometry(
   2000,
   2000,
-  220,
-  220
+  80,
+  80
 );
 
 const waterMaterial = new THREE.MeshStandardMaterial({
@@ -381,7 +381,7 @@ for(let i = 0; i < waterPositions.count; i++){
 const starGeo = new THREE.BufferGeometry();
 const arr = [];
 
-for(let i=0;i<1000;i++){
+for(let i=0;i<350;i++){
 arr.push(
 (Math.random()-0.5)*1500,
 Math.random()*600,
@@ -403,8 +403,8 @@ scene.add(stars);
 const particleGeo = new THREE.BufferGeometry();
 const particleArr = [];
 
-for(let i=0;i<300;i++){
-
+for(let i=0;i<120;i++){
+  
   particleArr.push(
     (Math.random()-0.5)*400,
     Math.random()*80,
@@ -909,7 +909,33 @@ function toggleYachtInterior(){
 
 }
   function toggleCabin(){
-  console.log("CABIN TOGGLE MISSING LOGIC");
+
+  if(activeCabin && !inside){
+
+    inside = true;
+
+    player.position.set(
+      activeCabin.group.position.x,
+      1,
+      activeCabin.group.position.z
+    );
+
+    document.getElementById("zone").innerText =
+      "PRIVATE CABIN";
+
+    return;
+  }
+
+  if(inside){
+
+    inside = false;
+
+    player.position.z += 8;
+
+    document.getElementById("zone").innerText =
+      "MARINA DISTRICT";
+  }
+
 }
 /////////////////////////////////////////////////////
 // 🏡 CABINS
@@ -1171,7 +1197,7 @@ scene.add(hero);
 const crowd = [];
 const crowdBaseY = [];
 
-for(let i=0;i<60;i++){
+for(let i=0;i<20;i++){
 
 const npc = new THREE.Mesh(
   new THREE.CylinderGeometry(0.6, 0.6, 1.8, 8),
@@ -1604,9 +1630,13 @@ marker.rotation.y += 0.03;
 const heroDist = player.position.distanceTo(hero.position);
 
 if(heroDist < 8){
- showInteraction("PRESS E TO TALK TO HERO");
-} else {
- hideInteraction();
+
+  showInteraction("PRESS E TO TALK TO HERO");
+
+} else if(!talkingToHero){
+
+  hideInteraction();
+
 }
 
 /////////////////////////////////////////////////////
@@ -1643,6 +1673,8 @@ helipad.material.emissiveIntensity =
   0.3 + Math.sin(Date.now() * 0.003) * 0.4;
 
 // PROXIMITY DETECTION
+// YACHT SYSTEM
+// PROXIMITY DETECTION
 const yachtDist =
   player.position.distanceTo(yacht.position);
 
@@ -1654,7 +1686,9 @@ if(
   document.getElementById("zone").innerText =
     "MEGA YACHT DISTRICT";
 }
+
 renderer.render(scene, camera);
+
 }
 
 animate();
