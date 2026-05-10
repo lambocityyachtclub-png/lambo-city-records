@@ -1218,7 +1218,7 @@ scene.add(hero);
 
 const crowd = [];
 const crowdBaseY = [];
-
+const crowdTargets = [];
 for(let i=0;i<20;i++){
 
 const npc = new THREE.Mesh(
@@ -1241,6 +1241,13 @@ scene.add(npc);
 crowd.push(npc);
 
 crowdBaseY.push(npc.position.y);
+
+crowdTargets.push({
+
+  x: npc.position.x,
+  z: npc.position.z
+
+});
 
 }
 
@@ -1462,10 +1469,38 @@ function updateStageEnergy(){
     stageLight1.position.set(Math.sin(t)*10, 10, -135);
     stageLight2.position.set(Math.cos(t)*10, 10, -135);
 
-    crowd.forEach((p,i)=>{
-      p.lookAt(player.position);
-      p.position.y = crowdBaseY[i] + Math.sin(Date.now()*0.005 + i)*0.25;
-    });
+   crowd.forEach((p,i)=>{
+
+  const target = crowdTargets[i];
+
+  // MOVE TOWARD TARGET
+  p.position.x += (target.x - p.position.x) * 0.01;
+  p.position.z += (target.z - p.position.z) * 0.01;
+
+  // FACE MOVEMENT
+  p.lookAt(target.x, p.position.y, target.z);
+
+  // CROWD BOUNCE
+  p.position.y =
+    crowdBaseY[i] +
+    Math.sin(Date.now()*0.005 + i)*0.25;
+
+  // PICK NEW DESTINATION
+  const dist = Math.hypot(
+    target.x - p.position.x,
+    target.z - p.position.z
+  );
+
+  if(dist < 2){
+
+    target.x =
+      (Math.random()-0.5) * 55;
+
+    target.z =
+      -135 + (Math.random()-0.5) * 35;
+  }
+
+});
 
   } else {
 
