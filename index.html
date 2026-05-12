@@ -1469,7 +1469,20 @@ function updateCamera(){
 
 
 function updateStageEnergy(){
+function updateWorldMood(){
 
+  const stageDist = player.position.distanceTo(stage.position);
+
+  // 🌊 WORLD BREATHING BASELINE
+  let targetFog = 0.012;
+
+  // 🎤 STAGE INTENSITY BOOST
+  if(stageDist < 60){
+    targetFog = 0.016;
+  }
+
+  scene.fog.density += (targetFog - scene.fog.density) * 0.02;
+}
   const dist = player.position.distanceTo(stage.position);
 
   // ONLY UPDATE GAME STATE (NO UI HERE)
@@ -1655,7 +1668,7 @@ function animate(){
   updateCamera();
 
   updateStageEnergy();
-
+  updateWorldMood();
   checkStageEvents();
 
   checkCabins();
