@@ -61,7 +61,34 @@ CABIN ACCESS ENABLED
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
 <script>
+/////////////////////////////////////////////////////
+// ⚙️ LAMBO CITY MASTER CONFIG (CONTROL CENTER)
+/////////////////////////////////////////////////////
 
+const CONFIG = {
+
+  world: {
+    limit: 220,
+    stageRadius: 45
+  },
+
+  economy: {
+    enabled: false,
+    debugCoins: true
+  },
+
+  audio: {
+    volume: 0.4,
+    enabled: true
+  },
+
+  gameplay: {
+    cabinAccess: true,
+    yachtAccess: true,
+    heroEnabled: true
+  }
+
+};
 /////////////////////////////////////////////////////
 // CORE ENGINE SYSTEM
 /////////////////////////////////////////////////////
@@ -122,25 +149,20 @@ let stageInside = false;
   const GameState = {
   stageActive: false
 };
-const WORLD_LIMIT = 220;
-const STAGE_RADIUS = 45;
+const WORLD_LIMIT = CONFIG.world.limit;
+const STAGE_RADIUS = CONFIG.world.stageRadius;
 document.addEventListener("keydown",e=>keys[e.key.toLowerCase()]=true);
 document.addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
 
 function start(){
-
   document.getElementById("start").style.display = "none";
-
   started = true;
 
-  document.getElementById("zone").innerText =
-    "WELCOME TO LAMBO CITY";
+  document.getElementById("zone").innerText = "WELCOME TO LAMBO CITY";
 
   updateHUD();
 
-  // START PLAYLIST
-  AudioSystem.play();
-
+  AudioSystem.play(); // ✅ MUST be triggered by user gesture
 }
   
 /////////////////////////////////////////////////////
@@ -176,20 +198,18 @@ const Economy = {
 
 function checkStageEvents() {
 
+  if (!stage) return;
+
   const dist = player.position.distanceTo(stage.position);
 
   if (dist < STAGE_RADIUS && !stageInside) {
     stageInside = true;
-
-    console.log("ENTERED STAGE");
-
     Events.emit("ENTER_STAGE_ZONE");
   }
 
   if (dist >= STAGE_RADIUS && stageInside) {
     stageInside = false;
   }
-
 }
   /////////////////////////////////////////////////////
 // 🪙 REWARD SYSTEM (PLACEHOLDER - NOT BALANCED YET)
@@ -199,9 +219,10 @@ let stageRewarded = false;
 
 function rewardPlayer(reason){
 
+  if(!FEATURES.rewards) return; // 🔒 hard stop
+
   console.log("Reward triggered:", reason);
 
-  // prevent spam reward from stage zone
   if(reason === "stage_visit" && stageRewarded) return;
 
   if(reason === "stage_visit") stageRewarded = true;
@@ -331,12 +352,7 @@ const WorldManager = {
 // 🌊 OCEAN SYSTEM
 /////////////////////////////////////////////////////
 
-const waterGeometry = new THREE.PlaneGeometry(
-  2000,
-  2000,
-  80,
-  80
-);
+const waterGeometry = new THREE.PlaneGeometry(1200, 1200, 40, 40);
 
 const waterMaterial = new THREE.MeshStandardMaterial({
   color:0x020b1a,
@@ -405,7 +421,7 @@ scene.add(stars);
 const particleGeo = new THREE.BufferGeometry();
 const particleArr = [];
 
-for(let i=0;i<120;i++){
+for(let i=0;i<70;i++){
   
   particleArr.push(
     (Math.random()-0.5)*400,
@@ -912,7 +928,9 @@ function toggleYachtInterior(){
 }
   function toggleCabin(){
 
-  if(activeCabin && !inside){
+  if(!activeCabin) return;
+
+  if(!inside){
 
     inside = true;
 
@@ -922,26 +940,20 @@ function toggleYachtInterior(){
       activeCabin.group.position.z
     );
 
-    document.getElementById("zone").innerText =
-      "PRIVATE CABIN";
+    document.getElementById("zone").innerText = "PRIVATE CABIN";
 
-    return;
+  } else {
+
+    inside = false;
+
+    player.position.set(
+      activeCabin.group.position.x,
+      1,
+      activeCabin.group.position.z + 10
+    );
+
+    document.getElementById("zone").innerText = "MARINA DISTRICT";
   }
-
- if(inside){
-
-  inside = false;
-
-  player.position.set(
-    activeCabin.group.position.x,
-    1,
-    activeCabin.group.position.z + 10
-  );
-
-  document.getElementById("zone").innerText =
-    "MARINA DISTRICT";
-}
-
 }
 /////////////////////////////////////////////////////
 // 🏡 CABINS
@@ -1124,27 +1136,29 @@ function checkCabins(){
   for(const c of cabins){
 
     const worldPos = new THREE.Vector3();
-
     c.trigger.getWorldPosition(worldPos);
 
     const dist = player.position.distanceTo(worldPos);
 
-if(dist < 3){
+    if(!c._triggered) c._triggered = false;
 
-  activeCabin = c;
+    if(dist < 3){
 
-  const heroDist =
-    player.position.distanceTo(hero.position);
+      activeCabin = c;
 
-  if(!talkingToHero && heroDist >= 8){
-    showInteraction("PRESS E TO ENTER CABIN");
+      showInteraction("PRESS E TO ENTER CABIN");
+
+      if(!c._triggered){
+        c._triggered = true;
+        Events.emit("ENTER_CABIN", { cabin: c });
+      }
+
+    } else {
+      c._triggered = false;
+    }
   }
-
 }
 
-  }
-
-}
 /////////////////////////////////////////////////////
 // 🌟 HERO NPC SYSTEM
 /////////////////////////////////////////////////////
@@ -1219,7 +1233,7 @@ scene.add(hero);
 const crowd = [];
 const crowdBaseY = [];
 const crowdTargets = [];
-for(let i=0;i<20;i++){
+for(let i=0;i<12;i++){
 
 const npc = new THREE.Mesh(
   new THREE.CylinderGeometry(0.6, 0.6, 1.8, 8),
@@ -1740,7 +1754,16 @@ renderer.render(scene, camera);
 }
 
 animate();
-
+  
+const SYSTEMS = {
+  player: true,
+  world: true,
+  economy: true,
+  cabins: true,
+  yacht: true,
+  hero: true,
+  audio: true
+};
 </script>
 </body>
 </html>
