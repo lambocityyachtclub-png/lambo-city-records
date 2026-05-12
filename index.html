@@ -1426,37 +1426,40 @@ function nextHeroDialogue() {
 
 function updateCamera(){
 
-let targetX = player.position.x;
-let targetY = 10;
-let targetZ = player.position.z + 14;
-let lookTarget = player.position;
+  let baseOffsetX = 0;
+  let baseOffsetY = 10;
+  let baseOffsetZ = 14;
 
-// CABIN CAMERA
-if(inside && activeCabin){
+  let lookTarget = player.position.clone();
 
-  targetY = 2.2;
-targetZ = activeCabin.group.position.z + 6;
+  const distToStage = player.position.distanceTo(stage.position);
+  const distToYacht = player.position.distanceTo(yacht.position);
 
-  lookTarget = activeCabin.group.position;
-}
+  // 🌊 STAGE ZONE FOCUS (slight cinematic pull)
+  if(distToStage < 60){
+    baseOffsetY = 12;
+    baseOffsetZ = 16;
+    lookTarget = stage.position.clone();
+  }
 
-// YACHT CAMERA
-if(insideYacht){
+  // 🚤 YACHT ZONE FOCUS (luxury framing)
+  if(distToYacht < 30){
+    baseOffsetX = 4;
+    baseOffsetY = 11;
+    baseOffsetZ = 18;
+    lookTarget = yacht.position.clone();
+  }
 
-  targetX = 42;
-  targetY = 5;
-  targetZ = -105;
+  // 📷 SMOOTH FOLLOW
+  const targetX = player.position.x + baseOffsetX;
+  const targetY = player.position.y + baseOffsetY;
+  const targetZ = player.position.z + baseOffsetZ;
 
-  lookTarget = yachtInterior.position;
-}
+  camera.position.x += (targetX - camera.position.x) * 0.08;
+  camera.position.y += (targetY - camera.position.y) * 0.08;
+  camera.position.z += (targetZ - camera.position.z) * 0.08;
 
-// SMOOTH FOLLOW
-camera.position.x += (targetX - camera.position.x) * 0.08;
-camera.position.y += (targetY - camera.position.y) * 0.08;
-camera.position.z += (targetZ - camera.position.z) * 0.08;
-
-camera.lookAt(lookTarget);
-
+  camera.lookAt(lookTarget);
 }
 
 
