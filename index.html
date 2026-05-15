@@ -1659,21 +1659,26 @@ function animate(){
   requestAnimationFrame(animate);
 
   if(!started){
+    renderer.render(scene, camera);
+    return;
+  }
 
-  renderer.render(scene, camera);
-
-  return;
-
-}
+  // 1. INPUT
   move();
 
-  updateCamera();
+  // 2. WORLD INTERACTIONS
+  checkStageEvents();
+  checkCabins();
 
+  // 3. GAME LOGIC
   updateStageEnergy();
   updateWorldMood();
-  checkStageEvents();
 
-  checkCabins();
+  // 4. CAMERA
+  updateCamera();
+
+  renderer.render(scene, camera);
+}
 /////////////////////////////////////////////////////
 // 🌊 DYNAMIC OCEAN MOTION
 /////////////////////////////////////////////////////
