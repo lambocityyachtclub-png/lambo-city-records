@@ -1468,24 +1468,26 @@ function updateCamera(){
 /////////////////////////////////////////////////////
 
 
-function updateStageEnergy(){
 function updateWorldMood(){
 
   const stageDist = player.position.distanceTo(stage.position);
 
-  // 🌊 WORLD BREATHING BASELINE
   let targetFog = 0.012;
 
-  // 🎤 STAGE INTENSITY BOOST
   if(stageDist < 60){
     targetFog = 0.016;
   }
 
-  scene.fog.density += (targetFog - scene.fog.density) * 0.02;
+  scene.fog.density +=
+    (targetFog - scene.fog.density) * 0.02;
 }
+
+function updateStageEnergy(){
+  
   const dist = player.position.distanceTo(stage.position);
 
-  // ONLY UPDATE GAME STATE (NO UI HERE)
+  // ONLY UPDATE GAME STATE (NO UI HERE) 
+  
   GameState.stageActive = dist < 45;
 
   // LIGHTS ONLY (visual feedback)
