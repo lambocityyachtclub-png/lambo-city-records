@@ -1733,17 +1733,20 @@ function move(){
   /////////////////////////////////////////////////////
   // PLAYER ROTATION
   /////////////////////////////////////////////////////
+// PLAYER ROTATION
+if (speed > 0.05) {
 
-  if(speed > 0.01){
+  const targetRotation = Math.atan2(velocity.x, velocity.z);
 
-    const targetRotation =
-      Math.atan2(velocity.x, velocity.z);
+  let delta = targetRotation - player.rotation.y;
 
-    player.rotation.y +=
-      (targetRotation - player.rotation.y)
-      * moveSettings.rotationSpeed;
-  }
+  delta = Math.atan2(Math.sin(delta), Math.cos(delta));
 
+  player.rotation.y += delta * moveSettings.rotationSpeed;
+
+} else {
+  // hold last direction (no drift)
+}
   /////////////////////////////////////////////////////
   // WORLD LIMITS
   /////////////////////////////////////////////////////
@@ -1826,7 +1829,10 @@ function animate(){
 
 if(dancing){
 
-  player.rotation.y += 0.08;
+  player.position.y =
+    1 + Math.sin(Date.now()*0.01)*0.25;
+
+} 
 
   player.position.y =
     1 + Math.sin(Date.now()*0.01)*0.25;
