@@ -157,7 +157,7 @@ const moveSettings = {
 };
 let activeCabin = null;
 let stageInside = false;
-
+let dancing = false;
   const GameState = {
   stageActive: false
 };
@@ -1327,7 +1327,22 @@ scene.add(screen);
 
 document.addEventListener("keydown", e => {
 
-  if(e.key.toLowerCase() !== "e") return;
+ const key = e.key.toLowerCase();
+
+if(key === "g"){
+
+  dancing = !dancing;
+
+  if(dancing){
+    showInteraction("DANCING");
+  } else {
+    hideInteraction();
+  }
+
+  return;
+}
+
+if(key !== "e") return;
 
   const heroDist =
     player.position.distanceTo(hero.position);
@@ -1805,7 +1820,21 @@ function animate(){
 
   hero.position.y =
     1 + Math.sin(Date.now() * 0.003) * 0.15;
+/////////////////////////////////////////////////////
+// 🕺 PLAYER DANCE SYSTEM
+/////////////////////////////////////////////////////
 
+if(dancing){
+
+  player.rotation.y += 0.08;
+
+  player.position.y =
+    1 + Math.sin(Date.now()*0.01)*0.25;
+
+} else {
+
+  player.position.y = 1;
+}
   marker.rotation.y += 0.03;
 
   /////////////////////////////////////////////////////
