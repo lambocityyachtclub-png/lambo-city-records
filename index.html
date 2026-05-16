@@ -143,6 +143,18 @@ const keys = {};
 let started = false;
 let coins = 0;
 let inside = false;
+
+// 🎮 MOVEMENT PHYSICS
+const velocity = new THREE.Vector3();
+
+const moveSettings = {
+
+  acceleration: 0.018,
+  maxSpeed: 0.32,
+  friction: 0.90,
+  rotationSpeed: 0.12
+
+};
 let activeCabin = null;
 let stageInside = false;
 
@@ -1625,21 +1637,102 @@ joystick.addEventListener("touchend", () => {
 function move(){
 
   if(insideYacht) return;
+
+  /////////////////////////////////////////////////////
+  // 🎮 INPUT VECTOR
+  /////////////////////////////////////////////////////
+
+  let inputX = 0;
+  let inputZ = 0;
+
   // KEYBOARD
-  if(keys["w"]) player.position.z -= 0.25;
-  if(keys["s"]) player.position.z += 0.25;
-  if(keys["a"]) player.position.x -= 0.25;
-  if(keys["d"]) player.position.x += 0.25;
+  if(keys["w"]) inputZ -= 1;
+  if(keys["s"]) inputZ += 1;
+  if(keys["a"]) inputX -= 1;
+  if(keys["d"]) inputX += 1;
 
   // MOBILE JOYSTICK
   if(joyActive){
 
-    player.position.x += joyX * 0.25;
-    player.position.z += joyY * 0.25;
+    inputX += joyX;
+    inputZ += joyY;
 
   }
 
+  /////////////////////////////////////////////////////
+  // NORMALIZE INPUT
+  /////////////////////////////////////////////////////
+
+  const inputLength =
+    Math.hypot(inputX, inputZ);
+
+  if(inputLength > 0){
+
+    inputX /= inputLength;
+    inputZ /= inputLength;
+
+    /////////////////////////////////////////////////////
+    // ACCELERATION
+    /////////////////////////////////////////////////////
+
+    velocity.x +=
+      inputX * moveSettings.acceleration;
+
+    velocity.z +=
+      inputZ * moveSettings.acceleration;
+
+  }
+
+  /////////////////////////////////////////////////////
+  // FRICTION
+  /////////////////////////////////////////////////////
+
+  velocity.x *= moveSettings.friction;
+  velocity.z *= moveSettings.friction;
+
+  /////////////////////////////////////////////////////
+  // SPEED LIMIT
+  /////////////////////////////////////////////////////
+
+  const speed =
+    Math.hypot(velocity.x, velocity.z);
+
+  if(speed > moveSettings.maxSpeed){
+
+    velocity.x =
+      (velocity.x / speed) *
+      moveSettings.maxSpeed;
+
+    velocity.z =
+      (velocity.z / speed) *
+      moveSettings.maxSpeed;
+  }
+
+  /////////////////////////////////////////////////////
+  // APPLY MOVEMENT
+  /////////////////////////////////////////////////////
+
+  player.position.x += velocity.x;
+  player.position.z += velocity.z;
+
+  /////////////////////////////////////////////////////
+  // PLAYER ROTATION
+  /////////////////////////////////////////////////////
+
+  if(speed > 0.01){
+
+    const targetRotation =
+      Math.atan2(velocity.x, velocity.z);
+
+    player.rotation.y +=
+      (targetRotation - player.rotation.y)
+      * moveSettings.rotationSpeed;
+  }
+
+  /////////////////////////////////////////////////////
   // WORLD LIMITS
+  /////////////////////////////////////////////////////
+
   player.position.x = Math.max(
     -WORLD_LIMIT,
     Math.min(WORLD_LIMIT, player.position.x)
