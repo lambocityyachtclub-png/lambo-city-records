@@ -518,6 +518,161 @@ new THREE.MeshStandardMaterial({
 );
 dock.position.set(0,0,-100);
 scene.add(dock);
+  /////////////////////////////////////////////////////
+// 🌴 LUXURY MARINA WALKWAY SYSTEM
+/////////////////////////////////////////////////////
+
+const marinaPaths = new THREE.Group();
+
+/////////////////////////////////////////////////////
+// MAIN CENTER WALKWAY
+/////////////////////////////////////////////////////
+
+const mainWalkway = new THREE.Mesh(
+
+  new THREE.BoxGeometry(24, 1, 180),
+
+  new THREE.MeshStandardMaterial({
+    color:0x3a2a1f,
+    roughness:0.9,
+    metalness:0.1,
+    emissive:0x1a120d,
+    emissiveIntensity:0.15
+  })
+
+);
+
+mainWalkway.position.set(0,0.5,-90);
+
+marinaPaths.add(mainWalkway);
+
+/////////////////////////////////////////////////////
+// CABIN SIDE PATHS
+/////////////////////////////////////////////////////
+
+for(let i = 0; i < 5; i++){
+
+  const leftPath = new THREE.Mesh(
+
+    new THREE.BoxGeometry(10,1,18),
+
+    new THREE.MeshStandardMaterial({
+      color:0x2f2218,
+      roughness:0.95
+    })
+
+  );
+
+  leftPath.position.set(
+    -14,
+    0.5,
+    -10 - (i * 20)
+  );
+
+  marinaPaths.add(leftPath);
+
+  const rightPath = leftPath.clone();
+
+  rightPath.position.x = 14;
+
+  marinaPaths.add(rightPath);
+
+}
+
+/////////////////////////////////////////////////////
+// YACHT ACCESS WALKWAY
+/////////////////////////////////////////////////////
+
+const yachtWalkway = new THREE.Mesh(
+
+  new THREE.BoxGeometry(14,1,36),
+
+  new THREE.MeshStandardMaterial({
+    color:0x35261d,
+    roughness:0.85
+  })
+
+);
+
+yachtWalkway.position.set(
+  28,
+  0.5,
+  -120
+);
+
+yachtWalkway.rotation.y = Math.PI * 0.08;
+
+marinaPaths.add(yachtWalkway);
+
+/////////////////////////////////////////////////////
+// STAGE PROMENADE
+/////////////////////////////////////////////////////
+
+const stagePromenade = new THREE.Mesh(
+
+  new THREE.BoxGeometry(120,1,30),
+
+  new THREE.MeshStandardMaterial({
+    color:0x251d1a,
+    roughness:0.95,
+    emissive:0x110022,
+    emissiveIntensity:0.12
+  })
+
+);
+
+stagePromenade.position.set(
+  0,
+  0.5,
+  -150
+);
+
+marinaPaths.add(stagePromenade);
+
+/////////////////////////////////////////////////////
+// EDGE LIGHTS
+/////////////////////////////////////////////////////
+
+for(let i = 0; i < 18; i++){
+
+  const lightPole = new THREE.Mesh(
+
+    new THREE.CylinderGeometry(0.15,0.15,4),
+
+    new THREE.MeshStandardMaterial({
+      color:0x111111
+    })
+
+  );
+
+  const glow = new THREE.PointLight(
+    0xffcc88,
+    0.7,
+    18
+  );
+
+  const z = -10 - (i * 10);
+
+  lightPole.position.set(-13,2,z);
+  glow.position.set(-13,4,z);
+
+  marinaPaths.add(lightPole);
+  marinaPaths.add(glow);
+
+  const pole2 = lightPole.clone();
+
+  pole2.position.x = 13;
+
+  const glow2 = glow.clone();
+
+  glow2.position.x = 13;
+
+  marinaPaths.add(pole2);
+  marinaPaths.add(glow2);
+
+}
+
+scene.add(marinaPaths);
 /////////////////////////////////////////////////////
 // 🌊 MAIN FESTIVAL DISTRICT
 /////////////////////////////////////////////////////
