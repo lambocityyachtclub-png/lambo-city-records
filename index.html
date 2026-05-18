@@ -133,12 +133,151 @@ scene.add(light);
 // PLAYER SYSTEM
 /////////////////////////////////////////////////////
   
-const player = new THREE.Mesh(
-new THREE.BoxGeometry(1,1.8,1),
-new THREE.MeshStandardMaterial({color:0xffffff})
+/////////////////////////////////////////////////////
+// 👤 PLAYER AVATAR SYSTEM (IMMERSION V1)
+/////////////////////////////////////////////////////
+
+const player = new THREE.Group();
+
+/////////////////////////////////////////////////////
+// BODY MATERIALS
+/////////////////////////////////////////////////////
+
+const bodyMat = new THREE.MeshStandardMaterial({
+  color:0x111111,
+  roughness:0.7,
+  metalness:0.2
+});
+
+const glowMat = new THREE.MeshStandardMaterial({
+  color:0x00ffff,
+  emissive:0x00ffff,
+  emissiveIntensity:1.2
+});
+
+/////////////////////////////////////////////////////
+// TORSO
+/////////////////////////////////////////////////////
+
+const torso = new THREE.Mesh(
+
+  new THREE.BoxGeometry(1.2,1.8,0.7),
+
+  bodyMat
+
 );
+
+torso.position.y = 2.2;
+
+player.add(torso);
+
+/////////////////////////////////////////////////////
+// HEAD
+/////////////////////////////////////////////////////
+
+const head = new THREE.Mesh(
+
+  new THREE.BoxGeometry(0.8,0.8,0.8),
+
+  new THREE.MeshStandardMaterial({
+    color:0xdddddd
+  })
+
+);
+
+head.position.y = 3.6;
+
+player.add(head);
+
+/////////////////////////////////////////////////////
+// SHOULDERS
+/////////////////////////////////////////////////////
+
+const shoulders = new THREE.Mesh(
+
+  new THREE.BoxGeometry(1.8,0.35,0.8),
+
+  glowMat
+
+);
+
+shoulders.position.y = 2.9;
+
+player.add(shoulders);
+
+/////////////////////////////////////////////////////
+// LEFT ARM
+/////////////////////////////////////////////////////
+
+const leftArm = new THREE.Mesh(
+
+  new THREE.BoxGeometry(0.35,1.5,0.35),
+
+  bodyMat
+
+);
+
+leftArm.position.set(-0.9,2.2,0);
+
+player.add(leftArm);
+
+/////////////////////////////////////////////////////
+// RIGHT ARM
+/////////////////////////////////////////////////////
+
+const rightArm = leftArm.clone();
+
+rightArm.position.x = 0.9;
+
+player.add(rightArm);
+
+/////////////////////////////////////////////////////
+// LEFT LEG
+/////////////////////////////////////////////////////
+
+const leftLeg = new THREE.Mesh(
+
+  new THREE.BoxGeometry(0.45,1.7,0.45),
+
+  bodyMat
+
+);
+
+leftLeg.position.set(-0.35,0.9,0);
+
+player.add(leftLeg);
+
+/////////////////////////////////////////////////////
+// RIGHT LEG
+/////////////////////////////////////////////////////
+
+const rightLeg = leftLeg.clone();
+
+rightLeg.position.x = 0.35;
+
+player.add(rightLeg);
+
+/////////////////////////////////////////////////////
+// CHEST LIGHT
+/////////////////////////////////////////////////////
+
+const chestGlow = new THREE.PointLight(
+  0x00ffff,
+  1.2,
+  8
+);
+
+chestGlow.position.set(0,2.5,1);
+
+player.add(chestGlow);
+
+/////////////////////////////////////////////////////
+// PLAYER POSITION
+/////////////////////////////////////////////////////
+
+player.position.set(0,0,-40);
+
 scene.add(player);
-player.position.set(0,1,-40);
 const keys = {};
 let started = false;
 let coins = 0;
