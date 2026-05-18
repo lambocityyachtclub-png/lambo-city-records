@@ -1339,9 +1339,12 @@ if(key === "g"){
   dancing = !dancing;
 
   if(dancing){
-    showInteraction("DANCING");
+   InteractionManager.show(
+  "dance",
+  "DANCING"
+);
   } else {
-    hideInteraction();
+    InteractionManager.clear("dance");
   }
 
   return;
@@ -1389,10 +1392,21 @@ const InteractionManager = {
 
   current: null,
 
+  priorities: {
+    hero: 3,
+    yacht: 2,
+    cabin: 1
+  },
+
   show(id, text){
 
-    // prevent weaker interactions overriding stronger ones
-    if(this.current && this.current !== id) return;
+    if(
+      this.current &&
+      this.priorities[this.current] >
+      this.priorities[id]
+    ){
+      return;
+    }
 
     this.current = id;
 
@@ -1440,14 +1454,7 @@ dialogueUI.style.display = "none";
   
 document.body.appendChild(interactionUI);
 
-function showInteraction(text){
-  interactionUI.innerText = text;
-  interactionUI.style.display = "block";
-}
 
-function hideInteraction(){
-  interactionUI.style.display = "none";
-}
 
 /////////////////////////////////////////////////////
 // 💬 HERO DIALOGUE SYSTEM (STEP 3B)
@@ -1877,7 +1884,21 @@ if(dancing){
 
   const heroDist =
     player.position.distanceTo(hero.position);
+  const yachtDist =
+  player.position.distanceTo(yacht.position);
 
+if(yachtDist < 18 && !insideYacht){
+
+  InteractionManager.show(
+    "yacht",
+    "PRESS E TO ENTER YACHT"
+  );
+
+} else {
+
+  InteractionManager.clear("yacht");
+
+}
   if(heroDist < 8){
 
    InteractionManager.show(
@@ -1885,10 +1906,14 @@ if(dancing){
   "PRESS E TO TALK TO HERO"
 );
 
-  } else if(!talkingToHero){
+ }
+else {
 
+  if(!talkingToHero){
     InteractionManager.clear("hero");
   }
+
+}
 
   /////////////////////////////////////////////////////
   // 🌌 CINEMATIC LIGHT MOTION
