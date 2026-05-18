@@ -2159,7 +2159,46 @@ function animate(){
 /////////////////////////////////////////////////////
 // 🕺 PLAYER DANCE SYSTEM
 /////////////////////////////////////////////////////
+/////////////////////////////////////////////////////
+// 🚶 PLAYER ANIMATION SYSTEM
+/////////////////////////////////////////////////////
 
+const moveSpeed =
+  Math.hypot(velocity.x, velocity.z);
+
+if(moveSpeed > 0.01){
+
+  const walkCycle =
+    Date.now() * 0.01;
+
+  leftLeg.rotation.x =
+    Math.sin(walkCycle) * 0.7;
+
+  rightLeg.rotation.x =
+    Math.sin(walkCycle + Math.PI) * 0.7;
+
+  leftArm.rotation.x =
+    Math.sin(walkCycle + Math.PI) * 0.5;
+
+  rightArm.rotation.x =
+    Math.sin(walkCycle) * 0.5;
+
+  torso.rotation.z =
+    Math.sin(walkCycle) * 0.05;
+
+} else {
+
+  // IDLE BREATHING
+
+  torso.rotation.z =
+    Math.sin(Date.now()*0.002) * 0.02;
+
+  leftLeg.rotation.x *= 0.8;
+  rightLeg.rotation.x *= 0.8;
+
+  leftArm.rotation.x *= 0.8;
+  rightArm.rotation.x *= 0.8;
+}
 if(dancing){
 
   player.position.y =
