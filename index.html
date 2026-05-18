@@ -1158,8 +1158,10 @@ function checkCabins(){
 
       activeCabin = c;
 
-      showInteraction("PRESS E TO ENTER CABIN");
-
+     InteractionManager.show(
+  "cabin",
+  "PRESS E TO ENTER CABIN"
+);
       if(!c._triggered){
         c._triggered = true;
         Events.emit("ENTER_CABIN", { cabin: c });
@@ -1169,6 +1171,9 @@ function checkCabins(){
       c._triggered = false;
     }
   }
+  if(!activeCabin){
+  InteractionManager.clear("cabin");
+}
 }
 
 /////////////////////////////////////////////////////
@@ -1376,6 +1381,35 @@ if(activeCabin){
 }
 
 });
+  /////////////////////////////////////////////////////
+// 🎮 INTERACTION MANAGER
+/////////////////////////////////////////////////////
+
+const InteractionManager = {
+
+  current: null,
+
+  show(id, text){
+
+    // prevent weaker interactions overriding stronger ones
+    if(this.current && this.current !== id) return;
+
+    this.current = id;
+
+    interactionUI.innerText = text;
+    interactionUI.style.display = "block";
+  },
+
+  clear(id){
+
+    if(this.current !== id) return;
+
+    this.current = null;
+
+    interactionUI.style.display = "none";
+  }
+
+};
 /////////////////////////////////////////////////////
 // 💬 INTERACTION SYSTEM (FIXED)
 /////////////////////////////////////////////////////
@@ -1846,14 +1880,14 @@ if(dancing){
 
   if(heroDist < 8){
 
-    showInteraction(
-      "PRESS E TO TALK TO HERO"
-    );
+   InteractionManager.show(
+  "hero",
+  "PRESS E TO TALK TO HERO"
+);
 
   } else if(!talkingToHero){
 
-    hideInteraction();
-
+    InteractionManager.clear("hero");
   }
 
   /////////////////////////////////////////////////////
