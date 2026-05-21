@@ -1208,6 +1208,14 @@ scene.add(yachtInterior);
 
 let insideYacht = false;
 
+/////////////////////////////////////////////////////
+// 🔐 YACHT ACCESS CONTROL
+/////////////////////////////////////////////////////
+
+const DEVELOPER_MODE = true;
+
+// PUBLIC ACCESS OFF
+const PUBLIC_YACHT_ACCESS = false;
 const yachtTrigger = new THREE.Vector3(
   42,
   0,
@@ -1223,8 +1231,21 @@ function toggleYachtInterior(){
     player.position.distanceTo(yachtTrigger);
 
   // ENTER YACHT
-  if(!insideYacht && dist < 12){
+if(!insideYacht && dist < 12){
 
+  /////////////////////////////////////////////////////
+  // 🔒 PUBLIC ACCESS LOCK
+  /////////////////////////////////////////////////////
+
+  if(!PUBLIC_YACHT_ACCESS && !DEVELOPER_MODE){
+
+    InteractionManager.show(
+      "yacht",
+      "PRIVATE YACHT — BOARDING PASS REQUIRED"
+    );
+
+    return;
+  }
     insideYacht = true;
     hideInteraction();
     yachtInterior.visible = true;
@@ -2251,10 +2272,25 @@ if(dancing){
 
 if(yachtDist < 18 && !insideYacht){
 
-  InteractionManager.show(
-    "yacht",
-    "PRESS E TO ENTER YACHT"
-  );
+  /////////////////////////////////////////////////////
+  // 🔒 PUBLIC LOCKED MESSAGE
+  /////////////////////////////////////////////////////
+
+  if(!PUBLIC_YACHT_ACCESS && !DEVELOPER_MODE){
+
+    InteractionManager.show(
+      "yacht",
+      "PRIVATE YACHT — BOARDING PASS REQUIRED"
+    );
+
+  } else {
+
+    InteractionManager.show(
+      "yacht",
+      "PRESS E TO ENTER YACHT"
+    );
+
+  }
 
 } else {
 
