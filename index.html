@@ -427,52 +427,81 @@ function handleEvent(type, data){
   }
 }
 /////////////////////////////////////////////////////
-// AUDIO SYSTEM
+// 🔊 IMMERSIVE AUDIO SYSTEM V2
 /////////////////////////////////////////////////////
-  
-/////////////////////////////////////////////////////
-// 🔊 AUDIO SYSTEM (SAFE)
-/////////////////////////////////////////////////////
+
 const AudioSystem = {
-  mode: "playlist", // "playlist" | "stream"
 
-  playlist: [
-    "https://cdn.pixabay.com/download/audio/2022/03/15/audio_115b9b7d3c.mp3"
-  ],
+  stageAudio: null,
+  oceanAudio: null,
 
-  streamURL: "",
+  init(){
 
-  current: null,
+    /////////////////////////////////////////////////////
+    // STAGE MUSIC
+    /////////////////////////////////////////////////////
 
-  play(index = 0) {
-    this.stop();
+    this.stageAudio = new Audio(
+      "https://cdn.pixabay.com/download/audio/2022/03/15/audio_115b9b7d3c.mp3"
+    );
 
-    this.mode = "playlist";
+    this.stageAudio.loop = true;
+    this.stageAudio.volume = 0;
 
-    this.current = new Audio(this.playlist[index]);
-    this.current.loop = true;
-    this.current.volume = 0.4;
-    this.current.play().catch(()=>{});
+    /////////////////////////////////////////////////////
+    // OCEAN AMBIENCE
+    /////////////////////////////////////////////////////
+
+    this.oceanAudio = new Audio(
+      "https://cdn.pixabay.com/download/audio/2021/08/09/audio_d1bab4fa1f.mp3"
+    );
+
+    this.oceanAudio.loop = true;
+    this.oceanAudio.volume = 0.25;
+
   },
 
-  playStream(url) {
-    this.stop();
+  play(){
 
-    this.mode = "stream";
+    this.stageAudio.play().catch(()=>{});
+    this.oceanAudio.play().catch(()=>{});
 
-    this.streamURL = url;
-    this.current = new Audio(url);
-    this.current.loop = true;
-    this.current.volume = 0.6;
-    this.current.play().catch(()=>{});
   },
 
-  stop() {
-    if (this.current) {
-      this.current.pause();
-      this.current = null;
-    }
+  update(){
+
+    /////////////////////////////////////////////////////
+    // DISTANCE TO STAGE
+    /////////////////////////////////////////////////////
+
+    const dist =
+      player.position.distanceTo(stage.position);
+
+    /////////////////////////////////////////////////////
+    // MAX HEARING DISTANCE
+    /////////////////////////////////////////////////////
+
+    const maxDist = 140;
+
+    /////////////////////////////////////////////////////
+    // NORMALIZED VOLUME
+    /////////////////////////////////////////////////////
+
+    let volume =
+      1 - (dist / maxDist);
+
+    volume =
+      Math.max(0, Math.min(1, volume));
+
+    /////////////////////////////////////////////////////
+    // SMOOTH AUDIO FEEL
+    /////////////////////////////////////////////////////
+
+    this.stageAudio.volume +=
+      (volume * 0.6 - this.stageAudio.volume) * 0.03;
+
   }
+
 };
 
 /////////////////////////////////////////////////////
