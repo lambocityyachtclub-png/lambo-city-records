@@ -312,7 +312,7 @@ function start(){
   document.getElementById("zone").innerText = "WELCOME TO LAMBO CITY";
 
   updateHUD();
-
+  AudioSystem.init();
   AudioSystem.play(); // ✅ MUST be triggered by user gesture
 }
   
@@ -2320,6 +2320,7 @@ else {
   helipad.material.emissiveIntensity =
     0.3 + Math.sin(Date.now() * 0.003) * 0.4;
 
+  AudioSystem.update();
   renderer.render(scene, camera);
 
 }
