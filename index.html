@@ -1705,7 +1705,9 @@ if(key === "g"){
 if(key !== "e") return;
 
   const heroDist =
-    player.position.distanceTo(hero.position);
+  hero
+    ? player.position.distanceTo(hero.position)
+    : 999;
 
   // HERO TALK
   if(heroDist < 8){
