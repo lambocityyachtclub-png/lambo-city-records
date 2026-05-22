@@ -1524,69 +1524,77 @@ function checkCabins(){
 // 🌟 HERO NPC SYSTEM
 /////////////////////////////////////////////////////
 
-const hero = new THREE.Group();
+let hero = null;
+let marker = null;
 
-/////////////////////////////////////////////////////
-// HERO BODY
-/////////////////////////////////////////////////////
+if(CONFIG.gameplay.heroEnabled){
 
-const heroBody = new THREE.Mesh(
+  hero = new THREE.Group();
 
-  new THREE.BoxGeometry(1.2,2.2,1),
+  /////////////////////////////////////////////////////
+  // HERO BODY
+  /////////////////////////////////////////////////////
 
-  new THREE.MeshStandardMaterial({
-    color:0xffffff,
-    emissive:0x00ffff,
-    emissiveIntensity:1.5
-  })
+  const heroBody = new THREE.Mesh(
 
-);
+    new THREE.BoxGeometry(1.2,2.2,1),
 
-heroBody.position.y = 1.1;
+    new THREE.MeshStandardMaterial({
+      color:0xffffff,
+      emissive:0x00ffff,
+      emissiveIntensity:1.5
+    })
 
-hero.add(heroBody);
+  );
 
-/////////////////////////////////////////////////////
-// HERO GLOW LIGHT
-/////////////////////////////////////////////////////
+  heroBody.position.y = 1.1;
 
-const heroLight = new THREE.PointLight(
-  0x00ffff,
-  3,
-  25
-);
+  hero.add(heroBody);
 
-heroLight.position.set(0,4,0);
+  /////////////////////////////////////////////////////
+  // HERO GLOW LIGHT
+  /////////////////////////////////////////////////////
 
-hero.add(heroLight);
+  const heroLight = new THREE.PointLight(
+    0x00ffff,
+    3,
+    25
+  );
 
-/////////////////////////////////////////////////////
-// HERO MARKER
-/////////////////////////////////////////////////////
+  heroLight.position.set(0,4,0);
 
-const marker = new THREE.Mesh(
+  hero.add(heroLight);
 
-  new THREE.ConeGeometry(0.8,1.5,12),
+  /////////////////////////////////////////////////////
+  // HERO MARKER
+  /////////////////////////////////////////////////////
 
-  new THREE.MeshStandardMaterial({
-    color:0x00ffff,
-    emissive:0x00ffff,
-    emissiveIntensity:2
-  })
+  marker = new THREE.Mesh(
 
-);
+    new THREE.ConeGeometry(0.8,1.5,12),
 
-marker.rotation.x = Math.PI;
-marker.position.y = 5;
+    new THREE.MeshStandardMaterial({
+      color:0x00ffff,
+      emissive:0x00ffff,
+      emissiveIntensity:2
+    })
 
-hero.add(marker);
+  );
 
-/////////////////////////////////////////////////////
-// HERO POSITION
-/////////////////////////////////////////////////////
+  marker.rotation.x = Math.PI;
+  marker.position.y = 5;
 
-hero.position.set(40,1,-110);
-scene.add(hero);
+  hero.add(marker);
+
+  /////////////////////////////////////////////////////
+  // HERO POSITION
+  /////////////////////////////////////////////////////
+
+  hero.position.set(40,1,-110);
+
+  scene.add(hero);
+
+}
 /////////////////////////////////////////////////////
 // CROWD SYSTEM
 /////////////////////////////////////////////////////
@@ -2201,11 +2209,15 @@ function animate(){
   }
 
   /////////////////////////////////////////////////////
-  // 🌟 HERO ANIMATION SYSTEM
-  /////////////////////////////////////////////////////
+// 🌟 HERO ANIMATION SYSTEM
+/////////////////////////////////////////////////////
+
+if(hero){
 
   hero.position.y =
     1 + Math.sin(Date.now() * 0.003) * 0.15;
+
+}
 /////////////////////////////////////////////////////
 // 🕺 PLAYER DANCE SYSTEM
 /////////////////////////////////////////////////////
@@ -2259,7 +2271,11 @@ if(dancing){
   player.position.y = 1;
 
 }
+  if(marker){
+
   marker.rotation.y += 0.03;
+
+}
 
   /////////////////////////////////////////////////////
   // 👤 HERO PROXIMITY SYSTEM
