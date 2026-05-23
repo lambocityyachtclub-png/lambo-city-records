@@ -275,8 +275,7 @@ player.add(chestGlow);
 // PLAYER POSITION
 /////////////////////////////////////////////////////
 
-player.position.set(0,0,-40);
-
+player.position.set(0,1,-40);
 scene.add(player);
 const keys = {};
 let started = false;
@@ -524,6 +523,53 @@ const WorldManager = {
     document.getElementById("zone").innerText = zone;
 
     console.log("ZONE CHANGED:", zone);
+
+  }
+
+};
+
+  /////////////////////////////////////////////////////
+// 🌍 ZONE MANAGER SYSTEM
+/////////////////////////////////////////////////////
+
+const ZoneManager = {
+
+  zones: [],
+
+  register(zone){
+    this.zones.push(zone);
+  },
+
+  update(){
+
+    this.zones.forEach(zone => {
+
+      const dist =
+        player.position.distanceTo(zone.position);
+
+      const inside = dist < zone.radius;
+
+      if(inside && !zone.active){
+
+        zone.active = true;
+
+        if(zone.onEnter){
+          zone.onEnter();
+        }
+
+      }
+
+      if(!inside && zone.active){
+
+        zone.active = false;
+
+        if(zone.onExit){
+          zone.onExit();
+        }
+
+      }
+
+    });
 
   }
 
@@ -1507,9 +1553,9 @@ function checkCabins(){
   "PRESS E TO ENTER CABIN"
 );
       if(!c._triggered){
-        c._triggered = true;
-        Events.emit("ENTER_CABIN", { cabin: c });
-      }
+  c._triggered = true;
+  Events.emit("ENTER_CABIN", { cabin: c });
+}
 
     } else {
       c._triggered = false;
@@ -1879,7 +1925,15 @@ function updateCamera(){
   camera.position.x += (targetX - camera.position.x) * 0.12;
 camera.position.y += (targetY - camera.position.y) * 0.12;
 camera.position.z += (targetZ - camera.position.z) * 0.12;
-  camera.lookAt(lookTarget);
+  camera.userData.lookTarget ??=
+  player.position.clone();
+
+camera.userData.lookTarget.lerp(
+  lookTarget,
+  0.08
+);
+
+camera.lookAt(camera.userData.lookTarget);
 }
 
 
@@ -2044,7 +2098,7 @@ joystick.addEventListener("touchend", () => {
 
 function move(){
 
-  if(insideYacht) return;
+  if(insideYacht && !yachtInterior.visible) return;
 
   /////////////////////////////////////////////////////
   // 🎮 INPUT VECTOR
@@ -2206,9 +2260,7 @@ function animate(){
 
   waterPositions.needsUpdate = true;
 
-  if(water.material.color){
-    water.material.color.offsetHSL(0.00002,0,0);
-  }
+ 
 
   /////////////////////////////////////////////////////
 // 🌟 HERO ANIMATION SYSTEM
@@ -2263,14 +2315,17 @@ if(moveSpeed > 0.01){
   leftArm.rotation.x *= 0.8;
   rightArm.rotation.x *= 0.8;
 }
+const basePlayerY = 1;
+
 if(dancing){
 
   player.position.y =
-    1 + Math.sin(Date.now()*0.01)*0.25;
+    basePlayerY +
+    Math.sin(Date.now()*0.01)*0.25;
 
 } else {
 
-  player.position.y = 1;
+  player.position.y = basePlayerY;
 
 }
   if(marker){
@@ -2284,7 +2339,9 @@ if(dancing){
   /////////////////////////////////////////////////////
 
   const heroDist =
-    player.position.distanceTo(hero.position);
+  hero
+    ? player.position.distanceTo(hero.position)
+    : 999;
   const yachtDist =
   player.position.distanceTo(yacht.position);
 
