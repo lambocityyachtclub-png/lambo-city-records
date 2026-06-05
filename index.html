@@ -101,7 +101,9 @@ const CONFIG = {
   stageInteraction: false,
   heroDialogue: true,
   music: true,
-  jumbotron: true
+  jumbotron: true,
+
+  harborBoats: true
 };
   
 const scene = new THREE.Scene();
@@ -1105,7 +1107,70 @@ yacht.add(yachtGlow);
 yacht.position.set(42,0,-120);
 
 scene.add(yacht);
+  
+/////////////////////////////////////////////////////
+// 🚤 LIVING HARBOR SYSTEM
+/////////////////////////////////////////////////////
 
+const harborBoats = [];
+
+if(FEATURES.harborBoats){
+
+  for(let i = 0; i < 4; i++){
+
+    const boat = new THREE.Group();
+
+    const hull = new THREE.Mesh(
+
+      new THREE.BoxGeometry(4,1,10),
+
+      new THREE.MeshStandardMaterial({
+        color:0x222222,
+        metalness:0.4,
+        roughness:0.6
+      })
+
+    );
+
+    hull.position.y = 1;
+
+    boat.add(hull);
+
+    const cabin = new THREE.Mesh(
+
+      new THREE.BoxGeometry(2,1.5,3),
+
+      new THREE.MeshStandardMaterial({
+        color:0xf5f5f5
+      })
+
+    );
+
+    cabin.position.set(0,2,-1);
+
+    boat.add(cabin);
+
+    boat.position.set(
+
+      -70 + (i * 45),
+      0,
+      -190 - Math.random() * 30
+
+    );
+
+    boat.userData = {
+
+      baseY: 0,
+      phase: Math.random() * Math.PI * 2
+
+    };
+
+    scene.add(boat);
+    harborBoats.push(boat);
+
+  }
+
+}
   /////////////////////////////////////////////////////
 // 🛥️ YACHT INTERIOR SYSTEM
 /////////////////////////////////////////////////////
@@ -2428,6 +2493,30 @@ else {
   helipad.material.emissiveIntensity =
     0.3 + Math.sin(Date.now() * 0.003) * 0.4;
 
+  /////////////////////////////////////////////////////
+// 🚤 HARBOR BOAT ANIMATION
+/////////////////////////////////////////////////////
+
+if(FEATURES.harborBoats){
+
+  const t = Date.now() * 0.001;
+
+  harborBoats.forEach(boat=>{
+
+    boat.position.y =
+      boat.userData.baseY +
+      Math.sin(
+        t + boat.userData.phase
+      ) * 0.35;
+
+    boat.rotation.z =
+      Math.sin(
+        t * 0.8 + boat.userData.phase
+      ) * 0.03;
+
+  });
+
+}
   AudioSystem.update();
   renderer.render(scene, camera);
 
