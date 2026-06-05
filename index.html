@@ -402,20 +402,13 @@ function handleEvent(type, data){
 }
       break;
 
-    case "ENTER_CABIN":
+   case "ENTER_CABIN":
 
-  console.log("Player entered cabin");
-
-  inside = true;
+  console.log("Cabin available");
 
   activeCabin = data.cabin;
 
   document.getElementById("msg").style.display = "block";
-
-  document.getElementById("zone").innerText =
-    "INSIDE CABIN";
-
-  rewardPlayer("cabin_entry");
 
   break;
 
@@ -1336,18 +1329,22 @@ if(!insideYacht && dist < 12){
 
     inside = true;
 
+    rewardPlayer("cabin_entry");
+    document.getElementById("msg").style.display = "block";
+
     player.position.set(
       activeCabin.group.position.x,
       1,
       activeCabin.group.position.z
     );
 
-    document.getElementById("zone").innerText = "PRIVATE CABIN";
+    document.getElementById("zone").innerText =
+      "PRIVATE CABIN";
 
   } else {
 
     inside = false;
-
+document.getElementById("msg").style.display = "none";
     player.position.set(
       activeCabin.group.position.x,
       1,
