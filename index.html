@@ -66,46 +66,40 @@ CABIN ACCESS ENABLED
 /////////////////////////////////////////////////////
 
 const CONFIG = {
-
   world: {
     limit: 220,
     stageRadius: 45
   },
 
-  economy: {
-    enabled: false,
-    debugCoins: true
+  gameplay: {
+    heroEnabled: true,
+    cabinAccess: true,
+    yachtAccess: true
   },
 
   audio: {
-    volume: 0.4,
-    enabled: true
-  },
-
-  gameplay: {
-    cabinAccess: true,
-    yachtAccess: true,
-    heroEnabled: true
+    enabled: true,
+    volume: 0.4
   }
-
 };
+
+const FEATURES = {
+  economy: false,
+  rewards: false,
+  cabins: true,
+  yachtInterior: true,
+  stageInteraction: true,
+  heroDialogue: true,
+  music: true,
+  jumbotron: true,
+  harborBoats: true
+};
+  
 /////////////////////////////////////////////////////
 // CORE ENGINE SYSTEM
 /////////////////////////////////////////////////////
   
-  const FEATURES = {
-  economy: false,
-  cabins: false,
-  yachtInterior: false,
-  rewards: false,
-  stageInteraction: false,
-  heroDialogue: true,
-  music: true,
-  jumbotron: true,
-
-  harborBoats: true
-};
-  
+ 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x000000);
 scene.fog = new THREE.FogExp2(0x080816, 0.012);
@@ -138,34 +132,69 @@ document.body.appendChild(interactionUI);
 /////////////////////////////////////////////////////
 // 🎮 INTERACTION MANAGER (CLEAN)
 /////////////////////////////////////////////////////
+/////////////////////////////////////////////////////
+// 🎯 INTERACTION REGISTRY (SINGLE SOURCE OF TRUTH)
+/////////////////////////////////////////////////////
+
+const InteractionRegistry = {
+
+  zones: [],
+
+  register(zone){
+    this.zones.push(zone);
+  },
+
+  update(player){
+
+    let active = null;
+    let bestDist = Infinity;
+
+    for(const z of this.zones){
+
+      const dist = player.position.distanceTo(z.position);
+      const inside = dist < z.radius;
+
+      if(inside && dist < bestDist){
+        bestDist = dist;
+        active = z;
+      }
+
+      if(inside && !z._active){
+        z._active = true;
+        z.onEnter?.();
+      }
+
+      if(!inside && z._active){
+        z._active = false;
+        z.onExit?.();
+      }
+    }
+
+    if(active){
+      InteractionManager.show(active.id, active.text());
+    } else {
+      InteractionManager.forceClear();
+    }
+  }
+};
 
 const InteractionManager = {
 
   current: null,
 
-  priorities: {
-    hero: 3,
-    yacht: 2,
-    cabin: 1,
-    dance: 1
-  },
-
   show(id, text){
-
-    if (
-      this.current &&
-      this.priorities[this.current] > this.priorities[id]
-    ) return;
-
     this.current = id;
     interactionUI.innerText = text;
     interactionUI.style.display = "block";
   },
 
   clear(id){
-
     if (this.current !== id) return;
+    this.current = null;
+    interactionUI.style.display = "none";
+  },
 
+  forceClear(){
     this.current = null;
     interactionUI.style.display = "none";
   }
@@ -1067,8 +1096,8 @@ scene.add(vipGlow);
 // 🚤 MEGA YACHT SYSTEM
 /////////////////////////////////////////////////////
 
-const yacht = new THREE.Group();
-
+yacht = new THREE.Group();
+  
 /////////////////////////////////////////////////////
 // MAIN BODY
 /////////////////////////////////////////////////////
@@ -1401,11 +1430,16 @@ let insideYacht = false;
 // 🔐 YACHT ACCESS CONTROL
 /////////////////////////////////////////////////////
 
-const DEVELOPER_MODE = true;
+/////////////////////////////////////////////////////
+// 🚤 YACHT ACCESS CONTROL CENTER
+/////////////////////////////////////////////////////
 
-// PUBLIC ACCESS OFF
-const PUBLIC_YACHT_ACCESS = false;
-const yachtTrigger = new THREE.Vector3(
+const YACHT_CONFIG = {
+  developerMode: true,
+  publicAccess: false,
+  triggerDistance: 12
+};
+  const yachtTrigger = new THREE.Vector3(
   42,
   0,
   -120
@@ -1426,32 +1460,26 @@ if(!insideYacht && dist < 12){
   // 🔒 PUBLIC ACCESS LOCK
   /////////////////////////////////////////////////////
 
-  if(!PUBLIC_YACHT_ACCESS && !DEVELOPER_MODE){
+if (!insideYacht && dist < 12) {
 
+  if (!YACHT_CONFIG.publicAccess && !YACHT_CONFIG.developerMode) {
     InteractionManager.show(
       "yacht",
       "PRIVATE YACHT — BOARDING PASS REQUIRED"
     );
-
-    return;
-  }
-   insideYacht = true;
-InteractionManager.clear("yacht");
-yachtInterior.visible = true;
-  
-    // MOVE PLAYER INSIDE
-    player.position.set(
-      42,
-      2,
-      -120
-    );
-playerBaseY = 2;
-    document.getElementById("zone").innerText =
-      "YACHT INTERIOR";
-
     return;
   }
 
+  insideYacht = true;
+  InteractionManager.clear("yacht");
+  yachtInterior.visible = true;
+
+  player.position.set(42, 2, -120);
+  playerBaseY = 2;
+
+  document.getElementById("zone").innerText = "YACHT INTERIOR";
+  return;
+}
   // EXIT YACHT
   if(insideYacht){
 
@@ -1695,22 +1723,16 @@ function checkCabins(){
 
       activeCabin = c;
 
-     InteractionManager.show(
-  "cabin",
-  "PRESS E TO ENTER CABIN"
-);
       if(!c._triggered){
-  c._triggered = true;
-  Events.emit("ENTER_CABIN", { cabin: c });
-}
+        c._triggered = true;
+        Events.emit("ENTER_CABIN", { cabin: c });
+      }
 
     } else {
       c._triggered = false;
     }
   }
-  if(!activeCabin){
-  InteractionManager.clear("cabin");
-}
+
 }
 
 /////////////////////////////////////////////////////
@@ -1984,51 +2006,48 @@ function nextHeroDialogue() {
 /////////////////////////////////////////////////////
 // 🎥 CAMERA
 /////////////////////////////////////////////////////
-
 function updateCamera() {
-    let baseOffsetX = 0;
-    let baseOffsetY = 7.5;
-    let baseOffsetZ = 11;
+  const speed = Math.hypot(velocity.x, velocity.z);
+  const speedFactor = Math.min(speed * 2.5, 1);
 
-    // Calculate player's speed
-    const speed = Math.hypot(velocity.x, velocity.z);
+  let baseOffsetX = 0;
+  let baseOffsetZ = 11 + speedFactor * 8;
+  let baseOffsetY = 7.5 + speedFactor * 3;
 
-    // Scale offsets based on speed (you can adjust the multiplier as needed)
-    const speedFactor = 1 + speed * 1.5; // Adjust multiplier for smooth scaling
+  const moveDir = new THREE.Vector3(velocity.x, 0, velocity.z);
 
-    // If we're near the stage, zoom out a bit
-    if (player.position.distanceTo(stage.position) < 60) {
-        baseOffsetY = 12 * speedFactor;
-        baseOffsetZ = 16 * speedFactor;
-    }
+  if (moveDir.length() > 0.01) moveDir.normalize();
 
-    // If we're near the yacht, adjust framing differently
-    if (player.position.distanceTo(yacht.position) < 30) {
-        baseOffsetX = 4 * speedFactor;
-        baseOffsetY = 11 * speedFactor;
-        baseOffsetZ = 18 * speedFactor;
-    }
+  if (player.position.distanceTo(stage.position) < 60) {
+    baseOffsetY = 12 * speedFactor;
+    baseOffsetZ = 16 * speedFactor;
+  }
 
-    // Smoothly move camera toward target offset
-    const targetX = player.position.x + baseOffsetX;
-    const targetY = player.position.y + baseOffsetY;
-    const targetZ = player.position.z + baseOffsetZ;
+  if (player.position.distanceTo(yacht.position) < 30) {
+    baseOffsetX = 4 * speedFactor;
+    baseOffsetY = 11 * speedFactor;
+    baseOffsetZ = 18 * speedFactor;
+  }
 
-    camera.position.x += (targetX - camera.position.x) * 0.12;
-    camera.position.y += (targetY - camera.position.y) * 0.12;
-    camera.position.z += (targetZ - camera.position.z) * 0.12;
+  const targetX = player.position.x + baseOffsetX;
+  const targetY = player.position.y + baseOffsetY;
+  const targetZ = player.position.z + baseOffsetZ;
 
-    // Make the camera look at a dynamic target (either stage or yacht, depending on distance)
-    let lookTarget = player.position.clone();
-    if (player.position.distanceTo(stage.position) < 60) {
-        lookTarget = stage.position.clone();
-    } else if (player.position.distanceTo(yacht.position) < 30) {
-        lookTarget = yacht.position.clone();
-    }
+  camera.position.x += (targetX - camera.position.x) * 0.12;
+  camera.position.y += (targetY - camera.position.y) * 0.12;
+  camera.position.z += (targetZ - camera.position.z) * 0.12;
 
-    camera.userData.lookTarget ??= player.position.clone();
-    camera.userData.lookTarget.lerp(lookTarget, 0.08);
-    camera.lookAt(camera.userData.lookTarget);
+  let lookTarget = player.position.clone();
+
+  if (player.position.distanceTo(stage.position) < 60) {
+    lookTarget = stage.position.clone();
+  } else if (player.position.distanceTo(yacht.position) < 30) {
+    lookTarget = yacht.position.clone();
+  }
+
+  camera.userData.lookTarget ??= player.position.clone();
+  camera.userData.lookTarget.lerp(lookTarget, 0.08);
+  camera.lookAt(camera.userData.lookTarget);
 }
 
 
@@ -2439,7 +2458,7 @@ if(yachtDist < 18 && !insideYacht){
   // 🔒 PUBLIC LOCKED MESSAGE
   /////////////////////////////////////////////////////
 
-  if(!PUBLIC_YACHT_ACCESS && !DEVELOPER_MODE){
+ if(!YACHT_CONFIG.publicAccess && !YACHT_CONFIG.developerMode){
 
     InteractionManager.show(
       "yacht",
