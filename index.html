@@ -1899,61 +1899,59 @@ scene.add(screen);
 
 document.addEventListener("keydown", e => {
 
- const key = e.key.toLowerCase();
+  const key = e.key.toLowerCase();
 
-if(key === "g"){
+  // DANCE
+  if(key === "g"){
 
-  dancing = !dancing;
+    dancing = !dancing;
 
-  if(dancing){
-   InteractionManager.show(
-  "dance",
-  "DANCING"
-);
-  } else {
-    InteractionManager.clear("dance");
-  }
-
-  return;
-}
-
-if(key !== "e") return;
-
-  const heroDist =
-  hero
-    ? player.position.distanceTo(hero.position)
-    : 999;
-
-  // HERO TALK
-  if(heroDist < 8){
-
-    if(!talkingToHero){
-      startHeroDialogue();
-    } else {
-      nextHeroDialogue();
+    if(dancing){
+      InteractionManager.show(
+        "dance",
+        "DANCING"
+      );
+    }else{
+      InteractionManager.clear("dance");
     }
 
     return;
   }
 
-  // YACHT SYSTEM
+  // ONLY HANDLE E BELOW
+  if(key !== "e") return;
+
+  // HERO DIALOGUE
+  if(talkingToHero){
+    nextHeroDialogue();
+    return;
+  }
+
+  const heroDist =
+    hero
+      ? player.position.distanceTo(hero.position)
+      : 999;
+
+  if(heroDist < 8){
+    startHeroDialogue();
+    return;
+  }
+
+  // YACHT
   const yachtDist =
     player.position.distanceTo(yacht.position);
 
-  if(yachtDist < 18){
+  if(insideYacht || yachtDist < 18){
+    toggleYachtInterior();
+    return;
+  }
 
-  toggleYachtInterior();
-
-  return;
-}
-
-  // CABIN SYSTEM
-if(activeCabin){
-  toggleCabin();
-}
+  // CABINS
+  if(activeCabin){
+    toggleCabin();
+  }
 
 });
-
 /////////////////////////////////////////////////////
 // 💬 INTERACTION SYSTEM (FIXED)
 /////////////////////////////////////////////////////
@@ -2441,60 +2439,49 @@ if(moveSpeed > 0.01){
 
 }
 
-  /////////////////////////////////////////////////////
-  // 👤 HERO PROXIMITY SYSTEM
-  /////////////////////////////////////////////////////
+ /////////////////////////////////////////////////////
+// 👤 HERO + YACHT PROXIMITY SYSTEM (FIXED)
+/////////////////////////////////////////////////////
 
-  const heroDist =
-  hero
-    ? player.position.distanceTo(hero.position)
-    : 999;
-  const yachtDist =
-  player.position.distanceTo(yacht.position);
+const heroDist = hero
+  ? player.position.distanceTo(hero.position)
+  : 999;
 
-if(yachtDist < 18 && !insideYacht){
+const yachtDist = player.position.distanceTo(yacht.position);
 
-  /////////////////////////////////////////////////////
-  // 🔒 PUBLIC LOCKED MESSAGE
-  /////////////////////////////////////////////////////
+// HERO INTERACTION
+if(heroDist < 8){
 
- if(!YACHT_CONFIG.publicAccess && !YACHT_CONFIG.developerMode){
+  if(!talkingToHero){
+    InteractionManager.show(
+      "hero",
+      "PRESS E TO TALK TO HERO"
+    );
+  }
 
+}
+
+// YACHT INTERACTION
+else if(yachtDist < 18 && !insideYacht){
+
+  if(!YACHT_CONFIG.publicAccess && !YACHT_CONFIG.developerMode){
     InteractionManager.show(
       "yacht",
       "PRIVATE YACHT — BOARDING PASS REQUIRED"
     );
-
   } else {
-
     InteractionManager.show(
       "yacht",
       "PRESS E TO ENTER YACHT"
     );
-
   }
 
-} else {
-
-  InteractionManager.clear("yacht");
-
 }
-  if(heroDist < 8){
 
-   InteractionManager.show(
-  "hero",
-  "PRESS E TO TALK TO HERO"
-);
-
- }
+// NOTHING ACTIVE
 else {
-
-  if(!talkingToHero){
-    InteractionManager.clear("hero");
-  }
-
+  InteractionManager.forceClear();
 }
-
   /////////////////////////////////////////////////////
   // 🌌 CINEMATIC LIGHT MOTION
   /////////////////////////////////////////////////////
