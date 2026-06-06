@@ -113,24 +113,85 @@ const camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 2000
 const canvas = document.getElementById("c");
 const renderer = new THREE.WebGLRenderer({canvas, antialias:true});
 renderer.setSize(innerWidth, innerHeight);
+/////////////////////////////////////////////////////
+// 💬 INTERACTION UI (SINGLE SOURCE OF TRUTH)
+/////////////////////////////////////////////////////
+
+const interactionUI = document.createElement("div");
+
+interactionUI.style.position = "absolute";
+interactionUI.style.bottom = "80px";
+interactionUI.style.left = "50%";
+interactionUI.style.transform = "translateX(-50%)";
+interactionUI.style.padding = "10px 20px";
+interactionUI.style.background = "rgba(0,0,0,0.7)";
+interactionUI.style.border = "1px solid #00ffff";
+interactionUI.style.color = "white";
+interactionUI.style.display = "none";
+interactionUI.style.zIndex = "50";
+
+document.body.appendChild(interactionUI);
+/////////////////////////////////////////////////////
+// 🎮 INTERACTION MANAGER (CLEAN)
+/////////////////////////////////////////////////////
+
+const InteractionManager = {
+
+  current: null,
+
+  priorities: {
+    hero: 3,
+    yacht: 2,
+    cabin: 1,
+    dance: 1
+  },
+
+  show(id, text){
+
+    if (
+      this.current &&
+      this.priorities[this.current] > this.priorities[id]
+    ) return;
+
+    this.current = id;
+    interactionUI.innerText = text;
+    interactionUI.style.display = "block";
+  },
+
+  clear(id){
+
+    if (this.current !== id) return;
+
+    this.current = null;
+    interactionUI.style.display = "none";
+  }
+};
+/////////////////////////////////////////////////////
+// ⚙️ RENDERER SETUP (UNCHANGED)
+/////////////////////////////////////////////////////
 
 renderer.setPixelRatio(1);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
-renderer.useLegacyLights = false; 
-renderer.powerPreference = "high-performance";  
+renderer.useLegacyLights = false;
+renderer.powerPreference = "high-performance";
+
 const size = () => {
   camera.aspect = innerWidth / innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(innerWidth, innerHeight);
 };
+
 window.addEventListener("resize", size);
 
-scene.add(new THREE.AmbientLight(0xffffff,0.7));
+/////////////////////////////////////////////////////
+// 💡 LIGHTING (UNCHANGED)
+/////////////////////////////////////////////////////
 
-const light = new THREE.PointLight(0x66ccff,1.5);
-light.position.set(0,25,40);
+scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+
+const light = new THREE.PointLight(0x66ccff, 1.5);
+light.position.set(0, 25, 40);
 scene.add(light);
-
 /////////////////////////////////////////////////////
 // PLAYER SYSTEM
 /////////////////////////////////////////////////////
@@ -286,10 +347,9 @@ let inside = false;
 
 // 🎮 MOVEMENT PHYSICS
 const velocity = new THREE.Vector3();
-
 const moveSettings = {
-  acceleration: 0.05,
-  maxSpeed: 0.85,
+  acceleration: 0.09,   // was 0.05
+  maxSpeed: 1.6,        // was 0.85
   friction: 0.86,
   rotationSpeed: 0.16
 };
@@ -300,6 +360,8 @@ const PLAYER_MODE = {
 let activeCabin = null;
 let stageInside = false;
 let dancing = false;
+
+let playerBaseY = 1;
   const GameState = {
   stageActive: false
 };
@@ -1352,17 +1414,17 @@ if(!insideYacht && dist < 12){
 
     return;
   }
-    insideYacht = true;
-    hideInteraction();
-    yachtInterior.visible = true;
-
+   insideYacht = true;
+InteractionManager.clear("yacht");
+yachtInterior.visible = true;
+  
     // MOVE PLAYER INSIDE
     player.position.set(
       42,
       2,
       -120
     );
-
+playerBaseY = 2;
     document.getElementById("zone").innerText =
       "YACHT INTERIOR";
 
@@ -1373,7 +1435,7 @@ if(!insideYacht && dist < 12){
   if(insideYacht){
 
     insideYacht = false;
-    hideInteraction();
+    InteractionManager.clear("yacht");
     yachtInterior.visible = false;
 
     // MOVE PLAYER OUTSIDE
@@ -1382,7 +1444,7 @@ if(!insideYacht && dist < 12){
       1,
       -100
     );
-
+playerBaseY = 1;
     document.getElementById("zone").innerText =
       "MEGA YACHT DISTRICT";
   }
@@ -1848,62 +1910,11 @@ if(activeCabin){
 }
 
 });
-  /////////////////////////////////////////////////////
-// 🎮 INTERACTION MANAGER
-/////////////////////////////////////////////////////
 
-const InteractionManager = {
-
-  current: null,
-
-  priorities: {
-    hero: 3,
-    yacht: 2,
-    cabin: 1
-  },
-
-  show(id, text){
-
-    if(
-      this.current &&
-      this.priorities[this.current] >
-      this.priorities[id]
-    ){
-      return;
-    }
-
-    this.current = id;
-
-    interactionUI.innerText = text;
-    interactionUI.style.display = "block";
-  },
-
-  clear(id){
-
-    if(this.current !== id) return;
-
-    this.current = null;
-
-    interactionUI.style.display = "none";
-  }
-
-};
 /////////////////////////////////////////////////////
 // 💬 INTERACTION SYSTEM (FIXED)
 /////////////////////////////////////////////////////
 
-  
-const interactionUI = document.createElement("div");
-  interactionUI.style.position = "absolute";
-interactionUI.style.bottom = "80px";
-interactionUI.style.left = "50%";
-interactionUI.style.transform = "translateX(-50%)";
-interactionUI.style.padding = "10px 20px";
-interactionUI.style.background = "rgba(0,0,0,0.7)";
-interactionUI.style.border = "1px solid #00ffff";
-interactionUI.style.color = "white";
-interactionUI.style.display = "none";
-  
   const dialogueUI = document.createElement("div");
   dialogueUI.style.position = "absolute";
 dialogueUI.style.bottom = "140px";
@@ -1915,9 +1926,6 @@ dialogueUI.style.border = "1px solid #00ffff";
 dialogueUI.style.color = "white";
 dialogueUI.style.display = "none";
   document.body.appendChild(dialogueUI);
-  
-document.body.appendChild(interactionUI);
-
 
 
 /////////////////////////////////////////////////////
@@ -2164,114 +2172,109 @@ function move(){
 
   if(insideYacht && !yachtInterior.visible) return;
 
-  /////////////////////////////////////////////////////
-  // 🎮 INPUT VECTOR
-  /////////////////////////////////////////////////////
-
   let inputX = 0;
   let inputZ = 0;
 
-  // KEYBOARD
   if(keys["w"]) inputZ -= 1;
   if(keys["s"]) inputZ += 1;
   if(keys["a"]) inputX -= 1;
   if(keys["d"]) inputX += 1;
 
-  // MOBILE JOYSTICK
   if(joyActive){
-
     inputX += joyX;
     inputZ += joyY;
-
   }
 
-  /////////////////////////////////////////////////////
-  // NORMALIZE INPUT
-  /////////////////////////////////////////////////////
-
-  const inputLength =
-    Math.hypot(inputX, inputZ);
+  const inputLength = Math.hypot(inputX,inputZ);
 
   if(inputLength > 0){
-
     inputX /= inputLength;
     inputZ /= inputLength;
 
-    /////////////////////////////////////////////////////
-    // ACCELERATION
-    /////////////////////////////////////////////////////
+    const multiplier =
+      PLAYER_MODE.skateboard
+      ? PLAYER_MODE.speedMultiplier
+      : 1;
 
-    const multiplier = PLAYER_MODE.skateboard
-  ? PLAYER_MODE.speedMultiplier
-  : 1;
+    velocity.x +=
+      inputX *
+      moveSettings.acceleration *
+      multiplier *
+      1.2;
 
-velocity.x += inputX * moveSettings.acceleration * multiplier;
-velocity.z += inputZ * moveSettings.acceleration * multiplier;
+    velocity.z +=
+      inputZ *
+      moveSettings.acceleration *
+      multiplier *
+      1.2;
+  }
 
-  /////////////////////////////////////////////////////
-  // FRICTION
-  /////////////////////////////////////////////////////
+  // Always apply friction
+  const friction =
+    inputLength > 0 ? 0.92 : 0.80;
 
-  velocity.x *= moveSettings.friction;
-  velocity.z *= moveSettings.friction;
+  velocity.x *= friction;
+  velocity.z *= friction;
 
-  /////////////////////////////////////////////////////
-  // SPEED LIMIT
-  /////////////////////////////////////////////////////
-
-  const speed =
-    Math.hypot(velocity.x, velocity.z);
+  const speed = Math.hypot(
+    velocity.x,
+    velocity.z
+  );
 
   if(speed > moveSettings.maxSpeed){
-
     velocity.x =
-      (velocity.x / speed) *
+      velocity.x / speed *
       moveSettings.maxSpeed;
 
     velocity.z =
-      (velocity.z / speed) *
+      velocity.z / speed *
       moveSettings.maxSpeed;
   }
-
-  /////////////////////////////////////////////////////
-  // APPLY MOVEMENT
-  /////////////////////////////////////////////////////
 
   player.position.x += velocity.x;
   player.position.z += velocity.z;
 
-  /////////////////////////////////////////////////////
-  // PLAYER ROTATION
-  /////////////////////////////////////////////////////
-// PLAYER ROTATION
-if (speed > 0.05) {
+  if(speed > 0.05){
+    const targetRotation =
+      Math.atan2(
+        velocity.x,
+        velocity.z
+      );
 
-  const targetRotation = Math.atan2(velocity.x, velocity.z);
+    let delta =
+      targetRotation -
+      player.rotation.y;
 
-  let delta = targetRotation - player.rotation.y;
+    delta =
+      Math.atan2(
+        Math.sin(delta),
+        Math.cos(delta)
+      );
 
-  delta = Math.atan2(Math.sin(delta), Math.cos(delta));
+    player.rotation.y +=
+      delta *
+      moveSettings.rotationSpeed;
+  }
 
-  player.rotation.y += delta * moveSettings.rotationSpeed;
+  player.position.x =
+    Math.max(
+      -WORLD_LIMIT,
+      Math.min(
+        WORLD_LIMIT,
+        player.position.x
+      )
+    );
 
-} else {
-  // hold last direction (no drift)
+  player.position.z =
+    Math.max(
+      -WORLD_LIMIT,
+      Math.min(
+        WORLD_LIMIT,
+        player.position.z
+      )
+    );
 }
-  /////////////////////////////////////////////////////
-  // WORLD LIMITS
-  /////////////////////////////////////////////////////
-
-  player.position.x = Math.max(
-    -WORLD_LIMIT,
-    Math.min(WORLD_LIMIT, player.position.x)
-  );
-
-  player.position.z = Math.max(
-    -WORLD_LIMIT,
-    Math.min(WORLD_LIMIT, player.position.z)
-  );
-
-}
+ 
 /////////////////////////////////////////////////////
 // MAIN GAME LOOP
 /////////////////////////////////////////////////////
@@ -2378,17 +2381,16 @@ if(moveSpeed > 0.01){
   leftArm.rotation.x *= 0.8;
   rightArm.rotation.x *= 0.8;
 }
-const basePlayerY = 1;
 
-if(dancing){
+  if(dancing){
 
   player.position.y =
-    basePlayerY +
+    playerBaseY +
     Math.sin(Date.now()*0.01)*0.25;
 
 } else {
 
-  player.position.y = basePlayerY;
+  player.position.y = playerBaseY;
 
 }
   if(marker){
