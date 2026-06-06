@@ -110,9 +110,13 @@ const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x000000);
 scene.fog = new THREE.FogExp2(0x080816, 0.012);
 const camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 2000);
+  let stage;
+  let yacht;
 const canvas = document.getElementById("c");
 const renderer = new THREE.WebGLRenderer({canvas, antialias:true});
 renderer.setSize(innerWidth, innerHeight);
+
+  
 /////////////////////////////////////////////////////
 // 💬 INTERACTION UI (SINGLE SOURCE OF TRUTH)
 /////////////////////////////////////////////////////
@@ -338,13 +342,30 @@ player.add(chestGlow);
 // PLAYER POSITION
 /////////////////////////////////////////////////////
 
-player.position.set(0,1,-40);
+  player.position.set(0,1,-40);
 scene.add(player);
+
+/////////////////////////////////////////////////////
+// 🛹 SKATEBOARD VISUAL (ATTACHED TO PLAYER)
+/////////////////////////////////////////////////////
+
+const skateboard = new THREE.Mesh(
+  new THREE.BoxGeometry(1.6, 0.15, 3.2),
+  new THREE.MeshStandardMaterial({
+    color: 0x111111,
+    roughness: 0.8,
+    metalness: 0.2
+  })
+);
+
+skateboard.position.set(0, 0.2, 0);
+player.add(skateboard);
+
 const keys = {};
 let started = false;
 let coins = 0;
 let inside = false;
-
+  
 // 🎮 MOVEMENT PHYSICS
 const velocity = new THREE.Vector3();
 const moveSettings = {
@@ -1001,8 +1022,8 @@ for(let i = 0; i < 24; i++){
 // 🎤 FESTIVAL STAGE
 /////////////////////////////////////////////////////
 
-const stage = new THREE.Mesh(
 
+  stage = new THREE.Mesh(
   new THREE.BoxGeometry(40,12,12),
 
   new THREE.MeshStandardMaterial({
@@ -1964,48 +1985,50 @@ function nextHeroDialogue() {
 // 🎥 CAMERA
 /////////////////////////////////////////////////////
 
-function updateCamera(){
+function updateCamera() {
+    let baseOffsetX = 0;
+    let baseOffsetY = 7.5;
+    let baseOffsetZ = 11;
 
-  let baseOffsetX = 0;
-  let baseOffsetY = 7.5;
-  let baseOffsetZ = 11;
-  let lookTarget = player.position.clone();
+    // Calculate player's speed
+    const speed = Math.hypot(velocity.x, velocity.z);
 
-  const distToStage = player.position.distanceTo(stage.position);
-  const distToYacht = player.position.distanceTo(yacht.position);
+    // Scale offsets based on speed (you can adjust the multiplier as needed)
+    const speedFactor = 1 + speed * 1.5; // Adjust multiplier for smooth scaling
 
-  // 🌊 STAGE ZONE FOCUS (slight cinematic pull)
-  if(distToStage < 60){
-    baseOffsetY = 12;
-    baseOffsetZ = 16;
-    lookTarget = stage.position.clone();
-  }
+    // If we're near the stage, zoom out a bit
+    if (player.position.distanceTo(stage.position) < 60) {
+        baseOffsetY = 12 * speedFactor;
+        baseOffsetZ = 16 * speedFactor;
+    }
 
-  // 🚤 YACHT ZONE FOCUS (luxury framing)
-  if(distToYacht < 30){
-    baseOffsetX = 4;
-    baseOffsetY = 11;
-    baseOffsetZ = 18;
-    lookTarget = yacht.position.clone();
-  }
+    // If we're near the yacht, adjust framing differently
+    if (player.position.distanceTo(yacht.position) < 30) {
+        baseOffsetX = 4 * speedFactor;
+        baseOffsetY = 11 * speedFactor;
+        baseOffsetZ = 18 * speedFactor;
+    }
 
-  // 📷 SMOOTH FOLLOW
-  const targetX = player.position.x + baseOffsetX;
-  const targetY = player.position.y + baseOffsetY;
-  const targetZ = player.position.z + baseOffsetZ;
+    // Smoothly move camera toward target offset
+    const targetX = player.position.x + baseOffsetX;
+    const targetY = player.position.y + baseOffsetY;
+    const targetZ = player.position.z + baseOffsetZ;
 
-  camera.position.x += (targetX - camera.position.x) * 0.12;
-camera.position.y += (targetY - camera.position.y) * 0.12;
-camera.position.z += (targetZ - camera.position.z) * 0.12;
-  camera.userData.lookTarget ??=
-  player.position.clone();
+    camera.position.x += (targetX - camera.position.x) * 0.12;
+    camera.position.y += (targetY - camera.position.y) * 0.12;
+    camera.position.z += (targetZ - camera.position.z) * 0.12;
 
-camera.userData.lookTarget.lerp(
-  lookTarget,
-  0.08
-);
+    // Make the camera look at a dynamic target (either stage or yacht, depending on distance)
+    let lookTarget = player.position.clone();
+    if (player.position.distanceTo(stage.position) < 60) {
+        lookTarget = stage.position.clone();
+    } else if (player.position.distanceTo(yacht.position) < 30) {
+        lookTarget = yacht.position.clone();
+    }
 
-camera.lookAt(camera.userData.lookTarget);
+    camera.userData.lookTarget ??= player.position.clone();
+    camera.userData.lookTarget.lerp(lookTarget, 0.08);
+    camera.lookAt(camera.userData.lookTarget);
 }
 
 
