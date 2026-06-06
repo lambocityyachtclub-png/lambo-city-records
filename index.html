@@ -288,12 +288,14 @@ let inside = false;
 const velocity = new THREE.Vector3();
 
 const moveSettings = {
-
-  acceleration: 0.026,
-  maxSpeed: 0.40,
-  friction: 0.88,
+  acceleration: 0.05,
+  maxSpeed: 0.85,
+  friction: 0.86,
   rotationSpeed: 0.16
-
+};
+const PLAYER_MODE = {
+  skateboard: true,
+  speedMultiplier: 1.6
 };
 let activeCabin = null;
 let stageInside = false;
@@ -2199,13 +2201,12 @@ function move(){
     // ACCELERATION
     /////////////////////////////////////////////////////
 
-    velocity.x +=
-      inputX * moveSettings.acceleration;
+    const multiplier = PLAYER_MODE.skateboard
+  ? PLAYER_MODE.speedMultiplier
+  : 1;
 
-    velocity.z +=
-      inputZ * moveSettings.acceleration;
-
-  }
+velocity.x += inputX * moveSettings.acceleration * multiplier;
+velocity.z += inputZ * moveSettings.acceleration * multiplier;
 
   /////////////////////////////////////////////////////
   // FRICTION
