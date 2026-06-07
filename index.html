@@ -214,7 +214,16 @@ const size = () => {
   renderer.setSize(innerWidth, innerHeight);
 };
 
-window.addEventListener("resize", size);
+window.addEventListener("resize", () => {
+
+  size();
+
+  renderer.render(
+    scene,
+    camera
+  );
+
+});
 
 /////////////////////////////////////////////////////
 // 💡 LIGHTING (UNCHANGED)
@@ -374,6 +383,17 @@ player.add(chestGlow);
   player.position.set(0,1,-40);
 scene.add(player);
 
+camera.position.set(
+  player.position.x,
+  player.position.y + 9,
+  player.position.z + 15
+);
+
+camera.lookAt(
+  player.position.x,
+  player.position.y + 2,
+  player.position.z
+);
 /////////////////////////////////////////////////////
 // 🛹 SKATEBOARD VISUAL (ATTACHED TO PLAYER)
 /////////////////////////////////////////////////////
@@ -427,8 +447,9 @@ function start(){
   document.getElementById("zone").innerText = "WELCOME TO LAMBO CITY";
 
   updateHUD();
+
   AudioSystem.init();
-  AudioSystem.play(); // ✅ MUST be triggered by user gesture
+  AudioSystem.play();
 }
   
 /////////////////////////////////////////////////////
@@ -545,6 +566,39 @@ const AudioSystem = {
 
   init(){
 
+    this.stageAudio = new Audio(
+      "https://cdn.pixabay.com/download/audio/2022/03/15/audio_115b9b7d3c.mp3"
+    );
+    this.stageAudio.loop = true;
+    this.stageAudio.volume = 0;
+
+    this.oceanAudio = new Audio(
+      "https://cdn.pixabay.com/download/audio/2021/08/09/audio_d1bab4fa1f.mp3"
+    );
+    this.oceanAudio.loop = true;
+    this.oceanAudio.volume = 0.25;
+  },
+
+  play(){
+    this.stageAudio?.play().catch(()=>{});
+    this.oceanAudio?.play().catch(()=>{});
+  },
+
+  update(){
+
+    if(!stage || !this.stageAudio) return;
+
+    const dist = player.position.distanceTo(stage.position);
+    const maxDist = 140;
+
+    let volume = 1 - (dist / maxDist);
+    volume = Math.max(0, Math.min(1, volume));
+
+    this.stageAudio.volume +=
+      (volume * 0.6 - this.stageAudio.volume) * 0.03;
+  }
+};
+
     /////////////////////////////////////////////////////
     // STAGE MUSIC
     /////////////////////////////////////////////////////
@@ -569,49 +623,43 @@ const AudioSystem = {
 
   },
 
-  play(){
+ play(){
 
+  if(this.stageAudio){
     this.stageAudio.play().catch(()=>{});
-    this.oceanAudio.play().catch(()=>{});
+  }
 
-  },
+  if(this.oceanAudio){
+    this.oceanAudio.play().catch(()=>{});
+  }
+
+},
 
   update(){
 
     /////////////////////////////////////////////////////
     // DISTANCE TO STAGE
     /////////////////////////////////////////////////////
+update(){
 
-    const dist =
-      player.position.distanceTo(stage.position);
+  if(!stage) return;
+  if(!this.stageAudio) return;
 
-    /////////////////////////////////////////////////////
-    // MAX HEARING DISTANCE
-    /////////////////////////////////////////////////////
+  const dist =
+    player.position.distanceTo(stage.position);
 
-    const maxDist = 140;
+  const maxDist = 140;
 
-    /////////////////////////////////////////////////////
-    // NORMALIZED VOLUME
-    /////////////////////////////////////////////////////
+  let volume =
+    1 - (dist / maxDist);
 
-    let volume =
-      1 - (dist / maxDist);
+  volume =
+    Math.max(0, Math.min(1, volume));
 
-    volume =
-      Math.max(0, Math.min(1, volume));
+  this.stageAudio.volume +=
+    (volume * 0.6 - this.stageAudio.volume) * 0.03;
 
-    /////////////////////////////////////////////////////
-    // SMOOTH AUDIO FEEL
-    /////////////////////////////////////////////////////
-
-    this.stageAudio.volume +=
-      (volume * 0.6 - this.stageAudio.volume) * 0.03;
-
-  }
-
-};
-
+}
 /////////////////////////////////////////////////////
 // WORLD SYSTEM
 /////////////////////////////////////////////////////
@@ -1992,51 +2040,112 @@ function nextHeroDialogue() {
 /////////////////////////////////////////////////////
 // 🎥 CAMERA
 /////////////////////////////////////////////////////
+
+let cameraSpeedLerp = 0;
+
 function updateCamera() {
-  const speed = Math.hypot(velocity.x, velocity.z);
-  const speedFactor = Math.min(speed * 2.5, 1);
+  
+  if(!player) return;
+  
+  const speed = Math.hypot(
+    velocity.x,
+    velocity.z
+  );
 
-  let baseOffsetX = 0;
-  let baseOffsetZ = 11 + speedFactor * 8;
-  let baseOffsetY = 7.5 + speedFactor * 3;
+  const speedFactor =
+    Math.min(speed * 2.5, 1);
 
-  const moveDir = new THREE.Vector3(velocity.x, 0, velocity.z);
+  // Smooth zoom transition
+  cameraSpeedLerp +=
+    (speedFactor - cameraSpeedLerp) * 0.05;
 
-  if (moveDir.length() > 0.01) moveDir.normalize();
+  /////////////////////////////////////////////////////
+  // DEFAULT CAMERA
+  /////////////////////////////////////////////////////
 
-  if (player.position.distanceTo(stage.position) < 60) {
-    baseOffsetY = 12 * speedFactor;
-    baseOffsetZ = 16 * speedFactor;
+  let offsetX = 0;
+  let offsetY = 9 + cameraSpeedLerp * 2;
+  let offsetZ = 15 + cameraSpeedLerp * 4;
+
+  /////////////////////////////////////////////////////
+  // STAGE CINEMATIC
+  /////////////////////////////////////////////////////
+
+  if(
+    player.position.distanceTo(stage.position)
+    < 60
+  ){
+    offsetY = 11;
+    offsetZ = 18;
   }
 
-  if (player.position.distanceTo(yacht.position) < 30) {
-    baseOffsetX = 4 * speedFactor;
-    baseOffsetY = 11 * speedFactor;
-    baseOffsetZ = 18 * speedFactor;
+  /////////////////////////////////////////////////////
+  // YACHT CINEMATIC
+  /////////////////////////////////////////////////////
+
+  if(
+    player.position.distanceTo(yacht.position)
+    < 30
+  ){
+    offsetX = 3;
+    offsetY = 10;
+    offsetZ = 17;
   }
 
-  const targetX = player.position.x + baseOffsetX;
-  const targetY = player.position.y + baseOffsetY;
-  const targetZ = player.position.z + baseOffsetZ;
+  /////////////////////////////////////////////////////
+  // CAMERA MOVEMENT
+  /////////////////////////////////////////////////////
 
-  camera.position.x += (targetX - camera.position.x) * 0.12;
-  camera.position.y += (targetY - camera.position.y) * 0.12;
-  camera.position.z += (targetZ - camera.position.z) * 0.12;
+  const targetPosition = new THREE.Vector3(
+    player.position.x + offsetX,
+    player.position.y + offsetY,
+    player.position.z + offsetZ
+  );
+
+  camera.position.lerp(
+    targetPosition,
+    0.08
+  );
+
+  /////////////////////////////////////////////////////
+  // LOOK TARGET
+  /////////////////////////////////////////////////////
 
   let lookTarget = player.position.clone();
+  lookTarget.y += 2.5;
 
-  if (player.position.distanceTo(stage.position) < 60) {
-    lookTarget = stage.position.clone();
-  } else if (player.position.distanceTo(yacht.position) < 30) {
-    lookTarget = yacht.position.clone();
+  if(
+    player.position.distanceTo(stage.position)
+    < 60
+  ){
+    lookTarget.lerp(
+      stage.position.clone(),
+      0.35
+    );
   }
 
-  camera.userData.lookTarget ??= player.position.clone();
-  camera.userData.lookTarget.lerp(lookTarget, 0.08);
-  camera.lookAt(camera.userData.lookTarget);
+  if(
+    player.position.distanceTo(yacht.position)
+    < 30
+  ){
+    lookTarget.lerp(
+      yacht.position.clone(),
+      0.25
+    );
+  }
+
+  camera.userData.lookTarget ??=
+    lookTarget.clone();
+
+  camera.userData.lookTarget.lerp(
+    lookTarget,
+    0.08
+  );
+
+  camera.lookAt(
+    camera.userData.lookTarget
+  );
 }
-
-
 /////////////////////////////////////////////////////
 // 🎧 STAGE ENERGY SYSTEM (FIXED)
 /////////////////////////////////////////////////////
@@ -2044,7 +2153,10 @@ function updateCamera() {
 
 function updateWorldMood(){
 
-  const stageDist = player.position.distanceTo(stage.position);
+  if(!stage) return;
+
+  const stageDist =
+    player.position.distanceTo(stage.position);
 
   let targetFog = 0.012;
 
@@ -2057,6 +2169,8 @@ function updateWorldMood(){
 }
 
 function updateStageEnergy(){
+
+  if(!stage) return;
   
   const dist = player.position.distanceTo(stage.position);
 
@@ -2262,6 +2376,13 @@ function move(){
   player.position.x += velocity.x;
   player.position.z += velocity.z;
 
+  if(isNaN(player.position.x)){
+  player.position.set(0,1,-40);
+}
+
+if(isNaN(player.position.z)){
+  player.position.set(0,1,-40);
+}
   if(speed > 0.05){
     const targetRotation =
       Math.atan2(
@@ -2315,19 +2436,20 @@ function animate(){
     return;
   }
 
-  // 1. INPUT
   move();
 
-  // 2. WORLD INTERACTIONS
   checkStageEvents();
   checkCabins();
 
-  // 3. GAME LOGIC
   updateStageEnergy();
   updateWorldMood();
 
-   // 4. CAMERA
   updateCamera();
+
+  AudioSystem.update();
+
+  renderer.render(scene, camera);
+}
 
   /////////////////////////////////////////////////////
   // 🌊 DYNAMIC OCEAN MOTION
@@ -2466,8 +2588,9 @@ else if(yachtDist < 18 && !insideYacht){
 
 }
 
+
 // NOTHING ACTIVE
-else {
+else if(!talkingToHero && !dancing){
   InteractionManager.forceClear();
 }
   /////////////////////////////////////////////////////
@@ -2537,8 +2660,14 @@ if(FEATURES.harborBoats){
   });
 
 }
+  if(CONFIG.audio.enabled){
   AudioSystem.update();
-  renderer.render(scene, camera);
+}
+
+renderer.render(
+  scene,
+  camera
+);
 
 }
 
