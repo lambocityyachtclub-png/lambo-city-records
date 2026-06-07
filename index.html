@@ -4697,123 +4697,84 @@ joystick.addEventListener("touchend", () => {
 
 });
 /////////////////////////////////////////////////////
-// 🚶 MOVEMENT
+// 🚶 MOVEMENT SYSTEM (FINAL CLEAN)
 /////////////////////////////////////////////////////
 
-function move(){
+function move() {
 
-  if(insideYacht && !yachtInterior.visible) return;
+  if (!player) return;
+
+  if (insideYacht && !yachtInterior.visible) return;
 
   let inputX = 0;
   let inputZ = 0;
 
-  if(keys["w"]) inputZ -= 1;
-  if(keys["s"]) inputZ += 1;
-  if(keys["a"]) inputX -= 1;
-  if(keys["d"]) inputX += 1;
+  // Keyboard input
+  if (keys["w"]) inputZ -= 1;
+  if (keys["s"]) inputZ += 1;
+  if (keys["a"]) inputX -= 1;
+  if (keys["d"]) inputX += 1;
 
-  if(joyActive){
+  // Mobile joystick input
+  if (joyActive) {
     inputX += joyX;
     inputZ += joyY;
   }
 
-  const inputLength = Math.hypot(inputX,inputZ);
+  const inputLength = Math.hypot(inputX, inputZ);
 
-  if(inputLength > 0){
+  // Normalize direction
+  if (inputLength > 0) {
     inputX /= inputLength;
     inputZ /= inputLength;
 
-    const multiplier =
-      PLAYER_MODE.skateboard
+    const multiplier = PLAYER_MODE.skateboard
       ? PLAYER_MODE.speedMultiplier
       : 1;
 
-    velocity.x +=
-      inputX *
-      moveSettings.acceleration *
-      multiplier *
-      1.2;
-
-    velocity.z +=
-      inputZ *
-      moveSettings.acceleration *
-      multiplier *
-      1.2;
+    velocity.x += inputX * moveSettings.acceleration * multiplier;
+    velocity.z += inputZ * moveSettings.acceleration * multiplier;
   }
 
-  // Always apply friction
-  const friction =
-    inputLength > 0 ? 0.92 : 0.80;
+  // Friction (smooth stop/start feel)
+  const friction = inputLength > 0 ? 0.90 : 0.82;
 
   velocity.x *= friction;
   velocity.z *= friction;
 
-  const speed = Math.hypot(
-    velocity.x,
-    velocity.z
-  );
+  // Speed clamp
+  const speed = Math.hypot(velocity.x, velocity.z);
 
-  if(speed > moveSettings.maxSpeed){
-    velocity.x =
-      velocity.x / speed *
-      moveSettings.maxSpeed;
-
-    velocity.z =
-      velocity.z / speed *
-      moveSettings.maxSpeed;
+  if (speed > moveSettings.maxSpeed) {
+    velocity.x = (velocity.x / speed) * moveSettings.maxSpeed;
+    velocity.z = (velocity.z / speed) * moveSettings.maxSpeed;
   }
 
+  // Apply movement
   player.position.x += velocity.x;
   player.position.z += velocity.z;
 
-  if(isNaN(player.position.x)){
-  player.position.set(0,1,-40);
-}
-
-if(isNaN(player.position.z)){
-  player.position.set(0,1,-40);
-}
-  if(speed > 0.05){
-    const targetRotation =
-      Math.atan2(
-        velocity.x,
-        velocity.z
-      );
-
-    let delta =
-      targetRotation -
-      player.rotation.y;
-
-    delta =
-      Math.atan2(
-        Math.sin(delta),
-        Math.cos(delta)
-      );
-
-    player.rotation.y +=
-      delta *
-      moveSettings.rotationSpeed;
+  // Safety reset (prevents NaN crashes)
+  if (isNaN(player.position.x) || isNaN(player.position.z)) {
+    player.position.set(0, 1, -40);
+    velocity.set(0, 0, 0);
   }
 
-  player.position.x =
-    Math.max(
-      -WORLD_LIMIT,
-      Math.min(
-        WORLD_LIMIT,
-        player.position.x
-      )
-    );
+  // Rotation (face movement direction)
+  if (speed > 0.05) {
+    const targetRotation = Math.atan2(velocity.x, velocity.z);
 
-  player.position.z =
-    Math.max(
-      -WORLD_LIMIT,
-      Math.min(
-        WORLD_LIMIT,
-        player.position.z
-      )
-    );
+    let delta = targetRotation - player.rotation.y;
+
+    delta = Math.atan2(Math.sin(delta), Math.cos(delta));
+
+    player.rotation.y += delta * moveSettings.rotationSpeed;
+  }
+
+  // World boundary clamp
+  player.position.x = Math.max(-WORLD_LIMIT, Math.min(WORLD_LIMIT, player.position.x));
+  player.position.z = Math.max(-WORLD_LIMIT, Math.min(WORLD_LIMIT, player.position.z));
 }
- 
 /////////////////////////////////////////////////////
 // MAIN GAME LOOP
 /////////////////////////////////////////////////////
