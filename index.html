@@ -252,9 +252,45 @@ const light = new THREE.PointLight(0x66ccff, 1.5);
 light.position.set(0, 25, 40);
 scene.add(light);
 /////////////////////////////////////////////////////
-// PLAYER SYSTEM
+// 👤 PLAYER SYSTEM
 /////////////////////////////////////////////////////
-  
+
+const player = new THREE.Group();
+scene.add(player);
+
+const bodyMat = new THREE.MeshStandardMaterial({
+  color: 0x111111,
+  roughness: 0.7
+});
+
+const glowMat = new THREE.MeshStandardMaterial({
+  color: 0x00ffff,
+  emissive: 0x00ffff,
+  emissiveIntensity: 1
+});
+
+// body
+const torso = new THREE.Mesh(
+  new THREE.BoxGeometry(1.2, 1.8, 0.7),
+  bodyMat
+);
+torso.position.y = 2;
+player.add(torso);
+
+// head
+const head = new THREE.Mesh(
+  new THREE.BoxGeometry(0.8, 0.8, 0.8),
+  new THREE.MeshStandardMaterial({ color: 0xffffff })
+);
+head.position.y = 3.4;
+player.add(head);
+
+// glow
+const chestGlow = new THREE.PointLight(0x00ffff, 1.2, 10);
+chestGlow.position.set(0, 2.5, 0);
+player.add(chestGlow);
+
+player.position.set(0, 1, -40);
 /////////////////////////////////////////////////////
 // 👤 PLAYER AVATAR SYSTEM (IMMERSION V1)
 /////////////////////////////////////////////////////
