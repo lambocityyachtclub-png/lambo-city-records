@@ -4435,107 +4435,79 @@ function nextHeroDialogue() {
   }
 }
 /////////////////////////////////////////////////////
-// 🎥 CAMERA FOLLOW SYSTEM
+// 🎥 CAMERA SYSTEM (FINAL CLEAN VERSION)
 /////////////////////////////////////////////////////
+
+let cameraLerp = 0;
+const cameraTarget = new THREE.Vector3();
+const lookTarget = new THREE.Vector3();
 
 function updateCamera() {
 
-  const target = new THREE.Vector3(
-    player.position.x,
-    player.position.y + 8,
-    player.position.z + 14
-  );
+  if (!player) return;
 
-  camera.position.lerp(target, 0.08);
-  camera.lookAt(player.position.x, player.position.y + 2, player.position.z);
-}
-  /////////////////////////////////////////////////////
-  // DEFAULT CAMERA
-  /////////////////////////////////////////////////////
+  const speed = Math.hypot(velocity.x, velocity.z);
+  const speedFactor = Math.min(speed * 2.5, 1);
 
+  cameraLerp += (speedFactor - cameraLerp) * 0.05;
+
+  // -----------------------------
+  // BASE OFFSET (FOLLOW CAMERA)
+  // -----------------------------
   let offsetX = 0;
-  let offsetY = 9 + cameraSpeedLerp * 2;
-  let offsetZ = 15 + cameraSpeedLerp * 4;
+  let offsetY = 9 + cameraLerp * 2;
+  let offsetZ = 15 + cameraLerp * 4;
 
-  /////////////////////////////////////////////////////
-  // STAGE CINEMATIC
-  /////////////////////////////////////////////////////
-
-  if(
-    player.position.distanceTo(stage.position)
-    < 60
-  ){
+  // -----------------------------
+  // STAGE CINEMATIC MODE
+  // -----------------------------
+  if (stage && player.position.distanceTo(stage.position) < 60) {
     offsetY = 11;
     offsetZ = 18;
   }
 
-  /////////////////////////////////////////////////////
-  // YACHT CINEMATIC
-  /////////////////////////////////////////////////////
-
-  if(
-    player.position.distanceTo(yacht.position)
-    < 30
-  ){
+  // -----------------------------
+  // YACHT CINEMATIC MODE
+  // -----------------------------
+  if (yacht && player.position.distanceTo(yacht.position) < 35) {
     offsetX = 3;
     offsetY = 10;
     offsetZ = 17;
   }
 
-  /////////////////////////////////////////////////////
-  // CAMERA MOVEMENT
-  /////////////////////////////////////////////////////
-
-  const targetPosition = new THREE.Vector3(
+  // -----------------------------
+  // CAMERA POSITION TARGET
+  // -----------------------------
+  cameraTarget.set(
     player.position.x + offsetX,
     player.position.y + offsetY,
     player.position.z + offsetZ
   );
 
-  camera.position.lerp(
-    targetPosition,
-    0.08
+  camera.position.lerp(cameraTarget, 0.08);
+
+  // -----------------------------
+  // LOOK TARGET (SMOOTH AIM)
+  // -----------------------------
+  lookTarget.set(
+    player.position.x,
+    player.position.y + 2.5,
+    player.position.z
   );
 
-  /////////////////////////////////////////////////////
-  // LOOK TARGET
-  /////////////////////////////////////////////////////
-
-  let lookTarget = player.position.clone();
-  lookTarget.y += 2.5;
-
-  if(
-    player.position.distanceTo(stage.position)
-    < 60
-  ){
-    lookTarget.lerp(
-      stage.position.clone(),
-      0.35
-    );
+  // Stage focus
+  if (stage && player.position.distanceTo(stage.position) < 60) {
+    lookTarget.lerp(stage.position, 0.35);
   }
 
-  if(
-    player.position.distanceTo(yacht.position)
-    < 30
-  ){
-    lookTarget.lerp(
-      yacht.position.clone(),
-      0.25
-    );
+  // Yacht focus
+  if (yacht && player.position.distanceTo(yacht.position) < 35) {
+    lookTarget.lerp(yacht.position, 0.25);
   }
 
-  camera.userData.lookTarget ??=
-    lookTarget.clone();
-
-  camera.userData.lookTarget.lerp(
-    lookTarget,
-    0.08
-  );
-
-  camera.lookAt(
-    camera.userData.lookTarget
-  );
+  camera.lookAt(lookTarget);
 }
+
 /////////////////////////////////////////////////////
 // 🎧 STAGE ENERGY SYSTEM (FIXED)
 /////////////////////////////////////////////////////
