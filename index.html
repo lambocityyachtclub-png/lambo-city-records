@@ -1450,55 +1450,43 @@ yachtInterior.visible = false;
 
 function toggleYachtInterior(){
 
-  const dist =
-    player.position.distanceTo(yachtTrigger);
+  const dist = player.position.distanceTo(yachtTrigger);
 
-  // ENTER YACHT
-if(!insideYacht && dist < 12){
+  if(!insideYacht && dist < 12){
 
-  /////////////////////////////////////////////////////
-  // 🔒 PUBLIC ACCESS LOCK
-  /////////////////////////////////////////////////////
+    if(!YACHT_CONFIG.publicAccess && !YACHT_CONFIG.developerMode){
+      InteractionManager.show(
+        "yacht",
+        "PRIVATE YACHT — BOARDING PASS REQUIRED"
+      );
+      return;
+    }
 
-if (!insideYacht && dist < 12) {
+    insideYacht = true;
+    yachtInterior.visible = true;
 
-  if (!YACHT_CONFIG.publicAccess && !YACHT_CONFIG.developerMode) {
-    InteractionManager.show(
-      "yacht",
-      "PRIVATE YACHT — BOARDING PASS REQUIRED"
-    );
+    player.position.set(42,2,-120);
+    playerBaseY = 2;
+
+    document.getElementById("zone").innerText =
+      "YACHT INTERIOR";
+
     return;
   }
 
-  insideYacht = true;
-  InteractionManager.clear("yacht");
-  yachtInterior.visible = true;
-
-  player.position.set(42, 2, -120);
-  playerBaseY = 2;
-
-  document.getElementById("zone").innerText = "YACHT INTERIOR";
-  return;
-}
-  // EXIT YACHT
   if(insideYacht){
 
     insideYacht = false;
-    InteractionManager.clear("yacht");
     yachtInterior.visible = false;
 
-    // MOVE PLAYER OUTSIDE
-    player.position.set(
-      42,
-      1,
-      -100
-    );
-playerBaseY = 1;
+    player.position.set(42,1,-100);
+    playerBaseY = 1;
+
     document.getElementById("zone").innerText =
       "MEGA YACHT DISTRICT";
   }
-
 }
+
   function toggleCabin(){
 
   if(!activeCabin) return;
