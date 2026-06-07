@@ -711,10 +711,7 @@ update(){
 
 }
 /////////////////////////////////////////////////////
-// WORLD SYSTEM
-/////////////////////////////////////////////////////
-/////////////////////////////////////////////////////
-// 🌍 WORLD MANAGER
+// 🌍 WORLD SYSTEM (FINAL CLEAN VERSION)
 /////////////////////////////////////////////////////
 
 const WorldManager = {
@@ -723,20 +720,20 @@ const WorldManager = {
 
   setZone(zone){
 
-    if(this.currentZone === zone) return;
+    if (this.currentZone === zone) return;
 
     this.currentZone = zone;
 
-    document.getElementById("zone").innerText = zone;
+    const el = document.getElementById("zone");
+    if (el) el.innerText = zone;
 
     console.log("ZONE CHANGED:", zone);
-
   }
 
 };
 
-  /////////////////////////////////////////////////////
-// 🌍 ZONE MANAGER SYSTEM
+/////////////////////////////////////////////////////
+// 🌍 ZONE MANAGER SYSTEM (LINKED VERSION)
 /////////////////////////////////////////////////////
 
 const ZoneManager = {
@@ -749,37 +746,32 @@ const ZoneManager = {
 
   update(){
 
-    this.zones.forEach(zone => {
+    for (const zone of this.zones) {
 
-      const dist =
-        player.position.distanceTo(zone.position);
-
+      const dist = player.position.distanceTo(zone.position);
       const inside = dist < zone.radius;
 
-      if(inside && !zone.active){
+      if (inside && !zone.active) {
 
         zone.active = true;
 
-        if(zone.onEnter){
-          zone.onEnter();
+        if (zone.onEnter) zone.onEnter();
+
+        // 🔥 IMPORTANT: CONNECT TO WORLD MANAGER
+        if (zone.name) {
+          WorldManager.setZone(zone.name);
         }
 
       }
 
-      if(!inside && zone.active){
+      if (!inside && zone.active) {
 
         zone.active = false;
 
-        if(zone.onExit){
-          zone.onExit();
-        }
-
+        if (zone.onExit) zone.onExit();
       }
-
-    });
-
+    }
   }
-
 };
 /////////////////////////////////////////////////////
 // 🌊 OCEAN SYSTEM
