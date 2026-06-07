@@ -2357,121 +2357,41 @@ joystick.addEventListener("touchend", () => {
 
 });
 /////////////////////////////////////////////////////
-// 🚶 MOVEMENT
+// 🎮 INPUT + MOVEMENT
 /////////////////////////////////////////////////////
 
-function move(){
+const keys = {};
+const velocity = new THREE.Vector3();
 
-  if(insideYacht && !yachtInterior.visible) return;
+document.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
+document.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
 
-  let inputX = 0;
-  let inputZ = 0;
+function movePlayer() {
 
-  if(keys["w"]) inputZ -= 1;
-  if(keys["s"]) inputZ += 1;
-  if(keys["a"]) inputX -= 1;
-  if(keys["d"]) inputX += 1;
+  let x = 0;
+  let z = 0;
 
-  if(joyActive){
-    inputX += joyX;
-    inputZ += joyY;
+  if (keys["w"]) z -= 1;
+  if (keys["s"]) z += 1;
+  if (keys["a"]) x -= 1;
+  if (keys["d"]) x += 1;
+
+  const len = Math.hypot(x, z);
+
+  if (len > 0) {
+    x /= len;
+    z /= len;
+
+    velocity.x += x * 0.08;
+    velocity.z += z * 0.08;
   }
 
-  const inputLength = Math.hypot(inputX,inputZ);
-
-  if(inputLength > 0){
-    inputX /= inputLength;
-    inputZ /= inputLength;
-
-    const multiplier =
-      PLAYER_MODE.skateboard
-      ? PLAYER_MODE.speedMultiplier
-      : 1;
-
-    velocity.x +=
-      inputX *
-      moveSettings.acceleration *
-      multiplier *
-      1.2;
-
-    velocity.z +=
-      inputZ *
-      moveSettings.acceleration *
-      multiplier *
-      1.2;
-  }
-
-  // Always apply friction
-  const friction =
-    inputLength > 0 ? 0.92 : 0.80;
-
-  velocity.x *= friction;
-  velocity.z *= friction;
-
-  const speed = Math.hypot(
-    velocity.x,
-    velocity.z
-  );
-
-  if(speed > moveSettings.maxSpeed){
-    velocity.x =
-      velocity.x / speed *
-      moveSettings.maxSpeed;
-
-    velocity.z =
-      velocity.z / speed *
-      moveSettings.maxSpeed;
-  }
+  // friction
+  velocity.x *= 0.85;
+  velocity.z *= 0.85;
 
   player.position.x += velocity.x;
   player.position.z += velocity.z;
-
-  if(isNaN(player.position.x)){
-  player.position.set(0,1,-40);
-}
-
-if(isNaN(player.position.z)){
-  player.position.set(0,1,-40);
-}
-  if(speed > 0.05){
-    const targetRotation =
-      Math.atan2(
-        velocity.x,
-        velocity.z
-      );
-
-    let delta =
-      targetRotation -
-      player.rotation.y;
-
-    delta =
-      Math.atan2(
-        Math.sin(delta),
-        Math.cos(delta)
-      );
-
-    player.rotation.y +=
-      delta *
-      moveSettings.rotationSpeed;
-  }
-
-  player.position.x =
-    Math.max(
-      -WORLD_LIMIT,
-      Math.min(
-        WORLD_LIMIT,
-        player.position.x
-      )
-    );
-
-  player.position.z =
-    Math.max(
-      -WORLD_LIMIT,
-      Math.min(
-        WORLD_LIMIT,
-        player.position.z
-      )
-    );
 }
  
 /////////////////////////////////////////////////////
@@ -3137,76 +3057,77 @@ update(){
 
 }
 /////////////////////////////////////////////////////
-// WORLD SYSTEM
-/////////////////////////////////////////////////////
-/////////////////////////////////////////////////////
-// 🌍 WORLD MANAGER
+// 🌍 WORLD BUILD (CLEAN BASE ENVIRONMENT)
 /////////////////////////////////////////////////////
 
-const WorldManager = {
+// 🌊 WATER
+const water = new THREE.Mesh(
+  new THREE.PlaneGeometry(1000, 1000),
+  new THREE.MeshStandardMaterial({
+    color: 0x020b1a,
+    roughness: 0.9,
+    metalness: 0.2
+  })
+);
 
+water.rotation.x = -Math.PI / 2;
+scene.add(water);
+
+// 🎤 STAGE
+const stage = new THREE.Mesh(
+  new THREE.BoxGeometry(30, 10, 10),
+  new THREE.MeshStandardMaterial({
+    color: 0x111111,
+    emissive: 0x00ffff,
+    emissiveIntensity: 0.6
+  })
+);
+
+stage.position.set(0, 5, -120);
+scene.add(stage);
+
+// 🚤 YACHT
+const yacht = new THREE.Mesh(
+  new THREE.BoxGeometry(18, 4, 50),
+  new THREE.MeshStandardMaterial({
+    color: 0xffffff,
+    roughness: 0.3,
+    metalness: 0.4
+  })
+);
+
+yacht.position.set(40, 2, -100);
+scene.add(yacht);
+
+// 🚧 DOCK BASE
+const dock = new THREE.Mesh(
+  new THREE.CylinderGeometry(80, 80, 1, 64),
+  new THREE.MeshStandardMaterial({
+    color: 0x111111
+  })
+);
+
+dock.position.set(0, 0, -100);
+scene.add(dock);
+
+
+/////////////////////////////////////////////////////
+// 🌍 WORLD SYSTEM (FINAL CLEAN VERSION)
+/////////////////////////////////////////////////////
+
+const World = {
   currentZone: "DOCK",
 
-  setZone(zone){
-
-    if(this.currentZone === zone) return;
+  setZone(zone) {
+    if (this.currentZone === zone) return;
 
     this.currentZone = zone;
-
     document.getElementById("zone").innerText = zone;
 
-    console.log("ZONE CHANGED:", zone);
-
+    console.log("ZONE:", zone);
   }
-
 };
-
-  /////////////////////////////////////////////////////
-// 🌍 ZONE MANAGER SYSTEM
-/////////////////////////////////////////////////////
-
-const ZoneManager = {
-
-  zones: [],
-
-  register(zone){
-    this.zones.push(zone);
-  },
-
-  update(){
-
-    this.zones.forEach(zone => {
-
-      const dist =
-        player.position.distanceTo(zone.position);
-
-      const inside = dist < zone.radius;
-
-      if(inside && !zone.active){
-
-        zone.active = true;
-
-        if(zone.onEnter){
-          zone.onEnter();
-        }
-
-      }
-
-      if(!inside && zone.active){
-
-        zone.active = false;
-
-        if(zone.onExit){
-          zone.onExit();
-        }
-
-      }
-
-    });
-
-  }
-
-};
+ 
 /////////////////////////////////////////////////////
 // 🌊 OCEAN SYSTEM
 /////////////////////////////////////////////////////
@@ -4514,27 +4435,20 @@ function nextHeroDialogue() {
   }
 }
 /////////////////////////////////////////////////////
-// 🎥 CAMERA
+// 🎥 CAMERA FOLLOW SYSTEM
 /////////////////////////////////////////////////////
 
-let cameraSpeedLerp = 0;
-
 function updateCamera() {
-  
-  if(!player) return;
-  
-  const speed = Math.hypot(
-    velocity.x,
-    velocity.z
+
+  const target = new THREE.Vector3(
+    player.position.x,
+    player.position.y + 8,
+    player.position.z + 14
   );
 
-  const speedFactor =
-    Math.min(speed * 2.5, 1);
-
-  // Smooth zoom transition
-  cameraSpeedLerp +=
-    (speedFactor - cameraSpeedLerp) * 0.05;
-
+  camera.position.lerp(target, 0.08);
+  camera.lookAt(player.position.x, player.position.y + 2, player.position.z);
+}
   /////////////////////////////////////////////////////
   // DEFAULT CAMERA
   /////////////////////////////////////////////////////
