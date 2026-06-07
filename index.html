@@ -569,42 +569,69 @@ function rewardPlayer(reason){
 
   Economy.earn(1);
 }
-  /////////////////////////////////////////////////////
-// 🎯 EVENT SYSTEM (FOUNDATION LAYER)
+/////////////////////////////////////////////////////
+// 🎯 EVENT SYSTEM (CLEAN FINAL VERSION)
 /////////////////////////////////////////////////////
 
 const Events = {
 
-  emit: (type, data = {}) => {
+  emit(type, data = {}) {
     handleEvent(type, data);
   }
 
 };
 
-function handleEvent(type, data){
+const EventLock = {
+  stage: false,
+  dock: false
+};
 
-  switch(type){
+function handleEvent(type, data) {
+
+  switch (type) {
 
     case "ENTER_STAGE_ZONE":
+      if (EventLock.stage) return;
+      EventLock.stage = true;
+
       console.log("Player entered stage zone");
-      if(FEATURES.rewards){
-  rewardPlayer("stage_visit");
-}
+
+      if (FEATURES.rewards) {
+        rewardPlayer("stage_visit");
+      }
       break;
 
-   case "ENTER_CABIN":
+    case "EXIT_STAGE_ZONE":
+      EventLock.stage = false;
+      break;
 
-  console.log("Cabin available");
+    case "ENTER_CABIN":
+      console.log("Cabin available");
 
-  activeCabin = data.cabin;
+      activeCabin = data.cabin || null;
 
-  document.getElementById("msg").style.display = "block";
+      const msg = document.getElementById("msg");
+      if (msg) msg.style.display = "block";
 
-  break;
+      break;
+
+    case "EXIT_CABIN":
+      activeCabin = null;
+
+      const msgOut = document.getElementById("msg");
+      if (msgOut) msgOut.style.display = "none";
+
+      break;
 
     case "DOCK_TOUCH":
+      if (EventLock.dock) return;
+      EventLock.dock = true;
+
       console.log("Player at dock");
-      rewardPlayer("dock_visit");
+
+      if (FEATURES.rewards) {
+        rewardPlayer("dock_visit");
+      }
       break;
   }
 }
