@@ -5045,7 +5045,8 @@ if(hero){
 // 🚶 PLAYER ANIMATION SYSTEM
 /////////////////////////////////////////////////////
 
-const moveSpeed =
+
+    const moveSpeed =
   Math.hypot(velocity.x, velocity.z);
 
 if(moveSpeed > 0.01){
@@ -5105,7 +5106,7 @@ if(moveSpeed > 0.01){
 // 🚤 HARBOR BOAT ANIMATION
 /////////////////////////////////////////////////////
 
-function animate() {
+    function animate() {
   requestAnimationFrame(animate);
 
   if (!started) {
@@ -5116,16 +5117,15 @@ function animate() {
   move();
   checkStageEvents();
   checkCabins();
+
   updateStageEnergy();
   updateWorldMood();
   updateCamera();
+
   AudioSystem.update();
   updateOcean();
 
-  /////////////////////////////////////////////////////
-  // SAFE WORLD ANIMATIONS
-  /////////////////////////////////////////////////////
-
+  // WORLD ANIMATIONS (safe section)
   if (hero) {
     hero.position.y =
       1 + Math.sin(Date.now() * 0.003) * 0.15;
@@ -5136,36 +5136,8 @@ function animate() {
       Math.sin(Date.now() * 0.0015) * 0.4;
   }
 
-  if (beam1 && beam2) {
-    beam1.position.x = Math.sin(Date.now() * 0.001) * 80;
-    beam2.position.x = Math.cos(Date.now() * 0.001) * 80;
-  }
-
-  if (stars && particles) {
-    stars.rotation.y += 0.0003;
-    particles.rotation.y += 0.0005;
-  }
-
-  if (screenMat && screen) {
-    screenMat.emissiveIntensity =
-      1.5 + Math.sin(Date.now() * 0.005) * 1.2;
-
-    screen.rotation.y =
-      Math.sin(Date.now() * 0.001) * 0.03;
-  }
-
-  if (yachtGlow && helipad && helipad.material) {
-    yachtGlow.intensity =
-      1.8 + Math.sin(Date.now() * 0.004) * 0.6;
-
-    helipad.material.emissiveIntensity =
-      0.3 + Math.sin(Date.now() * 0.003) * 0.4;
-  }
-
   renderer.render(scene, camera);
 }
-
-animate();
 </script>
 </body>
 </html>
