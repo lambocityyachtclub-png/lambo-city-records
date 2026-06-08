@@ -506,31 +506,40 @@ function start(){
 }
   
 /////////////////////////////////////////////////////
-// 🪙 ECONOMY CORE (LAMBO COIN SYSTEM)
+// 🪙 PLAYER PROGRESSION SYSTEM
 /////////////////////////////////////////////////////
 
+let coins = 0;
 
+function updateHUD() {
 
-function updateHUD(){
-  document.getElementById("coins").innerText = coins;
+  const coinUI = document.getElementById("coins");
+
+  if (coinUI) {
+    coinUI.innerText = coins;
+  }
+
 }
 
 const Economy = {
-  getBalance: () => coins,
 
-  earn: (amount) => {
-    coins += amount;
-    updateHUD();
+  getBalance() {
+    return coins;
   },
 
-  spend: (amount) => {
-    if (coins >= amount) {
-      coins -= amount;
-      updateHUD();
-      return true;
-    }
-    return false;
+  earn(amount) {
+
+    coins += amount;
+    updateHUD();
+
+    console.log(
+      "+",
+      amount,
+      "LAMBO Points"
+    );
+
   }
+
 };
  /////////////////////////////////////////////////////
 // 🎯 STAGE EVENT SYSTEM (ONE-TIME TRIGGERS)
