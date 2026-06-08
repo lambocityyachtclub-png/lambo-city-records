@@ -2867,18 +2867,15 @@ const STAGE_RADIUS = CONFIG.world.stageRadius;
 document.addEventListener("keydown",e=>keys[e.key.toLowerCase()]=true);
 document.addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
 
-function start(){
+function start() {
+  console.log("START PRESSED");
+
   document.getElementById("start").style.display = "none";
   started = true;
 
   document.getElementById("zone").innerText = "WELCOME TO LAMBO CITY";
-
-  console.log("START WORKING");
-
-  // updateHUD();
-  // AudioSystem.init();
-  // AudioSystem.play();
-}  
+}
+  
 /////////////////////////////////////////////////////
 // 🪙 ECONOMY CORE (LAMBO COIN SYSTEM)
 /////////////////////////////////////////////////////
@@ -4782,21 +4779,10 @@ function animate() {
     return;
   }
 
+  // SAFE CORE LOOP ONLY
   move();
-  checkStageEvents();
-  checkCabins();
-
-  updateStageEnergy();
-  updateWorldMood();
-
-  updateCamera();
-
-  AudioSystem.update();
   updateOcean();
-
-  // ✅ ALL ANIMATIONS CALLED HERE
-  updateHero();
-  updatePlayerAnimation();
+  updateCamera();
 
   renderer.render(scene, camera);
 }
