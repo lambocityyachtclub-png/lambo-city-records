@@ -5099,92 +5099,7 @@ if(moveSpeed > 0.01){
 
 }
 
- /////////////////////////////////////////////////////
-// 👤 HERO + YACHT PROXIMITY SYSTEM (FIXED)
-/////////////////////////////////////////////////////
 
-const heroDist = hero
-  ? player.position.distanceTo(hero.position)
-  : 999;
-
-const yachtDist = player.position.distanceTo(yacht.position);
-
-// HERO INTERACTION
-if(heroDist < 8){
-
-  if(!talkingToHero){
-    InteractionManager.show(
-      "hero",
-      "PRESS E TO TALK TO HERO"
-    );
-  }
-
-}
-
-// YACHT INTERACTION
-else if(yachtDist < 18 && !insideYacht){
-
-  if(!YACHT_CONFIG.publicAccess && !YACHT_CONFIG.developerMode){
-    InteractionManager.show(
-      "yacht",
-      "PRIVATE YACHT — BOARDING PASS REQUIRED"
-    );
-  } else {
-    InteractionManager.show(
-      "yacht",
-      "PRESS E TO ENTER YACHT"
-    );
-  }
-
-}
-
-
-// NOTHING ACTIVE
-else if(!talkingToHero && !dancing){
-  InteractionManager.forceClear();
-}
-  /////////////////////////////////////////////////////
-  // 🌌 CINEMATIC LIGHT MOTION
-  /////////////////////////////////////////////////////
-
-  beam1.position.x =
-    Math.sin(Date.now()*0.001)*80;
-
-  beam2.position.x =
-    Math.cos(Date.now()*0.001)*80;
-
-  /////////////////////////////////////////////////////
-  // 📺 DJ SCREEN ANIMATION
-  /////////////////////////////////////////////////////
-
-  screenMat.emissiveIntensity =
-    1.5 + Math.sin(Date.now()*0.005) * 1.2;
-
-  screen.rotation.y =
-    Math.sin(Date.now()*0.001) * 0.03;
-
-  /////////////////////////////////////////////////////
-  // 🌟 ENVIRONMENT MOTION
-  /////////////////////////////////////////////////////
-
-  stars.rotation.y += 0.0003;
-  particles.rotation.y += 0.0005;
-
-  /////////////////////////////////////////////////////
-  // 🛥️ YACHT ENERGY SYSTEM
-  /////////////////////////////////////////////////////
-
-  // FLOATING MOTION
-  yacht.position.y =
-    Math.sin(Date.now() * 0.0015) * 0.4;
-
-  // YACHT GLOW PULSE
-  yachtGlow.intensity =
-    1.8 + Math.sin(Date.now() * 0.004) * 0.6;
-
-  // HELIPAD ENERGY
-  helipad.material.emissiveIntensity =
-    0.3 + Math.sin(Date.now() * 0.003) * 0.4;
 
   /////////////////////////////////////////////////////
 // 🚤 HARBOR BOAT ANIMATION
@@ -5199,22 +5114,52 @@ function animate() {
   }
 
   move();
-
   checkStageEvents();
   checkCabins();
-
   updateStageEnergy();
   updateWorldMood();
-
   updateCamera();
-
   AudioSystem.update();
   updateOcean();
 
-  // HERO ANIMATION (safe here)
+  /////////////////////////////////////////////////////
+  // SAFE WORLD ANIMATIONS
+  /////////////////////////////////////////////////////
+
   if (hero) {
     hero.position.y =
       1 + Math.sin(Date.now() * 0.003) * 0.15;
+  }
+
+  if (yacht) {
+    yacht.position.y =
+      Math.sin(Date.now() * 0.0015) * 0.4;
+  }
+
+  if (beam1 && beam2) {
+    beam1.position.x = Math.sin(Date.now() * 0.001) * 80;
+    beam2.position.x = Math.cos(Date.now() * 0.001) * 80;
+  }
+
+  if (stars && particles) {
+    stars.rotation.y += 0.0003;
+    particles.rotation.y += 0.0005;
+  }
+
+  if (screenMat && screen) {
+    screenMat.emissiveIntensity =
+      1.5 + Math.sin(Date.now() * 0.005) * 1.2;
+
+    screen.rotation.y =
+      Math.sin(Date.now() * 0.001) * 0.03;
+  }
+
+  if (yachtGlow && helipad && helipad.material) {
+    yachtGlow.intensity =
+      1.8 + Math.sin(Date.now() * 0.004) * 0.6;
+
+    helipad.material.emissiveIntensity =
+      0.3 + Math.sin(Date.now() * 0.003) * 0.4;
   }
 
   renderer.render(scene, camera);
