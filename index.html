@@ -94,9 +94,19 @@ const FEATURES = {
   jumbotron: true,
   harborBoats: true
 };
-  
+
 /////////////////////////////////////////////////////
-// 🌐 CORE ENGINE (CLEAN BASE)
+// 🧱 WORLD ANCHORS (ADD THIS BLOCK HERE)
+/////////////////////////////////////////////////////
+
+const WORLD = {
+  stage: null,
+  yacht: null,
+  hero: null
+};
+
+/////////////////////////////////////////////////////
+// 🌐 CORE ENGINE (CLEAN BASELINE - SINGLE SOURCE)
 /////////////////////////////////////////////////////
 
 const scene = new THREE.Scene();
@@ -114,22 +124,27 @@ const canvas = document.getElementById("c");
 
 const renderer = new THREE.WebGLRenderer({
   canvas,
-  antialias: true
+  antialias: true,
+  powerPreference: "high-performance"
 });
 
 renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setPixelRatio(1);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.useLegacyLights = false;
 
-window.addEventListener("resize", () => {
+// SINGLE RESIZE SYSTEM (ONLY ONE IN ENTIRE PROJECT)
+function resizeEngine() {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
-});
+}
+
+window.addEventListener("resize", resizeEngine);
 
   
 /////////////////////////////////////////////////////
-// 💬 INTERACTION UI (SINGLE SOURCE OF TRUTH)
+// 💬 INTERACTION UI (SINGLE SYSTEM ONLY)
 /////////////////////////////////////////////////////
 
 const interactionUI = document.createElement("div");
@@ -146,6 +161,15 @@ interactionUI.style.display = "none";
 interactionUI.style.zIndex = "50";
 
 document.body.appendChild(interactionUI);
+
+function showInteraction(text) {
+  interactionUI.innerText = text;
+  interactionUI.style.display = "block";
+}
+
+function hideInteraction() {
+  interactionUI.style.display = "none";
+}
 /////////////////////////////////////////////////////
 // 🎮 INTERACTION MANAGER (CLEAN)
 /////////////////////////////////////////////////////
@@ -220,27 +244,6 @@ const InteractionManager = {
 // ⚙️ RENDERER SETUP (UNCHANGED)
 /////////////////////////////////////////////////////
 
-renderer.setPixelRatio(1);
-renderer.outputColorSpace = THREE.SRGBColorSpace;
-renderer.useLegacyLights = false;
-renderer.powerPreference = "high-performance";
-
-const size = () => {
-  camera.aspect = innerWidth / innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(innerWidth, innerHeight);
-};
-
-window.addEventListener("resize", () => {
-
-  size();
-
-  renderer.render(
-    scene,
-    camera
-  );
-
-});
 
 /////////////////////////////////////////////////////
 // 💡 LIGHTING (UNCHANGED)
@@ -295,7 +298,7 @@ player.position.set(0, 1, -40);
 // 👤 PLAYER AVATAR SYSTEM (IMMERSION V1)
 /////////////////////////////////////////////////////
 
-const player = new THREE.Group();
+
 
 /////////////////////////////////////////////////////
 // BODY MATERIALS
