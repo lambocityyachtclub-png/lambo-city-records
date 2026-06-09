@@ -2,13 +2,13 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LAMBO CITY V22 — FIXED STABLE</title>
+<title>LAMBO CITY V23 — FINAL WORLD</title>
 
 <style>
 body { margin:0; overflow:hidden; background:black; }
 canvas { display:block; }
 
-#ui,#zone,#hint{
+#ui,#zone{
 position:absolute;
 font-family:Arial;
 font-size:13px;
@@ -18,23 +18,13 @@ z-index:10;
 
 #ui{top:20px;left:20px;}
 #zone{top:20px;right:20px;color:#00ffff;}
-
-#hint{
-bottom:80px;
-left:50%;
-transform:translateX(-50%);
-padding:10px 15px;
-border:1px solid #00ffff;
-background:rgba(0,0,0,0.7);
-display:none;
-}
 </style>
 </head>
 
 <body>
 
-<div id="ui">LAMBO CITY V22 — FIXED</div>
-<div id="zone">WORLD ACTIVE</div>
+<div id="ui">LAMBO CITY V23 — FINAL BUILD</div>
+<div id="zone">CINEMATIC WORLD ACTIVE</div>
 
 <canvas id="c"></canvas>
 
@@ -45,41 +35,59 @@ display:none;
 window.addEventListener("load", () => {
 
 /////////////////////////////////////////////////////
-// CORE SAFE INIT
+// CORE
 /////////////////////////////////////////////////////
 
 const canvas = document.getElementById("c");
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x04070d);
-scene.fog = new THREE.FogExp2(0x04070d, 0.0025);
+scene.background = new THREE.Color(0x050914);
+scene.fog = new THREE.FogExp2(0x050914, 0.0025);
 
 const camera = new THREE.PerspectiveCamera(
-75, window.innerWidth/window.innerHeight, 0.1, 5000
+75, innerWidth/innerHeight, 0.1, 5000
 );
 
 const renderer = new THREE.WebGLRenderer({
-canvas: canvas,
+canvas,
 antialias:true
 });
 
-renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
 
-document.body.appendChild(renderer.domElement);
+window.addEventListener("resize",()=>{
+camera.aspect = innerWidth/innerHeight;
+camera.updateProjectionMatrix();
+renderer.setSize(innerWidth, innerHeight);
+});
 
 /////////////////////////////////////////////////////
-// LIGHTING (SAFE)
+// LIGHTING
 /////////////////////////////////////////////////////
 
-scene.add(new THREE.AmbientLight(0x1b2a3a, 1));
+scene.add(new THREE.AmbientLight(0x223344, 1));
 
 const sun = new THREE.DirectionalLight(0x88bbff, 1.2);
 sun.position.set(120,200,100);
 scene.add(sun);
 
+const glow = new THREE.PointLight(0x00aaff, 1.5, 800);
+glow.position.set(0,30,0);
+scene.add(glow);
+
 /////////////////////////////////////////////////////
-// PLAYER (FORCED VISIBLE)
+// INPUT
+/////////////////////////////////////////////////////
+
+const keys={};
+document.addEventListener("keydown",e=>keys[e.key.toLowerCase()]=true);
+document.addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
+
+let mode="walk";
+
+/////////////////////////////////////////////////////
+// PLAYER
 /////////////////////////////////////////////////////
 
 const player = new THREE.Mesh(
@@ -90,14 +98,18 @@ player.position.set(0,1,40);
 scene.add(player);
 
 /////////////////////////////////////////////////////
-// CAR
+// CAR (DRIVABLE)
 /////////////////////////////////////////////////////
 
 const car = new THREE.Group();
 
 const body = new THREE.Mesh(
 new THREE.BoxGeometry(3.2,0.7,6.2),
-new THREE.MeshStandardMaterial({color:0xffcc00})
+new THREE.MeshStandardMaterial({
+color:0xffcc00,
+metalness:1,
+roughness:0.25
+})
 );
 
 car.add(body);
@@ -105,58 +117,202 @@ car.position.set(0,0,60);
 scene.add(car);
 
 /////////////////////////////////////////////////////
-// OCEAN SAFE
+// YACHT
 /////////////////////////////////////////////////////
 
-const waterGeo = new THREE.PlaneGeometry(2000,2000,40,40);
+const yacht = new THREE.Group();
+
+const hull = new THREE.Mesh(
+new THREE.BoxGeometry(20,2,60),
+new THREE.MeshStandardMaterial({color:0xffffff})
+);
+hull.position.y=1;
+
+const cabinY = new THREE.Mesh(
+new THREE.BoxGeometry(10,4,20),
+new THREE.MeshStandardMaterial({color:0x222222})
+);
+cabinY.position.y=5;
+
+const yachtLight = new THREE.PointLight(0x00ccff,2,120);
+yachtLight.position.set(0,6,0);
+
+yacht.add(hull);
+yacht.add(cabinY);
+yacht.add(yachtLight);
+yacht.position.set(50,0,-100);
+scene.add(yacht);
+
+/////////////////////////////////////////////////////
+// OCEAN (SAFE ANIMATION)
+/////////////////////////////////////////////////////
+
+const waterGeo = new THREE.PlaneGeometry(3000,3000,60,60);
 
 const water = new THREE.Mesh(
 waterGeo,
-new THREE.MeshStandardMaterial({color:0x02131f})
+new THREE.MeshStandardMaterial({
+color:0x02131f,
+emissive:0x001122,
+emissiveIntensity:0.4
+})
 );
 
 water.rotation.x = -Math.PI/2;
 scene.add(water);
 
-/////////////////////////////////////////////////////
-// INPUT SAFE
-/////////////////////////////////////////////////////
+const pos = water.geometry.attributes.position;
+const base = [];
 
-const keys={};
-
-document.addEventListener("keydown",e=>{
-keys[e.key.toLowerCase()]=true;
-});
-
-document.addEventListener("keyup",e=>{
-keys[e.key.toLowerCase()]=false;
-});
+for(let i=0;i<pos.count;i++){
+base.push({x:pos.getX(i), z:pos.getZ(i)});
+}
 
 /////////////////////////////////////////////////////
-// MOVE SAFE
+// CABINS
+/////////////////////////////////////////////////////
+
+function cabin(x,z){
+
+const g = new THREE.Group();
+
+const baseMesh = new THREE.Mesh(
+new THREE.BoxGeometry(18,1,18),
+new THREE.MeshStandardMaterial({color:0x2b2b2b})
+);
+
+const house = new THREE.Mesh(
+new THREE.BoxGeometry(16,8,16),
+new THREE.MeshStandardMaterial({color:0x3b3b3b})
+);
+house.position.y=5;
+
+const glow = new THREE.PointLight(0x00ccff,1.2,60);
+glow.position.y=6;
+
+g.add(baseMesh);
+g.add(house);
+g.add(glow);
+
+g.position.set(x,0,z);
+scene.add(g);
+}
+
+for(let i=0;i<6;i++){
+cabin(-45,-20-i*35);
+cabin(45,-20-i*35);
+}
+
+/////////////////////////////////////////////////////
+// JUMBOTRON
+/////////////////////////////////////////////////////
+
+const screen = new THREE.Mesh(
+new THREE.BoxGeometry(40,20,2),
+new THREE.MeshStandardMaterial({
+color:0x000000,
+emissive:0x0044ff,
+emissiveIntensity:2
+})
+);
+
+screen.position.set(0,18,-185);
+scene.add(screen);
+
+/////////////////////////////////////////////////////
+// NPCS
+/////////////////////////////////////////////////////
+
+const npcs=[];
+
+function npc(x,z){
+const n=new THREE.Mesh(
+new THREE.BoxGeometry(1,2,1),
+new THREE.MeshStandardMaterial({color:0xffaa66})
+);
+
+n.position.set(x,1,z);
+n.userData={dir:Math.random()*Math.PI*2,speed:0.03};
+
+scene.add(n);
+npcs.push(n);
+}
+
+for(let i=0;i<10;i++){
+npc(-20+i*3,-40);
+}
+
+/////////////////////////////////////////////////////
+// MOVE SYSTEM
 /////////////////////////////////////////////////////
 
 function move(){
-if(keys.w) player.position.z -= 0.3;
-if(keys.s) player.position.z += 0.3;
-if(keys.a) player.position.x -= 0.3;
-if(keys.d) player.position.x += 0.3;
+const s=0.3;
+
+if(mode==="walk"){
+if(keys.w)player.position.z-=s;
+if(keys.s)player.position.z+=s;
+if(keys.a)player.position.x-=s;
+if(keys.d)player.position.x+=s;
+}
+
+if(mode==="car"){
+if(keys.w)car.position.z-=s;
+if(keys.s)car.position.z+=s;
+if(keys.a)car.rotation.y+=0.03;
+if(keys.d)car.rotation.y-=0.03;
+}
 }
 
 /////////////////////////////////////////////////////
-// CAMERA SAFE
+// CAMERA
 /////////////////////////////////////////////////////
 
 function updateCamera(){
-camera.position.x += (player.position.x - camera.position.x) * 0.08;
-camera.position.y += ((player.position.y + 8) - camera.position.y) * 0.08;
-camera.position.z += ((player.position.z + 18) - camera.position.z) * 0.08;
 
-camera.lookAt(player.position);
+let tx,ty,tz;
+
+if(mode==="walk"){
+tx=player.position.x;
+ty=player.position.y+8;
+tz=player.position.z+18;
+}else{
+tx=car.position.x+Math.sin(car.rotation.y)*-12;
+ty=car.position.y+6;
+tz=car.position.z+12;
+}
+
+camera.position.x += (tx-camera.position.x)*0.06;
+camera.position.y += (ty-camera.position.y)*0.06;
+camera.position.z += (tz-camera.position.z)*0.06;
+
+camera.lookAt(mode==="walk"?player.position:car.position);
 }
 
 /////////////////////////////////////////////////////
-// LOOP SAFE
+// ENTER / EXIT CAR
+/////////////////////////////////////////////////////
+
+document.addEventListener("keydown",e=>{
+if(e.key.toLowerCase()==="e"){
+
+const d=player.position.distanceTo(car.position);
+
+if(mode==="walk" && d<4){
+mode="car";
+player.visible=false;
+}
+
+else if(mode==="car"){
+mode="walk";
+player.visible=true;
+player.position.set(car.position.x+2,1,car.position.z);
+}
+}
+});
+
+/////////////////////////////////////////////////////
+// LOOP
 /////////////////////////////////////////////////////
 
 camera.position.set(0,10,20);
@@ -164,15 +320,38 @@ camera.position.set(0,10,20);
 function animate(){
 requestAnimationFrame(animate);
 
+const t=performance.now()*0.001;
+
+// ocean waves (SAFE)
+for(let i=0;i<pos.count;i+=2){
+const v=base[i];
+pos.setY(i,
+Math.sin(v.x*0.01+t)*0.6+
+Math.cos(v.z*0.01+t*1.2)*0.6
+);
+}
+pos.needsUpdate=true;
+
+// movement
 move();
 updateCamera();
+
+// NPC movement
+for(let n of npcs){
+n.position.x+=Math.cos(n.userData.dir)*n.userData.speed;
+n.position.z+=Math.sin(n.userData.dir)*n.userData.speed;
+n.userData.dir+=(Math.random()-0.5)*0.01;
+}
+
+// jumbotron pulse
+screen.material.emissiveIntensity = 1.5 + Math.sin(t*2)*0.5;
 
 renderer.render(scene,camera);
 }
 
 animate();
 
-}); // IMPORTANT WRAPPER CLOSE
+}); // END LOAD
 
 </script>
 
