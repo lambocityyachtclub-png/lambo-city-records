@@ -2,35 +2,54 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LAMBO CITY — CLEAN IMMERSION BUILD</title>
+<title>LAMBO CITY — IMMERSION WORLD v8 CLEAN</title>
 
 <style>
 body { margin:0; overflow:hidden; background:black; }
 canvas { display:block; }
 
-#ui {
-position:absolute; top:20px; left:20px;
-color:white; font-family:Arial; font-size:13px;
+#ui, #zone, #hint {
+position:absolute;
+color:white;
+font-family:Arial;
+font-size:13px;
+z-index:10;
 }
 
-#zone {
-position:absolute; top:20px; right:20px;
-color:#00ffff; font-family:Arial;
+#ui { top:20px; left:20px; }
+#zone { top:20px; right:20px; color:#00ffff; }
+
+#start {
+position:absolute;
+inset:0;
+display:flex;
+justify-content:center;
+align-items:center;
+flex-direction:column;
+background:black;
+color:white;
+z-index:20;
 }
 
 #hint {
-position:absolute; bottom:60px; left:50%;
+bottom:80px;
+left:50%;
 transform:translateX(-50%);
-padding:10px 15px;
+padding:10px 16px;
 border:1px solid #00ffff;
-background:rgba(0,0,0,0.6);
-color:white;
+background:rgba(0,0,0,0.7);
 display:none;
+position:absolute;
 }
 </style>
 </head>
 
 <body>
+
+<div id="start">
+<h1>LAMBO CITY</h1>
+<button onclick="start()">ENTER WORLD</button>
+</div>
 
 <div id="ui">WASD MOVE • E INTERACT</div>
 <div id="zone">LOADING WORLD...</div>
@@ -43,88 +62,108 @@ display:none;
 <script>
 
 /////////////////////////////////////////////////////
-// BASIC SETUP (CLEAN)
+// CORE
 /////////////////////////////////////////////////////
+
+let started = false;
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x000000);
-scene.fog = new THREE.FogExp2(0x060812, 0.012);
+scene.fog = new THREE.FogExp2(0x080816, 0.012);
 
 const camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 2000);
 
-const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById("c"), antialias:true });
+const renderer = new THREE.WebGLRenderer({canvas:document.getElementById("c"), antialias:true});
 renderer.setSize(innerWidth, innerHeight);
 
 window.addEventListener("resize", () => {
-  camera.aspect = innerWidth/innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(innerWidth, innerHeight);
+camera.aspect = innerWidth/innerHeight;
+camera.updateProjectionMatrix();
+renderer.setSize(innerWidth, innerHeight);
 });
 
 /////////////////////////////////////////////////////
-// LIGHTING (CINEMATIC BASE)
+// LIGHTING
 /////////////////////////////////////////////////////
 
 scene.add(new THREE.AmbientLight(0xffffff, 0.6));
 
-const keyLight = new THREE.PointLight(0x66ccff, 1.5, 200);
-keyLight.position.set(0,30,20);
-scene.add(keyLight);
+const light = new THREE.PointLight(0x66ccff, 1.5, 200);
+light.position.set(0,30,30);
+scene.add(light);
 
 /////////////////////////////////////////////////////
 // PLAYER
 /////////////////////////////////////////////////////
 
 const player = new THREE.Mesh(
-  new THREE.BoxGeometry(1,2,1),
-  new THREE.MeshStandardMaterial({ color:0xffffff })
+new THREE.BoxGeometry(1,2,1),
+new THREE.MeshStandardMaterial({color:0xffffff})
 );
-
-player.position.set(0,1,-20);
+player.position.set(0,1,-30);
 scene.add(player);
 
 const keys = {};
-document.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
-document.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
 
-function movePlayer(){
-  if(keys["w"]) player.position.z -= 0.25;
-  if(keys["s"]) player.position.z += 0.25;
-  if(keys["a"]) player.position.x -= 0.25;
-  if(keys["d"]) player.position.x += 0.25;
+document.addEventListener("keydown",e=>keys[e.key.toLowerCase()]=true);
+document.addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
+
+/////////////////////////////////////////////////////
+// START
+/////////////////////////////////////////////////////
+
+function start(){
+document.getElementById("start").style.display="none";
+started = true;
+document.getElementById("zone").innerText="LAMBO CITY ACTIVE";
 }
 
 /////////////////////////////////////////////////////
-// CAMERA (SMOOTH FOLLOW)
+// CAMERA
 /////////////////////////////////////////////////////
 
 function updateCamera(){
-  const target = new THREE.Vector3(
-    player.position.x,
-    player.position.y + 8,
-    player.position.z + 14
-  );
+camera.position.x += (player.position.x - camera.position.x)*0.08;
+camera.position.y += ((player.position.y+8) - camera.position.y)*0.08;
+camera.position.z += ((player.position.z+14) - camera.position.z)*0.08;
+camera.lookAt(player.position);
+}
 
-  camera.position.lerp(target, 0.08);
-  camera.lookAt(player.position);
+/////////////////////////////////////////////////////
+// MOVEMENT
+/////////////////////////////////////////////////////
+
+function move(){
+if(keys["w"]) player.position.z -= 0.25;
+if(keys["s"]) player.position.z += 0.25;
+if(keys["a"]) player.position.x -= 0.25;
+if(keys["d"]) player.position.x += 0.25;
 }
 
 /////////////////////////////////////////////////////
 // OCEAN
 /////////////////////////////////////////////////////
 
-const oceanGeo = new THREE.PlaneGeometry(2000,2000,50,50);
-const oceanMat = new THREE.MeshStandardMaterial({
-  color:0x02111f,
-  metalness:0.6,
-  roughness:0.3
+const waterGeo = new THREE.PlaneGeometry(1500,1500,50,50);
+const waterMat = new THREE.MeshStandardMaterial({
+color:0x020b1a,
+metalness:0.7,
+roughness:0.3
 });
 
-const ocean = new THREE.Mesh(oceanGeo, oceanMat);
-ocean.rotation.x = -Math.PI/2;
-scene.add(ocean);
+const water = new THREE.Mesh(waterGeo, waterMat);
+water.rotation.x = -Math.PI/2;
+scene.add(water);
 
-const oceanBase = oceanGeo.attributes.position.array.slice();
+const waterPos = water.geometry.attributes.position;
+const waterBase = [];
+
+for(let i=0;i<waterPos.count;i++){
+waterBase.push({
+x:waterPos.getX(i),
+z:waterPos.getZ(i)
+});
+}
 
 /////////////////////////////////////////////////////
 // CABINS
@@ -134,24 +173,21 @@ const cabins = [];
 
 function createCabin(x,z){
 
-  const cabin = new THREE.Mesh(
-    new THREE.BoxGeometry(6,4,6),
-    new THREE.MeshStandardMaterial({ color:0x111111 })
-  );
+const cabin = new THREE.Mesh(
+new THREE.BoxGeometry(10,5,10),
+new THREE.MeshStandardMaterial({color:0x1a1a1a})
+);
 
-  cabin.position.set(x,2,z);
-  scene.add(cabin);
+cabin.position.set(x,2.5,z);
+scene.add(cabin);
 
-  cabins.push(cabin);
+cabins.push(cabin);
 }
 
-for(let i=0;i<4;i++){
-  createCabin(-10, -10 - i*12);
-  createCabin(10, -10 - i*12);
+for(let i=0;i<5;i++){
+createCabin(-20,-20-i*15);
+createCabin(20,-20-i*15);
 }
-
-let insideCabin = false;
-let activeCabin = null;
 
 /////////////////////////////////////////////////////
 // YACHT
@@ -160,13 +196,14 @@ let activeCabin = null;
 const yacht = new THREE.Group();
 
 const hull = new THREE.Mesh(
-  new THREE.BoxGeometry(14,3,40),
-  new THREE.MeshStandardMaterial({ color:0xf5f5f5 })
+new THREE.BoxGeometry(15,4,40),
+new THREE.MeshStandardMaterial({color:0xf2f2f2})
 );
+
 hull.position.y = 2;
 yacht.add(hull);
 
-yacht.position.set(25,0,-30);
+yacht.position.set(40,0,-80);
 scene.add(yacht);
 
 let insideYacht = false;
@@ -176,77 +213,56 @@ let insideYacht = false;
 /////////////////////////////////////////////////////
 
 const hero = new THREE.Mesh(
-  new THREE.BoxGeometry(1.2,2.2,1),
-  new THREE.MeshStandardMaterial({
-    color:0x00ffff,
-    emissive:0x00ffff,
-    emissiveIntensity:1.5
-  })
+new THREE.BoxGeometry(1,2,1),
+new THREE.MeshStandardMaterial({color:0x00ffff, emissive:0x00ffff})
 );
 
-hero.position.set(8,1,-15);
+hero.position.set(10,1,-20);
 scene.add(hero);
 
 /////////////////////////////////////////////////////
-// UI
+// INTERACTION UI
 /////////////////////////////////////////////////////
 
 const hint = document.getElementById("hint");
-const zone = document.getElementById("zone");
 
-function showHint(t){
-  hint.style.display = "block";
-  hint.innerText = t;
+function show(t){
+hint.style.display="block";
+hint.innerText=t;
 }
 
-function hideHint(){
-  hint.style.display = "none";
+function hide(){
+hint.style.display="none";
 }
 
 /////////////////////////////////////////////////////
 // INTERACTION
 /////////////////////////////////////////////////////
 
-document.addEventListener("keydown", (e)=>{
+function checkInteractions(){
 
-  if(e.key.toLowerCase() !== "e") return;
+const heroDist = player.position.distanceTo(hero.position);
+if(heroDist < 3) show("PRESS E TO TALK");
 
-  // HERO
-  if(player.position.distanceTo(hero.position) < 3){
-    zone.innerText = "TALKING TO HERO";
-    return;
-  }
+else hide();
 
-  // YACHT
-  if(player.position.distanceTo(yacht.position) < 8){
-    insideYacht = !insideYacht;
+}
 
-    if(insideYacht){
-      player.position.set(25,1,-30);
-      zone.innerText = "INSIDE YACHT";
-    } else {
-      player.position.set(25,1,-45);
-      zone.innerText = "DOCK";
-    }
-    return;
-  }
+document.addEventListener("keydown",e=>{
 
-  // CABIN
-  for(let c of cabins){
-    if(player.position.distanceTo(c.position) < 3){
-      insideCabin = !insideCabin;
-      activeCabin = c;
+if(e.key.toLowerCase()==="e"){
 
-      if(insideCabin){
-        player.position.copy(c.position);
-        zone.innerText = "INSIDE CABIN";
-      } else {
-        zone.innerText = "MARINA";
-      }
-      return;
-    }
-  }
+if(player.position.distanceTo(hero.position)<3){
+document.getElementById("zone").innerText="HERO: Welcome to LAMBO CITY";
+}
 
+if(player.position.distanceTo(yacht.position)<10){
+insideYacht = !insideYacht;
+player.position.set(40,1,-80);
+document.getElementById("zone").innerText="YACHT ZONE";
+}
+
+}
 });
 
 /////////////////////////////////////////////////////
@@ -254,28 +270,30 @@ document.addEventListener("keydown", (e)=>{
 /////////////////////////////////////////////////////
 
 function animate(){
-  requestAnimationFrame(animate);
+requestAnimationFrame(animate);
 
-  movePlayer();
-  updateCamera();
+if(!started){
+renderer.render(scene,camera);
+return;
+}
 
-  // ocean wave
-  const time = Date.now()*0.001;
-  const pos = ocean.geometry.attributes.position;
+move();
+updateCamera();
+checkInteractions();
 
-  for(let i=0;i<pos.count;i++){
-    const x = oceanBase[i*3];
-    const z = oceanBase[i*3+2];
+const t = Date.now()*0.001;
 
-    pos.setY(i,
-      Math.sin(x*0.02 + time)*0.3 +
-      Math.cos(z*0.02 + time)*0.3
-    );
-  }
+for(let i=0;i<waterPos.count;i++){
+const v = waterBase[i];
+waterPos.setY(i,
+Math.sin(v.x*0.02+t)*0.4 +
+Math.cos(v.z*0.02+t)*0.4
+);
+}
 
-  pos.needsUpdate = true;
+waterPos.needsUpdate=true;
 
-  renderer.render(scene,camera);
+renderer.render(scene,camera);
 }
 
 animate();
