@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LAMBO CITY V8 — LUXURY WORLD CORE</title>
+<title>LAMBO CITY V9 — LUXURY IMMERSION CORE</title>
 
 <style>
 body { margin:0; overflow:hidden; background:black; }
@@ -34,7 +34,7 @@ display:none;
 <body>
 
 <div id="ui">WASD MOVE • E INTERACT</div>
-<div id="zone">LAMBO CITY V8 LOADED</div>
+<div id="zone">LAMBO CITY V9 LOADING...</div>
 <div id="hint"></div>
 
 <canvas id="c"></canvas>
@@ -51,15 +51,13 @@ const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x050a14);
 scene.fog = new THREE.FogExp2(0x070b1a, 0.006);
 
-const camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 3000);
+const camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 2000);
 
 const renderer = new THREE.WebGLRenderer({
   canvas: document.getElementById("c"),
   antialias: true
 });
-
 renderer.setSize(innerWidth, innerHeight);
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
 window.addEventListener("resize", () => {
   camera.aspect = innerWidth/innerHeight;
@@ -68,38 +66,35 @@ window.addEventListener("resize", () => {
 });
 
 /////////////////////////////////////////////////////
-// LIGHTING (LUXURY STACK)
+// LIGHTING (LUXURY LOOK)
 /////////////////////////////////////////////////////
 
 scene.add(new THREE.AmbientLight(0x2a3b55, 1.0));
 
 const sun = new THREE.DirectionalLight(0x66ccff, 1.2);
-sun.position.set(80, 120, 40);
+sun.position.set(50,100,50);
 scene.add(sun);
 
-const glow = new THREE.PointLight(0x4da3ff, 1.5, 1200);
-glow.position.set(0, 80, 0);
-scene.add(glow);
+const fill = new THREE.PointLight(0x4da3ff, 1.2, 1200);
+fill.position.set(0,80,0);
+scene.add(fill);
 
 /////////////////////////////////////////////////////
-// PLAYER + CAMERA
+// PLAYER
 /////////////////////////////////////////////////////
 
 const player = new THREE.Mesh(
   new THREE.BoxGeometry(1,2,1),
-  new THREE.MeshStandardMaterial({ color:0xffffff })
+  new THREE.MeshStandardMaterial({color:0xffffff})
 );
-
-player.position.set(0,1,-30);
+player.position.set(0,1,-20);
 scene.add(player);
 
-// IMPORTANT FIX: proper starting camera position
-camera.position.set(0, 8, 12);
-camera.lookAt(player.position);
+camera.position.set(0,8,12);
 
 const keys = {};
-document.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
-document.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
+document.addEventListener("keydown",e=>keys[e.key.toLowerCase()]=true);
+document.addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
 
 function move(){
   if(keys["w"]) player.position.z -= 0.3;
@@ -109,24 +104,24 @@ function move(){
 }
 
 function updateCamera(){
-  camera.position.x += (player.position.x - camera.position.x) * 0.08;
-  camera.position.y += ((player.position.y + 8) - camera.position.y) * 0.08;
-  camera.position.z += ((player.position.z + 14) - camera.position.z) * 0.08;
+  camera.position.x += (player.position.x - camera.position.x)*0.08;
+  camera.position.y += ((player.position.y+8)-camera.position.y)*0.08;
+  camera.position.z += ((player.position.z+14)-camera.position.z)*0.08;
   camera.lookAt(player.position);
 }
 
 /////////////////////////////////////////////////////
-// 🌊 OCEAN (STABLE LUXURY WATER)
+// 🌊 OCEAN
 /////////////////////////////////////////////////////
 
-const waterGeo = new THREE.PlaneGeometry(2500, 2500, 80, 80);
+const waterGeo = new THREE.PlaneGeometry(2000,2000,80,80);
 
 const waterMat = new THREE.MeshStandardMaterial({
-  color: 0x061a2b,
-  metalness: 0.4,
-  roughness: 0.55,
-  emissive: 0x001122,
-  emissiveIntensity: 0.25
+  color:0x021428,
+  metalness:0.4,
+  roughness:0.6,
+  emissive:0x001122,
+  emissiveIntensity:0.3
 });
 
 const water = new THREE.Mesh(waterGeo, waterMat);
@@ -138,61 +133,44 @@ const waterBase = [];
 
 for(let i=0;i<waterPos.count;i++){
   waterBase.push({
-    x: waterPos.getX(i),
-    z: waterPos.getZ(i)
+    x:waterPos.getX(i),
+    z:waterPos.getZ(i)
   });
 }
 
 /////////////////////////////////////////////////////
-// 🌴 DOCK + WALKWAYS (LUXURY STRUCTURE)
-/////////////////////////////////////////////////////
-
-const dock = new THREE.Mesh(
-  new THREE.CylinderGeometry(220,220,2,64),
-  new THREE.MeshStandardMaterial({ color:0x111111, roughness:0.7 })
-);
-dock.position.set(0,0,-90);
-scene.add(dock);
-
-const walkway = new THREE.Mesh(
-  new THREE.BoxGeometry(8,1,220),
-  new THREE.MeshStandardMaterial({ color:0x0a0a0a })
-);
-walkway.position.set(0,0.5,-80);
-scene.add(walkway);
-
-/////////////////////////////////////////////////////
-// 🏡 LUXURY VILLAS (IDENTITY SYSTEM)
+// 🏡 VILLAS
 /////////////////////////////////////////////////////
 
 function createVilla(x,z){
-  const g = new THREE.Group();
+  const v = new THREE.Group();
 
   const base = new THREE.Mesh(
-    new THREE.BoxGeometry(14,1,14),
-    new THREE.MeshStandardMaterial({ color:0x111111 })
+    new THREE.BoxGeometry(16,1,16),
+    new THREE.MeshStandardMaterial({color:0x111111})
   );
-  base.position.y = 0.5;
-  g.add(base);
+  base.position.y=0.5;
+  v.add(base);
 
   const body = new THREE.Mesh(
-    new THREE.BoxGeometry(14,6,14),
-    new THREE.MeshStandardMaterial({ color:0x151515 })
+    new THREE.BoxGeometry(16,6,16),
+    new THREE.MeshStandardMaterial({color:0x1a1a1a})
   );
-  body.position.y = 4;
-  g.add(body);
+  body.position.y=3;
+  v.add(body);
 
-  const glow = new THREE.PointLight(0x66ccff, 1.2, 40);
+  const glow = new THREE.PointLight(0x66ccff,1.2,40);
   glow.position.set(0,5,0);
-  g.add(glow);
+  v.add(glow);
 
-  g.position.set(x,0,z);
-  scene.add(g);
+  v.position.set(x,0,z);
+  scene.add(v);
 }
 
-for(let i=0;i<6;i++){
-  createVilla(-30,-30-i*25);
-  createVilla(30,-30-i*25);
+// rows of villas
+for(let i=0;i<5;i++){
+  createVilla(-25,-20-i*25);
+  createVilla(25,-20-i*25);
 }
 
 /////////////////////////////////////////////////////
@@ -200,40 +178,73 @@ for(let i=0;i<6;i++){
 /////////////////////////////////////////////////////
 
 const yacht = new THREE.Mesh(
-  new THREE.BoxGeometry(18,4,50),
-  new THREE.MeshStandardMaterial({ color:0xf2f2f2 })
+  new THREE.BoxGeometry(16,4,45),
+  new THREE.MeshStandardMaterial({color:0xf2f2f2})
 );
-yacht.position.set(40,2,-90);
+yacht.position.set(40,2,-80);
 scene.add(yacht);
 
 /////////////////////////////////////////////////////
-// 🎤 LUXURY STAGE (JUMBO TRON STYLE)
-/////////////////////////////////////////////////////
-
-const stage = new THREE.Mesh(
-  new THREE.BoxGeometry(30,8,10),
-  new THREE.MeshStandardMaterial({ color:0x0a0a0a, emissive:0x002244 })
-);
-stage.position.set(0,4,40);
-scene.add(stage);
-
-const screen = new THREE.Mesh(
-  new THREE.BoxGeometry(25,12,1),
-  new THREE.MeshStandardMaterial({ color:0x111111, emissive:0x0044ff })
-);
-screen.position.set(0,10,35);
-scene.add(screen);
-
-/////////////////////////////////////////////////////
-// 🌟 HERO NPC
+// 🌟 HERO
 /////////////////////////////////////////////////////
 
 const hero = new THREE.Mesh(
   new THREE.BoxGeometry(1,2,1),
-  new THREE.MeshStandardMaterial({ color:0x00ffff, emissive:0x00ffff })
+  new THREE.MeshStandardMaterial({color:0x00ffff, emissive:0x00ffff})
 );
-hero.position.set(10,1,-15);
+hero.position.set(10,1,-20);
 scene.add(hero);
+
+/////////////////////////////////////////////////////
+// 🌉 STAGE + JUMBOTRON (RESTORED V7 FEATURE)
+/////////////////////////////////////////////////////
+
+const stage = new THREE.Mesh(
+  new THREE.BoxGeometry(30,2,12),
+  new THREE.MeshStandardMaterial({color:0x0a0a0a})
+);
+stage.position.set(0,1,-120);
+scene.add(stage);
+
+// Jumbotron screen
+const screen = new THREE.Mesh(
+  new THREE.PlaneGeometry(18,10),
+  new THREE.MeshStandardMaterial({
+    color:0x00ffff,
+    emissive:0x00ffff,
+    emissiveIntensity:1.5
+  })
+);
+screen.position.set(0,10,-125);
+scene.add(screen);
+
+/////////////////////////////////////////////////////
+// UI
+/////////////////////////////////////////////////////
+
+const hint = document.getElementById("hint");
+
+function show(t){
+  hint.style.display="block";
+  hint.innerText=t;
+}
+
+function hide(){
+  hint.style.display="none";
+}
+
+document.addEventListener("keydown",e=>{
+  if(e.key.toLowerCase()==="e"){
+    if(player.position.distanceTo(hero.position)<3){
+      document.getElementById("zone").innerText="HERO: Welcome to LAMBO CITY";
+    }
+  }
+});
+
+function check(){
+  if(player.position.distanceTo(hero.position)<3) show("PRESS E TO TALK");
+  else hide();
+}
 
 /////////////////////////////////////////////////////
 // LOOP
@@ -244,20 +255,20 @@ function animate(){
 
   move();
   updateCamera();
+  check();
 
-  const time = Date.now() * 0.001;
+  const time = Date.now()*0.001;
 
   for(let i=0;i<waterPos.count;i++){
     const v = waterBase[i];
-
     const wave =
-      Math.sin(v.x*0.02 + time)*0.4 +
-      Math.cos(v.z*0.02 + time*1.3)*0.4;
+      Math.sin(v.x*0.02+time)*0.4 +
+      Math.cos(v.z*0.02+time*1.3)*0.4;
 
-    waterPos.setY(i, wave);
+    waterPos.setY(i,wave);
   }
 
-  waterPos.needsUpdate = true;
+  waterPos.needsUpdate=true;
 
   renderer.render(scene,camera);
 }
