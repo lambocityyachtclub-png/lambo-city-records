@@ -220,17 +220,29 @@ if(keys.d) car.rotation.y -= turn;
 // 🌊 OCEAN (FRONT AREA)
 /////////////////////////////////////////////////////
 
-const water=new THREE.Mesh(
-new THREE.PlaneGeometry(3000,3000,100,100),
-new THREE.MeshStandardMaterial({
+const waterGeo = new THREE.PlaneGeometry(3000,3000,160,160);
+
+const waterMat = new THREE.MeshStandardMaterial({
 color:0x021a33,
-metalness:0.4,
-roughness:0.3,
-emissive:0x001122
-})
-);
-water.rotation.x=-Math.PI/2;
+metalness:0.35,
+roughness:0.25,
+emissive:0x001a33,
+emissiveIntensity:0.35
+});
+
+const water = new THREE.Mesh(waterGeo, waterMat);
+water.rotation.x = -Math.PI/2;
 scene.add(water);
+
+const waterPos = water.geometry.attributes.position;
+const waterBase = [];
+
+for(let i=0;i<waterPos.count;i++){
+waterBase.push({
+x:waterPos.getX(i),
+z:waterPos.getZ(i)
+});
+}
 
 /////////////////////////////////////////////////////
 // 🎬 CENTRAL JUMBOTRON STAGE (CORE IDENTITY)
