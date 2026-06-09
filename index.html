@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LAMBO CITY V17 — CLEAN BASE</title>
+<title>LAMBO CITY — FINAL WORLD BUILD</title>
 
 <style>
 body { margin:0; overflow:hidden; background:black; }
@@ -33,8 +33,8 @@ display:none;
 
 <body>
 
-<div id="ui">LAMBO CITY V17</div>
-<div id="zone">CLEAN CORE SYSTEM</div>
+<div id="ui">LAMBO CITY — FINAL BUILD</div>
+<div id="zone">WELCOME</div>
 <div id="hint"></div>
 
 <canvas id="c"></canvas>
@@ -67,27 +67,35 @@ renderer.setSize(innerWidth,innerHeight);
 });
 
 /////////////////////////////////////////////////////
+// LIGHTING (CINEMATIC)
+/////////////////////////////////////////////////////
+
+scene.add(new THREE.AmbientLight(0x223344,1));
+
+const sun = new THREE.DirectionalLight(0x99ccff,1.2);
+sun.position.set(100,200,80);
+scene.add(sun);
+
+/////////////////////////////////////////////////////
 // INPUT
 /////////////////////////////////////////////////////
 
-const keys = {};
+const keys={};
 document.addEventListener("keydown",e=>keys[e.key.toLowerCase()]=true);
 document.addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
 
 /////////////////////////////////////////////////////
-// GAME STATE (IMPORTANT)
+// GAME STATE
 /////////////////////////////////////////////////////
 
+let mode = "walk";
+
 const game = {
-mode: "walk",
-score: 0,
-zones: {
-basket: false,
-golf: false,
-race: false
-},
-raceStart: null,
-bestLap: null
+score:0,
+raceStart:null,
+bestLap:null,
+basketZone:false,
+golfZone:false
 };
 
 /////////////////////////////////////////////////////
@@ -116,22 +124,67 @@ car.position.set(0,0.5,40);
 scene.add(car);
 
 /////////////////////////////////////////////////////
-// CAMERA (CLEAN FOLLOW)
+// JUMBOTRON (PRESERVED CORE IDENTITY)
+/////////////////////////////////////////////////////
+
+const jumbotron = new THREE.Mesh(
+new THREE.BoxGeometry(30,15,1),
+new THREE.MeshStandardMaterial({color:0x000000,emissive:0x0044ff})
+);
+jumbotron.position.set(0,10,-10);
+scene.add(jumbotron);
+
+const stage = new THREE.Mesh(
+new THREE.BoxGeometry(40,2,20),
+new THREE.MeshStandardMaterial({color:0x111111,emissive:0x0033ff})
+);
+stage.position.set(0,1,0);
+scene.add(stage);
+
+/////////////////////////////////////////////////////
+// ZONES
+/////////////////////////////////////////////////////
+
+const court = new THREE.Mesh(
+new THREE.PlaneGeometry(60,30),
+new THREE.MeshStandardMaterial({color:0x111111})
+);
+court.rotation.x=-Math.PI/2;
+court.position.set(-80,0,20);
+scene.add(court);
+
+const golf = new THREE.Mesh(
+new THREE.PlaneGeometry(100,100),
+new THREE.MeshStandardMaterial({color:0x0c4a1f})
+);
+golf.rotation.x=-Math.PI/2;
+golf.position.set(90,0,20);
+scene.add(golf);
+
+const strip = new THREE.Mesh(
+new THREE.BoxGeometry(10,0.5,200),
+new THREE.MeshStandardMaterial({color:0x0a0a0a})
+);
+strip.position.set(0,0.2,120);
+scene.add(strip);
+
+/////////////////////////////////////////////////////
+// CAMERA (CINEMATIC SMOOTH)
 /////////////////////////////////////////////////////
 
 function updateCamera(){
 
 let tx,ty,tz;
 
-if(game.mode==="walk"){
+if(mode==="walk"){
 tx = player.position.x;
 ty = player.position.y + 7;
 tz = player.position.z + 12;
 }
 
-if(game.mode==="car"){
+if(mode==="car"){
 tx = car.position.x + Math.sin(car.rotation.y)*-10;
-ty = car.position.y + 5;
+ty = car.position.y + 5.5;
 tz = car.position.z + Math.cos(car.rotation.y)*-10;
 }
 
@@ -139,36 +192,32 @@ camera.position.x += (tx-camera.position.x)*0.06;
 camera.position.y += (ty-camera.position.y)*0.06;
 camera.position.z += (tz-camera.position.z)*0.06;
 
-camera.lookAt(game.mode==="walk" ? player.position : car.position);
+camera.lookAt(mode==="walk" ? player.position : car.position);
 }
 
 /////////////////////////////////////////////////////
-// MOVEMENT (CLEAN)
+// MOVEMENT
 /////////////////////////////////////////////////////
 
 function move(){
 
-const speed = 0.22;
+const speed=0.22;
 
-if(game.mode==="walk"){
-
+if(mode==="walk"){
 player.position.x += (keys.d?speed:0)-(keys.a?speed:0);
 player.position.z += (keys.s?speed:0)-(keys.w?speed:0);
-
 }
 
-if(game.mode==="car"){
-
+if(mode==="car"){
 if(keys.w) car.position.z -= speed;
 if(keys.s) car.position.z += speed;
 if(keys.a) car.rotation.y += 0.02;
 if(keys.d) car.rotation.y -= 0.02;
-
 }
 }
 
 /////////////////////////////////////////////////////
-// MODE SWITCH (E KEY)
+// MODE SWITCH
 /////////////////////////////////////////////////////
 
 document.addEventListener("keydown",e=>{
@@ -177,13 +226,13 @@ if(e.key.toLowerCase()==="e"){
 
 const dist = player.position.distanceTo(car.position);
 
-if(game.mode==="walk" && dist<4){
-game.mode="car";
+if(mode==="walk" && dist<4){
+mode="car";
 player.visible=false;
 }
 
-else if(game.mode==="car"){
-game.mode="walk";
+else if(mode==="car"){
+mode="walk";
 player.visible=true;
 player.position.set(car.position.x+2,1,car.position.z);
 }
@@ -191,21 +240,21 @@ player.position.set(car.position.x+2,1,car.position.z);
 });
 
 /////////////////////////////////////////////////////
-// ZONE SYSTEM (CLEAN STRUCTURE)
+// GAMEPLAY ZONES
 /////////////////////////////////////////////////////
 
 function updateZones(){
 
-const basketDist = player.position.distanceTo(new THREE.Vector3(-80,0,20));
-const golfDist = player.position.distanceTo(new THREE.Vector3(90,0,20));
+const bDist = player.position.distanceTo(court.position);
+const gDist = player.position.distanceTo(golf.position);
 
-game.zones.basket = basketDist < 25;
-game.zones.golf = golfDist < 35;
+game.basketZone = bDist < 25;
+game.golfZone = gDist < 35;
 
 document.getElementById("zone").innerText =
-game.zones.basket ? "BASKETBALL ZONE" :
-game.zones.golf ? "GOLF ZONE" :
-"FREE ROAM";
+game.basketZone ? "BASKETBALL ZONE" :
+game.golfZone ? "GOLF ZONE" :
+"LAMBO CITY WORLD";
 }
 
 /////////////////////////////////////////////////////
@@ -217,8 +266,8 @@ camera.position.set(0,8,12);
 function animate(){
 
 move();
-updateZones();
 updateCamera();
+updateZones();
 
 renderer.render(scene,camera);
 requestAnimationFrame(animate);
@@ -227,5 +276,6 @@ requestAnimationFrame(animate);
 animate();
 
 </script>
+
 </body>
 </html>
