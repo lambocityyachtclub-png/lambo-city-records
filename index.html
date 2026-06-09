@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LAMBO CITY V16 MASTER — FINAL WORLD</title>
+<title>LAMBO CITY V16 MASTER FINAL</title>
 
 <style>
 body { margin:0; overflow:hidden; background:black; }
@@ -51,64 +51,79 @@ const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x050814);
 scene.fog = new THREE.FogExp2(0x050814,0.0035);
 
-const camera = new THREE.PerspectiveCamera(75,innerWidth/innerHeight,0.1,3000);
+const camera = new THREE.PerspectiveCamera(
+75, innerWidth/innerHeight, 0.1, 3000
+);
 
 const renderer = new THREE.WebGLRenderer({
-canvas:document.getElementById("c"),
-antialias:true
+canvas: document.getElementById("c"),
+antialias: true
 });
 
-renderer.setSize(innerWidth,innerHeight);
-renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 
-window.addEventListener("resize",()=>{
-camera.aspect=innerWidth/innerHeight;
+window.addEventListener("resize", () => {
+camera.aspect = innerWidth / innerHeight;
 camera.updateProjectionMatrix();
-renderer.setSize(innerWidth,innerHeight);
+renderer.setSize(innerWidth, innerHeight);
 });
 
 /////////////////////////////////////////////////////
 // LIGHTING
 /////////////////////////////////////////////////////
 
-scene.add(new THREE.AmbientLight(0x223344,1));
+scene.add(new THREE.AmbientLight(0x223344, 1));
 
-const sun=new THREE.DirectionalLight(0x99ccff,1.2);
-sun.position.set(100,200,80);
+const sun = new THREE.DirectionalLight(0x99ccff, 1.2);
+sun.position.set(100, 200, 80);
 scene.add(sun);
 
-const glow=new THREE.PointLight(0x00aaff,1.2,600);
-glow.position.set(0,20,0);
+const glow = new THREE.PointLight(0x00aaff, 1.2, 600);
+glow.position.set(0, 20, 0);
 scene.add(glow);
 
 /////////////////////////////////////////////////////
 // INPUT
 /////////////////////////////////////////////////////
 
-const keys={};
-document.addEventListener("keydown",e=>keys[e.key.toLowerCase()]=true);
-document.addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
+const keys = {};
+document.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
+document.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
+
+/////////////////////////////////////////////////////
+// STATE
+/////////////////////////////////////////////////////
+
+let mode = "walk";
 
 /////////////////////////////////////////////////////
 // PLAYER + HERO
 /////////////////////////////////////////////////////
 
-const player=new THREE.Mesh(
+const player = new THREE.Mesh(
 new THREE.BoxGeometry(1,2,1),
-new THREE.MeshStandardMaterial({color:0xffffff,emissive:0x222222})
+new THREE.MeshStandardMaterial({
+color:0xffffff,
+emissive:0x222222,
+emissiveIntensity:0.8
+})
 );
 player.position.set(0,1,-20);
 scene.add(player);
 
-const hero=new THREE.Mesh(
+const hero = new THREE.Mesh(
 new THREE.BoxGeometry(1.2,2.2,1.2),
-new THREE.MeshStandardMaterial({color:0x00ffff,emissive:0x00ffff})
+new THREE.MeshStandardMaterial({
+color:0x00ffff,
+emissive:0x00ffff
+})
 );
 hero.position.set(0,1,0);
 scene.add(hero);
 
 /////////////////////////////////////////////////////
-// 🚗 CAR (STRIP ZONE ONLY — V16 SAFE)
+// CAR
 /////////////////////////////////////////////////////
 
 const car = new THREE.Mesh(
@@ -118,109 +133,36 @@ color:0xff0000,
 emissive:0x330000
 })
 );
-
 car.position.set(0,0.5,40);
 scene.add(car);
 
-// IMPORTANT: do NOT redeclare mode here
-// mode is controlled in CORE
+document.addEventListener("keydown", e => {
 
-document.addEventListener("keydown",e=>{
-
-if(e.key.toLowerCase()==="e"){
+if(e.key.toLowerCase() === "e"){
 
 const dist = player.position.distanceTo(car.position);
 
-if(mode==="walk" && dist < 4){
-mode="car";
-player.visible=false;
+if(mode === "walk" && dist < 4){
+mode = "car";
+player.visible = false;
 return;
 }
 
-if(mode==="car"){
-mode="walk";
-player.visible=true;
+if(mode === "car"){
+mode = "walk";
+player.visible = true;
 
-// exit slightly beside car
 player.position.set(
 car.position.x + 2,
 car.position.y,
 car.position.z
 );
 }
-
 }
 });
-  
-/////////////////////////////////////////////////////
-// CAMERA
-/////////////////////////////////////////////////////
-
-function updateCamera(){
-
-let targetX, targetY, targetZ;
-
-if(mode==="walk"){
-targetX = player.position.x;
-targetY = player.position.y + 7;
-targetZ = player.position.z + 12;
-}
-
-if(mode==="car"){
-targetX = car.position.x + Math.sin(car.rotation.y) * -10;
-targetY = car.position.y + 5;
-targetZ = car.position.z + Math.cos(car.rotation.y) * -10;
-}
-
-camera.position.x = smoothStep(camera.position.x, targetX, 0.06);
-camera.position.y = smoothStep(camera.position.y, targetY, 0.06);
-camera.position.z = smoothStep(camera.position.z, targetZ, 0.06);
-
-const lookAtTarget = (mode==="walk") ? player.position : car.position;
-camera.lookAt(lookAtTarget);
-}
-/////////////////////////////////////////////////////
-// MOVEMENT (CLEAN FINAL VERSION)
-/////////////////////////////////////////////////////
-
-const speed = 0.22;
-const carSpeed = 0.22;
-const turn = 0.02;
-
-function smoothStep(a,b,s){
-return a + (b-a)*s;
-}
-
-function move(){
-
-if(mode==="walk"){
-
-const targetX =
-player.position.x +
-((keys.d ? speed : 0) - (keys.a ? speed : 0));
-
-const targetZ =
-player.position.z +
-((keys.s ? speed : 0) - (keys.w ? speed : 0));
-
-player.position.x = smoothStep(player.position.x, targetX, 0.35);
-player.position.z = smoothStep(player.position.z, targetZ, 0.35);
-
-}
-
-if(mode==="car"){
-
-if(keys.w) car.position.z -= carSpeed;
-if(keys.s) car.position.z += carSpeed;
-
-if(keys.a) car.rotation.y += turn;
-if(keys.d) car.rotation.y -= turn;
-
-}
-}
 
 /////////////////////////////////////////////////////
-// 🌊 OCEAN (FRONT AREA)
+// OCEAN
 /////////////////////////////////////////////////////
 
 const waterGeo = new THREE.PlaneGeometry(3000,3000,160,160);
@@ -248,17 +190,17 @@ z:waterPos.getZ(i)
 }
 
 /////////////////////////////////////////////////////
-// 🎬 CENTRAL JUMBOTRON STAGE (CORE IDENTITY)
+// STAGE + JUMBOTRON
 /////////////////////////////////////////////////////
 
-const stage=new THREE.Mesh(
+const stage = new THREE.Mesh(
 new THREE.BoxGeometry(40,2,20),
 new THREE.MeshStandardMaterial({color:0x111111,emissive:0x0033ff})
 );
 stage.position.set(0,1,0);
 scene.add(stage);
 
-const jumbotron=new THREE.Mesh(
+const jumbotron = new THREE.Mesh(
 new THREE.BoxGeometry(30,15,1),
 new THREE.MeshStandardMaterial({color:0x000000,emissive:0x0044ff})
 );
@@ -266,34 +208,26 @@ jumbotron.position.set(0,10,-10);
 scene.add(jumbotron);
 
 /////////////////////////////////////////////////////
-// 🏀 BASKETBALL COURT (LEFT ZONE)
+// ZONES
 /////////////////////////////////////////////////////
 
-const court=new THREE.Mesh(
+const court = new THREE.Mesh(
 new THREE.PlaneGeometry(60,30),
 new THREE.MeshStandardMaterial({color:0x111111})
 );
-court.rotation.x=-Math.PI/2;
+court.rotation.x = -Math.PI/2;
 court.position.set(-80,0,20);
 scene.add(court);
 
-/////////////////////////////////////////////////////
-// ⛳ GOLF ZONE (RIGHT SIDE)
-/////////////////////////////////////////////////////
-
-const golf=new THREE.Mesh(
+const golf = new THREE.Mesh(
 new THREE.PlaneGeometry(100,100),
 new THREE.MeshStandardMaterial({color:0x0c4a1f})
 );
-golf.rotation.x=-Math.PI/2;
+golf.rotation.x = -Math.PI/2;
 golf.position.set(90,0,20);
 scene.add(golf);
 
-/////////////////////////////////////////////////////
-// 🏎 CAR STRIP (BACK ZONE ONLY)
-/////////////////////////////////////////////////////
-
-const strip=new THREE.Mesh(
+const strip = new THREE.Mesh(
 new THREE.BoxGeometry(10,0.5,200),
 new THREE.MeshStandardMaterial({color:0x0a0a0a})
 );
@@ -301,23 +235,23 @@ strip.position.set(0,0.2,120);
 scene.add(strip);
 
 /////////////////////////////////////////////////////
-// 🌴 VILLAS (PERIMETER CLEAN)
+// VILLAS
 /////////////////////////////////////////////////////
 
 function villa(x,z){
-const g=new THREE.Group();
+const g = new THREE.Group();
 
-const base=new THREE.Mesh(
+const base = new THREE.Mesh(
 new THREE.BoxGeometry(14,1,14),
 new THREE.MeshStandardMaterial({color:0x1a1a1a})
 );
 
-const house=new THREE.Mesh(
+const house = new THREE.Mesh(
 new THREE.BoxGeometry(12,6,12),
 new THREE.MeshStandardMaterial({color:0x2a2a2a})
 );
 
-house.position.y=4;
+house.position.y = 4;
 
 g.add(base);
 g.add(house);
@@ -331,19 +265,23 @@ villa(i,80);
 }
 
 /////////////////////////////////////////////////////
-// 🧍 NPCS
+// NPCS
 /////////////////////////////////////////////////////
 
-const npcs=[];
+const npcs = [];
 
 function npc(x,z){
-const n=new THREE.Mesh(
+const n = new THREE.Mesh(
 new THREE.BoxGeometry(1,2,1),
 new THREE.MeshStandardMaterial({color:0xffcc66})
 );
 
 n.position.set(x,1,z);
-n.userData={dir:Math.random()*Math.PI*2,speed:0.04};
+n.userData = {
+dir: Math.random()*Math.PI*2,
+speed: 0.04
+};
+
 scene.add(n);
 npcs.push(n);
 }
@@ -353,39 +291,95 @@ npc((Math.random()-0.5)*120,(Math.random()-0.5)*120);
 }
 
 /////////////////////////////////////////////////////
+// CONTROLS
+/////////////////////////////////////////////////////
+
+function move(){
+
+const speed = 0.22;
+
+if(mode === "walk"){
+
+player.position.x += (keys.d ? speed : 0) - (keys.a ? speed : 0);
+player.position.z += (keys.s ? speed : 0) - (keys.w ? speed : 0);
+
+}
+
+if(mode === "car"){
+
+const carSpeed = 0.22;
+const turn = 0.02;
+
+car.position.x -= Math.sin(car.rotation.y) * carSpeed;
+car.position.z -= Math.cos(car.rotation.y) * carSpeed;
+
+if(keys.a) car.rotation.y += turn;
+if(keys.d) car.rotation.y -= turn;
+}
+}
+
+/////////////////////////////////////////////////////
+// CAMERA (UPGRADED FEEL)
+/////////////////////////////////////////////////////
+
+function updateCamera(){
+
+let tx, ty, tz;
+
+if(mode === "walk"){
+tx = player.position.x;
+ty = player.position.y + 7.2;
+tz = player.position.z + 12;
+}
+
+if(mode === "car"){
+tx = car.position.x + Math.sin(car.rotation.y) * -10;
+ty = car.position.y + 5.5;
+tz = car.position.z + Math.cos(car.rotation.y) * -10;
+}
+
+camera.position.x += (tx - camera.position.x) * 0.06;
+camera.position.y += (ty - camera.position.y) * 0.06;
+camera.position.z += (tz - camera.position.z) * 0.06;
+
+const target = (mode === "walk") ? player.position : car.position;
+camera.lookAt(target);
+}
+
+/////////////////////////////////////////////////////
 // LOOP
 /////////////////////////////////////////////////////
 
 camera.position.set(0,8,12);
 
 function animate(){
-  
+
 const time = performance.now() * 0.001;
 
+// ocean motion
 for(let i=0;i<waterPos.count;i++){
-
 const v = waterBase[i];
 
 waterPos.setY(i,
-Math.sin(v.x*0.015 + time)*0.5 +
-Math.cos(v.z*0.015 + time*1.2)*0.5
+Math.sin(v.x * 0.012 + time) * 0.6 +
+Math.cos(v.z * 0.012 + time * 1.1) * 0.6
 );
 }
-
 waterPos.needsUpdate = true;
-requestAnimationFrame(animate);
 
+// gameplay
 move();
 updateCamera();
 
 // NPC
 for(let n of npcs){
-n.position.x+=Math.cos(n.userData.dir)*n.userData.speed;
-n.position.z+=Math.sin(n.userData.dir)*n.userData.speed;
-n.userData.dir+=(Math.random()-0.5)*0.02;
+n.position.x += Math.cos(n.userData.dir) * n.userData.speed;
+n.position.z += Math.sin(n.userData.dir) * n.userData.speed;
+n.userData.dir += (Math.random() - 0.5) * 0.01;
 }
 
 renderer.render(scene,camera);
+requestAnimationFrame(animate);
 }
 
 animate();
