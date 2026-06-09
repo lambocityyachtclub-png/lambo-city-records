@@ -198,6 +198,48 @@ const hazeLight = new THREE.PointLight(0x3355ff, 0.4, 800);
 hazeLight.position.set(0, 80, 0);
 scene.add(hazeLight);
   
+ /////////////////////////////////////////////////////
+// 🌉 DOCK + LUXURY WALKWAY SYSTEM
+/////////////////////////////////////////////////////
+
+const dock = new THREE.Mesh(
+  new THREE.CylinderGeometry(200, 200, 1, 64),
+  new THREE.MeshStandardMaterial({
+    color: 0x111111,
+    metalness: 0.4,
+    roughness: 0.6
+  })
+);
+
+dock.position.set(0, 0.1, -80);
+scene.add(dock);
+
+// WALKWAY TO VILLAS
+const walkway = new THREE.Mesh(
+  new THREE.BoxGeometry(6, 0.5, 200),
+  new THREE.MeshStandardMaterial({
+    color: 0x0a0a0a,
+    emissive: 0x001122,
+    emissiveIntensity: 0.2
+  })
+);
+
+walkway.position.set(0, 0.25, -60);
+scene.add(walkway);
+
+// WALKWAY TO YACHT
+const yachtPath = new THREE.Mesh(
+  new THREE.BoxGeometry(4, 0.5, 120),
+  new THREE.MeshStandardMaterial({
+    color: 0x0a0a0a,
+    emissive: 0x002244,
+    emissiveIntensity: 0.3
+  })
+);
+
+yachtPath.position.set(20, 0.25, -80);
+scene.add(yachtPath);
+  
 /////////////////////////////////////////////////////
 // 🏡 LUXURY VILLA (FIXED — MULTI LEVEL)
 /////////////////////////////////////////////////////
