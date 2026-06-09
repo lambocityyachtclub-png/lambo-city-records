@@ -98,6 +98,130 @@ document.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
 let mode = "walk";
 
 /////////////////////////////////////////////////////
+// 🎮 GAMEPLAY STATE (V16 GAMEPLAY 1)
+/////////////////////////////////////////////////////
+
+const game = {
+  score: 0,
+  inBasketZone: false,
+  inGolfZone: false,
+  raceStart: null,
+  bestLap: null
+};
+
+/////////////////////////////////////////////////////
+// 🏀 BASKETBALL GAMEPLAY
+/////////////////////////////////////////////////////
+
+function checkBasket(){
+
+const d = player.position.distanceTo(court.position);
+
+if(d < 25){
+game.inBasketZone = true;
+document.getElementById("zone").innerText =
+"LAMBO CITY • BASKETBALL ZONE";
+} else {
+game.inBasketZone = false;
+}
+}
+
+// score when near hero in court zone
+document.addEventListener("keydown", e => {
+
+if(e.key.toLowerCase() === "e" && game.inBasketZone){
+
+const dist = player.position.distanceTo(hero.position);
+
+if(dist < 3){
+game.score += 1;
+document.getElementById("hint").style.display = "block";
+document.getElementById("hint").innerText =
+"SCORE! TOTAL: " + game.score;
+
+setTimeout(()=>{
+document.getElementById("hint").style.display = "none";
+}, 1000);
+}
+}
+});
+
+/////////////////////////////////////////////////////
+// ⛳ GOLF GAMEPLAY
+/////////////////////////////////////////////////////
+
+function checkGolf(){
+
+const d = player.position.distanceTo(golf.position);
+
+if(d < 35){
+game.inGolfZone = true;
+document.getElementById("zone").innerText =
+"LAMBO CITY • GOLF RANGE";
+} else {
+game.inGolfZone = false;
+}
+}
+
+// simple golf interaction
+document.addEventListener("keydown", e => {
+
+if(e.key.toLowerCase() === "e" && game.inGolfZone){
+
+document.getElementById("hint").style.display = "block";
+document.getElementById("hint").innerText =
+"SWING READY (MECHANIC NEXT UPGRADE)";
+
+setTimeout(()=>{
+document.getElementById("hint").style.display = "none";
+}, 1200);
+}
+});
+
+/////////////////////////////////////////////////////
+// 🏎 RACING SYSTEM (STRIP ZONE TIMER)
+/////////////////////////////////////////////////////
+
+function checkRace(){
+
+if(player.position.z > 80){
+
+if(game.raceStart === null){
+game.raceStart = performance.now();
+document.getElementById("zone").innerText =
+"RACE STARTED";
+}
+}
+}
+
+function finishRace(){
+
+if(player.position.z < 10 && game.raceStart){
+
+const time = (performance.now() - game.raceStart)/1000;
+
+if(!game.bestLap || time < game.bestLap){
+game.bestLap = time;
+}
+
+document.getElementById("hint").style.display = "block";
+document.getElementById("hint").innerText =
+"LAP: " + time.toFixed(2) + "s | BEST: " + game.bestLap.toFixed(2) + "s";
+
+game.raceStart = null;
+
+// prevent spam re-trigger
+player.position.z = 12;
+
+setTimeout(()=>{
+document.getElementById("hint").style.display = "none";
+}, 2000);
+}
+}
+
+  
+  
+/////////////////////////////////////////////////////
 // PLAYER + HERO
 /////////////////////////////////////////////////////
 
@@ -370,7 +494,10 @@ waterPos.needsUpdate = true;
 // gameplay
 move();
 updateCamera();
-
+checkBasket();
+checkGolf();
+checkRace();
+finishRace();
 // NPC
 for(let n of npcs){
 n.position.x += Math.cos(n.userData.dir) * n.userData.speed;
