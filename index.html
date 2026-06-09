@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LAMBO CITY — FINAL WORLD BUILD</title>
+<title>LAMBO CITY — FINAL WORLD</title>
 
 <style>
 body { margin:0; overflow:hidden; background:black; }
@@ -34,7 +34,7 @@ display:none;
 <body>
 
 <div id="ui">LAMBO CITY — FINAL BUILD</div>
-<div id="zone">WELCOME</div>
+<div id="zone">LOADING WORLD</div>
 <div id="hint"></div>
 
 <canvas id="c"></canvas>
@@ -49,53 +49,53 @@ display:none;
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x050814);
-scene.fog = new THREE.FogExp2(0x050814,0.0035);
+scene.fog = new THREE.FogExp2(0x050814, 0.0035);
 
-const camera = new THREE.PerspectiveCamera(75,innerWidth/innerHeight,0.1,3000);
+const camera = new THREE.PerspectiveCamera(
+75, innerWidth / innerHeight, 0.1, 3000
+);
 
 const renderer = new THREE.WebGLRenderer({
-canvas:document.getElementById("c"),
-antialias:true
+canvas: document.getElementById("c"),
+antialias: true
 });
 
-renderer.setSize(innerWidth,innerHeight);
+renderer.setSize(innerWidth, innerHeight);
 
-window.addEventListener("resize",()=>{
-camera.aspect=innerWidth/innerHeight;
+window.addEventListener("resize", () => {
+camera.aspect = innerWidth / innerHeight;
 camera.updateProjectionMatrix();
-renderer.setSize(innerWidth,innerHeight);
+renderer.setSize(innerWidth, innerHeight);
 });
 
 /////////////////////////////////////////////////////
-// LIGHTING (CINEMATIC)
+// LIGHTING
 /////////////////////////////////////////////////////
 
-scene.add(new THREE.AmbientLight(0x223344,1));
+scene.add(new THREE.AmbientLight(0x223344, 1));
 
-const sun = new THREE.DirectionalLight(0x99ccff,1.2);
-sun.position.set(100,200,80);
+const sun = new THREE.DirectionalLight(0x99ccff, 1.2);
+sun.position.set(100, 200, 80);
 scene.add(sun);
 
 /////////////////////////////////////////////////////
 // INPUT
 /////////////////////////////////////////////////////
 
-const keys={};
-document.addEventListener("keydown",e=>keys[e.key.toLowerCase()]=true);
-document.addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
+const keys = {};
+document.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
+document.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
 
 /////////////////////////////////////////////////////
-// GAME STATE
+// STATE
 /////////////////////////////////////////////////////
 
 let mode = "walk";
 
 const game = {
-score:0,
-raceStart:null,
-bestLap:null,
-basketZone:false,
-golfZone:false
+score: 0,
+raceStart: null,
+bestLap: null
 };
 
 /////////////////////////////////////////////////////
@@ -124,15 +124,8 @@ car.position.set(0,0.5,40);
 scene.add(car);
 
 /////////////////////////////////////////////////////
-// JUMBOTRON (PRESERVED CORE IDENTITY)
+// JUMBOTRON (YOUR CORE IDENTITY)
 /////////////////////////////////////////////////////
-
-const jumbotron = new THREE.Mesh(
-new THREE.BoxGeometry(30,15,1),
-new THREE.MeshStandardMaterial({color:0x000000,emissive:0x0044ff})
-);
-jumbotron.position.set(0,10,-10);
-scene.add(jumbotron);
 
 const stage = new THREE.Mesh(
 new THREE.BoxGeometry(40,2,20),
@@ -141,15 +134,22 @@ new THREE.MeshStandardMaterial({color:0x111111,emissive:0x0033ff})
 stage.position.set(0,1,0);
 scene.add(stage);
 
+const jumbotron = new THREE.Mesh(
+new THREE.BoxGeometry(30,15,1),
+new THREE.MeshStandardMaterial({color:0x000000,emissive:0x0044ff})
+);
+jumbotron.position.set(0,10,-10);
+scene.add(jumbotron);
+
 /////////////////////////////////////////////////////
-// ZONES
+// WORLD ZONES
 /////////////////////////////////////////////////////
 
 const court = new THREE.Mesh(
 new THREE.PlaneGeometry(60,30),
 new THREE.MeshStandardMaterial({color:0x111111})
 );
-court.rotation.x=-Math.PI/2;
+court.rotation.x = -Math.PI/2;
 court.position.set(-80,0,20);
 scene.add(court);
 
@@ -157,7 +157,7 @@ const golf = new THREE.Mesh(
 new THREE.PlaneGeometry(100,100),
 new THREE.MeshStandardMaterial({color:0x0c4a1f})
 );
-golf.rotation.x=-Math.PI/2;
+golf.rotation.x = -Math.PI/2;
 golf.position.set(90,0,20);
 scene.add(golf);
 
@@ -169,7 +169,7 @@ strip.position.set(0,0.2,120);
 scene.add(strip);
 
 /////////////////////////////////////////////////////
-// CAMERA (CINEMATIC SMOOTH)
+// CAMERA SYSTEM
 /////////////////////////////////////////////////////
 
 function updateCamera(){
@@ -201,7 +201,7 @@ camera.lookAt(mode==="walk" ? player.position : car.position);
 
 function move(){
 
-const speed=0.22;
+const speed = 0.22;
 
 if(mode==="walk"){
 player.position.x += (keys.d?speed:0)-(keys.a?speed:0);
@@ -240,24 +240,6 @@ player.position.set(car.position.x+2,1,car.position.z);
 });
 
 /////////////////////////////////////////////////////
-// GAMEPLAY ZONES
-/////////////////////////////////////////////////////
-
-function updateZones(){
-
-const bDist = player.position.distanceTo(court.position);
-const gDist = player.position.distanceTo(golf.position);
-
-game.basketZone = bDist < 25;
-game.golfZone = gDist < 35;
-
-document.getElementById("zone").innerText =
-game.basketZone ? "BASKETBALL ZONE" :
-game.golfZone ? "GOLF ZONE" :
-"LAMBO CITY WORLD";
-}
-
-/////////////////////////////////////////////////////
 // LOOP
 /////////////////////////////////////////////////////
 
@@ -267,7 +249,8 @@ function animate(){
 
 move();
 updateCamera();
-updateZones();
+
+document.getElementById("zone").innerText = "LAMBO CITY — WORLD ACTIVE";
 
 renderer.render(scene,camera);
 requestAnimationFrame(animate);
