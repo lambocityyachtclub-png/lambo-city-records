@@ -48,76 +48,70 @@ position:absolute;
 // CORE
 /////////////////////////////////////////////////////
 
-let started = true;
-
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x000000);
-scene.fog = new THREE.FogExp2(0x070814, 0.012);
+scene.background = new THREE.Color(0x02040a);
+scene.fog = new THREE.FogExp2(0x070b1a, 0.006);
 
 const camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 2000);
 
-const renderer = new THREE.WebGLRenderer({canvas:document.getElementById("c"), antialias:true});
+const renderer = new THREE.WebGLRenderer({
+  canvas: document.getElementById("c"),
+  antialias: true
+});
+
 renderer.setSize(innerWidth, innerHeight);
 
-window.addEventListener("resize", ()=>{
-camera.aspect = innerWidth/innerHeight;
-camera.updateProjectionMatrix();
-renderer.setSize(innerWidth, innerHeight);
+window.addEventListener("resize", () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
 });
 
 /////////////////////////////////////////////////////
-// LIGHTING (LUXURY LOOK)
+// LIGHTING
 /////////////////////////////////////////////////////
 
-scene.add(new THREE.AmbientLight(0xffffff, 0.55));
+scene.add(new THREE.AmbientLight(0x223344, 0.8));
 
-const mainLight = new THREE.PointLight(0x66ccff, 1.5, 250);
-mainLight.position.set(0,40,40);
-scene.add(mainLight);
+const light = new THREE.PointLight(0x4da3ff, 1, 900);
+light.position.set(0, 120, 0);
+scene.add(light);
 
 /////////////////////////////////////////////////////
 // PLAYER
 /////////////////////////////////////////////////////
 
 const player = new THREE.Mesh(
-new THREE.BoxGeometry(1,2,1),
-new THREE.MeshStandardMaterial({color:0xffffff})
+  new THREE.BoxGeometry(1,2,1),
+  new THREE.MeshStandardMaterial({ color: 0xffffff })
 );
 
 player.position.set(0,1,-30);
 scene.add(player);
 
 const keys = {};
-document.addEventListener("keydown",e=>keys[e.key.toLowerCase()]=true);
-document.addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
-
-/////////////////////////////////////////////////////
-// CAMERA
-/////////////////////////////////////////////////////
-
-function updateCamera(){
-camera.position.x += (player.position.x - camera.position.x)*0.08;
-camera.position.y += ((player.position.y+8) - camera.position.y)*0.08;
-camera.position.z += ((player.position.z+14) - camera.position.z)*0.08;
-camera.lookAt(player.position);
-}
-
-/////////////////////////////////////////////////////
-// MOVEMENT
-/////////////////////////////////////////////////////
+document.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
+document.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
 
 function move(){
-if(keys["w"]) player.position.z -= 0.25;
-if(keys["s"]) player.position.z += 0.25;
-if(keys["a"]) player.position.x -= 0.25;
-if(keys["d"]) player.position.x += 0.25;
+  if(keys["w"]) player.position.z -= 0.25;
+  if(keys["s"]) player.position.z += 0.25;
+  if(keys["a"]) player.position.x -= 0.25;
+  if(keys["d"]) player.position.x += 0.25;
+}
+
+function updateCamera(){
+  camera.position.x += (player.position.x - camera.position.x) * 0.08;
+  camera.position.y += ((player.position.y + 8) - camera.position.y) * 0.08;
+  camera.position.z += ((player.position.z + 14) - camera.position.z) * 0.08;
+  camera.lookAt(player.position);
 }
 
 /////////////////////////////////////////////////////
-// 🌊 OCEAN (FIXED CLEAN VERSION)
+// 🌊 OCEAN (SAFE VERSION)
 /////////////////////////////////////////////////////
 
-const waterGeo = new THREE.PlaneGeometry(1500, 1500, 80, 80);
+const waterGeo = new THREE.PlaneGeometry(1500,1500,80,80);
 
 const waterMat = new THREE.MeshStandardMaterial({
   color: 0x021428,
@@ -128,319 +122,18 @@ const waterMat = new THREE.MeshStandardMaterial({
 });
 
 const water = new THREE.Mesh(waterGeo, waterMat);
-water.rotation.x = -Math.PI / 2;
-water.position.y = 0;
+water.rotation.x = -Math.PI/2;
 scene.add(water);
 
-// STORE VERTEX DATA (for wave animation)
 const waterPos = water.geometry.attributes.position;
 const waterBase = [];
 
-// BUILD WAVE BASE DATA (IMPORTANT FIX)
-for (let i = 0; i < waterPos.count; i++) {
+for(let i=0;i<waterPos.count;i++){
   waterBase.push({
     x: waterPos.getX(i),
     z: waterPos.getZ(i)
   });
 }
-/////////////////////////////////////////////////////
-// 🌉 DOCK + LUXURY WALKWAY SYSTEM
-/////////////////////////////////////////////////////
-
-const dock = new THREE.Mesh(
-  new THREE.CylinderGeometry(200, 200, 1, 64),
-  new THREE.MeshStandardMaterial({
-    color: 0x111111,
-    metalness: 0.4,
-    roughness: 0.6
-  })
-);
-
-dock.position.set(0, 0.1, -80);
-scene.add(dock);
-
-const walkway = new THREE.Mesh(
-  new THREE.BoxGeometry(6, 0.5, 200),
-  new THREE.MeshStandardMaterial({
-    color: 0x0a0a0a,
-    emissive: 0x001122,
-    emissiveIntensity: 0.2
-  })
-);
-
-walkway.position.set(0, 0.25, -60);
-scene.add(walkway);
-
-const yachtPath = new THREE.Mesh(
-  new THREE.BoxGeometry(4, 0.5, 120),
-  new THREE.MeshStandardMaterial({
-    color: 0x0a0a0a,
-    emissive: 0x002244,
-    emissiveIntensity: 0.3
-  })
-);
-
-yachtPath.position.set(20, 0.25, -80);
-scene.add(yachtPath);
-  
-for (let i = 0; i < waterPos.count; i++) {
-  waterBase.push({
-    x: waterPos.getX(i),
-    z: waterPos.getZ(i)
-  });
-}
-/////////////////////////////////////////////////////
-// 🌌 ATMOSPHERE PACK (STABLE FIXED VERSION)
-/////////////////////////////////////////////////////
-
-// SINGLE CONTROLLED FOG (DO NOT DUPLICATE)
-scene.fog = new THREE.FogExp2(0x070b1a, 0.006);
-
-// SKY BACKGROUND (helps visibility immediately)
-scene.background = new THREE.Color(0x02040a);
-
-// STAR FIELD
-const starGeo = new THREE.BufferGeometry();
-const starArr = [];
-
-for (let i = 0; i < 800; i++) {
-
-  starArr.push(
-    (Math.random() - 0.5) * 2500,
-    Math.random() * 1200,
-    (Math.random() - 0.5) * 2500
-  );
-
-}
-
-starGeo.setAttribute(
-  "position",
-  new THREE.Float32BufferAttribute(starArr, 3)
-);
-
-const stars = new THREE.Points(
-  starGeo,
-  new THREE.PointsMaterial({
-    color: 0xffffff,
-    size: 1.4,
-    transparent: true,
-    opacity: 0.9
-  })
-);
-
-scene.add(stars);
-
-// LIGHTING FIX (THIS IS WHAT YOU WERE MISSING FEELING “BLANK”)
-const ambient = new THREE.AmbientLight(0x223344, 0.8);
-scene.add(ambient);
-
-const skyGlow = new THREE.HemisphereLight(0x4c7dff, 0x0a0a0a, 0.7);
-scene.add(skyGlow);
-
-const mainFill = new THREE.PointLight(0x4da3ff, 0.8, 900);
-mainFill.position.set(0, 120, 0);
-scene.add(mainFill);
-  
-
-/////////////////////////////////////////////////////
-// 🏡 LUXURY VILLA (FIXED — MULTI LEVEL)
-/////////////////////////////////////////////////////
-const villas = [];
-
-function createVilla(x,z){
-
-const villa = new THREE.Group();
-
-const base = new THREE.Mesh(
-
-new THREE.BoxGeometry(16,1,16),
-
-new THREE.MeshStandardMaterial({color:0x0f0f0f})
-
-);
-
-base.position.y = 0.5;
-
-villa.add(base);
-
-const floor1 = new THREE.Mesh(
-
-new THREE.BoxGeometry(16,5,16),
-
-new THREE.MeshStandardMaterial({color:0x151515})
-
-);
-
-floor1.position.y = 3;
-
-villa.add(floor1);
-
-const floor2 = new THREE.Mesh(
-
-new THREE.BoxGeometry(14,4,14),
-
-new THREE.MeshStandardMaterial({color:0x101010})
-
-);
-
-floor2.position.y = 7.5;
-
-villa.add(floor2);
-
-const roof = new THREE.Mesh(
-
-new THREE.BoxGeometry(17,1,17),
-
-new THREE.MeshStandardMaterial({color:0x0a0a0a})
-
-);
-
-roof.position.y = 10;
-
-villa.add(roof);
-
-// BALCONY (IMPORTANT LUXURY FEEL)
-
-const balcony = new THREE.Mesh(
-
-new THREE.BoxGeometry(22,0.4,6),
-
-new THREE.MeshStandardMaterial({color:0x222222})
-
-);
-
-balcony.position.set(0,4,10);
-
-villa.add(balcony);
-
-// GLASS RAIL
-
-const rail = new THREE.Mesh(
-
-new THREE.BoxGeometry(22,1.2,0.2),
-
-new THREE.MeshStandardMaterial({
-
-color:0x88ccff,
-
-transparent:true,
-
-opacity:0.3
-
-})
-
-);
-
-rail.position.set(0,5,13);
-
-villa.add(rail);
-
-// FRONT GLASS
-
-const glass = new THREE.Mesh(
-
-new THREE.BoxGeometry(10,3,0.2),
-
-new THREE.MeshStandardMaterial({
-
-color:0x99ddff,
-
-transparent:true,
-
-opacity:0.35
-
-})
-
-);
-
-glass.position.set(0,3,7.5);
-
-villa.add(glass);
-
-// LIGHT GLOW
-
-const light = new THREE.PointLight(0x66ccff,1.2,30);
-
-light.position.set(0,6,0);
-
-villa.add(light);
-
-villa.position.set(x,0,z);
-
-scene.add(villa);
-
-villas.push(villa);
-
-}
-
-for(let i=0;i<6;i++){
-
-createVilla(-25,-20-i*25);
-
-createVilla(25,-20-i*25);
-
-}
-
-
-/////////////////////////////////////////////////////
-// 🚤 YACHT (SIMPLE CLEAN)
-/////////////////////////////////////////////////////
-
-const yacht = new THREE.Mesh(
-new THREE.BoxGeometry(16,4,45),
-new THREE.MeshStandardMaterial({color:0xf2f2f2})
-);
-
-yacht.position.set(40,2,-80);
-scene.add(yacht);
-
-/////////////////////////////////////////////////////
-// 🌟 HERO
-/////////////////////////////////////////////////////
-
-const hero = new THREE.Mesh(
-new THREE.BoxGeometry(1,2,1),
-new THREE.MeshStandardMaterial({
-color:0x00ffff,
-emissive:0x00ffff
-})
-);
-
-hero.position.set(10,1,-20);
-scene.add(hero);
-
-/////////////////////////////////////////////////////
-// UI
-/////////////////////////////////////////////////////
-
-const hint = document.getElementById("hint");
-
-function show(t){
-hint.style.display="block";
-hint.innerText=t;
-}
-
-function hide(){
-hint.style.display="none";
-}
-
-/////////////////////////////////////////////////////
-// INTERACTIONS
-/////////////////////////////////////////////////////
-
-function check(){
-const d = player.position.distanceTo(hero.position);
-if(d<3) show("PRESS E TO TALK");
-else hide();
-}
-
-document.addEventListener("keydown",e=>{
-if(e.key.toLowerCase()==="e"){
-if(player.position.distanceTo(hero.position)<3){
-document.getElementById("zone").innerText="HERO: Welcome to LAMBO CITY";
-}
-}
-});
 
 /////////////////////////////////////////////////////
 // LOOP
@@ -451,16 +144,10 @@ function animate(){
 
   move();
   updateCamera();
-  check();
-
-  /////////////////////////////////////////////////////
-  // 🌊 OCEAN WAVE SYSTEM (CLEAN + STABLE)
-  /////////////////////////////////////////////////////
 
   const time = Date.now() * 0.001;
 
-  for (let i = 0; i < waterPos.count; i++) {
-
+  for(let i=0;i<waterPos.count;i++){
     const v = waterBase[i];
 
     const wave =
@@ -472,11 +159,7 @@ function animate(){
 
   waterPos.needsUpdate = true;
 
-  /////////////////////////////////////////////////////
-  // 🎥 RENDER FRAME
-  /////////////////////////////////////////////////////
-
-  renderer.render(scene, camera);
+  renderer.render(scene,camera);
 }
 
 animate();
