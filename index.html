@@ -208,15 +208,32 @@ if(keys.d) player.position.x += s;
 }
 
 /////////////////////////////////////////////////////
-// CAMERA FOLLOW (STABLE)
+// AAA CAMERA SYSTEM V1 (REPLACE OLD CAMERA BLOCK)
 /////////////////////////////////////////////////////
 
-function updateCamera(){
-camera.position.x += (player.position.x - camera.position.x)*0.06;
-camera.position.y += ((player.position.y+10) - camera.position.y)*0.06;
-camera.position.z += ((player.position.z+70) - camera.position.z)*0.06;
+const cameraOffset = new THREE.Vector3(0, 12, 35);
+const cameraLerp = 0.08;
 
-camera.lookAt(player.position);
+function updateCamera(){
+
+// desired cinematic position behind player
+const desiredPosition = new THREE.Vector3(
+player.position.x + cameraOffset.x,
+player.position.y + cameraOffset.y,
+player.position.z + cameraOffset.z
+);
+
+// smooth follow (AAA feel)
+camera.position.lerp(desiredPosition, cameraLerp);
+
+// cinematic look slightly above player center
+const lookTarget = new THREE.Vector3(
+player.position.x,
+player.position.y + 2,
+player.position.z
+);
+
+camera.lookAt(lookTarget);
 }
 
 /////////////////////////////////////////////////////
