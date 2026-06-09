@@ -114,28 +114,33 @@ if(keys["d"]) player.position.x += 0.25;
 }
 
 /////////////////////////////////////////////////////
-// 🌊 OCEAN
+// 🌊 OCEAN (LUXURY VERSION - CLEAN CORE)
 /////////////////////////////////////////////////////
 
-const waterGeo = new THREE.PlaneGeometry(1500,1500,50,50);
+const waterGeo = new THREE.PlaneGeometry(1500, 1500, 80, 80);
+
 const waterMat = new THREE.MeshStandardMaterial({
-color:0x020b1a,
-metalness:0.7,
-roughness:0.3
+  color: 0x021428,
+  metalness: 0.9,
+  roughness: 0.25,
+  emissive: 0x001122,
+  emissiveIntensity: 0.4
 });
 
 const water = new THREE.Mesh(waterGeo, waterMat);
-water.rotation.x = -Math.PI/2;
+water.rotation.x = -Math.PI / 2;
+water.position.y = 0;
 scene.add(water);
 
+// STORE VERTEX DATA (for wave animation)
 const waterPos = water.geometry.attributes.position;
 const waterBase = [];
 
-for(let i=0;i<waterPos.count;i++){
-waterBase.push({
-x:waterPos.getX(i),
-z:waterPos.getZ(i)
-});
+for (let i = 0; i < waterPos.count; i++) {
+  waterBase.push({
+    x: waterPos.getX(i),
+    z: waterPos.getZ(i)
+  });
 }
 
 /////////////////////////////////////////////////////
@@ -343,29 +348,36 @@ document.getElementById("zone").innerText="HERO: Welcome to LAMBO CITY";
 /////////////////////////////////////////////////////
 
 function animate(){
-requestAnimationFrame(animate);
+  requestAnimationFrame(animate);
 
-move();
-updateCamera();
-check();
+  move();
+  updateCamera();
+  check();
 
-const t = Date.now()*0.001;
+  /////////////////////////////////////////////////////
+  // 🌊 OCEAN WAVE SYSTEM (CLEAN + STABLE)
+  /////////////////////////////////////////////////////
 
-for(let i=0;i<waterPos.count;i++){
-const v = waterBase[i];
-waterPos.setY(i,
-Math.sin(v.x*0.02+t)*0.4 +
-Math.cos(v.z*0.02+t)*0.4
-);
-}
+  const time = Date.now() * 0.001;
 
-waterPos.needsUpdate = true;
+  for (let i = 0; i < waterPos.count; i++) {
 
-renderer.render(scene,camera);
+    const v = waterBase[i];
+
+    const wave =
+      Math.sin(v.x * 0.02 + time) * 0.4 +
+      Math.cos(v.z * 0.02 + time * 1.3) * 0.4;
+
+    waterPos.setY(i, wave);
+  }
+
+  waterPos.needsUpdate = true;
+
+  /////////////////////////////////////////////////////
+  // 🎥 RENDER FRAME
+  /////////////////////////////////////////////////////
+
+  renderer.render(scene, camera);
 }
 
 animate();
-
-</script>
-</body>
-</html>
