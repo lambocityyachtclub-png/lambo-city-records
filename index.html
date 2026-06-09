@@ -169,24 +169,154 @@ z:waterPos.getZ(i)
 // CABINS
 /////////////////////////////////////////////////////
 
+/////////////////////////////////////////////////////
+// 🏡 LUXURY VILLA CABINS (MULTI-LEVEL MANSIONS)
+/////////////////////////////////////////////////////
+
 const cabins = [];
 
-function createCabin(x,z){
+function createCabin(x, z) {
 
-const cabin = new THREE.Mesh(
-new THREE.BoxGeometry(10,5,10),
-new THREE.MeshStandardMaterial({color:0x1a1a1a})
+const base = new THREE.Group();
+
+/////////////////////////////////////////////////////
+// FOUNDATION
+/////////////////////////////////////////////////////
+
+const foundation = new THREE.Mesh(
+new THREE.BoxGeometry(14, 1, 14),
+new THREE.MeshStandardMaterial({ color: 0x0f0f0f })
 );
+foundation.position.y = 0.5;
+base.add(foundation);
 
-cabin.position.set(x,2.5,z);
-scene.add(cabin);
+/////////////////////////////////////////////////////
+// MAIN FLOOR (GLASS + WALL BODY)
+/////////////////////////////////////////////////////
 
-cabins.push(cabin);
+const main = new THREE.Mesh(
+new THREE.BoxGeometry(14, 5, 14),
+new THREE.MeshStandardMaterial({
+color: 0x151515,
+metalness: 0.2,
+roughness: 0.8
+})
+);
+main.position.y = 3;
+base.add(main);
+
+/////////////////////////////////////////////////////
+// SECOND FLOOR (MANSION LEVEL)
+/////////////////////////////////////////////////////
+
+const upper = new THREE.Mesh(
+new THREE.BoxGeometry(12, 4, 12),
+new THREE.MeshStandardMaterial({
+color: 0x101010,
+metalness: 0.3,
+roughness: 0.7
+})
+);
+upper.position.y = 7.5;
+base.add(upper);
+
+/////////////////////////////////////////////////////
+// ROOF LUXURY PLATE
+/////////////////////////////////////////////////////
+
+const roof = new THREE.Mesh(
+new THREE.BoxGeometry(15, 0.8, 15),
+new THREE.MeshStandardMaterial({
+color: 0x0a0a0a,
+metalness: 0.4
+})
+);
+roof.position.y = 10;
+base.add(roof);
+
+/////////////////////////////////////////////////////
+// BALCONY WRAP (IMPORTANT LUXURY FEEL)
+/////////////////////////////////////////////////////
+
+const balcony = new THREE.Mesh(
+new THREE.BoxGeometry(20, 0.4, 6),
+new THREE.MeshStandardMaterial({
+color: 0x222222,
+metalness: 0.6,
+roughness: 0.3
+})
+);
+balcony.position.set(0, 4, 10);
+base.add(balcony);
+
+/////////////////////////////////////////////////////
+// GLASS RAILING (KEY LUXURY DETAIL)
+/////////////////////////////////////////////////////
+
+const rail = new THREE.Mesh(
+new THREE.BoxGeometry(20, 1.2, 0.2),
+new THREE.MeshStandardMaterial({
+color: 0x88ccff,
+transparent: true,
+opacity: 0.25
+})
+);
+rail.position.set(0, 5, 13);
+base.add(rail);
+
+/////////////////////////////////////////////////////
+// GLASS FRONT WINDOW STRIP
+/////////////////////////////////////////////////////
+
+const glass = new THREE.Mesh(
+new THREE.BoxGeometry(10, 3, 0.2),
+new THREE.MeshStandardMaterial({
+color: 0x99ddff,
+transparent: true,
+opacity: 0.35,
+emissive: 0x113355,
+emissiveIntensity: 0.4
+})
+);
+glass.position.set(0, 3, 7.2);
+base.add(glass);
+
+/////////////////////////////////////////////////////
+// INTERIOR LIGHT GLOW (KEY LUXURY SIGNAL)
+/////////////////////////////////////////////////////
+
+const light = new THREE.PointLight(0x66ccff, 1.2, 25);
+light.position.set(0, 6, 0);
+base.add(light);
+
+/////////////////////////////////////////////////////
+// SIDE WALL DETAILING (DEPTH)
+/////////////////////////////////////////////////////
+
+const sideDetail = new THREE.Mesh(
+new THREE.BoxGeometry(14, 3, 0.5),
+new THREE.MeshStandardMaterial({ color: 0x0d0d0d })
+);
+sideDetail.position.set(0, 6, -7);
+base.add(sideDetail);
+
+/////////////////////////////////////////////////////
+// POSITION
+/////////////////////////////////////////////////////
+
+base.position.set(x, 0, z);
+scene.add(base);
+
+cabins.push(base);
 }
 
-for(let i=0;i<5;i++){
-createCabin(-20,-20-i*15);
-createCabin(20,-20-i*15);
+/////////////////////////////////////////////////////
+// SPAWN LUXURY DISTRICT
+/////////////////////////////////////////////////////
+
+for (let i = 0; i < 5; i++) {
+createCabin(-25, -20 - i * 25);
+createCabin(25, -20 - i * 25);
 }
 
 /////////////////////////////////////////////////////
