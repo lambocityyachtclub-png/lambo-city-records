@@ -142,7 +142,62 @@ for (let i = 0; i < waterPos.count; i++) {
     z: waterPos.getZ(i)
   });
 }
+/////////////////////////////////////////////////////
+// 🌌 ATMOSPHERE PACK (LUXURY WORLD DEPTH)
+/////////////////////////////////////////////////////
 
+// 🌫️ IMPROVED FOG (gives distance + scale)
+scene.fog = new THREE.FogExp2(0x070b1a, 0.008);
+
+// 🌌 STAR FIELD (SKY VISUAL DEPTH)
+const starGeo = new THREE.BufferGeometry();
+const starArr = [];
+
+for (let i = 0; i < 600; i++) {
+
+  starArr.push(
+    (Math.random() - 0.5) * 2500,
+    Math.random() * 900,
+    (Math.random() - 0.5) * 2500
+  );
+
+}
+
+starGeo.setAttribute(
+  "position",
+  new THREE.Float32BufferAttribute(starArr, 3)
+);
+
+const stars = new THREE.Points(
+  starGeo,
+  new THREE.PointsMaterial({
+    color: 0xffffff,
+    size: 1.2,
+    transparent: true,
+    opacity: 0.9
+  })
+);
+
+scene.add(stars);
+
+// 🌫️ SOFT AMBIENT FILL (fixes “too dark / flat” look)
+const ambient = new THREE.AmbientLight(0x1a2a3a, 0.7);
+scene.add(ambient);
+
+// 🌙 SKY DEPTH LIGHT (adds cinematic blue tone)
+const skyGlow = new THREE.HemisphereLight(
+  0x4466ff,   // sky color
+  0x0a0a0a,   // ground color
+  0.6
+);
+
+scene.add(skyGlow);
+
+// ✨ OPTIONAL: subtle world haze glow light
+const hazeLight = new THREE.PointLight(0x3355ff, 0.4, 800);
+hazeLight.position.set(0, 80, 0);
+scene.add(hazeLight);
+  
 /////////////////////////////////////////////////////
 // 🏡 LUXURY VILLA (FIXED — MULTI LEVEL)
 /////////////////////////////////////////////////////
