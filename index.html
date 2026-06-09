@@ -2,10 +2,10 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LAMBO CITY V25 — WORLD EXPANSION</title>
+<title>LAMBO CITY — FIXED START BUILD</title>
 
 <style>
-body { margin:0; overflow:hidden; background:black; }
+body { margin:0; overflow:hidden; background:#050814; }
 canvas { display:block; }
 
 #ui,#zone{
@@ -23,8 +23,8 @@ z-index:10;
 
 <body>
 
-<div id="ui">LAMBO CITY V25 — WORLD EXPANSION</div>
-<div id="zone">ZONE: OCEAN CENTER</div>
+<div id="ui">LAMBO CITY — FIX FIX PATCH</div>
+<div id="zone">LOADING WORLD...</div>
 
 <canvas id="c"></canvas>
 
@@ -32,18 +32,16 @@ z-index:10;
 
 <script>
 
-window.addEventListener("load", () => {
-
 /////////////////////////////////////////////////////
 // CORE
 /////////////////////////////////////////////////////
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x050814);
-scene.fog = new THREE.FogExp2(0x050814, 0.0022);
+scene.background = new THREE.Color(0x0a1020);
+scene.fog = new THREE.FogExp2(0x0a1020, 0.0012); // 🔥 FIXED (less fog = visible world)
 
 const camera = new THREE.PerspectiveCamera(
-75, innerWidth/innerHeight, 0.1, 7000
+75, innerWidth/innerHeight, 0.1, 10000
 );
 
 const renderer = new THREE.WebGLRenderer({
@@ -52,21 +50,74 @@ antialias:true
 });
 
 renderer.setSize(innerWidth, innerHeight);
-renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+
+window.addEventListener("resize",()=>{
+camera.aspect = innerWidth/innerHeight;
+camera.updateProjectionMatrix();
+renderer.setSize(innerWidth, innerHeight);
+});
 
 /////////////////////////////////////////////////////
-// LIGHTING
+// LIGHTING (BOOSTED VISIBILITY FIX)
 /////////////////////////////////////////////////////
 
-scene.add(new THREE.AmbientLight(0x223344, 1));
+scene.add(new THREE.AmbientLight(0x556677, 1.2));
 
-const sun = new THREE.DirectionalLight(0x99c6ff, 1.4);
-sun.position.set(200,300,100);
+const sun = new THREE.DirectionalLight(0xaaccff, 1.5);
+sun.position.set(200,300,200);
 scene.add(sun);
 
-const glow = new THREE.PointLight(0x00ccff, 2, 1000);
-glow.position.set(0,40,0);
+const glow = new THREE.PointLight(0x00ccff, 2, 1500);
+glow.position.set(0,50,0);
 scene.add(glow);
+
+/////////////////////////////////////////////////////
+// WORLD ANCHOR (DEBUG FIX - YOU MUST SEE THIS)
+/////////////////////////////////////////////////////
+
+const anchor = new THREE.Mesh(
+new THREE.BoxGeometry(5,5,5),
+new THREE.MeshStandardMaterial({color:0xff0000})
+);
+anchor.position.set(0,5,0);
+scene.add(anchor);
+
+/////////////////////////////////////////////////////
+// PLAYER / CAR START FIX
+/////////////////////////////////////////////////////
+
+const car = new THREE.Mesh(
+new THREE.BoxGeometry(3,1,6),
+new THREE.MeshStandardMaterial({color:0xffcc00})
+);
+
+car.position.set(0,2,0); // 🔥 CENTERED START (FIX)
+scene.add(car);
+
+/////////////////////////////////////////////////////
+// ISLAND (VISIBLE POSITION FIX)
+/////////////////////////////////////////////////////
+
+const island = new THREE.Mesh(
+new THREE.CylinderGeometry(300,300,40,32),
+new THREE.MeshStandardMaterial({color:0x1f3b1f})
+);
+island.position.y = -10;
+scene.add(island);
+
+/////////////////////////////////////////////////////
+// OCEAN (VISIBLE UNDER ISLAND)
+/////////////////////////////////////////////////////
+
+const ocean = new THREE.Mesh(
+new THREE.PlaneGeometry(5000,5000),
+new THREE.MeshStandardMaterial({
+color:0x061a2b
+})
+);
+ocean.rotation.x = -Math.PI/2;
+ocean.position.y = -12;
+scene.add(ocean);
 
 /////////////////////////////////////////////////////
 // INPUT
@@ -76,165 +127,34 @@ const keys={};
 document.addEventListener("keydown",e=>keys[e.key.toLowerCase()]=true);
 document.addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
 
-let mode="car";
-
 /////////////////////////////////////////////////////
-// CAR
+// CAMERA FIX (FORCE LOOK AT START)
 /////////////////////////////////////////////////////
 
-const car = new THREE.Group();
-
-const body = new THREE.Mesh(
-new THREE.BoxGeometry(3.2,0.7,6.2),
-new THREE.MeshStandardMaterial({color:0xffcc00,metalness:1,roughness:0.25})
-);
-
-car.add(body);
-car.position.set(0,1,0);
-scene.add(car);
-
-let speed = 0;
-let steer = 0;
+camera.position.set(0,20,30);
+camera.lookAt(0,0,0); // 🔥 CRITICAL FIX
 
 /////////////////////////////////////////////////////
-// ISLAND (REAL TERRAIN BASE)
+// MOVEMENT
 /////////////////////////////////////////////////////
 
-const island = new THREE.Mesh(
-new THREE.CylinderGeometry(800,900,60,64),
-new THREE.MeshStandardMaterial({color:0x1a2b1a})
-);
-island.position.y = -20;
-scene.add(island);
-
-/////////////////////////////////////////////////////
-// OCEAN
-/////////////////////////////////////////////////////
-
-const ocean = new THREE.Mesh(
-new THREE.PlaneGeometry(8000,8000,80,80),
-new THREE.MeshStandardMaterial({
-color:0x02131f,
-emissive:0x001122,
-emissiveIntensity:0.4
-})
-);
-
-ocean.rotation.x = -Math.PI/2;
-ocean.position.y = -5;
-scene.add(ocean);
-
-const pos = ocean.geometry.attributes.position;
-const base = [];
-
-for(let i=0;i<pos.count;i++){
-base.push({x:pos.getX(i), z:pos.getZ(i)});
+function move(){
+if(keys.w) car.position.z -= 0.4;
+if(keys.s) car.position.z += 0.4;
+if(keys.a) car.position.x -= 0.4;
+if(keys.d) car.position.x += 0.4;
 }
 
 /////////////////////////////////////////////////////
-// ROADS (LOOP SYSTEM)
-/////////////////////////////////////////////////////
-
-const road = new THREE.Mesh(
-new THREE.TorusGeometry(300, 12, 16, 100),
-new THREE.MeshStandardMaterial({color:0x333333})
-);
-road.rotation.x = Math.PI/2;
-road.position.y = 0;
-scene.add(road);
-
-/////////////////////////////////////////////////////
-// GOLF ZONE
-/////////////////////////////////////////////////////
-
-const golf = new THREE.Mesh(
-new THREE.BoxGeometry(200,1,200),
-new THREE.MeshStandardMaterial({color:0x2d5a2d})
-);
-golf.position.set(-250,0,-200);
-scene.add(golf);
-
-/////////////////////////////////////////////////////
-// BASKETBALL COURT
-/////////////////////////////////////////////////////
-
-const court = new THREE.Mesh(
-new THREE.BoxGeometry(120,1,60),
-new THREE.MeshStandardMaterial({color:0x111144})
-);
-court.position.set(260,0,-220);
-scene.add(court);
-
-/////////////////////////////////////////////////////
-// YACHT (MOVING)
-/////////////////////////////////////////////////////
-
-const yacht = new THREE.Mesh(
-new THREE.BoxGeometry(30,5,80),
-new THREE.MeshStandardMaterial({color:0xffffff})
-);
-yacht.position.set(0,2,-300);
-scene.add(yacht);
-
-/////////////////////////////////////////////////////
-// CAMERA
+// CAMERA FOLLOW FIX
 /////////////////////////////////////////////////////
 
 function updateCamera(){
 camera.position.x += (car.position.x - camera.position.x)*0.08;
-camera.position.y += (car.position.y + 10 - camera.position.y)*0.08;
-camera.position.z += (car.position.z + 20 - camera.position.z)*0.08;
+camera.position.y += ((car.position.y + 15) - camera.position.y)*0.08;
+camera.position.z += ((car.position.z + 25) - camera.position.z)*0.08;
+
 camera.lookAt(car.position);
-}
-
-/////////////////////////////////////////////////////
-// CAR PHYSICS
-/////////////////////////////////////////////////////
-
-function updateCar(){
-
-if(keys.w) speed += 0.03;
-if(keys.s) speed -= 0.03;
-if(keys.a) steer += 0.02;
-if(keys.d) steer -= 0.02;
-
-speed *= 0.97;
-
-car.rotation.y += steer * speed;
-car.position.x -= Math.sin(car.rotation.y)*speed;
-car.position.z -= Math.cos(car.rotation.y)*speed;
-
-steer *= 0.9;
-}
-
-/////////////////////////////////////////////////////
-// ZONE DETECTION
-/////////////////////////////////////////////////////
-
-function updateZone(){
-
-let zone = "OCEAN CENTER";
-
-if(car.position.x < -150) zone = "GOLF ZONE";
-if(car.position.x > 150) zone = "BASKETBALL ZONE";
-if(car.position.z < -200) zone = "YACHT HARBOR";
-
-document.getElementById("zone").innerText = "ZONE: " + zone;
-}
-
-/////////////////////////////////////////////////////
-// OCEAN ANIMATION
-/////////////////////////////////////////////////////
-
-function updateOcean(t){
-for(let i=0;i<pos.count;i+=2){
-const v=base[i];
-pos.setY(i,
-Math.sin(v.x*0.005+t)*2 +
-Math.cos(v.z*0.005+t*1.3)*2
-);
-}
-pos.needsUpdate=true;
 }
 
 /////////////////////////////////////////////////////
@@ -244,22 +164,13 @@ pos.needsUpdate=true;
 function animate(){
 requestAnimationFrame(animate);
 
-const t = performance.now()*0.001;
-
-updateCar();
+move();
 updateCamera();
-updateZone();
-updateOcean(t);
-
-// yacht motion
-yacht.position.z = -300 + Math.sin(t)*20;
 
 renderer.render(scene,camera);
 }
 
 animate();
-
-});
 
 </script>
 
