@@ -44,159 +44,241 @@ display:none;
 <script>
 
 /////////////////////////////////////////////////////
+
 // CORE
+
 /////////////////////////////////////////////////////
 
 const scene = new THREE.Scene();
+
 scene.background = new THREE.Color(0x050814);
+
 scene.fog = new THREE.FogExp2(0x050814, 0.0035);
 
 const camera = new THREE.PerspectiveCamera(
+
 75, innerWidth / innerHeight, 0.1, 3000
+
 );
 
 const renderer = new THREE.WebGLRenderer({
+
 canvas: document.getElementById("c"),
+
 antialias: true
+
 });
 
 renderer.setSize(innerWidth, innerHeight);
+
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 
 window.addEventListener("resize", () => {
+
 camera.aspect = innerWidth / innerHeight;
+
 camera.updateProjectionMatrix();
+
 renderer.setSize(innerWidth, innerHeight);
+
 });
 
 /////////////////////////////////////////////////////
-// LIGHTING
+
+// LIGHTING (CLEAN + STABLE)
+
 /////////////////////////////////////////////////////
 
-scene.add(new THREE.AmbientLight(0x223344, 1));
+scene.add(new THREE.AmbientLight(0x2a3b55, 1.1));
 
 const sun = new THREE.DirectionalLight(0x99ccff, 1.2);
+
 sun.position.set(100, 200, 80);
+
 scene.add(sun);
 
+const glow = new THREE.PointLight(0x00aaff, 0.8, 600);
+
+glow.position.set(0, 10, 0);
+
+scene.add(glow);
+
 /////////////////////////////////////////////////////
+
 // INPUT
+
 /////////////////////////////////////////////////////
 
 const keys = {};
+
 document.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
+
 document.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
 
 /////////////////////////////////////////////////////
+
 // STATE
+
 /////////////////////////////////////////////////////
 
 let mode = "walk";
 
-const game = {
-score: 0,
-raceStart: null,
-bestLap: null
-};
-
 /////////////////////////////////////////////////////
+
 // PLAYER / HERO / CAR
+
 /////////////////////////////////////////////////////
 
 const player = new THREE.Mesh(
+
 new THREE.BoxGeometry(1,2,1),
+
 new THREE.MeshStandardMaterial({color:0xffffff,emissive:0x222222})
+
 );
+
 player.position.set(0,1,-20);
+
 scene.add(player);
 
 const hero = new THREE.Mesh(
+
 new THREE.BoxGeometry(1.2,2.2,1.2),
+
 new THREE.MeshStandardMaterial({color:0x00ffff,emissive:0x00ffff})
+
 );
+
 hero.position.set(0,1,0);
+
 scene.add(hero);
 
 const car = new THREE.Mesh(
+
 new THREE.BoxGeometry(2,1,4),
+
 new THREE.MeshStandardMaterial({color:0xff0000,emissive:0x330000})
+
 );
+
 car.position.set(0,0.5,40);
+
 scene.add(car);
 
 /////////////////////////////////////////////////////
-// JUMBOTRON (YOUR CORE IDENTITY)
+
+// JUMBOTRON (SAFE CORE IDENTITY)
+
 /////////////////////////////////////////////////////
 
-const stage = new THREE.Mesh(
-new THREE.BoxGeometry(40,2,20),
-new THREE.MeshStandardMaterial({color:0x111111,emissive:0x0033ff})
-);
-stage.position.set(0,1,0);
-scene.add(stage);
-
 const jumbotron = new THREE.Mesh(
+
 new THREE.BoxGeometry(30,15,1),
-new THREE.MeshStandardMaterial({color:0x000000,emissive:0x0044ff})
+
+new THREE.MeshStandardMaterial({
+
+color:0x000000,
+
+emissive:0x0044ff,
+
+emissiveIntensity:0.6
+
+})
+
 );
+
 jumbotron.position.set(0,10,-10);
+
 scene.add(jumbotron);
 
 /////////////////////////////////////////////////////
+
 // WORLD ZONES
+
 /////////////////////////////////////////////////////
 
 const court = new THREE.Mesh(
+
 new THREE.PlaneGeometry(60,30),
+
 new THREE.MeshStandardMaterial({color:0x111111})
+
 );
+
 court.rotation.x = -Math.PI/2;
-court.position.set(-80,0,20);
+
 scene.add(court);
 
 const golf = new THREE.Mesh(
+
 new THREE.PlaneGeometry(100,100),
+
 new THREE.MeshStandardMaterial({color:0x0c4a1f})
+
 );
+
 golf.rotation.x = -Math.PI/2;
+
 golf.position.set(90,0,20);
+
 scene.add(golf);
 
 const strip = new THREE.Mesh(
+
 new THREE.BoxGeometry(10,0.5,200),
+
 new THREE.MeshStandardMaterial({color:0x0a0a0a})
+
 );
+
 strip.position.set(0,0.2,120);
+
 scene.add(strip);
 
 /////////////////////////////////////////////////////
-// CAMERA SYSTEM
+
+// CAMERA
+
 /////////////////////////////////////////////////////
 
 function updateCamera(){
 
-let tx,ty,tz;
+let tx, ty, tz;
 
 if(mode==="walk"){
+
 tx = player.position.x;
+
 ty = player.position.y + 7;
+
 tz = player.position.z + 12;
+
 }
 
 if(mode==="car"){
-tx = car.position.x + Math.sin(car.rotation.y)*-10;
+
+tx = car.position.x + Math.sin(car.rotation.y) * -10;
+
 ty = car.position.y + 5.5;
-tz = car.position.z + Math.cos(car.rotation.y)*-10;
+
+tz = car.position.z + Math.cos(car.rotation.y) * -10;
+
 }
 
-camera.position.x += (tx-camera.position.x)*0.06;
-camera.position.y += (ty-camera.position.y)*0.06;
-camera.position.z += (tz-camera.position.z)*0.06;
+camera.position.x += (tx - camera.position.x) * 0.06;
+
+camera.position.y += (ty - camera.position.y) * 0.06;
+
+camera.position.z += (tz - camera.position.z) * 0.06;
 
 camera.lookAt(mode==="walk" ? player.position : car.position);
+
 }
 
 /////////////////////////////////////////////////////
-// MOVEMENT
+
+// MOVEMENT (FIXED CAR PHYSICS)
+
 /////////////////////////////////////////////////////
 
 function move(){
@@ -204,20 +286,37 @@ function move(){
 const speed = 0.22;
 
 if(mode==="walk"){
+
 player.position.x += (keys.d?speed:0)-(keys.a?speed:0);
+
 player.position.z += (keys.s?speed:0)-(keys.w?speed:0);
+
 }
 
 if(mode==="car"){
-if(keys.w) car.position.z -= speed;
-if(keys.s) car.position.z += speed;
-if(keys.a) car.rotation.y += 0.02;
-if(keys.d) car.rotation.y -= 0.02;
+
+const moveSpeed = 0.35;
+
+const turn = 0.03;
+
+if(keys.a) car.rotation.y += turn;
+
+if(keys.d) car.rotation.y -= turn;
+
+// ✅ correct forward movement based on rotation
+
+car.position.x -= Math.sin(car.rotation.y) * moveSpeed;
+
+car.position.z -= Math.cos(car.rotation.y) * moveSpeed;
+
 }
+
 }
 
 /////////////////////////////////////////////////////
-// MODE SWITCH
+
+// SWITCH MODE
+
 /////////////////////////////////////////////////////
 
 document.addEventListener("keydown",e=>{
@@ -227,20 +326,31 @@ if(e.key.toLowerCase()==="e"){
 const dist = player.position.distanceTo(car.position);
 
 if(mode==="walk" && dist<4){
+
 mode="car";
+
 player.visible=false;
+
 }
 
 else if(mode==="car"){
+
 mode="walk";
+
 player.visible=true;
+
 player.position.set(car.position.x+2,1,car.position.z);
+
 }
+
 }
+
 });
 
 /////////////////////////////////////////////////////
+
 // LOOP
+
 /////////////////////////////////////////////////////
 
 camera.position.set(0,8,12);
@@ -248,17 +358,13 @@ camera.position.set(0,8,12);
 function animate(){
 
 move();
+
 updateCamera();
 
-document.getElementById("zone").innerText = "LAMBO CITY — WORLD ACTIVE";
-
 renderer.render(scene,camera);
+
 requestAnimationFrame(animate);
+
 }
 
 animate();
-
-</script>
-
-</body>
-</html>
