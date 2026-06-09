@@ -180,34 +180,42 @@ const lookAtTarget = (mode==="walk") ? player.position : car.position;
 camera.lookAt(lookAtTarget);
 }
 /////////////////////////////////////////////////////
-// MOVEMENT
+// MOVEMENT (CLEAN FINAL VERSION)
 /////////////////////////////////////////////////////
 
-function move(){
+const speed = 0.22;
+const carSpeed = 0.22;
+const turn = 0.02;
 
 function smoothStep(a,b,s){
 return a + (b-a)*s;
 }
-const speed = 0.22;
+
+function move(){
 
 if(mode==="walk"){
 
-// smooth acceleration feel
-player.position.x += (keys.d ? speed : 0) - (keys.a ? speed : 0);
-player.position.z += (keys.s ? speed : 0) - (keys.w ? speed : 0);
+const targetX =
+player.position.x +
+((keys.d ? speed : 0) - (keys.a ? speed : 0));
+
+const targetZ =
+player.position.z +
+((keys.s ? speed : 0) - (keys.w ? speed : 0));
+
+player.position.x = smoothStep(player.position.x, targetX, 0.35);
+player.position.z = smoothStep(player.position.z, targetZ, 0.35);
 
 }
 
 if(mode==="car"){
-
-const carSpeed = 0.35;
-const turn = 0.035;
 
 if(keys.w) car.position.z -= carSpeed;
 if(keys.s) car.position.z += carSpeed;
 
 if(keys.a) car.rotation.y += turn;
 if(keys.d) car.rotation.y -= turn;
+
 }
 }
 
@@ -351,6 +359,20 @@ npc((Math.random()-0.5)*120,(Math.random()-0.5)*120);
 camera.position.set(0,8,12);
 
 function animate(){
+  
+const time = performance.now() * 0.001;
+
+for(let i=0;i<waterPos.count;i++){
+
+const v = waterBase[i];
+
+waterPos.setY(i,
+Math.sin(v.x*0.015 + time)*0.5 +
+Math.cos(v.z*0.015 + time*1.2)*0.5
+);
+}
+
+waterPos.needsUpdate = true;
 requestAnimationFrame(animate);
 
 move();
