@@ -141,95 +141,142 @@ z:waterPos.getZ(i)
 /////////////////////////////////////////////////////
 // 🏡 LUXURY VILLA (FIXED — MULTI LEVEL)
 /////////////////////////////////////////////////////
-function createVilla(x, z) {
+const villas = [];
+
+function createVilla(x,z){
 
 const villa = new THREE.Group();
 
-// BASE PLATFORM
 const base = new THREE.Mesh(
-new THREE.BoxGeometry(18, 1, 18),
-new THREE.MeshStandardMaterial({ color: 0x0d0d0d })
+
+new THREE.BoxGeometry(16,1,16),
+
+new THREE.MeshStandardMaterial({color:0x0f0f0f})
+
 );
+
 base.position.y = 0.5;
+
 villa.add(base);
 
-// MAIN BUILDING (clean luxury block)
-const main = new THREE.Mesh(
-new THREE.BoxGeometry(18, 6, 18),
-new THREE.MeshStandardMaterial({
-color: 0x141414,
-metalness: 0.2,
-roughness: 0.8
-})
-);
-main.position.y = 3.5;
-villa.add(main);
+const floor1 = new THREE.Mesh(
 
-// SECOND FLOOR (smaller = more mansion feel)
-const upper = new THREE.Mesh(
-new THREE.BoxGeometry(14, 4, 14),
-new THREE.MeshStandardMaterial({
-color: 0x0f0f0f,
-metalness: 0.3,
-roughness: 0.7
-})
-);
-upper.position.y = 8;
-villa.add(upper);
+new THREE.BoxGeometry(16,5,16),
 
-// ROOF (flat modern luxury)
+new THREE.MeshStandardMaterial({color:0x151515})
+
+);
+
+floor1.position.y = 3;
+
+villa.add(floor1);
+
+const floor2 = new THREE.Mesh(
+
+new THREE.BoxGeometry(14,4,14),
+
+new THREE.MeshStandardMaterial({color:0x101010})
+
+);
+
+floor2.position.y = 7.5;
+
+villa.add(floor2);
+
 const roof = new THREE.Mesh(
-new THREE.BoxGeometry(19, 0.8, 19),
-new THREE.MeshStandardMaterial({ color: 0x080808 })
+
+new THREE.BoxGeometry(17,1,17),
+
+new THREE.MeshStandardMaterial({color:0x0a0a0a})
+
 );
-roof.position.y = 11;
+
+roof.position.y = 10;
+
 villa.add(roof);
 
-// FRONT GLASS STRIP (this gives “luxury identity”)
-const glass = new THREE.Mesh(
-new THREE.BoxGeometry(10, 3, 0.2),
-new THREE.MeshStandardMaterial({
-color: 0x99ddff,
-transparent: true,
-opacity: 0.35,
-emissive: 0x112233,
-emissiveIntensity: 0.3
-})
-);
-glass.position.set(0, 3.5, 9);
-villa.add(glass);
+// BALCONY (IMPORTANT LUXURY FEEL)
 
-// BALCONY (key visual upgrade)
 const balcony = new THREE.Mesh(
-new THREE.BoxGeometry(20, 0.4, 6),
-new THREE.MeshStandardMaterial({ color: 0x1c1c1c })
+
+new THREE.BoxGeometry(22,0.4,6),
+
+new THREE.MeshStandardMaterial({color:0x222222})
+
 );
-balcony.position.set(0, 5, 10);
+
+balcony.position.set(0,4,10);
+
 villa.add(balcony);
 
-// GLASS RAIL (makes it feel expensive instantly)
+// GLASS RAIL
+
 const rail = new THREE.Mesh(
-new THREE.BoxGeometry(20, 1, 0.2),
+
+new THREE.BoxGeometry(22,1.2,0.2),
+
 new THREE.MeshStandardMaterial({
-color: 0x88ccff,
-transparent: true,
-opacity: 0.25
+
+color:0x88ccff,
+
+transparent:true,
+
+opacity:0.3
+
 })
+
 );
-rail.position.set(0, 5.8, 13);
+
+rail.position.set(0,5,13);
+
 villa.add(rail);
 
-// LIGHT (gives life at night)
-const light = new THREE.PointLight(0x66ccff, 1.2, 40);
-light.position.set(0, 6, 0);
+// FRONT GLASS
+
+const glass = new THREE.Mesh(
+
+new THREE.BoxGeometry(10,3,0.2),
+
+new THREE.MeshStandardMaterial({
+
+color:0x99ddff,
+
+transparent:true,
+
+opacity:0.35
+
+})
+
+);
+
+glass.position.set(0,3,7.5);
+
+villa.add(glass);
+
+// LIGHT GLOW
+
+const light = new THREE.PointLight(0x66ccff,1.2,30);
+
+light.position.set(0,6,0);
+
 villa.add(light);
 
-// POSITION
-villa.position.set(x, 0, z);
+villa.position.set(x,0,z);
+
 scene.add(villa);
 
 villas.push(villa);
+
 }
+
+for(let i=0;i<6;i++){
+
+createVilla(-25,-20-i*25);
+
+createVilla(25,-20-i*25);
+
+}
+
 
 /////////////////////////////////////////////////////
 // 🚤 YACHT (SIMPLE CLEAN)
