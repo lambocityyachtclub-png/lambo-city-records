@@ -1,114 +1,76 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>LAMBO CITY SAFE BOOT</title>
-
-<style>
-body { margin:0; overflow:hidden; background:black; }
-canvas { display:block; }
-
-#ui{
-position:absolute;
-top:20px;left:20px;
-color:white;
-font-family:Arial;
-z-index:10;
-}
-
-#error{
-position:absolute;
-bottom:20px;
-left:20px;
-color:red;
-font-family:Arial;
-z-index:20;
-}
-</style>
-</head>
-
-<body>
-
-<div id="ui">LAMBO CITY — SAFE BOOT</div>
-<div id="error"></div>
-
-<canvas id="c"></canvas>
-
 <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
 
 <script>
 
-window.addEventListener("load", () => {
-
-const errorBox = document.getElementById("error");
-
 /////////////////////////////////////////////////////
-// WEBGL CHECK (CRITICAL FIX)
+// CORE
 /////////////////////////////////////////////////////
-
-try {
-
-if (!window.WebGLRenderingContext) {
-errorBox.innerText = "WebGL not supported on this device.";
-return;
-}
-
-/////////////////////////////////////////////////////
-// CORE SAFE INIT
-/////////////////////////////////////////////////////
-
-const canvas = document.getElementById("c");
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x05070d);
+scene.background = new THREE.Color(0x04070d);
+scene.fog = new THREE.FogExp2(0x04070d, 0.0025);
 
 const camera = new THREE.PerspectiveCamera(
 75,
-window.innerWidth/window.innerHeight,
+window.innerWidth / window.innerHeight,
 0.1,
 5000
 );
 
 const renderer = new THREE.WebGLRenderer({
-canvas: canvas,
+canvas: document.getElementById("c"),
 antialias:true
 });
 
 renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
 
 window.addEventListener("resize",()=>{
-camera.aspect = window.innerWidth/window.innerHeight;
+
+camera.aspect = innerWidth / innerHeight;
 camera.updateProjectionMatrix();
-renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setSize(innerWidth, innerHeight);
+
 });
 
 /////////////////////////////////////////////////////
-// LIGHTS
+// LIGHTING
 /////////////////////////////////////////////////////
 
-scene.add(new THREE.AmbientLight(0x334455,1));
+scene.add(new THREE.AmbientLight(0x334455,0.8));
 
-const sun = new THREE.DirectionalLight(0x88bbff,1.2);
-sun.position.set(100,200,100);
-scene.add(sun);
+const moon = new THREE.DirectionalLight(0x88bbff,1.2);
+moon.position.set(100,200,100);
+scene.add(moon);
+
+const cityGlow = new THREE.PointLight(0x00aaff,2,500);
+cityGlow.position.set(0,40,0);
+scene.add(cityGlow);
 
 /////////////////////////////////////////////////////
 // PLAYER
 /////////////////////////////////////////////////////
 
 const player = new THREE.Mesh(
+
 new THREE.BoxGeometry(1,2,1),
-new THREE.MeshStandardMaterial({color:0xffffff,emissive:0x222222})
+
+new THREE.MeshStandardMaterial({
+color:0xffffff,
+emissive:0x222222
+})
+
 );
 
-player.position.set(0,1,20);
+player.position.set(0,1,40);
+
 scene.add(player);
 
 /////////////////////////////////////////////////////
 // INPUT
 /////////////////////////////////////////////////////
 
-const keys={};
+const keys = {};
 
 document.addEventListener("keydown",e=>{
 keys[e.key.toLowerCase()] = true;
@@ -119,69 +81,386 @@ keys[e.key.toLowerCase()] = false;
 });
 
 /////////////////////////////////////////////////////
-// MOVE
+// OCEAN
+/////////////////////////////////////////////////////
+
+const waterGeo = new THREE.PlaneGeometry(
+4000,
+4000,
+200,
+200
+);
+
+const waterMat = new THREE.MeshStandardMaterial({
+
+color:0x02131f,
+metalness:0.5,
+roughness:0.4,
+emissive:0x00111f,
+emissiveIntensity:0.5
+
+});
+
+const water = new THREE.Mesh(waterGeo, waterMat);
+
+water.rotation.x = -Math.PI/2;
+
+scene.add(water);
+
+const waterPos = water.geometry.attributes.position;
+
+const waterBase = [];
+
+for(let i=0;i<waterPos.count;i++){
+
+waterBase.push({
+x:waterPos.getX(i),
+z:waterPos.getZ(i)
+});
+
+}
+
+/////////////////////////////////////////////////////
+// MAIN DOCK
+/////////////////////////////////////////////////////
+
+const dock = new THREE.Mesh(
+
+new THREE.BoxGeometry(22,1,180),
+
+new THREE.MeshStandardMaterial({
+color:0x4a321d
+})
+
+);
+
+dock.position.set(0,0.5,-40);
+
+scene.add(dock);
+
+/////////////////////////////////////////////////////
+// ROUNDABOUT PLATFORM
+/////////////////////////////////////////////////////
+
+const stage = new THREE.Mesh(
+
+new THREE.CylinderGeometry(
+35,
+35,
+2,
+64
+),
+
+new THREE.MeshStandardMaterial({
+color:0x111111,
+emissive:0x002244,
+emissiveIntensity:1
+})
+
+);
+
+stage.position.set(0,1,-150);
+
+scene.add(stage);
+
+/////////////////////////////////////////////////////
+// JUMBOTRON
+/////////////////////////////////////////////////////
+
+const screen = new THREE.Mesh(
+
+new THREE.BoxGeometry(40,20,2),
+
+new THREE.MeshStandardMaterial({
+color:0x000000,
+emissive:0x0044ff,
+emissiveIntensity:2
+})
+
+);
+
+screen.position.set(0,18,-185);
+
+scene.add(screen);
+
+/////////////////////////////////////////////////////
+// CABINS
+/////////////////////////////////////////////////////
+
+function cabin(x,z){
+
+const g = new THREE.Group();
+
+/////////////////////////////////////////////////////
+// FOUNDATION
+/////////////////////////////////////////////////////
+
+const base = new THREE.Mesh(
+
+new THREE.BoxGeometry(18,1,18),
+
+new THREE.MeshStandardMaterial({
+color:0x2b2b2b
+})
+
+);
+
+base.position.y = 0.5;
+
+g.add(base);
+
+/////////////////////////////////////////////////////
+// MAIN STRUCTURE
+/////////////////////////////////////////////////////
+
+const house = new THREE.Mesh(
+
+new THREE.BoxGeometry(16,8,16),
+
+new THREE.MeshStandardMaterial({
+color:0x3b3b3b
+})
+
+);
+
+house.position.y = 5;
+
+g.add(house);
+
+/////////////////////////////////////////////////////
+// SECOND FLOOR
+/////////////////////////////////////////////////////
+
+const top = new THREE.Mesh(
+
+new THREE.BoxGeometry(10,4,10),
+
+new THREE.MeshStandardMaterial({
+color:0x555555
+})
+
+);
+
+top.position.y = 11;
+
+g.add(top);
+
+/////////////////////////////////////////////////////
+// WINDOW GLOW
+/////////////////////////////////////////////////////
+
+const glow = new THREE.PointLight(
+0x00ccff,
+1.5,
+40
+);
+
+glow.position.set(0,6,0);
+
+g.add(glow);
+
+/////////////////////////////////////////////////////
+// OCEAN WINDOW
+/////////////////////////////////////////////////////
+
+const glass = new THREE.Mesh(
+
+new THREE.BoxGeometry(8,3,0.2),
+
+new THREE.MeshStandardMaterial({
+color:0x88ccff,
+emissive:0x224466,
+transparent:true,
+opacity:0.7
+})
+
+);
+
+glass.position.set(0,6,-8.1);
+
+g.add(glass);
+
+/////////////////////////////////////////////////////
+// POSITION
+/////////////////////////////////////////////////////
+
+g.position.set(x,0,z);
+
+scene.add(g);
+
+}
+
+/////////////////////////////////////////////////////
+// LEFT SIDE CABINS
+/////////////////////////////////////////////////////
+
+for(let i=0;i<6;i++){
+
+cabin(-45,-20 - i*35);
+
+}
+
+/////////////////////////////////////////////////////
+// RIGHT SIDE CABINS
+/////////////////////////////////////////////////////
+
+for(let i=0;i<6;i++){
+
+cabin(45,-20 - i*35);
+
+}
+
+/////////////////////////////////////////////////////
+// WALKWAYS
+/////////////////////////////////////////////////////
+
+function walkway(x,z){
+
+const w = new THREE.Mesh(
+
+new THREE.BoxGeometry(8,0.5,28),
+
+new THREE.MeshStandardMaterial({
+color:0x5b3d21
+})
+
+);
+
+w.position.set(x,0.3,z);
+
+scene.add(w);
+
+}
+
+for(let i=0;i<6;i++){
+
+walkway(-22,-20 - i*35);
+walkway(22,-20 - i*35);
+
+}
+
+/////////////////////////////////////////////////////
+// BEACH LIGHTS
+/////////////////////////////////////////////////////
+
+for(let i=0;i<10;i++){
+
+const p = new THREE.PointLight(
+0x66ccff,
+1,
+80
+);
+
+p.position.set(
+(i-5)*25,
+4,
+-120
+);
+
+scene.add(p);
+
+}
+
+/////////////////////////////////////////////////////
+// MOVEMENT
 /////////////////////////////////////////////////////
 
 function move(){
-const s=0.25;
-if(keys.w)player.position.z-=s;
-if(keys.s)player.position.z+=s;
-if(keys.a)player.position.x-=s;
-if(keys.d)player.position.x+=s;
+
+const speed = 0.35;
+
+if(keys["w"]) player.position.z -= speed;
+if(keys["s"]) player.position.z += speed;
+if(keys["a"]) player.position.x -= speed;
+if(keys["d"]) player.position.x += speed;
+
 }
 
 /////////////////////////////////////////////////////
 // CAMERA
 /////////////////////////////////////////////////////
 
-camera.position.set(0,8,12);
+camera.position.set(0,10,20);
 
 function updateCamera(){
-camera.position.x += (player.position.x - camera.position.x)*0.08;
-camera.position.y += ((player.position.y+8) - camera.position.y)*0.08;
-camera.position.z += ((player.position.z+14) - camera.position.z)*0.08;
-camera.lookAt(player.position);
+
+const tx = player.position.x;
+const ty = player.position.y + 8;
+const tz = player.position.z + 18;
+
+camera.position.x += (tx - camera.position.x)*0.05;
+
+camera.position.y += (ty - camera.position.y)*0.05;
+
+camera.position.z += (tz - camera.position.z)*0.05;
+
+camera.lookAt(
+player.position.x,
+player.position.y + 3,
+player.position.z
+);
+
 }
 
 /////////////////////////////////////////////////////
-// SIMPLE FLOOR (TEST IF RENDER WORKS)
-/////////////////////////////////////////////////////
-
-const ground = new THREE.Mesh(
-new THREE.PlaneGeometry(200,200),
-new THREE.MeshStandardMaterial({color:0x111111})
-);
-
-ground.rotation.x = -Math.PI/2;
-scene.add(ground);
-
-/////////////////////////////////////////////////////
-// LOOP
+// ANIMATION LOOP
 /////////////////////////////////////////////////////
 
 function animate(){
+
 requestAnimationFrame(animate);
 
+const time = performance.now()*0.001;
+
+/////////////////////////////////////////////////////
+// OCEAN WAVES
+/////////////////////////////////////////////////////
+
+for(let i=0;i<waterPos.count;i++){
+
+const v = waterBase[i];
+
+waterPos.setY(
+
+i,
+
+Math.sin(v.x*0.01 + time)*0.8 +
+
+Math.cos(v.z*0.01 + time*1.2)*0.8
+
+);
+
+}
+
+waterPos.needsUpdate = true;
+
+/////////////////////////////////////////////////////
+// PLAYER
+/////////////////////////////////////////////////////
+
 move();
+
+/////////////////////////////////////////////////////
+// CAMERA
+/////////////////////////////////////////////////////
+
 updateCamera();
 
+/////////////////////////////////////////////////////
+// STAGE PULSE
+/////////////////////////////////////////////////////
+
+screen.material.emissiveIntensity =
+1.5 + Math.sin(time*2)*0.5;
+
+/////////////////////////////////////////////////////
+// RENDER
+/////////////////////////////////////////////////////
+
 renderer.render(scene,camera);
+
 }
 
 animate();
 
-} catch (err) {
-
-document.getElementById("error").innerText =
-"ERROR: " + err.message;
-
-console.log(err);
-
-}
-
-});
-
 </script>
-
-</body>
-</html>
