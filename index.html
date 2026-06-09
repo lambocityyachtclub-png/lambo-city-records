@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LAMBO CITY — IMMERSION WORLD v8 CLEAN</title>
+<title>LAMBO CITY — LUXURY WORLD CORE</title>
 
 <style>
 body { margin:0; overflow:hidden; background:black; }
@@ -10,32 +10,20 @@ canvas { display:block; }
 
 #ui, #zone, #hint {
 position:absolute;
-color:white;
 font-family:Arial;
 font-size:13px;
+color:white;
 z-index:10;
 }
 
 #ui { top:20px; left:20px; }
 #zone { top:20px; right:20px; color:#00ffff; }
 
-#start {
-position:absolute;
-inset:0;
-display:flex;
-justify-content:center;
-align-items:center;
-flex-direction:column;
-background:black;
-color:white;
-z-index:20;
-}
-
 #hint {
 bottom:80px;
 left:50%;
 transform:translateX(-50%);
-padding:10px 16px;
+padding:10px 15px;
 border:1px solid #00ffff;
 background:rgba(0,0,0,0.7);
 display:none;
@@ -46,13 +34,8 @@ position:absolute;
 
 <body>
 
-<div id="start">
-<h1>LAMBO CITY</h1>
-<button onclick="start()">ENTER WORLD</button>
-</div>
-
 <div id="ui">WASD MOVE • E INTERACT</div>
-<div id="zone">LOADING WORLD...</div>
+<div id="zone">LOADING LUXURY WORLD...</div>
 <div id="hint"></div>
 
 <canvas id="c"></canvas>
@@ -65,32 +48,32 @@ position:absolute;
 // CORE
 /////////////////////////////////////////////////////
 
-let started = false;
+let started = true;
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x000000);
-scene.fog = new THREE.FogExp2(0x080816, 0.012);
+scene.fog = new THREE.FogExp2(0x070814, 0.012);
 
 const camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 2000);
 
 const renderer = new THREE.WebGLRenderer({canvas:document.getElementById("c"), antialias:true});
 renderer.setSize(innerWidth, innerHeight);
 
-window.addEventListener("resize", () => {
+window.addEventListener("resize", ()=>{
 camera.aspect = innerWidth/innerHeight;
 camera.updateProjectionMatrix();
 renderer.setSize(innerWidth, innerHeight);
 });
 
 /////////////////////////////////////////////////////
-// LIGHTING
+// LIGHTING (LUXURY LOOK)
 /////////////////////////////////////////////////////
 
-scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+scene.add(new THREE.AmbientLight(0xffffff, 0.55));
 
-const light = new THREE.PointLight(0x66ccff, 1.5, 200);
-light.position.set(0,30,30);
-scene.add(light);
+const mainLight = new THREE.PointLight(0x66ccff, 1.5, 250);
+mainLight.position.set(0,40,40);
+scene.add(mainLight);
 
 /////////////////////////////////////////////////////
 // PLAYER
@@ -100,23 +83,13 @@ const player = new THREE.Mesh(
 new THREE.BoxGeometry(1,2,1),
 new THREE.MeshStandardMaterial({color:0xffffff})
 );
+
 player.position.set(0,1,-30);
 scene.add(player);
 
 const keys = {};
-
 document.addEventListener("keydown",e=>keys[e.key.toLowerCase()]=true);
 document.addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
-
-/////////////////////////////////////////////////////
-// START
-/////////////////////////////////////////////////////
-
-function start(){
-document.getElementById("start").style.display="none";
-started = true;
-document.getElementById("zone").innerText="LAMBO CITY ACTIVE";
-}
 
 /////////////////////////////////////////////////////
 // CAMERA
@@ -141,7 +114,7 @@ if(keys["d"]) player.position.x += 0.25;
 }
 
 /////////////////////////////////////////////////////
-// OCEAN
+// 🌊 OCEAN
 /////////////////////////////////////////////////////
 
 const waterGeo = new THREE.PlaneGeometry(1500,1500,50,50);
@@ -166,192 +139,120 @@ z:waterPos.getZ(i)
 }
 
 /////////////////////////////////////////////////////
-// CABINS
+// 🏡 LUXURY VILLA (FIXED — MULTI LEVEL)
 /////////////////////////////////////////////////////
 
-/////////////////////////////////////////////////////
-// 🏡 LUXURY VILLA CABINS (MULTI-LEVEL MANSIONS)
-/////////////////////////////////////////////////////
+const villas = [];
 
-const cabins = [];
+function createVilla(x,z){
 
-function createCabin(x, z) {
+const villa = new THREE.Group();
 
-const base = new THREE.Group();
-
-/////////////////////////////////////////////////////
-// FOUNDATION
-/////////////////////////////////////////////////////
-
-const foundation = new THREE.Mesh(
-new THREE.BoxGeometry(14, 1, 14),
-new THREE.MeshStandardMaterial({ color: 0x0f0f0f })
+const base = new THREE.Mesh(
+new THREE.BoxGeometry(16,1,16),
+new THREE.MeshStandardMaterial({color:0x0f0f0f})
 );
-foundation.position.y = 0.5;
-base.add(foundation);
+base.position.y = 0.5;
+villa.add(base);
 
-/////////////////////////////////////////////////////
-// MAIN FLOOR (GLASS + WALL BODY)
-/////////////////////////////////////////////////////
-
-const main = new THREE.Mesh(
-new THREE.BoxGeometry(14, 5, 14),
-new THREE.MeshStandardMaterial({
-color: 0x151515,
-metalness: 0.2,
-roughness: 0.8
-})
+const floor1 = new THREE.Mesh(
+new THREE.BoxGeometry(16,5,16),
+new THREE.MeshStandardMaterial({color:0x151515})
 );
-main.position.y = 3;
-base.add(main);
+floor1.position.y = 3;
+villa.add(floor1);
 
-/////////////////////////////////////////////////////
-// SECOND FLOOR (MANSION LEVEL)
-/////////////////////////////////////////////////////
-
-const upper = new THREE.Mesh(
-new THREE.BoxGeometry(12, 4, 12),
-new THREE.MeshStandardMaterial({
-color: 0x101010,
-metalness: 0.3,
-roughness: 0.7
-})
+const floor2 = new THREE.Mesh(
+new THREE.BoxGeometry(14,4,14),
+new THREE.MeshStandardMaterial({color:0x101010})
 );
-upper.position.y = 7.5;
-base.add(upper);
-
-/////////////////////////////////////////////////////
-// ROOF LUXURY PLATE
-/////////////////////////////////////////////////////
+floor2.position.y = 7.5;
+villa.add(floor2);
 
 const roof = new THREE.Mesh(
-new THREE.BoxGeometry(15, 0.8, 15),
-new THREE.MeshStandardMaterial({
-color: 0x0a0a0a,
-metalness: 0.4
-})
+new THREE.BoxGeometry(17,1,17),
+new THREE.MeshStandardMaterial({color:0x0a0a0a})
 );
 roof.position.y = 10;
-base.add(roof);
+villa.add(roof);
 
-/////////////////////////////////////////////////////
-// BALCONY WRAP (IMPORTANT LUXURY FEEL)
-/////////////////////////////////////////////////////
-
+// BALCONY (IMPORTANT LUXURY FEEL)
 const balcony = new THREE.Mesh(
-new THREE.BoxGeometry(20, 0.4, 6),
-new THREE.MeshStandardMaterial({
-color: 0x222222,
-metalness: 0.6,
-roughness: 0.3
-})
+new THREE.BoxGeometry(22,0.4,6),
+new THREE.MeshStandardMaterial({color:0x222222})
 );
-balcony.position.set(0, 4, 10);
-base.add(balcony);
+balcony.position.set(0,4,10);
+villa.add(balcony);
 
-/////////////////////////////////////////////////////
-// GLASS RAILING (KEY LUXURY DETAIL)
-/////////////////////////////////////////////////////
-
+// GLASS RAIL
 const rail = new THREE.Mesh(
-new THREE.BoxGeometry(20, 1.2, 0.2),
+new THREE.BoxGeometry(22,1.2,0.2),
 new THREE.MeshStandardMaterial({
-color: 0x88ccff,
-transparent: true,
-opacity: 0.25
+color:0x88ccff,
+transparent:true,
+opacity:0.3
 })
 );
-rail.position.set(0, 5, 13);
-base.add(rail);
+rail.position.set(0,5,13);
+villa.add(rail);
 
-/////////////////////////////////////////////////////
-// GLASS FRONT WINDOW STRIP
-/////////////////////////////////////////////////////
-
+// FRONT GLASS
 const glass = new THREE.Mesh(
-new THREE.BoxGeometry(10, 3, 0.2),
+new THREE.BoxGeometry(10,3,0.2),
 new THREE.MeshStandardMaterial({
-color: 0x99ddff,
-transparent: true,
-opacity: 0.35,
-emissive: 0x113355,
-emissiveIntensity: 0.4
+color:0x99ddff,
+transparent:true,
+opacity:0.35
 })
 );
-glass.position.set(0, 3, 7.2);
-base.add(glass);
+glass.position.set(0,3,7.5);
+villa.add(glass);
 
-/////////////////////////////////////////////////////
-// INTERIOR LIGHT GLOW (KEY LUXURY SIGNAL)
-/////////////////////////////////////////////////////
+// LIGHT GLOW
+const light = new THREE.PointLight(0x66ccff,1.2,30);
+light.position.set(0,6,0);
+villa.add(light);
 
-const light = new THREE.PointLight(0x66ccff, 1.2, 25);
-light.position.set(0, 6, 0);
-base.add(light);
+villa.position.set(x,0,z);
+scene.add(villa);
 
-/////////////////////////////////////////////////////
-// SIDE WALL DETAILING (DEPTH)
-/////////////////////////////////////////////////////
+villas.push(villa);
+}
 
-const sideDetail = new THREE.Mesh(
-new THREE.BoxGeometry(14, 3, 0.5),
-new THREE.MeshStandardMaterial({ color: 0x0d0d0d })
-);
-sideDetail.position.set(0, 6, -7);
-base.add(sideDetail);
-
-/////////////////////////////////////////////////////
-// POSITION
-/////////////////////////////////////////////////////
-
-base.position.set(x, 0, z);
-scene.add(base);
-
-cabins.push(base);
+for(let i=0;i<6;i++){
+createVilla(-25,-20-i*25);
+createVilla(25,-20-i*25);
 }
 
 /////////////////////////////////////////////////////
-// SPAWN LUXURY DISTRICT
+// 🚤 YACHT (SIMPLE CLEAN)
 /////////////////////////////////////////////////////
 
-for (let i = 0; i < 5; i++) {
-createCabin(-25, -20 - i * 25);
-createCabin(25, -20 - i * 25);
-}
-
-/////////////////////////////////////////////////////
-// YACHT
-/////////////////////////////////////////////////////
-
-const yacht = new THREE.Group();
-
-const hull = new THREE.Mesh(
-new THREE.BoxGeometry(15,4,40),
+const yacht = new THREE.Mesh(
+new THREE.BoxGeometry(16,4,45),
 new THREE.MeshStandardMaterial({color:0xf2f2f2})
 );
 
-hull.position.y = 2;
-yacht.add(hull);
-
-yacht.position.set(40,0,-80);
+yacht.position.set(40,2,-80);
 scene.add(yacht);
 
-let insideYacht = false;
-
 /////////////////////////////////////////////////////
-// HERO
+// 🌟 HERO
 /////////////////////////////////////////////////////
 
 const hero = new THREE.Mesh(
 new THREE.BoxGeometry(1,2,1),
-new THREE.MeshStandardMaterial({color:0x00ffff, emissive:0x00ffff})
+new THREE.MeshStandardMaterial({
+color:0x00ffff,
+emissive:0x00ffff
+})
 );
 
 hero.position.set(10,1,-20);
 scene.add(hero);
 
 /////////////////////////////////////////////////////
-// INTERACTION UI
+// UI
 /////////////////////////////////////////////////////
 
 const hint = document.getElementById("hint");
@@ -366,32 +267,20 @@ hint.style.display="none";
 }
 
 /////////////////////////////////////////////////////
-// INTERACTION
+// INTERACTIONS
 /////////////////////////////////////////////////////
 
-function checkInteractions(){
-
-const heroDist = player.position.distanceTo(hero.position);
-if(heroDist < 3) show("PRESS E TO TALK");
-
+function check(){
+const d = player.position.distanceTo(hero.position);
+if(d<3) show("PRESS E TO TALK");
 else hide();
-
 }
 
 document.addEventListener("keydown",e=>{
-
 if(e.key.toLowerCase()==="e"){
-
 if(player.position.distanceTo(hero.position)<3){
 document.getElementById("zone").innerText="HERO: Welcome to LAMBO CITY";
 }
-
-if(player.position.distanceTo(yacht.position)<10){
-insideYacht = !insideYacht;
-player.position.set(40,1,-80);
-document.getElementById("zone").innerText="YACHT ZONE";
-}
-
 }
 });
 
@@ -402,14 +291,9 @@ document.getElementById("zone").innerText="YACHT ZONE";
 function animate(){
 requestAnimationFrame(animate);
 
-if(!started){
-renderer.render(scene,camera);
-return;
-}
-
 move();
 updateCamera();
-checkInteractions();
+check();
 
 const t = Date.now()*0.001;
 
@@ -421,7 +305,7 @@ Math.cos(v.z*0.02+t)*0.4
 );
 }
 
-waterPos.needsUpdate=true;
+waterPos.needsUpdate = true;
 
 renderer.render(scene,camera);
 }
