@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LAMBO CITY V9 — LUXURY IMMERSION CORE</title>
+<title>LAMBO CITY V10 — LUXURY ENGINE</title>
 
 <style>
 body { margin:0; overflow:hidden; background:black; }
@@ -34,7 +34,7 @@ display:none;
 <body>
 
 <div id="ui">WASD MOVE • E INTERACT</div>
-<div id="zone">LAMBO CITY V9 LOADING...</div>
+<div id="zone">LAMBO CITY V10 ACTIVE</div>
 <div id="hint"></div>
 
 <canvas id="c"></canvas>
@@ -49,14 +49,15 @@ display:none;
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x050a14);
-scene.fog = new THREE.FogExp2(0x070b1a, 0.006);
+scene.fog = new THREE.FogExp2(0x070b1a, 0.005);
 
-const camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 2000);
+const camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 2500);
 
 const renderer = new THREE.WebGLRenderer({
   canvas: document.getElementById("c"),
   antialias: true
 });
+
 renderer.setSize(innerWidth, innerHeight);
 
 window.addEventListener("resize", () => {
@@ -66,62 +67,66 @@ window.addEventListener("resize", () => {
 });
 
 /////////////////////////////////////////////////////
-// LIGHTING (LUXURY LOOK)
+// LIGHTING (CINEMATIC UPGRADE)
 /////////////////////////////////////////////////////
 
-scene.add(new THREE.AmbientLight(0x2a3b55, 1.0));
+scene.add(new THREE.AmbientLight(0x2a3b55, 0.9));
 
-const sun = new THREE.DirectionalLight(0x66ccff, 1.2);
-sun.position.set(50,100,50);
+const sun = new THREE.DirectionalLight(0x66ccff, 1.3);
+sun.position.set(80,120,60);
 scene.add(sun);
 
-const fill = new THREE.PointLight(0x4da3ff, 1.2, 1200);
-fill.position.set(0,80,0);
+const fill = new THREE.PointLight(0x4da3ff, 1.5, 1500);
+fill.position.set(0,90,0);
 scene.add(fill);
 
 /////////////////////////////////////////////////////
-// PLAYER
+// PLAYER (SMOOTHER CAMERA FEEL)
 /////////////////////////////////////////////////////
 
 const player = new THREE.Mesh(
   new THREE.BoxGeometry(1,2,1),
-  new THREE.MeshStandardMaterial({color:0xffffff})
+  new THREE.MeshStandardMaterial({
+    color:0xffffff,
+    emissive:0x111111
+  })
 );
+
 player.position.set(0,1,-20);
 scene.add(player);
 
-camera.position.set(0,8,12);
+camera.position.set(0,8,14);
 
 const keys = {};
 document.addEventListener("keydown",e=>keys[e.key.toLowerCase()]=true);
 document.addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
 
 function move(){
-  if(keys["w"]) player.position.z -= 0.3;
-  if(keys["s"]) player.position.z += 0.3;
-  if(keys["a"]) player.position.x -= 0.3;
-  if(keys["d"]) player.position.x += 0.3;
+  if(keys["w"]) player.position.z -= 0.28;
+  if(keys["s"]) player.position.z += 0.28;
+  if(keys["a"]) player.position.x -= 0.28;
+  if(keys["d"]) player.position.x += 0.28;
 }
 
 function updateCamera(){
-  camera.position.x += (player.position.x - camera.position.x)*0.08;
-  camera.position.y += ((player.position.y+8)-camera.position.y)*0.08;
-  camera.position.z += ((player.position.z+14)-camera.position.z)*0.08;
+  camera.position.x += (player.position.x - camera.position.x)*0.06;
+  camera.position.y += ((player.position.y+9)-camera.position.y)*0.06;
+  camera.position.z += ((player.position.z+16)-camera.position.z)*0.06;
   camera.lookAt(player.position);
 }
 
 /////////////////////////////////////////////////////
-// 🌊 OCEAN
+// 🌊 OCEAN (SMOOTHER + CINEMATIC COLOR)
 /////////////////////////////////////////////////////
 
-const waterGeo = new THREE.PlaneGeometry(2000,2000,80,80);
+const waterGeo = new THREE.PlaneGeometry(2200,2200,90,90);
 
 const waterMat = new THREE.MeshStandardMaterial({
-  color:0x021428,
-  metalness:0.4,
-  roughness:0.6,
+  color:0x021a33,
+  metalness:0.35,
+  roughness:0.65,
   emissive:0x001122,
-  emissiveIntensity:0.3
+  emissiveIntensity:0.35
 });
 
 const water = new THREE.Mesh(waterGeo, waterMat);
@@ -139,38 +144,46 @@ for(let i=0;i<waterPos.count;i++){
 }
 
 /////////////////////////////////////////////////////
-// 🏡 VILLAS
+// 🏡 VILLAS (INDIVIDUAL IDENTITY SYSTEM)
 /////////////////////////////////////////////////////
 
-function createVilla(x,z){
-  const v = new THREE.Group();
+function createVilla(x,z,i){
+
+  const group = new THREE.Group();
+
+  const hue = 0x111111 + (i * 0x101010);
 
   const base = new THREE.Mesh(
     new THREE.BoxGeometry(16,1,16),
     new THREE.MeshStandardMaterial({color:0x111111})
   );
-  base.position.y=0.5;
-  v.add(base);
 
   const body = new THREE.Mesh(
     new THREE.BoxGeometry(16,6,16),
-    new THREE.MeshStandardMaterial({color:0x1a1a1a})
+    new THREE.MeshStandardMaterial({color:hue})
   );
-  body.position.y=3;
-  v.add(body);
 
-  const glow = new THREE.PointLight(0x66ccff,1.2,40);
-  glow.position.set(0,5,0);
-  v.add(glow);
+  body.position.y = 3;
 
-  v.position.set(x,0,z);
-  scene.add(v);
+  const light = new THREE.PointLight(
+    0x66ccff,
+    1.2,
+    60
+  );
+
+  light.position.set(0,5,0);
+
+  group.add(base);
+  group.add(body);
+  group.add(light);
+
+  group.position.set(x,0,z);
+  scene.add(group);
 }
 
-// rows of villas
-for(let i=0;i<5;i++){
-  createVilla(-25,-20-i*25);
-  createVilla(25,-20-i*25);
+for(let i=0;i<6;i++){
+  createVilla(-25,-20-i*25,i);
+  createVilla(25,-20-i*25,i+1);
 }
 
 /////////////////////////////////////////////////////
@@ -181,6 +194,7 @@ const yacht = new THREE.Mesh(
   new THREE.BoxGeometry(16,4,45),
   new THREE.MeshStandardMaterial({color:0xf2f2f2})
 );
+
 yacht.position.set(40,2,-80);
 scene.add(yacht);
 
@@ -190,32 +204,37 @@ scene.add(yacht);
 
 const hero = new THREE.Mesh(
   new THREE.BoxGeometry(1,2,1),
-  new THREE.MeshStandardMaterial({color:0x00ffff, emissive:0x00ffff})
+  new THREE.MeshStandardMaterial({
+    color:0x00ffff,
+    emissive:0x00ffff
+  })
 );
+
 hero.position.set(10,1,-20);
 scene.add(hero);
 
 /////////////////////////////////////////////////////
-// 🌉 STAGE + JUMBOTRON (RESTORED V7 FEATURE)
+// 🌉 JUMBOTRON STAGE (V10 UPGRADED VERSION)
 /////////////////////////////////////////////////////
 
 const stage = new THREE.Mesh(
-  new THREE.BoxGeometry(30,2,12),
+  new THREE.BoxGeometry(34,2,14),
   new THREE.MeshStandardMaterial({color:0x0a0a0a})
 );
-stage.position.set(0,1,-120);
+
+stage.position.set(0,1,-140);
 scene.add(stage);
 
-// Jumbotron screen
 const screen = new THREE.Mesh(
-  new THREE.PlaneGeometry(18,10),
+  new THREE.PlaneGeometry(22,12),
   new THREE.MeshStandardMaterial({
     color:0x00ffff,
     emissive:0x00ffff,
-    emissiveIntensity:1.5
+    emissiveIntensity:1.8
   })
 );
-screen.position.set(0,10,-125);
+
+screen.position.set(0,12,-147);
 scene.add(screen);
 
 /////////////////////////////////////////////////////
@@ -261,9 +280,10 @@ function animate(){
 
   for(let i=0;i<waterPos.count;i++){
     const v = waterBase[i];
+
     const wave =
-      Math.sin(v.x*0.02+time)*0.4 +
-      Math.cos(v.z*0.02+time*1.3)*0.4;
+      Math.sin(v.x*0.02+time)*0.35 +
+      Math.cos(v.z*0.02+time*1.2)*0.35;
 
     waterPos.setY(i,wave);
   }
