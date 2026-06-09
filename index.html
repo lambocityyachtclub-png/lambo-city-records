@@ -108,70 +108,111 @@ hero.position.set(0,1,0);
 scene.add(hero);
 
 /////////////////////////////////////////////////////
-// CAR (LIMITED TO STRIP ZONE)
+// 🚗 CAR (STRIP ZONE ONLY — V16 SAFE)
 /////////////////////////////////////////////////////
 
-const car=new THREE.Mesh(
+const car = new THREE.Mesh(
 new THREE.BoxGeometry(2,1,4),
-new THREE.MeshStandardMaterial({color:0xff0000,emissive:0x330000})
+new THREE.MeshStandardMaterial({
+color:0xff0000,
+emissive:0x330000
+})
 );
+
 car.position.set(0,0.5,40);
 scene.add(car);
 
-let mode="walk";
+// IMPORTANT: do NOT redeclare mode here
+// mode is controlled in CORE
 
 document.addEventListener("keydown",e=>{
+
 if(e.key.toLowerCase()==="e"){
-if(mode==="walk" && player.position.distanceTo(car.position)<4){
+
+const dist = player.position.distanceTo(car.position);
+
+if(mode==="walk" && dist < 4){
 mode="car";
 player.visible=false;
-}else if(mode==="car"){
+return;
+}
+
+if(mode==="car"){
 mode="walk";
 player.visible=true;
-player.position.copy(car.position).add(new THREE.Vector3(2,0,0));
+
+// exit slightly beside car
+player.position.set(
+car.position.x + 2,
+car.position.y,
+car.position.z
+);
 }
+
 }
 });
-
+  
 /////////////////////////////////////////////////////
 // CAMERA
 /////////////////////////////////////////////////////
 
 function updateCamera(){
+
 if(mode==="walk"){
-camera.position.x+=(player.position.x-camera.position.x)*0.08;
-camera.position.y+=((player.position.y+8)-camera.position.y)*0.08;
-camera.position.z+=((player.position.z+14)-camera.position.z)*0.08;
+
+const targetX = player.position.x;
+const targetY = player.position.y + 7.5;
+const targetZ = player.position.z + 13;
+
+camera.position.x += (targetX - camera.position.x) * 0.06;
+camera.position.y += (targetY - camera.position.y) * 0.06;
+camera.position.z += (targetZ - camera.position.z) * 0.06;
+
 camera.lookAt(player.position);
 }
+
 if(mode==="car"){
-const ox=Math.sin(car.rotation.y)*-8;
-const oz=Math.cos(car.rotation.y)*-8;
-camera.position.x+=(car.position.x+ox-camera.position.x)*0.08;
-camera.position.y+=((car.position.y+5)-camera.position.y)*0.08;
-camera.position.z+=(car.position.z+oz-camera.position.z)*0.08;
+
+const offsetX = Math.sin(car.rotation.y) * -10;
+const offsetZ = Math.cos(car.rotation.y) * -10;
+
+const targetX = car.position.x + offsetX;
+const targetY = car.position.y + 5;
+const targetZ = car.position.z + offsetZ;
+
+camera.position.x += (targetX - camera.position.x) * 0.08;
+camera.position.y += (targetY - camera.position.y) * 0.08;
+camera.position.z += (targetZ - camera.position.z) * 0.08;
+
 camera.lookAt(car.position);
 }
 }
-
 /////////////////////////////////////////////////////
 // MOVEMENT
 /////////////////////////////////////////////////////
 
 function move(){
 
+const speed = 0.22;
+
 if(mode==="walk"){
-if(keys.w)player.position.z-=0.25;
-if(keys.s)player.position.z+=0.25;
-if(keys.a)player.position.x-=0.25;
-if(keys.d)player.position.x+=0.25;
+
+// smooth acceleration feel
+player.position.x += (keys.d ? speed : 0) - (keys.a ? speed : 0);
+player.position.z += (keys.s ? speed : 0) - (keys.w ? speed : 0);
+
 }
 
 if(mode==="car"){
-if(keys.w)car.position.z-=0.35;
-if(keys.s)car.position.z+=0.35;
-if(keys.a)car.rotation.y+=0.04;
-if(keys.d)car.rotation.y-=0.04;
+
+const carSpeed = 0.35;
+const turn = 0.035;
+
+if(keys.w) car.position.z -= carSpeed;
+if(keys.s) car.position.z += carSpeed;
+
+if(keys.a) car.rotation.y += turn;
+if(keys.d) car.rotation.y -= turn;
 }
 }
 
