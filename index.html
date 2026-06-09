@@ -2,13 +2,13 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LAMBO CITY V34 — MISSION SYSTEM ENGINE</title>
+<title>LAMBO CITY V33 — PROGRESSION FRAMEWORK</title>
 
 <style>
 body { margin:0; overflow:hidden; background:#050814; }
 canvas { display:block; }
- 
-#ui,#zone,#mission{
+
+#ui,#zone{
 position:absolute;
 font-family:Arial;
 font-size:13px;
@@ -18,15 +18,13 @@ z-index:10;
 
 #ui{top:20px;left:20px;}
 #zone{top:20px;right:20px;color:#00ffff;}
-#mission{bottom:20px;left:20px;color:#00ff99;}
 </style>
 </head>
 
 <body>
 
-<div id="ui">LAMBO CITY V34 — MISSIONS</div>
-<div id="zone">ZONE: INIT</div>
-<div id="mission">MISSION: NONE</div>
+<div id="ui">LAMBO CITY V33 — PROGRESSION FRAMEWORK</div>
+<div id="zone">STATE: INIT</div>
 
 <canvas id="c"></canvas>
 
@@ -35,102 +33,35 @@ z-index:10;
 <script>
 
 /////////////////////////////////////////////////////
-// CORE STATE
+// GAME CORE STATE
 /////////////////////////////////////////////////////
 
 const GAME = {
+state: "EXPLORE",
 lockInput: false
 };
 
 /////////////////////////////////////////////////////
-// MISSION SYSTEM (NEW CORE)
+// PROGRESSION SYSTEM (NEW)
 /////////////////////////////////////////////////////
 
-const MISSIONS = [
-{
-id: 1,
-name: "Reach the Stage",
-active: true,
-complete: false,
-check: function(player){
-return player.position.z < -140;
-}
-},
-{
-id: 2,
-name: "Visit Yacht",
-active: false,
-complete: false,
-check: function(player, yacht){
-return player.position.distanceTo(yacht.position) < 10;
-}
-}
-];
+const PROGRESS = {
+points: 0,
+events: []
+};
 
-let currentMission = 0;
+function emitReward(type){
 
-function updateMission(player,yacht){
+// JUST LOGGING — NO REAL REWARD SYSTEM YET
+PROGRESS.events.push(type);
 
-let m = MISSIONS[currentMission];
+console.log("EVENT:", type);
 
-if(!m) return;
-
-// show mission
-document.getElementById("mission").innerText =
-"MISSION: " + m.name;
-
-// check completion
-if(m.check(player,yacht)){
-
-m.complete = true;
-
-document.getElementById("mission").innerText =
-"MISSION COMPLETE: " + m.name;
-
-// next mission unlock
-currentMission++;
-
-if(MISSIONS[currentMission]){
-MISSIONS[currentMission].active = true;
-
-// cinematic transition
-playMissionCutscene();
-}
-}
 }
 
-/////////////////////////////////////////////////////
-// CUTSCENE SYSTEM
-/////////////////////////////////////////////////////
-
-let cutscene = false;
-
-function playMissionCutscene(){
-
-cutscene = true;
-GAME.lockInput = true;
-
-let t = 0;
-
-function run(){
-
-t += 0.01;
-
-camera.position.x = Math.sin(t)*60;
-camera.position.y = 35 - t*10;
-camera.position.z = 80 - t*50;
-
-camera.lookAt(0,0,0);
-
-if(t < 1.5){
-requestAnimationFrame(run);
-}else{
-cutscene = false;
-GAME.lockInput = false;
-}
-}
-
-run();
+function addPoints(amount){
+PROGRESS.points += amount;
+console.log("POINTS:", PROGRESS.points);
 }
 
 /////////////////////////////////////////////////////
@@ -176,6 +107,11 @@ const keys={};
 
 document.addEventListener("keydown",e=>{
 keys[e.key.toLowerCase()] = true;
+
+// INTERACTION
+if(e.key.toLowerCase()==="e"){
+handleInteract();
+}
 });
 
 document.addEventListener("keyup",e=>{
@@ -183,7 +119,7 @@ keys[e.key.toLowerCase()] = false;
 });
 
 /////////////////////////////////////////////////////
-// WORLD
+// PLAYER
 /////////////////////////////////////////////////////
 
 const player = new THREE.Mesh(
@@ -193,12 +129,23 @@ new THREE.MeshStandardMaterial({color:0xffffff})
 player.position.set(0,1,40);
 scene.add(player);
 
+/////////////////////////////////////////////////////
+// WORLD
+/////////////////////////////////////////////////////
+
 const yacht = new THREE.Mesh(
 new THREE.BoxGeometry(20,4,60),
 new THREE.MeshStandardMaterial({color:0xffffff})
 );
 yacht.position.set(60,2,-120);
 scene.add(yacht);
+
+const stage = new THREE.Mesh(
+new THREE.CylinderGeometry(35,35,2,64),
+new THREE.MeshStandardMaterial({color:0x111111})
+);
+stage.position.set(0,1,-150);
+scene.add(stage);
 
 /////////////////////////////////////////////////////
 // CAMERA
@@ -207,8 +154,6 @@ scene.add(yacht);
 camera.position.set(0,22,35);
 
 function updateCamera(){
-if(cutscene) return;
-
 camera.position.x += (player.position.x - camera.position.x)*0.06;
 camera.position.y += ((player.position.y + 12) - camera.position.y)*0.06;
 camera.position.z += ((player.position.z + 25) - camera.position.z)*0.06;
@@ -221,7 +166,6 @@ camera.lookAt(player.position);
 /////////////////////////////////////////////////////
 
 function move(){
-
 if(GAME.lockInput) return;
 
 const s = 0.32;
@@ -230,21 +174,53 @@ if(keys.w) player.position.z -= s;
 if(keys.s) player.position.z += s;
 if(keys.a) player.position.x -= s;
 if(keys.d) player.position.x += s;
+
+// ZONE EVENTS (reward hooks)
+if(player.position.z < -120){
+emitReward("REACHED_STAGE_ZONE");
+addPoints(1);
+}
+}
+
+/////////////////////////////////////////////////////
+// INTERACTION SYSTEM
+/////////////////////////////////////////////////////
+
+function handleInteract(){
+
+const d = player.position.distanceTo(yacht.position);
+
+if(d < 10){
+emitReward("YACHT_INTERACT");
+addPoints(5);
+return;
+}
+
+if(player.position.z < -120){
+emitReward("STAGE_INTERACT");
+addPoints(2);
+return;
+}
+
 }
 
 /////////////////////////////////////////////////////
 // LOOP
 /////////////////////////////////////////////////////
 
-function loop(){
-
-requestAnimationFrame(loop);
-
+function update(){
 move();
 updateCamera();
-updateMission(player,yacht);
+}
 
+function render(){
 renderer.render(scene,camera);
+}
+
+function loop(){
+requestAnimationFrame(loop);
+update();
+render();
 }
 
 loop();
