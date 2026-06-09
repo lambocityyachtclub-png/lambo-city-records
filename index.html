@@ -49,582 +49,468 @@ LUXURY WORLD ONLINE
 <div id="hint"></div>
 <canvas id="c"></canvas>
 <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
+
 <script>
+
 /////////////////////////////////////////////////////
 // CORE
 /////////////////////////////////////////////////////
+
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x02050a);
-scene.fog = new THREE.FogExp2(
-0x02050a,
-0.0025
-);
+scene.background = new THREE.Color(0x04070d);
+scene.fog = new THREE.FogExp2(0x04070d, 0.0025);
+
 const camera = new THREE.PerspectiveCamera(
 75,
-innerWidth/innerHeight,
+window.innerWidth / window.innerHeight,
 0.1,
 5000
 );
+
 const renderer = new THREE.WebGLRenderer({
-canvas:document.getElementById("c"),
+canvas: document.getElementById("c"),
 antialias:true
 });
-renderer.setSize(
-innerWidth,
-innerHeight
-);
-renderer.setPixelRatio(
-Math.min(devicePixelRatio,2)
-);
+
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+
 window.addEventListener("resize",()=>{
-camera.aspect =
-innerWidth/innerHeight;
+
+camera.aspect = innerWidth / innerHeight;
 camera.updateProjectionMatrix();
-renderer.setSize(
-innerWidth,
-innerHeight
-);
+renderer.setSize(innerWidth, innerHeight);
+
 });
+
 /////////////////////////////////////////////////////
 // LIGHTING
 /////////////////////////////////////////////////////
-scene.add(
-new THREE.AmbientLight(
-0x334455,
-1
-)
-);
-const moon =
-new THREE.DirectionalLight(
-0x99bbff,
-1.3
-);
-moon.position.set(
-120,
-180,
-100
-);
+
+scene.add(new THREE.AmbientLight(0x334455,0.8));
+
+const moon = new THREE.DirectionalLight(0x88bbff,1.2);
+moon.position.set(100,200,100);
 scene.add(moon);
-const neonGlow =
-new THREE.PointLight(
-0x00aaff,
-2,
-900
-);
-neonGlow.position.set(
-0,
-40,
-0
-);
-scene.add(neonGlow);
-/////////////////////////////////////////////////////
-// INPUT
-/////////////////////////////////////////////////////
-const keys = {};
-document.addEventListener("keydown",e=>{
-keys[e.key.toLowerCase()] = true;
-});
-document.addEventListener("keyup",e=>{
-keys[e.key.toLowerCase()] = false;
-});
+
+const cityGlow = new THREE.PointLight(0x00aaff,2,500);
+cityGlow.position.set(0,40,0);
+scene.add(cityGlow);
+
 /////////////////////////////////////////////////////
 // PLAYER
 /////////////////////////////////////////////////////
-const player = new THREE.Group();
-const body = new THREE.Mesh(
+
+const player = new THREE.Mesh(
+
 new THREE.BoxGeometry(1,2,1),
+
 new THREE.MeshStandardMaterial({
 color:0xffffff,
 emissive:0x222222
 })
+
 );
-const head = new THREE.Mesh(
-new THREE.SphereGeometry(0.45,16,16),
-new THREE.MeshStandardMaterial({
-color:0xffddcc
-})
-);
-head.position.y = 1.6;
-player.add(body);
-player.add(head);
-player.position.set(0,1,-20);
+
+player.position.set(0,1,40);
+
 scene.add(player);
+
 /////////////////////////////////////////////////////
-// HERO NPC
+// INPUT
 /////////////////////////////////////////////////////
-const hero = new THREE.Mesh(
-new THREE.BoxGeometry(1.2,2.2,1.2),
-new THREE.MeshStandardMaterial({
-color:0x00ffff,
-emissive:0x00ffff
-})
-);
-hero.position.set(0,1,0);
-scene.add(hero);
-/////////////////////////////////////////////////////
-// LAMBORGHINI
-/////////////////////////////////////////////////////
-const car = new THREE.Group();
-const carBase = new THREE.Mesh(
-new THREE.BoxGeometry(3.4,0.8,7),
-new THREE.MeshStandardMaterial({
-color:0xffcc00,
-metalness:0.8,
-roughness:0.25
-})
-);
-carBase.position.y = 0.8;
-const carTop = new THREE.Mesh(
-new THREE.BoxGeometry(2.3,0.9,3),
-new THREE.MeshStandardMaterial({
-color:0x111111,
-metalness:0.9,
-roughness:0.2
-})
-);
-carTop.position.set(0,1.5,-0.4);
-car.add(carBase);
-car.add(carTop);
-function wheel(x,z){
-const w = new THREE.Mesh(
-new THREE.CylinderGeometry(
-0.6,
-0.6,
-0.5,
-18
-),
-new THREE.MeshStandardMaterial({
-color:0x111111
-})
-);
-w.rotation.z = Math.PI/2;
-w.position.set(x,0.5,z);
-car.add(w);
-}
-wheel(-1.5,-2.3);
-wheel(1.5,-2.3);
-wheel(-1.5,2.3);
-wheel(1.5,2.3);
-const headLightL =
-new THREE.PointLight(
-0xffffff,
-1,
-40
-);
-headLightL.position.set(
--1,
-1,
--4
-);
-const headLightR =
-new THREE.PointLight(
-0xffffff,
-1,
-40
-);
-headLightR.position.set(
-1,
-1,
--4
-);
-car.add(headLightL);
-car.add(headLightR);
-car.position.set(0,0,40);
-scene.add(car);
-/////////////////////////////////////////////////////
-// VEHICLE SYSTEM
-/////////////////////////////////////////////////////
-let mode = "walk";
+
+const keys = {};
+
 document.addEventListener("keydown",e=>{
-if(e.key.toLowerCase()==="e"){
-const dist =
-player.position.distanceTo(
-car.position
-);
-if(mode==="walk" && dist<6){
-mode = "car";
-player.visible = false;
-document.getElementById("zone").innerText =
-"DRIVING LAMBORGHINI";
-}
-else if(mode==="car"){
-mode = "walk";
-player.visible = true;
-player.position.set(
-car.position.x+5,
-1,
-car.position.z
-);
-document.getElementById("zone").innerText =
-"ON FOOT";
-}
-}
+keys[e.key.toLowerCase()] = true;
 });
+
+document.addEventListener("keyup",e=>{
+keys[e.key.toLowerCase()] = false;
+});
+
 /////////////////////////////////////////////////////
 // OCEAN
 /////////////////////////////////////////////////////
-const waterGeo =
-new THREE.PlaneGeometry(
-5000,
-5000,
-180,
-180
+
+const waterGeo = new THREE.PlaneGeometry(
+4000,
+4000,
+200,
+200
 );
-const waterMat =
-new THREE.MeshStandardMaterial({
-color:0x021522,
-metalness:0.65,
-roughness:0.35,
+
+const waterMat = new THREE.MeshStandardMaterial({
+
+color:0x02131f,
+metalness:0.5,
+roughness:0.4,
 emissive:0x00111f,
-emissiveIntensity:0.45
+emissiveIntensity:0.5
+
 });
-const water =
-new THREE.Mesh(
-waterGeo,
-waterMat
-);
+
+const water = new THREE.Mesh(waterGeo, waterMat);
+
 water.rotation.x = -Math.PI/2;
+
 scene.add(water);
-const waterPos =
-water.geometry.attributes.position;
+
+const waterPos = water.geometry.attributes.position;
+
 const waterBase = [];
+
 for(let i=0;i<waterPos.count;i++){
+
 waterBase.push({
 x:waterPos.getX(i),
 z:waterPos.getZ(i)
 });
+
 }
+
 /////////////////////////////////////////////////////
-// YACHT
+// MAIN DOCK
 /////////////////////////////////////////////////////
-const yacht = new THREE.Group();
-const hull = new THREE.Mesh(
-new THREE.BoxGeometry(
-24,
-3,
-70
-),
+
+const dock = new THREE.Mesh(
+
+new THREE.BoxGeometry(22,1,180),
+
 new THREE.MeshStandardMaterial({
-color:0xffffff
+color:0x4a321d
 })
+
 );
-hull.position.y = 2;
-const deck = new THREE.Mesh(
-new THREE.BoxGeometry(
-18,
-1,
-55
-),
-new THREE.MeshStandardMaterial({
-color:0xe8e8e8
-})
-);
-deck.position.y = 5;
-const cabin = new THREE.Mesh(
-new THREE.BoxGeometry(
-12,
-5,
-25
-),
-new THREE.MeshStandardMaterial({
-color:0x222222,
-emissive:0x111111
-})
-);
-cabin.position.y = 9;
-const yachtGlow =
-new THREE.PointLight(
-0x00ccff,
-1.8,
-120
-);
-yachtGlow.position.y = 10;
-yacht.add(hull);
-yacht.add(deck);
-yacht.add(cabin);
-yacht.add(yachtGlow);
-yacht.position.set(
-70,
-0,
--180
-);
-scene.add(yacht);
+
+dock.position.set(0,0.5,-40);
+
+scene.add(dock);
+
 /////////////////////////////////////////////////////
-// VILLAS
+// ROUNDABOUT PLATFORM
 /////////////////////////////////////////////////////
-function villa(x,z){
-const g = new THREE.Group();
-const base = new THREE.Mesh(
-new THREE.BoxGeometry(
-18,
-1,
-18
+
+const stage = new THREE.Mesh(
+
+new THREE.CylinderGeometry(
+35,
+35,
+2,
+64
 ),
-new THREE.MeshStandardMaterial({
-color:0x111111
-})
-);
-const house = new THREE.Mesh(
-new THREE.BoxGeometry(
-16,
-8,
-16
-),
-new THREE.MeshStandardMaterial({
-color:0x2a2a2a
-})
-);
-house.position.y = 5;
-const windows = new THREE.Mesh(
-new THREE.BoxGeometry(
-8,
-3,
-0.3
-),
-new THREE.MeshStandardMaterial({
-color:0x88ccff,
-emissive:0x66aaff,
-emissiveIntensity:2
-})
-);
-windows.position.set(
-0,
-5,
-8.2
-);
-const glow =
-new THREE.PointLight(
-0x00aaff,
-1.2,
-60
-);
-glow.position.y = 6;
-g.add(base);
-g.add(house);
-g.add(windows);
-g.add(glow);
-g.position.set(x,0,z);
-scene.add(g);
-}
-for(let i=-120;i<=120;i+=50){
-villa(i,-80);
-villa(i,100);
-}
-/////////////////////////////////////////////////////
-// CITY SKYLINE
-/////////////////////////////////////////////////////
-function tower(x,z,h){
-const t = new THREE.Mesh(
-new THREE.BoxGeometry(
-18,
-h,
-18
-),
+
 new THREE.MeshStandardMaterial({
 color:0x111111,
-emissive:0x001122,
-metalness:0.4
+emissive:0x002244,
+emissiveIntensity:1
 })
+
 );
-t.position.set(
-x,
-h/2,
-z
-);
-scene.add(t);
-const glow =
-new THREE.PointLight(
-0x00aaff,
-1,
-120
-);
-glow.position.set(
-x,
-h,
-z
-);
-scene.add(glow);
-}
-for(let i=-200;i<=200;i+=60){
-tower(i,-260,
-40+Math.random()*80
-);
-}
+
+stage.position.set(0,1,-150);
+
+scene.add(stage);
+
 /////////////////////////////////////////////////////
 // JUMBOTRON
 /////////////////////////////////////////////////////
-const jumbotron = new THREE.Mesh(
-new THREE.BoxGeometry(
-40,
-20,
-1
-),
+
+const screen = new THREE.Mesh(
+
+new THREE.BoxGeometry(40,20,2),
+
 new THREE.MeshStandardMaterial({
 color:0x000000,
 emissive:0x0044ff,
 emissiveIntensity:2
 })
+
 );
-jumbotron.position.set(
-0,
-20,
--180
+
+screen.position.set(0,18,-185);
+
+scene.add(screen);
+
+/////////////////////////////////////////////////////
+// CABINS
+/////////////////////////////////////////////////////
+
+function cabin(x,z){
+
+const g = new THREE.Group();
+
+/////////////////////////////////////////////////////
+// FOUNDATION
+/////////////////////////////////////////////////////
+
+const base = new THREE.Mesh(
+
+new THREE.BoxGeometry(18,1,18),
+
+new THREE.MeshStandardMaterial({
+color:0x2b2b2b
+})
+
 );
-scene.add(jumbotron);
+
+base.position.y = 0.5;
+
+g.add(base);
+
 /////////////////////////////////////////////////////
-// NPCS
+// MAIN STRUCTURE
 /////////////////////////////////////////////////////
-const npcs = [];
-function npc(x,z){
-const n = new THREE.Mesh(
-new THREE.BoxGeometry(
+
+const house = new THREE.Mesh(
+
+new THREE.BoxGeometry(16,8,16),
+
+new THREE.MeshStandardMaterial({
+color:0x3b3b3b
+})
+
+);
+
+house.position.y = 5;
+
+g.add(house);
+
+/////////////////////////////////////////////////////
+// SECOND FLOOR
+/////////////////////////////////////////////////////
+
+const top = new THREE.Mesh(
+
+new THREE.BoxGeometry(10,4,10),
+
+new THREE.MeshStandardMaterial({
+color:0x555555
+})
+
+);
+
+top.position.y = 11;
+
+g.add(top);
+
+/////////////////////////////////////////////////////
+// WINDOW GLOW
+/////////////////////////////////////////////////////
+
+const glow = new THREE.PointLight(
+0x00ccff,
+1.5,
+40
+);
+
+glow.position.set(0,6,0);
+
+g.add(glow);
+
+/////////////////////////////////////////////////////
+// OCEAN WINDOW
+/////////////////////////////////////////////////////
+
+const glass = new THREE.Mesh(
+
+new THREE.BoxGeometry(8,3,0.2),
+
+new THREE.MeshStandardMaterial({
+color:0x88ccff,
+emissive:0x224466,
+transparent:true,
+opacity:0.7
+})
+
+);
+
+glass.position.set(0,6,-8.1);
+
+g.add(glass);
+
+/////////////////////////////////////////////////////
+// POSITION
+/////////////////////////////////////////////////////
+
+g.position.set(x,0,z);
+
+scene.add(g);
+
+}
+
+/////////////////////////////////////////////////////
+// LEFT SIDE CABINS
+/////////////////////////////////////////////////////
+
+for(let i=0;i<6;i++){
+
+cabin(-45,-20 - i*35);
+
+}
+
+/////////////////////////////////////////////////////
+// RIGHT SIDE CABINS
+/////////////////////////////////////////////////////
+
+for(let i=0;i<6;i++){
+
+cabin(45,-20 - i*35);
+
+}
+
+/////////////////////////////////////////////////////
+// WALKWAYS
+/////////////////////////////////////////////////////
+
+function walkway(x,z){
+
+const w = new THREE.Mesh(
+
+new THREE.BoxGeometry(8,0.5,28),
+
+new THREE.MeshStandardMaterial({
+color:0x5b3d21
+})
+
+);
+
+w.position.set(x,0.3,z);
+
+scene.add(w);
+
+}
+
+for(let i=0;i<6;i++){
+
+walkway(-22,-20 - i*35);
+walkway(22,-20 - i*35);
+
+}
+
+/////////////////////////////////////////////////////
+// BEACH LIGHTS
+/////////////////////////////////////////////////////
+
+for(let i=0;i<10;i++){
+
+const p = new THREE.PointLight(
+0x66ccff,
 1,
-2,
-1
-),
-new THREE.MeshStandardMaterial({
-color:0xffaa66
-})
+80
 );
-n.position.set(x,1,z);
-n.userData = {
-dir:Math.random()*Math.PI*2,
-speed:0.03 + Math.random()*0.04
-};
-scene.add(n);
-npcs.push(n);
-}
-for(let i=0;i<18;i++){
-npc(
-(Math.random()-0.5)*120,
-(Math.random()-0.5)*120
+
+p.position.set(
+(i-5)*25,
+4,
+-120
 );
+
+scene.add(p);
+
 }
-/////////////////////////////////////////////////////
-// ROADS
-/////////////////////////////////////////////////////
-const road = new THREE.Mesh(
-new THREE.BoxGeometry(
-16,
-0.5,
-500
-),
-new THREE.MeshStandardMaterial({
-color:0x0a0a0a
-})
-);
-road.position.set(
-0,
-0.2,
-100
-);
-scene.add(road);
-/////////////////////////////////////////////////////
-// CAMERA
-/////////////////////////////////////////////////////
-function updateCamera(){
-let tx,ty,tz;
-if(mode==="walk"){
-tx = player.position.x;
-ty = player.position.y + 9;
-tz = player.position.z + 16;
-}
-if(mode==="car"){
-tx =
-car.position.x +
-Math.sin(car.rotation.y)*-15;
-ty =
-car.position.y + 7;
-tz =
-car.position.z +
-Math.cos(car.rotation.y)*-15;
-}
-camera.position.x +=
-(tx-camera.position.x)*0.05;
-camera.position.y +=
-(ty-camera.position.y)*0.05;
-camera.position.z +=
-(tz-camera.position.z)*0.05;
-camera.lookAt(
-mode==="walk"
-? player.position
-: car.position
-);
-}
+
 /////////////////////////////////////////////////////
 // MOVEMENT
 /////////////////////////////////////////////////////
+
 function move(){
-const speed = 0.3;
-if(mode==="walk"){
-if(keys.w) player.position.z -= speed;
-if(keys.s) player.position.z += speed;
-if(keys.a) player.position.x -= speed;
-if(keys.d) player.position.x += speed;
+
+const speed = 0.35;
+
+if(keys["w"]) player.position.z -= speed;
+if(keys["s"]) player.position.z += speed;
+if(keys["a"]) player.position.x -= speed;
+if(keys["d"]) player.position.x += speed;
+
 }
-if(mode==="car"){
-if(keys.w){
-car.position.x -=
-Math.sin(car.rotation.y)*speed;
-car.position.z -=
-Math.cos(car.rotation.y)*speed;
-}
-if(keys.s){
-car.position.x +=
-Math.sin(car.rotation.y)*speed;
-car.position.z +=
-Math.cos(car.rotation.y)*speed;
-}
-if(keys.a) car.rotation.y += 0.03;
-if(keys.d) car.rotation.y -= 0.03;
-}
-}
+
 /////////////////////////////////////////////////////
-// LOOP
+// CAMERA
 /////////////////////////////////////////////////////
-camera.position.set(0,10,18);
+
+camera.position.set(0,10,20);
+
+function updateCamera(){
+
+const tx = player.position.x;
+const ty = player.position.y + 8;
+const tz = player.position.z + 18;
+
+camera.position.x += (tx - camera.position.x)*0.05;
+
+camera.position.y += (ty - camera.position.y)*0.05;
+
+camera.position.z += (tz - camera.position.z)*0.05;
+
+camera.lookAt(
+player.position.x,
+player.position.y + 3,
+player.position.z
+);
+
+}
+
+/////////////////////////////////////////////////////
+// ANIMATION LOOP
+/////////////////////////////////////////////////////
+
 function animate(){
+
 requestAnimationFrame(animate);
-const time =
-performance.now()*0.001;
+
+const time = performance.now()*0.001;
+
 /////////////////////////////////////////////////////
-// OCEAN
+// OCEAN WAVES
 /////////////////////////////////////////////////////
+
 for(let i=0;i<waterPos.count;i++){
+
 const v = waterBase[i];
+
 waterPos.setY(
+
 i,
-Math.sin(v.x*0.012 + time)*0.8 +
-Math.cos(v.z*0.012 + time*1.2)*0.8
+
+Math.sin(v.x*0.01 + time)*0.8 +
+
+Math.cos(v.z*0.01 + time*1.2)*0.8
+
 );
+
 }
+
 waterPos.needsUpdate = true;
+
 /////////////////////////////////////////////////////
-// JUMBOTRON REACTIVE
+// PLAYER
 /////////////////////////////////////////////////////
-jumbotron.material.emissiveIntensity =
-2 + Math.sin(time*4)*1.2;
-/////////////////////////////////////////////////////
-// NPC UPDATE
-/////////////////////////////////////////////////////
-for(let n of npcs){
-n.position.x +=
-Math.cos(n.userData.dir) *
-n.userData.speed;
-n.position.z +=
-Math.sin(n.userData.dir) *
-n.userData.speed;
-n.userData.dir +=
-(Math.random()-0.5)*0.02;
-}
+
 move();
+
+/////////////////////////////////////////////////////
+// CAMERA
+/////////////////////////////////////////////////////
+
 updateCamera();
-renderer.render(
-scene,
-camera
-);
+
+/////////////////////////////////////////////////////
+// STAGE PULSE
+/////////////////////////////////////////////////////
+
+screen.material.emissiveIntensity =
+1.5 + Math.sin(time*2)*0.5;
+
+/////////////////////////////////////////////////////
+// RENDER
+/////////////////////////////////////////////////////
+
+renderer.render(scene,camera);
+
 }
+
 animate();
+
 </script>
-</body>
-</html>
