@@ -2,13 +2,13 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LAMBO CITY V17 — LUXURY PLAYABLE BUILD</title>
+<title>LAMBO CITY V16 — MASTER LUXURY WORLD</title>
 
 <style>
 body { margin:0; overflow:hidden; background:black; }
 canvas { display:block; }
 
-#ui, #zone, #hint {
+#ui,#zone,#hint{
 position:absolute;
 font-family:Arial;
 font-size:13px;
@@ -16,10 +16,10 @@ color:white;
 z-index:10;
 }
 
-#ui { top:20px; left:20px; }
-#zone { top:20px; right:20px; color:#00ffff; }
+#ui{top:20px;left:20px;}
+#zone{top:20px;right:20px;color:#00ffff;}
 
-#hint {
+#hint{
 bottom:80px;
 left:50%;
 transform:translateX(-50%);
@@ -33,8 +33,8 @@ display:none;
 
 <body>
 
-<div id="ui">WASD MOVE • E: ENTER/EXIT CAR • LAMBO CITY V17</div>
-<div id="zone">LUXURY WORLD ACTIVE</div>
+<div id="ui">LAMBO CITY — MASTER WORLD</div>
+<div id="zone">LUXURY ISLAND BUILD</div>
 <div id="hint"></div>
 
 <canvas id="c"></canvas>
@@ -44,142 +44,119 @@ display:none;
 <script>
 
 /////////////////////////////////////////////////////
-// CORE
+// CORE WORLD
 /////////////////////////////////////////////////////
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x050814);
-scene.fog = new THREE.FogExp2(0x050814, 0.004);
+scene.background = new THREE.Color(0x030816);
+scene.fog = new THREE.FogExp2(0x030816, 0.003);
 
-const camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 2000);
+const camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 3000);
 
 const renderer = new THREE.WebGLRenderer({
   canvas: document.getElementById("c"),
-  antialias: true
+  antialias:true
 });
 
 renderer.setSize(innerWidth, innerHeight);
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
 
-window.addEventListener("resize", () => {
+window.addEventListener("resize",()=>{
   camera.aspect = innerWidth/innerHeight;
   camera.updateProjectionMatrix();
-  renderer.setSize(innerWidth, innerHeight);
+  renderer.setSize(innerWidth,innerHeight);
 });
 
 /////////////////////////////////////////////////////
-// LIGHTS
+// LIGHTING (SUNSET LUXURY FEEL)
 /////////////////////////////////////////////////////
 
-scene.add(new THREE.AmbientLight(0x2a3b55, 1));
+scene.add(new THREE.AmbientLight(0x223344,1));
 
-const sun = new THREE.DirectionalLight(0x66ccff, 1.2);
-sun.position.set(50,100,50);
+const sun = new THREE.DirectionalLight(0x99ccff,1.2);
+sun.position.set(100,200,50);
 scene.add(sun);
 
-const glow = new THREE.PointLight(0x3366ff, 1.5, 300);
-glow.position.set(0,30,0);
-scene.add(glow);
+const oceanGlow = new THREE.PointLight(0x00aaff,1.2,500);
+oceanGlow.position.set(0,20,0);
+scene.add(oceanGlow);
 
 /////////////////////////////////////////////////////
-// INPUT SYSTEM (FIXED)
-/////////////////////////////////////////////////////
-
-const keys = {};
-
-document.addEventListener("keydown", e=>{
-  keys[e.key.toLowerCase()] = true;
-
-  if(e.key.toLowerCase() === "e"){
-    if(mode === "onFoot" && player.position.distanceTo(car.position) < 4){
-      enterCar();
-    } else if(mode === "inCar"){
-      exitCar();
-    }
-  }
-});
-
-document.addEventListener("keyup", e=>{
-  keys[e.key.toLowerCase()] = false;
-});
-
-/////////////////////////////////////////////////////
-// PLAYER
+// PLAYER + HERO (CENTER CHARACTER ENERGY)
 /////////////////////////////////////////////////////
 
 const player = new THREE.Mesh(
-  new THREE.BoxGeometry(1,2,1),
-  new THREE.MeshStandardMaterial({
-    color:0xffffff,
-    emissive:0x222222,
-    emissiveIntensity:0.8
-  })
+new THREE.BoxGeometry(1,2,1),
+new THREE.MeshStandardMaterial({color:0xffffff, emissive:0x222222})
 );
-
 player.position.set(0,1,-20);
 scene.add(player);
 
+const hero = new THREE.Mesh(
+new THREE.BoxGeometry(1.2,2.2,1.2),
+new THREE.MeshStandardMaterial({color:0x00ffff, emissive:0x00ffff})
+);
+hero.position.set(5,1,-10);
+scene.add(hero);
+
 /////////////////////////////////////////////////////
-// CAR
+// CAR (LAMBO FEEL)
 /////////////////////////////////////////////////////
 
 const car = new THREE.Mesh(
-  new THREE.BoxGeometry(2,1,4),
-  new THREE.MeshStandardMaterial({
-    color:0xff0000,
-    emissive:0x220000,
-    emissiveIntensity:0.6
-  })
+new THREE.BoxGeometry(2,1,4),
+new THREE.MeshStandardMaterial({
+color:0xff0000,
+emissive:0x330000
+})
 );
-
-car.position.set(5,0.5,-10);
+car.position.set(-5,0.5,-10);
 scene.add(car);
 
 /////////////////////////////////////////////////////
-// GAME STATE (FIXED)
+// INPUT
 /////////////////////////////////////////////////////
 
-let mode = "onFoot";
+const keys={};
+document.addEventListener("keydown",e=>keys[e.key.toLowerCase()]=true);
+document.addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
 
-function enterCar(){
-  mode = "inCar";
-  player.visible = false;
+let mode="walk";
+
+document.addEventListener("keydown",e=>{
+if(e.key.toLowerCase()==="e"){
+if(mode==="walk" && player.position.distanceTo(car.position)<4){
+mode="car";
+player.visible=false;
+}else if(mode==="car"){
+mode="walk";
+player.visible=true;
+player.position.copy(car.position).add(new THREE.Vector3(2,0,0));
 }
-
-function exitCar(){
-  mode = "onFoot";
-  player.visible = true;
-
-  player.position.set(
-    car.position.x + 2,
-    car.position.y,
-    car.position.z
-  );
 }
+});
 
 /////////////////////////////////////////////////////
-// CAMERA SYSTEM
+// CAMERA
 /////////////////////////////////////////////////////
 
 function updateCamera(){
+if(mode==="walk"){
+camera.position.x+=(player.position.x-camera.position.x)*0.08;
+camera.position.y+=((player.position.y+8)-camera.position.y)*0.08;
+camera.position.z+=((player.position.z+14)-camera.position.z)*0.08;
+camera.lookAt(player.position);
+}
 
-  if(mode === "onFoot"){
-    camera.position.x += (player.position.x - camera.position.x)*0.08;
-    camera.position.y += ((player.position.y+8) - camera.position.y)*0.08;
-    camera.position.z += ((player.position.z+14) - camera.position.z)*0.08;
-    camera.lookAt(player.position);
-  }
+if(mode==="car"){
+const ox=Math.sin(car.rotation.y)*-8;
+const oz=Math.cos(car.rotation.y)*-8;
 
-  if(mode === "inCar"){
-    const ox = Math.sin(car.rotation.y) * -8;
-    const oz = Math.cos(car.rotation.y) * -8;
-
-    camera.position.x += (car.position.x + ox - camera.position.x)*0.08;
-    camera.position.y += ((car.position.y+5) - camera.position.y)*0.08;
-    camera.position.z += (car.position.z + oz - camera.position.z)*0.08;
-
-    camera.lookAt(car.position);
-  }
+camera.position.x+=(car.position.x+ox-camera.position.x)*0.08;
+camera.position.y+=((car.position.y+5)-camera.position.y)*0.08;
+camera.position.z+=(car.position.z+oz-camera.position.z)*0.08;
+camera.lookAt(car.position);
+}
 }
 
 /////////////////////////////////////////////////////
@@ -188,119 +165,174 @@ function updateCamera(){
 
 function move(){
 
-  if(mode === "onFoot"){
-    if(keys["w"]) player.position.z -= 0.25;
-    if(keys["s"]) player.position.z += 0.25;
-    if(keys["a"]) player.position.x -= 0.25;
-    if(keys["d"]) player.position.x += 0.25;
-  }
+if(mode==="walk"){
+if(keys.w)player.position.z-=0.2;
+if(keys.s)player.position.z+=0.2;
+if(keys.a)player.position.x-=0.2;
+if(keys.d)player.position.x+=0.2;
+}
 
-  if(mode === "inCar"){
-    if(keys["w"]) car.position.z -= 0.35;
-    if(keys["s"]) car.position.z += 0.35;
-    if(keys["a"]) car.rotation.y += 0.04;
-    if(keys["d"]) car.rotation.y -= 0.04;
-  }
+if(mode==="car"){
+if(keys.w)car.position.z-=0.35;
+if(keys.s)car.position.z+=0.35;
+if(keys.a)car.rotation.y+=0.04;
+if(keys.d)car.rotation.y-=0.04;
+}
 }
 
 /////////////////////////////////////////////////////
-// HERO
+// 🌊 OCEAN (REALISTIC LUXURY WATER)
 /////////////////////////////////////////////////////
 
-const hero = new THREE.Mesh(
-  new THREE.BoxGeometry(1,2,1),
-  new THREE.MeshStandardMaterial({color:0x00ffff, emissive:0x00ffff})
-);
+const waterGeo=new THREE.PlaneGeometry(3000,3000,120,120);
 
-hero.position.set(10,1,-20);
-scene.add(hero);
+const waterMat=new THREE.MeshStandardMaterial({
+color:0x031a2d,
+metalness:0.4,
+roughness:0.2,
+emissive:0x001a33,
+emissiveIntensity:0.4
+});
 
-/////////////////////////////////////////////////////
-// NPCS
-/////////////////////////////////////////////////////
-
-const npcs = [];
-
-function createNPC(x,z){
-  const n = new THREE.Mesh(
-    new THREE.BoxGeometry(1,2,1),
-    new THREE.MeshStandardMaterial({color:0xffaa00})
-  );
-
-  n.position.set(x,1,z);
-
-  n.userData = {
-    dir: Math.random()*Math.PI*2,
-    speed: 0.05 + Math.random()*0.05
-  };
-
-  scene.add(n);
-  npcs.push(n);
-}
-
-for(let i=0;i<6;i++){
-  createNPC(-10+i*3,-30);
-  createNPC(10+i*3,-60);
-}
-
-/////////////////////////////////////////////////////
-// OCEAN
-/////////////////////////////////////////////////////
-
-const waterGeo = new THREE.PlaneGeometry(2200,2200,80,80);
-
-const water = new THREE.Mesh(
-  waterGeo,
-  new THREE.MeshStandardMaterial({
-    color:0x021428,
-    emissive:0x001122,
-    metalness:0.4,
-    roughness:0.6
-  })
-);
-
-water.rotation.x = -Math.PI/2;
+const water=new THREE.Mesh(waterGeo,waterMat);
+water.rotation.x=-Math.PI/2;
 scene.add(water);
 
-const waterPos = water.geometry.attributes.position;
-const waterBase = [];
+const wPos=water.geometry.attributes.position;
+const wBase=[];
 
-for(let i=0;i<waterPos.count;i++){
-  waterBase.push({
-    x:waterPos.getX(i),
-    z:waterPos.getZ(i)
-  });
+for(let i=0;i<wPos.count;i++){
+wBase.push({x:wPos.getX(i),z:wPos.getZ(i)});
 }
 
 /////////////////////////////////////////////////////
-// WORLD OBJECTS (SIMPLIFIED BUT CLEAN)
+// 🏝️ MAIN ISLAND (CENTER LUXURY HUB)
+/////////////////////////////////////////////////////
+
+const island=new THREE.Mesh(
+new THREE.CylinderGeometry(80,120,10,32),
+new THREE.MeshStandardMaterial({color:0x1b3a2f})
+);
+island.position.y=0;
+scene.add(island);
+
+/////////////////////////////////////////////////////
+// 🏡 VILLAS (LUXURY GRID — NOT RANDOM)
 /////////////////////////////////////////////////////
 
 function villa(x,z){
-  const g = new THREE.Group();
+const g=new THREE.Group();
 
-  const base = new THREE.Mesh(
-    new THREE.BoxGeometry(16,1,16),
-    new THREE.MeshStandardMaterial({color:0x1a1a1a})
-  );
-  base.position.y = 0.5;
+const base=new THREE.Mesh(
+new THREE.BoxGeometry(18,1,18),
+new THREE.MeshStandardMaterial({color:0x111111})
+);
 
-  const main = new THREE.Mesh(
-    new THREE.BoxGeometry(14,6,14),
-    new THREE.MeshStandardMaterial({color:0x2a2a2a})
-  );
-  main.position.y = 4;
+const house=new THREE.Mesh(
+new THREE.BoxGeometry(14,8,14),
+new THREE.MeshStandardMaterial({color:0x2b2b2b})
+);
 
-  g.add(base);
-  g.add(main);
+house.position.y=5;
 
-  g.position.set(x,0,z);
-  scene.add(g);
+const light=new THREE.PointLight(0x66ccff,1,60);
+light.position.set(0,5,0);
+
+g.add(base);
+g.add(house);
+g.add(light);
+
+g.position.set(x,0,z);
+scene.add(g);
 }
 
-for(let i=0;i<6;i++){
-  villa(-25,-20-i*25);
-  villa(25,-20-i*25);
+for(let x=-60;x<=60;x+=30){
+for(let z=-80;z<=-20;z+=30){
+villa(x,z);
+}
+}
+
+/////////////////////////////////////////////////////
+// 🌴 PALM TREES (LUXURY IDENTITY)
+/////////////////////////////////////////////////////
+
+function palm(x,z){
+const trunk=new THREE.Mesh(
+new THREE.CylinderGeometry(0.5,1,8,8),
+new THREE.MeshStandardMaterial({color:0x3b2a1a})
+);
+
+const top=new THREE.Mesh(
+new THREE.SphereGeometry(2,8,8),
+new THREE.MeshStandardMaterial({color:0x1faa4a})
+);
+
+trunk.position.set(x,4,z);
+top.position.set(x,8,z);
+
+scene.add(trunk);
+scene.add(top);
+}
+
+for(let i=0;i<25;i++){
+palm((Math.random()-0.5)*200,(Math.random()-0.5)*200);
+}
+
+/////////////////////////////////////////////////////
+// ⛳ GOLF COURSE (REAL LAYOUT FEEL)
+/////////////////////////////////////////////////////
+
+const golfBase=new THREE.Mesh(
+new THREE.PlaneGeometry(200,200),
+new THREE.MeshStandardMaterial({color:0x0c4a1f})
+);
+golfBase.rotation.x=-Math.PI/2;
+golfBase.position.set(120,0,-80);
+scene.add(golfBase);
+
+/////////////////////////////////////////////////////
+// 🏀 BASKETBALL COURT (HERO ENERGY ZONE)
+/////////////////////////////////////////////////////
+
+const court=new THREE.Mesh(
+new THREE.PlaneGeometry(60,30),
+new THREE.MeshStandardMaterial({color:0x111111})
+);
+court.rotation.x=-Math.PI/2;
+court.position.set(-120,0,-40);
+scene.add(court);
+
+/////////////////////////////////////////////////////
+// 🚤 YACHT DOCK
+/////////////////////////////////////////////////////
+
+const yacht=new THREE.Mesh(
+new THREE.BoxGeometry(20,4,60),
+new THREE.MeshStandardMaterial({color:0xffffff})
+);
+yacht.position.set(40,2,-120);
+scene.add(yacht);
+
+/////////////////////////////////////////////////////
+// NPC LIFE
+/////////////////////////////////////////////////////
+
+const npcs=[];
+
+function npc(x,z){
+const n=new THREE.Mesh(
+new THREE.BoxGeometry(1,2,1),
+new THREE.MeshStandardMaterial({color:0xffcc66})
+);
+
+n.position.set(x,1,z);
+n.userData={dir:Math.random()*Math.PI*2,speed:0.05};
+scene.add(n);
+npcs.push(n);
+}
+
+for(let i=0;i<10;i++){
+npc((Math.random()-0.5)*100,(Math.random()-0.5)*100);
 }
 
 /////////////////////////////////////////////////////
@@ -310,32 +342,29 @@ for(let i=0;i<6;i++){
 camera.position.set(0,8,12);
 
 function animate(){
-  requestAnimationFrame(animate);
+requestAnimationFrame(animate);
 
-  const t = performance.now()*0.001;
+const t=performance.now()*0.001;
 
-  move();
-  updateCamera();
+move();
+updateCamera();
 
-  // water
-  for(let i=0;i<waterPos.count;i++){
-    const v = waterBase[i];
+for(let i=0;i<wPos.count;i++){
+const v=wBase[i];
+wPos.setY(i,
+Math.sin(v.x*0.02+t)*0.5+
+Math.cos(v.z*0.02+t)*0.5
+);
+}
+wPos.needsUpdate=true;
 
-    waterPos.setY(i,
-      Math.sin(v.x*0.02+t)*0.35 +
-      Math.cos(v.z*0.02+t*1.2)*0.35
-    );
-  }
-  waterPos.needsUpdate = true;
+for(let n of npcs){
+n.position.x+=Math.cos(n.userData.dir)*n.userData.speed;
+n.position.z+=Math.sin(n.userData.dir)*n.userData.speed;
+n.userData.dir+=(Math.random()-0.5)*0.02;
+}
 
-  // NPCS
-  for(let n of npcs){
-    n.position.x += Math.cos(n.userData.dir)*n.userData.speed;
-    n.position.z += Math.sin(n.userData.dir)*n.userData.speed;
-    n.userData.dir += (Math.random()-0.5)*0.02;
-  }
-
-  renderer.render(scene,camera);
+renderer.render(scene,camera);
 }
 
 animate();
