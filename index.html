@@ -2,26 +2,26 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LAMBO CITY — IMMERSION CORE v3</title>
+<title>LAMBO CITY — PHASE 1 LUXURY WORLD</title>
 
 <style>
 body { margin:0; overflow:hidden; background:black; }
 canvas { display:block; }
 
-#ui, #zone {
-position:absolute;
-color:white;
-font-family:Arial;
-font-size:13px;
+#ui {
+position:absolute; top:20px; left:20px;
+color:white; font-family:Arial; font-size:13px;
 z-index:10;
 }
 
-#ui { top:20px; left:20px; }
-#zone { top:20px; right:20px; color:#00ffff; }
+#zone {
+position:absolute; top:20px; right:20px;
+color:#00ffff; font-family:Arial;
+z-index:10;
+}
 
 #start {
-position:absolute;
-inset:0;
+position:absolute; inset:0;
 display:flex;
 justify-content:center;
 align-items:center;
@@ -29,18 +29,6 @@ flex-direction:column;
 background:black;
 color:white;
 z-index:20;
-}
-
-#hint {
-position:absolute;
-bottom:80px;
-left:50%;
-transform:translateX(-50%);
-padding:10px 18px;
-border:1px solid #00ffff;
-background:rgba(0,0,0,0.7);
-display:none;
-color:white;
 }
 </style>
 
@@ -54,8 +42,7 @@ color:white;
 </div>
 
 <div id="ui">WASD TO MOVE</div>
-<div id="zone">LOADING LUXURY WORLD...</div>
-<div id="hint"></div>
+<div id="zone">LOADING WORLD...</div>
 
 <canvas id="c"></canvas>
 
@@ -64,22 +51,22 @@ color:white;
 <script>
 
 /////////////////////////////////////////////////////
-// CORE STATE
+// STATE
 /////////////////////////////////////////////////////
 
 let started = false;
 
-const STATE = {
-  stageEnabled: false
+const FEATURES = {
+  stage: false // 🔒 LOCKED (your request)
 };
 
 /////////////////////////////////////////////////////
-// SCENE / CAMERA / RENDERER
+// SCENE
 /////////////////////////////////////////////////////
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x000000);
-scene.fog = new THREE.FogExp2(0x0a0f1a, 0.008);
+scene.fog = new THREE.FogExp2(0x070818, 0.01);
 
 const camera = new THREE.PerspectiveCamera(
   75,
@@ -102,17 +89,17 @@ window.addEventListener("resize", () => {
 });
 
 /////////////////////////////////////////////////////
-// LIGHTING (LUXURY TONE)
+// LIGHTING
 /////////////////////////////////////////////////////
 
 scene.add(new THREE.AmbientLight(0xffffff, 0.55));
 
-const keyLight = new THREE.PointLight(0x00ffff, 1.6, 200);
-keyLight.position.set(0,30,20);
-scene.add(keyLight);
+const mainLight = new THREE.PointLight(0x00ffff, 1.5, 300);
+mainLight.position.set(0, 30, 40);
+scene.add(mainLight);
 
 /////////////////////////////////////////////////////
-// PLAYER (SMOOTH WALKER)
+// PLAYER
 /////////////////////////////////////////////////////
 
 const player = new THREE.Mesh(
@@ -120,32 +107,34 @@ const player = new THREE.Mesh(
   new THREE.MeshStandardMaterial({ color:0xffffff })
 );
 
-player.position.set(0,1,-30);
+player.position.set(0,1,-40);
 scene.add(player);
 
 const keys = {};
 document.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
 document.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
 
+function move() {
+  if (keys["w"]) player.position.z -= 0.25;
+  if (keys["s"]) player.position.z += 0.25;
+  if (keys["a"]) player.position.x -= 0.25;
+  if (keys["d"]) player.position.x += 0.25;
+}
+
 /////////////////////////////////////////////////////
-// CAMERA (CINEMATIC FOLLOW)
+// CAMERA
 /////////////////////////////////////////////////////
 
-function updateCamera(){
-
-  const targetX = player.position.x;
-  const targetY = 8;
-  const targetZ = player.position.z + 14;
-
-  camera.position.x += (targetX - camera.position.x) * 0.08;
-  camera.position.y += (targetY - camera.position.y) * 0.08;
-  camera.position.z += (targetZ - camera.position.z) * 0.08;
+function updateCamera() {
+  camera.position.x += (player.position.x - camera.position.x) * 0.07;
+  camera.position.y += ((player.position.y + 8) - camera.position.y) * 0.07;
+  camera.position.z += ((player.position.z + 16) - camera.position.z) * 0.07;
 
   camera.lookAt(player.position);
 }
 
 /////////////////////////////////////////////////////
-// OCEAN (LUXURY BASE)
+// OCEAN
 /////////////////////////////////////////////////////
 
 const ocean = new THREE.Mesh(
@@ -161,80 +150,75 @@ ocean.rotation.x = -Math.PI/2;
 scene.add(ocean);
 
 /////////////////////////////////////////////////////
-// YACHT (VISUAL LUXURY OBJECT)
+// YACHT
 /////////////////////////////////////////////////////
 
 const yacht = new THREE.Group();
 
 const hull = new THREE.Mesh(
-  new THREE.BoxGeometry(14,3,50),
+  new THREE.BoxGeometry(16,4,60),
   new THREE.MeshStandardMaterial({ color:0xf2f2f2 })
 );
-
 hull.position.y = 2;
 yacht.add(hull);
 
 const deck = new THREE.Mesh(
-  new THREE.BoxGeometry(12,2,30),
+  new THREE.BoxGeometry(14,2,30),
   new THREE.MeshStandardMaterial({ color:0x111111 })
 );
-
-deck.position.y = 4;
+deck.position.y = 5;
 yacht.add(deck);
 
-yacht.position.set(35,0,-20);
+yacht.position.set(40,0,-90);
 scene.add(yacht);
 
 /////////////////////////////////////////////////////
-// CABINS (LUXURY STRUCTURES)
+// CABINS (VILLAS)
 /////////////////////////////////////////////////////
 
 function createCabin(x,z){
 
   const cabin = new THREE.Mesh(
-    new THREE.BoxGeometry(6,4,6),
-    new THREE.MeshStandardMaterial({
-      color:0x1a1a1a,
-      metalness:0.2
-    })
+    new THREE.BoxGeometry(10,5,10),
+    new THREE.MeshStandardMaterial({ color:0x1a1a1a })
   );
 
-  cabin.position.set(x,2,z);
+  cabin.position.set(x,2.5,z);
   scene.add(cabin);
 
 }
 
-for(let i=0;i<3;i++){
-  createCabin(-12, -10 - i*14);
-  createCabin(12, -10 - i*14);
+for(let i=0;i<5;i++){
+  createCabin(-18, -20 - i*15);
+  createCabin(18, -20 - i*15);
 }
 
 /////////////////////////////////////////////////////
-// HERO NPC (CENTER FIGURE)
+// HERO
 /////////////////////////////////////////////////////
 
 const hero = new THREE.Mesh(
-  new THREE.BoxGeometry(1,2.5,1),
+  new THREE.BoxGeometry(1.2,2.2,1),
   new THREE.MeshStandardMaterial({
     color:0x00ffff,
     emissive:0x00ffff,
-    emissiveIntensity:1.2
+    emissiveIntensity:1.5
   })
 );
 
-hero.position.set(8,1,-12);
+hero.position.set(10,1,-15);
 scene.add(hero);
 
 /////////////////////////////////////////////////////
-// STAGE (VISUAL ONLY — NO GAMEPLAY)
+// STAGE (VISUAL ONLY — LOCKED)
 /////////////////////////////////////////////////////
 
 const stage = new THREE.Mesh(
-  new THREE.CylinderGeometry(20,20,1,32),
+  new THREE.CylinderGeometry(18,18,1,32),
   new THREE.MeshStandardMaterial({
     color:0x111111,
     emissive:0x220044,
-    emissiveIntensity:0.4
+    emissiveIntensity:0.3
   })
 );
 
@@ -247,21 +231,17 @@ scene.add(stage);
 
 const crowd = [];
 
-for(let i=0;i<14;i++){
+for(let i=0;i<12;i++){
 
   const npc = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.6,0.6,1.8,8),
-    new THREE.MeshStandardMaterial({
-      color:0x00ffff,
-      emissive:0x00ffff,
-      emissiveIntensity:1.2
-    })
+    new THREE.CylinderGeometry(0.5,0.5,1.6,8),
+    new THREE.MeshStandardMaterial({ color:0x00ffff })
   );
 
   npc.position.set(
-    (Math.random()-0.5)*30,
+    (Math.random()-0.5)*25,
     1,
-    -55 + (Math.random()-0.5)*20
+    -55 + (Math.random()-0.5)*15
   );
 
   scene.add(npc);
@@ -269,56 +249,13 @@ for(let i=0;i<14;i++){
 }
 
 /////////////////////////////////////////////////////
-// MOVEMENT
-/////////////////////////////////////////////////////
-
-function move(){
-
-  if(keys["w"]) player.position.z -= 0.2;
-  if(keys["s"]) player.position.z += 0.2;
-  if(keys["a"]) player.position.x -= 0.2;
-  if(keys["d"]) player.position.x += 0.2;
-
-}
-
-/////////////////////////////////////////////////////
-// HERO INTERACTION
-/////////////////////////////////////////////////////
-
-function checkHero(){
-
-  const d = player.position.distanceTo(hero.position);
-
-  if(d < 3){
-    show("PRESS E TO TALK");
-  } else {
-    hide();
-  }
-}
-
-/////////////////////////////////////////////////////
-// UI
-/////////////////////////////////////////////////////
-
-const hint = document.getElementById("hint");
-
-function show(t){
-  hint.style.display = "block";
-  hint.innerText = t;
-}
-
-function hide(){
-  hint.style.display = "none";
-}
-
-/////////////////////////////////////////////////////
-// START
+// INPUT
 /////////////////////////////////////////////////////
 
 function start(){
   document.getElementById("start").style.display = "none";
   started = true;
-  document.getElementById("zone").innerText = "IMMERSIVE WORLD ACTIVE";
+  document.getElementById("zone").innerText = "LUXURY WORLD ACTIVE";
 }
 
 /////////////////////////////////////////////////////
@@ -336,7 +273,15 @@ function animate(){
 
   move();
   updateCamera();
-  checkHero();
+
+  // simple hero proximity UI
+  const d = player.position.distanceTo(hero.position);
+
+  if(d < 3){
+    document.getElementById("ui").innerText = "PRESS E TO TALK";
+  } else {
+    document.getElementById("ui").innerText = "WASD TO MOVE";
+  }
 
   renderer.render(scene,camera);
 }
