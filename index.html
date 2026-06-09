@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LAMBO CITY — MASTER WORLD v1</title>
+<title>LAMBO CITY — PHASE 2 WORLD RESTORE</title>
 
 <style>
 body { margin:0; overflow:hidden; background:black; }
@@ -11,9 +11,8 @@ canvas { display:block; }
 #ui, #zone {
 position:absolute;
 color:white;
-z-index:10;
-font-family:Arial;
 font-size:13px;
+z-index:10;
 }
 
 #ui { top:20px; left:20px; }
@@ -54,7 +53,7 @@ color:white;
 </div>
 
 <div id="ui">WASD MOVE</div>
-<div id="zone">LOADING...</div>
+<div id="zone">LOADING WORLD...</div>
 <div id="interaction"></div>
 
 <canvas id="c"></canvas>
@@ -68,19 +67,20 @@ color:white;
 /////////////////////////////////////////////////////
 
 let started = false;
-let coins = 0;
 
-const WORLD = {
-  stageEnabled: false // DISABLED UNTIL WORLD COMPLETE
+const STATE = {
+  stageEnabled: false, // still locked (your instruction)
+  insideYacht: false,
+  insideCabin: false
 };
 
 /////////////////////////////////////////////////////
-// SCENE / CAMERA / RENDERER
+// SCENE / CAMERA / RENDERER (CLEAN CORE)
 /////////////////////////////////////////////////////
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x000000);
-scene.fog = new THREE.FogExp2(0x080816, 0.01);
+scene.fog = new THREE.FogExp2(0x081018, 0.01);
 
 const camera = new THREE.PerspectiveCamera(
   75,
@@ -113,7 +113,7 @@ mainLight.position.set(0,20,20);
 scene.add(mainLight);
 
 /////////////////////////////////////////////////////
-// PLAYER
+// PLAYER (SINGLE VERSION ONLY)
 /////////////////////////////////////////////////////
 
 const player = new THREE.Mesh(
@@ -129,18 +129,18 @@ document.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
 document.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
 
 /////////////////////////////////////////////////////
-// UI SYSTEM
+// UI SYSTEM (SINGLE SOURCE OF TRUTH)
 /////////////////////////////////////////////////////
 
-const interactionUI = document.getElementById("interaction");
+const ui = document.getElementById("interaction");
 
-function showInteraction(t){
-  interactionUI.style.display = "block";
-  interactionUI.innerText = t;
+function show(text){
+  ui.style.display = "block";
+  ui.innerText = text;
 }
 
-function hideInteraction(){
-  interactionUI.style.display = "none";
+function hide(){
+  ui.style.display = "none";
 }
 
 /////////////////////////////////////////////////////
@@ -158,8 +158,6 @@ const hero = new THREE.Mesh(
 
 hero.position.set(10,1,-10);
 scene.add(hero);
-
-let talking = false;
 
 /////////////////////////////////////////////////////
 // OCEAN
@@ -198,8 +196,6 @@ yacht.add(yachtInterior);
 yacht.position.set(25,0,-20);
 scene.add(yacht);
 
-let insideYacht = false;
-
 /////////////////////////////////////////////////////
 // CABINS
 /////////////////////////////////////////////////////
@@ -215,6 +211,7 @@ function createCabin(x,z){
 
   c.position.set(x,1,z);
   scene.add(c);
+
   cabins.push(c);
 }
 
@@ -237,7 +234,7 @@ function move(){
 }
 
 /////////////////////////////////////////////////////
-// CAMERA
+// CAMERA FOLLOW
 /////////////////////////////////////////////////////
 
 function updateCamera(){
@@ -251,7 +248,7 @@ function updateCamera(){
 }
 
 /////////////////////////////////////////////////////
-// HERO INTERACTION
+// INTERACTIONS
 /////////////////////////////////////////////////////
 
 function checkHero(){
@@ -259,20 +256,19 @@ function checkHero(){
   const d = player.position.distanceTo(hero.position);
 
   if(d < 3){
-    showInteraction("PRESS E TO TALK");
-  } else {
-    hideInteraction();
+    show("PRESS E TO TALK TO HERO");
   }
+  else hide();
 }
 
 /////////////////////////////////////////////////////
-// START
+// START GAME
 /////////////////////////////////////////////////////
 
 function start(){
   document.getElementById("start").style.display = "none";
   started = true;
-  document.getElementById("zone").innerText = "WORLD ACTIVE";
+  document.getElementById("zone").innerText = "WORLD RESTORED";
 }
 
 /////////////////////////////////////////////////////
@@ -298,5 +294,6 @@ function animate(){
 animate();
 
 </script>
+
 </body>
 </html>
