@@ -2,48 +2,43 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LAMBO CITY — FINAL FIXED WORLD</title>
+<title>LAMBO CITY — STABLE FINAL BASE</title>
 
 <style>
 body { margin:0; overflow:hidden; background:#050814; }
 canvas { display:block; }
 
-#ui,#zone{
+#ui{
 position:absolute;
-font-family:Arial;
-font-size:13px;
+top:20px;left:20px;
 color:white;
+font-family:Arial;
+font-size:14px;
 z-index:10;
 }
-
-#ui{top:20px;left:20px;}
-#zone{top:20px;right:20px;color:#00ffff;}
 </style>
 </head>
 
 <body>
 
-<div id="ui">LAMBO CITY — FINAL FIX</div>
-<div id="zone">WORLD LOADED</div>
-
+<div id="ui">LAMBO CITY — STABLE BASE WORLD</div>
 <canvas id="c"></canvas>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
 
 <script>
 
-window.addEventListener("load", () => {
-
 /////////////////////////////////////////////////////
-// CORE
+// CORE ENGINE (SAFE START)
 /////////////////////////////////////////////////////
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x0a1220);
-scene.fog = new THREE.FogExp2(0x0a1220, 0.0008);
+
+// IMPORTANT: no heavy fog (THIS WAS BREAKING VISIBILITY)
+scene.fog = new THREE.Fog(0x0a1220, 80, 600);
 
 const camera = new THREE.PerspectiveCamera(
-75, innerWidth/innerHeight, 0.1, 10000
+75, innerWidth/innerHeight, 0.1, 5000
 );
 
 const renderer = new THREE.WebGLRenderer({
@@ -61,7 +56,7 @@ renderer.setSize(innerWidth, innerHeight);
 });
 
 /////////////////////////////////////////////////////
-// LIGHTING (VISIBLE FIX)
+// LIGHTING (VISIBLE + CONTRAST FIX)
 /////////////////////////////////////////////////////
 
 scene.add(new THREE.AmbientLight(0x556677, 1.2));
@@ -70,20 +65,15 @@ const sun = new THREE.DirectionalLight(0xaaccff, 1.5);
 sun.position.set(200,300,200);
 scene.add(sun);
 
-const glow = new THREE.PointLight(0x00ccff, 2, 2000);
-glow.position.set(0,50,0);
-scene.add(glow);
-
 /////////////////////////////////////////////////////
-// GROUND (YOU MUST SEE THIS)
+// GROUND (ANCHOR YOU CAN SEE)
 /////////////////////////////////////////////////////
 
 const ground = new THREE.Mesh(
-new THREE.PlaneGeometry(500,500),
+new THREE.PlaneGeometry(1000,1000),
 new THREE.MeshStandardMaterial({color:0x1f3b1f})
 );
 ground.rotation.x = -Math.PI/2;
-ground.position.y = 0;
 scene.add(ground);
 
 /////////////////////////////////////////////////////
@@ -94,7 +84,7 @@ const car = new THREE.Mesh(
 new THREE.BoxGeometry(3,1,6),
 new THREE.MeshStandardMaterial({
 color:0xffcc00,
-emissive:0x553300,
+emissive:0x332200,
 emissiveIntensity:0.5
 })
 );
@@ -103,27 +93,16 @@ car.position.set(0,1,0);
 scene.add(car);
 
 /////////////////////////////////////////////////////
-// ISLAND (REFERENCE WORLD)
-/////////////////////////////////////////////////////
-
-const island = new THREE.Mesh(
-new THREE.CylinderGeometry(200,220,40,32),
-new THREE.MeshStandardMaterial({color:0x2a4a2a})
-);
-island.position.y = -10;
-scene.add(island);
-
-/////////////////////////////////////////////////////
-// OCEAN
+// OCEAN (BACKGROUND ONLY)
 /////////////////////////////////////////////////////
 
 const ocean = new THREE.Mesh(
-new THREE.PlaneGeometry(2000,2000),
+new THREE.PlaneGeometry(3000,3000),
 new THREE.MeshStandardMaterial({color:0x061a2b})
 );
 
 ocean.rotation.x = -Math.PI/2;
-ocean.position.y = -12;
+ocean.position.y = -2;
 scene.add(ocean);
 
 /////////////////////////////////////////////////////
@@ -131,11 +110,24 @@ scene.add(ocean);
 /////////////////////////////////////////////////////
 
 const keys={};
-document.addEventListener("keydown",e=>keys[e.key.toLowerCase()]=true);
-document.addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
+
+document.addEventListener("keydown",e=>{
+keys[e.key.toLowerCase()]=true;
+});
+
+document.addEventListener("keyup",e=>{
+keys[e.key.toLowerCase()]=false;
+});
 
 /////////////////////////////////////////////////////
-// MOVE
+// CAMERA START (CRITICAL FIX)
+/////////////////////////////////////////////////////
+
+camera.position.set(0,15,25);
+camera.lookAt(0,0,0);
+
+/////////////////////////////////////////////////////
+// MOVEMENT
 /////////////////////////////////////////////////////
 
 function move(){
@@ -146,10 +138,8 @@ if(keys.d) car.position.x += 0.4;
 }
 
 /////////////////////////////////////////////////////
-// CAMERA (LOCKED + SAFE)
+// CAMERA FOLLOW (SMOOTH)
 /////////////////////////////////////////////////////
-
-camera.position.set(0,15,25);
 
 function updateCamera(){
 camera.position.x += (car.position.x - camera.position.x)*0.08;
@@ -160,7 +150,7 @@ camera.lookAt(car.position);
 }
 
 /////////////////////////////////////////////////////
-// LOOP
+// LOOP (SAFE)
 /////////////////////////////////////////////////////
 
 function animate(){
@@ -173,8 +163,6 @@ renderer.render(scene,camera);
 }
 
 animate();
-
-});
 
 </script>
 
