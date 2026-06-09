@@ -142,86 +142,84 @@ z:waterPos.getZ(i)
 // 🏡 LUXURY VILLA (FIXED — MULTI LEVEL)
 /////////////////////////////////////////////////////
 
-const villas = [];
-
-function createVilla(x,z){
+function createVilla(x, z) {
 
 const villa = new THREE.Group();
 
 const base = new THREE.Mesh(
-new THREE.BoxGeometry(16,1,16),
-new THREE.MeshStandardMaterial({color:0x0f0f0f})
+new THREE.BoxGeometry(18, 1, 18),
+new THREE.MeshStandardMaterial({ color: 0x0f0f0f })
 );
 base.position.y = 0.5;
 villa.add(base);
 
 const floor1 = new THREE.Mesh(
-new THREE.BoxGeometry(16,5,16),
-new THREE.MeshStandardMaterial({color:0x151515})
+new THREE.BoxGeometry(18, 5, 18),
+new THREE.MeshStandardMaterial({ color: 0x151515 })
 );
 floor1.position.y = 3;
 villa.add(floor1);
 
 const floor2 = new THREE.Mesh(
-new THREE.BoxGeometry(14,4,14),
-new THREE.MeshStandardMaterial({color:0x101010})
+new THREE.BoxGeometry(16, 5, 16),
+new THREE.MeshStandardMaterial({ color: 0x101010 })
 );
-floor2.position.y = 7.5;
+floor2.position.y = 8;
 villa.add(floor2);
 
-const roof = new THREE.Mesh(
-new THREE.BoxGeometry(17,1,17),
-new THREE.MeshStandardMaterial({color:0x0a0a0a})
+// OPEN FRONT (IMPORTANT FOR WALK-IN FEEL)
+const entrance = new THREE.Mesh(
+new THREE.BoxGeometry(6, 4, 0.5),
+new THREE.MeshBasicMaterial({ visible: false })
 );
-roof.position.y = 10;
-villa.add(roof);
+entrance.position.set(0, 2, 9);
+villa.add(entrance);
 
-// BALCONY (IMPORTANT LUXURY FEEL)
+// BALCONY WRAP
 const balcony = new THREE.Mesh(
-new THREE.BoxGeometry(22,0.4,6),
-new THREE.MeshStandardMaterial({color:0x222222})
+new THREE.BoxGeometry(24, 0.5, 6),
+new THREE.MeshStandardMaterial({ color: 0x222222 })
 );
-balcony.position.set(0,4,10);
+balcony.position.set(0, 5, 10);
 villa.add(balcony);
 
 // GLASS RAIL
 const rail = new THREE.Mesh(
-new THREE.BoxGeometry(22,1.2,0.2),
+new THREE.BoxGeometry(24, 1.2, 0.2),
 new THREE.MeshStandardMaterial({
-color:0x88ccff,
-transparent:true,
-opacity:0.3
+color: 0x88ccff,
+transparent: true,
+opacity: 0.3
 })
 );
-rail.position.set(0,5,13);
+rail.position.set(0, 6, 13);
 villa.add(rail);
 
-// FRONT GLASS
-const glass = new THREE.Mesh(
-new THREE.BoxGeometry(10,3,0.2),
-new THREE.MeshStandardMaterial({
-color:0x99ddff,
-transparent:true,
-opacity:0.35
-})
-);
-glass.position.set(0,3,7.5);
-villa.add(glass);
-
-// LIGHT GLOW
-const light = new THREE.PointLight(0x66ccff,1.2,30);
-light.position.set(0,6,0);
+// INTERIOR LIGHT (KEY LUXURY FEEL)
+const light = new THREE.PointLight(0x66ccff, 1.5, 40);
+light.position.set(0, 6, 0);
 villa.add(light);
 
-villa.position.set(x,0,z);
+// MINIMAL INTERIOR FURNITURE (VISIBLE FROM OUTSIDE)
+const couch = new THREE.Mesh(
+new THREE.BoxGeometry(6, 1, 2),
+new THREE.MeshStandardMaterial({ color: 0x222222 })
+);
+couch.position.set(-3, 1, 0);
+villa.add(couch);
+
+const table = new THREE.Mesh(
+new THREE.BoxGeometry(2, 1, 2),
+new THREE.MeshStandardMaterial({ color: 0x111111 })
+);
+table.position.set(3, 1, 0);
+villa.add(table);
+
+// POSITION
+villa.position.set(x, 0, z);
 scene.add(villa);
 
 villas.push(villa);
-}
-
-for(let i=0;i<6;i++){
-createVilla(-25,-20-i*25);
-createVilla(25,-20-i*25);
 }
 
 /////////////////////////////////////////////////////
