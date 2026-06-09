@@ -45,14 +45,19 @@ position:absolute;
 <script>
 
 /////////////////////////////////////////////////////
-// CORE
+// CORE (FIXED SAFE START)
 /////////////////////////////////////////////////////
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x02040a);
 scene.fog = new THREE.FogExp2(0x070b1a, 0.006);
 
-const camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 2000);
+const camera = new THREE.PerspectiveCamera(
+  75,
+  innerWidth / innerHeight,
+  0.1,
+  2000
+);
 
 const renderer = new THREE.WebGLRenderer({
   canvas: document.getElementById("c"),
@@ -60,6 +65,7 @@ const renderer = new THREE.WebGLRenderer({
 });
 
 renderer.setSize(innerWidth, innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
 window.addEventListener("resize", () => {
   camera.aspect = innerWidth / innerHeight;
@@ -68,39 +74,60 @@ window.addEventListener("resize", () => {
 });
 
 /////////////////////////////////////////////////////
-// LIGHTING
+// LIGHTING (IMPORTANT FIX)
 /////////////////////////////////////////////////////
 
-scene.add(new THREE.AmbientLight(0x223344, 0.8));
+scene.add(new THREE.AmbientLight(0x2a3b55, 1.0));
 
-const light = new THREE.PointLight(0x4da3ff, 1, 900);
-light.position.set(0, 120, 0);
-scene.add(light);
+const mainLight = new THREE.DirectionalLight(0x66ccff, 1.2);
+mainLight.position.set(50, 100, 50);
+scene.add(mainLight);
 
+const fillLight = new THREE.PointLight(0x4da3ff, 1.2, 1000);
+fillLight.position.set(0, 80, 0);
+scene.add(fillLight);
+/////////////////////////////////////////////////////
+// EXTRA VISIBILITY FIX (IMPORTANT)
+/////////////////////////////////////////////////////
+
+const ambientBoost = new THREE.AmbientLight(0x335577, 0.8);
+scene.add(ambientBoost);
+
+scene.background = new THREE.Color(0x050a14);
 /////////////////////////////////////////////////////
 // PLAYER
 /////////////////////////////////////////////////////
 
 const player = new THREE.Mesh(
-  new THREE.BoxGeometry(1,2,1),
-  new THREE.MeshStandardMaterial({ color: 0xffffff })
+  new THREE.BoxGeometry(1, 2, 1),
+  new THREE.MeshStandardMaterial({
+    color: 0xffffff,
+    emissive: 0x111111
+  })
 );
 
-player.position.set(0,1,-30);
+player.position.set(0, 1, -20);
 scene.add(player);
+camera.position.set(0, 8, 10);
 
 const keys = {};
-document.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
-document.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
 
-function move(){
-  if(keys["w"]) player.position.z -= 0.25;
-  if(keys["s"]) player.position.z += 0.25;
-  if(keys["a"]) player.position.x -= 0.25;
-  if(keys["d"]) player.position.x += 0.25;
+document.addEventListener("keydown", e => {
+  keys[e.key.toLowerCase()] = true;
+});
+
+document.addEventListener("keyup", e => {
+  keys[e.key.toLowerCase()] = false;
+});
+
+function move() {
+  if (keys["w"]) player.position.z -= 0.3;
+  if (keys["s"]) player.position.z += 0.3;
+  if (keys["a"]) player.position.x -= 0.3;
+  if (keys["d"]) player.position.x += 0.3;
 }
 
-function updateCamera(){
+function updateCamera() {
   camera.position.x += (player.position.x - camera.position.x) * 0.08;
   camera.position.y += ((player.position.y + 8) - camera.position.y) * 0.08;
   camera.position.z += ((player.position.z + 14) - camera.position.z) * 0.08;
@@ -108,38 +135,37 @@ function updateCamera(){
 }
 
 /////////////////////////////////////////////////////
-// 🌊 OCEAN (SAFE VERSION)
+// 🌊 OCEAN (STABLE FIX)
 /////////////////////////////////////////////////////
 
-const waterGeo = new THREE.PlaneGeometry(1500,1500,80,80);
+const waterGeo = new THREE.PlaneGeometry(2000, 2000, 80, 80);
 
 const waterMat = new THREE.MeshStandardMaterial({
   color: 0x021428,
-  metalness: 0.9,
-  roughness: 0.25,
+  metalness: 0.4,
+  roughness: 0.6,
   emissive: 0x001122,
-  emissiveIntensity: 0.4
+  emissiveIntensity: 0.3
 });
 
 const water = new THREE.Mesh(waterGeo, waterMat);
-water.rotation.x = -Math.PI/2;
+water.rotation.x = -Math.PI / 2;
 scene.add(water);
 
 const waterPos = water.geometry.attributes.position;
 const waterBase = [];
 
-for(let i=0;i<waterPos.count;i++){
+for (let i = 0; i < waterPos.count; i++) {
   waterBase.push({
     x: waterPos.getX(i),
     z: waterPos.getZ(i)
   });
 }
-
+  /////////////////////////////////////////////////////
+// LOOP (PUT THIS HERE - END OF FILE)
 /////////////////////////////////////////////////////
-// LOOP
-/////////////////////////////////////////////////////
 
-function animate(){
+function animate() {
   requestAnimationFrame(animate);
 
   move();
@@ -147,7 +173,7 @@ function animate(){
 
   const time = Date.now() * 0.001;
 
-  for(let i=0;i<waterPos.count;i++){
+  for (let i = 0; i < waterPos.count; i++) {
     const v = waterBase[i];
 
     const wave =
@@ -159,7 +185,7 @@ function animate(){
 
   waterPos.needsUpdate = true;
 
-  renderer.render(scene,camera);
+  renderer.render(scene, camera);
 }
 
 animate();
