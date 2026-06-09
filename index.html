@@ -44,22 +44,36 @@ display:none;
 <script>
 
 /////////////////////////////////////////////////////
-// CORE
+// CORE (CLEAN LUXURY STABLE FIX)
 /////////////////////////////////////////////////////
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x050a14);
-scene.fog = new THREE.FogExp2(0x070b1a, 0.006);
 
-const camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 2000);
+// MATCHED ATMOSPHERE (luxury night tone)
+scene.background = new THREE.Color(0x050814);
+scene.fog = new THREE.FogExp2(0x050814, 0.004);
 
-const renderer = new THREE.WebGLRenderer({canvas:document.getElementById("c"), antialias:true});
+const camera = new THREE.PerspectiveCamera(
+  75,
+  innerWidth / innerHeight,
+  0.1,
+  2000
+);
+
+const renderer = new THREE.WebGLRenderer({
+  canvas: document.getElementById("c"),
+  antialias: true
+});
+
+// ✅ FIX 1: sharp rendering (IMPORTANT)
 renderer.setSize(innerWidth, innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
-window.addEventListener("resize", ()=>{
-camera.aspect = innerWidth/innerHeight;
-camera.updateProjectionMatrix();
-renderer.setSize(innerWidth, innerHeight);
+// resize safety
+window.addEventListener("resize", () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
 });
 
 /////////////////////////////////////////////////////
@@ -76,8 +90,6 @@ scene.add(sun);
 // 🌃 CINEMATIC NIGHT UPGRADE
 /////////////////////////////////////////////////////
 
-scene.fog = new THREE.FogExp2(0x050814, 0.004);
-
 const cityGlow = new THREE.PointLight(0x3366ff, 1.5, 300);
 cityGlow.position.set(0,30,0);
 scene.add(cityGlow);
@@ -90,7 +102,7 @@ const player = new THREE.Mesh(
   new THREE.MeshStandardMaterial({
     color: 0xffffff,
     emissive: 0x222222,
-    emissiveIntensity: 0.5
+    emissiveIntensity: 0.8
   })
 );
 
@@ -315,25 +327,26 @@ document.getElementById("zone").innerText="HERO: Welcome to V16 LAMBO CITY";
 /////////////////////////////////////////////////////
 
 function animate(){
+const time = performance.now() * 0.001;
 requestAnimationFrame(animate);
 
 move();
 updateCamera();
 check();
 
-const time=Date.now()*0.001;
 
-for(let i=0;i<waterPos.count;i++){
-const v=waterBase[i];
+for (let i = 0; i < waterPos.count; i++) {
 
-const wave=
-Math.sin(v.x*0.02+time)*0.4+
-Math.cos(v.z*0.02+time*1.3)*0.4;
+  const v = waterBase[i];
 
-waterPos.setY(i,wave);
+  const wave =
+    Math.sin(v.x * 0.02 + time) * 0.35 +
+    Math.cos(v.z * 0.02 + time * 1.2) * 0.35;
+
+  waterPos.setY(i, wave);
 }
 
-waterPos.needsUpdate=true;
+waterPos.needsUpdate = true;
   
 /////////////////////////////////////////////////////
 // 🧍 NPC MOVEMENT UPDATE
