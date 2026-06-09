@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LAMBO CITY — FIXED START BUILD</title>
+<title>LAMBO CITY — FINAL FIXED WORLD</title>
 
 <style>
 body { margin:0; overflow:hidden; background:#050814; }
@@ -23,8 +23,8 @@ z-index:10;
 
 <body>
 
-<div id="ui">LAMBO CITY — FIX FIX PATCH</div>
-<div id="zone">LOADING WORLD...</div>
+<div id="ui">LAMBO CITY — FINAL FIX</div>
+<div id="zone">WORLD LOADED</div>
 
 <canvas id="c"></canvas>
 
@@ -32,13 +32,15 @@ z-index:10;
 
 <script>
 
+window.addEventListener("load", () => {
+
 /////////////////////////////////////////////////////
 // CORE
 /////////////////////////////////////////////////////
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x0a1020);
-scene.fog = new THREE.FogExp2(0x0a1020, 0.0012); // 🔥 FIXED (less fog = visible world)
+scene.background = new THREE.Color(0x0a1220);
+scene.fog = new THREE.FogExp2(0x0a1220, 0.0008);
 
 const camera = new THREE.PerspectiveCamera(
 75, innerWidth/innerHeight, 0.1, 10000
@@ -50,6 +52,7 @@ antialias:true
 });
 
 renderer.setSize(innerWidth, innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
 
 window.addEventListener("resize",()=>{
 camera.aspect = innerWidth/innerHeight;
@@ -58,7 +61,7 @@ renderer.setSize(innerWidth, innerHeight);
 });
 
 /////////////////////////////////////////////////////
-// LIGHTING (BOOSTED VISIBILITY FIX)
+// LIGHTING (VISIBLE FIX)
 /////////////////////////////////////////////////////
 
 scene.add(new THREE.AmbientLight(0x556677, 1.2));
@@ -67,54 +70,58 @@ const sun = new THREE.DirectionalLight(0xaaccff, 1.5);
 sun.position.set(200,300,200);
 scene.add(sun);
 
-const glow = new THREE.PointLight(0x00ccff, 2, 1500);
+const glow = new THREE.PointLight(0x00ccff, 2, 2000);
 glow.position.set(0,50,0);
 scene.add(glow);
 
 /////////////////////////////////////////////////////
-// WORLD ANCHOR (DEBUG FIX - YOU MUST SEE THIS)
+// GROUND (YOU MUST SEE THIS)
 /////////////////////////////////////////////////////
 
-const anchor = new THREE.Mesh(
-new THREE.BoxGeometry(5,5,5),
-new THREE.MeshStandardMaterial({color:0xff0000})
+const ground = new THREE.Mesh(
+new THREE.PlaneGeometry(500,500),
+new THREE.MeshStandardMaterial({color:0x1f3b1f})
 );
-anchor.position.set(0,5,0);
-scene.add(anchor);
+ground.rotation.x = -Math.PI/2;
+ground.position.y = 0;
+scene.add(ground);
 
 /////////////////////////////////////////////////////
-// PLAYER / CAR START FIX
+// CAR (ALWAYS VISIBLE)
 /////////////////////////////////////////////////////
 
 const car = new THREE.Mesh(
 new THREE.BoxGeometry(3,1,6),
-new THREE.MeshStandardMaterial({color:0xffcc00})
+new THREE.MeshStandardMaterial({
+color:0xffcc00,
+emissive:0x553300,
+emissiveIntensity:0.5
+})
 );
 
-car.position.set(0,2,0); // 🔥 CENTERED START (FIX)
+car.position.set(0,1,0);
 scene.add(car);
 
 /////////////////////////////////////////////////////
-// ISLAND (VISIBLE POSITION FIX)
+// ISLAND (REFERENCE WORLD)
 /////////////////////////////////////////////////////
 
 const island = new THREE.Mesh(
-new THREE.CylinderGeometry(300,300,40,32),
-new THREE.MeshStandardMaterial({color:0x1f3b1f})
+new THREE.CylinderGeometry(200,220,40,32),
+new THREE.MeshStandardMaterial({color:0x2a4a2a})
 );
 island.position.y = -10;
 scene.add(island);
 
 /////////////////////////////////////////////////////
-// OCEAN (VISIBLE UNDER ISLAND)
+// OCEAN
 /////////////////////////////////////////////////////
 
 const ocean = new THREE.Mesh(
-new THREE.PlaneGeometry(5000,5000),
-new THREE.MeshStandardMaterial({
-color:0x061a2b
-})
+new THREE.PlaneGeometry(2000,2000),
+new THREE.MeshStandardMaterial({color:0x061a2b})
 );
+
 ocean.rotation.x = -Math.PI/2;
 ocean.position.y = -12;
 scene.add(ocean);
@@ -128,14 +135,7 @@ document.addEventListener("keydown",e=>keys[e.key.toLowerCase()]=true);
 document.addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
 
 /////////////////////////////////////////////////////
-// CAMERA FIX (FORCE LOOK AT START)
-/////////////////////////////////////////////////////
-
-camera.position.set(0,20,30);
-camera.lookAt(0,0,0); // 🔥 CRITICAL FIX
-
-/////////////////////////////////////////////////////
-// MOVEMENT
+// MOVE
 /////////////////////////////////////////////////////
 
 function move(){
@@ -146,13 +146,15 @@ if(keys.d) car.position.x += 0.4;
 }
 
 /////////////////////////////////////////////////////
-// CAMERA FOLLOW FIX
+// CAMERA (LOCKED + SAFE)
 /////////////////////////////////////////////////////
+
+camera.position.set(0,15,25);
 
 function updateCamera(){
 camera.position.x += (car.position.x - camera.position.x)*0.08;
-camera.position.y += ((car.position.y + 15) - camera.position.y)*0.08;
-camera.position.z += ((car.position.z + 25) - camera.position.z)*0.08;
+camera.position.y += ((car.position.y + 12) - camera.position.y)*0.08;
+camera.position.z += ((car.position.z + 20) - camera.position.z)*0.08;
 
 camera.lookAt(car.position);
 }
@@ -171,6 +173,8 @@ renderer.render(scene,camera);
 }
 
 animate();
+
+});
 
 </script>
 
