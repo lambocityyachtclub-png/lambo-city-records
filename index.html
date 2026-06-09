@@ -195,16 +195,49 @@ raceTrack.position.set(0,2,-250);
 scene.add(raceTrack);
 
 /////////////////////////////////////////////////////
-// MOVEMENT
+// AAA MOVEMENT SYSTEM V1 (REPLACE MOVE FUNCTION)
 /////////////////////////////////////////////////////
 
-function move(){
-const s = 0.35;
+const velocity = new THREE.Vector3(0,0,0);
 
-if(keys.w) player.position.z -= s;
-if(keys.s) player.position.z += s;
-if(keys.a) player.position.x -= s;
-if(keys.d) player.position.x += s;
+// tuning (feel control here)
+const acceleration = 0.02;
+const friction = 0.90;
+const maxSpeed = 0.6;
+
+function move(){
+
+// input direction
+let inputX = 0;
+let inputZ = 0;
+
+if(keys.w) inputZ -= 1;
+if(keys.s) inputZ += 1;
+if(keys.a) inputX -= 1;
+if(keys.d) inputX += 1;
+
+// normalize diagonal movement
+const len = Math.sqrt(inputX*inputX + inputZ*inputZ);
+if(len > 0){
+inputX /= len;
+inputZ /= len;
+}
+
+// apply acceleration
+velocity.x += inputX * acceleration;
+velocity.z += inputZ * acceleration;
+
+// apply friction (natural slowing)
+velocity.x *= friction;
+velocity.z *= friction;
+
+// clamp speed
+velocity.x = Math.max(-maxSpeed, Math.min(maxSpeed, velocity.x));
+velocity.z = Math.max(-maxSpeed, Math.min(maxSpeed, velocity.z));
+
+// apply movement
+player.position.x += velocity.x;
+player.position.z += velocity.z;
 }
 
 /////////////////////////////////////////////////////
