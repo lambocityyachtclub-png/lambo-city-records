@@ -158,34 +158,26 @@ car.position.z
 
 function updateCamera(){
 
+let targetX, targetY, targetZ;
+
 if(mode==="walk"){
-
-const targetX = player.position.x;
-const targetY = player.position.y + 7.5;
-const targetZ = player.position.z + 13;
-
-camera.position.x += (targetX - camera.position.x) * 0.06;
-camera.position.y += (targetY - camera.position.y) * 0.06;
-camera.position.z += (targetZ - camera.position.z) * 0.06;
-
-camera.lookAt(player.position);
+targetX = player.position.x;
+targetY = player.position.y + 7;
+targetZ = player.position.z + 12;
 }
 
 if(mode==="car"){
-
-const offsetX = Math.sin(car.rotation.y) * -10;
-const offsetZ = Math.cos(car.rotation.y) * -10;
-
-const targetX = car.position.x + offsetX;
-const targetY = car.position.y + 5;
-const targetZ = car.position.z + offsetZ;
-
-camera.position.x += (targetX - camera.position.x) * 0.08;
-camera.position.y += (targetY - camera.position.y) * 0.08;
-camera.position.z += (targetZ - camera.position.z) * 0.08;
-
-camera.lookAt(car.position);
+targetX = car.position.x + Math.sin(car.rotation.y) * -10;
+targetY = car.position.y + 5;
+targetZ = car.position.z + Math.cos(car.rotation.y) * -10;
 }
+
+camera.position.x = smoothStep(camera.position.x, targetX, 0.06);
+camera.position.y = smoothStep(camera.position.y, targetY, 0.06);
+camera.position.z = smoothStep(camera.position.z, targetZ, 0.06);
+
+const lookAtTarget = (mode==="walk") ? player.position : car.position;
+camera.lookAt(lookAtTarget);
 }
 /////////////////////////////////////////////////////
 // MOVEMENT
@@ -193,6 +185,9 @@ camera.lookAt(car.position);
 
 function move(){
 
+function smoothStep(a,b,s){
+return a + (b-a)*s;
+}
 const speed = 0.22;
 
 if(mode==="walk"){
