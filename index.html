@@ -114,7 +114,7 @@ if(keys["d"]) player.position.x += 0.25;
 }
 
 /////////////////////////////////////////////////////
-// 🌊 OCEAN (LUXURY VERSION - CLEAN CORE)
+// 🌊 OCEAN (FIXED CLEAN VERSION)
 /////////////////////////////////////////////////////
 
 const waterGeo = new THREE.PlaneGeometry(1500, 1500, 80, 80);
@@ -136,6 +136,7 @@ scene.add(water);
 const waterPos = water.geometry.attributes.position;
 const waterBase = [];
 
+// BUILD WAVE BASE DATA (IMPORTANT FIX)
 for (let i = 0; i < waterPos.count; i++) {
   waterBase.push({
     x: waterPos.getX(i),
@@ -143,62 +144,6 @@ for (let i = 0; i < waterPos.count; i++) {
   });
 }
 /////////////////////////////////////////////////////
-// 🌌 ATMOSPHERE PACK (LUXURY WORLD DEPTH)
-/////////////////////////////////////////////////////
-
-// 🌫️ IMPROVED FOG (gives distance + scale)
-scene.fog = new THREE.FogExp2(0x070b1a, 0.008);
-
-// 🌌 STAR FIELD (SKY VISUAL DEPTH)
-const starGeo = new THREE.BufferGeometry();
-const starArr = [];
-
-for (let i = 0; i < 600; i++) {
-
-  starArr.push(
-    (Math.random() - 0.5) * 2500,
-    Math.random() * 900,
-    (Math.random() - 0.5) * 2500
-  );
-
-}
-
-starGeo.setAttribute(
-  "position",
-  new THREE.Float32BufferAttribute(starArr, 3)
-);
-
-const stars = new THREE.Points(
-  starGeo,
-  new THREE.PointsMaterial({
-    color: 0xffffff,
-    size: 1.2,
-    transparent: true,
-    opacity: 0.9
-  })
-);
-
-scene.add(stars);
-
-// 🌫️ SOFT AMBIENT FILL (fixes “too dark / flat” look)
-const ambient = new THREE.AmbientLight(0x1a2a3a, 0.7);
-scene.add(ambient);
-
-// 🌙 SKY DEPTH LIGHT (adds cinematic blue tone)
-const skyGlow = new THREE.HemisphereLight(
-  0x4466ff,   // sky color
-  0x0a0a0a,   // ground color
-  0.6
-);
-
-scene.add(skyGlow);
-
-// ✨ OPTIONAL: subtle world haze glow light
-const hazeLight = new THREE.PointLight(0x3355ff, 0.4, 800);
-hazeLight.position.set(0, 80, 0);
-scene.add(hazeLight);
-  
- /////////////////////////////////////////////////////
 // 🌉 DOCK + LUXURY WALKWAY SYSTEM
 /////////////////////////////////////////////////////
 
@@ -214,7 +159,6 @@ const dock = new THREE.Mesh(
 dock.position.set(0, 0.1, -80);
 scene.add(dock);
 
-// WALKWAY TO VILLAS
 const walkway = new THREE.Mesh(
   new THREE.BoxGeometry(6, 0.5, 200),
   new THREE.MeshStandardMaterial({
@@ -227,7 +171,6 @@ const walkway = new THREE.Mesh(
 walkway.position.set(0, 0.25, -60);
 scene.add(walkway);
 
-// WALKWAY TO YACHT
 const yachtPath = new THREE.Mesh(
   new THREE.BoxGeometry(4, 0.5, 120),
   new THREE.MeshStandardMaterial({
@@ -240,6 +183,65 @@ const yachtPath = new THREE.Mesh(
 yachtPath.position.set(20, 0.25, -80);
 scene.add(yachtPath);
   
+for (let i = 0; i < waterPos.count; i++) {
+  waterBase.push({
+    x: waterPos.getX(i),
+    z: waterPos.getZ(i)
+  });
+}
+/////////////////////////////////////////////////////
+// 🌌 ATMOSPHERE PACK (STABLE FIXED VERSION)
+/////////////////////////////////////////////////////
+
+// SINGLE CONTROLLED FOG (DO NOT DUPLICATE)
+scene.fog = new THREE.FogExp2(0x070b1a, 0.006);
+
+// SKY BACKGROUND (helps visibility immediately)
+scene.background = new THREE.Color(0x02040a);
+
+// STAR FIELD
+const starGeo = new THREE.BufferGeometry();
+const starArr = [];
+
+for (let i = 0; i < 800; i++) {
+
+  starArr.push(
+    (Math.random() - 0.5) * 2500,
+    Math.random() * 1200,
+    (Math.random() - 0.5) * 2500
+  );
+
+}
+
+starGeo.setAttribute(
+  "position",
+  new THREE.Float32BufferAttribute(starArr, 3)
+);
+
+const stars = new THREE.Points(
+  starGeo,
+  new THREE.PointsMaterial({
+    color: 0xffffff,
+    size: 1.4,
+    transparent: true,
+    opacity: 0.9
+  })
+);
+
+scene.add(stars);
+
+// LIGHTING FIX (THIS IS WHAT YOU WERE MISSING FEELING “BLANK”)
+const ambient = new THREE.AmbientLight(0x223344, 0.8);
+scene.add(ambient);
+
+const skyGlow = new THREE.HemisphereLight(0x4c7dff, 0x0a0a0a, 0.7);
+scene.add(skyGlow);
+
+const mainFill = new THREE.PointLight(0x4da3ff, 0.8, 900);
+mainFill.position.set(0, 120, 0);
+scene.add(mainFill);
+  
+
 /////////////////////////////////////////////////////
 // 🏡 LUXURY VILLA (FIXED — MULTI LEVEL)
 /////////////////////////////////////////////////////
