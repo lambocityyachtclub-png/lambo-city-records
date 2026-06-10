@@ -482,23 +482,35 @@ player.position.z + offset.z
 
 const smooth = cameraSmoothness[cameraMode] || 0.08;
 
+// spring movement
 cameraVelocity.x += (targetPosition.x - camera.position.x) * smooth;
 cameraVelocity.y += (targetPosition.y - camera.position.y) * smooth;
 cameraVelocity.z += (targetPosition.z - camera.position.z) * smooth;
 
-cameraVelocity.multiplyScalar(0.85);
+// stronger damping = smoother cinematic float
+cameraVelocity.multiplyScalar(0.82);
 
+// apply movement
 camera.position.add(cameraVelocity);
 
+// 🎬 cinematic look height
 let lookHeight = 2;
 
 if(cameraMode === "stage") lookHeight = 6;
 if(cameraMode === "race") lookHeight = 1;
 
+// 🎯 soft look (not hard snap)
+const lookTarget = new THREE.Vector3(
+player.position.x,
+player.position.y + lookHeight,
+player.position.z
+);
+
+// smoother camera aim (important upgrade)
 camera.lookAt(
-  player.position.x,
-  player.position.y + lookHeight,
-  player.position.z
+camera.position.x + (lookTarget.x - camera.position.x) * 0.15,
+camera.position.y + (lookTarget.y - camera.position.y) * 0.15,
+camera.position.z + (lookTarget.z - camera.position.z) * 0.15
 );
 
 }
