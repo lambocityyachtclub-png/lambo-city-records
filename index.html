@@ -205,6 +205,17 @@ raceTrack.position.set(0,2,-250);
 scene.add(raceTrack);
 
 /////////////////////////////////////////////////////
+// WORLD FLOW SYSTEM (BLOCK 4)
+/////////////////////////////////////////////////////
+
+const anchors = [
+  { name: "dock", x: 0, z: -40, strength: 0.6 },
+  { name: "stage", x: 0, z: -150, strength: 1.2 },
+  { name: "jumbotron", x: 0, z: -185, strength: 1.0 },
+  { name: "race", x: 0, z: -250, strength: 0.8 }
+];
+  
+/////////////////////////////////////////////////////
 // AAA MOVEMENT SYSTEM V1 (REPLACE MOVE FUNCTION)
 /////////////////////////////////////////////////////
 
@@ -217,7 +228,6 @@ const maxSpeed = 0.6;
 
 function move(){
 
-// input direction
 let inputX = 0;
 let inputZ = 0;
 
@@ -226,22 +236,43 @@ if(keys.s) inputZ += 1;
 if(keys.a) inputX -= 1;
 if(keys.d) inputX += 1;
 
-// normalize diagonal movement
+// normalize input
 const len = Math.sqrt(inputX*inputX + inputZ*inputZ);
 if(len > 0){
 inputX /= len;
 inputZ /= len;
 }
 
-// apply acceleration
-velocity.x += inputX * acceleration;
-velocity.z += inputZ * acceleration;
+// 🎯 WORLD FLOW PULL (soft attraction to key zones)
+let pullX = 0;
+let pullZ = 0;
 
-// apply friction (natural slowing)
+for(let a of anchors){
+
+const dx = a.x - player.position.x;
+const dz = a.z - player.position.z;
+
+const dist = Math.sqrt(dx*dx + dz*dz);
+
+// avoid division crash
+if(dist < 1) continue;
+
+// stronger pull when closer
+const force = a.strength / (dist * 0.02);
+
+pullX += dx * force * 0.001;
+pullZ += dz * force * 0.001;
+}
+
+// combine input + world guidance
+velocity.x += (inputX * acceleration) + pullX;
+velocity.z += (inputZ * acceleration) + pullZ;
+
+// friction
 velocity.x *= friction;
 velocity.z *= friction;
 
-// clamp speed
+// clamp
 velocity.x = Math.max(-maxSpeed, Math.min(maxSpeed, velocity.x));
 velocity.z = Math.max(-maxSpeed, Math.min(maxSpeed, velocity.z));
 
