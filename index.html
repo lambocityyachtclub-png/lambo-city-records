@@ -398,6 +398,19 @@ const anchors = [
   { name: "race", x: 0, z: -250, strength: 0.8 }
 ];
 
+function getCurrentZone(){
+  if(!nearObject) return null;
+
+  const zones = {
+    dock: { lightTint: 0x6aa6ff, cameraBoost: 1.0 },
+    stage: { lightTint: 0x00aaff, cameraBoost: 1.3 },
+    jumbotron: { lightTint: 0x00ffcc, cameraBoost: 1.2 },
+    race: { lightTint: 0xffaa00, cameraBoost: 1.5 }
+  };
+
+  return zones[nearObject.name] || null;
+}
+  
 /////////////////////////////////////////////////////
 // AAA MOVEMENT SYSTEM V1 (FULL CONTROL MODE)
 /////////////////////////////////////////////////////
@@ -489,7 +502,13 @@ speedFactor = Math.min(speedFactor / 0.5, 1);
 
 // slower when still, slightly looser when moving
 const baseSmooth = cameraSmoothness[cameraMode] || 0.08;
-const dynamicSmooth = baseSmooth + (speedFactor * 0.03);
+
+let zone = getCurrentZone();
+
+let zoneBoost = zone ? zone.cameraBoost : 1;
+
+const dynamicSmooth =
+baseSmooth + (speedFactor * 0.03 * zoneBoost);
 
 // 🧠 spring physics feel (camera lags slightly behind intention)
 cameraVelocity.x += (targetPosition.x - camera.position.x) * dynamicSmooth;
@@ -574,7 +593,7 @@ screen.material.emissiveIntensity =
 1.8 + Math.sin(worldTime * 6.0) * 0.3 * mood.intensity;
 
 }
-
+  
 /////////////////////////////////////////////////////
 // BLOCK 13 — CINEMATIC WORLD PULSE SYSTEM
 /////////////////////////////////////////////////////
