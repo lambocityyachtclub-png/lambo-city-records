@@ -474,43 +474,55 @@ function updateCamera(){
 
 const offset = cameraTargetOffset[cameraMode];
 
+// 🎯 desired camera position
 const targetPosition = new THREE.Vector3(
 player.position.x + offset.x,
 player.position.y + offset.y,
 player.position.z + offset.z
 );
 
-const smooth = cameraSmoothness[cameraMode] || 0.08;
+// 🎬 dynamic smoothness (adds “weight” depending on movement state)
+let speedFactor = Math.abs(velocity.x) + Math.abs(velocity.z);
 
-// spring movement
-cameraVelocity.x += (targetPosition.x - camera.position.x) * smooth;
-cameraVelocity.y += (targetPosition.y - camera.position.y) * smooth;
-cameraVelocity.z += (targetPosition.z - camera.position.z) * smooth;
+// normalize speed influence
+speedFactor = Math.min(speedFactor / 0.5, 1);
 
-// stronger damping = smoother cinematic float
-cameraVelocity.multiplyScalar(0.82);
+// slower when still, slightly looser when moving
+const baseSmooth = cameraSmoothness[cameraMode] || 0.08;
+const dynamicSmooth = baseSmooth + (speedFactor * 0.03);
+
+// 🧠 spring physics feel (camera lags slightly behind intention)
+cameraVelocity.x += (targetPosition.x - camera.position.x) * dynamicSmooth;
+cameraVelocity.y += (targetPosition.y - camera.position.y) * dynamicSmooth;
+cameraVelocity.z += (targetPosition.z - camera.position.z) * dynamicSmooth;
+
+// 🧲 stronger damping = cinematic drag
+cameraVelocity.multiplyScalar(0.78);
 
 // apply movement
 camera.position.add(cameraVelocity);
 
-// 🎬 cinematic look height
+// 🎬 soft look height system
 let lookHeight = 2;
 
 if(cameraMode === "stage") lookHeight = 6;
 if(cameraMode === "race") lookHeight = 1;
 
-// 🎯 soft look (not hard snap)
+// 🎯 predicted look target (slight forward prediction = cinematic feel)
+const predictedX = player.position.x + velocity.x * 10;
+const predictedZ = player.position.z + velocity.z * 10;
+
 const lookTarget = new THREE.Vector3(
-player.position.x,
+predictedX,
 player.position.y + lookHeight,
-player.position.z
+predictedZ
 );
 
-// smoother camera aim (important upgrade)
+// 🎥 soft camera aim (no snapping)
 camera.lookAt(
-camera.position.x + (lookTarget.x - camera.position.x) * 0.15,
-camera.position.y + (lookTarget.y - camera.position.y) * 0.15,
-camera.position.z + (lookTarget.z - camera.position.z) * 0.15
+camera.position.x + (lookTarget.x - camera.position.x) * 0.12,
+camera.position.y + (lookTarget.y - camera.position.y) * 0.12,
+camera.position.z + (lookTarget.z - camera.position.z) * 0.12
 );
 
 }
