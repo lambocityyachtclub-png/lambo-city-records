@@ -513,6 +513,36 @@ screen.material.emissiveIntensity =
 1.8 + Math.sin(worldTime * 6.0) * 0.3 * mood.intensity;
 
 }
+
+/////////////////////////////////////////////////////
+// BLOCK 13 — CINEMATIC WORLD PULSE SYSTEM
+/////////////////////////////////////////////////////
+
+function updateWorldPulse(){
+
+// cinematic pulse value
+const pulse = Math.sin(worldTime * 2.0);
+
+// STAGE BREATHING
+stage.scale.y = 1 + pulse * 0.02;
+
+// JUMBOTRON FLOAT
+screen.position.y =
+18 + Math.sin(worldTime * 1.5) * 0.5;
+
+// DOCK ENERGY
+dock.material.emissiveIntensity =
+0.4 + Math.sin(worldTime * 3.0) * 0.1;
+
+// OCEAN LIGHT BREATHING
+oceanLight.intensity =
+1.5 + Math.sin(worldTime * 1.2) * 0.4;
+
+// STAGE GLOW MOVEMENT
+stageGlow.position.y =
+20 + Math.sin(worldTime * 2.0) * 2;
+
+}
   
 /////////////////////////////////////////////////////
 // LOOP
@@ -542,7 +572,7 @@ updateWorldEvolution();
 // ENVIRONMENT
 updateOceanMotion();
 updateMoodSystem();
-
+updateWorldPulse();
 // RENDER
 renderer.render(scene,camera);
 
