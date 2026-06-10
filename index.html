@@ -175,28 +175,38 @@ hint.style.display = "none";
 // INTERACTION ACTION SYSTEM (BLOCK 6)
 /////////////////////////////////////////////////////
 
-  document.addEventListener("keydown", (e) => {
+document.addEventListener("keydown", (e) => {
 
 if(e.key.toLowerCase() !== "e") return;
 if(!canInteract || !nearObject) return;
 
+// 🌊 DOCK
 if(nearObject.name === "dock"){
-camera.position.set(0, 25, 120);
+  setCameraMode("stage");
 }
 
+// 🎤 STAGE
 if(nearObject.name === "stage"){
-stage.material.emissiveIntensity = 2.5;
-setTimeout(()=> stage.material.emissiveIntensity = 1.0, 2000);
+  setCameraMode("stage");
+
+  stage.material.emissiveIntensity = 2.5;
+  setTimeout(()=> stage.material.emissiveIntensity = 1.0, 2000);
 }
 
+// 📺 JUMBOTRON
 if(nearObject.name === "jumbotron"){
-screen.material.emissive.set(0x00ffcc);
-setTimeout(()=> screen.material.emissive.set(0x0044ff), 1500);
+  setCameraMode("stage");
+
+  screen.material.emissive.set(0x00ffcc);
+  setTimeout(()=> screen.material.emissive.set(0x0044ff), 1500);
 }
 
+// 🏁 RACE
 if(nearObject.name === "race"){
-velocity.x *= 2;
-velocity.z *= 2;
+  setCameraMode("race");
+
+  velocity.x *= 2;
+  velocity.z *= 2;
 }
 
 });
@@ -436,30 +446,50 @@ player.position.x += velocity.x;
 player.position.z += velocity.z;
 
 }
+/////////////////////////////////////////////////////
+// BLOCK 14 — CINEMATIC MODE SYSTEM
+/////////////////////////////////////////////////////
 
+let cameraMode = "follow";
+
+const cameraTargetOffset = {
+  follow: new THREE.Vector3(0, 12, 35),
+  dock: new THREE.Vector3(0, 25, 90),
+  stage: new THREE.Vector3(0, 18, 55),
+  race: new THREE.Vector3(0, 10, 25)
+};
+
+function setCameraMode(mode){
+  cameraMode = mode;
+}
+  
 /////////////////////////////////////////////////////
 // AAA CAMERA SYSTEM V1 (REPLACE OLD CAMERA BLOCK)
 /////////////////////////////////////////////////////
 
-const cameraOffset = new THREE.Vector3(0, 12, 35);
-const cameraLerp = 0.08;
-
 function updateCamera(){
 
-// desired cinematic position behind player
+const offset = cameraTargetOffset[cameraMode];
+
+// desired position
 const desiredPosition = new THREE.Vector3(
-player.position.x + cameraOffset.x,
-player.position.y + cameraOffset.y,
-player.position.z + cameraOffset.z
+player.position.x + offset.x,
+player.position.y + offset.y,
+player.position.z + offset.z
 );
 
-// smooth follow (AAA feel)
-camera.position.lerp(desiredPosition, cameraLerp);
+// smooth follow
+camera.position.lerp(desiredPosition, 0.08);
 
-// cinematic look slightly above player center
+// look target changes slightly per mode
+let lookHeight = 2;
+
+if(cameraMode === "stage") lookHeight = 6;
+if(cameraMode === "race") lookHeight = 1;
+
 const lookTarget = new THREE.Vector3(
 player.position.x,
-player.position.y + 2,
+player.position.y + lookHeight,
 player.position.z
 );
 
