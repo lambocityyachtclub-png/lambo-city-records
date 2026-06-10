@@ -189,29 +189,67 @@ velocity.z *= 2;
 // INTERACTION MEMORY SYSTEM (BLOCK 7)
 /////////////////////////////////////////////////////
 
-let worldState = {
+  let worldState = {
   dockVisited: false,
   stageActivated: false,
   jumbotronUsed: false,
   raceBoosted: false
 };
 
+let lastObject = null;
+
 function updateWorldState(){
 
-if(nearObject?.name === "dock"){
-worldState.dockVisited = true;
+if(nearObject && nearObject !== lastObject){
+
+if(nearObject.name === "dock") worldState.dockVisited = true;
+if(nearObject.name === "stage") worldState.stageActivated = true;
+if(nearObject.name === "jumbotron") worldState.jumbotronUsed = true;
+if(nearObject.name === "race") worldState.raceBoosted = true;
+
+lastObject = nearObject;
 }
 
-if(nearObject?.name === "stage"){
-worldState.stageActivated = true;
+if(!nearObject){
+lastObject = null;
 }
 
-if(nearObject?.name === "jumbotron"){
-worldState.jumbotronUsed = true;
 }
 
-if(nearObject?.name === "race"){
-worldState.raceBoosted = true;
+/////////////////////////////////////////////////////
+// WORLD EVOLUTION SYSTEM (BLOCK 8)
+/////////////////////////////////////////////////////
+
+function updateWorldEvolution(){
+
+// 🌊 DOCK EVOLUTION
+if(worldState.dockVisited){
+dock.material.color.set(0x6aa6ff);
+dock.material.emissive.set(0x001122);
+}
+
+// 🎤 STAGE EVOLUTION
+if(worldState.stageActivated){
+stage.material.emissiveIntensity = 2.0;
+stage.material.color.set(0x222222);
+
+// subtle “energy pulse”
+stage.rotation.y += 0.001;
+}
+
+// 📺 JUMBOTRON EVOLUTION
+if(worldState.jumbotronUsed){
+screen.material.emissive.set(0x00ffcc);
+screen.scale.set(1.05, 1.05, 1.05);
+}
+
+// 🏁 RACE EVOLUTION
+if(worldState.raceBoosted){
+raceTrack.material.color.set(0x444444);
+
+// optional: boost player speed feel
+velocity.x *= 1.001;
+velocity.z *= 1.001;
 }
 
 }
@@ -238,8 +276,13 @@ scene.add(water);
 
 const dock = new THREE.Mesh(
 new THREE.BoxGeometry(25,1,180),
-new THREE.MeshStandardMaterial({color:0x4a321d})
+new THREE.MeshStandardMaterial({
+color:0x4a321d,
+emissive:0x000000,
+emissiveIntensity:1
+})
 );
+
 dock.position.set(0,0.5,-40);
 scene.add(dock);
 
@@ -434,8 +477,11 @@ requestAnimationFrame(animate);
 
 move();
 updateCamera();
-checkInteraction(); // 🔥 ADD THIS LINE
-updateWorldState();
+checkInteraction();
+
+updateWorldState();      // move this UP
+updateWorldEvolution();   // keep after state update
+
 renderer.render(scene,camera);
 }
 
