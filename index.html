@@ -51,6 +51,17 @@ antialias:true
 
 renderer.setSize(window.innerWidth, window.innerHeight);
 
+/////////////////////////////////////////////////////
+// GLOBAL WORLD STATE (CORE MEMORY)
+/////////////////////////////////////////////////////
+
+let worldTime = 0;
+
+let mood = {
+  timeOfDay: 0,
+  intensity: 1
+};
+  
 window.addEventListener("resize",()=>{
 camera.aspect = window.innerWidth/window.innerHeight;
 camera.updateProjectionMatrix();
@@ -456,30 +467,50 @@ camera.lookAt(lookTarget);
 }
   
 /////////////////////////////////////////////////////
-// CINEMATIC ENVIRONMENT SYSTEM (BLOCK 9)
+// OCEAN MOTION SYSTEM (BLOCK 9)
 /////////////////////////////////////////////////////
-
-let worldTime = 0;
-
-function updateEnvironment(){
+  
+function updateOceanMotion(){
 
 worldTime += 0.01;
 
-// 🌊 OCEAN MOTION
 water.position.x = Math.sin(worldTime * 0.3) * 2;
 water.position.z = -200 + Math.cos(worldTime * 0.2) * 2;
 
-// 💡 STAGE ENERGY PULSE
+}
+
+/////////////////////////////////////////////////////
+// BLOCK 12 — ATMOSPHERE + WORLD MOOD SYSTEM
+/////////////////////////////////////////////////////
+
+function updateMoodSystem(){
+
+// natural slow cycle
+mood.timeOfDay += 0.0005;
+if(mood.timeOfDay > 1) mood.timeOfDay = 0;
+
+const dayStrength = Math.sin(mood.timeOfDay * Math.PI);
+
+// 🌅 AMBIENT
+ambient.intensity = 0.6 + dayStrength * 0.8;
+
+// 🌞 SUN
+sun.intensity = 0.8 + dayStrength * 1.2;
+
+// 🌊 OCEAN COLOR SHIFT
+water.material.color.setRGB(
+0.02 + dayStrength * 0.05,
+0.08 + dayStrength * 0.1,
+0.15 + dayStrength * 0.2
+);
+
+// 🎧 STAGE GLOW (ONLY HERE)
 stageGlow.intensity =
-2.2 + Math.sin(worldTime * 2.0) * 0.4;
+1.5 + Math.sin(worldTime * 1.5) * 0.6 * mood.intensity;
 
-// 📺 JUMBOTRON FLICKER
+// 📺 SCREEN GLOW (ONLY HERE)
 screen.material.emissiveIntensity =
-2 + Math.sin(worldTime * 8.0) * 0.2;
-
-// 🌌 AMBIENT LIGHT BREATHING
-ambient.intensity =
-1.2 + Math.sin(worldTime * 0.5) * 0.05;
+1.8 + Math.sin(worldTime * 6.0) * 0.3 * mood.intensity;
 
 }
   
@@ -487,18 +518,34 @@ ambient.intensity =
 // LOOP
 /////////////////////////////////////////////////////
 
+/////////////////////////////////////////////////////
+// LOOP (MASTER WORLD UPDATE SYSTEM)
+/////////////////////////////////////////////////////
+
 function animate(){
+
 requestAnimationFrame(animate);
 
+// PLAYER
 move();
+
+// CAMERA
 updateCamera();
+
+// INTERACTION
 checkInteraction();
+updateWorldState();
 
-updateWorldState();      // move this UP
-updateWorldEvolution();   // keep after state update
+// WORLD EVOLUTION
+updateWorldEvolution();
 
-updateEnvironment();
+// ENVIRONMENT
+updateOceanMotion();
+updateMoodSystem();
+
+// RENDER
 renderer.render(scene,camera);
+
 }
 
 animate();
