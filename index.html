@@ -404,10 +404,10 @@ const anchors = [
 
 const velocity = new THREE.Vector3(0,0,0);
 
-// tuning (feel control here)
-const acceleration = 0.02;
-const friction = 0.90;
-const maxSpeed = 0.6;
+// 🎮 PHASE 2 FEEL UPGRADE — WEIGHTED MOVEMENT
+const acceleration = 0.015;   // slower start = more weight
+const friction = 0.86;        // stronger drag = grounded feel
+const maxSpeed = 0.45;        // reduce arcade speed
 
 function move(){
 
