@@ -154,6 +154,36 @@ hint.innerHTML = `${nearObject.message} <br> Press <b>E</b>`;
 hint.style.display = "none";
 }
 }
+
+/////////////////////////////////////////////////////
+// INTERACTION ACTION SYSTEM (BLOCK 6)
+/////////////////////////////////////////////////////
+
+document.addEventListener("keydown", (e) => {
+
+if(e.key.toLowerCase() !== "e") return;
+if(!canInteract || !nearObject) return;
+
+if(nearObject.name === "dock"){
+camera.position.set(0, 25, 120);
+}
+
+if(nearObject.name === "stage"){
+stage.material.emissiveIntensity = 2.5;
+setTimeout(()=> stage.material.emissiveIntensity = 1.0, 2000);
+}
+
+if(nearObject.name === "jumbotron"){
+screen.material.emissive.set(0x00ffcc);
+setTimeout(()=> screen.material.emissive.set(0x0044ff), 1500);
+}
+
+if(nearObject.name === "race"){
+velocity.x *= 2;
+velocity.z *= 2;
+}
+
+});
   
 /////////////////////////////////////////////////////
 // OCEAN (BEHIND WORLD)
