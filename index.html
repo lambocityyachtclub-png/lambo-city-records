@@ -164,7 +164,7 @@ hint.style.display = "none";
 // INTERACTION ACTION SYSTEM (BLOCK 6)
 /////////////////////////////////////////////////////
 
-document.addEventListener("keydown", (e) => {
+  document.addEventListener("keydown", (e) => {
 
 if(e.key.toLowerCase() !== "e") return;
 if(!canInteract || !nearObject) return;
@@ -378,9 +378,9 @@ const anchors = [
   { name: "jumbotron", x: 0, z: -185, strength: 1.0 },
   { name: "race", x: 0, z: -250, strength: 0.8 }
 ];
-  
+
 /////////////////////////////////////////////////////
-// AAA MOVEMENT SYSTEM V1 (REPLACE MOVE FUNCTION)
+// AAA MOVEMENT SYSTEM V1 (FULL CONTROL MODE)
 /////////////////////////////////////////////////////
 
 const velocity = new THREE.Vector3(0,0,0);
@@ -395,54 +395,35 @@ function move(){
 let inputX = 0;
 let inputZ = 0;
 
+// INPUT
 if(keys.w) inputZ -= 1;
 if(keys.s) inputZ += 1;
 if(keys.a) inputX -= 1;
 if(keys.d) inputX += 1;
 
-// normalize input
+// normalize input (prevents faster diagonal movement)
 const len = Math.sqrt(inputX*inputX + inputZ*inputZ);
 if(len > 0){
 inputX /= len;
 inputZ /= len;
 }
 
-// 🎯 WORLD FLOW PULL (soft attraction to key zones)
-let pullX = 0;
-let pullZ = 0;
+// APPLY MOVEMENT (NO WORLD PULL)
+velocity.x += inputX * acceleration;
+velocity.z += inputZ * acceleration;
 
-for(let a of anchors){
-
-const dx = a.x - player.position.x;
-const dz = a.z - player.position.z;
-
-const dist = Math.sqrt(dx*dx + dz*dz);
-
-// avoid division crash
-if(dist < 1) continue;
-
-// stronger pull when closer
-const force = a.strength / (dist * 0.02);
-
-pullX += dx * force * 0.001;
-pullZ += dz * force * 0.001;
-}
-
-// combine input + world guidance
-velocity.x += (inputX * acceleration) + pullX;
-velocity.z += (inputZ * acceleration) + pullZ;
-
-// friction
+// FRICTION (smooth stop)
 velocity.x *= friction;
 velocity.z *= friction;
 
-// clamp
+// SPEED LIMIT
 velocity.x = Math.max(-maxSpeed, Math.min(maxSpeed, velocity.x));
 velocity.z = Math.max(-maxSpeed, Math.min(maxSpeed, velocity.z));
 
-// apply movement
+// APPLY TO PLAYER
 player.position.x += velocity.x;
 player.position.z += velocity.z;
+
 }
 
 /////////////////////////////////////////////////////
