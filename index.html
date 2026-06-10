@@ -189,7 +189,7 @@ velocity.z *= 2;
 // INTERACTION MEMORY SYSTEM (BLOCK 7)
 /////////////////////////////////////////////////////
 
-  let worldState = {
+ let worldState = {
   dockVisited: false,
   stageActivated: false,
   jumbotronUsed: false,
@@ -200,20 +200,21 @@ let lastObject = null;
 
 function updateWorldState(){
 
-if(nearObject && nearObject !== lastObject){
-
-if(nearObject.name === "dock") worldState.dockVisited = true;
-if(nearObject.name === "stage") worldState.stageActivated = true;
-if(nearObject.name === "jumbotron") worldState.jumbotronUsed = true;
-if(nearObject.name === "race") worldState.raceBoosted = true;
-
-lastObject = nearObject;
+if(!nearObject) {
+  lastObject = null;
+  return;
 }
 
-if(!nearObject){
-lastObject = null;
-}
+// only trigger when entering a new object
+if(nearObject !== lastObject){
 
+  if(nearObject.name === "dock") worldState.dockVisited = true;
+  if(nearObject.name === "stage") worldState.stageActivated = true;
+  if(nearObject.name === "jumbotron") worldState.jumbotronUsed = true;
+  if(nearObject.name === "race") worldState.raceBoosted = true;
+
+  lastObject = nearObject;
+}
 }
 
 /////////////////////////////////////////////////////
