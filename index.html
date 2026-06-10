@@ -102,6 +102,60 @@ document.addEventListener("keydown",e=>keys[e.key.toLowerCase()]=true);
 document.addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
 
 /////////////////////////////////////////////////////
+// INTERACTION SYSTEM (BLOCK 5)
+/////////////////////////////////////////////////////
+
+let nearObject = null;
+let canInteract = false;
+
+const hint = document.createElement("div");
+hint.style.position = "absolute";
+hint.style.bottom = "80px";
+hint.style.left = "50%";
+hint.style.transform = "translateX(-50%)";
+hint.style.padding = "10px 15px";
+hint.style.color = "white";
+hint.style.fontFamily = "Arial";
+hint.style.background = "rgba(0,0,0,0.6)";
+hint.style.border = "1px solid #00aaff";
+hint.style.display = "none";
+document.body.appendChild(hint);
+
+const interactables = [
+  { name: "dock", x: 0, z: -40, radius: 12, message: "Dock: Explore Yacht Area" },
+  { name: "stage", x: 0, z: -150, radius: 14, message: "Stage: Press E to activate show mode" },
+  { name: "jumbotron", x: 0, z: -185, radius: 14, message: "Jumbotron: Visual system ready" },
+  { name: "race", x: 0, z: -250, radius: 16, message: "Race Track: Free roam zone" }
+];
+
+  function checkInteraction(){
+
+nearObject = null;
+canInteract = false;
+
+for(let obj of interactables){
+
+const dx = player.position.x - obj.x;
+const dz = player.position.z - obj.z;
+
+const dist = Math.sqrt(dx*dx + dz*dz);
+
+if(dist < obj.radius){
+nearObject = obj;
+canInteract = true;
+break;
+}
+}
+
+if(canInteract){
+hint.style.display = "block";
+hint.innerHTML = `${nearObject.message} <br> Press <b>E</b>`;
+}else{
+hint.style.display = "none";
+}
+}
+  
+/////////////////////////////////////////////////////
 // OCEAN (BEHIND WORLD)
 /////////////////////////////////////////////////////
 
@@ -319,6 +373,7 @@ requestAnimationFrame(animate);
 
 move();
 updateCamera();
+checkInteraction(); // 🔥 ADD THIS LINE
 
 renderer.render(scene,camera);
 }
