@@ -468,7 +468,35 @@ player.position.z
 
 camera.lookAt(lookTarget);
 }
+  
+/////////////////////////////////////////////////////
+// CINEMATIC ENVIRONMENT SYSTEM (BLOCK 9)
+/////////////////////////////////////////////////////
 
+let worldTime = 0;
+
+function updateEnvironment(){
+
+worldTime += 0.01;
+
+// 🌊 OCEAN MOTION
+water.position.x = Math.sin(worldTime * 0.3) * 2;
+water.position.z = -200 + Math.cos(worldTime * 0.2) * 2;
+
+// 💡 STAGE ENERGY PULSE
+stageGlow.intensity =
+2.2 + Math.sin(worldTime * 2.0) * 0.4;
+
+// 📺 JUMBOTRON FLICKER
+screen.material.emissiveIntensity =
+2 + Math.sin(worldTime * 8.0) * 0.2;
+
+// 🌌 AMBIENT LIGHT BREATHING
+ambient.intensity =
+1.2 + Math.sin(worldTime * 0.5) * 0.05;
+
+}
+  
 /////////////////////////////////////////////////////
 // LOOP
 /////////////////////////////////////////////////////
@@ -483,6 +511,7 @@ checkInteraction();
 updateWorldState();      // move this UP
 updateWorldEvolution();   // keep after state update
 
+updateEnvironment();
 renderer.render(scene,camera);
 }
 
