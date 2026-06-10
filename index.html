@@ -28,13 +28,12 @@ z-index:10;
 
 <script>
 
+
 /////////////////////////////////////////////////////
-// CORE WORLD
+// CORE ENGINE (REQUIRED - DO NOT REMOVE)
 /////////////////////////////////////////////////////
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x061018);
-scene.fog = new THREE.FogExp2(0x061018, 0.0018);
 
 const camera = new THREE.PerspectiveCamera(
 75, window.innerWidth/window.innerHeight, 0.1, 5000
@@ -44,6 +43,7 @@ const renderer = new THREE.WebGLRenderer({
 canvas: document.getElementById("c"),
 antialias:true
 });
+
 renderer.setSize(window.innerWidth, window.innerHeight);
 
 window.addEventListener("resize",()=>{
@@ -52,20 +52,30 @@ camera.updateProjectionMatrix();
 renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
+  
 /////////////////////////////////////////////////////
-// LIGHTING (CLEAR VISIBILITY FIX)
+// LIGHTING LAYERS (AAA STYLE)
 /////////////////////////////////////////////////////
 
-scene.add(new THREE.AmbientLight(0x6a7f90, 1.4));
+// base ambient (fills shadows so world is visible)
+const ambient = new THREE.AmbientLight(0x7fa6b8, 1.2);
+scene.add(ambient);
 
-const sun = new THREE.DirectionalLight(0x9ecbff, 1.3);
-sun.position.set(100,200,80);
+// directional “sun / moon hybrid” (cinematic tone)
+const sun = new THREE.DirectionalLight(0xa6d0ff, 1.4);
+sun.position.set(120, 220, 80);
 scene.add(sun);
 
-const glow = new THREE.PointLight(0x00aaff, 2, 900);
-glow.position.set(0,40,0);
-scene.add(glow);
+// ocean bounce light (reflective water feel)
+const oceanLight = new THREE.PointLight(0x1ec8ff, 1.8, 1200);
+oceanLight.position.set(0, 30, -50);
+scene.add(oceanLight);
 
+// stage glow (focus anchor)
+const stageGlow = new THREE.PointLight(0x00aaff, 2.2, 900);
+stageGlow.position.set(0, 20, -150);
+scene.add(stageGlow);
+  
 /////////////////////////////////////////////////////
 // CAMERA FIX (IMPORTANT)
 /////////////////////////////////////////////////////
