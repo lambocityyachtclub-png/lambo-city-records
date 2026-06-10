@@ -184,6 +184,37 @@ velocity.z *= 2;
 }
 
 });
+
+/////////////////////////////////////////////////////
+// INTERACTION MEMORY SYSTEM (BLOCK 7)
+/////////////////////////////////////////////////////
+
+let worldState = {
+  dockVisited: false,
+  stageActivated: false,
+  jumbotronUsed: false,
+  raceBoosted: false
+};
+
+function updateWorldState(){
+
+if(nearObject?.name === "dock"){
+worldState.dockVisited = true;
+}
+
+if(nearObject?.name === "stage"){
+worldState.stageActivated = true;
+}
+
+if(nearObject?.name === "jumbotron"){
+worldState.jumbotronUsed = true;
+}
+
+if(nearObject?.name === "race"){
+worldState.raceBoosted = true;
+}
+
+}
   
 /////////////////////////////////////////////////////
 // OCEAN (BEHIND WORLD)
@@ -404,7 +435,7 @@ requestAnimationFrame(animate);
 move();
 updateCamera();
 checkInteraction(); // 🔥 ADD THIS LINE
-
+updateWorldState();
 renderer.render(scene,camera);
 }
 
