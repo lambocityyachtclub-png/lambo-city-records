@@ -95,9 +95,7 @@ scene.add(stageGlow);
 /////////////////////////////////////////////////////
 // CAMERA FIX (IMPORTANT)
 /////////////////////////////////////////////////////
-
 camera.position.set(0, 35, 90);
-
 /////////////////////////////////////////////////////
 // PLAYER
 /////////////////////////////////////////////////////
@@ -447,7 +445,7 @@ player.position.z += velocity.z;
 
 }
 /////////////////////////////////////////////////////
-// BLOCK 14 — CINEMATIC MODE SYSTEM
+// CINEMATIC CAMERA SYSTEM (FINAL CLEAN VERSION)
 /////////////////////////////////////////////////////
 
 let cameraMode = "follow";
@@ -462,38 +460,47 @@ const cameraTargetOffset = {
 function setCameraMode(mode){
   cameraMode = mode;
 }
-  
-/////////////////////////////////////////////////////
-// AAA CAMERA SYSTEM V1 (REPLACE OLD CAMERA BLOCK)
-/////////////////////////////////////////////////////
+
+const cameraVelocity = new THREE.Vector3(0,0,0);
+
+const cameraSmoothness = {
+  follow: 0.08,
+  dock: 0.06,
+  stage: 0.05,
+  race: 0.12
+};
 
 function updateCamera(){
 
 const offset = cameraTargetOffset[cameraMode];
 
-// desired position
-const desiredPosition = new THREE.Vector3(
+const targetPosition = new THREE.Vector3(
 player.position.x + offset.x,
 player.position.y + offset.y,
 player.position.z + offset.z
 );
 
-// smooth follow
-camera.position.lerp(desiredPosition, 0.08);
+const smooth = cameraSmoothness[cameraMode] || 0.08;
 
-// look target changes slightly per mode
+cameraVelocity.x += (targetPosition.x - camera.position.x) * smooth;
+cameraVelocity.y += (targetPosition.y - camera.position.y) * smooth;
+cameraVelocity.z += (targetPosition.z - camera.position.z) * smooth;
+
+cameraVelocity.multiplyScalar(0.85);
+
+camera.position.add(cameraVelocity);
+
 let lookHeight = 2;
 
 if(cameraMode === "stage") lookHeight = 6;
 if(cameraMode === "race") lookHeight = 1;
 
-const lookTarget = new THREE.Vector3(
-player.position.x,
-player.position.y + lookHeight,
-player.position.z
+camera.lookAt(
+  player.position.x,
+  player.position.y + lookHeight,
+  player.position.z
 );
 
-camera.lookAt(lookTarget);
 }
   
 /////////////////////////////////////////////////////
