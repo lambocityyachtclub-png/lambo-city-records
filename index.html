@@ -2,23 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LAMBO CITY — AAA FINAL POST FX</title>
+<title>LAMBO CITY — STABLE AAA ENGINE</title>
 
 <style>
 body { margin:0; overflow:hidden; background:black; }
 canvas { display:block; }
-
-/* CINEMATIC VIGNETTE LAYER */
-#vignette{
-position:fixed;
-inset:0;
-pointer-events:none;
-z-index:10;
-background:radial-gradient(circle at center,
-rgba(0,0,0,0) 40%,
-rgba(0,0,0,0.75) 100%);
-mix-blend-mode:multiply;
-}
 
 #intro{
 position:fixed;
@@ -35,7 +23,7 @@ position:absolute;
 width:100%;
 height:100%;
 object-fit:cover;
-opacity:0.9;
+opacity:0.85;
 }
 
 #enter{
@@ -58,6 +46,17 @@ color:white;
 font-family:Arial;
 z-index:20;
 }
+
+#vignette{
+position:fixed;
+inset:0;
+pointer-events:none;
+z-index:10;
+background:radial-gradient(circle,
+rgba(0,0,0,0) 40%,
+rgba(0,0,0,0.75) 100%);
+mix-blend-mode:multiply;
+}
 </style>
 </head>
 
@@ -68,17 +67,14 @@ z-index:20;
 <button id="enter">ENTER LAMBO CITY</button>
 </div>
 
-<div id="ui">LAMBO CITY — AAA ENGINE</div>
+<div id="ui">LAMBO CITY — STABLE ENGINE</div>
 <div id="vignette"></div>
 
 <canvas id="c"></canvas>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
 
-<script src="https://cdn.jsdelivr.net/npm/three@0.152.2/examples/js/postprocessing/EffectComposer.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.152.2/examples/js/postprocessing/RenderPass.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.152.2/examples/js/postprocessing/UnrealBloomPass.js"></script>
-
+<script>
 /////////////////////////////////////////////////////
 // STATE
 /////////////////////////////////////////////////////
@@ -96,7 +92,9 @@ const scene = new THREE.Scene();
 scene.fog = new THREE.FogExp2(0x050814, 0.0015);
 scene.background = new THREE.Color(0x050714);
 
-const camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 6000);
+const camera = new THREE.PerspectiveCamera(
+75, innerWidth/innerHeight, 0.1, 6000
+);
 
 const renderer = new THREE.WebGLRenderer({
 canvas:document.getElementById("c"),
@@ -104,22 +102,12 @@ antialias:true
 });
 renderer.setSize(innerWidth, innerHeight);
 
-/* AAA RENDER SETTINGS */
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.35;
-renderer.outputColorSpace = THREE.SRGBColorSpace;
-
-/* POST FX */
-const composer = new THREE.EffectComposer(renderer);
-composer.addPass(new THREE.RenderPass(scene, camera));
-
-const bloomPass = new THREE.UnrealBloomPass(
-new THREE.Vector2(innerWidth, innerHeight),
-1.3,  // strength
-0.8,  // radius
-0.2   // threshold
-);
-composer.addPass(bloomPass);
+/* SAFE RESIZE FIX (IMPORTANT) */
+window.addEventListener("resize", ()=>{
+camera.aspect = innerWidth/innerHeight;
+camera.updateProjectionMatrix();
+renderer.setSize(innerWidth, innerHeight);
+});
 
 /////////////////////////////////////////////////////
 // LIGHTING
@@ -177,7 +165,7 @@ player.position.z += vel.z;
 }
 
 /////////////////////////////////////////////////////
-// CAMERA (AAA SPRING)
+// CAMERA
 /////////////////////////////////////////////////////
 
 let camVel = new THREE.Vector3();
@@ -259,7 +247,7 @@ scene.add(c2);
 }
 
 /////////////////////////////////////////////////////
-// DAY NIGHT + BLOOM SHIFT
+// DAY/NIGHT
 /////////////////////////////////////////////////////
 
 function time(){
@@ -280,9 +268,6 @@ water.material.color.setRGB(
 0.08,
 0.12+day*0.06
 );
-
-/* AAA BLOOM DYNAMIC */
-bloomPass.strength = 1.0 + day*0.6;
 }
 
 /////////////////////////////////////////////////////
@@ -295,7 +280,7 @@ water.position.z = -200 + Math.cos(t*1.1)*3;
 }
 
 /////////////////////////////////////////////////////
-// CINEMATIC INTRO (ROCKSTAR STYLE)
+// INTRO CAMERA
 /////////////////////////////////////////////////////
 
 function introCam(){
@@ -322,45 +307,45 @@ camera.position.lerp(new THREE.Vector3(
 camera.lookAt(0,0,-160);
 }
 else {
-mode="play";
+mode = "play";
 }
 }
 
 /////////////////////////////////////////////////////
-// ENTER FIX (IMPORTANT)
+// ENTER BUTTON (FIXED)
 /////////////////////////////////////////////////////
 
-document.getElementById("enter").onclick = ()=>{
-document.getElementById("intro").style.display="none";
-mode="cinematic";
-introTime=0;
-};
+document.getElementById("enter").addEventListener("click", ()=>{
+document.getElementById("intro").style.display = "none";
+mode = "cinematic";
+introTime = 0;
+started = true;
+});
 
 /////////////////////////////////////////////////////
-// LOOP
+// LOOP (SAFE RENDER)
 /////////////////////////////////////////////////////
 
 function animate(){
 requestAnimationFrame(animate);
 
-if(mode==="cinematic"){
+if(mode === "cinematic"){
 introCam();
-composer.render();
+renderer.render(scene,camera);
 return;
 }
 
-if(mode==="play"){
+if(mode === "play"){
 move();
 time();
 ocean();
 cam();
 }
 
-composer.render();
+renderer.render(scene,camera);
 }
 
 animate();
-
 </script>
 
 </body>
