@@ -2,29 +2,34 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LAMBO CITY — MASTER BUILD</title>
+<title>LAMBO CITY — AAA FINAL ENGINE</title>
 
 <style>
 body { margin:0; overflow:hidden; background:black; }
 canvas { display:block; }
 
-#ui{
-position:absolute;
-top:20px;
-left:20px;
-color:white;
-font-family:Arial;
-z-index:10;
+/* CINEMATIC POST FX LAYER (FAKE BLOOM + VIGNETTE) */
+#fx {
+position:fixed;
+top:0;left:0;
+width:100%;
+height:100%;
+pointer-events:none;
+z-index:20;
+background:
+radial-gradient(circle at center,
+rgba(0,0,0,0) 40%,
+rgba(0,0,0,0.65) 100%);
+mix-blend-mode: multiply;
 }
 
 #intro{
 position:fixed;
-top:0;left:0;
-width:100%;height:100%;
-z-index:999;
+inset:0;
 display:flex;
-justify-content:center;
 align-items:center;
+justify-content:center;
+z-index:999;
 background:black;
 }
 
@@ -33,19 +38,26 @@ position:absolute;
 width:100%;
 height:100%;
 object-fit:cover;
-opacity:0.9;
+opacity:0.85;
 }
 
 #enter{
 position:relative;
-z-index:2;
 padding:18px 40px;
 font-size:20px;
-background:rgba(0,0,0,0.6);
 border:2px solid #00aaff;
+background:rgba(0,0,0,0.6);
 color:white;
 cursor:pointer;
 letter-spacing:3px;
+}
+
+#ui{
+position:absolute;
+top:20px;left:20px;
+color:white;
+font-family:Arial;
+z-index:10;
 }
 </style>
 </head>
@@ -57,17 +69,19 @@ letter-spacing:3px;
 <button id="enter">ENTER LAMBO CITY</button>
 </div>
 
-<div id="ui">LAMBO CITY — MASTER AAA WORLD</div>
+<div id="ui">LAMBO CITY — AAA ENGINE</div>
+<div id="fx"></div>
 
 <canvas id="c"></canvas>
 
-<!-- THREE + POST FX -->
 <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
 
 <script>
+
 /////////////////////////////////////////////////////
 // STATE
 /////////////////////////////////////////////////////
+
 let mode = "intro";
 let t = 0;
 let introTime = 0;
@@ -75,44 +89,38 @@ let introTime = 0;
 /////////////////////////////////////////////////////
 // CORE
 /////////////////////////////////////////////////////
+
 const scene = new THREE.Scene();
-scene.fog = new THREE.FogExp2(0x060b18, 0.0013);
+scene.fog = new THREE.FogExp2(0x050814, 0.0014);
 scene.background = new THREE.Color(0x050714);
 
 const camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 6000);
 
-const renderer = new THREE.WebGLRenderer({canvas:document.getElementById("c"),antialias:true});
+const renderer = new THREE.WebGLRenderer({
+canvas: document.getElementById("c"),
+antialias:true
+});
 renderer.setSize(innerWidth, innerHeight);
 
 /////////////////////////////////////////////////////
-// LIGHTING
+// LIGHTING (AAA LOOK)
 /////////////////////////////////////////////////////
-const ambient = new THREE.AmbientLight(0x4a6f8f, 0.18);
+
+const ambient = new THREE.AmbientLight(0x6fa6c8, 0.25);
 scene.add(ambient);
 
-const sun = new THREE.DirectionalLight(0xfff0d0, 3.2);
-sun.position.set(300,380,150);
+const sun = new THREE.DirectionalLight(0xfff1d6, 3.0);
+sun.position.set(250,300,150);
 scene.add(sun);
 
-const oceanGlow = new THREE.PointLight(0x1aaaff,1.4,1200);
-oceanGlow.position.set(0,30,-120);
-scene.add(oceanGlow);
-
-/////////////////////////////////////////////////////
-// POST PROCESSING (SIMPLIFIED BUT STABLE)
-/////////////////////////////////////////////////////
-const composer = new THREE.EffectComposer(renderer);
-composer.addPass(new THREE.RenderPass(scene,camera));
-
-const bloom = new THREE.UnrealBloomPass(
-new THREE.Vector2(innerWidth,innerHeight),
-1.2,0.6,0.2
-);
-composer.addPass(bloom);
+const glow = new THREE.PointLight(0x00aaff, 1.8, 1200);
+glow.position.set(0,30,-120);
+scene.add(glow);
 
 /////////////////////////////////////////////////////
 // PLAYER
 /////////////////////////////////////////////////////
+
 const player = new THREE.Mesh(
 new THREE.BoxGeometry(1,2,1),
 new THREE.MeshStandardMaterial({color:0xffffff})
@@ -120,15 +128,16 @@ new THREE.MeshStandardMaterial({color:0xffffff})
 player.position.set(0,1,20);
 scene.add(player);
 
-const keys={};
+const keys = {};
 addEventListener("keydown",e=>keys[e.key.toLowerCase()]=true);
 addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
 
 let vel = new THREE.Vector3();
-const speed = 0.13;
+const speed = 0.14;
 const friction = 0.86;
 
 function move(){
+
 let x=0,z=0;
 if(keys.w) z-=1;
 if(keys.s) z+=1;
@@ -149,26 +158,29 @@ player.position.z += vel.z;
 }
 
 /////////////////////////////////////////////////////
-// CAMERA
+// CAMERA (AAA SPRING)
 /////////////////////////////////////////////////////
+
 let camVel = new THREE.Vector3();
 
 function cam(){
+
 const target = new THREE.Vector3(
 player.position.x,
-player.position.y+32,
-player.position.z+105
+player.position.y + 30,
+player.position.z + 95
 );
 
-camVel.x += (target.x-camera.position.x)*0.055;
-camVel.y += (target.y-camera.position.y)*0.055;
-camVel.z += (target.z-camera.position.z)*0.055;
+camVel.x += (target.x - camera.position.x) * 0.06;
+camVel.y += (target.y - camera.position.y) * 0.06;
+camVel.z += (target.z - camera.position.z) * 0.06;
 
-camVel.multiplyScalar(0.80);
+camVel.multiplyScalar(0.78);
+
 camera.position.add(camVel);
 
 let sp = Math.abs(vel.x)+Math.abs(vel.z);
-camera.fov = 70 + sp*20;
+camera.fov = 70 + sp*18;
 camera.updateProjectionMatrix();
 
 camera.lookAt(player.position);
@@ -177,19 +189,24 @@ camera.lookAt(player.position);
 /////////////////////////////////////////////////////
 // WORLD
 /////////////////////////////////////////////////////
+
 const water = new THREE.Mesh(
-new THREE.PlaneGeometry(7000,7000),
-new THREE.MeshStandardMaterial({color:0x08293d,metalness:0.7,roughness:0.25})
+new THREE.PlaneGeometry(8000,8000),
+new THREE.MeshStandardMaterial({
+color:0x08293d,
+metalness:0.75,
+roughness:0.25
+})
 );
-water.rotation.x=-Math.PI/2;
-water.position.z=-200;
+water.rotation.x = -Math.PI/2;
+water.position.z = -200;
 scene.add(water);
 
 const beach = new THREE.Mesh(
 new THREE.PlaneGeometry(1800,900),
 new THREE.MeshStandardMaterial({color:0xcbb27a})
 );
-beach.rotation.x=-Math.PI/2;
+beach.rotation.x = -Math.PI/2;
 beach.position.set(0,-0.2,180);
 scene.add(beach);
 
@@ -202,7 +219,7 @@ scene.add(dock);
 
 const stage = new THREE.Mesh(
 new THREE.CylinderGeometry(40,40,2,64),
-new THREE.MeshStandardMaterial({color:0x111111})
+new THREE.MeshStandardMaterial({color:0x111111, emissive:0x001122})
 );
 stage.position.set(0,1,-160);
 scene.add(stage);
@@ -210,96 +227,155 @@ scene.add(stage);
 /////////////////////////////////////////////////////
 // CABINS
 /////////////////////////////////////////////////////
+
 for(let i=0;i<6;i++){
-let c=new THREE.Mesh(
+let c1 = new THREE.Mesh(
 new THREE.BoxGeometry(16,8,16),
 new THREE.MeshStandardMaterial({color:0x333333})
 );
-c.position.set(-45,4,-20-i*30);
-scene.add(c);
+c1.position.set(-45,4,-20-i*30);
+scene.add(c1);
 
-let c2=c.clone();
-c2.position.x=45;
+let c2 = c1.clone();
+c2.position.x = 45;
 scene.add(c2);
+}
+
+/////////////////////////////////////////////////////
+// ZONES
+/////////////////////////////////////////////////////
+
+const golf = new THREE.Mesh(
+new THREE.PlaneGeometry(200,120),
+new THREE.MeshStandardMaterial({color:0x1f6b3a})
+);
+golf.rotation.x=-Math.PI/2;
+golf.position.set(200,0,-120);
+scene.add(golf);
+
+const basketball = new THREE.Mesh(
+new THREE.PlaneGeometry(120,80),
+new THREE.MeshStandardMaterial({color:0x222244})
+);
+basketball.rotation.x=-Math.PI/2;
+basketball.position.set(-200,0,-120);
+scene.add(basketball);
+
+const track = new THREE.Mesh(
+new THREE.TorusGeometry(80,6,16,100),
+new THREE.MeshStandardMaterial({color:0x222222})
+);
+track.rotation.x=Math.PI/2;
+track.position.set(0,2,-300);
+scene.add(track);
+
+/////////////////////////////////////////////////////
+// STARS
+/////////////////////////////////////////////////////
+
+const geo = new THREE.BufferGeometry();
+let arr=[];
+for(let i=0;i<1200;i++){
+arr.push((Math.random()-0.5)*4000,
+Math.random()*1500,
+(Math.random()-0.5)*4000);
+}
+geo.setAttribute("position", new THREE.Float32BufferAttribute(arr,3));
+
+const stars = new THREE.Points(
+geo,
+new THREE.PointsMaterial({color:0xffffff,size:2})
+);
+scene.add(stars);
+
+/////////////////////////////////////////////////////
+// DAY NIGHT
+/////////////////////////////////////////////////////
+
+function time(){
+t += 0.0012;
+
+let day = Math.sin(t);
+
+ambient.intensity = 0.2 + (1-day)*0.4;
+sun.intensity = 2.0 + day*1.4;
+
+scene.fog.color = new THREE.Color(
+0.02+day*0.06,
+0.06+day*0.08,
+0.12+day*0.16
+);
+
+water.material.color.setRGB(
+0.01+day*0.03,
+0.08,
+0.12+day*0.06
+);
 }
 
 /////////////////////////////////////////////////////
 // OCEAN
 /////////////////////////////////////////////////////
+
 function ocean(){
-water.position.x=Math.sin(t*1.2)*3;
-water.position.z=-200+Math.cos(t*1.0)*3;
-water.rotation.z=Math.sin(t*0.25)*0.003;
+water.position.x = Math.sin(t*1.2)*3;
+water.position.z = -200 + Math.cos(t*1.1)*3;
 }
 
 /////////////////////////////////////////////////////
-// ATMOSPHERE
+// CINEMATIC INTRO
 /////////////////////////////////////////////////////
-function time(){
-t+=0.0011;
-let day=Math.sin(t);
 
-scene.fog.color=new THREE.Color(
-0.02+day*0.05,
-0.06+day*0.08,
-0.12+day*0.15
-);
+function intro(){
 
-ambient.intensity=0.15+(1-day)*0.25;
-sun.intensity=2.2+day*1.3;
+introTime += 0.016;
 
-water.material.color.setRGB(
-0.01+day*0.03,
-0.07,
-0.12+day*0.05
-);
+if(introTime < 6){
+camera.position.lerp(new THREE.Vector3(
+Math.sin(introTime*0.4)*180,
+50,
+150 - introTime*30
+),0.05);
+camera.lookAt(0,0,-120);
+}
 
-// BLOOM BREATHING (AAA FEEL)
-bloom.strength = 1.0 + Math.sin(t*2)*0.2;
+else if(introTime < 12){
+camera.position.lerp(new THREE.Vector3(
+0,40,80 - (introTime-6)*35
+),0.05);
+camera.lookAt(0,0,-40);
+}
+
+else if(introTime < 18){
+camera.position.lerp(new THREE.Vector3(
+0,45,-40 - (introTime-12)*40
+),0.05);
+camera.lookAt(0,0,-160);
+}
+
+else mode="play";
 }
 
 /////////////////////////////////////////////////////
-// INTRO
+// ENTER
 /////////////////////////////////////////////////////
-document.getElementById("enter").onclick=()=>{
+
+document.getElementById("enter").onclick = ()=>{
 document.getElementById("intro").style.display="none";
 mode="cinematic";
 introTime=0;
 };
 
 /////////////////////////////////////////////////////
-// CINEMATIC INTRO
-/////////////////////////////////////////////////////
-function cinematic(){
-introTime+=0.016;
-
-if(introTime<6){
-camera.position.lerp(new THREE.Vector3(120,45,140-introTime*25),0.05);
-camera.lookAt(0,0,-120);
-}
-else if(introTime<12){
-camera.position.lerp(new THREE.Vector3(0,35,90-(introTime-6)*30),0.05);
-camera.lookAt(0,0,-40);
-}
-else if(introTime<18){
-camera.position.lerp(new THREE.Vector3(0,40,-20-(introTime-12)*35),0.05);
-camera.lookAt(0,0,-160);
-}
-else{
-mode="play";
-player.position.set(0,1,20);
-}
-}
-
-/////////////////////////////////////////////////////
 // LOOP
 /////////////////////////////////////////////////////
+
 function animate(){
 requestAnimationFrame(animate);
 
 if(mode==="cinematic"){
-cinematic();
-composer.render();
+intro();
+renderer.render(scene,camera);
 return;
 }
 
@@ -308,10 +384,13 @@ move();
 time();
 ocean();
 cam();
-composer.render();
 }
+
+renderer.render(scene,camera);
 }
+
 animate();
+
 </script>
 
 </body>
