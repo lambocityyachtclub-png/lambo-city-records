@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LAMBO CITY — STABLE AAA FIXED</title>
+<title>LAMBO CITY — BULLETPROOF BUILD</title>
 
 <style>
 body { margin:0; overflow:hidden; background:black; }
@@ -45,33 +45,22 @@ z-index:10;
 <button id="enter">ENTER LAMBO CITY</button>
 </div>
 
-<div id="ui">LAMBO CITY — STABLE ENGINE</div>
+<div id="ui">LAMBO CITY — BULLETPROOF ENGINE</div>
 
 <canvas id="c"></canvas>
 
-<script type="module">
+<!-- ✅ OLD SCHOOL STABLE THREE.JS (NO MODULE ISSUES) -->
+<script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.152.2/examples/js/postprocessing/EffectComposer.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.152.2/examples/js/postprocessing/RenderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.152.2/examples/js/postprocessing/UnrealBloomPass.js"></script>
 
-import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.module.js";
-import { EffectComposer } from "https://cdn.jsdelivr.net/npm/three@0.152.2/examples/jsm/postprocessing/EffectComposer.js";
-import { RenderPass } from "https://cdn.jsdelivr.net/npm/three@0.152.2/examples/jsm/postprocessing/RenderPass.js";
-import { UnrealBloomPass } from "https://cdn.jsdelivr.net/npm/three@0.152.2/examples/jsm/postprocessing/UnrealBloomPass.js";
-
-/////////////////////////////////////////////////////
-// STATE
-/////////////////////////////////////////////////////
+<script>
 
 let mode = "intro";
-let t = 0;
-let introTime = 0;
-let started = false;
-
-/////////////////////////////////////////////////////
-// CORE
-/////////////////////////////////////////////////////
 
 const scene = new THREE.Scene();
 scene.fog = new THREE.FogExp2(0x050814, 0.0014);
-scene.background = new THREE.Color(0x050714);
 
 const camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 6000);
 
@@ -81,34 +70,24 @@ antialias:true
 });
 renderer.setSize(innerWidth, innerHeight);
 
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.25;
+/* POST FX */
+const composer = new THREE.EffectComposer(renderer);
+composer.addPass(new THREE.RenderPass(scene, camera));
 
-/* POST FX (SAFE VERSION) */
-const composer = new EffectComposer(renderer);
-composer.addPass(new RenderPass(scene, camera));
-
-const bloom = new UnrealBloomPass(
+const bloom = new THREE.UnrealBloomPass(
 new THREE.Vector2(innerWidth, innerHeight),
 1.2, 0.6, 0.2
 );
 composer.addPass(bloom);
 
-/////////////////////////////////////////////////////
-// LIGHTING
-/////////////////////////////////////////////////////
+/* LIGHTS */
+scene.add(new THREE.AmbientLight(0x6fa6c8, 0.3));
 
-const ambient = new THREE.AmbientLight(0x6fa6c8, 0.25);
-scene.add(ambient);
-
-const sun = new THREE.DirectionalLight(0xfff1d6, 3.0);
-sun.position.set(250,300,150);
+const sun = new THREE.DirectionalLight(0xffffff, 3);
+sun.position.set(200,300,150);
 scene.add(sun);
 
-/////////////////////////////////////////////////////
-// PLAYER
-/////////////////////////////////////////////////////
-
+/* PLAYER */
 const player = new THREE.Mesh(
 new THREE.BoxGeometry(1,2,1),
 new THREE.MeshStandardMaterial({color:0xffffff})
@@ -116,11 +95,11 @@ new THREE.MeshStandardMaterial({color:0xffffff})
 player.position.set(0,1,20);
 scene.add(player);
 
+let vel = new THREE.Vector3();
 const keys = {};
+
 addEventListener("keydown",e=>keys[e.key.toLowerCase()]=true);
 addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
-
-let vel = new THREE.Vector3();
 
 function move(){
 let x=0,z=0;
@@ -129,77 +108,49 @@ if(keys.s) z+=1;
 if(keys.a) x-=1;
 if(keys.d) x+=1;
 
-let len=Math.sqrt(x*x+z*z);
+let len=Math.hypot(x,z);
 if(len>0){x/=len;z/=len;}
 
 vel.x += x*0.14;
 vel.z += z*0.14;
 
 vel.multiplyScalar(0.86);
-
 player.position.add(vel);
 }
 
-/////////////////////////////////////////////////////
-// CAMERA
-/////////////////////////////////////////////////////
-
-let camVel = new THREE.Vector3();
-
+/* CAMERA */
 function cam(){
-const target = new THREE.Vector3(
-player.position.x,
-player.position.y + 30,
-player.position.z + 90
-);
-
-camVel.lerp(target.sub(camera.position),0.06);
-camera.position.add(camVel);
+camera.position.x += (player.position.x - camera.position.x)*0.06;
+camera.position.y += ((player.position.y+30) - camera.position.y)*0.06;
+camera.position.z += ((player.position.z+90) - camera.position.z)*0.06;
 camera.lookAt(player.position);
 }
 
-/////////////////////////////////////////////////////
-// WORLD (MINIMAL BUT WORKING)
-/////////////////////////////////////////////////////
-
+/* WORLD */
 const ground = new THREE.Mesh(
-new THREE.PlaneGeometry(2000,2000),
+new THREE.PlaneGeometry(3000,3000),
 new THREE.MeshStandardMaterial({color:0x08293d})
 );
 ground.rotation.x = -Math.PI/2;
 scene.add(ground);
 
-/////////////////////////////////////////////////////
-// INTRO SWITCH (100% FIXED)
-/////////////////////////////////////////////////////
-
-function start(){
-if(started) return;
-started = true;
-
+/* FIXED BUTTON */
+window.onload = () => {
+document.getElementById("enter").onclick = () => {
 document.getElementById("intro").style.display = "none";
 mode = "play";
-}
+};
+};
 
-window.addEventListener("load", ()=>{
-document.getElementById("enter").addEventListener("click", start);
-});
-
-/////////////////////////////////////////////////////
-// RESIZE
-/////////////////////////////////////////////////////
-
-window.addEventListener("resize", ()=>{
+/* RESIZE FIX */
+addEventListener("resize", () => {
 camera.aspect = innerWidth/innerHeight;
 camera.updateProjectionMatrix();
 renderer.setSize(innerWidth, innerHeight);
 composer.setSize(innerWidth, innerHeight);
 });
 
-/////////////////////////////////////////////////////
-// LOOP
-/////////////////////////////////////////////////////
-
+/* LOOP */
 function animate(){
 requestAnimationFrame(animate);
 
