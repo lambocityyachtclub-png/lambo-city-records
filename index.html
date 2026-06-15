@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LAMBO CITY — FULL AAA WORLD BUILD</title>
+<title>LAMBO CITY — AAA UPGRADED ENGINE</title>
 
 <style>
 body { margin:0; overflow:hidden; background:black; }
@@ -13,7 +13,6 @@ inset:0;
 z-index:1;
 }
 
-/* INTRO */
 #intro{
 position:fixed;
 inset:0;
@@ -46,7 +45,6 @@ color:white;
 cursor:pointer;
 }
 
-/* UI */
 #ui{
 position:fixed;
 top:20px;
@@ -54,17 +52,6 @@ left:20px;
 color:white;
 z-index:10;
 font-family:Arial;
-}
-
-/* VIGNETTE */
-#vignette{
-position:fixed;
-inset:0;
-z-index:5;
-pointer-events:none;
-background:radial-gradient(circle at center,
-rgba(0,0,0,0) 40%,
-rgba(0,0,0,0.75) 100%);
 }
 </style>
 </head>
@@ -76,8 +63,7 @@ rgba(0,0,0,0.75) 100%);
 <button id="enter">ENTER WORLD</button>
 </div>
 
-<div id="ui">LAMBO CITY — AAA FULL BUILD</div>
-<div id="vignette"></div>
+<div id="ui">LAMBO CITY — UE5 CAMERA UPGRADE</div>
 
 <canvas id="c"></canvas>
 
@@ -100,8 +86,10 @@ const scene = new THREE.Scene();
 scene.fog = new THREE.FogExp2(0x050814,0.0014);
 scene.background = new THREE.Color(0x050714);
 
-/* CAMERA (UE STYLE FEEL) */
-const camera = new THREE.PerspectiveCamera(75,innerWidth/innerHeight,0.1,6000);
+/* CAMERA */
+const camera = new THREE.PerspectiveCamera(
+75,innerWidth/innerHeight,0.1,6000
+);
 camera.position.set(0,40,120);
 
 /* RENDERER */
@@ -117,7 +105,7 @@ renderer.toneMappingExposure = 1.25;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 
 /* =========================
-LIGHTING (AAA)
+LIGHTING
 ========================= */
 const ambient = new THREE.AmbientLight(0x6fa6c8,0.3);
 scene.add(ambient);
@@ -125,10 +113,6 @@ scene.add(ambient);
 const sun = new THREE.DirectionalLight(0xfff1d6,3);
 sun.position.set(250,300,150);
 scene.add(sun);
-
-const glow = new THREE.PointLight(0x00aaff,2.2,1200);
-glow.position.set(0,30,-120);
-scene.add(glow);
 
 /* =========================
 WORLD
@@ -148,35 +132,19 @@ new THREE.MeshStandardMaterial({color:0x4a2f1d})
 dock.position.set(0,0.5,-40);
 scene.add(dock);
 
-const stage = new THREE.Mesh(
-new THREE.CylinderGeometry(40,40,2,64),
-new THREE.MeshStandardMaterial({color:0x111111,emissive:0x001122})
-);
-stage.position.set(0,1,-160);
-scene.add(stage);
-
 /* CABINS */
 for(let i=0;i<6;i++){
-let c1 = new THREE.Mesh(
+let c1=new THREE.Mesh(
 new THREE.BoxGeometry(16,8,16),
 new THREE.MeshStandardMaterial({color:0x333333})
 );
 c1.position.set(-45,4,-20-i*30);
 scene.add(c1);
 
-let c2 = c1.clone();
-c2.position.x = 45;
+let c2=c1.clone();
+c2.position.x=45;
 scene.add(c2);
 }
-
-/* ZONES */
-const golf = new THREE.Mesh(
-new THREE.PlaneGeometry(200,120),
-new THREE.MeshStandardMaterial({color:0x1f6b3a})
-);
-golf.rotation.x=-Math.PI/2;
-golf.position.set(200,0,-120);
-scene.add(golf);
 
 /* =========================
 PLAYER
@@ -191,11 +159,19 @@ scene.add(player);
 let vel=new THREE.Vector3();
 const keys={};
 
+/* CAMERA UPGRADE VARIABLES */
+let camVel=new THREE.Vector3();
+let shake=0;
+
 window.addEventListener("keydown",e=>keys[e.key.toLowerCase()]=true);
 window.addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
 
+/* =========================
+MOVE
+========================= */
 function move(){
 let x=0,z=0;
+
 if(keys.w)z-=1;
 if(keys.s)z+=1;
 if(keys.a)x-=1;
@@ -213,23 +189,34 @@ player.position.z+=vel.z;
 }
 
 /* =========================
-CAMERA (UE5 STYLE FEEL)
+UE5 CAMERA UPGRADE (NEW)
 ========================= */
-let camVel=new THREE.Vector3();
-
 function cam(){
+
 const target=new THREE.Vector3(
 player.position.x,
 player.position.y+30,
 player.position.z+95
 );
 
-camVel.x+=(target.x-camera.position.x)*0.06;
-camVel.y+=(target.y-camera.position.y)*0.06;
-camVel.z+=(target.z-camera.position.z)*0.06;
+/* smooth lag (UE STYLE) */
+camVel.x+=(target.x-camera.position.x)*0.045;
+camVel.y+=(target.y-camera.position.y)*0.045;
+camVel.z+=(target.z-camera.position.z)*0.045;
 
-camVel.multiplyScalar(0.8);
+camVel.multiplyScalar(0.82);
 camera.position.add(camVel);
+
+/* SPEED BASED FOV */
+let speed=Math.abs(vel.x)+Math.abs(vel.z);
+camera.fov = 70 + speed*25;
+camera.updateProjectionMatrix();
+
+/* SCREEN SHAKE (SUBTLE AAA FEEL) */
+shake = speed * 2;
+
+camera.position.x += (Math.random()-0.5)*shake;
+camera.position.y += (Math.random()-0.5)*shake;
 
 camera.lookAt(player.position);
 }
@@ -281,7 +268,7 @@ else mode="play";
 }
 
 /* =========================
-ENTER BUTTON (100% SAFE)
+ENTER BUTTON (SAFE)
 ========================= */
 document.getElementById("enter").addEventListener("click",()=>{
 document.getElementById("intro").style.display="none";
@@ -290,7 +277,7 @@ introTime=0;
 });
 
 /* =========================
-RESIZE FIX
+RESIZE
 ========================= */
 window.addEventListener("resize",()=>{
 camera.aspect=innerWidth/innerHeight;
