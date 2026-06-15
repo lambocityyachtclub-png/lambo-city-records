@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LAMBO CITY — AAA FINAL ENGINE (STABLE)</title>
+<title>LAMBO CITY — STABLE BOOT ENGINE</title>
 
 <style>
 body { margin:0; overflow:hidden; background:black; }
@@ -18,16 +18,7 @@ z-index:999;
 background:black;
 }
 
-#intro img{
-position:absolute;
-width:100%;
-height:100%;
-object-fit:cover;
-opacity:0.85;
-}
-
 #enter{
-position:relative;
 padding:18px 40px;
 font-size:20px;
 border:2px solid #00aaff;
@@ -35,7 +26,6 @@ background:rgba(0,0,0,0.6);
 color:white;
 cursor:pointer;
 letter-spacing:3px;
-z-index:2;
 }
 
 #ui{
@@ -52,11 +42,10 @@ z-index:10;
 <body>
 
 <div id="intro">
-<img src="DE9FC752-FFAA-4E55-A7BB-904416E4EA23.png">
 <button id="enter">ENTER LAMBO CITY</button>
 </div>
 
-<div id="ui">LAMBO CITY — AAA ENGINE (STABLE)</div>
+<div id="ui">LAMBO CITY — BOOT ENGINE</div>
 
 <canvas id="c"></canvas>
 
@@ -67,18 +56,13 @@ z-index:10;
 
 <script>
 
-/////////////////////////////////////////////////////
-// STATE (SAFE INIT)
-/////////////////////////////////////////////////////
-
-let mode = "intro";
+let started = false;
+let mode = "idle";
 let t = 0;
 let introTime = 0;
 
-let started = false;
-
 /////////////////////////////////////////////////////
-// CORE
+// SAFE ENGINE CORE (INIT LATER)
 /////////////////////////////////////////////////////
 
 const scene = new THREE.Scene();
@@ -93,41 +77,11 @@ antialias:true
 });
 renderer.setSize(innerWidth, innerHeight);
 
-/* AAA RENDER */
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.25;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 
-/* POST FX */
-const composer = new THREE.EffectComposer(renderer);
-const renderPass = new THREE.RenderPass(scene, camera);
-composer.addPass(renderPass);
-
-const bloomPass = new THREE.UnrealBloomPass(
-new THREE.Vector2(innerWidth, innerHeight),
-1.2,
-0.6,
-0.15
-);
-composer.addPass(bloomPass);
-
 /////////////////////////////////////////////////////
-// LIGHTING
-/////////////////////////////////////////////////////
-
-const ambient = new THREE.AmbientLight(0x6fa6c8, 0.25);
-scene.add(ambient);
-
-const sun = new THREE.DirectionalLight(0xfff1d6, 3.0);
-sun.position.set(250,300,150);
-scene.add(sun);
-
-const glow = new THREE.PointLight(0x00aaff, 2.0, 1200);
-glow.position.set(0,30,-120);
-scene.add(glow);
-
-/////////////////////////////////////////////////////
-// PLAYER
+// WORLD (SAFE TO LOAD ANY TIME)
 /////////////////////////////////////////////////////
 
 const player = new THREE.Mesh(
@@ -136,6 +90,45 @@ new THREE.MeshStandardMaterial({color:0xffffff})
 );
 player.position.set(0,1,20);
 scene.add(player);
+
+const ambient = new THREE.AmbientLight(0x6fa6c8, 0.25);
+scene.add(ambient);
+
+const sun = new THREE.DirectionalLight(0xfff1d6, 3.0);
+sun.position.set(250,300,150);
+scene.add(sun);
+
+const water = new THREE.Mesh(
+new THREE.PlaneGeometry(8000,8000),
+new THREE.MeshStandardMaterial({color:0x08293d})
+);
+water.rotation.x = -Math.PI/2;
+scene.add(water);
+
+/////////////////////////////////////////////////////
+// POST FX (ONLY ENABLE AFTER START)
+/////////////////////////////////////////////////////
+
+let composer, bloomPass;
+
+function initPostFX(){
+
+composer = new THREE.EffectComposer(renderer);
+
+const renderPass = new THREE.RenderPass(scene, camera);
+composer.addPass(renderPass);
+
+bloomPass = new THREE.UnrealBloomPass(
+new THREE.Vector2(innerWidth, innerHeight),
+1.2, 0.6, 0.15
+);
+composer.addPass(bloomPass);
+
+}
+
+/////////////////////////////////////////////////////
+// CONTROLS
+/////////////////////////////////////////////////////
 
 const keys = {};
 window.addEventListener("keydown",e=>keys[e.key.toLowerCase()]=true);
@@ -183,100 +176,31 @@ camVel.y += (target.y - camera.position.y) * 0.06;
 camVel.z += (target.z - camera.position.z) * 0.06;
 
 camVel.multiplyScalar(0.78);
-
 camera.position.add(camVel);
 camera.lookAt(player.position);
 }
 
 /////////////////////////////////////////////////////
-// WORLD
+// ENTER FIX (CRITICAL)
 /////////////////////////////////////////////////////
 
-const water = new THREE.Mesh(
-new THREE.PlaneGeometry(8000,8000),
-new THREE.MeshStandardMaterial({
-color:0x08293d,
-metalness:0.75,
-roughness:0.25
-})
-);
-water.rotation.x = -Math.PI/2;
-water.position.z = -200;
-scene.add(water);
+document.getElementById("enter").addEventListener("click", () => {
 
-const beach = new THREE.Mesh(
-new THREE.PlaneGeometry(1800,900),
-new THREE.MeshStandardMaterial({color:0xcbb27a})
-);
-beach.rotation.x=-Math.PI/2;
-beach.position.set(0,-0.2,180);
-scene.add(beach);
+started = true;
+mode = "cinematic";
+introTime = 0;
 
-const dock = new THREE.Mesh(
-new THREE.BoxGeometry(30,1,200),
-new THREE.MeshStandardMaterial({color:0x4a2f1d})
-);
-dock.position.set(0,0.5,-40);
-scene.add(dock);
+document.getElementById("intro").style.display = "none";
 
-const stage = new THREE.Mesh(
-new THREE.CylinderGeometry(40,40,2,64),
-new THREE.MeshStandardMaterial({color:0x111111, emissive:0x002244})
-);
-stage.position.set(0,1,-160);
-scene.add(stage);
+/* IMPORTANT: delay post FX init one frame */
+setTimeout(()=>{
+initPostFX();
+}, 50);
 
-for(let i=0;i<6;i++){
-let c = new THREE.Mesh(
-new THREE.BoxGeometry(16,8,16),
-new THREE.MeshStandardMaterial({color:0x333333})
-);
-c.position.set(-45,4,-20-i*30);
-scene.add(c);
-
-let c2 = c.clone();
-c2.position.x = 45;
-scene.add(c2);
-}
+});
 
 /////////////////////////////////////////////////////
-// ATMOSPHERE
-/////////////////////////////////////////////////////
-
-function time(){
-t += 0.0012;
-
-let day = Math.sin(t);
-
-ambient.intensity = 0.2 + (1-day)*0.4;
-sun.intensity = 2.0 + day*1.4;
-
-scene.fog.color = new THREE.Color(
-0.02+day*0.06,
-0.06+day*0.08,
-0.12+day*0.16
-);
-
-water.material.color.setRGB(
-0.01+day*0.03,
-0.08,
-0.12+day*0.06
-);
-
-bloomPass.strength = 1.0 + day*0.6;
-}
-
-/////////////////////////////////////////////////////
-// OCEAN
-/////////////////////////////////////////////////////
-
-function ocean(){
-water.position.x = Math.sin(t*1.2)*3;
-water.position.z = -200 + Math.cos(t*1.1)*3;
-}
-
-/////////////////////////////////////////////////////
-// CINEMATIC
+// CINEMATIC (SAFE)
 /////////////////////////////////////////////////////
 
 function introCam(){
@@ -294,48 +218,19 @@ else if(introTime < 12){
 camera.position.lerp(new THREE.Vector3(0,40,80 - (introTime-6)*35),0.05);
 camera.lookAt(0,0,-40);
 }
-else if(introTime < 18){
-camera.position.lerp(new THREE.Vector3(0,45,-40 - (introTime-12)*40),0.05);
-camera.lookAt(0,0,-160);
-}
 else {
 mode = "play";
 }
 }
 
 /////////////////////////////////////////////////////
-// FIXED ENTER (100% RELIABLE)
-/////////////////////////////////////////////////////
-
-function startExperience(){
-document.getElementById("intro").style.display = "none";
-mode = "cinematic";
-introTime = 0;
-started = true;
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-document.getElementById("enter").addEventListener("click", startExperience);
-});
-
-/////////////////////////////////////////////////////
-// RESIZE FIX
-/////////////////////////////////////////////////////
-
-window.addEventListener("resize", () => {
-camera.aspect = innerWidth/innerHeight;
-camera.updateProjectionMatrix();
-renderer.setSize(innerWidth, innerHeight);
-composer.setSize(innerWidth, innerHeight);
-});
-
-/////////////////////////////////////////////////////
-// LOOP (SAFE)
+// LOOP (SAFE SWITCH)
 /////////////////////////////////////////////////////
 
 function animate(){
 requestAnimationFrame(animate);
 
+/* NEVER RENDER BEFORE START */
 if(!started){
 renderer.render(scene,camera);
 return;
@@ -343,18 +238,18 @@ return;
 
 if(mode==="cinematic"){
 introCam();
-composer.render();
+if(composer) composer.render();
+else renderer.render(scene,camera);
 return;
 }
 
 if(mode==="play"){
 move();
-time();
-ocean();
 cam();
 }
 
-composer.render();
+if(composer) composer.render();
+else renderer.render(scene,camera);
 }
 
 animate();
