@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LAMBO CITY V35 — STABLE WORLD</title>
+<title>LAMBO CITY V36 — CINEMATIC WORLD</title>
 
 <style>
 body { margin:0; overflow:hidden; background:black; }
@@ -15,12 +15,54 @@ color:white;
 font-family:Arial;
 z-index:10;
 }
+
+/* INTRO SCREEN */
+#introScreen{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:black;
+display:flex;
+justify-content:center;
+align-items:center;
+z-index:999;
+transition:opacity 2s ease;
+}
+
+#introImage{
+position:absolute;
+width:100%;
+height:100%;
+object-fit:cover;
+}
+
+#enterButton{
+position:relative;
+z-index:2;
+
+padding:20px 40px;
+font-size:22px;
+
+background:rgba(0,0,0,0.7);
+border:2px solid #00aaff;
+color:white;
+cursor:pointer;
+letter-spacing:4px;
+}
 </style>
 </head>
 
 <body>
 
-<div id="ui">LAMBO CITY V35 — WORLD FOUNDATION</div>
+<!-- INTRO -->
+<div id="introScreen">
+<img id="introImage" src="DE9FC752-FFAA-4E55-A7BB-904416E4EA23.png">
+<button id="enterButton">ENTER LAMBO CITY</button>
+</div>
+
+<div id="ui">LAMBO CITY V36 — CINEMATIC WORLD</div>
 
 <canvas id="c"></canvas>
 
@@ -28,17 +70,13 @@ z-index:10;
 
 <script>
 
-
 /////////////////////////////////////////////////////
-// CORE ENGINE (REQUIRED - DO NOT REMOVE)
+// CORE ENGINE
 /////////////////////////////////////////////////////
 
 const scene = new THREE.Scene();
 
-scene.fog = new THREE.FogExp2(
-0x06131f, // deep blue atmosphere
-0.0035    // fog density
-);
+scene.fog = new THREE.FogExp2(0x06131f, 0.0035);
 
 const camera = new THREE.PerspectiveCamera(
 75, window.innerWidth/window.innerHeight, 0.1, 5000
@@ -51,51 +89,37 @@ antialias:true
 
 renderer.setSize(window.innerWidth, window.innerHeight);
 
-/////////////////////////////////////////////////////
-// GLOBAL WORLD STATE (CORE MEMORY)
-/////////////////////////////////////////////////////
-
-let worldTime = 0;
-
-let mood = {
-  timeOfDay: 0,
-  intensity: 1
-};
-  
 window.addEventListener("resize",()=>{
 camera.aspect = window.innerWidth/window.innerHeight;
 camera.updateProjectionMatrix();
 renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
-  
 /////////////////////////////////////////////////////
-// LIGHTING LAYERS (AAA STYLE)
+// WORLD STATE
 /////////////////////////////////////////////////////
 
-// base ambient (fills shadows so world is visible)
+let worldTime = 0;
+
+/////////////////////////////////////////////////////
+// LIGHTING
+/////////////////////////////////////////////////////
+
 const ambient = new THREE.AmbientLight(0x7fa6b8, 1.2);
 scene.add(ambient);
 
-// directional “sun / moon hybrid” (cinematic tone)
 const sun = new THREE.DirectionalLight(0xa6d0ff, 1.4);
-sun.position.set(120, 220, 80);
+sun.position.set(120,220,80);
 scene.add(sun);
 
-// ocean bounce light (reflective water feel)
 const oceanLight = new THREE.PointLight(0x1ec8ff, 1.8, 1200);
-oceanLight.position.set(0, 30, -50);
+oceanLight.position.set(0,30,-50);
 scene.add(oceanLight);
 
-// stage glow (focus anchor)
 const stageGlow = new THREE.PointLight(0x00aaff, 2.2, 900);
-stageGlow.position.set(0, 20, -150);
+stageGlow.position.set(0,20,-150);
 scene.add(stageGlow);
-  
-/////////////////////////////////////////////////////
-// CAMERA FIX (IMPORTANT)
-/////////////////////////////////////////////////////
-camera.position.set(0, 35, 90);
+
 /////////////////////////////////////////////////////
 // PLAYER
 /////////////////////////////////////////////////////
@@ -104,6 +128,7 @@ const player = new THREE.Mesh(
 new THREE.BoxGeometry(1,2,1),
 new THREE.MeshStandardMaterial({color:0xffffff})
 );
+
 player.position.set(0,1,20);
 scene.add(player);
 
@@ -116,546 +141,183 @@ document.addEventListener("keydown",e=>keys[e.key.toLowerCase()]=true);
 document.addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
 
 /////////////////////////////////////////////////////
-// INTERACTION SYSTEM (BLOCK 5)
+// MOVE SYSTEM
 /////////////////////////////////////////////////////
 
-let nearObject = null;
-let canInteract = false;
+const velocity = new THREE.Vector3();
+const acceleration = 0.015;
+const friction = 0.86;
+const maxSpeed = 0.45;
 
-const hint = document.createElement("div");
-hint.style.position = "absolute";
-hint.style.bottom = "80px";
-hint.style.left = "50%";
-hint.style.transform = "translateX(-50%)";
-hint.style.padding = "10px 15px";
-hint.style.color = "white";
-hint.style.fontFamily = "Arial";
-hint.style.background = "rgba(0,0,0,0.6)";
-hint.style.border = "1px solid #00aaff";
-hint.style.display = "none";
-document.body.appendChild(hint);
+function move(){
 
-const interactables = [
-  { name: "dock", x: 0, z: -40, radius: 12, message: "Dock: Explore Yacht Area" },
-  { name: "stage", x: 0, z: -150, radius: 14, message: "Stage: Press E to activate show mode" },
-  { name: "jumbotron", x: 0, z: -185, radius: 14, message: "Jumbotron: Visual system ready" },
-  { name: "race", x: 0, z: -250, radius: 16, message: "Race Track: Free roam zone" }
-];
+let x=0,z=0;
 
-  function checkInteraction(){
+if(keys.w) z -= 1;
+if(keys.s) z += 1;
+if(keys.a) x -= 1;
+if(keys.d) x += 1;
 
-nearObject = null;
-canInteract = false;
+let len = Math.sqrt(x*x+z*z);
+if(len>0){ x/=len; z/=len; }
 
-for(let obj of interactables){
+velocity.x += x * acceleration;
+velocity.z += z * acceleration;
 
-const dx = player.position.x - obj.x;
-const dz = player.position.z - obj.z;
+velocity.x *= friction;
+velocity.z *= friction;
 
-const dist = Math.sqrt(dx*dx + dz*dz);
+velocity.x = Math.max(-maxSpeed,Math.min(maxSpeed,velocity.x));
+velocity.z = Math.max(-maxSpeed,Math.min(maxSpeed,velocity.z));
 
-if(dist < obj.radius){
-nearObject = obj;
-canInteract = true;
-break;
-}
-}
+player.position.x += velocity.x;
+player.position.z += velocity.z;
 
-if(canInteract){
-hint.style.display = "block";
-hint.innerHTML = `${nearObject.message} <br> Press <b>E</b>`;
-}else{
-hint.style.display = "none";
-}
+// WORLD LIMITS
+player.position.x = Math.max(-350, Math.min(350, player.position.x));
+player.position.z = Math.max(-450, Math.min(250, player.position.z));
 }
 
 /////////////////////////////////////////////////////
-// INTERACTION ACTION SYSTEM (BLOCK 6)
+// CAMERA
 /////////////////////////////////////////////////////
 
-document.addEventListener("keydown", (e) => {
+function updateCamera(){
 
-if(e.key.toLowerCase() !== "e") return;
-if(!canInteract || !nearObject) return;
+const target = new THREE.Vector3(
+player.position.x,
+player.position.y + 35,
+player.position.z + 90
+);
 
-// 🌊 DOCK
-if(nearObject.name === "dock"){
-  setCameraMode("stage");
-}
-
-// 🎤 STAGE
-if(nearObject.name === "stage"){
-  setCameraMode("stage");
-
-  stage.material.emissiveIntensity = 2.5;
-  setTimeout(()=> stage.material.emissiveIntensity = 1.0, 2000);
-}
-
-// 📺 JUMBOTRON
-if(nearObject.name === "jumbotron"){
-  setCameraMode("stage");
-
-  screen.material.emissive.set(0x00ffcc);
-  setTimeout(()=> screen.material.emissive.set(0x0044ff), 1500);
-}
-
-// 🏁 RACE
-if(nearObject.name === "race"){
-  setCameraMode("race");
-
-  velocity.x *= 2;
-  velocity.z *= 2;
-}
-
-});
-
-/////////////////////////////////////////////////////
-// INTERACTION MEMORY SYSTEM (BLOCK 7)
-/////////////////////////////////////////////////////
-
- let worldState = {
-  dockVisited: false,
-  stageActivated: false,
-  jumbotronUsed: false,
-  raceBoosted: false
-};
-
-let lastObject = null;
-
-function updateWorldState(){
-
-if(!nearObject) {
-  lastObject = null;
-  return;
-}
-
-// only trigger when entering a new object
-if(nearObject !== lastObject){
-
-  if(nearObject.name === "dock") worldState.dockVisited = true;
-  if(nearObject.name === "stage") worldState.stageActivated = true;
-  if(nearObject.name === "jumbotron") worldState.jumbotronUsed = true;
-  if(nearObject.name === "race") worldState.raceBoosted = true;
-
-  lastObject = nearObject;
-}
+camera.position.lerp(target,0.08);
+camera.lookAt(player.position);
 }
 
 /////////////////////////////////////////////////////
-// WORLD EVOLUTION SYSTEM (BLOCK 8)
+// WORLD
 /////////////////////////////////////////////////////
 
-function updateWorldEvolution(){
-
-// 🌊 DOCK EVOLUTION
-if(worldState.dockVisited){
-dock.material.color.set(0x6aa6ff);
-dock.material.emissive.set(0x001122);
-}
-
-// 🎤 STAGE EVOLUTION
-if(worldState.stageActivated){
-stage.material.emissiveIntensity = 2.0;
-stage.material.color.set(0x222222);
-
-// subtle “energy pulse”
-stage.rotation.y += 0.001;
-}
-
-// 📺 JUMBOTRON EVOLUTION
-if(worldState.jumbotronUsed){
-screen.material.emissive.set(0x00ffcc);
-screen.scale.set(1.05, 1.05, 1.05);
-}
-
-// 🏁 RACE EVOLUTION
-if(worldState.raceBoosted){
-raceTrack.material.color.set(0x444444);
-
-// optional: boost player speed feel
-velocity.x *= 1.001;
-velocity.z *= 1.001;
-}
-
-}
-  
-/////////////////////////////////////////////////////
-// OCEAN (BEHIND WORLD)
-/////////////////////////////////////////////////////
-
+// WATER
 const water = new THREE.Mesh(
 new THREE.PlaneGeometry(3000,3000),
-new THREE.MeshStandardMaterial({
-color:0x0a2233,
-metalness:0.4,
-roughness:0.6
-})
+new THREE.MeshStandardMaterial({color:0x0a2233})
 );
 water.rotation.x = -Math.PI/2;
 water.position.z = -200;
 scene.add(water);
 
-/////////////////////////////////////////////////////
-// MAIN DOCK (CENTER PIECE)
-/////////////////////////////////////////////////////
+// BEACH
+const beach = new THREE.Mesh(
+new THREE.PlaneGeometry(1200,800),
+new THREE.MeshStandardMaterial({color:0xc2b280})
+);
+beach.rotation.x = -Math.PI/2;
+beach.position.set(0,-0.2,150);
+scene.add(beach);
 
+// DOCK
 const dock = new THREE.Mesh(
 new THREE.BoxGeometry(25,1,180),
-new THREE.MeshStandardMaterial({
-color:0x4a321d,
-emissive:0x000000,
-emissiveIntensity:1
-})
+new THREE.MeshStandardMaterial({color:0x4a321d})
 );
-
 dock.position.set(0,0.5,-40);
 scene.add(dock);
 
-/////////////////////////////////////////////////////
-// ROUND STAGE (FOCAL POINT)
-/////////////////////////////////////////////////////
-
+// STAGE
 const stage = new THREE.Mesh(
 new THREE.CylinderGeometry(35,35,2,64),
-new THREE.MeshStandardMaterial({
-color:0x111111,
-emissive:0x003355
-})
+new THREE.MeshStandardMaterial({color:0x111111})
 );
 stage.position.set(0,1,-150);
 scene.add(stage);
 
-/////////////////////////////////////////////////////
 // JUMBOTRON
-/////////////////////////////////////////////////////
-
 const screen = new THREE.Mesh(
 new THREE.BoxGeometry(40,20,2),
-new THREE.MeshStandardMaterial({
-color:0x000000,
-emissive:0x0044ff,
-emissiveIntensity:2
-})
+new THREE.MeshStandardMaterial({color:0x0044ff})
 );
 screen.position.set(0,18,-185);
 scene.add(screen);
 
+// YACHT VIP GLOW
+const vipGlow = new THREE.PointLight(0x00d5ff,4,300);
+vipGlow.position.set(0,25,-120);
+scene.add(vipGlow);
+
 /////////////////////////////////////////////////////
-// CABINS (LEFT / RIGHT STRUCTURE)
+// MOUNTAINS
 /////////////////////////////////////////////////////
 
-function cabin(x,z){
-const g = new THREE.Mesh(
+for(let i=0;i<12;i++){
+
+const m = new THREE.Mesh(
+new THREE.ConeGeometry(100,200,4),
+new THREE.MeshStandardMaterial({color:0x111111})
+);
+
+m.position.set(
+-1200 + i*220,
+100,
+-900
+);
+
+scene.add(m);
+}
+
+/////////////////////////////////////////////////////
+// CABINS
+/////////////////////////////////////////////////////
+
+for(let i=0;i<6;i++){
+
+let c1 = new THREE.Mesh(
 new THREE.BoxGeometry(16,8,16),
 new THREE.MeshStandardMaterial({color:0x333333})
 );
-g.position.set(x,4,z);
-scene.add(g);
+
+c1.position.set(-45,4,-20-i*30);
+scene.add(c1);
+
+let c2 = c1.clone();
+c2.position.x = 45;
+scene.add(c2);
 }
 
-for(let i=0;i<6;i++){
-cabin(-45,-20-i*30);
-cabin(45,-20-i*30);
-}
-
 /////////////////////////////////////////////////////
-// FUTURE ZONES (PLACEHOLDERS)
-// (NO COMPLEXITY YET — JUST STRUCTURE)
+// CONTROLS SYSTEM
 /////////////////////////////////////////////////////
 
-const basketballZone = new THREE.Mesh(
-new THREE.PlaneGeometry(60,40),
-new THREE.MeshStandardMaterial({color:0x112233})
-);
-basketballZone.rotation.x = -Math.PI/2;
-basketballZone.position.set(-80,0,-120);
-scene.add(basketballZone);
+let introScreen = document.getElementById("introScreen");
+let enterButton = document.getElementById("enterButton");
 
-const golfZone = new THREE.Mesh(
-new THREE.PlaneGeometry(80,60),
-new THREE.MeshStandardMaterial({color:0x113322})
-);
-golfZone.rotation.x = -Math.PI/2;
-golfZone.position.set(80,0,-160);
-scene.add(golfZone);
+enterButton.onclick = ()=>{
 
-const raceTrack = new THREE.Mesh(
-new THREE.TorusGeometry(60,5,16,100),
-new THREE.MeshStandardMaterial({color:0x222222})
-);
-raceTrack.rotation.x = Math.PI/2;
-raceTrack.position.set(0,2,-250);
-scene.add(raceTrack);
+introScreen.style.opacity = "0";
 
-/////////////////////////////////////////////////////
-// WORLD FLOW SYSTEM (BLOCK 4)
-/////////////////////////////////////////////////////
+setTimeout(()=>{
+introScreen.style.display = "none";
+},2000);
 
-const anchors = [
-  { name: "dock", x: 0, z: -40, strength: 0.6 },
-  { name: "stage", x: 0, z: -150, strength: 1.2 },
-  { name: "jumbotron", x: 0, z: -185, strength: 1.0 },
-  { name: "race", x: 0, z: -250, strength: 0.8 }
-];
-
-function getCurrentZone(){
-  if(!nearObject) return null;
-
-  const zones = {
-    dock: { lightTint: 0x6aa6ff, cameraBoost: 1.0 },
-    stage: { lightTint: 0x00aaff, cameraBoost: 1.3 },
-    jumbotron: { lightTint: 0x00ffcc, cameraBoost: 1.2 },
-    race: { lightTint: 0xffaa00, cameraBoost: 1.5 }
-  };
-
-  return zones[nearObject.name] || null;
-}
-  
-/////////////////////////////////////////////////////
-// AAA MOVEMENT SYSTEM V1 (FULL CONTROL MODE)
-/////////////////////////////////////////////////////
-
-const velocity = new THREE.Vector3(0,0,0);
-
-// 🎮 PHASE 2 FEEL UPGRADE — WEIGHTED MOVEMENT
-const acceleration = 0.015;   // slower start = more weight
-const friction = 0.86;        // stronger drag = grounded feel
-const maxSpeed = 0.45;        // reduce arcade speed
-
-function move(){
-
-let inputX = 0;
-let inputZ = 0;
-
-// INPUT
-if(keys.w) inputZ -= 1;
-if(keys.s) inputZ += 1;
-if(keys.a) inputX -= 1;
-if(keys.d) inputX += 1;
-
-// normalize input (prevents faster diagonal movement)
-const len = Math.sqrt(inputX*inputX + inputZ*inputZ);
-if(len > 0){
-inputX /= len;
-inputZ /= len;
-}
-
-// APPLY MOVEMENT (NO WORLD PULL)
-velocity.x += inputX * acceleration;
-velocity.z += inputZ * acceleration;
-
-// FRICTION (smooth stop)
-velocity.x *= friction;
-velocity.z *= friction;
-
-// SPEED LIMIT
-velocity.x = Math.max(-maxSpeed, Math.min(maxSpeed, velocity.x));
-velocity.z = Math.max(-maxSpeed, Math.min(maxSpeed, velocity.z));
-
-// APPLY TO PLAYER
-player.position.x += velocity.x;
-player.position.z += velocity.z;
-
-}
-/////////////////////////////////////////////////////
-// CINEMATIC CAMERA SYSTEM (FINAL CLEAN VERSION)
-/////////////////////////////////////////////////////
-
-let cameraMode = "follow";
-
-const cameraTargetOffset = {
-  follow: new THREE.Vector3(0, 12, 35),
-  dock: new THREE.Vector3(0, 25, 90),
-  stage: new THREE.Vector3(0, 18, 55),
-  race: new THREE.Vector3(0, 10, 25)
 };
 
-function setCameraMode(mode){
-  cameraMode = mode;
-}
-
-const cameraVelocity = new THREE.Vector3(0,0,0);
-
-const cameraSmoothness = {
-  follow: 0.08,
-  dock: 0.06,
-  stage: 0.05,
-  race: 0.12
-};
-
-function updateCamera(){
-
-const offset = cameraTargetOffset[cameraMode];
-
-// 🎯 desired camera position
-const targetPosition = new THREE.Vector3(
-player.position.x + offset.x,
-player.position.y + offset.y,
-player.position.z + offset.z
-);
-
-// 🎬 dynamic smoothness (adds “weight” depending on movement state)
-let speedFactor = Math.abs(velocity.x) + Math.abs(velocity.z);
-
-// normalize speed influence
-speedFactor = Math.min(speedFactor / 0.5, 1);
-
-// slower when still, slightly looser when moving
-const baseSmooth = cameraSmoothness[cameraMode] || 0.08;
-
-let zone = getCurrentZone();
-
-let zoneBoost = zone ? zone.cameraBoost : 1;
-
-const dynamicSmooth =
-baseSmooth + (speedFactor * 0.03 * zoneBoost);
-
-// 🧠 spring physics feel (camera lags slightly behind intention)
-cameraVelocity.x += (targetPosition.x - camera.position.x) * dynamicSmooth;
-cameraVelocity.y += (targetPosition.y - camera.position.y) * dynamicSmooth;
-cameraVelocity.z += (targetPosition.z - camera.position.z) * dynamicSmooth;
-
-// 🧲 stronger damping = cinematic drag
-cameraVelocity.multiplyScalar(0.78);
-
-// apply movement
-camera.position.add(cameraVelocity);
-
-// 🎬 soft look height system
-let lookHeight = 2;
-
-if(cameraMode === "stage") lookHeight = 6;
-if(cameraMode === "race") lookHeight = 1;
-
-// 🎯 predicted look target (slight forward prediction = cinematic feel)
-const predictedX = player.position.x + velocity.x * 10;
-const predictedZ = player.position.z + velocity.z * 10;
-
-const lookTarget = new THREE.Vector3(
-predictedX,
-player.position.y + lookHeight,
-predictedZ
-);
-
-// 🎥 soft camera aim (no snapping)
-camera.lookAt(
-camera.position.x + (lookTarget.x - camera.position.x) * 0.12,
-camera.position.y + (lookTarget.y - camera.position.y) * 0.12,
-camera.position.z + (lookTarget.z - camera.position.z) * 0.12
-);
-
-}
-  
-/////////////////////////////////////////////////////
-// OCEAN MOTION SYSTEM (BLOCK 9)
-/////////////////////////////////////////////////////
-  
-function updateOceanMotion(){
-
-worldTime += 0.01;
-
-water.position.x = Math.sin(worldTime * 0.3) * 2;
-water.position.z = -200 + Math.cos(worldTime * 0.2) * 2;
-
-}
-
-/////////////////////////////////////////////////////
-// BLOCK 12 — ATMOSPHERE + WORLD MOOD SYSTEM
-/////////////////////////////////////////////////////
-
-function updateMoodSystem(){
-
-// natural slow cycle
-mood.timeOfDay += 0.0005;
-if(mood.timeOfDay > 1) mood.timeOfDay = 0;
-
-const dayStrength = Math.sin(mood.timeOfDay * Math.PI);
-
-// 🌅 AMBIENT
-ambient.intensity = 0.6 + dayStrength * 0.8;
-
-// 🌞 SUN
-sun.intensity = 0.8 + dayStrength * 1.2;
-
-// 🌊 OCEAN COLOR SHIFT
-water.material.color.setRGB(
-0.02 + dayStrength * 0.05,
-0.08 + dayStrength * 0.1,
-0.15 + dayStrength * 0.2
-);
-
-// 🎧 STAGE GLOW (ONLY HERE)
-stageGlow.intensity =
-1.5 + Math.sin(worldTime * 1.5) * 0.6 * mood.intensity;
-
-// 📺 SCREEN GLOW (ONLY HERE)
-screen.material.emissiveIntensity =
-1.8 + Math.sin(worldTime * 6.0) * 0.3 * mood.intensity;
-
-}
-  
-/////////////////////////////////////////////////////
-// BLOCK 13 — CINEMATIC WORLD PULSE SYSTEM
-/////////////////////////////////////////////////////
-
-function updateWorldPulse(){
-
-// cinematic pulse value
-const pulse = Math.sin(worldTime * 2.0);
-
-// STAGE BREATHING
-stage.scale.y = 1 + pulse * 0.02;
-
-// JUMBOTRON FLOAT
-screen.position.y =
-18 + Math.sin(worldTime * 1.5) * 0.5;
-
-// DOCK ENERGY
-dock.material.emissiveIntensity =
-0.4 + Math.sin(worldTime * 3.0) * 0.1;
-
-// OCEAN LIGHT BREATHING
-oceanLight.intensity =
-1.5 + Math.sin(worldTime * 1.2) * 0.4;
-
-// STAGE GLOW MOVEMENT
-stageGlow.position.y =
-20 + Math.sin(worldTime * 2.0) * 2;
-
-}
-  
 /////////////////////////////////////////////////////
 // LOOP
-/////////////////////////////////////////////////////
-
-/////////////////////////////////////////////////////
-// LOOP (MASTER WORLD UPDATE SYSTEM)
 /////////////////////////////////////////////////////
 
 function animate(){
 
 requestAnimationFrame(animate);
 
-// PLAYER
 move();
-
-// CAMERA
 updateCamera();
 
-// INTERACTION
-checkInteraction();
-updateWorldState();
+worldTime += 0.01;
 
-// WORLD EVOLUTION
-updateWorldEvolution();
+// ocean motion
+water.position.x = Math.sin(worldTime*0.3)*2;
 
-// ENVIRONMENT
-updateOceanMotion();
-updateMoodSystem();
-updateWorldPulse();
-// RENDER
 renderer.render(scene,camera);
-
 }
 
 animate();
