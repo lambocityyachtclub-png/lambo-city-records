@@ -2,26 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LAMBO CITY — AAA FINAL ENGINE</title>
+<title>LAMBO CITY — REAL AAA POST FX</title>
 
 <style>
 body { margin:0; overflow:hidden; background:black; }
 canvas { display:block; }
-
-/* CINEMATIC POST FX LAYER (FAKE BLOOM + VIGNETTE) */
-#fx {
-position:fixed;
-top:0;left:0;
-width:100%;
-height:100%;
-pointer-events:none;
-z-index:20;
-background:
-radial-gradient(circle at center,
-rgba(0,0,0,0) 40%,
-rgba(0,0,0,0.65) 100%);
-mix-blend-mode: multiply;
-}
 
 #intro{
 position:fixed;
@@ -69,12 +54,16 @@ z-index:10;
 <button id="enter">ENTER LAMBO CITY</button>
 </div>
 
-<div id="ui">LAMBO CITY — AAA ENGINE</div>
-<div id="fx"></div>
+<div id="ui">LAMBO CITY — REAL AAA ENGINE</div>
 
 <canvas id="c"></canvas>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
+
+<!-- REAL POST PROCESSING -->
+<script src="https://cdn.jsdelivr.net/npm/three@0.152.2/examples/js/postprocessing/EffectComposer.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.152.2/examples/js/postprocessing/RenderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.152.2/examples/js/postprocessing/UnrealBloomPass.js"></script>
 
 <script>
 
@@ -102,8 +91,27 @@ antialias:true
 });
 renderer.setSize(innerWidth, innerHeight);
 
+/* ---------------- REAL AAA RENDER PIPELINE ---------------- */
+
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.25;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+/* POST FX */
+const composer = new THREE.EffectComposer(renderer);
+const renderPass = new THREE.RenderPass(scene, camera);
+composer.addPass(renderPass);
+
+const bloomPass = new THREE.UnrealBloomPass(
+new THREE.Vector2(innerWidth, innerHeight),
+1.2,   // strength
+0.6,   // radius
+0.15   // threshold
+);
+composer.addPass(bloomPass);
+
 /////////////////////////////////////////////////////
-// LIGHTING (AAA LOOK)
+// LIGHTING (REAL BLOOM FRIENDLY)
 /////////////////////////////////////////////////////
 
 const ambient = new THREE.AmbientLight(0x6fa6c8, 0.25);
@@ -113,7 +121,7 @@ const sun = new THREE.DirectionalLight(0xfff1d6, 3.0);
 sun.position.set(250,300,150);
 scene.add(sun);
 
-const glow = new THREE.PointLight(0x00aaff, 1.8, 1200);
+const glow = new THREE.PointLight(0x00aaff, 2.5, 1200);
 glow.position.set(0,30,-120);
 scene.add(glow);
 
@@ -158,7 +166,7 @@ player.position.z += vel.z;
 }
 
 /////////////////////////////////////////////////////
-// CAMERA (AAA SPRING)
+// CAMERA
 /////////////////////////////////////////////////////
 
 let camVel = new THREE.Vector3();
@@ -178,10 +186,6 @@ camVel.z += (target.z - camera.position.z) * 0.06;
 camVel.multiplyScalar(0.78);
 
 camera.position.add(camVel);
-
-let sp = Math.abs(vel.x)+Math.abs(vel.z);
-camera.fov = 70 + sp*18;
-camera.updateProjectionMatrix();
 
 camera.lookAt(player.position);
 }
@@ -219,7 +223,11 @@ scene.add(dock);
 
 const stage = new THREE.Mesh(
 new THREE.CylinderGeometry(40,40,2,64),
-new THREE.MeshStandardMaterial({color:0x111111, emissive:0x001122})
+new THREE.MeshStandardMaterial({
+color:0x111111,
+emissive:0x002244,
+emissiveIntensity:1.5
+})
 );
 stage.position.set(0,1,-160);
 scene.add(stage);
@@ -240,53 +248,6 @@ let c2 = c1.clone();
 c2.position.x = 45;
 scene.add(c2);
 }
-
-/////////////////////////////////////////////////////
-// ZONES
-/////////////////////////////////////////////////////
-
-const golf = new THREE.Mesh(
-new THREE.PlaneGeometry(200,120),
-new THREE.MeshStandardMaterial({color:0x1f6b3a})
-);
-golf.rotation.x=-Math.PI/2;
-golf.position.set(200,0,-120);
-scene.add(golf);
-
-const basketball = new THREE.Mesh(
-new THREE.PlaneGeometry(120,80),
-new THREE.MeshStandardMaterial({color:0x222244})
-);
-basketball.rotation.x=-Math.PI/2;
-basketball.position.set(-200,0,-120);
-scene.add(basketball);
-
-const track = new THREE.Mesh(
-new THREE.TorusGeometry(80,6,16,100),
-new THREE.MeshStandardMaterial({color:0x222222})
-);
-track.rotation.x=Math.PI/2;
-track.position.set(0,2,-300);
-scene.add(track);
-
-/////////////////////////////////////////////////////
-// STARS
-/////////////////////////////////////////////////////
-
-const geo = new THREE.BufferGeometry();
-let arr=[];
-for(let i=0;i<1200;i++){
-arr.push((Math.random()-0.5)*4000,
-Math.random()*1500,
-(Math.random()-0.5)*4000);
-}
-geo.setAttribute("position", new THREE.Float32BufferAttribute(arr,3));
-
-const stars = new THREE.Points(
-geo,
-new THREE.PointsMaterial({color:0xffffff,size:2})
-);
-scene.add(stars);
 
 /////////////////////////////////////////////////////
 // DAY NIGHT
@@ -311,6 +272,9 @@ water.material.color.setRGB(
 0.08,
 0.12+day*0.06
 );
+
+/* BLOOM FEEL SHIFT */
+bloomPass.strength = 1.1 + day*0.4;
 }
 
 /////////////////////////////////////////////////////
@@ -323,7 +287,7 @@ water.position.z = -200 + Math.cos(t*1.1)*3;
 }
 
 /////////////////////////////////////////////////////
-// CINEMATIC INTRO
+// INTRO
 /////////////////////////////////////////////////////
 
 function intro(){
@@ -367,7 +331,7 @@ introTime=0;
 };
 
 /////////////////////////////////////////////////////
-// LOOP
+// LOOP (REAL POST FX RENDER)
 /////////////////////////////////////////////////////
 
 function animate(){
@@ -375,7 +339,7 @@ requestAnimationFrame(animate);
 
 if(mode==="cinematic"){
 intro();
-renderer.render(scene,camera);
+composer.render();
 return;
 }
 
@@ -386,7 +350,7 @@ ocean();
 cam();
 }
 
-renderer.render(scene,camera);
+composer.render();
 }
 
 animate();
