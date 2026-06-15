@@ -2,10 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LAMBO CITY — BULLETPROOF BUILD</title>
+<title>LAMBO CITY — AAA STABLE BASE</title>
 
 <style>
 body { margin:0; overflow:hidden; background:black; }
+
 canvas { display:block; }
 
 #intro{
@@ -15,7 +16,7 @@ display:flex;
 align-items:center;
 justify-content:center;
 background:black;
-z-index:999;
+z-index:9999;
 }
 
 #enter{
@@ -36,6 +37,16 @@ color:white;
 font-family:Arial;
 z-index:10;
 }
+
+#hint{
+position:absolute;
+bottom:20px;
+left:20px;
+color:#aaa;
+font-family:Arial;
+font-size:12px;
+z-index:10;
+}
 </style>
 </head>
 
@@ -45,11 +56,11 @@ z-index:10;
 <button id="enter">ENTER LAMBO CITY</button>
 </div>
 
-<div id="ui">LAMBO CITY — BULLETPROOF ENGINE</div>
+<div id="ui">LAMBO CITY — AAA STABLE ENGINE</div>
+<div id="hint">WASD to move</div>
 
 <canvas id="c"></canvas>
 
-<!-- ✅ OLD SCHOOL STABLE THREE.JS (NO MODULE ISSUES) -->
 <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/examples/js/postprocessing/EffectComposer.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/examples/js/postprocessing/RenderPass.js"></script>
@@ -57,45 +68,158 @@ z-index:10;
 
 <script>
 
+/////////////////////////////////////////////////////
+// SAFE STATE
+/////////////////////////////////////////////////////
+
+let started = false;
 let mode = "intro";
+let t = 0;
 
-const scene = new THREE.Scene();
-scene.fog = new THREE.FogExp2(0x050814, 0.0014);
+/////////////////////////////////////////////////////
+// BUTTON (100% SAFE)
+/////////////////////////////////////////////////////
 
-const camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 6000);
+const enterBtn = document.getElementById("enter");
 
-const renderer = new THREE.WebGLRenderer({
+enterBtn.addEventListener("click", () => {
+document.getElementById("intro").style.display = "none";
+started = true;
+mode = "play";
+init();
+animate();
+});
+
+/////////////////////////////////////////////////////
+// CORE
+/////////////////////////////////////////////////////
+
+let scene, camera, renderer, composer, bloom;
+
+let player, vel;
+
+function init(){
+
+scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(0x050814, 0.0012);
+scene.background = new THREE.Color(0x050714);
+
+camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 5000);
+
+renderer = new THREE.WebGLRenderer({
 canvas: document.getElementById("c"),
 antialias:true
 });
+
 renderer.setSize(innerWidth, innerHeight);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.2;
 
 /* POST FX */
-const composer = new THREE.EffectComposer(renderer);
+composer = new THREE.EffectComposer(renderer);
 composer.addPass(new THREE.RenderPass(scene, camera));
 
-const bloom = new THREE.UnrealBloomPass(
+bloom = new THREE.UnrealBloomPass(
 new THREE.Vector2(innerWidth, innerHeight),
 1.2, 0.6, 0.2
 );
 composer.addPass(bloom);
 
-/* LIGHTS */
-scene.add(new THREE.AmbientLight(0x6fa6c8, 0.3));
+/////////////////////////////////////////////////////
+// LIGHTING
+/////////////////////////////////////////////////////
+
+scene.add(new THREE.AmbientLight(0x6fa6c8, 0.25));
 
 const sun = new THREE.DirectionalLight(0xffffff, 3);
 sun.position.set(200,300,150);
 scene.add(sun);
 
-/* PLAYER */
-const player = new THREE.Mesh(
+/////////////////////////////////////////////////////
+// PLAYER
+/////////////////////////////////////////////////////
+
+player = new THREE.Mesh(
 new THREE.BoxGeometry(1,2,1),
 new THREE.MeshStandardMaterial({color:0xffffff})
 );
+
 player.position.set(0,1,20);
 scene.add(player);
 
-let vel = new THREE.Vector3();
+vel = new THREE.Vector3();
+
+/////////////////////////////////////////////////////
+// WORLD (STABLE AAA LAYERS)
+/////////////////////////////////////////////////////
+
+const ground = new THREE.Mesh(
+new THREE.PlaneGeometry(5000,5000),
+new THREE.MeshStandardMaterial({color:0x08293d})
+);
+ground.rotation.x = -Math.PI/2;
+scene.add(ground);
+
+/* dock */
+const dock = new THREE.Mesh(
+new THREE.BoxGeometry(30,1,200),
+new THREE.MeshStandardMaterial({color:0x4a2f1d})
+);
+dock.position.set(0,0.5,-40);
+scene.add(dock);
+
+/* stage */
+const stage = new THREE.Mesh(
+new THREE.CylinderGeometry(40,40,2,64),
+new THREE.MeshStandardMaterial({
+color:0x111111,
+emissive:0x002244,
+emissiveIntensity:1.2
+})
+);
+stage.position.set(0,1,-160);
+scene.add(stage);
+
+/* cabins */
+for(let i=0;i<6;i++){
+let c = new THREE.Mesh(
+new THREE.BoxGeometry(16,8,16),
+new THREE.MeshStandardMaterial({color:0x333333})
+);
+
+c.position.set(-45,4,-20-i*30);
+scene.add(c);
+
+let c2 = c.clone();
+c2.position.x = 45;
+scene.add(c2);
+}
+
+/* stars */
+const starGeo = new THREE.BufferGeometry();
+let pos = [];
+
+for(let i=0;i<1000;i++){
+pos.push((Math.random()-0.5)*4000,
+Math.random()*1500,
+(Math.random()-0.5)*4000);
+}
+
+starGeo.setAttribute("position", new THREE.Float32BufferAttribute(pos,3));
+
+const stars = new THREE.Points(
+starGeo,
+new THREE.PointsMaterial({color:0xffffff,size:2})
+);
+
+scene.add(stars);
+
+}
+
+/////////////////////////////////////////////////////
+// INPUT
+/////////////////////////////////////////////////////
+
 const keys = {};
 
 addEventListener("keydown",e=>keys[e.key.toLowerCase()]=true);
@@ -103,6 +227,7 @@ addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
 
 function move(){
 let x=0,z=0;
+
 if(keys.w) z-=1;
 if(keys.s) z+=1;
 if(keys.a) x-=1;
@@ -115,54 +240,56 @@ vel.x += x*0.14;
 vel.z += z*0.14;
 
 vel.multiplyScalar(0.86);
+
 player.position.add(vel);
 }
 
-/* CAMERA */
+/////////////////////////////////////////////////////
+// CAMERA
+/////////////////////////////////////////////////////
+
 function cam(){
+
 camera.position.x += (player.position.x - camera.position.x)*0.06;
 camera.position.y += ((player.position.y+30) - camera.position.y)*0.06;
 camera.position.z += ((player.position.z+90) - camera.position.z)*0.06;
+
 camera.lookAt(player.position);
 }
 
-/* WORLD */
-const ground = new THREE.Mesh(
-new THREE.PlaneGeometry(3000,3000),
-new THREE.MeshStandardMaterial({color:0x08293d})
+/////////////////////////////////////////////////////
+// DAY / ATMOSPHERE
+/////////////////////////////////////////////////////
+
+function time(){
+t += 0.0012;
+let day = Math.sin(t);
+
+scene.fog.color = new THREE.Color(
+0.02+day*0.06,
+0.06+day*0.08,
+0.12+day*0.16
 );
-ground.rotation.x = -Math.PI/2;
-scene.add(ground);
 
-/* FIXED BUTTON */
-window.onload = () => {
-document.getElementById("enter").onclick = () => {
-document.getElementById("intro").style.display = "none";
-mode = "play";
-};
-};
+bloom.strength = 1.0 + day*0.6;
+}
 
-/* RESIZE FIX */
-addEventListener("resize", () => {
-camera.aspect = innerWidth/innerHeight;
-camera.updateProjectionMatrix();
-renderer.setSize(innerWidth, innerHeight);
-composer.setSize(innerWidth, innerHeight);
-});
+/////////////////////////////////////////////////////
+// LOOP
+/////////////////////////////////////////////////////
 
-/* LOOP */
 function animate(){
+
 requestAnimationFrame(animate);
 
-if(mode==="play"){
+if(!started) return;
+
 move();
 cam();
-}
+time();
 
 composer.render();
 }
-
-animate();
 
 </script>
 
