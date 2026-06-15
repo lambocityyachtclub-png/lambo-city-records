@@ -2,12 +2,13 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LAMBO CITY — STABLE AAA POST FX</title>
+<title>LAMBO CITY — FIXED ENTRY</title>
 
 <style>
 body { margin:0; overflow:hidden; background:black; }
 canvas { display:block; }
 
+/* INTRO LAYER */
 #intro{
 position:fixed;
 inset:0;
@@ -18,16 +19,20 @@ z-index:999;
 background:black;
 }
 
+/* IMPORTANT FIX: image must NOT block clicks */
 #intro img{
 position:absolute;
 width:100%;
 height:100%;
 object-fit:cover;
-opacity:0.9;
+opacity:0.85;
+pointer-events:none;
 }
 
+/* BUTTON MUST BE ABOVE EVERYTHING */
 #enter{
 position:relative;
+z-index:10;
 padding:18px 40px;
 font-size:20px;
 border:2px solid #00aaff;
@@ -35,9 +40,9 @@ background:rgba(0,0,0,0.6);
 color:white;
 cursor:pointer;
 letter-spacing:3px;
-z-index:2;
 }
 
+/* UI */
 #ui{
 position:absolute;
 top:20px;
@@ -45,7 +50,6 @@ left:20px;
 color:white;
 font-family:Arial;
 z-index:10;
-pointer-events:none;
 }
 </style>
 </head>
@@ -57,26 +61,17 @@ pointer-events:none;
 <button id="enter">ENTER LAMBO CITY</button>
 </div>
 
-<div id="ui">LAMBO CITY — STABLE AAA ENGINE</div>
+<div id="ui">LAMBO CITY — FIXED ENTRY BUILD</div>
 
 <canvas id="c"></canvas>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
 
-<!-- REQUIRED POST FX DEPENDENCIES (THIS FIXES YOUR BLACK SCREEN) -->
-<script src="https://cdn.jsdelivr.net/npm/three@0.152.2/examples/js/shaders/CopyShader.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.152.2/examples/js/shaders/LuminosityHighPassShader.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.152.2/examples/js/postprocessing/ShaderPass.js"></script>
-
-<script src="https://cdn.jsdelivr.net/npm/three@0.152.2/examples/js/postprocessing/EffectComposer.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.152.2/examples/js/postprocessing/RenderPass.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.152.2/examples/js/postprocessing/UnrealBloomPass.js"></script>
-
 <script>
 
-let mode = "intro";
-let t = 0;
-let introTime = 0;
+let mode="intro";
+let t=0;
+let introTime=0;
 
 /* CORE */
 const scene = new THREE.Scene();
@@ -86,39 +81,18 @@ scene.background = new THREE.Color(0x050714);
 const camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 6000);
 
 const renderer = new THREE.WebGLRenderer({
-canvas: document.getElementById("c"),
+canvas:document.getElementById("c"),
 antialias:true
 });
-renderer.setSize(innerWidth, innerHeight);
+renderer.setSize(innerWidth,innerHeight);
 
-/* AAA TONE */
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.25;
-renderer.outputColorSpace = THREE.SRGBColorSpace;
-
-/* POST FX (NOW STABLE) */
-const composer = new THREE.EffectComposer(renderer);
-composer.addPass(new THREE.RenderPass(scene, camera));
-
-const bloomPass = new THREE.UnrealBloomPass(
-new THREE.Vector2(innerWidth, innerHeight),
-1.2,
-0.7,
-0.2
-);
-composer.addPass(bloomPass);
-
-/* LIGHTING */
-const ambient = new THREE.AmbientLight(0x6fa6c8, 0.25);
+/* LIGHTS */
+const ambient = new THREE.AmbientLight(0x6fa6c8,0.25);
 scene.add(ambient);
 
-const sun = new THREE.DirectionalLight(0xfff1d6, 3.0);
+const sun = new THREE.DirectionalLight(0xfff1d6,3);
 sun.position.set(250,300,150);
 scene.add(sun);
-
-const glow = new THREE.PointLight(0x00aaff, 2.0, 1200);
-glow.position.set(0,30,-120);
-scene.add(glow);
 
 /* PLAYER */
 const player = new THREE.Mesh(
@@ -128,13 +102,13 @@ new THREE.MeshStandardMaterial({color:0xffffff})
 player.position.set(0,1,20);
 scene.add(player);
 
-const keys = {};
+const keys={};
 addEventListener("keydown",e=>keys[e.key.toLowerCase()]=true);
 addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
 
-let vel = new THREE.Vector3();
-const speed = 0.14;
-const friction = 0.86;
+let vel=new THREE.Vector3();
+const speed=0.14;
+const friction=0.86;
 
 function move(){
 let x=0,z=0;
@@ -146,29 +120,29 @@ if(keys.d) x+=1;
 let len=Math.sqrt(x*x+z*z);
 if(len>0){x/=len;z/=len;}
 
-vel.x += x*speed;
-vel.z += z*speed;
+vel.x+=x*speed;
+vel.z+=z*speed;
 
-vel.x *= friction;
-vel.z *= friction;
+vel.x*=friction;
+vel.z*=friction;
 
-player.position.x += vel.x;
-player.position.z += vel.z;
+player.position.x+=vel.x;
+player.position.z+=vel.z;
 }
 
 /* CAMERA */
-let camVel = new THREE.Vector3();
+let camVel=new THREE.Vector3();
 
 function cam(){
-const target = new THREE.Vector3(
+const target=new THREE.Vector3(
 player.position.x,
-player.position.y + 30,
-player.position.z + 95
+player.position.y+30,
+player.position.z+95
 );
 
-camVel.x += (target.x - camera.position.x) * 0.06;
-camVel.y += (target.y - camera.position.y) * 0.06;
-camVel.z += (target.z - camera.position.z) * 0.06;
+camVel.x+=(target.x-camera.position.x)*0.06;
+camVel.y+=(target.y-camera.position.y)*0.06;
+camVel.z+=(target.z-camera.position.z)*0.06;
 
 camVel.multiplyScalar(0.78);
 camera.position.add(camVel);
@@ -177,114 +151,47 @@ camera.lookAt(player.position);
 }
 
 /* WORLD */
-const water = new THREE.Mesh(
+const water=new THREE.Mesh(
 new THREE.PlaneGeometry(8000,8000),
-new THREE.MeshStandardMaterial({color:0x08293d, metalness:0.75, roughness:0.25})
+new THREE.MeshStandardMaterial({color:0x08293d,metalness:0.7,roughness:0.25})
 );
-water.rotation.x = -Math.PI/2;
-water.position.z = -200;
+water.rotation.x=-Math.PI/2;
 scene.add(water);
 
-const beach = new THREE.Mesh(
-new THREE.PlaneGeometry(1800,900),
-new THREE.MeshStandardMaterial({color:0xcbb27a})
-);
-beach.rotation.x=-Math.PI/2;
-beach.position.set(0,-0.2,180);
-scene.add(beach);
-
-const dock = new THREE.Mesh(
-new THREE.BoxGeometry(30,1,200),
-new THREE.MeshStandardMaterial({color:0x4a2f1d})
-);
-dock.position.set(0,0.5,-40);
-scene.add(dock);
-
-const stage = new THREE.Mesh(
-new THREE.CylinderGeometry(40,40,2,64),
-new THREE.MeshStandardMaterial({color:0x111111, emissive:0x001122})
-);
-stage.position.set(0,1,-160);
-scene.add(stage);
-
-/* CABINS */
-for(let i=0;i<6;i++){
-let c1 = new THREE.Mesh(
-new THREE.BoxGeometry(16,8,16),
-new THREE.MeshStandardMaterial({color:0x333333})
-);
-c1.position.set(-45,4,-20-i*30);
-scene.add(c1);
-
-let c2 = c1.clone();
-c2.position.x = 45;
-scene.add(c2);
-}
-
-/* ATMOSPHERE */
-function time(){
-t += 0.0012;
-let day = Math.sin(t);
-
-ambient.intensity = 0.2 + (1-day)*0.4;
-sun.intensity = 2.0 + day*1.4;
-
-scene.fog.color = new THREE.Color(
-0.02+day*0.06,
-0.06+day*0.08,
-0.12+day*0.16
-);
-
-water.material.color.setRGB(0.01+day*0.03,0.08,0.12+day*0.06);
-
-bloomPass.strength = 1.0 + day*0.6;
-}
-
-/* OCEAN */
-function ocean(){
-water.position.x = Math.sin(t*1.2)*3;
-water.position.z = -200 + Math.cos(t*1.1)*3;
-}
-
-/* INTRO */
+/* INTRO CAMERA */
 function introCam(){
-introTime += 0.016;
+introTime+=0.016;
 
-if(introTime < 6){
+if(introTime<6){
 camera.position.lerp(new THREE.Vector3(
 Math.sin(introTime*0.4)*180,
 50,
-150 - introTime*30
+150-introTime*30
 ),0.05);
 camera.lookAt(0,0,-120);
 }
-else if(introTime < 12){
-camera.position.lerp(new THREE.Vector3(0,40,80-(introTime-6)*35),0.05);
+else if(introTime<12){
+camera.position.lerp(new THREE.Vector3(
+0,40,80-(introTime-6)*35
+),0.05);
 camera.lookAt(0,0,-40);
-}
-else if(introTime < 18){
-camera.position.lerp(new THREE.Vector3(0,45,-40-(introTime-12)*40),0.05);
-camera.lookAt(0,0,-160);
 }
 else mode="play";
 }
 
-/* FIXED BUTTON (100% RELIABLE) */
-document.addEventListener("DOMContentLoaded", () => {
-document.getElementById("enter").addEventListener("click", () => {
+/* 🔥 FIXED ENTER (MULTI-LAYER SAFETY) */
+function startWorld(){
 document.getElementById("intro").style.display="none";
 mode="cinematic";
 introTime=0;
-});
-});
+console.log("ENTER PRESSED → WORLD STARTED");
+}
 
-/* RESIZE FIX */
-window.addEventListener("resize",()=>{
-camera.aspect=innerWidth/innerHeight;
-camera.updateProjectionMatrix();
-renderer.setSize(innerWidth,innerHeight);
-composer.setSize(innerWidth,innerHeight);
-});
+/* NORMAL CLICK */
+document.getElementById("enter").addEventListener("click", startWorld);
+
+/* MOBILE SAFETY (TAP ANYWHERE) */
+document.getElementById("intro").addEventListener("pointerdown", startWorld);
 
 /* LOOP */
 function animate(){
@@ -292,18 +199,16 @@ requestAnimationFrame(animate);
 
 if(mode==="cinematic"){
 introCam();
-composer.render();
+renderer.render(scene,camera);
 return;
 }
 
 if(mode==="play"){
 move();
-time();
-ocean();
 cam();
 }
 
-composer.render();
+renderer.render(scene,camera);
 }
 
 animate();
