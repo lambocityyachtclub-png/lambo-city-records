@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LAMBO CITY — AAA FINAL ENGINE (POST FX)</title>
+<title>LAMBO CITY — STABLE AAA ENGINE</title>
 
 <style>
 body { margin:0; overflow:hidden; background:black; }
@@ -56,13 +56,13 @@ z-index:10;
 <button id="enter">ENTER LAMBO CITY</button>
 </div>
 
-<div id="ui">LAMBO CITY — AAA ENGINE (POST FX)</div>
+<div id="ui">LAMBO CITY — STABLE AAA ENGINE</div>
 
 <canvas id="c"></canvas>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
 
-<!-- POST PROCESSING -->
+<!-- POST FX -->
 <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/examples/js/postprocessing/EffectComposer.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/examples/js/postprocessing/RenderPass.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/examples/js/postprocessing/UnrealBloomPass.js"></script>
@@ -78,7 +78,7 @@ let t = 0;
 let introTime = 0;
 
 /////////////////////////////////////////////////////
-// CORE
+// CORE SAFE INIT
 /////////////////////////////////////////////////////
 
 const scene = new THREE.Scene();
@@ -86,32 +86,35 @@ scene.fog = new THREE.FogExp2(0x050814, 0.0014);
 scene.background = new THREE.Color(0x050714);
 
 const camera = new THREE.PerspectiveCamera(
-75, innerWidth/innerHeight, 0.1, 6000
+75, window.innerWidth/window.innerHeight, 0.1, 6000
 );
 
 const renderer = new THREE.WebGLRenderer({
 canvas: document.getElementById("c"),
 antialias:true
 });
-renderer.setSize(innerWidth, innerHeight);
 
-/* ===== AAA RENDER SETTINGS ===== */
+renderer.setSize(window.innerWidth, window.innerHeight);
+
+/* AAA LOOK */
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.25;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 
-/* ===== POST FX PIPELINE ===== */
-const composer = new THREE.EffectComposer(renderer);
+/////////////////////////////////////////////////////
+// POST FX (SAFE INIT)
+/////////////////////////////////////////////////////
 
-const renderPass = new THREE.RenderPass(scene, camera);
-composer.addPass(renderPass);
+const composer = new THREE.EffectComposer(renderer);
+composer.addPass(new THREE.RenderPass(scene, camera));
 
 const bloomPass = new THREE.UnrealBloomPass(
-new THREE.Vector2(innerWidth, innerHeight),
-1.3,   // strength
-0.6,   // radius
-0.15   // threshold
+new THREE.Vector2(window.innerWidth, window.innerHeight),
+1.2,
+0.6,
+0.15
 );
+
 composer.addPass(bloomPass);
 
 /////////////////////////////////////////////////////
@@ -235,24 +238,7 @@ stage.position.set(0,1,-160);
 scene.add(stage);
 
 /////////////////////////////////////////////////////
-// CABINS
-/////////////////////////////////////////////////////
-
-for(let i=0;i<6;i++){
-let c1 = new THREE.Mesh(
-new THREE.BoxGeometry(16,8,16),
-new THREE.MeshStandardMaterial({color:0x333333})
-);
-c1.position.set(-45,4,-20-i*30);
-scene.add(c1);
-
-let c2 = c1.clone();
-c2.position.x = 45;
-scene.add(c2);
-}
-
-/////////////////////////////////////////////////////
-// ATMOSPHERE + BLOOM CONTROL
+// ATMOSPHERE
 /////////////////////////////////////////////////////
 
 function time(){
@@ -275,9 +261,7 @@ water.material.color.setRGB(
 0.12+day*0.06
 );
 
-/* REAL AAA POST FX SHIFT */
 bloomPass.strength = 1.0 + day*0.7;
-bloomPass.radius = 0.6 + day*0.2;
 }
 
 /////////////////////////////////////////////////////
@@ -322,42 +306,43 @@ mode = "play";
 }
 
 /////////////////////////////////////////////////////
-// FIXED ENTER BUTTON (GUARANTEED WORK)
+// ✅ FIXED ENTER BUTTON (THIS WAS YOUR BUG)
 /////////////////////////////////////////////////////
 
-window.addEventListener("load", () => {
-document.getElementById("enter").onclick = () => {
+function startExperience(){
 document.getElementById("intro").style.display = "none";
 mode = "cinematic";
 introTime = 0;
-};
-});
+}
+
+document.getElementById("enter").addEventListener("click", startExperience);
 
 /////////////////////////////////////////////////////
-// RESIZE FIX (IMPORTANT FOR POST FX)
+// RESIZE SAFE
 /////////////////////////////////////////////////////
 
 window.addEventListener("resize", () => {
-camera.aspect = innerWidth/innerHeight;
+camera.aspect = window.innerWidth/window.innerHeight;
 camera.updateProjectionMatrix();
-renderer.setSize(innerWidth, innerHeight);
-composer.setSize(innerWidth, innerHeight);
+
+renderer.setSize(window.innerWidth, window.innerHeight);
+composer.setSize(window.innerWidth, window.innerHeight);
 });
 
 /////////////////////////////////////////////////////
-// LOOP
+// LOOP (SAFE)
 /////////////////////////////////////////////////////
 
 function animate(){
 requestAnimationFrame(animate);
 
-if(mode==="cinematic"){
+if(mode === "cinematic"){
 introCam();
 composer.render();
 return;
 }
 
-if(mode==="play"){
+if(mode === "play"){
 move();
 time();
 ocean();
