@@ -2,11 +2,23 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LAMBO CITY — REAL AAA POST FX</title>
+<title>LAMBO CITY — AAA FINAL POST FX</title>
 
 <style>
 body { margin:0; overflow:hidden; background:black; }
 canvas { display:block; }
+
+/* CINEMATIC VIGNETTE LAYER */
+#vignette{
+position:fixed;
+inset:0;
+pointer-events:none;
+z-index:10;
+background:radial-gradient(circle at center,
+rgba(0,0,0,0) 40%,
+rgba(0,0,0,0.75) 100%);
+mix-blend-mode:multiply;
+}
 
 #intro{
 position:fixed;
@@ -23,7 +35,7 @@ position:absolute;
 width:100%;
 height:100%;
 object-fit:cover;
-opacity:0.85;
+opacity:0.9;
 }
 
 #enter{
@@ -35,14 +47,16 @@ background:rgba(0,0,0,0.6);
 color:white;
 cursor:pointer;
 letter-spacing:3px;
+z-index:2;
 }
 
 #ui{
 position:absolute;
-top:20px;left:20px;
+top:20px;
+left:20px;
 color:white;
 font-family:Arial;
-z-index:10;
+z-index:20;
 }
 </style>
 </head>
@@ -54,18 +68,16 @@ z-index:10;
 <button id="enter">ENTER LAMBO CITY</button>
 </div>
 
-<div id="ui">LAMBO CITY — REAL AAA ENGINE</div>
+<div id="ui">LAMBO CITY — AAA ENGINE</div>
+<div id="vignette"></div>
 
 <canvas id="c"></canvas>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
 
-<!-- REAL POST PROCESSING -->
 <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/examples/js/postprocessing/EffectComposer.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/examples/js/postprocessing/RenderPass.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/examples/js/postprocessing/UnrealBloomPass.js"></script>
-
-<script>
 
 /////////////////////////////////////////////////////
 // STATE
@@ -74,54 +86,53 @@ z-index:10;
 let mode = "intro";
 let t = 0;
 let introTime = 0;
+let started = false;
 
 /////////////////////////////////////////////////////
 // CORE
 /////////////////////////////////////////////////////
 
 const scene = new THREE.Scene();
-scene.fog = new THREE.FogExp2(0x050814, 0.0014);
+scene.fog = new THREE.FogExp2(0x050814, 0.0015);
 scene.background = new THREE.Color(0x050714);
 
 const camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 6000);
 
 const renderer = new THREE.WebGLRenderer({
-canvas: document.getElementById("c"),
+canvas:document.getElementById("c"),
 antialias:true
 });
 renderer.setSize(innerWidth, innerHeight);
 
-/* ---------------- REAL AAA RENDER PIPELINE ---------------- */
-
+/* AAA RENDER SETTINGS */
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.25;
+renderer.toneMappingExposure = 1.35;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 
 /* POST FX */
 const composer = new THREE.EffectComposer(renderer);
-const renderPass = new THREE.RenderPass(scene, camera);
-composer.addPass(renderPass);
+composer.addPass(new THREE.RenderPass(scene, camera));
 
 const bloomPass = new THREE.UnrealBloomPass(
 new THREE.Vector2(innerWidth, innerHeight),
-1.2,   // strength
-0.6,   // radius
-0.15   // threshold
+1.3,  // strength
+0.8,  // radius
+0.2   // threshold
 );
 composer.addPass(bloomPass);
 
 /////////////////////////////////////////////////////
-// LIGHTING (REAL BLOOM FRIENDLY)
+// LIGHTING
 /////////////////////////////////////////////////////
 
 const ambient = new THREE.AmbientLight(0x6fa6c8, 0.25);
 scene.add(ambient);
 
-const sun = new THREE.DirectionalLight(0xfff1d6, 3.0);
+const sun = new THREE.DirectionalLight(0xfff1d6, 3.2);
 sun.position.set(250,300,150);
 scene.add(sun);
 
-const glow = new THREE.PointLight(0x00aaff, 2.5, 1200);
+const glow = new THREE.PointLight(0x00aaff, 2.2, 1200);
 glow.position.set(0,30,-120);
 scene.add(glow);
 
@@ -145,8 +156,8 @@ const speed = 0.14;
 const friction = 0.86;
 
 function move(){
-
 let x=0,z=0;
+
 if(keys.w) z-=1;
 if(keys.s) z+=1;
 if(keys.a) x-=1;
@@ -166,13 +177,12 @@ player.position.z += vel.z;
 }
 
 /////////////////////////////////////////////////////
-// CAMERA
+// CAMERA (AAA SPRING)
 /////////////////////////////////////////////////////
 
 let camVel = new THREE.Vector3();
 
 function cam(){
-
 const target = new THREE.Vector3(
 player.position.x,
 player.position.y + 30,
@@ -184,7 +194,6 @@ camVel.y += (target.y - camera.position.y) * 0.06;
 camVel.z += (target.z - camera.position.z) * 0.06;
 
 camVel.multiplyScalar(0.78);
-
 camera.position.add(camVel);
 
 camera.lookAt(player.position);
@@ -210,7 +219,7 @@ const beach = new THREE.Mesh(
 new THREE.PlaneGeometry(1800,900),
 new THREE.MeshStandardMaterial({color:0xcbb27a})
 );
-beach.rotation.x = -Math.PI/2;
+beach.rotation.x=-Math.PI/2;
 beach.position.set(0,-0.2,180);
 scene.add(beach);
 
@@ -250,12 +259,11 @@ scene.add(c2);
 }
 
 /////////////////////////////////////////////////////
-// DAY NIGHT
+// DAY NIGHT + BLOOM SHIFT
 /////////////////////////////////////////////////////
 
 function time(){
 t += 0.0012;
-
 let day = Math.sin(t);
 
 ambient.intensity = 0.2 + (1-day)*0.4;
@@ -273,8 +281,8 @@ water.material.color.setRGB(
 0.12+day*0.06
 );
 
-/* BLOOM FEEL SHIFT */
-bloomPass.strength = 1.1 + day*0.4;
+/* AAA BLOOM DYNAMIC */
+bloomPass.strength = 1.0 + day*0.6;
 }
 
 /////////////////////////////////////////////////////
@@ -287,11 +295,10 @@ water.position.z = -200 + Math.cos(t*1.1)*3;
 }
 
 /////////////////////////////////////////////////////
-// INTRO
+// CINEMATIC INTRO (ROCKSTAR STYLE)
 /////////////////////////////////////////////////////
 
-function intro(){
-
+function introCam(){
 introTime += 0.016;
 
 if(introTime < 6){
@@ -302,26 +309,25 @@ Math.sin(introTime*0.4)*180,
 ),0.05);
 camera.lookAt(0,0,-120);
 }
-
 else if(introTime < 12){
 camera.position.lerp(new THREE.Vector3(
 0,40,80 - (introTime-6)*35
 ),0.05);
 camera.lookAt(0,0,-40);
 }
-
 else if(introTime < 18){
 camera.position.lerp(new THREE.Vector3(
 0,45,-40 - (introTime-12)*40
 ),0.05);
 camera.lookAt(0,0,-160);
 }
-
-else mode="play";
+else {
+mode="play";
+}
 }
 
 /////////////////////////////////////////////////////
-// ENTER
+// ENTER FIX (IMPORTANT)
 /////////////////////////////////////////////////////
 
 document.getElementById("enter").onclick = ()=>{
@@ -331,14 +337,14 @@ introTime=0;
 };
 
 /////////////////////////////////////////////////////
-// LOOP (REAL POST FX RENDER)
+// LOOP
 /////////////////////////////////////////////////////
 
 function animate(){
 requestAnimationFrame(animate);
 
 if(mode==="cinematic"){
-intro();
+introCam();
 composer.render();
 return;
 }
