@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LAMBO CITY — AAA UPGRADED</title>
+<title>LAMBO CITY — MASTER BUILD</title>
 
 <style>
 body { margin:0; overflow:hidden; background:black; }
@@ -19,10 +19,8 @@ z-index:10;
 
 #intro{
 position:fixed;
-top:0;
-left:0;
-width:100%;
-height:100%;
+top:0;left:0;
+width:100%;height:100%;
 z-index:999;
 display:flex;
 justify-content:center;
@@ -59,60 +57,62 @@ letter-spacing:3px;
 <button id="enter">ENTER LAMBO CITY</button>
 </div>
 
-<div id="ui">LAMBO CITY — AAA ENGINE UPGRADE</div>
+<div id="ui">LAMBO CITY — MASTER AAA WORLD</div>
 
 <canvas id="c"></canvas>
 
+<!-- THREE + POST FX -->
 <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
 
 <script>
-
 /////////////////////////////////////////////////////
 // STATE
 /////////////////////////////////////////////////////
-
-let started = false;
+let mode = "intro";
+let t = 0;
+let introTime = 0;
 
 /////////////////////////////////////////////////////
 // CORE
 /////////////////////////////////////////////////////
-
 const scene = new THREE.Scene();
-
-// 🌌 AAA ATMOSPHERE (MORE DEPTH)
 scene.fog = new THREE.FogExp2(0x060b18, 0.0013);
 scene.background = new THREE.Color(0x050714);
 
-const camera = new THREE.PerspectiveCamera(
-75, innerWidth/innerHeight, 0.1, 6000
-);
+const camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 6000);
 
-const renderer = new THREE.WebGLRenderer({
-canvas:document.getElementById("c"),
-antialias:true
-});
+const renderer = new THREE.WebGLRenderer({canvas:document.getElementById("c"),antialias:true});
 renderer.setSize(innerWidth, innerHeight);
 
 /////////////////////////////////////////////////////
-// LIGHTING (AAA UPGRADE)
+// LIGHTING
 /////////////////////////////////////////////////////
-
 const ambient = new THREE.AmbientLight(0x4a6f8f, 0.18);
 scene.add(ambient);
 
 const sun = new THREE.DirectionalLight(0xfff0d0, 3.2);
-sun.position.set(300, 380, 150);
+sun.position.set(300,380,150);
 scene.add(sun);
 
-// ocean bounce glow (fake GI feel)
-const oceanGlow = new THREE.PointLight(0x1aaaff, 1.4, 1200);
-oceanGlow.position.set(0, 30, -120);
+const oceanGlow = new THREE.PointLight(0x1aaaff,1.4,1200);
+oceanGlow.position.set(0,30,-120);
 scene.add(oceanGlow);
 
 /////////////////////////////////////////////////////
-// PLAYER (SMOOTHER AAA FEEL)
+// POST PROCESSING (SIMPLIFIED BUT STABLE)
 /////////////////////////////////////////////////////
+const composer = new THREE.EffectComposer(renderer);
+composer.addPass(new THREE.RenderPass(scene,camera));
 
+const bloom = new THREE.UnrealBloomPass(
+new THREE.Vector2(innerWidth,innerHeight),
+1.2,0.6,0.2
+);
+composer.addPass(bloom);
+
+/////////////////////////////////////////////////////
+// PLAYER
+/////////////////////////////////////////////////////
 const player = new THREE.Mesh(
 new THREE.BoxGeometry(1,2,1),
 new THREE.MeshStandardMaterial({color:0xffffff})
@@ -125,13 +125,11 @@ addEventListener("keydown",e=>keys[e.key.toLowerCase()]=true);
 addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
 
 let vel = new THREE.Vector3();
-const speed = 0.13;     // slightly stronger feel
+const speed = 0.13;
 const friction = 0.86;
 
 function move(){
-
 let x=0,z=0;
-
 if(keys.w) z-=1;
 if(keys.s) z+=1;
 if(keys.a) x-=1;
@@ -151,31 +149,26 @@ player.position.z += vel.z;
 }
 
 /////////////////////////////////////////////////////
-// CAMERA (AAA CINEMATIC WEIGHT)
+// CAMERA
 /////////////////////////////////////////////////////
-
 let camVel = new THREE.Vector3();
 
 function cam(){
-
 const target = new THREE.Vector3(
 player.position.x,
-player.position.y + 32,
-player.position.z + 105
+player.position.y+32,
+player.position.z+105
 );
 
-// spring camera (AAA feel)
-camVel.x += (target.x - camera.position.x) * 0.055;
-camVel.y += (target.y - camera.position.y) * 0.055;
-camVel.z += (target.z - camera.position.z) * 0.055;
+camVel.x += (target.x-camera.position.x)*0.055;
+camVel.y += (target.y-camera.position.y)*0.055;
+camVel.z += (target.z-camera.position.z)*0.055;
 
 camVel.multiplyScalar(0.80);
-
 camera.position.add(camVel);
 
-// speed-based cinematic FOV
-let sp = Math.abs(vel.x) + Math.abs(vel.z);
-camera.fov = 70 + sp * 20;
+let sp = Math.abs(vel.x)+Math.abs(vel.z);
+camera.fov = 70 + sp*20;
 camera.updateProjectionMatrix();
 
 camera.lookAt(player.position);
@@ -184,18 +177,12 @@ camera.lookAt(player.position);
 /////////////////////////////////////////////////////
 // WORLD
 /////////////////////////////////////////////////////
-
 const water = new THREE.Mesh(
 new THREE.PlaneGeometry(7000,7000),
-new THREE.MeshStandardMaterial({
-color:0x08293d,
-metalness:0.75,
-roughness:0.22,
-emissive:0x001822
-})
+new THREE.MeshStandardMaterial({color:0x08293d,metalness:0.7,roughness:0.25})
 );
-water.rotation.x = -Math.PI/2;
-water.position.z = -200;
+water.rotation.x=-Math.PI/2;
+water.position.z=-200;
 scene.add(water);
 
 const beach = new THREE.Mesh(
@@ -221,80 +208,110 @@ stage.position.set(0,1,-160);
 scene.add(stage);
 
 /////////////////////////////////////////////////////
-// OCEAN MOTION (AAA WAVES FEEL)
+// CABINS
 /////////////////////////////////////////////////////
+for(let i=0;i<6;i++){
+let c=new THREE.Mesh(
+new THREE.BoxGeometry(16,8,16),
+new THREE.MeshStandardMaterial({color:0x333333})
+);
+c.position.set(-45,4,-20-i*30);
+scene.add(c);
 
-function ocean(){
-
-water.position.x = Math.sin(t * 1.2) * 3;
-water.position.z = -200 + Math.cos(t * 1.0) * 3;
-
-water.rotation.z = Math.sin(t * 0.25) * 0.003;
-
+let c2=c.clone();
+c2.position.x=45;
+scene.add(c2);
 }
 
 /////////////////////////////////////////////////////
-// ATMOSPHERE SYSTEM (REAL AAA LOOK MAGIC)
+// OCEAN
 /////////////////////////////////////////////////////
+function ocean(){
+water.position.x=Math.sin(t*1.2)*3;
+water.position.z=-200+Math.cos(t*1.0)*3;
+water.rotation.z=Math.sin(t*0.25)*0.003;
+}
 
-let t = 0;
-
+/////////////////////////////////////////////////////
+// ATMOSPHERE
+/////////////////////////////////////////////////////
 function time(){
+t+=0.0011;
+let day=Math.sin(t);
 
-t += 0.0011;
-
-// day/night feel
-let day = Math.sin(t);
-
-// fog color shift (HUGE AAA TRICK)
-scene.fog.color = new THREE.Color(
-0.02 + day * 0.05,
-0.06 + day * 0.08,
-0.12 + day * 0.15
+scene.fog.color=new THREE.Color(
+0.02+day*0.05,
+0.06+day*0.08,
+0.12+day*0.15
 );
 
-// lighting mood shift
-ambient.intensity = 0.15 + (1 - day) * 0.25;
-sun.intensity = 2.2 + day * 1.3;
+ambient.intensity=0.15+(1-day)*0.25;
+sun.intensity=2.2+day*1.3;
 
-// ocean color shift
 water.material.color.setRGB(
-0.01 + day * 0.03,
+0.01+day*0.03,
 0.07,
-0.12 + day * 0.05
+0.12+day*0.05
 );
 
+// BLOOM BREATHING (AAA FEEL)
+bloom.strength = 1.0 + Math.sin(t*2)*0.2;
 }
 
 /////////////////////////////////////////////////////
 // INTRO
 /////////////////////////////////////////////////////
-
-document.getElementById("enter").onclick = () => {
-document.getElementById("intro").style.display = "none";
-started = true;
+document.getElementById("enter").onclick=()=>{
+document.getElementById("intro").style.display="none";
+mode="cinematic";
+introTime=0;
 };
 
 /////////////////////////////////////////////////////
-// LOOP (AAA ORDER)
+// CINEMATIC INTRO
 /////////////////////////////////////////////////////
+function cinematic(){
+introTime+=0.016;
 
+if(introTime<6){
+camera.position.lerp(new THREE.Vector3(120,45,140-introTime*25),0.05);
+camera.lookAt(0,0,-120);
+}
+else if(introTime<12){
+camera.position.lerp(new THREE.Vector3(0,35,90-(introTime-6)*30),0.05);
+camera.lookAt(0,0,-40);
+}
+else if(introTime<18){
+camera.position.lerp(new THREE.Vector3(0,40,-20-(introTime-12)*35),0.05);
+camera.lookAt(0,0,-160);
+}
+else{
+mode="play";
+player.position.set(0,1,20);
+}
+}
+
+/////////////////////////////////////////////////////
+// LOOP
+/////////////////////////////////////////////////////
 function animate(){
-
 requestAnimationFrame(animate);
 
-if(!started) return;
+if(mode==="cinematic"){
+cinematic();
+composer.render();
+return;
+}
 
+if(mode==="play"){
 move();
 time();
 ocean();
 cam();
-
-renderer.render(scene,camera);
+composer.render();
 }
-
+}
 animate();
-
 </script>
 
 </body>
