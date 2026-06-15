@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LAMBO CITY — FIXED START</title>
+<title>LAMBO CITY — AAA UPGRADED</title>
 
 <style>
 body { margin:0; overflow:hidden; background:black; }
@@ -59,7 +59,7 @@ letter-spacing:3px;
 <button id="enter">ENTER LAMBO CITY</button>
 </div>
 
-<div id="ui">LAMBO CITY — FIXED START SYSTEM</div>
+<div id="ui">LAMBO CITY — AAA ENGINE UPGRADE</div>
 
 <canvas id="c"></canvas>
 
@@ -68,7 +68,7 @@ letter-spacing:3px;
 <script>
 
 /////////////////////////////////////////////////////
-// STATE SYSTEM (FIX = KEY PART)
+// STATE
 /////////////////////////////////////////////////////
 
 let started = false;
@@ -78,10 +78,13 @@ let started = false;
 /////////////////////////////////////////////////////
 
 const scene = new THREE.Scene();
-scene.fog = new THREE.FogExp2(0x050814, 0.0018);
+
+// 🌌 AAA ATMOSPHERE (MORE DEPTH)
+scene.fog = new THREE.FogExp2(0x060b18, 0.0013);
+scene.background = new THREE.Color(0x050714);
 
 const camera = new THREE.PerspectiveCamera(
-75, innerWidth/innerHeight, 0.1, 5000
+75, innerWidth/innerHeight, 0.1, 6000
 );
 
 const renderer = new THREE.WebGLRenderer({
@@ -90,25 +93,24 @@ antialias:true
 });
 renderer.setSize(innerWidth, innerHeight);
 
-window.addEventListener("resize",()=>{
-camera.aspect = innerWidth/innerHeight;
-camera.updateProjectionMatrix();
-renderer.setSize(innerWidth, innerHeight);
-});
-
 /////////////////////////////////////////////////////
-// LIGHTING
+// LIGHTING (AAA UPGRADE)
 /////////////////////////////////////////////////////
 
-const ambient = new THREE.AmbientLight(0x4d6f8f,0.25);
+const ambient = new THREE.AmbientLight(0x4a6f8f, 0.18);
 scene.add(ambient);
 
-const sun = new THREE.DirectionalLight(0xffffff,2.8);
-sun.position.set(250,320,120);
+const sun = new THREE.DirectionalLight(0xfff0d0, 3.2);
+sun.position.set(300, 380, 150);
 scene.add(sun);
 
+// ocean bounce glow (fake GI feel)
+const oceanGlow = new THREE.PointLight(0x1aaaff, 1.4, 1200);
+oceanGlow.position.set(0, 30, -120);
+scene.add(oceanGlow);
+
 /////////////////////////////////////////////////////
-// PLAYER
+// PLAYER (SMOOTHER AAA FEEL)
 /////////////////////////////////////////////////////
 
 const player = new THREE.Mesh(
@@ -123,8 +125,8 @@ addEventListener("keydown",e=>keys[e.key.toLowerCase()]=true);
 addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
 
 let vel = new THREE.Vector3();
-const speed = 0.12;
-const friction = 0.85;
+const speed = 0.13;     // slightly stronger feel
+const friction = 0.86;
 
 function move(){
 
@@ -149,18 +151,33 @@ player.position.z += vel.z;
 }
 
 /////////////////////////////////////////////////////
-// CAMERA
+// CAMERA (AAA CINEMATIC WEIGHT)
 /////////////////////////////////////////////////////
+
+let camVel = new THREE.Vector3();
 
 function cam(){
 
-let target = new THREE.Vector3(
+const target = new THREE.Vector3(
 player.position.x,
-player.position.y+30,
-player.position.z+95
+player.position.y + 32,
+player.position.z + 105
 );
 
-camera.position.lerp(target,0.06);
+// spring camera (AAA feel)
+camVel.x += (target.x - camera.position.x) * 0.055;
+camVel.y += (target.y - camera.position.y) * 0.055;
+camVel.z += (target.z - camera.position.z) * 0.055;
+
+camVel.multiplyScalar(0.80);
+
+camera.position.add(camVel);
+
+// speed-based cinematic FOV
+let sp = Math.abs(vel.x) + Math.abs(vel.z);
+camera.fov = 70 + sp * 20;
+camera.updateProjectionMatrix();
+
 camera.lookAt(player.position);
 }
 
@@ -169,15 +186,16 @@ camera.lookAt(player.position);
 /////////////////////////////////////////////////////
 
 const water = new THREE.Mesh(
-new THREE.PlaneGeometry(6000,6000),
+new THREE.PlaneGeometry(7000,7000),
 new THREE.MeshStandardMaterial({
-color:0x0a2f44,
-metalness:0.7,
-roughness:0.25
+color:0x08293d,
+metalness:0.75,
+roughness:0.22,
+emissive:0x001822
 })
 );
-water.rotation.x=-Math.PI/2;
-water.position.z=-200;
+water.rotation.x = -Math.PI/2;
+water.position.z = -200;
 scene.add(water);
 
 const beach = new THREE.Mesh(
@@ -203,58 +221,79 @@ stage.position.set(0,1,-160);
 scene.add(stage);
 
 /////////////////////////////////////////////////////
-// MOVE WORLD (SAFE)
+// OCEAN MOTION (AAA WAVES FEEL)
 /////////////////////////////////////////////////////
-
-let t=0;
-
-function time(){
-t += 0.0012;
-
-ambient.intensity = 0.25 + Math.sin(t)*0.4;
-
-sun.position.x = Math.sin(t*1.5)*300;
-sun.position.y = Math.abs(Math.cos(t*1.2))*320;
-}
 
 function ocean(){
-water.position.x = Math.sin(t*1.3)*2;
-water.position.z = -200 + Math.cos(t*1.1)*2;
+
+water.position.x = Math.sin(t * 1.2) * 3;
+water.position.z = -200 + Math.cos(t * 1.0) * 3;
+
+water.rotation.z = Math.sin(t * 0.25) * 0.003;
+
 }
 
 /////////////////////////////////////////////////////
-// MAIN LOOP (ONLY RUNS AFTER ENTER)
+// ATMOSPHERE SYSTEM (REAL AAA LOOK MAGIC)
+/////////////////////////////////////////////////////
+
+let t = 0;
+
+function time(){
+
+t += 0.0011;
+
+// day/night feel
+let day = Math.sin(t);
+
+// fog color shift (HUGE AAA TRICK)
+scene.fog.color = new THREE.Color(
+0.02 + day * 0.05,
+0.06 + day * 0.08,
+0.12 + day * 0.15
+);
+
+// lighting mood shift
+ambient.intensity = 0.15 + (1 - day) * 0.25;
+sun.intensity = 2.2 + day * 1.3;
+
+// ocean color shift
+water.material.color.setRGB(
+0.01 + day * 0.03,
+0.07,
+0.12 + day * 0.05
+);
+
+}
+
+/////////////////////////////////////////////////////
+// INTRO
+/////////////////////////////////////////////////////
+
+document.getElementById("enter").onclick = () => {
+document.getElementById("intro").style.display = "none";
+started = true;
+};
+
+/////////////////////////////////////////////////////
+// LOOP (AAA ORDER)
 /////////////////////////////////////////////////////
 
 function animate(){
 
 requestAnimationFrame(animate);
 
-// 🔥 KEY FIX: nothing runs until ENTER is clicked
 if(!started) return;
 
 move();
-cam();
 time();
 ocean();
+cam();
 
 renderer.render(scene,camera);
 }
 
 animate();
-
-/////////////////////////////////////////////////////
-// ENTER BUTTON FIX
-/////////////////////////////////////////////////////
-
-document.getElementById("enter").onclick = () => {
-
-document.getElementById("intro").style.display = "none";
-
-// 🔥 START WORLD PROPERLY
-started = true;
-
-};
 
 </script>
 
