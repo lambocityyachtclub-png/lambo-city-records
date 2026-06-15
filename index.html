@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LAMBO CITY — FINAL WORLD BUILD</title>
+<title>LAMBO CITY — AAA WORLD BUILD</title>
 
 <style>
 body { margin:0; overflow:hidden; background:black; }
@@ -17,17 +17,15 @@ font-family:Arial;
 z-index:10;
 }
 
-/* INTRO */
 #intro{
 position:fixed;
-top:0;
-left:0;
-width:100%;
-height:100%;
+top:0;left:0;
+width:100%;height:100%;
 z-index:999;
 display:flex;
 justify-content:center;
 align-items:center;
+background:black;
 }
 
 #intro img{
@@ -35,6 +33,7 @@ position:absolute;
 width:100%;
 height:100%;
 object-fit:cover;
+opacity:0.9;
 }
 
 #enter{
@@ -58,7 +57,7 @@ letter-spacing:3px;
 <button id="enter">ENTER LAMBO CITY</button>
 </div>
 
-<div id="ui">LAMBO CITY — FINAL WORLD</div>
+<div id="ui">LAMBO CITY — AAA WORLD</div>
 
 <canvas id="c"></canvas>
 
@@ -71,10 +70,14 @@ letter-spacing:3px;
 /////////////////////////////////////////////////////
 
 const scene = new THREE.Scene();
-scene.fog = new THREE.FogExp2(0x050b18, 0.0028);
+scene.fog = new THREE.FogExp2(0x070b18, 0.0022);
 
 const camera = new THREE.PerspectiveCamera(75,innerWidth/innerHeight,0.1,5000);
-const renderer = new THREE.WebGLRenderer({canvas:document.getElementById("c"),antialias:true});
+
+const renderer = new THREE.WebGLRenderer({
+canvas:document.getElementById("c"),
+antialias:true
+});
 renderer.setSize(innerWidth,innerHeight);
 
 window.addEventListener("resize",()=>{
@@ -84,22 +87,22 @@ renderer.setSize(innerWidth,innerHeight);
 });
 
 /////////////////////////////////////////////////////
-// LIGHTING
+// LIGHTING (AAA UPGRADE)
 /////////////////////////////////////////////////////
 
-const ambient = new THREE.AmbientLight(0x6aa6ff,0.6);
+const ambient = new THREE.AmbientLight(0x5f7fa6,0.55);
 scene.add(ambient);
 
-const sun = new THREE.DirectionalLight(0xffffff,1.4);
-sun.position.set(120,220,80);
+const sun = new THREE.DirectionalLight(0xffffff,2.0);
+sun.position.set(200,260,120);
 scene.add(sun);
 
-const glow = new THREE.PointLight(0x00aaff,2,800);
-glow.position.set(0,20,-120);
+const glow = new THREE.PointLight(0x00aaff,2,900);
+glow.position.set(0,30,-120);
 scene.add(glow);
 
 /////////////////////////////////////////////////////
-// PLAYER (FIXED SPEED)
+// PLAYER (FIXED FEEL)
 /////////////////////////////////////////////////////
 
 const player = new THREE.Mesh(
@@ -114,11 +117,11 @@ addEventListener("keydown",e=>keys[e.key.toLowerCase()]=true);
 addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
 
 let vel = new THREE.Vector3();
-const speed = 0.09;      // FIXED (faster)
-const friction = 0.82;
+const speed = 0.11;   // faster = AAA feel
+const friction = 0.84;
 
 /////////////////////////////////////////////////////
-// MOVE
+// MOVE SYSTEM
 /////////////////////////////////////////////////////
 
 function move(){
@@ -141,31 +144,35 @@ vel.z *= friction;
 
 player.position.x += vel.x;
 player.position.z += vel.z;
-
-// boundaries
-player.position.x=Math.max(-450,Math.min(450,player.position.x));
-player.position.z=Math.max(-500,Math.min(300,player.position.z));
 }
 
 /////////////////////////////////////////////////////
-// CAMERA
+// CAMERA (SMOOTH AAA FOLLOW)
 /////////////////////////////////////////////////////
 
 function cam(){
-camera.position.lerp(
-new THREE.Vector3(player.position.x,player.position.y+35,player.position.z+90),
-0.07
+
+const target = new THREE.Vector3(
+player.position.x,
+player.position.y+28,
+player.position.z+85
 );
+
+camera.position.lerp(target,0.08);
 camera.lookAt(player.position);
 }
 
 /////////////////////////////////////////////////////
-// WORLD — OCEAN
+// OCEAN (REAL MOTION)
 /////////////////////////////////////////////////////
 
 const water = new THREE.Mesh(
 new THREE.PlaneGeometry(5000,5000),
-new THREE.MeshStandardMaterial({color:0x0a1f33})
+new THREE.MeshStandardMaterial({
+color:0x0a2238,
+metalness:0.5,
+roughness:0.35
+})
 );
 water.rotation.x=-Math.PI/2;
 water.position.z=-200;
@@ -209,26 +216,26 @@ screen.position.set(0,18,-185);
 scene.add(screen);
 
 /////////////////////////////////////////////////////
-// CABINS (RESTORED)
+// CABINS
 /////////////////////////////////////////////////////
 
 for(let i=0;i<6;i++){
 
-let left = new THREE.Mesh(
+let c1 = new THREE.Mesh(
 new THREE.BoxGeometry(16,8,16),
 new THREE.MeshStandardMaterial({color:0x333333})
 );
-left.position.set(-45,4,-20-i*30);
-scene.add(left);
+c1.position.set(-45,4,-20-i*30);
+scene.add(c1);
 
-let right = left.clone();
-right.position.x=45;
-scene.add(right);
+let c2 = c1.clone();
+c2.position.x=45;
+scene.add(c2);
 
 }
 
 /////////////////////////////////////////////////////
-// GOLF ZONE
+// ZONES
 /////////////////////////////////////////////////////
 
 const golf = new THREE.Mesh(
@@ -239,10 +246,6 @@ golf.rotation.x=-Math.PI/2;
 golf.position.set(200,0,-120);
 scene.add(golf);
 
-/////////////////////////////////////////////////////
-// BASKETBALL ZONE
-/////////////////////////////////////////////////////
-
 const basketball = new THREE.Mesh(
 new THREE.PlaneGeometry(120,80),
 new THREE.MeshStandardMaterial({color:0x222244})
@@ -250,10 +253,6 @@ new THREE.MeshStandardMaterial({color:0x222244})
 basketball.rotation.x=-Math.PI/2;
 basketball.position.set(-200,0,-120);
 scene.add(basketball);
-
-/////////////////////////////////////////////////////
-// NASCAR TRACK
-/////////////////////////////////////////////////////
 
 const track = new THREE.Mesh(
 new THREE.TorusGeometry(80,6,16,100),
@@ -277,7 +276,7 @@ scene.add(m);
 }
 
 /////////////////////////////////////////////////////
-// STARS
+// STARS (MOVING FEEL)
 /////////////////////////////////////////////////////
 
 const geo = new THREE.BufferGeometry();
@@ -293,33 +292,40 @@ const stars = new THREE.Points(
 geo,
 new THREE.PointsMaterial({color:0xffffff,size:2})
 );
-
 scene.add(stars);
 
 /////////////////////////////////////////////////////
-// DAY / NIGHT
+// TIME SYSTEM (AAA LIGHTING SHIFT)
 /////////////////////////////////////////////////////
 
 let t=0;
 
 function time(){
 
-t+=0.001;
+t+=0.0012;
 
-ambient.intensity=0.4+Math.sin(t)*0.5;
+// ambient day/night shift
+ambient.intensity = 0.35 + Math.sin(t)*0.45;
 
-sun.position.x=Math.sin(t*2)*200;
-sun.position.y=Math.abs(Math.cos(t*1.5))*250;
+// sun motion
+sun.position.x = Math.sin(t*1.5)*250;
+sun.position.y = Math.abs(Math.cos(t*1.2))*260;
 
-water.material.color.setRGB(0.02+Math.sin(t)*0.05,0.08,0.15);
+// ocean tint
+water.material.color.setRGB(
+0.02 + Math.sin(t)*0.04,
+0.08,
+0.15 + Math.cos(t)*0.05
+);
 }
 
 /////////////////////////////////////////////////////
-// OCEAN
+// OCEAN MOTION
 /////////////////////////////////////////////////////
 
 function ocean(){
-water.position.x=Math.sin(t*2)*2;
+water.position.x = Math.sin(t*1.8)*2;
+water.position.z = -200 + Math.cos(t*1.3)*2;
 }
 
 /////////////////////////////////////////////////////
