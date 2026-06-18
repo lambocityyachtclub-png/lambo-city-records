@@ -33,13 +33,12 @@ color:white;cursor:pointer;z-index:9999;
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
 
-<script>
 window.addEventListener("DOMContentLoaded",()=>{
 
 /* =========================
-CORE STATE
+ENGINE CORE
 ========================= */
-let mode="intro";
+let mode="play";
 let t=0;
 
 /* =========================
@@ -66,108 +65,7 @@ sun.position.set(200,300,100);
 scene.add(sun);
 
 /* =========================
-WORLD BASE
-========================= */
-const ocean=new THREE.Mesh(
-new THREE.PlaneGeometry(9000,9000),
-new THREE.MeshStandardMaterial({color:0x0a2a3a,metalness:0.7,roughness:0.25})
-);
-ocean.rotation.x=-Math.PI/2;
-scene.add(ocean);
-
-const yacht=new THREE.Group();
-const hull=new THREE.Mesh(
-new THREE.BoxGeometry(60,10,160),
-new THREE.MeshStandardMaterial({color:0xffffff,metalness:0.9})
-);
-hull.position.y=5;
-yacht.add(hull);
-yacht.position.set(0,0,-420);
-scene.add(yacht);
-
-/* STAGE */
-const stage=new THREE.Mesh(
-new THREE.CylinderGeometry(60,60,5,64),
-new THREE.MeshStandardMaterial({
-color:0x111111,
-emissive:0x003355,
-emissiveIntensity:2
-})
-);
-stage.position.set(0,2,-220);
-scene.add(stage);
-
-const stageLight=new THREE.PointLight(0x00aaff,3,200);
-stageLight.position.set(0,40,-220);
-scene.add(stageLight);
-
-/* =========================
-CITY EXPANSION LAYER (RESTORED)
-========================= */
-const districts=[];
-
-function addDistrict(name,rep,pos,fn){
-districts.push({name,rep,pos,fn,done:false});
-}
-
-addDistrict("Ocean Blvd",10,new THREE.Vector3(-200,0,-200),()=>{
-const r=new THREE.Mesh(
-new THREE.BoxGeometry(300,1,40),
-new THREE.MeshStandardMaterial({color:0x222233})
-);
-r.position.set(-200,0,-200);
-scene.add(r);
-});
-
-addDistrict("Basketball Court",5,new THREE.Vector3(150,0,150),()=>{
-const c=new THREE.Mesh(
-new THREE.BoxGeometry(80,1,50),
-new THREE.MeshStandardMaterial({color:0x0033aa})
-);
-c.position.set(150,0,150);
-scene.add(c);
-});
-
-addDistrict("Popstar Hills",40,new THREE.Vector3(300,0,-300),()=>{
-for(let i=0;i<6;i++){
-const m=new THREE.Mesh(
-new THREE.BoxGeometry(40,25,40),
-new THREE.MeshStandardMaterial({color:0x111111})
-);
-m.position.set(300+i*60,12,-300-i*30);
-scene.add(m);
-}
-});
-
-/* =========================
-ROAD NETWORK (EXPANDED)
-========================= */
-function road(a,b){
-const curve=new THREE.CatmullRomCurve3([a,b]);
-const mesh=new THREE.Mesh(
-new THREE.TubeGeometry(curve,80,2,10,false),
-new THREE.MeshStandardMaterial({color:0x1a1a1a})
-);
-scene.add(mesh);
-}
-
-road(new THREE.Vector3(0,0,0),new THREE.Vector3(200,0,-80));
-road(new THREE.Vector3(0,0,0),new THREE.Vector3(-200,0,-200));
-road(new THREE.Vector3(0,0,0),new THREE.Vector3(150,0,150));
-road(new THREE.Vector3(200,0,-80),new THREE.Vector3(300,0,-300));
-
-/* =========================
-CITY SIGN
-========================= */
-const sign=new THREE.Mesh(
-new THREE.BoxGeometry(160,30,10),
-new THREE.MeshStandardMaterial({color:0x111111,emissive:0x00aaff,emissiveIntensity:2})
-);
-sign.position.set(0,70,-600);
-scene.add(sign);
-
-/* =========================
-PLAYER
+PLAYER SYSTEM
 ========================= */
 const player=new THREE.Mesh(
 new THREE.BoxGeometry(1,2,1),
@@ -177,112 +75,200 @@ player.position.set(0,1,20);
 scene.add(player);
 
 /* =========================
-MOVEMENT
+WORLD BASE
+========================= */
+const ocean=new THREE.Mesh(
+new THREE.PlaneGeometry(9000,9000),
+new THREE.MeshStandardMaterial({color:0x0a2a3a})
+);
+ocean.rotation.x=-Math.PI/2;
+scene.add(ocean);
+
+/* =========================
+CAR SYSTEM (GTA CORE)
+========================= */
+const car=new THREE.Mesh(
+new THREE.BoxGeometry(3,1.5,6),
+new THREE.MeshStandardMaterial({color:0xff0000})
+);
+car.position.set(10,1,10);
+scene.add(car);
+
+let inCar=false;
+
+/* =========================
+YACHT + INTERIOR SYSTEM
+========================= */
+const yacht=new THREE.Group();
+
+const hull=new THREE.Mesh(
+new THREE.BoxGeometry(60,10,160),
+new THREE.MeshStandardMaterial({color:0xffffff})
+);
+hull.position.y=5;
+yacht.add(hull);
+
+yacht.position.set(0,0,-420);
+scene.add(yacht);
+
+let inYacht=false;
+
+/* =========================
+NPC SYSTEM (CROWDS)
+========================= */
+const npcs=[];
+
+function spawnNPC(x,z){
+const n=new THREE.Mesh(
+new THREE.BoxGeometry(1,2,1),
+new THREE.MeshStandardMaterial({color:0x00ffcc})
+);
+n.position.set(x,1,z);
+n.userData={
+vx:(Math.random()-0.5)*0.1,
+vz:(Math.random()-0.5)*0.1
+};
+scene.add(n);
+npcs.push(n);
+}
+
+/* spawn crowd */
+for(let i=0;i<30;i++){
+spawnNPC((Math.random()-0.5)*100,(Math.random()-0.5)*100);
+}
+
+/* NPC update */
+function updateNPCs(){
+for(let n of npcs){
+n.position.x += n.userData.vx;
+n.position.z += n.userData.vz;
+
+if(Math.random()<0.01){
+n.userData.vx=(Math.random()-0.5)*0.1;
+n.userData.vz=(Math.random()-0.5)*0.1;
+}
+}
+}
+
+/* =========================
+DISTRICT STREAMING SYSTEM
+========================= */
+const zones={
+loaded:false,
+load(){
+if(this.loaded) return;
+this.loaded=true;
+
+const zone=new THREE.Mesh(
+new THREE.BoxGeometry(300,1,300),
+new THREE.MeshStandardMaterial({color:0x222233})
+);
+zone.position.set(-200,0,-200);
+scene.add(zone);
+
+console.log("ZONE LOADED");
+}
+};
+
+/* =========================
+MULTIPLAYER FOUNDATION (SIMULATION LAYER)
+========================= */
+const network={
+players:{},
+
+update(){
+/* placeholder for WebSocket sync */
+}
+};
+
+/* =========================
+CONTROLS
 ========================= */
 const keys={};
 let vel=new THREE.Vector3();
 
-addEventListener("keydown",e=>keys[e.key.toLowerCase()]=true);
-addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
+addEventListener("keydown",(e)=>{
+keys[e.key.toLowerCase()]=true;
 
+/* ENTER CAR */
+if(e.key==="e"){
+inCar=!inCar;
+}
+
+/* ENTER YACHT */
+if(e.key==="q"){
+inYacht=!inYacht;
+}
+});
+
+addEventListener("keyup",(e)=>keys[e.key.toLowerCase()]=false);
+
+/* =========================
+MOVEMENT SYSTEM
+========================= */
 function move(){
+
+let target=inCar?car:player;
+
+let speed=inCar?0.25:0.12;
+
 let x=0,z=0;
 if(keys.w)z-=1;
 if(keys.s)z+=1;
 if(keys.a)x-=1;
 if(keys.d)x+=1;
+
 let l=Math.hypot(x,z);
 if(l){x/=l;z/=l;}
-vel.x+=x*0.12;
-vel.z+=z*0.12;
-vel.multiplyScalar(0.86);
-player.position.add(vel);
+
+target.position.x += x*speed;
+target.position.z += z*speed;
 }
 
 /* =========================
-CAMERA (CINEMATIC V5 FIXED)
+CAMERA (FOLLOW SYSTEM)
 ========================= */
 let camVel=new THREE.Vector3();
 
 function cam(){
-const target=new THREE.Vector3(
-player.position.x,
-player.position.y+30,
-player.position.z+95
+
+let target=inCar?car:player;
+
+const goal=new THREE.Vector3(
+target.position.x,
+target.position.y+30,
+target.position.z+90
 );
 
-camVel.lerp(target.clone().sub(camera.position).multiplyScalar(0.06),0.8);
+camVel.lerp(goal.clone().sub(camera.position).multiplyScalar(0.06),0.8);
 camera.position.add(camVel);
 
-t+=0.002;
-camera.position.y+=Math.sin(t)*0.25;
-camera.position.x+=Math.cos(t*0.7)*0.15;
-
-camera.lookAt(player.position);
+camera.lookAt(target.position);
 }
 
 /* =========================
-MUSIC SYSTEM (SAFE INIT)
+YACHT INTERIOR ZONE
 ========================= */
-let audio,analyser,dataArray;
-
-function initMusic(){
-audio=new Audio("https://cdn.pixabay.com/download/audio/2022/10/25/audio_3b5f2c6c3c.mp3");
-audio.loop=true;
-audio.crossOrigin="anonymous";
-audio.play();
-
-const ctx=new AudioContext();
-const src=ctx.createMediaElementSource(audio);
-analyser=ctx.createAnalyser();
-src.connect(analyser);
-analyser.connect(ctx.destination);
-
-dataArray=new Uint8Array(analyser.frequencyBinCount);
-}
-
-function musicReact(){
-if(!analyser)return;
-analyser.getByteFrequencyData(dataArray);
-let avg=0;
-for(let i=0;i<dataArray.length;i++)avg+=dataArray[i];
-avg/=dataArray.length;
-
-stage.scale.y=1+avg/400;
-stage.material.emissiveIntensity=1+avg/120;
-}
-
-/* =========================
-PROGRESSION + DISTRICTS
-========================= */
-const Progression={
-rep:0,
-add(){
-this.rep++;
-document.getElementById("reputation").innerText="Reputation: "+this.rep;
-
-for(let d of districts){
-if(!d.done && this.rep>=d.rep){
-d.done=true;
-d.fn();
-console.log("Unlocked:",d.name);
+function yachtCheck(){
+if(player.position.distanceTo(yacht.position)<80){
+zones.load();
 }
 }
-}
-};
-
-setInterval(()=>{if(mode==="play")Progression.add();},2500);
 
 /* =========================
 LOOP
 ========================= */
 function animate(){
 requestAnimationFrame(animate);
+
 if(mode==="play"){
 move();
 cam();
-musicReact();
+updateNPCs();
+yachtCheck();
+network.update();
 }
+
 renderer.render(scene,camera);
 }
 animate();
@@ -290,14 +276,9 @@ animate();
 /* =========================
 START
 ========================= */
-document.getElementById("enter").onclick=()=>{
-document.getElementById("enter").style.display="none";
 mode="play";
-initMusic();
-};
 
 });
-</script>
-
+  
 </body>
 </html>
