@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LAMBO CITY — ENGINE v4 MUSIC</title>
+<title>LAMBO CITY — ENGINE v5</title>
 
 <style>
 body{
@@ -11,120 +11,151 @@ overflow:hidden;
 background:black;
 font-family:Arial;
 }
-
 canvas{
 position:fixed;
 inset:0;
 display:block;
+z-index:1;
 }
 
 #ui{
 position:fixed;
 top:20px;
 left:20px;
-color:white;
 z-index:10;
+color:white;
+font-size:14px;
+letter-spacing:2px;
 }
 
-#energy{
+#reputation{
 position:fixed;
 top:50px;
 left:20px;
-color:#ffcc00;
 z-index:10;
+color:white;
+font-size:14px;
+letter-spacing:2px;
 }
 
-#mode{
+#enter{
 position:fixed;
-top:80px;
-left:20px;
-color:#00aaff;
-z-index:10;
+top:50%;
+left:50%;
+transform:translate(-50%,-50%);
+padding:18px 40px;
+font-size:18px;
+background:black;
+border:2px solid #00aaff;
+color:white;
+cursor:pointer;
+z-index:9999;
 }
 </style>
 </head>
 
 <body>
 
-<div id="ui">LAMBO CITY ENGINE v4</div>
-<div id="energy">Beat Energy: 0</div>
-<div id="mode">Audio: Initializing...</div>
+<div id="ui">LAMBO CITY ENGINE v5</div>
+<div id="reputation">Reputation: 0</div>
+<button id="enter">ENTER WORLD</button>
 
 <canvas id="c"></canvas>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
 
 <script>
-window.addEventListener("DOMContentLoaded",async()=>{
-
-/* =========================
-STATE CORE
-========================= */
-const GameState = {
-time:0,
-energy:0,
-bass:0,
-mode:"idle"
-};
-
-/* =========================
-AUDIO SYSTEM (NEW CORE)
-========================= */
-let audioCtx;
-let analyser;
-let dataArray;
-let microphone;
-
-async function initAudio(){
-try{
-audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-
-const stream = await navigator.mediaDevices.getUserMedia({audio:true});
-microphone = audioCtx.createMediaStreamSource(stream);
-
-analyser = audioCtx.createAnalyser();
-analyser.fftSize = 256;
-
-microphone.connect(analyser);
-
-dataArray = new Uint8Array(analyser.frequencyBinCount);
-
-document.getElementById("mode").innerText = "Audio: LIVE INPUT";
-GameState.mode = "live";
-
-}catch(e){
-document.getElementById("mode").innerText = "Audio: FAILED (using simulation)";
-GameState.mode = "sim";
-}
-}
-initAudio();
+window.addEventListener("DOMContentLoaded",()=>{
 
 /* =========================
 ENGINE CORE
 ========================= */
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x050714);
-scene.fog = new THREE.FogExp2(0x050814,0.0012);
+let mode="intro";
+let t=0;
 
-const camera = new THREE.PerspectiveCamera(75,innerWidth/innerHeight,0.1,10000);
+/* =========================
+SCENE
+========================= */
+const scene=new THREE.Scene();
+scene.fog=new THREE.FogExp2(0x050714,0.0012);
+
+/* CAMERA (v5 cinematic system)
+========================= */
+const camera=new THREE.PerspectiveCamera(70,innerWidth/innerHeight,0.1,10000);
 camera.position.set(0,40,120);
 
-const renderer = new THREE.WebGLRenderer({
+/* RENDERER
+========================= */
+const renderer=new THREE.WebGLRenderer({
 canvas:document.getElementById("c"),
 antialias:true
 });
 renderer.setSize(innerWidth,innerHeight);
 
-/* LIGHTS */
-scene.add(new THREE.AmbientLight(0x88aacc,0.35));
-const sun = new THREE.DirectionalLight(0xfff1d6,3.2);
-sun.position.set(250,300,150);
+/* LIGHTING
+========================= */
+const ambient=new THREE.AmbientLight(0x88aacc,0.4);
+scene.add(ambient);
+
+const sun=new THREE.DirectionalLight(0xffffff,2.5);
+sun.position.set(200,300,100);
 scene.add(sun);
+
+/* =========================
+ENGINE v2 — OCEAN + YACHT LAYER
+========================= */
+const ocean=new THREE.Mesh(
+new THREE.PlaneGeometry(9000,9000),
+new THREE.MeshStandardMaterial({
+color:0x0a2a3a,
+metalness:0.7,
+roughness:0.25
+})
+);
+ocean.rotation.x=-Math.PI/2;
+scene.add(ocean);
+
+const yacht=new THREE.Group();
+
+const hull=new THREE.Mesh(
+new THREE.BoxGeometry(60,10,160),
+new THREE.MeshStandardMaterial({color:0xffffff,metalness:0.9})
+);
+hull.position.y=5;
+yacht.add(hull);
+
+const deck=new THREE.Mesh(
+new THREE.BoxGeometry(40,10,80),
+new THREE.MeshStandardMaterial({color:0xdddddd})
+);
+deck.position.set(0,15,-10);
+yacht.add(deck);
+
+yacht.position.set(0,0,-420);
+scene.add(yacht);
+
+/* =========================
+ENGINE v3 — STAGE SYSTEM
+========================= */
+const stage=new THREE.Mesh(
+new THREE.CylinderGeometry(60,60,5,64),
+new THREE.MeshStandardMaterial({
+color:0x111111,
+emissive:0x003355,
+emissiveIntensity:2
+})
+);
+stage.position.set(0,2,-220);
+scene.add(stage);
+
+const stageLight=new THREE.PointLight(0x00aaff,3,200);
+stageLight.position.set(0,40,-220);
+scene.add(stageLight);
 
 /* =========================
 PLAYER
 ========================= */
-const player = new THREE.Mesh(
+const player=new THREE.Mesh(
 new THREE.BoxGeometry(1,2,1),
 new THREE.MeshStandardMaterial({color:0xffffff})
 );
@@ -132,140 +163,108 @@ player.position.set(0,1,20);
 scene.add(player);
 
 /* =========================
-CAMERA
+MOVEMENT
 ========================= */
-const camVel = new THREE.Vector3();
+const keys={};
+let vel=new THREE.Vector3();
 
-function cam(){
-const target = new THREE.Vector3(
+addEventListener("keydown",e=>keys[e.key.toLowerCase()]=true);
+addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
+
+function move(){
+let x=0,z=0;
+if(keys.w)z-=1;
+if(keys.s)z+=1;
+if(keys.a)x-=1;
+if(keys.d)x+=1;
+let l=Math.hypot(x,z);
+if(l){x/=l;z/=l;}
+vel.x+=x*0.12;
+vel.z+=z*0.12;
+vel.multiplyScalar(0.86);
+player.position.add(vel);
+}
+
+/* =========================
+ENGINE v5 — CINEMATIC CAMERA SYSTEM
+========================= */
+let camVel=new THREE.Vector3();
+let camMode="follow";
+
+function cinematicCamera(){
+
+const target=new THREE.Vector3(
 player.position.x,
 player.position.y+30,
-player.position.z+95
+player.position.z+90
 );
 
-camVel.lerp(target.clone().sub(camera.position).multiplyScalar(0.06),0.85);
+camVel.lerp(
+target.clone().sub(camera.position).multiplyScalar(0.06),
+0.8
+);
+
 camera.position.add(camVel);
+
+/* cinematic sway */
+t+=0.003;
+
+camera.position.y += Math.sin(t)*0.3;
+camera.position.x += Math.cos(t*0.7)*0.2;
+
 camera.lookAt(player.position);
 }
 
 /* =========================
-OCEAN + STAGE
+ENGINE v4 — MUSIC REACTIVE SYSTEM
 ========================= */
-const ocean = new THREE.Mesh(
-new THREE.PlaneGeometry(12000,12000),
-new THREE.MeshStandardMaterial({color:0x062a3a})
-);
-ocean.rotation.x = -Math.PI/2;
-ocean.position.z = -400;
-scene.add(ocean);
+let audio=null;
+let analyser=null;
+let dataArray=null;
 
-/* STAGE */
-const stage = new THREE.Mesh(
-new THREE.CylinderGeometry(60,60,6,64),
-new THREE.MeshStandardMaterial({
-color:0x111111,
-emissive:0x003355,
-emissiveIntensity:1
-})
-);
-stage.position.set(0,3,-220);
-scene.add(stage);
+function initAudio(){
+audio=new Audio();
+audio.src="https://cdn.pixabay.com/download/audio/2022/10/25/audio_3b5f2c6c3c.mp3?filename=cinematic-ambient-121198.mp3";
+audio.loop=true;
+audio.crossOrigin="anonymous";
+audio.play();
 
-/* LIGHT RING */
-const lights = [];
-for(let i=0;i<12;i++){
-const l = new THREE.PointLight(0x00aaff,1.5,200);
-l.position.set(
-Math.cos(i/12*Math.PI*2)*70,
-25,
-Math.sin(i/12*Math.PI*2)*70 - 220
-);
-scene.add(l);
-lights.push(l);
+const ctx=new AudioContext();
+const src=ctx.createMediaElementSource(audio);
+analyser=ctx.createAnalyser();
+src.connect(analyser);
+analyser.connect(ctx.destination);
+
+dataArray=new Uint8Array(analyser.frequencyBinCount);
 }
 
-/* CROWD */
-const crowd = [];
-for(let i=0;i<120;i++){
-const npc = new THREE.Mesh(
-new THREE.BoxGeometry(1,2,1),
-new THREE.MeshStandardMaterial({color:0x222222})
-);
+function musicReactive(){
+if(!analyser) return;
 
-npc.position.set(
-(Math.random()-0.5)*140,
-1,
--150 + Math.random()*80
-);
-
-scene.add(npc);
-crowd.push(npc);
-}
-
-/* =========================
-AUDIO ANALYSIS (BEAT ENGINE)
-========================= */
-function getBass(){
-if(GameState.mode === "live" && analyser){
 analyser.getByteFrequencyData(dataArray);
+let avg=0;
+for(let i=0;i<dataArray.length;i++) avg+=dataArray[i];
+avg/=dataArray.length;
 
-let sum = 0;
-for(let i=0;i<40;i++){
-sum += dataArray[i];
-}
-
-return sum / 40 / 255;
-}
-
-/* fallback simulation */
-return 0.3 + Math.sin(GameState.time*2)*0.3;
+/* react stage */
+stage.scale.y = 1 + avg/400;
+stage.material.emissiveIntensity = 1 + avg/120;
 }
 
 /* =========================
-REACTIVE WORLD SYSTEM
+REPUTATION SYSTEM
 ========================= */
-function audioReact(){
-
-GameState.bass = getBass();
-GameState.energy += GameState.bass * 2;
-GameState.energy *= 0.96;
-
-/* UI */
-document.getElementById("energy").innerText =
-"Beat Energy: " + Math.floor(GameState.energy * 100);
-
-/* STAGE LIGHTS */
-lights.forEach(l=>{
-l.intensity = 1 + GameState.energy * 3;
-l.color.setHSL(0.55 + GameState.energy*0.2, 1, 0.6);
-});
-
-/* STAGE GLOW */
-stage.material.emissiveIntensity =
-1 + GameState.energy * 2;
-
-/* OCEAN PULSE */
-ocean.position.y = Math.sin(GameState.time*2) * GameState.energy * 2;
-
-/* CROWD REACTION */
-crowd.forEach(c=>{
-c.position.y = 1 + Math.sin(GameState.time*10 + c.position.x) * GameState.energy;
-c.scale.y = 1 + GameState.energy * 2;
-});
+const Progression={
+rep:0,
+add(){
+this.rep++;
+document.getElementById("reputation").innerText="Reputation: "+this.rep;
 }
+};
 
-/* =========================
-ATMOSPHERE
-========================= */
-function atmosphere(){
-GameState.time += 0.01;
-
-scene.fog.color = new THREE.Color(
-0.02 + GameState.energy*0.1,
-0.06,
-0.12 + GameState.energy*0.2
-);
-}
+setInterval(()=>{
+if(mode==="play") Progression.add();
+},2500);
 
 /* =========================
 LOOP
@@ -273,22 +272,24 @@ LOOP
 function animate(){
 requestAnimationFrame(animate);
 
-audioReact();
-atmosphere();
-cam();
+if(mode==="play"){
+move();
+cinematicCamera();
+musicReactive();
+}
 
 renderer.render(scene,camera);
 }
 animate();
 
 /* =========================
-INPUT
+START
 ========================= */
-addEventListener("keydown",e=>{
-if(e.key===" "){
-GameState.energy += 1; // manual beat trigger fallback
-}
-});
+document.getElementById("enter").onclick=()=>{
+document.getElementById("enter").style.display="none";
+mode="play";
+initAudio();
+};
 
 });
 </script>
