@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LAMBO CITY — ENGINE v5+</title>
+<title>LAMBO CITY — ENGINE v6</title>
 
 <style>
 body{margin:0;overflow:hidden;background:black;font-family:Arial}
@@ -25,7 +25,7 @@ color:white;cursor:pointer;z-index:9999;
 
 <body>
 
-<div id="ui">LAMBO CITY ENGINE v5+</div>
+<div id="ui">LAMBO CITY ENGINE v6</div>
 <div id="reputation">Reputation: 0</div>
 <button id="enter">ENTER WORLD</button>
 
@@ -33,6 +33,7 @@ color:white;cursor:pointer;z-index:9999;
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
 
+<script>
 window.addEventListener("DOMContentLoaded",()=>{
 
 /* =========================
@@ -97,7 +98,7 @@ scene.add(car);
 let inCar=false;
 
 /* =========================
-YACHT + INTERIOR SYSTEM
+YACHT SYSTEM
 ========================= */
 const yacht=new THREE.Group();
 
@@ -114,7 +115,7 @@ scene.add(yacht);
 let inYacht=false;
 
 /* =========================
-NPC SYSTEM (CROWDS)
+NPC SYSTEM
 ========================= */
 const npcs=[];
 
@@ -132,16 +133,14 @@ scene.add(n);
 npcs.push(n);
 }
 
-/* spawn crowd */
 for(let i=0;i<30;i++){
 spawnNPC((Math.random()-0.5)*100,(Math.random()-0.5)*100);
 }
 
-/* NPC update */
 function updateNPCs(){
 for(let n of npcs){
-n.position.x += n.userData.vx;
-n.position.z += n.userData.vz;
+n.position.x+=n.userData.vx;
+n.position.z+=n.userData.vz;
 
 if(Math.random()<0.01){
 n.userData.vx=(Math.random()-0.5)*0.1;
@@ -151,7 +150,7 @@ n.userData.vz=(Math.random()-0.5)*0.1;
 }
 
 /* =========================
-DISTRICT STREAMING SYSTEM
+DISTRICT LOADING
 ========================= */
 const zones={
 loaded:false,
@@ -165,51 +164,38 @@ new THREE.MeshStandardMaterial({color:0x222233})
 );
 zone.position.set(-200,0,-200);
 scene.add(zone);
-
-console.log("ZONE LOADED");
 }
 };
 
 /* =========================
-MULTIPLAYER FOUNDATION (SIMULATION LAYER)
+NETWORK (placeholder)
 ========================= */
 const network={
-players:{},
-
-update(){
-/* placeholder for WebSocket sync */
-}
+update(){}
 };
 
 /* =========================
 CONTROLS
 ========================= */
 const keys={};
-let vel=new THREE.Vector3();
 
 addEventListener("keydown",(e)=>{
 keys[e.key.toLowerCase()]=true;
 
-/* ENTER CAR */
-if(e.key==="e"){
-inCar=!inCar;
-}
-
-/* ENTER YACHT */
-if(e.key==="q"){
-inYacht=!inYacht;
-}
+if(e.key==="e") inCar=!inCar;
+if(e.key==="q") inYacht=!inYacht;
 });
 
-addEventListener("keyup",(e)=>keys[e.key.toLowerCase()]=false);
+addEventListener("keyup",(e)=>{
+keys[e.key.toLowerCase()]=false;
+});
 
 /* =========================
-MOVEMENT SYSTEM
+MOVE
 ========================= */
 function move(){
 
 let target=inCar?car:player;
-
 let speed=inCar?0.25:0.12;
 
 let x=0,z=0;
@@ -221,12 +207,12 @@ if(keys.d)x+=1;
 let l=Math.hypot(x,z);
 if(l){x/=l;z/=l;}
 
-target.position.x += x*speed;
-target.position.z += z*speed;
+target.position.x+=x*speed;
+target.position.z+=z*speed;
 }
 
 /* =========================
-CAMERA (FOLLOW SYSTEM)
+CAMERA
 ========================= */
 let camVel=new THREE.Vector3();
 
@@ -247,7 +233,7 @@ camera.lookAt(target.position);
 }
 
 /* =========================
-YACHT INTERIOR ZONE
+YACHT TRIGGER
 ========================= */
 function yachtCheck(){
 if(player.position.distanceTo(yacht.position)<80){
@@ -274,11 +260,15 @@ renderer.render(scene,camera);
 animate();
 
 /* =========================
-START
+ENTER
 ========================= */
+document.getElementById("enter").onclick=()=>{
+document.getElementById("enter").style.display="none";
 mode="play";
+};
 
 });
-  
+</script>
+
 </body>
 </html>
