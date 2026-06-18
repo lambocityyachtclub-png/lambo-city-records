@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LAMBO CITY — ENGINE v1</title>
+<title>LAMBO CITY — ENGINE v2</title>
 
 <style>
 body{
@@ -11,6 +11,7 @@ overflow:hidden;
 background:black;
 font-family:Arial;
 }
+
 canvas{
 position:fixed;
 inset:0;
@@ -24,7 +25,6 @@ left:20px;
 color:white;
 z-index:10;
 letter-spacing:2px;
-font-size:14px;
 }
 
 #rep{
@@ -35,27 +35,21 @@ color:white;
 z-index:10;
 }
 
-#enter{
+#zone{
 position:fixed;
-inset:0;
-margin:auto;
-width:200px;
-height:60px;
-z-index:9999;
-background:rgba(0,0,0,0.7);
-border:2px solid #00aaff;
-color:white;
-cursor:pointer;
-letter-spacing:3px;
+top:80px;
+left:20px;
+color:#00aaff;
+z-index:10;
 }
 </style>
 </head>
 
 <body>
 
-<div id="ui">LAMBO CITY ENGINE v1</div>
+<div id="ui">LAMBO CITY ENGINE v2</div>
 <div id="rep">Reputation: 0</div>
-<button id="enter">ENTER WORLD</button>
+<div id="zone">Zone: Dock</div>
 
 <canvas id="c"></canvas>
 
@@ -65,12 +59,14 @@ letter-spacing:3px;
 window.addEventListener("DOMContentLoaded",()=>{
 
 /* =========================
-GAME STATE (CORE HUB)
+STATE HUB
 ========================= */
 const GameState = {
-mode:"intro",
+mode:"play",
+rep:0,
+zone:"Dock",
 time:0,
-reputation:0
+yachtUnlocked:false
 };
 
 /* =========================
@@ -88,16 +84,15 @@ canvas:document.getElementById("c"),
 antialias:true
 });
 renderer.setSize(innerWidth,innerHeight);
-renderer.setPixelRatio(Math.min(devicePixelRatio,2));
 
-/* LIGHTING */
+/* LIGHTS */
 scene.add(new THREE.AmbientLight(0x88aacc,0.35));
 const sun = new THREE.DirectionalLight(0xfff1d6,3.2);
 sun.position.set(250,300,150);
 scene.add(sun);
 
 /* =========================
-PLAYER SYSTEM
+PLAYER
 ========================= */
 const player = new THREE.Mesh(
 new THREE.BoxGeometry(1,2,1),
@@ -112,7 +107,7 @@ let vel = new THREE.Vector3();
 addEventListener("keydown",e=>keys[e.key.toLowerCase()]=true);
 addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
 
-function updatePlayer(){
+function move(){
 let x=0,z=0;
 if(keys.w)z-=1;
 if(keys.s)z+=1;
@@ -130,11 +125,11 @@ player.position.add(vel);
 }
 
 /* =========================
-CAMERA SYSTEM (SMOOTH FOLLOW)
+CAMERA
 ========================= */
 const camVel = new THREE.Vector3();
 
-function updateCamera(){
+function cam(){
 const target = new THREE.Vector3(
 player.position.x,
 player.position.y+30,
@@ -147,206 +142,163 @@ camera.lookAt(player.position);
 }
 
 /* =========================
-WORLD CORE
+WORLD BASE
 ========================= */
-const world = {
-roads:[],
-districts:[],
-buildings:[]
-};
 
-function addGround(){
-const water = new THREE.Mesh(
-new THREE.PlaneGeometry(9000,9000),
-new THREE.MeshStandardMaterial({color:0x08293d})
+/* 🌊 OCEAN SYSTEM (NEW) */
+const ocean = new THREE.Mesh(
+new THREE.PlaneGeometry(12000,12000),
+new THREE.MeshStandardMaterial({
+color:0x062a3a,
+metalness:0.7,
+roughness:0.3
+})
 );
-water.rotation.x = -Math.PI/2;
-water.position.z = -250;
-scene.add(water);
-}
-addGround();
+ocean.rotation.x = -Math.PI/2;
+ocean.position.z = -400;
+scene.add(ocean);
+
+/* DOCK */
+const dock = new THREE.Mesh(
+new THREE.BoxGeometry(40,1,260),
+new THREE.MeshStandardMaterial({color:0x4a2f1d})
+);
+dock.position.set(0,0.5,-40);
+scene.add(dock);
 
 /* =========================
-ROAD SYSTEM (ENGINEIZED)
+YACHT SYSTEM (NEW CORE FEATURE)
 ========================= */
-function addRoad(points){
-const curve = new THREE.CatmullRomCurve3(points);
+const yachtZone = {
+active:false,
+radius:120
+};
 
-const road = new THREE.Mesh(
-new THREE.TubeGeometry(curve,80,2,10,false),
-new THREE.MeshStandardMaterial({color:0x1a1a1a})
+const yacht = new THREE.Group();
+
+/* yacht body */
+const hull = new THREE.Mesh(
+new THREE.BoxGeometry(60,12,160),
+new THREE.MeshStandardMaterial({
+color:0xf1f1f1,
+metalness:0.9,
+roughness:0.2
+})
 );
 
-scene.add(road);
-world.roads.push(road);
-}
+hull.position.y = 8;
+yacht.add(hull);
 
-/* MAIN CITY SPINE */
-addRoad([
-new THREE.Vector3(0,0,0),
-new THREE.Vector3(200,0,-80),
-new THREE.Vector3(300,0,-300),
-new THREE.Vector3(0,0,300),
-new THREE.Vector3(-200,0,-200)
-]);
+/* yacht cabin */
+const cabin = new THREE.Mesh(
+new THREE.BoxGeometry(40,15,70),
+new THREE.MeshStandardMaterial({
+color:0xdedede,
+metalness:0.6,
+roughness:0.25
+})
+);
+
+cabin.position.set(0,22,-10);
+yacht.add(cabin);
+
+/* glow deck */
+const yachtLight = new THREE.PointLight(0x00aaff,2,400);
+yachtLight.position.set(0,30,0);
+yacht.add(yachtLight);
+
+/* initial placement (far ocean) */
+yacht.position.set(0,0,-700);
+scene.add(yacht);
 
 /* =========================
-DISTRICT SYSTEM (PLUG-IN ARCHITECTURE)
+ZONE DETECTION SYSTEM
 ========================= */
-const DistrictManager = {
+function updateZone(){
+const d = player.position.distanceTo(yacht.position);
 
-register(d){
-world.districts.push(d);
-},
+if(d < yachtZone.radius){
+GameState.zone = "Yacht Deck";
+yachtZone.active = true;
+} else if(player.position.z < -200){
+GameState.zone = "Ocean";
+} else {
+GameState.zone = "Dock";
+}
 
-update(rep){
-world.districts.forEach(d=>{
-if(!d.unlocked && rep>=d.unlockRep){
-d.unlocked = true;
-d.onUnlock();
-console.log("UNLOCK:",d.name);
+document.getElementById("zone").innerText =
+"Zone: " + GameState.zone;
 }
-});
+
+/* =========================
+YACHT UNLOCK SYSTEM
+========================= */
+function checkYachtUnlock(){
+if(GameState.rep >= 30 && !GameState.yachtUnlocked){
+GameState.yachtUnlocked = true;
+
+/* move yacht closer when unlocked */
+yacht.position.set(0,0,-500);
+
+console.log("🚢 YACHT UNLOCKED");
 }
-};
+}
 
 /* =========================
 PROGRESSION SYSTEM
 ========================= */
-const Progression = {
-add(amount){
-GameState.reputation += amount;
+function addRep(amount){
+GameState.rep += amount;
 
 document.getElementById("rep").innerText =
-"Reputation: " + GameState.reputation;
+"Reputation: " + GameState.rep;
 
-DistrictManager.update(GameState.reputation);
-
-if(GameState.reputation >= 25 && !world.heroBuilt){
-world.heroBuilt = true;
-spawnHeroMansion();
+checkYachtUnlock();
 }
-}
-};
 
 /* =========================
-HERO MANSION (CORE EVENT BUILD)
+ATMOSPHERE UPGRADE
 ========================= */
-function spawnHeroMansion(){
-const base = new THREE.Mesh(
-new THREE.BoxGeometry(30,18,30),
-new THREE.MeshStandardMaterial({color:0x111111})
+function atmosphere(){
+GameState.time += 0.01;
+
+const wave = Math.sin(GameState.time);
+
+/* ocean breathing motion */
+ocean.position.x = wave * 2;
+ocean.position.z = -400 + Math.cos(GameState.time)*2;
+
+/* yacht float */
+yacht.position.y = Math.sin(GameState.time*2)*1.5;
+
+/* lighting shift */
+scene.fog.color = new THREE.Color(
+0.02 + wave*0.02,
+0.06,
+0.12 + wave*0.03
 );
-
-base.position.set(200,9,-80);
-scene.add(base);
-
-const light = new THREE.PointLight(0x00aaff,2,300);
-light.position.set(200,25,-80);
-scene.add(light);
 }
 
 /* =========================
-DISTRICTS (MODULAR PLUGINS)
-========================= */
-
-DistrictManager.register({
-name:"Ocean Blvd",
-unlockRep:10,
-unlocked:false,
-onUnlock(){
-const road = new THREE.Mesh(
-new THREE.BoxGeometry(300,1,40),
-new THREE.MeshStandardMaterial({color:0x222233})
-);
-road.position.set(-200,0,-200);
-scene.add(road);
-}
-});
-
-DistrictManager.register({
-name:"Speedway",
-unlockRep:25,
-unlocked:false,
-onUnlock(){
-const curve = new THREE.CatmullRomCurve3([
-new THREE.Vector3(0,0,300),
-new THREE.Vector3(120,0,350),
-new THREE.Vector3(240,0,300),
-new THREE.Vector3(120,0,250)
-]);
-
-const track = new THREE.Mesh(
-new THREE.TubeGeometry(curve,120,6,12,true),
-new THREE.MeshStandardMaterial({color:0x111111})
-);
-
-scene.add(track);
-}
-});
-
-DistrictManager.register({
-name:"Popstar Hills",
-unlockRep:40,
-unlocked:false,
-onUnlock(){
-for(let i=0;i<6;i++){
-const house = new THREE.Mesh(
-new THREE.BoxGeometry(40,25,40),
-new THREE.MeshStandardMaterial({color:0x111111})
-);
-house.position.set(300+i*60,12,-300-i*30);
-scene.add(house);
-}
-}
-});
-
-DistrictManager.register({
-name:"Basketball Court",
-unlockRep:5,
-unlocked:false,
-onUnlock(){
-const court = new THREE.Mesh(
-new THREE.BoxGeometry(80,1,50),
-new THREE.MeshStandardMaterial({color:0x0033aa})
-);
-court.position.set(150,0,150);
-scene.add(court);
-}
-});
-
-/* =========================
-LOOP
+CAM LOOP
 ========================= */
 function animate(){
 requestAnimationFrame(animate);
 
-if(GameState.mode === "play"){
-updatePlayer();
-updateCamera();
-}
-
-GameState.time += 0.01;
+move();
+cam();
+updateZone();
+atmosphere();
 
 renderer.render(scene,camera);
 }
 animate();
 
 /* =========================
-ENTER WORLD
-========================= */
-document.getElementById("enter").onclick=()=>{
-GameState.mode="play";
-document.getElementById("enter").style.display="none";
-};
-
-/* =========================
-REPUTATION LOOP (TEST)
+TEST REPUTATION GAIN
 ========================= */
 setInterval(()=>{
-if(GameState.mode==="play"){
-Progression.add(1);
-}
+addRep(1);
 },3000);
 
 });
