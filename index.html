@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LAMBO CITY — ENGINE v2</title>
+<title>LAMBO CITY — ENGINE v3 STAGE</title>
 
 <style>
 body{
@@ -24,22 +24,21 @@ top:20px;
 left:20px;
 color:white;
 z-index:10;
-letter-spacing:2px;
-}
-
-#rep{
-position:fixed;
-top:50px;
-left:20px;
-color:white;
-z-index:10;
 }
 
 #zone{
 position:fixed;
-top:80px;
+top:50px;
 left:20px;
 color:#00aaff;
+z-index:10;
+}
+
+#energy{
+position:fixed;
+top:80px;
+left:20px;
+color:#ffcc00;
 z-index:10;
 }
 </style>
@@ -47,9 +46,9 @@ z-index:10;
 
 <body>
 
-<div id="ui">LAMBO CITY ENGINE v2</div>
-<div id="rep">Reputation: 0</div>
+<div id="ui">LAMBO CITY ENGINE v3</div>
 <div id="zone">Zone: Dock</div>
+<div id="energy">Stage Energy: 0</div>
 
 <canvas id="c"></canvas>
 
@@ -59,14 +58,14 @@ z-index:10;
 window.addEventListener("DOMContentLoaded",()=>{
 
 /* =========================
-STATE HUB
+CORE STATE
 ========================= */
 const GameState = {
-mode:"play",
 rep:0,
-zone:"Dock",
 time:0,
-yachtUnlocked:false
+zone:"Dock",
+stageActive:false,
+energy:0
 };
 
 /* =========================
@@ -142,84 +141,127 @@ camera.lookAt(player.position);
 }
 
 /* =========================
-WORLD BASE
+OCEAN BASE (from v2 simplified)
 ========================= */
-
-/* 🌊 OCEAN SYSTEM (NEW) */
 const ocean = new THREE.Mesh(
 new THREE.PlaneGeometry(12000,12000),
-new THREE.MeshStandardMaterial({
-color:0x062a3a,
-metalness:0.7,
-roughness:0.3
-})
+new THREE.MeshStandardMaterial({color:0x062a3a})
 );
 ocean.rotation.x = -Math.PI/2;
 ocean.position.z = -400;
 scene.add(ocean);
 
-/* DOCK */
-const dock = new THREE.Mesh(
-new THREE.BoxGeometry(40,1,260),
-new THREE.MeshStandardMaterial({color:0x4a2f1d})
-);
-dock.position.set(0,0.5,-40);
-scene.add(dock);
-
 /* =========================
-YACHT SYSTEM (NEW CORE FEATURE)
+MAIN STAGE (NEW CORE FEATURE)
 ========================= */
-const yachtZone = {
-active:false,
-radius:120
-};
+const stage = new THREE.Group();
 
-const yacht = new THREE.Group();
-
-/* yacht body */
-const hull = new THREE.Mesh(
-new THREE.BoxGeometry(60,12,160),
+/* stage base */
+const platform = new THREE.Mesh(
+new THREE.CylinderGeometry(60,60,6,64),
 new THREE.MeshStandardMaterial({
-color:0xf1f1f1,
-metalness:0.9,
-roughness:0.2
+color:0x111111,
+emissive:0x003355,
+emissiveIntensity:1.5
 })
 );
 
-hull.position.y = 8;
-yacht.add(hull);
+platform.position.y = 3;
+stage.add(platform);
 
-/* yacht cabin */
-const cabin = new THREE.Mesh(
-new THREE.BoxGeometry(40,15,70),
+/* jumbotron */
+const screen = new THREE.Mesh(
+new THREE.BoxGeometry(80,35,3),
 new THREE.MeshStandardMaterial({
-color:0xdedede,
-metalness:0.6,
-roughness:0.25
+color:0x111111,
+emissive:0x00aaff,
+emissiveIntensity:1.5
 })
 );
 
-cabin.position.set(0,22,-10);
-yacht.add(cabin);
+screen.position.set(0,40,-60);
+stage.add(screen);
 
-/* glow deck */
-const yachtLight = new THREE.PointLight(0x00aaff,2,400);
-yachtLight.position.set(0,30,0);
-yacht.add(yachtLight);
+/* stage lights ring */
+for(let i=0;i<12;i++){
+const light = new THREE.PointLight(0x00aaff,2,200);
+light.position.set(
+Math.cos(i/12*Math.PI*2)*70,
+25,
+Math.sin(i/12*Math.PI*2)*70
+);
+stage.add(light);
+}
 
-/* initial placement (far ocean) */
-yacht.position.set(0,0,-700);
-scene.add(yacht);
+/* stage position */
+stage.position.set(0,0,-220);
+scene.add(stage);
 
 /* =========================
-ZONE DETECTION SYSTEM
+CROWD SYSTEM (NEW)
+========================= */
+const crowd = [];
+
+function spawnCrowd(){
+for(let i=0;i<120;i++){
+const npc = new THREE.Mesh(
+new THREE.BoxGeometry(1,2,1),
+new THREE.MeshStandardMaterial({color:0x222222})
+);
+
+npc.position.set(
+(stage.position.x + (Math.random()-0.5)*120),
+1,
+(stage.position.z + 80 + Math.random()*60)
+);
+
+scene.add(npc);
+crowd.push(npc);
+}
+}
+spawnCrowd();
+
+/* crowd animation */
+function updateCrowd(){
+crowd.forEach(n=>{
+n.position.y = 1 + Math.sin(GameState.time*3 + n.position.x)*0.2;
+});
+}
+
+/* =========================
+STAGE ENERGY SYSTEM (NEW)
+========================= */
+function updateStageEnergy(){
+
+const dist = player.position.distanceTo(stage.position);
+
+if(dist < 200){
+GameState.stageActive = true;
+GameState.energy += 0.5;
+} else {
+GameState.stageActive = false;
+GameState.energy *= 0.98;
+}
+
+document.getElementById("energy").innerText =
+"Stage Energy: " + Math.floor(GameState.energy);
+
+/* visual pulse */
+platform.material.emissiveIntensity =
+1 + GameState.energy*0.02;
+
+screen.material.emissiveIntensity =
+1.5 + GameState.energy*0.03;
+}
+
+/* =========================
+ZONE SYSTEM
 ========================= */
 function updateZone(){
-const d = player.position.distanceTo(yacht.position);
+const d = player.position.distanceTo(stage.position);
 
-if(d < yachtZone.radius){
-GameState.zone = "Yacht Deck";
-yachtZone.active = true;
+if(d < 200){
+GameState.zone = "Stage Zone";
 } else if(player.position.z < -200){
 GameState.zone = "Ocean";
 } else {
@@ -231,47 +273,20 @@ document.getElementById("zone").innerText =
 }
 
 /* =========================
-YACHT UNLOCK SYSTEM
-========================= */
-function checkYachtUnlock(){
-if(GameState.rep >= 30 && !GameState.yachtUnlocked){
-GameState.yachtUnlocked = true;
-
-/* move yacht closer when unlocked */
-yacht.position.set(0,0,-500);
-
-console.log("🚢 YACHT UNLOCKED");
-}
-}
-
-/* =========================
-PROGRESSION SYSTEM
-========================= */
-function addRep(amount){
-GameState.rep += amount;
-
-document.getElementById("rep").innerText =
-"Reputation: " + GameState.rep;
-
-checkYachtUnlock();
-}
-
-/* =========================
-ATMOSPHERE UPGRADE
+ATMOSPHERE (LIGHT PULSE)
 ========================= */
 function atmosphere(){
 GameState.time += 0.01;
 
 const wave = Math.sin(GameState.time);
 
-/* ocean breathing motion */
+/* ocean motion */
 ocean.position.x = wave * 2;
-ocean.position.z = -400 + Math.cos(GameState.time)*2;
 
-/* yacht float */
-yacht.position.y = Math.sin(GameState.time*2)*1.5;
+/* stage float */
+stage.position.y = Math.sin(GameState.time*2)*1.2;
 
-/* lighting shift */
+/* lighting mood shift */
 scene.fog.color = new THREE.Color(
 0.02 + wave*0.02,
 0.06,
@@ -280,7 +295,7 @@ scene.fog.color = new THREE.Color(
 }
 
 /* =========================
-CAM LOOP
+MAIN LOOP
 ========================= */
 function animate(){
 requestAnimationFrame(animate);
@@ -288,18 +303,13 @@ requestAnimationFrame(animate);
 move();
 cam();
 updateZone();
+updateStageEnergy();
+updateCrowd();
 atmosphere();
 
 renderer.render(scene,camera);
 }
 animate();
-
-/* =========================
-TEST REPUTATION GAIN
-========================= */
-setInterval(()=>{
-addRep(1);
-},3000);
 
 });
 </script>
