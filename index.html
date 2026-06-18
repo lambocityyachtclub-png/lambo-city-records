@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LAMBO CITY — ENGINE v3 STAGE</title>
+<title>LAMBO CITY — ENGINE v4 MUSIC</title>
 
 <style>
 body{
@@ -26,19 +26,19 @@ color:white;
 z-index:10;
 }
 
-#zone{
+#energy{
 position:fixed;
 top:50px;
 left:20px;
-color:#00aaff;
+color:#ffcc00;
 z-index:10;
 }
 
-#energy{
+#mode{
 position:fixed;
 top:80px;
 left:20px;
-color:#ffcc00;
+color:#00aaff;
 z-index:10;
 }
 </style>
@@ -46,27 +46,58 @@ z-index:10;
 
 <body>
 
-<div id="ui">LAMBO CITY ENGINE v3</div>
-<div id="zone">Zone: Dock</div>
-<div id="energy">Stage Energy: 0</div>
+<div id="ui">LAMBO CITY ENGINE v4</div>
+<div id="energy">Beat Energy: 0</div>
+<div id="mode">Audio: Initializing...</div>
 
 <canvas id="c"></canvas>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
 
 <script>
-window.addEventListener("DOMContentLoaded",()=>{
+window.addEventListener("DOMContentLoaded",async()=>{
 
 /* =========================
-CORE STATE
+STATE CORE
 ========================= */
 const GameState = {
-rep:0,
 time:0,
-zone:"Dock",
-stageActive:false,
-energy:0
+energy:0,
+bass:0,
+mode:"idle"
 };
+
+/* =========================
+AUDIO SYSTEM (NEW CORE)
+========================= */
+let audioCtx;
+let analyser;
+let dataArray;
+let microphone;
+
+async function initAudio(){
+try{
+audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+const stream = await navigator.mediaDevices.getUserMedia({audio:true});
+microphone = audioCtx.createMediaStreamSource(stream);
+
+analyser = audioCtx.createAnalyser();
+analyser.fftSize = 256;
+
+microphone.connect(analyser);
+
+dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+document.getElementById("mode").innerText = "Audio: LIVE INPUT";
+GameState.mode = "live";
+
+}catch(e){
+document.getElementById("mode").innerText = "Audio: FAILED (using simulation)";
+GameState.mode = "sim";
+}
+}
+initAudio();
 
 /* =========================
 ENGINE CORE
@@ -100,29 +131,6 @@ new THREE.MeshStandardMaterial({color:0xffffff})
 player.position.set(0,1,20);
 scene.add(player);
 
-const keys = {};
-let vel = new THREE.Vector3();
-
-addEventListener("keydown",e=>keys[e.key.toLowerCase()]=true);
-addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
-
-function move(){
-let x=0,z=0;
-if(keys.w)z-=1;
-if(keys.s)z+=1;
-if(keys.a)x-=1;
-if(keys.d)x+=1;
-
-let len=Math.hypot(x,z);
-if(len){x/=len;z/=len;}
-
-vel.x += x*0.12;
-vel.z += z*0.12;
-vel.multiplyScalar(0.86);
-
-player.position.add(vel);
-}
-
 /* =========================
 CAMERA
 ========================= */
@@ -141,7 +149,7 @@ camera.lookAt(player.position);
 }
 
 /* =========================
-OCEAN BASE (from v2 simplified)
+OCEAN + STAGE
 ========================= */
 const ocean = new THREE.Mesh(
 new THREE.PlaneGeometry(12000,12000),
@@ -151,58 +159,33 @@ ocean.rotation.x = -Math.PI/2;
 ocean.position.z = -400;
 scene.add(ocean);
 
-/* =========================
-MAIN STAGE (NEW CORE FEATURE)
-========================= */
-const stage = new THREE.Group();
-
-/* stage base */
-const platform = new THREE.Mesh(
+/* STAGE */
+const stage = new THREE.Mesh(
 new THREE.CylinderGeometry(60,60,6,64),
 new THREE.MeshStandardMaterial({
 color:0x111111,
 emissive:0x003355,
-emissiveIntensity:1.5
+emissiveIntensity:1
 })
 );
-
-platform.position.y = 3;
-stage.add(platform);
-
-/* jumbotron */
-const screen = new THREE.Mesh(
-new THREE.BoxGeometry(80,35,3),
-new THREE.MeshStandardMaterial({
-color:0x111111,
-emissive:0x00aaff,
-emissiveIntensity:1.5
-})
-);
-
-screen.position.set(0,40,-60);
-stage.add(screen);
-
-/* stage lights ring */
-for(let i=0;i<12;i++){
-const light = new THREE.PointLight(0x00aaff,2,200);
-light.position.set(
-Math.cos(i/12*Math.PI*2)*70,
-25,
-Math.sin(i/12*Math.PI*2)*70
-);
-stage.add(light);
-}
-
-/* stage position */
-stage.position.set(0,0,-220);
+stage.position.set(0,3,-220);
 scene.add(stage);
 
-/* =========================
-CROWD SYSTEM (NEW)
-========================= */
-const crowd = [];
+/* LIGHT RING */
+const lights = [];
+for(let i=0;i<12;i++){
+const l = new THREE.PointLight(0x00aaff,1.5,200);
+l.position.set(
+Math.cos(i/12*Math.PI*2)*70,
+25,
+Math.sin(i/12*Math.PI*2)*70 - 220
+);
+scene.add(l);
+lights.push(l);
+}
 
-function spawnCrowd(){
+/* CROWD */
+const crowd = [];
 for(let i=0;i<120;i++){
 const npc = new THREE.Mesh(
 new THREE.BoxGeometry(1,2,1),
@@ -210,106 +193,102 @@ new THREE.MeshStandardMaterial({color:0x222222})
 );
 
 npc.position.set(
-(stage.position.x + (Math.random()-0.5)*120),
+(Math.random()-0.5)*140,
 1,
-(stage.position.z + 80 + Math.random()*60)
+-150 + Math.random()*80
 );
 
 scene.add(npc);
 crowd.push(npc);
 }
-}
-spawnCrowd();
 
-/* crowd animation */
-function updateCrowd(){
-crowd.forEach(n=>{
-n.position.y = 1 + Math.sin(GameState.time*3 + n.position.x)*0.2;
+/* =========================
+AUDIO ANALYSIS (BEAT ENGINE)
+========================= */
+function getBass(){
+if(GameState.mode === "live" && analyser){
+analyser.getByteFrequencyData(dataArray);
+
+let sum = 0;
+for(let i=0;i<40;i++){
+sum += dataArray[i];
+}
+
+return sum / 40 / 255;
+}
+
+/* fallback simulation */
+return 0.3 + Math.sin(GameState.time*2)*0.3;
+}
+
+/* =========================
+REACTIVE WORLD SYSTEM
+========================= */
+function audioReact(){
+
+GameState.bass = getBass();
+GameState.energy += GameState.bass * 2;
+GameState.energy *= 0.96;
+
+/* UI */
+document.getElementById("energy").innerText =
+"Beat Energy: " + Math.floor(GameState.energy * 100);
+
+/* STAGE LIGHTS */
+lights.forEach(l=>{
+l.intensity = 1 + GameState.energy * 3;
+l.color.setHSL(0.55 + GameState.energy*0.2, 1, 0.6);
+});
+
+/* STAGE GLOW */
+stage.material.emissiveIntensity =
+1 + GameState.energy * 2;
+
+/* OCEAN PULSE */
+ocean.position.y = Math.sin(GameState.time*2) * GameState.energy * 2;
+
+/* CROWD REACTION */
+crowd.forEach(c=>{
+c.position.y = 1 + Math.sin(GameState.time*10 + c.position.x) * GameState.energy;
+c.scale.y = 1 + GameState.energy * 2;
 });
 }
 
 /* =========================
-STAGE ENERGY SYSTEM (NEW)
-========================= */
-function updateStageEnergy(){
-
-const dist = player.position.distanceTo(stage.position);
-
-if(dist < 200){
-GameState.stageActive = true;
-GameState.energy += 0.5;
-} else {
-GameState.stageActive = false;
-GameState.energy *= 0.98;
-}
-
-document.getElementById("energy").innerText =
-"Stage Energy: " + Math.floor(GameState.energy);
-
-/* visual pulse */
-platform.material.emissiveIntensity =
-1 + GameState.energy*0.02;
-
-screen.material.emissiveIntensity =
-1.5 + GameState.energy*0.03;
-}
-
-/* =========================
-ZONE SYSTEM
-========================= */
-function updateZone(){
-const d = player.position.distanceTo(stage.position);
-
-if(d < 200){
-GameState.zone = "Stage Zone";
-} else if(player.position.z < -200){
-GameState.zone = "Ocean";
-} else {
-GameState.zone = "Dock";
-}
-
-document.getElementById("zone").innerText =
-"Zone: " + GameState.zone;
-}
-
-/* =========================
-ATMOSPHERE (LIGHT PULSE)
+ATMOSPHERE
 ========================= */
 function atmosphere(){
 GameState.time += 0.01;
 
-const wave = Math.sin(GameState.time);
-
-/* ocean motion */
-ocean.position.x = wave * 2;
-
-/* stage float */
-stage.position.y = Math.sin(GameState.time*2)*1.2;
-
-/* lighting mood shift */
 scene.fog.color = new THREE.Color(
-0.02 + wave*0.02,
+0.02 + GameState.energy*0.1,
 0.06,
-0.12 + wave*0.03
+0.12 + GameState.energy*0.2
 );
 }
 
 /* =========================
-MAIN LOOP
+LOOP
 ========================= */
 function animate(){
 requestAnimationFrame(animate);
 
-move();
-cam();
-updateZone();
-updateStageEnergy();
-updateCrowd();
+audioReact();
 atmosphere();
+cam();
 
 renderer.render(scene,camera);
 }
 animate();
+
+/* =========================
+INPUT
+========================= */
+addEventListener("keydown",e=>{
+if(e.key===" "){
+GameState.energy += 1; // manual beat trigger fallback
+}
+});
 
 });
 </script>
