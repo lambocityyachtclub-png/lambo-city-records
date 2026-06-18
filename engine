@@ -1,5 +1,35 @@
 engine/
 ├── core.js
 ├── scene.js
+import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.module.js";
+
+export let scene;
+
+export function initScene(){
+scene = new THREE.Scene();
+scene.background = new THREE.Color(0x050714);
+scene.fog = new THREE.FogExp2(0x050714, 0.0012);
+}
+
 ├── camera.js
+import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.module.js";
+
+export let camera;
+
+export function initCamera(){
+camera = new THREE.PerspectiveCamera(70, innerWidth/innerHeight, 0.1, 10000);
+camera.position.set(0,40,120);
+}
+
 ├── renderer.js
+import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.module.js";
+
+export let renderer;
+
+export function initRenderer(){
+renderer = new THREE.WebGLRenderer({
+canvas: document.getElementById("c"),
+antialias:true
+});
+renderer.setSize(innerWidth, innerHeight);
+}
