@@ -88,6 +88,7 @@ background:radial-gradient(circle at center,rgba(0,0,0,0) 45%,rgba(0,0,0,0.82) 1
 <div id="ui">LAMBO CITY — FULL CINEMATIC BUILD</div>
 <div id="reputation">Reputation: 0</div>
 <div id="vignette"></div>
+
 <canvas id="c"></canvas>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
@@ -99,8 +100,6 @@ window.addEventListener("DOMContentLoaded",()=>{
 STATE
 ========================= */
 let mode="intro";
-let introTime=0;
-let t=0;
 
 /* =========================
 SCENE
@@ -129,7 +128,7 @@ sun.position.set(250,300,150);
 scene.add(sun);
 
 /* =========================
-WORLD (YOUR ORIGINAL)
+WORLD BASE
 ========================= */
 const water=new THREE.Mesh(
 new THREE.PlaneGeometry(9000,9000),
@@ -196,13 +195,19 @@ camera.lookAt(player.position);
 }
 
 /* =========================
-PROGRESSION SYSTEM (FIXED)
+PROGRESSION SYSTEM
 ========================= */
+const World = {
+heroBuilt:false
+};
+
 const Progression={
 reputation:0,
 addReputation(a){
 this.reputation+=a;
 document.getElementById("reputation").innerText="Reputation: "+this.reputation;
+
+DistrictManager.update(this.reputation);
 
 if(this.reputation>=25 && !World.heroBuilt){
 World.heroBuilt=true;
@@ -211,8 +216,51 @@ buildHeroMansion();
 }
 };
 
-const World={heroBuilt:false};
+/* =========================
+DISTRICT SYSTEM
+========================= */
+const DistrictManager={
+districts:[],
 
+register(d){
+this.districts.push(d);
+},
+
+update(rep){
+this.districts.forEach(d=>{
+if(!d.unlocked && rep>=d.unlockRep){
+d.unlocked=true;
+d.onUnlock();
+console.log("🏙 Unlocked:",d.name);
+}
+});
+}
+};
+
+/* =========================
+LAMBO CITY SIGN (GLOBAL IDENTITY)
+========================= */
+function createCitySign(){
+const sign=new THREE.Mesh(
+new THREE.BoxGeometry(120,25,10),
+new THREE.MeshStandardMaterial({
+color:0x111111,
+emissive:0x00aaff,
+emissiveIntensity:2
+})
+);
+sign.position.set(0,60,-600);
+scene.add(sign);
+
+const glow=new THREE.PointLight(0x00aaff,2,600);
+glow.position.set(0,80,-600);
+scene.add(glow);
+}
+createCitySign();
+
+/* =========================
+HERO MANSION
+========================= */
 function buildHeroMansion(){
 const base=new THREE.Mesh(
 new THREE.BoxGeometry(30,18,30),
@@ -228,39 +276,105 @@ scene.add(light);
 console.log("🏛 HERO MANSION UNLOCKED");
 }
 
-/* ROAD */
-function road(){
+/* =========================
+DISTRICTS
+========================= */
+DistrictManager.register({
+name:"Ocean Blvd",
+unlockRep:10,
+unlocked:false,
+
+onUnlock(){
+const road=new THREE.Mesh(
+new THREE.BoxGeometry(300,1,40),
+new THREE.MeshStandardMaterial({color:0x222233})
+);
+road.position.set(-200,0,-200);
+scene.add(road);
+}
+});
+
+DistrictManager.register({
+name:"Popstar Hills",
+unlockRep:40,
+unlocked:false,
+
+onUnlock(){
+for(let i=0;i<6;i++){
+const m=new THREE.Mesh(
+new THREE.BoxGeometry(40,25,40),
+new THREE.MeshStandardMaterial({color:0x111111})
+);
+m.position.set(300+i*60,12,-300-i*30);
+scene.add(m);
+}
+}
+});
+
+DistrictManager.register({
+name:"Speedway",
+unlockRep:25,
+unlocked:false,
+
+onUnlock(){
 const curve=new THREE.CatmullRomCurve3([
+new THREE.Vector3(0,0,300),
+new THREE.Vector3(120,0,350),
+new THREE.Vector3(240,0,300),
+new THREE.Vector3(120,0,250)
+]);
+
+const track=new THREE.Mesh(
+new THREE.TubeGeometry(curve,120,6,12,true),
+new THREE.MeshStandardMaterial({color:0x111111})
+);
+scene.add(track);
+}
+});
+
+DistrictManager.register({
+name:"Basketball Court",
+unlockRep:5,
+unlocked:false,
+
+onUnlock(){
+const court=new THREE.Mesh(
+new THREE.BoxGeometry(80,1,50),
+new THREE.MeshStandardMaterial({color:0x0033aa})
+);
+court.position.set(150,0,150);
+scene.add(court);
+}
+});
+
+/* =========================
+ROAD TO HERO MANSION
+========================= */
+const road=new THREE.Mesh(
+new THREE.TubeGeometry(
+new THREE.CatmullRomCurve3([
 new THREE.Vector3(0,0,0),
 new THREE.Vector3(60,0,-10),
 new THREE.Vector3(120,0,-40),
 new THREE.Vector3(200,0,-80)
-]);
-
-const mesh=new THREE.Mesh(
-new THREE.TubeGeometry(curve,80,1.5,8,false),
+]),
+80,1.5,8,false
+),
 new THREE.MeshStandardMaterial({color:0x1a1a1a})
 );
-
-scene.add(mesh);
-}
-road();
+scene.add(road);
 
 /* =========================
-TEST REPUTATION
-========================= */
-setInterval(()=>{
-if(mode==="play"){
-Progression.addReputation(1);
-}
-},3000);
-
-/* =========================
-ANIMATION LOOP
+MOVEMENT LOOP
 ========================= */
 function animate(){
 requestAnimationFrame(animate);
-if(mode==="play"){move();cam();}
+
+if(mode==="play"){
+move();
+cam();
+}
+
 renderer.render(scene,camera);
 }
 animate();
@@ -272,6 +386,15 @@ document.getElementById("enter").onclick=()=>{
 document.getElementById("intro").style.display="none";
 mode="play";
 };
+
+/* =========================
+TEST REPUTATION GAIN
+========================= */
+setInterval(()=>{
+if(mode==="play"){
+Progression.addReputation(1);
+}
+},3000);
 
 });
 </script>
