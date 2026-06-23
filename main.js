@@ -35,7 +35,8 @@ const ground = new THREE.Mesh(
 );
 ground.rotation.x = -Math.PI / 2;
 scene.add(ground);
-
+const gridHelper = new THREE.GridHelper(200, 50, 0x444444, 0x222222);
+scene.add(gridHelper);
 /* -----------------------------
    PLAZA (CENTER PIECE)
 ------------------------------*/
