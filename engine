@@ -74,48 +74,47 @@ window.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
 /* -----------------------------
    MOVEMENT
 ------------------------------*/
+let velX = 0;
+let velZ = 0;
+
 function move(){
-  const speed = 0.4;
+  const speed = 0.35;
+  const damping = 0.85;
 
-  if(keys["w"]) player.position.z -= speed;
-  if(keys["s"]) player.position.z += speed;
-  if(keys["a"]) player.position.x -= speed;
-  if(keys["d"]) player.position.x += speed;
+  let inputX = 0;
+  let inputZ = 0;
 
-  camera.position.x = player.position.x;
-  camera.position.z = player.position.z + 30;
+  if(keys["w"]) inputZ -= 1;
+  if(keys["s"]) inputZ += 1;
+  if(keys["a"]) inputX -= 1;
+  if(keys["d"]) inputX += 1;
+
+  // normalize diagonal movement
+  const length = Math.sqrt(inputX * inputX + inputZ * inputZ);
+  if(length > 0){
+    inputX /= length;
+    inputZ /= length;
+  }
+
+  // smooth acceleration (cinematic feel)
+  velX += (inputX * speed - velX) * 0.15;
+  velZ += (inputZ * speed - velZ) * 0.15;
+
+  player.position.x += velX;
+  player.position.z += velZ;
+
+  // 🎥 cinematic camera follow (lag behind player)
+  camera.position.x += (player.position.x - camera.position.x) * 0.08;
+  camera.position.z += (player.position.z + 30 - camera.position.z) * 0.08;
+  camera.position.y += (18 - camera.position.y) * 0.08;
+
   camera.lookAt(player.position);
-}
 
-function updateDistrict() {
-  let found = "CITY CENTER";
-
-  for (const key in districts) {
-    const d = districts[key];
-
-    const dx = player.position.x - d.x;
-    const dz = player.position.z - d.z;
-
-    const dist = Math.sqrt(dx * dx + dz * dz);
-
-    if (dist < d.radius) {
-      found = d.name;
-      break;
-    }
-  }
-
-  if (World.district !== found) {
-    World.lastDistrict = World.district;
-    World.district = found;
-
-    World.reputation += 5;
-
-    console.log("🌍 Entered:", World.district);
-  }
-
-  hud.innerHTML =
-    `DISTRICT: ${World.district}<br>` +
-    `REPUTATION: ${World.reputation}`;
+  // 🎬 slight FOV dynamic zoom (feels like GTA running speed)
+  const speedAmount = Math.abs(velX) + Math.abs(velZ);
+  const targetFov = 70 + speedAmount * 15;
+camera.fov += (targetFov - camera.fov) * 0.1;
+camera.updateProjectionMatrix();
 }
 /* -----------------------------
    GAME LOOP
