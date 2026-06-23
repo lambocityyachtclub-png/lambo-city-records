@@ -85,6 +85,36 @@ player.position.y = 1;
 scene.add(player);
 
 /* -----------------------------
+   NPC SYSTEM
+------------------------------*/
+const npcs = [];
+
+function createNPC(x, z) {
+  const npc = new THREE.Mesh(
+    new THREE.BoxGeometry(1, 2, 1),
+    new THREE.MeshStandardMaterial({ color: 0xffaa00 })
+  );
+
+  npc.position.set(x, 1, z);
+
+  npc.userData = {
+    targetX: x,
+    targetZ: z,
+    timer: Math.random() * 200
+  };
+
+  scene.add(npc);
+  npcs.push(npc);
+}
+
+// spawn a small crowd
+for (let i = 0; i < 12; i++) {
+  createNPC(
+    (Math.random() - 0.5) * 80,
+    (Math.random() - 0.5) * 80
+  );
+}
+/* -----------------------------
    INPUT
 ------------------------------*/
 const keys = {};
