@@ -80,7 +80,7 @@ const player = new THREE.Mesh(
   new THREE.MeshStandardMaterial({ color: 0xff0033 })
 );
 
-player.position.set(2, 1, 2);
+player.position.set(0, 1, 5);
 scene.add(player);
 
 /* -----------------------------
