@@ -32,7 +32,8 @@ scene.add(ambient);
 const directional = new THREE.DirectionalLight(0xffffff, 1);
 directional.position.set(10, 20, 10);
 scene.add(directional);
-
+camera.position.set(0, 10, 15);
+camera.lookAt(0, 0, 0);
 /* -----------------------------
    WORLD (GROUND)
 ------------------------------*/
