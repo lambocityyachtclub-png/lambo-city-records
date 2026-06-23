@@ -60,7 +60,7 @@ plazaGroup.add(plazaFloor);
 for (let i = 0; i < 4; i++) {
   const pillar = new THREE.Mesh(
     new THREE.BoxGeometry(1.5, 8, 1.5), // bigger
-    new THREE.MeshStandardMaterial({ color: 0xffcc00 }) // bright gold
+    new THREE.MeshBasicMaterial({ color: 0xffff00 })
   );
 
   const angle = (i / 4) * Math.PI * 2;
