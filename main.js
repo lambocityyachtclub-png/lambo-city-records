@@ -1,111 +1,68 @@
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 
-import { scene } from "./scene.js";
-import { camera } from "./camera.js";
-import { renderer } from "./renderer.js";
-
-import { player } from "./engine/player.js";
-import { zones, updateZone } from "./engine/zones.js";
-import { move } from "./engine/movement.js";
-
 /* -----------------------------
-   CLOCK
+   WORLD OBJECTS
 ------------------------------*/
-const clock = new THREE.Clock();
 
-/* -----------------------------
-   HUD
-------------------------------*/
-const hud = document.createElement("div");
-hud.style.position = "absolute";
-hud.style.top = "15px";
-hud.style.left = "15px";
-hud.style.color = "white";
-hud.style.fontFamily = "Arial";
-hud.style.fontSize = "18px";
-hud.style.padding = "10px 14px";
-hud.style.background = "rgba(0,0,0,0.5)";
-hud.style.border = "1px solid rgba(255,255,255,0.2)";
-hud.style.borderRadius = "8px";
-hud.style.zIndex = "10";
-document.body.appendChild(hud);
+export function createWorld(scene) {
 
-/* -----------------------------
-   LIGHTING
-------------------------------*/
-scene.add(new THREE.AmbientLight(0xffffff, 0.4));
+  /* -----------------------------
+     GROUND DETAIL (OPTIONAL FUTURE EXPANSION)
+  ------------------------------*/
+  const groundDetail = new THREE.Mesh(
+    new THREE.PlaneGeometry(200, 200),
+    new THREE.MeshStandardMaterial({ color: 0x111827 })
+  );
 
-const sun = new THREE.DirectionalLight(0xffffff, 1.2);
-sun.position.set(20, 30, 10);
-scene.add(sun);
+  groundDetail.rotation.x = -Math.PI / 2;
+  scene.add(groundDetail);
 
-const fillLight = new THREE.PointLight(0x66ccff, 0.8, 200);
-fillLight.position.set(0, 15, 0);
-scene.add(fillLight);
+  /* -----------------------------
+     PLAZA
+  ------------------------------*/
+  const plaza = new THREE.Mesh(
+    new THREE.BoxGeometry(12, 0.5, 12),
+    new THREE.MeshStandardMaterial({ color: 0x444444 })
+  );
 
-/* -----------------------------
-   WORLD (GROUND ONLY HERE)
-------------------------------*/
-const ground = new THREE.Mesh(
-  new THREE.PlaneGeometry(200, 200),
-  new THREE.MeshStandardMaterial({ color: 0x111827 })
-);
+  plaza.position.y = 0.25;
+  scene.add(plaza);
 
-ground.rotation.x = -Math.PI / 2;
-scene.add(ground);
+  /* -----------------------------
+     PILLARS
+  ------------------------------*/
+  for (let i = 0; i < 4; i++) {
+    const pillar = new THREE.Mesh(
+      new THREE.BoxGeometry(2, 10, 2),
+      new THREE.MeshStandardMaterial({
+        color: 0xff0000,
+        emissive: 0xff0000,
+        emissiveIntensity: 1.5
+      })
+    );
 
-/* -----------------------------
-   DEBUG GRID (OPTIONAL)
-------------------------------*/
-scene.add(new THREE.GridHelper(200, 50));
+    const angle = (i / 4) * Math.PI * 2;
 
-/* -----------------------------
-   INPUT (GLOBAL KEYS HERE)
-------------------------------*/
-const keys = {};
+    pillar.position.x = Math.cos(angle) * 6;
+    pillar.position.z = Math.sin(angle) * 6;
+    pillar.position.y = 5;
 
-window.addEventListener("keydown", (e) => {
-  keys[e.key.toLowerCase()] = true;
-});
+    scene.add(pillar);
+  }
 
-window.addEventListener("keyup", (e) => {
-  keys[e.key.toLowerCase()] = false;
-});
+  /* -----------------------------
+     BEACON
+  ------------------------------*/
+  const beacon = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.5, 0.5, 20, 16),
+    new THREE.MeshBasicMaterial({ color: 0x00ffff })
+  );
 
-/* -----------------------------
-   ATTACH INPUT TO ENGINE
-------------------------------*/
-player.keys = keys;
+  beacon.position.set(0, 10, 0);
+  scene.add(beacon);
 
-/* -----------------------------
-   CAMERA START POSITION
-------------------------------*/
-camera.position.set(0, 18, 25);
-
-/* -----------------------------
-   RESIZE
-------------------------------*/
-window.addEventListener("resize", () => {
-  camera.aspect = window.innerWidth / window.innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
-});
-
-/* -----------------------------
-   GAME LOOP
-------------------------------*/
-function animate() {
-  requestAnimationFrame(animate);
-
-  const delta = clock.getDelta();
-
-  // movement system (engine)
-  move(delta, player, camera);
-
-  // zone system (engine)
-  updateZone(player, hud, zones);
-
-  renderer.render(scene, camera);
+  return {
+    plaza,
+    beacon
+  };
 }
-
-animate();
