@@ -4,32 +4,124 @@ import { camera } from "./camera.js";
 import { renderer } from "./renderer.js";
 
 /* -----------------------------
-   BASIC LIGHT
+   LIGHTING
 ------------------------------*/
-const light = new THREE.AmbientLight(0xffffff, 1);
-scene.add(light);
+scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+
+const sun = new THREE.DirectionalLight(0xffffff, 1.2);
+sun.position.set(10, 20, 10);
+scene.add(sun);
 
 /* -----------------------------
-   TEST OBJECT (THIS CONFIRMS RENDERING)
+   GROUND
 ------------------------------*/
-const cube = new THREE.Mesh(
-  new THREE.BoxGeometry(1, 1, 1),
+const ground = new THREE.Mesh(
+  new THREE.PlaneGeometry(200, 200),
+  new THREE.MeshStandardMaterial({ color: 0x111827 })
+);
+ground.rotation.x = -Math.PI / 2;
+scene.add(ground);
+
+/* -----------------------------
+   PLAYER
+------------------------------*/
+const player = new THREE.Mesh(
+  new THREE.BoxGeometry(1, 2, 1),
   new THREE.MeshStandardMaterial({ color: 0x00ffcc })
 );
-scene.add(cube);
+player.position.y = 1;
+scene.add(player);
 
 /* -----------------------------
-   CAMERA POSITION (IMPORTANT)
+   INPUT
 ------------------------------*/
-camera.position.set(0, 2, 5);
+const keys = {};
+
+window.addEventListener("keydown", (e) => {
+  keys[e.key.toLowerCase()] = true;
+});
+
+window.addEventListener("keyup", (e) => {
+  keys[e.key.toLowerCase()] = false;
+});
 
 /* -----------------------------
-   ANIMATE LOOP (THIS FIXES BLACK SCREEN)
+   MOVEMENT
+------------------------------*/
+let velX = 0;
+let velZ = 0;
+
+function move() {
+  const speed = 0.25;
+
+  let inputX = 0;
+  let inputZ = 0;
+
+  if (keys["w"]) inputZ -= 1;
+  if (keys["s"]) inputZ += 1;
+  if (keys["a"]) inputX -= 1;
+  if (keys["d"]) inputX += 1;
+
+  const len = Math.sqrt(inputX * inputX + inputZ * inputZ);
+  if (len > 0) {
+    inputX /= len;
+    inputZ /= len;
+  }
+
+  velX += (inputX * speed - velX) * 0.2;
+  velZ += (inputZ * speed - velZ) * 0.2;
+
+  player.position.x += velX;
+  player.position.z += velZ;
+
+  /* CAMERA FOLLOW (CINEMATIC) */
+  camera.position.x += (player.position.x - camera.position.x) * 0.08;
+  camera.position.z += (player.position.z + 8 - camera.position.z) * 0.08;
+  camera.position.y += (6 - camera.position.y) * 0.08;
+
+  camera.lookAt(player.position);
+}
+
+/* -----------------------------
+   ZONES
+------------------------------*/
+const zones = {
+  CENTER: { name: "CITY CENTER", x: 0, z: 0, radius: 40 },
+  YACHT: { name: "YACHT CLUB", x: -60, z: -40, radius: 40 },
+  BEACH: { name: "BEACH", x: 60, z: -40, radius: 50 },
+  RACING: { name: "RACING TRACK", x: 0, z: 80, radius: 60 }
+};
+
+let currentZone = "CITY CENTER";
+
+function updateZone() {
+  let found = "CITY CENTER";
+
+  for (const key in zones) {
+    const z = zones[key];
+
+    const dx = player.position.x - z.x;
+    const dz = player.position.z - z.z;
+
+    const dist = Math.sqrt(dx * dx + dz * dz);
+
+    if (dist < z.radius) {
+      found = z.name;
+      break;
+    }
+  }
+
+  currentZone = found;
+}
+
+/* -----------------------------
+   LOOP
 ------------------------------*/
 function animate() {
   requestAnimationFrame(animate);
 
-  cube.rotation.y += 0.01;
+  move();
+  updateZone();
 
   renderer.render(scene, camera);
 }
