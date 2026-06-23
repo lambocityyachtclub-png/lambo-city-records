@@ -6,11 +6,27 @@ import { renderer } from "./renderer.js";
 /* -----------------------------
    LIGHTING
 ------------------------------*/
-scene.add(new THREE.AmbientLight(0xffffff, 0.6));
 
 const sun = new THREE.DirectionalLight(0xffffff, 1.2);
 sun.position.set(10, 20, 10);
 scene.add(sun);
+
+const atmospheres = {
+  CENTER: { color: 0xffffff, intensity: 1.0 },
+  YACHT: { color: 0x222244, intensity: 0.6 },
+  BEACH: { color: 0x66ccff, intensity: 1.2 },
+  RACING: { color: 0xff3300, intensity: 1.4 }
+};
+
+const ambient = new THREE.AmbientLight(0xffffff, 0.6);
+scene.add(ambient);
+
+function updateAtmosphere(zoneName) {
+  const zone = atmospheres[zoneName.replace(" CITY", "").replace(" CLUB", "")] || atmospheres.CENTER;
+
+  ambient.color.set(zone.color);
+  ambient.intensity = zone.intensity;
+}
 
 /* -----------------------------
    GROUND
@@ -158,8 +174,14 @@ function updateZone() {
     }
   }
 
-  currentZone = found;
-  hud.innerHTML = "ZONE: " + currentZone;
+ currentZone = found;
+hud.innerHTML = "ZONE: " + currentZone;
+
+function updateAtmosphere(zoneName) {
+  const zone = atmospheres[zoneName] || atmospheres.CENTER;
+
+  ambient.color.set(zone.color);
+  ambient.intensity = zone.intensity;
 }
 /* -----------------------------
    LOOP
