@@ -22,6 +22,23 @@ const ambient = new THREE.AmbientLight(0xffffff, 0.6);
 scene.add(ambient);
 
 /* -----------------------------
+   ATMOSPHERE SYSTEM (FIXED)
+------------------------------*/
+function updateAtmosphere(zoneName) {
+  let key = "CENTER";
+
+  if (zoneName.includes("CENTER")) key = "CENTER";
+  else if (zoneName.includes("YACHT")) key = "YACHT";
+  else if (zoneName.includes("BEACH")) key = "BEACH";
+  else if (zoneName.includes("RACING")) key = "RACING";
+
+  const zone = atmospheres[key] || atmospheres.CENTER;
+
+  ambient.color.set(zone.color);
+  ambient.intensity = zone.intensity;
+}
+
+/* -----------------------------
    GROUND
 ------------------------------*/
 const ground = new THREE.Mesh(
@@ -51,17 +68,11 @@ function createZoneRing(x, z, color) {
   scene.add(ring);
 }
 
-/* CITY CENTER */
-createZoneRing(0, 0, 0x00ffcc);
+createZoneRing(0, 0, 0x00ffcc);      // CENTER
+createZoneRing(-60, -40, 0xff00ff);  // YACHT
+createZoneRing(60, -40, 0x00aaff);    // BEACH
+createZoneRing(0, 80, 0xffcc00);     // RACING
 
-/* YACHT */
-createZoneRing(-60, -40, 0xff00ff);
-
-/* BEACH */
-createZoneRing(60, -40, 0x00aaff);
-
-/* RACING */
-createZoneRing(0, 80, 0xffcc00);
 /* -----------------------------
    PLAYER
 ------------------------------*/
@@ -69,6 +80,7 @@ const player = new THREE.Mesh(
   new THREE.BoxGeometry(1, 2, 1),
   new THREE.MeshStandardMaterial({ color: 0x00ffcc })
 );
+
 player.position.y = 1;
 scene.add(player);
 
@@ -103,6 +115,7 @@ function move() {
   if (keys["d"]) inputX += 1;
 
   const len = Math.sqrt(inputX * inputX + inputZ * inputZ);
+
   if (len > 0) {
     inputX /= len;
     inputZ /= len;
@@ -114,7 +127,7 @@ function move() {
   player.position.x += velX;
   player.position.z += velZ;
 
-  /* CAMERA FOLLOW (CINEMATIC) */
+  /* CAMERA FOLLOW */
   camera.position.x += (player.position.x - camera.position.x) * 0.08;
   camera.position.z += (player.position.z + 8 - camera.position.z) * 0.08;
   camera.position.y += (6 - camera.position.y) * 0.08;
@@ -133,6 +146,7 @@ const zones = {
 };
 
 let currentZone = "CITY CENTER";
+
 /* -----------------------------
    HUD
 ------------------------------*/
@@ -148,8 +162,12 @@ hud.style.background = "rgba(0,0,0,0.5)";
 hud.style.borderRadius = "8px";
 hud.style.zIndex = "10";
 hud.innerHTML = "ZONE: CITY CENTER";
+
 document.body.appendChild(hud);
 
+/* -----------------------------
+   ZONE UPDATE
+------------------------------*/
 function updateZone() {
   let found = "CITY CENTER";
 
@@ -172,21 +190,7 @@ function updateZone() {
 
   updateAtmosphere(found);
 }
-  function updateAtmosphere(zoneName) {
-  let key = "";
 
-  if (zoneName.includes("CENTER")) key = "CENTER";
-  else if (zoneName.includes("YACHT")) key = "YACHT";
-  else if (zoneName.includes("BEACH")) key = "BEACH";
-  else if (zoneName.includes("RACING")) key = "RACING";
-  else key = "CENTER";
-
-  const zone = atmospheres[key] || atmospheres.CENTER;
-
-  ambient.color.set(zone.color);
-  ambient.intensity = zone.intensity;
-}
-  
 /* -----------------------------
    LOOP
 ------------------------------*/
