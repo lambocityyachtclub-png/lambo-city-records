@@ -70,13 +70,14 @@ for (let i = 0; i < 4; i++) {
   plazaGroup.add(pillar);
 }
 /* -----------------------------
-   PLAYER (SIMPLE BOX)
+   PLAYER (SINGLE CLEAN VERSION)
 ------------------------------*/
 const player = new THREE.Mesh(
   new THREE.BoxGeometry(1, 2, 1),
   new THREE.MeshStandardMaterial({ color: 0xff0033 })
 );
-player.position.y = 1;
+
+player.position.set(2, 1, 2);
 scene.add(player);
 
 /* -----------------------------
