@@ -58,17 +58,19 @@ plazaGroup.add(plazaFloor);
 // 4 corner pillars
 for (let i = 0; i < 4; i++) {
   const pillar = new THREE.Mesh(
-    new THREE.BoxGeometry(1, 5, 1),
-    new THREE.MeshStandardMaterial({ color: 0xff0033 })
+    new THREE.BoxGeometry(1.5, 8, 1.5), // bigger
+    new THREE.MeshStandardMaterial({ color: 0xffcc00 }) // bright gold
   );
 
   const angle = (i / 4) * Math.PI * 2;
-  pillar.position.x = Math.cos(angle) * 4;
-  pillar.position.z = Math.sin(angle) * 4;
-  pillar.position.y = 2.5;
+
+  pillar.position.x = Math.cos(angle) * 5;
+  pillar.position.z = Math.sin(angle) * 5;
+  pillar.position.y = 4; // higher so it doesn't sink
 
   plazaGroup.add(pillar);
 }
+
 /* -----------------------------
    PLAYER (SINGLE CLEAN VERSION)
 ------------------------------*/
