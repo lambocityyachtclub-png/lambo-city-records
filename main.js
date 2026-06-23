@@ -1,23 +1,18 @@
 import * as THREE from "three";
 
 /* -----------------------------
-   CORE SETUP (NO DEPENDENCIES)
+   BASIC SETUP
 ------------------------------*/
-
-// Scene
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x05070d);
 
-// Camera
 const camera = new THREE.PerspectiveCamera(
   75,
   window.innerWidth / window.innerHeight,
   0.1,
   2000
 );
-camera.position.set(0, 5, 10);
 
-// Renderer
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.style.margin = "0";
@@ -26,16 +21,14 @@ document.body.appendChild(renderer.domElement);
 /* -----------------------------
    LIGHTING
 ------------------------------*/
-const ambient = new THREE.AmbientLight(0xffffff, 0.6);
-scene.add(ambient);
+scene.add(new THREE.AmbientLight(0xffffff, 0.6));
 
-const directional = new THREE.DirectionalLight(0xffffff, 1);
-directional.position.set(10, 20, 10);
-scene.add(directional);
-camera.position.set(0, 10, 15);
-camera.lookAt(0, 0, 0);
+const sun = new THREE.DirectionalLight(0xffffff, 1);
+sun.position.set(10, 20, 10);
+scene.add(sun);
+
 /* -----------------------------
-   WORLD (GROUND)
+   GROUND
 ------------------------------*/
 const ground = new THREE.Mesh(
   new THREE.PlaneGeometry(200, 200),
@@ -44,59 +37,56 @@ const ground = new THREE.Mesh(
 ground.rotation.x = -Math.PI / 2;
 scene.add(ground);
 
-/* ---------------- LAMBO CITY PLAZA ---------------- */
-const plazaGroup = new THREE.Group();
-scene.add(plazaGroup);
-
-// central platform
-const plazaFloor = new THREE.Mesh(
-  new THREE.BoxGeometry(10, 0.5, 10),
-  new THREE.MeshStandardMaterial({ color: 0x333333 })
+/* -----------------------------
+   PLAZA (VISIBLE LANDMARK)
+------------------------------*/
+const plaza = new THREE.Mesh(
+  new THREE.BoxGeometry(12, 0.5, 12),
+  new THREE.MeshStandardMaterial({ color: 0x444444 })
 );
-plazaFloor.position.y = 0.25;
-plazaGroup.add(plazaFloor);
+plaza.position.y = 0.25;
+scene.add(plaza);
 
+/* pillars */
 for (let i = 0; i < 4; i++) {
-
   const pillar = new THREE.Mesh(
-    new THREE.BoxGeometry(2, 12, 2), // MUCH bigger
-    new THREE.MeshBasicMaterial({ color: 0xff0000 }) // pure red = impossible to miss
+    new THREE.BoxGeometry(2, 10, 2),
+    new THREE.MeshStandardMaterial({ color: 0xff0000 })
   );
 
   const angle = (i / 4) * Math.PI * 2;
-
   pillar.position.x = Math.cos(angle) * 6;
   pillar.position.z = Math.sin(angle) * 6;
-  pillar.position.y = 6; // higher so it sits clearly above everything
+  pillar.position.y = 5;
 
-  plazaGroup.add(pillar);
+  scene.add(pillar);
 }
 
 /* -----------------------------
-   PLAYER (SINGLE CLEAN VERSION)
+   PLAYER
 ------------------------------*/
 const player = new THREE.Mesh(
   new THREE.BoxGeometry(1, 2, 1),
-  new THREE.MeshStandardMaterial({ color: 0xff0033 })
+  new THREE.MeshStandardMaterial({ color: 0x00ffcc })
 );
-
 player.position.set(0, 1, 5);
 scene.add(player);
 
 /* -----------------------------
-   CONTROLS (WASD)
+   CAMERA START (IMPORTANT)
+------------------------------*/
+camera.position.set(0, 10, 15);
+camera.lookAt(0, 0, 0);
+
+/* -----------------------------
+   CONTROLS
 ------------------------------*/
 const keys = {};
 
-window.addEventListener("keydown", (e) => {
-  keys[e.key.toLowerCase()] = true;
-});
+window.addEventListener("keydown", (e) => keys[e.key.toLowerCase()] = true);
+window.addEventListener("keyup", (e) => keys[e.key.toLowerCase()] = false);
 
-window.addEventListener("keyup", (e) => {
-  keys[e.key.toLowerCase()] = false;
-});
-
-function movePlayer() {
+function move() {
   const speed = 0.15;
 
   if (keys["w"]) player.position.z -= speed;
@@ -104,14 +94,13 @@ function movePlayer() {
   if (keys["a"]) player.position.x -= speed;
   if (keys["d"]) player.position.x += speed;
 
-  // camera follow
   camera.position.x = player.position.x;
   camera.position.z = player.position.z + 8;
   camera.lookAt(player.position);
 }
 
 /* -----------------------------
-   RESIZE FIX
+   RESIZE
 ------------------------------*/
 window.addEventListener("resize", () => {
   camera.aspect = window.innerWidth / window.innerHeight;
@@ -124,9 +113,7 @@ window.addEventListener("resize", () => {
 ------------------------------*/
 function animate() {
   requestAnimationFrame(animate);
-
-  movePlayer();
-
+  move();
   renderer.render(scene, camera);
 }
 
