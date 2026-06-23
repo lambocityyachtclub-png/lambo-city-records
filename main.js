@@ -56,18 +56,18 @@ const plazaFloor = new THREE.Mesh(
 plazaFloor.position.y = 0.25;
 plazaGroup.add(plazaFloor);
 
-// 4 corner pillars
 for (let i = 0; i < 4; i++) {
+
   const pillar = new THREE.Mesh(
-    new THREE.BoxGeometry(1.5, 8, 1.5), // bigger
-    new THREE.MeshBasicMaterial({ color: 0xffff00 })
+    new THREE.BoxGeometry(2, 12, 2), // MUCH bigger
+    new THREE.MeshBasicMaterial({ color: 0xff0000 }) // pure red = impossible to miss
   );
 
   const angle = (i / 4) * Math.PI * 2;
 
-  pillar.position.x = Math.cos(angle) * 5;
-  pillar.position.z = Math.sin(angle) * 5;
-  pillar.position.y = 4; // higher so it doesn't sink
+  pillar.position.x = Math.cos(angle) * 6;
+  pillar.position.z = Math.sin(angle) * 6;
+  pillar.position.y = 6; // higher so it sits clearly above everything
 
   plazaGroup.add(pillar);
 }
