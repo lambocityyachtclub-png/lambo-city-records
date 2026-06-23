@@ -1,27 +1,103 @@
-import { initScene, scene } from "./engine/scene.js";
-import { initCamera, camera } from "./engine/camera.js";
-import { initRenderer, renderer } from "./engine/renderer.js";
+import * as THREE from "three";
 
-console.log("LAMBO CITY BOOT STARTED");
+/* -----------------------------
+   CORE SETUP (NO DEPENDENCIES)
+------------------------------*/
 
-initScene();
-console.log("Scene OK");
+// Scene
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x05070d);
 
-initCamera();
-console.log("Camera OK");
+// Camera
+const camera = new THREE.PerspectiveCamera(
+  75,
+  window.innerWidth / window.innerHeight,
+  0.1,
+  2000
+);
+camera.position.set(0, 5, 10);
 
-initRenderer();
-console.log("Renderer OK");
+// Renderer
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.style.margin = "0";
+document.body.appendChild(renderer.domElement);
 
-// REMOVE ALL SYSTEMS FOR NOW
-console.log("Skipping systems for test...");
+/* -----------------------------
+   LIGHTING
+------------------------------*/
+const ambient = new THREE.AmbientLight(0xffffff, 0.6);
+scene.add(ambient);
 
-function animate(){
+const directional = new THREE.DirectionalLight(0xffffff, 1);
+directional.position.set(10, 20, 10);
+scene.add(directional);
+
+/* -----------------------------
+   WORLD (GROUND)
+------------------------------*/
+const ground = new THREE.Mesh(
+  new THREE.PlaneGeometry(200, 200),
+  new THREE.MeshStandardMaterial({ color: 0x111827 })
+);
+ground.rotation.x = -Math.PI / 2;
+scene.add(ground);
+
+/* -----------------------------
+   PLAYER (SIMPLE BOX)
+------------------------------*/
+const player = new THREE.Mesh(
+  new THREE.BoxGeometry(1, 2, 1),
+  new THREE.MeshStandardMaterial({ color: 0xff0033 })
+);
+player.position.y = 1;
+scene.add(player);
+
+/* -----------------------------
+   CONTROLS (WASD)
+------------------------------*/
+const keys = {};
+
+window.addEventListener("keydown", (e) => {
+  keys[e.key.toLowerCase()] = true;
+});
+
+window.addEventListener("keyup", (e) => {
+  keys[e.key.toLowerCase()] = false;
+});
+
+function movePlayer() {
+  const speed = 0.15;
+
+  if (keys["w"]) player.position.z -= speed;
+  if (keys["s"]) player.position.z += speed;
+  if (keys["a"]) player.position.x -= speed;
+  if (keys["d"]) player.position.x += speed;
+
+  // camera follow
+  camera.position.x = player.position.x;
+  camera.position.z = player.position.z + 8;
+  camera.lookAt(player.position);
+}
+
+/* -----------------------------
+   RESIZE FIX
+------------------------------*/
+window.addEventListener("resize", () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+/* -----------------------------
+   LOOP
+------------------------------*/
+function animate() {
   requestAnimationFrame(animate);
+
+  movePlayer();
 
   renderer.render(scene, camera);
 }
 
 animate();
-
-console.log("GAME LOOP RUNNING");
