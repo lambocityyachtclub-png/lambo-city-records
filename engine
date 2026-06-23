@@ -3,12 +3,35 @@ import { scene } from "./scene.js";
 import { camera } from "./camera.js";
 import { renderer } from "./renderer.js";
 
+const hud = document.createElement("div");
+hud.style.position = "absolute";
+hud.style.top = "15px";
+hud.style.left = "15px";
+hud.style.color = "white";
+hud.style.fontFamily = "Arial";
+hud.style.fontSize = "16px";
+hud.style.padding = "10px 14px";
+hud.style.background = "rgba(0,0,0,0.5)";
+hud.style.borderRadius = "8px";
+hud.style.zIndex = "10";
+document.body.appendChild(hud);
+
 /* -----------------------------
    WORLD STATE
 ------------------------------*/
 const World = {
   district: "CITY CENTER",
+  lastDistrict: null,
   reputation: 0
+};
+/* -----------------------------
+   DISTRICTS (WORLD SYSTEM)
+------------------------------*/
+const districts = {
+  CENTER: { name: "CITY CENTER", x: 0, z: 0, radius: 80 },
+  YACHT: { name: "YACHT CLUB", x: -120, z: -80, radius: 70 },
+  BEACH: { name: "BEACH", x: 120, z: -80, radius: 100 },
+  RACING: { name: "RACING TRACK", x: 0, z: 200, radius: 120 }
 };
 
 /* -----------------------------
@@ -64,6 +87,36 @@ function move(){
   camera.lookAt(player.position);
 }
 
+function updateDistrict() {
+  let found = "CITY CENTER";
+
+  for (const key in districts) {
+    const d = districts[key];
+
+    const dx = player.position.x - d.x;
+    const dz = player.position.z - d.z;
+
+    const dist = Math.sqrt(dx * dx + dz * dz);
+
+    if (dist < d.radius) {
+      found = d.name;
+      break;
+    }
+  }
+
+  if (World.district !== found) {
+    World.lastDistrict = World.district;
+    World.district = found;
+
+    World.reputation += 5;
+
+    console.log("🌍 Entered:", World.district);
+  }
+
+  hud.innerHTML =
+    `DISTRICT: ${World.district}<br>` +
+    `REPUTATION: ${World.reputation}`;
+}
 /* -----------------------------
    GAME LOOP
 ------------------------------*/
@@ -71,6 +124,7 @@ function animate(){
   requestAnimationFrame(animate);
 
   move();
+updateDistrict();
 
   renderer.render(scene, camera);
 }
