@@ -43,6 +43,32 @@ const ground = new THREE.Mesh(
 ground.rotation.x = -Math.PI / 2;
 scene.add(ground);
 
+/* ---------------- LAMBO CITY PLAZA ---------------- */
+const plazaGroup = new THREE.Group();
+scene.add(plazaGroup);
+
+// central platform
+const plazaFloor = new THREE.Mesh(
+  new THREE.BoxGeometry(10, 0.5, 10),
+  new THREE.MeshStandardMaterial({ color: 0x333333 })
+);
+plazaFloor.position.y = 0.25;
+plazaGroup.add(plazaFloor);
+
+// 4 corner pillars
+for (let i = 0; i < 4; i++) {
+  const pillar = new THREE.Mesh(
+    new THREE.BoxGeometry(1, 5, 1),
+    new THREE.MeshStandardMaterial({ color: 0xff0033 })
+  );
+
+  const angle = (i / 4) * Math.PI * 2;
+  pillar.position.x = Math.cos(angle) * 4;
+  pillar.position.z = Math.sin(angle) * 4;
+  pillar.position.y = 2.5;
+
+  plazaGroup.add(pillar);
+}
 /* -----------------------------
    PLAYER (SIMPLE BOX)
 ------------------------------*/
