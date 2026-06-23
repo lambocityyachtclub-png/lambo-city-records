@@ -79,8 +79,7 @@ scene.add(player);
 /* -----------------------------
    CAMERA (FIXED START)
 ------------------------------*/
-camera.position.set(0, 15, 20);
-camera.lookAt(0, 0, 0);
+camera.position.set(0, 10, 15);
 /* -----------------------------
    CONTROLS
 ------------------------------*/
