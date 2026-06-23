@@ -1,6 +1,7 @@
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
+
 /* -----------------------------
-   BASIC SETUP
+   SCENE SETUP
 ------------------------------*/
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x05070d);
@@ -27,6 +28,18 @@ sun.position.set(10, 20, 10);
 scene.add(sun);
 
 /* -----------------------------
+   ZONES (REAL FUNCTIONAL SYSTEM)
+------------------------------*/
+const zones = {
+  center: { name: "CITY CENTER", x: 0, z: 0, radius: 40 },
+  yacht: { name: "YACHT CLUB", x: -60, z: -40, radius: 40 },
+  beach: { name: "BEACH", x: 60, z: -40, radius: 50 },
+  racing: { name: "RACING TRACK", x: 0, z: 80, radius: 60 }
+};
+
+let currentZone = "CITY CENTER";
+
+/* -----------------------------
    WORLD
 ------------------------------*/
 const ground = new THREE.Mesh(
@@ -35,10 +48,12 @@ const ground = new THREE.Mesh(
 );
 ground.rotation.x = -Math.PI / 2;
 scene.add(ground);
-const gridHelper = new THREE.GridHelper(200, 50, 0x444444, 0x222222);
-scene.add(gridHelper);
+
+/* grid for visual debugging */
+scene.add(new THREE.GridHelper(200, 50));
+
 /* -----------------------------
-   PLAZA (CENTER PIECE)
+   PLAZA
 ------------------------------*/
 const plaza = new THREE.Mesh(
   new THREE.BoxGeometry(12, 0.5, 12),
@@ -47,14 +62,11 @@ const plaza = new THREE.Mesh(
 plaza.position.y = 0.25;
 scene.add(plaza);
 
-/* pillars */
+/* 4 pillars */
 for (let i = 0; i < 4; i++) {
   const pillar = new THREE.Mesh(
     new THREE.BoxGeometry(2, 10, 2),
-    new THREE.MeshStandardMaterial({
-  color: 0xff0000,
-  emissive: 0x330000
-})
+    new THREE.MeshStandardMaterial({ color: 0xff0000, emissive: 0x330000 })
   );
 
   const angle = (i / 4) * Math.PI * 2;
@@ -77,9 +89,10 @@ player.position.set(0, 1, 5);
 scene.add(player);
 
 /* -----------------------------
-   CAMERA (FIXED START)
+   CAMERA
 ------------------------------*/
 camera.position.set(0, 10, 15);
+
 /* -----------------------------
    CONTROLS
 ------------------------------*/
@@ -93,6 +106,33 @@ window.addEventListener("keyup", (e) => {
   keys[e.key.toLowerCase()] = false;
 });
 
+/* -----------------------------
+   ZONE DETECTION (THIS FIXES EVERYTHING)
+------------------------------*/
+function updateZone() {
+  let closest = "CITY CENTER";
+  let minDist = Infinity;
+
+  for (const key in zones) {
+    const z = zones[key];
+
+    const dx = player.position.x - z.x;
+    const dz = player.position.z - z.z;
+
+    const dist = Math.sqrt(dx * dx + dz * dz);
+
+    if (dist < minDist) {
+      minDist = dist;
+      closest = z.name;
+    }
+  }
+
+  currentZone = closest;
+}
+
+/* -----------------------------
+   MOVEMENT
+------------------------------*/
 function move() {
   const speed = 0.15;
 
@@ -104,6 +144,8 @@ function move() {
   camera.position.x = player.position.x;
   camera.position.z = player.position.z + 8;
   camera.lookAt(player.position);
+
+  updateZone();
 }
 
 /* -----------------------------
