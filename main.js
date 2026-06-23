@@ -93,6 +93,22 @@ const zones = {
 };
 
 let currentZone = "CITY CENTER";
+/* -----------------------------
+   HUD
+------------------------------*/
+const hud = document.createElement("div");
+hud.style.position = "absolute";
+hud.style.top = "15px";
+hud.style.left = "15px";
+hud.style.color = "white";
+hud.style.fontFamily = "Arial";
+hud.style.fontSize = "18px";
+hud.style.padding = "10px 14px";
+hud.style.background = "rgba(0,0,0,0.5)";
+hud.style.borderRadius = "8px";
+hud.style.zIndex = "10";
+hud.innerHTML = "ZONE: CITY CENTER";
+document.body.appendChild(hud);
 
 function updateZone() {
   let found = "CITY CENTER";
@@ -112,8 +128,8 @@ function updateZone() {
   }
 
   currentZone = found;
+  hud.innerHTML = "ZONE: " + currentZone;
 }
-
 /* -----------------------------
    LOOP
 ------------------------------*/
