@@ -28,7 +28,7 @@ sun.position.set(10, 20, 10);
 scene.add(sun);
 
 /* -----------------------------
-   GROUND
+   WORLD
 ------------------------------*/
 const ground = new THREE.Mesh(
   new THREE.PlaneGeometry(200, 200),
@@ -38,7 +38,7 @@ ground.rotation.x = -Math.PI / 2;
 scene.add(ground);
 
 /* -----------------------------
-   PLAZA (VISIBLE LANDMARK)
+   PLAZA (CENTER PIECE)
 ------------------------------*/
 const plaza = new THREE.Mesh(
   new THREE.BoxGeometry(12, 0.5, 12),
@@ -69,13 +69,14 @@ const player = new THREE.Mesh(
   new THREE.BoxGeometry(1, 2, 1),
   new THREE.MeshStandardMaterial({ color: 0x00ffcc })
 );
+
 player.position.set(0, 1, 5);
 scene.add(player);
 
 /* -----------------------------
-   CAMERA START (IMPORTANT)
+   CAMERA (FIXED START)
 ------------------------------*/
-camera.position.set(0, 10, 15);
+camera.position.set(0, 12, 18);
 camera.lookAt(0, 0, 0);
 
 /* -----------------------------
@@ -83,8 +84,13 @@ camera.lookAt(0, 0, 0);
 ------------------------------*/
 const keys = {};
 
-window.addEventListener("keydown", (e) => keys[e.key.toLowerCase()] = true);
-window.addEventListener("keyup", (e) => keys[e.key.toLowerCase()] = false);
+window.addEventListener("keydown", (e) => {
+  keys[e.key.toLowerCase()] = true;
+});
+
+window.addEventListener("keyup", (e) => {
+  keys[e.key.toLowerCase()] = false;
+});
 
 function move() {
   const speed = 0.15;
@@ -113,7 +119,9 @@ window.addEventListener("resize", () => {
 ------------------------------*/
 function animate() {
   requestAnimationFrame(animate);
+
   move();
+
   renderer.render(scene, camera);
 }
 
