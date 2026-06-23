@@ -37,7 +37,6 @@ function updateAtmosphere(zoneName) {
   ambient.color.set(zone.color);
   ambient.intensity = zone.intensity;
 }
-
 /* -----------------------------
    GROUND
 ------------------------------*/
@@ -85,7 +84,7 @@ player.position.y = 1;
 scene.add(player);
 
 /* -----------------------------
-   NPC SYSTEM
+   NPC SYSTEM (IMPROVED)
 ------------------------------*/
 const npcs = [];
 
@@ -98,21 +97,49 @@ function createNPC(x, z) {
   npc.position.set(x, 1, z);
 
   npc.userData = {
+    homeX: x,
+    homeZ: z,
     targetX: x,
     targetZ: z,
-    timer: Math.random() * 200
+    timer: Math.random() * 200,
+    speed: 0.01
   };
 
   scene.add(npc);
   npcs.push(npc);
 }
 
-// spawn a small crowd
+// spawn crowd
 for (let i = 0; i < 12; i++) {
   createNPC(
-    (Math.random() - 0.5) * 80,
-    (Math.random() - 0.5) * 80
+    (Math.random() - 0.5) * 100,
+    (Math.random() - 0.5) * 100
   );
+}
+
+/* -----------------------------
+   NPC UPDATE SYSTEM
+------------------------------*/
+function updateNPCs() {
+  for (const npc of npcs) {
+    npc.userData.timer--;
+
+    if (npc.userData.timer <= 0) {
+      npc.userData.targetX =
+        npc.userData.homeX + (Math.random() - 0.5) * 40;
+
+      npc.userData.targetZ =
+        npc.userData.homeZ + (Math.random() - 0.5) * 40;
+
+      npc.userData.timer = 120 + Math.random() * 200;
+    }
+
+    const dx = npc.userData.targetX - npc.position.x;
+    const dz = npc.userData.targetZ - npc.position.z;
+
+    npc.position.x += dx * npc.userData.speed;
+    npc.position.z += dz * npc.userData.speed;
+  }
 }
 /* -----------------------------
    INPUT
@@ -229,8 +256,10 @@ function animate() {
 
   move();
   updateZone();
+  updateNPCs(); // ✅ ADD THIS
 
   renderer.render(scene, camera);
 }
+
 
 animate();
