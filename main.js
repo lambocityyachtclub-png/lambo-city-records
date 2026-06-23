@@ -21,13 +21,6 @@ const atmospheres = {
 const ambient = new THREE.AmbientLight(0xffffff, 0.6);
 scene.add(ambient);
 
-function updateAtmosphere(zoneName) {
-  const zone = atmospheres[zoneName.replace(" CITY", "").replace(" CLUB", "")] || atmospheres.CENTER;
-
-  ambient.color.set(zone.color);
-  ambient.intensity = zone.intensity;
-}
-
 /* -----------------------------
    GROUND
 ------------------------------*/
@@ -174,15 +167,26 @@ function updateZone() {
     }
   }
 
- currentZone = found;
-hud.innerHTML = "ZONE: " + currentZone;
+  currentZone = found;
+  hud.innerHTML = "ZONE: " + currentZone;
 
-function updateAtmosphere(zoneName) {
-  const zone = atmospheres[zoneName] || atmospheres.CENTER;
+  updateAtmosphere(found);
+}
+  function updateAtmosphere(zoneName) {
+  let key = "";
+
+  if (zoneName.includes("CENTER")) key = "CENTER";
+  else if (zoneName.includes("YACHT")) key = "YACHT";
+  else if (zoneName.includes("BEACH")) key = "BEACH";
+  else if (zoneName.includes("RACING")) key = "RACING";
+  else key = "CENTER";
+
+  const zone = atmospheres[key] || atmospheres.CENTER;
 
   ambient.color.set(zone.color);
   ambient.intensity = zone.intensity;
 }
+  
 /* -----------------------------
    LOOP
 ------------------------------*/
