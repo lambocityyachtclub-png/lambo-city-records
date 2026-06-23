@@ -51,7 +51,10 @@ scene.add(plaza);
 for (let i = 0; i < 4; i++) {
   const pillar = new THREE.Mesh(
     new THREE.BoxGeometry(2, 10, 2),
-    new THREE.MeshStandardMaterial({ color: 0xff0000 })
+    new THREE.MeshStandardMaterial({
+  color: 0xff0000,
+  emissive: 0x330000
+})
   );
 
   const angle = (i / 4) * Math.PI * 2;
