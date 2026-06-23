@@ -23,6 +23,37 @@ ground.rotation.x = -Math.PI / 2;
 scene.add(ground);
 
 /* -----------------------------
+   ZONE VISUAL MARKERS
+------------------------------*/
+function createZoneRing(x, z, color) {
+  const ring = new THREE.Mesh(
+    new THREE.RingGeometry(8, 10, 32),
+    new THREE.MeshBasicMaterial({
+      color,
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 0.6
+    })
+  );
+
+  ring.rotation.x = -Math.PI / 2;
+  ring.position.set(x, 0.1, z);
+
+  scene.add(ring);
+}
+
+/* CITY CENTER */
+createZoneRing(0, 0, 0x00ffcc);
+
+/* YACHT */
+createZoneRing(-60, -40, 0xff00ff);
+
+/* BEACH */
+createZoneRing(60, -40, 0x00aaff);
+
+/* RACING */
+createZoneRing(0, 80, 0xffcc00);
+/* -----------------------------
    PLAYER
 ------------------------------*/
 const player = new THREE.Mesh(
