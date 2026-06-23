@@ -1,15 +1,38 @@
-import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.module.js";
-import { scene } from "./scene.js";
-import { camera } from "./camera.js";
-import { renderer } from "./renderer.js";
+import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js";
 
+/* -----------------------------
+   SCENE SETUP
+------------------------------*/
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x05070d);
+
+const camera = new THREE.PerspectiveCamera(
+  75,
+  window.innerWidth / window.innerHeight,
+  0.1,
+  2000
+);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.style.margin = "0";
+document.body.appendChild(renderer.domElement);
+
+/* -----------------------------
+   CLOCK
+------------------------------*/
+const clock = new THREE.Clock();
+
+/* -----------------------------
+   HUD
+------------------------------*/
 const hud = document.createElement("div");
 hud.style.position = "absolute";
 hud.style.top = "15px";
 hud.style.left = "15px";
 hud.style.color = "white";
 hud.style.fontFamily = "Arial";
-hud.style.fontSize = "16px";
+hud.style.fontSize = "18px";
 hud.style.padding = "10px 14px";
 hud.style.background = "rgba(0,0,0,0.5)";
 hud.style.borderRadius = "8px";
@@ -17,51 +40,55 @@ hud.style.zIndex = "10";
 document.body.appendChild(hud);
 
 /* -----------------------------
-   WORLD STATE
+   LIGHTING
 ------------------------------*/
-const World = {
-  district: "CITY CENTER",
-  lastDistrict: null,
-  reputation: 0
-};
+scene.add(new THREE.AmbientLight(0xffffff, 0.4));
+
+const sun = new THREE.DirectionalLight(0xffffff, 1.2);
+sun.position.set(20, 30, 10);
+scene.add(sun);
+
+const fill = new THREE.PointLight(0x66ccff, 0.8, 200);
+fill.position.set(0, 15, 0);
+scene.add(fill);
+
 /* -----------------------------
-   DISTRICTS (WORLD SYSTEM)
+   WORLD ZONES
 ------------------------------*/
-const districts = {
-  CENTER: { name: "CITY CENTER", x: 0, z: 0, radius: 80 },
-  YACHT: { name: "YACHT CLUB", x: -120, z: -80, radius: 70 },
-  BEACH: { name: "BEACH", x: 120, z: -80, radius: 100 },
-  RACING: { name: "RACING TRACK", x: 0, z: 200, radius: 120 }
+const zones = {
+  CENTER: { name: "CITY CENTER", x: 0, z: 0, radius: 45 },
+  YACHT: { name: "YACHT CLUB", x: -60, z: -40, radius: 45 },
+  BEACH: { name: "BEACH", x: 60, z: -40, radius: 55 },
+  RACING: { name: "RACING TRACK", x: 0, z: 80, radius: 60 }
 };
+
+let currentZone = "CITY CENTER";
+
+/* -----------------------------
+   WORLD GROUND
+------------------------------*/
+const ground = new THREE.Mesh(
+  new THREE.PlaneGeometry(200, 200),
+  new THREE.MeshStandardMaterial({ color: 0x111827 })
+);
+ground.rotation.x = -Math.PI / 2;
+scene.add(ground);
 
 /* -----------------------------
    PLAYER
 ------------------------------*/
 const player = new THREE.Mesh(
-  new THREE.BoxGeometry(2, 2, 2),
+  new THREE.BoxGeometry(1, 2, 1),
   new THREE.MeshStandardMaterial({ color: 0x00ffcc })
 );
 
-player.position.set(0, 1, 0);
+player.position.set(0, 1, 5);
 scene.add(player);
 
 /* -----------------------------
-   LIGHTING
+   CAMERA START
 ------------------------------*/
-const light = new THREE.DirectionalLight(0xffffff, 1.2);
-light.position.set(20, 50, 10);
-scene.add(light);
-
-/* -----------------------------
-   GROUND
-------------------------------*/
-const ground = new THREE.Mesh(
-  new THREE.PlaneGeometry(500, 500),
-  new THREE.MeshStandardMaterial({ color: 0x111827 })
-);
-
-ground.rotation.x = -Math.PI / 2;
-scene.add(ground);
+camera.position.set(0, 18, 25);
 
 /* -----------------------------
    INPUT
@@ -72,58 +99,90 @@ window.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
 window.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
 
 /* -----------------------------
-   MOVEMENT
+   MOVEMENT (CINEMATIC)
 ------------------------------*/
 let velX = 0;
 let velZ = 0;
 
-function move(){
+function move() {
   const speed = 0.35;
-  const damping = 0.85;
 
   let inputX = 0;
   let inputZ = 0;
 
-  if(keys["w"]) inputZ -= 1;
-  if(keys["s"]) inputZ += 1;
-  if(keys["a"]) inputX -= 1;
-  if(keys["d"]) inputX += 1;
+  if (keys["w"]) inputZ -= 1;
+  if (keys["s"]) inputZ += 1;
+  if (keys["a"]) inputX -= 1;
+  if (keys["d"]) inputX += 1;
 
-  // normalize diagonal movement
-  const length = Math.sqrt(inputX * inputX + inputZ * inputZ);
-  if(length > 0){
-    inputX /= length;
-    inputZ /= length;
+  const len = Math.sqrt(inputX * inputX + inputZ * inputZ);
+  if (len > 0) {
+    inputX /= len;
+    inputZ /= len;
   }
 
-  // smooth acceleration (cinematic feel)
   velX += (inputX * speed - velX) * 0.15;
   velZ += (inputZ * speed - velZ) * 0.15;
 
   player.position.x += velX;
   player.position.z += velZ;
 
-  // 🎥 cinematic camera follow (lag behind player)
+  /* camera follow (cinematic lag) */
   camera.position.x += (player.position.x - camera.position.x) * 0.08;
   camera.position.z += (player.position.z + 30 - camera.position.z) * 0.08;
   camera.position.y += (18 - camera.position.y) * 0.08;
 
   camera.lookAt(player.position);
 
-  // 🎬 slight FOV dynamic zoom (feels like GTA running speed)
+  /* dynamic FOV */
   const speedAmount = Math.abs(velX) + Math.abs(velZ);
   const targetFov = 70 + speedAmount * 15;
-camera.fov += (targetFov - camera.fov) * 0.1;
-camera.updateProjectionMatrix();
+
+  camera.fov += (targetFov - camera.fov) * 0.1;
+  camera.updateProjectionMatrix();
 }
+
 /* -----------------------------
-   GAME LOOP
+   ZONE SYSTEM
 ------------------------------*/
-function animate(){
+function updateZone() {
+  let found = "CITY CENTER";
+
+  for (const key in zones) {
+    const z = zones[key];
+
+    const dx = player.position.x - z.x;
+    const dz = player.position.z - z.z;
+
+    const dist = Math.sqrt(dx * dx + dz * dz);
+
+    if (dist < z.radius) {
+      found = z.name;
+      break;
+    }
+  }
+
+  currentZone = found;
+  hud.innerHTML = "ZONE: " + currentZone;
+}
+
+/* -----------------------------
+   RESIZE
+------------------------------*/
+window.addEventListener("resize", () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+/* -----------------------------
+   LOOP
+------------------------------*/
+function animate() {
   requestAnimationFrame(animate);
 
   move();
-updateDistrict();
+  updateZone();
 
   renderer.render(scene, camera);
 }
