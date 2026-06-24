@@ -61,6 +61,7 @@ function updateAtmosphere(zoneName) {
   const zone = atmospheres[key] || atmospheres.CENTER;
 
   ambient.color.set(zone.color);
+ambient.intensity = zone.intensity;
 }
 /* -----------------------------
    GROUND
@@ -112,7 +113,7 @@ function createStreetLight(x, z) {
   pole.position.set(x, 3, z);
   scene.add(pole);
 
-  const bulb = new THREE.PointLight(0xffee88, 0, 15);
+  const bulb = new THREE.PointLight(0xffee88, 1, 15);
   bulb.position.set(x, 5, z);
   scene.add(bulb);
 
