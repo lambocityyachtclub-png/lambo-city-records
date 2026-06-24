@@ -286,6 +286,8 @@ hud.style.zIndex = "10";
 hud.innerHTML = "ZONE: CITY CENTER";
 
 document.body.appendChild(hud);
+camera.position.set(0, 6, 10);
+camera.lookAt(0, 0, 0);
 
 /* -----------------------------
    ZONE UPDATE
@@ -312,7 +314,6 @@ function updateZone() {
 
   updateAtmosphere(found);
 }
-
 /* -----------------------------
    LOOP
 ------------------------------*/
