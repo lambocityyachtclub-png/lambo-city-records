@@ -10,7 +10,7 @@ import { renderer } from "./renderer.js";
 const sun = new THREE.DirectionalLight(0xffffff, 1.2);
 sun.position.set(10, 20, 10);
 scene.add(sun);
-
+const streetLights = [];
 const atmospheres = {
   CENTER: { color: 0xffffff, intensity: 1.0 },
   YACHT: { color: 0x222244, intensity: 0.6 },
@@ -34,6 +34,13 @@ function updateWorldTime() {
 
   ambient.intensity =
     0.4 + Math.max(0, Math.cos(worldTime)) * 0.8;
+
+  /* STREETLIGHT AUTO CONTROL */
+  const nightFactor = Math.max(0, Math.cos(worldTime));
+
+  for (const light of streetLights) {
+    light.bulb.intensity = (1 - nightFactor) * light.baseIntensity;
+  }
 }
 /* -----------------------------
    ATMOSPHERE SYSTEM (FIXED)
@@ -90,6 +97,45 @@ createZoneRing(-60, -40, 0xff00ff);  // YACHT
 createZoneRing(60, -40, 0x00aaff);    // BEACH
 createZoneRing(0, 80, 0xffcc00);     // RACING
 
+/* -----------------------------
+   STREETLIGHT SYSTEM
+------------------------------*/
+
+const streetLights = [];
+
+function createStreetLight(x, z) {
+  const pole = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.1, 0.1, 6),
+    new THREE.MeshStandardMaterial({ color: 0x333333 })
+  );
+
+  pole.position.set(x, 3, z);
+  scene.add(pole);
+
+  const bulb = new THREE.PointLight(0xffee88, 0, 15);
+  bulb.position.set(x, 5, z);
+  scene.add(bulb);
+
+  streetLights.push({
+    bulb,
+    baseIntensity: 1.5,
+    x,
+    z
+  });
+}
+/* -----------------------------
+   SPAWN STREETLIGHT GRID
+------------------------------*/
+
+for (let x = -80; x <= 80; x += 20) {
+  createStreetLight(x, -30);
+  createStreetLight(x, 30);
+}
+
+for (let z = -60; z <= 80; z += 20) {
+  createStreetLight(-80, z);
+  createStreetLight(80, z);
+}
 /* -----------------------------
    PLAYER
 ------------------------------*/
