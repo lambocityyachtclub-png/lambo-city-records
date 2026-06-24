@@ -38,7 +38,12 @@ function updateWorldTime() {
 /* -----------------------------
    ATMOSPHERE SYSTEM (FIXED)
 ------------------------------*/
+let lastZone = "";
+
 function updateAtmosphere(zoneName) {
+  if (zoneName === lastZone) return;
+  lastZone = zoneName;
+
   let key = "CENTER";
 
   if (zoneName.includes("CENTER")) key = "CENTER";
@@ -49,7 +54,6 @@ function updateAtmosphere(zoneName) {
   const zone = atmospheres[key] || atmospheres.CENTER;
 
   ambient.color.set(zone.color);
-  
 }
 /* -----------------------------
    GROUND
