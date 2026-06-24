@@ -61,7 +61,7 @@ function updateAtmosphere(zoneName) {
   const zone = atmospheres[key] || atmospheres.CENTER;
 
   ambient.color.set(zone.color);
-ambient.intensity = zone.intensity;
+
 }
 /* -----------------------------
    GROUND
