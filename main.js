@@ -22,6 +22,20 @@ const ambient = new THREE.AmbientLight(0xffffff, 0.6);
 scene.add(ambient);
 
 /* -----------------------------
+   DAY / NIGHT SYSTEM
+------------------------------*/
+let worldTime = 0;
+
+function updateWorldTime() {
+  worldTime += 0.001;
+
+  sun.position.x = Math.sin(worldTime) * 30;
+  sun.position.y = Math.cos(worldTime) * 20;
+
+  ambient.intensity =
+    0.4 + Math.max(0, Math.cos(worldTime)) * 0.8;
+}
+/* -----------------------------
    ATMOSPHERE SYSTEM (FIXED)
 ------------------------------*/
 function updateAtmosphere(zoneName) {
@@ -35,7 +49,7 @@ function updateAtmosphere(zoneName) {
   const zone = atmospheres[key] || atmospheres.CENTER;
 
   ambient.color.set(zone.color);
-  ambient.intensity = zone.intensity;
+  
 }
 /* -----------------------------
    GROUND
@@ -256,7 +270,8 @@ function animate() {
 
   move();
   updateZone();
-  updateNPCs(); // ✅ ADD THIS
+  updateNPCs();
+  updateWorldTime();
 
   renderer.render(scene, camera);
 }
