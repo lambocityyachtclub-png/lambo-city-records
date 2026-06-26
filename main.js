@@ -4,7 +4,7 @@ import { camera } from "./camera.js";
 import { renderer } from "./renderer.js";
 
 /* -----------------------------
-   SAFE RENDERER INIT
+   RENDERER SETUP
 ------------------------------*/
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -13,16 +13,12 @@ document.body.style.margin = "0";
 document.body.style.overflow = "hidden";
 document.body.appendChild(renderer.domElement);
 
-/* CRITICAL: single source of input focus */
 const canvas = renderer.domElement;
-canvas.setAttribute("tabindex", "0");
+canvas.tabIndex = 0;
 canvas.style.outline = "none";
-canvas.style.display = "block";
 canvas.focus();
 
-/* lock focus ONLY on user interaction */
 window.addEventListener("mousedown", () => canvas.focus());
-window.addEventListener("touchstart", () => canvas.focus());
 
 /* -----------------------------
    CAMERA
@@ -74,7 +70,7 @@ function updateWorldTime() {
 }
 
 /* -----------------------------
-   ATMOSPHERE SWITCH
+   ATMOSPHERE UPDATE
 ------------------------------*/
 let lastZone = "";
 
@@ -88,7 +84,6 @@ function updateAtmosphere(zoneName) {
   else if (zoneName.includes("RACING")) key = "RACING";
 
   const zone = atmospheres[key];
-
   ambient.color.set(zone.color);
   ambient.intensity = zone.intensity;
 }
@@ -104,7 +99,7 @@ ground.rotation.x = -Math.PI / 2;
 scene.add(ground);
 
 /* -----------------------------
-   ZONES VISUAL
+   ZONE RINGS
 ------------------------------*/
 function createZoneRing(x, z, color) {
   const ring = new THREE.Mesh(
@@ -162,15 +157,15 @@ const player = new THREE.Mesh(
   new THREE.BoxGeometry(1, 2, 1),
   new THREE.MeshStandardMaterial({ color: 0x00ffcc })
 );
+
 player.position.set(0, 1, 0);
 scene.add(player);
 
 /* -----------------------------
-   INPUT (FIXED — NO GLITCH VERSION)
+   INPUT (ONLY ONE SYSTEM — FIXED)
 ------------------------------*/
 const keys = Object.create(null);
 
-/* single reliable input system */
 window.addEventListener("keydown", (e) => {
   keys[e.code] = true;
   canvas.focus();
@@ -181,7 +176,7 @@ window.addEventListener("keyup", (e) => {
 });
 
 /* -----------------------------
-   MOVEMENT (STABLE)
+   MOVEMENT
 ------------------------------*/
 let velX = 0;
 let velZ = 0;
@@ -229,6 +224,38 @@ const zones = {
 let currentZone = "CITY CENTER";
 
 /* -----------------------------
+   INTERACTABLES
+------------------------------*/
+const interactables = [
+  { name: "CABIN_1", x: -20, z: -10, radius: 5, type: "CABIN" },
+  { name: "CABIN_2", x: 25, z: -15, radius: 5, type: "CABIN" },
+  { name: "YACHT_ENTRY", x: -60, z: -40, radius: 8, type: "YACHT" }
+];
+
+const interaction = {
+  current: null
+};
+
+/* -----------------------------
+   E KEY INTERACTION (SAFE)
+------------------------------*/
+window.addEventListener("keydown", (e) => {
+  if (e.code === "KeyE") {
+    for (const obj of interactables) {
+      const dx = player.position.x - obj.x;
+      const dz = player.position.z - obj.z;
+
+      if (Math.hypot(dx, dz) < obj.radius) {
+        interaction.current = obj.name;
+        console.log("INTERACT:", obj.name);
+        return;
+      }
+    }
+    interaction.current = null;
+  }
+});
+
+/* -----------------------------
    HUD
 ------------------------------*/
 const hud = document.createElement("div");
@@ -251,6 +278,7 @@ function updateZone() {
 
   for (const k in zones) {
     const z = zones[k];
+
     const dx = player.position.x - z.x;
     const dz = player.position.z - z.z;
 
@@ -261,7 +289,9 @@ function updateZone() {
   }
 
   currentZone = found;
-  hud.innerHTML = "ZONE: " + currentZone;
+  hud.innerHTML =
+    "ZONE: " + currentZone +
+    "<br>INTERACT: " + (interaction.current || "NONE");
 
   updateAtmosphere(found);
 }
