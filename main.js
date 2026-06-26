@@ -3,9 +3,9 @@ import { scene } from "./scene.js";
 import { camera } from "./camera.js";
 import { renderer } from "./renderer.js";
 
-/* -----------------------------
-   INIT RENDERER
-------------------------------*/
+/* =========================================================
+   CORE ENGINE SETUP
+========================================================= */
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
@@ -17,14 +17,14 @@ const canvas = renderer.domElement;
 canvas.tabIndex = 0;
 canvas.focus();
 
-/* -----------------------------
+/* =========================================================
    CAMERA
-------------------------------*/
+========================================================= */
 camera.position.set(0, 6, 10);
 
-/* -----------------------------
-   LIGHTING
-------------------------------*/
+/* =========================================================
+   LIGHTING / ATMOSPHERE
+========================================================= */
 const sun = new THREE.DirectionalLight(0xffffff, 1.2);
 sun.position.set(10, 20, 10);
 scene.add(sun);
@@ -32,14 +32,10 @@ scene.add(sun);
 const ambient = new THREE.AmbientLight(0xffffff, 0.6);
 scene.add(ambient);
 
-/* -----------------------------
-   WORLD TIME
-------------------------------*/
 let worldTime = 0;
 
 function updateWorldTime() {
   worldTime += 0.0015;
-
   sun.position.x = Math.sin(worldTime) * 30;
   sun.position.y = Math.cos(worldTime) * 20;
 
@@ -47,31 +43,31 @@ function updateWorldTime() {
   ambient.intensity = 0.3 + day * 0.7;
 }
 
-/* -----------------------------
-   WORLD
-------------------------------*/
+/* =========================================================
+   WORLD BASE
+========================================================= */
 const ground = new THREE.Mesh(
-  new THREE.PlaneGeometry(700, 700),
+  new THREE.PlaneGeometry(800, 800),
   new THREE.MeshStandardMaterial({ color: 0x0f0f0f })
 );
 ground.rotation.x = -Math.PI / 2;
 scene.add(ground);
 
-/* -----------------------------
-   ZONES
-------------------------------*/
+/* =========================================================
+   ZONES (GAME DESIGN CORE)
+========================================================= */
 const zones = {
   CENTER: { name: "CITY CENTER", x: 0, z: 0, radius: 70, boost: 1.0 },
   YACHT: { name: "YACHT CLUB", x: -60, z: -40, radius: 70, boost: 1.1 },
   BEACH: { name: "BEACH", x: 60, z: -40, radius: 70, boost: 1.05 },
-  RACING: { name: "RACING TRACK", x: 0, z: 80, radius: 80, boost: 1.3 }
+  RACING: { name: "RACING TRACK", x: 0, z: 80, radius: 80, boost: 1.4 }
 };
 
 let currentZone = "CITY CENTER";
 
-/* -----------------------------
+/* =========================================================
    PLAYER
-------------------------------*/
+========================================================= */
 const player = new THREE.Mesh(
   new THREE.BoxGeometry(1, 2, 1),
   new THREE.MeshStandardMaterial({ color: 0x00ffcc })
@@ -79,21 +75,47 @@ const player = new THREE.Mesh(
 player.position.set(0, 1, 0);
 scene.add(player);
 
-/* -----------------------------
-   HERO (GUIDE NPC)
-------------------------------*/
+/* =========================================================
+   HERO SYSTEM (CINEMATIC INTRO)
+========================================================= */
 const hero = new THREE.Mesh(
   new THREE.CapsuleGeometry(0.6, 1.2, 4, 8),
   new THREE.MeshStandardMaterial({ color: 0xffcc00 })
 );
-hero.position.set(5, 1, 5);
+hero.position.set(6, 1, 6);
 scene.add(hero);
 
 let heroIntroPlayed = false;
 
-/* -----------------------------
-   GRIND OBJECTS
-------------------------------*/
+/* =========================================================
+   STAGE SYSTEM (MUSIC / PERFORMANCE ZONE)
+========================================================= */
+const stage = new THREE.Mesh(
+  new THREE.BoxGeometry(20, 2, 10),
+  new THREE.MeshStandardMaterial({ color: 0x222222 })
+);
+stage.position.set(0, 1, -30);
+scene.add(stage);
+
+const stageLight = new THREE.PointLight(0xff00ff, 2, 50);
+stageLight.position.set(0, 10, -30);
+scene.add(stageLight);
+
+/* =========================================================
+   SKATE SYSTEM (TRICKS + SPEED)
+========================================================= */
+let velocityX = 0;
+let velocityZ = 0;
+
+const skate = {
+  speed: 0.35,
+  boost: 1,
+  tricks: 0
+};
+
+/* =========================================================
+   GRIND RAILS
+========================================================= */
 function rail(x, z) {
   const r = new THREE.Mesh(
     new THREE.BoxGeometry(6, 0.2, 0.2),
@@ -109,9 +131,9 @@ rail(-6, 18);
 rail(10, -8);
 rail(-12, -5);
 
-/* -----------------------------
+/* =========================================================
    INPUT SYSTEM
-------------------------------*/
+========================================================= */
 const keys = Object.create(null);
 
 window.addEventListener("keydown", (e) => {
@@ -123,26 +145,23 @@ window.addEventListener("keyup", (e) => {
   keys[e.code] = false;
 });
 
-/* -----------------------------
-   SKATE MOVEMENT (REAL FEEL)
-------------------------------*/
-let velX = 0;
-let velZ = 0;
-let speed = 0.35;
-
+/* =========================================================
+   ZONE BOOST SYSTEM
+========================================================= */
 function getZoneBoost() {
   for (const k in zones) {
     const z = zones[k];
     const dx = player.position.x - z.x;
     const dz = player.position.z - z.z;
 
-    if (Math.hypot(dx, dz) < z.radius) {
-      return z.boost;
-    }
+    if (Math.hypot(dx, dz) < z.radius) return z.boost;
   }
   return 1;
 }
 
+/* =========================================================
+   MOVEMENT (SKATE FEEL)
+========================================================= */
 function move() {
   const boost = getZoneBoost();
 
@@ -160,14 +179,14 @@ function move() {
     iz /= len;
   }
 
-  const targetX = ix * speed * boost;
-  const targetZ = iz * speed * boost;
+  const targetX = ix * skate.speed * boost;
+  const targetZ = iz * skate.speed * boost;
 
-  velX += (targetX - velX) * 0.15;
-  velZ += (targetZ - velZ) * 0.15;
+  velocityX += (targetX - velocityX) * 0.15;
+  velocityZ += (targetZ - velocityZ) * 0.15;
 
-  player.position.x += velX;
-  player.position.z += velZ;
+  player.position.x += velocityX;
+  player.position.z += velocityZ;
 
   camera.position.x += (player.position.x - camera.position.x) * 0.08;
   camera.position.z += (player.position.z + 8 - camera.position.z) * 0.08;
@@ -176,32 +195,69 @@ function move() {
   camera.lookAt(player.position);
 }
 
-/* -----------------------------
-   HERO INTRO SYSTEM
-------------------------------*/
+/* =========================================================
+   HERO INTRO (CINEMATIC TRIGGER)
+========================================================= */
 function updateHero() {
   const dist = player.position.distanceTo(hero.position);
 
   if (dist < 8 && !heroIntroPlayed) {
     heroIntroPlayed = true;
 
-    hud.innerHTML =
-      "HERO: Welcome to LAMBO CITY... build your path, earn your place.";
+    alert(
+      "HERO: Welcome to LAMBO CITY.\nBuild your path.\nEarn your place."
+    );
   }
 }
 
-/* -----------------------------
+/* =========================================================
+   SKATE TRICKS (FOUNDATION SYSTEM)
+========================================================= */
+function doTrick() {
+  skate.tricks++;
+
+  skate.speed += 0.01;
+
+  setTimeout(() => {
+    skate.speed = Math.max(0.35, skate.speed);
+  }, 2000);
+}
+
+window.addEventListener("keydown", (e) => {
+  if (e.code === "Space") doTrick();
+});
+
+/* =========================================================
+   STAGE MUSIC SYSTEM (HOOK READY)
+========================================================= */
+let musicPlaying = false;
+
+function toggleMusic() {
+  musicPlaying = !musicPlaying;
+
+  if (musicPlaying) {
+    console.log("PLAY MUSIC STREAM (YouTube / DJ / Twitch hook)");
+  } else {
+    console.log("STOP MUSIC");
+  }
+}
+
+window.addEventListener("keydown", (e) => {
+  if (e.code === "KeyM") toggleMusic();
+});
+
+/* =========================================================
    ZONE SYSTEM + HUD
-------------------------------*/
+========================================================= */
 const hud = document.createElement("div");
 hud.style.position = "absolute";
 hud.style.top = "15px";
 hud.style.left = "15px";
 hud.style.color = "white";
+hud.style.fontSize = "16px";
+hud.style.fontFamily = "Arial";
 hud.style.padding = "10px";
 hud.style.background = "rgba(0,0,0,0.5)";
-hud.style.fontFamily = "Arial";
-hud.style.fontSize = "16px";
 document.body.appendChild(hud);
 
 function updateZone() {
@@ -219,12 +275,13 @@ function updateZone() {
   }
 
   currentZone = found;
-  hud.innerHTML = "ZONE: " + currentZone;
+  hud.innerHTML =
+    `ZONE: ${currentZone} | SPEED: ${skate.speed.toFixed(2)} | TRICKS: ${skate.tricks}`;
 }
 
-/* -----------------------------
+/* =========================================================
    LOOP
-------------------------------*/
+========================================================= */
 function animate() {
   requestAnimationFrame(animate);
 
