@@ -2,29 +2,26 @@ import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 import { scene } from "./scene.js";
 import { camera } from "./camera.js";
 import { renderer } from "./renderer.js";
+
 /* -----------------------------
-   RENDERER SAFETY (IMPORTANT FIX)
+   RENDERER SAFETY
 ------------------------------*/
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(window.devicePixelRatio);
 
 document.body.style.margin = "0";
 document.body.style.overflow = "hidden";
-
 document.body.appendChild(renderer.domElement);
 
 renderer.domElement.style.display = "block";
-renderer.domElement.style.outline = "none";
-renderer.domElement.style.pointerEvents = "auto";
-renderer.domElement.tabIndex = 1;
+renderer.domElement.tabIndex = 0;
 
-window.addEventListener("click", () => {
-  window.focus();
-});
+/* keep focus stable */
+window.addEventListener("click", () => renderer.domElement.focus());
+renderer.domElement.focus();
 
-window.focus();
 /* -----------------------------
-   CAMERA SAFE START
+   CAMERA
 ------------------------------*/
 camera.position.set(0, 6, 10);
 camera.lookAt(0, 0, 0);
@@ -41,6 +38,9 @@ scene.add(ambient);
 
 const streetLights = [];
 
+/* -----------------------------
+   ATMOSPHERE
+------------------------------*/
 const atmospheres = {
   CENTER: { color: 0xffffff, intensity: 0.9 },
   YACHT: { color: 0x222244, intensity: 0.6 },
@@ -70,7 +70,7 @@ function updateWorldTime() {
 }
 
 /* -----------------------------
-   ATMOSPHERE
+   ATMOSPHERE UPDATE
 ------------------------------*/
 let lastZone = "";
 
@@ -91,72 +91,15 @@ function updateAtmosphere(zoneName) {
 }
 
 /* -----------------------------
-   GROUND (FIXED VISIBILITY)
+   GROUND
 ------------------------------*/
 const ground = new THREE.Mesh(
   new THREE.PlaneGeometry(500, 500),
   new THREE.MeshStandardMaterial({ color: 0x1a1a1a })
 );
+
 ground.rotation.x = -Math.PI / 2;
-ground.position.y = 0;
 scene.add(ground);
-
-/* -----------------------------
-   ZONES VISUALS
-------------------------------*/
-function createZoneRing(x, z, color) {
-  const ring = new THREE.Mesh(
-    new THREE.RingGeometry(8, 10, 32),
-    new THREE.MeshBasicMaterial({
-      color,
-      transparent: true,
-      opacity: 0.6,
-      side: THREE.DoubleSide
-    })
-  );
-
-  ring.rotation.x = -Math.PI / 2;
-  ring.position.set(x, 0.05, z);
-
-  scene.add(ring);
-}
-
-createZoneRing(0, 0, 0x00ffcc);
-createZoneRing(-60, -40, 0xff00ff);
-createZoneRing(60, -40, 0x00aaff);
-createZoneRing(0, 80, 0xffcc00);
-
-/* -----------------------------
-   STREETLIGHTS (FIXED ARRAY BUG)
-------------------------------*/
-function createStreetLight(x, z) {
-  const pole = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.1, 0.1, 6),
-    new THREE.MeshStandardMaterial({ color: 0x333333 })
-  );
-
-  pole.position.set(x, 3, z);
-  scene.add(pole);
-
-  const bulb = new THREE.PointLight(0xffee88, 1, 15);
-  bulb.position.set(x, 5, z);
-  scene.add(bulb);
-
-  streetLights.push({
-    bulb,
-    baseIntensity: 1.5
-  });
-}
-
-for (let x = -80; x <= 80; x += 20) {
-  createStreetLight(x, -30);
-  createStreetLight(x, 30);
-}
-
-for (let z = -60; z <= 80; z += 20) {
-  createStreetLight(-80, z);
-  createStreetLight(80, z);
-}
 
 /* -----------------------------
    PLAYER
@@ -170,21 +113,20 @@ player.position.set(0, 1, 0);
 scene.add(player);
 
 /* -----------------------------
-   INPUT (FIXED RELIABLE VERSION)
+   INPUT (FINAL STABLE)
 ------------------------------*/
 const keys = {};
 
-window.addEventListener("keydown", (e) => {
+document.addEventListener("keydown", (e) => {
   keys[e.code] = true;
 });
 
-window.addEventListener("keyup", (e) => {
+document.addEventListener("keyup", (e) => {
   keys[e.code] = false;
 });
 
-
 /* -----------------------------
-   MOVEMENT (WORKING VERSION)
+   MOVEMENT
 ------------------------------*/
 let velX = 0;
 let velZ = 0;
@@ -195,36 +137,33 @@ function move() {
   let ix = 0;
   let iz = 0;
 
-  // WASD (reliable key codes)
   if (keys["KeyW"]) iz -= 1;
   if (keys["KeyS"]) iz += 1;
   if (keys["KeyA"]) ix -= 1;
   if (keys["KeyD"]) ix += 1;
 
-  // normalize diagonal movement
   const len = Math.hypot(ix, iz);
+
   if (len > 0) {
     ix /= len;
     iz /= len;
   }
 
-  // smooth acceleration
   velX += (ix * speed - velX) * 0.2;
   velZ += (iz * speed - velZ) * 0.2;
 
-  // apply movement
   player.position.x += velX;
   player.position.z += velZ;
 
-  // camera follow
   camera.position.x += (player.position.x - camera.position.x) * 0.08;
   camera.position.z += (player.position.z + 8 - camera.position.z) * 0.08;
   camera.position.y += (6 - camera.position.y) * 0.08;
 
   camera.lookAt(player.position);
 }
+
 /* -----------------------------
-   ZONES LOGIC
+   ZONES
 ------------------------------*/
 const zones = {
   CENTER: { name: "CITY CENTER", x: 0, z: 0, radius: 50 },
@@ -275,7 +214,7 @@ function updateZone() {
 }
 
 /* -----------------------------
-   LOOP (SAFE)
+   LOOP
 ------------------------------*/
 function animate() {
   requestAnimationFrame(animate);
