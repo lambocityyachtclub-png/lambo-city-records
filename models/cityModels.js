@@ -1,108 +1,97 @@
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 
-/* =========================================================
-   LAMBO CITY - MODELS SYSTEM (CABINS + DOCKS + STAGE)
-   This is where your world "stops being squares"
-========================================================= */
+/* -----------------------------
+   LAMBO CITY WORLD MODELS
+   (DOCKS + CABINS + BEACH BASE)
+------------------------------*/
 
-export function loadCityModels(scene) {
-
-  /* -----------------------------
-     OCEAN WATER (BASIC REALISTIC BASE)
-  ------------------------------*/
+export function createWorldModels(scene) {
+  
+  /* =========================
+     WATER (REALISTIC BASE)
+  ========================== */
   const water = new THREE.Mesh(
-    new THREE.PlaneGeometry(1000, 1000),
+    new THREE.PlaneGeometry(500, 500),
     new THREE.MeshStandardMaterial({
-      color: 0x0a1a2a,
-      metalness: 0.2,
-      roughness: 0.1
+      color: 0x0a3a5a,
+      roughness: 0.2,
+      metalness: 0.6
     })
   );
 
   water.rotation.x = -Math.PI / 2;
-  water.position.y = -0.5;
+  water.position.set(0, -0.5, -80);
   scene.add(water);
 
-  /* -----------------------------
-     MAIN DOCK (LUXURY WOOD PLATFORM)
-  ------------------------------*/
+  /* =========================
+     DOCK PLATFORM
+  ========================== */
   const dock = new THREE.Mesh(
-    new THREE.BoxGeometry(40, 1, 12),
-    new THREE.MeshStandardMaterial({ color: 0x5a3a1e })
+    new THREE.BoxGeometry(120, 2, 40),
+    new THREE.MeshStandardMaterial({
+      color: 0x3b2a1a,
+      roughness: 0.9
+    })
   );
 
-  dock.position.set(0, 0, -10);
+  dock.position.set(0, 0, -40);
   scene.add(dock);
 
-  /* -----------------------------
-     HERO MANSION CABIN (BIGGEST BUILDING)
-  ------------------------------*/
-  const heroCabin = new THREE.Mesh(
-    new THREE.BoxGeometry(10, 6, 10),
-    new THREE.MeshStandardMaterial({ color: 0x222222 })
-  );
+  /* =========================
+     CABINS (LOCKED VILLAS)
+  ========================== */
+  function createCabin(x, z, color = 0x8b5a2b) {
+    const cabin = new THREE.Group();
 
-  heroCabin.position.set(0, 3, -25);
-  scene.add(heroCabin);
-
-  /* -----------------------------
-     VIP CABINS (LOCKED AREA)
-  ------------------------------*/
-  const cabinPositions = [
-    [-12, -25],
-    [12, -25],
-    [-18, -35],
-    [18, -35]
-  ];
-
-  cabinPositions.forEach((pos, i) => {
-    const cabin = new THREE.Mesh(
-      new THREE.BoxGeometry(6, 4, 6),
-      new THREE.MeshStandardMaterial({ color: 0x444444 })
+    const base = new THREE.Mesh(
+      new THREE.BoxGeometry(10, 6, 10),
+      new THREE.MeshStandardMaterial({ color })
     );
 
-    cabin.position.set(pos[0], 2, pos[1]);
-    scene.add(cabin);
-  });
+    const roof = new THREE.Mesh(
+      new THREE.ConeGeometry(7, 4, 4),
+      new THREE.MeshStandardMaterial({ color: 0x222222 })
+    );
 
-  /* -----------------------------
-     BEACH TRANSITION (SAND ZONE)
-  ------------------------------*/
+    roof.position.y = 5.5;
+
+    cabin.add(base);
+    cabin.add(roof);
+
+    cabin.position.set(x, 3, z);
+
+    scene.add(cabin);
+    return cabin;
+  }
+
+  createCabin(-30, -55);
+  createCabin(0, -55);
+  createCabin(30, -55);
+
+  /* =========================
+     HERO MANSION (MAIN CABIN)
+  ========================== */
+  const heroMansion = new THREE.Mesh(
+    new THREE.BoxGeometry(18, 10, 18),
+    new THREE.MeshStandardMaterial({
+      color: 0xd4af37, // gold luxury tone
+      emissive: 0x222200
+    })
+  );
+
+  heroMansion.position.set(0, 5, -70);
+  scene.add(heroMansion);
+
+  /* =========================
+     BEACH TRANSITION ZONE
+  ========================== */
   const sand = new THREE.Mesh(
-    new THREE.PlaneGeometry(300, 200),
+    new THREE.PlaneGeometry(200, 120),
     new THREE.MeshStandardMaterial({ color: 0xc2b280 })
   );
 
   sand.rotation.x = -Math.PI / 2;
-  sand.position.set(0, 0, 60);
+  sand.position.set(0, -0.45, 60);
   scene.add(sand);
-
-  /* -----------------------------
-     COACHELLA STYLE STAGE
-  ------------------------------*/
-  const stage = new THREE.Mesh(
-    new THREE.BoxGeometry(30, 3, 12),
-    new THREE.MeshStandardMaterial({ color: 0x111111 })
-  );
-
-  stage.position.set(0, 1.5, 30);
-  scene.add(stage);
-
-  const jumbotron = new THREE.Mesh(
-    new THREE.BoxGeometry(18, 10, 1),
-    new THREE.MeshStandardMaterial({ color: 0x000000 })
-  );
-
-  jumbotron.position.set(0, 8, 24);
-  scene.add(jumbotron);
-
-  /* -----------------------------
-     SIMPLE PALM / ATMOSPHERE LIGHTS
-  ------------------------------*/
-  for (let i = -40; i <= 40; i += 20) {
-    const light = new THREE.PointLight(0xffcc88, 1, 20);
-    light.position.set(i, 5, 10);
-    scene.add(light);
-  }
 
 }
