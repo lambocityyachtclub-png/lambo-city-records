@@ -18,11 +18,11 @@ renderer.domElement.style.outline = "none";
 renderer.domElement.style.pointerEvents = "auto";
 renderer.domElement.tabIndex = 1;
 
-renderer.domElement.addEventListener("click", () => {
-  renderer.domElement.focus();
+window.addEventListener("click", () => {
+  window.focus();
 });
 
-renderer.domElement.focus();
+window.focus();
 /* -----------------------------
    CAMERA SAFE START
 ------------------------------*/
@@ -174,12 +174,14 @@ scene.add(player);
 ------------------------------*/
 const keys = {};
 
-window.addEventListener("keydown", (e) => {
+document.addEventListener("keydown", (e) => {
   keys[e.key.toLowerCase()] = true;
+  console.log("DOWN:", e.key);
 });
 
-window.addEventListener("keyup", (e) => {
+document.addEventListener("keyup", (e) => {
   keys[e.key.toLowerCase()] = false;
+  console.log("UP:", e.key);
 });
 
 /* -----------------------------
@@ -197,7 +199,7 @@ function move() {
   if (keys["s"]) iz += 1;
   if (keys["a"]) ix -= 1;
   if (keys["d"]) ix += 1;
-
+console.log("ix:", ix, "iz:", iz);
   const len = Math.hypot(ix, iz);
 
   if (len > 0) {
