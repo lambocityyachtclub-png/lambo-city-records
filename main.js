@@ -166,6 +166,71 @@ const skate = {
   tricks: 0
 };
 
+/* =========================================================
+   RAIL SYSTEM (CREATE, DETECT GRIND, SNAP ON)
+========================================================= */
+const rails = [];
+
+function createRail(x, y, z, length = 10) {
+  const rail = new THREE.Mesh(
+    new THREE.BoxGeometry(length, 0.2, 0.3),
+    new THREE.MeshStandardMaterial({ color: 0xaaaaaa })
+  );
+
+  rail.position.set(x, y, z);
+  scene.add(rail);
+
+  rails.push({
+    mesh: rail,
+    length,
+    active: false
+  });
+
+  return rail;
+}
+
+createRail(0, 1, -5, 14);
+createRail(-10, 1, 8, 12);
+createRail(12, 1, 12, 16);
+createRail(20, 1, -8, 10);
+
+let grinding = false;
+let activeRail = null;
+
+function checkGrind() {
+  if (grinding) return;
+
+  for (const rail of rails) {
+    const dist = player.position.distanceTo(rail.mesh.position);
+
+    if (dist < 1.6) {
+      grinding = true;
+      activeRail = rail;
+
+      // Snap player onto rail
+      player.position.y = rail.mesh.position.y + 1.2;
+      vx *= 0.3;
+      vz *= 0.3;
+
+      skate.speed += 0.02; // reward for grinding
+      break;
+    }
+  }
+}
+
+function exitGrind() {
+  if (grinding && activeRail) {
+    const dist = player.position.distanceTo(activeRail.mesh.position);
+    if (dist > 3) {
+      grinding = false;
+      activeRail = null;
+    }
+  }
+}
+
+/* =========================================================
+   MOVE FUNCTION (SKATE + GRIND)
+========================================================= */
 function move() {
   let ix = 0;
   let iz = 0;
@@ -181,25 +246,16 @@ function move() {
     iz /= len;
   }
 
-  /* =====================================================
-     SKATEBOARD PHYSICS (REAL FEEL)
-  ===================================================== */
-
   if (skate.onBoard) {
-    // accelerate toward input direction
     vx += ix * skate.acceleration;
     vz += iz * skate.acceleration;
 
-    // clamp max speed
     vx = THREE.MathUtils.clamp(vx, -skate.maxSpeed, skate.maxSpeed);
     vz = THREE.MathUtils.clamp(vz, -skate.maxSpeed, skate.maxSpeed);
 
-    // friction (keeps motion smooth, not floating)
     vx *= skate.friction;
     vz *= skate.friction;
-
   } else {
-    // fallback walking feel (slower)
     vx = ix * 0.1;
     vz = iz * 0.1;
   }
@@ -207,17 +263,16 @@ function move() {
   player.position.x += vx;
   player.position.z += vz;
 
-  /* =====================================================
-     CAMERA FOLLOW (UNCHANGED BUT STABILIZED)
-  ===================================================== */
-
+  // Camera follow
   cameraTarget.set(player.position.x, player.position.y, player.position.z);
-
   camera.position.x += (player.position.x - camera.position.x) * 0.08;
   camera.position.z += (player.position.z + 10 - camera.position.z) * 0.08;
   camera.position.y += (6 - camera.position.y) * 0.08;
 
   camera.lookAt(cameraTarget);
+
+  // Check grind exit
+  exitGrind();
 }
 
 /* =========================================================
@@ -246,48 +301,6 @@ hud.style.fontFamily = "Arial";
 document.body.appendChild(hud);
 
 /* =========================================================
-   INTERACTION SYSTEM
-========================================================= */
-const eState = { down: false };
-
-function dist(a, b) {
-  return a.distanceTo(b);
-}
-
-function getNearbyObject() {
-  const list = [
-    { obj: heroMansion, radius: 10, action: "HERO" },
-    { obj: cabin1, radius: 6, action: "CABIN" },
-    { obj: cabin2, radius: 6, action: "CABIN" },
-    { obj: cabin3, radius: 6, action: "CABIN" },
-    { obj: stage, radius: 12, action: "STAGE" }
-  ];
-
-  for (const i of list) {
-    if (dist(player.position, i.obj.position) < i.radius) {
-      return i;
-    }
-  }
-  return null;
-}
-
-window.addEventListener("keydown", (e) => {
-  if (e.code === "KeyE" && !eState.down) {
-    eState.down = true;
-
-    const obj = getNearbyObject();
-    if (!obj) return;
-
-    if (obj.action === "CABIN") alert("VIP CABIN LOCKED");
-    if (obj.action === "HERO") alert("HERO: Welcome to LAMBO CITY");
-    if (obj.action === "STAGE") alert("STAGE ACTIVE");
-  }
-});
-
-window.addEventListener("keyup", (e) => {
-  if (e.code === "KeyE") eState.down = false;
-});
-
 /* =========================================================
    HERO TRIGGER
 ========================================================= */
@@ -309,7 +322,8 @@ function updateZone() {
   for (const k in zones) {
     const z = zones[k];
     const zonePos = new THREE.Vector3(z.x, 0, z.z);
-const d = player.position.distanceTo(zonePos);
+    const d = player.position.distanceTo(zonePos);
+
     if (d < z.r) found = z.name;
   }
 
@@ -320,12 +334,30 @@ const d = player.position.distanceTo(zonePos);
 }
 
 /* =========================================================
-   LOOP (SINGLE CLEAN LOOP)
+   🛹 GRIND SYSTEM UPDATE (RUN EVERY FRAME)
+========================================================= */
+function updateGrind() {
+  // if already grinding, stick player to rail
+  if (grinding && activeRail) {
+    const rail = activeRail.mesh;
+
+    player.position.y = rail.position.y + 1.2;
+
+    // optional forward rail slide
+    vx *= 0.98;
+    vz *= 0.98;
+  }
+}
+
+/* =========================================================
+   LOOP (MAIN GAME LOOP)
 ========================================================= */
 function animate() {
   requestAnimationFrame(animate);
 
   move();
+  checkGrind();     // detect rail entry
+  updateGrind();    // maintain grind state
   updateZone();
   updateHero();
   updateWorldTime();
@@ -333,4 +365,4 @@ function animate() {
   renderer.render(scene, camera);
 }
 
-animate();
+animate();  
