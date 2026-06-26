@@ -158,8 +158,11 @@ let vx = 0;
 let vz = 0;
 
 const skate = {
-  speed: 0.28,
-  maxSpeed: 0.55,
+  onBoard: true,        // skateboard active
+  speed: 0.18,          // base push speed (lower = more realistic start)
+  maxSpeed: 0.85,       // top sprint speed
+  acceleration: 0.06,   // how fast you gain speed
+  friction: 0.92,       // natural slowdown
   tricks: 0
 };
 
@@ -178,14 +181,35 @@ function move() {
     iz /= len;
   }
 
-  const tx = ix * skate.speed;
-  const tz = iz * skate.speed;
+  /* =====================================================
+     SKATEBOARD PHYSICS (REAL FEEL)
+  ===================================================== */
 
-  vx += (tx - vx) * 0.18;
-  vz += (tz - vz) * 0.18;
+  if (skate.onBoard) {
+    // accelerate toward input direction
+    vx += ix * skate.acceleration;
+    vz += iz * skate.acceleration;
+
+    // clamp max speed
+    vx = THREE.MathUtils.clamp(vx, -skate.maxSpeed, skate.maxSpeed);
+    vz = THREE.MathUtils.clamp(vz, -skate.maxSpeed, skate.maxSpeed);
+
+    // friction (keeps motion smooth, not floating)
+    vx *= skate.friction;
+    vz *= skate.friction;
+
+  } else {
+    // fallback walking feel (slower)
+    vx = ix * 0.1;
+    vz = iz * 0.1;
+  }
 
   player.position.x += vx;
   player.position.z += vz;
+
+  /* =====================================================
+     CAMERA FOLLOW (UNCHANGED BUT STABILIZED)
+  ===================================================== */
 
   cameraTarget.set(player.position.x, player.position.y, player.position.z);
 
@@ -284,7 +308,8 @@ function updateZone() {
 
   for (const k in zones) {
     const z = zones[k];
-    const d = player.position.distanceTo(new THREE.Vector3(z.x, 0, z.z));
+    const zonePos = new THREE.Vector3(z.x, 0, z.z);
+const d = player.position.distanceTo(zonePos);
     if (d < z.r) found = z.name;
   }
 
