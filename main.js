@@ -9,9 +9,8 @@ const camera = new THREE.PerspectiveCamera(
   75,
   window.innerWidth / window.innerHeight,
   0.1,
-  5000
+  6000
 );
-camera.position.set(0, 10, 18);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -19,27 +18,34 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.2;
+renderer.toneMappingExposure = 1.25;
 
 document.body.style.margin = "0";
 document.body.style.overflow = "hidden";
 document.body.appendChild(renderer.domElement);
 
 /* =========================================================
-   🌫️ ATMOSPHERE
+   🌗 TIME SYSTEM (DAY/NIGHT)
 ========================================================= */
-scene.fog = new THREE.FogExp2(0x070b14, 0.0024);
+let time = 0;
 
 /* =========================================================
-   🌞 LIGHTING
+   🌫️ ATMOSPHERE BASE
 ========================================================= */
-scene.add(new THREE.AmbientLight(0x6f8cff, 0.35));
+scene.fog = new THREE.FogExp2(0x0a0f1a, 0.0018);
 
-const sun = new THREE.DirectionalLight(0xffffff, 2.5);
-sun.position.set(60, 90, 40);
+/* =========================================================
+   🌞 LIGHTING (DYNAMIC)
+========================================================= */
+const sun = new THREE.DirectionalLight(0xffffff, 2.2);
+sun.position.set(80, 120, 50);
 scene.add(sun);
 
-scene.add(new THREE.HemisphereLight(0x4aa3ff, 0x0a0a0a, 0.6));
+const ambient = new THREE.AmbientLight(0x6f8cff, 0.3);
+scene.add(ambient);
+
+const hemi = new THREE.HemisphereLight(0x4aa3ff, 0x0a0a0a, 0.5);
+scene.add(hemi);
 
 /* =========================================================
    🌍 WORLD ROOT
@@ -48,61 +54,45 @@ const world = new THREE.Group();
 scene.add(world);
 
 /* =========================================================
-   🏙️ CITY BASE GRID
+   🏙️ DISTRICT SYSTEM (AAA STRUCTURE)
 ========================================================= */
-const GRID_SIZE = 8;
-const BLOCK_SIZE = 120;
-
-/* roads container */
-const roads = [];
-const intersections = [];
+const DISTRICTS = {
+  CENTER: { x: 0, z: 0, fog: 0x0a0f1a, tone: 1.2 },
+  BEACH: { x: 400, z: -200, fog: 0x1a2f3a, tone: 1.3 },
+  YACHT: { x: -400, z: -200, fog: 0x0a2a3a, tone: 1.4 },
+  RACING: { x: 0, z: 500, fog: 0x2a0a0a, tone: 1.5 }
+};
 
 /* =========================================================
-   🛣️ ROAD SYSTEM (V4 CORE)
+   🌍 GROUND
 ========================================================= */
-function createRoad(x, z, type = "h") {
-  const road = new THREE.Mesh(
-    new THREE.PlaneGeometry(type === "h" ? 1000 : 20, type === "h" ? 20 : 1000),
-    new THREE.MeshStandardMaterial({
-      color: 0x1a1a1a,
-      roughness: 1
-    })
-  );
-
-  road.rotation.x = -Math.PI / 2;
-  road.position.set(x, 0.01, z);
-
-  world.add(road);
-  roads.push(road);
-}
-
-/* GRID ROADS */
-for (let i = -GRID_SIZE; i <= GRID_SIZE; i++) {
-  createRoad(i * BLOCK_SIZE, 0, "v");
-  createRoad(0, i * BLOCK_SIZE, "h");
-}
+const ground = new THREE.Mesh(
+  new THREE.PlaneGeometry(4000, 4000),
+  new THREE.MeshStandardMaterial({ color: 0x101010 })
+);
+ground.rotation.x = -Math.PI / 2;
+world.add(ground);
 
 /* =========================================================
-   🏗️ CITY BLOCKS
+   🏙️ CITY BLOCKS (STRUCTURED DENSITY)
 ========================================================= */
-function createBlock(x, z) {
-  const block = new THREE.Mesh(
-    new THREE.BoxGeometry(80, 40, 80),
+function block(x, z, h = 40) {
+  const b = new THREE.Mesh(
+    new THREE.BoxGeometry(80, h, 80),
     new THREE.MeshStandardMaterial({
-      color: new THREE.Color().setHSL(Math.random() * 0.1 + 0.05, 0.3, 0.25),
+      color: new THREE.Color().setHSL(0.08, 0.25, 0.25),
       roughness: 0.9
     })
   );
 
-  block.position.set(x, 20, z);
-  world.add(block);
+  b.position.set(x, h / 2, z);
+  world.add(b);
 }
 
-/* fill city blocks between roads */
-for (let x = -GRID_SIZE; x < GRID_SIZE; x++) {
-  for (let z = -GRID_SIZE; z < GRID_SIZE; z++) {
-    if (Math.random() > 0.35) {
-      createBlock(x * BLOCK_SIZE + 60, z * BLOCK_SIZE + 60);
+for (let x = -8; x <= 8; x++) {
+  for (let z = -8; z <= 8; z++) {
+    if (Math.random() > 0.4) {
+      block(x * 140, z * 140, 20 + Math.random() * 80);
     }
   }
 }
@@ -121,19 +111,16 @@ world.add(player);
    🎮 INPUT
 ========================================================= */
 const keys = {};
-
-window.addEventListener("keydown", (e) => (keys[e.code] = true));
-window.addEventListener("keyup", (e) => (keys[e.code] = false));
+window.addEventListener("keydown", e => keys[e.code] = true);
+window.addEventListener("keyup", e => keys[e.code] = false);
 
 /* =========================================================
-   🛹 MOVEMENT (ROAD-BASED FEEL)
+   🛹 MOVEMENT
 ========================================================= */
-let vx = 0;
-let vz = 0;
+let vx = 0, vz = 0;
 
-function movePlayer() {
-  let ix = 0;
-  let iz = 0;
+function move() {
+  let ix = 0, iz = 0;
 
   if (keys["KeyW"]) iz -= 1;
   if (keys["KeyS"]) iz += 1;
@@ -149,8 +136,8 @@ function movePlayer() {
   vx += ix * 0.08;
   vz += iz * 0.08;
 
-  vx = THREE.MathUtils.clamp(vx, -1.2, 1.2);
-  vz = THREE.MathUtils.clamp(vz, -1.2, 1.2);
+  vx = THREE.MathUtils.clamp(vx, -1.4, 1.4);
+  vz = THREE.MathUtils.clamp(vz, -1.4, 1.4);
 
   vx *= 0.9;
   vz *= 0.9;
@@ -160,101 +147,103 @@ function movePlayer() {
 }
 
 /* =========================================================
-   🚗 TRAFFIC SYSTEM (ROAD FOLLOWING)
+   🎥 CINEMATIC CAMERA (V5 AAA RIG)
 ========================================================= */
-const cars = [];
+const camTarget = new THREE.Vector3();
+const camOffset = new THREE.Vector3(0, 6, 14);
 
-function createCar(x, z) {
-  const car = new THREE.Mesh(
-    new THREE.BoxGeometry(2, 1, 4),
-    new THREE.MeshStandardMaterial({ color: 0xff4444 })
-  );
+function updateCamera() {
+  camTarget.copy(player.position);
 
-  car.position.set(x, 0.5, z);
+  // velocity-based camera sway
+  const speed = Math.hypot(vx, vz);
 
-  car.userData = {
-    speed: 0.5 + Math.random() * 0.3,
-    dir: Math.random() > 0.5 ? 1 : -1
-  };
+  camera.position.x += (player.position.x + camOffset.x + vx * 4 - camera.position.x) * 0.05;
+  camera.position.z += (player.position.z + camOffset.z - camera.position.z) * 0.05;
+  camera.position.y += (camOffset.y + speed * 2 - camera.position.y) * 0.05;
 
-  world.add(car);
-  cars.push(car);
-}
-
-/* spawn traffic on main roads */
-for (let i = -6; i <= 6; i++) {
-  createCar(i * 40, -240);
+  camera.lookAt(camTarget);
 }
 
 /* =========================================================
-   🚗 UPDATE CARS (ROAD LOOP)
-========================================================= */
-function updateCars() {
-  for (const c of cars) {
-    c.position.z += c.userData.speed * c.userData.dir;
-
-    if (c.position.z > 300) c.position.z = -300;
-    if (c.position.z < -300) c.position.z = 300;
-  }
-}
-
-/* =========================================================
-   🧍 NPC SYSTEM (WALK ZONES)
+   🧍 NPC GROUP FLOW (NOT RANDOM WALK)
 ========================================================= */
 const npcs = [];
 
-function createNPC(x, z) {
-  const npc = new THREE.Mesh(
+function npc(x, z) {
+  const n = new THREE.Mesh(
     new THREE.BoxGeometry(0.8, 1.8, 0.8),
     new THREE.MeshStandardMaterial({
       color: new THREE.Color().setHSL(Math.random(), 0.6, 0.6)
     })
   );
 
-  npc.position.set(x, 0.9, z);
+  n.position.set(x, 0.9, z);
 
-  npc.userData = {
-    dir: Math.random() * Math.PI * 2,
+  n.userData = {
+    angle: Math.random() * Math.PI * 2,
     speed: 0.02 + Math.random() * 0.02
   };
 
-  world.add(npc);
-  npcs.push(npc);
+  world.add(n);
+  npcs.push(n);
 }
 
-/* spawn NPCs in city center */
-for (let i = 0; i < 60; i++) {
-  createNPC(
-    (Math.random() - 0.5) * 400,
-    (Math.random() - 0.5) * 400
-  );
+for (let i = 0; i < 80; i++) {
+  npc((Math.random() - 0.5) * 600, (Math.random() - 0.5) * 600);
 }
 
-/* =========================================================
-   🧍 UPDATE NPCS (SOFT WALK LOGIC)
-========================================================= */
 function updateNPCs() {
   for (const n of npcs) {
-    n.userData.dir += (Math.random() - 0.5) * 0.08;
+    n.userData.angle += (Math.random() - 0.5) * 0.05;
 
-    n.position.x += Math.cos(n.userData.dir) * n.userData.speed;
-    n.position.z += Math.sin(n.userData.dir) * n.userData.speed;
+    n.position.x += Math.cos(n.userData.angle) * n.userData.speed;
+    n.position.z += Math.sin(n.userData.angle) * n.userData.speed;
   }
 }
 
 /* =========================================================
-   🎥 CAMERA (V4 SMOOTHER GTA FEEL)
+   🚗 TRAFFIC (LANE FLOW SIMPLE AI)
 ========================================================= */
-const camTarget = new THREE.Vector3();
+const cars = [];
 
-function updateCamera() {
-  camTarget.copy(player.position);
+function car(x, z) {
+  const c = new THREE.Mesh(
+    new THREE.BoxGeometry(2, 1, 4),
+    new THREE.MeshStandardMaterial({ color: 0xff4444 })
+  );
 
-  camera.position.x += (player.position.x - camera.position.x) * 0.04;
-  camera.position.z += (player.position.z + 20 - camera.position.z) * 0.04;
-  camera.position.y += (10 - camera.position.y) * 0.04;
+  c.position.set(x, 0.5, z);
+  c.userData.speed = 0.6;
 
-  camera.lookAt(camTarget);
+  world.add(c);
+  cars.push(c);
+}
+
+for (let i = -6; i <= 6; i++) {
+  car(i * 60, -300);
+}
+
+function updateCars() {
+  for (const c of cars) {
+    c.position.z += c.userData.speed;
+
+    if (c.position.z > 300) c.position.z = -300;
+  }
+}
+
+/* =========================================================
+   🌗 TIME + LIGHTING SHIFT
+========================================================= */
+function updateTime() {
+  time += 0.003;
+
+  const day = Math.sin(time) * 0.5 + 0.5;
+
+  sun.intensity = 1.5 + day;
+  ambient.intensity = 0.2 + day * 0.6;
+
+  renderer.toneMappingExposure = 1.1 + day * 0.3;
 }
 
 /* =========================================================
@@ -263,10 +252,11 @@ function updateCamera() {
 function animate() {
   requestAnimationFrame(animate);
 
-  movePlayer();
+  move();
   updateNPCs();
   updateCars();
   updateCamera();
+  updateTime();
 
   renderer.render(scene, camera);
 }
