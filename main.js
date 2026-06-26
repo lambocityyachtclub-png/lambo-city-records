@@ -64,6 +64,34 @@ water.position.set(-80, -0.2, -120);
 scene.add(water);
 
 /* =========================================================
+   🪵 GRIND RAILS (REAL 3D OBJECTS)
+========================================================= */
+
+const rails = [];
+
+function createRail(x, y, z, length = 10) {
+  const rail = new THREE.Mesh(
+    new THREE.BoxGeometry(1, 0.5, length),
+    new THREE.MeshStandardMaterial({
+      color: 0x888888,
+      metalness: 1,
+      roughness: 0.2
+    })
+  );
+
+  rail.position.set(x, y, z);
+  scene.add(rail);
+
+  rails.push(rail);
+  return rail;
+}
+
+/* MAIN SKATE RAIL ZONE (dock area) */
+createRail(-8, 1.2, -35, 14);
+createRail(8, 1.2, -35, 14);
+createRail(0, 1.2, -50, 18);
+
+/* =========================================================
    DOCK + CABINS + HERO MANSION
 ========================================================= */
 const dock = new THREE.Mesh(
@@ -145,12 +173,19 @@ const keys = Object.create(null);
 window.addEventListener("keydown", (e) => {
   keys[e.code] = true;
   canvas.focus();
+
+  // SPACE JUMP / TRICK
+  if (e.code === "Space") {
+    if (skateState.mode === "ground") {
+      player.position.y += 1.5;
+      skateState.speedBoost += 0.01;
+    }
+  }
 });
 
 window.addEventListener("keyup", (e) => {
   keys[e.code] = false;
 });
-
 /* =========================================================
    SKATE MOVEMENT
 ========================================================= */
@@ -229,6 +264,35 @@ function exitGrind() {
 }
 
 /* =========================================================
+   🛹 REAL SKATE SYSTEM v2 (CORE)
+========================================================= */
+
+const skateState = {
+  mode: "ground", // ground | grind
+  rail: null,
+  railT: 0,
+  speedBoost: 0,
+  baseSpeed: 0.18,
+  maxSpeed: 0.95,
+  accel: 0.06,
+  friction: 0.92,
+  grindSpeed: 0.12
+};
+
+let vx = 0;
+let vz = 0;
+
+function checkGrindRail() {
+  for (const rail of rails) {
+    const dist = player.position.distanceTo(rail.position);
+
+    if (dist < 1.6 && player.position.y < 2.2) {
+      return rail;
+    }
+  }
+  return null;
+}
+/* =========================================================
    MOVE FUNCTION (SKATE + GRIND)
 ========================================================= */
 function move() {
@@ -246,33 +310,63 @@ function move() {
     iz /= len;
   }
 
-  if (skate.onBoard) {
-    vx += ix * skate.acceleration;
-    vz += iz * skate.acceleration;
+  /* =====================================================
+     🪵 GRIND MODE
+  ===================================================== */
 
-    vx = THREE.MathUtils.clamp(vx, -skate.maxSpeed, skate.maxSpeed);
-    vz = THREE.MathUtils.clamp(vz, -skate.maxSpeed, skate.maxSpeed);
+  const rail = checkGrindRail();
 
-    vx *= skate.friction;
-    vz *= skate.friction;
+  if (rail && keys["Space"]) {
+    skateState.mode = "grind";
+    skateState.rail = rail;
+
+    // snap player onto rail
+    player.position.y = rail.position.y + 0.6;
+
+    // grind forward direction
+    vx = 0;
+    vz = skateState.grindSpeed;
+
+    skateState.speedBoost += 0.002;
+
   } else {
-    vx = ix * 0.1;
-    vz = iz * 0.1;
+    skateState.mode = "ground";
+    skateState.rail = null;
+
+    /* =====================================================
+       🛹 GROUND SKATE PHYSICS
+    ===================================================== */
+
+    vx += ix * skateState.accel;
+    vz += iz * skateState.accel;
+
+    vx = THREE.MathUtils.clamp(vx, -skateState.maxSpeed, skateState.maxSpeed);
+    vz = THREE.MathUtils.clamp(vz, -skateState.maxSpeed, skateState.maxSpeed);
+
+    vx *= skateState.friction;
+    vz *= skateState.friction;
+
+    player.position.y += (1 - player.position.y) * 0.15; // reset height
   }
+
+  /* =====================================================
+     APPLY MOVEMENT
+  ===================================================== */
 
   player.position.x += vx;
   player.position.z += vz;
 
-  // Camera follow
+  /* =====================================================
+     CAMERA FOLLOW (UNCHANGED)
+  ===================================================== */
+
   cameraTarget.set(player.position.x, player.position.y, player.position.z);
+
   camera.position.x += (player.position.x - camera.position.x) * 0.08;
   camera.position.z += (player.position.z + 10 - camera.position.z) * 0.08;
   camera.position.y += (6 - camera.position.y) * 0.08;
 
   camera.lookAt(cameraTarget);
-
-  // Check grind exit
-  exitGrind();
 }
 
 /* =========================================================
