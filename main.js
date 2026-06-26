@@ -16,7 +16,6 @@ document.body.appendChild(renderer.domElement);
 renderer.domElement.style.display = "block";
 renderer.domElement.tabIndex = 0;
 
-/* keep focus stable */
 window.addEventListener("click", () => renderer.domElement.focus());
 renderer.domElement.focus();
 
@@ -39,7 +38,7 @@ scene.add(ambient);
 const streetLights = [];
 
 /* -----------------------------
-   ATMOSPHERE
+   ATMOSPHERES
 ------------------------------*/
 const atmospheres = {
   CENTER: { color: 0xffffff, intensity: 0.9 },
@@ -49,7 +48,7 @@ const atmospheres = {
 };
 
 /* -----------------------------
-   WORLD TIME
+   WORLD TIME SYSTEM
 ------------------------------*/
 let worldTime = 0;
 
@@ -70,7 +69,7 @@ function updateWorldTime() {
 }
 
 /* -----------------------------
-   ATMOSPHERE UPDATE
+   ATMOSPHERE SWITCHING
 ------------------------------*/
 let lastZone = "";
 
@@ -102,6 +101,62 @@ ground.rotation.x = -Math.PI / 2;
 scene.add(ground);
 
 /* -----------------------------
+   ZONE RINGS
+------------------------------*/
+function createZoneRing(x, z, color) {
+  const ring = new THREE.Mesh(
+    new THREE.RingGeometry(8, 10, 32),
+    new THREE.MeshBasicMaterial({
+      color,
+      transparent: true,
+      opacity: 0.6,
+      side: THREE.DoubleSide
+    })
+  );
+
+  ring.rotation.x = -Math.PI / 2;
+  ring.position.set(x, 0.05, z);
+  scene.add(ring);
+}
+
+createZoneRing(0, 0, 0x00ffcc);
+createZoneRing(-60, -40, 0xff00ff);
+createZoneRing(60, -40, 0x00aaff);
+createZoneRing(0, 80, 0xffcc00);
+
+/* -----------------------------
+   STREETLIGHTS
+------------------------------*/
+function createStreetLight(x, z) {
+  const pole = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.1, 0.1, 6),
+    new THREE.MeshStandardMaterial({ color: 0x333333 })
+  );
+
+  pole.position.set(x, 3, z);
+  scene.add(pole);
+
+  const bulb = new THREE.PointLight(0xffee88, 1, 15);
+  bulb.position.set(x, 5, z);
+  scene.add(bulb);
+
+  streetLights.push({
+    bulb,
+    baseIntensity: 1.5
+  });
+}
+
+for (let x = -80; x <= 80; x += 20) {
+  createStreetLight(x, -30);
+  createStreetLight(x, 30);
+}
+
+for (let z = -60; z <= 80; z += 20) {
+  createStreetLight(-80, z);
+  createStreetLight(80, z);
+}
+
+/* -----------------------------
    PLAYER
 ------------------------------*/
 const player = new THREE.Mesh(
@@ -113,7 +168,7 @@ player.position.set(0, 1, 0);
 scene.add(player);
 
 /* -----------------------------
-   INPUT (FINAL STABLE)
+   INPUT (FINAL STABLE SYSTEM)
 ------------------------------*/
 const keys = {};
 
@@ -126,7 +181,7 @@ document.addEventListener("keyup", (e) => {
 });
 
 /* -----------------------------
-   MOVEMENT
+   MOVEMENT (FINAL STABLE)
 ------------------------------*/
 let velX = 0;
 let velZ = 0;
@@ -190,7 +245,7 @@ hud.style.borderRadius = "8px";
 document.body.appendChild(hud);
 
 /* -----------------------------
-   ZONE UPDATE
+   ZONE SYSTEM
 ------------------------------*/
 function updateZone() {
   let found = "CITY CENTER";
@@ -214,7 +269,7 @@ function updateZone() {
 }
 
 /* -----------------------------
-   LOOP
+   MAIN LOOP
 ------------------------------*/
 function animate() {
   requestAnimationFrame(animate);
