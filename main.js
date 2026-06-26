@@ -18,14 +18,13 @@ canvas.tabIndex = 0;
 canvas.focus();
 
 /* =========================================================
-   CAMERA (GTA STYLE SMOOTH FOLLOW)
+   CAMERA
 ========================================================= */
 camera.position.set(0, 6, 10);
-
 const cameraTarget = new THREE.Vector3();
 
 /* =========================================================
-   LIGHTING + WORLD TIME
+   LIGHTING + TIME
 ========================================================= */
 const sun = new THREE.DirectionalLight(0xffffff, 1.2);
 sun.position.set(10, 20, 10);
@@ -47,7 +46,7 @@ function updateWorldTime() {
 }
 
 /* =========================================================
-   WORLD BASE (GROUND + WATER + BEACH)
+   WORLD
 ========================================================= */
 const ground = new THREE.Mesh(
   new THREE.PlaneGeometry(1000, 1000),
@@ -58,23 +57,11 @@ scene.add(ground);
 
 const water = new THREE.Mesh(
   new THREE.PlaneGeometry(800, 800),
-  new THREE.MeshStandardMaterial({
-    color: 0x0a3a5a,
-    roughness: 0.3,
-    metalness: 0.4
-  })
+  new THREE.MeshStandardMaterial({ color: 0x0a3a5a })
 );
 water.rotation.x = -Math.PI / 2;
 water.position.set(-80, -0.2, -120);
 scene.add(water);
-
-const sand = new THREE.Mesh(
-  new THREE.PlaneGeometry(400, 300),
-  new THREE.MeshStandardMaterial({ color: 0xc2b280 })
-);
-sand.rotation.x = -Math.PI / 2;
-sand.position.set(0, -0.1, 80);
-scene.add(sand);
 
 /* =========================================================
    DOCK + CABINS + HERO MANSION
@@ -86,12 +73,12 @@ const dock = new THREE.Mesh(
 dock.position.set(0, 0, -40);
 scene.add(dock);
 
-function cabin(x, z, color = 0x8b5a2b) {
+function cabin(x, z) {
   const g = new THREE.Group();
 
   const base = new THREE.Mesh(
     new THREE.BoxGeometry(10, 6, 10),
-    new THREE.MeshStandardMaterial({ color })
+    new THREE.MeshStandardMaterial({ color: 0x8b5a2b })
   );
 
   const roof = new THREE.Mesh(
@@ -104,25 +91,22 @@ function cabin(x, z, color = 0x8b5a2b) {
   g.add(base, roof);
   g.position.set(x, 3, z);
   scene.add(g);
+  return g;
 }
 
-cabin(-30, -55);
-cabin(0, -55);
-cabin(30, -55);
+const cabin1 = cabin(-30, -55);
+const cabin2 = cabin(0, -55);
+const cabin3 = cabin(30, -55);
 
-/* HERO MANSION */
 const heroMansion = new THREE.Mesh(
   new THREE.BoxGeometry(20, 12, 20),
-  new THREE.MeshStandardMaterial({
-    color: 0xd4af37,
-    emissive: 0x111100
-  })
+  new THREE.MeshStandardMaterial({ color: 0xd4af37 })
 );
 heroMansion.position.set(0, 6, -80);
 scene.add(heroMansion);
 
 /* =========================================================
-   STAGE (COACHELLA STYLE BASE)
+   STAGE
 ========================================================= */
 const stage = new THREE.Mesh(
   new THREE.BoxGeometry(30, 3, 12),
@@ -131,12 +115,8 @@ const stage = new THREE.Mesh(
 stage.position.set(0, 1.5, -25);
 scene.add(stage);
 
-const stageLight = new THREE.PointLight(0xff00ff, 2, 80);
-stageLight.position.set(0, 12, -25);
-scene.add(stageLight);
-
 /* =========================================================
-   PLAYER (SKATE READY)
+   PLAYER
 ========================================================= */
 const player = new THREE.Mesh(
   new THREE.BoxGeometry(1, 2, 1),
@@ -146,7 +126,7 @@ player.position.set(0, 1, 10);
 scene.add(player);
 
 /* =========================================================
-   HERO NPC (INTRO GUIDE)
+   HERO
 ========================================================= */
 const hero = new THREE.Mesh(
   new THREE.CapsuleGeometry(0.6, 1.4, 4, 8),
@@ -158,19 +138,7 @@ scene.add(hero);
 let heroPlayed = false;
 
 /* =========================================================
-   SKATE SYSTEM (FEEL + SPEED BALANCE FIXED)
-========================================================= */
-let vx = 0;
-let vz = 0;
-
-const skate = {
-  speed: 0.28,
-  maxSpeed: 0.55,
-  tricks: 0
-};
-
-/* =========================================================
-   INPUT SYSTEM (STABLE)
+   INPUT
 ========================================================= */
 const keys = Object.create(null);
 
@@ -184,8 +152,17 @@ window.addEventListener("keyup", (e) => {
 });
 
 /* =========================================================
-   MOVEMENT (GTA + SKATE FEEL)
+   SKATE MOVEMENT
 ========================================================= */
+let vx = 0;
+let vz = 0;
+
+const skate = {
+  speed: 0.28,
+  maxSpeed: 0.55,
+  tricks: 0
+};
+
 function move() {
   let ix = 0;
   let iz = 0;
@@ -201,16 +178,15 @@ function move() {
     iz /= len;
   }
 
-  const targetX = ix * skate.speed;
-  const targetZ = iz * skate.speed;
+  const tx = ix * skate.speed;
+  const tz = iz * skate.speed;
 
-  vx += (targetX - vx) * 0.18;
-  vz += (targetZ - vz) * 0.18;
+  vx += (tx - vx) * 0.18;
+  vz += (tz - vz) * 0.18;
 
   player.position.x += vx;
   player.position.z += vz;
 
-  /* CAMERA (SMOOTH GTA STYLE) */
   cameraTarget.set(player.position.x, player.position.y, player.position.z);
 
   camera.position.x += (player.position.x - camera.position.x) * 0.08;
@@ -221,7 +197,7 @@ function move() {
 }
 
 /* =========================================================
-   ZONES (FULL SYSTEM)
+   ZONES
 ========================================================= */
 const zones = {
   CENTER: { name: "CITY CENTER", x: 0, z: 0, r: 70 },
@@ -232,26 +208,8 @@ const zones = {
 
 let currentZone = "CITY CENTER";
 
-function updateZone() {
-  let found = "CITY CENTER";
-
-  for (const k in zones) {
-    const z = zones[k];
-    const dx = player.position.x - z.x;
-    const dz = player.position.z - z.z;
-
-    if (Math.hypot(dx, dz) < z.r) {
-      found = z.name;
-      break;
-    }
-  }
-
-  currentZone = found;
-  hud.innerHTML = `ZONE: ${currentZone} | SPEED: ${skate.speed.toFixed(2)} | TRICKS: ${skate.tricks}`;
-}
-
 /* =========================================================
-   HUD
+   HUD (CREATE FIRST)
 ========================================================= */
 const hud = document.createElement("div");
 hud.style.position = "absolute";
@@ -264,45 +222,80 @@ hud.style.fontFamily = "Arial";
 document.body.appendChild(hud);
 
 /* =========================================================
-   HERO INTRO (CINEMATIC TRIGGER)
+   INTERACTION SYSTEM
+========================================================= */
+const eState = { down: false };
+
+function dist(a, b) {
+  return a.distanceTo(b);
+}
+
+function getNearbyObject() {
+  const list = [
+    { obj: heroMansion, radius: 10, action: "HERO" },
+    { obj: cabin1, radius: 6, action: "CABIN" },
+    { obj: cabin2, radius: 6, action: "CABIN" },
+    { obj: cabin3, radius: 6, action: "CABIN" },
+    { obj: stage, radius: 12, action: "STAGE" }
+  ];
+
+  for (const i of list) {
+    if (dist(player.position, i.obj.position) < i.radius) {
+      return i;
+    }
+  }
+  return null;
+}
+
+window.addEventListener("keydown", (e) => {
+  if (e.code === "KeyE" && !eState.down) {
+    eState.down = true;
+
+    const obj = getNearbyObject();
+    if (!obj) return;
+
+    if (obj.action === "CABIN") alert("VIP CABIN LOCKED");
+    if (obj.action === "HERO") alert("HERO: Welcome to LAMBO CITY");
+    if (obj.action === "STAGE") alert("STAGE ACTIVE");
+  }
+});
+
+window.addEventListener("keyup", (e) => {
+  if (e.code === "KeyE") eState.down = false;
+});
+
+/* =========================================================
+   HERO TRIGGER
 ========================================================= */
 function updateHero() {
-  const dist = player.position.distanceTo(hero.position);
+  if (heroPlayed) return;
 
-  if (dist < 7 && !heroPlayed) {
+  if (player.position.distanceTo(hero.position) < 7) {
     heroPlayed = true;
-    alert("HERO: Welcome to LAMBO CITY. Build your path.");
+    alert("HERO: Welcome to LAMBO CITY");
   }
 }
 
 /* =========================================================
-   TRICKS SYSTEM
+   ZONE UPDATE
 ========================================================= */
-window.addEventListener("keydown", (e) => {
-  if (e.code === "Space") {
-    skate.tricks++;
-    skate.speed = Math.min(skate.maxSpeed, skate.speed + 0.02);
+function updateZone() {
+  let found = "CITY CENTER";
 
-    setTimeout(() => {
-      skate.speed = Math.max(0.28, skate.speed);
-    }, 1500);
+  for (const k in zones) {
+    const z = zones[k];
+    const d = player.position.distanceTo(new THREE.Vector3(z.x, 0, z.z));
+    if (d < z.r) found = z.name;
   }
-});
+
+  currentZone = found;
+
+  hud.innerHTML =
+    `ZONE: ${currentZone} | SPEED: ${skate.speed.toFixed(2)} | TRICKS: ${skate.tricks}`;
+}
 
 /* =========================================================
-   MUSIC SYSTEM (HOOK READY)
-========================================================= */
-let music = false;
-
-window.addEventListener("keydown", (e) => {
-  if (e.code === "KeyM") {
-    music = !music;
-    console.log(music ? "PLAY MUSIC" : "STOP MUSIC");
-  }
-});
-
-/* =========================================================
-   LOOP
+   LOOP (SINGLE CLEAN LOOP)
 ========================================================= */
 function animate() {
   requestAnimationFrame(animate);
