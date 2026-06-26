@@ -9,7 +9,7 @@ const camera = new THREE.PerspectiveCamera(
   75,
   window.innerWidth / window.innerHeight,
   0.1,
-  6000
+  7000
 );
 
 camera.position.set(0, 10, 18);
@@ -20,26 +20,11 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.25;
+renderer.toneMappingExposure = 1.3;
 
 document.body.style.margin = "0";
 document.body.style.overflow = "hidden";
 document.body.appendChild(renderer.domElement);
-
-/* =========================================================
-   🌫️ ATMOSPHERE
-========================================================= */
-scene.fog = new THREE.FogExp2(0x0a0f1a, 0.0019);
-
-/* =========================================================
-   🌞 LIGHTING
-========================================================= */
-const sun = new THREE.DirectionalLight(0xffffff, 2.2);
-sun.position.set(80, 120, 40);
-scene.add(sun);
-
-scene.add(new THREE.AmbientLight(0x6f8cff, 0.35));
-scene.add(new THREE.HemisphereLight(0x4aa3ff, 0x0a0a0a, 0.5));
 
 /* =========================================================
    🌍 WORLD ROOT
@@ -48,81 +33,103 @@ const world = new THREE.Group();
 scene.add(world);
 
 /* =========================================================
-   🛣️ ROAD SYSTEM (INTERSECTION GRID)
+   🌗 DISTRICT SYSTEM (IMMERSION CORE)
 ========================================================= */
-const ROAD_SPACING = 140;
-const GRID = 7;
+const DISTRICTS = {
+  CENTER: {
+    fog: 0x0a0f1a,
+    ambient: 0x6f8cff,
+    tone: 1.25
+  },
+  BEACH: {
+    fog: 0x1a2f3a,
+    ambient: 0x6fdcff,
+    tone: 1.35
+  },
+  YACHT: {
+    fog: 0x0a2a3a,
+    ambient: 0x4aa3ff,
+    tone: 1.45
+  },
+  RACING: {
+    fog: 0x2a0a0a,
+    ambient: 0xff4444,
+    tone: 1.5
+  }
+};
 
-function road(x, z, horizontal = true) {
+/* active district */
+let activeDistrict = "CENTER";
+
+/* =========================================================
+   🌫️ ATMOSPHERE (DYNAMIC)
+========================================================= */
+scene.fog = new THREE.FogExp2(DISTRICTS.CENTER.fog, 0.0018);
+
+/* =========================================================
+   🌞 LIGHTING SYSTEM
+========================================================= */
+const sun = new THREE.DirectionalLight(0xffffff, 2.2);
+sun.position.set(80, 120, 40);
+scene.add(sun);
+
+const ambient = new THREE.AmbientLight(0x6f8cff, 0.3);
+scene.add(ambient);
+
+scene.add(new THREE.HemisphereLight(0x4aa3ff, 0x0a0a0a, 0.5));
+
+/* =========================================================
+   🌆 GROUND
+========================================================= */
+const ground = new THREE.Mesh(
+  new THREE.PlaneGeometry(5000, 5000),
+  new THREE.MeshStandardMaterial({ color: 0x101010 })
+);
+ground.rotation.x = -Math.PI / 2;
+world.add(ground);
+
+/* =========================================================
+   🧭 CITY GRID (STRUCTURE)
+========================================================= */
+const GRID = 7;
+const SPACING = 140;
+
+/* roads */
+function road(x, z, vertical = false) {
   const r = new THREE.Mesh(
-    new THREE.PlaneGeometry(horizontal ? 2000 : 20, horizontal ? 20 : 2000),
+    new THREE.PlaneGeometry(vertical ? 20 : 2000, vertical ? 2000 : 20),
     new THREE.MeshStandardMaterial({ color: 0x151515 })
   );
 
   r.rotation.x = -Math.PI / 2;
   r.position.set(x, 0.01, z);
-
   world.add(r);
-  return r;
 }
 
-/* grid roads */
 for (let i = -GRID; i <= GRID; i++) {
-  road(i * ROAD_SPACING, 0, false);
-  road(0, i * ROAD_SPACING, true);
+  road(i * SPACING, 0, true);
+  road(0, i * SPACING, false);
 }
 
 /* =========================================================
-   🚦 INTERSECTION NODES (CORE SYSTEM)
-========================================================= */
-const intersections = [];
-
-function createIntersection(x, z) {
-  intersections.push({
-    x,
-    z,
-    timer: Math.random() * 4,
-    state: "NS" // north-south green first
-  });
-}
-
-for (let x = -GRID; x <= GRID; x++) {
-  for (let z = -GRID; z <= GRID; z++) {
-    createIntersection(x * ROAD_SPACING, z * ROAD_SPACING);
-  }
-}
-
-function updateIntersections() {
-  for (const i of intersections) {
-    i.timer += 0.01;
-
-    if (i.timer > 4) {
-      i.timer = 0;
-      i.state = i.state === "NS" ? "EW" : "NS";
-    }
-  }
-}
-
-/* =========================================================
-   🏙️ CITY BLOCKS
+   🏙️ BLOCKS
 ========================================================= */
 function block(x, z) {
   const b = new THREE.Mesh(
-    new THREE.BoxGeometry(90, 30, 90),
+    new THREE.BoxGeometry(90, 40, 90),
     new THREE.MeshStandardMaterial({
       color: new THREE.Color().setHSL(0.08, 0.25, 0.25)
     })
   );
 
-  b.position.set(x, 15, z);
+  b.position.set(x, 20, z);
   world.add(b);
 }
 
-/* fill blocks */
 for (let x = -GRID; x < GRID; x++) {
   for (let z = -GRID; z < GRID; z++) {
-    if (Math.random() > 0.35) {
-      block(x * ROAD_SPACING + 60, z * ROAD_SPACING + 60);
+    if (Math.random() > 0.4) {
+      block(x * SPACING + 60, z * SPACING + 60);
     }
   }
 }
@@ -166,8 +173,8 @@ function move() {
   vx += ix * 0.09;
   vz += iz * 0.09;
 
-  vx = THREE.MathUtils.clamp(vx, -1.4, 1.4);
-  vz = THREE.MathUtils.clamp(vz, -1.4, 1.4);
+  vx = THREE.MathUtils.clamp(vx, -1.5, 1.5);
+  vz = THREE.MathUtils.clamp(vz, -1.5, 1.5);
 
   vx *= 0.88;
   vz *= 0.88;
@@ -177,51 +184,29 @@ function move() {
 }
 
 /* =========================================================
-   🚗 CAR SYSTEM (INTERSECTION-AWARE)
+   🌗 DISTRICT DETECTION (KEY V7 SYSTEM)
 ========================================================= */
-const cars = [];
+function updateDistrict() {
+  const p = player.position;
 
-function car(x, z) {
-  const c = new THREE.Mesh(
-    new THREE.BoxGeometry(2, 1, 4),
-    new THREE.MeshStandardMaterial({ color: 0xff4444 })
-  );
+  let newDistrict = "CENTER";
 
-  c.position.set(x, 0.5, z);
-  c.userData.speed = 0.6;
+  if (p.x > 300) newDistrict = "BEACH";
+  if (p.x < -300) newDistrict = "YACHT";
+  if (p.z > 300) newDistrict = "RACING";
 
-  world.add(c);
-  cars.push(c);
-}
+  if (newDistrict !== activeDistrict) {
+    activeDistrict = newDistrict;
 
-for (let i = -5; i <= 5; i++) {
-  car(i * 60, -300);
-}
+    const d = DISTRICTS[activeDistrict];
 
-function updateCars() {
-  for (const c of cars) {
-    const nextZ = c.position.z + c.userData.speed;
-
-    const nearIntersection = intersections.find(i =>
-      Math.abs(i.x - c.position.x) < 10 &&
-      Math.abs(i.z - c.position.z) < 20
-    );
-
-    if (nearIntersection) {
-      // simple stop/go rule
-      if (nearIntersection.state === "EW") {
-        continue; // stop traffic
-      }
-    }
-
-    c.position.z = nextZ;
-
-    if (c.position.z > 400) c.position.z = -400;
+    scene.fog.color.setHex(d.fog);
+    ambient.color.setHex(d.ambient);
   }
 }
 
 /* =========================================================
-   🧍 NPC STREET FLOW (NOT RANDOM)
+   🧍 NPC FLOW (SMOOTH STREET ENERGY)
 ========================================================= */
 const npcs = [];
 
@@ -236,31 +221,71 @@ function npc(x, z) {
   n.position.set(x, 0.9, z);
 
   n.userData = {
-    dir: Math.random() > 0.5 ? 1 : -1,
-    speed: 0.03 + Math.random() * 0.02
+    dir: Math.random() * Math.PI * 2,
+    speed: 0.02 + Math.random() * 0.02
   };
 
   world.add(n);
   npcs.push(n);
 }
 
-/* spawn near roads */
 for (let i = 0; i < 80; i++) {
-  npc(
-    (Math.random() - 0.5) * 600,
-    (Math.random() - 0.5) * 600
-  );
+  npc((Math.random() - 0.5) * 700, (Math.random() - 0.5) * 700);
 }
 
 function updateNPCs() {
   for (const n of npcs) {
-    n.position.x += n.userData.speed * n.userData.dir;
-    n.position.z += Math.sin(n.position.x * 0.01) * 0.1;
+    n.userData.dir += (Math.random() - 0.5) * 0.03;
+
+    n.position.x += Math.cos(n.userData.dir) * n.userData.speed;
+    n.position.z += Math.sin(n.userData.dir) * n.userData.speed;
   }
 }
 
 /* =========================================================
-   🎥 AAA CAMERA SYSTEM
+   🚗 TRAFFIC FLOW
+========================================================= */
+const cars = [];
+
+function car(x, z) {
+  const c = new THREE.Mesh(
+    new THREE.BoxGeometry(2, 1, 4),
+    new THREE.MeshStandardMaterial({ color: 0xff4444 })
+  );
+
+  c.position.set(x, 0.5, z);
+  c.userData.speed = 0.7;
+
+  world.add(c);
+  cars.push(c);
+}
+
+for (let i = -5; i <= 5; i++) {
+  car(i * 60, -350);
+}
+
+function updateCars() {
+  for (const c of cars) {
+    c.position.z += c.userData.speed;
+
+    if (c.position.z > 350) c.position.z = -350;
+  }
+}
+
+/* =========================================================
+   🎧 AUDIO LAYER (SYNTH IMMERSION)
+========================================================= */
+function updateAudio() {
+  const speed = Math.hypot(vx, vz);
+
+  // fake “city hum”
+  const base = 0.2 + speed * 0.2;
+
+  renderer.toneMappingExposure = 1.2 + base * 0.2;
+}
+
+/* =========================================================
+   🎥 AAA CAMERA (FINAL FEEL PASS)
 ========================================================= */
 const camTarget = new THREE.Vector3();
 
@@ -285,8 +310,9 @@ function animate() {
   move();
   updateNPCs();
   updateCars();
-  updateIntersections();
   updateCamera();
+  updateDistrict();
+  updateAudio();
 
   renderer.render(scene, camera);
 }
