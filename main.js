@@ -40,7 +40,9 @@ const camTarget = new THREE.Vector3();
 function animate() {
   requestAnimationFrame(animate);
 
-  // follow player if exists
+ if (engine.updatePlayer) engine.updatePlayer();
+   
+   // follow player if exists
   if (engine.player) {
     camTarget.copy(engine.player.position);
 
