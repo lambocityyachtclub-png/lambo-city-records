@@ -1,7 +1,7 @@
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 
 export const engine = {
-  scene: null,
+  scene: new THREE.Scene(),
   camera: null,
   renderer: null,
 
@@ -18,3 +18,6 @@ export const engine = {
     district: "CENTER"
   }
 };
+
+// attach world to scene immediately
+engine.scene.add(engine.world);
