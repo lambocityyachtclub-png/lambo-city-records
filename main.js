@@ -4,7 +4,7 @@ import { camera } from "./camera.js";
 import { renderer } from "./renderer.js";
 
 /* -----------------------------
-   RENDERER SETUP
+   INIT RENDERER
 ------------------------------*/
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -48,44 +48,26 @@ function updateWorldTime() {
 }
 
 /* -----------------------------
-   ZONES
-------------------------------*/
-const zones = {
-  CENTER: { name: "CITY CENTER", x: 0, z: 0, radius: 60 },
-  YACHT: { name: "YACHT CLUB", x: -60, z: -40, radius: 60 },
-  BEACH: { name: "BEACH", x: 60, z: -40, radius: 60 },
-  RACING: { name: "RACING TRACK", x: 0, z: 80, radius: 70 }
-};
-
-let currentZone = "CITY CENTER";
-
-/* -----------------------------
-   GROUND
+   WORLD
 ------------------------------*/
 const ground = new THREE.Mesh(
-  new THREE.PlaneGeometry(600, 600),
-  new THREE.MeshStandardMaterial({ color: 0x111111 })
+  new THREE.PlaneGeometry(700, 700),
+  new THREE.MeshStandardMaterial({ color: 0x0f0f0f })
 );
 ground.rotation.x = -Math.PI / 2;
 scene.add(ground);
 
 /* -----------------------------
-   ZONE RINGS
+   ZONES
 ------------------------------*/
-function ring(x, z, color) {
-  const r = new THREE.Mesh(
-    new THREE.RingGeometry(8, 10, 32),
-    new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.6 })
-  );
-  r.rotation.x = -Math.PI / 2;
-  r.position.set(x, 0.05, z);
-  scene.add(r);
-}
+const zones = {
+  CENTER: { name: "CITY CENTER", x: 0, z: 0, radius: 70, boost: 1.0 },
+  YACHT: { name: "YACHT CLUB", x: -60, z: -40, radius: 70, boost: 1.1 },
+  BEACH: { name: "BEACH", x: 60, z: -40, radius: 70, boost: 1.05 },
+  RACING: { name: "RACING TRACK", x: 0, z: 80, radius: 80, boost: 1.3 }
+};
 
-ring(0, 0, 0x00ffcc);
-ring(-60, -40, 0xff00ff);
-ring(60, -40, 0x00aaff);
-ring(0, 80, 0xffcc00);
+let currentZone = "CITY CENTER";
 
 /* -----------------------------
    PLAYER
@@ -98,92 +80,16 @@ player.position.set(0, 1, 0);
 scene.add(player);
 
 /* -----------------------------
-   HERO NPC
+   HERO (GUIDE NPC)
 ------------------------------*/
 const hero = new THREE.Mesh(
   new THREE.CapsuleGeometry(0.6, 1.2, 4, 8),
   new THREE.MeshStandardMaterial({ color: 0xffcc00 })
 );
-hero.position.set(4, 1, 4);
+hero.position.set(5, 1, 5);
 scene.add(hero);
 
-const heroState = {
-  met: false
-};
-
-/* -----------------------------
-   SKATEBOARD SYSTEM
-------------------------------*/
-let onBoard = true;
-function getSpeed() {
-  return onBoard ? 0.42 : 0.25;
-}
-
-/* -----------------------------
-   INPUT
-------------------------------*/
-const keys = Object.create(null);
-
-window.addEventListener("keydown", (e) => {
-  keys[e.code] = true;
-  canvas.focus();
-});
-
-window.addEventListener("keyup", (e) => {
-  keys[e.code] = false;
-});
-
-/* -----------------------------
-   MOVEMENT
-------------------------------*/
-let velX = 0;
-let velZ = 0;
-
-function move() {
-  const speed = getSpeed();
-
-  let ix = 0;
-  let iz = 0;
-
-  if (keys["KeyW"]) iz -= 1;
-  if (keys["KeyS"]) iz += 1;
-  if (keys["KeyA"]) ix -= 1;
-  if (keys["KeyD"]) ix += 1;
-
-  const len = Math.hypot(ix, iz);
-  if (len > 0) {
-    ix /= len;
-    iz /= len;
-  }
-
-  velX += (ix * speed - velX) * 0.2;
-  velZ += (iz * speed - velZ) * 0.2;
-
-  player.position.x += velX;
-  player.position.z += velZ;
-
-  camera.position.x += (player.position.x - camera.position.x) * 0.08;
-  camera.position.z += (player.position.z + 8 - camera.position.z) * 0.08;
-  camera.position.y += (6 - camera.position.y) * 0.08;
-
-  camera.lookAt(player.position);
-}
-
-/* -----------------------------
-   INTERACTION (E KEY)
-------------------------------*/
-function handleInteract() {
-  const dist = player.position.distanceTo(hero.position);
-
-  if (dist < 4) {
-    heroState.met = true;
-    alert("HERO: Welcome to LAMBO CITY. This is just the beginning.");
-  }
-}
-
-window.addEventListener("keydown", (e) => {
-  if (e.code === "KeyE") handleInteract();
-});
+let heroIntroPlayed = false;
 
 /* -----------------------------
    GRIND OBJECTS
@@ -201,9 +107,91 @@ rail(0, 10);
 rail(6, 14);
 rail(-6, 18);
 rail(10, -8);
+rail(-12, -5);
 
 /* -----------------------------
-   ZONE SYSTEM
+   INPUT SYSTEM
+------------------------------*/
+const keys = Object.create(null);
+
+window.addEventListener("keydown", (e) => {
+  keys[e.code] = true;
+  canvas.focus();
+});
+
+window.addEventListener("keyup", (e) => {
+  keys[e.code] = false;
+});
+
+/* -----------------------------
+   SKATE MOVEMENT (REAL FEEL)
+------------------------------*/
+let velX = 0;
+let velZ = 0;
+let speed = 0.35;
+
+function getZoneBoost() {
+  for (const k in zones) {
+    const z = zones[k];
+    const dx = player.position.x - z.x;
+    const dz = player.position.z - z.z;
+
+    if (Math.hypot(dx, dz) < z.radius) {
+      return z.boost;
+    }
+  }
+  return 1;
+}
+
+function move() {
+  const boost = getZoneBoost();
+
+  let ix = 0;
+  let iz = 0;
+
+  if (keys["KeyW"]) iz -= 1;
+  if (keys["KeyS"]) iz += 1;
+  if (keys["KeyA"]) ix -= 1;
+  if (keys["KeyD"]) ix += 1;
+
+  const len = Math.hypot(ix, iz);
+  if (len > 0) {
+    ix /= len;
+    iz /= len;
+  }
+
+  const targetX = ix * speed * boost;
+  const targetZ = iz * speed * boost;
+
+  velX += (targetX - velX) * 0.15;
+  velZ += (targetZ - velZ) * 0.15;
+
+  player.position.x += velX;
+  player.position.z += velZ;
+
+  camera.position.x += (player.position.x - camera.position.x) * 0.08;
+  camera.position.z += (player.position.z + 8 - camera.position.z) * 0.08;
+  camera.position.y += (6 - camera.position.y) * 0.08;
+
+  camera.lookAt(player.position);
+}
+
+/* -----------------------------
+   HERO INTRO SYSTEM
+------------------------------*/
+function updateHero() {
+  const dist = player.position.distanceTo(hero.position);
+
+  if (dist < 8 && !heroIntroPlayed) {
+    heroIntroPlayed = true;
+
+    hud.innerHTML =
+      "HERO: Welcome to LAMBO CITY... build your path, earn your place.";
+  }
+}
+
+/* -----------------------------
+   ZONE SYSTEM + HUD
 ------------------------------*/
 const hud = document.createElement("div");
 hud.style.position = "absolute";
@@ -212,6 +200,8 @@ hud.style.left = "15px";
 hud.style.color = "white";
 hud.style.padding = "10px";
 hud.style.background = "rgba(0,0,0,0.5)";
+hud.style.fontFamily = "Arial";
+hud.style.fontSize = "16px";
 document.body.appendChild(hud);
 
 function updateZone() {
@@ -233,17 +223,6 @@ function updateZone() {
 }
 
 /* -----------------------------
-   HERO UPDATE
-------------------------------*/
-function updateHero() {
-  const dist = player.position.distanceTo(hero.position);
-
-  if (dist < 6 && !heroState.met) {
-    hud.innerHTML = "ZONE: " + currentZone + " | PRESS E TO TALK TO HERO";
-  }
-}
-
-/* -----------------------------
    LOOP
 ------------------------------*/
 function animate() {
@@ -251,8 +230,8 @@ function animate() {
 
   move();
   updateZone();
-  updateWorldTime();
   updateHero();
+  updateWorldTime();
 
   renderer.render(scene, camera);
 }
