@@ -64,35 +64,49 @@ water.position.set(-80, -0.2, -120);
 scene.add(water);
 
 /* =========================================================
-   🪵 GRIND RAILS (REAL 3D OBJECTS)
+   SKATE STATE (MUST COME BEFORE INPUT)
 ========================================================= */
+const skateState = {
+  mode: "ground",
+  rail: null,
+  speedBoost: 0,
+  accel: 0.06,
+  maxSpeed: 0.95,
+  friction: 0.92,
+  grindSpeed: 0.12
+};
 
+/* =========================================================
+   VELOCITY
+========================================================= */
+let vx = 0;
+let vz = 0;
+
+/* =========================================================
+   RAILS
+========================================================= */
 const rails = [];
 
 function createRail(x, y, z, length = 10) {
   const rail = new THREE.Mesh(
-    new THREE.BoxGeometry(1, 0.5, length),
-    new THREE.MeshStandardMaterial({
-      color: 0x888888,
-      metalness: 1,
-      roughness: 0.2
-    })
+    new THREE.BoxGeometry(length, 0.2, 0.3),
+    new THREE.MeshStandardMaterial({ color: 0xaaaaaa })
   );
 
   rail.position.set(x, y, z);
   scene.add(rail);
 
-  rails.push(rail);
-  return rail;
+  rails.push({ mesh: rail });
 }
 
-/* MAIN SKATE RAIL ZONE (dock area) */
-createRail(-8, 1.2, -35, 14);
-createRail(8, 1.2, -35, 14);
-createRail(0, 1.2, -50, 18);
+/* MAIN RAILS */
+createRail(0, 1, -5, 14);
+createRail(-10, 1, 8, 12);
+createRail(12, 1, 12, 16);
+createRail(20, 1, -8, 10);
 
 /* =========================================================
-   DOCK + CABINS + HERO MANSION
+   DOCK + ENVIRONMENT
 ========================================================= */
 const dock = new THREE.Mesh(
   new THREE.BoxGeometry(140, 2, 40),
@@ -100,48 +114,6 @@ const dock = new THREE.Mesh(
 );
 dock.position.set(0, 0, -40);
 scene.add(dock);
-
-function cabin(x, z) {
-  const g = new THREE.Group();
-
-  const base = new THREE.Mesh(
-    new THREE.BoxGeometry(10, 6, 10),
-    new THREE.MeshStandardMaterial({ color: 0x8b5a2b })
-  );
-
-  const roof = new THREE.Mesh(
-    new THREE.ConeGeometry(7, 4, 4),
-    new THREE.MeshStandardMaterial({ color: 0x222222 })
-  );
-
-  roof.position.y = 5.5;
-
-  g.add(base, roof);
-  g.position.set(x, 3, z);
-  scene.add(g);
-  return g;
-}
-
-const cabin1 = cabin(-30, -55);
-const cabin2 = cabin(0, -55);
-const cabin3 = cabin(30, -55);
-
-const heroMansion = new THREE.Mesh(
-  new THREE.BoxGeometry(20, 12, 20),
-  new THREE.MeshStandardMaterial({ color: 0xd4af37 })
-);
-heroMansion.position.set(0, 6, -80);
-scene.add(heroMansion);
-
-/* =========================================================
-   STAGE
-========================================================= */
-const stage = new THREE.Mesh(
-  new THREE.BoxGeometry(30, 3, 12),
-  new THREE.MeshStandardMaterial({ color: 0x222222 })
-);
-stage.position.set(0, 1.5, -25);
-scene.add(stage);
 
 /* =========================================================
    PLAYER
@@ -166,15 +138,14 @@ scene.add(hero);
 let heroPlayed = false;
 
 /* =========================================================
-   INPUT
+   INPUT (FIXED)
 ========================================================= */
 const keys = Object.create(null);
 
 window.addEventListener("keydown", (e) => {
   keys[e.code] = true;
-  canvas.focus();
 
-  // SPACE JUMP / TRICK
+  // SPACE TRICK (FIXED SAFE)
   if (e.code === "Space") {
     if (skateState.mode === "ground") {
       player.position.y += 1.5;
@@ -186,114 +157,23 @@ window.addEventListener("keydown", (e) => {
 window.addEventListener("keyup", (e) => {
   keys[e.code] = false;
 });
-/* =========================================================
-   SKATE MOVEMENT
-========================================================= */
-let vx = 0;
-let vz = 0;
-
-const skate = {
-  onBoard: true,        // skateboard active
-  speed: 0.18,          // base push speed (lower = more realistic start)
-  maxSpeed: 0.85,       // top sprint speed
-  acceleration: 0.06,   // how fast you gain speed
-  friction: 0.92,       // natural slowdown
-  tricks: 0
-};
 
 /* =========================================================
-   RAIL SYSTEM (CREATE, DETECT GRIND, SNAP ON)
+   RAIL DETECTION (FIXED)
 ========================================================= */
-const rails = [];
-
-function createRail(x, y, z, length = 10) {
-  const rail = new THREE.Mesh(
-    new THREE.BoxGeometry(length, 0.2, 0.3),
-    new THREE.MeshStandardMaterial({ color: 0xaaaaaa })
-  );
-
-  rail.position.set(x, y, z);
-  scene.add(rail);
-
-  rails.push({
-    mesh: rail,
-    length,
-    active: false
-  });
-
-  return rail;
-}
-
-createRail(0, 1, -5, 14);
-createRail(-10, 1, 8, 12);
-createRail(12, 1, 12, 16);
-createRail(20, 1, -8, 10);
-
-let grinding = false;
-let activeRail = null;
-
-function checkGrind() {
-  if (grinding) return;
-
-  for (const rail of rails) {
-    const dist = player.position.distanceTo(rail.mesh.position);
-
-    if (dist < 1.6) {
-      grinding = true;
-      activeRail = rail;
-
-      // Snap player onto rail
-      player.position.y = rail.mesh.position.y + 1.2;
-      vx *= 0.3;
-      vz *= 0.3;
-
-      skate.speed += 0.02; // reward for grinding
-      break;
-    }
-  }
-}
-
-function exitGrind() {
-  if (grinding && activeRail) {
-    const dist = player.position.distanceTo(activeRail.mesh.position);
-    if (dist > 3) {
-      grinding = false;
-      activeRail = null;
-    }
-  }
-}
-
-/* =========================================================
-   🛹 REAL SKATE SYSTEM v2 (CORE)
-========================================================= */
-
-const skateState = {
-  mode: "ground", // ground | grind
-  rail: null,
-  railT: 0,
-  speedBoost: 0,
-  baseSpeed: 0.18,
-  maxSpeed: 0.95,
-  accel: 0.06,
-  friction: 0.92,
-  grindSpeed: 0.12
-};
-
-let vx = 0;
-let vz = 0;
-
-function checkGrindRail() {
-  for (const rail of rails) {
-    const dist = player.position.distanceTo(rail.position);
+function checkRail() {
+  for (const r of rails) {
+    const dist = player.position.distanceTo(r.mesh.position);
 
     if (dist < 1.6 && player.position.y < 2.2) {
-      return rail;
+      return r;
     }
   }
   return null;
 }
+
 /* =========================================================
-   MOVE FUNCTION (SKATE + GRIND)
+   MOVE SYSTEM (GROUND + GRIND)
 ========================================================= */
 function move() {
   let ix = 0;
@@ -310,32 +190,29 @@ function move() {
     iz /= len;
   }
 
-  /* =====================================================
-     🪵 GRIND MODE
-  ===================================================== */
+  const rail = checkRail();
 
-  const rail = checkGrindRail();
-
+  /* =========================
+     GRIND MODE
+  ========================= */
   if (rail && keys["Space"]) {
     skateState.mode = "grind";
     skateState.rail = rail;
 
-    // snap player onto rail
-    player.position.y = rail.position.y + 0.6;
+    player.position.y = rail.mesh.position.y + 0.6;
 
-    // grind forward direction
     vx = 0;
     vz = skateState.grindSpeed;
 
     skateState.speedBoost += 0.002;
+  }
 
-  } else {
+  /* =========================
+     GROUND MODE
+  ========================= */
+  else {
     skateState.mode = "ground";
     skateState.rail = null;
-
-    /* =====================================================
-       🛹 GROUND SKATE PHYSICS
-    ===================================================== */
 
     vx += ix * skateState.accel;
     vz += iz * skateState.accel;
@@ -346,19 +223,11 @@ function move() {
     vx *= skateState.friction;
     vz *= skateState.friction;
 
-    player.position.y += (1 - player.position.y) * 0.15; // reset height
+    player.position.y += (1 - player.position.y) * 0.15;
   }
-
-  /* =====================================================
-     APPLY MOVEMENT
-  ===================================================== */
 
   player.position.x += vx;
   player.position.z += vz;
-
-  /* =====================================================
-     CAMERA FOLLOW (UNCHANGED)
-  ===================================================== */
 
   cameraTarget.set(player.position.x, player.position.y, player.position.z);
 
@@ -370,93 +239,15 @@ function move() {
 }
 
 /* =========================================================
-   ZONES
-========================================================= */
-const zones = {
-  CENTER: { name: "CITY CENTER", x: 0, z: 0, r: 70 },
-  YACHT: { name: "YACHT CLUB", x: -60, z: -40, r: 70 },
-  BEACH: { name: "BEACH", x: 60, z: -40, r: 70 },
-  RACING: { name: "RACING TRACK", x: 0, z: 80, r: 80 }
-};
-
-let currentZone = "CITY CENTER";
-
-/* =========================================================
-   HUD (CREATE FIRST)
-========================================================= */
-const hud = document.createElement("div");
-hud.style.position = "absolute";
-hud.style.top = "15px";
-hud.style.left = "15px";
-hud.style.color = "white";
-hud.style.padding = "10px";
-hud.style.background = "rgba(0,0,0,0.5)";
-hud.style.fontFamily = "Arial";
-document.body.appendChild(hud);
-
-/* =========================================================
-/* =========================================================
-   HERO TRIGGER
-========================================================= */
-function updateHero() {
-  if (heroPlayed) return;
-
-  if (player.position.distanceTo(hero.position) < 7) {
-    heroPlayed = true;
-    alert("HERO: Welcome to LAMBO CITY");
-  }
-}
-
-/* =========================================================
-   ZONE UPDATE
-========================================================= */
-function updateZone() {
-  let found = "CITY CENTER";
-
-  for (const k in zones) {
-    const z = zones[k];
-    const zonePos = new THREE.Vector3(z.x, 0, z.z);
-    const d = player.position.distanceTo(zonePos);
-
-    if (d < z.r) found = z.name;
-  }
-
-  currentZone = found;
-
-  hud.innerHTML =
-    `ZONE: ${currentZone} | SPEED: ${skate.speed.toFixed(2)} | TRICKS: ${skate.tricks}`;
-}
-
-/* =========================================================
-   🛹 GRIND SYSTEM UPDATE (RUN EVERY FRAME)
-========================================================= */
-function updateGrind() {
-  // if already grinding, stick player to rail
-  if (grinding && activeRail) {
-    const rail = activeRail.mesh;
-
-    player.position.y = rail.position.y + 1.2;
-
-    // optional forward rail slide
-    vx *= 0.98;
-    vz *= 0.98;
-  }
-}
-
-/* =========================================================
-   LOOP (MAIN GAME LOOP)
+   LOOP
 ========================================================= */
 function animate() {
   requestAnimationFrame(animate);
 
   move();
-  checkGrind();     // detect rail entry
-  updateGrind();    // maintain grind state
-  updateZone();
-  updateHero();
   updateWorldTime();
 
   renderer.render(scene, camera);
 }
 
-animate();  
+animate();
