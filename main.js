@@ -4,20 +4,25 @@ import { camera } from "./camera.js";
 import { renderer } from "./renderer.js";
 
 /* -----------------------------
-   RENDERER SAFETY
+   SAFE RENDERER INIT
 ------------------------------*/
 renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setPixelRatio(window.devicePixelRatio);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
 document.body.style.margin = "0";
 document.body.style.overflow = "hidden";
 document.body.appendChild(renderer.domElement);
 
-renderer.domElement.style.display = "block";
-renderer.domElement.tabIndex = 0;
+/* CRITICAL: single source of input focus */
+const canvas = renderer.domElement;
+canvas.setAttribute("tabindex", "0");
+canvas.style.outline = "none";
+canvas.style.display = "block";
+canvas.focus();
 
-window.addEventListener("click", () => renderer.domElement.focus());
-renderer.domElement.focus();
+/* lock focus ONLY on user interaction */
+window.addEventListener("mousedown", () => canvas.focus());
+window.addEventListener("touchstart", () => canvas.focus());
 
 /* -----------------------------
    CAMERA
@@ -48,7 +53,7 @@ const atmospheres = {
 };
 
 /* -----------------------------
-   WORLD TIME SYSTEM
+   WORLD TIME
 ------------------------------*/
 let worldTime = 0;
 
@@ -69,7 +74,7 @@ function updateWorldTime() {
 }
 
 /* -----------------------------
-   ATMOSPHERE SWITCHING
+   ATMOSPHERE SWITCH
 ------------------------------*/
 let lastZone = "";
 
@@ -78,7 +83,6 @@ function updateAtmosphere(zoneName) {
   lastZone = zoneName;
 
   let key = "CENTER";
-
   if (zoneName.includes("YACHT")) key = "YACHT";
   else if (zoneName.includes("BEACH")) key = "BEACH";
   else if (zoneName.includes("RACING")) key = "RACING";
@@ -96,12 +100,11 @@ const ground = new THREE.Mesh(
   new THREE.PlaneGeometry(500, 500),
   new THREE.MeshStandardMaterial({ color: 0x1a1a1a })
 );
-
 ground.rotation.x = -Math.PI / 2;
 scene.add(ground);
 
 /* -----------------------------
-   ZONE RINGS
+   ZONES VISUAL
 ------------------------------*/
 function createZoneRing(x, z, color) {
   const ring = new THREE.Mesh(
@@ -140,17 +143,13 @@ function createStreetLight(x, z) {
   bulb.position.set(x, 5, z);
   scene.add(bulb);
 
-  streetLights.push({
-    bulb,
-    baseIntensity: 1.5
-  });
+  streetLights.push({ bulb, baseIntensity: 1.5 });
 }
 
 for (let x = -80; x <= 80; x += 20) {
   createStreetLight(x, -30);
   createStreetLight(x, 30);
 }
-
 for (let z = -60; z <= 80; z += 20) {
   createStreetLight(-80, z);
   createStreetLight(80, z);
@@ -163,25 +162,26 @@ const player = new THREE.Mesh(
   new THREE.BoxGeometry(1, 2, 1),
   new THREE.MeshStandardMaterial({ color: 0x00ffcc })
 );
-
 player.position.set(0, 1, 0);
 scene.add(player);
 
 /* -----------------------------
-   INPUT (FINAL STABLE SYSTEM)
+   INPUT (FIXED — NO GLITCH VERSION)
 ------------------------------*/
-const keys = {};
+const keys = Object.create(null);
 
-document.addEventListener("keydown", (e) => {
+/* single reliable input system */
+window.addEventListener("keydown", (e) => {
   keys[e.code] = true;
+  canvas.focus();
 });
 
-document.addEventListener("keyup", (e) => {
+window.addEventListener("keyup", (e) => {
   keys[e.code] = false;
 });
 
 /* -----------------------------
-   MOVEMENT (FINAL STABLE)
+   MOVEMENT (STABLE)
 ------------------------------*/
 let velX = 0;
 let velZ = 0;
@@ -198,7 +198,6 @@ function move() {
   if (keys["KeyD"]) ix += 1;
 
   const len = Math.hypot(ix, iz);
-
   if (len > 0) {
     ix /= len;
     iz /= len;
@@ -245,14 +244,13 @@ hud.style.borderRadius = "8px";
 document.body.appendChild(hud);
 
 /* -----------------------------
-   ZONE SYSTEM
+   ZONE UPDATE
 ------------------------------*/
 function updateZone() {
   let found = "CITY CENTER";
 
   for (const k in zones) {
     const z = zones[k];
-
     const dx = player.position.x - z.x;
     const dz = player.position.z - z.z;
 
@@ -269,7 +267,7 @@ function updateZone() {
 }
 
 /* -----------------------------
-   MAIN LOOP
+   LOOP
 ------------------------------*/
 function animate() {
   requestAnimationFrame(animate);
