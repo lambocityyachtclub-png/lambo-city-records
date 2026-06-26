@@ -170,22 +170,21 @@ player.position.set(0, 1, 0);
 scene.add(player);
 
 /* -----------------------------
-   INPUT
+   INPUT (FIXED RELIABLE VERSION)
 ------------------------------*/
 const keys = {};
 
-document.addEventListener("keydown", (e) => {
-  keys[e.key.toLowerCase()] = true;
-  console.log("DOWN:", e.key);
+window.addEventListener("keydown", (e) => {
+  keys[e.code] = true;
 });
 
-document.addEventListener("keyup", (e) => {
-  keys[e.key.toLowerCase()] = false;
-  console.log("UP:", e.key);
+window.addEventListener("keyup", (e) => {
+  keys[e.code] = false;
 });
+
 
 /* -----------------------------
-   MOVEMENT (FIXED CLAMP)
+   MOVEMENT (WORKING VERSION)
 ------------------------------*/
 let velX = 0;
 let velZ = 0;
@@ -193,33 +192,37 @@ let velZ = 0;
 function move() {
   const speed = 0.25;
 
-  let ix = 0, iz = 0;
+  let ix = 0;
+  let iz = 0;
 
-  if (keys["w"]) iz -= 1;
-  if (keys["s"]) iz += 1;
-  if (keys["a"]) ix -= 1;
-  if (keys["d"]) ix += 1;
-console.log("ix:", ix, "iz:", iz);
+  // WASD (reliable key codes)
+  if (keys["KeyW"]) iz -= 1;
+  if (keys["KeyS"]) iz += 1;
+  if (keys["KeyA"]) ix -= 1;
+  if (keys["KeyD"]) ix += 1;
+
+  // normalize diagonal movement
   const len = Math.hypot(ix, iz);
-
   if (len > 0) {
     ix /= len;
     iz /= len;
   }
 
+  // smooth acceleration
   velX += (ix * speed - velX) * 0.2;
   velZ += (iz * speed - velZ) * 0.2;
 
+  // apply movement
   player.position.x += velX;
   player.position.z += velZ;
 
+  // camera follow
   camera.position.x += (player.position.x - camera.position.x) * 0.08;
   camera.position.z += (player.position.z + 8 - camera.position.z) * 0.08;
   camera.position.y += (6 - camera.position.y) * 0.08;
 
   camera.lookAt(player.position);
 }
-
 /* -----------------------------
    ZONES LOGIC
 ------------------------------*/
