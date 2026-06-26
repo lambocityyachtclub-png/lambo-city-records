@@ -2,16 +2,27 @@ import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 import { scene } from "./scene.js";
 import { camera } from "./camera.js";
 import { renderer } from "./renderer.js";
-
 /* -----------------------------
    RENDERER SAFETY (IMPORTANT FIX)
 ------------------------------*/
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(window.devicePixelRatio);
+
 document.body.style.margin = "0";
 document.body.style.overflow = "hidden";
+
 document.body.appendChild(renderer.domElement);
 
+renderer.domElement.style.display = "block";
+renderer.domElement.style.outline = "none";
+renderer.domElement.style.pointerEvents = "auto";
+renderer.domElement.tabIndex = 1;
+
+renderer.domElement.addEventListener("click", () => {
+  renderer.domElement.focus();
+});
+
+renderer.domElement.focus();
 /* -----------------------------
    CAMERA SAFE START
 ------------------------------*/
