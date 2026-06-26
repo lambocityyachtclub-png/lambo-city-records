@@ -11,7 +11,7 @@ const camera = new THREE.PerspectiveCamera(
   0.1,
   5000
 );
-camera.position.set(0, 8, 14);
+camera.position.set(0, 10, 18);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -26,9 +26,9 @@ document.body.style.overflow = "hidden";
 document.body.appendChild(renderer.domElement);
 
 /* =========================================================
-   🌫️ ATMOSPHERE (V3 ZONED FEEL)
+   🌫️ ATMOSPHERE
 ========================================================= */
-scene.fog = new THREE.FogExp2(0x070b14, 0.0022);
+scene.fog = new THREE.FogExp2(0x070b14, 0.0024);
 
 /* =========================================================
    🌞 LIGHTING
@@ -36,7 +36,7 @@ scene.fog = new THREE.FogExp2(0x070b14, 0.0022);
 scene.add(new THREE.AmbientLight(0x6f8cff, 0.35));
 
 const sun = new THREE.DirectionalLight(0xffffff, 2.5);
-sun.position.set(60, 80, 40);
+sun.position.set(60, 90, 40);
 scene.add(sun);
 
 scene.add(new THREE.HemisphereLight(0x4aa3ff, 0x0a0a0a, 0.6));
@@ -48,75 +48,63 @@ const world = new THREE.Group();
 scene.add(world);
 
 /* =========================================================
-   🧱 BASE GROUND
+   🏙️ CITY BASE GRID
 ========================================================= */
-const ground = new THREE.Mesh(
-  new THREE.PlaneGeometry(3000, 3000),
-  new THREE.MeshStandardMaterial({
-    color: 0x0f0f0f,
-    roughness: 1
-  })
-);
-ground.rotation.x = -Math.PI / 2;
-world.add(ground);
+const GRID_SIZE = 8;
+const BLOCK_SIZE = 120;
+
+/* roads container */
+const roads = [];
+const intersections = [];
 
 /* =========================================================
-   🗺️ CITY ZONES (STRUCTURE)
+   🛣️ ROAD SYSTEM (V4 CORE)
 ========================================================= */
-const ZONES = {
-  CENTER: { x: 0, z: 0, size: 250, color: 0x222222 },
-  YACHT: { x: -350, z: -200, size: 250, color: 0x0a2a3a },
-  BEACH: { x: 350, z: -200, size: 300, color: 0x1a3a2a },
-  RACING: { x: 0, z: 450, size: 350, color: 0x2a0a0a }
-};
-
-/* =========================================================
-   🏗️ BUILD ZONES
-========================================================= */
-function createZoneBase(zone) {
-  const base = new THREE.Mesh(
-    new THREE.BoxGeometry(zone.size, 2, zone.size),
+function createRoad(x, z, type = "h") {
+  const road = new THREE.Mesh(
+    new THREE.PlaneGeometry(type === "h" ? 1000 : 20, type === "h" ? 20 : 1000),
     new THREE.MeshStandardMaterial({
-      color: zone.color,
-      roughness: 0.95
+      color: 0x1a1a1a,
+      roughness: 1
     })
   );
 
-  base.position.set(zone.x, 0, zone.z);
-  world.add(base);
+  road.rotation.x = -Math.PI / 2;
+  road.position.set(x, 0.01, z);
+
+  world.add(road);
+  roads.push(road);
 }
 
-for (const z of Object.values(ZONES)) {
-  createZoneBase(z);
+/* GRID ROADS */
+for (let i = -GRID_SIZE; i <= GRID_SIZE; i++) {
+  createRoad(i * BLOCK_SIZE, 0, "v");
+  createRoad(0, i * BLOCK_SIZE, "h");
 }
 
 /* =========================================================
-   🌴 DECOR SYSTEM (INSTANT WORLD DENSITY)
+   🏗️ CITY BLOCKS
 ========================================================= */
-function tree(x, z) {
-  const trunk = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.5, 0.7, 6),
-    new THREE.MeshStandardMaterial({ color: 0x5a3a1a })
+function createBlock(x, z) {
+  const block = new THREE.Mesh(
+    new THREE.BoxGeometry(80, 40, 80),
+    new THREE.MeshStandardMaterial({
+      color: new THREE.Color().setHSL(Math.random() * 0.1 + 0.05, 0.3, 0.25),
+      roughness: 0.9
+    })
   );
 
-  const leaves = new THREE.Mesh(
-    new THREE.SphereGeometry(2.5, 8, 8),
-    new THREE.MeshStandardMaterial({ color: 0x1f7a3a })
-  );
-
-  trunk.position.set(x, 3, z);
-  leaves.position.set(x, 7, z);
-
-  world.add(trunk);
-  world.add(leaves);
+  block.position.set(x, 20, z);
+  world.add(block);
 }
 
-/* scatter trees in beach + yacht */
-for (let i = 0; i < 60; i++) {
-  tree(
-    (Math.random() - 0.5) * 800,
-    -200 + (Math.random() - 0.5) * 400
-  );
+/* fill city blocks between roads */
+for (let x = -GRID_SIZE; x < GRID_SIZE; x++) {
+  for (let z = -GRID_SIZE; z < GRID_SIZE; z++) {
+    if (Math.random() > 0.35) {
+      createBlock(x * BLOCK_SIZE + 60, z * BLOCK_SIZE + 60);
+    }
+  }
 }
 
 /* =========================================================
@@ -138,12 +126,12 @@ window.addEventListener("keydown", (e) => (keys[e.code] = true));
 window.addEventListener("keyup", (e) => (keys[e.code] = false));
 
 /* =========================================================
-   🛹 MOVEMENT
+   🛹 MOVEMENT (ROAD-BASED FEEL)
 ========================================================= */
 let vx = 0;
 let vz = 0;
 
-function move() {
+function movePlayer() {
   let ix = 0;
   let iz = 0;
 
@@ -158,38 +146,116 @@ function move() {
     iz /= len;
   }
 
-  vx += ix * 0.07;
-  vz += iz * 0.07;
+  vx += ix * 0.08;
+  vz += iz * 0.08;
 
-  vx = THREE.MathUtils.clamp(vx, -1, 1);
-  vz = THREE.MathUtils.clamp(vz, -1, 1);
+  vx = THREE.MathUtils.clamp(vx, -1.2, 1.2);
+  vz = THREE.MathUtils.clamp(vz, -1.2, 1.2);
 
-  vx *= 0.92;
-  vz *= 0.92;
+  vx *= 0.9;
+  vz *= 0.9;
 
   player.position.x += vx;
   player.position.z += vz;
 }
 
 /* =========================================================
-   🎥 CINEMATIC CAMERA (V3 IMPROVED)
+   🚗 TRAFFIC SYSTEM (ROAD FOLLOWING)
+========================================================= */
+const cars = [];
+
+function createCar(x, z) {
+  const car = new THREE.Mesh(
+    new THREE.BoxGeometry(2, 1, 4),
+    new THREE.MeshStandardMaterial({ color: 0xff4444 })
+  );
+
+  car.position.set(x, 0.5, z);
+
+  car.userData = {
+    speed: 0.5 + Math.random() * 0.3,
+    dir: Math.random() > 0.5 ? 1 : -1
+  };
+
+  world.add(car);
+  cars.push(car);
+}
+
+/* spawn traffic on main roads */
+for (let i = -6; i <= 6; i++) {
+  createCar(i * 40, -240);
+}
+
+/* =========================================================
+   🚗 UPDATE CARS (ROAD LOOP)
+========================================================= */
+function updateCars() {
+  for (const c of cars) {
+    c.position.z += c.userData.speed * c.userData.dir;
+
+    if (c.position.z > 300) c.position.z = -300;
+    if (c.position.z < -300) c.position.z = 300;
+  }
+}
+
+/* =========================================================
+   🧍 NPC SYSTEM (WALK ZONES)
+========================================================= */
+const npcs = [];
+
+function createNPC(x, z) {
+  const npc = new THREE.Mesh(
+    new THREE.BoxGeometry(0.8, 1.8, 0.8),
+    new THREE.MeshStandardMaterial({
+      color: new THREE.Color().setHSL(Math.random(), 0.6, 0.6)
+    })
+  );
+
+  npc.position.set(x, 0.9, z);
+
+  npc.userData = {
+    dir: Math.random() * Math.PI * 2,
+    speed: 0.02 + Math.random() * 0.02
+  };
+
+  world.add(npc);
+  npcs.push(npc);
+}
+
+/* spawn NPCs in city center */
+for (let i = 0; i < 60; i++) {
+  createNPC(
+    (Math.random() - 0.5) * 400,
+    (Math.random() - 0.5) * 400
+  );
+}
+
+/* =========================================================
+   🧍 UPDATE NPCS (SOFT WALK LOGIC)
+========================================================= */
+function updateNPCs() {
+  for (const n of npcs) {
+    n.userData.dir += (Math.random() - 0.5) * 0.08;
+
+    n.position.x += Math.cos(n.userData.dir) * n.userData.speed;
+    n.position.z += Math.sin(n.userData.dir) * n.userData.speed;
+  }
+}
+
+/* =========================================================
+   🎥 CAMERA (V4 SMOOTHER GTA FEEL)
 ========================================================= */
 const camTarget = new THREE.Vector3();
 
 function updateCamera() {
   camTarget.copy(player.position);
 
-  camera.position.x += (player.position.x - camera.position.x) * 0.05;
-  camera.position.z += (player.position.z + 16 - camera.position.z) * 0.05;
-  camera.position.y += (8 - camera.position.y) * 0.05;
+  camera.position.x += (player.position.x - camera.position.x) * 0.04;
+  camera.position.z += (player.position.z + 20 - camera.position.z) * 0.04;
+  camera.position.y += (10 - camera.position.y) * 0.04;
 
   camera.lookAt(camTarget);
 }
-
-/* =========================================================
-   🌆 WORLD TIME
-========================================================= */
-let t = 0;
 
 /* =========================================================
    🔁 LOOP
@@ -197,9 +263,9 @@ let t = 0;
 function animate() {
   requestAnimationFrame(animate);
 
-  t += 0.01;
-
-  move();
+  movePlayer();
+  updateNPCs();
+  updateCars();
   updateCamera();
 
   renderer.render(scene, camera);
