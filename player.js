@@ -2,10 +2,9 @@ import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 import { engine } from "./engine.js";
 
 /* =========================================================
-   🧍 PLAYER SYSTEM
+   🧍 PLAYER SYSTEM (CLEAN)
 ========================================================= */
 
-// create player ONCE
 const player = new THREE.Mesh(
   new THREE.BoxGeometry(1, 2, 1),
   new THREE.MeshStandardMaterial({ color: 0x00ffcc })
@@ -13,9 +12,22 @@ const player = new THREE.Mesh(
 
 player.position.set(0, 1, 200);
 
-// register globally
 engine.player = player;
-engine.world.add(player);
+
+/* =========================================================
+   🧠 SAFE ATTACH (WAIT FOR WORLD)
+========================================================= */
+
+function attachPlayer() {
+  if (!engine.world) {
+    requestAnimationFrame(attachPlayer);
+    return;
+  }
+
+  engine.world.add(player);
+}
+
+attachPlayer();
 
 /* =========================================================
    🛹 MOVEMENT SYSTEM
@@ -41,25 +53,17 @@ function updatePlayer() {
     iz /= len;
   }
 
-  // acceleration
   vx += ix * 0.09;
   vz += iz * 0.09;
 
-  // clamp speed
   vx = THREE.MathUtils.clamp(vx, -1.5, 1.5);
   vz = THREE.MathUtils.clamp(vz, -1.5, 1.5);
 
-  // friction
   vx *= 0.88;
   vz *= 0.88;
 
-  // apply movement
   player.position.x += vx;
   player.position.z += vz;
 }
-
-/* =========================================================
-   🔁 REGISTER UPDATE LOOP
-========================================================= */
 
 engine.updatePlayer = updatePlayer;
