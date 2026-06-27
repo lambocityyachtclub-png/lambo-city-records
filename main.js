@@ -57,7 +57,7 @@ engine.camera = new THREE.PerspectiveCamera(
   7000
 );
 
-engine.camera.position.set(0, 10, 18);
+engine.camera.position.set(0, 120, 400);
 
 /* =========================================================
    RENDERER
