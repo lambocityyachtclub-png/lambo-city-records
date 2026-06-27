@@ -12,10 +12,10 @@ engine.world.add(dockGroup);
    🪵 MAIN BOARDWALK (PLAYER ENTRY PATH)
 ========================================================= */
 const boardwalk = new THREE.Mesh(
-  new THREE.BoxGeometry(40, 1, 600),
+  new THREE.BoxGeometry(60, 1, 900),
   new THREE.MeshStandardMaterial({
     color: 0x5a3a1e,
-    roughness: 0.9
+    roughness: 0.95
   })
 );
 
