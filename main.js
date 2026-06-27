@@ -1,6 +1,9 @@
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 import { engine } from "./engine.js";
 
+if (!engine.scene) console.warn("Scene not ready");
+if (!engine.world) console.warn("World not ready");
+
 import "./scene.js";
 import "./world.js";
 import "./player.js";
@@ -9,6 +12,7 @@ import "./npc.js";
 import "./cars.js";
 import "./water.js";
 import "./dock.js";
+
 /* =========================================================
    DEBUG
 ========================================================= */
