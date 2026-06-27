@@ -2,7 +2,7 @@ import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 import { engine } from "./engine.js";
 
 /* =========================================================
-   🧍 PLAYER SYSTEM (CLEAN)
+   🧍 PLAYER (CINEMATIC PHYSICS CORE)
 ========================================================= */
 
 const player = new THREE.Mesh(
@@ -10,12 +10,13 @@ const player = new THREE.Mesh(
   new THREE.MeshStandardMaterial({ color: 0x00ffcc })
 );
 
+// Start at dock spawn (cinematic ground focus)
 player.position.set(0, 1, 200);
 
 engine.player = player;
 
 /* =========================================================
-   🧠 SAFE ATTACH (WAIT FOR WORLD)
+   🌍 ATTACH TO WORLD
 ========================================================= */
 
 function attachPlayer() {
@@ -23,47 +24,94 @@ function attachPlayer() {
     requestAnimationFrame(attachPlayer);
     return;
   }
-
   engine.world.add(player);
 }
-
 attachPlayer();
 
 /* =========================================================
-   🛹 MOVEMENT SYSTEM
+   🧠 PHYSICS STATE (IMPORTANT UPGRADE)
 ========================================================= */
 
-let vx = 0;
-let vz = 0;
+// velocity
+const velocity = new THREE.Vector3(0, 0, 0);
+
+// movement tuning (THIS is your “feel system”)
+const config = {
+  acceleration: 0.12,
+  maxSpeed: 1.8,
+  friction: 0.86,
+  turnSharpness: 0.92
+};
+
+/* =========================================================
+   🎮 INPUT VECTOR
+========================================================= */
+
+const input = new THREE.Vector3(0, 0, 0);
+
+/* =========================================================
+   🛹 MAIN UPDATE LOOP
+========================================================= */
 
 function updatePlayer() {
   const keys = engine.keys;
 
-  let ix = 0;
-  let iz = 0;
+  // reset input each frame
+  input.set(0, 0, 0);
 
-  if (keys["KeyW"]) iz -= 1;
-  if (keys["KeyS"]) iz += 1;
-  if (keys["KeyA"]) ix -= 1;
-  if (keys["KeyD"]) ix += 1;
+  // movement input
+  if (keys["KeyW"]) input.z -= 1;
+  if (keys["KeyS"]) input.z += 1;
+  if (keys["KeyA"]) input.x -= 1;
+  if (keys["KeyD"]) input.x += 1;
 
-  const len = Math.hypot(ix, iz);
-  if (len > 0) {
-    ix /= len;
-    iz /= len;
+  // normalize diagonal movement
+  if (input.length() > 0) input.normalize();
+
+  /* =========================================================
+     ⚡ ACCELERATION (REAL FEEL)
+  ========================================================= */
+
+  velocity.x += input.x * config.acceleration;
+  velocity.z += input.z * config.acceleration;
+
+  // clamp max speed (GTA-style control cap)
+  velocity.x = THREE.MathUtils.clamp(velocity.x, -config.maxSpeed, config.maxSpeed);
+  velocity.z = THREE.MathUtils.clamp(velocity.z, -config.maxSpeed, config.maxSpeed);
+
+  /* =========================================================
+     🌫 FRICTION (GROUND FEEL)
+  ========================================================= */
+
+  velocity.x *= config.friction;
+  velocity.z *= config.friction;
+
+  /* =========================================================
+     📍 APPLY MOVEMENT
+  ========================================================= */
+
+  player.position.x += velocity.x;
+  player.position.z += velocity.z;
+
+  /* =========================================================
+     🎯 ORIENTATION (FUTURE CAMERA LINK HOOK)
+  ========================================================= */
+
+  const moveDir = new THREE.Vector3(velocity.x, 0, velocity.z);
+
+  if (moveDir.length() > 0.01) {
+    player.rotation.y = THREE.MathUtils.lerp(
+      player.rotation.y,
+      Math.atan2(velocity.x, velocity.z),
+      0.15
+    );
   }
 
-  vx += ix * 0.09;
-  vz += iz * 0.09;
+  /* =========================================================
+     🧠 ENGINE HOOK (FOR CAMERA + ZONES)
+  ========================================================= */
 
-  vx = THREE.MathUtils.clamp(vx, -1.5, 1.5);
-  vz = THREE.MathUtils.clamp(vz, -1.5, 1.5);
-
-  vx *= 0.88;
-  vz *= 0.88;
-
-  player.position.x += vx;
-  player.position.z += vz;
+  engine.playerVelocity = velocity;
 }
 
 engine.updatePlayer = updatePlayer;
