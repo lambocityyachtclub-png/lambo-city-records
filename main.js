@@ -1,5 +1,4 @@
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
-
 import { engine } from "./engine.js";
 
 import "./scene.js";
@@ -9,21 +8,35 @@ import "./input.js";
 import "./npc.js";
 import "./cars.js";
 
+/* =========================================================
+   DEBUG
+========================================================= */
+
 console.log("MAIN JS LOADED");
-console.log("ENGINE:", engine);
+console.log(engine);
 
-import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
-import { engine } from "./engine.js";
+/* =========================================================
+   LIGHTING
+========================================================= */
 
-const ambient = new THREE.AmbientLight(0xffffff, 0.8);
+const ambient = new THREE.AmbientLight(
+  0xffffff,
+  0.8
+);
+
 engine.scene.add(ambient);
 
-const sun = new THREE.DirectionalLight(0xffffff, 2);
+const sun = new THREE.DirectionalLight(
+  0xffffff,
+  2
+);
+
 sun.position.set(100, 150, 100);
 
 engine.scene.add(sun);
+
 /* =========================================================
-   🎬 CAMERA SETUP
+   CAMERA
 ========================================================= */
 
 engine.camera = new THREE.PerspectiveCamera(
@@ -36,61 +49,93 @@ engine.camera = new THREE.PerspectiveCamera(
 engine.camera.position.set(0, 10, 18);
 
 /* =========================================================
-   🎥 RENDERER SETUP
+   RENDERER
 ========================================================= */
 
-engine.renderer = new THREE.WebGLRenderer({ antialias: true });
+engine.renderer = new THREE.WebGLRenderer({
+  antialias: true
+});
 
-engine.renderer.setSize(window.innerWidth, window.innerHeight);
-engine.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+engine.renderer.setSize(
+  window.innerWidth,
+  window.innerHeight
+);
 
-engine.renderer.outputColorSpace = THREE.SRGBColorSpace;
-engine.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+engine.renderer.setPixelRatio(
+  Math.min(window.devicePixelRatio, 2)
+);
+
+engine.renderer.outputColorSpace =
+  THREE.SRGBColorSpace;
+
+engine.renderer.toneMapping =
+  THREE.ACESFilmicToneMapping;
+
 engine.renderer.toneMappingExposure = 1.3;
 
 document.body.style.margin = "0";
 document.body.style.overflow = "hidden";
-document.body.appendChild(engine.renderer.domElement);
+
+document.body.appendChild(
+  engine.renderer.domElement
+);
 
 /* =========================================================
-   🎮 GAME LOOP (ONLY RESPONSIBILITY)
+   CAMERA FOLLOW
 ========================================================= */
 
 const camTarget = new THREE.Vector3();
 
+/* =========================================================
+   MAIN LOOP
+========================================================= */
+
 function animate() {
   requestAnimationFrame(animate);
 
- if (engine.updatePlayer) engine.updatePlayer();
-   
-   // follow player if exists
+  if (engine.updatePlayer) {
+    engine.updatePlayer();
+  }
+
   if (engine.player) {
     camTarget.copy(engine.player.position);
 
     engine.camera.position.x +=
-      (engine.player.position.x + 0 - engine.camera.position.x) * 0.05;
+      (engine.player.position.x -
+        engine.camera.position.x) * 0.05;
 
     engine.camera.position.z +=
-      (engine.player.position.z + 18 - engine.camera.position.z) * 0.05;
+      (engine.player.position.z + 18 -
+        engine.camera.position.z) * 0.05;
 
     engine.camera.position.y +=
-      (10 - engine.camera.position.y) * 0.05;
+      (10 -
+        engine.camera.position.y) * 0.05;
 
     engine.camera.lookAt(camTarget);
   }
 
-  engine.renderer.render(engine.scene, engine.camera);
+  engine.renderer.render(
+    engine.scene,
+    engine.camera
+  );
 }
 
 animate();
 
 /* =========================================================
-   🪟 RESIZE HANDLER
+   RESIZE
 ========================================================= */
 
 window.addEventListener("resize", () => {
-  engine.camera.aspect = window.innerWidth / window.innerHeight;
+  engine.camera.aspect =
+    window.innerWidth /
+    window.innerHeight;
+
   engine.camera.updateProjectionMatrix();
 
-  engine.renderer.setSize(window.innerWidth, window.innerHeight);
+  engine.renderer.setSize(
+    window.innerWidth,
+    window.innerHeight
+  );
 });
