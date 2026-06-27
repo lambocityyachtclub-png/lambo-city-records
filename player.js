@@ -11,7 +11,7 @@ const player = new THREE.Mesh(
   new THREE.MeshStandardMaterial({ color: 0x00ffcc })
 );
 
-player.position.set(0, 1, 0);
+player.position.set(0, 1, 200);
 
 // register globally
 engine.player = player;
