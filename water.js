@@ -20,7 +20,7 @@ water.rotation.x = -Math.PI / 2;
   Move the ocean north of the city.
   City stays near z = 0.
 */
-water.position.set(0, -0.5, 2500);
+water.position.set(0, -0.5, 900);
 
 engine.world.add(water);
 
