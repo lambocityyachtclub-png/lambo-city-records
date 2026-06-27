@@ -11,16 +11,15 @@ engine.world.add(dockGroup);
 /* =========================================================
    🪵 MAIN BOARDWALK (PLAYER ENTRY PATH)
 ========================================================= */
-
 const boardwalk = new THREE.Mesh(
-  new THREE.BoxGeometry(20, 1, 400),
+  new THREE.BoxGeometry(40, 1, 600),
   new THREE.MeshStandardMaterial({
     color: 0x5a3a1e,
     roughness: 0.9
   })
 );
 
-boardwalk.position.set(0, 0.5, 50);
+boardwalk.position.set(0, 0.5, 0);
 dockGroup.add(boardwalk);
 
 /* =========================================================
@@ -102,7 +101,7 @@ const yachtMarker = new THREE.Mesh(
   })
 );
 
-yachtMarker.position.set(0, 5, 320);
+yachtMarker.position.set(0, 5, 260);
 dockGroup.add(yachtMarker);
 
 /* =========================================================
