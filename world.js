@@ -1,17 +1,16 @@
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 import { engine } from "./engine.js";
 
-const world = engine.world;
-
 /* =========================================================
-   🌍 GROUND (CINEMATIC BASE ONLY)
+   🌍 WORLD BASE PLATFORM (VISIBILITY ANCHOR)
 ========================================================= */
 
 const ground = new THREE.Mesh(
-  new THREE.PlaneGeometry(8000, 8000),
-  new THREE.MeshStandardMaterial({ color: 0x101010 })
+  new THREE.PlaneGeometry(5000, 5000),
+  new THREE.MeshStandardMaterial({ color: 0x111111 })
 );
 
 ground.rotation.x = -Math.PI / 2;
-world.add(ground);
+ground.position.y = 0;
 
+engine.world.add(ground);
