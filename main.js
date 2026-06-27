@@ -11,12 +11,14 @@ import "./cars.js";
 import "./water.js";
 import "./dock.js";
 import { DockCore } from "./cinematicDockCore.js";
-
+import { CinematicFlow } from "./cinematicFlowSystem.js";
 requestAnimationFrame(() => {
 
   DockCore.init();
+  CinematicFlow.init();
 
 });
+
 /* =========================================================
    DEBUG
 ========================================================= */
@@ -114,6 +116,9 @@ if (engine.updateCars)
 if (engine.updateWater)
   engine.updateWater();
 
+  if (CinematicFlow.update)
+  CinematicFlow.update();
+  
   if (engine.player) {
     camTarget.copy(engine.player.position);
 
