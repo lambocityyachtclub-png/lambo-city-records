@@ -19,5 +19,5 @@ export const engine = {
   }
 };
 
-// attach world to scene immediately
+// 👇 THIS IS IMPORTANT (attach world ONCE)
 engine.scene.add(engine.world);
