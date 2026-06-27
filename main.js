@@ -1,9 +1,27 @@
+import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
+
+import { engine } from "./engine.js";
+
+import "./scene.js";
+import "./world.js";
+import "./player.js";
+import "./input.js";
+import "./npc.js";
+import "./cars.js";
+
 console.log("MAIN JS LOADED");
 console.log("ENGINE:", engine);
 
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 import { engine } from "./engine.js";
 
+const ambient = new THREE.AmbientLight(0xffffff, 0.8);
+engine.scene.add(ambient);
+
+const sun = new THREE.DirectionalLight(0xffffff, 2);
+sun.position.set(100, 150, 100);
+
+engine.scene.add(sun);
 /* =========================================================
    🎬 CAMERA SETUP
 ========================================================= */
