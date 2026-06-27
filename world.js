@@ -15,7 +15,3 @@ const ground = new THREE.Mesh(
 ground.rotation.x = -Math.PI / 2;
 world.add(ground);
 
-/* =========================================================
-   🌊 RESERVED SPACE FOR OCEAN (DO NOT FILL)
-   (Handled by water.js if needed)
-========================================================= */
