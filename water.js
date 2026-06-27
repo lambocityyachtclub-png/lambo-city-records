@@ -36,6 +36,5 @@ const beach = new THREE.Mesh(
 );
 
 beach.rotation.x = -Math.PI / 2;
-beach.position.set(0, 0.02, 600);
-
+beach.position.set(0, 0.02, 180);
 engine.world.add(beach);
