@@ -93,9 +93,17 @@ const camTarget = new THREE.Vector3();
 function animate() {
   requestAnimationFrame(animate);
 
-  if (engine.updatePlayer) {
-    engine.updatePlayer();
-  }
+  if (engine.updatePlayer)
+  engine.updatePlayer();
+
+if (engine.updateNPCs)
+  engine.updateNPCs();
+
+if (engine.updateCars)
+  engine.updateCars();
+
+if (engine.updateWater)
+  engine.updateWater();
 
   if (engine.player) {
     camTarget.copy(engine.player.position);
