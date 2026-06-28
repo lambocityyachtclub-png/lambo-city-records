@@ -1,25 +1,40 @@
-start() {
-  const loop = () => {
-    requestAnimationFrame(loop);
+import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 
-    this.delta = this.clock.getDelta();
-    this.elapsed += this.delta;
+export const engine = {
+  scene: new THREE.Scene(),
+  camera: null,
+  renderer: null,
+  world: new THREE.Group(),
 
-    for (const sys of this.systems) {
-      sys(this);
-    }
+  systems: [],
 
-    if (this.updateCamera) {
-      this.updateCamera(this);
-    }
+  clock: new THREE.Clock(),
+  delta: 0,
+  elapsed: 0,
 
-    // 🚨 DEBUG FORCE LOG
-    if (!this.scene) console.error("NO SCENE");
-    if (!this.camera) console.error("NO CAMERA");
-    if (!this.renderer) console.error("NO RENDERER");
+  updateCamera: null,
 
-    this.renderer.render(this.scene, this.camera);
-  };
+  start() {
+    const loop = () => {
+      requestAnimationFrame(loop);
 
-  loop();
-}
+      this.delta = this.clock.getDelta();
+      this.elapsed += this.delta;
+
+      for (const sys of this.systems) {
+        sys(this);
+      }
+
+      if (this.updateCamera) {
+        this.updateCamera();
+      }
+
+      // 🔥 HARD GUARANTEE RENDER TARGETS
+      if (this.scene && this.camera && this.renderer) {
+        this.renderer.render(this.scene, this.camera);
+      }
+    };
+
+    loop();
+  }
+};
