@@ -1,12 +1,11 @@
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 import { engine } from "./engine.js";
 
-/* =========================================================
-   🎥 LAMBO CITY THIRD PERSON CAMERA
-========================================================= */
+/* =========================
+   INIT CAMERA SYSTEM
+========================= */
 
 export function initCameraSystem() {
-
   const camera = new THREE.PerspectiveCamera(
     75,
     window.innerWidth / window.innerHeight,
@@ -16,18 +15,15 @@ export function initCameraSystem() {
 
   engine.camera = camera;
 
-  camera.position.set(0, 8, 18);
-
   const desired = new THREE.Vector3();
   const lookTarget = new THREE.Vector3();
 
   engine.updateCamera = function () {
-
     if (!engine.player) return;
 
     const player = engine.player;
 
-    // Behind the player
+    // Cinematic follow position (behind + above)
     desired.set(
       player.position.x,
       player.position.y + 6,
