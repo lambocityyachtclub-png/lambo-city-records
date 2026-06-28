@@ -11,8 +11,8 @@ export function initCameraSystem() {
 
   engine.camera = camera;
 
-  // 🚨 FORCE POSITION WHERE TEST OBJECT IS
-  camera.position.set(0, 5, 10);
+  // FORCE VISIBILITY POSITION
+  camera.position.set(0, 8, 15);
   camera.lookAt(0, 0, 0);
 
   engine.updateCamera = function () {
