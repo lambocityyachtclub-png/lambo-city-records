@@ -1,25 +1,70 @@
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 import { engine } from "./engine.js";
 
-// CAMERA (ONLY HERE OR camera.js — NOT BOTH)
-engine.camera = new THREE.PerspectiveCamera(
-  75,
-  window.innerWidth / window.innerHeight,
-  0.1,
-  20000
+/* =========================================================
+   🌍 LAMBO CITY SCENE SYSTEM
+========================================================= */
+
+/* =========================
+   SCENE SETTINGS
+========================= */
+
+engine.scene.background = new THREE.Color(0x0a1420);
+
+engine.scene.fog = new THREE.FogExp2(
+  0x0a1420,
+  0.002
 );
 
-engine.camera.position.set(0, 80, 160);
+/* =========================
+   AMBIENT LIGHT
+========================= */
 
-// RENDERER (ONLY HERE — CRITICAL)
-engine.renderer = new THREE.WebGLRenderer({ antialias: true });
-engine.renderer.setSize(window.innerWidth, window.innerHeight);
-document.body.appendChild(engine.renderer.domElement);
+const ambient = new THREE.AmbientLight(
+  0xffffff,
+  0.7
+);
 
-// LIGHTS (SAFE BASE)
-const ambient = new THREE.AmbientLight(0xffffff, 0.6);
 engine.scene.add(ambient);
 
-const sun = new THREE.DirectionalLight(0xffffff, 1.5);
-sun.position.set(100, 200, 100);
+/* =========================
+   SUNLIGHT
+========================= */
+
+const sun = new THREE.DirectionalLight(
+  0xffddaa,
+  1.8
+);
+
+sun.position.set(
+  100,
+  200,
+  100
+);
+
+sun.castShadow = true;
+
 engine.scene.add(sun);
+
+/* =========================
+   SUNSET FILL LIGHT
+========================= */
+
+const fill = new THREE.DirectionalLight(
+  0xaa66ff,
+  0.5
+);
+
+fill.position.set(
+  -100,
+  80,
+  -100
+);
+
+engine.scene.add(fill);
+
+/* =========================
+   WORLD ROOT
+========================= */
+
+engine.scene.add(engine.world);
