@@ -1,7 +1,7 @@
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 
 export const engine = {
-  scene: new THREE.Scene(),
+  scene: null,
   camera: null,
   renderer: null,
 
@@ -28,25 +28,19 @@ export const engine = {
       this.delta = this.clock.getDelta();
       this.elapsed += this.delta;
 
-      // SYSTEMS
       for (const sys of this.systems) {
         sys(this);
       }
 
-      // CAMERA
       if (this.updateCamera) {
-        this.updateCamera();
+        this.updateCamera(this);
       }
 
-      // SAFETY CHECK (CRITICAL)
-      if (!this.renderer || !this.scene || !this.camera) return;
-
-      this.renderer.render(this.scene, this.camera);
+      if (this.renderer && this.scene && this.camera) {
+        this.renderer.render(this.scene, this.camera);
+      }
     };
 
     loop();
   }
 };
-
-// ADD WORLD ROOT
-engine.scene.add(engine.world);
