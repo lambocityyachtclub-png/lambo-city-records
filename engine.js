@@ -11,13 +11,12 @@ export const engine = {
   renderer: null,
 
   /* =====================================================
-     WORLD
+     WORLD ROOT
   ===================================================== */
 
   world: new THREE.Group(),
 
   player: null,
-
   npcs: [],
   cars: [],
 
@@ -28,7 +27,7 @@ export const engine = {
   keys: {},
 
   /* =====================================================
-     TIMING
+     TIME SYSTEM
   ===================================================== */
 
   clock: new THREE.Clock(),
@@ -36,30 +35,65 @@ export const engine = {
   elapsed: 0,
 
   /* =====================================================
-     PLAYER DATA
+     PHYSICS
   ===================================================== */
 
   playerVelocity: new THREE.Vector3(),
 
   /* =====================================================
-     UPDATE SYSTEMS
+     SYSTEM REGISTRY (IMPORTANT UPGRADE)
   ===================================================== */
 
-  updatePlayer: null,
-  updateCamera: null,
-  updateNPCs: null,
-  updateCars: null,
-  updateWorld: null,
+  systems: [],
+
+  registerSystem(fn) {
+    if (typeof fn === "function") {
+      this.systems.push(fn);
+    }
+  },
 
   /* =====================================================
-     GAME STATE
+     GAME STATE (SINGLE SOURCE OF TRUTH)
   ===================================================== */
 
   state: {
-    district: "DOCK",
-    zone: "DOCK",
+    phase: "DOCK",
+    cinematicPhase: "DOCK",
     weather: "CLEAR",
     timeOfDay: "SUNSET"
+  },
+
+  /* =====================================================
+     MAIN UPDATE LOOP (ENGINE OWNED)
+  ===================================================== */
+
+  start() {
+
+    const loop = () => {
+
+      requestAnimationFrame(loop);
+
+      this.delta = this.clock.getDelta();
+      this.elapsed += this.delta;
+
+      /* ================================================
+         RUN SYSTEMS (ORDERED CONTROL)
+      ================================================ */
+
+      for (const sys of this.systems) {
+        if (typeof sys === "function") sys();
+      }
+
+      /* ================================================
+         RENDER SAFETY CHECK
+      ================================================ */
+
+      if (this.renderer && this.scene && this.camera) {
+        this.renderer.render(this.scene, this.camera);
+      }
+    };
+
+    loop();
   }
 };
 
