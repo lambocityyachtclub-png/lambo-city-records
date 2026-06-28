@@ -11,7 +11,6 @@ export function initCameraSystem() {
 
   engine.camera = camera;
 
-  // 🔥 FORCE START POSITION (ALWAYS LOOK AT WORLD CENTER)
   camera.position.set(0, 10, 20);
   camera.lookAt(0, 0, 0);
 
