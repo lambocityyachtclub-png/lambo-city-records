@@ -25,7 +25,8 @@ function boot() {
 
   // WORLD STYLE FIRST
   initWorldSkin();
-
+  initCameraSystem();
+   
   // CINEMATIC SYSTEMS
   DockCore.init();
   CinematicFlow.init();
