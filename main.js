@@ -1,7 +1,7 @@
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 
 /* =========================================================
-   SCENE
+   BASIC SCENE
 ========================================================= */
 
 const scene = new THREE.Scene();
@@ -33,31 +33,63 @@ document.body.appendChild(renderer.domElement);
    LIGHTING
 ========================================================= */
 
-const light = new THREE.DirectionalLight(0xffffff, 2);
-light.position.set(5, 10, 5);
-scene.add(light);
+scene.add(new THREE.AmbientLight(0xffffff, 0.6));
 
-scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+const sun = new THREE.DirectionalLight(0xffffff, 2);
+sun.position.set(5, 10, 5);
+scene.add(sun);
 
 /* =========================================================
-   TEST OBJECT (YOU MUST SEE THIS)
+   FLOOR (DOCK BASE)
 ========================================================= */
 
-const cube = new THREE.Mesh(
+const ground = new THREE.Mesh(
+  new THREE.PlaneGeometry(50, 50),
+  new THREE.MeshStandardMaterial({ color: 0x444444 })
+);
+
+ground.rotation.x = -Math.PI / 2;
+scene.add(ground);
+
+/* =========================================================
+   PLAYER (RED CUBE)
+========================================================= */
+
+const player = new THREE.Mesh(
   new THREE.BoxGeometry(1, 1, 1),
   new THREE.MeshStandardMaterial({ color: 0xff0000 })
 );
 
-scene.add(cube);
+player.position.y = 0.5;
+scene.add(player);
 
 /* =========================================================
-   ANIMATION LOOP
+   INPUT
+========================================================= */
+
+const keys = {};
+
+window.addEventListener("keydown", (e) => keys[e.code] = true);
+window.addEventListener("keyup", (e) => keys[e.code] = false);
+
+/* =========================================================
+   GAME LOOP
 ========================================================= */
 
 function animate() {
   requestAnimationFrame(animate);
 
-  cube.rotation.y += 0.01;
+  // movement
+  if (keys["KeyW"]) player.position.z -= 0.1;
+  if (keys["KeyS"]) player.position.z += 0.1;
+  if (keys["KeyA"]) player.position.x -= 0.1;
+  if (keys["KeyD"]) player.position.x += 0.1;
+
+  // camera follow
+  camera.position.x += (player.position.x - camera.position.x) * 0.1;
+  camera.position.z += (player.position.z + 8 - camera.position.z) * 0.1;
+
+  camera.lookAt(player.position);
 
   renderer.render(scene, camera);
 }
@@ -65,7 +97,7 @@ function animate() {
 animate();
 
 /* =========================================================
-   RESIZE FIX
+   RESIZE
 ========================================================= */
 
 window.addEventListener("resize", () => {
