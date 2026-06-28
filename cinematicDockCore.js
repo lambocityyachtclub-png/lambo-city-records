@@ -2,18 +2,22 @@ import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 import { engine } from "./engine.js";
 
 /* =========================================================
-   🌉 CINEMATIC DOCK CORE SYSTEM v1
-   (NO BREAKING CHANGES - PURE LAYER SYSTEM)
+   🎬 CINEMATIC DOCK CORE SYSTEM (DIRECTOR VERSION)
 ========================================================= */
 
 export const DockCore = {
 
+  state: {
+    phase: "INTRO",
+    hasStarted: false
+  },
+
   init() {
 
-    console.log("🌉 DockCore initializing...");
+    console.log("🎬 DockCore DIRECTOR initializing...");
 
     /* =====================================================
-       🧭 CINEMATIC SPINE (FORWARD WORLD DIRECTION)
+       🧭 CINEMATIC SPINE (WORLD STORY FLOW)
     ===================================================== */
 
     this.spine = {
@@ -24,24 +28,15 @@ export const DockCore = {
     };
 
     /* =====================================================
-       🧍 PLAYER ALIGNMENT (SAFE ADJUST ONLY)
+       🧍 PLAYER CINEMATIC ALIGNMENT
     ===================================================== */
 
     if (engine.player) {
-
-      // keep your spawn but enforce forward facing direction
-      engine.player.position.set(
-        engine.player.position.x,
-        engine.player.position.y,
-        this.spine.ENTRY_Z
-      );
-
+      engine.player.position.z = this.spine.ENTRY_Z;
     }
 
     /* =====================================================
-       🌴 SIDE WORLD: RESORT BEACH (A LAYER)
-       - behind cabins feel
-       - calm aesthetic space
+       🌍 WORLD LAYERS
     ===================================================== */
 
     this.leftBeach = this.createBeach(-1200);
@@ -51,13 +46,10 @@ export const DockCore = {
     engine.world.add(this.rightBeach);
 
     /* =====================================================
-       🌊 MAIN WATER SPLIT SYSTEM
-       - CENTER = ENERGY / PROGRESSION
-       - SIDES = RESORT CALM WATER
+       🌊 OCEAN SYSTEMS
     ===================================================== */
 
     this.centerWater = this.createWater(0, 900, 2000, 8000);
-
     this.leftWater = this.createWater(-1200, 900, 2000, 8000);
     this.rightWater = this.createWater(1200, 900, 2000, 8000);
 
@@ -66,7 +58,7 @@ export const DockCore = {
     engine.world.add(this.rightWater);
 
     /* =====================================================
-       🚤 JET SKI LANES (CENTER ENERGY LAYER)
+       🚤 ENERGY LANES (MOVEMENT GUIDES)
     ===================================================== */
 
     this.jetLaneLeft = this.createJetLane(-400);
@@ -75,11 +67,35 @@ export const DockCore = {
     engine.world.add(this.jetLaneLeft);
     engine.world.add(this.jetLaneRight);
 
-    console.log("🌉 DockCore READY");
+    this.state.hasStarted = true;
+
+    console.log("🎬 DockCore READY (CINEMATIC MODE)");
   },
 
   /* =========================================================
-     🏖 BEACH CREATION (SIDE LAYER)
+     🎬 UPDATE (THIS IS NOW A DIRECTOR SYSTEM)
+  ========================================================= */
+
+  update() {
+
+    if (!engine.player) return;
+
+    const z = engine.player.position.z;
+
+    /* =====================================================
+       🎭 PHASE DETECTION (WORLD STORY CONTROL)
+    ===================================================== */
+
+    if (z < 400) this.state.phase = "DOCK_INTRO";
+    else if (z < 800) this.state.phase = "BOARDWALK";
+    else if (z < 1200) this.state.phase = "STAGE";
+    else this.state.phase = "YACHT_REVEAL";
+
+    engine.state.dockPhase = this.state.phase;
+  },
+
+  /* =========================================================
+     🏖 BEACH
   ========================================================= */
 
   createBeach(x) {
@@ -98,7 +114,7 @@ export const DockCore = {
   },
 
   /* =========================================================
-     🌊 WATER CREATION (REUSABLE LAYER)
+     🌊 WATER
   ========================================================= */
 
   createWater(x, z, w, h) {
@@ -119,7 +135,7 @@ export const DockCore = {
   },
 
   /* =========================================================
-     🚤 JET SKI LANE
+     🚤 JET LANE
   ========================================================= */
 
   createJetLane(x) {
