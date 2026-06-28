@@ -22,6 +22,14 @@ const sun = new THREE.DirectionalLight(0xffffff, 2);
 sun.position.set(100, 200, 100);
 engine.scene.add(sun);
 
+const testCube = new THREE.Mesh(
+  new THREE.BoxGeometry(10, 10, 10),
+  new THREE.MeshStandardMaterial({ color: 0xff0000 })
+);
+
+testCube.position.set(0, 10, 0);
+
+engine.scene.add(testCube);
 /* =========================================================
    CAMERA (ONLY ONCE — CRITICAL)
 ========================================================= */
