@@ -2,7 +2,7 @@ import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 import { engine } from "./engine.js";
 
 /* =========================================================
-   🧍 PLAYER (CINEMATIC PHYSICS CORE)
+   🧍 LAMBO CITY PLAYER SYSTEM (CINEMATIC PHYSICS CORE)
 ========================================================= */
 
 const player = new THREE.Mesh(
@@ -10,9 +10,7 @@ const player = new THREE.Mesh(
   new THREE.MeshStandardMaterial({ color: 0x00ffcc })
 );
 
-// Start at dock spawn (cinematic ground focus)
 player.position.set(0, 1, 200);
-
 engine.player = player;
 
 /* =========================================================
@@ -29,89 +27,99 @@ function attachPlayer() {
 attachPlayer();
 
 /* =========================================================
-   🧠 PHYSICS STATE (IMPORTANT UPGRADE)
+   🧠 PHYSICS STATE (PRIVATE)
 ========================================================= */
 
-// velocity
-const velocity = new THREE.Vector3(0, 0, 0);
+const velocity = new THREE.Vector3();
+const input = new THREE.Vector3();
 
-// movement tuning (THIS is your “feel system”)
+/* =========================================================
+   ⚙ CONFIG (FEEL SYSTEM)
+========================================================= */
+
 const config = {
   acceleration: 0.12,
   maxSpeed: 1.8,
-  friction: 0.86,
-  turnSharpness: 0.92
+  friction: 0.86
 };
 
 /* =========================================================
-   🎮 INPUT VECTOR
-========================================================= */
-
-const input = new THREE.Vector3(0, 0, 0);
-
-/* =========================================================
-   🛹 MAIN UPDATE LOOP
+   🎮 UPDATE LOOP
 ========================================================= */
 
 function updatePlayer() {
+
   const keys = engine.keys;
 
-  // reset input each frame
+  /* =====================================================
+     🎮 INPUT VECTOR
+  ===================================================== */
+
   input.set(0, 0, 0);
 
-  // movement input
   if (keys["KeyW"]) input.z -= 1;
   if (keys["KeyS"]) input.z += 1;
   if (keys["KeyA"]) input.x -= 1;
   if (keys["KeyD"]) input.x += 1;
 
-  // normalize diagonal movement
   if (input.length() > 0) input.normalize();
 
-  /* =========================================================
-     ⚡ ACCELERATION (REAL FEEL)
-  ========================================================= */
+  /* =====================================================
+     ⚡ ACCELERATION
+  ===================================================== */
 
   velocity.x += input.x * config.acceleration;
   velocity.z += input.z * config.acceleration;
 
-  // clamp max speed (GTA-style control cap)
-  velocity.x = THREE.MathUtils.clamp(velocity.x, -config.maxSpeed, config.maxSpeed);
-  velocity.z = THREE.MathUtils.clamp(velocity.z, -config.maxSpeed, config.maxSpeed);
+  velocity.x = THREE.MathUtils.clamp(
+    velocity.x,
+    -config.maxSpeed,
+    config.maxSpeed
+  );
 
-  /* =========================================================
-     🌫 FRICTION (GROUND FEEL)
-  ========================================================= */
+  velocity.z = THREE.MathUtils.clamp(
+    velocity.z,
+    -config.maxSpeed,
+    config.maxSpeed
+  );
 
-  velocity.x *= config.friction;
-  velocity.z *= config.friction;
+  /* =====================================================
+     🌫 FRICTION
+  ===================================================== */
 
-  /* =========================================================
+  velocity.multiplyScalar(config.friction);
+
+  /* =====================================================
      📍 APPLY MOVEMENT
-  ========================================================= */
+  ===================================================== */
 
-  player.position.x += velocity.x;
-  player.position.z += velocity.z;
+  player.position.add(velocity);
 
-  /* =========================================================
-     🎯 ORIENTATION (FUTURE CAMERA LINK HOOK)
-  ========================================================= */
+  /* =====================================================
+     🎯 ROTATION (MOVEMENT-BASED ORIENTATION)
+  ===================================================== */
 
-  const moveDir = new THREE.Vector3(velocity.x, 0, velocity.z);
+  const moveDir = velocity.clone();
 
   if (moveDir.length() > 0.01) {
+
+    const targetRotation = Math.atan2(
+      velocity.x,
+      velocity.z
+    );
+
     player.rotation.y = THREE.MathUtils.lerp(
       player.rotation.y,
-      Math.atan2(velocity.x, velocity.z),
+      targetRotation,
       0.15
     );
   }
 
-  /* =========================================================
-     🧠 ENGINE HOOK (FOR CAMERA + ZONES)
-  ========================================================= */
+  /* =====================================================
+     🧠 ENGINE OUTPUT (SAFE COPY)
+  ===================================================== */
 
-  engine.playerVelocity = velocity;
+  engine.playerVelocity = velocity.clone();
 }
 
 engine.updatePlayer = updatePlayer;
