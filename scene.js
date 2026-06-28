@@ -1,38 +1,29 @@
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 import { engine } from "./engine.js";
 
-/* =========================
-   BACKGROUND
-========================= */
+/* SCENE INIT */
+engine.scene = new THREE.Scene();
 
 engine.scene.background = new THREE.Color(0x0a1420);
 engine.scene.fog = new THREE.FogExp2(0x0a1420, 0.002);
 
-/* =========================
-   LIGHTING
-========================= */
+/* LIGHTING (ONLY HERE — RULE) */
 
-const ambient = new THREE.AmbientLight(0xffffff, 0.8);
+const ambient = new THREE.AmbientLight(0xffffff, 0.6);
 engine.scene.add(ambient);
 
-const sun = new THREE.DirectionalLight(0xffddaa, 2);
+const sun = new THREE.DirectionalLight(0xffddaa, 1.6);
 sun.position.set(100, 200, 100);
+sun.castShadow = true;
+
+sun.shadow.mapSize.width = 2048;
+sun.shadow.mapSize.height = 2048;
+
 engine.scene.add(sun);
 
-/* =========================
-   🚨 DEBUG VISUAL OBJECT (CRITICAL FIX)
-========================= */
+const fill = new THREE.DirectionalLight(0xaa66ff, 0.4);
+fill.position.set(-100, 80, -100);
+engine.scene.add(fill);
 
-const ground = new THREE.Mesh(
-  new THREE.PlaneGeometry(500, 500),
-  new THREE.MeshStandardMaterial({ color: 0x224466 })
-);
-
-ground.rotation.x = -Math.PI / 2;
-engine.scene.add(ground);
-
-/* =========================
-   WORLD ROOT
-========================= */
-
+/* WORLD ROOT */
 engine.scene.add(engine.world);
