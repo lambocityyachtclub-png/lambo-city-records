@@ -20,9 +20,29 @@ export const engine = {
       this.delta = this.clock.getDelta();
       this.elapsed += this.delta;
 
+      // 🔥 HARD FAIL-SAFE CAMERA
+      if (!this.camera) {
+        this.camera = new THREE.PerspectiveCamera(
+          75,
+          window.innerWidth / window.innerHeight,
+          0.1,
+          2000
+        );
+        this.camera.position.set(0, 10, 20);
+      }
+
+      // 🔥 HARD FAIL-SAFE SCENE CONTENT
+      if (this.world.children.length === 0) {
+        const test = new THREE.Mesh(
+          new THREE.BoxGeometry(3, 3, 3),
+          new THREE.MeshStandardMaterial({ color: 0xff0000 })
+        );
+        this.world.add(test);
+      }
+
       if (this.updateCamera) this.updateCamera();
 
-      // 🔥 CRITICAL: render WORLD, not scene
+      // 🔥 FINAL RENDER GUARANTEE
       this.renderer.render(this.world, this.camera);
     };
 
