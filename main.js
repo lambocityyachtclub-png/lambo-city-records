@@ -11,53 +11,42 @@ import "./cars.js";
 import "./water.js";
 import "./dock.js";
 
+import { initCameraSystem } from "./cinematicCameraSystem.js";
 import { DockCore } from "./cinematicDockCore.js";
 import { CinematicFlow } from "./cinematicFlowSystem.js";
 import { initWorldSkin } from "./cinematicWorldSkin.js";
 
-/* =========================
-   BOOT
-========================= */
+/* =========================================================
+   🎬 BOOT SYSTEM (CLEAN + LOCKED)
+========================================================= */
 
 function boot() {
 
-  console.log("🎬 LAMBO CITY BOOT");
+  console.log("LAMBO CITY BOOT");
 
   /* =========================
-     1. WORLD FIRST
+     🌍 WORLD FIRST
   ========================= */
-
   initWorldSkin();
 
   /* =========================
-     2. CINEMATIC SYSTEMS
+     🎥 CAMERA SYSTEM
   ========================= */
+  initCameraSystem();
 
+  /* =========================
+     🎬 CINEMATIC SYSTEMS
+  ========================= */
   DockCore.init();
   CinematicFlow.init();
 
   /* =========================
-     3. SAFETY WAIT (CRITICAL)
+     ⏳ WAIT 1 FRAME (ENGINE SAFETY)
   ========================= */
-
   requestAnimationFrame(() => {
 
     /* =========================
-       4. ENSURE CAMERA EXISTS
-    ========================= */
-
-    if (!engine.camera) {
-      engine.camera = new THREE.PerspectiveCamera(
-        75,
-        window.innerWidth / window.innerHeight,
-        0.1,
-        20000
-      );
-      engine.camera.position.set(0, 20, 40);
-    }
-
-    /* =========================
-       5. REGISTER SYSTEMS
+       🎮 REGISTER GAME SYSTEMS
     ========================= */
 
     if (engine.updatePlayer)
@@ -79,12 +68,11 @@ function boot() {
       engine.registerSystem(() => DockCore.update(engine));
 
     /* =========================
-       6. START ENGINE
+       🚀 START ENGINE
     ========================= */
-
     engine.start();
 
-    console.log("🎮 LAMBO CITY READY");
+    console.log("LAMBO CITY READY");
   });
 }
 
