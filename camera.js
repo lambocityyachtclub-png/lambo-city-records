@@ -23,7 +23,7 @@ export function initCameraSystem() {
 
     const player = engine.player;
 
-    // Cinematic follow position (behind + above)
+    // Cinematic follow position (behind + above player)
     desired.set(
       player.position.x,
       player.position.y + 6,
