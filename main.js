@@ -52,4 +52,4 @@ function boot() {
    ⏳ SAFE START (WAIT FOR BROWSER READY)
 ========================================================= */
 
-requestAnimationFrame(boot);
+window.addEventListener("load", boot);
