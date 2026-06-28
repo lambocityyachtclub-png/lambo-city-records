@@ -6,6 +6,7 @@ import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x0a0f1f);
+scene.fog = new THREE.Fog(0x0a0f1f, 20, 120);
 
 /* =========================================================
    CAMERA
@@ -26,25 +27,28 @@ camera.position.set(0, 8, 15);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 document.body.style.margin = "0";
+document.body.style.overflow = "hidden";
 document.body.appendChild(renderer.domElement);
 
 /* =========================================================
    LIGHTING (CINEMATIC BASE)
 ========================================================= */
 
-scene.add(new THREE.AmbientLight(0x2a3b5a, 0.7));
+const ambient = new THREE.AmbientLight(0x2a3b5a, 0.7);
+scene.add(ambient);
 
 const sun = new THREE.DirectionalLight(0xffd6a0, 2);
 sun.position.set(10, 20, 10);
 scene.add(sun);
 
 /* =========================================================
-   🌊 OCEAN
+   🌊 OCEAN (EXPANDED)
 ========================================================= */
 
 const ocean = new THREE.Mesh(
-  new THREE.PlaneGeometry(200, 200),
+  new THREE.PlaneGeometry(500, 500),
   new THREE.MeshStandardMaterial({
     color: 0x0a3d62,
     roughness: 0.4,
@@ -53,22 +57,63 @@ const ocean = new THREE.Mesh(
 );
 
 ocean.rotation.x = -Math.PI / 2;
+ocean.position.y = 0;
 scene.add(ocean);
 
 /* =========================================================
-   🌉 DOCK PLATFORM
+   🌉 DOCK (MAIN PLATFORM)
 ========================================================= */
 
 const dock = new THREE.Mesh(
-  new THREE.BoxGeometry(10, 1, 30),
+  new THREE.BoxGeometry(10, 1, 40),
   new THREE.MeshStandardMaterial({ color: 0x5a3a1e })
 );
 
-dock.position.y = 0.5;
+dock.position.set(0, 0.5, 0);
 scene.add(dock);
 
 /* =========================================================
-   🧍 PLAYER (RED CUBE TEMP)
+   🌉 DOCK EXTENSION (DEPTH FEEL)
+========================================================= */
+
+const dockExtension = new THREE.Mesh(
+  new THREE.BoxGeometry(8, 1, 60),
+  new THREE.MeshStandardMaterial({ color: 0x3b2a1a })
+);
+
+dockExtension.position.set(0, 0.5, -40);
+scene.add(dockExtension);
+
+/* =========================================================
+   🌴 PALMS (CINEMATIC IDENTITY)
+========================================================= */
+
+function createPalm(x, z) {
+  const trunk = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.3, 0.5, 5),
+    new THREE.MeshStandardMaterial({ color: 0x8b5a2b })
+  );
+
+  const leaves = new THREE.Mesh(
+    new THREE.ConeGeometry(2, 4, 6),
+    new THREE.MeshStandardMaterial({ color: 0x1f8f3a })
+  );
+
+  trunk.position.set(x, 2.5, z);
+  leaves.position.set(x, 6, z);
+
+  scene.add(trunk);
+  scene.add(leaves);
+}
+
+/* palm layout */
+createPalm(-6, -10);
+createPalm(6, -10);
+createPalm(-6, 10);
+createPalm(6, 10);
+
+/* =========================================================
+   🧍 PLAYER
 ========================================================= */
 
 const player = new THREE.Mesh(
@@ -76,7 +121,7 @@ const player = new THREE.Mesh(
   new THREE.MeshStandardMaterial({ color: 0xff0000 })
 );
 
-player.position.y = 1;
+player.position.set(0, 1, 5);
 scene.add(player);
 
 /* =========================================================
@@ -85,8 +130,8 @@ scene.add(player);
 
 const keys = {};
 
-window.addEventListener("keydown", (e) => keys[e.code] = true);
-window.addEventListener("keyup", (e) => keys[e.code] = false);
+window.addEventListener("keydown", (e) => (keys[e.code] = true));
+window.addEventListener("keyup", (e) => (keys[e.code] = false));
 
 /* =========================================================
    UPDATE LOOP
@@ -96,14 +141,15 @@ function animate() {
   requestAnimationFrame(animate);
 
   // movement
-  if (keys["KeyW"]) player.position.z -= 0.1;
-  if (keys["KeyS"]) player.position.z += 0.1;
-  if (keys["KeyA"]) player.position.x -= 0.1;
-  if (keys["KeyD"]) player.position.x += 0.1;
+  if (keys["KeyW"]) player.position.z -= 0.15;
+  if (keys["KeyS"]) player.position.z += 0.15;
+  if (keys["KeyA"]) player.position.x -= 0.15;
+  if (keys["KeyD"]) player.position.x += 0.15;
 
-  // camera follow
+  // camera follow (smooth cinematic)
   camera.position.x += (player.position.x - camera.position.x) * 0.08;
-  camera.position.z += (player.position.z + 10 - camera.position.z) * 0.08;
+  camera.position.z += (player.position.z + 12 - camera.position.z) * 0.08;
+  camera.position.y += (8 - camera.position.y) * 0.08;
 
   camera.lookAt(player.position);
 
