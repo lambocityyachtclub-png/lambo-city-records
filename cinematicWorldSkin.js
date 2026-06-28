@@ -1,62 +1,91 @@
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 import { engine } from "./engine.js";
 
+/* =========================================================
+   🌍 WORLD SKIN (STABLE BASE LAYER)
+========================================================= */
+
 export function initWorldSkin() {
 
-  /* =====================================================
-     🌅 SKY ATMOSPHERE
-  ===================================================== */
+  const scene = engine.scene;
 
-  engine.scene.background = new THREE.Color(0x070a12);
+  if (!scene) {
+    console.error("Scene not ready in engine");
+    return;
+  }
 
-  engine.scene.fog = new THREE.FogExp2(0x0a0f18, 0.0008);
+  /* =========================
+     🌊 OCEAN BASE
+  ========================= */
 
-  /* =====================================================
-     💡 CINEMATIC LIGHT BALANCE
-  ===================================================== */
+  const ocean = new THREE.Mesh(
+    new THREE.PlaneGeometry(3000, 3000),
+    new THREE.MeshStandardMaterial({
+      color: 0x0a2a3a,
+      roughness: 0.9,
+      metalness: 0.1
+    })
+  );
 
-  const ambient = new THREE.AmbientLight(0x2a3b5a, 0.6);
-  engine.scene.add(ambient);
+  ocean.rotation.x = -Math.PI / 2;
+  ocean.position.y = 0;
+  scene.add(ocean);
 
-  const sun = new THREE.DirectionalLight(0xffd6a0, 1.4);
-  sun.position.set(200, 300, 150);
-  engine.scene.add(sun);
+  /* =========================
+     🪵 DOCK (CENTER LINE)
+  ========================= */
 
-  /* =====================================================
-     🌴 SIMPLE PALM TREE SYSTEM (PLACEHOLDER PROPS)
-  ===================================================== */
+  const dock = new THREE.Mesh(
+    new THREE.BoxGeometry(10, 1, 300),
+    new THREE.MeshStandardMaterial({ color: 0x5a3b22 })
+  );
 
-  function createPalm(x, z) {
+  dock.position.set(0, 0.5, -80);
+  scene.add(dock);
+
+  /* =========================
+     🌴 PALM TREES (CINEMATIC FRAMING)
+  ========================= */
+
+  const trunkMat = new THREE.MeshStandardMaterial({ color: 0x3b2a1a });
+  const leafMat = new THREE.MeshStandardMaterial({ color: 0x1f6b3a });
+
+  function palm(x, z) {
+
+    const g = new THREE.Group();
+
     const trunk = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.5, 1, 12, 6),
-      new THREE.MeshStandardMaterial({ color: 0x3b2a1a })
+      new THREE.CylinderGeometry(0.4, 0.6, 7, 6),
+      trunkMat
     );
+
+    trunk.position.y = 3.5;
 
     const leaves = new THREE.Mesh(
-      new THREE.SphereGeometry(3, 6, 6),
-      new THREE.MeshStandardMaterial({ color: 0x1f6b3a })
+      new THREE.SphereGeometry(2.5, 6, 6),
+      leafMat
     );
 
-    const group = new THREE.Group();
-    trunk.position.y = 6;
-    leaves.position.y = 12;
+    leaves.position.y = 7;
 
-    group.add(trunk);
-    group.add(leaves);
+    g.add(trunk);
+    g.add(leaves);
 
-    group.position.set(x, 0, z);
+    g.position.set(x, 0, z);
 
-    engine.world.add(group);
+    scene.add(g);
   }
 
-  /* =====================================================
-     🌴 PLACE PALM ROWS (DOCK FEEL)
-  ===================================================== */
-
-  for (let i = -10; i <= 10; i++) {
-    createPalm(-20, i * 30);
-    createPalm(20, i * 30);
+  for (let i = -120; i <= 120; i += 25) {
+    palm(-15, i);
+    palm(15, i);
   }
 
-  console.log("🌴 Cinematic World Skin Loaded");
+  /* =========================
+     🌫 ATMOSPHERE (GTA FEEL)
+  ========================= */
+
+  scene.fog = new THREE.FogExp2(0x0a1a22, 0.006);
+
+  scene.background = new THREE.Color(0x87b5d6);
 }
