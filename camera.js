@@ -11,12 +11,11 @@ export function initCameraSystem() {
 
   engine.camera = camera;
 
-  // 🚨 FORCE CAMERA POSITION (NO DEPENDENCIES)
+  // 🚨 FORCE POSITION WHERE TEST OBJECT IS
   camera.position.set(0, 5, 10);
   camera.lookAt(0, 0, 0);
 
   engine.updateCamera = function () {
-    // NO PLAYER DEPENDENCY (REMOVED TEMPORARILY)
     camera.lookAt(0, 0, 0);
   };
 }
