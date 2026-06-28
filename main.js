@@ -5,11 +5,11 @@ import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 ========================================================= */
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x081018);
-scene.fog = new THREE.Fog(0x081018, 20, 160);
+scene.background = new THREE.Color(0x071018);
+scene.fog = new THREE.Fog(0x071018, 30, 220);
 
 /* =========================================================
-   CAMERA
+   CAMERA (CINEMATIC SYSTEM)
 ========================================================= */
 
 const camera = new THREE.PerspectiveCamera(
@@ -19,7 +19,7 @@ const camera = new THREE.PerspectiveCamera(
   2000
 );
 
-camera.position.set(0, 8, 18);
+camera.position.set(0, 10, 20);
 
 /* =========================================================
    RENDERER
@@ -28,67 +28,65 @@ camera.position.set(0, 8, 18);
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
 document.body.style.margin = "0";
 document.body.style.overflow = "hidden";
 document.body.appendChild(renderer.domElement);
 
 /* =========================================================
-   LIGHTING (SUNSET CINEMATIC)
+   LIGHTING (SUNSET GTA FEEL)
 ========================================================= */
 
-const ambient = new THREE.AmbientLight(0x2a3b5a, 0.8);
-scene.add(ambient);
+scene.add(new THREE.AmbientLight(0x2a3b5a, 0.75));
 
-const sun = new THREE.DirectionalLight(0xffb36b, 2.2);
-sun.position.set(20, 30, 10);
+const sun = new THREE.DirectionalLight(0xffb36b, 2.4);
+sun.position.set(40, 60, 20);
 scene.add(sun);
 
 /* =========================================================
-   🌊 OCEAN
+   🌍 LONG BEACH BLOCKOUT MAP (REAL STRUCTURE LAYERS)
 ========================================================= */
 
-const ocean = new THREE.Mesh(
-  new THREE.PlaneGeometry(600, 600),
-  new THREE.MeshStandardMaterial({
-    color: 0x0a3d62,
-    roughness: 0.5,
-    metalness: 0.2
-  })
-);
+/*
+ZONES (REAL WORLD LAYOUT LOGIC):
 
-ocean.rotation.x = -Math.PI / 2;
-scene.add(ocean);
+- Z  0 → DOCK / YACHT CLUB (your spawn)
+- Z -80 → BEACH / shoreline
+- Z -160 → OCEAN EXTENSION / horizon
+- X -60 → WEST SIDE (Queensway / port feel)
+- X +60 → EAST SIDE (Belmont Shore direction)
+*/
 
-/* =========================================================
-   🏖 BEACH ZONE (NEW)
-========================================================= */
+function box(w, h, d, x, y, z, color) {
+  const m = new THREE.Mesh(
+    new THREE.BoxGeometry(w, h, d),
+    new THREE.MeshStandardMaterial({ color })
+  );
+  m.position.set(x, y, z);
+  scene.add(m);
+  return m;
+}
 
-const beach = new THREE.Mesh(
-  new THREE.PlaneGeometry(300, 80),
-  new THREE.MeshStandardMaterial({ color: 0xd9c28c })
-);
+/* DOCK CORE */
+box(14, 1, 40, 0, 0.5, 0, 0x5a3a1e);
 
-beach.rotation.x = -Math.PI / 2;
-beach.position.set(0, 0.01, -120);
-scene.add(beach);
+/* LEFT PORT / INDUSTRIAL */
+box(40, 1, 40, -60, 0.5, -20, 0x2b2b2b);
 
-/* =========================================================
-   🌉 DOCK
-========================================================= */
+/* RIGHT BELMONT SIDE (residential feel blockout) */
+box(40, 1, 40, 60, 0.5, -20, 0x3a4a5a);
 
-const dock = new THREE.Mesh(
-  new THREE.BoxGeometry(10, 1, 40),
-  new THREE.MeshStandardMaterial({ color: 0x5a3a1e })
-);
+/* BEACH STRIP */
+box(80, 1, 30, 0, 0.5, -80, 0xd9c28c);
 
-dock.position.set(0, 0.5, 0);
-scene.add(dock);
+/* OCEAN HORIZON */
+box(200, 1, 200, 0, 0.2, -170, 0x0a3d62);
 
 /* =========================================================
    🌴 PALMS
 ========================================================= */
 
-function createPalm(x, z) {
+function palm(x, z) {
   const trunk = new THREE.Mesh(
     new THREE.CylinderGeometry(0.3, 0.5, 5),
     new THREE.MeshStandardMaterial({ color: 0x8b5a2b })
@@ -105,22 +103,10 @@ function createPalm(x, z) {
   scene.add(trunk, leaves);
 }
 
-createPalm(-6, -10);
-createPalm(6, -10);
-createPalm(-6, 10);
-createPalm(6, 10);
-
-/* =========================================================
-   🚤 YACHT (MAIN GOAL OBJECT)
-========================================================= */
-
-const yacht = new THREE.Mesh(
-  new THREE.BoxGeometry(4, 2, 12),
-  new THREE.MeshStandardMaterial({ color: 0xffffff })
-);
-
-yacht.position.set(0, 1, -160);
-scene.add(yacht);
+palm(-6, -10);
+palm(6, -10);
+palm(-6, 10);
+palm(6, 10);
 
 /* =========================================================
    🧍 PLAYER
@@ -144,24 +130,63 @@ window.addEventListener("keydown", (e) => (keys[e.code] = true));
 window.addEventListener("keyup", (e) => (keys[e.code] = false));
 
 /* =========================================================
+   🚗 PLAYER MOVEMENT + VELOCITY (FOR CAMERA SYSTEM)
+========================================================= */
+
+const velocity = new THREE.Vector3();
+
+function updatePlayer() {
+  const accel = 0.18;
+  const friction = 0.82;
+
+  if (keys["KeyW"]) velocity.z -= accel;
+  if (keys["KeyS"]) velocity.z += accel;
+  if (keys["KeyA"]) velocity.x -= accel;
+  if (keys["KeyD"]) velocity.x += accel;
+
+  velocity.x *= friction;
+  velocity.z *= friction;
+
+  player.position.add(velocity);
+}
+
+/* =========================================================
+   🎥 GTA-STYLE CINEMATIC CAMERA SYSTEM
+========================================================= */
+
+const camOffset = new THREE.Vector3(0, 10, 22);
+const camPos = new THREE.Vector3();
+const lookAt = new THREE.Vector3();
+
+function updateCamera() {
+  const speed = velocity.length();
+
+  const dynamicZ = camOffset.z + speed * 8;
+
+  camPos.set(
+    player.position.x,
+    player.position.y + camOffset.y,
+    player.position.z + dynamicZ
+  );
+
+  camera.position.lerp(camPos, 0.08);
+
+  lookAt.lerp(player.position, 0.12);
+  camera.lookAt(lookAt);
+
+  // slight cinematic drift
+  camera.rotation.z = (velocity.x) * -0.01;
+}
+
+/* =========================================================
    LOOP
 ========================================================= */
 
 function animate() {
   requestAnimationFrame(animate);
 
-  // movement
-  if (keys["KeyW"]) player.position.z -= 0.18;
-  if (keys["KeyS"]) player.position.z += 0.18;
-  if (keys["KeyA"]) player.position.x -= 0.18;
-  if (keys["KeyD"]) player.position.x += 0.18;
-
-  // camera follow
-  camera.position.x += (player.position.x - camera.position.x) * 0.08;
-  camera.position.z += (player.position.z + 14 - camera.position.z) * 0.08;
-  camera.position.y += (8 - camera.position.y) * 0.08;
-
-  camera.lookAt(player.position);
+  updatePlayer();
+  updateCamera();
 
   renderer.render(scene, camera);
 }
