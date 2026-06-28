@@ -2,120 +2,39 @@ import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 import { engine } from "./engine.js";
 
 /* =========================================================
-   🎥 LAMBO CITY — CINEMATIC CAMERA SYSTEM (FINAL CORE)
+   🎥 CINEMATIC CAMERA SYSTEM (LAMBO CITY)
 ========================================================= */
 
-engine.camera = new THREE.PerspectiveCamera(
-  75,
-  window.innerWidth / window.innerHeight,
-  0.1,
-  20000
-);
+export function initCameraSystem() {
 
-const cam = engine.camera;
-
-/* =========================================================
-   🧠 CAMERA STATE
-========================================================= */
-
-const offset = new THREE.Vector3(0, 80, 160);
-const desiredPosition = new THREE.Vector3();
-const lookTarget = new THREE.Vector3();
-
-/* =========================================================
-   ⚙ CONFIG
-========================================================= */
-
-const config = {
-  followSmooth: 0.06,
-  lookSmooth: 0.08,
-  maxOffsetZ: 220,
-  minOffsetZ: 120
-};
-
-/* =========================================================
-   🎬 CAMERA UPDATE (CINEMATIC DIRECTOR AWARE)
-========================================================= */
-
-function updateCamera() {
-
-  if (!engine.player) return;
-
-  const player = engine.player;
-
-  /* =====================================================
-     🎭 CINEMATIC PHASE INPUT
-  ===================================================== */
-
-  const phase = engine.state?.cinematicPhase || "DOCK";
-
-  /* =====================================================
-     ⚡ SPEED (SAFE FALLBACK)
-  ===================================================== */
-
-  const vx = engine.playerVelocity?.x || 0;
-  const vz = engine.playerVelocity?.z || 0;
-
-  const speed = Math.sqrt(vx * vx + vz * vz);
-
-  /* =====================================================
-     🎯 PHASE-BASED CAMERA BEHAVIOR
-  ===================================================== */
-
-  let dynamicOffsetZ = offset.z;
-
-  if (phase === "DOCK") {
-    dynamicOffsetZ = offset.z;
-  }
-
-  if (phase === "BOARDWALK") {
-    dynamicOffsetZ = offset.z + 20;
-  }
-
-  if (phase === "STAGE") {
-    dynamicOffsetZ = offset.z + 40;
-  }
-
-  if (phase === "YACHT") {
-    dynamicOffsetZ = offset.z + 80;
-  }
-
-  /* =====================================================
-     ⚡ SPEED FEEL ADDITION
-  ===================================================== */
-
-  dynamicOffsetZ = THREE.MathUtils.clamp(
-    dynamicOffsetZ + speed * 80,
-    config.minOffsetZ,
-    config.maxOffsetZ
+  const camera = new THREE.PerspectiveCamera(
+    75,
+    window.innerWidth / window.innerHeight,
+    0.1,
+    20000
   );
 
-  /* =====================================================
-     📍 DESIRED POSITION
-  ===================================================== */
+  engine.camera = camera;
 
-  desiredPosition.set(
-    player.position.x,
-    player.position.y + offset.y,
-    player.position.z + dynamicOffsetZ
-  );
+  camera.position.set(0, 20, 40);
 
-  /* =====================================================
-     🌊 SMOOTH FOLLOW
-  ===================================================== */
+  let target = new THREE.Vector3();
+  let smoothPos = new THREE.Vector3();
 
-  cam.position.lerp(desiredPosition, config.followSmooth);
+  engine.updateCamera = function () {
 
-  /* =====================================================
-     🎯 LOOK AT (CLEAN SYSTEM - NO ROTATION CONFLICT)
-  ===================================================== */
+    if (!engine.player) return;
 
-  lookTarget.lerp(player.position, config.lookSmooth);
-  cam.lookAt(lookTarget);
+    // 🎯 target is slightly behind + above player
+    target.copy(engine.player.position);
+    target.y += 6;
+    target.z += 12;
+
+    // 🧠 smooth follow (cinematic easing)
+    smoothPos.lerpVectors(camera.position, target, 0.06);
+
+    camera.position.copy(smoothPos);
+
+    camera.lookAt(engine.player.position);
+  };
 }
-
-/* =========================================================
-   🧠 REGISTER SYSTEM
-========================================================= */
-
-engine.updateCamera = updateCamera;
