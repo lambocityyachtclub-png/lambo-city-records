@@ -19,6 +19,29 @@ function boot() {
 
   console.log("🎬 LAMBO CITY BOOTING...");
 
+  DockCore.init();
+  CinematicFlow.init();
+
+  // WAIT ONE FRAME so player/camera systems attach
+  requestAnimationFrame(() => {
+
+    if (engine.updatePlayer) engine.registerSystem(engine.updatePlayer);
+    if (engine.updateCamera) engine.registerSystem(engine.updateCamera);
+    if (engine.updateNPCs) engine.registerSystem(engine.updateNPCs);
+    if (engine.updateCars) engine.registerSystem(engine.updateCars);
+    if (engine.updateWater) engine.registerSystem(engine.updateWater);
+
+    if (CinematicFlow.update)
+      engine.registerSystem(() => CinematicFlow.update());
+
+    if (DockCore.update)
+      engine.registerSystem(() => DockCore.update());
+
+    engine.start();
+
+    console.log("🎮 LAMBO CITY READY");
+  });
+}
   /* =====================================================
      🎬 CINEMATIC SYSTEMS INIT
   ===================================================== */
