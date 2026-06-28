@@ -2,14 +2,15 @@ import { engine } from "./engine.js";
 import { renderer } from "./renderer.js";
 import { initCameraSystem } from "./camera.js";
 
-// Import other world components here
-import "./scene.js";    // Sets up the scene and lighting
-import "./world.js";    // Your world structure (e.g., dock, ocean, etc.)
-import "./player.js";   // Player setup and controls
-import "./input.js";    // Input handling (WASD, etc.)
+/* WORLD MODULES */
+import "./scene.js";
+import "./world.js";
+import "./dock.js";
+import "./player.js";
+import "./input.js";
 
-// Initialize camera
+/* CAMERA */
 initCameraSystem();
 
-// Start the engine loop
+/* START ENGINE */
 engine.start();
