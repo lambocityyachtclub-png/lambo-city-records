@@ -36,7 +36,7 @@ export const engine = {
       this.delta = this.clock.getDelta();
       this.elapsed += this.delta;
 
-      // 1. RUN SYSTEMS (game logic, animation, etc.)
+      // RUN SYSTEMS
       for (const sys of this.systems) {
         try {
           sys(this);
@@ -45,19 +45,19 @@ export const engine = {
         }
       }
 
-      // 2. CAMERA UPDATE (IMPORTANT: BEFORE RENDER)
+      // CAMERA UPDATE (if defined)
       if (this.updateCamera) {
-        this.updateCamera(this);
+        this.updateCamera();
       }
 
-      // 3. RENDER
+      // RENDER
       if (this.renderer && this.scene && this.camera) {
         this.renderer.render(this.scene, this.camera);
       }
     };
 
     loop();
-  }
+  },
 };
 
 // ATTACH WORLD ROOT
