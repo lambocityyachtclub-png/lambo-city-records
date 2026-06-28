@@ -2,41 +2,21 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>LAMBO CITY WORLD</title>
-
+  <title>TEST</title>
   <style>
     body {
       margin: 0;
       overflow: hidden;
-      background: black;
-    }
-
-    canvas {
-      display: block;
-    }
-
-    /* future cinematic fade layer */
-    #bootOverlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: black;
-      z-index: 10;
-      pointer-events: none;
-      transition: opacity 2s ease;
     }
   </style>
 </head>
-
 <body>
 
-<!-- 🎬 BOOT LAYER (future cinematic intro control) -->
-<div id="bootOverlay"></div>
+<script type="module">
+console.log("HTML IS RUNNING");
 
-<!-- MAIN ENGINE -->
-<script type="module" src="./main.js"></script>
+document.body.style.background = "green";
+</script>
 
 </body>
 </html>
