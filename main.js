@@ -1,3 +1,4 @@
+import { initWorldSkin } from "./cinematicWorldSkin.js";
 import "./scene.js";
 import "./world.js";
 import "./player.js";
