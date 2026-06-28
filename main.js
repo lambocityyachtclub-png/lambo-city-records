@@ -21,32 +21,71 @@ import { initWorldSkin } from "./cinematicWorldSkin.js";
 
 function boot() {
 
-  console.log("LAMBO CITY BOOT");
+  console.log("🎬 LAMBO CITY BOOT");
 
-  // WORLD STYLE FIRST
+  /* =========================
+     1. WORLD FIRST
+  ========================= */
+
   initWorldSkin();
-  initCameraSystem();
-   
-  // CINEMATIC SYSTEMS
+
+  /* =========================
+     2. CINEMATIC SYSTEMS
+  ========================= */
+
   DockCore.init();
   CinematicFlow.init();
 
-  // REGISTER GAME SYSTEMS
-  if (engine.updatePlayer) engine.registerSystem(engine.updatePlayer);
-  if (engine.updateCamera) engine.registerSystem(engine.updateCamera);
-  if (engine.updateNPCs) engine.registerSystem(engine.updateNPCs);
-  if (engine.updateCars) engine.registerSystem(engine.updateCars);
+  /* =========================
+     3. SAFETY WAIT (CRITICAL)
+  ========================= */
 
-  if (CinematicFlow.update)
-    engine.registerSystem(() => CinematicFlow.update(engine));
+  requestAnimationFrame(() => {
 
-  if (DockCore.update)
-    engine.registerSystem(() => DockCore.update(engine));
+    /* =========================
+       4. ENSURE CAMERA EXISTS
+    ========================= */
 
-  // START ENGINE
-  engine.start();
+    if (!engine.camera) {
+      engine.camera = new THREE.PerspectiveCamera(
+        75,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        20000
+      );
+      engine.camera.position.set(0, 20, 40);
+    }
 
-  console.log("LAMBO CITY READY");
+    /* =========================
+       5. REGISTER SYSTEMS
+    ========================= */
+
+    if (engine.updatePlayer)
+      engine.registerSystem(engine.updatePlayer);
+
+    if (engine.updateCamera)
+      engine.registerSystem(engine.updateCamera);
+
+    if (engine.updateNPCs)
+      engine.registerSystem(engine.updateNPCs);
+
+    if (engine.updateCars)
+      engine.registerSystem(engine.updateCars);
+
+    if (CinematicFlow.update)
+      engine.registerSystem(() => CinematicFlow.update(engine));
+
+    if (DockCore.update)
+      engine.registerSystem(() => DockCore.update(engine));
+
+    /* =========================
+       6. START ENGINE
+    ========================= */
+
+    engine.start();
+
+    console.log("🎮 LAMBO CITY READY");
+  });
 }
 
 window.addEventListener("load", boot);
