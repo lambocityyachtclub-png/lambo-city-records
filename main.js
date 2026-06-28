@@ -1,11 +1,11 @@
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 
 /* =========================================================
-   BASIC SCENE
+   SCENE
 ========================================================= */
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x87ceeb);
+scene.background = new THREE.Color(0x0a0f1f);
 
 /* =========================================================
    CAMERA
@@ -15,10 +15,10 @@ const camera = new THREE.PerspectiveCamera(
   75,
   window.innerWidth / window.innerHeight,
   0.1,
-  1000
+  2000
 );
 
-camera.position.set(0, 5, 10);
+camera.position.set(0, 8, 15);
 
 /* =========================================================
    RENDERER
@@ -30,29 +30,45 @@ document.body.style.margin = "0";
 document.body.appendChild(renderer.domElement);
 
 /* =========================================================
-   LIGHTING
+   LIGHTING (CINEMATIC BASE)
 ========================================================= */
 
-scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+scene.add(new THREE.AmbientLight(0x2a3b5a, 0.7));
 
-const sun = new THREE.DirectionalLight(0xffffff, 2);
-sun.position.set(5, 10, 5);
+const sun = new THREE.DirectionalLight(0xffd6a0, 2);
+sun.position.set(10, 20, 10);
 scene.add(sun);
 
 /* =========================================================
-   FLOOR (DOCK BASE)
+   🌊 OCEAN
 ========================================================= */
 
-const ground = new THREE.Mesh(
-  new THREE.PlaneGeometry(50, 50),
-  new THREE.MeshStandardMaterial({ color: 0x444444 })
+const ocean = new THREE.Mesh(
+  new THREE.PlaneGeometry(200, 200),
+  new THREE.MeshStandardMaterial({
+    color: 0x0a3d62,
+    roughness: 0.4,
+    metalness: 0.2
+  })
 );
 
-ground.rotation.x = -Math.PI / 2;
-scene.add(ground);
+ocean.rotation.x = -Math.PI / 2;
+scene.add(ocean);
 
 /* =========================================================
-   PLAYER (RED CUBE)
+   🌉 DOCK PLATFORM
+========================================================= */
+
+const dock = new THREE.Mesh(
+  new THREE.BoxGeometry(10, 1, 30),
+  new THREE.MeshStandardMaterial({ color: 0x5a3a1e })
+);
+
+dock.position.y = 0.5;
+scene.add(dock);
+
+/* =========================================================
+   🧍 PLAYER (RED CUBE TEMP)
 ========================================================= */
 
 const player = new THREE.Mesh(
@@ -60,7 +76,7 @@ const player = new THREE.Mesh(
   new THREE.MeshStandardMaterial({ color: 0xff0000 })
 );
 
-player.position.y = 0.5;
+player.position.y = 1;
 scene.add(player);
 
 /* =========================================================
@@ -73,7 +89,7 @@ window.addEventListener("keydown", (e) => keys[e.code] = true);
 window.addEventListener("keyup", (e) => keys[e.code] = false);
 
 /* =========================================================
-   GAME LOOP
+   UPDATE LOOP
 ========================================================= */
 
 function animate() {
@@ -86,8 +102,8 @@ function animate() {
   if (keys["KeyD"]) player.position.x += 0.1;
 
   // camera follow
-  camera.position.x += (player.position.x - camera.position.x) * 0.1;
-  camera.position.z += (player.position.z + 8 - camera.position.z) * 0.1;
+  camera.position.x += (player.position.x - camera.position.x) * 0.08;
+  camera.position.z += (player.position.z + 10 - camera.position.z) * 0.08;
 
   camera.lookAt(player.position);
 
