@@ -4,9 +4,8 @@ export const engine = {
   scene: new THREE.Scene(),
   camera: null,
   renderer: null,
-  world: new THREE.Group(),
 
-  systems: [],
+  world: new THREE.Group(),
 
   clock: new THREE.Clock(),
   delta: 0,
@@ -21,18 +20,10 @@ export const engine = {
       this.delta = this.clock.getDelta();
       this.elapsed += this.delta;
 
-      for (const sys of this.systems) {
-        sys(this);
-      }
+      if (this.updateCamera) this.updateCamera();
 
-      if (this.updateCamera) {
-        this.updateCamera();
-      }
-
-      // 🔥 HARD GUARANTEE RENDER TARGETS
-      if (this.scene && this.camera && this.renderer) {
-        this.renderer.render(this.scene, this.camera);
-      }
+      // 🔥 CRITICAL: render WORLD, not scene
+      this.renderer.render(this.world, this.camera);
     };
 
     loop();
