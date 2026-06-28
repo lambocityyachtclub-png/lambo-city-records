@@ -2,7 +2,7 @@ import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 import { engine } from "./engine.js";
 
 /* =========================
-   RENDERER
+   RENDERER SETUP
 ========================= */
 
 const renderer = new THREE.WebGLRenderer({
@@ -33,7 +33,7 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
 /* =========================
-   DOM
+   DOM ATTACHMENT
 ========================= */
 
 document.body.style.margin = "0";
@@ -41,7 +41,7 @@ document.body.style.overflow = "hidden";
 document.body.appendChild(renderer.domElement);
 
 /* =========================
-   RESIZE
+   WINDOW RESIZE
 ========================= */
 
 window.addEventListener("resize", () => {
