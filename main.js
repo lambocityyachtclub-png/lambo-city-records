@@ -1,4 +1,4 @@
-import { initWorldSkin } from "./cinematicWorldSkin.js";
+import { engine } from "./engine.js";
 
 import "./scene.js";
 import "./world.js";
@@ -9,65 +9,52 @@ import "./cars.js";
 import "./water.js";
 import "./dock.js";
 
-import { engine } from "./engine.js";
-import { DockCore } from "./cinematicDockCore.js";
-import { CinematicFlow } from "./cinematicFlowSystem.js";
+/* =========================================================
+   BASIC LIGHTING (GUARANTEES VISIBILITY)
+========================================================= */
+
+import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
+
+const ambient = new THREE.AmbientLight(0xffffff, 1);
+engine.scene.add(ambient);
+
+const sun = new THREE.DirectionalLight(0xffffff, 2);
+sun.position.set(100, 200, 100);
+engine.scene.add(sun);
 
 /* =========================================================
-   🎬 BOOT SEQUENCE
+   CAMERA (ONLY ONCE — CRITICAL)
+========================================================= */
+
+engine.camera = new THREE.PerspectiveCamera(
+  75,
+  window.innerWidth / window.innerHeight,
+  0.1,
+  20000
+);
+
+engine.camera.position.set(0, 120, 300);
+
+/* =========================================================
+   RENDERER (ONLY ONCE — CRITICAL)
+========================================================= */
+
+engine.renderer = new THREE.WebGLRenderer({ antialias: true });
+engine.renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(engine.renderer.domElement);
+
+/* =========================================================
+   BOOT GAME
 ========================================================= */
 
 function boot() {
 
-  console.log("🎬 LAMBO CITY BOOTING...");
+  console.log("LAMBO CITY BOOT");
 
-  /* =====================================================
-     🌍 WORLD VISUAL LAYER
-  ===================================================== */
+  // START ENGINE LOOP
+  engine.start();
 
-  initWorldSkin();
-
-  /* =====================================================
-     🎬 CINEMATIC SYSTEMS
-  ===================================================== */
-
-  DockCore.init();
-  CinematicFlow.init();
-
-  /* =====================================================
-     ⏳ WAIT 1 FRAME FOR SYSTEMS TO ATTACH
-  ===================================================== */
-
-  requestAnimationFrame(() => {
-
-    /* =====================================================
-       🧠 REGISTER SYSTEMS
-    ===================================================== */
-
-    if (engine.updatePlayer) engine.registerSystem(engine.updatePlayer);
-    if (engine.updateCamera) engine.registerSystem(engine.updateCamera);
-    if (engine.updateNPCs) engine.registerSystem(engine.updateNPCs);
-    if (engine.updateCars) engine.registerSystem(engine.updateCars);
-    if (engine.updateWater) engine.registerSystem(engine.updateWater);
-
-    if (CinematicFlow.update)
-      engine.registerSystem(() => CinematicFlow.update());
-
-    if (DockCore.update)
-      engine.registerSystem(() => DockCore.update());
-
-    /* =====================================================
-       🎮 START ENGINE (ONLY ONCE)
-    ===================================================== */
-
-    engine.start();
-
-    console.log("🎮 LAMBO CITY READY");
-  });
+  console.log("READY");
 }
-
-/* =========================================================
-   ⏳ SAFE START
-========================================================= */
 
 window.addEventListener("load", boot);
