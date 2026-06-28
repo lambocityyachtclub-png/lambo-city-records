@@ -3,27 +3,38 @@ import { engine } from "./engine.js";
 
 const world = engine.world;
 
-/* GROUND */
-const ground = new THREE.Mesh(
-  new THREE.PlaneGeometry(200, 200),
-  new THREE.MeshStandardMaterial({ color: 0x2ecc71 })
-);
+/* =========================
+   EMISSIVE TEST CUBE (UNBREAKABLE VISIBILITY)
+========================= */
 
-ground.rotation.x = -Math.PI / 2;
-world.add(ground);
-
-/* RED CUBE */
 const cube = new THREE.Mesh(
   new THREE.BoxGeometry(3, 3, 3),
-  new THREE.MeshStandardMaterial({ color: 0xff0000 })
+  new THREE.MeshBasicMaterial({ color: 0xff0000 }) // 🔥 NO LIGHT REQUIRED
 );
 
 cube.position.set(0, 2, 0);
 world.add(cube);
 
-/* LIGHT */
-const light = new THREE.DirectionalLight(0xffffff, 2);
-light.position.set(10, 20, 10);
-world.add(light);
+/* =========================
+   GROUND (ALSO EMISSIVE TEST)
+========================= */
 
-world.add(new THREE.AmbientLight(0xffffff, 1));
+const ground = new THREE.Mesh(
+  new THREE.PlaneGeometry(200, 200),
+  new THREE.MeshBasicMaterial({ color: 0x00ff00 })
+);
+
+ground.rotation.x = -Math.PI / 2;
+world.add(ground);
+
+/* =========================
+   BLUE MARKER
+========================= */
+
+const cube2 = new THREE.Mesh(
+  new THREE.BoxGeometry(2, 2, 2),
+  new THREE.MeshBasicMaterial({ color: 0x0000ff })
+);
+
+cube2.position.set(5, 2, -5);
+world.add(cube2);
