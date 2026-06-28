@@ -2,7 +2,7 @@ import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 import { engine } from "./engine.js";
 
 /* =========================================================
-   🧍 LAMBO CITY PLAYER SYSTEM (CINEMATIC PHYSICS CORE)
+   🧍 PLAYER (CINEMATIC PHYSICS CORE - CLEAN VERSION)
 ========================================================= */
 
 const player = new THREE.Mesh(
@@ -10,31 +10,25 @@ const player = new THREE.Mesh(
   new THREE.MeshStandardMaterial({ color: 0x00ffcc })
 );
 
+// spawn
 player.position.set(0, 1, 200);
 engine.player = player;
 
 /* =========================================================
-   🌍 ATTACH TO WORLD
+   🌍 ADD TO WORLD (SAFE - NO RACE CONDITION LOOP)
 ========================================================= */
 
-function attachPlayer() {
-  if (!engine.world) {
-    requestAnimationFrame(attachPlayer);
-    return;
-  }
-  engine.world.add(player);
-}
-attachPlayer();
+engine.world.add(player);
 
 /* =========================================================
-   🧠 PHYSICS STATE (PRIVATE)
+   🧠 PHYSICS STATE
 ========================================================= */
 
 const velocity = new THREE.Vector3();
 const input = new THREE.Vector3();
 
 /* =========================================================
-   ⚙ CONFIG (FEEL SYSTEM)
+   ⚙ CONFIG (FEEL TUNING)
 ========================================================= */
 
 const config = {
@@ -49,11 +43,13 @@ const config = {
 
 function updatePlayer() {
 
+  if (!engine.keys) return;
+
   const keys = engine.keys;
 
-  /* =====================================================
-     🎮 INPUT VECTOR
-  ===================================================== */
+  /* =========================
+     INPUT
+  ========================= */
 
   input.set(0, 0, 0);
 
@@ -62,15 +58,16 @@ function updatePlayer() {
   if (keys["KeyA"]) input.x -= 1;
   if (keys["KeyD"]) input.x += 1;
 
-  if (input.length() > 0) input.normalize();
+  if (input.lengthSq() > 0) input.normalize();
 
-  /* =====================================================
-     ⚡ ACCELERATION
-  ===================================================== */
+  /* =========================
+     ACCELERATION
+  ========================= */
 
   velocity.x += input.x * config.acceleration;
   velocity.z += input.z * config.acceleration;
 
+  /* clamp speed */
   velocity.x = THREE.MathUtils.clamp(
     velocity.x,
     -config.maxSpeed,
@@ -83,30 +80,26 @@ function updatePlayer() {
     config.maxSpeed
   );
 
-  /* =====================================================
-     🌫 FRICTION
-  ===================================================== */
+  /* =========================
+     FRICTION
+  ========================= */
 
   velocity.multiplyScalar(config.friction);
 
-  /* =====================================================
-     📍 APPLY MOVEMENT
-  ===================================================== */
+  /* =========================
+     APPLY MOVEMENT
+  ========================= */
 
-  player.position.add(velocity);
+  player.position.x += velocity.x;
+  player.position.z += velocity.z;
 
-  /* =====================================================
-     🎯 ROTATION (MOVEMENT-BASED ORIENTATION)
-  ===================================================== */
+  /* =========================
+     ROTATION (CINEMATIC FEEL)
+  ========================= */
 
-  const moveDir = velocity.clone();
+  if (velocity.lengthSq() > 0.001) {
 
-  if (moveDir.length() > 0.01) {
-
-    const targetRotation = Math.atan2(
-      velocity.x,
-      velocity.z
-    );
+    const targetRotation = Math.atan2(velocity.x, velocity.z);
 
     player.rotation.y = THREE.MathUtils.lerp(
       player.rotation.y,
@@ -115,11 +108,11 @@ function updatePlayer() {
     );
   }
 
-  /* =====================================================
-     🧠 ENGINE OUTPUT (SAFE COPY)
-  ===================================================== */
+  /* =========================
+     OUTPUT TO ENGINE
+  ========================= */
 
-  engine.playerVelocity = velocity.clone();
+  engine.playerVelocity.copy(velocity);
 }
 
 engine.updatePlayer = updatePlayer;
