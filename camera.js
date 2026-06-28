@@ -2,7 +2,7 @@ import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 import { engine } from "./engine.js";
 
 /* =========================================================
-   🎥 CINEMATIC CAMERA SYSTEM (LAMBO CITY)
+   🎥 LAMBO CITY THIRD PERSON CAMERA
 ========================================================= */
 
 export function initCameraSystem() {
@@ -16,25 +16,32 @@ export function initCameraSystem() {
 
   engine.camera = camera;
 
-  camera.position.set(0, 20, 40);
+  camera.position.set(0, 8, 18);
 
-  let target = new THREE.Vector3();
-  let smoothPos = new THREE.Vector3();
+  const desired = new THREE.Vector3();
+  const lookTarget = new THREE.Vector3();
 
   engine.updateCamera = function () {
 
     if (!engine.player) return;
 
-    // 🎯 target is slightly behind + above player
-    target.copy(engine.player.position);
-    target.y += 6;
-    target.z += 12;
+    const player = engine.player;
 
-    // 🧠 smooth follow (cinematic easing)
-    smoothPos.lerpVectors(camera.position, target, 0.06);
+    // Behind the player
+    desired.set(
+      player.position.x,
+      player.position.y + 6,
+      player.position.z + 18
+    );
 
-    camera.position.copy(smoothPos);
+    camera.position.lerp(desired, 0.08);
 
-    camera.lookAt(engine.player.position);
+    lookTarget.set(
+      player.position.x,
+      player.position.y + 3,
+      player.position.z
+    );
+
+    camera.lookAt(lookTarget);
   };
 }
