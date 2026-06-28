@@ -1,29 +1,41 @@
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 import { engine } from "./engine.js";
 
-/* SCENE INIT */
+/* =========================
+   SCENE
+========================= */
+
 engine.scene = new THREE.Scene();
+engine.scene.background = new THREE.Color(0x111111);
 
-engine.scene.background = new THREE.Color(0x0a1420);
-engine.scene.fog = new THREE.FogExp2(0x0a1420, 0.002);
+/* LIGHT */
+const light = new THREE.DirectionalLight(0xffffff, 2);
+light.position.set(10, 20, 10);
+engine.scene.add(light);
 
-/* LIGHTING (ONLY HERE — RULE) */
+/* AMBIENT */
+engine.scene.add(new THREE.AmbientLight(0xffffff, 1));
 
-const ambient = new THREE.AmbientLight(0xffffff, 0.6);
-engine.scene.add(ambient);
+/* =========================
+   🚨 FORCE VISIBILITY OBJECT
+========================= */
 
-const sun = new THREE.DirectionalLight(0xffddaa, 1.6);
-sun.position.set(100, 200, 100);
-sun.castShadow = true;
+const testCube = new THREE.Mesh(
+  new THREE.BoxGeometry(2, 2, 2),
+  new THREE.MeshStandardMaterial({ color: 0xff0000 })
+);
 
-sun.shadow.mapSize.width = 2048;
-sun.shadow.mapSize.height = 2048;
+testCube.position.set(0, 1, 0);
+engine.scene.add(testCube);
 
-engine.scene.add(sun);
+/* GROUND */
+const ground = new THREE.Mesh(
+  new THREE.PlaneGeometry(50, 50),
+  new THREE.MeshStandardMaterial({ color: 0x333333 })
+);
 
-const fill = new THREE.DirectionalLight(0xaa66ff, 0.4);
-fill.position.set(-100, 80, -100);
-engine.scene.add(fill);
+ground.rotation.x = -Math.PI / 2;
+engine.scene.add(ground);
 
 /* WORLD ROOT */
 engine.scene.add(engine.world);
