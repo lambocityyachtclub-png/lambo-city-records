@@ -16,7 +16,7 @@ export const engine = {
   // INPUT
   keys: {},
 
-  // SYSTEMS (ORDERED EXECUTION)
+  // SYSTEMS
   systems: [],
 
   registerSystem(fn) {
@@ -30,7 +30,26 @@ export const engine = {
   delta: 0,
   elapsed: 0,
 
-  // START ENGINE LOOP (ONLY LOOP THAT EXISTS)
+  /* =========================================================
+     🎥 CAMERA SAFETY (FIXES YOUR “STEEL SCREEN” ISSUE)
+  ========================================================= */
+  ensureCamera() {
+    if (!this.camera) {
+      this.camera = new THREE.PerspectiveCamera(
+        75,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        20000
+      );
+
+      this.camera.position.set(0, 20, 40);
+      this.scene.add(this.camera);
+    }
+  },
+
+  /* =========================================================
+     🎮 ENGINE LOOP
+  ========================================================= */
   start() {
 
     const loop = () => {
@@ -40,7 +59,10 @@ export const engine = {
       this.delta = this.clock.getDelta();
       this.elapsed += this.delta;
 
-      // RUN SYSTEMS SAFELY
+      // ✅ ALWAYS ENSURE CAMERA EXISTS
+      this.ensureCamera();
+
+      // RUN SYSTEMS
       for (const sys of this.systems) {
         try {
           sys(this);
@@ -49,7 +71,7 @@ export const engine = {
         }
       }
 
-      // RENDER (ONLY HERE)
+      // RENDER
       if (this.renderer && this.scene && this.camera) {
         this.renderer.render(this.scene, this.camera);
       }
