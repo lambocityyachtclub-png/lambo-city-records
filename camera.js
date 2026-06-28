@@ -2,7 +2,7 @@ import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 import { engine } from "./engine.js";
 
 /* =========================================================
-   🎥 CINEMATIC CAMERA SYSTEM (GTA-STYLE CORE)
+   🎥 LAMBO CITY — CINEMATIC CAMERA SYSTEM (FINAL CORE)
 ========================================================= */
 
 engine.camera = new THREE.PerspectiveCamera(
@@ -12,53 +12,87 @@ engine.camera = new THREE.PerspectiveCamera(
   20000
 );
 
+const cam = engine.camera;
+
 /* =========================================================
    🧠 CAMERA STATE
 ========================================================= */
 
-const cam = engine.camera;
-
-// target follow position
 const offset = new THREE.Vector3(0, 80, 160);
-
-// smooth position buffer
 const desiredPosition = new THREE.Vector3();
-const currentLookAt = new THREE.Vector3();
+const lookTarget = new THREE.Vector3();
 
-// damping strength (feel control)
+/* =========================================================
+   ⚙ CONFIG
+========================================================= */
+
 const config = {
-  followSmoothness: 0.06,
-  lookSmoothness: 0.08,
-  speedZoomFactor: 0.08,
-  maxZoomOut: 220,
-  minZoom: 120
+  followSmooth: 0.06,
+  lookSmooth: 0.08,
+  maxOffsetZ: 220,
+  minOffsetZ: 120
 };
 
 /* =========================================================
-   🎯 CAMERA UPDATE LOOP
+   🎬 CAMERA UPDATE (CINEMATIC DIRECTOR AWARE)
 ========================================================= */
 
 function updateCamera() {
+
   if (!engine.player) return;
 
   const player = engine.player;
-  const velocity = engine.playerVelocity || { x: 0, z: 0 };
 
-  /* =========================================================
-     ⚡ SPEED-BASED CAMERA ZOOM (FEEL SYSTEM)
-  ========================================================= */
+  /* =====================================================
+     🎭 CINEMATIC PHASE INPUT
+  ===================================================== */
 
-  const speed = Math.sqrt(velocity.x ** 2 + velocity.z ** 2);
+  const phase = engine.state?.cinematicPhase || "DOCK";
 
-  const dynamicOffsetZ = THREE.MathUtils.clamp(
-    offset.z + speed * config.speedZoomFactor * 100,
-    config.minZoom,
-    config.maxZoomOut
+  /* =====================================================
+     ⚡ SPEED (SAFE FALLBACK)
+  ===================================================== */
+
+  const vx = engine.playerVelocity?.x || 0;
+  const vz = engine.playerVelocity?.z || 0;
+
+  const speed = Math.sqrt(vx * vx + vz * vz);
+
+  /* =====================================================
+     🎯 PHASE-BASED CAMERA BEHAVIOR
+  ===================================================== */
+
+  let dynamicOffsetZ = offset.z;
+
+  if (phase === "DOCK") {
+    dynamicOffsetZ = offset.z;
+  }
+
+  if (phase === "BOARDWALK") {
+    dynamicOffsetZ = offset.z + 20;
+  }
+
+  if (phase === "STAGE") {
+    dynamicOffsetZ = offset.z + 40;
+  }
+
+  if (phase === "YACHT") {
+    dynamicOffsetZ = offset.z + 80;
+  }
+
+  /* =====================================================
+     ⚡ SPEED FEEL ADDITION
+  ===================================================== */
+
+  dynamicOffsetZ = THREE.MathUtils.clamp(
+    dynamicOffsetZ + speed * 80,
+    config.minOffsetZ,
+    config.maxOffsetZ
   );
 
-  /* =========================================================
-     📍 DESIRED CAMERA POSITION
-  ========================================================= */
+  /* =====================================================
+     📍 DESIRED POSITION
+  ===================================================== */
 
   desiredPosition.set(
     player.position.x,
@@ -66,29 +100,22 @@ function updateCamera() {
     player.position.z + dynamicOffsetZ
   );
 
-  /* =========================================================
-     🌊 SMOOTH FOLLOW (FLOATING CINEMATIC FEEL)
-  ========================================================= */
+  /* =====================================================
+     🌊 SMOOTH FOLLOW
+  ===================================================== */
 
-  cam.position.x += (desiredPosition.x - cam.position.x) * config.followSmoothness;
-  cam.position.y += (desiredPosition.y - cam.position.y) * config.followSmoothness;
-  cam.position.z += (desiredPosition.z - cam.position.z) * config.followSmoothness;
+  cam.position.lerp(desiredPosition, config.followSmooth);
 
-  /* =========================================================
-     🎯 LOOK AT PLAYER (SMOOTH)
-  ========================================================= */
+  /* =====================================================
+     🎯 LOOK AT (CLEAN SYSTEM - NO ROTATION CONFLICT)
+  ===================================================== */
 
-  currentLookAt.lerp(player.position, config.lookSmoothness);
-
-  cam.lookAt(currentLookAt);
-
-  /* =========================================================
-     🎬 CINEMATIC DIRECTION BIAS (IMPORTANT)
-  ========================================================= */
-
-  if (speed > 0.2) {
-    cam.rotation.y += (Math.atan2(velocity.x, velocity.z) - cam.rotation.y) * 0.02;
-  }
+  lookTarget.lerp(player.position, config.lookSmooth);
+  cam.lookAt(lookTarget);
 }
+
+/* =========================================================
+   🧠 REGISTER SYSTEM
+========================================================= */
 
 engine.updateCamera = updateCamera;
