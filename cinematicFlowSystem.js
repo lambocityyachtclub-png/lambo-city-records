@@ -2,21 +2,24 @@ import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 import { engine } from "./engine.js";
 
 /* =========================================================
-   🎬 CINEMATIC FLOW SYSTEM v1
-   (LIGHTWEIGHT WORLD FEEL LAYER)
+   🎬 CINEMATIC FLOW SYSTEM v2 (STABLE DIRECTOR LAYER)
 ========================================================= */
 
 export const CinematicFlow = {
 
+  state: {
+    currentPhase: "DOCK"
+  },
+
   init() {
 
-    console.log("🎬 Cinematic Flow System Active");
+    console.log("🎬 Cinematic Flow System Active (v2)");
 
     this.stageZ = 900;
     this.yachtZ = 1300;
 
     /* =====================================================
-       🌫 FOG SYSTEM (DEPTH CONTROL)
+       🌫 FOG SYSTEM
     ===================================================== */
 
     engine.scene.fog = new THREE.Fog(
@@ -26,21 +29,30 @@ export const CinematicFlow = {
     );
 
     /* =====================================================
-       💡 STORE LIGHT BASES (FOR DYNAMIC INTENSITY)
+       💡 LIGHT REFERENCES (SAFE DETECTION)
     ===================================================== */
 
-    this.baseAmbient = 0.8;
-    this.baseSun = 2.0;
+    this.ambient = null;
+    this.sun = null;
 
-    this.ambient = engine.scene.children.find(
-      obj => obj.isAmbientLight
-    );
+    engine.scene.traverse((obj) => {
 
-    this.sun = engine.scene.children.find(
-      obj => obj.isDirectionalLight
-    );
+      if (obj instanceof THREE.AmbientLight) {
+        this.ambient = obj;
+      }
 
+      if (obj instanceof THREE.DirectionalLight) {
+        this.sun = obj;
+      }
+    });
+
+    this.baseAmbient = this.ambient ? this.ambient.intensity : 0.8;
+    this.baseSun = this.sun ? this.sun.intensity : 2.0;
   },
+
+  /* =========================================================
+     🎬 UPDATE (CINEMATIC DIRECTOR LOGIC)
+  ========================================================= */
 
   update() {
 
@@ -49,8 +61,7 @@ export const CinematicFlow = {
     const z = engine.player.position.z;
 
     /* =====================================================
-       🎯 PROGRESS VALUE (0 → 1)
-       Based on movement toward stage/yacht
+       🎯 NORMALIZED WORLD PROGRESS
     ===================================================== */
 
     const progress = THREE.MathUtils.clamp(
@@ -60,7 +71,18 @@ export const CinematicFlow = {
     );
 
     /* =====================================================
-       🌫 FOG INTENSITY SHIFT
+       🎭 PHASE SYSTEM (MATCHES DockCore)
+    ===================================================== */
+
+    if (z < 400) this.state.currentPhase = "DOCK";
+    else if (z < 800) this.state.currentPhase = "BOARDWALK";
+    else if (z < 1200) this.state.currentPhase = "STAGE";
+    else this.state.currentPhase = "YACHT";
+
+    engine.state.cinematicPhase = this.state.currentPhase;
+
+    /* =====================================================
+       🌫 FOG DEPTH CONTROL
     ===================================================== */
 
     if (engine.scene.fog) {
@@ -68,7 +90,7 @@ export const CinematicFlow = {
     }
 
     /* =====================================================
-       💡 LIGHT INTENSITY SHIFT
+       💡 LIGHT INTENSITY GRADIENT
     ===================================================== */
 
     if (this.ambient) {
@@ -82,10 +104,10 @@ export const CinematicFlow = {
     }
 
     /* =====================================================
-       🎥 CAMERA FORWARD PULL (SUBTLE)
+       🎥 CAMERA DO NOT DRIFT (IMPORTANT FIX)
     ===================================================== */
 
-    engine.camera.position.z -= progress * 0.02;
-
+    // intentionally removed permanent camera movement
+    // camera control belongs ONLY in camera.js
   }
 };
