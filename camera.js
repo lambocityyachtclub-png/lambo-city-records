@@ -6,14 +6,13 @@ export function initCameraSystem() {
     75,
     window.innerWidth / window.innerHeight,
     0.1,
-    1000
+    2000
   );
 
-  engine.camera = camera;
-
-  // FORCE VISIBILITY POSITION
-  camera.position.set(0, 8, 15);
+  camera.position.set(0, 10, 20);
   camera.lookAt(0, 0, 0);
+
+  engine.camera = camera;
 
   engine.updateCamera = function () {
     camera.lookAt(0, 0, 0);
