@@ -6,7 +6,7 @@ import { engine } from "./engine.js";
 ========================================================= */
 
 const world = new THREE.Group();
-engine.world = world;
+engine.world = world; 
 
 /* =========================================================
    🌊 MAIN GROUND PLANE (BASE WORLD ANCHOR)
