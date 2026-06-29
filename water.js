@@ -1,43 +1,46 @@
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 
 let waterMesh;
-let time = 0;
+let waterTime = 0;
 
 export default {
   init(scene) {
-    const geo = new THREE.PlaneGeometry(800, 800, 80, 80);
+    // MAIN OCEAN
+    const geo = new THREE.PlaneGeometry(1000, 1000, 40, 40);
     const mat = new THREE.MeshStandardMaterial({
-      color: 0x006994,
-      roughness: 0.1,
-      metalness: 0.8,
+      color: 0x003366,
+      roughness: 0.2,
+      metalness: 0.6,
       transparent: true,
-      opacity: 0.85,
+      opacity: 0.9
     });
     waterMesh = new THREE.Mesh(geo, mat);
     waterMesh.rotation.x = -Math.PI / 2;
-    waterMesh.position.y = -0.5;
+    waterMesh.position.y = -0.8;
     scene.add(waterMesh);
 
-    // NEON WATER REFLECTION PLANE
-    const reflectGeo = new THREE.PlaneGeometry(800, 800);
-    const reflectMat = new THREE.MeshBasicMaterial({
-      color: 0x9900ff,
+    // NEON REFLECTION LAYER
+    const refGeo = new THREE.PlaneGeometry(1000, 1000);
+    const refMat = new THREE.MeshBasicMaterial({
+      color: 0x6600cc,
       transparent: true,
-      opacity: 0.04,
+      opacity: 0.06
     });
-    const reflect = new THREE.Mesh(reflectGeo, reflectMat);
-    reflect.rotation.x = -Math.PI / 2;
-    reflect.position.y = -0.4;
-    scene.add(reflect);
+    const ref = new THREE.Mesh(refGeo, refMat);
+    ref.rotation.x = -Math.PI / 2;
+    ref.position.y = -0.75;
+    scene.add(ref);
   },
+
   update(delta) {
     if (!waterMesh) return;
-    time += delta;
+    waterTime += delta;
     const pos = waterMesh.geometry.attributes.position;
-    for (let i = 0; i < pos.count; i++) {
-      const x = pos.getX(i);
-      const z = pos.getZ(i);
-      pos.setY(i, Math.sin(x * 0.05 + time) * 0.3 + Math.cos(z * 0.05 + time) * 0.3);
+    for (var i = 0; i < pos.count; i++) {
+      var x = pos.getX(i);
+      var z = pos.getZ(i);
+      pos.setY(i, Math.sin(x * 0.08 + waterTime * 0.8) * 0.25 +
+                   Math.cos(z * 0.08 + waterTime * 0.6) * 0.25);
     }
     pos.needsUpdate = true;
     waterMesh.geometry.computeVertexNormals();
