@@ -2,39 +2,66 @@ import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 
 export default {
   init(scene) {
-    // SUNSET GRADIENT — canvas texture approach (guaranteed to work)
     const canvas = document.createElement('canvas');
-    canvas.width = 2;
-    canvas.height = 512;
+    canvas.width = 4;
+    canvas.height = 1024;
     const ctx = canvas.getContext('2d');
-    const gradient = ctx.createLinearGradient(0, 0, 0, 512);
-    gradient.addColorStop(0.0,  '#0a0a2a'); // deep night top
-    gradient.addColorStop(0.3,  '#1a0a4a'); // purple mid
-    gradient.addColorStop(0.55, '#ff4500'); // sunset orange
-    gradient.addColorStop(0.75, '#ff6a00'); // warm orange
-    gradient.addColorStop(1.0,  '#ff8c00'); // horizon gold
+    const gradient = ctx.createLinearGradient(0, 0, 0, 1024);
+    gradient.addColorStop(0.00, '#050510'); // deep night
+    gradient.addColorStop(0.25, '#0d0830'); // dark purple
+    gradient.addColorStop(0.50, '#6b1a6b'); // purple sunset
+    gradient.addColorStop(0.70, '#cc3300'); // deep orange
+    gradient.addColorStop(0.85, '#ff6600'); // orange
+    gradient.addColorStop(1.00, '#ff9900'); // horizon gold
     ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, 2, 512);
+    ctx.fillRect(0, 0, 4, 1024);
 
-    const texture = new THREE.CanvasTexture(canvas);
-    const skyGeo = new THREE.SphereGeometry(700, 32, 32);
-    const skyMat = new THREE.MeshBasicMaterial({
-      map: texture,
-      side: THREE.BackSide
-    });
-    scene.add(new THREE.Mesh(skyGeo, skyMat));
+    const tex = new THREE.CanvasTexture(canvas);
+    const sky = new THREE.Mesh(
+      new THREE.SphereGeometry(600, 32, 32),
+      new THREE.MeshBasicMaterial({ map: tex, side: THREE.BackSide })
+    );
+    scene.add(sky);
 
-    // STARS
+    // STARS — only upper hemisphere
     const starGeo = new THREE.BufferGeometry();
-    const count = 1500;
+    const count = 2000;
     const pos = new Float32Array(count * 3);
-    for (let i = 0; i < count * 3; i++) {
-      pos[i] = (Math.random() - 0.5) * 1200;
+    let i = 0;
+    while (i < count) {
+      const x = (Math.random() - 0.5) * 1000;
+      const y = Math.random() * 400 + 50; // only above horizon
+      const z = (Math.random() - 0.5) * 1000;
+      pos[i * 3]     = x;
+      pos[i * 3 + 1] = y;
+      pos[i * 3 + 2] = z;
+      i++;
     }
     starGeo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-    scene.add(new THREE.Points(starGeo,
-      new THREE.PointsMaterial({ color: 0xffffff, size: 0.5 })
+    scene.add(new THREE.Points(
+      starGeo,
+      new THREE.PointsMaterial({ color: 0xffffff, size: 0.7, transparent: true, opacity: 0.8 })
     ));
+
+    // MOON
+    const moon = new THREE.Mesh(
+      new THREE.SphereGeometry(8, 16, 16),
+      new THREE.MeshBasicMaterial({ color: 0xfffde0 })
+    );
+    moon.position.set(-120, 180, -300);
+    scene.add(moon);
+
+    // MOON GLOW
+    const moonGlow = new THREE.Mesh(
+      new THREE.SphereGeometry(14, 16, 16),
+      new THREE.MeshBasicMaterial({
+        color: 0xffffaa,
+        transparent: true,
+        opacity: 0.08
+      })
+    );
+    moonGlow.position.copy(moon.position);
+    scene.add(moonGlow);
   },
   update() {}
 };
