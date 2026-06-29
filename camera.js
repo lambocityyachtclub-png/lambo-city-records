@@ -11,11 +11,19 @@ export default {
       2000
     );
 
-    // CINEMATIC ANGLE (LOOKING DOWN MARINA)
-    camera.position.set(15, 12, 25);
-    camera.lookAt(0, 2, 0);
-
     return camera;
+  },
+
+  update(delta, context) {
+    const player = context.player?.getPlayer?.();
+    if (!player) return;
+
+    // THIRD PERSON FOLLOW CAMERA
+    camera.position.x = player.position.x;
+    camera.position.z = player.position.z + 10;
+    camera.position.y = 6;
+
+    camera.lookAt(player.position);
   },
 
   getCamera() {
