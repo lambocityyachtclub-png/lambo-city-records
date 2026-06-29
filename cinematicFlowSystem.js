@@ -1,113 +1,75 @@
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
-import { engine } from "./engine.js";
 
-/* =========================================================
-   🎬 CINEMATIC FLOW SYSTEM v2 (STABLE DIRECTOR LAYER)
-========================================================= */
+let lights = [];
+let beams = [];
+let time = 0;
 
-export const CinematicFlow = {
+export default {
+  init(scene) {
+    // STAGE SPOT BEAMS — visible cones
+    var colors = [0xff00ff, 0x00ffff, 0xffff00, 0xff4400, 0x00ff88];
+    for (var i = 0; i < 5; i++) {
+      var spot = new THREE.SpotLight(colors[i], 12, 150, Math.PI / 14, 0.5);
+      spot.position.set(-20 + i * 10, 35, -60);
+      spot.target.position.set(-20 + i * 10, 0, -75);
+      scene.add(spot);
+      scene.add(spot.target);
+      lights.push(spot);
 
-  state: {
-    currentPhase: "DOCK"
+      // VISIBLE BEAM CONE
+      var coneGeo = new THREE.CylinderGeometry(0.1, 4, 35, 8, 1, true);
+      var coneMat = new THREE.MeshBasicMaterial({
+        color: colors[i],
+        transparent: true,
+        opacity: 0.06,
+        side: THREE.DoubleSide
+      });
+      var cone = new THREE.Mesh(coneGeo, coneMat);
+      cone.position.set(-20 + i * 10, 18, -65);
+      scene.add(cone);
+      beams.push({ mesh: cone, baseOpacity: 0.06, color: colors[i], offset: i });
+    }
+
+    // NEON GROUND STRIPS — stage area
+    var neonMat = new THREE.MeshStandardMaterial({
+      color: 0x9900ff,
+      emissive: 0x9900ff,
+      emissiveIntensity: 2
+    });
+    [-12, -6, 0, 6, 12].forEach(function(x) {
+      var strip = new THREE.Mesh(
+        new THREE.BoxGeometry(0.15, 0.05, 20),
+        neonMat
+      );
+      strip.position.set(x, 0.55, -70);
+      scene.add(strip);
+    });
+
+    // STAGE LED SCREEN PULSE LIGHT
+    var screenLight = new THREE.PointLight(0x9900ff, 4, 60);
+    screenLight.position.set(0, 12, -78);
+    scene.add(screenLight);
+    lights.push(screenLight);
   },
 
-  init() {
+  update(delta) {
+    time += delta;
 
-    console.log("🎬 Cinematic Flow System Active (v2)");
-
-    this.stageZ = 900;
-    this.yachtZ = 1300;
-
-    /* =====================================================
-       🌫 FOG SYSTEM
-    ===================================================== */
-
-    engine.scene.fog = new THREE.Fog(
-      0x0a0f1f,
-      300,
-      2200
-    );
-
-    /* =====================================================
-       💡 LIGHT REFERENCES (SAFE DETECTION)
-    ===================================================== */
-
-    this.ambient = null;
-    this.sun = null;
-
-    engine.scene.traverse((obj) => {
-
-      if (obj instanceof THREE.AmbientLight) {
-        this.ambient = obj;
-      }
-
-      if (obj instanceof THREE.DirectionalLight) {
-        this.sun = obj;
+    // ANIMATE SPOT LIGHTS — sweep side to side
+    lights.forEach(function(light, i) {
+      if (light.target) {
+        light.target.position.x = Math.sin(time * 0.8 + i * 1.2) * 15;
+        light.target.updateMatrixWorld();
+        light.intensity = 8 + Math.sin(time * 2 + i) * 4;
+      } else {
+        // screen light pulse
+        light.intensity = 3 + Math.sin(time * 3) * 2;
       }
     });
 
-    this.baseAmbient = this.ambient ? this.ambient.intensity : 0.8;
-    this.baseSun = this.sun ? this.sun.intensity : 2.0;
-  },
-
-  /* =========================================================
-     🎬 UPDATE (CINEMATIC DIRECTOR LOGIC)
-  ========================================================= */
-
-  update() {
-
-    if (!engine.player) return;
-
-    const z = engine.player.position.z;
-
-    /* =====================================================
-       🎯 NORMALIZED WORLD PROGRESS
-    ===================================================== */
-
-    const progress = THREE.MathUtils.clamp(
-      (z - 200) / (this.yachtZ - 200),
-      0,
-      1
-    );
-
-    /* =====================================================
-       🎭 PHASE SYSTEM (MATCHES DockCore)
-    ===================================================== */
-
-    if (z < 400) this.state.currentPhase = "DOCK";
-    else if (z < 800) this.state.currentPhase = "BOARDWALK";
-    else if (z < 1200) this.state.currentPhase = "STAGE";
-    else this.state.currentPhase = "YACHT";
-
-    engine.state.cinematicPhase = this.state.currentPhase;
-
-    /* =====================================================
-       🌫 FOG DEPTH CONTROL
-    ===================================================== */
-
-    if (engine.scene.fog) {
-      engine.scene.fog.far = 2200 - (progress * 900);
-    }
-
-    /* =====================================================
-       💡 LIGHT INTENSITY GRADIENT
-    ===================================================== */
-
-    if (this.ambient) {
-      this.ambient.intensity =
-        this.baseAmbient + (progress * 0.6);
-    }
-
-    if (this.sun) {
-      this.sun.intensity =
-        this.baseSun + (progress * 1.2);
-    }
-
-    /* =====================================================
-       🎥 CAMERA DO NOT DRIFT (IMPORTANT FIX)
-    ===================================================== */
-
-    // intentionally removed permanent camera movement
-    // camera control belongs ONLY in camera.js
+    // ANIMATE BEAM OPACITY
+    beams.forEach(function(b, i) {
+      b.mesh.material.opacity = 0.04 + Math.sin(time * 2 + i * 0.8) * 0.03;
+    });
   }
 };
