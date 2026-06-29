@@ -9,6 +9,9 @@ import Water from "./water.js";
 import Sky from "./sky.js";
 import Lighting from "./lighting.js";
 
+import Palms from "./palms.js";
+import Yacht from "./yacht.js";
+
 const engine = new Engine();
 
 engine.registerSystems({
@@ -19,7 +22,10 @@ engine.registerSystems({
   dock: Dock,
   water: Water,
   sky: Sky,
-  lighting: Lighting
+  lighting: Lighting,
+
+  palms: Palms,
+  yacht: Yacht
 });
 
 engine.init();
