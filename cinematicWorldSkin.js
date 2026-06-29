@@ -5,104 +5,152 @@ let time = 0;
 
 export default {
   init(scene) {
-    // JET SKIS on water
+
+    // JET SKIS
     var jetSkiData = [
-      { x: -20, z: -15, rot: 0.3 },
-      { x: -25, z: -30, rot: -0.2 },
-      { x:  22, z: -10, rot: -0.4 },
+      { x: -18, z: -15, rot: 0.3 },
+      { x: -24, z: -35, rot: -0.2 },
+      { x:  20, z: -12, rot: -0.4 },
+      { x:  26, z: -32, rot:  0.5 },
     ];
 
     jetSkiData.forEach(function(data) {
       var js = new THREE.Group();
 
-      // HULL
       var hull = new THREE.Mesh(
         new THREE.BoxGeometry(4, 0.8, 1.8),
         new THREE.MeshStandardMaterial({ color: 0x111111, metalness: 0.8, roughness: 0.2 })
       );
-      hull.position.y = 0.2;
+      hull.position.y = 0.4;
       js.add(hull);
 
-      // SEAT
       var seat = new THREE.Mesh(
-        new THREE.BoxGeometry(1.8, 0.4, 1.4),
-        new THREE.MeshStandardMaterial({ color: 0x222222 })
+        new THREE.BoxGeometry(1.8, 0.5, 1.4),
+        new THREE.MeshStandardMaterial({ color: 0x1a1a1a })
       );
-      seat.position.set(0, 0.8, 0);
+      seat.position.set(0, 1.0, 0);
       js.add(seat);
 
-      // NEON STRIP
       var neon = new THREE.Mesh(
-        new THREE.BoxGeometry(4, 0.1, 0.1),
+        new THREE.BoxGeometry(4.1, 0.08, 0.08),
         new THREE.MeshStandardMaterial({
           color: 0x00ffff,
           emissive: 0x00ffff,
-          emissiveIntensity: 2
+          emissiveIntensity: 3
         })
       );
-      neon.position.set(0, 0.1, 0.95);
+      neon.position.set(0, 0.15, 0.95);
       js.add(neon);
 
-      // LAMBO CITY DECAL
       var decal = new THREE.Mesh(
-        new THREE.BoxGeometry(1.5, 0.1, 0.05),
+        new THREE.BoxGeometry(1.5, 0.08, 0.05),
         new THREE.MeshStandardMaterial({
           color: 0xffd700,
           emissive: 0xffd700,
-          emissiveIntensity: 1
+          emissiveIntensity: 1.5
         })
       );
-      decal.position.set(0, 0.65, -0.93);
+      decal.position.set(0, 0.75, -0.93);
       js.add(decal);
 
-      js.position.set(data.x, -0.5, data.z);
+      // GLOW
+      var glow = new THREE.PointLight(0x00ffff, 1.5, 8);
+      glow.position.set(0, 0.5, 0);
+      js.add(glow);
+
+      js.position.set(data.x, 0.3, data.z);
       js.rotation.y = data.rot;
       scene.add(js);
       jetSkis.push(js);
     });
 
-    // DOCK FLAGS
+    // DOCK FLAGS at entrance
     var flagColors = [0x9900ff, 0xffd700, 0xff00aa];
-    [-6, 0, 6].forEach(function(x, i) {
+    [-5, 0, 5].forEach(function(x, i) {
       var pole = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.05, 0.05, 5, 6),
-        new THREE.MeshStandardMaterial({ color: 0x888888 })
+        new THREE.CylinderGeometry(0.06, 0.06, 5, 6),
+        new THREE.MeshStandardMaterial({ color: 0x888888, metalness: 0.6 })
       );
-      pole.position.set(x, 2.8, 18);
+      pole.position.set(x, 2.5, 20);
       scene.add(pole);
 
       var flag = new THREE.Mesh(
-        new THREE.BoxGeometry(1.5, 0.8, 0.05),
+        new THREE.BoxGeometry(2, 1, 0.05),
         new THREE.MeshStandardMaterial({
           color: flagColors[i],
           emissive: flagColors[i],
-          emissiveIntensity: 0.3
+          emissiveIntensity: 0.4
         })
       );
-      flag.position.set(x + 0.75, 5.0, 18);
+      flag.position.set(x + 1, 5.2, 20);
       scene.add(flag);
     });
 
-    // FLOATING BUOYS
-    [-30, 30].forEach(function(x) {
+    // BUOYS
+    [-28, 28].forEach(function(x) {
       var buoy = new THREE.Mesh(
-        new THREE.SphereGeometry(0.6, 8, 8),
+        new THREE.SphereGeometry(0.7, 8, 8),
         new THREE.MeshStandardMaterial({
           color: 0xff4400,
           emissive: 0xff2200,
-          emissiveIntensity: 0.5
+          emissiveIntensity: 0.6
         })
       );
-      buoy.position.set(x, 0, -20);
+      buoy.position.set(x, 0.5, -25);
       scene.add(buoy);
+
+      var buoyLight = new THREE.PointLight(0xff4400, 1, 8);
+      buoyLight.position.set(x, 1, -25);
+      scene.add(buoyLight);
     });
+
+    // LAMBO CITY BILLBOARD
+    var billboard = new THREE.Group();
+    var board = new THREE.Mesh(
+      new THREE.BoxGeometry(16, 6, 0.3),
+      new THREE.MeshStandardMaterial({
+        color: 0x9900ff,
+        emissive: 0x9900ff,
+        emissiveIntensity: 0.8
+      })
+    );
+    billboard.add(board);
+
+    var boardText = new THREE.Mesh(
+      new THREE.BoxGeometry(14, 2, 0.4),
+      new THREE.MeshStandardMaterial({
+        color: 0xffd700,
+        emissive: 0xffd700,
+        emissiveIntensity: 1.5
+      })
+    );
+    boardText.position.y = 0.5;
+    billboard.add(boardText);
+
+    var pole1 = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.2, 0.2, 10, 6),
+      new THREE.MeshStandardMaterial({ color: 0x444444 })
+    );
+    pole1.position.set(-5, -8, 0);
+    billboard.add(pole1);
+
+    var pole2 = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.2, 0.2, 10, 6),
+      new THREE.MeshStandardMaterial({ color: 0x444444 })
+    );
+    pole2.position.set(5, -8, 0);
+    billboard.add(pole2);
+
+    billboard.position.set(-35, 12, -20);
+    billboard.rotation.y = 0.4;
+    scene.add(billboard);
   },
 
   update(delta) {
     time += delta;
     jetSkis.forEach(function(js, i) {
-      js.position.y = -0.5 + Math.sin(time * 0.8 + i) * 0.12;
-      js.rotation.z = Math.sin(time * 0.6 + i) * 0.04;
+      js.position.y = 0.3 + Math.sin(time * 0.8 + i) * 0.15;
+      js.rotation.z = Math.sin(time * 0.5 + i) * 0.05;
     });
   }
 };
