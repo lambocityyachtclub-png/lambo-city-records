@@ -12,20 +12,24 @@ export default {
     player.position.set(0, 1, 5);
     scene.add(player);
 
-    this.speed = 0.15;
+    this.speed = 5; // units per second (smooth movement)
 
     return player;
   },
 
   update(delta, context) {
-    const input = context.input;
+    const input = context.systems?.input || context.input;
 
     if (!input) return;
 
-    if (input.keys?.w) player.position.z -= this.speed;
-    if (input.keys?.s) player.position.z += this.speed;
-    if (input.keys?.a) player.position.x -= this.speed;
-    if (input.keys?.d) player.position.x += this.speed;
+    const move = this.speed * delta;
+
+    if (input.keys?.w) player.position.z -= move;
+    if (input.keys?.s) player.position.z += move;
+    if (input.keys?.a) player.position.x -= move;
+    if (input.keys?.d) player.position.x += move;
+
+    context.player = player;
   },
 
   getPlayer() {
