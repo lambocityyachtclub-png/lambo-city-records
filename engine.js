@@ -29,6 +29,7 @@ export default class Engine {
     this.systems.cinematicFlow?.init?.(this.scene);
     this.systems.worldSkin?.init?.(this.scene);
     this.systems.dockCore?.init?.(this.scene);
+    this.systems.yachtClub?.init?.(this.scene);
 
     this.systems.input?.init?.();
     this.systems.player?.init?.(this.scene);
