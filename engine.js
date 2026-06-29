@@ -43,10 +43,16 @@ export default class Engine {
   }
 
   render() {
-    const { scene, camera, renderer } = this.context;
+  const scene =
+    this.context.scene || this.systems.scene?.getScene?.();
 
-    if (!scene || !camera || !renderer) return;
+  const camera =
+    this.context.camera || this.systems.camera?.getCamera?.();
 
-    renderer.render(scene, camera);
-  }
+  const renderer =
+    this.context.renderer || this.systems.renderer?.getRenderer?.();
+
+  if (!scene || !camera || !renderer) return;
+
+  renderer.render(scene, camera);
 }
