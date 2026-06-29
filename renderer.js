@@ -4,19 +4,26 @@ let renderer;
 
 export default {
   init() {
-    renderer = new THREE.WebGLRenderer({ antialias: true });
-
+    renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      powerPreference: 'high-performance'
+    });
     renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.2;
 
-    document.body.style.margin = "0";
-    document.body.style.overflow = "hidden";
-
+    document.body.style.margin = '0';
+    document.body.style.overflow = 'hidden';
     document.body.appendChild(renderer.domElement);
 
-    return renderer; // 🔥 CRITICAL
-  },
+    window.addEventListener('resize', function() {
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
 
-  getRenderer() {
     return renderer;
-  }
+  },
+  getRenderer() { return renderer; }
 };
