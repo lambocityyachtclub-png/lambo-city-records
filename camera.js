@@ -13,14 +13,11 @@ export default {
 
     camera.position.set(0, 10, 20);
     camera.lookAt(0, 0, 0);
-  },
 
-  update() {
-    // optional future camera logic
+    return camera; // 🔥 CRITICAL
   },
 
   getCamera() {
     return camera;
   }
 };
- 
