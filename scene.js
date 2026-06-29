@@ -5,7 +5,8 @@ let scene;
 export default {
   init() {
     scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2(0xff6030, 0.008);
+    // FIXED: softer fog, correct sunset orange-blue tone
+    scene.fog = new THREE.FogExp2(0x221133, 0.004);
     return scene;
   },
   getScene() {
