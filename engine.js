@@ -2,7 +2,7 @@ export default class Engine {
   constructor() {
     this.systems = {};
     this.lastTime = 0;
-    this.context = {}; // shared world data (future-proof)
+    this.context = {};
   }
 
   registerSystems(systems) {
@@ -10,16 +10,14 @@ export default class Engine {
   }
 
   init() {
-    const scene = this.systems.scene?.init?.(this.context);
-    const camera = this.systems.camera?.init?.(this.context);
-    const renderer = this.systems.renderer?.init?.(this.context);
+    // 1. CORE SYSTEMS FIRST (ONLY ONCE)
+    this.context.scene = this.systems.scene?.init?.(this.context);
+    this.context.camera = this.systems.camera?.init?.(this.context);
+    this.context.renderer = this.systems.renderer?.init?.(this.context);
 
-    this.context.scene = scene;
-    this.context.camera = camera;
-    this.context.renderer = renderer;
-
-    // AUTO INIT ALL SYSTEMS (NO MANUAL LISTING EVER AGAIN)
-    Object.values(this.systems).forEach((sys) => {
+    // 2. WORLD SYSTEMS (NO RETURN EXPECTED)
+    Object.entries(this.systems).forEach(([key, sys]) => {
+      if (["scene", "camera", "renderer"].includes(key)) return;
       sys?.init?.(this.context);
     });
 
@@ -43,16 +41,10 @@ export default class Engine {
   }
 
   render() {
-  const scene =
-    this.context.scene || this.systems.scene?.getScene?.();
+    const { scene, camera, renderer } = this.context;
 
-  const camera =
-    this.context.camera || this.systems.camera?.getCamera?.();
+    if (!scene || !camera || !renderer) return;
 
-  const renderer =
-    this.context.renderer || this.systems.renderer?.getRenderer?.();
-
-  if (!scene || !camera || !renderer) return;
-
-  renderer.render(scene, camera);
+    renderer.render(scene, camera);
+  }
 }
