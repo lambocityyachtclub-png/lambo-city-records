@@ -15,6 +15,7 @@ import NPC from "./npc.js";
 import Cars from "./cars.js";
 import CinematicFlowSystem from "./cinematicFlowSystem.js";
 import CinematicWorldSkin from "./cinematicWorldSkin.js";
+import CinematicDockCore from "./cinematicDockCore.js";
 
 const engine = new Engine();
 engine.registerSystems({
@@ -34,5 +35,6 @@ engine.registerSystems({
   cars: Cars,
   cinematicFlow: CinematicFlowSystem,
   worldSkin: CinematicWorldSkin,
+  dockCore: CinematicDockCore,
 });
 engine.init();
