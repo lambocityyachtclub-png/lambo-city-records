@@ -1,32 +1,25 @@
-import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
+import Engine from "./engine.js";
 
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x111111);
+import Scene from "./scene.js";
+import Camera from "./camera.js";
+import Renderer from "./renderer.js";
 
-const camera = new THREE.PerspectiveCamera(
-  75,
-  window.innerWidth / window.innerHeight,
-  0.1,
-  1000
-);
+import Dock from "./dock.js";
+import Water from "./water.js";
+import Sky from "./sky.js";
+import Lighting from "./lighting.js";
 
-camera.position.z = 5;
+const engine = new Engine();
 
-const renderer = new THREE.WebGLRenderer();
-renderer.setSize(window.innerWidth, window.innerHeight);
-document.body.appendChild(renderer.domElement);
+engine.registerSystems({
+  scene: Scene,
+  camera: Camera,
+  renderer: Renderer,
 
-const cube = new THREE.Mesh(
-  new THREE.BoxGeometry(),
-  new THREE.MeshBasicMaterial({ color: 0xff0000 })
-);
+  dock: Dock,
+  water: Water,
+  sky: Sky,
+  lighting: Lighting
+});
 
-scene.add(cube);
-
-function animate() {
-  requestAnimationFrame(animate);
-  cube.rotation.y += 0.01;
-  renderer.render(scene, camera);
-}
-
-animate();
+engine.init();
