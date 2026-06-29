@@ -1,15 +1,22 @@
-render() {
-  const sceneModule = this.systems.scene;
-  const cameraModule = this.systems.camera;
-  const rendererModule = this.systems.renderer;
+import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 
-  if (!sceneModule || !cameraModule || !rendererModule) return;
+let renderer;
 
-  const scene = sceneModule.getScene?.();
-  const camera = cameraModule.getCamera?.();
-  const renderer = rendererModule.getRenderer?.();
+export default {
+  init() {
+    renderer = new THREE.WebGLRenderer({ antialias: true });
 
-  if (!scene || !camera || !renderer) return;
+    renderer.setSize(window.innerWidth, window.innerHeight);
 
-  renderer.render(scene, camera);
-}
+    document.body.style.margin = "0";
+    document.body.style.overflow = "hidden";
+
+    document.body.appendChild(renderer.domElement);
+
+    return renderer; // 🔥 CRITICAL
+  },
+
+  getRenderer() {
+    return renderer;
+  }
+};
