@@ -16,6 +16,7 @@ import Cars from "./cars.js";
 import CinematicFlowSystem from "./cinematicFlowSystem.js";
 import CinematicWorldSkin from "./cinematicWorldSkin.js";
 import CinematicDockCore from "./cinematicDockCore.js";
+import YachtClub from "./yachtClub.js";
 
 const engine = new Engine();
 engine.registerSystems({
@@ -36,5 +37,6 @@ engine.registerSystems({
   cinematicFlow: CinematicFlowSystem,
   worldSkin: CinematicWorldSkin,
   dockCore: CinematicDockCore,
+  yachtClub: YachtClub,
 });
 engine.init();
