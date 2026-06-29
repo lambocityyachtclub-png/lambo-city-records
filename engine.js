@@ -3,7 +3,7 @@ export default class Engine {
     this.systems = {};
     this.lastTime = 0;
 
-    // shared world state (CRITICAL)
+    // shared world state
     this.context = {};
   }
 
@@ -22,14 +22,14 @@ export default class Engine {
     this.context.camera = this.camera;
     this.context.renderer = this.renderer;
 
-    // WORLD INIT (pass scene)
+    // WORLD SYSTEMS
     this.systems.world?.init?.(this.scene);
     this.systems.water?.init?.(this.scene);
     this.systems.dock?.init?.(this.scene);
     this.systems.sky?.init?.(this.scene);
     this.systems.lighting?.init?.(this.scene);
 
-    // PLAYER SYSTEM INIT (IMPORTANT)
+    // PLAYER SYSTEMS
     this.systems.input?.init?.();
     this.systems.player?.init?.(this.scene);
 
@@ -47,11 +47,13 @@ export default class Engine {
   };
 
   update(delta) {
-    // PASS CONTEXT TO EVERYTHING
+    // ALWAYS UPDATE CONTEXT
     this.context.delta = delta;
 
-    this.systems.input?.update?.(delta, this.context);
-    this.systems.player?.update?.(delta, this.context);
+    // UNIVERSAL SYSTEM UPDATE (SAFE + FUTURE PROOF)
+    Object.values(this.systems).forEach((sys) => {
+      sys?.update?.(delta, this.context);
+    });
   }
 
   render() {
