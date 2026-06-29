@@ -5,6 +5,7 @@ let scene;
 export default {
   init() {
     scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0a0520);
     return scene;
   },
   getScene() {
