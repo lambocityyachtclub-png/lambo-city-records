@@ -1,11 +1,9 @@
 export default class Engine {
   constructor() {
     this.systems = {};
-    this.lastTime = 0;
   }
 
   init() {
-    // init systems safely
     this.systems.scene?.init?.();
     this.systems.camera?.init?.();
     this.systems.renderer?.init?.();
@@ -13,20 +11,16 @@ export default class Engine {
     this.loop();
   }
 
-  loop = (time = 0) => {
-    const delta = (time - this.lastTime) / 1000;
-    this.lastTime = time;
-
-    this.update(delta);
-    this.render();
-
+  loop = () => {
     requestAnimationFrame(this.loop);
+
+    this.update();
+    this.render();
   };
 
-  update(delta) {
-    this.systems.input?.update?.(delta);
-    this.systems.player?.update?.(delta);
-    this.systems.world?.update?.(delta);
+  update() {
+    this.systems.player?.update?.();
+    this.systems.world?.update?.();
   }
 
   render() {
