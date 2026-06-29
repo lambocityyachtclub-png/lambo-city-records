@@ -1,8 +1,6 @@
 export default class Engine {
   constructor() {
     this.systems = {};
-    this.lastTime = 0;
-    this.context = {};
   }
 
   registerSystems(systems) {
@@ -10,41 +8,34 @@ export default class Engine {
   }
 
   init() {
-    // 1. CORE SYSTEMS FIRST (ONLY ONCE)
-    this.context.scene = this.systems.scene?.init?.(this.context);
-    this.context.camera = this.systems.camera?.init?.(this.context);
-    this.context.renderer = this.systems.renderer?.init?.(this.context);
+    this.scene = this.systems.scene?.init?.();
+    this.camera = this.systems.camera?.init?.();
+    this.renderer = this.systems.renderer?.init?.();
 
-    // 2. WORLD SYSTEMS (NO RETURN EXPECTED)
-    Object.entries(this.systems).forEach(([key, sys]) => {
-      if (["scene", "camera", "renderer"].includes(key)) return;
-      sys?.init?.(this.context);
-    });
+    this.systems.world?.init?.(this.scene);
+    this.systems.water?.init?.(this.scene);
+    this.systems.dock?.init?.(this.scene);
+    this.systems.sky?.init?.(this.scene);
+    this.systems.lighting?.init?.(this.scene);
 
     this.loop();
   }
 
-  loop = (time = 0) => {
-    const delta = (time - this.lastTime) / 1000;
-    this.lastTime = time;
-
-    this.update(delta);
-    this.render();
-
+  loop = () => {
     requestAnimationFrame(this.loop);
+
+    this.update();
+    this.render();
   };
 
-  update(delta) {
-    Object.values(this.systems).forEach((sys) => {
-      sys?.update?.(delta, this.context);
-    });
+  update() {
+    this.systems.player?.update?.();
+    this.systems.input?.update?.();
   }
 
   render() {
-    const { scene, camera, renderer } = this.context;
+    if (!this.scene || !this.camera || !this.renderer) return;
 
-    if (!scene || !camera || !renderer) return;
-
-    renderer.render(scene, camera);
+    this.renderer.render(this.scene, this.camera);
   }
 }
