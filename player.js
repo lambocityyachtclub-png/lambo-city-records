@@ -9,16 +9,17 @@ export default {
       new THREE.MeshStandardMaterial({ color: 0x00ffcc })
     );
 
-    player.position.set(0, 1, 5);
+    player.position.set(0, 2, 5);
+
     scene.add(player);
 
-    this.speed = 5; // units per second (smooth movement)
+    this.speed = 5;
 
     return player;
   },
 
   update(delta, context) {
-    const input = context.systems?.input || context.input;
+    const input = context.systems?.input;
 
     if (!input) return;
 
@@ -29,6 +30,7 @@ export default {
     if (input.keys?.a) player.position.x -= move;
     if (input.keys?.d) player.position.x += move;
 
+    // expose player to camera + engine
     context.player = player;
   },
 
