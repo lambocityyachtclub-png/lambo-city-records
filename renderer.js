@@ -12,14 +12,9 @@ export default {
     document.body.style.overflow = "hidden";
 
     document.body.appendChild(renderer.domElement);
-
-    window.addEventListener("resize", () => {
-      // camera handled by engine system
-      renderer.setSize(window.innerWidth, window.innerHeight);
-    });
   },
 
-  render(scene, camera) {
-    renderer.render(scene, camera);
+  getRenderer() {
+    return renderer;
   }
 };
