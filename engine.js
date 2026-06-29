@@ -3,6 +3,7 @@ export default class Engine {
     this.systems = {};
     this.lastTime = 0;
 
+    // shared world state
     this.context = {};
   }
 
@@ -11,25 +12,26 @@ export default class Engine {
   }
 
   init() {
-    // CORE
+    // CORE SYSTEMS
     this.scene = this.systems.scene?.init?.();
     this.camera = this.systems.camera?.init?.();
     this.renderer = this.systems.renderer?.init?.();
 
+    // STORE IN CONTEXT
     this.context.scene = this.scene;
     this.context.camera = this.camera;
     this.context.renderer = this.renderer;
 
-    // WORLD
+    // WORLD SYSTEMS
     this.systems.world?.init?.(this.scene);
     this.systems.water?.init?.(this.scene);
     this.systems.dock?.init?.(this.scene);
     this.systems.sky?.init?.(this.scene);
     this.systems.lighting?.init?.(this.scene);
 
-    // PLAYER LAYER (explicit = safer than auto loop init)
-    this.systems.input?.init?.(this.context);
-    this.systems.player?.init?.(this.context);
+    // PLAYER SYSTEMS
+    this.systems.input?.init?.();
+    this.systems.player?.init?.(this.scene);
 
     this.loop();
   }
@@ -45,18 +47,13 @@ export default class Engine {
   };
 
   update(delta) {
+    // ALWAYS UPDATE CONTEXT
     this.context.delta = delta;
 
-    // ONLY UPDATE systems that actually exist in gameplay loop
-    this.systems.input?.update?.(delta, this.context);
-    this.systems.player?.update?.(delta, this.context);
-
-    this.systems.world?.update?.(delta, this.context);
-    this.systems.water?.update?.(delta, this.context);
-    this.systems.dock?.update?.(delta, this.context);
-
-    this.systems.sky?.update?.(delta, this.context);
-    this.systems.lighting?.update?.(delta, this.context);
+    // UNIVERSAL SYSTEM UPDATE (SAFE + FUTURE PROOF)
+    Object.values(this.systems).forEach((sys) => {
+      sys?.update?.(delta, this.context);
+    });
   }
 
   render() {
