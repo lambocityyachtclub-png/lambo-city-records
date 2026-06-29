@@ -15,13 +15,19 @@ export default {
   },
 
   update(delta, context) {
-    const player = context.player?.getPlayer?.();
+    const player = context.player;
+
     if (!player) return;
 
-    // THIRD PERSON FOLLOW CAMERA
-    camera.position.x = player.position.x;
-    camera.position.z = player.position.z + 10;
-    camera.position.y = 6;
+    // TARGET POSITION (behind player)
+    const targetX = player.position.x;
+    const targetY = player.position.y + 6;
+    const targetZ = player.position.z + 10;
+
+    // SMOOTH FOLLOW (LERP STYLE)
+    camera.position.x += (targetX - camera.position.x) * 0.08;
+    camera.position.y += (targetY - camera.position.y) * 0.08;
+    camera.position.z += (targetZ - camera.position.z) * 0.08;
 
     camera.lookAt(player.position);
   },
