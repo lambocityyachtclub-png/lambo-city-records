@@ -5,16 +5,17 @@ let camera;
 export default {
   init() {
     camera = new THREE.PerspectiveCamera(
-      75,
+      70,
       window.innerWidth / window.innerHeight,
       0.1,
       2000
     );
 
-    camera.position.set(0, 10, 20);
-    camera.lookAt(0, 0, 0);
+    // CINEMATIC ANGLE (LOOKING DOWN MARINA)
+    camera.position.set(15, 12, 25);
+    camera.lookAt(0, 2, 0);
 
-    return camera; // 🔥 CRITICAL
+    return camera;
   },
 
   getCamera() {
