@@ -1,34 +1,32 @@
-const engine = new Engine();
+import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 
-engine.registerSystems({
-  scene: Scene,
-  camera: Camera,
-  renderer: Renderer,
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x111111);
 
-  input: Input,
-  player: Player,
+const camera = new THREE.PerspectiveCamera(
+  75,
+  window.innerWidth / window.innerHeight,
+  0.1,
+  1000
+);
 
-  world: World,
-  water: Water,
-  dock: Dock,
-  sky: Sky,
-  lighting: Lighting,
+camera.position.z = 5;
 
-  palms: Palms,
-  villas: Villas,
-  stage: Stage,
-  yacht: Yacht,
-  jetskis: Jetskis,
+const renderer = new THREE.WebGLRenderer();
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
 
-  hero: Hero,
-  npc: NPC,
+const cube = new THREE.Mesh(
+  new THREE.BoxGeometry(),
+  new THREE.MeshBasicMaterial({ color: 0xff0000 })
+);
 
-  hud: HUD,
-  missions: Missions,
-  reputation: Reputation,
+scene.add(cube);
 
-  cinematicFlowSystem: CinematicFlowSystem,
-  cinematicDockCore: CinematicDockCore
-});
+function animate() {
+  requestAnimationFrame(animate);
+  cube.rotation.y += 0.01;
+  renderer.render(scene, camera);
+}
 
-engine.init();
+animate();
