@@ -1,22 +1,25 @@
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
-import { engine } from "./engine.js";
 
-const renderer = new THREE.WebGLRenderer({ antialias: true });
+let renderer;
 
-renderer.setSize(window.innerWidth, window.innerHeight);
+export default {
+  init() {
+    renderer = new THREE.WebGLRenderer({ antialias: true });
 
-document.body.style.margin = "0";
-document.body.style.overflow = "hidden";
+    renderer.setSize(window.innerWidth, window.innerHeight);
 
-document.body.appendChild(renderer.domElement);
+    document.body.style.margin = "0";
+    document.body.style.overflow = "hidden";
 
-engine.renderer = renderer;
+    document.body.appendChild(renderer.domElement);
 
-window.addEventListener("resize", () => {
-  if (!engine.camera) return;
+    window.addEventListener("resize", () => {
+      // camera handled by engine system
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+  },
 
-  engine.camera.aspect = window.innerWidth / window.innerHeight;
-  engine.camera.updateProjectionMatrix();
-
-  renderer.setSize(window.innerWidth, window.innerHeight);
-});
+  render(scene, camera) {
+    renderer.render(scene, camera);
+  }
+};
