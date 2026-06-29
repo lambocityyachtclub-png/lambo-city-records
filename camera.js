@@ -11,7 +11,7 @@ export default {
       0.1,
       2000
     );
-    camera.position.set(0, 10, 24);
+    camera.position.set(0, 10, 28);
     camera.lookAt(0, 2, 0);
 
     window.addEventListener('resize', () => {
@@ -27,20 +27,16 @@ export default {
     if (!player) return;
     cinTime += delta;
 
-    // CINEMATIC DRIFT — subtle side sway
-    const drift = Math.sin(cinTime * 0.3) * 0.8;
+    const drift = Math.sin(cinTime * 0.25) * 1.2;
 
     const targetX = player.position.x + drift;
-    const targetY = player.position.y + 7;
-    const targetZ = player.position.z + 16;
+    const targetY = player.position.y + 8;
+    const targetZ = player.position.z + 18;
 
-    // SMOOTH LERP FOLLOW
-    const lerpSpeed = 0.055;
-    camera.position.x += (targetX - camera.position.x) * lerpSpeed;
-    camera.position.y += (targetY - camera.position.y) * lerpSpeed;
-    camera.position.z += (targetZ - camera.position.z) * lerpSpeed;
+    camera.position.x += (targetX - camera.position.x) * 0.05;
+    camera.position.y += (targetY - camera.position.y) * 0.05;
+    camera.position.z += (targetZ - camera.position.z) * 0.05;
 
-    // LOOK SLIGHTLY ABOVE PLAYER CENTER
     camera.lookAt(
       player.position.x,
       player.position.y + 2,
