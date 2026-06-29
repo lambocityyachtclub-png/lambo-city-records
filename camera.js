@@ -6,13 +6,14 @@ let cinTime = 0;
 export default {
   init() {
     camera = new THREE.PerspectiveCamera(
-      65,
+      75,
       window.innerWidth / window.innerHeight,
       0.1,
       2000
     );
-    camera.position.set(0, 10, 28);
-    camera.lookAt(0, 2, 0);
+    // WIDER ANGLE — can see water on sides
+    camera.position.set(0, 12, 30);
+    camera.lookAt(0, 0, -10);
 
     window.addEventListener('resize', () => {
       camera.aspect = window.innerWidth / window.innerHeight;
@@ -27,11 +28,11 @@ export default {
     if (!player) return;
     cinTime += delta;
 
-    const drift = Math.sin(cinTime * 0.25) * 1.2;
+    const drift = Math.sin(cinTime * 0.25) * 1.5;
 
     const targetX = player.position.x + drift;
-    const targetY = player.position.y + 8;
-    const targetZ = player.position.z + 18;
+    const targetY = player.position.y + 9;
+    const targetZ = player.position.z + 22;
 
     camera.position.x += (targetX - camera.position.x) * 0.05;
     camera.position.y += (targetY - camera.position.y) * 0.05;
@@ -39,8 +40,8 @@ export default {
 
     camera.lookAt(
       player.position.x,
-      player.position.y + 2,
-      player.position.z
+      player.position.y + 1,
+      player.position.z - 5
     );
   },
 
