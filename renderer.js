@@ -1,20 +1,15 @@
-import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
+render() {
+  const sceneModule = this.systems.scene;
+  const cameraModule = this.systems.camera;
+  const rendererModule = this.systems.renderer;
 
-let renderer;
+  if (!sceneModule || !cameraModule || !rendererModule) return;
 
-export default {
-  init() {
-    renderer = new THREE.WebGLRenderer({ antialias: true });
+  const scene = sceneModule.getScene?.();
+  const camera = cameraModule.getCamera?.();
+  const renderer = rendererModule.getRenderer?.();
 
-    renderer.setSize(window.innerWidth, window.innerHeight);
+  if (!scene || !camera || !renderer) return;
 
-    document.body.style.margin = "0";
-    document.body.style.overflow = "hidden";
-
-    document.body.appendChild(renderer.domElement);
-  },
-
-  getRenderer() {
-    return renderer;
-  }
-};
+  renderer.render(scene, camera);
+}
