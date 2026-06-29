@@ -2,45 +2,26 @@ export default class Engine {
   constructor() {
     this.systems = {};
     this.lastTime = 0;
+    this.context = {}; // shared world data (future-proof)
+  }
+
+  registerSystems(systems) {
+    this.systems = systems;
   }
 
   init() {
-    // CORE
-    this.systems.scene?.init?.();
-    this.systems.camera?.init?.();
-    this.systems.renderer?.init?.();
+    const scene = this.systems.scene?.init?.(this.context);
+    const camera = this.systems.camera?.init?.(this.context);
+    const renderer = this.systems.renderer?.init?.(this.context);
 
-    // WORLD LAYERS (AUTO WIRED HERE — NO MORE MANUAL STEPS)
-    this.systems.world?.init?.(this.systems.scene?.getScene?.());
-    this.systems.water?.init?.(this.systems.scene?.getScene?.());
-    this.systems.dock?.init?.(this.systems.scene?.getScene?.());
-    this.systems.sky?.init?.(this.systems.scene?.getScene?.());
-    this.systems.lighting?.init?.(this.systems.scene?.getScene?.());
+    this.context.scene = scene;
+    this.context.camera = camera;
+    this.context.renderer = renderer;
 
-    this.systems.palms?.init?.(this.systems.scene?.getScene?.());
-    this.systems.villas?.init?.(this.systems.scene?.getScene?.());
-    this.systems.stage?.init?.(this.systems.scene?.getScene?.());
-    this.systems.yacht?.init?.(this.systems.scene?.getScene?.());
-    this.systems.jetskis?.init?.(this.systems.scene?.getScene?.());
-
-    // PLAYER + INPUT
-    this.systems.input?.init?.();
-    this.systems.player?.init?.(
-      this.systems.scene?.getScene?.(),
-      this.systems.input
-    );
-
-    // GAME SYSTEMS
-    this.systems.npc?.init?.();
-    this.systems.hero?.init?.();
-
-    this.systems.hud?.init?.();
-    this.systems.missions?.init?.();
-    this.systems.reputation?.init?.();
-
-    // CINEMATIC LAYER
-    this.systems.cinematicFlowSystem?.init?.();
-    this.systems.cinematicDockCore?.init?.();
+    // AUTO INIT ALL SYSTEMS (NO MANUAL LISTING EVER AGAIN)
+    Object.values(this.systems).forEach((sys) => {
+      sys?.init?.(this.context);
+    });
 
     this.loop();
   }
@@ -56,23 +37,13 @@ export default class Engine {
   };
 
   update(delta) {
-    this.systems.input?.update?.(delta);
-    this.systems.player?.update?.(delta);
-    this.systems.world?.update?.(delta);
-
-    this.systems.npc?.update?.(delta);
-    this.systems.hero?.update?.(delta);
-
-    this.systems.cinematicFlowSystem?.update?.(delta);
-    this.systems.cinematicDockCore?.update?.(delta);
-
-    this.systems.hud?.update?.(delta);
+    Object.values(this.systems).forEach((sys) => {
+      sys?.update?.(delta, this.context);
+    });
   }
 
   render() {
-    const scene = this.systems.scene?.getScene?.();
-    const camera = this.systems.camera?.getCamera?.();
-    const renderer = this.systems.renderer?.getRenderer?.();
+    const { scene, camera, renderer } = this.context;
 
     if (!scene || !camera || !renderer) return;
 
