@@ -1,65 +1,49 @@
-import Engine from "./engine.js";
+import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 
-import Scene from "./scene.js";
-import Renderer from "./renderer.js";
-import Camera from "./camera.js";
+// 1. SCENE
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x001018);
 
-import Input from "./input.js";
-import Player from "./player.js";
+// 2. CAMERA
+const camera = new THREE.PerspectiveCamera(
+  75,
+  window.innerWidth / window.innerHeight,
+  0.1,
+  1000
+);
 
-import World from "./world.js";
-import Water from "./water.js";
-import Dock from "./dock.js";
-import Sky from "./sky.js";
-import Lighting from "./lighting.js";
+camera.position.set(0, 2, 6);
+camera.lookAt(0, 0, 0);
 
-import Palms from "./palms.js";
-import Villas from "./villas.js";
-import Stage from "./stage.js";
-import Yacht from "./yacht.js";
-import Jetskis from "./jetskis.js";
+// 3. RENDERER
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.style.margin = "0";
+document.body.style.overflow = "hidden";
+document.body.appendChild(renderer.domElement);
 
-import Hero from "./hero.js";
-import NPC from "./npc.js";
+// 4. TEST OBJECT (VISIBLE PROOF)
+const cube = new THREE.Mesh(
+  new THREE.BoxGeometry(1, 1, 1),
+  new THREE.MeshBasicMaterial({ color: 0xff0000 })
+);
 
-import HUD from "./hud.js";
-import Missions from "./missions.js";
-import Reputation from "./reputation.js";
+scene.add(cube);
 
-import CinematicFlowSystem from "./cinematicFlowSystem.js";
-import CinematicDockCore from "./cinematicDockCore.js";
+// 5. RESIZE SUPPORT
+window.addEventListener("resize", () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
 
-const engine = new Engine();
+// 6. LOOP
+function animate() {
+  requestAnimationFrame(animate);
 
-// 🔥 REGISTER ALL SYSTEMS
-engine.systems.scene = Scene;
-engine.systems.renderer = Renderer;
-engine.systems.camera = Camera;
+  cube.rotation.y += 0.01;
 
-engine.systems.input = Input;
-engine.systems.player = Player;
+  renderer.render(scene, camera);
+}
 
-engine.systems.world = World;
-engine.systems.water = Water;
-engine.systems.dock = Dock;
-engine.systems.sky = Sky;
-engine.systems.lighting = Lighting;
-
-engine.systems.palms = Palms;
-engine.systems.villas = Villas;
-engine.systems.stage = Stage;
-engine.systems.yacht = Yacht;
-engine.systems.jetskis = Jetskis;
-
-engine.systems.hero = Hero;
-engine.systems.npc = NPC;
-
-engine.systems.hud = HUD;
-engine.systems.missions = Missions;
-engine.systems.reputation = Reputation;
-
-engine.systems.cinematicFlowSystem = CinematicFlowSystem;
-engine.systems.cinematicDockCore = CinematicDockCore;
-
-// 🚀 START EVERYTHING
-engine.init();
+animate();
