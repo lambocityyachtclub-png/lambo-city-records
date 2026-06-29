@@ -12,6 +12,7 @@ import Input from "./input.js";
 import Player from "./player.js";
 import HUD from "./hud.js";
 import NPC from "./npc.js";
+import Cars from "./cars.js";
 import CinematicFlowSystem from "./cinematicFlowSystem.js";
 import CinematicWorldSkin from "./cinematicWorldSkin.js";
 
@@ -30,6 +31,7 @@ engine.registerSystems({
   yacht: Yacht,
   hud: HUD,
   npc: NPC,
+  cars: Cars,
   cinematicFlow: CinematicFlowSystem,
   worldSkin: CinematicWorldSkin,
 });
