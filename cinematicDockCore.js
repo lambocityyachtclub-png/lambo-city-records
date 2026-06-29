@@ -1,157 +1,183 @@
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
-import { engine } from "./engine.js";
 
-/* =========================================================
-   🎬 CINEMATIC DOCK CORE SYSTEM (DIRECTOR VERSION)
-========================================================= */
+let billboards = [];
+let time = 0;
 
-export const DockCore = {
-
-  state: {
-    phase: "INTRO",
-    hasStarted: false
+export default {
+  init(scene) {
+    this._buildSocialBillboards(scene);
+    this._buildArchGate(scene);
+    this._buildNeonSigns(scene);
   },
 
-  init() {
+  _buildSocialBillboards(scene) {
+    var socialData = [
+      {
+        x: -38, y: 10, z: -15, rotY:  0.5,
+        color: 0x000000, accent: 0xff0050,
+        label: 'TIKTOK', sub: '@LAMBOCITY • 2.4M FOLLOWERS'
+      },
+      {
+        x:  38, y: 10, z: -15, rotY: -0.5,
+        color: 0x000000, accent: 0xff0000,
+        label: 'YOUTUBE', sub: 'LAMBO CITY RECORDS • 890K SUBS'
+      },
+      {
+        x: -42, y: 10, z: -45, rotY:  0.3,
+        color: 0x000000, accent: 0x1da1f2,
+        label: 'TWITTER/X', sub: '@LAMBOCITY • 1.1M FOLLOWERS'
+      },
+      {
+        x:  42, y: 10, z: -45, rotY: -0.3,
+        color: 0x000000, accent: 0xe1306c,
+        label: 'INSTAGRAM', sub: '@LAMBOCITYOFFICIAL • 3.2M'
+      },
+    ];
 
-    console.log("🎬 DockCore DIRECTOR initializing...");
+    socialData.forEach(function(d) {
+      var group = new THREE.Group();
 
-    /* =====================================================
-       🧭 CINEMATIC SPINE (WORLD STORY FLOW)
-    ===================================================== */
+      // BOARD BACKING
+      var back = new THREE.Mesh(
+        new THREE.BoxGeometry(18, 8, 0.4),
+        new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 0.5 })
+      );
+      group.add(back);
 
-    this.spine = {
-      ENTRY_Z: 200,
-      BOARDWALK_Z: 500,
-      STAGE_Z: 900,
-      YACHT_Z: 1300
-    };
+      // ACCENT BORDER
+      var border = new THREE.Mesh(
+        new THREE.BoxGeometry(18.4, 8.4, 0.2),
+        new THREE.MeshStandardMaterial({
+          color: d.accent,
+          emissive: d.accent,
+          emissiveIntensity: 0.6
+        })
+      );
+      border.position.z = -0.2;
+      group.add(border);
 
-    /* =====================================================
-       🧍 PLAYER CINEMATIC ALIGNMENT
-    ===================================================== */
+      // PLATFORM NAME BAR
+      var bar = new THREE.Mesh(
+        new THREE.BoxGeometry(16, 2, 0.5),
+        new THREE.MeshStandardMaterial({
+          color: d.accent,
+          emissive: d.accent,
+          emissiveIntensity: 0.5
+        })
+      );
+      bar.position.set(0, 2, 0.3);
+      group.add(bar);
 
-    if (engine.player) {
-      engine.player.position.z = this.spine.ENTRY_Z;
-    }
+      // FOLLOWER STRIP
+      var strip = new THREE.Mesh(
+        new THREE.BoxGeometry(14, 1, 0.5),
+        new THREE.MeshStandardMaterial({
+          color: 0xffd700,
+          emissive: 0xffd700,
+          emissiveIntensity: 0.4
+        })
+      );
+      strip.position.set(0, -2, 0.3);
+      group.add(strip);
 
-    /* =====================================================
-       🌍 WORLD LAYERS
-    ===================================================== */
+      // POLES
+      [-6, 6].forEach(function(x) {
+        var pole = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.2, 0.2, 12, 6),
+          new THREE.MeshStandardMaterial({ color: 0x333333 })
+        );
+        pole.position.set(x, -10, 0);
+        group.add(pole);
+      });
 
-    this.leftBeach = this.createBeach(-1200);
-    this.rightBeach = this.createBeach(1200);
+      // BILLBOARD LIGHT
+      var light = new THREE.PointLight(d.accent, 2, 25);
+      light.position.set(0, 0, 3);
+      group.add(light);
 
-    engine.world.add(this.leftBeach);
-    engine.world.add(this.rightBeach);
-
-    /* =====================================================
-       🌊 OCEAN SYSTEMS
-    ===================================================== */
-
-    this.centerWater = this.createWater(0, 900, 2000, 8000);
-    this.leftWater = this.createWater(-1200, 900, 2000, 8000);
-    this.rightWater = this.createWater(1200, 900, 2000, 8000);
-
-    engine.world.add(this.centerWater);
-    engine.world.add(this.leftWater);
-    engine.world.add(this.rightWater);
-
-    /* =====================================================
-       🚤 ENERGY LANES (MOVEMENT GUIDES)
-    ===================================================== */
-
-    this.jetLaneLeft = this.createJetLane(-400);
-    this.jetLaneRight = this.createJetLane(400);
-
-    engine.world.add(this.jetLaneLeft);
-    engine.world.add(this.jetLaneRight);
-
-    this.state.hasStarted = true;
-
-    console.log("🎬 DockCore READY (CINEMATIC MODE)");
+      group.position.set(d.x, d.y, d.z);
+      group.rotation.y = d.rotY;
+      scene.add(group);
+      billboards.push({ group: group, light: light, offset: Math.random() * Math.PI * 2 });
+    });
   },
 
-  /* =========================================================
-     🎬 UPDATE (THIS IS NOW A DIRECTOR SYSTEM)
-  ========================================================= */
+  _buildArchGate(scene) {
+    // LAMBO CITY ENTRANCE ARCH over dock
+    var archMat = new THREE.MeshStandardMaterial({
+      color: 0x111111, metalness: 0.8, roughness: 0.2
+    });
+    var goldMat = new THREE.MeshStandardMaterial({
+      color: 0xffd700, emissive: 0xffd700, emissiveIntensity: 0.8
+    });
 
-  update() {
-
-    if (!engine.player) return;
-
-    const z = engine.player.position.z;
-
-    /* =====================================================
-       🎭 PHASE DETECTION (WORLD STORY CONTROL)
-    ===================================================== */
-
-    if (z < 400) this.state.phase = "DOCK_INTRO";
-    else if (z < 800) this.state.phase = "BOARDWALK";
-    else if (z < 1200) this.state.phase = "STAGE";
-    else this.state.phase = "YACHT_REVEAL";
-
-    engine.state.dockPhase = this.state.phase;
-  },
-
-  /* =========================================================
-     🏖 BEACH
-  ========================================================= */
-
-  createBeach(x) {
-
-    const beach = new THREE.Mesh(
-      new THREE.PlaneGeometry(2000, 800),
-      new THREE.MeshStandardMaterial({
-        color: 0xd9c28c
-      })
+    // LEFT PILLAR
+    var leftPillar = new THREE.Mesh(
+      new THREE.BoxGeometry(1.5, 12, 1.5), archMat
     );
+    leftPillar.position.set(-8, 6, 22);
+    scene.add(leftPillar);
 
-    beach.rotation.x = -Math.PI / 2;
-    beach.position.set(x, 0.02, 600);
+    // RIGHT PILLAR
+    var rightPillar = new THREE.Mesh(
+      new THREE.BoxGeometry(1.5, 12, 1.5), archMat
+    );
+    rightPillar.position.set(8, 6, 22);
+    scene.add(rightPillar);
 
-    return beach;
+    // TOP BEAM
+    var beam = new THREE.Mesh(
+      new THREE.BoxGeometry(18, 1.2, 1.5), archMat
+    );
+    beam.position.set(0, 12, 22);
+    scene.add(beam);
+
+    // GOLD SIGN ON ARCH
+    var sign = new THREE.Mesh(
+      new THREE.BoxGeometry(14, 2, 0.3), goldMat
+    );
+    sign.position.set(0, 12, 22.8);
+    scene.add(sign);
+
+    // ARCH LIGHTS
+    [-6, 0, 6].forEach(function(x) {
+      var archLight = new THREE.PointLight(0xffd700, 1.5, 12);
+      archLight.position.set(x, 13, 22);
+      scene.add(archLight);
+    });
   },
 
-  /* =========================================================
-     🌊 WATER
-  ========================================================= */
+  _buildNeonSigns(scene) {
+    // NEON SIGNS floating near buildings
+    var signs = [
+      { x: -50, y: 8, z: -35, color: 0x9900ff, w: 10, h: 1.5 },
+      { x:  50, y: 8, z: -35, color: 0x00ffcc, w: 10, h: 1.5 },
+      { x: -50, y: 5, z: -60, color: 0xff00aa, w: 8,  h: 1.2 },
+      { x:  50, y: 5, z: -60, color: 0xffcc00, w: 8,  h: 1.2 },
+    ];
 
-  createWater(x, z, w, h) {
+    signs.forEach(function(s) {
+      var sign = new THREE.Mesh(
+        new THREE.BoxGeometry(s.w, s.h, 0.2),
+        new THREE.MeshStandardMaterial({
+          color: s.color,
+          emissive: s.color,
+          emissiveIntensity: 1.5
+        })
+      );
+      sign.position.set(s.x, s.y, s.z);
+      scene.add(sign);
 
-    const water = new THREE.Mesh(
-      new THREE.PlaneGeometry(w, h),
-      new THREE.MeshStandardMaterial({
-        color: x === 0 ? 0x0a3d62 : 0x0b2a3a,
-        metalness: 0.7,
-        roughness: 0.25
-      })
-    );
-
-    water.rotation.x = -Math.PI / 2;
-    water.position.set(x, -0.5, z);
-
-    return water;
+      var light = new THREE.PointLight(s.color, 2, 15);
+      light.position.set(s.x, s.y, s.z + 2);
+      scene.add(light);
+    });
   },
 
-  /* =========================================================
-     🚤 JET LANE
-  ========================================================= */
-
-  createJetLane(x) {
-
-    const lane = new THREE.Mesh(
-      new THREE.PlaneGeometry(600, 6000),
-      new THREE.MeshStandardMaterial({
-        color: 0x00bfff,
-        transparent: true,
-        opacity: 0.25
-      })
-    );
-
-    lane.rotation.x = -Math.PI / 2;
-    lane.position.set(x, -0.49, 900);
-
-    return lane;
+  update(delta) {
+    time += delta;
+    billboards.forEach(function(b, i) {
+      b.light.intensity = 1.5 + Math.sin(time * 1.5 + b.offset) * 0.8;
+    });
   }
 };
