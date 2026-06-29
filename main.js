@@ -12,12 +12,18 @@ import Lighting from "./lighting.js";
 import Palms from "./palms.js";
 import Yacht from "./yacht.js";
 
+import Input from "./input.js";
+import Player from "./player.js";
+
 const engine = new Engine();
 
 engine.registerSystems({
   scene: Scene,
   camera: Camera,
   renderer: Renderer,
+
+  input: Input,
+  player: Player,
 
   dock: Dock,
   water: Water,
