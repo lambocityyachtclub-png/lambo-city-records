@@ -7,7 +7,6 @@ export default {
   },
 
   _buildHUD() {
-    // REMOVE OLD HUD IF EXISTS
     var old = document.getElementById('hud');
     if (old) old.remove();
 
@@ -20,17 +19,15 @@ export default {
     `;
     document.body.appendChild(hud);
 
-    // TOP LEFT — missions
     this._add(hud, `
       <div style="position:absolute;top:20px;left:20px;color:white;">
         <div style="color:#ffd700;font-size:13px;letter-spacing:2px;">WELCOME TO LAMBO CITY</div>
         <div style="color:#aaa;font-size:11px;margin-top:5px;">◆ Walk the Dock</div>
-        <div style="color:#aaa;font-size:11px;margin-top:2px;">◈ Reach the Stage</div>
-        <div style="color:#aaa;font-size:11px;margin-top:2px;">◈ Earn Boarding Pass</div>
+        <div style="color:#aaa;font-size:11px;margin-top:2px;">◈ Reach the Yacht Club</div>
+        <div style="color:#aaa;font-size:11px;margin-top:2px;">◈ Earn Your Boarding Pass</div>
       </div>
     `);
 
-    // TOP RIGHT — money + rep
     this._add(hud, `
       <div style="position:absolute;top:20px;right:20px;text-align:right;color:white;">
         <div style="color:#ffd700;font-size:15px;font-weight:bold;">$ 1,000,000,000</div>
@@ -44,7 +41,6 @@ export default {
       </div>
     `);
 
-    // TOP CENTER — music player
     this._add(hud, `
       <div id="music-hud" style="
         position:absolute;top:16px;left:50%;transform:translateX(-50%);
@@ -63,8 +59,7 @@ export default {
         </div>
         <div style="width:70px;height:3px;background:#333;border-radius:2px;overflow:hidden;">
           <div id="music-progress" style="width:0%;height:100%;
-            background:linear-gradient(90deg,#9900ff,#ff00aa);border-radius:2px;
-            transition:width 0.1s linear;"></div>
+            background:linear-gradient(90deg,#9900ff,#ff00aa);border-radius:2px;"></div>
         </div>
         <button id="music-btn" style="
           background:linear-gradient(135deg,#9900ff,#ff00aa);
@@ -76,7 +71,6 @@ export default {
       </div>
     `);
 
-    // BOTTOM LEFT — minimap
     this._add(hud, `
       <div style="position:absolute;bottom:20px;left:20px;">
         <canvas id="minimap" width="140" height="140" style="
@@ -90,7 +84,6 @@ export default {
       </div>
     `);
 
-    // BOTTOM CENTER — boarding pass
     this._add(hud, `
       <div style="position:absolute;bottom:22px;left:50%;transform:translateX(-50%);text-align:center;">
         <div style="color:#ffd700;font-size:9px;letter-spacing:2px;margin-bottom:4px;">
@@ -104,12 +97,11 @@ export default {
             transition:width 0.8s ease;"></div>
         </div>
         <div id="bp-label" style="color:#666;font-size:9px;margin-top:3px;letter-spacing:1px;">
-          WALK THE DOCK TO EARN ACCESS
+          WALK TO THE YACHT CLUB TO BOARD
         </div>
       </div>
     `);
 
-    // BOTTOM RIGHT — controls
     this._add(hud, `
       <div style="position:absolute;bottom:20px;right:20px;color:white;
         font-size:11px;text-align:right;letter-spacing:1px;">
@@ -136,7 +128,6 @@ export default {
   },
 
   _initMusicPlayer() {
-    var self = this;
     var playing = false;
     var progress = 0;
     var interval = null;
@@ -175,30 +166,31 @@ export default {
     ctx.fillStyle = 'rgba(0,30,60,0.95)';
     ctx.fillRect(0, 0, 140, 140);
 
-    // DOCK
-    ctx.fillStyle = '#8b5e3c';
-    ctx.fillRect(cx - 5, 15, 10, 115);
-
-    // WATER
     ctx.fillStyle = 'rgba(0,60,120,0.6)';
     ctx.fillRect(0, 0, cx - 5, 140);
     ctx.fillRect(cx + 5, 0, 70, 140);
+
+    ctx.fillStyle = '#8b5e3c';
+    ctx.fillRect(cx - 5, 15, 10, 115);
+
+    // YACHT — marked as destination
+    ctx.fillStyle = '#00ffff';
+    ctx.fillRect(cx + 20, cy - 8, 22, 8);
+    ctx.fillStyle = '#ffd700';
+    ctx.font = 'bold 7px Arial';
+    ctx.textAlign = 'left';
+    ctx.fillText('YACHT', cx + 21, cy - 1);
 
     // STAGE
     ctx.fillStyle = '#9900ff';
     ctx.fillRect(cx - 15, 10, 30, 8);
 
-    // YACHT
-    ctx.fillStyle = '#dddddd';
-    ctx.fillRect(cx + 22, cy - 5, 18, 6);
-
     // CARS
     ctx.fillStyle = '#ffcc00';
     ctx.fillRect(cx - 20, cy + 5, 5, 3);
     ctx.fillStyle = '#ff2200';
-    ctx.fillRect(cx + 16, cy + 5, 5, 3);
+    ctx.fillRect(cx + 16, cy + 14, 5, 3);
 
-    // PLAYER
     var px = playerPos ? cx + playerPos.x * 0.75 : cx;
     var py = playerPos ? cy + playerPos.z * 0.75 : cy + 18;
     ctx.fillStyle = 'rgba(255,50,0,0.3)';
@@ -224,26 +216,34 @@ export default {
 
     this._drawMinimap(player.position);
 
-    // BOARDING PASS — fills as player walks toward stage (z goes from 10 to -75)
-    var startZ = 10;
-    var endZ = -75;
-    var range = startZ - endZ;
-    var walked = startZ - player.position.z;
-    var progress = Math.min(100, Math.max(0, (walked / range) * 100));
+    // BOARDING PASS — triggers when player reaches YACHT position (x:35, z:-25)
+    var yachtX = 35;
+    var yachtZ = -25;
+    var dx = player.position.x - yachtX;
+    var dz = player.position.z - yachtZ;
+    var distToYacht = Math.sqrt(dx * dx + dz * dz);
+
+    // PROGRESS — based on how close to yacht (max distance ~60)
+    var maxDist = 60;
+    var progress = Math.min(100, Math.max(0, ((maxDist - distToYacht) / maxDist) * 100));
 
     var bpBar = document.getElementById('bp-bar');
     var bpLabel = document.getElementById('bp-label');
     if (bpBar) bpBar.style.width = progress + '%';
+
     if (bpLabel) {
-      if (progress < 25) {
-        bpLabel.textContent = 'WALK THE DOCK TO EARN ACCESS';
+      if (progress < 20) {
+        bpLabel.textContent = 'WALK TO THE YACHT CLUB TO BOARD';
         bpLabel.style.color = '#666';
-      } else if (progress < 60) {
-        bpLabel.textContent = 'GETTING CLOSER — KEEP MOVING';
+      } else if (progress < 50) {
+        bpLabel.textContent = 'HEADING TO THE YACHT CLUB...';
         bpLabel.style.color = '#ff8800';
-      } else if (progress < 100) {
-        bpLabel.textContent = 'ALMOST THERE — REACH THE STAGE';
+      } else if (progress < 85) {
+        bpLabel.textContent = 'YACHT CLUB AHEAD — KEEP MOVING';
         bpLabel.style.color = '#ffd700';
+      } else if (progress < 100) {
+        bpLabel.textContent = '⚓ ALMOST AT THE YACHT CLUB...';
+        bpLabel.style.color = '#00ffff';
       } else {
         bpLabel.textContent = '✦ BOARDING PASS UNLOCKED ✦';
         bpLabel.style.color = '#ffd700';
@@ -267,28 +267,40 @@ export default {
       box-shadow:0 0 60px rgba(255,215,0,0.4),0 0 120px rgba(153,0,255,0.2);
     `;
     card.innerHTML = `
-      <div style="color:#ffd700;font-size:10px;letter-spacing:4px;margin-bottom:8px;">✦ CONGRATULATIONS ✦</div>
-      <div style="font-size:22px;font-weight:bold;letter-spacing:3px;margin-bottom:12px;">BOARDING PASS</div>
+      <div style="color:#ffd700;font-size:10px;letter-spacing:4px;margin-bottom:8px;">
+        ⚓ YOU MADE IT ⚓
+      </div>
+      <div style="font-size:22px;font-weight:bold;letter-spacing:3px;margin-bottom:12px;">
+        BOARDING PASS
+      </div>
       <div style="border:1px solid rgba(255,215,0,0.3);border-radius:8px;
         padding:14px 20px;margin:12px 0;background:rgba(255,215,0,0.05);">
-        <div style="color:#ffd700;font-size:12px;letter-spacing:2px;">LAMBO CITY YACHT CLUB</div>
-        <div style="color:#aaa;font-size:10px;margin-top:4px;">VIP ACCESS — FINANCIAL DISTRICT</div>
+        <div style="color:#00ffff;font-size:12px;letter-spacing:2px;">
+          LAMBO CITY YACHT CLUB
+        </div>
+        <div style="color:#aaa;font-size:10px;margin-top:4px;">
+          VIP MEMBER — EXCLUSIVE ACCESS
+        </div>
         <div style="font-size:30px;letter-spacing:6px;margin:10px 0;
-          color:#ffd700;font-weight:bold;text-shadow:0 0 20px rgba(255,215,0,0.5);">
+          color:#ffd700;font-weight:bold;
+          text-shadow:0 0 20px rgba(255,215,0,0.5);">
           LC-2024
         </div>
-        <div style="color:#666;font-size:9px;letter-spacing:1px;">CITIZEN OF LAMBO CITY</div>
+        <div style="color:#666;font-size:9px;letter-spacing:1px;">
+          CITIZEN OF LAMBO CITY • LONG BEACH, CA
+        </div>
       </div>
-      <div style="color:#aaa;font-size:11px;line-height:1.6;margin-bottom:16px;">
-        You've unlocked access to exclusive<br>
-        financial tools & the Yacht Club.
+      <div style="color:#aaa;font-size:11px;line-height:1.7;margin-bottom:16px;">
+        You've unlocked access to the Yacht Club.<br>
+        Financial tools, digital real estate &<br>
+        exclusive events await inside.
       </div>
       <button onclick="this.parentElement.remove()" style="
         background:linear-gradient(90deg,#9900ff,#ff00aa);
         border:none;border-radius:20px;color:white;
         padding:10px 28px;font-size:12px;letter-spacing:2px;
         cursor:pointer;box-shadow:0 0 20px rgba(153,0,255,0.5);
-      ">ENTER THE YACHT CLUB →</button>
+      ">⚓ BOARD THE YACHT →</button>
     `;
     document.body.appendChild(card);
   }
