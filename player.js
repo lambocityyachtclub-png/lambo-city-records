@@ -1,27 +1,162 @@
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 
 let player;
+let bobTime = 0;
 
 export default {
   init(scene) {
-    const geometry = new THREE.BoxGeometry(1.5, 3, 1.5);
-    const material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-    player = new THREE.Mesh(geometry, material);
-    // SPAWN ON TOP OF DOCK, near camera start
-    player.position.set(0, 2, 10);
+    player = new THREE.Group();
+
+    // BODY
+    const body = new THREE.Mesh(
+      new THREE.BoxGeometry(1.2, 1.8, 0.7),
+      new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.8 })
+    );
+    body.position.y = 1.8;
+    player.add(body);
+
+    // HOODIE LOGO (chest patch)
+    const logo = new THREE.Mesh(
+      new THREE.BoxGeometry(0.5, 0.4, 0.05),
+      new THREE.MeshStandardMaterial({
+        color: 0xffd700,
+        emissive: 0xffd700,
+        emissiveIntensity: 0.6
+      })
+    );
+    logo.position.set(0, 1.9, 0.38);
+    player.add(logo);
+
+    // HEAD
+    const head = new THREE.Mesh(
+      new THREE.BoxGeometry(0.9, 0.9, 0.9),
+      new THREE.MeshStandardMaterial({ color: 0x8d5524, roughness: 0.9 })
+    );
+    head.position.y = 3.15;
+    player.add(head);
+
+    // HAIR / CAP
+    const cap = new THREE.Mesh(
+      new THREE.BoxGeometry(0.95, 0.25, 0.95),
+      new THREE.MeshStandardMaterial({ color: 0x111111 })
+    );
+    cap.position.y = 3.65;
+    player.add(cap);
+
+    const capBrim = new THREE.Mesh(
+      new THREE.BoxGeometry(1.1, 0.08, 0.5),
+      new THREE.MeshStandardMaterial({ color: 0x111111 })
+    );
+    capBrim.position.set(0, 3.52, 0.55);
+    player.add(capBrim);
+
+    // LEFT ARM
+    const armL = new THREE.Mesh(
+      new THREE.BoxGeometry(0.35, 1.4, 0.35),
+      new THREE.MeshStandardMaterial({ color: 0x111111 })
+    );
+    armL.position.set(-0.8, 1.8, 0);
+    player.add(armL);
+
+    // RIGHT ARM
+    const armR = new THREE.Mesh(
+      new THREE.BoxGeometry(0.35, 1.4, 0.35),
+      new THREE.MeshStandardMaterial({ color: 0x111111 })
+    );
+    armR.position.set(0.8, 1.8, 0);
+    player.add(armR);
+
+    // LEFT LEG
+    const legL = new THREE.Mesh(
+      new THREE.BoxGeometry(0.45, 1.6, 0.45),
+      new THREE.MeshStandardMaterial({ color: 0x222222 })
+    );
+    legL.position.set(-0.35, 0.6, 0);
+    player.add(legL);
+
+    // RIGHT LEG
+    const legR = new THREE.Mesh(
+      new THREE.BoxGeometry(0.45, 1.6, 0.45),
+      new THREE.MeshStandardMaterial({ color: 0x222222 })
+    );
+    legR.position.set(0.35, 0.6, 0);
+    player.add(legR);
+
+    // SHOES
+    [-0.35, 0.35].forEach(x => {
+      const shoe = new THREE.Mesh(
+        new THREE.BoxGeometry(0.5, 0.25, 0.7),
+        new THREE.MeshStandardMaterial({ color: 0xffffff })
+      );
+      shoe.position.set(x, -0.22, 0.1);
+      player.add(shoe);
+    });
+
+    // GOLD CHAIN
+    const chain = new THREE.Mesh(
+      new THREE.TorusGeometry(0.25, 0.04, 6, 12),
+      new THREE.MeshStandardMaterial({
+        color: 0xffd700,
+        emissive: 0xffd700,
+        emissiveIntensity: 0.4,
+        metalness: 1,
+        roughness: 0.2
+      })
+    );
+    chain.position.set(0, 2.1, 0.36);
+    chain.rotation.x = Math.PI / 2;
+    player.add(chain);
+
+    // SPAWN ON DOCK
+    player.position.set(0, 0.3, 10);
     scene.add(player);
-    console.log("PLAYER SPAWNED:", player.position);
+
     this.speed = 8;
+    this.body = body;
+    this.armL = armL;
+    this.armR = armR;
+    this.legL = legL;
+    this.legR = legR;
+
     return player;
   },
+
   update(delta, context) {
     const input = context.systems?.input;
     if (!input || !player) return;
+
+    bobTime += delta;
     const move = this.speed * delta;
-    if (input.keys?.w) player.position.z -= move;
-    if (input.keys?.s) player.position.z += move;
-    if (input.keys?.a) player.position.x -= move;
-    if (input.keys?.d) player.position.x += move;
+    let moving = false;
+    let direction = new THREE.Vector3();
+
+    if (input.keys?.w) { player.position.z -= move; direction.z = -1; moving = true; }
+    if (input.keys?.s) { player.position.z += move; direction.z = 1;  moving = true; }
+    if (input.keys?.a) { player.position.x -= move; direction.x = -1; moving = true; }
+    if (input.keys?.d) { player.position.x += move; direction.x = 1;  moving = true; }
+
+    // FACE DIRECTION OF MOVEMENT
+    if (moving && direction.length() > 0) {
+      const angle = Math.atan2(direction.x, direction.z);
+      player.rotation.y = angle;
+    }
+
+    // WALK ANIMATION
+    if (moving) {
+      const swing = Math.sin(bobTime * 10) * 0.4;
+      this.armL.rotation.x =  swing;
+      this.armR.rotation.x = -swing;
+      this.legL.rotation.x = -swing;
+      this.legR.rotation.x =  swing;
+    } else {
+      // IDLE BOB
+      this.armL.rotation.x *= 0.85;
+      this.armR.rotation.x *= 0.85;
+      this.legL.rotation.x *= 0.85;
+      this.legR.rotation.x *= 0.85;
+      player.position.y = 0.3 + Math.sin(bobTime * 1.5) * 0.04;
+    }
+
     context.player = player;
   }
 };
