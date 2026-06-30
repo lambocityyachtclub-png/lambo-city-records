@@ -9,11 +9,10 @@ export default {
       powerPreference: 'high-performance'
     });
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    // CAP PIXEL RATIO for performance on iPad
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.2;
+    renderer.toneMappingExposure = 1.1;
 
     document.body.style.margin = '0';
     document.body.style.overflow = 'hidden';
