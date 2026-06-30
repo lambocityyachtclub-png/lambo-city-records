@@ -6,32 +6,15 @@ let time = 0;
 export default {
   init(scene) {
     this._buildSocialBillboards(scene);
-    this._buildArchGate(scene);
     this._buildNeonSigns(scene);
   },
 
   _buildSocialBillboards(scene) {
     var socialData = [
-      {
-        x: -45, y: 8, z: -10, rotY: 0.6,
-        accent: 0xff0050, label: 'TIKTOK',
-        sub: '@LAMBOCITY • 2.4M'
-      },
-      {
-        x: 45, y: 8, z: -10, rotY: -0.6,
-        accent: 0xff0000, label: 'YOUTUBE',
-        sub: '890K SUBSCRIBERS'
-      },
-      {
-        x: -50, y: 8, z: -45, rotY: 0.3,
-        accent: 0x1da1f2, label: 'TWITTER/X',
-        sub: '1.1M FOLLOWERS'
-      },
-      {
-        x: 50, y: 8, z: -45, rotY: -0.3,
-        accent: 0xe1306c, label: 'INSTAGRAM',
-        sub: '3.2M FOLLOWERS'
-      },
+      { x: -55, y: 8, z: -10, rotY:  0.5, accent: 0xff0050, label: 'TIKTOK'    },
+      { x:  55, y: 8, z: -10, rotY: -0.5, accent: 0xff0000, label: 'YOUTUBE'   },
+      { x: -60, y: 8, z: -45, rotY:  0.3, accent: 0x1da1f2, label: 'TWITTER/X' },
+      { x:  60, y: 8, z: -45, rotY: -0.3, accent: 0xe1306c, label: 'INSTAGRAM' },
     ];
 
     socialData.forEach(function(d) {
@@ -44,7 +27,7 @@ export default {
       group.add(back);
 
       var border = new THREE.Mesh(
-        new THREE.BoxGeometry(16.5, 7.5, 0.2),
+        new THREE.BoxGeometry(16.6, 7.6, 0.2),
         new THREE.MeshStandardMaterial({
           color: d.accent, emissive: d.accent, emissiveIntensity: 0.5
         })
@@ -86,57 +69,14 @@ export default {
       group.position.set(d.x, d.y, d.z);
       group.rotation.y = d.rotY;
       scene.add(group);
-      billboards.push({ group: group, light: light, offset: Math.random() * Math.PI * 2 });
-    });
-  },
-
-  _buildArchGate(scene) {
-    var archMat = new THREE.MeshStandardMaterial({
-      color: 0x111111, metalness: 0.8, roughness: 0.2
-    });
-    var goldMat = new THREE.MeshStandardMaterial({
-      color: 0xffd700, emissive: 0xffd700, emissiveIntensity: 0.6
-    });
-
-    // PILLARS — slimmer, not as tall
-    var leftPillar = new THREE.Mesh(
-      new THREE.BoxGeometry(1.2, 8, 1.2), archMat
-    );
-    leftPillar.position.set(-8, 4, 24);
-    scene.add(leftPillar);
-
-    var rightPillar = new THREE.Mesh(
-      new THREE.BoxGeometry(1.2, 8, 1.2), archMat
-    );
-    rightPillar.position.set(8, 4, 24);
-    scene.add(rightPillar);
-
-    // TOP BEAM — lower
-    var beam = new THREE.Mesh(
-      new THREE.BoxGeometry(18, 1, 1.2), archMat
-    );
-    beam.position.set(0, 8.5, 24);
-    scene.add(beam);
-
-    // GOLD SIGN
-    var sign = new THREE.Mesh(
-      new THREE.BoxGeometry(13, 1.6, 0.3), goldMat
-    );
-    sign.position.set(0, 8.5, 24.7);
-    scene.add(sign);
-
-    // ARCH LIGHTS
-    [-5, 0, 5].forEach(function(x) {
-      var light = new THREE.PointLight(0xffd700, 1.2, 10);
-      light.position.set(x, 9, 24);
-      scene.add(light);
+      billboards.push({ light: light, offset: Math.random() * Math.PI * 2 });
     });
   },
 
   _buildNeonSigns(scene) {
     var signs = [
-      { x: -55, y: 6, z: -30, color: 0x9900ff, w: 10, h: 1.4 },
-      { x:  55, y: 6, z: -30, color: 0x00ffcc, w: 10, h: 1.4 },
+      { x: -55, y: 5, z: -30, color: 0x9900ff, w: 10, h: 1.4 },
+      { x:  55, y: 5, z: -30, color: 0x00ffcc, w: 10, h: 1.4 },
       { x: -55, y: 4, z: -55, color: 0xff00aa, w: 8,  h: 1.1 },
       { x:  55, y: 4, z: -55, color: 0xffcc00, w: 8,  h: 1.1 },
     ];
