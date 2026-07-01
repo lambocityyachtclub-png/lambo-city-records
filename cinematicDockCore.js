@@ -11,10 +11,10 @@ export default {
 
   _buildSocialBillboards(scene) {
     var socialData = [
-      { x: -55, y: 8, z: -10, rotY:  0.5, accent: 0xff0050, label: 'TIKTOK'    },
-      { x:  55, y: 8, z: -10, rotY: -0.5, accent: 0xff0000, label: 'YOUTUBE'   },
-      { x: -60, y: 8, z: -45, rotY:  0.3, accent: 0x1da1f2, label: 'TWITTER/X' },
-      { x:  60, y: 8, z: -45, rotY: -0.3, accent: 0xe1306c, label: 'INSTAGRAM' },
+      { x: -62, y: 8, z: -15, rotY:  0.5, accent: 0xff0050, label: 'TIKTOK'    },
+      { x:  62, y: 8, z: -15, rotY: -0.5, accent: 0xff0000, label: 'YOUTUBE'   },
+      { x: -65, y: 8, z: -50, rotY:  0.3, accent: 0x1da1f2, label: 'TWITTER/X' },
+      { x:  65, y: 8, z: -50, rotY: -0.3, accent: 0xe1306c, label: 'INSTAGRAM' },
     ];
 
     socialData.forEach(function(d) {
@@ -75,10 +75,10 @@ export default {
 
   _buildNeonSigns(scene) {
     var signs = [
-      { x: -55, y: 5, z: -30, color: 0x9900ff, w: 10, h: 1.4 },
-      { x:  55, y: 5, z: -30, color: 0x00ffcc, w: 10, h: 1.4 },
-      { x: -55, y: 4, z: -55, color: 0xff00aa, w: 8,  h: 1.1 },
-      { x:  55, y: 4, z: -55, color: 0xffcc00, w: 8,  h: 1.1 },
+      { x: -60, y: 5, z: -32, color: 0x9900ff, w: 10, h: 1.4 },
+      { x:  60, y: 5, z: -32, color: 0x00ffcc, w: 10, h: 1.4 },
+      { x: -60, y: 4, z: -58, color: 0xff00aa, w: 8,  h: 1.1 },
+      { x:  60, y: 4, z: -58, color: 0xffcc00, w: 8,  h: 1.1 },
     ];
 
     signs.forEach(function(s) {
