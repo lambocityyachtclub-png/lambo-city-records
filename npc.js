@@ -1,104 +1,134 @@
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 
-let npcGroup;
-let time = 0;
+let heroMesh;
 let crowdNPCs = [];
+let time = 0;
+let giftGiven = false;
 
 export default {
   init(scene) {
-    this._buildHeroNPC(scene);
+    this._buildHero(scene);
     this._buildCrowd(scene);
   },
 
-  _buildHeroNPC(scene) {
-    npcGroup = new THREE.Group();
+  _buildHero(scene) {
+    heroMesh = new THREE.Group();
 
-    var body = new THREE.Mesh(
+    // BODY — Lambo City hoodie black
+    const body = new THREE.Mesh(
       new THREE.BoxGeometry(1.2, 1.8, 0.7),
-      new THREE.MeshStandardMaterial({ color: 0x1a0a2e })
+      new THREE.MeshStandardMaterial({ color: 0x0a0a0a })
     );
     body.position.y = 1.8;
-    npcGroup.add(body);
+    heroMesh.add(body);
 
-    var head = new THREE.Mesh(
+    // HOODIE LOGO
+    const logo = new THREE.Mesh(
+      new THREE.BoxGeometry(0.55, 0.45, 0.06),
+      new THREE.MeshStandardMaterial({
+        color: 0xffd700, emissive: 0xffd700, emissiveIntensity: 0.8
+      })
+    );
+    logo.position.set(0, 1.9, 0.38);
+    heroMesh.add(logo);
+
+    // HEAD
+    const head = new THREE.Mesh(
       new THREE.BoxGeometry(0.9, 0.9, 0.9),
       new THREE.MeshStandardMaterial({ color: 0x8d5524 })
     );
     head.position.y = 3.15;
-    npcGroup.add(head);
+    heroMesh.add(head);
 
-    var cap = new THREE.Mesh(
+    // GOLD CAP
+    const cap = new THREE.Mesh(
       new THREE.BoxGeometry(0.95, 0.25, 0.95),
-      new THREE.MeshStandardMaterial({ color: 0xffd700 })
+      new THREE.MeshStandardMaterial({
+        color: 0xffd700, emissive: 0xffd700, emissiveIntensity: 0.2
+      })
     );
     cap.position.y = 3.65;
-    npcGroup.add(cap);
+    heroMesh.add(cap);
 
-    var capBrim = new THREE.Mesh(
+    const brim = new THREE.Mesh(
       new THREE.BoxGeometry(1.1, 0.08, 0.5),
       new THREE.MeshStandardMaterial({ color: 0xffd700 })
     );
-    capBrim.position.set(0, 3.52, 0.5);
-    npcGroup.add(capBrim);
+    brim.position.set(0, 3.52, 0.5);
+    heroMesh.add(brim);
 
+    // ARMS
     [-0.8, 0.8].forEach(function(x) {
-      var arm = new THREE.Mesh(
+      const arm = new THREE.Mesh(
         new THREE.BoxGeometry(0.35, 1.4, 0.35),
-        new THREE.MeshStandardMaterial({ color: 0x1a0a2e })
+        new THREE.MeshStandardMaterial({ color: 0x0a0a0a })
       );
       arm.position.set(x, 1.8, 0);
-      npcGroup.add(arm);
+      heroMesh.add(arm);
     });
 
+    // LEGS
     [-0.35, 0.35].forEach(function(x) {
-      var leg = new THREE.Mesh(
+      const leg = new THREE.Mesh(
         new THREE.BoxGeometry(0.45, 1.6, 0.45),
         new THREE.MeshStandardMaterial({ color: 0x111111 })
       );
       leg.position.set(x, 0.6, 0);
-      npcGroup.add(leg);
+      heroMesh.add(leg);
     });
 
-    var chain = new THREE.Mesh(
+    // WHITE SHOES
+    [-0.35, 0.35].forEach(function(x) {
+      const shoe = new THREE.Mesh(
+        new THREE.BoxGeometry(0.5, 0.25, 0.7),
+        new THREE.MeshStandardMaterial({ color: 0xffffff })
+      );
+      shoe.position.set(x, -0.22, 0.1);
+      heroMesh.add(shoe);
+    });
+
+    // GOLD CHAIN
+    const chain = new THREE.Mesh(
       new THREE.TorusGeometry(0.25, 0.04, 6, 12),
       new THREE.MeshStandardMaterial({
         color: 0xffd700, emissive: 0xffd700,
-        emissiveIntensity: 0.5, metalness: 1, roughness: 0.2
+        emissiveIntensity: 0.6, metalness: 1, roughness: 0.2
       })
     );
     chain.position.set(0, 2.1, 0.36);
     chain.rotation.x = Math.PI / 2;
-    npcGroup.add(chain);
+    heroMesh.add(chain);
 
-    var glow = new THREE.PointLight(0xffd700, 2, 8);
+    // HERO GLOW
+    const glow = new THREE.PointLight(0xffd700, 2, 8);
     glow.position.set(0, 2, 0);
-    npcGroup.add(glow);
+    heroMesh.add(glow);
 
-    npcGroup.position.set(3, 0.5, 6);
-    npcGroup.rotation.y = Math.PI;
-    scene.add(npcGroup);
+    heroMesh.position.set(2.5, 0.3, 6);
+    heroMesh.rotation.y = Math.PI;
+    scene.add(heroMesh);
 
-    setTimeout(function() { showHeroDialogue(); }, 1800);
+    setTimeout(function() { showHeroDialogue(); }, 1500);
   },
 
   _buildCrowd(scene) {
-    var colors = [
+    const colors = [
       0xff2200, 0x0044ff, 0x00aa44, 0xffaa00,
       0xaa00ff, 0xff0088, 0x00ffcc, 0xffffff
     ];
 
-    for (var i = 0; i < 20; i++) {
-      var npc = new THREE.Group();
-      var color = colors[i % colors.length];
+    for (let i = 0; i < 16; i++) {
+      const npc = new THREE.Group();
+      const color = colors[i % colors.length];
 
-      var body = new THREE.Mesh(
+      const body = new THREE.Mesh(
         new THREE.BoxGeometry(0.9, 1.5, 0.5),
         new THREE.MeshStandardMaterial({ color: color })
       );
       body.position.y = 1.5;
       npc.add(body);
 
-      var head = new THREE.Mesh(
+      const head = new THREE.Mesh(
         new THREE.BoxGeometry(0.7, 0.7, 0.7),
         new THREE.MeshStandardMaterial({ color: 0x8d5524 })
       );
@@ -106,7 +136,7 @@ export default {
       npc.add(head);
 
       [-0.35, 0.35].forEach(function(x) {
-        var leg = new THREE.Mesh(
+        const leg = new THREE.Mesh(
           new THREE.BoxGeometry(0.35, 1.2, 0.35),
           new THREE.MeshStandardMaterial({ color: 0x222222 })
         );
@@ -114,38 +144,47 @@ export default {
         npc.add(leg);
       });
 
-      // SPREAD AROUND STAGE AREA
-      var angle = (i / 20) * Math.PI * 2;
-      var radius = 8 + Math.random() * 12;
-      var x = Math.cos(angle) * radius;
-      var z = -72 + Math.sin(angle) * 6;
-
-      npc.position.set(x, 0.5, z);
+      const angle = (i / 16) * Math.PI * 2;
+      const radius = 6 + Math.random() * 10;
+      npc.position.set(
+        Math.cos(angle) * radius,
+        0.3,
+        -72 + Math.sin(angle) * 5
+      );
       npc.rotation.y = Math.random() * Math.PI * 2;
       scene.add(npc);
       crowdNPCs.push({ mesh: npc, offset: Math.random() * Math.PI * 2 });
     }
   },
 
-  update(delta) {
+  update(delta, context) {
     time += delta;
 
-    // HERO BOB
-    if (npcGroup) {
-      npcGroup.position.y = 0.5 + Math.sin(time * 1.2) * 0.05;
-      npcGroup.rotation.y = Math.PI + Math.sin(time * 0.4) * 0.2;
+    if (heroMesh) {
+      heroMesh.position.y = 0.3 + Math.sin(time * 1.2) * 0.05;
+      heroMesh.rotation.y = Math.PI + Math.sin(time * 0.4) * 0.15;
     }
 
-    // CROWD DANCE
     crowdNPCs.forEach(function(c) {
-      c.mesh.position.y = 0.5 + Math.sin(time * 3 + c.offset) * 0.15;
-      c.mesh.rotation.y += delta * 0.5;
+      c.mesh.position.y = 0.3 + Math.sin(time * 3 + c.offset) * 0.12;
+      c.mesh.rotation.y += delta * 0.4;
     });
+
+    // GIFT — when player gets close to Hero
+    if (!giftGiven && context.player) {
+      const px = context.player.position.x;
+      const pz = context.player.position.z;
+      const dist = Math.sqrt((px - 2.5) * (px - 2.5) + (pz - 6) * (pz - 6));
+      if (dist < 4) {
+        giftGiven = true;
+        showGiftPopup();
+      }
+    }
   }
 };
 
 function showHeroDialogue() {
-  var box = document.createElement('div');
+  const box = document.createElement('div');
   box.style.cssText = `
     position:fixed;bottom:130px;left:50%;transform:translateX(-50%);
     background:rgba(0,0,0,0.88);
@@ -160,9 +199,9 @@ function showHeroDialogue() {
     <div style="color:#ffd700;font-size:11px;letter-spacing:3px;margin-bottom:8px;">HERO</div>
     <div style="font-size:14px;line-height:1.7;color:#eee;">
       "Welcome to <span style="color:#ffd700;font-weight:bold;">Lambo City</span>.
-      Walk the dock, reach the stage, earn your
-      <span style="color:#ff00aa;font-weight:bold;">Boarding Pass</span>.
-      Your legend starts now."
+      This is where legends are made.
+      Walk the dock, reach the Yacht Club,
+      earn your <span style="color:#ff00aa;font-weight:bold;">Boarding Pass</span>."
     </div>
     <button onclick="this.parentElement.remove()" style="
       margin-top:14px;
@@ -172,4 +211,45 @@ function showHeroDialogue() {
     ">LET'S GO →</button>
   `;
   document.body.appendChild(box);
+}
+
+function showGiftPopup() {
+  const gift = document.createElement('div');
+  gift.style.cssText = `
+    position:fixed;top:50%;left:50%;
+    transform:translate(-50%,-50%);
+    background:linear-gradient(135deg,#0a0020,#1a0040);
+    border:2px solid #ffd700;border-radius:16px;
+    padding:28px 36px;color:white;text-align:center;
+    z-index:500;pointer-events:all;
+    box-shadow:0 0 60px rgba(255,215,0,0.4);
+    animation:fadeIn 0.5s ease;
+  `;
+  gift.innerHTML = `
+    <div style="font-size:32px;margin-bottom:10px;">🎁</div>
+    <div style="color:#ffd700;font-size:11px;letter-spacing:3px;margin-bottom:8px;">
+      HERO GIFTED YOU
+    </div>
+    <div style="font-size:18px;font-weight:bold;margin-bottom:6px;">
+      LAMBO CITY HOODIE
+    </div>
+    <div style="color:#aaa;font-size:11px;margin-bottom:16px;">
+      Exclusive Lambo City Records merch.<br>
+      Wear it with pride, citizen.
+    </div>
+    <div style="
+      background:rgba(255,215,0,0.1);
+      border:1px solid rgba(255,215,0,0.3);
+      border-radius:8px;padding:10px;margin-bottom:16px;
+      color:#ffd700;font-size:10px;letter-spacing:2px;
+    ">
+      + LAMBO CITY HOODIE EQUIPPED
+    </div>
+    <button onclick="this.parentElement.remove()" style="
+      background:linear-gradient(90deg,#9900ff,#ff00aa);
+      border:none;border-radius:20px;color:white;
+      padding:10px 28px;font-size:12px;letter-spacing:2px;cursor:pointer;
+    ">WEAR IT →</button>
+  `;
+  document.body.appendChild(gift);
 }
