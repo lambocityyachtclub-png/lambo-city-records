@@ -2,61 +2,55 @@ import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 
 export default {
   init(scene) {
-    const trunkMat = new THREE.MeshStandardMaterial({ color: 0x8b5a2b, roughness: 1 });
-    const leafMat  = new THREE.MeshStandardMaterial({ color: 0x1a7a3a, roughness: 0.8 });
+    const trunkMat = new THREE.MeshStandardMaterial({ color: 0x6b4226, roughness: 1 });
+    const leafMat  = new THREE.MeshStandardMaterial({ color: 0x1a5c2a, roughness: 0.8 });
+    const leafMat2 = new THREE.MeshStandardMaterial({ color: 0x0d3d1a, roughness: 0.8 });
 
     const positions = [
-      [-18, 0, -10],
-      [-22, 0, -25],
-      [-18, 0, -40],
-      [-24, 0, -55],
-      [ 18, 0, -10],
-      [ 22, 0, -25],
-      [ 18, 0, -40],
-      [ 24, 0, -55],
-      [-14, 0, -65],
-      [ 14, 0, -65]
+      // LEFT SIDE
+      { x: -16, z:  5,  h: 10, lean:  0.08 },
+      { x: -20, z: -10, h: 12, lean:  0.12 },
+      { x: -17, z: -25, h: 9,  lean:  0.06 },
+      { x: -22, z: -42, h: 13, lean:  0.10 },
+      { x: -16, z: -58, h: 11, lean:  0.08 },
+      // RIGHT SIDE
+      { x:  16, z:  5,  h: 10, lean: -0.08 },
+      { x:  20, z: -10, h: 12, lean: -0.12 },
+      { x:  17, z: -25, h: 9,  lean: -0.06 },
+      { x:  22, z: -42, h: 13, lean: -0.10 },
+      { x:  16, z: -58, h: 11, lean: -0.08 },
+      // NEAR STAGE
+      { x: -14, z: -65, h: 8,  lean:  0.05 },
+      { x:  14, z: -65, h: 8,  lean: -0.05 },
     ];
 
-    positions.forEach(function(coord) {
-      var x = coord[0];
-      var y = coord[1];
-      var z = coord[2];
+    positions.forEach(function(p) {
+      const palm = new THREE.Group();
 
-      var palm = new THREE.Group();
-
-      var trunk = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.25, 0.45, 7, 8),
+      // TRUNK — segmented for curve
+      const trunk = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.2, 0.4, p.h, 8),
         trunkMat
       );
-      trunk.position.y = 3.5;
+      trunk.position.y = p.h / 2;
+      trunk.rotation.z = p.lean;
       palm.add(trunk);
 
-      var leaf1 = new THREE.Mesh(
-        new THREE.SphereGeometry(2.2, 7, 7),
-        leafMat
-      );
-      leaf1.position.y = 7.5;
-      palm.add(leaf1);
+      // LEAF CLUSTER — 3 layers
+      const leafOffsetX = Math.sin(p.lean) * p.h * 0.5;
+      [0, 0.7, 1.3].forEach(function(yOff, i) {
+        const leaves = new THREE.Mesh(
+          new THREE.SphereGeometry(2.4 - i * 0.4, 7, 5),
+          i === 0 ? leafMat : leafMat2
+        );
+        leaves.position.set(leafOffsetX, p.h + yOff, 0);
+        leaves.scale.set(1, 0.5, 1);
+        palm.add(leaves);
+      });
 
-      var leaf2 = new THREE.Mesh(
-        new THREE.SphereGeometry(1.8, 7, 7),
-        leafMat
-      );
-      leaf2.position.y = 8.3;
-      palm.add(leaf2);
-
-      var leaf3 = new THREE.Mesh(
-        new THREE.SphereGeometry(1.4, 7, 7),
-        leafMat
-      );
-      leaf3.position.y = 8.9;
-      palm.add(leaf3);
-
-      palm.position.set(x, y, z);
+      palm.position.set(p.x, 0, p.z);
       scene.add(palm);
     });
   },
-
   update() {}
 };
