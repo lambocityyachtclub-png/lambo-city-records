@@ -4,7 +4,6 @@ export default {
   init(scene) {
     var yacht = new THREE.Group();
 
-    // HULL
     var hull = new THREE.Mesh(
       new THREE.BoxGeometry(22, 3, 8),
       new THREE.MeshStandardMaterial({
@@ -14,7 +13,6 @@ export default {
     hull.position.y = 1.5;
     yacht.add(hull);
 
-    // LOWER DECK
     var deck = new THREE.Mesh(
       new THREE.BoxGeometry(20, 0.3, 7.5),
       new THREE.MeshStandardMaterial({ color: 0xe8e8e8 })
@@ -22,7 +20,6 @@ export default {
     deck.position.y = 3.1;
     yacht.add(deck);
 
-    // CABIN LEVEL 1
     var cabin1 = new THREE.Mesh(
       new THREE.BoxGeometry(12, 2.5, 6),
       new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.1 })
@@ -30,7 +27,6 @@ export default {
     cabin1.position.set(1, 4.4, 0);
     yacht.add(cabin1);
 
-    // CABIN LEVEL 2
     var cabin2 = new THREE.Mesh(
       new THREE.BoxGeometry(7, 2, 5),
       new THREE.MeshStandardMaterial({ color: 0xf0f0f0 })
@@ -38,7 +34,6 @@ export default {
     cabin2.position.set(2, 6.6, 0);
     yacht.add(cabin2);
 
-    // BRIDGE
     var bridge = new THREE.Mesh(
       new THREE.BoxGeometry(4, 1.2, 4),
       new THREE.MeshStandardMaterial({ color: 0xe0e0e0 })
@@ -46,7 +41,6 @@ export default {
     bridge.position.set(3, 8.2, 0);
     yacht.add(bridge);
 
-    // MAST
     var mast = new THREE.Mesh(
       new THREE.CylinderGeometry(0.1, 0.1, 12, 6),
       new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 0.8 })
@@ -54,7 +48,6 @@ export default {
     mast.position.set(3, 15, 0);
     yacht.add(mast);
 
-    // LAMBO CITY SIGN
     var sign = new THREE.Mesh(
       new THREE.BoxGeometry(8, 1, 0.1),
       new THREE.MeshStandardMaterial({
@@ -64,7 +57,6 @@ export default {
     sign.position.set(0, 4.5, -4.1);
     yacht.add(sign);
 
-    // CYAN NEON STRIP
     var neon = new THREE.Mesh(
       new THREE.BoxGeometry(22, 0.15, 0.15),
       new THREE.MeshStandardMaterial({
@@ -74,7 +66,6 @@ export default {
     neon.position.set(0, 0.3, 4.1);
     yacht.add(neon);
 
-    // WINDOWS
     [-1, 1].forEach(function(side) {
       for (var i = 0; i < 4; i++) {
         var win = new THREE.Mesh(
@@ -89,36 +80,18 @@ export default {
       }
     });
 
-    // RAILING
-    var railMat = new THREE.MeshStandardMaterial({
-      color: 0xcccccc, metalness: 0.9
-    });
-    var rail = new THREE.Mesh(
-      new THREE.BoxGeometry(20, 0.1, 0.1), railMat
-    );
-    rail.position.set(0, 3.35, 3.8);
-    yacht.add(rail);
-
-    var rail2 = new THREE.Mesh(
-      new THREE.BoxGeometry(20, 0.1, 0.1), railMat
-    );
-    rail2.position.set(0, 3.35, -3.8);
-    yacht.add(rail2);
-
-    // ANCHOR LIGHT
     var anchorLight = new THREE.PointLight(0x00ffff, 3, 40);
     anchorLight.position.set(0, 4, 0);
     yacht.add(anchorLight);
 
-    // GOLD GLOW
     var goldLight = new THREE.PointLight(0xffd700, 1.5, 20);
     goldLight.position.set(0, 8, -4);
     yacht.add(goldLight);
 
-    yacht.position.set(38, 0.1, -25);
+    // SITS ON WATER SURFACE
+    yacht.position.set(36, -0.5, -25);
     yacht.rotation.y = Math.PI / 6;
     scene.add(yacht);
   },
-
   update() {}
 };
