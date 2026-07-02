@@ -5,63 +5,60 @@ let time = 0;
 
 export default {
   init(scene) {
-    // AMBIENT — deep warm night
-    const ambient = new THREE.AmbientLight(0x220a44, 0.8);
+    // STRONG AMBIENT — warm golden
+    var ambient = new THREE.AmbientLight(0xffaa55, 1.2);
     scene.add(ambient);
 
-    // SUN — golden hour, low angle from right
-    const sun = new THREE.DirectionalLight(0xff7722, 1.8);
-    sun.position.set(100, 40, -60);
+    // SUN — powerful golden hour
+    var sun = new THREE.DirectionalLight(0xff8844, 3.0);
+    sun.position.set(80, 60, 20);
     scene.add(sun);
 
-    // MOON FILL — cool blue left
-    const moonFill = new THREE.DirectionalLight(0x2244aa, 0.4);
-    moonFill.position.set(-100, 60, 40);
-    scene.add(moonFill);
+    // FILL — cool blue opposite
+    var fill = new THREE.DirectionalLight(0x4466cc, 0.8);
+    fill.position.set(-80, 40, -20);
+    scene.add(fill);
 
-    // DOCK LANTERN POINT LIGHTS
-    const lanternZ = [-55, -45, -35, -25, -15, -5, 5, 15];
+    // GROUND FILL — stops dark undersides
+    var groundFill = new THREE.DirectionalLight(0xff6622, 0.5);
+    groundFill.position.set(0, -10, 0);
+    scene.add(groundFill);
+
+    // DOCK LANTERNS
+    var lanternZ = [-50,-40,-30,-20,-10,0,10,20];
     lanternZ.forEach(function(z, i) {
-      const light = new THREE.PointLight(0xffaa33, 1.8, 9);
-      light.position.set(-5.5, 3, z);
-      scene.add(light);
-      lanternLights.push(light);
-
-      const light2 = new THREE.PointLight(0xffaa33, 1.8, 9);
-      light2.position.set(5.5, 3, z);
-      scene.add(light2);
-      lanternLights.push(light2);
+      [-5.5, 5.5].forEach(function(x) {
+        var l = new THREE.PointLight(0xffaa33, 2.5, 12);
+        l.position.set(x, 3, z);
+        scene.add(l);
+        lanternLights.push(l);
+      });
     });
 
     // WATER TEAL LIGHT
-    const waterLight = new THREE.PointLight(0x00aacc, 2, 60);
-    waterLight.position.set(0, 0.5, -10);
+    var waterLight = new THREE.PointLight(0x00bbcc, 2, 80);
+    waterLight.position.set(0, 0, -20);
     scene.add(waterLight);
 
-    // STAGE WASH — purple
-    const stagePurple = new THREE.PointLight(0x9900ff, 6, 100);
+    // STAGE PURPLE WASH
+    var stagePurple = new THREE.PointLight(0x9900ff, 8, 120);
     stagePurple.position.set(0, 20, -65);
     scene.add(stagePurple);
 
-    // STAGE PINK SIDE WASH
-    const stagePink = new THREE.PointLight(0xff00aa, 3, 60);
-    stagePink.position.set(-20, 10, -70);
-    scene.add(stagePink);
+    // STAGE SIDES
+    var stageL = new THREE.PointLight(0xff00aa, 4, 60);
+    stageL.position.set(-25, 10, -70);
+    scene.add(stageL);
 
-    const stageBlue = new THREE.PointLight(0x0044ff, 3, 60);
-    stageBlue.position.set(20, 10, -70);
-    scene.add(stageBlue);
-
-    // YACHT LIGHT
-    const yachtLight = new THREE.PointLight(0x00ffff, 2, 35);
-    yachtLight.position.set(36, 5, -25);
-    scene.add(yachtLight);
+    var stageR = new THREE.PointLight(0x0044ff, 4, 60);
+    stageR.position.set(25, 10, -70);
+    scene.add(stageR);
   },
 
   update(delta) {
     time += delta;
     lanternLights.forEach(function(l, i) {
-      l.intensity = 1.5 + Math.sin(time * 1.8 + i * 0.3) * 0.4;
+      l.intensity = 2.0 + Math.sin(time * 1.8 + i * 0.3) * 0.5;
     });
   }
 };
