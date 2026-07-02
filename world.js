@@ -3,10 +3,37 @@ import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 export default {
   init(scene) {
 
+    // MARINA GROUND — left side (villas)
+    var groundMat = new THREE.MeshStandardMaterial({
+      color: 0x1a1a2e, roughness: 1
+    });
+    var leftGround = new THREE.Mesh(
+      new THREE.BoxGeometry(80, 0.4, 120),
+      groundMat
+    );
+    leftGround.position.set(-47, 0.0, -20);
+    scene.add(leftGround);
+
+    // MARINA GROUND — right side (yacht/jet skis)
+    var rightGround = new THREE.Mesh(
+      new THREE.BoxGeometry(80, 0.4, 120),
+      groundMat
+    );
+    rightGround.position.set(47, 0.0, -20);
+    scene.add(rightGround);
+
+    // STAGE GROUND
+    var stageGround = new THREE.Mesh(
+      new THREE.BoxGeometry(120, 0.4, 60),
+      groundMat
+    );
+    stageGround.position.set(0, 0.0, -72);
+    scene.add(stageGround);
+
     // STAGE PLATFORM
-    var stageMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.6 });
     var stage = new THREE.Mesh(
-      new THREE.BoxGeometry(32, 1.2, 16), stageMat
+      new THREE.BoxGeometry(32, 1.2, 16),
+      new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.6 })
     );
     stage.position.set(0, 0.6, -74);
     scene.add(stage);
@@ -72,12 +99,98 @@ export default {
       scene.add(stair);
     }
 
-    // BUILDINGS — reduced count for performance
+    // VILLAS — LEFT SIDE
+    var villaMat = new THREE.MeshStandardMaterial({ color: 0x4a2e1a, roughness: 0.9 });
+    var roofMat  = new THREE.MeshStandardMaterial({ color: 0x2a1a0a, roughness: 1 });
+    var glassMat = new THREE.MeshStandardMaterial({
+      color: 0x88ccff, transparent: true, opacity: 0.5,
+      emissive: 0xffaa44, emissiveIntensity: 0.3
+    });
+
+    var villaPositions = [
+      { x: -38, z: 5  },
+      { x: -38, z: -18 },
+      { x: -38, z: -41 },
+    ];
+
+    villaPositions.forEach(function(vp) {
+      // MAIN STRUCTURE
+      var villa = new THREE.Mesh(
+        new THREE.BoxGeometry(16, 9, 14),
+        villaMat
+      );
+      villa.position.set(vp.x, 4.5, vp.z);
+      scene.add(villa);
+
+      // ROOF
+      var roof = new THREE.Mesh(
+        new THREE.BoxGeometry(17, 1, 15),
+        roofMat
+      );
+      roof.position.set(vp.x, 9.5, vp.z);
+      scene.add(roof);
+
+      // BALCONY
+      var balcony = new THREE.Mesh(
+        new THREE.BoxGeometry(14, 0.3, 3),
+        new THREE.MeshStandardMaterial({ color: 0x3a2010 })
+      );
+      balcony.position.set(vp.x, 5.5, vp.z + 7.5);
+      scene.add(balcony);
+
+      // WINDOWS — warm lit
+      for (var row = 0; row < 2; row++) {
+        for (var col = 0; col < 3; col++) {
+          var win = new THREE.Mesh(
+            new THREE.BoxGeometry(2.5, 2, 0.1),
+            glassMat
+          );
+          win.position.set(
+            vp.x - 4 + col * 4,
+            3 + row * 4,
+            vp.z + 7.1
+          );
+          scene.add(win);
+        }
+      }
+
+      // VILLA WARM LIGHT
+      var vLight = new THREE.PointLight(0xffaa44, 2, 16);
+      vLight.position.set(vp.x, 4, vp.z + 6);
+      scene.add(vLight);
+
+      // POOL — teal glow
+      var pool = new THREE.Mesh(
+        new THREE.BoxGeometry(10, 0.2, 5),
+        new THREE.MeshStandardMaterial({
+          color: 0x00aacc, emissive: 0x00aacc,
+          emissiveIntensity: 0.6, transparent: true, opacity: 0.8
+        })
+      );
+      pool.position.set(vp.x, 0.3, vp.z + 11);
+      scene.add(pool);
+
+      var poolLight = new THREE.PointLight(0x00aacc, 1.5, 12);
+      poolLight.position.set(vp.x, 1, vp.z + 11);
+      scene.add(poolLight);
+
+      // NEON TRIM on villa
+      var neonTrim = new THREE.Mesh(
+        new THREE.BoxGeometry(16, 0.12, 0.12),
+        new THREE.MeshStandardMaterial({
+          color: 0x9900ff, emissive: 0x9900ff, emissiveIntensity: 2
+        })
+      );
+      neonTrim.position.set(vp.x, 0.4, vp.z + 7.1);
+      scene.add(neonTrim);
+    });
+
+    // BUILDINGS background
     var buildings = [
-      { x: -55, z: -45, w: 12, h: 20, color: 0x1a1a3e },
-      { x: -72, z: -62, w: 10, h: 28, color: 0x0d0d2b },
-      { x:  55, z: -45, w: 12, h: 18, color: 0x1a1a3e },
-      { x:  72, z: -62, w: 10, h: 24, color: 0x0d0d2b },
+      { x: -65, z: -45, w: 12, h: 20, color: 0x1a1a3e },
+      { x: -80, z: -62, w: 10, h: 28, color: 0x0d0d2b },
+      { x:  65, z: -45, w: 12, h: 18, color: 0x1a1a3e },
+      { x:  80, z: -62, w: 10, h: 24, color: 0x0d0d2b },
       { x:   0, z: -96, w: 18, h: 22, color: 0x0a0820 },
     ];
 
@@ -89,11 +202,9 @@ export default {
       building.position.set(b.x, b.h / 2, b.z);
       scene.add(building);
 
-      // WINDOWS — reduced for performance
       for (var row = 0; row < 4; row++) {
         for (var col = 0; col < 3; col++) {
-          var lit = Math.random() > 0.4;
-          if (!lit) continue;
+          if (Math.random() < 0.4) continue;
           var win = new THREE.Mesh(
             new THREE.BoxGeometry(1.2, 0.8, 0.1),
             new THREE.MeshStandardMaterial({
@@ -109,7 +220,6 @@ export default {
         }
       }
 
-      // ROOFTOP NEON
       var roofNeon = new THREE.Mesh(
         new THREE.BoxGeometry(b.w, 0.2, 0.2),
         new THREE.MeshStandardMaterial({
@@ -121,57 +231,15 @@ export default {
     });
 
     // NEON DOCK STRIPS
-    var neonMat = new THREE.MeshStandardMaterial({
-      color: 0x9900ff, emissive: 0x9900ff, emissiveIntensity: 1.5
-    });
     [-7, 7].forEach(function(x) {
       var strip = new THREE.Mesh(
-        new THREE.BoxGeometry(0.2, 0.05, 100), neonMat
+        new THREE.BoxGeometry(0.2, 0.05, 100),
+        new THREE.MeshStandardMaterial({
+          color: 0x9900ff, emissive: 0x9900ff, emissiveIntensity: 1.5
+        })
       );
       strip.position.set(x, 0.55, -25);
       scene.add(strip);
-    });
-
-    // VILLAS — left side like concept image
-    var villaMat = new THREE.MeshStandardMaterial({ color: 0x5c3d1e, roughness: 0.9 });
-    var roofMat  = new THREE.MeshStandardMaterial({ color: 0x3a2510, roughness: 1 });
-    [-1, 1].forEach(function(side) {
-      for (var v = 0; v < 3; v++) {
-        var villa = new THREE.Mesh(
-          new THREE.BoxGeometry(14, 8, 12),
-          villaMat
-        );
-        villa.position.set(side * 32, 4, -10 - v * 18);
-        scene.add(villa);
-
-        var roof = new THREE.Mesh(
-          new THREE.BoxGeometry(15, 1, 13),
-          roofMat
-        );
-        roof.position.set(side * 32, 8.5, -10 - v * 18);
-        scene.add(roof);
-
-        // VILLA WINDOWS
-        for (var w = 0; w < 3; w++) {
-          var vwin = new THREE.Mesh(
-            new THREE.BoxGeometry(2, 1.5, 0.1),
-            new THREE.MeshStandardMaterial({
-              color: 0xffee88, emissive: 0xffee88, emissiveIntensity: 0.6,
-              transparent: true, opacity: 0.8
-            })
-          );
-          vwin.position.set(
-            side * 32 - 4 + w * 4,
-            4, side > 0 ? -10 - v * 18 - 6.1 : -10 - v * 18 + 6.1
-          );
-          scene.add(vwin);
-        }
-
-        // VILLA LIGHT
-        var vLight = new THREE.PointLight(0xffaa44, 1, 12);
-        vLight.position.set(side * 32, 3, -10 - v * 18);
-        scene.add(vLight);
-      }
     });
   },
   update() {}
