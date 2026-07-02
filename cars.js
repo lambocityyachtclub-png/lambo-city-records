@@ -3,10 +3,10 @@ import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 export default {
   init(scene) {
     var carData = [
-      { x: -22, z:  5,  color: 0xffcc00, rot:  0.2 },
-      { x: -26, z: -15, color: 0xffffff, rot:  0.1 },
-      { x:  22, z:  5,  color: 0x111111, rot: -0.2 },
-      { x:  26, z: -15, color: 0xff2200, rot: -0.1 },
+      { x: -30, z:  8,  color: 0xffcc00, rot:  0.2 },
+      { x: -34, z: -12, color: 0xffffff, rot:  0.1 },
+      { x:  30, z:  8,  color: 0x111111, rot: -0.2 },
+      { x:  34, z: -12, color: 0xff2200, rot: -0.1 },
     ];
 
     carData.forEach(function(data) {
@@ -31,7 +31,7 @@ export default {
       car.add(cabin);
 
       var wheelMat = new THREE.MeshStandardMaterial({ color: 0x111111 });
-      var rimMat   = new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 1 });
+      var rimMat = new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 1 });
       [[1.6,1.3],[1.6,-1.3],[-1.6,1.3],[-1.6,-1.3]].forEach(function(w) {
         var wheel = new THREE.Mesh(
           new THREE.CylinderGeometry(0.4, 0.4, 0.35, 10), wheelMat
@@ -47,11 +47,11 @@ export default {
         car.add(rim);
       });
 
-      var neonMat = new THREE.MeshStandardMaterial({
-        color: 0x9900ff, emissive: 0x9900ff, emissiveIntensity: 2
-      });
       var underglow = new THREE.Mesh(
-        new THREE.BoxGeometry(5, 0.05, 2.5), neonMat
+        new THREE.BoxGeometry(5, 0.05, 2.5),
+        new THREE.MeshStandardMaterial({
+          color: 0x9900ff, emissive: 0x9900ff, emissiveIntensity: 2
+        })
       );
       underglow.position.y = 0.05;
       car.add(underglow);
@@ -60,8 +60,8 @@ export default {
       glowLight.position.set(0, 0.3, 0);
       car.add(glowLight);
 
-      // EXACTLY ON GROUND
-      car.position.set(data.x, 0, data.z);
+      // SIT ON MARINA GROUND
+      car.position.set(data.x, 0.2, data.z);
       car.rotation.y = data.rot;
       scene.add(car);
     });
