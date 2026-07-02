@@ -6,29 +6,25 @@ let time = 0;
 export default {
   init(scene) {
     this._buildSocialBillboards(scene);
-    this._buildNeonSigns(scene);
   },
 
   _buildSocialBillboards(scene) {
     var socialData = [
-      { x: -55, z: -10, rotY:  0.5, accent: 0xff0050, label: 'TIKTOK'    },
-      { x:  55, z: -10, rotY: -0.5, accent: 0xff0000, label: 'YOUTUBE'   },
-      { x: -58, z: -45, rotY:  0.3, accent: 0x1da1f2, label: 'TWITTER/X' },
-      { x:  58, z: -45, rotY: -0.3, accent: 0xe1306c, label: 'INSTAGRAM' },
+      { x: -70, z: -15, rotY:  0.5, accent: 0xff0050 },
+      { x:  70, z: -15, rotY: -0.5, accent: 0xff0000 },
+      { x: -75, z: -50, rotY:  0.3, accent: 0x1da1f2 },
+      { x:  75, z: -50, rotY: -0.3, accent: 0xe1306c },
     ];
 
     socialData.forEach(function(d) {
       var group = new THREE.Group();
 
-      // BOARD
       var back = new THREE.Mesh(
         new THREE.BoxGeometry(14, 6, 0.4),
         new THREE.MeshStandardMaterial({ color: 0x050505 })
       );
-      back.position.y = 0;
       group.add(back);
 
-      // ACCENT BORDER
       var border = new THREE.Mesh(
         new THREE.BoxGeometry(14.5, 6.5, 0.2),
         new THREE.MeshStandardMaterial({
@@ -38,9 +34,8 @@ export default {
       border.position.z = -0.2;
       group.add(border);
 
-      // COLOR BAR
       var bar = new THREE.Mesh(
-        new THREE.BoxGeometry(12, 1.6, 0.5),
+        new THREE.BoxGeometry(12, 1.5, 0.5),
         new THREE.MeshStandardMaterial({
           color: d.accent, emissive: d.accent, emissiveIntensity: 0.4
         })
@@ -48,67 +43,32 @@ export default {
       bar.position.set(0, 1.5, 0.3);
       group.add(bar);
 
-      // GOLD STRIP
-      var strip = new THREE.Mesh(
-        new THREE.BoxGeometry(10, 0.8, 0.5),
-        new THREE.MeshStandardMaterial({
-          color: 0xffd700, emissive: 0xffd700, emissiveIntensity: 0.3
-        })
-      );
-      strip.position.set(0, -1.8, 0.3);
-      group.add(strip);
-
-      // POLES — go from board bottom to ground
+      // POLES — tall enough to reach ground
       [-4.5, 4.5].forEach(function(x) {
         var pole = new THREE.Mesh(
-          new THREE.CylinderGeometry(0.18, 0.18, 12, 6),
+          new THREE.CylinderGeometry(0.2, 0.2, 14, 6),
           new THREE.MeshStandardMaterial({ color: 0x333333 })
         );
-        // pole center at -6 means bottom at -12, top at 0
-        pole.position.set(x, -9, 0);
+        pole.position.set(x, -10, 0);
         group.add(pole);
       });
 
-      var light = new THREE.PointLight(d.accent, 1.5, 20);
+      var light = new THREE.PointLight(d.accent, 2, 25);
       light.position.set(0, 0, 3);
       group.add(light);
 
-      // POSITION: board center at y=11, poles reach y=-1 (ground)
-      group.position.set(d.x, 11, d.z);
+      // board at Y=10, poles reach down to Y=-3 (ground)
+      group.position.set(d.x, 10, d.z);
       group.rotation.y = d.rotY;
       scene.add(group);
       billboards.push({ light: light, offset: Math.random() * Math.PI * 2 });
     });
   },
 
-  _buildNeonSigns(scene) {
-    var signs = [
-      { x: -58, y: 5, z: -28, color: 0x9900ff, w: 10, h: 1.4 },
-      { x:  58, y: 5, z: -28, color: 0x00ffcc, w: 10, h: 1.4 },
-      { x: -58, y: 4, z: -55, color: 0xff00aa, w: 8,  h: 1.1 },
-      { x:  58, y: 4, z: -55, color: 0xffcc00, w: 8,  h: 1.1 },
-    ];
-
-    signs.forEach(function(s) {
-      var sign = new THREE.Mesh(
-        new THREE.BoxGeometry(s.w, s.h, 0.2),
-        new THREE.MeshStandardMaterial({
-          color: s.color, emissive: s.color, emissiveIntensity: 1.5
-        })
-      );
-      sign.position.set(s.x, s.y, s.z);
-      scene.add(sign);
-
-      var light = new THREE.PointLight(s.color, 1.5, 14);
-      light.position.set(s.x, s.y, s.z + 2);
-      scene.add(light);
-    });
-  },
-
   update(delta) {
     time += delta;
     billboards.forEach(function(b) {
-      b.light.intensity = 1.2 + Math.sin(time * 1.5 + b.offset) * 0.6;
+      b.light.intensity = 1.5 + Math.sin(time * 1.5 + b.offset) * 0.6;
     });
   }
 };
