@@ -5,6 +5,7 @@ let time = 0;
 
 export default {
   init(scene) {
+    // JET SKIS on water
     var jetSkiData = [
       { x:  18, z: -8,  rot: -0.3 },
       { x:  22, z: -22, rot:  0.2 },
@@ -53,34 +54,13 @@ export default {
       glow.position.set(0, 0.5, 0);
       js.add(glow);
 
-      // SIT ON WATER at Y=-0.3
       js.position.set(data.x, -0.1, data.z);
       js.rotation.y = data.rot;
       scene.add(js);
       jetSkis.push(js);
     });
 
-    // DOCK FLAGS
-    var flagColors = [0x9900ff, 0xffd700, 0xff00aa];
-    [-5, 0, 5].forEach(function(x, i) {
-      var pole = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.06, 0.06, 5, 6),
-        new THREE.MeshStandardMaterial({ color: 0x888888 })
-      );
-      pole.position.set(x, 2.5, 22);
-      scene.add(pole);
-
-      var flag = new THREE.Mesh(
-        new THREE.BoxGeometry(2, 1, 0.05),
-        new THREE.MeshStandardMaterial({
-          color: flagColors[i], emissive: flagColors[i], emissiveIntensity: 0.4
-        })
-      );
-      flag.position.set(x + 1, 5.5, 22);
-      scene.add(flag);
-    });
-
-    // BUOYS on water
+    // BUOYS
     [-22, 22].forEach(function(x) {
       var buoy = new THREE.Mesh(
         new THREE.SphereGeometry(0.7, 8, 8),
@@ -88,11 +68,10 @@ export default {
           color: 0xff4400, emissive: 0xff2200, emissiveIntensity: 0.6
         })
       );
-      buoy.position.set(x, 0.2, -22);
+      buoy.position.set(x, 0.3, -22);
       scene.add(buoy);
-
       var bLight = new THREE.PointLight(0xff4400, 1, 8);
-      bLight.position.set(x, 0.8, -22);
+      bLight.position.set(x, 1, -22);
       scene.add(bLight);
     });
   },
@@ -100,7 +79,6 @@ export default {
   update(delta) {
     time += delta;
     jetSkis.forEach(function(js, i) {
-      // BOB on water surface
       js.position.y = -0.1 + Math.sin(time * 0.8 + i) * 0.12;
       js.rotation.z = Math.sin(time * 0.5 + i) * 0.04;
     });
