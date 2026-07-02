@@ -48,24 +48,27 @@ export default {
     mast.position.set(3, 15, 0);
     yacht.add(mast);
 
+    // LAMBO CITY SIGN
     var sign = new THREE.Mesh(
-      new THREE.BoxGeometry(8, 1, 0.1),
+      new THREE.BoxGeometry(10, 1.2, 0.1),
       new THREE.MeshStandardMaterial({
         color: 0xffd700, emissive: 0xffd700, emissiveIntensity: 1.5
       })
     );
-    sign.position.set(0, 4.5, -4.1);
+    sign.position.set(0, 5, -4.1);
     yacht.add(sign);
 
+    // CYAN NEON STRIP
     var neon = new THREE.Mesh(
       new THREE.BoxGeometry(22, 0.15, 0.15),
       new THREE.MeshStandardMaterial({
         color: 0x00ffff, emissive: 0x00ffff, emissiveIntensity: 3
       })
     );
-    neon.position.set(0, 0.3, 4.1);
+    neon.position.set(0, 0.5, 4.1);
     yacht.add(neon);
 
+    // WINDOWS
     [-1, 1].forEach(function(side) {
       for (var i = 0; i < 4; i++) {
         var win = new THREE.Mesh(
@@ -80,6 +83,7 @@ export default {
       }
     });
 
+    // LIGHTS
     var anchorLight = new THREE.PointLight(0x00ffff, 3, 40);
     anchorLight.position.set(0, 4, 0);
     yacht.add(anchorLight);
@@ -88,8 +92,8 @@ export default {
     goldLight.position.set(0, 8, -4);
     yacht.add(goldLight);
 
-    // SITS ON WATER SURFACE
-    yacht.position.set(36, -0.5, -25);
+    // ON WATER SURFACE
+    yacht.position.set(38, -0.3, -28);
     yacht.rotation.y = Math.PI / 6;
     scene.add(yacht);
   },
