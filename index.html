@@ -24,16 +24,16 @@
 <body>
   <div id="error"></div>
   <script type="module">
-    window.onerror = function(msg, src, line, col, err) {
-      const el = document.getElementById('error');
-      el.style.display = 'block';
-      el.textContent = 'ERROR: ' + msg + '\nFile: ' + src + '\nLine: ' + line + '\n\n' + (err?.stack || '');
-    };
     window.addEventListener('unhandledrejection', function(e) {
-      const el = document.getElementById('error');
+      var el = document.getElementById('error');
       el.style.display = 'block';
-      el.textContent = 'MODULE ERROR:\n' + (e.reason?.stack || e.reason || e);
+      el.textContent = 'ERROR:\n' + (e.reason?.stack || e.reason || e);
     });
+    window.onerror = function(msg, src, line, col, err) {
+      var el = document.getElementById('error');
+      el.style.display = 'block';
+      el.textContent = 'ERROR: ' + msg + '\nFile: ' + src + '\nLine: ' + line;
+    };
   </script>
   <script type="module" src="./main.js"></script>
 </body>
