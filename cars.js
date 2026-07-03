@@ -60,8 +60,8 @@ export default {
       glowLight.position.set(0, 0.3, 0);
       car.add(glowLight);
 
-      // SIT ON MARINA GROUND
-      car.position.set(data.x, 0.2, data.z);
+      // ON TOP OF MARINA GROUND (ground top = Y 0.5)
+      car.position.set(data.x, 0.5, data.z);
       car.rotation.y = data.rot;
       scene.add(car);
     });
