@@ -16,25 +16,27 @@ import Cars from "./cars.js";
 import CinematicFlowSystem from "./cinematicFlowSystem.js";
 import CinematicWorldSkin from "./cinematicWorldSkin.js";
 import CinematicDockCore from "./cinematicDockCore.js";
+import World from "./world.js";
 
 const engine = new Engine();
 engine.registerSystems({
-  scene: Scene,
-  camera: Camera,
-  renderer: Renderer,
-  input: Input,
-  player: Player,
-  dock: Dock,
-  water: Water,
-  sky: Sky,
-  lighting: Lighting,
-  palms: Palms,
-  yacht: Yacht,
-  hud: HUD,
-  npc: NPC,
-  cars: Cars,
-  cinematicFlow: CinematicFlowSystem,
-  worldSkin: CinematicWorldSkin,
-  dockCore: CinematicDockCore,
+  scene:        Scene,
+  camera:       Camera,
+  renderer:     Renderer,
+  world:        World,
+  input:        Input,
+  player:       Player,
+  dock:         Dock,
+  water:        Water,
+  sky:          Sky,
+  lighting:     Lighting,
+  palms:        Palms,
+  yacht:        Yacht,
+  hud:          HUD,
+  npc:          NPC,
+  cars:         Cars,
+  cinematicFlow:  CinematicFlowSystem,
+  worldSkin:    CinematicWorldSkin,
+  dockCore:     CinematicDockCore,
 });
 engine.init();
