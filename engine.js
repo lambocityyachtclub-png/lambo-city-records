@@ -4,19 +4,15 @@ export default class Engine {
     this.lastTime = 0;
     this.context = {};
   }
-  registerSystems(systems) {
-    this.systems = systems;
-  }
+  registerSystems(systems) { this.systems = systems; }
   init() {
     this.scene    = this.systems.scene?.init?.();
     this.camera   = this.systems.camera?.init?.();
     this.renderer = this.systems.renderer?.init?.();
-
     this.context.scene    = this.scene;
     this.context.camera   = this.camera;
     this.context.renderer = this.renderer;
     this.context.systems  = this.systems;
-
     this.systems.world?.init?.(this.scene);
     this.systems.water?.init?.(this.scene);
     this.systems.dock?.init?.(this.scene);
@@ -29,12 +25,9 @@ export default class Engine {
     this.systems.cinematicFlow?.init?.(this.scene);
     this.systems.worldSkin?.init?.(this.scene);
     this.systems.dockCore?.init?.(this.scene);
-    this.systems.yachtClub?.init?.(this.scene);
-
     this.systems.input?.init?.();
     this.systems.player?.init?.(this.scene);
     this.systems.hud?.init?.();
-
     this.loop();
   }
   loop = (time = 0) => {
@@ -46,9 +39,7 @@ export default class Engine {
   };
   update(delta) {
     this.context.delta = delta;
-    Object.values(this.systems).forEach((sys) => {
-      sys?.update?.(delta, this.context);
-    });
+    Object.values(this.systems).forEach((sys) => { sys?.update?.(delta, this.context); });
   }
   render() {
     if (!this.scene || !this.camera || !this.renderer) return;
