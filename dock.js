@@ -7,43 +7,39 @@ export default {
     const postMat  = new THREE.MeshStandardMaterial({ color: 0x5c3d1e, roughness: 1 });
     const railMat  = new THREE.MeshStandardMaterial({ color: 0x3a2510, roughness: 0.8 });
 
-    const DOCK_Y = 0.5;
+    const DOCK_Y = 0.8;
 
     // MAIN PLATFORM
-    const base = new THREE.Mesh(
-      new THREE.BoxGeometry(14, 0.4, 100),
-      woodMat
+    var base = new THREE.Mesh(
+      new THREE.BoxGeometry(14, 0.4, 100), woodMat
     );
     base.position.set(0, DOCK_Y, -20);
     scene.add(base);
 
     // PLANKS
     for (var z = -65; z < 35; z += 2) {
-      const plank = new THREE.Mesh(
-        new THREE.BoxGeometry(13.5, 0.15, 1.2),
-        plankMat
+      var plank = new THREE.Mesh(
+        new THREE.BoxGeometry(13.5, 0.15, 1.2), plankMat
       );
       plank.position.set(0, DOCK_Y + 0.28, z);
       scene.add(plank);
     }
 
-    // POSTS
+    // POSTS — go down into water
     [-6, 6].forEach(function(x) {
       for (var z = -65; z < 35; z += 8) {
-        const post = new THREE.Mesh(
-          new THREE.CylinderGeometry(0.2, 0.2, 5, 8),
-          postMat
+        var post = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.2, 0.2, 6, 8), postMat
         );
-        post.position.set(x, DOCK_Y - 2, z);
+        post.position.set(x, DOCK_Y - 2.5, z);
         scene.add(post);
       }
     });
 
     // RAILINGS
     [-6.2, 6.2].forEach(function(x) {
-      const rail = new THREE.Mesh(
-        new THREE.BoxGeometry(0.12, 0.6, 100),
-        railMat
+      var rail = new THREE.Mesh(
+        new THREE.BoxGeometry(0.12, 0.6, 100), railMat
       );
       rail.position.set(x, DOCK_Y + 0.6, -20);
       scene.add(rail);
@@ -52,33 +48,27 @@ export default {
     // LANTERNS
     for (var lz = -60; lz < 30; lz += 8) {
       [-5.5, 5.5].forEach(function(lx) {
-        // pole
-        const pole = new THREE.Mesh(
+        var pole = new THREE.Mesh(
           new THREE.CylinderGeometry(0.06, 0.06, 2.5, 6),
           new THREE.MeshStandardMaterial({ color: 0x222222 })
         );
         pole.position.set(lx, DOCK_Y + 1.5, lz);
         scene.add(pole);
 
-        // lantern box
-        const lantern = new THREE.Mesh(
+        var lantern = new THREE.Mesh(
           new THREE.BoxGeometry(0.4, 0.5, 0.4),
           new THREE.MeshStandardMaterial({
-            color: 0xffcc44,
-            emissive: 0xffaa00,
-            emissiveIntensity: 1.8
+            color: 0xffcc44, emissive: 0xffaa00, emissiveIntensity: 2
           })
         );
         lantern.position.set(lx, DOCK_Y + 2.9, lz);
         scene.add(lantern);
 
-        // glow
-        const glow = new THREE.PointLight(0xffaa33, 1.5, 7);
+        var glow = new THREE.PointLight(0xffaa33, 2, 8);
         glow.position.set(lx, DOCK_Y + 2.9, lz);
         scene.add(glow);
       });
     }
   },
-
   update() {}
 };
