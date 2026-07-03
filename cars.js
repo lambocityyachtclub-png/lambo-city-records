@@ -3,10 +3,10 @@ import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 export default {
   init(scene) {
     var carData = [
-      { x: -30, z:  8,  color: 0xffcc00, rot:  0.2 },
-      { x: -34, z: -12, color: 0xffffff, rot:  0.1 },
-      { x:  30, z:  8,  color: 0x111111, rot: -0.2 },
-      { x:  34, z: -12, color: 0xff2200, rot: -0.1 },
+      { x: -28, z:  8,  color: 0xffcc00, rot:  0.2 },
+      { x: -32, z: -14, color: 0xffffff, rot:  0.1 },
+      { x:  28, z:  8,  color: 0x111111, rot: -0.2 },
+      { x:  32, z: -14, color: 0xff2200, rot: -0.1 },
     ];
 
     carData.forEach(function(data) {
@@ -60,7 +60,7 @@ export default {
       glowLight.position.set(0, 0.3, 0);
       car.add(glowLight);
 
-      // ON TOP OF MARINA GROUND (ground top = Y 0.5)
+      // GROUND TOP = Y 0.5, so car base at 0.5
       car.position.set(data.x, 0.5, data.z);
       car.rotation.y = data.rot;
       scene.add(car);
