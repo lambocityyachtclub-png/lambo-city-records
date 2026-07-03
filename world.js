@@ -3,31 +3,32 @@ import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 export default {
   init(scene) {
 
-    // MARINA GROUND — left side (villas)
+    // MARINA GROUND LEFT — villas side
     var groundMat = new THREE.MeshStandardMaterial({
-      color: 0x1a1a2e, roughness: 1
+      color: 0x2a1a0e, roughness: 1, metalness: 0
     });
+
     var leftGround = new THREE.Mesh(
-      new THREE.BoxGeometry(80, 0.4, 120),
+      new THREE.BoxGeometry(70, 0.5, 130),
       groundMat
     );
-    leftGround.position.set(-47, 0.0, -20);
+    leftGround.position.set(-44, 0.25, -20);
     scene.add(leftGround);
 
-    // MARINA GROUND — right side (yacht/jet skis)
+    // MARINA GROUND RIGHT — yacht/cars side
     var rightGround = new THREE.Mesh(
-      new THREE.BoxGeometry(80, 0.4, 120),
+      new THREE.BoxGeometry(70, 0.5, 130),
       groundMat
     );
-    rightGround.position.set(47, 0.0, -20);
+    rightGround.position.set(44, 0.25, -20);
     scene.add(rightGround);
 
     // STAGE GROUND
     var stageGround = new THREE.Mesh(
-      new THREE.BoxGeometry(120, 0.4, 60),
-      groundMat
+      new THREE.BoxGeometry(140, 0.5, 60),
+      new THREE.MeshStandardMaterial({ color: 0x111118, roughness: 1 })
     );
-    stageGround.position.set(0, 0.0, -72);
+    stageGround.position.set(0, 0.25, -72);
     scene.add(stageGround);
 
     // STAGE PLATFORM
@@ -35,7 +36,7 @@ export default {
       new THREE.BoxGeometry(32, 1.2, 16),
       new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.6 })
     );
-    stage.position.set(0, 0.6, -74);
+    stage.position.set(0, 0.85, -74);
     scene.add(stage);
 
     // STAGE BACK WALL
@@ -95,103 +96,100 @@ export default {
         new THREE.BoxGeometry(14, 0.3, 1.5),
         new THREE.MeshStandardMaterial({ color: 0x1a1a1a })
       );
-      stair.position.set(0, 0.15 + i * 0.25, -66 - i * 1.5);
+      stair.position.set(0, 0.4 + i * 0.25, -66 - i * 1.5);
       scene.add(stair);
     }
 
-    // VILLAS — LEFT SIDE
-    var villaMat = new THREE.MeshStandardMaterial({ color: 0x4a2e1a, roughness: 0.9 });
-    var roofMat  = new THREE.MeshStandardMaterial({ color: 0x2a1a0a, roughness: 1 });
-    var glassMat = new THREE.MeshStandardMaterial({
-      color: 0x88ccff, transparent: true, opacity: 0.5,
-      emissive: 0xffaa44, emissiveIntensity: 0.3
-    });
-
+    // VILLAS — LEFT SIDE like concept image
     var villaPositions = [
-      { x: -38, z: 5  },
-      { x: -38, z: -18 },
-      { x: -38, z: -41 },
+      { z:  8  },
+      { z: -16 },
+      { z: -40 },
     ];
 
     villaPositions.forEach(function(vp) {
-      // MAIN STRUCTURE
+      var x = -38;
+
+      // MAIN VILLA BODY
       var villa = new THREE.Mesh(
-        new THREE.BoxGeometry(16, 9, 14),
-        villaMat
+        new THREE.BoxGeometry(18, 9, 14),
+        new THREE.MeshStandardMaterial({ color: 0x4a2e1a, roughness: 0.9 })
       );
-      villa.position.set(vp.x, 4.5, vp.z);
+      villa.position.set(x, 4.75, vp.z);
       scene.add(villa);
 
       // ROOF
       var roof = new THREE.Mesh(
-        new THREE.BoxGeometry(17, 1, 15),
-        roofMat
+        new THREE.BoxGeometry(19, 0.8, 15),
+        new THREE.MeshStandardMaterial({ color: 0x2a1a0a, roughness: 1 })
       );
-      roof.position.set(vp.x, 9.5, vp.z);
+      roof.position.set(x, 9.65, vp.z);
       scene.add(roof);
 
-      // BALCONY
+      // BALCONY SLAB
       var balcony = new THREE.Mesh(
-        new THREE.BoxGeometry(14, 0.3, 3),
+        new THREE.BoxGeometry(16, 0.3, 3),
         new THREE.MeshStandardMaterial({ color: 0x3a2010 })
       );
-      balcony.position.set(vp.x, 5.5, vp.z + 7.5);
+      balcony.position.set(x, 6, vp.z + 7.5);
       scene.add(balcony);
 
-      // WINDOWS — warm lit
+      // WINDOWS — warm orange glow
       for (var row = 0; row < 2; row++) {
-        for (var col = 0; col < 3; col++) {
+        for (var col = 0; col < 4; col++) {
           var win = new THREE.Mesh(
-            new THREE.BoxGeometry(2.5, 2, 0.1),
-            glassMat
+            new THREE.BoxGeometry(2.2, 1.8, 0.1),
+            new THREE.MeshStandardMaterial({
+              color: 0xffcc66,
+              emissive: 0xffaa33,
+              emissiveIntensity: 0.8,
+              transparent: true,
+              opacity: 0.9
+            })
           );
-          win.position.set(
-            vp.x - 4 + col * 4,
-            3 + row * 4,
-            vp.z + 7.1
-          );
+          win.position.set(x - 6 + col * 4, 3.5 + row * 4, vp.z + 7.1);
           scene.add(win);
         }
       }
 
-      // VILLA WARM LIGHT
-      var vLight = new THREE.PointLight(0xffaa44, 2, 16);
-      vLight.position.set(vp.x, 4, vp.z + 6);
+      // WARM VILLA LIGHT
+      var vLight = new THREE.PointLight(0xffaa44, 3, 20);
+      vLight.position.set(x, 4, vp.z + 6);
       scene.add(vLight);
 
-      // POOL — teal glow
+      // POOL
       var pool = new THREE.Mesh(
-        new THREE.BoxGeometry(10, 0.2, 5),
+        new THREE.BoxGeometry(12, 0.2, 5),
         new THREE.MeshStandardMaterial({
           color: 0x00aacc, emissive: 0x00aacc,
-          emissiveIntensity: 0.6, transparent: true, opacity: 0.8
+          emissiveIntensity: 0.8, transparent: true, opacity: 0.85
         })
       );
-      pool.position.set(vp.x, 0.3, vp.z + 11);
+      pool.position.set(x, 0.6, vp.z + 12);
       scene.add(pool);
 
-      var poolLight = new THREE.PointLight(0x00aacc, 1.5, 12);
-      poolLight.position.set(vp.x, 1, vp.z + 11);
+      var poolLight = new THREE.PointLight(0x00ccff, 2, 15);
+      poolLight.position.set(x, 1.5, vp.z + 12);
       scene.add(poolLight);
 
-      // NEON TRIM on villa
-      var neonTrim = new THREE.Mesh(
-        new THREE.BoxGeometry(16, 0.12, 0.12),
+      // NEON BASE TRIM
+      var neonBase = new THREE.Mesh(
+        new THREE.BoxGeometry(18, 0.12, 0.12),
         new THREE.MeshStandardMaterial({
           color: 0x9900ff, emissive: 0x9900ff, emissiveIntensity: 2
         })
       );
-      neonTrim.position.set(vp.x, 0.4, vp.z + 7.1);
-      scene.add(neonTrim);
+      neonBase.position.set(x, 0.55, vp.z + 7.1);
+      scene.add(neonBase);
     });
 
-    // BUILDINGS background
+    // BACKGROUND BUILDINGS
     var buildings = [
-      { x: -65, z: -45, w: 12, h: 20, color: 0x1a1a3e },
-      { x: -80, z: -62, w: 10, h: 28, color: 0x0d0d2b },
-      { x:  65, z: -45, w: 12, h: 18, color: 0x1a1a3e },
-      { x:  80, z: -62, w: 10, h: 24, color: 0x0d0d2b },
-      { x:   0, z: -96, w: 18, h: 22, color: 0x0a0820 },
+      { x: -65, z: -45, w: 12, h: 22, color: 0x1a1a3e },
+      { x: -82, z: -65, w: 10, h: 30, color: 0x0d0d2b },
+      { x:  65, z: -45, w: 12, h: 20, color: 0x1a1a3e },
+      { x:  82, z: -65, w: 10, h: 26, color: 0x0d0d2b },
+      { x:   0, z: -98, w: 20, h: 24, color: 0x0a0820 },
     ];
 
     buildings.forEach(function(b) {
@@ -204,33 +202,30 @@ export default {
 
       for (var row = 0; row < 4; row++) {
         for (var col = 0; col < 3; col++) {
-          if (Math.random() < 0.4) continue;
+          if (Math.random() < 0.35) continue;
           var win = new THREE.Mesh(
             new THREE.BoxGeometry(1.2, 0.8, 0.1),
             new THREE.MeshStandardMaterial({
               color: 0xffee88, emissive: 0xffee88, emissiveIntensity: 0.8
             })
           );
-          win.position.set(
-            b.x - 3 + col * 3,
-            3 + row * 3.5,
-            b.z + 5.1
-          );
+          win.position.set(b.x - 3 + col * 3, 3 + row * 3.5, b.z + 5.1);
           scene.add(win);
         }
       }
 
-      var roofNeon = new THREE.Mesh(
+      // ROOFTOP NEON
+      var rNeon = new THREE.Mesh(
         new THREE.BoxGeometry(b.w, 0.2, 0.2),
         new THREE.MeshStandardMaterial({
           color: 0x9900ff, emissive: 0x9900ff, emissiveIntensity: 2
         })
       );
-      roofNeon.position.set(b.x, b.h + 0.1, b.z + 5);
-      scene.add(roofNeon);
+      rNeon.position.set(b.x, b.h + 0.1, b.z + 5);
+      scene.add(rNeon);
     });
 
-    // NEON DOCK STRIPS
+    // NEON DOCK EDGE STRIPS
     [-7, 7].forEach(function(x) {
       var strip = new THREE.Mesh(
         new THREE.BoxGeometry(0.2, 0.05, 100),
@@ -238,9 +233,10 @@ export default {
           color: 0x9900ff, emissive: 0x9900ff, emissiveIntensity: 1.5
         })
       );
-      strip.position.set(x, 0.55, -25);
+      strip.position.set(x, 0.6, -20);
       scene.add(strip);
     });
   },
+
   update() {}
 };
