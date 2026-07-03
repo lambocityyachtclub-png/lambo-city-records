@@ -48,7 +48,6 @@ export default {
     mast.position.set(3, 15, 0);
     yacht.add(mast);
 
-    // LAMBO CITY SIGN
     var sign = new THREE.Mesh(
       new THREE.BoxGeometry(10, 1.2, 0.1),
       new THREE.MeshStandardMaterial({
@@ -58,7 +57,6 @@ export default {
     sign.position.set(0, 5, -4.1);
     yacht.add(sign);
 
-    // CYAN NEON STRIP
     var neon = new THREE.Mesh(
       new THREE.BoxGeometry(22, 0.15, 0.15),
       new THREE.MeshStandardMaterial({
@@ -68,7 +66,6 @@ export default {
     neon.position.set(0, 0.5, 4.1);
     yacht.add(neon);
 
-    // WINDOWS
     [-1, 1].forEach(function(side) {
       for (var i = 0; i < 4; i++) {
         var win = new THREE.Mesh(
@@ -83,7 +80,6 @@ export default {
       }
     });
 
-    // LIGHTS
     var anchorLight = new THREE.PointLight(0x00ffff, 3, 40);
     anchorLight.position.set(0, 4, 0);
     yacht.add(anchorLight);
@@ -92,8 +88,8 @@ export default {
     goldLight.position.set(0, 8, -4);
     yacht.add(goldLight);
 
-    // ON WATER SURFACE
-    yacht.position.set(38, -0.3, -28);
+    // ON WATER — Y=0 means hull bottom at -1.5, floats naturally
+    yacht.position.set(38, 0, -28);
     yacht.rotation.y = Math.PI / 6;
     scene.add(yacht);
   },
