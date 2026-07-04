@@ -5,9 +5,9 @@ export default {
     renderer = new THREE.WebGLRenderer({
       antialias: false,
       powerPreference: 'high-performance',
+      precision: 'mediump',
     });
     renderer.setSize(window.innerWidth, window.innerHeight);
-    // CAP AT 1x on mobile — biggest single performance win
     renderer.setPixelRatio(1);
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.1;
