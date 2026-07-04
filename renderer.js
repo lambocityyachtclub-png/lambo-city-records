@@ -3,18 +3,17 @@ let renderer;
 export default {
   init() {
     renderer = new THREE.WebGLRenderer({
-      antialias: false,
-      powerPreference: 'high-performance',
-      precision: 'mediump',
+      antialias: true,
+      powerPreference: 'high-performance'
     });
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(1);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.1;
     document.body.style.margin = '0';
     document.body.style.overflow = 'hidden';
     document.body.appendChild(renderer.domElement);
-    window.addEventListener('resize', function() {
+    window.addEventListener('resize', () => {
       renderer.setSize(window.innerWidth, window.innerHeight);
     });
     return renderer;
