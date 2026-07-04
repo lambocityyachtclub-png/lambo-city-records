@@ -17,6 +17,7 @@ import CinematicFlowSystem from "./cinematicFlowSystem.js";
 import CinematicWorldSkin from "./cinematicWorldSkin.js";
 import CinematicDockCore from "./cinematicDockCore.js";
 import World from "./world.js";
+import Marina from "./marina.js";
 
 const engine = new Engine();
 engine.registerSystems({
@@ -38,5 +39,6 @@ engine.registerSystems({
   cinematicFlow:  CinematicFlowSystem,
   worldSkin:    CinematicWorldSkin,
   dockCore:     CinematicDockCore,
+  marina:       Marina,
 });
 engine.init();
