@@ -2,11 +2,15 @@ import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 let renderer;
 export default {
   init() {
-    renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+    renderer = new THREE.WebGLRenderer({
+      antialias: false,
+      powerPreference: 'high-performance',
+    });
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+    // CAP AT 1x on mobile — biggest single performance win
+    renderer.setPixelRatio(1);
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.2;
+    renderer.toneMappingExposure = 1.1;
     document.body.style.margin = '0';
     document.body.style.overflow = 'hidden';
     document.body.appendChild(renderer.domElement);
