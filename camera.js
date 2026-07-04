@@ -3,8 +3,8 @@ let camera;
 let cinTime = 0;
 export default {
   init() {
-    camera = new THREE.PerspectiveCamera(72, window.innerWidth / window.innerHeight, 0.1, 2000);
-    camera.position.set(0, 16, 35);
+    camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 2000);
+    camera.position.set(0, 18, 32);
     camera.lookAt(0, 2, 0);
     window.addEventListener('resize', function() {
       camera.aspect = window.innerWidth / window.innerHeight;
@@ -16,17 +16,17 @@ export default {
     var player = context.player;
     if (!player) return;
     cinTime += delta;
-    var drift = Math.sin(cinTime * 0.25) * 1.5;
+    var drift = Math.sin(cinTime * 0.25) * 1.2;
     var targetX = player.position.x + drift;
-    var targetY = player.position.y + 12;
-    var targetZ = player.position.z + 26;
+    var targetY = player.position.y + 14;
+    var targetZ = player.position.z + 24;
     camera.position.x += (targetX - camera.position.x) * 0.05;
     camera.position.y += (targetY - camera.position.y) * 0.05;
     camera.position.z += (targetZ - camera.position.z) * 0.05;
     camera.lookAt(
       player.position.x,
-      player.position.y + 1,
-      player.position.z - 5
+      player.position.y + 2,
+      player.position.z - 8
     );
   },
   getCamera() { return camera; }
