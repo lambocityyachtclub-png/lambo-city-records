@@ -3,46 +3,84 @@ let lanternLights = [];
 let time = 0;
 export default {
   init(scene) {
-    var ambient = new THREE.AmbientLight(0xffaa55, 1.2);
+    // STRONG WARM AMBIENT — golden hour base
+    var ambient = new THREE.AmbientLight(0xff8844, 1.8);
     scene.add(ambient);
-    var sun = new THREE.DirectionalLight(0xff8844, 3.0);
-    sun.position.set(80, 60, 20);
+
+    // SUN — low angle golden hour from right
+    var sun = new THREE.DirectionalLight(0xff7722, 4.0);
+    sun.position.set(120, 50, -30);
     scene.add(sun);
-    var fill = new THREE.DirectionalLight(0x4466cc, 0.8);
-    fill.position.set(-80, 40, -20);
+
+    // WARM FILL — opposite side
+    var fill = new THREE.DirectionalLight(0xff5500, 1.5);
+    fill.position.set(-80, 30, 40);
     scene.add(fill);
-    var groundFill = new THREE.DirectionalLight(0xff6622, 0.5);
-    groundFill.position.set(0, -10, 0);
-    scene.add(groundFill);
-    var lanternZ = [-50,-40,-30,-20,-10,0,10,20];
-    lanternZ.forEach(function(z, i) {
+
+    // GROUND BOUNCE — stops dark undersides
+    var bounce = new THREE.DirectionalLight(0xff6622, 0.8);
+    bounce.position.set(0, -5, 0);
+    scene.add(bounce);
+
+    // DOCK LANTERNS — warm amber
+    var lanternZ = [-55,-45,-35,-25,-15,-5,5,15,22];
+    lanternZ.forEach(function(z) {
       [-5.5, 5.5].forEach(function(x) {
-        var l = new THREE.PointLight(0xffaa33, 2.5, 12);
+        var l = new THREE.PointLight(0xffaa33, 3.5, 14);
         l.position.set(x, 3.8, z);
         scene.add(l);
         lanternLights.push(l);
       });
     });
-    var waterLight = new THREE.PointLight(0x00bbcc, 2, 80);
-    waterLight.position.set(0, 0, -20);
-    scene.add(waterLight);
-    var stagePurple = new THREE.PointLight(0x9900ff, 8, 120);
-    stagePurple.position.set(0, 20, -65);
+
+    // WATER TEAL GLOW
+    var waterL = new THREE.PointLight(0x00bbcc, 3, 100);
+    waterL.position.set(0, 0.5, -15);
+    scene.add(waterL);
+
+    // LEFT WATER — villa side pools
+    var leftWater = new THREE.PointLight(0x00aacc, 2, 50);
+    leftWater.position.set(-30, 0.5, -10);
+    scene.add(leftWater);
+
+    // RIGHT WATER — jet ski side
+    var rightWater = new THREE.PointLight(0x00aacc, 2, 50);
+    rightWater.position.set(30, 0.5, -10);
+    scene.add(rightWater);
+
+    // STAGE PURPLE WASH
+    var stagePurple = new THREE.PointLight(0x9900ff, 10, 130);
+    stagePurple.position.set(0, 22, -62);
     scene.add(stagePurple);
-    var stageL = new THREE.PointLight(0xff00aa, 4, 60);
-    stageL.position.set(-25, 10, -70);
+
+    // STAGE PINK LEFT
+    var stageL = new THREE.PointLight(0xff00aa, 5, 70);
+    stageL.position.set(-25, 12, -68);
     scene.add(stageL);
-    var stageR = new THREE.PointLight(0x0044ff, 4, 60);
-    stageR.position.set(25, 10, -70);
+
+    // STAGE BLUE RIGHT
+    var stageR = new THREE.PointLight(0x0055ff, 5, 70);
+    stageR.position.set(25, 12, -68);
     scene.add(stageR);
-    var yachtLight = new THREE.PointLight(0x00ffff, 2, 35);
-    yachtLight.position.set(38, 5, -28);
+
+    // YACHT CYAN
+    var yachtLight = new THREE.PointLight(0x00ffff, 3, 40);
+    yachtLight.position.set(38, 4, -28);
     scene.add(yachtLight);
+
+    // VILLA WARMTH
+    [-37].forEach(function(x) {
+      [8, -16, -40].forEach(function(z) {
+        var vl = new THREE.PointLight(0xff8833, 3, 22);
+        vl.position.set(x, 4, z + 6);
+        scene.add(vl);
+      });
+    });
   },
   update(delta) {
     time += delta;
     lanternLights.forEach(function(l, i) {
-      l.intensity = 2.0 + Math.sin(time * 1.8 + i * 0.3) * 0.5;
+      l.intensity = 3.0 + Math.sin(time * 1.8 + i * 0.3) * 0.6;
     });
   }
 };
