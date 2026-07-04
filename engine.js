@@ -25,6 +25,7 @@ export default class Engine {
     this.systems.cinematicFlow?.init?.(this.scene);
     this.systems.worldSkin?.init?.(this.scene);
     this.systems.dockCore?.init?.(this.scene);
+    this.systems.marina?.init?.(this.scene);
     this.systems.input?.init?.();
     this.systems.player?.init?.(this.scene);
     this.systems.hud?.init?.();
@@ -39,7 +40,9 @@ export default class Engine {
   };
   update(delta) {
     this.context.delta = delta;
-    Object.values(this.systems).forEach((sys) => { sys?.update?.(delta, this.context); });
+    Object.values(this.systems).forEach((sys) => {
+      sys?.update?.(delta, this.context);
+    });
   }
   render() {
     if (!this.scene || !this.camera || !this.renderer) return;
