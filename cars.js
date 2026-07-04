@@ -22,14 +22,14 @@ export default {
       cabin.position.set(-0.2, 1.5, 0);
       car.add(cabin);
       var wheelMat = new THREE.MeshStandardMaterial({ color: 0x111111 });
-      var rimMat = new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 1 });
+      var rimMat   = new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 1 });
       [[1.6,1.3],[1.6,-1.3],[-1.6,1.3],[-1.6,-1.3]].forEach(function(w) {
-        var wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 0.35, 10), wheelMat);
-        wheel.rotation.z = Math.PI / 2;
+        var wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.4,0.4,0.35,10), wheelMat);
+        wheel.rotation.z = Math.PI/2;
         wheel.position.set(w[0], 0.4, w[1]);
         car.add(wheel);
-        var rim = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.36, 8), rimMat);
-        rim.rotation.z = Math.PI / 2;
+        var rim = new THREE.Mesh(new THREE.CylinderGeometry(0.18,0.18,0.36,8), rimMat);
+        rim.rotation.z = Math.PI/2;
         rim.position.set(w[0], 0.4, w[1]);
         car.add(rim);
       });
@@ -42,8 +42,9 @@ export default {
       var glowLight = new THREE.PointLight(0x9900ff, 1.5, 6);
       glowLight.position.set(0, 0.3, 0);
       car.add(glowLight);
-      // ground top = 0.5, wheel radius = 0.4, so car.y = 0.5 - 0.4 + 0.4 = 0.5
-      car.position.set(data.x, 0.5, data.z);
+      // ground top = 0.65, wheel radius = 0.4
+      // car.y = 0.65 means wheel centers at 1.05, bottoms at 0.65 ✅
+      car.position.set(data.x, 0.65, data.z);
       car.rotation.y = data.rot;
       scene.add(car);
     });
