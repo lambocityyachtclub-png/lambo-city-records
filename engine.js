@@ -3,8 +3,6 @@ export default class Engine {
     this.systems = {};
     this.lastTime = 0;
     this.context = {};
-    this.fpsInterval = 1000 / 60;
-    this.then = 0;
   }
   registerSystems(systems) { this.systems = systems; }
   init() {
@@ -31,15 +29,13 @@ export default class Engine {
     this.systems.input?.init?.();
     this.systems.player?.init?.(this.scene);
     this.systems.hud?.init?.();
-    this.then = performance.now();
     this.loop();
   }
-  loop = (now = 0) => {
+  loop = (time = 0) => {
     requestAnimationFrame(this.loop);
-    var elapsed = now - this.then;
-    if (elapsed < this.fpsInterval) return;
-    this.then = now - (elapsed % this.fpsInterval);
-    var delta = Math.min(elapsed / 1000, 0.05); // cap delta at 50ms
+    // CAP DELTA — prevents jumpy movement on lag spikes
+    var delta = Math.min((time - this.lastTime) / 1000, 0.033);
+    this.lastTime = time;
     this.update(delta);
     this.render();
   };
