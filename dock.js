@@ -1,64 +1,41 @@
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 export default {
   init(scene) {
-    var woodMat  = new THREE.MeshStandardMaterial({ color: 0x8b5e3c, roughness: 0.9 });
-    var plankMat = new THREE.MeshStandardMaterial({ color: 0xa0693a, roughness: 0.85 });
-    var postMat  = new THREE.MeshStandardMaterial({ color: 0x5c3d1e, roughness: 1 });
-    var railMat  = new THREE.MeshStandardMaterial({ color: 0x3a2510, roughness: 0.8 });
-
-    var DOCK_Y = 1.0;
-
-    // MAIN PLATFORM
-    var base = new THREE.Mesh(new THREE.BoxGeometry(14, 0.4, 100), woodMat);
-    base.position.set(0, DOCK_Y, -20);
+    const woodMat  = new THREE.MeshStandardMaterial({ color: 0x8b5e3c, roughness: 0.9 });
+    const plankMat = new THREE.MeshStandardMaterial({ color: 0xa0693a, roughness: 0.85 });
+    const postMat  = new THREE.MeshStandardMaterial({ color: 0x5c3d1e, roughness: 1 });
+    const railMat  = new THREE.MeshStandardMaterial({ color: 0x3a2510, roughness: 0.8 });
+    const Y = 1.0;
+    const base = new THREE.Mesh(new THREE.BoxGeometry(14, 0.4, 100), woodMat);
+    base.position.set(0, Y, -20);
     scene.add(base);
-
-    // PLANKS
-    for (var z = -65; z < 35; z += 2) {
-      var plank = new THREE.Mesh(new THREE.BoxGeometry(13.5, 0.15, 1.2), plankMat);
-      plank.position.set(0, DOCK_Y + 0.28, z);
-      scene.add(plank);
+    for (let z = -65; z < 35; z += 2) {
+      const p = new THREE.Mesh(new THREE.BoxGeometry(13.5, 0.15, 1.2), plankMat);
+      p.position.set(0, Y+0.28, z);
+      scene.add(p);
     }
-
-    // POSTS — tall enough to reach below water
-    [-6, 6].forEach(function(x) {
-      for (var pz = -65; pz < 35; pz += 8) {
-        var post = new THREE.Mesh(
-          new THREE.CylinderGeometry(0.22, 0.22, 8, 8), postMat
-        );
-        post.position.set(x, DOCK_Y - 3.5, pz);
+    [-6,6].forEach(x => {
+      for (let z = -65; z < 35; z += 8) {
+        const post = new THREE.Mesh(new THREE.CylinderGeometry(0.22,0.22,8,8), postMat);
+        post.position.set(x, Y-3.5, z);
         scene.add(post);
       }
     });
-
-    // RAILINGS
-    [-6.2, 6.2].forEach(function(x) {
-      var rail = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.6, 100), railMat);
-      rail.position.set(x, DOCK_Y + 0.6, -20);
-      scene.add(rail);
+    [-6.2,6.2].forEach(x => {
+      const r = new THREE.Mesh(new THREE.BoxGeometry(0.12,0.6,100), railMat);
+      r.position.set(x, Y+0.6, -20);
+      scene.add(r);
     });
-
-    // LANTERNS
-    for (var lz = -60; lz < 30; lz += 8) {
-      [-5.5, 5.5].forEach(function(lx) {
-        var pole = new THREE.Mesh(
-          new THREE.CylinderGeometry(0.06, 0.06, 2.5, 6),
-          new THREE.MeshStandardMaterial({ color: 0x222222 })
-        );
-        pole.position.set(lx, DOCK_Y + 1.5, lz);
+    for (let z = -60; z < 30; z += 8) {
+      [-5.5,5.5].forEach(x => {
+        const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.06,2.5,6), new THREE.MeshStandardMaterial({color:0x222222}));
+        pole.position.set(x, Y+1.5, z);
         scene.add(pole);
-
-        var lantern = new THREE.Mesh(
-          new THREE.BoxGeometry(0.4, 0.5, 0.4),
-          new THREE.MeshStandardMaterial({
-            color: 0xffcc44, emissive: 0xffaa00, emissiveIntensity: 2.5
-          })
-        );
-        lantern.position.set(lx, DOCK_Y + 2.9, lz);
+        const lantern = new THREE.Mesh(new THREE.BoxGeometry(0.4,0.5,0.4), new THREE.MeshStandardMaterial({color:0xffcc44,emissive:0xffaa00,emissiveIntensity:2.5}));
+        lantern.position.set(x, Y+2.9, z);
         scene.add(lantern);
-
-        var glow = new THREE.PointLight(0xffaa33, 2.5, 9);
-        glow.position.set(lx, DOCK_Y + 2.9, lz);
+        const glow = new THREE.PointLight(0xffaa33, 2.5, 9);
+        glow.position.set(x, Y+2.9, z);
         scene.add(glow);
       });
     }
