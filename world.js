@@ -1,14 +1,15 @@
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 export default {
   init(scene) {
-    var groundMat = new THREE.MeshStandardMaterial({ color: 0x2a1a08, roughness: 1 });
+    var groundMat = new THREE.MeshStandardMaterial({ color: 0x4a2e10, roughness: 1 });
 
-    var leftGround = new THREE.Mesh(new THREE.BoxGeometry(60, 0.5, 130), groundMat);
-    leftGround.position.set(-40, 0.4, -20);
+    // NARROWER ground pads — leaves water gap visible
+    var leftGround = new THREE.Mesh(new THREE.BoxGeometry(44, 0.5, 130), groundMat);
+    leftGround.position.set(-43, 0.4, -20);
     scene.add(leftGround);
 
-    var rightGround = new THREE.Mesh(new THREE.BoxGeometry(60, 0.5, 130), groundMat);
-    rightGround.position.set(40, 0.4, -20);
+    var rightGround = new THREE.Mesh(new THREE.BoxGeometry(44, 0.5, 130), groundMat);
+    rightGround.position.set(43, 0.4, -20);
     scene.add(rightGround);
 
     var stageGround = new THREE.Mesh(
@@ -74,25 +75,26 @@ export default {
       scene.add(stair);
     }
 
+    // VILLAS LEFT
     [{z:8},{z:-16},{z:-40}].forEach(function(vp) {
       var x = -37;
       var villa = new THREE.Mesh(
         new THREE.BoxGeometry(18, 9, 14),
-        new THREE.MeshStandardMaterial({ color: 0x4a2e1a, roughness: 0.9 })
+        new THREE.MeshStandardMaterial({ color: 0x5a3820, roughness: 0.9 })
       );
       villa.position.set(x, 5.15, vp.z);
       scene.add(villa);
 
       var roof = new THREE.Mesh(
         new THREE.BoxGeometry(19, 0.8, 15),
-        new THREE.MeshStandardMaterial({ color: 0x2a1a0a, roughness: 1 })
+        new THREE.MeshStandardMaterial({ color: 0x3a2510, roughness: 1 })
       );
       roof.position.set(x, 10.05, vp.z);
       scene.add(roof);
 
       var balcony = new THREE.Mesh(
         new THREE.BoxGeometry(16, 0.3, 3),
-        new THREE.MeshStandardMaterial({ color: 0x3a2010 })
+        new THREE.MeshStandardMaterial({ color: 0x4a3020 })
       );
       balcony.position.set(x, 6.3, vp.z + 7.5);
       scene.add(balcony);
@@ -103,7 +105,7 @@ export default {
             new THREE.BoxGeometry(2.2, 1.8, 0.1),
             new THREE.MeshStandardMaterial({
               color: 0xffcc66, emissive: 0xffaa33,
-              emissiveIntensity: 0.9, transparent: true, opacity: 0.9
+              emissiveIntensity: 1.2, transparent: true, opacity: 0.95
             })
           );
           win.position.set(x - 6 + col * 4, 4.3 + row * 4, vp.z + 7.1);
@@ -111,7 +113,7 @@ export default {
         }
       }
 
-      var vLight = new THREE.PointLight(0xffaa44, 3, 20);
+      var vLight = new THREE.PointLight(0xffaa44, 4, 24);
       vLight.position.set(x, 5, vp.z + 5);
       scene.add(vLight);
 
@@ -119,24 +121,25 @@ export default {
         new THREE.BoxGeometry(12, 0.2, 5),
         new THREE.MeshStandardMaterial({
           color: 0x00aacc, emissive: 0x00aacc,
-          emissiveIntensity: 0.8, transparent: true, opacity: 0.85
+          emissiveIntensity: 1.0, transparent: true, opacity: 0.9
         })
       );
       pool.position.set(x, 0.9, vp.z + 12);
       scene.add(pool);
 
-      var poolLight = new THREE.PointLight(0x00ccff, 2, 14);
+      var poolLight = new THREE.PointLight(0x00ccff, 3, 16);
       poolLight.position.set(x, 1.5, vp.z + 12);
       scene.add(poolLight);
 
       var neon = new THREE.Mesh(
-        new THREE.BoxGeometry(18, 0.1, 0.1),
-        new THREE.MeshStandardMaterial({ color: 0x9900ff, emissive: 0x9900ff, emissiveIntensity: 2 })
+        new THREE.BoxGeometry(18, 0.12, 0.12),
+        new THREE.MeshStandardMaterial({ color: 0x9900ff, emissive: 0x9900ff, emissiveIntensity: 2.5 })
       );
       neon.position.set(x, 0.9, vp.z + 7.1);
       scene.add(neon);
     });
 
+    // BUILDINGS
     [{x:-65,z:-45,w:12,h:22,c:0x1a1a3e},{x:-82,z:-65,w:10,h:30,c:0x0d0d2b},
      {x:65,z:-45,w:12,h:20,c:0x1a1a3e},{x:82,z:-65,w:10,h:26,c:0x0d0d2b},
      {x:0,z:-98,w:20,h:24,c:0x0a0820}
