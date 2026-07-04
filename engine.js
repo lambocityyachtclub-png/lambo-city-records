@@ -4,7 +4,9 @@ export default class Engine {
     this.lastTime = 0;
     this.context = {};
   }
-  registerSystems(systems) { this.systems = systems; }
+  registerSystems(systems) {
+    this.systems = systems;
+  }
   init() {
     this.scene    = this.systems.scene?.init?.();
     this.camera   = this.systems.camera?.init?.();
@@ -33,17 +35,14 @@ export default class Engine {
   }
   loop = (time = 0) => {
     requestAnimationFrame(this.loop);
-    // CAP DELTA — prevents jumpy movement on lag spikes
-    var delta = Math.min((time - this.lastTime) / 1000, 0.033);
+    const delta = Math.min((time - this.lastTime) / 1000, 0.033);
     this.lastTime = time;
     this.update(delta);
     this.render();
   };
   update(delta) {
     this.context.delta = delta;
-    Object.values(this.systems).forEach((sys) => {
-      sys?.update?.(delta, this.context);
-    });
+    Object.values(this.systems).forEach(sys => sys?.update?.(delta, this.context));
   }
   render() {
     if (!this.scene || !this.camera || !this.renderer) return;
