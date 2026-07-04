@@ -6,35 +6,9 @@
   <style>
     * { margin: 0; padding: 0; }
     body { overflow: hidden; background: #000; }
-    #error {
-      display: none;
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%;
-      background: #000;
-      color: #ff4444;
-      font-family: monospace;
-      font-size: 13px;
-      padding: 20px;
-      z-index: 9999;
-      white-space: pre-wrap;
-    }
   </style>
 </head>
 <body>
-  <div id="error"></div>
-  <script type="module">
-    window.addEventListener('unhandledrejection', function(e) {
-      var el = document.getElementById('error');
-      el.style.display = 'block';
-      el.textContent = 'ERROR:\n' + (e.reason?.stack || e.reason || e);
-    });
-    window.onerror = function(msg, src, line, col, err) {
-      var el = document.getElementById('error');
-      el.style.display = 'block';
-      el.textContent = 'ERROR: ' + msg + '\nFile: ' + src + '\nLine: ' + line;
-    };
-  </script>
   <script type="module" src="./main.js"></script>
 </body>
 </html>
