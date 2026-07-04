@@ -3,8 +3,8 @@ let scene;
 export default {
   init() {
     scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x0a0520);
-    scene.fog = new THREE.FogExp2(0x0a0520, 0.0018);
+    scene.background = new THREE.Color(0xff6600);
+    scene.fog = new THREE.FogExp2(0xcc3300, 0.004);
     return scene;
   },
   getScene() { return scene; }
