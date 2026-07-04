@@ -3,48 +3,45 @@ export default {
   init(scene) {
     var canvas = document.createElement('canvas');
     canvas.width = 4;
-    canvas.height = 1024;
+    canvas.height = 512;
     var ctx = canvas.getContext('2d');
-    var gradient = ctx.createLinearGradient(0, 0, 0, 1024);
-    gradient.addColorStop(0.00, '#020008');
-    gradient.addColorStop(0.20, '#0d0428');
-    gradient.addColorStop(0.40, '#3d0d5c');
-    gradient.addColorStop(0.58, '#8b1a1a');
-    gradient.addColorStop(0.72, '#cc4400');
-    gradient.addColorStop(0.84, '#ff6600');
-    gradient.addColorStop(0.93, '#ff8800');
-    gradient.addColorStop(1.00, '#005577');
+    var gradient = ctx.createLinearGradient(0, 0, 0, 512);
+    gradient.addColorStop(0.00, '#080018');
+    gradient.addColorStop(0.30, '#2d0a50');
+    gradient.addColorStop(0.55, '#8b1a1a');
+    gradient.addColorStop(0.75, '#dd4400');
+    gradient.addColorStop(0.88, '#ff7700');
+    gradient.addColorStop(1.00, '#004466');
     ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, 4, 1024);
+    ctx.fillRect(0, 0, 4, 512);
     var tex = new THREE.CanvasTexture(canvas);
-    scene.add(new THREE.Mesh(
-      new THREE.SphereGeometry(480, 32, 32),
+    var sky = new THREE.Mesh(
+      new THREE.SphereGeometry(450, 32, 32),
       new THREE.MeshBasicMaterial({ map: tex, side: THREE.BackSide, depthWrite: false })
-    ));
+    );
+    scene.add(sky);
+    // STARS
     var starGeo = new THREE.BufferGeometry();
-    var count = 1200;
+    var count = 1000;
     var pos = new Float32Array(count * 3);
     var i = 0;
     while (i < count) {
-      pos[i*3]   = (Math.random()-0.5)*800;
-      pos[i*3+1] = Math.random()*300+30;
-      pos[i*3+2] = (Math.random()-0.5)*800;
+      pos[i*3]   = (Math.random()-0.5)*700;
+      pos[i*3+1] = Math.random()*250+40;
+      pos[i*3+2] = (Math.random()-0.5)*700;
       i++;
     }
     starGeo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-    scene.add(new THREE.Points(starGeo, new THREE.PointsMaterial({ color: 0xffffff, size: 0.5, transparent: true, opacity: 0.8 })));
+    scene.add(new THREE.Points(starGeo,
+      new THREE.PointsMaterial({ color: 0xffffff, size: 0.5, transparent: true, opacity: 0.7 })
+    ));
+    // MOON
     var moon = new THREE.Mesh(
       new THREE.SphereGeometry(7, 16, 16),
       new THREE.MeshBasicMaterial({ color: 0xfffde0 })
     );
     moon.position.set(-100, 160, -260);
     scene.add(moon);
-    var halo = new THREE.Mesh(
-      new THREE.SphereGeometry(13, 16, 16),
-      new THREE.MeshBasicMaterial({ color: 0xffffaa, transparent: true, opacity: 0.05 })
-    );
-    halo.position.copy(moon.position);
-    scene.add(halo);
   },
   update() {}
 };
