@@ -18,7 +18,7 @@ import CinematicFlowSystem from "./cinematicFlowSystem.js";
 import CinematicWorldSkin from "./cinematicWorldSkin.js";
 import CinematicDockCore from "./cinematicDockCore.js";
 import Marina from "./marina.js";
-
+import StageVideo from "./stageVideo.js";
 const engine = new Engine();
 engine.registerSystems({
   scene:         Scene,
@@ -37,6 +37,7 @@ engine.registerSystems({
   worldSkin:     CinematicWorldSkin,
   dockCore:      CinematicDockCore,
   marina:        Marina,
+  stageVideo:    StageVideo,
   input:         Input,
   player:        Player,
   hud:           HUD,
