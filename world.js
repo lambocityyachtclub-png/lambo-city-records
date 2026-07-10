@@ -36,6 +36,7 @@ export default {
         color:0x9900ff, emissive:0x9900ff, emissiveIntensity:2.0
       })
     );
+    screen.name = "stageScreenOuter";
     screen.position.set(0,12,-83); scene.add(screen);
 
     // SCREEN INNER — brighter center
@@ -45,6 +46,7 @@ export default {
         color:0xcc44ff, emissive:0xcc44ff, emissiveIntensity:1.5
       })
     );
+    screenC.name = "stageScreenInner";
     screenC.position.set(0,12,-82.8); scene.add(screenC);
 
     // GOLD SIGN
