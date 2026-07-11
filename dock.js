@@ -1,4 +1,5 @@
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
+let lanternLights = [], time = 0;
 export default {
   init(scene) {
     const woodMat  = new THREE.MeshStandardMaterial({ color: 0x8b5e3c, roughness: 0.9 });
@@ -26,6 +27,11 @@ export default {
       r.position.set(x, Y+0.6, -20);
       scene.add(r);
     });
+    // PERF: previously duplicated by a second lantern-light system in lighting.js
+    // (now removed there). Every lantern mesh keeps its bright emissive glow
+    // (unchanged) — only the real PointLight is thinned, kept every 3rd lantern
+    // (24 → 8) with a wider radius to bridge the gaps.
+    let idx = 0;
     for (let z = -60; z < 30; z += 8) {
       [-5.5,5.5].forEach(x => {
         const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.06,2.5,6), new THREE.MeshStandardMaterial({color:0x222222}));
@@ -34,11 +40,20 @@ export default {
         const lantern = new THREE.Mesh(new THREE.BoxGeometry(0.4,0.5,0.4), new THREE.MeshStandardMaterial({color:0xffcc44,emissive:0xffaa00,emissiveIntensity:2.5}));
         lantern.position.set(x, Y+2.9, z);
         scene.add(lantern);
-        const glow = new THREE.PointLight(0xffaa33, 2.5, 9);
-        glow.position.set(x, Y+2.9, z);
-        scene.add(glow);
+        if (idx % 3 === 0) {
+          const glow = new THREE.PointLight(0xffaa33, 3.5, 18);
+          glow.position.set(x, Y+2.9, z);
+          scene.add(glow);
+          lanternLights.push(glow);
+        }
       });
+      idx++;
     }
   },
-  update() {}
+  update(delta) {
+    time += delta;
+    lanternLights.forEach((l, i) => {
+      l.intensity = 3.5 + Math.sin(time*1.8+i*0.4)*0.7;
+    });
+  }
 };
