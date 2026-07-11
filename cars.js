@@ -1,6 +1,9 @@
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 export default {
   init(scene) {
+    // PERF: removed the per-car underglow PointLight (4 total). Each car already has
+    // its own emissive underglow strip (boosted 2 → 2.8 to compensate), so the visual
+    // glow is unchanged — only the expensive real-time cast light is gone.
     [{x:-28,z:8,color:0xffcc00,rot:0.2},{x:-32,z:-14,color:0xffffff,rot:0.1},
      {x:28,z:8,color:0x111111,rot:-0.2},{x:32,z:-14,color:0xff2200,rot:-0.1}
     ].forEach(d => {
@@ -17,10 +20,8 @@ export default {
         const ri = new THREE.Mesh(new THREE.CylinderGeometry(0.18,0.18,0.36,8),rm);
         ri.rotation.z = Math.PI/2; ri.position.set(w[0],0.4,w[1]); car.add(ri);
       });
-      const ng = new THREE.Mesh(new THREE.BoxGeometry(5,0.05,2.5), new THREE.MeshStandardMaterial({color:0x9900ff,emissive:0x9900ff,emissiveIntensity:2}));
+      const ng = new THREE.Mesh(new THREE.BoxGeometry(5,0.05,2.5), new THREE.MeshStandardMaterial({color:0x9900ff,emissive:0x9900ff,emissiveIntensity:2.8}));
       ng.position.y = 0.05; car.add(ng);
-      const gl = new THREE.PointLight(0x9900ff,1.5,6);
-      gl.position.set(0,0.3,0); car.add(gl);
       car.position.set(d.x,0.65,d.z);
       car.rotation.y = d.rot;
       scene.add(car);
