@@ -1,29 +1,32 @@
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
-let billboards = [], time = 0;
+let jetSkis = [], time = 0;
 export default {
   init(scene) {
-    [{x:-70,z:-15,rotY:0.5,accent:0xff0050},{x:70,z:-15,rotY:-0.5,accent:0xff0000},
-     {x:-75,z:-50,rotY:0.3,accent:0x1da1f2},{x:75,z:-50,rotY:-0.3,accent:0xe1306c}
-    ].forEach(d => {
-      const g = new THREE.Group();
-      const back = new THREE.Mesh(new THREE.BoxGeometry(14,6,0.4), new THREE.MeshStandardMaterial({color:0x050505}));
-      g.add(back);
-      const border = new THREE.Mesh(new THREE.BoxGeometry(14.5,6.5,0.2), new THREE.MeshStandardMaterial({color:d.accent,emissive:d.accent,emissiveIntensity:0.5}));
-      border.position.z = -0.2; g.add(border);
-      [-4.5,4.5].forEach(x => {
-        const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.2,0.2,14,6), new THREE.MeshStandardMaterial({color:0x333333}));
-        pole.position.set(x,-10,0); g.add(pole);
-      });
-      const light = new THREE.PointLight(d.accent,2,25);
-      light.position.set(0,0,3); g.add(light);
-      g.position.set(d.x,10,d.z);
-      g.rotation.y = d.rotY;
-      scene.add(g);
-      billboards.push({light,offset:Math.random()*Math.PI*2});
+    // PERF: removed the per-jet-ski and per-buoy PointLights. Both already have their
+    // own bright emissive materials (neon strip emissiveIntensity 3, buoy 0.6), so the
+    // visual glow is unchanged — only the expensive real-time cast light is gone.
+    [{x:18,z:-8,rot:-0.3},{x:22,z:-22,rot:0.2},{x:20,z:-38,rot:-0.1},{x:-20,z:-30,rot:0.4}].forEach(d => {
+      const js = new THREE.Group();
+      const hull = new THREE.Mesh(new THREE.BoxGeometry(4,0.8,1.8), new THREE.MeshStandardMaterial({color:0x111111,metalness:0.8,roughness:0.2}));
+      hull.position.y = 0.4; js.add(hull);
+      const seat = new THREE.Mesh(new THREE.BoxGeometry(1.8,0.5,1.4), new THREE.MeshStandardMaterial({color:0x1a1a1a}));
+      seat.position.set(0,1.0,0); js.add(seat);
+      const neon = new THREE.Mesh(new THREE.BoxGeometry(4.1,0.08,0.08), new THREE.MeshStandardMaterial({color:0x00ffff,emissive:0x00ffff,emissiveIntensity:3.5}));
+      neon.position.set(0,0.15,0.95); js.add(neon);
+      js.position.set(d.x,-0.2,d.z);
+      js.rotation.y = d.rot;
+      scene.add(js); jetSkis.push(js);
+    });
+    [-22,22].forEach(x => {
+      const b = new THREE.Mesh(new THREE.SphereGeometry(0.7,8,8), new THREE.MeshStandardMaterial({color:0xff4400,emissive:0xff2200,emissiveIntensity:1.0}));
+      b.position.set(x,0.3,-22); scene.add(b);
     });
   },
   update(delta) {
     time += delta;
-    billboards.forEach(b => { b.light.intensity = 1.5+Math.sin(time*1.5+b.offset)*0.6; });
+    jetSkis.forEach((js,i) => {
+      js.position.y = -0.2 + Math.sin(time*0.8+i)*0.12;
+      js.rotation.z = Math.sin(time*0.5+i)*0.04;
+    });
   }
 };
