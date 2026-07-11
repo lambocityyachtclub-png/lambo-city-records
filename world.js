@@ -67,7 +67,7 @@ export default {
     );
     tb.position.set(0,17.5,-82.8); scene.add(tb);
 
-    // STAGE TOWERS
+    // STAGE TOWERS (kept both tower lights — hero elements right at the main venue)
     [-17,17].forEach(x => {
       const t = new THREE.Mesh(
         new THREE.BoxGeometry(2.5,26,2.5),
@@ -158,7 +158,7 @@ export default {
         new THREE.BoxGeometry(14,0.2,6),
         new THREE.MeshStandardMaterial({
           color:0x00aacc, emissive:0x00aacc,
-          emissiveIntensity:1.0, transparent:true, opacity:0.9
+          emissiveIntensity:1.3, transparent:true, opacity:0.9
         })
       );
       pool.position.set(x,0.8,vp.z+14); scene.add(pool);
@@ -176,14 +176,16 @@ export default {
         edge.position.set(x, 0.9, vp.z+11+ci*6); scene.add(edge);
       });
 
-      // VILLA LIGHTS
-      const vl = new THREE.PointLight(0xffaa44,4,24);
-      vl.position.set(x,5,vp.z+6); scene.add(vl);
-      const pl = new THREE.PointLight(0x00ccff,3,18);
-      pl.position.set(x,1.5,vp.z+14); scene.add(pl);
+      // VILLA LIGHTS — REMOVED (redundant): pool and windows above already carry their
+      // own emissive materials (boosted slightly to compensate: pool 1.0→1.3), so the
+      // glow persists without the two PointLights per villa.
     });
 
     // BACKGROUND SKYLINE — taller, more detailed
+    // PERF: rooftop PointLight kept only on every 3rd building (3 of 9), with a wider
+    // radius/intensity to still wash the skyline generally. Each building's own emissive
+    // rooftop neon strip (unchanged, emissiveIntensity 2.5) still glows on every building
+    // regardless — only the extra cast-light PointLight is thinned out.
     [
       {x:-68,z:-48,w:14,h:26,c:0x1a1a3e},
       {x:-85,z:-68,w:11,h:38,c:0x0d0d2b},
@@ -194,7 +196,7 @@ export default {
       {x:0,  z:-100,w:22,h:28,c:0x0a0820},
       {x:-40,z:-90,w:12,h:20,c:0x120d2b},
       {x:40, z:-90,w:12,h:20,c:0x120d2b},
-    ].forEach(b => {
+    ].forEach((b, idx) => {
       const bl = new THREE.Mesh(
         new THREE.BoxGeometry(b.w,b.h,12),
         new THREE.MeshStandardMaterial({color:b.c,roughness:0.7,metalness:0.2})
@@ -223,9 +225,11 @@ export default {
       );
       rn.position.set(b.x,b.h+0.2,b.z+6); scene.add(rn);
 
-      // ROOFTOP LIGHT
-      const rl = new THREE.PointLight(0x9900ff,1.5,25);
-      rl.position.set(b.x,b.h+2,b.z+6); scene.add(rl);
+      // ROOFTOP LIGHT — thinned to every 3rd building
+      if (idx % 3 === 0) {
+        const rl = new THREE.PointLight(0x9900ff,2.2,55);
+        rl.position.set(b.x,b.h+2,b.z+6); scene.add(rl);
+      }
     });
 
     // NEON DOCK EDGE STRIPS
