@@ -43,13 +43,19 @@ export default {
     const videoTexture = new THREE.VideoTexture(video);
     videoTexture.colorSpace = THREE.SRGBColorSpace;
 
+    // BRIGHTNESS FIX: drive the video through emissiveMap instead of the
+    // regular color map. Emissive light isn't affected by the scene's
+    // ambient/directional lighting, so the screen stays bright and clear
+    // no matter how dark it is around it — just like a real video screen.
     inner.material.color.setHex(0x000000);
     inner.material.map = null;
     inner.material.emissive.setHex(0xffffff);
     inner.material.emissiveMap = videoTexture;
-    inner.material.emissiveIntensity = 2.2;
+    inner.material.emissiveIntensity = 1.0;
     inner.material.needsUpdate = true;
 
+    // BORDER FIX: neutralize the purple frame mesh so it's just a plain
+    // dark bezel instead of competing with the video for attention.
     if (outer) {
       outer.material.color.setHex(0x0a0a0a);
       outer.material.emissive.setHex(0x000000);
