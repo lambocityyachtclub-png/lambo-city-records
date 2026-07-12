@@ -13,9 +13,7 @@ const SCREEN_MESH_NAME = "stageScreenInner"; // the brighter inner screen panel 
 
 // ---- CONFIG: add as many videos as you want, they'll cycle in order ----
 const VIDEO_PLAYLIST = [
-  "/assets/videos/tour-clip-1.mp4",
-  // "/assets/videos/tour-clip-2.mp4",
-  // "/assets/videos/tour-clip-3.mp4",
+  "https://res.cloudinary.com/z99sdnqv/video/upload/HERO_-_ARTWORK_tdc7kv.mp4",
 ];
 
 let screen, video, playlistIndex = 0;
