@@ -19,6 +19,7 @@ import CinematicWorldSkin from "./cinematicWorldSkin.js";
 import CinematicDockCore from "./cinematicDockCore.js";
 import Marina from "./marina.js";
 import StageVideo from "./stageVideo.js";
+import StageScreenMedia from "./stageScreenMedia.js";
 const engine = new Engine();
 engine.registerSystems({
   scene:         Scene,
@@ -38,6 +39,7 @@ engine.registerSystems({
   dockCore:      CinematicDockCore,
   marina:        Marina,
   stageVideo:    StageVideo,
+  stageScreenMedia: StageScreenMedia,
   input:         Input,
   player:        Player,
   hud:           HUD,
