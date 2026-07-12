@@ -41,7 +41,15 @@ export default {
     const videoTexture = new THREE.VideoTexture(video);
     videoTexture.colorSpace = THREE.SRGBColorSpace;
     screen.material.map = videoTexture;
-    screen.material.emissiveIntensity = 0.5;
+
+    // FIX: the screen's original material color/emissive were both bright
+    // purple (from world.js), which tints and washes out any texture placed
+    // on top of it. Setting color to white removes the tint so the video
+    // shows its true colors, and a small emissiveIntensity keeps a subtle
+    // glow without washing the picture out.
+    screen.material.color.setHex(0xffffff);
+    screen.material.emissive.setHex(0x330055);
+    screen.material.emissiveIntensity = 0.15;
     screen.material.needsUpdate = true;
 
     playNext();
