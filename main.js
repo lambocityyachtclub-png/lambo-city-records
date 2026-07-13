@@ -20,6 +20,7 @@ import CinematicDockCore from "./cinematicDockCore.js";
 import Marina from "./marina.js";
 import StageVideo from "./stageVideo.js";
 import StageScreenMedia from "./stageScreenMedia.js";
+import StageBanner from "./stageBanner.js";
 import AmbientMusic from "./ambientMusic.js";
 const engine = new Engine();
 engine.registerSystems({
@@ -41,6 +42,7 @@ engine.registerSystems({
   marina:        Marina,
   stageVideo:    StageVideo,
   stageScreenMedia: StageScreenMedia,
+  stageBanner:   StageBanner,
   ambientMusic:  AmbientMusic,
   input:         Input,
   player:        Player,
