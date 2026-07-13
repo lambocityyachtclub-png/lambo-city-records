@@ -1,12 +1,13 @@
 // stageVideo.js
 // Shows a real YouTube video for the stage performance via a simple modal
 // overlay, opened when the player is near the stage and presses E (or taps
-// the on-screen prompt). This avoids anchoring the iframe to the 3D screen
-// mesh entirely — that approach hit a WebKit limitation where iframes nested
-// inside CSS 3D transforms don't reliably render on iPad Safari. This version
-// uses no 3D transforms at all, so it's guaranteed to render correctly.
-// Playback is 100% native user-click, no autoplay — YouTube Content ID /
-// royalty tracking stays valid.
+// the on-screen prompt). Playback is 100% native user-click, no autoplay —
+// YouTube Content ID / royalty tracking stays valid.
+//
+// Also pauses/resumes the ambient background music (ambientMusic.js) while
+// this modal is open, so the two tracks don't play over each other.
+
+import AmbientMusic from "./ambientMusic.js";
 
 // ---- CONFIG: swap the track here, nothing else needs to change ----
 const TRACK = {
@@ -26,7 +27,6 @@ let modalOpen = false;
 let inRange = false;
 
 function buildDOM() {
-  // ON-SCREEN PROMPT — small, styled to match the existing HUD's dark rounded look
   promptEl = document.createElement("div");
   promptEl.style.position = "fixed";
   promptEl.style.bottom = "160px";
@@ -51,7 +51,6 @@ function buildDOM() {
   promptEl.addEventListener("click", openModal);
   document.body.appendChild(promptEl);
 
-  // MODAL OVERLAY — plain fixed/centered, no 3D transforms anywhere
   modalEl = document.createElement("div");
   modalEl.style.position = "fixed";
   modalEl.style.top = "0";
@@ -101,7 +100,7 @@ function buildDOM() {
   const videoWrap = document.createElement("div");
   videoWrap.style.position = "relative";
   videoWrap.style.width = "100%";
-  videoWrap.style.paddingBottom = "56.25%"; // 16:9
+  videoWrap.style.paddingBottom = "56.25%";
   videoWrap.style.background = "#000";
   videoWrap.style.borderRadius = "8px";
   videoWrap.style.overflow = "hidden";
@@ -116,15 +115,12 @@ function buildDOM() {
   modalIframe.style.border = "0";
   modalIframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";
   modalIframe.allowFullscreen = true;
-  // src intentionally left blank until opened — avoids loading the player
-  // until the user actually wants it
 
   videoWrap.appendChild(modalIframe);
   panel.appendChild(header);
   panel.appendChild(videoWrap);
   modalEl.appendChild(panel);
 
-  // Clicking the dark backdrop (not the panel itself) also closes the modal
   modalEl.addEventListener("click", (e) => {
     if (e.target === modalEl) closeModal();
   });
@@ -151,13 +147,15 @@ function openModal() {
   modalIframe.src =
     `https://www.youtube.com/embed/${TRACK.videoId}` +
     `?autoplay=0&controls=1&rel=0&modestbranding=1&playsinline=1`;
+  AmbientMusic.pause();
 }
 
 function closeModal() {
   if (!modalEl) return;
   modalOpen = false;
   modalEl.style.display = "none";
-  modalIframe.src = ""; // stops playback when closed
+  modalIframe.src = "";
+  AmbientMusic.resume();
 }
 
 export default {
@@ -170,11 +168,11 @@ export default {
 
     if (!screenMesh) {
       screenMesh = scene.getObjectByName(SCREEN_MESH_NAME);
-      if (!screenMesh) return; // world.js hasn't tagged the mesh yet
+      if (!screenMesh) return;
     }
 
     if (!built) buildDOM();
-    if (modalOpen) return; // don't fuss with the prompt while the modal is up
+    if (modalOpen) return;
 
     const player = context.player;
     if (!player) return;
@@ -187,8 +185,6 @@ export default {
     promptEl.style.display = inRange ? "block" : "none";
   },
 
-  // Call this from your phone/HUD/admin system to swap the track later —
-  // fully modular, no need to touch this file or any other system.
   setTrack(videoId, title, artist, label) {
     TRACK.videoId = videoId;
     if (title) TRACK.title = title;
