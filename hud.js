@@ -1,3 +1,5 @@
+import AmbientMusic from "./ambientMusic.js";
+
 export default {
   _boardingPassShown: false,
   _repProgress: 72,
@@ -6,7 +8,6 @@ export default {
   _level: 25,
   _coins: 250750,
   _diamonds: 1250,
-  _radioPlaying: true,
   _radioProgress: 0,
   _radioInterval: null,
 
@@ -45,7 +46,6 @@ export default {
       display:flex;flex-direction:column;gap:6px;
     `;
 
-    // LAMBO CITY RECORDS logo
     tl.innerHTML += `
       <div style="
         color:#ff00aa;font-size:13px;font-weight:bold;
@@ -57,7 +57,6 @@ export default {
       </div>
     `;
 
-    // PLAYER CARD
     const card = document.createElement('div');
     card.style.cssText = `
       background:rgba(0,0,0,0.7);
@@ -102,7 +101,6 @@ export default {
     `;
     tl.appendChild(card);
 
-    // CURRENCY ROW
     const currency = document.createElement('div');
     currency.style.cssText = `
       display:flex;gap:8px;
@@ -140,7 +138,6 @@ export default {
     `;
     tl.appendChild(currency);
 
-    // REPUTATION BAR
     const rep = document.createElement('div');
     rep.style.cssText = `
       background:rgba(0,0,0,0.65);
@@ -226,7 +223,6 @@ export default {
       align-items:flex-end;
     `;
 
-    // PLAYER COUNT
     tr.innerHTML = `
       <div style="
         display:flex;gap:12px;align-items:center;
@@ -244,7 +240,6 @@ export default {
       </div>
     `;
 
-    // RADIO CARD
     const radio = document.createElement('div');
     radio.style.cssText = `
       background:rgba(0,0,0,0.75);
@@ -273,8 +268,8 @@ export default {
               border-radius:2px;
             "></div>
           </div>
-          <div style="color:white;font-size:11px;font-weight:bold;">
-            HERO - FLY AWAY
+          <div style="color:white;font-size:11px;font-weight:bold;" id="radio-track-name">
+            LOADING...
           </div>
         </div>
         <button id="radio-toggle" style="
@@ -289,13 +284,12 @@ export default {
     tr.appendChild(radio);
     hud.appendChild(tr);
 
-    // Radio button listener
+    // Radio button listener — now controls the real ambient track
     setTimeout(() => {
       const btn = document.getElementById('radio-toggle');
       if (!btn) return;
       btn.addEventListener('click', () => {
-        this._radioPlaying = !this._radioPlaying;
-        btn.textContent = this._radioPlaying ? '⏸' : '▶';
+        AmbientMusic.togglePlay();
       });
     }, 300);
   },
@@ -489,31 +483,24 @@ export default {
 
     ctx.clearRect(0, 0, W, H);
 
-    // BG
     ctx.fillStyle = 'rgba(10,10,20,0.95)';
     ctx.fillRect(0, 0, W, H);
 
-    // WATER
     ctx.fillStyle = 'rgba(0,60,100,0.7)';
     ctx.fillRect(0, 80, W, H);
 
-    // ROADS
     ctx.strokeStyle = 'rgba(80,80,80,0.8)';
     ctx.lineWidth = 4;
-    // Main road horizontal
     ctx.beginPath(); ctx.moveTo(0,80); ctx.lineTo(W,80); ctx.stroke();
-    // Dock vertical
     ctx.strokeStyle = '#8b5e3c';
     ctx.lineWidth = 6;
     ctx.beginPath(); ctx.moveTo(110,0); ctx.lineTo(110,H); ctx.stroke();
-    // Side roads
     ctx.strokeStyle = 'rgba(60,60,60,0.6)';
     ctx.lineWidth = 3;
     [40,80,140,180].forEach(x => {
       ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,80); ctx.stroke();
     });
 
-    // STAGE
     ctx.fillStyle = '#9900ff';
     ctx.fillRect(90,10,40,12);
     ctx.shadowColor = '#9900ff';
@@ -521,15 +508,12 @@ export default {
     ctx.fillRect(90,10,40,12);
     ctx.shadowBlur = 0;
 
-    // YACHT CLUB
     ctx.fillStyle = '#00ffff';
     ctx.fillRect(140,85,30,12);
 
-    // YACHT
     ctx.fillStyle = '#dddddd';
     ctx.fillRect(150,100,25,8);
 
-    // BUILDINGS
     [
       {x:10,y:20,w:25,h:35,c:'#1a1a3e'},
       {x:40,y:15,w:20,h:40,c:'#0d0d2b'},
@@ -538,14 +522,12 @@ export default {
     ].forEach(b => {
       ctx.fillStyle = b.c;
       ctx.fillRect(b.x,b.y,b.w,b.h);
-      // Windows
       ctx.fillStyle = 'rgba(255,238,136,0.6)';
       for(let r=0;r<3;r++) for(let c=0;c<2;c++) {
         if(Math.random()>0.3) ctx.fillRect(b.x+3+c*8,b.y+4+r*10,5,4);
       }
     });
 
-    // ZONE ICONS
     const zones = [
       {x:95,y:8,icon:'🎵',color:'#9900ff'},
       {x:143,y:82,icon:'⚓',color:'#00ffff'},
@@ -557,7 +539,6 @@ export default {
       ctx.fillText(z.icon, z.x, z.y+10);
     });
 
-    // PLAYER DOT
     const px = playerPos ? 110 + playerPos.x * 0.6 : 110;
     const py = playerPos ? 100 + playerPos.z * 0.4 : 100;
     ctx.shadowColor = '#ff3300';
@@ -568,7 +549,6 @@ export default {
     ctx.fill();
     ctx.shadowBlur = 0;
 
-    // HEADING INDICATOR
     ctx.fillStyle = '#ffd700';
     ctx.font = 'bold 9px Arial';
     ctx.textAlign = 'center';
@@ -579,11 +559,24 @@ export default {
   _startRadio() {
     let p = 0;
     this._radioInterval = setInterval(() => {
-      if (!this._radioPlaying) return;
-      p = (p + 0.4) % 100;
-      const bar = document.getElementById('radio-wave');
-      if (bar) bar.style.width = p + '%';
-      // Update clock
+      const playing = AmbientMusic.isPlaying();
+
+      const btn = document.getElementById('radio-toggle');
+      if (btn) btn.textContent = playing ? '⏸' : '▶';
+
+      const track = AmbientMusic.getCurrentTrack();
+      const nameEl = document.getElementById('radio-track-name');
+      if (nameEl && track) {
+        const label = `${track.artist.toUpperCase()} - ${track.title.toUpperCase()}`;
+        if (nameEl.textContent !== label) nameEl.textContent = label;
+      }
+
+      if (playing) {
+        p = (p + 0.4) % 100;
+        const bar = document.getElementById('radio-wave');
+        if (bar) bar.style.width = p + '%';
+      }
+
       const now = new Date();
       let h = now.getHours();
       const m = now.getMinutes().toString().padStart(2,'0');
@@ -602,13 +595,11 @@ export default {
 
     this._drawMinimap(player.position);
 
-    // BOARDING PASS PROGRESS
     const dx = player.position.x - 35;
     const dz = player.position.z + 25;
     const dist = Math.sqrt(dx*dx + dz*dz);
     const progress = Math.min(100, Math.max(0, ((60-dist)/60)*100));
 
-    // UPDATE COINS based on movement
     if (Math.random() < 0.002) {
       this._coins += 1;
       const el = document.getElementById('coin-balance');
