@@ -1,13 +1,15 @@
 // stageVideo.js
 // Shows a real YouTube video for the stage performance via a simple modal
 // overlay, opened when the player is near the stage and presses E (or taps
-// the on-screen prompt). Playback is 100% native user-click, no autoplay —
-// YouTube Content ID / royalty tracking stays valid.
-//
-// Also pauses/resumes the ambient background music (ambientMusic.js) while
-// this modal is open, so the two tracks don't play over each other.
+// the on-screen prompt). This avoids anchoring the iframe to the 3D screen
+// mesh entirely — that approach hit a WebKit limitation where iframes nested
+// inside CSS 3D transforms don't reliably render on iPad Safari. This version
+// uses no 3D transforms at all, so it's guaranteed to render correctly.
+// Playback is 100% native user-click, no autoplay — YouTube Content ID /
+// royalty tracking stays valid.
 
 import AmbientMusic from "./ambientMusic.js";
+import StageAudioZone from "./stageAudioZone.js";
 
 // ---- CONFIG: swap the track here, nothing else needs to change ----
 const TRACK = {
@@ -51,7 +53,7 @@ function buildDOM() {
   promptEl.addEventListener("click", openModal);
   document.body.appendChild(promptEl);
 
-  modalEl = document.createElement("div");
+  const modalEl_ = modalEl = document.createElement("div");
   modalEl.style.position = "fixed";
   modalEl.style.top = "0";
   modalEl.style.left = "0";
@@ -148,6 +150,7 @@ function openModal() {
     `https://www.youtube.com/embed/${TRACK.videoId}` +
     `?autoplay=0&controls=1&rel=0&modestbranding=1&playsinline=1`;
   AmbientMusic.pause();
+  StageAudioZone.pause();
 }
 
 function closeModal() {
@@ -156,6 +159,7 @@ function closeModal() {
   modalEl.style.display = "none";
   modalIframe.src = "";
   AmbientMusic.resume();
+  StageAudioZone.resume();
 }
 
 export default {
