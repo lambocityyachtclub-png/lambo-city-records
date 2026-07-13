@@ -66,4 +66,10 @@ export default {
     playNext();
   },
   update() {},
+  setVolume(v) {
+    if (!video) return;
+    const clamped = Math.max(0, Math.min(1, v));
+    video.muted = clamped <= 0.001;
+    video.volume = clamped;
+  },
 };
