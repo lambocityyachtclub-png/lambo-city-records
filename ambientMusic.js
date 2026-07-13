@@ -1,16 +1,29 @@
 // ambientMusic.js
-// Plays a looping background track as soon as the player starts interacting
-// with the world. Browsers (especially iPad Safari) block audio with sound
-// from autoplaying before any user interaction, so this starts on the very
-// first tap/keypress if a direct autoplay attempt is blocked — which for a
-// game happens almost immediately.
+// LAMBO CITY RADIO — plays a playlist of self-hosted tracks, starting as
+// soon as the player interacts with the world (browsers block audio
+// autoplay before any interaction). Exposes real controls (play, pause,
+// toggle, next, current track info) so hud.js's radio widget can display
+// and control it directly, instead of being a fake decoration.
 
-const TRACK_URL = "https://res.cloudinary.com/z99sdnqv/video/upload/v1783884019/Let_s_Rage_qjmowr.mp3";
+// ---- PLAYLIST: add more songs here later, same shape ----
+const PLAYLIST = [
+  {
+    title: "Let's Rage",
+    artist: "Hero",
+    url: "https://res.cloudinary.com/z99sdnqv/video/upload/v1783884019/Let_s_Rage_qjmowr.mp3",
+  },
+  // { title: "Next Song", artist: "Hero", url: "https://..." },
+];
 
-let audio, started = false;
+let audio, started = false, trackIndex = 0;
+
+function loadTrack(index) {
+  trackIndex = ((index % PLAYLIST.length) + PLAYLIST.length) % PLAYLIST.length;
+  audio.src = PLAYLIST[trackIndex].url;
+}
 
 function start() {
-  if (started || !audio) return;
+  if (!audio) return;
   audio.play().then(() => { started = true; }).catch(() => {
     // still blocked — next interaction will try again via the listeners below
   });
@@ -26,22 +39,40 @@ function unlockOnce() {
 
 export default {
   init() {
-    audio = new Audio(TRACK_URL);
-    audio.loop = true;
+    audio = new Audio();
     audio.volume = 0.6;
+    audio.addEventListener("ended", () => {
+      loadTrack(trackIndex + 1);
+      start();
+    });
 
-    // Try immediately — some browsers (often desktop) allow this right away
+    loadTrack(0);
     start();
 
-    // Fallback: wait for the first tap/click/key press anywhere on the page
     window.addEventListener("pointerdown", unlockOnce);
     window.addEventListener("keydown", unlockOnce);
   },
   update() {},
+
   pause() {
     if (audio) audio.pause();
   },
   resume() {
-    if (audio && started) audio.play().catch(() => {});
+    if (audio) start();
+  },
+  togglePlay() {
+    if (!audio) return;
+    if (audio.paused) start();
+    else audio.pause();
+  },
+  next() {
+    loadTrack(trackIndex + 1);
+    start();
+  },
+  isPlaying() {
+    return !!audio && !audio.paused;
+  },
+  getCurrentTrack() {
+    return PLAYLIST[trackIndex];
   },
 };
