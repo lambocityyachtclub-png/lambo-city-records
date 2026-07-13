@@ -56,6 +56,7 @@ export default {
         color:0xffd700, emissive:0xffd700, emissiveIntensity:2.5
       })
     );
+    sign.name = "stageGoldSign";
     sign.position.set(0,19.5,-82.8); scene.add(sign);
 
     // THE TAKEOVER text bar
