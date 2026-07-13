@@ -59,15 +59,6 @@ export default {
     sign.name = "stageGoldSign";
     sign.position.set(0,19.5,-82.8); scene.add(sign);
 
-    // THE TAKEOVER text bar
-    const tb = new THREE.Mesh(
-      new THREE.BoxGeometry(16,1.2,0.4),
-      new THREE.MeshStandardMaterial({
-        color:0xffffff, emissive:0xffffff, emissiveIntensity:0.6
-      })
-    );
-    tb.position.set(0,17.5,-82.8); scene.add(tb);
-
     // STAGE TOWERS (kept both tower lights — hero elements right at the main venue)
     [-17,17].forEach(x => {
       const t = new THREE.Mesh(
