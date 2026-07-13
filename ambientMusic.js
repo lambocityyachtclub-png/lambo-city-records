@@ -75,4 +75,7 @@ export default {
   getCurrentTrack() {
     return PLAYLIST[trackIndex];
   },
+  setVolume(v) {
+    if (audio) audio.volume = Math.max(0, Math.min(1, v));
+  },
 };
