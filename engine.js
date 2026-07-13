@@ -30,6 +30,7 @@ export default class Engine {
     this.systems.marina?.init?.(this.scene);
     this.systems.stageVideo?.init?.(this.scene);
     this.systems.stageScreenMedia?.init?.(this.scene);
+    this.systems.stageBanner?.init?.(this.scene);
     this.systems.ambientMusic?.init?.();
     this.systems.input?.init?.();
     this.systems.player?.init?.(this.scene);
