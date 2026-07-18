@@ -14,7 +14,7 @@ const OUTER_SCREEN_NAME = "stageScreenOuter"; // the frame/bezel around it
 
 // ---- CONFIG: add as many videos as you want, they'll cycle in order ----
 const VIDEO_PLAYLIST = [
-  "https://res.cloudinary.com/z99sdnqv/video/upload/HERO_-_ARTWORK_tdc7kv.mp4",
+  "https://res.cloudinary.com/z99sdnqv/video/upload/Hollywood_Hero_-_Hollywood_LCYC_Music_Video_cnpk9n.mp4",
 ];
 
 let video, playlistIndex = 0;
@@ -43,10 +43,6 @@ export default {
     const videoTexture = new THREE.VideoTexture(video);
     videoTexture.colorSpace = THREE.SRGBColorSpace;
 
-    // BRIGHTNESS FIX: drive the video through emissiveMap instead of the
-    // regular color map. Emissive light isn't affected by the scene's
-    // ambient/directional lighting, so the screen stays bright and clear
-    // no matter how dark it is around it — just like a real video screen.
     inner.material.color.setHex(0x000000);
     inner.material.map = null;
     inner.material.emissive.setHex(0xffffff);
@@ -54,8 +50,6 @@ export default {
     inner.material.emissiveIntensity = 1.0;
     inner.material.needsUpdate = true;
 
-    // BORDER FIX: neutralize the purple frame mesh so it's just a plain
-    // dark bezel instead of competing with the video for attention.
     if (outer) {
       outer.material.color.setHex(0x0a0a0a);
       outer.material.emissive.setHex(0x000000);
