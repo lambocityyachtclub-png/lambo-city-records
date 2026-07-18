@@ -14,7 +14,7 @@ const OUTER_SCREEN_NAME = "stageScreenOuter"; // the frame/bezel around it
 
 // ---- CONFIG: add as many videos as you want, they'll cycle in order ----
 const VIDEO_PLAYLIST = [
-  "https://res.cloudinary.com/z99sdnqv/video/upload/Hollywood_Hero_-_Hollywood_LCYC_Music_Video_cnpk9n.mp4",
+  "https://res.cloudinary.com/z99sdnqv/video/upload/HERO_-_ARTWORK_tdc7kv.mp4",
 ];
 
 let video, playlistIndex = 0;
