@@ -23,6 +23,7 @@ import StageScreenMedia from "./stageScreenMedia.js";
 import StageBanner from "./stageBanner.js";
 import AmbientMusic from "./ambientMusic.js";
 import StageAudioZone from "./stageAudioZone.js";
+import Collision from "./collision.js";
 const engine = new Engine();
 engine.registerSystems({
   scene:         Scene,
@@ -46,6 +47,7 @@ engine.registerSystems({
   stageBanner:   StageBanner,
   ambientMusic:  AmbientMusic,
   stageAudioZone: StageAudioZone,
+  collision:     Collision,
   input:         Input,
   player:        Player,
   hud:           HUD,
