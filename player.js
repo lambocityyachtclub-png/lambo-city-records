@@ -1,4 +1,5 @@
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
+import Collision from "./collision.js";
 let player, bobTime = 0;
 export default {
   init(scene) {
@@ -52,8 +53,10 @@ export default {
       if (Math.abs(input.joystick.y)>0.08){dz=input.joystick.y;moving=true;}
     }
     if (dx!==0&&dz!==0){const l=Math.sqrt(dx*dx+dz*dz);dx/=l;dz/=l;}
-    player.position.x += dx*speed;
-    player.position.z += dz*speed;
+    const newX = player.position.x + dx*speed;
+    const newZ = player.position.z + dz*speed;
+    if (!Collision.isBlocked(newX, player.position.z)) player.position.x = newX;
+    if (!Collision.isBlocked(player.position.x, newZ)) player.position.z = newZ;
     if (moving&&(dx!==0||dz!==0)) {
       const ta = Math.atan2(dx,dz);
       let diff = ta-this._facing;
