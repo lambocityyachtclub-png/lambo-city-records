@@ -33,6 +33,7 @@ export default class Engine {
     this.systems.stageBanner?.init?.(this.scene);
     this.systems.ambientMusic?.init?.();
     this.systems.stageAudioZone?.init?.(this.scene);
+    this.systems.collision?.init?.();
     this.systems.input?.init?.();
     this.systems.player?.init?.(this.scene);
     this.systems.hud?.init?.();
