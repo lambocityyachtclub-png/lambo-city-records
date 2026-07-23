@@ -27,6 +27,7 @@ import Collision from "./collision.js";
 import StageSpotlights from "./stageSpotlights.js";
 import StageLasers from "./stageLasers.js";
 import StageSmoke from "./stageSmoke.js";
+import StageCrowdPulse from "./stageCrowdPulse.js";
 const engine = new Engine();
 engine.registerSystems({
   scene:         Scene,
@@ -54,6 +55,7 @@ engine.registerSystems({
   stageSpotlights: StageSpotlights,
   stageLasers:   StageLasers,
   stageSmoke:    StageSmoke,
+  stageCrowdPulse: StageCrowdPulse,
   input:         Input,
   player:        Player,
   hud:           HUD,
