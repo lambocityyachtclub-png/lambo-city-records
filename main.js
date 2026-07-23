@@ -29,6 +29,7 @@ import StageLasers from "./stageLasers.js";
 import StageSmoke from "./stageSmoke.js";
 import StageCrowdPulse from "./stageCrowdPulse.js";
 import YachtLuxuryDetails from "./yachtLuxuryDetails.js";
+import VillaLuxuryDetails from "./villaLuxuryDetails.js";
 const engine = new Engine();
 engine.registerSystems({
   scene:         Scene,
@@ -58,6 +59,7 @@ engine.registerSystems({
   stageSmoke:    StageSmoke,
   stageCrowdPulse: StageCrowdPulse,
   yachtLuxuryDetails: YachtLuxuryDetails,
+  villaLuxuryDetails: VillaLuxuryDetails,
   input:         Input,
   player:        Player,
   hud:           HUD,
