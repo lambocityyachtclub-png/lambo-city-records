@@ -38,6 +38,7 @@ export default class Engine {
     this.systems.stageLasers?.init?.(this.scene);
     this.systems.stageSmoke?.init?.(this.scene);
     this.systems.stageCrowdPulse?.init?.(this.scene);
+    this.systems.yachtLuxuryDetails?.init?.(this.scene);
     this.systems.input?.init?.();
     this.systems.player?.init?.(this.scene);
     this.systems.hud?.init?.();
