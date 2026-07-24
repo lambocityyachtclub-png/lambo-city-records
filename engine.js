@@ -41,6 +41,7 @@ export default class Engine {
     this.systems.yachtLuxuryDetails?.init?.(this.scene);
     this.systems.villaLuxuryDetails?.init?.(this.scene);
     this.systems.dockEntranceLuxury?.init?.(this.scene);
+    this.systems.dockLuxuryOverhaul?.init?.(this.scene);
     this.systems.input?.init?.();
     this.systems.player?.init?.(this.scene);
     this.systems.hud?.init?.();
