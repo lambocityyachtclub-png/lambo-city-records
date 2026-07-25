@@ -32,6 +32,7 @@ import YachtLuxuryDetails from "./yachtLuxuryDetails.js";
 import VillaLuxuryDetails from "./villaLuxuryDetails.js";
 import DockEntranceLuxury from "./dockEntranceLuxury.js";
 import DockLuxuryOverhaul from "./dockLuxuryOverhaul.js";
+import RecordsHQ from "./recordsHQ.js";
 const engine = new Engine();
 engine.registerSystems({
   scene:         Scene,
@@ -64,6 +65,7 @@ engine.registerSystems({
   villaLuxuryDetails: VillaLuxuryDetails,
   dockEntranceLuxury: DockEntranceLuxury,
   dockLuxuryOverhaul: DockLuxuryOverhaul,
+  recordsHQ:     RecordsHQ,
   input:         Input,
   player:        Player,
   hud:           HUD,
