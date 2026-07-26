@@ -1,168 +1,92 @@
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 
+// REBUILT per feedback: removed hotels, freeway/bridge, and boat slips.
+// Boulevard + restaurant row (stores) repositioned to run alongside the
+// dock starting at its beginning (dock spans z=-65 to z=35, ~14 wide,
+// centered x=0), instead of being placed far away at z=150.
+
+const BOULEVARD_X = 14;
+const BOULEVARD_Z_START = -60;
+const BOULEVARD_Z_END = 34;
+const BOULEVARD_Z_LEN = BOULEVARD_Z_END - BOULEVARD_Z_START;
+const BOULEVARD_Z_MID = (BOULEVARD_Z_START + BOULEVARD_Z_END) / 2;
+
 export default {
   init(scene) {
     this._buildBoulevard(scene);
-    this._buildHotels(scene);
     this._buildRestaurantRow(scene);
-    this._buildBoatSlips(scene);
-    this._buildFreewayOnRamp(scene);
     this._buildMarinaPalms(scene);
     this._buildMarinaNeon(scene);
   },
 
   _buildBoulevard(scene) {
     var roadMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.9 });
-    var road = new THREE.Mesh(new THREE.BoxGeometry(300, 0.3, 18), roadMat);
-    road.position.set(0, 0.5, 150);
+    var road = new THREE.Mesh(new THREE.BoxGeometry(18, 0.3, BOULEVARD_Z_LEN), roadMat);
+    road.position.set(BOULEVARD_X, 0.5, BOULEVARD_Z_MID);
     scene.add(road);
 
     var markMat = new THREE.MeshStandardMaterial({
       color: 0xffcc00, emissive: 0xffcc00, emissiveIntensity: 0.3
     });
-    for (var x = -140; x < 140; x += 12) {
-      var mark = new THREE.Mesh(new THREE.BoxGeometry(6, 0.05, 0.4), markMat);
-      mark.position.set(x, 0.66, 150);
+    for (var z = BOULEVARD_Z_START + 5; z < BOULEVARD_Z_END; z += 12) {
+      var mark = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.05, 6), markMat);
+      mark.position.set(BOULEVARD_X, 0.66, z);
       scene.add(mark);
     }
 
     var sidewalkMat = new THREE.MeshStandardMaterial({ color: 0x888877, roughness: 1 });
     [-1, 1].forEach(function(side) {
-      var sidewalk = new THREE.Mesh(new THREE.BoxGeometry(300, 0.3, 6), sidewalkMat);
-      sidewalk.position.set(0, 0.55, 150 + side * 12);
+      var sidewalk = new THREE.Mesh(new THREE.BoxGeometry(6, 0.3, BOULEVARD_Z_LEN), sidewalkMat);
+      sidewalk.position.set(BOULEVARD_X + side * 12, 0.55, BOULEVARD_Z_MID);
       scene.add(sidewalk);
     });
 
-    var ground = new THREE.Mesh(
-      new THREE.BoxGeometry(300, 0.4, 140),
-      new THREE.MeshStandardMaterial({ color: 0x2a1a08, roughness: 1 })
-    );
-    ground.position.set(0, 0.3, 90);
-    scene.add(ground);
-
-    // STREET LIGHTS — lamp heads now emissive so every lamp still looks lit; the real
-    // PointLight is kept only on every 3rd lamp (14 → 5), with a wider radius.
-    var lampIdx = 0;
-    for (var lx = -130; lx <= 130; lx += 20) {
+    for (var lz = BOULEVARD_Z_START; lz <= BOULEVARD_Z_END; lz += 20) {
       var pole = new THREE.Mesh(
         new THREE.CylinderGeometry(0.15, 0.15, 8, 6),
         new THREE.MeshStandardMaterial({ color: 0x333333 })
       );
-      pole.position.set(lx, 4.5, 144);
+      pole.position.set(BOULEVARD_X + 8, 4.5, lz);
       scene.add(pole);
 
       var lampHead = new THREE.Mesh(
-        new THREE.BoxGeometry(2, 0.3, 0.3),
+        new THREE.BoxGeometry(0.3, 0.3, 2),
         new THREE.MeshStandardMaterial({ color: 0xffeeaa, emissive: 0xffeeaa, emissiveIntensity: 1.2 })
       );
-      lampHead.position.set(lx, 8.5, 144);
+      lampHead.position.set(BOULEVARD_X + 8, 8.5, lz);
       scene.add(lampHead);
-
-      if (lampIdx % 3 === 0) {
-        var lampLight = new THREE.PointLight(0xffeeaa, 2.2, 34);
-        lampLight.position.set(lx, 8, 144);
-        scene.add(lampLight);
-      }
-      lampIdx++;
     }
-  },
-
-  _buildHotels(scene) {
-    var hotelData = [
-      { x: -80, z: 100, w: 30, h: 45, color: 0x1a1a2e, name: 'MARINA GRAND' },
-      { x:  80, z: 100, w: 30, h: 38, color: 0x0d1a2e, name: 'HARBOR SUITES' },
-      { x:   0, z: 80,  w: 25, h: 55, color: 0x0a0a1e, name: 'LAMBO TOWER'   },
-    ];
-
-    hotelData.forEach(function(h) {
-      var tower = new THREE.Mesh(
-        new THREE.BoxGeometry(h.w, h.h, 20),
-        new THREE.MeshStandardMaterial({ color: h.color, roughness: 0.3, metalness: 0.4 })
-      );
-      tower.position.set(h.x, h.h / 2 + 0.5, h.z);
-      scene.add(tower);
-
-      var glass = new THREE.Mesh(
-        new THREE.BoxGeometry(h.w - 2, h.h - 4, 0.2),
-        new THREE.MeshStandardMaterial({ color: 0x003355, transparent: true, opacity: 0.5, metalness: 0.9 })
-      );
-      glass.position.set(h.x, h.h / 2 + 0.5, h.z + 10.1);
-      scene.add(glass);
-
-      var rows = Math.floor(h.h / 4);
-      var cols = Math.floor(h.w / 4);
-      for (var row = 0; row < rows; row++) {
-        for (var col = 0; col < cols; col++) {
-          if (Math.random() < 0.25) continue;
-          var win = new THREE.Mesh(
-            new THREE.BoxGeometry(1.8, 1.2, 0.1),
-            new THREE.MeshStandardMaterial({
-              color: 0xffee88, emissive: 0xffee88, emissiveIntensity: Math.random() * 0.6 + 0.4
-            })
-          );
-          win.position.set(h.x - h.w/2 + 2 + col * 4, 2 + row * 4, h.z + 10.2);
-          scene.add(win);
-        }
-      }
-
-      var roofNeon = new THREE.Mesh(
-        new THREE.BoxGeometry(h.w + 1, 0.3, 0.3),
-        new THREE.MeshStandardMaterial({ color: 0x9900ff, emissive: 0x9900ff, emissiveIntensity: 2.5 })
-      );
-      roofNeon.position.set(h.x, h.h + 0.8, h.z + 10);
-      scene.add(roofNeon);
-      // Rooftop PointLight removed — roofNeon above is already bright emissive.
-
-      var lobby = new THREE.Mesh(
-        new THREE.BoxGeometry(10, 5, 4),
-        new THREE.MeshStandardMaterial({ color: 0x222233, roughness: 0.2, emissive: 0xffaa44, emissiveIntensity: 0.5 })
-      );
-      lobby.position.set(h.x, 3, h.z + 12);
-      scene.add(lobby);
-      // Lobby PointLight removed — lobby mesh now carries its own emissive glow.
-
-      if (h.name === 'LAMBO TOWER') {
-        var sign = new THREE.Mesh(
-          new THREE.BoxGeometry(16, 2, 0.3),
-          new THREE.MeshStandardMaterial({ color: 0xffd700, emissive: 0xffd700, emissiveIntensity: 1.5 })
-        );
-        sign.position.set(h.x, h.h + 1.5, h.z + 10.2);
-        scene.add(sign);
-      }
-    });
   },
 
   _buildRestaurantRow(scene) {
     var restaurants = [
-      { x: -120, color: 0x8b1a1a, light: 0xff4444 },
-      { x:  -90, color: 0x1a3a1a, light: 0x44ff44 },
-      { x:  -60, color: 0x1a1a8b, light: 0x4444ff },
-      { x:   60, color: 0x8b6a1a, light: 0xffaa00 },
-      { x:   90, color: 0x4a1a8b, light: 0xaa00ff },
-      { x:  120, color: 0x8b1a6a, light: 0xff00aa },
+      { z: -50, color: 0x8b1a1a, light: 0xff4444 },
+      { z: -30, color: 0x1a3a1a, light: 0x44ff44 },
+      { z: -10, color: 0x1a1a8b, light: 0x4444ff },
+      { z:  10, color: 0x8b6a1a, light: 0xffaa00 },
+      { z:  25, color: 0x4a1a8b, light: 0xaa00ff },
     ];
 
     restaurants.forEach(function(r) {
       var building = new THREE.Mesh(
-        new THREE.BoxGeometry(18, 8, 14),
+        new THREE.BoxGeometry(14, 8, 18),
         new THREE.MeshStandardMaterial({ color: r.color, roughness: 0.8 })
       );
-      building.position.set(r.x, 4.5, 170);
+      building.position.set(BOULEVARD_X + 20, 4.5, r.z);
       scene.add(building);
 
       var awning = new THREE.Mesh(
-        new THREE.BoxGeometry(18, 0.3, 4),
+        new THREE.BoxGeometry(4, 0.3, 18),
         new THREE.MeshStandardMaterial({ color: r.light, emissive: r.light, emissiveIntensity: 0.5 })
       );
-      awning.position.set(r.x, 5, 163.5);
+      awning.position.set(BOULEVARD_X + 12.5, 5, r.z);
       scene.add(awning);
 
-      // Sign emissiveIntensity boosted (0.8 → 1.4) to replace the removed light
       var rSign = new THREE.Mesh(
-        new THREE.BoxGeometry(12, 1.5, 0.2),
+        new THREE.BoxGeometry(0.2, 1.5, 12),
         new THREE.MeshStandardMaterial({ color: r.light, emissive: r.light, emissiveIntensity: 1.4 })
       );
-      rSign.position.set(r.x, 7, 163.4);
+      rSign.position.set(BOULEVARD_X + 13.4, 7, r.z);
       scene.add(rSign);
 
       for (var t = -3; t <= 3; t += 3) {
@@ -170,150 +94,19 @@ export default {
           new THREE.CylinderGeometry(0.8, 0.8, 0.1, 8),
           new THREE.MeshStandardMaterial({ color: 0x888888 })
         );
-        table.position.set(r.x + t, 1.1, 161);
+        table.position.set(BOULEVARD_X + 8, 1.1, r.z + t);
         scene.add(table);
       }
-      // Restaurant PointLight removed — sign + awning above are already emissive.
     });
-  },
-
-  _buildBoatSlips(scene) {
-    var dockMat = new THREE.MeshStandardMaterial({ color: 0x8b5e3c, roughness: 0.9 });
-
-    var slipPositions = [-100, -60, -20, 20, 60, 100];
-    slipPositions.forEach(function(x, idx) {
-      var pier = new THREE.Mesh(new THREE.BoxGeometry(4, 0.3, 35), dockMat);
-      pier.position.set(x, 0.7, 28);
-      scene.add(pier);
-
-      var boat = new THREE.Group();
-
-      var hull = new THREE.Mesh(
-        new THREE.BoxGeometry(8, 1.5, 3),
-        new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.3 })
-      );
-      hull.position.y = 0.75;
-      boat.add(hull);
-
-      var cabin = new THREE.Mesh(
-        new THREE.BoxGeometry(3.5, 1.5, 2.5),
-        new THREE.MeshStandardMaterial({ color: 0xeeeeee })
-      );
-      cabin.position.set(0, 2, 0);
-      boat.add(cabin);
-
-      var boatNeon = new THREE.Mesh(
-        new THREE.BoxGeometry(8, 0.1, 0.1),
-        new THREE.MeshStandardMaterial({ color: 0x00ffff, emissive: 0x00ffff, emissiveIntensity: 2.5 })
-      );
-      boatNeon.position.set(0, 0.2, 1.55);
-      boat.add(boatNeon);
-
-      boat.position.set(x + (idx % 2 === 0 ? 6 : -6), 0, 20);
-      scene.add(boat);
-
-      // Pier PointLight kept on every other slip (6 → 3)
-      if (idx % 2 === 0) {
-        var pierLight = new THREE.PointLight(0xffaa33, 2.2, 16);
-        pierLight.position.set(x, 2, 28);
-        scene.add(pierLight);
-      }
-    });
-
-    var wall = new THREE.Mesh(new THREE.BoxGeometry(280, 1.5, 3), dockMat);
-    wall.position.set(0, 0.8, 12);
-    scene.add(wall);
-  },
-
-  _buildFreewayOnRamp(scene) {
-    var fwyMat = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.9 });
-
-    var freeway = new THREE.Mesh(new THREE.BoxGeometry(24, 0.4, 200), fwyMat);
-    freeway.position.set(0, 0.5, 250);
-    scene.add(freeway);
-
-    var divider = new THREE.Mesh(
-      new THREE.BoxGeometry(0.5, 0.2, 200),
-      new THREE.MeshStandardMaterial({ color: 0xffcc00, emissive: 0xffcc00, emissiveIntensity: 0.4 })
-    );
-    divider.position.set(0, 0.7, 250);
-    scene.add(divider);
-
-    var ramp = new THREE.Mesh(new THREE.BoxGeometry(12, 0.4, 80), fwyMat);
-    ramp.position.set(0, 0.5, 195);
-    scene.add(ramp);
-
-    var signData = [
-      { x: -8, text: '710 NORTH — DOWNTOWN' },
-      { x:  8, text: '710 SOUTH — DOCKS'    },
-    ];
-    signData.forEach(function(s) {
-      var signBoard = new THREE.Mesh(
-        new THREE.BoxGeometry(14, 4, 0.3),
-        new THREE.MeshStandardMaterial({ color: 0x006600 })
-      );
-      signBoard.position.set(s.x, 8, 160);
-      scene.add(signBoard);
-
-      var signText = new THREE.Mesh(
-        new THREE.BoxGeometry(12, 1.5, 0.4),
-        new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 0.5 })
-      );
-      signText.position.set(s.x, 8, 160.2);
-      scene.add(signText);
-
-      [-5, 5].forEach(function(px) {
-        var sPole = new THREE.Mesh(
-          new THREE.CylinderGeometry(0.2, 0.2, 8, 6),
-          new THREE.MeshStandardMaterial({ color: 0x888888 })
-        );
-        sPole.position.set(s.x + px, 4, 160);
-        scene.add(sPole);
-      });
-    });
-
-    var bridge = new THREE.Mesh(
-      new THREE.BoxGeometry(28, 1, 8),
-      new THREE.MeshStandardMaterial({ color: 0x333333, roughness: 0.7 })
-    );
-    bridge.position.set(0, 7, 150);
-    scene.add(bridge);
-
-    [-10, 10].forEach(function(x) {
-      var col = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.8, 0.8, 7, 8),
-        new THREE.MeshStandardMaterial({ color: 0x444444 })
-      );
-      col.position.set(x, 3.5, 150);
-      scene.add(col);
-    });
-
-    // FREEWAY LIGHTS — distant background, density halved (step 30 → 90)
-    for (var fz = 160; fz < 350; fz += 90) {
-      [-14, 14].forEach(function(fx) {
-        var fPole = new THREE.Mesh(
-          new THREE.CylinderGeometry(0.15, 0.15, 10, 6),
-          new THREE.MeshStandardMaterial({ color: 0x333333 })
-        );
-        fPole.position.set(fx, 5, fz);
-        scene.add(fPole);
-
-        var fLight = new THREE.PointLight(0xffeeaa, 1.5, 30);
-        fLight.position.set(fx, 10, fz);
-        scene.add(fLight);
-      });
-    }
   },
 
   _buildMarinaPalms(scene) {
     var trunkMat = new THREE.MeshStandardMaterial({ color: 0x6b4226, roughness: 1 });
     var leafMat  = new THREE.MeshStandardMaterial({ color: 0x1a5c2a, roughness: 0.8 });
 
-    var palmPositions = [-120,-100,-80,-60,-40,-20,0,20,40,60,80,100,120];
-
-    palmPositions.forEach(function(x) {
-      var palm = new THREE.Group();
+    for (var pz = BOULEVARD_Z_START; pz <= BOULEVARD_Z_END; pz += 14) {
       var h = 8 + Math.random() * 4;
+      var palm = new THREE.Group();
 
       var trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.4, h, 8), trunkMat);
       trunk.position.y = h / 2;
@@ -327,46 +120,25 @@ export default {
         palm.add(leaves);
       });
 
-      [-1, 1].forEach(function(side) {
-        var p = palm.clone();
-        p.position.set(x, 0.5, 150 + side * 16);
-        scene.add(p);
-      });
-    });
+      palm.position.set(BOULEVARD_X - 8, 0.5, pz);
+      scene.add(palm);
+    }
   },
 
   _buildMarinaNeon(scene) {
     var mainSign = new THREE.Mesh(
-      new THREE.BoxGeometry(30, 4, 0.4),
+      new THREE.BoxGeometry(0.4, 4, 8),
       new THREE.MeshStandardMaterial({ color: 0x9900ff, emissive: 0x9900ff, emissiveIntensity: 1.4 })
     );
-    mainSign.position.set(0, 12, 35);
+    mainSign.position.set(BOULEVARD_X - 8, 12, BOULEVARD_Z_END - 4);
     scene.add(mainSign);
 
     var mainText = new THREE.Mesh(
-      new THREE.BoxGeometry(24, 2, 0.5),
+      new THREE.BoxGeometry(0.5, 2, 6),
       new THREE.MeshStandardMaterial({ color: 0xffd700, emissive: 0xffd700, emissiveIntensity: 2.5 })
     );
-    mainText.position.set(0, 12, 35.3);
+    mainText.position.set(BOULEVARD_X - 8.3, 12, BOULEVARD_Z_END - 4);
     scene.add(mainText);
-
-    [-12, 12].forEach(function(x) {
-      var pole = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.25, 0.25, 12, 6),
-        new THREE.MeshStandardMaterial({ color: 0x444444 })
-      );
-      pole.position.set(x, 6, 35);
-      scene.add(pole);
-    });
-
-    // Sign PointLight removed — mainSign + mainText above are already bright emissive.
-
-    var neonStrip = new THREE.Mesh(
-      new THREE.BoxGeometry(280, 0.15, 0.15),
-      new THREE.MeshStandardMaterial({ color: 0x00ffff, emissive: 0x00ffff, emissiveIntensity: 2 })
-    );
-    neonStrip.position.set(0, 1, 12);
-    scene.add(neonStrip);
 
     this._buildZoneLabel();
   },
@@ -390,7 +162,7 @@ export default {
         NEW ZONE
       </div>
       <div style="font-size:18px;font-weight:bold;color:white;margin-bottom:4px;">
-        MARINA DISTRICT
+        MARINA BOARDWALK
       </div>
       <div style="color:#aaa;font-size:11px;">
         Long Beach Waterfront • Gateway to the City
@@ -404,7 +176,7 @@ export default {
   update(delta, context) {
     if (!context.player || !this._labelEl || this._labelShown) return;
     var pz = context.player.position.z;
-    if (pz > 100) {
+    if (pz > 5 && pz < 40) {
       this._labelShown = true;
       this._labelEl.style.display = 'block';
       var self = this;
