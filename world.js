@@ -59,7 +59,7 @@ export default {
     sign.name = "stageGoldSign";
     sign.position.set(0,19.5,-82.8); scene.add(sign);
 
-    // STAGE TOWERS (kept both tower lights — hero elements right at the main venue)
+    // STAGE TOWERS
     [-17,17].forEach(x => {
       const t = new THREE.Mesh(
         new THREE.BoxGeometry(2.5,26,2.5),
@@ -89,95 +89,7 @@ export default {
       s.position.set(0, 0.8+i*0.22, -65.5-i*1.5); scene.add(s);
     }
 
-    // VILLAS — left side, upgraded
-    [{z:8},{z:-16},{z:-40}].forEach(vp => {
-      const x = -37;
-
-      // MAIN VILLA — warm wood
-      const v = new THREE.Mesh(
-        new THREE.BoxGeometry(20,10,16),
-        new THREE.MeshStandardMaterial({color:0x5a3520,roughness:0.85})
-      );
-      v.position.set(x,5.7,vp.z); scene.add(v);
-
-      // ROOF OVERHANG
-      const roof = new THREE.Mesh(
-        new THREE.BoxGeometry(22,0.6,18),
-        new THREE.MeshStandardMaterial({color:0x3a2010,roughness:1})
-      );
-      roof.position.set(x,11,vp.z); scene.add(roof);
-
-      // SECOND FLOOR BALCONY
-      const bal = new THREE.Mesh(
-        new THREE.BoxGeometry(18,0.3,3.5),
-        new THREE.MeshStandardMaterial({color:0x6a4530,roughness:0.9})
-      );
-      bal.position.set(x,7,vp.z+8.5); scene.add(bal);
-
-      // BALCONY RAILING
-      const rail = new THREE.Mesh(
-        new THREE.BoxGeometry(18,0.8,0.15),
-        new THREE.MeshStandardMaterial({color:0x888888,metalness:0.6})
-      );
-      rail.position.set(x,7.6,vp.z+10.3); scene.add(rail);
-
-      // WINDOWS — ground floor
-      for (let col = 0; col < 4; col++) {
-        const wg = new THREE.Mesh(
-          new THREE.BoxGeometry(2.8,2.5,0.1),
-          new THREE.MeshStandardMaterial({
-            color:0xffcc66, emissive:0xffaa33,
-            emissiveIntensity:1.0, transparent:true, opacity:0.9
-          })
-        );
-        wg.position.set(x-7+col*4.5, 3.5, vp.z+8.1); scene.add(wg);
-      }
-
-      // WINDOWS — second floor
-      for (let col = 0; col < 3; col++) {
-        const w2 = new THREE.Mesh(
-          new THREE.BoxGeometry(2.5,2,0.1),
-          new THREE.MeshStandardMaterial({
-            color:0xffcc66, emissive:0xffaa33,
-            emissiveIntensity:0.8, transparent:true, opacity:0.9
-          })
-        );
-        w2.position.set(x-5+col*5, 7.5, vp.z+8.1); scene.add(w2);
-      }
-
-      // POOL — teal glow
-      const pool = new THREE.Mesh(
-        new THREE.BoxGeometry(14,0.2,6),
-        new THREE.MeshStandardMaterial({
-          color:0x00aacc, emissive:0x00aacc,
-          emissiveIntensity:1.3, transparent:true, opacity:0.9
-        })
-      );
-      pool.position.set(x,0.8,vp.z+14); scene.add(pool);
-
-      // POOL NEON EDGE
-      ['#9900ff','#00aacc'].forEach((color, ci) => {
-        const edge = new THREE.Mesh(
-          new THREE.BoxGeometry(14,0.12,0.12),
-          new THREE.MeshStandardMaterial({
-            color:parseInt(color.replace('#','0x')),
-            emissive:parseInt(color.replace('#','0x')),
-            emissiveIntensity:2.5
-          })
-        );
-        edge.position.set(x, 0.9, vp.z+11+ci*6); scene.add(edge);
-      });
-
-      // VILLA LIGHTS — REMOVED (redundant): pool and windows above already carry their
-      // own emissive materials (boosted slightly to compensate: pool 1.0→1.3), so the
-      // glow persists without the two PointLights per villa.
-    });
-
     // BACKGROUND SKYLINE — taller, more detailed
-    // PERF: rooftop PointLight kept only on every 3rd building (3 of 9), with a wider
-    // radius/intensity to still wash the skyline generally. Each building's own emissive
-    // rooftop neon strip (unchanged, emissiveIntensity 2.5) still glows on every building
-    // regardless — only the extra cast-light PointLight is thinned out.
     [
       {x:-68,z:-48,w:14,h:26,c:0x1a1a3e},
       {x:-85,z:-68,w:11,h:38,c:0x0d0d2b},
