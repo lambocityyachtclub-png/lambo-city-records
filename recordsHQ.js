@@ -1,13 +1,13 @@
 // recordsHQ.js
 // LAMBO CITY RECORDS headquarters — exterior landmark building near the
-// start of the dock. Glowing wordmark + original bull emblem, marquee
+// start of the dock, on the RIGHT (east/positive X) side, matching the
+// reference map. Glowing wordmark + original bull emblem, marquee
 // announcement bar, lit glass lobby front (decorative, not walkable yet),
-// red carpet with velvet-rope stanchions. New standalone file, doesn't
-// touch world.js, dock.js, or anything else.
+// red carpet with velvet-rope stanchions.
 
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 
-const HQ_POSITION = { x: -28, z: 34 };
+const HQ_POSITION = { x: 28, z: 34 };
 
 function createSignTexture() {
   const w = 1024, h = 512;
