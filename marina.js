@@ -1,110 +1,101 @@
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 
-// REBUILT per feedback: removed hotels, freeway/bridge, and boat slips.
-// Boulevard + restaurant row (stores) repositioned to run alongside the
-// dock starting at its beginning (dock spans z=-65 to z=35, ~14 wide,
-// centered x=0), instead of being placed far away at z=150.
+// REBUILT to match the reference map: boardwalk/street now crosses
+// PERPENDICULAR to the dock near its base (a T-shape), instead of running
+// alongside its full length. Stores/Club Vista sit on the LEFT (west,
+// negative X) side of the dock. Records HQ (built separately in
+// recordsHQ.js) sits on the RIGHT (east, positive X) side.
 
-const BOULEVARD_X = 14;
-const BOULEVARD_Z_START = -60;
-const BOULEVARD_Z_END = 34;
-const BOULEVARD_Z_LEN = BOULEVARD_Z_END - BOULEVARD_Z_START;
-const BOULEVARD_Z_MID = (BOULEVARD_Z_START + BOULEVARD_Z_END) / 2;
+const STREET_Z = 30;
+const STREET_X_MIN = -45;
+const STREET_X_MAX = 45;
+const STREET_LEN = STREET_X_MAX - STREET_X_MIN;
+const STREET_X_MID = (STREET_X_MIN + STREET_X_MAX) / 2;
 
 export default {
   init(scene) {
-    this._buildBoulevard(scene);
-    this._buildRestaurantRow(scene);
-    this._buildMarinaPalms(scene);
-    this._buildMarinaNeon(scene);
+    this._buildStreet(scene);
+    this._buildStores(scene);
+    this._buildPalms(scene);
+    this._buildNeon(scene);
   },
 
-  _buildBoulevard(scene) {
+  _buildStreet(scene) {
     var roadMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.9 });
-    var road = new THREE.Mesh(new THREE.BoxGeometry(18, 0.3, BOULEVARD_Z_LEN), roadMat);
-    road.position.set(BOULEVARD_X, 0.5, BOULEVARD_Z_MID);
+    var road = new THREE.Mesh(new THREE.BoxGeometry(STREET_LEN, 0.3, 8), roadMat);
+    road.position.set(STREET_X_MID, 0.5, STREET_Z);
     scene.add(road);
 
     var markMat = new THREE.MeshStandardMaterial({
       color: 0xffcc00, emissive: 0xffcc00, emissiveIntensity: 0.3
     });
-    for (var z = BOULEVARD_Z_START + 5; z < BOULEVARD_Z_END; z += 12) {
-      var mark = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.05, 6), markMat);
-      mark.position.set(BOULEVARD_X, 0.66, z);
+    for (var x = STREET_X_MIN + 5; x < STREET_X_MAX; x += 12) {
+      var mark = new THREE.Mesh(new THREE.BoxGeometry(6, 0.05, 0.4), markMat);
+      mark.position.set(x, 0.66, STREET_Z);
       scene.add(mark);
     }
 
     var sidewalkMat = new THREE.MeshStandardMaterial({ color: 0x888877, roughness: 1 });
     [-1, 1].forEach(function(side) {
-      var sidewalk = new THREE.Mesh(new THREE.BoxGeometry(6, 0.3, BOULEVARD_Z_LEN), sidewalkMat);
-      sidewalk.position.set(BOULEVARD_X + side * 12, 0.55, BOULEVARD_Z_MID);
+      var sidewalk = new THREE.Mesh(new THREE.BoxGeometry(STREET_LEN, 0.3, 5), sidewalkMat);
+      sidewalk.position.set(STREET_X_MID, 0.55, STREET_Z + side * 6.5);
       scene.add(sidewalk);
     });
 
-    for (var lz = BOULEVARD_Z_START; lz <= BOULEVARD_Z_END; lz += 20) {
+    for (var lx = STREET_X_MIN; lx <= STREET_X_MAX; lx += 18) {
       var pole = new THREE.Mesh(
         new THREE.CylinderGeometry(0.15, 0.15, 8, 6),
         new THREE.MeshStandardMaterial({ color: 0x333333 })
       );
-      pole.position.set(BOULEVARD_X + 8, 4.5, lz);
+      pole.position.set(lx, 4.5, STREET_Z + 9);
       scene.add(pole);
 
       var lampHead = new THREE.Mesh(
-        new THREE.BoxGeometry(0.3, 0.3, 2),
+        new THREE.BoxGeometry(2, 0.3, 0.3),
         new THREE.MeshStandardMaterial({ color: 0xffeeaa, emissive: 0xffeeaa, emissiveIntensity: 1.2 })
       );
-      lampHead.position.set(BOULEVARD_X + 8, 8.5, lz);
+      lampHead.position.set(lx, 8.5, STREET_Z + 9);
       scene.add(lampHead);
     }
   },
 
-  _buildRestaurantRow(scene) {
-    var restaurants = [
-      { z: -50, color: 0x8b1a1a, light: 0xff4444 },
-      { z: -30, color: 0x1a3a1a, light: 0x44ff44 },
-      { z: -10, color: 0x1a1a8b, light: 0x4444ff },
-      { z:  10, color: 0x8b6a1a, light: 0xffaa00 },
-      { z:  25, color: 0x4a1a8b, light: 0xaa00ff },
+  _buildStores(scene) {
+    var stores = [
+      { x: -20, color: 0x1a1a3e, light: 0x00ccff, label: "CLUB VISTA" },
+      { x: -32, color: 0x3a1a2a, light: 0xff2288, label: "STORE" },
+      { x: -44, color: 0x2a2a10, light: 0xffcc00, label: "STORE" },
     ];
 
-    restaurants.forEach(function(r) {
+    stores.forEach(function(s) {
       var building = new THREE.Mesh(
-        new THREE.BoxGeometry(14, 8, 18),
-        new THREE.MeshStandardMaterial({ color: r.color, roughness: 0.8 })
+        new THREE.BoxGeometry(10, 8, 12),
+        new THREE.MeshStandardMaterial({ color: s.color, roughness: 0.8 })
       );
-      building.position.set(BOULEVARD_X + 20, 4.5, r.z);
+      building.position.set(s.x, 4.5, STREET_Z - 10);
       scene.add(building);
 
       var awning = new THREE.Mesh(
-        new THREE.BoxGeometry(4, 0.3, 18),
-        new THREE.MeshStandardMaterial({ color: r.light, emissive: r.light, emissiveIntensity: 0.5 })
+        new THREE.BoxGeometry(10, 0.3, 3),
+        new THREE.MeshStandardMaterial({ color: s.light, emissive: s.light, emissiveIntensity: 0.5 })
       );
-      awning.position.set(BOULEVARD_X + 12.5, 5, r.z);
+      awning.position.set(s.x, 5, STREET_Z - 5.5);
       scene.add(awning);
 
-      var rSign = new THREE.Mesh(
-        new THREE.BoxGeometry(0.2, 1.5, 12),
-        new THREE.MeshStandardMaterial({ color: r.light, emissive: r.light, emissiveIntensity: 1.4 })
+      var signPlane = new THREE.Mesh(
+        new THREE.BoxGeometry(8, 1.3, 0.2),
+        new THREE.MeshStandardMaterial({ color: s.light, emissive: s.light, emissiveIntensity: 1.6 })
       );
-      rSign.position.set(BOULEVARD_X + 13.4, 7, r.z);
-      scene.add(rSign);
-
-      for (var t = -3; t <= 3; t += 3) {
-        var table = new THREE.Mesh(
-          new THREE.CylinderGeometry(0.8, 0.8, 0.1, 8),
-          new THREE.MeshStandardMaterial({ color: 0x888888 })
-        );
-        table.position.set(BOULEVARD_X + 8, 1.1, r.z + t);
-        scene.add(table);
-      }
+      signPlane.position.set(s.x, 6.8, STREET_Z - 4);
+      scene.add(signPlane);
     });
   },
 
-  _buildMarinaPalms(scene) {
+  _buildPalms(scene) {
     var trunkMat = new THREE.MeshStandardMaterial({ color: 0x6b4226, roughness: 1 });
     var leafMat  = new THREE.MeshStandardMaterial({ color: 0x1a5c2a, roughness: 0.8 });
 
-    for (var pz = BOULEVARD_Z_START; pz <= BOULEVARD_Z_END; pz += 14) {
+    for (var px = STREET_X_MIN; px <= STREET_X_MAX; px += 16) {
+      if (Math.abs(px) < 8) continue;
       var h = 8 + Math.random() * 4;
       var palm = new THREE.Group();
 
@@ -120,25 +111,18 @@ export default {
         palm.add(leaves);
       });
 
-      palm.position.set(BOULEVARD_X - 8, 0.5, pz);
+      palm.position.set(px, 0.5, STREET_Z + 12);
       scene.add(palm);
     }
   },
 
-  _buildMarinaNeon(scene) {
+  _buildNeon(scene) {
     var mainSign = new THREE.Mesh(
-      new THREE.BoxGeometry(0.4, 4, 8),
+      new THREE.BoxGeometry(8, 4, 0.4),
       new THREE.MeshStandardMaterial({ color: 0x9900ff, emissive: 0x9900ff, emissiveIntensity: 1.4 })
     );
-    mainSign.position.set(BOULEVARD_X - 8, 12, BOULEVARD_Z_END - 4);
+    mainSign.position.set(STREET_X_MIN + 4, 12, STREET_Z);
     scene.add(mainSign);
-
-    var mainText = new THREE.Mesh(
-      new THREE.BoxGeometry(0.5, 2, 6),
-      new THREE.MeshStandardMaterial({ color: 0xffd700, emissive: 0xffd700, emissiveIntensity: 2.5 })
-    );
-    mainText.position.set(BOULEVARD_X - 8.3, 12, BOULEVARD_Z_END - 4);
-    scene.add(mainText);
 
     this._buildZoneLabel();
   },
@@ -176,7 +160,7 @@ export default {
   update(delta, context) {
     if (!context.player || !this._labelEl || this._labelShown) return;
     var pz = context.player.position.z;
-    if (pz > 5 && pz < 40) {
+    if (pz > 20 && pz < 40) {
       this._labelShown = true;
       this._labelEl.style.display = 'block';
       var self = this;
