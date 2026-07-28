@@ -1,9 +1,9 @@
 // dockLuxuryOverhaul.js
 // Major visual upgrade for the main dock — thick glowing underglow strips
-// running its full length, overwater cabana huts with glowing pools, and
-// dense warm lantern glow. All pure emissive materials, no real dynamic
-// lights, so this stays cheap on iPad despite the density. Doesn't touch
-// dock.js or world.js at all.
+// running its full length, dense warm lantern glow, and exactly 5
+// overwater cabins on the WEST side (matching the reference map's
+// "5 Cabins" callout). All pure emissive materials, no real dynamic
+// lights, so this stays cheap on iPad. Doesn't touch dock.js or world.js.
 
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 
@@ -36,7 +36,7 @@ function buildLanternGlows(scene) {
   }
 }
 
-function buildCabana(x, z) {
+function buildCabin(x, z) {
   const group = new THREE.Group();
 
   const hut = new THREE.Mesh(
@@ -54,13 +54,6 @@ function buildCabana(x, z) {
   roof.rotation.y = Math.PI / 4;
   group.add(roof);
 
-  const pool = new THREE.Mesh(
-    new THREE.BoxGeometry(4.2, 0.15, 2),
-    new THREE.MeshStandardMaterial({ color: 0x9900ff, emissive: 0x9900ff, emissiveIntensity: 2 })
-  );
-  pool.position.set(0, 0.1, 2.6);
-  group.add(pool);
-
   const doorGlow = new THREE.Mesh(
     new THREE.PlaneGeometry(1, 1.6),
     new THREE.MeshStandardMaterial({ color: 0xffaa33, emissive: 0xffaa33, emissiveIntensity: 2, side: THREE.DoubleSide })
@@ -68,15 +61,21 @@ function buildCabana(x, z) {
   doorGlow.position.set(0, 1.1, 1.51);
   group.add(doorGlow);
 
+  const deck = new THREE.Mesh(
+    new THREE.BoxGeometry(4.2, 0.15, 2),
+    new THREE.MeshStandardMaterial({ color: 0x6b4226, roughness: 0.9 })
+  );
+  deck.position.set(0, 0.1, 2.6);
+  group.add(deck);
+
   group.position.set(x, 0, z);
   return group;
 }
 
-function buildCabanas(scene) {
-  const positions = [-40, -10, 20];
-  positions.forEach(z => {
-    scene.add(buildCabana(-11, z));
-    scene.add(buildCabana(11, z));
+function buildCabins(scene) {
+  const positions = [-45, -25, -5, 15, -50];
+  positions.slice(0, 5).forEach(z => {
+    scene.add(buildCabin(-11, z));
   });
 }
 
@@ -84,7 +83,7 @@ export default {
   init(scene) {
     buildUnderglow(scene);
     buildLanternGlows(scene);
-    buildCabanas(scene);
+    buildCabins(scene);
   },
   update() {},
 };
