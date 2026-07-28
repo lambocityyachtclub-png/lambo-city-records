@@ -29,7 +29,6 @@ import StageLasers from "./stageLasers.js";
 import StageSmoke from "./stageSmoke.js";
 import StageCrowdPulse from "./stageCrowdPulse.js";
 import YachtLuxuryDetails from "./yachtLuxuryDetails.js";
-import VillaLuxuryDetails from "./villaLuxuryDetails.js";
 import DockEntranceLuxury from "./dockEntranceLuxury.js";
 import DockLuxuryOverhaul from "./dockLuxuryOverhaul.js";
 import RecordsHQ from "./recordsHQ.js";
@@ -62,7 +61,6 @@ engine.registerSystems({
   stageSmoke:    StageSmoke,
   stageCrowdPulse: StageCrowdPulse,
   yachtLuxuryDetails: YachtLuxuryDetails,
-  villaLuxuryDetails: VillaLuxuryDetails,
   dockEntranceLuxury: DockEntranceLuxury,
   dockLuxuryOverhaul: DockLuxuryOverhaul,
   recordsHQ:     RecordsHQ,
