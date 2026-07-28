@@ -1,11 +1,9 @@
-cat > /home/claude/dockLuxuryOverhaul.js << 'ENDOFFILE'
 // dockLuxuryOverhaul.js
-// Dock atmosphere (underglow strips, lantern glow) plus 5 VIP waterfront
-// ESTATES — not cabins. Aspen-luxury-cabin-meets-Malibu-mansion, each with
-// a themed accent color and name plaque (Movie/Gaming/Music/Creator/
-// Executive), connected to the dock by a private walkway. Exterior only
-// for now — interior/invite-only access is a future gameplay system, not
-// built here. Doesn't touch dock.js or world.js.
+// Major visual upgrade for the main dock — thick glowing underglow strips
+// running its full length, dense warm lantern glow, and exactly 5
+// overwater cabins on the WEST side (matching the reference map's
+// "5 Cabins" callout). All pure emissive materials, no real dynamic
+// lights, so this stays cheap on iPad. Doesn't touch dock.js or world.js.
 
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 
@@ -13,14 +11,6 @@ const DOCK_Z_START = -55;
 const DOCK_Z_END = 25;
 const DOCK_Z_LEN = DOCK_Z_END - DOCK_Z_START;
 const DOCK_Z_MID = (DOCK_Z_START + DOCK_Z_END) / 2;
-
-const THEMES = [
-  { name: "MOVIE ESTATE",     color: 0xffd700 },
-  { name: "GAMING ESTATE",    color: 0x9900ff },
-  { name: "MUSIC ESTATE",     color: 0xff00aa },
-  { name: "CREATOR ESTATE",   color: 0x00ffff },
-  { name: "EXECUTIVE ESTATE", color: 0xffffff },
-];
 
 function buildUnderglow(scene) {
   [-7.5, 7.5].forEach(x => {
@@ -46,111 +36,46 @@ function buildLanternGlows(scene) {
   }
 }
 
-function createPlaqueTexture(name, color) {
-  const w = 512, h = 128;
-  const canvas = document.createElement("canvas");
-  canvas.width = w; canvas.height = h;
-  const ctx = canvas.getContext("2d");
-  ctx.fillStyle = "#000000";
-  ctx.fillRect(0, 0, w, h);
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.font = "bold 46px Arial, sans-serif";
-  const hex = "#" + color.toString(16).padStart(6, "0");
-  ctx.fillStyle = hex;
-  ctx.fillText(name, w / 2, h / 2);
-  return canvas;
-}
-
-function buildEstate(x, z, theme) {
+function buildCabin(x, z) {
   const group = new THREE.Group();
 
-  // GROUND FLOOR
-  const floor1 = new THREE.Mesh(
-    new THREE.BoxGeometry(9, 4.5, 7),
-    new THREE.MeshStandardMaterial({ color: 0x3a3530, roughness: 0.7 })
+  const hut = new THREE.Mesh(
+    new THREE.BoxGeometry(4, 2.2, 3),
+    new THREE.MeshStandardMaterial({ color: 0x2a1a10, roughness: 0.8 })
   );
-  floor1.position.y = 2.25;
-  group.add(floor1);
+  hut.position.y = 1.1;
+  group.add(hut);
 
-  const glass1 = new THREE.Mesh(
-    new THREE.BoxGeometry(8.6, 3.6, 0.15),
-    new THREE.MeshStandardMaterial({
-      color: 0x88ccff, transparent: true, opacity: 0.55,
-      emissive: 0xffcc77, emissiveIntensity: 0.5,
-    })
-  );
-  glass1.position.set(0, 2.4, 3.55);
-  group.add(glass1);
-
-  // SECOND FLOOR — offset modern box
-  const floor2 = new THREE.Mesh(
-    new THREE.BoxGeometry(7, 3.5, 6),
-    new THREE.MeshStandardMaterial({ color: 0x4a4038, roughness: 0.6 })
-  );
-  floor2.position.set(0.5, 6.25, -0.3);
-  group.add(floor2);
-
-  const glass2 = new THREE.Mesh(
-    new THREE.BoxGeometry(6.6, 2.8, 0.15),
-    new THREE.MeshStandardMaterial({
-      color: 0x88ccff, transparent: true, opacity: 0.55,
-      emissive: 0xffcc77, emissiveIntensity: 0.5,
-    })
-  );
-  glass2.position.set(0.5, 6.3, 2.7);
-  group.add(glass2);
-
-  // FLAT ROOF with themed accent edge
   const roof = new THREE.Mesh(
-    new THREE.BoxGeometry(7.4, 0.25, 6.4),
-    new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.5 })
+    new THREE.ConeGeometry(3, 1.4, 4),
+    new THREE.MeshStandardMaterial({ color: 0x1a0f08, roughness: 0.9 })
   );
-  roof.position.set(0.5, 8.1, -0.3);
+  roof.position.y = 2.9;
+  roof.rotation.y = Math.PI / 4;
   group.add(roof);
 
-  const roofAccent = new THREE.Mesh(
-    new THREE.BoxGeometry(7.5, 0.08, 0.08),
-    new THREE.MeshStandardMaterial({ color: theme.color, emissive: theme.color, emissiveIntensity: 2 })
+  const doorGlow = new THREE.Mesh(
+    new THREE.PlaneGeometry(1, 1.6),
+    new THREE.MeshStandardMaterial({ color: 0xffaa33, emissive: 0xffaa33, emissiveIntensity: 2, side: THREE.DoubleSide })
   );
-  roofAccent.position.set(0.5, 8.24, 2.85);
-  group.add(roofAccent);
+  doorGlow.position.set(0, 1.1, 1.51);
+  group.add(doorGlow);
 
-  // THEME PLAQUE
-  const plaqueTex = new THREE.CanvasTexture(createPlaqueTexture(theme.name, theme.color));
-  const plaque = new THREE.Mesh(
-    new THREE.PlaneGeometry(3.4, 0.85),
-    new THREE.MeshStandardMaterial({
-      color: 0x000000, map: plaqueTex,
-      emissive: 0xffffff, emissiveMap: plaqueTex, emissiveIntensity: 1.3,
-    })
-  );
-  plaque.position.set(0, 4.6, 3.63);
-  group.add(plaque);
-
-  // PRIVATE WALKWAY connecting the estate to the dock
-  const walkway = new THREE.Mesh(
-    new THREE.BoxGeometry(7, 0.15, 3),
+  const deck = new THREE.Mesh(
+    new THREE.BoxGeometry(4.2, 0.15, 2),
     new THREE.MeshStandardMaterial({ color: 0x6b4226, roughness: 0.9 })
   );
-  walkway.position.set(7.5, 0.1, 0);
-  group.add(walkway);
-
-  const walkwayGlow = new THREE.Mesh(
-    new THREE.BoxGeometry(7.1, 0.06, 0.06),
-    new THREE.MeshStandardMaterial({ color: theme.color, emissive: theme.color, emissiveIntensity: 2.5 })
-  );
-  walkwayGlow.position.set(7.5, 0.19, 1.55);
-  group.add(walkwayGlow);
+  deck.position.set(0, 0.1, 2.6);
+  group.add(deck);
 
   group.position.set(x, 0, z);
   return group;
 }
 
-function buildEstates(scene) {
-  const zPositions = [-50, -35, -20, -5, 10];
-  zPositions.forEach((z, i) => {
-    scene.add(buildEstate(-16, z, THEMES[i]));
+function buildCabins(scene) {
+  const positions = [-45, -25, -5, 15, -50];
+  positions.slice(0, 5).forEach(z => {
+    scene.add(buildCabin(-11, z));
   });
 }
 
@@ -158,11 +83,7 @@ export default {
   init(scene) {
     buildUnderglow(scene);
     buildLanternGlows(scene);
-    buildEstates(scene);
+    buildCabins(scene);
   },
   update() {},
 };
-ENDOFFILE
-echo "done"
-Output
-done
