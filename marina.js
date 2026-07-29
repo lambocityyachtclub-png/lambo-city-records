@@ -85,21 +85,21 @@ export default {
         new THREE.BoxGeometry(10, 8, 12),
         new THREE.MeshStandardMaterial({ color: s.color, roughness: 0.8 })
       );
-      building.position.set(s.x, 4.5, STREET_Z - 10);
+      building.position.set(s.x, 4.5, STREET_Z - 15);
       scene.add(building);
 
       var awning = new THREE.Mesh(
         new THREE.BoxGeometry(10, 0.3, 3),
         new THREE.MeshStandardMaterial({ color: s.light, emissive: s.light, emissiveIntensity: 0.5 })
       );
-      awning.position.set(s.x, 5, STREET_Z - 5.5);
+      awning.position.set(s.x, 5, STREET_Z - 10.5);
       scene.add(awning);
 
       var signPlane = new THREE.Mesh(
         new THREE.BoxGeometry(8, 1.3, 0.2),
         new THREE.MeshStandardMaterial({ color: s.light, emissive: s.light, emissiveIntensity: 1.6 })
       );
-      signPlane.position.set(s.x, 6.8, STREET_Z - 4);
+      signPlane.position.set(s.x, 6.8, STREET_Z - 9);
       scene.add(signPlane);
     });
   },
