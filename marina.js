@@ -14,10 +14,22 @@ const STREET_X_MID = (STREET_X_MIN + STREET_X_MAX) / 2;
 
 export default {
   init(scene) {
+    this._buildDockRamp(scene);
     this._buildStreet(scene);
     this._buildStores(scene);
     this._buildPalms(scene);
     this._buildNeon(scene);
+  },
+
+  _buildDockRamp(scene) {
+    // Steps down from the raised dock (~1.15 high) to street level (~0.5),
+    // bridging the height gap where the dock ends and the plaza begins.
+    var stepMat = new THREE.MeshStandardMaterial({ color: 0x5c3d1e, roughness: 1 });
+    for (var i = 0; i < 5; i++) {
+      var step = new THREE.Mesh(new THREE.BoxGeometry(13, 0.25, 1.6), stepMat);
+      step.position.set(0, 1.15 - i * 0.16, 31 + i * 1.5);
+      scene.add(step);
+    }
   },
 
   _buildStreet(scene) {
@@ -60,6 +72,8 @@ export default {
   },
 
   _buildStores(scene) {
+    // Club Vista (closest to the dock) + 2 more stores, all on the WEST
+    // (negative X) side of the dock, facing the street.
     var stores = [
       { x: -20, color: 0x1a1a3e, light: 0x00ccff, label: "CLUB VISTA" },
       { x: -32, color: 0x3a1a2a, light: 0xff2288, label: "STORE" },
@@ -95,7 +109,7 @@ export default {
     var leafMat  = new THREE.MeshStandardMaterial({ color: 0x1a5c2a, roughness: 0.8 });
 
     for (var px = STREET_X_MIN; px <= STREET_X_MAX; px += 16) {
-      if (Math.abs(px) < 8) continue;
+      if (Math.abs(px) < 8) continue; // leave a gap for the dock itself
       var h = 8 + Math.random() * 4;
       var palm = new THREE.Group();
 
