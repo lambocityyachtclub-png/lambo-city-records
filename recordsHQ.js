@@ -7,7 +7,7 @@
 
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 
-const HQ_POSITION = { x: 28, z: 34 };
+const HQ_POSITION = { x: 28, z: 44 };
 
 function createSignTexture() {
   const w = 1024, h = 512;
