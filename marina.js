@@ -6,7 +6,7 @@ import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 // negative X) side of the dock. Records HQ (built separately in
 // recordsHQ.js) sits on the RIGHT (east, positive X) side.
 
-const STREET_Z = 30;
+const STREET_Z = 46;
 const STREET_X_MIN = -45;
 const STREET_X_MAX = 45;
 const STREET_LEN = STREET_X_MAX - STREET_X_MIN;
