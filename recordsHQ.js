@@ -185,8 +185,10 @@ carpet.rotation.x = -Math.PI / 2;
 carpet.position.set(0, 0.03, 10.5);
 
 group.add(carpet);
-    
-   const ropeZs = [7.6, 9.8];
+
+
+// VIP velvet rope entrance
+const ropeZs = [9.0, 12.0];
 
 [-2.2, 2.2].forEach(x => {
   ropeZs.forEach(z => group.add(buildStanchion(x, z)));
