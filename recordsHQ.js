@@ -173,7 +173,7 @@ export default {
     lobbyEmblem.position.set(0, 3.5, 6.9);
     group.add(lobbyEmblem);
 
-   const carpet = new THREE.Mesh(
+const carpet = new THREE.Mesh(
   new THREE.PlaneGeometry(4, 5),
   new THREE.MeshStandardMaterial({
     color: 0x8b0018,
@@ -182,9 +182,7 @@ export default {
 );
 
 carpet.rotation.x = -Math.PI / 2;
-
-// place carpet directly in front of HQ entrance
-carpet.position.set(0, 0.03, 6);
+carpet.position.set(0, 0.03, 10.5);
 
 group.add(carpet);
     
