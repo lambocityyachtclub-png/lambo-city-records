@@ -7,7 +7,7 @@
 
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 
-const HQ_POSITION = { x: 28, z: 44 };
+const HQ_POSITION = { x: 28, z: 38 };
 
 function createSignTexture() {
   const w = 1024, h = 512;
@@ -173,21 +173,28 @@ export default {
     lobbyEmblem.position.set(0, 3.5, 6.9);
     group.add(lobbyEmblem);
 
-    const carpet = new THREE.Mesh(
-      new THREE.PlaneGeometry(5, 10),
-      new THREE.MeshStandardMaterial({ color: 0x8b0018, roughness: 0.7 })
-    );
-    carpet.rotation.x = -Math.PI / 2;
-    carpet.position.set(0, 0.02, 12.2);
-    group.add(carpet);
+   const carpet = new THREE.Mesh(
+  new THREE.PlaneGeometry(4, 4),
+  new THREE.MeshStandardMaterial({
+    color: 0x8b0018,
+    roughness: 0.7
+  })
+);
 
-    const ropeZs = [8.2, 12.2, 16.2];
-    [-2.8, 2.8].forEach(x => {
-      ropeZs.forEach(z => group.add(buildStanchion(x, z)));
-      for (let i = 0; i < ropeZs.length - 1; i++) {
-        buildRope(x, ropeZs[i], x, ropeZs[i + 1], group);
-      }
-    });
+carpet.rotation.x = -Math.PI / 2;
+carpet.position.set(0, 0.02, 8.8);
+
+group.add(carpet);
+
+   const ropeZs = [7.6, 9.8];
+
+[-2.2, 2.2].forEach(x => {
+  ropeZs.forEach(z => group.add(buildStanchion(x, z)));
+
+  for (let i = 0; i < ropeZs.length - 1; i++) {
+    buildRope(x, ropeZs[i], x, ropeZs[i + 1], group);
+  }
+});
 
     scene.add(group);
   },
