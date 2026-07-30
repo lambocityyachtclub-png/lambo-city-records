@@ -1,14 +1,21 @@
 // recordsHQ.js
-// LAMBO CITY RECORDS Headquarters VIP Marina Expansion
+// LAMBO CITY RECORDS Headquarters VIP Expansion
 // HQ LOCATION LOCKED:
 // x:28 z:22
 //
-// Added:
+// Includes:
 // - VIP red carpet arrival
 // - luxury HQ exterior
 // - marble VIP plaza
-// - waterfront expansion (Part 2)
-// - exclusive marina feeling
+// - exclusive headquarters atmosphere
+// - private VIP lounge (no water system)
+// - roundabout turnaround
+//
+// Water remains handled by:
+// water.js
+// marina.js
+// yacht.js
+
 
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 
@@ -27,17 +34,11 @@ function createSignTexture(){
   canvas.width=1024;
   canvas.height=512;
 
-
   const ctx=canvas.getContext("2d");
 
 
   ctx.fillStyle="#050505";
-  ctx.fillRect(
-    0,
-    0,
-    1024,
-    512
-  );
+  ctx.fillRect(0,0,1024,512);
 
 
   ctx.textAlign="center";
@@ -60,7 +61,6 @@ function createSignTexture(){
 
 
   ctx.font="bold 90px Arial";
-
 
   ctx.fillText(
     "RECORDS",
@@ -90,6 +90,7 @@ function createMarqueeTexture(){
 
 
   ctx.fillStyle="#000000";
+
   ctx.fillRect(
     0,
     0,
@@ -99,6 +100,7 @@ function createMarqueeTexture(){
 
 
   ctx.font="bold 42px Arial";
+
   ctx.textAlign="center";
   ctx.textBaseline="middle";
 
@@ -123,6 +125,7 @@ function createMarqueeTexture(){
 function buildStanchion(x,z){
 
   const group=new THREE.Group();
+
 
 
   const base=new THREE.Mesh(
@@ -150,6 +153,7 @@ function buildStanchion(x,z){
 
 
 
+
   const pole=new THREE.Mesh(
 
     new THREE.CylinderGeometry(
@@ -174,6 +178,7 @@ function buildStanchion(x,z){
   pole.position.y=.65;
 
   group.add(pole);
+
 
 
 
@@ -212,6 +217,7 @@ function buildStanchion(x,z){
   return group;
 
 }
+
 
 
 
@@ -292,6 +298,7 @@ group.position.set(
 
 
 
+
 // ================================
 // HQ BUILDING
 // ================================
@@ -318,12 +325,15 @@ const building=new THREE.Mesh(
 
 building.position.y=13;
 
+
 group.add(building);
 
 
 
 
+
 // GOLD BUILDING TRIM
+
 
 [-9,9].forEach(x=>{
 
@@ -362,7 +372,9 @@ group.add(trim);
 
 
 
+
 // WINDOWS
+
 
 for(let row=0; row<7; row++){
 
@@ -413,7 +425,6 @@ for(let row=0; row<7; row++){
 
 
 
-
 // ================================
 // MAIN SIGN
 // ================================
@@ -450,6 +461,7 @@ sign.position.set(
 
 
 group.add(sign);
+
 
 
 
@@ -491,12 +503,16 @@ marquee.position.set(
 
 group.add(marquee);
 
+
+
+
+
 // ================================
 // LOBBY GLASS ENTRANCE
 // ================================
 
 
-const lobbyGlow = new THREE.Mesh(
+const lobbyGlow=new THREE.Mesh(
 
  new THREE.BoxGeometry(
  10,
@@ -526,10 +542,10 @@ lobbyGlow.position.set(
 
 group.add(lobbyGlow);
 
-
-
-
+// ================================
 // GOLD LOBBY EMBLEM
+// ================================
+
 
 const lobbyEmblem=new THREE.Mesh(
 
@@ -557,6 +573,7 @@ lobbyEmblem.position.set(
 
 
 group.add(lobbyEmblem);
+
 
 
 
@@ -601,6 +618,8 @@ group.add(carpet);
 
 
 
+
+
 // ================================
 // VELVET ROPE ENTRANCE
 // ================================
@@ -623,7 +642,6 @@ const ropeZ=[8.5,11.5];
  });
 
 
-
  buildRope(
   x,
   ropeZ[0],
@@ -634,6 +652,7 @@ const ropeZ=[8.5,11.5];
 
 
 });
+
 
 
 
@@ -681,7 +700,11 @@ group.add(plaza);
 
 
 
+
+
+
 // GOLD MARBLE LINES
+
 
 [-8,-4,0,4,8].forEach(x=>{
 
@@ -728,8 +751,11 @@ group.add(line);
 
 
 
+
 // ================================
-// WATERFRONT VIP LOUNGE
+// PRIVATE VIP LOUNGE AREA
+// Decorative only
+// Water handled by water.js
 // ================================
 
 
@@ -769,11 +795,13 @@ group.add(loungeFloor);
 
 
 
+
+
 const seatMat=new THREE.MeshStandardMaterial({
 
-color:0x050505,
-roughness:.4,
-metalness:.3
+ color:0x050505,
+ roughness:.4,
+ metalness:.3
 
 });
 
@@ -821,7 +849,11 @@ group.add(seat);
 
 
 
+
+
+
 // VIP TABLE
+
 
 const table=new THREE.Mesh(
 
@@ -856,90 +888,6 @@ table.position.set(
 
 group.add(table);
 
-
-
-
-
-
-// ================================
-// PRIVATE PIER WATER VIEW
-// ================================
-
-
-const waterDeck=new THREE.Mesh(
-
- new THREE.BoxGeometry(
- 28,
- .15,
- 20
- ),
-
- new THREE.MeshStandardMaterial({
-
-  color:0x081522,
-  roughness:.2,
-  metalness:.3
-
- })
-
-);
-
-
-waterDeck.position.set(
-
- HQ_POSITION.x+14,
-
- .05,
-
- HQ_POSITION.z+22
-
-);
-
-
-group.add(waterDeck);
-
-
-
-
-// WATER REFLECTION LINES
-
-[-5,0,5].forEach(x=>{
-
-
-const reflection=new THREE.Mesh(
-
- new THREE.BoxGeometry(
- 22,
- .03,
- .15
- ),
-
- new THREE.MeshStandardMaterial({
-
-  color:0x00ffff,
-  emissive:0x00ffff,
-  emissiveIntensity:1.5
-
- })
-
-);
-
-
-reflection.position.set(
-
- HQ_POSITION.x+14+x,
-
- .15,
-
- HQ_POSITION.z+22
-
-);
-
-
-group.add(reflection);
-
-
-});
 
 
 
@@ -989,6 +937,8 @@ group.add(roundabout);
 
 
 
+
+
 const ring=new THREE.Mesh(
 
  new THREE.TorusGeometry(
@@ -1031,9 +981,10 @@ group.add(ring);
 
 
 
+
 // ================================
 // VIP STREET CONTROL
-// Stops vehicles from parking directly
+// Prevents direct parking
 // in front of HQ
 // ================================
 
@@ -1074,7 +1025,11 @@ group.add(barrier);
 
 
 
+
+
+
 // FINAL ADD
+
 
 scene.add(group);
 
