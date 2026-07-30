@@ -1,13 +1,18 @@
+bash
+cat > /home/claude/recordsHQ.js << 'ENDOFFILE'
 // recordsHQ.js
-// LAMBO CITY RECORDS headquarters — exterior landmark building near the
-// start of the dock, on the RIGHT (east/positive X) side, matching the
-// reference map. Glowing wordmark + original bull emblem, marquee
-// announcement bar, lit glass lobby front (decorative, not walkable yet),
-// red carpet with velvet-rope stanchions.
+// LAMBO CITY RECORDS headquarters — exterior landmark building on the
+// RIGHT (east/positive X) side of the dock, aligned with the same
+// boardwalk row as the stores on the opposite side. Red carpet shortened
+// to stay entirely within the sidewalk strip — doesn't cross into the
+// street. Glowing wordmark + original bull emblem, marquee announcement
+// bar, lit glass lobby front (decorative, not walkable yet).
 
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 
-const HQ_POSITION = { x: 28, z: 44 };
+// Aligned with the same z-row as the stores (marina.js), on the opposite
+// (east) side of the dock. Building faces +Z, toward the sidewalk.
+const HQ_POSITION = { x: 28, z: 30 };
 
 function createSignTexture() {
   const w = 1024, h = 512;
@@ -173,23 +178,29 @@ export default {
     lobbyEmblem.position.set(0, 3.5, 6.9);
     group.add(lobbyEmblem);
 
+    // RED CARPET — shortened so it stays entirely within the sidewalk
+    // strip (building face at local z=7, sidewalk is only ~5 units deep),
+    // instead of running all the way across into the street.
     const carpet = new THREE.Mesh(
-      new THREE.PlaneGeometry(5, 10),
+      new THREE.PlaneGeometry(5, 3.2),
       new THREE.MeshStandardMaterial({ color: 0x8b0018, roughness: 0.7 })
     );
     carpet.rotation.x = -Math.PI / 2;
-    carpet.position.set(0, 0.02, 12.2);
+    carpet.position.set(0, 0.02, 8.6);
     group.add(carpet);
 
-    const ropeZs = [8.2, 12.2, 16.2];
+    // VELVET ROPE STANCHIONS — shortened to match the carpet
+    const ropeZs = [7.6, 10];
     [-2.8, 2.8].forEach(x => {
       ropeZs.forEach(z => group.add(buildStanchion(x, z)));
-      for (let i = 0; i < ropeZs.length - 1; i++) {
-        buildRope(x, ropeZs[i], x, ropeZs[i + 1], group);
-      }
+      buildRope(x, ropeZs[0], x, ropeZs[1], group);
     });
 
     scene.add(group);
   },
   update() {},
 };
+ENDOFFILE
+echo "done"
+Output
+done
