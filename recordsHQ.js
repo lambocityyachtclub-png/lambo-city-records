@@ -4,30 +4,40 @@
 // x:28 z:22
 //
 // Added:
-// - VIP red carpet arrival plaza
-// - luxury marble entrance
-// - waterfront lounge
-// - private pier feeling
-// - exclusive roundabout area
+// - VIP red carpet arrival
+// - luxury HQ exterior
+// - marble VIP plaza
+// - waterfront expansion (Part 2)
+// - exclusive marina feeling
 
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 
 
-const HQ_POSITION = { x: 28, z: 22 };
+const HQ_POSITION = {
+  x:28,
+  z:22
+};
+
 
 
 function createSignTexture(){
 
-  const canvas = document.createElement("canvas");
+  const canvas=document.createElement("canvas");
 
-  canvas.width = 1024;
-  canvas.height = 512;
+  canvas.width=1024;
+  canvas.height=512;
 
-  const ctx = canvas.getContext("2d");
+
+  const ctx=canvas.getContext("2d");
 
 
   ctx.fillStyle="#050505";
-  ctx.fillRect(0,0,1024,512);
+  ctx.fillRect(
+    0,
+    0,
+    1024,
+    512
+  );
 
 
   ctx.textAlign="center";
@@ -41,6 +51,7 @@ function createSignTexture(){
 
   ctx.fillStyle="#ffd700";
 
+
   ctx.fillText(
     "LAMBO CITY",
     512,
@@ -49,6 +60,7 @@ function createSignTexture(){
 
 
   ctx.font="bold 90px Arial";
+
 
   ctx.fillText(
     "RECORDS",
@@ -63,6 +75,48 @@ function createSignTexture(){
   return canvas;
 
 }
+
+
+
+function createMarqueeTexture(){
+
+  const canvas=document.createElement("canvas");
+
+  canvas.width=1024;
+  canvas.height=128;
+
+
+  const ctx=canvas.getContext("2d");
+
+
+  ctx.fillStyle="#000000";
+  ctx.fillRect(
+    0,
+    0,
+    1024,
+    128
+  );
+
+
+  ctx.font="bold 42px Arial";
+  ctx.textAlign="center";
+  ctx.textBaseline="middle";
+
+  ctx.fillStyle="#ffffff";
+
+
+  ctx.fillText(
+    "LAMBO CITY RECORDS — THE SOUND OF THE CITY",
+    512,
+    64
+  );
+
+
+  return canvas;
+
+}
+
+
 
 
 
@@ -83,7 +137,7 @@ function buildStanchion(x,z){
     new THREE.MeshStandardMaterial({
 
       color:0x111111,
-      metalness:.6
+      metalness:.7
 
     })
 
@@ -109,7 +163,8 @@ function buildStanchion(x,z){
 
       color:0xffd700,
       emissive:0xffd700,
-      emissiveIntensity:.4
+      emissiveIntensity:.4,
+      metalness:.8
 
     })
 
@@ -146,6 +201,7 @@ function buildStanchion(x,z){
   group.add(top);
 
 
+
   group.position.set(
     x,
     0,
@@ -156,6 +212,8 @@ function buildStanchion(x,z){
   return group;
 
 }
+
+
 
 
 
@@ -198,7 +256,8 @@ function buildRope(x1,z1,x2,z2,parent){
 
     new THREE.MeshStandardMaterial({
 
-      color:0x8b0018
+      color:0x8b0018,
+      roughness:.6
 
     })
 
@@ -212,281 +271,818 @@ function buildRope(x1,z1,x2,z2,parent){
 
 
 
-function buildVIPPlaza(scene){
 
 
-  const plaza=new THREE.Mesh(
 
-    new THREE.BoxGeometry(
-      20,
-      .08,
-      18
-    ),
+export default {
 
-    new THREE.MeshStandardMaterial({
 
-      color:0xe9e4d8,
-      roughness:.25,
-      metalness:.2
+init(scene){
 
-    })
+
+const group=new THREE.Group();
+
+
+group.position.set(
+  HQ_POSITION.x,
+  0,
+  HQ_POSITION.z
+);
+
+
+
+
+// ================================
+// HQ BUILDING
+// ================================
+
+
+const building=new THREE.Mesh(
+
+  new THREE.BoxGeometry(
+    18,
+    26,
+    14
+  ),
+
+  new THREE.MeshStandardMaterial({
+
+    color:0x0a0a0f,
+    roughness:.5,
+    metalness:.3
+
+  })
+
+);
+
+
+building.position.y=13;
+
+group.add(building);
+
+
+
+
+// GOLD BUILDING TRIM
+
+[-9,9].forEach(x=>{
+
+
+const trim=new THREE.Mesh(
+
+ new THREE.BoxGeometry(
+   .2,
+   26,
+   .2
+ ),
+
+ new THREE.MeshStandardMaterial({
+
+  color:0xffd700,
+  emissive:0xffd700,
+  emissiveIntensity:1.5
+
+ })
+
+);
+
+
+trim.position.set(
+ x,
+ 13,
+ 7.05
+);
+
+
+group.add(trim);
+
+
+});
+
+
+
+
+// WINDOWS
+
+for(let row=0; row<7; row++){
+
+ for(let col=0; col<5; col++){
+
+
+  if(Math.random()<.35) continue;
+
+
+  const win=new THREE.Mesh(
+
+   new THREE.BoxGeometry(
+    1.4,
+    1.6,
+    .1
+   ),
+
+   new THREE.MeshStandardMaterial({
+
+    color:0xffee88,
+    emissive:0xffee88,
+    emissiveIntensity:.7
+
+   })
 
   );
 
 
-  plaza.position.set(
+  win.position.set(
 
-    HQ_POSITION.x,
+   -7 + col*3.5,
 
-    .04,
+   21-row*2.6,
 
-    HQ_POSITION.z+10
+   7.06
 
   );
 
 
-  scene.add(plaza);
+  group.add(win);
 
 
-
-  [-8,-4,0,4,8].forEach(x=>{
-
-
-    const goldLine=new THREE.Mesh(
-
-      new THREE.BoxGeometry(
-        .05,
-        .09,
-        18
-      ),
-
-      new THREE.MeshStandardMaterial({
-
-        color:0xffd700,
-        emissive:0xffd700,
-        emissiveIntensity:1
-
-      })
-
-    );
-
-
-    goldLine.position.set(
-
-      HQ_POSITION.x+x,
-
-      .08,
-
-      HQ_POSITION.z+10
-
-    );
-
-
-    scene.add(goldLine);
-
-
-  });
-
+ }
 
 }
 
-    // =========================================================
-    // WATERFRONT VIP LOUNGE AREA
-    // =========================================================
-
-    const lounge = new THREE.Group();
-
-    const loungeFloor = new THREE.Mesh(
-      new THREE.BoxGeometry(14,0.15,12),
-      new THREE.MeshStandardMaterial({
-        color:0x161616,
-        roughness:0.35,
-        metalness:0.4
-      })
-    );
-
-    loungeFloor.position.set(16,0.08,8);
-    group.add(loungeFloor);
-
-
-    // Luxury seating
-    const seatMat = new THREE.MeshStandardMaterial({
-      color:0x050505,
-      roughness:0.4,
-      metalness:0.3
-    });
-
-
-    [
-      [13,5],
-      [19,5],
-      [13,10],
-      [19,10]
-    ].forEach(pos=>{
-
-      const chair = new THREE.Mesh(
-        new THREE.BoxGeometry(2,0.7,2),
-        seatMat
-      );
-
-      chair.position.set(pos[0],0.45,pos[1]);
-      group.add(chair);
-
-    });
-
-
-    // Center VIP table
-
-    const table = new THREE.Mesh(
-      new THREE.CylinderGeometry(1.2,1.2,0.15,24),
-      new THREE.MeshStandardMaterial({
-        color:0x111111,
-        metalness:0.8,
-        roughness:0.2
-      })
-    );
-
-    table.position.set(16,0.7,7.5);
-    group.add(table);
 
 
 
-    // Ocean railing
-
-    const railing = new THREE.Mesh(
-      new THREE.BoxGeometry(18,1,0.15),
-      new THREE.MeshStandardMaterial({
-        color:0xd4af37,
-        metalness:0.8,
-        roughness:0.2
-      })
-    );
-
-    railing.position.set(16,0.8,14);
-    group.add(railing);
 
 
-
-    // =========================================================
-    // WATER VIEW AREA
-    // =========================================================
-
-    const waterDeck = new THREE.Mesh(
-      new THREE.BoxGeometry(26,0.15,18),
-      new THREE.MeshStandardMaterial({
-        color:0x081522,
-        roughness:0.2,
-        metalness:0.3
-      })
-    );
-
-    waterDeck.position.set(16,0.05,22);
-    group.add(waterDeck);
+// ================================
+// MAIN SIGN
+// ================================
 
 
+const signTex=new THREE.CanvasTexture(
+ createSignTexture()
+);
 
-    // Fake water reflection strips
 
-    [-4,0,4].forEach(x=>{
+const sign=new THREE.Mesh(
 
-      const reflection = new THREE.Mesh(
-        new THREE.BoxGeometry(20,0.03,0.15),
-        new THREE.MeshStandardMaterial({
-          color:0x00ffff,
-          emissive:0x00ffff,
-          emissiveIntensity:1.5
-        })
-      );
+ new THREE.PlaneGeometry(
+ 16,
+ 8
+ ),
 
-      reflection.position.set(16+x,0.15,22);
-      group.add(reflection);
+ new THREE.MeshStandardMaterial({
 
-    });
+  map:signTex,
+  emissiveMap:signTex,
+  emissiveIntensity:1.4
+
+ })
+
+);
+
+
+sign.position.set(
+0,
+22,
+7.1
+);
+
+
+group.add(sign);
 
 
 
-    // =========================================================
-    // HQ ROUNDABOUT TURNAROUND
-    // =========================================================
+
+// ================================
+// MARQUEE
+// ================================
 
 
-    const roundabout = new THREE.Mesh(
-      new THREE.CylinderGeometry(8,8,0.15,48),
-      new THREE.MeshStandardMaterial({
-        color:0x111111,
-        roughness:0.8
-      })
-    );
-
-    roundabout.position.set(18,0.1,-2);
-    group.add(roundabout);
+const marqueeTex=new THREE.CanvasTexture(
+ createMarqueeTexture()
+);
 
 
+const marquee=new THREE.Mesh(
 
-    const centerRing = new THREE.Mesh(
-      new THREE.TorusGeometry(5,0.12,12,48),
-      new THREE.MeshStandardMaterial({
-        color:0xffd700,
-        emissive:0xffd700,
-        emissiveIntensity:1.5
-      })
-    );
+ new THREE.PlaneGeometry(
+ 14,
+ 1.5
+ ),
 
-    centerRing.rotation.x=Math.PI/2;
-    centerRing.position.set(18,0.25,-2);
-    group.add(centerRing);
+ new THREE.MeshStandardMaterial({
 
+  map:marqueeTex,
+  emissiveMap:marqueeTex,
+  emissiveIntensity:1.2
 
+ })
 
-    // =========================================================
-    // VIP STREET BLOCKER
-    // Prevents cars pulling directly in front of HQ
-    // =========================================================
+);
 
 
-    const streetBarrier = new THREE.Mesh(
-      new THREE.BoxGeometry(18,0.6,1),
-      new THREE.MeshStandardMaterial({
-        color:0x220000,
-        roughness:0.5
-      })
-    );
+marquee.position.set(
+0,
+16.5,
+7.1
+);
 
 
-    streetBarrier.position.set(0,-0.2,15);
-    group.add(streetBarrier);
+group.add(marquee);
+
+// ================================
+// LOBBY GLASS ENTRANCE
+// ================================
 
 
+const lobbyGlow = new THREE.Mesh(
 
-    // Gold VIP entrance markers
+ new THREE.BoxGeometry(
+ 10,
+ 6,
+ .3
+ ),
 
-    [-6,6].forEach(x=>{
+ new THREE.MeshStandardMaterial({
 
-      const marker = new THREE.Mesh(
-        new THREE.CylinderGeometry(
-          0.25,
-          0.25,
-          1.2,
-          16
-        ),
-        new THREE.MeshStandardMaterial({
-          color:0xffd700,
-          emissive:0xffd700,
-          emissiveIntensity:1.2
-        })
-      );
+  color:0xfff4d0,
+  emissive:0xffe8a0,
+  emissiveIntensity:1,
+  transparent:true,
+  opacity:.55
 
-      marker.position.set(x,0.6,15);
-      group.add(marker);
+ })
 
-    });
+);
+
+
+lobbyGlow.position.set(
+0,
+3,
+7.2
+);
+
+
+group.add(lobbyGlow);
 
 
 
-    scene.add(group);
 
-  },
+// GOLD LOBBY EMBLEM
 
-  update(){}
+const lobbyEmblem=new THREE.Mesh(
 
-};
+ new THREE.CircleGeometry(
+ 1.3,
+ 24
+ ),
+
+ new THREE.MeshStandardMaterial({
+
+  color:0xffd700,
+  emissive:0xffd700,
+  emissiveIntensity:1.8
+
+ })
+
+);
+
+
+lobbyEmblem.position.set(
+0,
+3.5,
+6.9
+);
+
+
+group.add(lobbyEmblem);
+
+
+
+
+
+
+// ================================
+// RED CARPET VIP ARRIVAL
+// ================================
+
+
+const carpet=new THREE.Mesh(
+
+ new THREE.PlaneGeometry(
+ 5,
+ 8
+ ),
+
+ new THREE.MeshStandardMaterial({
+
+  color:0x8b0018,
+  roughness:.7
+
+ })
+
+);
+
+
+carpet.rotation.x=-Math.PI/2;
+
+
+carpet.position.set(
+0,
+.03,
+10.5
+);
+
+
+group.add(carpet);
+
+
+
+
+
+// ================================
+// VELVET ROPE ENTRANCE
+// ================================
+
+
+const ropeZ=[8.5,11.5];
+
+
+[-2.5,2.5].forEach(x=>{
+
+
+ ropeZ.forEach(z=>{
+
+
+  group.add(
+   buildStanchion(x,z)
+  );
+
+
+ });
+
+
+
+ buildRope(
+  x,
+  ropeZ[0],
+  x,
+  ropeZ[1],
+  group
+ );
+
+
+});
+
+
+
+
+
+
+
+// ================================
+// VIP MARBLE PLAZA
+// ================================
+
+
+const plaza=new THREE.Mesh(
+
+ new THREE.BoxGeometry(
+ 22,
+ .08,
+ 18
+ ),
+
+ new THREE.MeshStandardMaterial({
+
+  color:0xe9e4d8,
+  roughness:.25,
+  metalness:.2
+
+ })
+
+);
+
+
+plaza.position.set(
+
+ HQ_POSITION.x,
+
+ .04,
+
+ HQ_POSITION.z+10
+
+);
+
+
+group.add(plaza);
+
+
+
+
+// GOLD MARBLE LINES
+
+[-8,-4,0,4,8].forEach(x=>{
+
+
+const line=new THREE.Mesh(
+
+ new THREE.BoxGeometry(
+ .05,
+ .09,
+ 18
+ ),
+
+ new THREE.MeshStandardMaterial({
+
+  color:0xffd700,
+  emissive:0xffd700,
+  emissiveIntensity:1
+
+ })
+
+);
+
+
+line.position.set(
+
+ HQ_POSITION.x+x,
+
+ .09,
+
+ HQ_POSITION.z+10
+
+);
+
+
+group.add(line);
+
+
+});
+
+
+
+
+
+
+
+
+// ================================
+// WATERFRONT VIP LOUNGE
+// ================================
+
+
+const loungeFloor=new THREE.Mesh(
+
+ new THREE.BoxGeometry(
+ 14,
+ .15,
+ 12
+ ),
+
+ new THREE.MeshStandardMaterial({
+
+  color:0x161616,
+  roughness:.35,
+  metalness:.4
+
+ })
+
+);
+
+
+loungeFloor.position.set(
+
+ HQ_POSITION.x+14,
+
+ .08,
+
+ HQ_POSITION.z+8
+
+);
+
+
+group.add(loungeFloor);
+
+
+
+
+
+const seatMat=new THREE.MeshStandardMaterial({
+
+color:0x050505,
+roughness:.4,
+metalness:.3
+
+});
+
+
+
+[
+ [-5,-3],
+ [5,-3],
+ [-5,3],
+ [5,3]
+
+].forEach(pos=>{
+
+
+const seat=new THREE.Mesh(
+
+ new THREE.BoxGeometry(
+ 2,
+ .7,
+ 2
+ ),
+
+ seatMat
+
+);
+
+
+seat.position.set(
+
+ HQ_POSITION.x+14+pos[0],
+
+ .45,
+
+ HQ_POSITION.z+8+pos[1]
+
+);
+
+
+group.add(seat);
+
+
+});
+
+
+
+
+
+// VIP TABLE
+
+const table=new THREE.Mesh(
+
+ new THREE.CylinderGeometry(
+ 1.2,
+ 1.2,
+ .15,
+ 24
+ ),
+
+ new THREE.MeshStandardMaterial({
+
+  color:0x111111,
+  metalness:.8,
+  roughness:.2
+
+ })
+
+);
+
+
+table.position.set(
+
+ HQ_POSITION.x+14,
+
+ .7,
+
+ HQ_POSITION.z+8
+
+);
+
+
+group.add(table);
+
+
+
+
+
+
+// ================================
+// PRIVATE PIER WATER VIEW
+// ================================
+
+
+const waterDeck=new THREE.Mesh(
+
+ new THREE.BoxGeometry(
+ 28,
+ .15,
+ 20
+ ),
+
+ new THREE.MeshStandardMaterial({
+
+  color:0x081522,
+  roughness:.2,
+  metalness:.3
+
+ })
+
+);
+
+
+waterDeck.position.set(
+
+ HQ_POSITION.x+14,
+
+ .05,
+
+ HQ_POSITION.z+22
+
+);
+
+
+group.add(waterDeck);
+
+
+
+
+// WATER REFLECTION LINES
+
+[-5,0,5].forEach(x=>{
+
+
+const reflection=new THREE.Mesh(
+
+ new THREE.BoxGeometry(
+ 22,
+ .03,
+ .15
+ ),
+
+ new THREE.MeshStandardMaterial({
+
+  color:0x00ffff,
+  emissive:0x00ffff,
+  emissiveIntensity:1.5
+
+ })
+
+);
+
+
+reflection.position.set(
+
+ HQ_POSITION.x+14+x,
+
+ .15,
+
+ HQ_POSITION.z+22
+
+);
+
+
+group.add(reflection);
+
+
+});
+
+
+
+
+
+
+
+
+// ================================
+// HQ ROUNDABOUT TURNAROUND
+// ================================
+
+
+const roundabout=new THREE.Mesh(
+
+ new THREE.CylinderGeometry(
+ 8,
+ 8,
+ .15,
+ 48
+ ),
+
+ new THREE.MeshStandardMaterial({
+
+  color:0x111111,
+  roughness:.8
+
+ })
+
+);
+
+
+roundabout.position.set(
+
+ HQ_POSITION.x+2,
+
+ .1,
+
+ HQ_POSITION.z-24
+
+);
+
+
+group.add(roundabout);
+
+
+
+
+
+const ring=new THREE.Mesh(
+
+ new THREE.TorusGeometry(
+ 5,
+ .12,
+ 12,
+ 48
+ ),
+
+ new THREE.MeshStandardMaterial({
+
+  color:0xffd700,
+  emissive:0xffd700,
+  emissiveIntensity:1.5
+
+ })
+
+);
+
+
+ring.rotation.x=Math.PI/2;
+
+
+ring.position.set(
+
+ HQ_POSITION.x+2,
+
+ .25,
+
+ HQ_POSITION.z-24
+
+);
+
+
+group.add(ring);
+
+
+
+
+
+
+
+// ================================
+// VIP STREET CONTROL
+// Stops vehicles from parking directly
+// in front of HQ
+// ================================
+
+
+const barrier=new THREE.Mesh(
+
+ new THREE.BoxGeometry(
+ 18,
+ .6,
+ 1
+ ),
+
+ new THREE.MeshStandardMaterial({
+
+  color:0x220000,
+  roughness:.5
+
+ })
+
+);
+
+
+barrier.position.set(
+
+ HQ_POSITION.x,
+
+ .3,
+
+ HQ_POSITION.z+15
+
+);
+
+
+group.add(barrier);
+
+
+
+
+
+
+// FINAL ADD
+
+scene.add(group);
+
+
+},
+
+
+update(){}
+
+
+};  
