@@ -1,7 +1,8 @@
 // dockLuxuryOverhaul.js
 // LAMBO CITY — Luxury Dock Environment Upgrade
 //
-// Phase 1A:
+// Phase 1A + Waterfront Edge Polish
+//
 // - Luxury dock trim/details
 // - Mooring hardware
 // - Bollards / cleats
@@ -10,6 +11,7 @@
 // - Five VIP waterfront ESTATES
 // - Estate landscaping/details
 // - Premium glass/material treatment
+// - Luxury waterfront fascia / edge treatment
 //
 // IMPORTANT:
 // This module does NOT replace the structural dock geometry owned by dock.js.
@@ -136,6 +138,28 @@ function createMaterials() {
       color: 0x77716a,
       roughness: 0.88,
     }),
+
+    // NEW — luxury waterfront fascia
+    waterfrontBody: new THREE.MeshStandardMaterial({
+      color: 0x161616,
+      roughness: 0.42,
+      metalness: 0.7,
+    }),
+
+    waterfrontAccent: new THREE.MeshStandardMaterial({
+      color: 0x8f6b2f,
+      emissive: 0x3a2408,
+      emissiveIntensity: 0.7,
+      roughness: 0.3,
+      metalness: 0.75,
+    }),
+
+    waterfrontGlow: new THREE.MeshStandardMaterial({
+      color: 0x9900ff,
+      emissive: 0x9900ff,
+      emissiveIntensity: 2.0,
+      roughness: 0.35,
+    }),
   };
 }
 
@@ -254,6 +278,19 @@ function createGeometries() {
       0.06,
       0.06
     ),
+
+    // NEW — waterfront edge pieces
+    waterfrontFascia: new THREE.BoxGeometry(
+      0.28,
+      0.65,
+      DOCK_Z_LEN
+    ),
+
+    waterfrontAccent: new THREE.BoxGeometry(
+      0.10,
+      0.08,
+      DOCK_Z_LEN
+    ),
   };
 }
 
@@ -287,6 +324,58 @@ function buildDockTrim(scene, materials, geometries) {
   );
 
   scene.add(right);
+}
+
+// ============================================================
+// NEW — LUXURY WATERFRONT FASCIA
+// ============================================================
+
+function buildWaterfrontEdge(scene, materials, geometries) {
+
+  // Outer dark architectural fascia
+  [-7.08, 7.08].forEach(x => {
+
+    const fascia = new THREE.Mesh(
+      geometries.waterfrontFascia,
+      materials.waterfrontBody
+    );
+
+    fascia.position.set(
+      x,
+      1.05,
+      DOCK_Z_MID
+    );
+
+    scene.add(fascia);
+
+    // Thin premium accent strip
+    const accent = new THREE.Mesh(
+      geometries.waterfrontAccent,
+      materials.waterfrontAccent
+    );
+
+    accent.position.set(
+      x > 0 ? x - 0.15 : x + 0.15,
+      1.30,
+      DOCK_Z_MID
+    );
+
+    scene.add(accent);
+
+    // Low-profile purple waterline glow
+    const glow = new THREE.Mesh(
+      geometries.waterfrontAccent,
+      materials.waterfrontGlow
+    );
+
+    glow.position.set(
+      x > 0 ? x - 0.16 : x + 0.16,
+      0.78,
+      DOCK_Z_MID
+    );
+
+    scene.add(glow);
+  });
 }
 
 // ============================================================
@@ -852,8 +941,6 @@ function buildEstate(
 
   group.add(walkwayGlow);
 
-  // Second subtle accent line
-
   const walkwayGlow2 = new THREE.Mesh(
     geometries.walkwayAccent,
     accentMaterial
@@ -931,6 +1018,13 @@ export default {
     const geometries = createGeometries();
 
     buildDockTrim(
+      scene,
+      materials,
+      geometries
+    );
+
+    // NEW — luxury waterfront edge
+    buildWaterfrontEdge(
       scene,
       materials,
       geometries
