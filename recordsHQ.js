@@ -1,139 +1,49 @@
 // recordsHQ.js
-// LAMBO CITY RECORDS Headquarters VIP Expansion
+// LAMBO CITY RECORDS — VIP Headquarters
 //
 // HQ LOCATION LOCKED:
 // x:28 z:22
 //
-// Phase 1 Environment Upgrade:
+// ENVIRONMENT-FIRST VERSION
+//
+// Includes:
 // - Luxury HQ exterior
-// - Grand architectural facade
-// - Entrance canopy
-// - Illuminated entrance frame
-// - Gold architectural columns
-// - Layered facade bands
-// - Rooftop crown
-// - VIP red carpet arrival
+// - Main LAMBO CITY RECORDS sign
+// - Marquee
+// - Lobby glass entrance
+// - Gold lobby emblem
+// - VIP red carpet
+// - Velvet rope entrance
 // - Marble VIP plaza
 // - Private VIP lounge
 // - Roundabout turnaround
-// - Existing HQ signage preserved
+// - VIP street control
+// - VIP waterfront promenade
+// - Waterfront plaza
+// - Glass waterfront guard
+// - Gold architectural accents
+// - Luxury planters
 //
-// IMPORTANT:
-// - Visual/environment upgrade only
-// - No new systems
-// - No collision changes
-// - No new real-time lights
-// - Water remains handled by water.js
-// - Designed to remain lightweight for iPad / Safari
+// PERFORMANCE:
+// - No PointLights
+// - No animation systems
+// - Shared materials
+// - Shared geometries where practical
+// - No unnecessary dynamic objects
+// - iPad / Safari friendly
 //
-// Three.js 0.160.0
+// Water remains handled by:
+// water.js
+// marina.js
+// yacht.js
 
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
+
 
 const HQ_POSITION = {
   x: 28,
   z: 22
 };
-
-// ============================================================
-// MATERIALS
-// ============================================================
-
-function createMaterials() {
-
-  return {
-
-    building: new THREE.MeshStandardMaterial({
-      color: 0x08090d,
-      roughness: 0.48,
-      metalness: 0.35
-    }),
-
-    buildingSecondary: new THREE.MeshStandardMaterial({
-      color: 0x15161c,
-      roughness: 0.4,
-      metalness: 0.45
-    }),
-
-    blackMetal: new THREE.MeshStandardMaterial({
-      color: 0x080808,
-      roughness: 0.28,
-      metalness: 0.78
-    }),
-
-    gold: new THREE.MeshStandardMaterial({
-      color: 0xffd700,
-      emissive: 0xffd700,
-      emissiveIntensity: 1.15,
-      roughness: 0.28,
-      metalness: 0.82
-    }),
-
-    goldSoft: new THREE.MeshStandardMaterial({
-      color: 0xc99a32,
-      roughness: 0.32,
-      metalness: 0.72
-    }),
-
-    goldGlow: new THREE.MeshStandardMaterial({
-      color: 0xffd700,
-      emissive: 0xffc400,
-      emissiveIntensity: 2.2,
-      roughness: 0.25,
-      metalness: 0.55
-    }),
-
-    warmGlass: new THREE.MeshStandardMaterial({
-      color: 0xffe8a0,
-      emissive: 0xffd66b,
-      emissiveIntensity: 0.9,
-      transparent: true,
-      opacity: 0.52,
-      roughness: 0.18,
-      metalness: 0.05
-    }),
-
-    darkGlass: new THREE.MeshStandardMaterial({
-      color: 0x111a24,
-      emissive: 0x07121c,
-      emissiveIntensity: 0.35,
-      transparent: true,
-      opacity: 0.58,
-      roughness: 0.12,
-      metalness: 0.18
-    }),
-
-    marble: new THREE.MeshStandardMaterial({
-      color: 0xe9e4d8,
-      roughness: 0.25,
-      metalness: 0.2
-    }),
-
-    redCarpet: new THREE.MeshStandardMaterial({
-      color: 0x8b0018,
-      roughness: 0.7
-    }),
-
-    lounge: new THREE.MeshStandardMaterial({
-      color: 0x161616,
-      roughness: 0.35,
-      metalness: 0.4
-    }),
-
-    seat: new THREE.MeshStandardMaterial({
-      color: 0x050505,
-      roughness: 0.4,
-      metalness: 0.3
-    }),
-
-    barrier: new THREE.MeshStandardMaterial({
-      color: 0x220000,
-      roughness: 0.5
-    })
-
-  };
-
-}
 
 
 // ============================================================
@@ -218,25 +128,242 @@ function createMarqueeTexture() {
 
 
 // ============================================================
+// SHARED MATERIALS
+// ============================================================
+
+function createMaterials() {
+
+  return {
+
+    black: new THREE.MeshStandardMaterial({
+      color: 0x0a0a0f,
+      roughness: 0.5,
+      metalness: 0.3
+    }),
+
+    darkBlack: new THREE.MeshStandardMaterial({
+      color: 0x080808,
+      roughness: 0.45,
+      metalness: 0.35
+    }),
+
+    gold: new THREE.MeshStandardMaterial({
+      color: 0xffd700,
+      emissive: 0xffd700,
+      emissiveIntensity: 1.25,
+      roughness: 0.3,
+      metalness: 0.75
+    }),
+
+    goldSoft: new THREE.MeshStandardMaterial({
+      color: 0xffd700,
+      emissive: 0xffd700,
+      emissiveIntensity: 0.5,
+      roughness: 0.3,
+      metalness: 0.7
+    }),
+
+    window: new THREE.MeshStandardMaterial({
+      color: 0xffee88,
+      emissive: 0xffee88,
+      emissiveIntensity: 0.7
+    }),
+
+    lobby: new THREE.MeshStandardMaterial({
+      color: 0xfff4d0,
+      emissive: 0xffe8a0,
+      emissiveIntensity: 1,
+      transparent: true,
+      opacity: 0.55
+    }),
+
+    marble: new THREE.MeshStandardMaterial({
+      color: 0xe9e4d8,
+      roughness: 0.25,
+      metalness: 0.2
+    }),
+
+    red: new THREE.MeshStandardMaterial({
+      color: 0x8b0018,
+      roughness: 0.7
+    }),
+
+    rope: new THREE.MeshStandardMaterial({
+      color: 0x8b0018,
+      roughness: 0.6
+    }),
+
+    waterfront: new THREE.MeshStandardMaterial({
+      color: 0x202024,
+      roughness: 0.48,
+      metalness: 0.18
+    }),
+
+    waterfrontEdge: new THREE.MeshStandardMaterial({
+      color: 0x111114,
+      roughness: 0.38,
+      metalness: 0.35
+    }),
+
+    glass: new THREE.MeshStandardMaterial({
+      color: 0x87dfff,
+      emissive: 0x155d73,
+      emissiveIntensity: 0.35,
+      transparent: true,
+      opacity: 0.42,
+      roughness: 0.12,
+      metalness: 0.15
+    }),
+
+    planter: new THREE.MeshStandardMaterial({
+      color: 0x111111,
+      roughness: 0.7,
+      metalness: 0.15
+    }),
+
+    plant: new THREE.MeshStandardMaterial({
+      color: 0x174f42,
+      roughness: 0.9
+    })
+  };
+}
+
+
+// ============================================================
+// SHARED GEOMETRIES
+// ============================================================
+
+function createGeometries() {
+
+  return {
+
+    stanchionBase:
+      new THREE.CylinderGeometry(
+        0.32,
+        0.38,
+        0.14,
+        10
+      ),
+
+    stanchionPole:
+      new THREE.CylinderGeometry(
+        0.07,
+        0.07,
+        1.1,
+        8
+      ),
+
+    stanchionTop:
+      new THREE.SphereGeometry(
+        0.13,
+        10,
+        8
+      ),
+
+    planter:
+      new THREE.CylinderGeometry(
+        0.42,
+        0.34,
+        0.48,
+        10
+      ),
+
+    plant:
+      new THREE.ConeGeometry(
+        0.34,
+        1.15,
+        7
+      ),
+
+    promenade:
+      new THREE.BoxGeometry(
+        12,
+        0.14,
+        18
+      ),
+
+    promenadeBorder:
+      new THREE.BoxGeometry(
+        0.32,
+        0.18,
+        18
+      ),
+
+    goldLine:
+      new THREE.BoxGeometry(
+        0.055,
+        0.19,
+        18
+      ),
+
+    promenadeEnd:
+      new THREE.BoxGeometry(
+        12.3,
+        0.22,
+        0.5
+      ),
+
+    glassRail:
+      new THREE.BoxGeometry(
+        10.5,
+        1.25,
+        0.08
+      ),
+
+    railTop:
+      new THREE.BoxGeometry(
+        10.7,
+        0.08,
+        0.12
+      ),
+
+    pillar:
+      new THREE.BoxGeometry(
+        0.28,
+        1.5,
+        0.28
+      ),
+
+    waterfrontPlaza:
+      new THREE.BoxGeometry(
+        16,
+        0.12,
+        5
+      ),
+
+    plazaFront:
+      new THREE.BoxGeometry(
+        16,
+        0.08,
+        0.08
+      ),
+
+    seat:
+      new THREE.BoxGeometry(
+        2.2,
+        0.45,
+        0.8
+      )
+  };
+}
+
+
+// ============================================================
 // VIP STANCHION
 // ============================================================
 
 function buildStanchion(
   x,
   z,
-  materials
+  materials,
+  geometries
 ) {
 
   const group = new THREE.Group();
 
   const base = new THREE.Mesh(
-    new THREE.CylinderGeometry(
-      0.32,
-      0.38,
-      0.14,
-      12
-    ),
-    materials.blackMetal
+    geometries.stanchionBase,
+    materials.darkBlack
   );
 
   base.position.y = 0.07;
@@ -245,13 +372,8 @@ function buildStanchion(
 
 
   const pole = new THREE.Mesh(
-    new THREE.CylinderGeometry(
-      0.07,
-      0.07,
-      1.1,
-      10
-    ),
-    materials.gold
+    geometries.stanchionPole,
+    materials.goldSoft
   );
 
   pole.position.y = 0.65;
@@ -260,12 +382,8 @@ function buildStanchion(
 
 
   const top = new THREE.Mesh(
-    new THREE.SphereGeometry(
-      0.13,
-      12,
-      12
-    ),
-    materials.gold
+    geometries.stanchionTop,
+    materials.goldSoft
   );
 
   top.position.y = 1.25;
@@ -292,7 +410,8 @@ function buildRope(
   z1,
   x2,
   z2,
-  parent
+  parent,
+  materials
 ) {
 
   const curve = new THREE.CatmullRomCurve3([
@@ -322,16 +441,13 @@ function buildRope(
 
     new THREE.TubeGeometry(
       curve,
-      12,
+      8,
       0.055,
-      6,
+      5,
       false
     ),
 
-    new THREE.MeshStandardMaterial({
-      color: 0x8b0018,
-      roughness: 0.6
-    })
+    materials.rope
 
   );
 
@@ -341,516 +457,312 @@ function buildRope(
 
 
 // ============================================================
-// GRAND FACADE
+// WATERFRONT PROMENADE
+// ============================================================
+//
+// IMPORTANT:
+// This function works in LOCAL HQ coordinates.
+// The HQ group itself is already positioned at:
+// x:28
+// z:22
+//
+// This prevents the old double-offset problem.
 // ============================================================
 
-function buildFacade(
+function buildWaterfrontPromenade(
   group,
-  materials
+  materials,
+  geometries
 ) {
 
   // ----------------------------------------------------------
-  // LARGE SIDE ARCHITECTURAL COLUMNS
+  // MAIN PROMENADE
   // ----------------------------------------------------------
 
-  [-8.15, 8.15].forEach(x => {
+  const promenade = new THREE.Mesh(
+    geometries.promenade,
+    materials.waterfront
+  );
 
-    const column = new THREE.Mesh(
+  promenade.position.set(
+    -7,
+    0.12,
+    18
+  );
 
-      new THREE.BoxGeometry(
-        0.55,
-        24,
-        0.55
-      ),
+  group.add(promenade);
 
+
+  // ----------------------------------------------------------
+  // DARK OUTER BORDERS
+  // ----------------------------------------------------------
+
+  const borderLeft = new THREE.Mesh(
+    geometries.promenadeBorder,
+    materials.waterfrontEdge
+  );
+
+  borderLeft.position.set(
+    -12.85,
+    0.19,
+    18
+  );
+
+  group.add(borderLeft);
+
+
+  const borderRight = new THREE.Mesh(
+    geometries.promenadeBorder,
+    materials.waterfrontEdge
+  );
+
+  borderRight.position.set(
+    -1.15,
+    0.19,
+    18
+  );
+
+  group.add(borderRight);
+
+
+  // ----------------------------------------------------------
+  // GOLD INLAY
+  // ----------------------------------------------------------
+
+  [-10.5, -7, -3.5, 0].forEach(x => {
+
+    const line = new THREE.Mesh(
+      geometries.goldLine,
       materials.gold
-
     );
 
-    column.position.set(
+    line.position.set(
       x,
-      13,
-      7.18
+      0.21,
+      18
     );
 
-    group.add(column);
+    group.add(line);
 
   });
 
 
   // ----------------------------------------------------------
-  // SECONDARY VERTICAL FACADE COLUMNS
+  // WATERFRONT END CAP
   // ----------------------------------------------------------
 
-  [-5.4, -2.7, 2.7, 5.4].forEach(x => {
-
-    const column = new THREE.Mesh(
-
-      new THREE.BoxGeometry(
-        0.22,
-        18,
-        0.32
-      ),
-
-      materials.goldSoft
-
-    );
-
-    column.position.set(
-      x,
-      12,
-      7.16
-    );
-
-    group.add(column);
-
-  });
-
-
-  // ----------------------------------------------------------
-  // HORIZONTAL GOLD ARCHITECTURAL BANDS
-  // ----------------------------------------------------------
-
-  [6.2, 11.2, 16.2, 20.1].forEach(y => {
-
-    const band = new THREE.Mesh(
-
-      new THREE.BoxGeometry(
-        17.7,
-        0.18,
-        0.38
-      ),
-
-      materials.goldSoft
-
-    );
-
-    band.position.set(
-      0,
-      y,
-      7.18
-    );
-
-    group.add(band);
-
-  });
-
-
-  // ----------------------------------------------------------
-  // DARK GLASS FACADE PANELS
-  // ----------------------------------------------------------
-
-  [-6.9, -4.1, -1.3, 1.3, 4.1, 6.9].forEach(x => {
-
-    const glass = new THREE.Mesh(
-
-      new THREE.BoxGeometry(
-        2.05,
-        4.2,
-        0.12
-      ),
-
-      materials.darkGlass
-
-    );
-
-    glass.position.set(
-      x,
-      8.5,
-      7.17
-    );
-
-    group.add(glass);
-
-  });
-
-
-  // ----------------------------------------------------------
-  // ENTRANCE GLASS WALL
-  // ----------------------------------------------------------
-
-  const entranceGlass = new THREE.Mesh(
-
-    new THREE.BoxGeometry(
-      9.4,
-      5.5,
-      0.16
-    ),
-
-    materials.warmGlass
-
+  const endCap = new THREE.Mesh(
+    geometries.promenadeEnd,
+    materials.waterfrontEdge
   );
 
-  entranceGlass.position.set(
-    0,
-    3.0,
-    7.2
+  endCap.position.set(
+    -7,
+    0.2,
+    27
   );
 
-  group.add(entranceGlass);
+  group.add(endCap);
 
 
   // ----------------------------------------------------------
-  // ENTRANCE GOLD FRAME
+  // GLASS GUARD
   // ----------------------------------------------------------
 
-  const frameTop = new THREE.Mesh(
-
-    new THREE.BoxGeometry(
-      10.5,
-      0.22,
-      0.3
-    ),
-
-    materials.goldGlow
-
+  const glassRail = new THREE.Mesh(
+    geometries.glassRail,
+    materials.glass
   );
 
-  frameTop.position.set(
-    0,
-    5.85,
-    7.35
+  glassRail.position.set(
+    -7,
+    0.82,
+    26.6
   );
 
-  group.add(frameTop);
-
-
-  [-5.15, 5.15].forEach(x => {
-
-    const frameSide = new THREE.Mesh(
-
-      new THREE.BoxGeometry(
-        0.22,
-        5.8,
-        0.3
-      ),
-
-      materials.goldGlow
-
-    );
-
-    frameSide.position.set(
-      x,
-      3.0,
-      7.35
-    );
-
-    group.add(frameSide);
-
-  });
+  group.add(glassRail);
 
 
   // ----------------------------------------------------------
-  // ENTRANCE CENTER DOOR DIVIDER
+  // GOLD RAIL TOP
   // ----------------------------------------------------------
 
-  const doorDivider = new THREE.Mesh(
-
-    new THREE.BoxGeometry(
-      0.12,
-      5.2,
-      0.2
-    ),
-
-    materials.goldSoft
-
+  const railTop = new THREE.Mesh(
+    geometries.railTop,
+    materials.gold
   );
 
-  doorDivider.position.set(
-    0,
-    3,
-    7.4
+  railTop.position.set(
+    -7,
+    1.48,
+    26.6
   );
 
-  group.add(doorDivider);
-
-}
-
-
-// ============================================================
-// GRAND ENTRANCE CANOPY
-// ============================================================
-
-function buildEntranceCanopy(
-  group,
-  materials
-) {
-
-  // ----------------------------------------------------------
-  // MAIN CANOPY
-  // ----------------------------------------------------------
-
-  const canopy = new THREE.Mesh(
-
-    new THREE.BoxGeometry(
-      11.5,
-      0.35,
-      4.8
-    ),
-
-    materials.blackMetal
-
-  );
-
-  canopy.position.set(
-    0,
-    7.0,
-    9.0
-  );
-
-  group.add(canopy);
+  group.add(railTop);
 
 
   // ----------------------------------------------------------
-  // GOLD CANOPY EDGE
+  // ARCHITECTURAL LIGHT PILLARS
   // ----------------------------------------------------------
 
-  const canopyEdge = new THREE.Mesh(
+  [
+    [-12.2, 10],
+    [-1.8, 10],
+    [-12.2, 18],
+    [-1.8, 18],
+    [-12.2, 26],
+    [-1.8, 26]
+  ].forEach(([x, z]) => {
 
-    new THREE.BoxGeometry(
-      11.7,
-      0.12,
-      0.18
-    ),
-
-    materials.goldGlow
-
-  );
-
-  canopyEdge.position.set(
-    0,
-    6.78,
-    11.35
-  );
-
-  group.add(canopyEdge);
-
-
-  // ----------------------------------------------------------
-  // CANOPY SUPPORTS
-  // ----------------------------------------------------------
-
-  [-5.0, 5.0].forEach(x => {
-
-    const support = new THREE.Mesh(
-
-      new THREE.BoxGeometry(
-        0.25,
-        3.5,
-        0.25
-      ),
-
+    const pillar = new THREE.Mesh(
+      geometries.pillar,
       materials.gold
-
     );
 
-    support.position.set(
+    pillar.position.set(
       x,
-      5.1,
-      10.9
+      0.78,
+      z
     );
 
-    group.add(support);
+    group.add(pillar);
 
   });
 
 
   // ----------------------------------------------------------
-  // CANOPY UNDERSIDE LIGHT STRIPS
+  // LUXURY PLANTERS
   // ----------------------------------------------------------
 
-  [-3.5, 0, 3.5].forEach(x => {
+  [
+    [-11.4, 12],
+    [-2.6, 16],
+    [-11.4, 21],
+    [-2.6, 24]
+  ].forEach(([x, z]) => {
 
-    const strip = new THREE.Mesh(
-
-      new THREE.BoxGeometry(
-        2.5,
-        0.06,
-        0.08
-      ),
-
-      materials.goldGlow
-
+    const planter = new THREE.Mesh(
+      geometries.planter,
+      materials.planter
     );
 
-    strip.position.set(
+    planter.position.set(
       x,
-      6.77,
-      9.0
+      0.36,
+      z
     );
 
-    group.add(strip);
+    group.add(planter);
+
+
+    const plant = new THREE.Mesh(
+      geometries.plant,
+      materials.plant
+    );
+
+    plant.position.set(
+      x,
+      1.12,
+      z
+    );
+
+    group.add(plant);
 
   });
 
-}
-
-
-// ============================================================
-// ROOFTOP CROWN
-// ============================================================
-
-function buildRooftopCrown(
-  group,
-  materials
-) {
 
   // ----------------------------------------------------------
-  // MAIN CROWN
+  // CENTRAL LAMBO CITY EMBLEM
   // ----------------------------------------------------------
 
-  const crown = new THREE.Mesh(
+  const emblem = new THREE.Mesh(
 
-    new THREE.BoxGeometry(
-      18.5,
-      0.45,
-      14.5
-    ),
-
-    materials.blackMetal
-
-  );
-
-  crown.position.y = 26.15;
-
-  group.add(crown);
-
-
-  // ----------------------------------------------------------
-  // GOLD CROWN EDGE
-  // ----------------------------------------------------------
-
-  const frontEdge = new THREE.Mesh(
-
-    new THREE.BoxGeometry(
-      18.2,
-      0.14,
-      0.22
-    ),
-
-    materials.goldGlow
-
-  );
-
-  frontEdge.position.set(
-    0,
-    25.88,
-    7.22
-  );
-
-  group.add(frontEdge);
-
-
-  // ----------------------------------------------------------
-  // ROOFTOP CENTER FEATURE
-  // ----------------------------------------------------------
-
-  const centerFeature = new THREE.Mesh(
-
-    new THREE.BoxGeometry(
-      7,
-      0.18,
-      0.3
+    new THREE.CylinderGeometry(
+      1.25,
+      1.25,
+      0.08,
+      24
     ),
 
     materials.gold
 
   );
 
-  centerFeature.position.set(
-    0,
-    26.48,
-    7.15
+  emblem.rotation.x = Math.PI / 2;
+
+  emblem.position.set(
+    -7,
+    0.23,
+    20
   );
 
-  group.add(centerFeature);
+  group.add(emblem);
 
 
   // ----------------------------------------------------------
-  // ROOFTOP CORNER CAPS
+  // SECONDARY WATERFRONT PLAZA
   // ----------------------------------------------------------
 
-  [-8.2, 8.2].forEach(x => {
+  const waterfrontPlaza = new THREE.Mesh(
+    geometries.waterfrontPlaza,
+    materials.waterfront
+  );
 
-    const cap = new THREE.Mesh(
+  waterfrontPlaza.position.set(
+    -7,
+    0.13,
+    29
+  );
 
-      new THREE.BoxGeometry(
-        0.7,
-        0.5,
-        0.7
-      ),
+  group.add(waterfrontPlaza);
 
-      materials.gold
 
+  // ----------------------------------------------------------
+  // WATERFRONT GOLD BORDER
+  // ----------------------------------------------------------
+
+  const plazaFront = new THREE.Mesh(
+    geometries.plazaFront,
+    materials.gold
+  );
+
+  plazaFront.position.set(
+    -7,
+    0.22,
+    31.35
+  );
+
+  group.add(plazaFront);
+
+
+  // ----------------------------------------------------------
+  // SEATING
+  // ----------------------------------------------------------
+
+  [
+    [-11, 29],
+    [-3, 29]
+  ].forEach(([x, z]) => {
+
+    const seat = new THREE.Mesh(
+      geometries.seat,
+      materials.darkBlack
     );
 
-    cap.position.set(
+    seat.position.set(
       x,
-      26.55,
-      6.8
+      0.42,
+      z
     );
 
-    group.add(cap);
+    group.add(seat);
 
   });
-
 }
 
 
 // ============================================================
-// HQ WINDOWS
-// ============================================================
-
-function buildWindows(
-  group,
-  materials
-) {
-
-  for (let row = 0; row < 7; row++) {
-
-    for (let col = 0; col < 5; col++) {
-
-      if (Math.random() < 0.35) continue;
-
-      const win = new THREE.Mesh(
-
-        new THREE.BoxGeometry(
-          1.4,
-          1.6,
-          0.1
-        ),
-
-        new THREE.MeshStandardMaterial({
-
-          color: 0xffee88,
-          emissive: 0xffee88,
-          emissiveIntensity: 0.7
-
-        })
-
-      );
-
-      win.position.set(
-
-        -7 + col * 3.5,
-
-        21 - row * 2.6,
-
-        7.06
-
-      );
-
-      group.add(win);
-
-    }
-
-  }
-
-}
-
-
-// ============================================================
-// MAIN HQ
+// INIT
 // ============================================================
 
 export default {
@@ -858,10 +770,12 @@ export default {
   init(scene) {
 
     const materials = createMaterials();
+    const geometries = createGeometries();
 
     const group = new THREE.Group();
 
 
+    // HQ WORLD POSITION
     group.position.set(
       HQ_POSITION.x,
       0,
@@ -881,7 +795,7 @@ export default {
         14
       ),
 
-      materials.building
+      materials.black
 
     );
 
@@ -891,37 +805,7 @@ export default {
 
 
     // ========================================================
-    // GRAND FACADE UPGRADE
-    // ========================================================
-
-    buildFacade(
-      group,
-      materials
-    );
-
-
-    // ========================================================
-    // ENTRANCE CANOPY
-    // ========================================================
-
-    buildEntranceCanopy(
-      group,
-      materials
-    );
-
-
-    // ========================================================
-    // ROOFTOP CROWN
-    // ========================================================
-
-    buildRooftopCrown(
-      group,
-      materials
-    );
-
-
-    // ========================================================
-    // ORIGINAL GOLD BUILDING TRIM
+    // GOLD BUILDING TRIM
     // ========================================================
 
     [-9, 9].forEach(x => {
@@ -934,7 +818,7 @@ export default {
           0.2
         ),
 
-        materials.goldGlow
+        materials.gold
 
       );
 
@@ -953,10 +837,46 @@ export default {
     // WINDOWS
     // ========================================================
 
-    buildWindows(
-      group,
-      materials
-    );
+    // Fixed pattern instead of Math.random().
+    // This avoids changing the building every reload.
+
+    const windowPattern = [
+      [0, 1, 2, 4],
+      [0, 2, 3, 4],
+      [1, 2, 4],
+      [0, 1, 3, 4],
+      [0, 2, 3],
+      [0, 1, 2, 4],
+      [1, 3, 4]
+    ];
+
+    for (let row = 0; row < 7; row++) {
+
+      windowPattern[row].forEach(col => {
+
+        const win = new THREE.Mesh(
+
+          new THREE.BoxGeometry(
+            1.4,
+            1.6,
+            0.1
+          ),
+
+          materials.window
+
+        );
+
+        win.position.set(
+          -7 + col * 3.5,
+          21 - row * 2.6,
+          7.06
+        );
+
+        group.add(win);
+
+      });
+
+    }
 
 
     // ========================================================
@@ -966,6 +886,8 @@ export default {
     const signTex = new THREE.CanvasTexture(
       createSignTexture()
     );
+
+    signTex.anisotropy = 2;
 
     const sign = new THREE.Mesh(
 
@@ -1001,6 +923,8 @@ export default {
       createMarqueeTexture()
     );
 
+    marqueeTex.anisotropy = 2;
+
     const marquee = new THREE.Mesh(
 
       new THREE.PlaneGeometry(
@@ -1028,7 +952,7 @@ export default {
 
 
     // ========================================================
-    // LOBBY GLASS ENTRANCE
+    // LOBBY GLASS
     // ========================================================
 
     const lobbyGlow = new THREE.Mesh(
@@ -1039,7 +963,7 @@ export default {
         0.3
       ),
 
-      materials.warmGlass
+      materials.lobby
 
     );
 
@@ -1060,10 +984,10 @@ export default {
 
       new THREE.CircleGeometry(
         1.3,
-        24
+        20
       ),
 
-      materials.goldGlow
+      materials.gold
 
     );
 
@@ -1077,7 +1001,7 @@ export default {
 
 
     // ========================================================
-    // RED CARPET VIP ARRIVAL
+    // RED CARPET
     // ========================================================
 
     const carpet = new THREE.Mesh(
@@ -1087,7 +1011,7 @@ export default {
         8
       ),
 
-      materials.redCarpet
+      materials.red
 
     );
 
@@ -1103,13 +1027,10 @@ export default {
 
 
     // ========================================================
-    // VELVET ROPE ENTRANCE
+    // VELVET ROPE
     // ========================================================
 
-    const ropeZ = [
-      8.5,
-      11.5
-    ];
+    const ropeZ = [8.5, 11.5];
 
     [-2.5, 2.5].forEach(x => {
 
@@ -1119,7 +1040,8 @@ export default {
           buildStanchion(
             x,
             z,
-            materials
+            materials,
+            geometries
           )
         );
 
@@ -1130,7 +1052,8 @@ export default {
         ropeZ[0],
         x,
         ropeZ[1],
-        group
+        group,
+        materials
       );
 
     });
@@ -1139,6 +1062,10 @@ export default {
     // ========================================================
     // VIP MARBLE PLAZA
     // ========================================================
+
+    // IMPORTANT:
+    // Local HQ coordinates only.
+    // Do NOT add HQ_POSITION again.
 
     const plaza = new THREE.Mesh(
 
@@ -1153,9 +1080,9 @@ export default {
     );
 
     plaza.position.set(
-      HQ_POSITION.x,
+      0,
       0.04,
-      HQ_POSITION.z + 10
+      10
     );
 
     group.add(plaza);
@@ -1180,9 +1107,9 @@ export default {
       );
 
       line.position.set(
-        HQ_POSITION.x + x,
+        x,
         0.09,
-        HQ_POSITION.z + 10
+        10
       );
 
       group.add(line);
@@ -1202,51 +1129,43 @@ export default {
         12
       ),
 
-      materials.lounge
+      materials.darkBlack
 
     );
 
     loungeFloor.position.set(
-
-      HQ_POSITION.x + 14,
+      14,
       0.08,
-      HQ_POSITION.z + 8
-
+      8
     );
 
     group.add(loungeFloor);
 
 
-    // ========================================================
-    // VIP SEATING
-    // ========================================================
+    const loungeSeatGeometry =
+      new THREE.BoxGeometry(
+        2,
+        0.7,
+        2
+      );
+
 
     [
       [-5, -3],
       [5, -3],
       [-5, 3],
       [5, 3]
-
-    ].forEach(pos => {
+    ].forEach(([x, z]) => {
 
       const seat = new THREE.Mesh(
-
-        new THREE.BoxGeometry(
-          2,
-          0.7,
-          2
-        ),
-
-        materials.seat
-
+        loungeSeatGeometry,
+        materials.darkBlack
       );
 
       seat.position.set(
-
-        HQ_POSITION.x + 14 + pos[0],
+        14 + x,
         0.45,
-        HQ_POSITION.z + 8 + pos[1]
-
+        8 + z
       );
 
       group.add(seat);
@@ -1264,32 +1183,24 @@ export default {
         1.2,
         1.2,
         0.15,
-        24
+        20
       ),
 
-      new THREE.MeshStandardMaterial({
-
-        color: 0x111111,
-        metalness: 0.8,
-        roughness: 0.2
-
-      })
+      materials.darkBlack
 
     );
 
     table.position.set(
-
-      HQ_POSITION.x + 14,
+      14,
       0.7,
-      HQ_POSITION.z + 8
-
+      8
     );
 
     group.add(table);
 
 
     // ========================================================
-    // HQ ROUNDABOUT
+    // ROUNDABOUT
     // ========================================================
 
     const roundabout = new THREE.Mesh(
@@ -1298,54 +1209,41 @@ export default {
         8,
         8,
         0.15,
-        48
+        32
       ),
 
-      new THREE.MeshStandardMaterial({
-
-        color: 0x111111,
-        roughness: 0.8
-
-      })
+      materials.darkBlack
 
     );
 
     roundabout.position.set(
-
-      HQ_POSITION.x + 2,
+      2,
       0.1,
-      HQ_POSITION.z - 24
-
+      -24
     );
 
     group.add(roundabout);
 
-
-    // ========================================================
-    // ROUNDABOUT GOLD RING
-    // ========================================================
 
     const ring = new THREE.Mesh(
 
       new THREE.TorusGeometry(
         5,
         0.12,
-        12,
-        48
+        8,
+        32
       ),
 
-      materials.goldGlow
+      materials.gold
 
     );
 
     ring.rotation.x = Math.PI / 2;
 
     ring.position.set(
-
-      HQ_POSITION.x + 2,
+      2,
       0.25,
-      HQ_POSITION.z - 24
-
+      -24
     );
 
     group.add(ring);
@@ -1363,19 +1261,31 @@ export default {
         1
       ),
 
-      materials.barrier
+      new THREE.MeshStandardMaterial({
+        color: 0x220000,
+        roughness: 0.5
+      })
 
     );
 
     barrier.position.set(
-
-      HQ_POSITION.x,
+      0,
       0.3,
-      HQ_POSITION.z + 15
-
+      15
     );
 
     group.add(barrier);
+
+
+    // ========================================================
+    // VIP WATERFRONT PROMENADE
+    // ========================================================
+
+    buildWaterfrontPromenade(
+      group,
+      materials,
+      geometries
+    );
 
 
     // ========================================================
