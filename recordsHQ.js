@@ -1,36 +1,24 @@
 // recordsHQ.js
-// LAMBO CITY RECORDS — VIP Headquarters
+// LAMBO CITY RECORDS Headquarters VIP Expansion
 //
 // HQ LOCATION LOCKED:
 // x:28 z:22
 //
-// ENVIRONMENT-FIRST VERSION
-//
 // Includes:
-// - Luxury HQ exterior
-// - Main LAMBO CITY RECORDS sign
-// - Marquee
-// - Lobby glass entrance
-// - Gold lobby emblem
-// - VIP red carpet
-// - Velvet rope entrance
-// - Marble VIP plaza
-// - Private VIP lounge
-// - Roundabout turnaround
-// - VIP street control
+// - VIP red carpet arrival
+// - luxury HQ exterior
+// - marble VIP plaza
+// - exclusive headquarters atmosphere
+// - private VIP lounge
+// - roundabout turnaround
 // - VIP waterfront promenade
-// - Waterfront plaza
-// - Glass waterfront guard
-// - Gold architectural accents
-// - Luxury planters
+// - luxury architectural transition from HQ -> waterfront
 //
 // PERFORMANCE:
-// - No PointLights
+// - No new PointLights
 // - No animation systems
-// - Shared materials
-// - Shared geometries where practical
-// - No unnecessary dynamic objects
-// - iPad / Safari friendly
+// - Lightweight geometry
+// - Uses emissive materials for architectural lighting
 //
 // Water remains handled by:
 // water.js
@@ -38,7 +26,6 @@
 // yacht.js
 
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
-
 
 const HQ_POSITION = {
   x: 28,
@@ -128,266 +115,66 @@ function createMarqueeTexture() {
 
 
 // ============================================================
-// SHARED MATERIALS
-// ============================================================
-
-function createMaterials() {
-
-  return {
-
-    black: new THREE.MeshStandardMaterial({
-      color: 0x0a0a0f,
-      roughness: 0.5,
-      metalness: 0.3
-    }),
-
-    darkBlack: new THREE.MeshStandardMaterial({
-      color: 0x080808,
-      roughness: 0.45,
-      metalness: 0.35
-    }),
-
-    gold: new THREE.MeshStandardMaterial({
-      color: 0xffd700,
-      emissive: 0xffd700,
-      emissiveIntensity: 1.25,
-      roughness: 0.3,
-      metalness: 0.75
-    }),
-
-    goldSoft: new THREE.MeshStandardMaterial({
-      color: 0xffd700,
-      emissive: 0xffd700,
-      emissiveIntensity: 0.5,
-      roughness: 0.3,
-      metalness: 0.7
-    }),
-
-    window: new THREE.MeshStandardMaterial({
-      color: 0xffee88,
-      emissive: 0xffee88,
-      emissiveIntensity: 0.7
-    }),
-
-    lobby: new THREE.MeshStandardMaterial({
-      color: 0xfff4d0,
-      emissive: 0xffe8a0,
-      emissiveIntensity: 1,
-      transparent: true,
-      opacity: 0.55
-    }),
-
-    marble: new THREE.MeshStandardMaterial({
-      color: 0xe9e4d8,
-      roughness: 0.25,
-      metalness: 0.2
-    }),
-
-    red: new THREE.MeshStandardMaterial({
-      color: 0x8b0018,
-      roughness: 0.7
-    }),
-
-    rope: new THREE.MeshStandardMaterial({
-      color: 0x8b0018,
-      roughness: 0.6
-    }),
-
-    waterfront: new THREE.MeshStandardMaterial({
-      color: 0x202024,
-      roughness: 0.48,
-      metalness: 0.18
-    }),
-
-    waterfrontEdge: new THREE.MeshStandardMaterial({
-      color: 0x111114,
-      roughness: 0.38,
-      metalness: 0.35
-    }),
-
-    glass: new THREE.MeshStandardMaterial({
-      color: 0x87dfff,
-      emissive: 0x155d73,
-      emissiveIntensity: 0.35,
-      transparent: true,
-      opacity: 0.42,
-      roughness: 0.12,
-      metalness: 0.15
-    }),
-
-    planter: new THREE.MeshStandardMaterial({
-      color: 0x111111,
-      roughness: 0.7,
-      metalness: 0.15
-    }),
-
-    plant: new THREE.MeshStandardMaterial({
-      color: 0x174f42,
-      roughness: 0.9
-    })
-  };
-}
-
-
-// ============================================================
-// SHARED GEOMETRIES
-// ============================================================
-
-function createGeometries() {
-
-  return {
-
-    stanchionBase:
-      new THREE.CylinderGeometry(
-        0.32,
-        0.38,
-        0.14,
-        10
-      ),
-
-    stanchionPole:
-      new THREE.CylinderGeometry(
-        0.07,
-        0.07,
-        1.1,
-        8
-      ),
-
-    stanchionTop:
-      new THREE.SphereGeometry(
-        0.13,
-        10,
-        8
-      ),
-
-    planter:
-      new THREE.CylinderGeometry(
-        0.42,
-        0.34,
-        0.48,
-        10
-      ),
-
-    plant:
-      new THREE.ConeGeometry(
-        0.34,
-        1.15,
-        7
-      ),
-
-    promenade:
-      new THREE.BoxGeometry(
-        12,
-        0.14,
-        18
-      ),
-
-    promenadeBorder:
-      new THREE.BoxGeometry(
-        0.32,
-        0.18,
-        18
-      ),
-
-    goldLine:
-      new THREE.BoxGeometry(
-        0.055,
-        0.19,
-        18
-      ),
-
-    promenadeEnd:
-      new THREE.BoxGeometry(
-        12.3,
-        0.22,
-        0.5
-      ),
-
-    glassRail:
-      new THREE.BoxGeometry(
-        10.5,
-        1.25,
-        0.08
-      ),
-
-    railTop:
-      new THREE.BoxGeometry(
-        10.7,
-        0.08,
-        0.12
-      ),
-
-    pillar:
-      new THREE.BoxGeometry(
-        0.28,
-        1.5,
-        0.28
-      ),
-
-    waterfrontPlaza:
-      new THREE.BoxGeometry(
-        16,
-        0.12,
-        5
-      ),
-
-    plazaFront:
-      new THREE.BoxGeometry(
-        16,
-        0.08,
-        0.08
-      ),
-
-    seat:
-      new THREE.BoxGeometry(
-        2.2,
-        0.45,
-        0.8
-      )
-  };
-}
-
-
-// ============================================================
 // VIP STANCHION
 // ============================================================
 
-function buildStanchion(
-  x,
-  z,
-  materials,
-  geometries
-) {
+function buildStanchion(x, z) {
 
   const group = new THREE.Group();
 
   const base = new THREE.Mesh(
-    geometries.stanchionBase,
-    materials.darkBlack
+    new THREE.CylinderGeometry(
+      .32,
+      .38,
+      .14,
+      12
+    ),
+    new THREE.MeshStandardMaterial({
+      color: 0x111111,
+      metalness: .7,
+      roughness: .35
+    })
   );
 
-  base.position.y = 0.07;
-
+  base.position.y = .07;
   group.add(base);
 
 
   const pole = new THREE.Mesh(
-    geometries.stanchionPole,
-    materials.goldSoft
+    new THREE.CylinderGeometry(
+      .07,
+      .07,
+      1.1,
+      10
+    ),
+    new THREE.MeshStandardMaterial({
+      color: 0xffd700,
+      emissive: 0xffd700,
+      emissiveIntensity: .4,
+      metalness: .8,
+      roughness: .3
+    })
   );
 
-  pole.position.y = 0.65;
-
+  pole.position.y = .65;
   group.add(pole);
 
 
   const top = new THREE.Mesh(
-    geometries.stanchionTop,
-    materials.goldSoft
+    new THREE.SphereGeometry(
+      .13,
+      12,
+      12
+    ),
+    new THREE.MeshStandardMaterial({
+      color: 0xffd700,
+      emissive: 0xffd700,
+      emissiveIntensity: .5,
+      metalness: .6
+    })
   );
 
   top.position.y = 1.25;
-
   group.add(top);
 
 
@@ -410,8 +197,7 @@ function buildRope(
   z1,
   x2,
   z2,
-  parent,
-  materials
+  parent
 ) {
 
   const curve = new THREE.CatmullRomCurve3([
@@ -424,7 +210,7 @@ function buildRope(
 
     new THREE.Vector3(
       (x1 + x2) / 2,
-      0.8,
+      .8,
       (z1 + z2) / 2
     ),
 
@@ -436,21 +222,19 @@ function buildRope(
 
   ]);
 
-
   const rope = new THREE.Mesh(
-
     new THREE.TubeGeometry(
       curve,
-      8,
-      0.055,
-      5,
+      12,
+      .055,
+      6,
       false
     ),
-
-    materials.rope
-
+    new THREE.MeshStandardMaterial({
+      color: 0x8b0018,
+      roughness: .6
+    })
   );
-
 
   parent.add(rope);
 }
@@ -459,91 +243,141 @@ function buildRope(
 // ============================================================
 // WATERFRONT PROMENADE
 // ============================================================
-//
-// IMPORTANT:
-// This function works in LOCAL HQ coordinates.
-// The HQ group itself is already positioned at:
-// x:28
-// z:22
-//
-// This prevents the old double-offset problem.
-// ============================================================
 
-function buildWaterfrontPromenade(
-  group,
-  materials,
-  geometries
-) {
+function buildWaterfrontPromenade(group) {
+
+  // ----------------------------------------------------------
+  // SHARED MATERIALS
+  // ----------------------------------------------------------
+
+  const promenadeStone = new THREE.MeshStandardMaterial({
+    color: 0x202024,
+    roughness: .48,
+    metalness: .18
+  });
+
+  const promenadeEdge = new THREE.MeshStandardMaterial({
+    color: 0x111114,
+    roughness: .38,
+    metalness: .35
+  });
+
+  const gold = new THREE.MeshStandardMaterial({
+    color: 0xffd700,
+    emissive: 0xffd700,
+    emissiveIntensity: 1.15,
+    roughness: .3,
+    metalness: .7
+  });
+
+  const glass = new THREE.MeshStandardMaterial({
+    color: 0x87dfff,
+    emissive: 0x155d73,
+    emissiveIntensity: .35,
+    transparent: true,
+    opacity: .42,
+    roughness: .12,
+    metalness: .15
+  });
+
+  const planterMat = new THREE.MeshStandardMaterial({
+    color: 0x111111,
+    roughness: .7,
+    metalness: .15
+  });
+
+  const plantMat = new THREE.MeshStandardMaterial({
+    color: 0x174f42,
+    roughness: .9
+  });
+
 
   // ----------------------------------------------------------
   // MAIN PROMENADE
+  //
+  // Extends from the HQ plaza toward the waterfront.
   // ----------------------------------------------------------
 
   const promenade = new THREE.Mesh(
-    geometries.promenade,
-    materials.waterfront
+    new THREE.BoxGeometry(
+      12,
+      .14,
+      18
+    ),
+    promenadeStone
   );
 
   promenade.position.set(
-    -7,
-    0.12,
-    18
+    HQ_POSITION.x - 7,
+    .12,
+    HQ_POSITION.z + 18
   );
 
   group.add(promenade);
 
 
   // ----------------------------------------------------------
-  // DARK OUTER BORDERS
+  // DARK OUTER BORDER
   // ----------------------------------------------------------
 
   const borderLeft = new THREE.Mesh(
-    geometries.promenadeBorder,
-    materials.waterfrontEdge
+    new THREE.BoxGeometry(
+      .32,
+      .18,
+      18
+    ),
+    promenadeEdge
   );
 
   borderLeft.position.set(
-    -12.85,
-    0.19,
-    18
+    HQ_POSITION.x - 12.85,
+    .19,
+    HQ_POSITION.z + 18
   );
 
   group.add(borderLeft);
 
 
   const borderRight = new THREE.Mesh(
-    geometries.promenadeBorder,
-    materials.waterfrontEdge
+    new THREE.BoxGeometry(
+      .32,
+      .18,
+      18
+    ),
+    promenadeEdge
   );
 
   borderRight.position.set(
-    -1.15,
-    0.19,
-    18
+    HQ_POSITION.x - 1.15,
+    .19,
+    HQ_POSITION.z + 18
   );
 
   group.add(borderRight);
 
 
   // ----------------------------------------------------------
-  // GOLD INLAY
+  // GOLD INLAY LINES
   // ----------------------------------------------------------
 
-  [-10.5, -7, -3.5, 0].forEach(x => {
+  [-10.5, -7, -3.5, 0].forEach(offset => {
 
     const line = new THREE.Mesh(
-      geometries.goldLine,
-      materials.gold
+      new THREE.BoxGeometry(
+        .055,
+        .19,
+        18
+      ),
+      gold
     );
 
     line.position.set(
-      x,
-      0.21,
-      18
+      HQ_POSITION.x + offset,
+      .21,
+      HQ_POSITION.z + 18
     );
 
     group.add(line);
-
   });
 
 
@@ -552,32 +386,40 @@ function buildWaterfrontPromenade(
   // ----------------------------------------------------------
 
   const endCap = new THREE.Mesh(
-    geometries.promenadeEnd,
-    materials.waterfrontEdge
+    new THREE.BoxGeometry(
+      12.3,
+      .22,
+      .5
+    ),
+    promenadeEdge
   );
 
   endCap.position.set(
-    -7,
-    0.2,
-    27
+    HQ_POSITION.x - 7,
+    .2,
+    HQ_POSITION.z + 27
   );
 
   group.add(endCap);
 
 
   // ----------------------------------------------------------
-  // GLASS GUARD
+  // GLASS GUARD / ARCHITECTURAL RAIL
   // ----------------------------------------------------------
 
   const glassRail = new THREE.Mesh(
-    geometries.glassRail,
-    materials.glass
+    new THREE.BoxGeometry(
+      10.5,
+      1.25,
+      .08
+    ),
+    glass
   );
 
   glassRail.position.set(
-    -7,
-    0.82,
-    26.6
+    HQ_POSITION.x - 7,
+    .82,
+    HQ_POSITION.z + 26.6
   );
 
   group.add(glassRail);
@@ -588,22 +430,32 @@ function buildWaterfrontPromenade(
   // ----------------------------------------------------------
 
   const railTop = new THREE.Mesh(
-    geometries.railTop,
-    materials.gold
+    new THREE.BoxGeometry(
+      10.7,
+      .08,
+      .12
+    ),
+    gold
   );
 
   railTop.position.set(
-    -7,
+    HQ_POSITION.x - 7,
     1.48,
-    26.6
+    HQ_POSITION.z + 26.6
   );
 
   group.add(railTop);
 
 
   // ----------------------------------------------------------
-  // ARCHITECTURAL LIGHT PILLARS
+  // LOW ARCHITECTURAL LIGHT PILLARS
   // ----------------------------------------------------------
+
+  const pillarGeometry = new THREE.BoxGeometry(
+    .28,
+    1.5,
+    .28
+  );
 
   [
     [-12.2, 10],
@@ -615,24 +467,37 @@ function buildWaterfrontPromenade(
   ].forEach(([x, z]) => {
 
     const pillar = new THREE.Mesh(
-      geometries.pillar,
-      materials.gold
+      pillarGeometry,
+      gold
     );
 
     pillar.position.set(
-      x,
-      0.78,
-      z
+      HQ_POSITION.x + x,
+      .78,
+      HQ_POSITION.z + z
     );
 
     group.add(pillar);
-
   });
 
 
   // ----------------------------------------------------------
   // LUXURY PLANTERS
   // ----------------------------------------------------------
+
+  const planterGeometry = new THREE.CylinderGeometry(
+    .42,
+    .34,
+    .48,
+    12
+  );
+
+  const plantGeometry = new THREE.ConeGeometry(
+    .34,
+    1.15,
+    7
+  );
+
 
   [
     [-11.4, 12],
@@ -642,32 +507,31 @@ function buildWaterfrontPromenade(
   ].forEach(([x, z]) => {
 
     const planter = new THREE.Mesh(
-      geometries.planter,
-      materials.planter
+      planterGeometry,
+      planterMat
     );
 
     planter.position.set(
-      x,
-      0.36,
-      z
+      HQ_POSITION.x + x,
+      .36,
+      HQ_POSITION.z + z
     );
 
     group.add(planter);
 
 
     const plant = new THREE.Mesh(
-      geometries.plant,
-      materials.plant
+      plantGeometry,
+      plantMat
     );
 
     plant.position.set(
-      x,
+      HQ_POSITION.x + x,
       1.12,
-      z
+      HQ_POSITION.z + z
     );
 
     group.add(plant);
-
   });
 
 
@@ -676,24 +540,21 @@ function buildWaterfrontPromenade(
   // ----------------------------------------------------------
 
   const emblem = new THREE.Mesh(
-
     new THREE.CylinderGeometry(
       1.25,
       1.25,
-      0.08,
-      24
+      .08,
+      32
     ),
-
-    materials.gold
-
+    gold
   );
 
   emblem.rotation.x = Math.PI / 2;
 
   emblem.position.set(
-    -7,
-    0.23,
-    20
+    HQ_POSITION.x - 7,
+    .23,
+    HQ_POSITION.z + 20
   );
 
   group.add(emblem);
@@ -704,40 +565,61 @@ function buildWaterfrontPromenade(
   // ----------------------------------------------------------
 
   const waterfrontPlaza = new THREE.Mesh(
-    geometries.waterfrontPlaza,
-    materials.waterfront
+    new THREE.BoxGeometry(
+      16,
+      .12,
+      5
+    ),
+    promenadeStone
   );
 
   waterfrontPlaza.position.set(
-    -7,
-    0.13,
-    29
+    HQ_POSITION.x - 7,
+    .13,
+    HQ_POSITION.z + 29
   );
 
   group.add(waterfrontPlaza);
 
 
   // ----------------------------------------------------------
-  // WATERFRONT GOLD BORDER
+  // WATERFRONT PLAZA GOLD BORDER
   // ----------------------------------------------------------
 
   const plazaFront = new THREE.Mesh(
-    geometries.plazaFront,
-    materials.gold
+    new THREE.BoxGeometry(
+      16,
+      .08,
+      .08
+    ),
+    gold
   );
 
   plazaFront.position.set(
-    -7,
-    0.22,
-    31.35
+    HQ_POSITION.x - 7,
+    .22,
+    HQ_POSITION.z + 31.35
   );
 
   group.add(plazaFront);
 
 
   // ----------------------------------------------------------
-  // SEATING
+  // SUBTLE SEATING BLOCKS
   // ----------------------------------------------------------
+
+  const seatGeometry = new THREE.BoxGeometry(
+    2.2,
+    .45,
+    .8
+  );
+
+  const seatMat = new THREE.MeshStandardMaterial({
+    color: 0x080808,
+    roughness: .42,
+    metalness: .25
+  });
+
 
   [
     [-11, 29],
@@ -745,37 +627,32 @@ function buildWaterfrontPromenade(
   ].forEach(([x, z]) => {
 
     const seat = new THREE.Mesh(
-      geometries.seat,
-      materials.darkBlack
+      seatGeometry,
+      seatMat
     );
 
     seat.position.set(
-      x,
-      0.42,
-      z
+      HQ_POSITION.x + x,
+      .42,
+      HQ_POSITION.z + z
     );
 
     group.add(seat);
-
   });
 }
 
 
 // ============================================================
-// INIT
+// MAIN HQ
 // ============================================================
 
 export default {
 
   init(scene) {
 
-    const materials = createMaterials();
-    const geometries = createGeometries();
-
     const group = new THREE.Group();
 
 
-    // HQ WORLD POSITION
     group.position.set(
       HQ_POSITION.x,
       0,
@@ -795,7 +672,13 @@ export default {
         14
       ),
 
-      materials.black
+      new THREE.MeshStandardMaterial({
+
+        color: 0x0a0a0f,
+        roughness: .5,
+        metalness: .3
+
+      })
 
     );
 
@@ -813,12 +696,18 @@ export default {
       const trim = new THREE.Mesh(
 
         new THREE.BoxGeometry(
-          0.2,
+          .2,
           26,
-          0.2
+          .2
         ),
 
-        materials.gold
+        new THREE.MeshStandardMaterial({
+
+          color: 0xffd700,
+          emissive: 0xffd700,
+          emissiveIntensity: 1.5
+
+        })
 
       );
 
@@ -837,44 +726,43 @@ export default {
     // WINDOWS
     // ========================================================
 
-    // Fixed pattern instead of Math.random().
-    // This avoids changing the building every reload.
-
-    const windowPattern = [
-      [0, 1, 2, 4],
-      [0, 2, 3, 4],
-      [1, 2, 4],
-      [0, 1, 3, 4],
-      [0, 2, 3],
-      [0, 1, 2, 4],
-      [1, 3, 4]
-    ];
-
     for (let row = 0; row < 7; row++) {
 
-      windowPattern[row].forEach(col => {
+      for (let col = 0; col < 5; col++) {
+
+        if (Math.random() < .35) continue;
 
         const win = new THREE.Mesh(
 
           new THREE.BoxGeometry(
             1.4,
             1.6,
-            0.1
+            .1
           ),
 
-          materials.window
+          new THREE.MeshStandardMaterial({
+
+            color: 0xffee88,
+            emissive: 0xffee88,
+            emissiveIntensity: .7
+
+          })
 
         );
 
         win.position.set(
+
           -7 + col * 3.5,
+
           21 - row * 2.6,
+
           7.06
+
         );
 
         group.add(win);
 
-      });
+      }
 
     }
 
@@ -886,8 +774,6 @@ export default {
     const signTex = new THREE.CanvasTexture(
       createSignTexture()
     );
-
-    signTex.anisotropy = 2;
 
     const sign = new THREE.Mesh(
 
@@ -923,8 +809,6 @@ export default {
       createMarqueeTexture()
     );
 
-    marqueeTex.anisotropy = 2;
-
     const marquee = new THREE.Mesh(
 
       new THREE.PlaneGeometry(
@@ -952,7 +836,7 @@ export default {
 
 
     // ========================================================
-    // LOBBY GLASS
+    // LOBBY GLASS ENTRANCE
     // ========================================================
 
     const lobbyGlow = new THREE.Mesh(
@@ -960,10 +844,18 @@ export default {
       new THREE.BoxGeometry(
         10,
         6,
-        0.3
+        .3
       ),
 
-      materials.lobby
+      new THREE.MeshStandardMaterial({
+
+        color: 0xfff4d0,
+        emissive: 0xffe8a0,
+        emissiveIntensity: 1,
+        transparent: true,
+        opacity: .55
+
+      })
 
     );
 
@@ -984,10 +876,16 @@ export default {
 
       new THREE.CircleGeometry(
         1.3,
-        20
+        24
       ),
 
-      materials.gold
+      new THREE.MeshStandardMaterial({
+
+        color: 0xffd700,
+        emissive: 0xffd700,
+        emissiveIntensity: 1.8
+
+      })
 
     );
 
@@ -1001,7 +899,7 @@ export default {
 
 
     // ========================================================
-    // RED CARPET
+    // RED CARPET VIP ARRIVAL
     // ========================================================
 
     const carpet = new THREE.Mesh(
@@ -1011,7 +909,12 @@ export default {
         8
       ),
 
-      materials.red
+      new THREE.MeshStandardMaterial({
+
+        color: 0x8b0018,
+        roughness: .7
+
+      })
 
     );
 
@@ -1019,7 +922,7 @@ export default {
 
     carpet.position.set(
       0,
-      0.03,
+      .03,
       10.5
     );
 
@@ -1027,7 +930,7 @@ export default {
 
 
     // ========================================================
-    // VELVET ROPE
+    // VELVET ROPE ENTRANCE
     // ========================================================
 
     const ropeZ = [8.5, 11.5];
@@ -1037,12 +940,7 @@ export default {
       ropeZ.forEach(z => {
 
         group.add(
-          buildStanchion(
-            x,
-            z,
-            materials,
-            geometries
-          )
+          buildStanchion(x, z)
         );
 
       });
@@ -1052,8 +950,7 @@ export default {
         ropeZ[0],
         x,
         ropeZ[1],
-        group,
-        materials
+        group
       );
 
     });
@@ -1063,26 +960,30 @@ export default {
     // VIP MARBLE PLAZA
     // ========================================================
 
-    // IMPORTANT:
-    // Local HQ coordinates only.
-    // Do NOT add HQ_POSITION again.
-
     const plaza = new THREE.Mesh(
 
       new THREE.BoxGeometry(
         22,
-        0.08,
+        .08,
         18
       ),
 
-      materials.marble
+      new THREE.MeshStandardMaterial({
+
+        color: 0xe9e4d8,
+        roughness: .25,
+        metalness: .2
+
+      })
 
     );
 
     plaza.position.set(
-      0,
-      0.04,
-      10
+
+      HQ_POSITION.x,
+      .04,
+      HQ_POSITION.z + 10
+
     );
 
     group.add(plaza);
@@ -1097,19 +998,27 @@ export default {
       const line = new THREE.Mesh(
 
         new THREE.BoxGeometry(
-          0.05,
-          0.09,
+          .05,
+          .09,
           18
         ),
 
-        materials.gold
+        new THREE.MeshStandardMaterial({
+
+          color: 0xffd700,
+          emissive: 0xffd700,
+          emissiveIntensity: 1
+
+        })
 
       );
 
       line.position.set(
-        x,
-        0.09,
-        10
+
+        HQ_POSITION.x + x,
+        .09,
+        HQ_POSITION.z + 10
+
       );
 
       group.add(line);
@@ -1118,36 +1027,45 @@ export default {
 
 
     // ========================================================
-    // PRIVATE VIP LOUNGE
+    // PRIVATE VIP LOUNGE AREA
     // ========================================================
 
     const loungeFloor = new THREE.Mesh(
 
       new THREE.BoxGeometry(
         14,
-        0.15,
+        .15,
         12
       ),
 
-      materials.darkBlack
+      new THREE.MeshStandardMaterial({
+
+        color: 0x161616,
+        roughness: .35,
+        metalness: .4
+
+      })
 
     );
 
     loungeFloor.position.set(
-      14,
-      0.08,
-      8
+
+      HQ_POSITION.x + 14,
+      .08,
+      HQ_POSITION.z + 8
+
     );
 
     group.add(loungeFloor);
 
 
-    const loungeSeatGeometry =
-      new THREE.BoxGeometry(
-        2,
-        0.7,
-        2
-      );
+    const seatMat = new THREE.MeshStandardMaterial({
+
+      color: 0x050505,
+      roughness: .4,
+      metalness: .3
+
+    });
 
 
     [
@@ -1155,17 +1073,29 @@ export default {
       [5, -3],
       [-5, 3],
       [5, 3]
-    ].forEach(([x, z]) => {
+
+    ].forEach(pos => {
 
       const seat = new THREE.Mesh(
-        loungeSeatGeometry,
-        materials.darkBlack
+
+        new THREE.BoxGeometry(
+          2,
+          .7,
+          2
+        ),
+
+        seatMat
+
       );
 
       seat.position.set(
-        14 + x,
-        0.45,
-        8 + z
+
+        HQ_POSITION.x + 14 + pos[0],
+
+        .45,
+
+        HQ_POSITION.z + 8 + pos[1]
+
       );
 
       group.add(seat);
@@ -1182,25 +1112,33 @@ export default {
       new THREE.CylinderGeometry(
         1.2,
         1.2,
-        0.15,
-        20
+        .15,
+        24
       ),
 
-      materials.darkBlack
+      new THREE.MeshStandardMaterial({
+
+        color: 0x111111,
+        metalness: .8,
+        roughness: .2
+
+      })
 
     );
 
     table.position.set(
-      14,
-      0.7,
-      8
+
+      HQ_POSITION.x + 14,
+      .7,
+      HQ_POSITION.z + 8
+
     );
 
     group.add(table);
 
 
     // ========================================================
-    // ROUNDABOUT
+    // HQ ROUNDABOUT TURNAROUND
     // ========================================================
 
     const roundabout = new THREE.Mesh(
@@ -1208,18 +1146,25 @@ export default {
       new THREE.CylinderGeometry(
         8,
         8,
-        0.15,
-        32
+        .15,
+        48
       ),
 
-      materials.darkBlack
+      new THREE.MeshStandardMaterial({
+
+        color: 0x111111,
+        roughness: .8
+
+      })
 
     );
 
     roundabout.position.set(
-      2,
-      0.1,
-      -24
+
+      HQ_POSITION.x + 2,
+      .1,
+      HQ_POSITION.z - 24
+
     );
 
     group.add(roundabout);
@@ -1229,21 +1174,29 @@ export default {
 
       new THREE.TorusGeometry(
         5,
-        0.12,
-        8,
-        32
+        .12,
+        12,
+        48
       ),
 
-      materials.gold
+      new THREE.MeshStandardMaterial({
+
+        color: 0xffd700,
+        emissive: 0xffd700,
+        emissiveIntensity: 1.5
+
+      })
 
     );
 
     ring.rotation.x = Math.PI / 2;
 
     ring.position.set(
-      2,
-      0.25,
-      -24
+
+      HQ_POSITION.x + 2,
+      .25,
+      HQ_POSITION.z - 24
+
     );
 
     group.add(ring);
@@ -1257,35 +1210,35 @@ export default {
 
       new THREE.BoxGeometry(
         18,
-        0.6,
+        .6,
         1
       ),
 
       new THREE.MeshStandardMaterial({
+
         color: 0x220000,
-        roughness: 0.5
+        roughness: .5
+
       })
 
     );
 
     barrier.position.set(
-      0,
-      0.3,
-      15
+
+      HQ_POSITION.x,
+      .3,
+      HQ_POSITION.z + 15
+
     );
 
     group.add(barrier);
 
 
     // ========================================================
-    // VIP WATERFRONT PROMENADE
+    // NEW — VIP WATERFRONT PROMENADE
     // ========================================================
 
-    buildWaterfrontPromenade(
-      group,
-      materials,
-      geometries
-    );
+    buildWaterfrontPromenade(group);
 
 
     // ========================================================
