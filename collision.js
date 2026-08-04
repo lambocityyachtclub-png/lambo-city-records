@@ -1,21 +1,69 @@
 // collision.js
-// Simple axis-aligned box collision system. Other systems register solid
-// areas here via registerBox(), and player.js checks isBlocked() before
-// committing each movement step. Kept independent of any one object, so
-// more colliders (yacht, buildings, etc.) can be added later — just one
-// more registerBox() call, nothing else needs to change.
+// Simple axis-aligned box collision system.
+// All solid environment areas register here.
+// Player movement checks isBlocked() before committing each step.
 
 const colliders = [];
 
 export default {
   init() {
-    // Stage platform — from world.js: BoxGeometry(34,1.4,18) at (0,1.1,-74)
-    this.registerBox("stagePlatform", { x: 0, z: -74, width: 34, depth: 18 });
+    // ------------------------------------------------------------
+    // STAGE
+    // world.js: BoxGeometry(34,1.4,18) at (0,1.1,-74)
+    // ------------------------------------------------------------
+    this.registerBox("stagePlatform", {
+      x: 0,
+      z: -74,
+      width: 34,
+      depth: 18
+    });
+
+    // ------------------------------------------------------------
+    // RECORDS HQ
+    // recordsHQ.js: centered at x:28, z:22
+    // 18 wide × 14 deep
+    // ------------------------------------------------------------
+    this.registerBox("recordsHQ", {
+      x: 28,
+      z: 22,
+      width: 18,
+      depth: 14
+    });
+
+    // ------------------------------------------------------------
+    // MARINA STORES
+    // marina.js: centered at z:31
+    // 10 wide × 12 deep
+    // ------------------------------------------------------------
+    [-20, -32, -44].forEach(x => {
+      this.registerBox(`store_${x}`, {
+        x,
+        z: 31,
+        width: 10,
+        depth: 12
+      });
+    });
+
+    // ------------------------------------------------------------
+    // WATERFRONT ESTATES
+    // dockLuxuryOverhaul.js
+    // x:-16, 9 wide × 7 deep
+    // ------------------------------------------------------------
+    [-50, -35, -20, -5, 10].forEach(z => {
+      this.registerBox(`estate_${z}`, {
+        x: -16,
+        z,
+        width: 9,
+        depth: 7
+      });
+    });
   },
 
-  // Public API — mark any area as solid. Pass width/depth (full sizes, as
-  // read straight off a BoxGeometry) or halfWidth/halfDepth directly.
-  registerBox(name, { x, z, width, depth, halfWidth, halfDepth }) {
+  // Public API — register any solid axis-aligned area.
+  registerBox(
+    name,
+    { x, z, width, depth, halfWidth, halfDepth }
+  ) {
     colliders.push({
       name,
       x,
@@ -27,11 +75,13 @@ export default {
 
   unregister(name) {
     const idx = colliders.findIndex(c => c.name === name);
-    if (idx !== -1) colliders.splice(idx, 1);
+    if (idx !== -1) {
+      colliders.splice(idx, 1);
+    }
   },
 
-  // True if point (x,z) falls inside any solid box, padded by radius so
-  // the player stops at the edge rather than at their exact center point.
+  // True if the player's padded position overlaps
+  // any registered solid box.
   isBlocked(x, z, radius = 0.6) {
     return colliders.some(c =>
       x + radius > c.x - c.halfWidth &&
