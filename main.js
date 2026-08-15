@@ -33,40 +33,53 @@ import YachtLuxuryDetails from "./yachtLuxuryDetails.js";
 import DockEntranceLuxury from "./dockEntranceLuxury.js";
 import DockLuxuryOverhaul from "./dockLuxuryOverhaul.js";
 import RecordsHQ from "./recordsHQ.js";
+
 const engine = new Engine();
+
 engine.registerSystems({
-  scene:         Scene,
-  camera:        Camera,
-  renderer:      Renderer,
-  world:         World,
-  water:         Water,
-  dock:          Dock,
-  sky:           Sky,
-  lighting:      Lighting,
-  palms:         Palms,
-  yacht:         Yacht,
-  cars:          Cars,
-  npc:           NPC,
+  scene: Scene,
+  camera: Camera,
+  renderer: Renderer,
+
+  world: World,
+  water: Water,
+  dock: Dock,
+  sky: Sky,
+  lighting: Lighting,
+  palms: Palms,
+  yacht: Yacht,
+  cars: Cars,
+  npc: NPC,
+
   cinematicFlow: CinematicFlowSystem,
-  worldSkin:     CinematicWorldSkin,
-  dockCore:      CinematicDockCore,
-  marina:        Marina,
-  stageVideo:    StageVideo,
+  worldSkin: CinematicWorldSkin,
+  dockCore: CinematicDockCore,
+  marina: Marina,
+
+  stageVideo: StageVideo,
+  stageArchitecture: StageArchitecture,
   stageScreenMedia: StageScreenMedia,
-  stageBanner:   StageBanner,
-  ambientMusic:  AmbientMusic,
+  stageBanner: StageBanner,
+
+  ambientMusic: AmbientMusic,
   stageAudioZone: StageAudioZone,
-  collision:     Collision,
+
+  collision: Collision,
+
   stageSpotlights: StageSpotlights,
-  stageLasers:   StageLasers,
-  stageSmoke:    StageSmoke,
+  stageLasers: StageLasers,
+  stageSmoke: StageSmoke,
   stageCrowdPulse: StageCrowdPulse,
+
   yachtLuxuryDetails: YachtLuxuryDetails,
   dockEntranceLuxury: DockEntranceLuxury,
   dockLuxuryOverhaul: DockLuxuryOverhaul,
-  recordsHQ:     RecordsHQ,
-  input:         Input,
-  player:        Player,
-  hud:           HUD,
+
+  recordsHQ: RecordsHQ,
+
+  input: Input,
+  player: Player,
+  hud: HUD,
 });
+
 engine.init();
