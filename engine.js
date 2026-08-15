@@ -29,6 +29,7 @@ export default class Engine {
     this.systems.dockCore?.init?.(this.scene);
     this.systems.marina?.init?.(this.scene);
     this.systems.stageVideo?.init?.(this.scene);
+    stageArchitecture: StageArchitecture,
     this.systems.stageScreenMedia?.init?.(this.scene);
     this.systems.stageBanner?.init?.(this.scene);
     this.systems.ambientMusic?.init?.();
