@@ -13,7 +13,7 @@ import Input from "./input.js";
 import Player from "./player.js";
 import HUD from "./hud.js";
 import NPC from "./npc.js";
-import StageArchitecture from "./stageArchitecture.js";
+
 import Cars from "./cars.js";
 import CinematicFlowSystem from "./cinematicFlowSystem.js";
 import CinematicWorldSkin from "./cinematicWorldSkin.js";
