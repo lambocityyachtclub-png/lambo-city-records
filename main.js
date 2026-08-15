@@ -57,7 +57,6 @@ engine.registerSystems({
   marina: Marina,
 
   stageVideo: StageVideo,
-  stageArchitecture: StageArchitecture,
   stageScreenMedia: StageScreenMedia,
   stageBanner: StageBanner,
 
