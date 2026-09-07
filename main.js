@@ -33,6 +33,7 @@ import YachtLuxuryDetails from "./yachtLuxuryDetails.js";
 import DockEntranceLuxury from "./dockEntranceLuxury.js";
 import DockLuxuryOverhaul from "./dockLuxuryOverhaul.js";
 import RecordsHQ from "./recordsHQ.js";
+import BoardwalkOverlooks from "./boardwalkOverlooks.js";
 
 const engine = new Engine();
 
