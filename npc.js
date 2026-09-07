@@ -46,6 +46,10 @@ export default {
       crowdNPCs.push({mesh:npc,offset:Math.random()*Math.PI*2});
     }
   },
+getHero() {
+  return heroMesh;
+},
+  
   update(delta, context) {
     time += delta;
     if (heroMesh) {
