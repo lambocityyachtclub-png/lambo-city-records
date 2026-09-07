@@ -1,5 +1,6 @@
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 let heroMesh, crowdNPCs = [], time = 0, giftGiven = false;
+let performanceMode = false;
 export default {
   init(scene) {
     heroMesh = new THREE.Group();
@@ -49,13 +50,15 @@ export default {
 getHero() {
   return heroMesh;
 },
-  
+ setPerformanceMode(active) {
+  performanceMode = !!active;
+}, 
   update(delta, context) {
     time += delta;
-    if (heroMesh) {
-      heroMesh.position.y = 1.3+Math.sin(time*1.2)*0.05;
-      heroMesh.rotation.y = Math.PI+Math.sin(time*0.4)*0.15;
-    }
+    if (heroMesh && !performanceMode) {
+  heroMesh.position.y = 1.3+Math.sin(time*1.2)*0.05;
+  heroMesh.rotation.y = Math.PI+Math.sin(time*0.4)*0.15;
+}
     crowdNPCs.forEach(c => {
       c.mesh.position.y = 1.3+Math.sin(time*3+c.offset)*0.12;
       c.mesh.rotation.y += delta*0.4;
