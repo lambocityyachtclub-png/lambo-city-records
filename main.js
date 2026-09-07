@@ -76,7 +76,7 @@ engine.registerSystems({
   dockLuxuryOverhaul: DockLuxuryOverhaul,
 
   recordsHQ: RecordsHQ,
-
+  boardwalkOverlooks: BoardwalkOverlooks,
   input: Input,
   player: Player,
   hud: HUD,
