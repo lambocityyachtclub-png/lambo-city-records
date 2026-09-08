@@ -112,7 +112,7 @@ function updateExiting(delta, context) {
   faceDirection(STAGE_RIGHT.x, -74);
 
   if (t >= 1) {
-    const npc = scene?.userData?.systems?.npc;
+    const npc = context.systems?.npc;
 
     state = "COMPLETE";
     stateTime = 0;
@@ -156,10 +156,9 @@ export default {
     }
 
     if (state === "EXITING") {
-      updateExiting(delta);
-      return;
-    }
-  },
+  updateExiting(delta, context);
+  return;
+}
 
   getState() {
     return state;
