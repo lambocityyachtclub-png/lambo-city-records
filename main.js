@@ -23,6 +23,7 @@ import StageVideo from "./stageVideo.js";
 import StageScreenMedia from "./stageScreenMedia.js";
 import StageBanner from "./stageBanner.js";
 import AmbientMusic from "./ambientMusic.js";
+import StageMusic from "./stageMusic.js";
 import StageAudioZone from "./stageAudioZone.js";
 import Collision from "./collision.js";
 import StageSpotlights from "./stageSpotlights.js";
@@ -34,14 +35,11 @@ import DockEntranceLuxury from "./dockEntranceLuxury.js";
 import DockLuxuryOverhaul from "./dockLuxuryOverhaul.js";
 import RecordsHQ from "./recordsHQ.js";
 import BoardwalkOverlooks from "./boardwalkOverlooks.js";
-
 const engine = new Engine();
-
 engine.registerSystems({
   scene: Scene,
   camera: Camera,
   renderer: Renderer,
-
   world: World,
   water: Water,
   dock: Dock,
@@ -56,30 +54,24 @@ engine.registerSystems({
   worldSkin: CinematicWorldSkin,
   dockCore: CinematicDockCore,
   marina: Marina,
-
   stageVideo: StageVideo,
   stageScreenMedia: StageScreenMedia,
   stageBanner: StageBanner,
-
   ambientMusic: AmbientMusic,
+  stageMusic: StageMusic,
   stageAudioZone: StageAudioZone,
-
   collision: Collision,
-
   stageSpotlights: StageSpotlights,
   stageLasers: StageLasers,
   stageSmoke: StageSmoke,
   stageCrowdPulse: StageCrowdPulse,
-
   yachtLuxuryDetails: YachtLuxuryDetails,
   dockEntranceLuxury: DockEntranceLuxury,
   dockLuxuryOverhaul: DockLuxuryOverhaul,
-
   recordsHQ: RecordsHQ,
   boardwalkOverlooks: BoardwalkOverlooks,
   input: Input,
   player: Player,
   hud: HUD,
 });
-
 engine.init();
