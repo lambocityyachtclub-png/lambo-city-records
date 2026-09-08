@@ -26,6 +26,7 @@ import AmbientMusic from "./ambientMusic.js";
 import StageMusic from "./stageMusic.js";
 import StageAudioZone from "./stageAudioZone.js";
 import Collision from "./collision.js";
+import GrandStagePier from "./grandStagePier.js";
 import StageSpotlights from "./stageSpotlights.js";
 import StageLasers from "./stageLasers.js";
 import StageSmoke from "./stageSmoke.js";
@@ -65,6 +66,7 @@ engine.registerSystems({
   stageLasers: StageLasers,
   stageSmoke: StageSmoke,
   stageCrowdPulse: StageCrowdPulse,
+  grandStagePier: GrandStagePier,
   yachtLuxuryDetails: YachtLuxuryDetails,
   dockEntranceLuxury: DockEntranceLuxury,
   dockLuxuryOverhaul: DockLuxuryOverhaul,
