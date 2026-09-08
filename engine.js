@@ -33,6 +33,7 @@ export default class Engine {
     this.systems.stageScreenMedia?.init?.(this.scene);
     this.systems.stageBanner?.init?.(this.scene);
     this.systems.ambientMusic?.init?.();
+    this.systems.stageMusic?.init?.();
     this.systems.stageAudioZone?.init?.(this.scene);
     this.systems.collision?.init?.();
     this.systems.stageSpotlights?.init?.(this.scene);
@@ -43,7 +44,7 @@ export default class Engine {
     this.systems.villaLuxuryDetails?.init?.(this.scene);
     this.systems.dockEntranceLuxury?.init?.(this.scene);
     this.systems.dockLuxuryOverhaul?.init?.(this.scene);
-        this.systems.recordsHQ?.init?.(this.scene)
+    this.systems.recordsHQ?.init?.(this.scene);
     this.systems.boardwalkOverlooks?.init?.(this.scene);
     this.systems.input?.init?.();
     this.systems.player?.init?.(this.scene);
@@ -52,17 +53,25 @@ export default class Engine {
   }
   loop = (time = 0) => {
     requestAnimationFrame(this.loop);
-    const delta = Math.min((time - this.lastTime) / 1000, 0.033);
+    const delta = Math.min(
+      (time - this.lastTime) / 1000,
+      0.033
+    );
     this.lastTime = time;
     this.update(delta);
     this.render();
   };
   update(delta) {
     this.context.delta = delta;
-    Object.values(this.systems).forEach(sys => sys?.update?.(delta, this.context));
+    Object.values(this.systems).forEach(sys =>
+      sys?.update?.(delta, this.context)
+    );
   }
   render() {
     if (!this.scene || !this.camera || !this.renderer) return;
-    this.renderer.render(this.scene, this.camera);
+    this.renderer.render(
+      this.scene,
+      this.camera
+    );
   }
 }
