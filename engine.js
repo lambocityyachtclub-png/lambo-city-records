@@ -24,6 +24,7 @@ export default class Engine {
     this.systems.yacht?.init?.(this.scene);
     this.systems.cars?.init?.(this.scene);
     this.systems.npc?.init?.(this.scene);
+    this.systems.heroPerformance?.init?.(this.scene);
     this.systems.cinematicFlow?.init?.(this.scene);
     this.systems.worldSkin?.init?.(this.scene);
     this.systems.dockCore?.init?.(this.scene);
