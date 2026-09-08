@@ -723,6 +723,74 @@ export default {
 
 
     // ========================================================
+    // GLASS CURTAIN WALL — wraps the two side faces and the back of
+    // the tower in the same glass used on the new boardwalk overlooks
+    // (boardwalkOverlooks.js), so the look carries around the whole
+    // building instead of just the street-facing entrance, which keeps
+    // its own sign/marquee/window-grid look untouched.
+    // ========================================================
+
+    const glassMat = new THREE.MeshStandardMaterial({
+      color: 0x87dfff,
+      emissive: 0x155d73,
+      emissiveIntensity: .35,
+      transparent: true,
+      opacity: .42,
+      roughness: .12,
+      metalness: .15
+    });
+
+    [-9.05, 9.05].forEach(x => {
+
+      const sideGlass = new THREE.Mesh(
+        new THREE.BoxGeometry(.15, 24, 13),
+        glassMat
+      );
+      sideGlass.position.set(x, 13, 0);
+      group.add(sideGlass);
+
+      // Gold mullion lines across the glass, echoing the corner trim
+      [4, 10, 16, 22].forEach(y => {
+        const mullion = new THREE.Mesh(
+          new THREE.BoxGeometry(.18, .1, 13.1),
+          new THREE.MeshStandardMaterial({
+            color: 0xffd700,
+            emissive: 0xffd700,
+            emissiveIntensity: 1.2
+          })
+        );
+        mullion.position.set(x, y, 0);
+        group.add(mullion);
+      });
+
+    });
+
+    const backGlass = new THREE.Mesh(
+      new THREE.BoxGeometry(17.8, 24, .15),
+      glassMat
+    );
+    backGlass.position.set(0, 13, -7.05);
+    group.add(backGlass);
+
+    // Gold back-corner trim, mirroring the existing front trim so the
+    // wrap reads as one continuous gold-edged form
+    [-9, 9].forEach(x => {
+
+      const backTrim = new THREE.Mesh(
+        new THREE.BoxGeometry(.2, 26, .2),
+        new THREE.MeshStandardMaterial({
+          color: 0xffd700,
+          emissive: 0xffd700,
+          emissiveIntensity: 1.5
+        })
+      );
+      backTrim.position.set(x, 13, -7.05);
+      group.add(backTrim);
+
+    });
+
+
+    // ========================================================
     // WINDOWS
     // ========================================================
 
