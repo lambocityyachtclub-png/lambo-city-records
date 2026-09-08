@@ -1,32 +1,32 @@
 // stageAudioZone.js
-// Crossfades between the city-wide ambient radio (ambientMusic.js) and the
-// stage's own video audio (stageScreenMedia.js) based on player proximity
-// to the stage. Reuses the same stageScreenOuter mesh + distance-check
-// pattern already used by stageVideo.js — no changes to world.js needed.
+// LAMBO CITY GRAND STAGE AUDIO ZONE
 //
-// Structured as a list of zones (one today) so additional stages — or a
-// future Broadcast Hub audio source — can be added later without changing
-// this file's public API (init/update + the status getter below).
+// The Grand Stage uses stageMusic.js for HERO's live in-world performance.
+// StageScreenMedia remains visual-only and must NOT become an audio source.
+//
+// This system keeps the existing stage proximity logic and public API so
+// stageVideo.js can still pause/resume the zone while the HQ video modal
+// is open.
 
 import AmbientMusic from "./ambientMusic.js";
-import StageScreenMedia from "./stageScreenMedia.js";
 
-const FADE_DURATION = 1.5; // seconds — matches the "1 to 2 seconds" spec
+const FADE_DURATION = 1.5;
 
-// Each zone: a stage's screen mesh name, its activation radius, and the
-// ambient/stage volume levels to fade between. Add more entries here later
-// for additional stages — nothing else in this file needs to change.
 const ZONES = [
   {
     meshName: "stageScreenOuter",
     radius: 45,
     ambientVolume: 0.6,
-    stageVolume: 0.7,
   },
 ];
 
-let scene, externallyPaused = false;
-const zoneState = ZONES.map(() => ({ mesh: null, fade: 0 })); // fade: 0=radio, 1=stage
+let scene = null;
+let externallyPaused = false;
+
+const zoneState = ZONES.map(() => ({
+  mesh: null,
+  fade: 0,
+}));
 
 export default {
   init(scene_) {
@@ -41,39 +41,51 @@ export default {
 
     ZONES.forEach((zone, i) => {
       const state = zoneState[i];
+
       if (!state.mesh) {
         state.mesh = scene.getObjectByName(zone.meshName);
-        if (!state.mesh) return; // world.js hasn't built the stage yet
+
+        if (!state.mesh) return;
       }
 
       const dx = player.position.x - state.mesh.position.x;
       const dz = player.position.z - state.mesh.position.z;
+
       const dist = Math.sqrt(dx * dx + dz * dz);
       const inZone = dist <= zone.radius;
 
       const target = inZone ? 1 : 0;
       const step = delta / FADE_DURATION;
-      if (state.fade < target) state.fade = Math.min(target, state.fade + step);
-      else if (state.fade > target) state.fade = Math.max(target, state.fade - step);
 
-      AmbientMusic.setVolume(zone.ambientVolume * (1 - state.fade));
-      StageScreenMedia.setVolume(zone.stageVolume * state.fade);
+      if (state.fade < target) {
+        state.fade = Math.min(target, state.fade + step);
+      } else if (state.fade > target) {
+        state.fade = Math.max(target, state.fade - step);
+      }
+
+      // Fade the normal city radio down as the visitor approaches
+      // the Grand Stage.
+      //
+      // stageMusic.js owns HERO's actual performance audio.
+      AmbientMusic.setVolume(
+        zone.ambientVolume * (1 - state.fade)
+      );
     });
   },
 
-  // Called by stageVideo.js while the royalty-tracked modal is open, so this
-  // system doesn't fight with it over volume.
+  // Used by stageVideo.js while the HQ YouTube performance is open.
   pause() {
     externallyPaused = true;
-    StageScreenMedia.setVolume(0);
-  },
-  resume() {
-    externallyPaused = false;
-    // next update() tick fades back to the correct level automatically
+    AmbientMusic.setVolume(0);
   },
 
-  // Read-only status, useful later for debugging or a HUD indicator
+  resume() {
+    externallyPaused = false;
+
+    // The next update() tick restores the correct ambient volume.
+  },
+
   isInAnyZone() {
-    return zoneState.some(s => s.fade > 0.5);
+    return zoneState.some((state) => state.fade > 0.5);
   },
 };
