@@ -80,15 +80,7 @@ export default {
       tl.position.set(x,24,-80); scene.add(tl);
     });
 
-    // STAGE STAIRS
-    for (let i = 0; i < 6; i++) {
-      const s = new THREE.Mesh(
-        new THREE.BoxGeometry(16,0.3,1.5),
-        new THREE.MeshStandardMaterial({color:0x111111})
-      );
-      s.position.set(0, 0.8+i*0.22, -65.5-i*1.5); scene.add(s);
-    }
-
+   
     // BACKGROUND SKYLINE — taller, more detailed
     [
       {x:-68,z:-48,w:14,h:26,c:0x1a1a3e},
