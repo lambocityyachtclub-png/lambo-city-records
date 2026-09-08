@@ -155,20 +155,20 @@ export default {
       return;
     }
 
-  if (state === "EXITING") {
-  updateExiting(delta, context);
-  return;
-}
-}  // <-- THIS was missing
+     if (state === "EXITING") {
+    updateExiting(delta, context);
+    return;
+  }
+},
 
 getState() {
-    return state;
-  },
+  return state;
+},
 
-  reset() {
-    state = "IDLE";
-    stateTime = 0;
-    performanceTime = 0;
-    hero = null;
-  },
+reset() {
+  state = "IDLE";
+  stateTime = 0;
+  performanceTime = 0;
+  hero = null;
+},
 };
