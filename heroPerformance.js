@@ -1,5 +1,6 @@
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 import StageMusic from "./stageMusic.js";
+import AmbientMusic from "./ambientMusic.js";
 const STAGE_CENTER = new THREE.Vector3(0, 1.3, -74);
 const TRIGGER_DISTANCE = 22;
 const STAGE_LEFT = new THREE.Vector3(-19, 1.3, -74);
@@ -31,6 +32,8 @@ function beginPerformance(context) {
   hero = npc.getHero();
   if (!hero) return;
   npc.setPerformanceMode?.(true);
+  // Pause the normal city radio while HERO performs.
+  AmbientMusic.pause();
   // Start HERO's performance song from 0:00.
   StageMusic.playFromStart();
   // Stage-left entrance position.
@@ -64,7 +67,9 @@ function updatePerformance(delta) {
   // Face the direction HERO is moving.
   const direction = Math.cos(t * 0.65);
   if (Math.abs(direction) > 0.05) {
-    hero.rotation.y = direction > 0 ? Math.PI / 2 : -Math.PI / 2;
+    hero.rotation.y = direction > 0
+      ? Math.PI / 2
+      : -Math.PI / 2;
   }
   // Simple performance movement.
   // The existing stage lighting, lasers, smoke,
@@ -78,7 +83,11 @@ function updateExiting(delta, context) {
   stateTime += delta;
   const t = Math.min(1, stateTime / EXIT_DURATION);
   // HERO exits toward stage right.
-  const x = THREE.MathUtils.lerp(9, STAGE_RIGHT.x, t);
+  const x = THREE.MathUtils.lerp(
+    9,
+    STAGE_RIGHT.x,
+    t
+  );
   hero.position.x = x;
   hero.position.y = 1.3 + Math.sin(t * Math.PI) * 0.05;
   faceDirection(STAGE_RIGHT.x, -74);
@@ -86,6 +95,8 @@ function updateExiting(delta, context) {
     const npc = context.systems?.npc;
     // Stop HERO's stage music when the performance is finished.
     StageMusic.stop();
+    // Restore the normal city radio.
+    AmbientMusic.resume();
     state = "COMPLETE";
     stateTime = 0;
     // Leave HERO standing at stage right for now.
@@ -127,6 +138,9 @@ export default {
   },
   reset() {
     StageMusic.stop();
+    // Make sure the normal radio is restored if the performance
+    // is reset before reaching the normal completion state.
+    AmbientMusic.resume();
     state = "IDLE";
     stateTime = 0;
     performanceTime = 0;
