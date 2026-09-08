@@ -22,10 +22,6 @@ function distanceToStage(player) {
   return Math.sqrt(dx * dx + dz * dz);
 }
 
-function moveToward(from, to, t) {
-  from.lerpVectors(from, to, Math.min(1, Math.max(0, t)));
-}
-
 function faceDirection(targetX, targetZ) {
   if (!hero) return;
 
