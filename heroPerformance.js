@@ -98,7 +98,7 @@ function updatePerformance(delta) {
   }
 }
 
-function updateExiting(delta) {
+function updateExiting(delta, context) {
   stateTime += delta;
 
   const t = Math.min(1, stateTime / EXIT_DURATION);
