@@ -155,12 +155,13 @@ export default {
       return;
     }
 
-    if (state === "EXITING") {
+  if (state === "EXITING") {
   updateExiting(delta, context);
   return;
 }
+}  // <-- THIS was missing
 
-  getState() {
+getState() {
     return state;
   },
 
