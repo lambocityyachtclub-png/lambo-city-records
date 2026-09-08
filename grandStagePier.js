@@ -113,24 +113,23 @@ export default {
     scene.add(neon);
 
     // ------------------------------------------------------------
-    // WATERFALL / EDGE LIGHTS
+    // LIGHTWEIGHT WATERFRONT LIGHTING
+    //
+    // IMPORTANT:
+    // Keep decorative lighting as emissive geometry.
+    // Only use 4 actual PointLights around the pier.
+    // This avoids creating a large number of dynamic lights
+    // on Safari / iPad / mobile WebGL.
     // ------------------------------------------------------------
 
-    const edgeLightPositions = 16;
+    const edgeLightPositions = [
+      Math.PI * 0.10,
+      Math.PI * 0.90,
+      Math.PI * 1.10,
+      Math.PI * 1.90
+    ];
 
-    for (let i = 0; i < edgeLightPositions; i++) {
-      const angle =
-        (i / edgeLightPositions) * Math.PI * 2;
-
-      // Leave the southern entrance visually open.
-      // Entrance is approximately toward +Z.
-      if (
-        angle > Math.PI * 0.35 &&
-        angle < Math.PI * 0.65
-      ) {
-        continue;
-      }
-
+    edgeLightPositions.forEach(angle => {
       const x =
         PIER_X +
         Math.cos(angle) * (PIER_RADIUS - 1.5);
@@ -141,8 +140,8 @@ export default {
 
       const light = new THREE.PointLight(
         0x9900ff,
-        0.8,
-        7
+        0.7,
+        10
       );
 
       light.position.set(
@@ -152,12 +151,11 @@ export default {
       );
 
       scene.add(light);
-    }
+    });
 
     // ------------------------------------------------------------
     // PUBLIC WALKING ZONE
     //
-    // This is intentionally left open.
     // Players can walk around the entire stage.
     // ------------------------------------------------------------
 
@@ -210,16 +208,19 @@ export default {
       );
 
       scene.add(line);
-    }
+    });
 
     // ------------------------------------------------------------
-    // PIER LIGHTING
+    // CENTRAL PIER LIGHT
+    //
+    // Reduced intensity/range to keep the stage visually lit
+    // without adding another expensive high-power light.
     // ------------------------------------------------------------
 
     const pierLight = new THREE.PointLight(
       0x9900ff,
-      4,
-      45
+      2.5,
+      35
     );
 
     pierLight.position.set(
@@ -232,9 +233,6 @@ export default {
 
     // ------------------------------------------------------------
     // SINGLE DOCK-WALK CONNECTION
-    //
-    // The existing city/dock side approaches from +Z.
-    // This creates the only physical connection to the pier.
     // ------------------------------------------------------------
 
     const entranceWidth = 8;
@@ -259,7 +257,9 @@ export default {
 
     scene.add(entrance);
 
-    // Entrance lighting
+    // ------------------------------------------------------------
+    // ENTRANCE NEON
+    // ------------------------------------------------------------
 
     [-3.2, 3.2].forEach(xOffset => {
       const strip = new THREE.Mesh(
