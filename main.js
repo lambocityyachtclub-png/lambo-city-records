@@ -13,7 +13,7 @@ import Input from "./input.js";
 import Player from "./player.js";
 import HUD from "./hud.js";
 import NPC from "./npc.js";
-
+import HeroPerformance from "./heroPerformance.js";
 import Cars from "./cars.js";
 import CinematicFlowSystem from "./cinematicFlowSystem.js";
 import CinematicWorldSkin from "./cinematicWorldSkin.js";
@@ -51,7 +51,7 @@ engine.registerSystems({
   yacht: Yacht,
   cars: Cars,
   npc: NPC,
-
+  heroPerformance: HeroPerformance,
   cinematicFlow: CinematicFlowSystem,
   worldSkin: CinematicWorldSkin,
   dockCore: CinematicDockCore,
