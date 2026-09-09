@@ -35,7 +35,9 @@ export default {
     // (unchanged) — only the real PointLight is thinned, kept every 3rd lantern
     // (24 → 8) with a wider radius to bridge the gaps.
         let idx = 0;
-    for (let z = -52; z < 30; z += 8) {
+    // Lanterns stop before the upper dock / roundabout transition.
+// The physical dock remains unchanged.
+for (let z = -52; z < 22; z += 8) {
       [-5.5,5.5].forEach(x => {
         const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.06,2.5,6), new THREE.MeshStandardMaterial({color:0x222222}));
         pole.position.set(x, Y+1.5, z);
