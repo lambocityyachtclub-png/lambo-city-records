@@ -81,10 +81,8 @@ export default {
     });
 
     // STAGE PLATFORM EDGE TRIM — glowing outline around the platform's
-    // top perimeter so its silhouette reads clearly against the dark
-    // ground, even with the character in dark clothing. (Center stairs
-    // removed — the stage is now reached only via the left/right side
-    // staircases in stagePerformanceRig.js.)
+    // top perimeter. No center stairs — the stage is reached only via
+    // the left/right side staircases in stagePerformanceRig.js.
     const trimMat = new THREE.MeshStandardMaterial({color:0x9900ff,emissive:0x9900ff,emissiveIntensity:2.5});
     [
       {w:34.3,d:0.15,x:0,z:-65.1},
@@ -142,8 +140,6 @@ export default {
         rl.position.set(b.x,b.h+2,b.z+6); scene.add(rl);
       }
     });
-
-   
 
     // STAGE NEON FLOOR STRIPS
     [-12,-6,0,6,12].forEach(x => {
