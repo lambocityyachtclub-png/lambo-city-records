@@ -1209,7 +1209,7 @@ export default {
     // HQ ROUNDABOUT TURNAROUND
     // ========================================================
 
-    const roundabout = new THREE.Mesh(
+       const roundabout = new THREE.Mesh(
 
       new THREE.CylinderGeometry(
         8,
@@ -1220,8 +1220,8 @@ export default {
 
       new THREE.MeshStandardMaterial({
 
-        color: 0x111111,
-        roughness: .8
+        color: 0xa0693a,
+        roughness: .85
 
       })
 
