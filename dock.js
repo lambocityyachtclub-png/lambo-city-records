@@ -80,8 +80,8 @@ export default {
       horizontalDX / horizontalDistance;
     const unitZ =
       horizontalDZ / horizontalDistance;
-    const END_DISTANCE_FROM_CENTER =
-      ROUNDABOUT_RADIUS - 1;
+        const END_DISTANCE_FROM_CENTER =
+      ROUNDABOUT_RADIUS - 4;
     const END = new THREE.Vector3(
       ROUNDABOUT_CENTER.x - unitX * END_DISTANCE_FROM_CENTER,
       ROUNDABOUT_CENTER.y,
