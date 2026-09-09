@@ -7,10 +7,9 @@ export default {
     const postMat  = new THREE.MeshStandardMaterial({ color: 0x5c3d1e, roughness: 1 });
     const railMat  = new THREE.MeshStandardMaterial({ color: 0x3a2510, roughness: 0.8 });
     const Y = 1.0;
-    // Straight dock, boardwalk (z:30) to the stage's round plaza (center
-    // z:-74, radius 14, edge at z:-60). Extended 3 units past that edge
-    // (to z:-63) so it overlaps the plaza cleanly instead of stopping
-    // short — one continuous straight walk, no rotation needed.
+    // Straight dock, no rotation. Boardwalk end at z:30, stage end at
+    // z:-63 — 3 units into the round stage plaza (center z:-74, radius
+    // 14, edge at z:-60), so it overlaps the plaza cleanly.
     const base = new THREE.Mesh(new THREE.BoxGeometry(14, 0.4, 93), woodMat);
     base.position.set(0, Y, -16.5);
     scene.add(base);
