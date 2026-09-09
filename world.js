@@ -159,15 +159,16 @@ export default {
       }
     });
 
-    // NEON DOCK EDGE STRIPS
+        // NEON DOCK EDGE STRIPS — shortened to match dock.js's pulled-back
+    // footprint (z:-58 to 30), so it no longer runs through the stage.
     [-7,7].forEach(x => {
       const s = new THREE.Mesh(
-        new THREE.BoxGeometry(0.2,0.06,100),
+        new THREE.BoxGeometry(0.2,0.06,88),
         new THREE.MeshStandardMaterial({
           color:0x9900ff, emissive:0x9900ff, emissiveIntensity:2
         })
       );
-      s.position.set(x,1.3,-20); scene.add(s);
+      s.position.set(x,1.3,-14); scene.add(s);
     });
 
     // STAGE NEON FLOOR STRIPS
