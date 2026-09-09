@@ -33,16 +33,21 @@ export default {
     heroMesh.rotation.y = Math.PI;
     scene.add(heroMesh);
     setTimeout(() => showHeroDialogue(), 1500);
-    const colors = [0xff2200,0x0044ff,0x00aa44,0xffaa00,0xaa00ff,0xff0088,0x00ffcc,0xffffff];
+       const colors = [0xff2200,0x0044ff,0x00aa44,0xffaa00,0xaa00ff,0xff0088,0x00ffcc,0xffffff];
     for (let i = 0; i < 16; i++) {
       const npc = new THREE.Group();
       const b = new THREE.Mesh(new THREE.BoxGeometry(0.9,1.5,0.5),new THREE.MeshStandardMaterial({color:colors[i%colors.length]}));
       b.position.y=1.5; npc.add(b);
       const h = new THREE.Mesh(new THREE.BoxGeometry(0.7,0.7,0.7),sm);
       h.position.y=2.65; npc.add(h);
-      const angle = (i/16)*Math.PI*2;
-      npc.position.set(Math.cos(angle)*8,1.3,-72+Math.sin(angle)*5);
-      npc.rotation.y = Math.random()*Math.PI*2;
+      // Arc across the flat ground in front of the stage stairs (which
+      // start at z:-65.5), not a full circle — keeps every NPC on open
+      // ground instead of overlapping the stairs/stage platform.
+      const angle = Math.PI * (i/15);
+      const x = Math.cos(angle) * 10;
+      const z = -55 - Math.sin(angle) * 8;
+      npc.position.set(x,1.3,z);
+      npc.rotation.y = Math.PI + (Math.random()-0.5)*0.6; // facing the stage, slight variance
       scene.add(npc);
       crowdNPCs.push({mesh:npc,offset:Math.random()*Math.PI*2});
     }
