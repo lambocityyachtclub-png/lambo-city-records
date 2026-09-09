@@ -80,27 +80,11 @@ export default {
       tl.position.set(x,24,-80); scene.add(tl);
     });
 
-    // STAGE STAIRS — 4 steps leading up to the stage platform, with
-    // extra flat ground in front for the crowd.
-    for (let i = 0; i < 4; i++) {
-      const s = new THREE.Mesh(
-        new THREE.BoxGeometry(16,0.3,1.5),
-        new THREE.MeshStandardMaterial({color:0x111111})
-      );
-      s.position.set(0, 1.24+i*0.22, -68.5-i*1.5); scene.add(s);
-
-      // Glowing lip on the front of each tread, so the steps read as
-      // distinct steps instead of one dark mass.
-      const treadLight = new THREE.Mesh(
-        new THREE.BoxGeometry(16,0.05,0.08),
-        new THREE.MeshStandardMaterial({color:0x9900ff,emissive:0x9900ff,emissiveIntensity:2.5})
-      );
-      treadLight.position.set(0, 1.24+i*0.22+0.18, -68.5-i*1.5+0.75); scene.add(treadLight);
-    }
-
     // STAGE PLATFORM EDGE TRIM — glowing outline around the platform's
     // top perimeter so its silhouette reads clearly against the dark
-    // ground, even with the character in dark clothing.
+    // ground, even with the character in dark clothing. (Center stairs
+    // removed — the stage is now reached only via the left/right side
+    // staircases in stagePerformanceRig.js.)
     const trimMat = new THREE.MeshStandardMaterial({color:0x9900ff,emissive:0x9900ff,emissiveIntensity:2.5});
     [
       {w:34.3,d:0.15,x:0,z:-65.1},
@@ -159,7 +143,7 @@ export default {
       }
     });
 
-        // NEON DOCK EDGE STRIPS — shortened to match dock.js's pulled-back
+    // NEON DOCK EDGE STRIPS — shortened to match dock.js's pulled-back
     // footprint (z:-58 to 30), so it no longer runs through the stage.
     [-7,7].forEach(x => {
       const s = new THREE.Mesh(
