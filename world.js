@@ -76,7 +76,7 @@ export default {
         strip.position.set(x,y,-83); scene.add(strip);
       });
 
-      const tl = new THREE.PointLight(0xff00ff,3,25);
+      const tl = new THREE.PointLight(0xff00ff,3,34);
       tl.position.set(x,24,-80); scene.add(tl);
     });
 
@@ -88,7 +88,29 @@ export default {
         new THREE.MeshStandardMaterial({color:0x111111})
       );
       s.position.set(0, 1.24+i*0.22, -68.5-i*1.5); scene.add(s);
+
+      // Glowing lip on the front of each tread, so the steps read as
+      // distinct steps instead of one dark mass.
+      const treadLight = new THREE.Mesh(
+        new THREE.BoxGeometry(16,0.05,0.08),
+        new THREE.MeshStandardMaterial({color:0x9900ff,emissive:0x9900ff,emissiveIntensity:2.5})
+      );
+      treadLight.position.set(0, 1.24+i*0.22+0.18, -68.5-i*1.5+0.75); scene.add(treadLight);
     }
+
+    // STAGE PLATFORM EDGE TRIM — glowing outline around the platform's
+    // top perimeter so its silhouette reads clearly against the dark
+    // ground, even with the character in dark clothing.
+    const trimMat = new THREE.MeshStandardMaterial({color:0x9900ff,emissive:0x9900ff,emissiveIntensity:2.5});
+    [
+      {w:34.3,d:0.15,x:0,z:-65.1},
+      {w:34.3,d:0.15,x:0,z:-82.9},
+      {w:0.15,d:18,x:-17.1,z:-74},
+      {w:0.15,d:18,x:17.1,z:-74},
+    ].forEach(e => {
+      const trim = new THREE.Mesh(new THREE.BoxGeometry(e.w,0.15,e.d),trimMat);
+      trim.position.set(e.x,1.85,e.z); scene.add(trim);
+    });
 
     // BACKGROUND SKYLINE — taller, more detailed
     [
