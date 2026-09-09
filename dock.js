@@ -3,7 +3,7 @@ let lanternLights = [], time = 0;
 export default {
   init(scene) {
     const woodMat  = new THREE.MeshStandardMaterial({ color: 0x8b5e3c, roughness: 0.9 });
-    const plankMat = new THREE.MeshStandardMaterial({ color: 0xa0693a, roughness: 0.85 });
+    const plankMat = new THREE.MeshStandardMaterial({ color: 0x6d4327, roughness: 0.72, metalness: 0.02 });
     const postMat  = new THREE.MeshStandardMaterial({ color: 0x5c3d1e, roughness: 1 });
     const railMat  = new THREE.MeshStandardMaterial({ color: 0x3a2510, roughness: 0.8 });
     const Y = 1.0;
