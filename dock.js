@@ -8,26 +8,26 @@ export default {
     const railMat  = new THREE.MeshStandardMaterial({ color: 0x3a2510, roughness: 0.8 });
     const Y = 1.0;
     // Straight dock, no rotation. Boardwalk end at z:30, stage end at
-    // z:-63 — 3 units into the round stage plaza (center z:-74, radius
-    // 14, edge at z:-60), so it overlaps the plaza cleanly.
-    const base = new THREE.Mesh(new THREE.BoxGeometry(14, 0.4, 93), woodMat);
-    base.position.set(0, Y, -16.5);
+    // z:-60 — exactly the edge of the round stage plaza (center z:-74,
+    // radius 14), so the dock stops right as the plaza begins.
+    const base = new THREE.Mesh(new THREE.BoxGeometry(14, 0.4, 90), woodMat);
+    base.position.set(0, Y, -15);
     scene.add(base);
-    for (let z = -63; z < 35; z += 2) {
+    for (let z = -60; z < 35; z += 2) {
       const p = new THREE.Mesh(new THREE.BoxGeometry(13.5, 0.15, 1.2), plankMat);
       p.position.set(0, Y+0.28, z);
       scene.add(p);
     }
     [-6,6].forEach(x => {
-      for (let z = -63; z < 35; z += 8) {
+      for (let z = -60; z < 35; z += 8) {
         const post = new THREE.Mesh(new THREE.CylinderGeometry(0.22,0.22,8,8), postMat);
         post.position.set(x, Y-3.5, z);
         scene.add(post);
       }
     });
     [-6.2,6.2].forEach(x => {
-      const r = new THREE.Mesh(new THREE.BoxGeometry(0.12,0.6,93), railMat);
-      r.position.set(x, Y+0.6, -16.5);
+      const r = new THREE.Mesh(new THREE.BoxGeometry(0.12,0.6,90), railMat);
+      r.position.set(x, Y+0.6, -15);
       scene.add(r);
     });
     let idx = 0;
