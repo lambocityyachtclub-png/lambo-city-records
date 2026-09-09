@@ -6,33 +6,36 @@ export default {
     const plankMat = new THREE.MeshStandardMaterial({ color: 0x6d4327, roughness: 0.72, metalness: 0.02 });
     const postMat  = new THREE.MeshStandardMaterial({ color: 0x5c3d1e, roughness: 1 });
     const railMat  = new THREE.MeshStandardMaterial({ color: 0x3a2510, roughness: 0.8 });
-    const Y = 1.0;
-    const base = new THREE.Mesh(new THREE.BoxGeometry(14, 0.4, 100), woodMat);
-    base.position.set(0, Y, -20);
+        const Y = 1.0;
+    // Dock footprint pulled back to z:-58 (was -70) so it stops clear of
+    // the stage stairs at z:-65.5, keeping the stage/crowd area free of
+    // dock railings and lanterns.
+    const base = new THREE.Mesh(new THREE.BoxGeometry(14, 0.4, 88), woodMat);
+    base.position.set(0, Y, -14);
     scene.add(base);
-    for (let z = -65; z < 35; z += 2) {
+    for (let z = -58; z < 35; z += 2) {
       const p = new THREE.Mesh(new THREE.BoxGeometry(13.5, 0.15, 1.2), plankMat);
       p.position.set(0, Y+0.28, z);
       scene.add(p);
     }
     [-6,6].forEach(x => {
-      for (let z = -65; z < 35; z += 8) {
+      for (let z = -58; z < 35; z += 8) {
         const post = new THREE.Mesh(new THREE.CylinderGeometry(0.22,0.22,8,8), postMat);
         post.position.set(x, Y-3.5, z);
         scene.add(post);
       }
     });
     [-6.2,6.2].forEach(x => {
-      const r = new THREE.Mesh(new THREE.BoxGeometry(0.12,0.6,100), railMat);
-      r.position.set(x, Y+0.6, -20);
+      const r = new THREE.Mesh(new THREE.BoxGeometry(0.12,0.6,88), railMat);
+      r.position.set(x, Y+0.6, -14);
       scene.add(r);
     });
     // PERF: previously duplicated by a second lantern-light system in lighting.js
     // (now removed there). Every lantern mesh keeps its bright emissive glow
     // (unchanged) — only the real PointLight is thinned, kept every 3rd lantern
     // (24 → 8) with a wider radius to bridge the gaps.
-    let idx = 0;
-    for (let z = -60; z < 30; z += 8) {
+        let idx = 0;
+    for (let z = -52; z < 30; z += 8) {
       [-5.5,5.5].forEach(x => {
         const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.06,2.5,6), new THREE.MeshStandardMaterial({color:0x222222}));
         pole.position.set(x, Y+1.5, z);
