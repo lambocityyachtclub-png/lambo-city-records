@@ -28,8 +28,10 @@ import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 const DOCK_X_LEFT  = -6.2;
 const DOCK_X_RIGHT =  6.2;
 
+// Dock-overhaul details stop when they reach the Stage Roundabout.
+// The physical dock and Stage Roundabout remain untouched.
 const DOCK_Z_START = -55;
-const DOCK_Z_END   = 25;
+const DOCK_Z_END   = -30;
 const DOCK_Z_LEN   = DOCK_Z_END - DOCK_Z_START;
 const DOCK_Z_MID   = (DOCK_Z_START + DOCK_Z_END) / 2;
 
@@ -297,13 +299,7 @@ function buildMooringBollards(scene, materials, geometries) {
   const zPositions = [
     -50,
     -38,
-    -26,
-    -14,
-    -2,
-    10,
-    22,
   ];
-
   zPositions.forEach(z => {
     [-6.7, 6.7].forEach(x => {
       const bollard = new THREE.Mesh(
@@ -330,10 +326,6 @@ function buildDockCleats(scene, materials, geometries) {
   const zPositions = [
     -44,
     -32,
-    -20,
-    -8,
-    4,
-    16,
   ];
 
   zPositions.forEach(z => {
@@ -397,10 +389,10 @@ function buildLanterns(scene, materials, geometries) {
   const zPositions = [];
 
   for (
-    let z = DOCK_Z_START;
-    z <= DOCK_Z_END;
-    z += 8
-  ) {
+  let z = DOCK_Z_START;
+  z <= DOCK_Z_END;
+  z += 8
+) {
     zPositions.push(z);
   }
 
@@ -493,13 +485,10 @@ function buildUnderglow(scene) {
 // ============================================================
 
 function buildDockPlanters(scene, materials, geometries) {
-  const positions = [
-    [-6.0, -47],
-    [6.0, -35],
-    [-6.0, -17],
-    [6.0, -5],
-    [-6.0, 13],
-  ];
+ const positions = [
+  [-6.0, -47],
+  [6.0, -35],
+];
 
   positions.forEach(([x, z]) => {
     const planter = new THREE.Mesh(
