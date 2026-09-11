@@ -31,9 +31,33 @@ const DOCK_X_RIGHT =  6.2;
 // Dock-overhaul details stop when they reach the Stage Roundabout.
 // The physical dock and Stage Roundabout remain untouched.
 const DOCK_Z_START = -55;
-const DOCK_Z_END   = -30;
-const DOCK_Z_LEN   = DOCK_Z_END - DOCK_Z_START;
-const DOCK_Z_MID   = (DOCK_Z_START + DOCK_Z_END) / 2;
+const DOCK_Z_END   = 25;
+
+const DOCK_Z_LEN =
+  DOCK_Z_END - DOCK_Z_START;
+
+const DOCK_Z_MID =
+  (DOCK_Z_END + DOCK_Z_START) / 2;
+
+// ------------------------------------------------------------
+// STAGE ROUNDABOUT BOUNDARY
+//
+// grandStagePier.js:
+// - center Z = -74
+// - radius = 44
+//
+// The dock itself is allowed to transition into the existing
+// Stage Roundabout connection. Only dockLuxuryOverhaul's
+// decorative elements must stop before entering the circular
+// Stage Roundabout.
+// ------------------------------------------------------------
+
+const STAGE_PIER_Z = -74;
+const STAGE_PIER_RADIUS = 44;
+
+// Decorative dock details stop at the front edge of the
+// Stage Roundabout.
+const DOCK_DECOR_END_Z = -30;
 
 const THEMES = [
   { name: "MOVIE ESTATE",     color: 0xffd700 },
@@ -264,28 +288,41 @@ function createGeometries() {
 // ============================================================
 
 function buildDockTrim(scene, materials, geometries) {
+  const trimLength =
+    DOCK_DECOR_END_Z - DOCK_Z_START;
+
+  const trimMid =
+    (DOCK_DECOR_END_Z + DOCK_Z_START) / 2;
+
+  const trimGeometry =
+    new THREE.BoxGeometry(
+      0.18,
+      0.22,
+      trimLength
+    );
+
   const left = new THREE.Mesh(
-    geometries.trimLong,
+    trimGeometry,
     materials.dockTrim
   );
 
   left.position.set(
     -7.02,
     1.36,
-    DOCK_Z_MID
+    trimMid
   );
 
   scene.add(left);
 
   const right = new THREE.Mesh(
-    geometries.trimLong,
+    trimGeometry,
     materials.dockTrim
   );
 
   right.position.set(
     7.02,
     1.36,
-    DOCK_Z_MID
+    trimMid
   );
 
   scene.add(right);
@@ -297,9 +334,13 @@ function buildDockTrim(scene, materials, geometries) {
 
 function buildMooringBollards(scene, materials, geometries) {
   const zPositions = [
-    -50,
-    -38,
-  ];
+  -50,
+  -26,
+  -14,
+  -2,
+  10,
+  22,
+];
   zPositions.forEach(z => {
     [-6.7, 6.7].forEach(x => {
       const bollard = new THREE.Mesh(
@@ -324,9 +365,12 @@ function buildMooringBollards(scene, materials, geometries) {
 
 function buildDockCleats(scene, materials, geometries) {
   const zPositions = [
-    -44,
-    -32,
-  ];
+  -44,
+  -20,
+  -8,
+  4,
+  16,
+];
 
   zPositions.forEach(z => {
     [-5.4, 5.4].forEach(x => {
@@ -389,11 +433,13 @@ function buildLanterns(scene, materials, geometries) {
   const zPositions = [];
 
   for (
-  let z = DOCK_Z_START;
-  z <= DOCK_Z_END;
-  z += 8
-) {
-    zPositions.push(z);
+    let z = DOCK_Z_START;
+    z <= DOCK_DECOR_END_Z;
+    z += 8
+  ) {
+    if (z < DOCK_DECOR_END_Z) {
+      zPositions.push(z);
+    }
   }
 
   zPositions.forEach((z, index) => {
@@ -453,19 +499,26 @@ function buildLanterns(scene, materials, geometries) {
 // ============================================================
 
 function buildUnderglow(scene) {
-  const material = new THREE.MeshStandardMaterial({
-    color: 0x9900ff,
-    emissive: 0x9900ff,
-    emissiveIntensity: 2.6,
-    roughness: 0.5,
-  });
+  const material =
+    new THREE.MeshStandardMaterial({
+      color: 0x9900ff,
+      emissive: 0x9900ff,
+      emissiveIntensity: 2.6,
+      roughness: 0.5,
+    });
+
+  const stripLength =
+    DOCK_DECOR_END_Z - DOCK_Z_START;
+
+  const stripMid =
+    (DOCK_DECOR_END_Z + DOCK_Z_START) / 2;
 
   [-7.5, 7.5].forEach(x => {
     const strip = new THREE.Mesh(
       new THREE.BoxGeometry(
         0.28,
         0.12,
-        DOCK_Z_LEN
+        stripLength
       ),
       material
     );
@@ -473,7 +526,7 @@ function buildUnderglow(scene) {
     strip.position.set(
       x,
       1.38,
-      DOCK_Z_MID
+      stripMid
     );
 
     scene.add(strip);
@@ -485,9 +538,11 @@ function buildUnderglow(scene) {
 // ============================================================
 
 function buildDockPlanters(scene, materials, geometries) {
- const positions = [
+const positions = [
   [-6.0, -47],
-  [6.0, -35],
+  [-6.0, -17],
+  [6.0, -5],
+  [-6.0, 13],
 ];
 
   positions.forEach(([x, z]) => {
