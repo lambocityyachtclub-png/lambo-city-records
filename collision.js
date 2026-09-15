@@ -1,15 +1,27 @@
 // collision.js
-// Simple axis-aligned box collision system.
-// All solid environment areas register here.
-// Player movement checks isBlocked() before committing each step.
+// LAMBO CITY — Player Collision System
+//
+// Phase 1:
+// - Keep the Grand Stage platform solid.
+// - Keep Records HQ, stores, and waterfront estates solid.
+// - Keep the Grand Stage public roundabout WALKABLE.
+// - Keep the dock → stage connector WALKABLE.
+// - Prevent access behind the Grand Stage.
+// - No circular collider on the public pier.
+// - Simple AABB collision for iPad/mobile performance.
 
 const colliders = [];
 
 export default {
   init() {
     // ------------------------------------------------------------
-    // STAGE
-    // world.js: BoxGeometry(34,1.4,18) at (0,1.1,-74)
+    // GRAND STAGE PLATFORM
+    // world.js:
+    // BoxGeometry(34, 1.4, 18)
+    // position: (0, 1.1, -74)
+    //
+    // This keeps the player from walking onto the actual
+    // performance platform.
     // ------------------------------------------------------------
     this.registerBox("stagePlatform", {
       x: 0,
@@ -19,8 +31,39 @@ export default {
     });
 
     // ------------------------------------------------------------
+    // GRAND STAGE REAR / BACKSTAGE EXCLUSION
+    //
+    // grandStagePier.js / world.js:
+    // Stage back wall is centered around z:-83.5.
+    //
+    // Phase 1 has no VIP backstage pass system yet, so the area
+    // directly behind the stage is simply blocked.
+    //
+    // This does NOT affect the public circular promenade.
+    // ------------------------------------------------------------
+    this.registerBox("stageBackstage", {
+      x: 0,
+      z: -88,
+      width: 34,
+      depth: 8
+    });
+
+    // ------------------------------------------------------------
+    // GRAND STAGE BACK WALL
+    //
+    // Provides a solid collision boundary at the rear wall itself.
+    // ------------------------------------------------------------
+    this.registerBox("stageBackWall", {
+      x: 0,
+      z: -83.5,
+      width: 34,
+      depth: 1.2
+    });
+
+    // ------------------------------------------------------------
     // RECORDS HQ
-    // recordsHQ.js: centered at x:28, z:22
+    // recordsHQ.js:
+    // centered at x:28, z:22
     // 18 wide × 14 deep
     // ------------------------------------------------------------
     this.registerBox("recordsHQ", {
@@ -32,7 +75,8 @@ export default {
 
     // ------------------------------------------------------------
     // MARINA STORES
-    // marina.js: centered at z:31
+    // marina.js:
+    // centered around z:31
     // 10 wide × 12 deep
     // ------------------------------------------------------------
     [-20, -32, -44].forEach(x => {
@@ -47,7 +91,8 @@ export default {
     // ------------------------------------------------------------
     // WATERFRONT ESTATES
     // dockLuxuryOverhaul.js
-    // x:-16, 9 wide × 7 deep
+    // x:-16
+    // 9 wide × 7 deep
     // ------------------------------------------------------------
     [-50, -35, -20, -5, 10].forEach(z => {
       this.registerBox(`estate_${z}`, {
@@ -57,9 +102,25 @@ export default {
         depth: 7
       });
     });
+
+    // ------------------------------------------------------------
+    // IMPORTANT:
+    //
+    // DO NOT add a collider for the Grand Stage circular pier.
+    //
+    // The public roundabout/promenade is intentionally walkable.
+    //
+    // The dock → Grand Stage connector is also intentionally
+    // walkable.
+    //
+    // The stagePlatform collider above handles the actual stage.
+    // The backstage collider handles the restricted rear area.
+    // ------------------------------------------------------------
   },
 
-  // Public API — register any solid axis-aligned area.
+  // --------------------------------------------------------------
+  // Register a solid axis-aligned box.
+  // --------------------------------------------------------------
   registerBox(
     name,
     { x, z, width, depth, halfWidth, halfDepth }
@@ -73,15 +134,21 @@ export default {
     });
   },
 
+  // --------------------------------------------------------------
+  // Remove a collider by name.
+  // --------------------------------------------------------------
   unregister(name) {
     const idx = colliders.findIndex(c => c.name === name);
+
     if (idx !== -1) {
       colliders.splice(idx, 1);
     }
   },
 
-  // True if the player's padded position overlaps
-  // any registered solid box.
+  // --------------------------------------------------------------
+  // Returns true if the player's padded position overlaps
+  // any registered solid area.
+  // --------------------------------------------------------------
   isBlocked(x, z, radius = 0.6) {
     return colliders.some(c =>
       x + radius > c.x - c.halfWidth &&
