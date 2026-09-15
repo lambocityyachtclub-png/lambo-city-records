@@ -28,9 +28,29 @@ import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 const DOCK_X_LEFT  = -6.2;
 const DOCK_X_RIGHT =  6.2;
 
-// Dock-overhaul details stop when they reach the Stage Roundabout.
-// The physical dock and Stage Roundabout remain untouched.
-const DOCK_Z_START = -55;
+// ============================================================
+// DOCK / GRAND STAGE HANDOFF
+//
+// The structural dock now ends at z:-41.
+//
+// The Grand Stage Pier connection occupies approximately
+// z:-41 through z:-29.
+//
+// Therefore normal dock decoration must NEVER continue
+// into that transition or the circular Grand Stage area.
+//
+// Main dock:
+//     z:-41 → z:25
+//
+// Grand Stage transition:
+//     z:-41 → z:-29
+//
+// Grand Stage Roundabout:
+//     centered at z:-74
+//     radius 44
+// ============================================================
+
+const DOCK_Z_START = -41;
 const DOCK_Z_END   = 25;
 
 const DOCK_Z_LEN =
@@ -39,25 +59,28 @@ const DOCK_Z_LEN =
 const DOCK_Z_MID =
   (DOCK_Z_END + DOCK_Z_START) / 2;
 
-// ------------------------------------------------------------
-// STAGE ROUNDABOUT BOUNDARY
-//
-// grandStagePier.js:
-// - center Z = -74
-// - radius = 44
-//
-// The dock itself is allowed to transition into the existing
-// Stage Roundabout connection. Only dockLuxuryOverhaul's
-// decorative elements must stop before entering the circular
-// Stage Roundabout.
-// ------------------------------------------------------------
-
+// Grand Stage information.
+// Kept here as reference for future navigation/collision work.
 const STAGE_PIER_Z = -74;
 const STAGE_PIER_RADIUS = 44;
 
-// Decorative dock details stop at the front edge of the
-// Stage Roundabout.
-const DOCK_DECOR_END_Z = -30;
+// ============================================================
+// IMPORTANT VISUAL BOUNDARY
+//
+// Normal dock decoration begins at the positive side of the
+// dock/roundabout handoff.
+//
+// Nothing owned by this module should be placed at a Z value
+// below -41.
+//
+// The Grand Stage connection owns that area.
+// ============================================================
+
+const DOCK_DECOR_START_Z = -41;
+
+// Decorative details are allowed to run all the way to the
+// normal street-side end of the dock.
+const DOCK_DECOR_END_Z = 25;
 
 const THEMES = [
   { name: "MOVIE ESTATE",     color: 0xffd700 },
@@ -171,9 +194,17 @@ function createMaterials() {
 
 function createGeometries() {
   return {
-    trimLong: new THREE.BoxGeometry(0.18, 0.22, DOCK_Z_LEN),
+    trimLong: new THREE.BoxGeometry(
+      0.18,
+      0.22,
+      DOCK_Z_LEN
+    ),
 
-    trimShort: new THREE.BoxGeometry(0.18, 0.22, 0.9),
+    trimShort: new THREE.BoxGeometry(
+      0.18,
+      0.22,
+      0.9
+    ),
 
     bollard: new THREE.CylinderGeometry(
       0.16,
@@ -289,10 +320,10 @@ function createGeometries() {
 
 function buildDockTrim(scene, materials, geometries) {
   const trimLength =
-    DOCK_DECOR_END_Z - DOCK_Z_START;
+    DOCK_DECOR_END_Z - DOCK_DECOR_START_Z;
 
   const trimMid =
-    (DOCK_DECOR_END_Z + DOCK_Z_START) / 2;
+    (DOCK_DECOR_END_Z + DOCK_DECOR_START_Z) / 2;
 
   const trimGeometry =
     new THREE.BoxGeometry(
@@ -330,17 +361,20 @@ function buildDockTrim(scene, materials, geometries) {
 
 // ============================================================
 // MOORING BOLLARDS
+//
+// These now begin AFTER the Grand Stage transition.
 // ============================================================
 
 function buildMooringBollards(scene, materials, geometries) {
   const zPositions = [
-  -50,
-  -26,
-  -14,
-  -2,
-  10,
-  22,
-];
+    -34,
+    -22,
+    -10,
+    2,
+    14,
+    22,
+  ];
+
   zPositions.forEach(z => {
     [-6.7, 6.7].forEach(x => {
       const bollard = new THREE.Mesh(
@@ -361,16 +395,19 @@ function buildMooringBollards(scene, materials, geometries) {
 
 // ============================================================
 // DOCK CLEATS
+//
+// Cleats remain on the normal dock only.
+// None are placed inside the roundabout.
 // ============================================================
 
 function buildDockCleats(scene, materials, geometries) {
   const zPositions = [
-  -44,
-  -20,
-  -8,
-  4,
-  16,
-];
+    -34,
+    -20,
+    -8,
+    4,
+    16,
+  ];
 
   zPositions.forEach(z => {
     [-5.4, 5.4].forEach(x => {
@@ -382,6 +419,7 @@ function buildDockCleats(scene, materials, geometries) {
       );
 
       base.position.y = 1.53;
+
       group.add(base);
 
       const armLeft = new THREE.Mesh(
@@ -427,19 +465,21 @@ function buildDockCleats(scene, materials, geometries) {
 
 // ============================================================
 // LUXURY LANTERNS
+//
+// Important:
+// No lanterns are placed inside the Grand Stage connector.
+// The first lantern begins safely down the main dock.
 // ============================================================
 
 function buildLanterns(scene, materials, geometries) {
   const zPositions = [];
 
   for (
-    let z = DOCK_Z_START;
+    let z = -34;
     z <= DOCK_DECOR_END_Z;
     z += 8
   ) {
-    if (z < DOCK_DECOR_END_Z) {
-      zPositions.push(z);
-    }
+    zPositions.push(z);
   }
 
   zPositions.forEach((z, index) => {
@@ -452,6 +492,7 @@ function buildLanterns(scene, materials, geometries) {
       );
 
       pole.position.y = 1.95;
+
       group.add(pole);
 
       const cap = new THREE.Mesh(
@@ -460,6 +501,7 @@ function buildLanterns(scene, materials, geometries) {
       );
 
       cap.position.y = 3.08;
+
       group.add(cap);
 
       const lantern = new THREE.Mesh(
@@ -468,6 +510,7 @@ function buildLanterns(scene, materials, geometries) {
       );
 
       lantern.position.y = 3.28;
+
       group.add(lantern);
 
       const glow = new THREE.Mesh(
@@ -476,6 +519,7 @@ function buildLanterns(scene, materials, geometries) {
       );
 
       glow.position.y = 3.28;
+
       group.add(glow);
 
       group.position.set(
@@ -488,7 +532,9 @@ function buildLanterns(scene, materials, geometries) {
 
       animatedGlows.push({
         mesh: glow,
-        offset: index * 0.35 + (x > 0 ? 0.15 : 0)
+        offset:
+          index * 0.35 +
+          (x > 0 ? 0.15 : 0)
       });
     });
   });
@@ -496,6 +542,9 @@ function buildLanterns(scene, materials, geometries) {
 
 // ============================================================
 // DOCK UNDERGLOW
+//
+// Starts at the main dock boundary.
+// No underglow extends into the Grand Stage Roundabout.
 // ============================================================
 
 function buildUnderglow(scene) {
@@ -508,10 +557,14 @@ function buildUnderglow(scene) {
     });
 
   const stripLength =
-    DOCK_DECOR_END_Z - DOCK_Z_START;
+    DOCK_DECOR_END_Z -
+    DOCK_DECOR_START_Z;
 
   const stripMid =
-    (DOCK_DECOR_END_Z + DOCK_Z_START) / 2;
+    (
+      DOCK_DECOR_END_Z +
+      DOCK_DECOR_START_Z
+    ) / 2;
 
   [-7.5, 7.5].forEach(x => {
     const strip = new THREE.Mesh(
@@ -535,15 +588,18 @@ function buildUnderglow(scene) {
 
 // ============================================================
 // SMALL DOCK PLANTERS
+//
+// Only the first planter is near the stage-side portion of
+// the dock. All others remain safely on the main dock.
 // ============================================================
 
 function buildDockPlanters(scene, materials, geometries) {
-const positions = [
-  [-6.0, -47],
-  [-6.0, -17],
-  [6.0, -5],
-  [-6.0, 13],
-];
+  const positions = [
+    [-6.0, -34],
+    [-6.0, -17],
+    [ 6.0, -5],
+    [-6.0, 13],
+  ];
 
   positions.forEach(([x, z]) => {
     const planter = new THREE.Mesh(
@@ -582,12 +638,14 @@ function createPlaqueTexture(name, color) {
   const w = 768;
   const h = 180;
 
-  const canvas = document.createElement("canvas");
+  const canvas =
+    document.createElement("canvas");
 
   canvas.width = w;
   canvas.height = h;
 
-  const ctx = canvas.getContext("2d");
+  const ctx =
+    canvas.getContext("2d");
 
   ctx.clearRect(
     0,
@@ -607,7 +665,9 @@ function createPlaqueTexture(name, color) {
 
   ctx.strokeStyle =
     "#" +
-    color.toString(16).padStart(6, "0");
+    color
+      .toString(16)
+      .padStart(6, "0");
 
   ctx.lineWidth = 5;
 
@@ -626,7 +686,9 @@ function createPlaqueTexture(name, color) {
 
   ctx.fillStyle =
     "#" +
-    color.toString(16).padStart(6, "0");
+    color
+      .toString(16)
+      .padStart(6, "0");
 
   ctx.fillText(
     name,
@@ -641,7 +703,12 @@ function createPlaqueTexture(name, color) {
 // ESTATE LANDSCAPING
 // ============================================================
 
-function buildEstateLandscaping(group, materials, geometries, theme) {
+function buildEstateLandscaping(
+  group,
+  materials,
+  geometries,
+  theme
+) {
   const positions = [
     [-3.7, 0, 2.9],
     [ 3.5, 0, 2.9],
@@ -697,7 +764,8 @@ function buildEstate(
   materials,
   geometries
 ) {
-  const group = new THREE.Group();
+  const group =
+    new THREE.Group();
 
   // ----------------------------------------------------------
   // MAIN STRUCTURE
@@ -830,12 +898,13 @@ function buildEstate(
   // ESTATE PLAQUE
   // ----------------------------------------------------------
 
-  const plaqueTex = new THREE.CanvasTexture(
-    createPlaqueTexture(
-      theme.name,
-      theme.color
-    )
-  );
+  const plaqueTex =
+    new THREE.CanvasTexture(
+      createPlaqueTexture(
+        theme.name,
+        theme.color
+      )
+    );
 
   plaqueTex.anisotropy = 4;
 
@@ -895,8 +964,6 @@ function buildEstate(
   );
 
   group.add(walkwayGlow);
-
-  // Second subtle accent line
 
   const walkwayGlow2 = new THREE.Mesh(
     geometries.walkwayAccent,
@@ -971,8 +1038,11 @@ function buildEstates(
 
 export default {
   init(scene) {
-    const materials = createMaterials();
-    const geometries = createGeometries();
+    const materials =
+      createMaterials();
+
+    const geometries =
+      createGeometries();
 
     buildDockTrim(
       scene,
@@ -1016,17 +1086,19 @@ export default {
   update(delta) {
     time += delta;
 
-    animatedGlows.forEach((item, index) => {
-      const pulse =
-        2.8 +
-        Math.sin(
-          time * 1.6 +
-          item.offset +
-          index * 0.05
-        ) * 0.35;
+    animatedGlows.forEach(
+      (item, index) => {
+        const pulse =
+          2.8 +
+          Math.sin(
+            time * 1.6 +
+            item.offset +
+            index * 0.05
+          ) * 0.35;
 
-      item.mesh.material.emissiveIntensity =
-        pulse;
-    });
+        item.mesh.material.emissiveIntensity =
+          pulse;
+      }
+    );
   },
 };
