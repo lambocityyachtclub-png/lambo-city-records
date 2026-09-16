@@ -2,13 +2,12 @@
 // LAMBO CITY — Player Collision System
 //
 // Phase 1:
-// - Keep the Grand Stage platform solid.
-// - Keep Records HQ, stores, and waterfront estates solid.
-// - Keep the Grand Stage public promenade WALKABLE.
-// - Keep the dock → Grand Stage connector WALKABLE.
-// - Prevent access behind the Grand Stage.
-// - Prevent access from the promenade into the water.
-// - Two precise waterfront glass barriers.
+// - Keep Grand Stage solid.
+// - Keep Records HQ, stores, and estates solid.
+// - Keep public promenade walkable.
+// - Keep dock → Grand Stage connector walkable.
+// - Prevent access behind Grand Stage.
+// - Completely seal the water-facing edges.
 // - No giant circular movement blocker.
 // - Simple AABB collision for iPad/mobile performance.
 
@@ -89,35 +88,64 @@ export default {
 
 
     // ==========================================================
-    // WATERFRONT GLASS BARRIERS
+    // FRONT WATERFRONT GLASS
     //
-    // These exactly match the two glass sections in marina.js.
-    //
-    // LEFT:
+    // LEFT / STORES
     // X -65 -> -21
+    // Z = 10
     //
-    // RIGHT:
+    // RIGHT / RECORDS HQ
     // X 21 -> 65
+    // Z = 10
     //
-    // CENTER:
-    // X -21 -> 21 remains OPEN.
-    //
-    // This lets HERO walk all the way up to the glass,
-    // while preventing him from walking into the ocean.
+    // CENTER REMAINS OPEN:
+    // X -21 -> 21
     // ==========================================================
 
-    this.registerBox("waterfrontGlassLeft", {
+    this.registerBox("waterfrontGlassFrontLeft", {
       x: -43,
       z: 10,
       width: 44,
       depth: 1
     });
 
-    this.registerBox("waterfrontGlassRight", {
+    this.registerBox("waterfrontGlassFrontRight", {
       x: 43,
       z: 10,
       width: 44,
       depth: 1
+    });
+
+
+    // ==========================================================
+    // LEFT / STORE-SIDE OUTER EDGE
+    //
+    // Seals the west side of the left waterfront ground.
+    // X = -65
+    // Z = 10 -> 45
+    // ==========================================================
+
+    this.registerBox("waterfrontGlassWestSide", {
+      x: -65,
+      z: 27.5,
+      width: 1,
+      depth: 35
+    });
+
+
+    // ==========================================================
+    // RIGHT / RECORDS HQ OUTER EDGE
+    //
+    // Seals the east side of the right waterfront ground.
+    // X = 65
+    // Z = 10 -> 45
+    // ==========================================================
+
+    this.registerBox("waterfrontGlassEastSide", {
+      x: 65,
+      z: 27.5,
+      width: 1,
+      depth: 35
     });
   },
 
