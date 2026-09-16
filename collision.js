@@ -2,12 +2,12 @@
 // LAMBO CITY — Player Collision System
 //
 // Phase 1:
-// - Keep the Grand Stage platform solid.
-// - Keep Records HQ, stores, and waterfront estates solid.
-// - Keep the Grand Stage public promenade WALKABLE.
-// - Keep the dock → Grand Stage connector WALKABLE.
-// - Prevent access behind the Grand Stage.
-// - Prevent access from the promenade into the water.
+// - Keep Grand Stage solid.
+// - Keep Records HQ, stores, estates solid.
+// - Keep public promenade WALKABLE.
+// - Keep dock → Grand Stage connector WALKABLE.
+// - Prevent access behind Grand Stage.
+// - Prevent access from waterfront into water.
 // - No giant circular movement blocker.
 // - Simple AABB collision for iPad/mobile performance.
 
@@ -28,6 +28,7 @@ export default {
       depth: 18
     });
 
+
     this.registerBox("stageBackstage", {
       x: 0,
       z: -88,
@@ -35,15 +36,13 @@ export default {
       depth: 10
     });
 
+
     this.registerBox("stageBackWall", {
       x: 0,
       z: -83.5,
       width: 34,
       depth: 1.2
     });
-
-    // No giant circular pier boundary.
-    // The public promenade remains walkable.
 
 
     // ==========================================================
@@ -63,32 +62,71 @@ export default {
     // ==========================================================
 
     [-20, -32, -44].forEach(x => {
+
       this.registerBox(`store_${x}`, {
         x,
         z: 31,
         width: 10,
         depth: 12
       });
+
     });
 
 
     // ==========================================================
     // WATERFRONT ESTATES
     // ==========================================================
-    //
-    // The estate at z:10 was removed from collision because its
-    // collider crossed HERO's main waterfront/boardwalk route.
-    //
-    // The visual estate remains untouched.
-    // The remaining estates stay solid.
 
     [-50, -35, -20, -5].forEach(z => {
+
       this.registerBox(`estate_${z}`, {
         x: -16,
         z,
         width: 9,
         depth: 7
       });
+
+    });
+
+
+    // ==========================================================
+    // WATERFRONT SAFETY BARRIERS
+    // ==========================================================
+    //
+    // These correspond to the new visual waterfront rail.
+    //
+    // They are intentionally narrow so HERO cannot walk
+    // through the rail and into the water, while the normal
+    // boardwalk remains completely open.
+    //
+    // No giant waterfront blocker.
+    // ==========================================================
+
+
+    // WEST / STORE-SIDE WATER EDGE
+
+    this.registerBox("waterEdgeWest", {
+      x: -32,
+      z: 10.15,
+      width: 31,
+      depth: 0.8
+    });
+
+
+    // ==========================================================
+    // EAST / RECORDS HQ WATER EDGE
+    // ==========================================================
+    //
+    // The existing HQ waterfront architecture already creates
+    // the visual edge. This narrow collider protects the water
+    // side without blocking the HQ approach.
+    //
+
+    this.registerBox("waterEdgeEast", {
+      x: 21,
+      z: 10.15,
+      width: 14,
+      depth: 0.8
     });
   },
 
@@ -99,23 +137,49 @@ export default {
 
   registerBox(
     name,
-    { x, z, width, depth, halfWidth, halfDepth }
+    {
+      x,
+      z,
+      width,
+      depth,
+      halfWidth,
+      halfDepth
+    }
   ) {
+
     colliders.push({
+
       name,
       x,
       z,
-      halfWidth: halfWidth ?? width / 2,
-      halfDepth: halfDepth ?? depth / 2,
+
+      halfWidth:
+        halfWidth ?? width / 2,
+
+      halfDepth:
+        halfDepth ?? depth / 2
     });
   },
 
 
+  // ==========================================================
+  // UNREGISTER
+  // ==========================================================
+
   unregister(name) {
-    const idx = colliders.findIndex(c => c.name === name);
+
+    const idx =
+      colliders.findIndex(
+        c => c.name === name
+      );
+
 
     if (idx !== -1) {
-      colliders.splice(idx, 1);
+
+      colliders.splice(
+        idx,
+        1
+      );
     }
   },
 
@@ -124,7 +188,12 @@ export default {
   // GRAND STAGE / PIER BOUNDARY
   // ==========================================================
 
-  isOutsidePier(x, z, radius = 0.6) {
+  isOutsidePier(
+    x,
+    z,
+    radius = 0.6
+  ) {
+
     return false;
   },
 
@@ -133,12 +202,26 @@ export default {
   // PLAYER COLLISION CHECK
   // ==========================================================
 
-  isBlocked(x, z, radius = 0.6) {
+  isBlocked(
+    x,
+    z,
+    radius = 0.6
+  ) {
+
     return colliders.some(c =>
-      x + radius > c.x - c.halfWidth &&
-      x - radius < c.x + c.halfWidth &&
-      z + radius > c.z - c.halfDepth &&
-      z - radius < c.z + c.halfDepth
+
+      x + radius >
+        c.x - c.halfWidth &&
+
+      x - radius <
+        c.x + c.halfWidth &&
+
+      z + radius >
+        c.z - c.halfDepth &&
+
+      z - radius <
+        c.z + c.halfDepth
+
     );
   },
 
