@@ -90,44 +90,28 @@ export default {
 
 
     // ==========================================================
-    // WATERFRONT SAFETY BARRIERS
+    // CONTINUOUS LUXURY WATERFRONT BARRIER
     // ==========================================================
     //
-    // These correspond to the new visual waterfront rail.
+    // This matches the new continuous glass/mirror railing
+    // running across the waterfront brown promenade.
     //
-    // They are intentionally narrow so HERO cannot walk
-    // through the rail and into the water, while the normal
-    // boardwalk remains completely open.
+    // STORE SIDE  ---------------------->  HQ SIDE
     //
-    // No giant waterfront blocker.
+    // HERO can walk normally on the promenade but cannot
+    // cross the glass barrier into the water.
+    //
+    // Grand Stage / future hotel areas are intentionally
+    // NOT included in this collider.
     // ==========================================================
 
-
-    // WEST / STORE-SIDE WATER EDGE
-
-    this.registerBox("waterEdgeWest", {
-      x: -32,
+    this.registerBox("waterfrontGlassBarrier", {
+      x: -6.5,
       z: 10.15,
-      width: 31,
+      width: 83,
       depth: 0.8
     });
 
-
-    // ==========================================================
-    // EAST / RECORDS HQ WATER EDGE
-    // ==========================================================
-    //
-    // The existing HQ waterfront architecture already creates
-    // the visual edge. This narrow collider protects the water
-    // side without blocking the HQ approach.
-    //
-
-    this.registerBox("waterEdgeEast", {
-      x: 21,
-      z: 10.15,
-      width: 14,
-      depth: 0.8
-    });
   },
 
 
