@@ -6,10 +6,10 @@
 // - Keep Records HQ, stores, and waterfront estates solid.
 // - Keep the Grand Stage public promenade WALKABLE.
 // - Keep the dock → Grand Stage connector WALKABLE.
-// - Prevent access from the promenade into the water.
 // - Prevent access behind the Grand Stage.
-// - No circular collider object.
-// - Simple math + AABB collision for iPad/mobile performance.
+// - Prevent access from the promenade into the water.
+// - No giant circular movement blocker.
+// - Simple AABB collision for iPad/mobile performance.
 
 const colliders = [];
 
@@ -19,12 +19,6 @@ export default {
 
     // ------------------------------------------------------------
     // GRAND STAGE PLATFORM
-    //
-    // grandStagePier.js / world.js:
-    // Center: (0, -74)
-    // Size: 34 × 18
-    //
-    // The actual performance platform remains solid.
     // ------------------------------------------------------------
 
     this.registerBox("stagePlatform", {
@@ -38,13 +32,7 @@ export default {
     // ------------------------------------------------------------
     // GRAND STAGE BACKSTAGE EXCLUSION
     //
-    // Prevents the player from walking behind the stage and
-    // getting close to the rear of the Jumbotron.
-    //
-    // This is intentionally wider than the old blocker so the
-    // player cannot simply walk around the sides.
-    //
-    // The public promenade remains accessible around the sides.
+    // Prevents walking behind the stage.
     // ------------------------------------------------------------
 
     this.registerBox("stageBackstage", {
@@ -57,8 +45,6 @@ export default {
 
     // ------------------------------------------------------------
     // GRAND STAGE BACK WALL
-    //
-    // Solid rear wall boundary.
     // ------------------------------------------------------------
 
     this.registerBox("stageBackWall", {
@@ -70,49 +56,25 @@ export default {
 
 
     // ------------------------------------------------------------
-    // GRAND STAGE CIRCULAR PROMENADE
+    // IMPORTANT
     //
-    // grandStagePier.js:
+    // The old giant circular pier boundary has been removed.
     //
-    // PIER_X = 0
-    // PIER_Z = -74
-    // PIER_RADIUS = 44
+    // That boundary was restricting the player to a 43.3-unit
+    // circle around the stage and only allowed one narrow opening
+    // at z = -35.
     //
-    // Everything outside this radius is water.
+    // This prevented HERO from freely walking along the
+    // boardwalk toward the stores and Records HQ.
     //
-    // Instead of creating a physical circular collider, we use
-    // lightweight math in isBlocked().
-    //
-    // IMPORTANT:
-    // The dock connection on the positive-Z side has a deliberate
-    // opening so players can enter and leave the promenade.
+    // The Grand Stage promenade is now WALKABLE.
     // ------------------------------------------------------------
-
-    this.pierBoundary = {
-      x: 0,
-      z: -74,
-      radius: 43.3,
-
-      // Existing dock connection:
-      // 14 units wide.
-      //
-      // Connection is centered approximately at:
-      // z = -74 + 44 - 5
-      // z = -35
-      //
-      // Keep a little extra width for the player's collision radius.
-      openingHalfWidth: 7.6,
-
-      // Positive-Z entrance toward the existing dock.
-      openingCenterZ: -35
-    };
 
 
     // ------------------------------------------------------------
     // RECORDS HQ
-    // recordsHQ.js:
-    // centered at x:28, z:22
-    // 18 wide × 14 deep
+    // recordsHQ.js
+    // Center: x 28, z 22
     // ------------------------------------------------------------
 
     this.registerBox("recordsHQ", {
@@ -125,9 +87,7 @@ export default {
 
     // ------------------------------------------------------------
     // MARINA STORES
-    // marina.js:
-    // centered around z:31
-    // 10 wide × 12 deep
+    // marina.js
     // ------------------------------------------------------------
 
     [-20, -32, -44].forEach(x => {
@@ -144,9 +104,6 @@ export default {
 
     // ------------------------------------------------------------
     // WATERFRONT ESTATES
-    // dockLuxuryOverhaul.js
-    //
-    // These remain unchanged.
     // ------------------------------------------------------------
 
     [-50, -35, -20, -5, 10].forEach(z => {
@@ -203,56 +160,18 @@ export default {
   // --------------------------------------------------------------
   // GRAND STAGE PIER BOUNDARY
   //
-  // Returns true when the player would be outside the usable
-  // circular promenade.
+  // DISABLED.
   //
-  // The dock connection creates an opening on the positive-Z side.
+  // The previous circular boundary was creating an artificial
+  // movement wall across the boardwalk.
+  //
+  // We leave the function here for compatibility with any other
+  // code that may call it, but it no longer blocks movement.
   // --------------------------------------------------------------
 
   isOutsidePier(x, z, radius = 0.6) {
 
-    if (!this.pierBoundary) {
-      return false;
-    }
-
-    const pier = this.pierBoundary;
-
-    const dx = x - pier.x;
-    const dz = z - pier.z;
-
-    const distance = Math.sqrt(
-      dx * dx +
-      dz * dz
-    );
-
-    // Player is safely inside the promenade.
-    if (distance <= pier.radius - radius) {
-      return false;
-    }
-
-
-    // ----------------------------------------------------------
-    // DOCK CONNECTION OPENING
-    //
-    // The opening exists only on the positive-Z side of the
-    // circular promenade.
-    //
-    // x must remain within the 14-unit-wide connection.
-    // z must be beyond the front edge of the circle.
-    // ----------------------------------------------------------
-
-    const inDockOpening =
-      Math.abs(x - pier.x) <=
-        pier.openingHalfWidth + radius &&
-      z >= pier.openingCenterZ - radius;
-
-    if (inDockOpening) {
-      return false;
-    }
-
-
-    // Outside the promenade and not inside the dock opening.
-    return true;
+    return false;
 
   },
 
@@ -260,34 +179,13 @@ export default {
   // --------------------------------------------------------------
   // GENERAL PLAYER COLLISION
   //
-  // Checks:
+  // Checks only actual solid structures.
   //
-  // 1. Circular Grand Stage promenade boundary
-  // 2. Stage platform
-  // 3. Backstage
-  // 4. Back wall
-  // 5. HQ
-  // 6. Stores
-  // 7. Waterfront estates
+  // The player is now free to move across the public promenade
+  // and boardwalk.
   // --------------------------------------------------------------
 
   isBlocked(x, z, radius = 0.6) {
-
-    // ----------------------------------------------------------
-    // WATER PROTECTION
-    //
-    // Do this first so the player cannot walk off the
-    // Grand Stage promenade into the water.
-    // ----------------------------------------------------------
-
-    if (this.isOutsidePier(x, z, radius)) {
-      return true;
-    }
-
-
-    // ----------------------------------------------------------
-    // NORMAL AABB COLLISION
-    // ----------------------------------------------------------
 
     return colliders.some(c =>
 
