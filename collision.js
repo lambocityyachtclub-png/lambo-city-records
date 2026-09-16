@@ -117,37 +117,36 @@ export default {
     });
 
 
-    // ==========================================================
-    // LEFT / STORE-SIDE OUTER EDGE
-    //
-    // Seals the west side of the left waterfront ground.
-    // X = -65
-    // Z = 10 -> 45
-    // ==========================================================
+   // ==========================================================
+// LEFT / STORE-SIDE OUTER EDGE
+//
+// Seals the west side of the left waterfront ground.
+// X = -65
+// Z = 10 -> 45
+// ==========================================================
 
-    this.registerBox("waterfrontGlassEastSide", {
-  x: 65,
+this.registerBox("waterfrontGlassWestSide", {
+  x: -65,
   z: 27.5,
   width: 2,
   depth: 35
 });
 
 
-    // ==========================================================
-    // RIGHT / RECORDS HQ OUTER EDGE
-    //
-    // Seals the east side of the right waterfront ground.
-    // X = 65
-    // Z = 10 -> 45
-    // ==========================================================
+// ==========================================================
+// RIGHT / RECORDS HQ OUTER EDGE
+//
+// Seals the east side of the right waterfront ground.
+// X = 65
+// Z = 10 -> 45
+// ==========================================================
 
-    this.registerBox("waterfrontGlassEastSide", {
-      x: 65,
-      z: 27.5,
-      width: 1,
-      depth: 35
-    });
-  },
+this.registerBox("waterfrontGlassEastSide", {
+  x: 65,
+  z: 27.5,
+  width: 2,
+  depth: 35
+});
 
 
   // ==========================================================
