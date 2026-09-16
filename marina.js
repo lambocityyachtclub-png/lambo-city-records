@@ -1,10 +1,9 @@
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 
-// REBUILT to match the reference map: boardwalk/street now crosses
-// PERPENDICULAR to the dock near its base (a T-shape), instead of running
-// alongside its full length. Stores/Club Vista sit on the LEFT (west,
-// negative X) side of the dock. Records HQ (built separately in
-// recordsHQ.js) sits on the RIGHT (east, positive X).
+// LAMBO CITY — Marina / Boardwalk
+// Original layout preserved.
+// Waterfront glass completely seals the water-facing edges
+// of both brown waterfront land sections.
 
 const STREET_Z = 46;
 const STREET_X_MIN = -45;
@@ -12,14 +11,21 @@ const STREET_X_MAX = 45;
 const STREET_LEN = STREET_X_MAX - STREET_X_MIN;
 const STREET_X_MID = (STREET_X_MIN + STREET_X_MAX) / 2;
 
-// Waterfront ground edges from world.js
+// Waterfront ground from world.js
 const WATERFRONT_Z = 10;
+
 const LEFT_WATERFRONT_MIN_X = -65;
 const LEFT_WATERFRONT_MAX_X = -21;
+
 const RIGHT_WATERFRONT_MIN_X = 21;
 const RIGHT_WATERFRONT_MAX_X = 65;
 
+// The brown waterfront ground extends from Z=10 to Z=45.
+// These side edges are the outer water-facing edges.
+const WATERFRONT_BACK_Z = 45;
+
 export default {
+
   init(scene) {
     this._buildDockRamp(scene);
     this._buildStreet(scene);
@@ -29,15 +35,16 @@ export default {
     this._buildWaterfrontGlass(scene);
   },
 
+
   _buildDockRamp(scene) {
-    // Steps down from the raised dock (~1.15 high) to street level (~0.5),
-    // bridging the height gap where the dock ends and the plaza begins.
+
     var stepMat = new THREE.MeshStandardMaterial({
       color: 0x5c3d1e,
       roughness: 1
     });
 
     for (var i = 0; i < 5; i++) {
+
       var step = new THREE.Mesh(
         new THREE.BoxGeometry(13, 0.25, 1.6),
         stepMat
@@ -53,7 +60,9 @@ export default {
     }
   },
 
+
   _buildStreet(scene) {
+
     var roadMat = new THREE.MeshStandardMaterial({
       color: 0x1a1a1a,
       roughness: 0.9
@@ -72,6 +81,7 @@ export default {
 
     scene.add(road);
 
+
     var markMat = new THREE.MeshStandardMaterial({
       color: 0xffcc00,
       emissive: 0xffcc00,
@@ -83,6 +93,7 @@ export default {
       x < STREET_X_MAX;
       x += 12
     ) {
+
       var mark = new THREE.Mesh(
         new THREE.BoxGeometry(6, 0.05, 0.4),
         markMat
@@ -97,12 +108,14 @@ export default {
       scene.add(mark);
     }
 
+
     var sidewalkMat = new THREE.MeshStandardMaterial({
       color: 0x888877,
       roughness: 1
     });
 
     [-1, 1].forEach(function(side) {
+
       var sidewalk = new THREE.Mesh(
         new THREE.BoxGeometry(STREET_LEN, 0.3, 5),
         sidewalkMat
@@ -117,11 +130,13 @@ export default {
       scene.add(sidewalk);
     });
 
+
     for (
       var lx = STREET_X_MIN;
       lx <= STREET_X_MAX;
       lx += 18
     ) {
+
       var pole = new THREE.Mesh(
         new THREE.CylinderGeometry(
           0.15,
@@ -142,6 +157,7 @@ export default {
 
       scene.add(pole);
 
+
       var lampHead = new THREE.Mesh(
         new THREE.BoxGeometry(2, 0.3, 0.3),
         new THREE.MeshStandardMaterial({
@@ -161,9 +177,9 @@ export default {
     }
   },
 
+
   _buildStores(scene) {
-    // Club Vista + 2 more stores, all on the WEST
-    // side of the dock, facing the street.
+
     var stores = [
       {
         x: -20,
@@ -186,6 +202,7 @@ export default {
     ];
 
     stores.forEach(function(s) {
+
       var building = new THREE.Mesh(
         new THREE.BoxGeometry(10, 8, 12),
         new THREE.MeshStandardMaterial({
@@ -201,6 +218,7 @@ export default {
       );
 
       scene.add(building);
+
 
       var awning = new THREE.Mesh(
         new THREE.BoxGeometry(10, 0.3, 3),
@@ -218,6 +236,7 @@ export default {
       );
 
       scene.add(awning);
+
 
       var signPlane = new THREE.Mesh(
         new THREE.BoxGeometry(8, 1.3, 0.2),
@@ -238,7 +257,9 @@ export default {
     });
   },
 
+
   _buildPalms(scene) {
+
     var trunkMat = new THREE.MeshStandardMaterial({
       color: 0x6b4226,
       roughness: 1
@@ -254,6 +275,7 @@ export default {
       px <= STREET_X_MAX;
       px += 16
     ) {
+
       if (Math.abs(px) < 8) continue;
 
       var h = 8 + Math.random() * 4;
@@ -271,9 +293,12 @@ export default {
 
       trunk.position.y = h / 2;
       trunk.rotation.z = (Math.random() - 0.5) * 0.15;
+
       palm.add(trunk);
 
+
       [0, 0.6, 1.1].forEach(function(yOff, i) {
+
         var leaves = new THREE.Mesh(
           new THREE.SphereGeometry(
             2.2 - i * 0.4,
@@ -285,8 +310,10 @@ export default {
 
         leaves.position.y = h + yOff;
         leaves.scale.set(1, 0.5, 1);
+
         palm.add(leaves);
       });
+
 
       palm.position.set(
         px,
@@ -298,7 +325,9 @@ export default {
     }
   },
 
+
   _buildNeon(scene) {
+
     var mainSign = new THREE.Mesh(
       new THREE.BoxGeometry(8, 4, 0.4),
       new THREE.MeshStandardMaterial({
@@ -319,15 +348,21 @@ export default {
     this._buildZoneLabel();
   },
 
+
   // ============================================================
-  // CINEMATIC WATERFRONT GLASS
+  // COMPLETE WATERFRONT GLASS
   //
-  // Two independent glass edges:
+  // STORE SIDE:
+  //   front edge Z=10
+  //   outer side X=-65
   //
-  // LEFT  : X -65 -> -21
-  // RIGHT : X  21 ->  65
+  // RECORDS HQ SIDE:
+  //   front edge Z=10
+  //   outer side X=65
   //
-  // The center X -21 -> 21 remains OPEN for the dock.
+  // This creates two continuous L-shaped barriers.
+  //
+  // CENTER X=-21 -> 21 remains OPEN for the dock.
   // ============================================================
 
   _buildWaterfrontGlass(scene) {
@@ -342,6 +377,7 @@ export default {
       metalness: 0.15
     });
 
+
     var frameMat = new THREE.MeshStandardMaterial({
       color: 0xffd700,
       emissive: 0xffd700,
@@ -350,133 +386,179 @@ export default {
       metalness: 0.7
     });
 
+
     var baseMat = new THREE.MeshStandardMaterial({
       color: 0x111114,
       roughness: 0.38,
       metalness: 0.35
     });
 
-    var sections = [
-      {
-        minX: LEFT_WATERFRONT_MIN_X,
-        maxX: LEFT_WATERFRONT_MAX_X
-      },
-      {
-        minX: RIGHT_WATERFRONT_MIN_X,
-        maxX: RIGHT_WATERFRONT_MAX_X
-      }
-    ];
 
-    sections.forEach(function(section) {
+    // ------------------------------------------------------------
+    // Helper: straight glass section
+    // ------------------------------------------------------------
 
-      var centerX =
-        (section.minX + section.maxX) / 2;
+    function addGlassSection(startX, endX, startZ, endZ) {
 
-      var width =
-        section.maxX - section.minX;
+      var horizontal = Math.abs(endX - startX) >= Math.abs(endZ - startZ);
 
-      // Low dark base
+      var length = horizontal
+        ? Math.abs(endX - startX)
+        : Math.abs(endZ - startZ);
+
+      var centerX = (startX + endX) / 2;
+      var centerZ = (startZ + endZ) / 2;
+
+      var glassDepth = 0.08;
+
+
+      // Base
       var base = new THREE.Mesh(
-        new THREE.BoxGeometry(
-          width,
-          0.18,
-          0.5
-        ),
+        horizontal
+          ? new THREE.BoxGeometry(length, 0.18, 0.5)
+          : new THREE.BoxGeometry(0.5, 0.18, length),
         baseMat
       );
 
       base.position.set(
         centerX,
         0.62,
-        WATERFRONT_Z
+        centerZ
       );
 
       scene.add(base);
 
-      // Main glass wall
+
+      // Glass
       var glass = new THREE.Mesh(
-        new THREE.BoxGeometry(
-          width,
-          1.65,
-          0.08
-        ),
+        horizontal
+          ? new THREE.BoxGeometry(length, 1.65, glassDepth)
+          : new THREE.BoxGeometry(glassDepth, 1.65, length),
         glassMat
       );
 
       glass.position.set(
         centerX,
         1.42,
-        WATERFRONT_Z
+        centerZ
       );
 
       scene.add(glass);
 
-      // Gold top rail
+
+      // Top rail
       var topRail = new THREE.Mesh(
-        new THREE.BoxGeometry(
-          width + 0.2,
-          0.09,
-          0.13
-        ),
+        horizontal
+          ? new THREE.BoxGeometry(length + 0.2, 0.09, 0.13)
+          : new THREE.BoxGeometry(0.13, 0.09, length + 0.2),
         frameMat
       );
 
       topRail.position.set(
         centerX,
         2.27,
-        WATERFRONT_Z
+        centerZ
       );
 
       scene.add(topRail);
 
-      // Gold bottom rail
+
+      // Bottom rail
       var bottomRail = new THREE.Mesh(
-        new THREE.BoxGeometry(
-          width,
-          0.07,
-          0.12
-        ),
+        horizontal
+          ? new THREE.BoxGeometry(length, 0.07, 0.12)
+          : new THREE.BoxGeometry(0.12, 0.07, length),
         frameMat
       );
 
       bottomRail.position.set(
         centerX,
         0.72,
-        WATERFRONT_Z
+        centerZ
       );
 
       scene.add(bottomRail);
 
-      // Vertical architectural posts
-      var postPositions = [
-        section.minX + 1,
-        centerX,
-        section.maxX - 1
-      ];
 
-      postPositions.forEach(function(x) {
+      // Posts
+      var postPositions = [0, 0.5, 1];
+
+      postPositions.forEach(function(t) {
+
+        var px = startX + (endX - startX) * t;
+        var pz = startZ + (endZ - startZ) * t;
 
         var post = new THREE.Mesh(
-          new THREE.BoxGeometry(
-            0.18,
-            1.75,
-            0.18
-          ),
+          new THREE.BoxGeometry(0.18, 1.75, 0.18),
           frameMat
         );
 
         post.position.set(
-          x,
+          px,
           1.45,
-          WATERFRONT_Z
+          pz
         );
 
         scene.add(post);
       });
-    });
+    }
+
+
+    // ------------------------------------------------------------
+    // LEFT / STORES
+    //
+    // Front waterfront edge
+    // X -65 -> -21 at Z=10
+    // ------------------------------------------------------------
+
+    addGlassSection(
+      LEFT_WATERFRONT_MIN_X,
+      LEFT_WATERFRONT_MAX_X,
+      WATERFRONT_Z,
+      WATERFRONT_Z
+    );
+
+
+    // Outer west side
+    // Z 10 -> 45 at X=-65
+
+    addGlassSection(
+      LEFT_WATERFRONT_MIN_X,
+      LEFT_WATERFRONT_MIN_X,
+      WATERFRONT_Z,
+      WATERFRONT_BACK_Z
+    );
+
+
+    // ------------------------------------------------------------
+    // RIGHT / RECORDS HQ
+    //
+    // Front waterfront edge
+    // X 21 -> 65 at Z=10
+    // ------------------------------------------------------------
+
+    addGlassSection(
+      RIGHT_WATERFRONT_MIN_X,
+      RIGHT_WATERFRONT_MAX_X,
+      WATERFRONT_Z,
+      WATERFRONT_Z
+    );
+
+
+    // Outer east side
+    // Z 10 -> 45 at X=65
+
+    addGlassSection(
+      RIGHT_WATERFRONT_MAX_X,
+      RIGHT_WATERFRONT_MAX_X,
+      WATERFRONT_Z,
+      WATERFRONT_BACK_Z
+    );
   },
 
+
   _buildZoneLabel() {
+
     var label = document.createElement('div');
 
     label.id = 'marina-label';
@@ -519,12 +601,15 @@ export default {
     this._labelShown = false;
   },
 
+
   update(delta, context) {
+
     if (!context.player || !this._labelEl || this._labelShown) return;
 
     var pz = context.player.position.z;
 
     if (pz > 20 && pz < 40) {
+
       this._labelShown = true;
       this._labelEl.style.display = 'block';
 
