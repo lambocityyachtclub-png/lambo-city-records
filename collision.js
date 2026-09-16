@@ -125,12 +125,12 @@ export default {
     // Z = 10 -> 45
     // ==========================================================
 
-    this.registerBox("waterfrontGlassWestSide", {
-      x: -65,
-      z: 27.5,
-      width: 1,
-      depth: 35
-    });
+    this.registerBox("waterfrontGlassEastSide", {
+  x: 65,
+  z: 27.5,
+  width: 2,
+  depth: 35
+});
 
 
     // ==========================================================
