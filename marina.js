@@ -1,1113 +1,186 @@
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 
-const STREET_Z = 46;
-const STORE_Z = 31;
-const WATERFRONT_Z = 10.15;
+// REBUILT to match the reference map: boardwalk/street now crosses
+// PERPENDICULAR to the dock near its base (a T-shape), instead of running
+// alongside its full length. Stores/Club Vista sit on the LEFT (west,
+// negative X) side of the dock. Records HQ (built separately in
+// recordsHQ.js) sits on the RIGHT (east, positive X) side.
 
-function mat(
-  color,
-  roughness = 0.7,
-  metalness = 0.0,
-  emissive = 0x000000,
-  emissiveIntensity = 0
-) {
-  return new THREE.MeshStandardMaterial({
-    color,
-    roughness,
-    metalness,
-    emissive,
-    emissiveIntensity
-  });
-}
+const STREET_Z = 46;
+const STREET_X_MIN = -45;
+const STREET_X_MAX = 45;
+const STREET_LEN = STREET_X_MAX - STREET_X_MIN;
+const STREET_X_MID = (STREET_X_MIN + STREET_X_MAX) / 2;
 
 export default {
-
   init(scene) {
-
+    this._buildDockRamp(scene);
     this._buildStreet(scene);
     this._buildStores(scene);
-    this._buildStoreRearPromenade(scene);
-    this._buildWaterfrontRail(scene);
-    this._buildMarinaAccents(scene);
-
+    this._buildPalms(scene);
+    this._buildNeon(scene);
   },
 
-  update() {},
-
-
-  // ============================================================
-  // STREET / BOARDWALK CONNECTION
-  // ============================================================
+  _buildDockRamp(scene) {
+    // Steps down from the raised dock (~1.15 high) to street level (~0.5),
+    // bridging the height gap where the dock ends and the plaza begins.
+    var stepMat = new THREE.MeshStandardMaterial({ color: 0x5c3d1e, roughness: 1 });
+    for (var i = 0; i < 5; i++) {
+      var step = new THREE.Mesh(new THREE.BoxGeometry(13, 0.25, 1.6), stepMat);
+      step.position.set(0, 1.15 - i * 0.16, 31 + i * 1.5);
+      scene.add(step);
+    }
+  },
 
   _buildStreet(scene) {
-
-    const roadMat = mat(0x161616, 0.95, 0.05);
-    const sidewalkMat = mat(0x6b6258, 0.95);
-    const curbMat = mat(0x292929, 0.85, 0.1);
-    const goldMat = mat(0xd4af37, 0.25, 0.9);
-
-    const road = new THREE.Mesh(
-      new THREE.BoxGeometry(90, 0.22, 12),
-      roadMat
-    );
-
-    road.position.set(
-      0,
-      0.72,
-      STREET_Z
-    );
-
+    var roadMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.9 });
+    var road = new THREE.Mesh(new THREE.BoxGeometry(STREET_LEN, 0.3, 8), roadMat);
+    road.position.set(STREET_X_MID, 0.5, STREET_Z);
     scene.add(road);
 
+    var markMat = new THREE.MeshStandardMaterial({
+      color: 0xffcc00, emissive: 0xffcc00, emissiveIntensity: 0.3
+    });
+    for (var x = STREET_X_MIN + 5; x < STREET_X_MAX; x += 12) {
+      var mark = new THREE.Mesh(new THREE.BoxGeometry(6, 0.05, 0.4), markMat);
+      mark.position.set(x, 0.66, STREET_Z);
+      scene.add(mark);
+    }
 
-    const sidewalk = new THREE.Mesh(
-      new THREE.BoxGeometry(90, 0.18, 7),
-      sidewalkMat
-    );
+    var sidewalkMat = new THREE.MeshStandardMaterial({ color: 0x888877, roughness: 1 });
+    [-1, 1].forEach(function(side) {
+      var sidewalk = new THREE.Mesh(new THREE.BoxGeometry(STREET_LEN, 0.3, 5), sidewalkMat);
+      sidewalk.position.set(STREET_X_MID, 0.55, STREET_Z + side * 6.5);
+      scene.add(sidewalk);
+    });
 
-    sidewalk.position.set(
-      0,
-      0.73,
-      38.5
-    );
+    for (var lx = STREET_X_MIN; lx <= STREET_X_MAX; lx += 18) {
+      var pole = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.15, 0.15, 8, 6),
+        new THREE.MeshStandardMaterial({ color: 0x333333 })
+      );
+      pole.position.set(lx, 4.5, STREET_Z + 9);
+      scene.add(pole);
 
-    scene.add(sidewalk);
-
-
-    const curb = new THREE.Mesh(
-      new THREE.BoxGeometry(90, 0.18, 0.45),
-      curbMat
-    );
-
-    curb.position.set(
-      0,
-      0.86,
-      42.0
-    );
-
-    scene.add(curb);
-
-
-    const centerStripe = new THREE.Mesh(
-      new THREE.BoxGeometry(80, 0.025, 0.10),
-      goldMat
-    );
-
-    centerStripe.position.set(
-      0,
-      0.86,
-      STREET_Z
-    );
-
-    scene.add(centerStripe);
-
+      var lampHead = new THREE.Mesh(
+        new THREE.BoxGeometry(2, 0.3, 0.3),
+        new THREE.MeshStandardMaterial({ color: 0xffeeaa, emissive: 0xffeeaa, emissiveIntensity: 1.2 })
+      );
+      lampHead.position.set(lx, 8.5, STREET_Z + 9);
+      scene.add(lampHead);
+    }
   },
-
-
-  // ============================================================
-  // WATERFRONT STORES
-  // ============================================================
 
   _buildStores(scene) {
+    // Club Vista (closest to the dock) + 2 more stores, all on the WEST
+    // (negative X) side of the dock, facing the street.
+    var stores = [
+      { x: -20, color: 0x1a1a3e, light: 0x00ccff, label: "CLUB VISTA" },
+      { x: -32, color: 0x3a1a2a, light: 0xff2288, label: "STORE" },
+      { x: -44, color: 0x2a2a10, light: 0xffcc00, label: "STORE" },
+    ];
 
-    const stone = mat(
-      0x3c332c,
-      0.82,
-      0.05
-    );
-
-    const dark = mat(
-      0x111111,
-      0.55,
-      0.45
-    );
-
-    const glass = new THREE.MeshPhysicalMaterial({
-      color: 0x9fd9e8,
-      transparent: true,
-      opacity: 0.32,
-      roughness: 0.12,
-      metalness: 0.2,
-      transmission: 0.2,
-      thickness: 0.06
-    });
-
-    const gold = mat(
-      0xd4af37,
-      0.2,
-      0.9
-    );
-
-    const neon = mat(
-      0xff36d1,
-      0.25,
-      0.15,
-      0xff36d1,
-      2.2
-    );
-
-
-    [-20, -32, -44].forEach((x, index) => {
-
-      const width = 10;
-      const depth = 12;
-      const height = 5.5;
-
-
-      const building = new THREE.Mesh(
-        new THREE.BoxGeometry(
-          width,
-          height,
-          depth
-        ),
-        stone
+    stores.forEach(function(s) {
+      var building = new THREE.Mesh(
+        new THREE.BoxGeometry(10, 8, 12),
+        new THREE.MeshStandardMaterial({ color: s.color, roughness: 0.8 })
       );
-
-      building.position.set(
-        x,
-        height / 2 + 0.9,
-        STORE_Z
-      );
-
+      building.position.set(s.x, 4.5, STREET_Z - 15);
       scene.add(building);
 
-
-      // FRONT GLASS
-
-      const frontGlass = new THREE.Mesh(
-        new THREE.BoxGeometry(
-          width - 0.8,
-          3.2,
-          0.12
-        ),
-        glass
+      var awning = new THREE.Mesh(
+        new THREE.BoxGeometry(10, 0.3, 3),
+        new THREE.MeshStandardMaterial({ color: s.light, emissive: s.light, emissiveIntensity: 0.5 })
       );
+      awning.position.set(s.x, 5, STREET_Z - 10.5);
+      scene.add(awning);
 
-      frontGlass.position.set(
-        x,
-        2.7,
-        STORE_Z - depth / 2 - 0.08
+      var signPlane = new THREE.Mesh(
+        new THREE.BoxGeometry(8, 1.3, 0.2),
+        new THREE.MeshStandardMaterial({ color: s.light, emissive: s.light, emissiveIntensity: 1.6 })
       );
-
-      scene.add(frontGlass);
-
-
-      // SIGN
-
-      const sign = new THREE.Mesh(
-        new THREE.BoxGeometry(
-          width - 1.2,
-          0.55,
-          0.18
-        ),
-        dark
-      );
-
-      sign.position.set(
-        x,
-        5.15,
-        STORE_Z - depth / 2 - 0.15
-      );
-
-      scene.add(sign);
-
-
-      // NEON SIGN
-
-      const signGlow = new THREE.Mesh(
-        new THREE.BoxGeometry(
-          width - 1.5,
-          0.10,
-          0.05
-        ),
-        neon
-      );
-
-      signGlow.position.set(
-        x,
-        5.45,
-        STORE_Z - depth / 2 - 0.24
-      );
-
-      scene.add(signGlow);
-
-
-      // GOLD ROOF TRIM
-
-      const goldTrim = new THREE.Mesh(
-        new THREE.BoxGeometry(
-          width + 0.15,
-          0.10,
-          0.18
-        ),
-        gold
-      );
-
-      goldTrim.position.set(
-        x,
-        6.0,
-        STORE_Z - 0.1
-      );
-
-      scene.add(goldTrim);
-
-
-      // DOOR
-
-      const door = new THREE.Mesh(
-        new THREE.BoxGeometry(
-          1.5,
-          2.7,
-          0.14
-        ),
-        dark
-      );
-
-      door.position.set(
-        x,
-        2.15,
-        STORE_Z - depth / 2 - 0.18
-      );
-
-      scene.add(door);
-
-
-      // FRONT PLANTERS
-
-      [-2.8, 2.8].forEach(dx => {
-
-        const planter = new THREE.Mesh(
-          new THREE.CylinderGeometry(
-            0.42,
-            0.5,
-            0.65,
-            10
-          ),
-          dark
-        );
-
-        planter.position.set(
-          x + dx,
-          1.25,
-          STORE_Z - depth / 2 - 0.55
-        );
-
-        scene.add(planter);
-
-
-        const plant = new THREE.Mesh(
-          new THREE.SphereGeometry(
-            0.55,
-            8,
-            6
-          ),
-          mat(0x274b2b, 0.95)
-        );
-
-        plant.position.set(
-          x + dx,
-          1.85,
-          STORE_Z - depth / 2 - 0.55
-        );
-
-        scene.add(plant);
-
-      });
-
-
-      // REAR ARCHITECTURAL PILASTERS
-
-      [
-        -width / 2 + 0.45,
-        width / 2 - 0.45
-      ].forEach(dx => {
-
-        const p = new THREE.Mesh(
-          new THREE.BoxGeometry(
-            0.35,
-            height,
-            0.35
-          ),
-          gold
-        );
-
-        p.position.set(
-          x + dx,
-          height / 2 + 0.9,
-          STORE_Z + depth / 2 + 0.12
-        );
-
-        scene.add(p);
-
-      });
-
-
-      // ROOF ACCENT
-
-      const roofAccent = new THREE.Mesh(
-        new THREE.BoxGeometry(
-          width - 1.5,
-          0.12,
-          0.16
-        ),
-        index === 1 ? neon : gold
-      );
-
-      roofAccent.position.set(
-        x,
-        height + 0.98,
-        STORE_Z + 0.1
-      );
-
-      scene.add(roofAccent);
-
+      signPlane.position.set(s.x, 6.8, STREET_Z - 9);
+      scene.add(signPlane);
     });
-
   },
 
-
-  // ============================================================
-  // LUXURY REAR PROMENADE
-  // ============================================================
-
-  _buildStoreRearPromenade(scene) {
-
-    const rearGround = mat(
-      0x5a4534,
-      0.92,
-      0.02
-    );
-
-    const stone = mat(
-      0x777067,
-      0.78,
-      0.05
-    );
-
-    const dark = mat(
-      0x171717,
-      0.58,
-      0.55
-    );
-
-    const gold = mat(
-      0xd4af37,
-      0.22,
-      0.92
-    );
-
-    const green = mat(
-      0x29482d,
-      0.95
-    );
-
-    const glow = mat(
-      0xffd86b,
-      0.25,
-      0.1,
-      0xffd86b,
-      2.0
-    );
-
-
-    // REAR COURTYARD
-
-    const courtyard = new THREE.Mesh(
-      new THREE.BoxGeometry(
-        86,
-        0.10,
-        22
-      ),
-      rearGround
-    );
-
-    courtyard.position.set(
-      -6.5,
-      0.70,
-      20.0
-    );
-
-    scene.add(courtyard);
-
-
-    // MAIN WALKING LANE
-
-    const lane = new THREE.Mesh(
-      new THREE.BoxGeometry(
-        82,
-        0.08,
-        5.0
-      ),
-      stone
-    );
-
-    lane.position.set(
-      -6.5,
-      0.79,
-      24.0
-    );
-
-    scene.add(lane);
-
-
-    // WATERFRONT EDGE STRIP
-
-    const edge = new THREE.Mesh(
-      new THREE.BoxGeometry(
-        83,
-        0.10,
-        0.65
-      ),
-      dark
-    );
-
-    edge.position.set(
-      -6.5,
-      0.81,
-      WATERFRONT_Z + 0.75
-    );
-
-    scene.add(edge);
-
-
-    // GOLD INLAY
-
-    const inlay = new THREE.Mesh(
-      new THREE.BoxGeometry(
-        81,
-        0.035,
-        0.10
-      ),
-      gold
-    );
-
-    inlay.position.set(
-      -6.5,
-      0.86,
-      25.9
-    );
-
-    scene.add(inlay);
-
-
-    // PLANTERS
-
-    [
-      -40,
-      -27,
-      -14,
-      -1,
-      12,
-      25
-    ].forEach(x => {
-
-      const planter = new THREE.Mesh(
-        new THREE.BoxGeometry(
-          3.0,
-          0.65,
-          1.8
-        ),
-        dark
-      );
-
-      planter.position.set(
-        x,
-        1.12,
-        16.5
-      );
-
-      scene.add(planter);
-
-
-      const soil = new THREE.Mesh(
-        new THREE.BoxGeometry(
-          2.5,
-          0.12,
-          1.35
-        ),
-        mat(0x24180f, 1)
-      );
-
-      soil.position.set(
-        x,
-        1.48,
-        16.5
-      );
-
-      scene.add(soil);
-
-
-      const shrub = new THREE.Mesh(
-        new THREE.SphereGeometry(
-          0.9,
-          8,
-          6
-        ),
-        green
-      );
-
-      shrub.scale.y = 0.65;
-
-      shrub.position.set(
-        x,
-        2.15,
-        16.5
-      );
-
-      scene.add(shrub);
-
-    });
-
-
-    // EMISSIVE LIGHT COLUMNS
-    // No PointLights — safer for iPad/Safari.
-
-    [
-      -37,
-      -24,
-      -11,
-      2,
-      15,
-      28
-    ].forEach(x => {
-
-      const column = new THREE.Mesh(
-        new THREE.BoxGeometry(
-          0.28,
-          2.7,
-          0.28
-        ),
-        dark
-      );
-
-      column.position.set(
-        x,
-        2.1,
-        27.0
-      );
-
-      scene.add(column);
-
-
-      const light = new THREE.Mesh(
-        new THREE.BoxGeometry(
-          0.10,
-          1.35,
-          0.05
-        ),
-        glow
-      );
-
-      light.position.set(
-        x,
-        2.25,
-        26.82
-      );
-
-      scene.add(light);
-
-    });
-
-
-    // REAR SEATING
-
-    [
-      -31,
-      -5,
-      21
-    ].forEach(x => {
-
-      const seat = new THREE.Mesh(
-        new THREE.BoxGeometry(
-          4.0,
-          0.35,
-          1.0
-        ),
-        dark
-      );
-
-      seat.position.set(
-        x,
-        1.05,
-        28.8
-      );
-
-      scene.add(seat);
-
-
-      const back = new THREE.Mesh(
-        new THREE.BoxGeometry(
-          4.0,
-          1.0,
-          0.25
-        ),
-        dark
-      );
-
-      back.position.set(
-        x,
-        1.45,
-        29.15
-      );
-
-      scene.add(back);
-
-    });
-
-  },
-
-
-  // ============================================================
-  // CONTINUOUS WATERFRONT GLASS BORDER
-  // STORE SIDE → HQ SIDE
-  // ============================================================
-
-  _buildWaterfrontRail(scene) {
-
-    const railGroup = new THREE.Group();
-
-    railGroup.name =
-      "LuxuryWaterfrontGlassBorder";
-
-
-    const glassMat =
-      new THREE.MeshPhysicalMaterial({
-
-        color: 0xdff7ff,
-
-        transparent: true,
-
-        opacity: 0.28,
-
-        roughness: 0.08,
-
-        metalness: 0.15,
-
-        transmission: 0.35,
-
-        thickness: 0.08
-
+  _buildPalms(scene) {
+    var trunkMat = new THREE.MeshStandardMaterial({ color: 0x6b4226, roughness: 1 });
+    var leafMat  = new THREE.MeshStandardMaterial({ color: 0x1a5c2a, roughness: 0.8 });
+
+    for (var px = STREET_X_MIN; px <= STREET_X_MAX; px += 16) {
+      if (Math.abs(px) < 8) continue; // leave a gap for the dock itself
+      var h = 8 + Math.random() * 4;
+      var palm = new THREE.Group();
+
+      var trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.4, h, 8), trunkMat);
+      trunk.position.y = h / 2;
+      trunk.rotation.z = (Math.random() - 0.5) * 0.15;
+      palm.add(trunk);
+
+      [0, 0.6, 1.1].forEach(function(yOff, i) {
+        var leaves = new THREE.Mesh(new THREE.SphereGeometry(2.2 - i * 0.4, 7, 5), leafMat);
+        leaves.position.y = h + yOff;
+        leaves.scale.set(1, 0.5, 1);
+        palm.add(leaves);
       });
 
-
-    const goldMat = mat(
-      0xd4af37,
-      0.2,
-      0.9
-    );
-
-
-    const darkMetalMat = mat(
-      0x151515,
-      0.25,
-      0.85
-    );
-
-
-    const glowMat =
-      new THREE.MeshBasicMaterial({
-
-        color: 0xffd86b,
-
-        transparent: true,
-
-        opacity: 0.65
-
-      });
-
-
-    const startX = -48;
-    const endX = 35;
-
-    const railZ =
-      WATERFRONT_Z;
-
-    const glassHeight = 1.65;
-
-    const glassBottom = 0.55;
-
-    const panelWidth = 4.0;
-
-
-    // GLASS PANELS
-
-    for (
-      let x = startX;
-      x < endX;
-      x += panelWidth
-    ) {
-
-      const width =
-        Math.min(
-          panelWidth,
-          endX - x
-        );
-
-
-      const panel = new THREE.Mesh(
-
-        new THREE.BoxGeometry(
-          Math.max(
-            0.1,
-            width - 0.08
-          ),
-          glassHeight,
-          0.10
-        ),
-
-        glassMat
-
-      );
-
-
-      panel.position.set(
-
-        x + width / 2,
-
-        glassBottom +
-          glassHeight / 2,
-
-        railZ
-
-      );
-
-
-      railGroup.add(panel);
-
+      palm.position.set(px, 0.5, STREET_Z + 12);
+      scene.add(palm);
     }
-
-
-    // GOLD TOP RAIL
-
-    const topRail = new THREE.Mesh(
-
-      new THREE.BoxGeometry(
-        endX - startX,
-        0.12,
-        0.16
-      ),
-
-      goldMat
-
-    );
-
-
-    topRail.position.set(
-
-      (startX + endX) / 2,
-
-      glassBottom +
-        glassHeight +
-        0.06,
-
-      railZ
-
-    );
-
-
-    railGroup.add(topRail);
-
-
-    // DARK LOWER RAIL
-
-    const lowerRail = new THREE.Mesh(
-
-      new THREE.BoxGeometry(
-        endX - startX,
-        0.10,
-        0.14
-      ),
-
-      darkMetalMat
-
-    );
-
-
-    lowerRail.position.set(
-
-      (startX + endX) / 2,
-
-      glassBottom,
-
-      railZ
-
-    );
-
-
-    railGroup.add(lowerRail);
-
-
-    // GOLD SUPPORT POSTS
-
-    for (
-      let x = startX;
-      x <= endX + 0.01;
-      x += panelWidth
-    ) {
-
-      const post = new THREE.Mesh(
-
-        new THREE.BoxGeometry(
-          0.13,
-          glassHeight + 0.20,
-          0.18
-        ),
-
-        goldMat
-
-      );
-
-
-      post.position.set(
-
-        x,
-
-        glassBottom +
-          glassHeight / 2,
-
-        railZ
-
-      );
-
-
-      railGroup.add(post);
-
-
-      const accent = new THREE.Mesh(
-
-        new THREE.BoxGeometry(
-          0.06,
-          0.34,
-          0.03
-        ),
-
-        glowMat
-
-      );
-
-
-      accent.position.set(
-
-        x,
-
-        glassBottom +
-          glassHeight * 0.52,
-
-        railZ - 0.10
-
-      );
-
-
-      railGroup.add(accent);
-
-    }
-
-
-    // PREMIUM BASE
-
-    const base = new THREE.Mesh(
-
-      new THREE.BoxGeometry(
-        endX - startX,
-        0.16,
-        0.38
-      ),
-
-      darkMetalMat
-
-    );
-
-
-    base.position.set(
-
-      (startX + endX) / 2,
-
-      glassBottom - 0.08,
-
-      railZ
-
-    );
-
-
-    railGroup.add(base);
-
-
-    // END CAPS
-
-    [
-      startX,
-      endX
-    ].forEach(x => {
-
-      const cap = new THREE.Mesh(
-
-        new THREE.BoxGeometry(
-          0.24,
-          glassHeight + 0.30,
-          0.30
-        ),
-
-        goldMat
-
-      );
-
-
-      cap.position.set(
-
-        x,
-
-        glassBottom +
-          glassHeight / 2,
-
-        railZ
-
-      );
-
-
-      railGroup.add(cap);
-
-    });
-
-
-    scene.add(railGroup);
-
   },
 
-
-  // ============================================================
-  // MARINA TRANSITION DETAILS
-  // ============================================================
-
-  _buildMarinaAccents(scene) {
-
-    const dark = mat(
-      0x151515,
-      0.55,
-      0.45
+  _buildNeon(scene) {
+    var mainSign = new THREE.Mesh(
+      new THREE.BoxGeometry(8, 4, 0.4),
+      new THREE.MeshStandardMaterial({ color: 0x9900ff, emissive: 0x9900ff, emissiveIntensity: 1.4 })
     );
+    mainSign.position.set(STREET_X_MIN + 4, 12, STREET_Z);
+    scene.add(mainSign);
 
-    const gold = mat(
-      0xd4af37,
-      0.22,
-      0.9
-    );
+    this._buildZoneLabel();
+  },
 
-    const neon = mat(
-      0xff36d1,
-      0.25,
-      0.15,
-      0xff36d1,
-      2.0
-    );
+  _buildZoneLabel() {
+    var label = document.createElement('div');
+    label.id = 'marina-label';
+    label.style.cssText = `
+      position:fixed;top:50%;left:50%;
+      transform:translate(-50%,-50%);
+      background:rgba(0,0,0,0.85);
+      border:1px solid rgba(0,255,255,0.4);
+      border-radius:12px;padding:16px 28px;
+      color:white;font-family:Arial,sans-serif;
+      text-align:center;z-index:300;
+      pointer-events:none;display:none;
+      box-shadow:0 0 30px rgba(0,255,255,0.2);
+    `;
+    label.innerHTML = `
+      <div style="color:#00ffff;font-size:10px;letter-spacing:3px;margin-bottom:4px;">
+        NEW ZONE
+      </div>
+      <div style="font-size:18px;font-weight:bold;color:white;margin-bottom:4px;">
+        MARINA BOARDWALK
+      </div>
+      <div style="color:#aaa;font-size:11px;">
+        Long Beach Waterfront • Gateway to the City
+      </div>
+    `;
+    document.body.appendChild(label);
+    this._labelEl = label;
+    this._labelShown = false;
+  },
 
-
-    // DOCK / BOARDWALK TRANSITION
-
-    const transition = new THREE.Mesh(
-
-      new THREE.BoxGeometry(
-        13.5,
-        0.12,
-        1.6
-      ),
-
-      dark
-
-    );
-
-
-    transition.position.set(
-      0,
-      0.86,
-      35.8
-    );
-
-
-    scene.add(transition);
-
-
-    const transitionTrim = new THREE.Mesh(
-
-      new THREE.BoxGeometry(
-        12.5,
-        0.08,
-        0.12
-      ),
-
-      gold
-
-    );
-
-
-    transitionTrim.position.set(
-      0,
-      0.96,
-      35.15
-    );
-
-
-    scene.add(transitionTrim);
-
-
-    // LOW WATERFRONT ARCHITECTURAL MARKERS
-    // Emissive only — no dynamic lights.
-
-    [
-      -43,
-      -29,
-      -15,
-      0,
-      15,
-      29
-    ].forEach(x => {
-
-      const post = new THREE.Mesh(
-
-        new THREE.BoxGeometry(
-          0.18,
-          1.4,
-          0.18
-        ),
-
-        dark
-
-      );
-
-
-      post.position.set(
-        x,
-        1.45,
-        12.0
-      );
-
-
-      scene.add(post);
-
-
-      const strip = new THREE.Mesh(
-
-        new THREE.BoxGeometry(
-          0.08,
-          0.5,
-          0.04
-        ),
-
-        neon
-
-      );
-
-
-      strip.position.set(
-        x,
-        1.55,
-        11.88
-      );
-
-
-      scene.add(strip);
-
-    });
-
+  update(delta, context) {
+    if (!context.player || !this._labelEl || this._labelShown) return;
+    var pz = context.player.position.z;
+    if (pz > 20 && pz < 40) {
+      this._labelShown = true;
+      this._labelEl.style.display = 'block';
+      var self = this;
+      setTimeout(function() {
+        self._labelEl.style.display = 'none';
+      }, 3000);
+    }
   }
-
 };
