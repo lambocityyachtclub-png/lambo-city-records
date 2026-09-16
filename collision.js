@@ -90,11 +90,11 @@ export default {
     // ==========================================================
     // FRONT WATERFRONT GLASS
     //
-    // LEFT / STORES
+    // LEFT / STORE SIDE
     // X -65 -> -21
     // Z = 10
     //
-    // RIGHT / RECORDS HQ
+    // RIGHT / RECORDS HQ SIDE
     // X 21 -> 65
     // Z = 10
     //
@@ -106,47 +106,85 @@ export default {
       x: -43,
       z: 10,
       width: 44,
-      depth: 1
+      depth: 1.4
     });
 
     this.registerBox("waterfrontGlassFrontRight", {
       x: 43,
       z: 10,
       width: 44,
-      depth: 1
+      depth: 1.4
     });
 
 
-   // ==========================================================
-// LEFT / STORE-SIDE OUTER EDGE
-//
-// Seals the west side of the left waterfront ground.
-// X = -65
-// Z = 10 -> 45
-// ==========================================================
+    // ==========================================================
+    // LEFT / STORE-SIDE OUTER WATER EDGE
+    //
+    // Fully seals the west edge of the waterfront.
+    // X = -65
+    // Z = 10 -> 45
+    // ==========================================================
 
-this.registerBox("waterfrontGlassWestSide", {
-  x: -65,
-  z: 27.5,
-  width: 2,
-  depth: 35
-});
+    this.registerBox("waterfrontGlassWestSide", {
+      x: -65,
+      z: 27.5,
+      width: 2.4,
+      depth: 35.8
+    });
 
 
-// ==========================================================
-// RIGHT / RECORDS HQ OUTER EDGE
-//
-// Seals the east side of the right waterfront ground.
-// X = 65
-// Z = 10 -> 45
-// ==========================================================
+    // ==========================================================
+    // RIGHT / RECORDS HQ OUTER WATER EDGE
+    //
+    // Fully seals the east edge of the waterfront.
+    // X = 65
+    // Z = 10 -> 45
+    //
+    // Slightly widened/deepened to make the corner impossible
+    // to slip around with the player's radius-based movement.
+    // ==========================================================
 
-this.registerBox("waterfrontGlassEastSide", {
-  x: 65,
-  z: 27.5,
-  width: 2,
-  depth: 35
-});
+    this.registerBox("waterfrontGlassEastSide", {
+      x: 65,
+      z: 27.5,
+      width: 2.4,
+      depth: 35.8
+    });
+
+
+    // ==========================================================
+    // RIGHT WATERFRONT CORNER
+    //
+    // Extra-small corner seal where the front glass meets
+    // the Records HQ-side outer glass.
+    //
+    // This does NOT create a new movement boundary.
+    // It simply closes the physical corner.
+    // ==========================================================
+
+    this.registerBox("waterfrontGlassRightCorner", {
+      x: 64.5,
+      z: 10.2,
+      width: 2.8,
+      depth: 1.8
+    });
+
+
+    // ==========================================================
+    // LEFT WATERFRONT CORNER
+    //
+    // Matches the right-side corner treatment so both sides
+    // behave consistently.
+    // ==========================================================
+
+    this.registerBox("waterfrontGlassLeftCorner", {
+      x: -64.5,
+      z: 10.2,
+      width: 2.8,
+      depth: 1.8
+    });
+
+  },
 
 
   // ==========================================================
@@ -212,4 +250,5 @@ this.registerBox("waterfrontGlassEastSide", {
 
 
   update() {}
+
 };
