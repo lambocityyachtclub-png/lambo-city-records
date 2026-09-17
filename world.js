@@ -324,9 +324,14 @@ export default {
     });
 
 
+     // ============================================================
+    // WATERFRONT NEON STRIP
     // ============================================================
-// WATERFRONT NEON STRIP
-// ============================================================
 
-// Removed the single purple LED crossing the waterfront.
-// Dock-connected LED strips remain unchanged.
+    // Removed the single purple LED crossing the waterfront.
+    // Dock-connected LED strips remain unchanged.
+
+  },
+
+  update() {}
+};
