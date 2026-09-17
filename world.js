@@ -325,21 +325,8 @@ export default {
 
 
     // ============================================================
-    // WATERFRONT NEON STRIP
-    // ============================================================
+// WATERFRONT NEON STRIP
+// ============================================================
 
-    const ws = new THREE.Mesh(
-      new THREE.BoxGeometry(120, 0.1, 0.1),
-      new THREE.MeshStandardMaterial({
-        color: 0x9900ff,
-        emissive: 0x9900ff,
-        emissiveIntensity: 2
-      })
-    );
-
-    ws.position.set(0, 0.9, 12);
-    scene.add(ws);
-  },
-
-  update() {}
-};
+// Removed the single purple LED crossing the waterfront.
+// Dock-connected LED strips remain unchanged.
