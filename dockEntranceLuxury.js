@@ -1,8 +1,7 @@
 // dockEntranceLuxury.js
-// VIP red-carpet entrance gate near the start of the dock — gold stanchions
-// connected by sagging velvet rope, flanked by two ornate glowing lamp
-// posts. Pure decorative add-on, doesn't touch dock.js at all.
-
+// VIP entrance gate near the start of the dock — gold stanchions
+// and ornate glowing lamp posts.
+// Pure decorative add-on, doesn't touch dock.js.
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 
 const ENTRANCE_Z = 26; // near player spawn, before the main dock stretch
@@ -32,18 +31,7 @@ function buildStanchion(x, z) {
   return group;
 }
 
-function buildRope(x1, z1, x2, z2, group) {
-  const attachY = 1.35;
-  const sagY = 0.9;
-  const curve = new THREE.CatmullRomCurve3([
-    new THREE.Vector3(x1, attachY, z1),
-    new THREE.Vector3((x1 + x2) / 2, sagY, (z1 + z2) / 2),
-    new THREE.Vector3(x2, attachY, z2),
-  ]);
-  const geo = new THREE.TubeGeometry(curve, 12, 0.06, 6, false);
-  const mat = new THREE.MeshStandardMaterial({ color: 0x8b0018, roughness: 0.6 });
-  group.add(new THREE.Mesh(geo, mat));
-}
+
 
 export default {
   init(scene) {
