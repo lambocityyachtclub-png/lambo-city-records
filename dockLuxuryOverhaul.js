@@ -935,49 +935,53 @@ function buildEstate(
 
   group.add(plaque);
 
-  // ----------------------------------------------------------
+    // ----------------------------------------------------------
   // PRIVATE WALKWAY
   // ----------------------------------------------------------
+  // The Gaming Estate's sideways purple walkway LEDs are
+  // intentionally disabled.
+  // The two long dock LEDs remain untouched.
 
-  const walkway = new THREE.Mesh(
-    geometries.walkway,
-    materials.premiumWood
-  );
+  if (theme.name !== "GAMING ESTATE") {
+    const walkway = new THREE.Mesh(
+      geometries.walkway,
+      materials.premiumWood
+    );
 
-  walkway.position.set(
-    7.5,
-    0.1,
-    0
-  );
+    walkway.position.set(
+      7.5,
+      0.1,
+      0
+    );
 
-  group.add(walkway);
+    group.add(walkway);
 
-  const walkwayGlow = new THREE.Mesh(
-    geometries.walkwayAccent,
-    accentMaterial
-  );
+    const walkwayGlow = new THREE.Mesh(
+      geometries.walkwayAccent,
+      accentMaterial
+    );
 
-  walkwayGlow.position.set(
-    7.5,
-    0.19,
-    1.55
-  );
+    walkwayGlow.position.set(
+      7.5,
+      0.19,
+      1.55
+    );
 
-  group.add(walkwayGlow);
+    group.add(walkwayGlow);
 
-  const walkwayGlow2 = new THREE.Mesh(
-    geometries.walkwayAccent,
-    accentMaterial
-  );
+    const walkwayGlow2 = new THREE.Mesh(
+      geometries.walkwayAccent,
+      accentMaterial
+    );
 
-  walkwayGlow2.position.set(
-    7.5,
-    0.19,
-    -1.55
-  );
+    walkwayGlow2.position.set(
+      7.5,
+      0.19,
+      -1.55
+    );
 
-  group.add(walkwayGlow2);
-
+    group.add(walkwayGlow2);
+  }
   // ----------------------------------------------------------
   // LANDSCAPING
   // ----------------------------------------------------------
