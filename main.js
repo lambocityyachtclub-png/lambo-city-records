@@ -14,7 +14,8 @@ import Player from "./player.js";
 import HUD from "./hud.js";
 import NPC from "./npc.js";
 import HeroPerformance from "./heroPerformance.js";
-import Cars from "./cars.js";
+// Cars temporarily disabled.
+// The cars.js feature remains preserved for future use.
 import CinematicFlowSystem from "./cinematicFlowSystem.js";
 import CinematicWorldSkin from "./cinematicWorldSkin.js";
 import CinematicDockCore from "./cinematicDockCore.js";
@@ -48,7 +49,7 @@ engine.registerSystems({
   lighting: Lighting,
   palms: Palms,
   yacht: Yacht,
-  cars: Cars,
+  // cars: Cars,
   npc: NPC,
   heroPerformance: HeroPerformance,
   cinematicFlow: CinematicFlowSystem,
