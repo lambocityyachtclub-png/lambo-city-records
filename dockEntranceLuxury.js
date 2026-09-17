@@ -51,9 +51,7 @@ export default {
 
     const positions = [-HALF_WIDTH, -HALF_WIDTH / 3, HALF_WIDTH / 3, HALF_WIDTH];
     positions.forEach(x => group.add(buildStanchion(x, ENTRANCE_Z)));
-    for (let i = 0; i < positions.length - 1; i++) {
-      buildRope(positions[i], ENTRANCE_Z, positions[i + 1], ENTRANCE_Z, group);
-    }
+    
 
     // ORNATE FLANKING LAMP POSTS
     [-HALF_WIDTH - 1.5, HALF_WIDTH + 1.5].forEach(x => {
