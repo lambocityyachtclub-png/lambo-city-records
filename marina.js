@@ -74,10 +74,10 @@ export default {
     );
 
     road.position.set(
-      STREET_X_MID,
-      0.5,
-      STREET_Z
-    );
+  STREET_X_MID,
+  0.51,
+  STREET_Z
+);
 
     scene.add(road);
 
