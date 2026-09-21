@@ -672,14 +672,17 @@ export default {
         14
       ),
 
-      new THREE.MeshStandardMaterial({
+     new THREE.MeshStandardMaterial({
 
-        color: 0x0a0a0f,
-        roughness: .5,
-        metalness: .3
+  color: 0x0a0a0f,
+  roughness: .5,
+  metalness: .3,
 
-      })
+  transparent: true,
+  opacity: 0.16,
+  depthWrite: false
 
+})
     );
 
     building.position.y = 13;
