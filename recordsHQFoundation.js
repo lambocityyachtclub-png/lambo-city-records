@@ -129,7 +129,7 @@ export default {
 
     elevator.name = "recordsHQGlassElevator";
 
-    elevator.position.set(5, 0, -7.85);
+    elevator.position.set(-5, 0, -7.85);
 
     box(
       elevator,
