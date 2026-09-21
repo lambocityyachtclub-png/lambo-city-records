@@ -36,6 +36,7 @@ import YachtLuxuryDetails from "./yachtLuxuryDetails.js";
 import DockEntranceLuxury from "./dockEntranceLuxury.js";
 import DockLuxuryOverhaul from "./dockLuxuryOverhaul.js";
 import RecordsHQ from "./recordsHQ.js";
+import RecordsHQFoundation from "./recordsHQFoundation.js";
 import BoardwalkOverlooks from "./boardwalkOverlooks.js";
 const engine = new Engine();
 engine.registerSystems({
@@ -72,6 +73,7 @@ engine.registerSystems({
   dockEntranceLuxury: DockEntranceLuxury,
   dockLuxuryOverhaul: DockLuxuryOverhaul,
   recordsHQ: RecordsHQ,
+  recordsHQFoundation: RecordsHQFoundation,
   boardwalkOverlooks: BoardwalkOverlooks,
   input: Input,
   player: Player,
