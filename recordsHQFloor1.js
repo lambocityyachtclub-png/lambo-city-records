@@ -78,7 +78,7 @@ function label(parent, text, x, y, z, color = 0xffd36a) {
   parent.add(sign);
 
   return sign;
-}
+} 
 
 export default {
 
