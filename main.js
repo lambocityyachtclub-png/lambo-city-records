@@ -37,6 +37,7 @@ import DockEntranceLuxury from "./dockEntranceLuxury.js";
 import DockLuxuryOverhaul from "./dockLuxuryOverhaul.js";
 import RecordsHQ from "./recordsHQ.js";
 import RecordsHQFoundation from "./recordsHQFoundation.js";
+import RecordsHQFloor1 from "./recordsHQFloor1.js";
 import BoardwalkOverlooks from "./boardwalkOverlooks.js";
 const engine = new Engine();
 engine.registerSystems({
@@ -74,6 +75,7 @@ engine.registerSystems({
   dockLuxuryOverhaul: DockLuxuryOverhaul,
   recordsHQ: RecordsHQ,
   recordsHQFoundation: RecordsHQFoundation,
+  recordsHQFloor1: RecordsHQFloor1,
   boardwalkOverlooks: BoardwalkOverlooks,
   input: Input,
   player: Player,
