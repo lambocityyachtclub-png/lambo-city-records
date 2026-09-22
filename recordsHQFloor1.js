@@ -89,7 +89,7 @@ export default {
     group.name = "recordsHQFloor1";
 
     // World position of Records HQ
-    group.position.set(HQ_X, 0, HQ_Z);
+    group.position.set(HQ_X, FLOOR_Y, HQ_Z);
 
     // ==================================================
     // MATERIALS
@@ -499,32 +499,32 @@ export default {
     // No blocking walls
     // ==================================================
 
-    box(
-      group,
-      new THREE.BoxGeometry(4.8, 0.035, 0.06),
-      goldGlow,
-      0,
-      FLOOR_Y + 0.1,
-      1.2
-    );
+   box(
+  group,
+  new THREE.BoxGeometry(4.8, 0.035, 0.06),
+  goldGlow,
+  0,
+  0.1,
+  1.2
+);
 
-    box(
-      group,
-      new THREE.BoxGeometry(0.06, 0.035, 3.5),
-      goldGlow,
-      -2.35,
-      FLOOR_Y + 0.1,
-      -0.55
-    );
+box(
+  group,
+  new THREE.BoxGeometry(0.06, 0.035, 3.5),
+  goldGlow,
+  -2.35,
+  0.1,
+  -0.55
+);
 
-    box(
-      group,
-      new THREE.BoxGeometry(0.06, 0.035, 3.5),
-      goldGlow,
-      2.35,
-      FLOOR_Y + 0.1,
-      -0.55
-    );
+box(
+  group,
+  new THREE.BoxGeometry(0.06, 0.035, 3.5),
+  goldGlow,
+  2.35,
+  0.1,
+  -0.55
+);
 
     // ==================================================
     // ELEVATOR ARRIVAL MARKER
