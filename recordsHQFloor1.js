@@ -19,7 +19,8 @@ import * as THREE from
 const HQ_X = 28;
 const HQ_Z = 22;
 
-// Floor 1 surface
+// Floor 1 world height.
+// The entire Floor 1 group is raised to the existing first-floor level.
 const FLOOR_Y = 4.32;
 
 function material(color, options = {}) {
@@ -78,7 +79,7 @@ function label(parent, text, x, y, z, color = 0xffd36a) {
   parent.add(sign);
 
   return sign;
-} 
+}
 
 export default {
 
@@ -88,7 +89,14 @@ export default {
 
     group.name = "recordsHQFloor1";
 
-    // World position of Records HQ
+    // ==================================================
+    // WORLD POSITION
+    // ==================================================
+    //
+    // Floor 1 is placed at the existing first-floor level.
+    // All interior Y values below are LOCAL to this group.
+    //
+
     group.position.set(HQ_X, FLOOR_Y, HQ_Z);
 
     // ==================================================
@@ -143,22 +151,25 @@ export default {
     // FLOOR FINISH
     // ==================================================
 
+    // LOCAL Y = 0 because the entire group is already
+    // positioned at FLOOR_Y in world space.
     box(
       group,
       new THREE.BoxGeometry(17.9, 0.08, 13.8),
       darkFloor,
       0,
-      FLOOR_Y,
+      0,
       0
     );
 
     // Luxury floor border
+
     box(
       group,
       new THREE.BoxGeometry(17.5, 0.04, 0.08),
       gold,
       0,
-      FLOOR_Y + 0.06,
+      0.06,
       6.65
     );
 
@@ -167,7 +178,7 @@ export default {
       new THREE.BoxGeometry(17.5, 0.04, 0.08),
       gold,
       0,
-      FLOOR_Y + 0.06,
+      0.06,
       -6.65
     );
 
@@ -176,7 +187,7 @@ export default {
       new THREE.BoxGeometry(0.08, 0.04, 13.3),
       gold,
       8.65,
-      FLOOR_Y + 0.06,
+      0.06,
       0
     );
 
@@ -185,7 +196,7 @@ export default {
       new THREE.BoxGeometry(0.08, 0.04, 13.3),
       gold,
       -8.65,
-      FLOOR_Y + 0.06,
+      0.06,
       0
     );
 
@@ -198,7 +209,6 @@ export default {
 
     merchandise.name = "floor1MerchandiseStore";
 
-    // Back display wall
     box(
       merchandise,
       new THREE.BoxGeometry(13.8, 4.4, 0.22),
@@ -208,7 +218,6 @@ export default {
       5.65
     );
 
-    // Gold wall trim
     box(
       merchandise,
       new THREE.BoxGeometry(13.6, 0.1, 0.08),
@@ -218,7 +227,6 @@ export default {
       5.5
     );
 
-    // Merchandise shelves
     [-5.4, -1.8, 1.8, 5.4].forEach(x => {
 
       box(
@@ -250,7 +258,6 @@ export default {
 
     });
 
-    // Shirt displays
     [-5.4, -1.8, 1.8, 5.4].forEach(x => {
 
       box(
@@ -318,7 +325,6 @@ export default {
       3.65
     );
 
-    // Counter front illumination
     box(
       counter,
       new THREE.BoxGeometry(3.8, 0.08, 0.04),
@@ -340,15 +346,12 @@ export default {
 
     // ==================================================
     // MUSIC + VIDEO STATION
-    // Located on the left side
-    // Kept away from elevator area
     // ==================================================
 
     const mediaStation = new THREE.Group();
 
     mediaStation.name = "floor1MusicVideoStation";
 
-    // Display wall
     box(
       mediaStation,
       new THREE.BoxGeometry(4.5, 2.8, 0.18),
@@ -358,7 +361,6 @@ export default {
       -3.5
     );
 
-    // Screen
     box(
       mediaStation,
       new THREE.BoxGeometry(3.55, 1.9, 0.08),
@@ -368,7 +370,6 @@ export default {
       -3.38
     );
 
-    // Screen frame
     box(
       mediaStation,
       new THREE.BoxGeometry(3.8, 0.08, 0.12),
@@ -387,7 +388,6 @@ export default {
       -3.35
     );
 
-    // Media console
     box(
       mediaStation,
       new THREE.BoxGeometry(4.1, 0.75, 1.1),
@@ -406,7 +406,6 @@ export default {
       -2.35
     );
 
-    // Speakers
     [-7.3, -4].forEach(x => {
 
       box(
@@ -441,7 +440,6 @@ export default {
 
     // ==================================================
     // RIGHT-SIDE DISPLAY TABLES
-    // Kept clear of the elevator at local x = -5
     // ==================================================
 
     const displayZone = new THREE.Group();
@@ -450,7 +448,6 @@ export default {
 
     [2.8, 5.7].forEach(x => {
 
-      // Table
       box(
         displayZone,
         new THREE.BoxGeometry(2.1, 0.12, 1.25),
@@ -460,7 +457,6 @@ export default {
         -1.2
       );
 
-      // Table base
       box(
         displayZone,
         new THREE.BoxGeometry(1.65, 0.85, 0.85),
@@ -470,7 +466,6 @@ export default {
         -1.2
       );
 
-      // Display product
       box(
         displayZone,
         new THREE.BoxGeometry(0.75, 0.5, 0.35),
@@ -495,36 +490,34 @@ export default {
 
     // ==================================================
     // CENTRAL OPEN WALKWAY
-    // Visual floor markers only
-    // No blocking walls
     // ==================================================
 
-   box(
-  group,
-  new THREE.BoxGeometry(4.8, 0.035, 0.06),
-  goldGlow,
-  0,
-  0.1,
-  1.2
-);
+    box(
+      group,
+      new THREE.BoxGeometry(4.8, 0.035, 0.06),
+      goldGlow,
+      0,
+      0.1,
+      1.2
+    );
 
-box(
-  group,
-  new THREE.BoxGeometry(0.06, 0.035, 3.5),
-  goldGlow,
-  -2.35,
-  0.1,
-  -0.55
-);
+    box(
+      group,
+      new THREE.BoxGeometry(0.06, 0.035, 3.5),
+      goldGlow,
+      -2.35,
+      0.1,
+      -0.55
+    );
 
-box(
-  group,
-  new THREE.BoxGeometry(0.06, 0.035, 3.5),
-  goldGlow,
-  2.35,
-  0.1,
-  -0.55
-);
+    box(
+      group,
+      new THREE.BoxGeometry(0.06, 0.035, 3.5),
+      goldGlow,
+      2.35,
+      0.1,
+      -0.55
+    );
 
     // ==================================================
     // ELEVATOR ARRIVAL MARKER
@@ -535,13 +528,12 @@ box(
 
     elevatorMarker.name = "floor1ElevatorArrival";
 
-    // Elevator is at local x = -5, local z = -7.85
     box(
       elevatorMarker,
       new THREE.BoxGeometry(3.4, 0.04, 1.8),
       gold,
       -5,
-      FLOOR_Y + 0.09,
+      0.09,
       -6.25
     );
 
@@ -550,7 +542,7 @@ box(
       new THREE.BoxGeometry(2.8, 0.025, 1.2),
       black,
       -5,
-      FLOOR_Y + 0.12,
+      0.12,
       -6.25
     );
 
@@ -558,7 +550,7 @@ box(
       elevatorMarker,
       "ELEVATOR",
       -5,
-      FLOOR_Y + 0.2,
+      0.2,
       -5.55
     );
 
