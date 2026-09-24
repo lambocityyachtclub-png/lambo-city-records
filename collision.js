@@ -47,12 +47,58 @@ export default {
     // RECORDS HQ
     // ==========================================================
 
-    this.registerBox("recordsHQ", {
-      x: 28,
-      z: 22,
-      width: 18,
-      depth: 14
-    });
+   // ==========================================================
+// RECORDS HQ
+//
+// The HQ remains solid on the sides and back.
+// The front center is intentionally left open so the player
+// can walk from the boardwalk/plaza directly into Floor 1.
+//
+// Building footprint:
+// X = 19 -> 37
+// Z = 15 -> 29
+//
+// Public entrance:
+// X = 23 -> 33
+// Z = 28.75
+// ==========================================================
+
+this.registerBox("recordsHQLeftWall", {
+  x: 19.25,
+  z: 22,
+  width: 0.5,
+  depth: 14
+});
+
+this.registerBox("recordsHQRightWall", {
+  x: 36.75,
+  z: 22,
+  width: 0.5,
+  depth: 14
+});
+
+this.registerBox("recordsHQBackWall", {
+  x: 28,
+  z: 15.25,
+  width: 18,
+  depth: 0.5
+});
+
+// Front facade — LEFT side of entrance
+this.registerBox("recordsHQFrontLeft", {
+  x: 21,
+  z: 28.75,
+  width: 4,
+  depth: 0.5
+});
+
+// Front facade — RIGHT side of entrance
+this.registerBox("recordsHQFrontRight", {
+  x: 35,
+  z: 28.75,
+  width: 4,
+  depth: 0.5
+});
 
 
     // ==========================================================
