@@ -21,7 +21,7 @@ const HQ_Z = 22;
 
 // Floor 1 world height.
 // The entire Floor 1 group is raised to the existing first-floor level.
-const FLOOR_Y = 4.32;
+const FLOOR_Y = 1.28;
 
 function material(color, options = {}) {
   return new THREE.MeshStandardMaterial({
