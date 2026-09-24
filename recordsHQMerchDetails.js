@@ -19,7 +19,7 @@ import * as THREE from
 
 const HQ_X = 28;
 const HQ_Z = 22;
-const FLOOR_Y = 4.32;
+const FLOOR_Y = 1.28;
 
 function material(color, options = {}) {
   return new THREE.MeshStandardMaterial({
