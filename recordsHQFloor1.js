@@ -3,7 +3,11 @@
 // FLOOR 1 — MERCHANDISE + MUSIC EXPERIENCE
 //
 // Phase 1 interior layout pass.
-// Preserves HQ exterior, foundation, elevator, collision and player.
+//
+// IMPORTANT:
+// The HQ architectural foundation is preserved.
+// Floor 1 uses the existing player-level surface.
+// This file does NOT create a second black floor.
 //
 // FLOOR FLOW:
 // Entrance
@@ -31,32 +35,78 @@ function material(color, options = {}) {
     roughness: options.roughness ?? 0.4,
     metalness: options.metalness ?? 0.35,
     emissive: options.emissive ?? 0x000000,
-    emissiveIntensity: options.emissiveIntensity ?? 0
+    emissiveIntensity:
+      options.emissiveIntensity ?? 0
   });
 }
 
-function box(parent, geometry, mat, x, y, z) {
-  const mesh = new THREE.Mesh(geometry, mat);
-  mesh.position.set(x, y, z);
+function box(
+  parent,
+  geometry,
+  mat,
+  x,
+  y,
+  z
+) {
+
+  const mesh = new THREE.Mesh(
+    geometry,
+    mat
+  );
+
+  mesh.position.set(
+    x,
+    y,
+    z
+  );
+
   parent.add(mesh);
+
   return mesh;
 }
 
-function cylinder(parent, geometry, mat, x, y, z) {
-  const mesh = new THREE.Mesh(geometry, mat);
-  mesh.position.set(x, y, z);
+function cylinder(
+  parent,
+  geometry,
+  mat,
+  x,
+  y,
+  z
+) {
+
+  const mesh = new THREE.Mesh(
+    geometry,
+    mat
+  );
+
+  mesh.position.set(
+    x,
+    y,
+    z
+  );
+
   parent.add(mesh);
+
   return mesh;
 }
 
-function label(parent, text, x, y, z, width = 4.2) {
+function label(
+  parent,
+  text,
+  x,
+  y,
+  z,
+  width = 4.2
+) {
 
-  const canvas = document.createElement("canvas");
+  const canvas =
+    document.createElement("canvas");
 
   canvas.width = 512;
   canvas.height = 128;
 
-  const context = canvas.getContext("2d");
+  const context =
+    canvas.getContext("2d");
 
   context.clearRect(
     0,
@@ -65,7 +115,9 @@ function label(parent, text, x, y, z, width = 4.2) {
     canvas.height
   );
 
-  context.font = "bold 42px Arial";
+  context.font =
+    "bold 42px Arial";
+
   context.textAlign = "center";
   context.textBaseline = "middle";
   context.fillStyle = "#ffd36a";
@@ -76,20 +128,27 @@ function label(parent, text, x, y, z, width = 4.2) {
     64
   );
 
-  const texture = new THREE.CanvasTexture(canvas);
+  const texture =
+    new THREE.CanvasTexture(canvas);
 
-  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.colorSpace =
+    THREE.SRGBColorSpace;
 
-  const signMaterial = new THREE.MeshBasicMaterial({
-    map: texture,
-    transparent: true,
-    side: THREE.DoubleSide
-  });
+  const signMaterial =
+    new THREE.MeshBasicMaterial({
+      map: texture,
+      transparent: true,
+      side: THREE.DoubleSide
+    });
 
-  const sign = new THREE.Mesh(
-    new THREE.PlaneGeometry(width, 0.8),
-    signMaterial
-  );
+  const sign =
+    new THREE.Mesh(
+      new THREE.PlaneGeometry(
+        width,
+        0.8
+      ),
+      signMaterial
+    );
 
   sign.position.set(
     x,
@@ -106,9 +165,11 @@ export default {
 
   init(scene) {
 
-    const group = new THREE.Group();
+    const group =
+      new THREE.Group();
 
-    group.name = "recordsHQFloor1";
+    group.name =
+      "recordsHQFloor1";
 
     group.position.set(
       HQ_X,
@@ -120,133 +181,72 @@ export default {
     // MATERIALS
     // ==================================================
 
-    const black = material(0x080a10, {
-      roughness: 0.3,
-      metalness: 0.65
-    });
+    const black =
+      material(0x080a10, {
+        roughness: 0.3,
+        metalness: 0.65
+      });
 
-    const darkFloor = material(0x14151c, {
-      roughness: 0.28,
-      metalness: 0.5
-    });
+    const gold =
+      material(0xffd36a, {
+        roughness: 0.25,
+        metalness: 0.8,
+        emissive: 0xff9d00,
+        emissiveIntensity: 0.45
+      });
 
-    const gold = material(0xffd36a, {
-      roughness: 0.25,
-      metalness: 0.8,
-      emissive: 0xff9d00,
-      emissiveIntensity: 0.45
-    });
+    const goldGlow =
+      material(0xffc14a, {
+        roughness: 0.3,
+        metalness: 0.55,
+        emissive: 0xff8500,
+        emissiveIntensity: 1.2
+      });
 
-    const goldGlow = material(0xffc14a, {
-      roughness: 0.3,
-      metalness: 0.55,
-      emissive: 0xff8500,
-      emissiveIntensity: 1.2
-    });
+    const glass =
+      new THREE.MeshStandardMaterial({
+        color: 0x4abaff,
+        emissive: 0x123b5d,
+        emissiveIntensity: 0.3,
+        transparent: true,
+        opacity: 0.3,
+        roughness: 0.1,
+        metalness: 0.2
+      });
 
-    const glass = new THREE.MeshStandardMaterial({
-      color: 0x4abaff,
-      emissive: 0x123b5d,
-      emissiveIntensity: 0.3,
-      transparent: true,
-      opacity: 0.3,
-      roughness: 0.1,
-      metalness: 0.2
-    });
+    const white =
+      material(0xf2eee5, {
+        roughness: 0.45,
+        metalness: 0.1
+      });
 
-    const white = material(0xf2eee5, {
-      roughness: 0.45,
-      metalness: 0.1
-    });
-
-    const red = material(0x720b18, {
-      roughness: 0.4,
-      metalness: 0.2
-    });
+    const red =
+      material(0x720b18, {
+        roughness: 0.4,
+        metalness: 0.2
+      });
 
     // ==================================================
-    // FLOOR
+    // NO SECOND FLOOR
+    //
+    // IMPORTANT:
+    // Do NOT create another black floor here.
+    //
+    // The group sits at FLOOR_Y = 1.28 and all interior
+    // pieces are positioned relative to that existing
+    // player-level surface.
     // ==================================================
-
-    box(
-      group,
-      new THREE.BoxGeometry(
-        17.9,
-        0.08,
-        13.8
-      ),
-      darkFloor,
-      0,
-      0,
-      0
-    );
-
-    // Floor border
-
-    box(
-      group,
-      new THREE.BoxGeometry(
-        17.5,
-        0.04,
-        0.08
-      ),
-      gold,
-      0,
-      0.06,
-      6.65
-    );
-
-    box(
-      group,
-      new THREE.BoxGeometry(
-        17.5,
-        0.04,
-        0.08
-      ),
-      gold,
-      0,
-      0.06,
-      -6.65
-    );
-
-    box(
-      group,
-      new THREE.BoxGeometry(
-        0.08,
-        0.04,
-        13.3
-      ),
-      gold,
-      8.65,
-      0.06,
-      0
-    );
-
-    box(
-      group,
-      new THREE.BoxGeometry(
-        0.08,
-        0.04,
-        13.3
-      ),
-      gold,
-      -8.65,
-      0.06,
-      0
-    );
 
     // ==================================================
     // FRONT MERCHANDISE ZONE
-    //
-    // Moved deeper into the room.
-    // This leaves the entrance open.
     // ==================================================
 
-    const merchandise = new THREE.Group();
+    const merchandise =
+      new THREE.Group();
 
-    merchandise.name = "floor1MerchandiseStore";
+    merchandise.name =
+      "floor1MerchandiseStore";
 
-    // Back display wall
     box(
       merchandise,
       new THREE.BoxGeometry(
@@ -260,7 +260,6 @@ export default {
       5.25
     );
 
-    // Gold header
     box(
       merchandise,
       new THREE.BoxGeometry(
@@ -274,94 +273,93 @@ export default {
       5.1
     );
 
-    // Shelves
-    [-5.4, -1.8, 1.8, 5.4].forEach(x => {
+    [-5.4, -1.8, 1.8, 5.4]
+      .forEach(x => {
 
-      box(
-        merchandise,
-        new THREE.BoxGeometry(
-          2.7,
-          0.12,
-          0.8
-        ),
-        gold,
-        x,
-        1.05,
-        4.75
-      );
+        box(
+          merchandise,
+          new THREE.BoxGeometry(
+            2.7,
+            0.12,
+            0.8
+          ),
+          gold,
+          x,
+          1.05,
+          4.75
+        );
 
-      box(
-        merchandise,
-        new THREE.BoxGeometry(
-          2.7,
-          0.12,
-          0.8
-        ),
-        gold,
-        x,
-        2.05,
-        4.75
-      );
+        box(
+          merchandise,
+          new THREE.BoxGeometry(
+            2.7,
+            0.12,
+            0.8
+          ),
+          gold,
+          x,
+          2.05,
+          4.75
+        );
 
-      box(
-        merchandise,
-        new THREE.BoxGeometry(
-          2.7,
-          0.12,
-          0.8
-        ),
-        gold,
-        x,
-        3.05,
-        4.75
-      );
+        box(
+          merchandise,
+          new THREE.BoxGeometry(
+            2.7,
+            0.12,
+            0.8
+          ),
+          gold,
+          x,
+          3.05,
+          4.75
+        );
 
-    });
+      });
 
-    // Merchandise blocks
+    [-5.4, -1.8, 1.8, 5.4]
+      .forEach(x => {
 
-    [-5.4, -1.8, 1.8, 5.4].forEach(x => {
+        box(
+          merchandise,
+          new THREE.BoxGeometry(
+            0.85,
+            0.75,
+            0.12
+          ),
+          white,
+          x,
+          1.48,
+          4.28
+        );
 
-      box(
-        merchandise,
-        new THREE.BoxGeometry(
-          0.85,
-          0.75,
-          0.12
-        ),
-        white,
-        x,
-        1.48,
-        4.28
-      );
+        box(
+          merchandise,
+          new THREE.BoxGeometry(
+            0.85,
+            0.75,
+            0.12
+          ),
+          red,
+          x,
+          2.48,
+          4.28
+        );
 
-      box(
-        merchandise,
-        new THREE.BoxGeometry(
-          0.85,
-          0.75,
-          0.12
-        ),
-        red,
-        x,
-        2.48,
-        4.28
-      );
+        box(
+          merchandise,
+          new THREE.BoxGeometry(
+            0.85,
+            0.75,
+            0.12
+          ),
+          white,
+          x,
+          3.48,
+          4.28
+        );
 
-      box(
-        merchandise,
-        new THREE.BoxGeometry(
-          0.85,
-          0.75,
-          0.12
-        ),
-        white,
-        x,
-        3.48,
-        4.28
-      );
-
-    });
+      });
 
     label(
       merchandise,
@@ -376,13 +374,13 @@ export default {
 
     // ==================================================
     // MERCHANDISE COUNTER
-    //
-    // Moved back slightly so the entrance remains open.
     // ==================================================
 
-    const counter = new THREE.Group();
+    const counter =
+      new THREE.Group();
 
-    counter.name = "floor1MerchandiseCounter";
+    counter.name =
+      "floor1MerchandiseCounter";
 
     box(
       counter,
@@ -436,13 +434,13 @@ export default {
 
     // ==================================================
     // MUSIC + VIDEO
-    //
-    // Kept toward the rear/stage side.
     // ==================================================
 
-    const mediaStation = new THREE.Group();
+    const mediaStation =
+      new THREE.Group();
 
-    mediaStation.name = "floor1MusicVideoStation";
+    mediaStation.name =
+      "floor1MusicVideoStation";
 
     box(
       mediaStation,
@@ -509,36 +507,37 @@ export default {
       -2.2
     );
 
-    [-7.1, -4.0].forEach(x => {
+    [-7.1, -4.0]
+      .forEach(x => {
 
-      box(
-        mediaStation,
-        new THREE.BoxGeometry(
-          0.55,
-          1.15,
-          0.45
-        ),
-        black,
-        x,
-        0.95,
-        -2.3
-      );
+        box(
+          mediaStation,
+          new THREE.BoxGeometry(
+            0.55,
+            1.15,
+            0.45
+          ),
+          black,
+          x,
+          0.95,
+          -2.3
+        );
 
-      cylinder(
-        mediaStation,
-        new THREE.CylinderGeometry(
-          0.13,
-          0.13,
-          0.04,
-          16
-        ),
-        goldGlow,
-        x,
-        1.1,
-        -2.55
-      );
+        cylinder(
+          mediaStation,
+          new THREE.CylinderGeometry(
+            0.13,
+            0.13,
+            0.04,
+            16
+          ),
+          goldGlow,
+          x,
+          1.1,
+          -2.55
+        );
 
-    });
+      });
 
     label(
       mediaStation,
@@ -555,72 +554,73 @@ export default {
     // RIGHT-SIDE PREMIUM DISPLAY
     // ==================================================
 
-    const displayZone = new THREE.Group();
+    const displayZone =
+      new THREE.Group();
 
-    displayZone.name = "floor1DisplayTables";
+    displayZone.name =
+      "floor1DisplayTables";
 
-    [3.0, 5.8].forEach(x => {
+    [3.0, 5.8]
+      .forEach(x => {
 
-      box(
-        displayZone,
-        new THREE.BoxGeometry(
-          2.0,
-          0.12,
-          1.15
-        ),
-        gold,
-        x,
-        1.0,
-        -1.0
-      );
+        box(
+          displayZone,
+          new THREE.BoxGeometry(
+            2.0,
+            0.12,
+            1.15
+          ),
+          gold,
+          x,
+          1.0,
+          -1.0
+        );
 
-      box(
-        displayZone,
-        new THREE.BoxGeometry(
-          1.55,
-          0.75,
-          0.8
-        ),
-        black,
-        x,
-        0.55,
-        -1.0
-      );
+        box(
+          displayZone,
+          new THREE.BoxGeometry(
+            1.55,
+            0.75,
+            0.8
+          ),
+          black,
+          x,
+          0.55,
+          -1.0
+        );
 
-      box(
-        displayZone,
-        new THREE.BoxGeometry(
-          0.7,
-          0.45,
-          0.32
-        ),
-        white,
-        x,
-        1.35,
-        -1.0
-      );
+        box(
+          displayZone,
+          new THREE.BoxGeometry(
+            0.7,
+            0.45,
+            0.32
+          ),
+          white,
+          x,
+          1.35,
+          -1.0
+        );
 
-      box(
-        displayZone,
-        new THREE.BoxGeometry(
-          0.7,
-          0.45,
-          0.32
-        ),
-        red,
-        x,
-        1.8,
-        -1.0
-      );
+        box(
+          displayZone,
+          new THREE.BoxGeometry(
+            0.7,
+            0.45,
+            0.32
+          ),
+          red,
+          x,
+          1.8,
+          -1.0
+        );
 
-    });
+      });
 
     group.add(displayZone);
 
     // ==================================================
-    // CENTRAL WALKWAY
-    //
-    // This is deliberately open.
+    // CENTRAL WALKWAY DETAIL
     // ==================================================
 
     box(
@@ -663,14 +663,16 @@ export default {
     );
 
     // ==================================================
-    // ELEVATOR ARRIVAL
+    // EXISTING ELEVATOR ARRIVAL
     //
-    // Existing elevator remains untouched.
+    // Position preserved.
     // ==================================================
 
-    const elevatorMarker = new THREE.Group();
+    const elevatorMarker =
+      new THREE.Group();
 
-    elevatorMarker.name = "floor1ElevatorArrival";
+    elevatorMarker.name =
+      "floor1ElevatorArrival";
 
     box(
       elevatorMarker,
@@ -711,51 +713,53 @@ export default {
 
     // ==================================================
     // FLOOR 1 LIGHTING
-    //
-    // Brought down into the actual usable volume.
     // ==================================================
 
-    const ceilingLights = new THREE.Group();
+    const ceilingLights =
+      new THREE.Group();
 
-    ceilingLights.name = "floor1CeilingLights";
+    ceilingLights.name =
+      "floor1CeilingLights";
 
-    [-5.5, 0, 5.5].forEach(x => {
+    [-5.5, 0, 5.5]
+      .forEach(x => {
 
-      box(
-        ceilingLights,
-        new THREE.BoxGeometry(
-          2.8,
-          0.05,
-          0.16
-        ),
-        goldGlow,
-        x,
-        3.75,
-        1.0
-      );
+        box(
+          ceilingLights,
+          new THREE.BoxGeometry(
+            2.8,
+            0.05,
+            0.16
+          ),
+          goldGlow,
+          x,
+          3.75,
+          1.0
+        );
 
-      box(
-        ceilingLights,
-        new THREE.BoxGeometry(
-          0.16,
-          0.05,
-          2.8
-        ),
-        goldGlow,
-        x,
-        3.75,
-        1.0
-      );
+        box(
+          ceilingLights,
+          new THREE.BoxGeometry(
+            0.16,
+            0.05,
+            2.8
+          ),
+          goldGlow,
+          x,
+          3.75,
+          1.0
+        );
 
-    });
+      });
 
     group.add(ceilingLights);
 
-    const light = new THREE.PointLight(
-      0xffc36b,
-      1.0,
-      12
-    );
+    const light =
+      new THREE.PointLight(
+        0xffc36b,
+        1.0,
+        12
+      );
 
     light.position.set(
       0,
@@ -765,13 +769,10 @@ export default {
 
     group.add(light);
 
-    // ==================================================
-    // REGISTER
-    // ==================================================
-
     scene.add(group);
 
     return group;
+
   },
 
   update() {}
