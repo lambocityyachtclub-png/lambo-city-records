@@ -2,17 +2,8 @@
 // LAMBO CITY RECORDS
 // FLOOR 1 — MERCHANDISE DETAIL LAYER
 //
-// Adds recognizable merchandise details to the existing
-// Floor 1 store without changing:
-// - HQ architecture
-// - Floor height
-// - Elevator
-// - Existing Floor 1 layout
-// - Collision
-// - Exterior
-//
-// Visual-only for Phase 1.
-// No purchasing system yet.
+// Visual-only Phase 1 merchandise details.
+// Positioned to match the revised Floor 1 flow.
 
 import * as THREE from
   "https://unpkg.com/three@0.160.0/build/three.module.js";
@@ -45,7 +36,14 @@ function cylinder(parent, geometry, mat, x, y, z) {
   return mesh;
 }
 
-function textLabel(parent, text, x, y, z, width = 2.4) {
+function textLabel(
+  parent,
+  text,
+  x,
+  y,
+  z,
+  width = 2.4
+) {
 
   const canvas = document.createElement("canvas");
 
@@ -54,12 +52,16 @@ function textLabel(parent, text, x, y, z, width = 2.4) {
 
   const ctx = canvas.getContext("2d");
 
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.clearRect(
+    0,
+    0,
+    canvas.width,
+    canvas.height
+  );
 
   ctx.font = "bold 38px Arial";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-
   ctx.fillStyle = "#ffffff";
 
   ctx.fillText(
@@ -79,11 +81,18 @@ function textLabel(parent, text, x, y, z, width = 2.4) {
   });
 
   const mesh = new THREE.Mesh(
-    new THREE.PlaneGeometry(width, 0.6),
+    new THREE.PlaneGeometry(
+      width,
+      0.6
+    ),
     mat
   );
 
-  mesh.position.set(x, y, z);
+  mesh.position.set(
+    x,
+    y,
+    z
+  );
 
   parent.add(mesh);
 
@@ -97,10 +106,6 @@ export default {
     const group = new THREE.Group();
 
     group.name = "recordsHQMerchDetails";
-
-    // ==================================================
-    // WORLD POSITION
-    // ==================================================
 
     group.position.set(
       HQ_X,
@@ -142,84 +147,75 @@ export default {
     });
 
     // ==================================================
-    // CLOTHING DISPLAY — FRONT SHELVES
+    // CLOTHING
     // ==================================================
 
     const clothing = new THREE.Group();
 
     clothing.name = "merchClothingDisplay";
 
-    const shirtPositions = [
-      -5.4,
-      -1.8,
-      1.8,
-      5.4
-    ];
+    [-5.4, -1.8, 1.8, 5.4].forEach(
+      (x, index) => {
 
-    shirtPositions.forEach((x, index) => {
+        const shirtMaterial =
+          index % 2 === 0
+            ? white
+            : red;
 
-      const bodyMaterial =
-        index % 2 === 0
-          ? white
-          : red;
+        box(
+          clothing,
+          new THREE.BoxGeometry(
+            0.72,
+            0.72,
+            0.12
+          ),
+          shirtMaterial,
+          x,
+          1.48,
+          4.25
+        );
 
-      // Shirt torso
-      box(
-        clothing,
-        new THREE.BoxGeometry(
-          0.72,
-          0.72,
-          0.12
-        ),
-        bodyMaterial,
-        x,
-        1.72,
-        4.55
-      );
+        box(
+          clothing,
+          new THREE.BoxGeometry(
+            0.28,
+            0.42,
+            0.12
+          ),
+          shirtMaterial,
+          x - 0.48,
+          1.58,
+          4.25
+        );
 
-      // Left sleeve
-      box(
-        clothing,
-        new THREE.BoxGeometry(
-          0.28,
-          0.42,
-          0.12
-        ),
-        bodyMaterial,
-        x - 0.48,
-        1.82,
-        4.55
-      );
+        box(
+          clothing,
+          new THREE.BoxGeometry(
+            0.28,
+            0.42,
+            0.12
+          ),
+          shirtMaterial,
+          x + 0.48,
+          1.58,
+          4.25
+        );
 
-      // Right sleeve
-      box(
-        clothing,
-        new THREE.BoxGeometry(
-          0.28,
-          0.42,
-          0.12
-        ),
-        bodyMaterial,
-        x + 0.48,
-        1.82,
-        4.55
-      );
+        box(
+          clothing,
+          new THREE.BoxGeometry(
+            0.34,
+            0.12,
+            0.025
+          ),
+          gold,
+          x,
+          1.48,
+          4.18
+        );
 
-      // Shirt center logo plate
-      box(
-        clothing,
-        new THREE.BoxGeometry(
-          0.34,
-          0.12,
-          0.025
-        ),
-        gold,
-        x,
-        1.72,
-        4.48
-      );
-
-    });
+      }
+    );
 
     group.add(clothing);
 
@@ -231,118 +227,118 @@ export default {
 
     hats.name = "merchHatDisplay";
 
-    [-5.4, -1.8, 1.8, 5.4].forEach((x, index) => {
+    [-5.4, -1.8, 1.8, 5.4].forEach(
+      (x, index) => {
 
-      const hatMaterial =
-        index % 2 === 0
-          ? black
-          : red;
+        const hatMaterial =
+          index % 2 === 0
+            ? black
+            : red;
 
-      // Crown
-      cylinder(
-        hats,
-        new THREE.CylinderGeometry(
-          0.27,
-          0.31,
-          0.18,
-          20
-        ),
-        hatMaterial,
-        x,
-        2.82,
-        4.52
-      );
+        cylinder(
+          hats,
+          new THREE.CylinderGeometry(
+            0.27,
+            0.31,
+            0.18,
+            20
+          ),
+          hatMaterial,
+          x,
+          2.55,
+          4.25
+        );
 
-      // Brim
-      box(
-        hats,
-        new THREE.BoxGeometry(
-          0.58,
-          0.035,
-          0.28
-        ),
-        hatMaterial,
-        x,
-        2.73,
-        4.58
-      );
+        box(
+          hats,
+          new THREE.BoxGeometry(
+            0.58,
+            0.035,
+            0.28
+          ),
+          hatMaterial,
+          x,
+          2.46,
+          4.32
+        );
 
-      // Gold logo
-      box(
-        hats,
-        new THREE.BoxGeometry(
-          0.16,
-          0.08,
-          0.025
-        ),
-        goldGlow,
-        x,
-        2.82,
-        4.22
-      );
+        box(
+          hats,
+          new THREE.BoxGeometry(
+            0.16,
+            0.08,
+            0.025
+          ),
+          goldGlow,
+          x,
+          2.55,
+          3.95
+        );
 
-    });
+      }
+    );
 
     group.add(hats);
 
     // ==================================================
-    // RECORD / VINYL DISPLAY
+    // VINYL
     // ==================================================
 
     const records = new THREE.Group();
 
     records.name = "merchRecordDisplay";
 
-    [-5.4, -1.8, 1.8, 5.4].forEach((x, index) => {
+    [-5.4, -1.8, 1.8, 5.4].forEach(
+      (x, index) => {
 
-      const vinylMaterial =
-        index % 2 === 0
-          ? black
-          : red;
+        const vinylMaterial =
+          index % 2 === 0
+            ? black
+            : red;
 
-      cylinder(
-        records,
-        new THREE.CylinderGeometry(
-          0.42,
-          0.42,
-          0.07,
-          32
-        ),
-        vinylMaterial,
-        x,
-        3.92,
-        4.48
-      );
+        cylinder(
+          records,
+          new THREE.CylinderGeometry(
+            0.42,
+            0.42,
+            0.07,
+            32
+          ),
+          vinylMaterial,
+          x,
+          3.45,
+          4.18
+        );
 
-      // Center label
-      cylinder(
-        records,
-        new THREE.CylinderGeometry(
-          0.12,
-          0.12,
-          0.075,
-          24
-        ),
-        gold,
-        x,
-        3.92,
-        4.48
-      );
+        cylinder(
+          records,
+          new THREE.CylinderGeometry(
+            0.12,
+            0.12,
+            0.075,
+            24
+          ),
+          gold,
+          x,
+          3.45,
+          4.18
+        );
 
-    });
+      }
+    );
 
     group.add(records);
 
     // ==================================================
-    // DISPLAY CATEGORY LABELS
+    // CATEGORY LABELS
     // ==================================================
 
     textLabel(
       group,
       "APPAREL",
       -5.4,
-      1.0,
-      4.48,
+      0.9,
+      4.15,
       2.0
     );
 
@@ -350,17 +346,17 @@ export default {
       group,
       "HEADWEAR",
       -1.8,
-      2.05,
-      4.48,
-      2.0
+      1.75,
+      4.15,
+      2.2
     );
 
     textLabel(
       group,
       "RECORDS",
       1.8,
-      3.15,
-      4.48,
+      2.65,
+      4.15,
       2.0
     );
 
@@ -368,77 +364,79 @@ export default {
       group,
       "COLLECT",
       5.4,
-      4.25,
-      4.48,
+      3.5,
+      4.15,
       2.0
     );
 
     // ==================================================
-    // PREMIUM DISPLAY PEDESTALS
+    // PREMIUM DISPLAYS
     // ==================================================
 
-    [2.8, 5.7].forEach((x, index) => {
+    [3.0, 5.8].forEach(
+      (x, index) => {
 
-      box(
-        group,
-        new THREE.BoxGeometry(
-          1.9,
-          0.08,
-          1.15
-        ),
-        gold,
-        x,
-        1.98,
-        -1.2
-      );
+        box(
+          group,
+          new THREE.BoxGeometry(
+            1.9,
+            0.08,
+            1.1
+          ),
+          gold,
+          x,
+          1.85,
+          -1.0
+        );
 
-      box(
-        group,
-        new THREE.BoxGeometry(
-          1.45,
-          0.12,
-          0.75
-        ),
-        black,
-        x,
-        2.05,
-        -1.2
-      );
+        box(
+          group,
+          new THREE.BoxGeometry(
+            1.45,
+            0.12,
+            0.72
+          ),
+          black,
+          x,
+          1.92,
+          -1.0
+        );
 
-      // Product object
-      cylinder(
-        group,
-        new THREE.CylinderGeometry(
-          0.24,
-          0.24,
-          0.08,
-          24
-        ),
-        index === 0 ? red : white,
-        x,
-        2.18,
-        -1.2
-      );
+        cylinder(
+          group,
+          new THREE.CylinderGeometry(
+            0.24,
+            0.24,
+            0.08,
+            24
+          ),
+          index === 0
+            ? red
+            : white,
+          x,
+          2.05,
+          -1.0
+        );
 
-      // Gold center
-      cylinder(
-        group,
-        new THREE.CylinderGeometry(
-          0.08,
-          0.08,
-          0.09,
-          20
-        ),
-        goldGlow,
-        x,
-        2.18,
-        -1.2
-      );
+        cylinder(
+          group,
+          new THREE.CylinderGeometry(
+            0.08,
+            0.08,
+            0.09,
+            20
+          ),
+          goldGlow,
+          x,
+          2.05,
+          -1.0
+        );
 
-    });
+      }
+    );
 
     // ==================================================
-    // PREMIUM STORE FLOOR MARKER
+    // FLOOR STORE GUIDE
     // ==================================================
 
     box(
@@ -451,30 +449,26 @@ export default {
       goldGlow,
       0,
       0.09,
-      2.65
+      1.0
     );
 
     // ==================================================
-    // SMALL AMBIENT DISPLAY LIGHT
+    // AMBIENT LIGHT
     // ==================================================
 
     const light = new THREE.PointLight(
       0xffb84d,
-      0.65,
+      0.55,
       8
     );
 
     light.position.set(
       0,
-      3.4,
-      4.2
+      3.0,
+      4.0
     );
 
     group.add(light);
-
-    // ==================================================
-    // REGISTER
-    // ==================================================
 
     scene.add(group);
 
