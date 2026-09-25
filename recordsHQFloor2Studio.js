@@ -1,31 +1,30 @@
 // recordsHQFloor2Studio.js
 // LAMBO CITY RECORDS — FLOOR 2
-// MUSIC LAB / DIGITAL ARTIST CREATION LAB
+// MUSIC LAB / RECORDING STUDIO
 //
-// PHASE 1 — SPATIAL FOUNDATION
+// PHASE 1 — PHYSICAL STUDIO FOUNDATION
 //
-// DESIGN:
-// - Professional recording-studio layout
-// - Clear dedicated production zones
-// - Large open center circulation area
-// - No listening lounge
-// - Beat Lab moved to opposite wall
-// - Piano receives dedicated area
-// - Vocal booth is enclosed
-// - Microphone positioned toward booth glass/window
-// - Acoustic treatment used around booth perimeter
-// - Mobile Studio gets dedicated station
-// - Control Room remains the technical heart
+// Layout:
+// - Control Room = rear
+// - Beat Lab / MPC = left wall
+// - Vocal Booth = front-left
+// - Piano = right wall
+// - Mobile Studio = front-right
+// - CENTER = OPEN
+// - NO LISTENING LOUNGE
 //
-// IMPORTANT:
-// - Does NOT create another floor
-// - Does NOT modify elevator
-// - Does NOT modify collision
-// - Does NOT modify player
-// - Does NOT modify Floor 1
-// - Does NOT modify Floor 3
-// - Does NOT modify rooftop
-// - No advanced Studio App functionality yet
+// Preserves:
+// - Existing HQ architecture
+// - Existing Floor 2 slab
+// - Existing elevator
+// - Existing collision
+// - Existing player
+// - Existing Floor 1
+// - Existing Floor 3
+// - Existing rooftop
+//
+// This file is visual only.
+// No Studio App functionality is activated yet.
 
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 
@@ -34,10 +33,15 @@ const HQ_Z = 22;
 const FLOOR_Y = 12.28;
 
 export function init(scene) {
+
   const group = new THREE.Group();
   group.name = "recordsHQFloor2Studio";
 
-  group.position.set(HQ_X, FLOOR_Y, HQ_Z);
+  group.position.set(
+    HQ_X,
+    FLOOR_Y,
+    HQ_Z
+  );
 
   // ============================================================
   // MATERIALS
@@ -45,96 +49,72 @@ export function init(scene) {
 
   const black = new THREE.MeshStandardMaterial({
     color: 0x08090b,
-    roughness: 0.32,
-    metalness: 0.55
+    roughness: 0.35,
+    metalness: 0.5
   });
 
   const dark = new THREE.MeshStandardMaterial({
-    color: 0x14161a,
-    roughness: 0.42,
-    metalness: 0.35
+    color: 0x17191d,
+    roughness: 0.45,
+    metalness: 0.3
   });
 
   const gold = new THREE.MeshStandardMaterial({
     color: 0xb38a32,
-    roughness: 0.24,
-    metalness: 0.78
+    roughness: 0.25,
+    metalness: 0.75
   });
 
   const goldGlow = new THREE.MeshStandardMaterial({
     color: 0xf3c85b,
     emissive: 0x8b681d,
-    emissiveIntensity: 1.8,
+    emissiveIntensity: 1.5,
     roughness: 0.25,
-    metalness: 0.65
+    metalness: 0.6
   });
 
   const glass = new THREE.MeshStandardMaterial({
     color: 0x9fb5c7,
     transparent: true,
-    opacity: 0.20,
-    roughness: 0.08,
-    metalness: 0.25
+    opacity: 0.22,
+    roughness: 0.1,
+    metalness: 0.2
   });
 
   const acoustic = new THREE.MeshStandardMaterial({
-    color: 0x2a1014,
-    roughness: 0.78,
-    metalness: 0.04
+    color: 0x3a151a,
+    roughness: 0.75,
+    metalness: 0.05
   });
 
   // ============================================================
   // HELPERS
   // ============================================================
 
-  function box(
-    w,
-    h,
-    d,
-    x,
-    y,
-    z,
-    material,
-    name = "studioBox"
-  ) {
-    const mesh = new THREE.Mesh(
-      new THREE.BoxGeometry(w, h, d),
-      material
-    );
-
-    mesh.position.set(x, y, z);
-    mesh.name = name;
-
-    mesh.castShadow = true;
-    mesh.receiveShadow = true;
-
-    group.add(mesh);
-
-    return mesh;
-  }
-
-  function cylinder(
-    radius,
+  function addBox(
+    width,
     height,
+    depth,
     x,
     y,
     z,
     material,
-    name = "studioCylinder",
-    segments = 24
+    name
   ) {
+
     const mesh = new THREE.Mesh(
-      new THREE.CylinderGeometry(
-        radius,
-        radius,
+      new THREE.BoxGeometry(
+        width,
         height,
-        segments
+        depth
       ),
       material
     );
 
     mesh.position.set(x, y, z);
-    mesh.name = name;
+
+    mesh.name =
+      name || "floor2Object";
 
     mesh.castShadow = true;
     mesh.receiveShadow = true;
@@ -144,30 +124,41 @@ export function init(scene) {
     return mesh;
   }
 
-  function label(
+  function addLabel(
     text,
     x,
     y,
     z,
-    size = 0.30,
-    color = 0xf3c85b,
-    width = 4.4
+    size,
+    width
   ) {
-    const canvas = document.createElement("canvas");
+
+    const canvas =
+      document.createElement("canvas");
 
     canvas.width = 1024;
     canvas.height = 256;
 
-    const ctx = canvas.getContext("2d");
+    const ctx =
+      canvas.getContext("2d");
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(
+      0,
+      0,
+      canvas.width,
+      canvas.height
+    );
 
-    ctx.font = `700 ${Math.floor(size * 150)}px Arial`;
+    ctx.font =
+      `700 ${Math.floor(
+        (size || 0.28) * 150
+      )}px Arial`;
+
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
 
     ctx.fillStyle =
-      `#${color.toString(16).padStart(6, "0")}`;
+      "#f3c85b";
 
     ctx.fillText(
       text,
@@ -175,7 +166,8 @@ export function init(scene) {
       canvas.height / 2
     );
 
-    const texture = new THREE.CanvasTexture(canvas);
+    const texture =
+      new THREE.CanvasTexture(canvas);
 
     texture.colorSpace =
       THREE.SRGBColorSpace;
@@ -187,291 +179,230 @@ export function init(scene) {
         depthWrite: false
       });
 
-    const mesh = new THREE.Mesh(
-      new THREE.PlaneGeometry(width, 0.95),
-      material
+    const mesh =
+      new THREE.Mesh(
+        new THREE.PlaneGeometry(
+          width || 4,
+          0.8
+        ),
+        material
+      );
+
+    mesh.position.set(
+      x,
+      y,
+      z
     );
 
-    mesh.position.set(x, y, z);
+    mesh.rotation.x =
+      -Math.PI / 2;
 
-    mesh.rotation.x = -Math.PI / 2;
-
-    mesh.name = `label_${text}`;
+    mesh.name =
+      `floor2Label_${text}`;
 
     group.add(mesh);
 
     return mesh;
   }
 
-  function acousticPanel(
-    x,
-    y,
-    z,
-    w,
-    h,
-    rotationY = 0
-  ) {
-    const panel = box(
-      w,
-      h,
-      0.14,
-      x,
-      y,
-      z,
-      acoustic,
-      "acousticTreatment"
-    );
-
-    panel.rotation.y = rotationY;
-
-    const trim = box(
-      w + 0.10,
-      0.055,
-      0.17,
-      x,
-      y + h / 2,
-      z,
-      gold,
-      "acousticTreatmentTrim"
-    );
-
-    trim.rotation.y = rotationY;
-
-    return panel;
-  }
-
   // ============================================================
-  // FLOOR 2 ARRIVAL
+  // ARRIVAL
   // ============================================================
 
-  box(
-    6.6,
-    0.07,
+  addBox(
+    6.5,
+    0.06,
     0.12,
     0,
     0.08,
-    6.05,
+    5.9,
     goldGlow,
     "floor2ArrivalStrip"
   );
 
-  label(
+  addLabel(
     "MUSIC LAB",
     0,
     0.16,
-    6.48,
-    0.44,
-    0xf3c85b,
+    6.35,
+    0.42,
     4.5
   );
 
-  label(
+  addLabel(
     "CREATE • RECORD • PRODUCE",
     0,
-    0.17,
+    0.16,
     5.55,
-    0.20,
-    0xd4d4d4,
-    5.4
+    0.19,
+    5.5
   );
 
   // ============================================================
-  // OPEN CENTER
+  // CENTER
   // ============================================================
   //
-  // Intentionally minimal.
+  // IMPORTANT:
+  // No furniture in this area.
   //
-  // The player should be able to walk through the middle
-  // without navigating around furniture.
+  // This is intentionally open for the player.
 
-  box(
-    7.5,
-    0.035,
-    0.06,
-    0,
-    0.075,
-    0,
-    goldGlow,
-    "centerStudioGuide"
-  );
-
-  box(
-    0.06,
-    0.035,
-    6.8,
-    0,
-    0.076,
-    0,
-    goldGlow,
-    "centerStudioGuide"
-  );
-
-  label(
+  addLabel(
     "LAMBO CITY MUSIC LAB",
     0,
-    0.17,
-    0.65,
+    0.15,
+    0.25,
     0.22,
-    0xd4d4d4,
-    5.8
+    5.2
   );
 
   // ============================================================
-  // REAR WALL — CONTROL ROOM
+  // CONTROL ROOM
+  // REAR / NEGATIVE Z
   // ============================================================
-  //
-  // This remains the technical center of production.
-  // It is deliberately kept against the rear wall.
 
-  const controlX = 2.9;
-  const controlZ = -5.25;
+  const controlX = 2.6;
+  const controlZ = -5.0;
 
-  box(
-    10.0,
-    2.85,
-    0.20,
-    controlX,
-    1.55,
-    -6.38,
-    black,
-    "controlRoomBackWall"
-  );
-
-  box(
-    9.75,
-    0.10,
+  // Rear wall
+  addBox(
+    9.5,
+    2.8,
     0.18,
     controlX,
-    3.02,
-    -6.27,
-    gold,
-    "controlRoomGoldTrim"
+    1.55,
+    -6.35,
+    black,
+    "controlRoomWall"
   );
 
-  // Main console
-  box(
-    7.2,
-    0.26,
-    1.15,
+  // Gold wall trim
+  addBox(
+    9.2,
+    0.08,
+    0.12,
+    controlX,
+    2.95,
+    -6.24,
+    gold,
+    "controlRoomTrim"
+  );
+
+  // Console
+  addBox(
+    6.8,
+    0.25,
+    1.1,
     controlX,
     0.78,
-    -5.15,
+    controlZ,
     black,
-    "controlRoomDesk"
+    "controlRoomConsole"
   );
 
-  box(
-    6.85,
+  addBox(
+    6.5,
     0.07,
-    0.98,
+    0.9,
     controlX,
-    0.96,
-    -5.15,
+    0.95,
+    controlZ,
     gold,
-    "controlRoomDeskTrim"
+    "controlRoomConsoleTrim"
   );
 
   // Screens
-  [-2.15, 0, 2.15].forEach(
+  [-2.0, 0, 2.0].forEach(
     (offset, index) => {
-      box(
-        1.75,
-        1.05,
-        0.07,
+
+      addBox(
+        1.65,
+        1.0,
+        0.06,
         controlX + offset,
-        1.68,
-        -5.82,
+        1.65,
+        -5.72,
         dark,
         `controlScreen_${index}`
       );
 
-      box(
-        1.55,
-        0.82,
+      addBox(
+        1.42,
+        0.78,
         0.025,
         controlX + offset,
-        1.68,
-        -5.765,
+        1.65,
+        -5.68,
         black,
         `controlScreenFace_${index}`
       );
+
     }
   );
 
   // Mixing controller
-  box(
-    1.55,
-    0.17,
-    0.72,
+  addBox(
+    1.5,
+    0.16,
+    0.7,
     controlX,
-    1.11,
-    -5.10,
+    1.10,
+    controlZ,
     dark,
     "mixController"
   );
 
-  // Studio monitors
-  [-3.85, 3.85].forEach(
+  // Speakers
+  [-3.65, 3.65].forEach(
     (offset) => {
-      box(
-        0.68,
-        1.70,
-        0.58,
+
+      addBox(
+        0.65,
+        1.55,
+        0.55,
         controlX + offset,
-        1.02,
-        -5.28,
+        1.0,
+        -5.20,
         black,
         "studioMonitor"
       );
 
-      cylinder(
-        0.17,
-        0.05,
-        controlX + offset,
-        1.42,
-        -5.60,
-        goldGlow,
-        "monitorCone",
-        20
-      ).rotation.x = Math.PI / 2;
     }
   );
 
-  label(
+  addLabel(
     "CONTROL ROOM",
     controlX,
-    3.32,
+    3.25,
     -5.70,
-    0.34,
-    0xf3c85b,
-    4.2
+    0.32,
+    4.0
   );
 
-  label(
+  addLabel(
     "ARRANGE • MIX • MASTER",
     controlX,
-    3.33,
-    -5.02,
-    0.18,
-    0xd4d4d4,
+    3.25,
+    -5.05,
+    0.17,
     4.8
   );
 
   // ============================================================
-  // LEFT WALL — BEAT LAB
+  // BEAT LAB / MPC
+  // LEFT WALL
   // ============================================================
   //
-  // MOVED HERE:
-  // The Beat Lab is now against the opposite side wall,
-  // leaving the center completely open.
+  // Moved away from the piano.
+  // Keeps the center clear.
 
-  const beatX = -5.35;
-  const beatZ = -1.65;
+  const beatX = -5.4;
+  const beatZ = -2.0;
 
-  box(
-    3.95,
+  addBox(
+    3.9,
     0.12,
-    1.65,
+    1.5,
     beatX,
     0.72,
     beatZ,
@@ -479,311 +410,313 @@ export function init(scene) {
     "beatLabDesk"
   );
 
-  box(
-    3.65,
+  addBox(
+    3.55,
     0.07,
-    1.42,
+    1.25,
     beatX,
     0.91,
     beatZ,
     gold,
-    "beatLabDeskTrim"
+    "beatLabTrim"
   );
 
   // MPC
-  box(
+  addBox(
     1.65,
-    0.18,
-    0.92,
+    0.16,
+    0.9,
     beatX,
     1.10,
     beatZ,
     dark,
-    "MPC"
+    "beatMachine"
   );
 
   // MPC pads
-  for (let row = 0; row < 4; row++) {
-    for (let col = 0; col < 4; col++) {
-      box(
-        0.22,
+  for (
+    let row = 0;
+    row < 4;
+    row++
+  ) {
+
+    for (
+      let col = 0;
+      col < 4;
+      col++
+    ) {
+
+      addBox(
+        0.20,
         0.035,
-        0.22,
-        beatX - 0.50 + col * 0.34,
-        1.21,
-        beatZ - 0.31 + row * 0.21,
+        0.20,
+        beatX - 0.48 + col * 0.32,
+        1.20,
+        beatZ - 0.28 + row * 0.19,
         goldGlow,
-        "MPCPad"
+        "beatPad"
       );
+
     }
+
   }
 
-  // Beat display
-  box(
-    1.65,
-    0.92,
-    0.07,
+  // Beat monitor
+  addBox(
+    1.55,
+    0.85,
+    0.06,
     beatX,
-    1.82,
-    beatZ - 0.66,
+    1.80,
+    beatZ - 0.62,
     black,
-    "beatLabDisplay"
+    "beatMonitor"
   );
 
-  label(
+  addLabel(
     "BEAT LAB",
     beatX,
-    3.02,
+    3.0,
     beatZ - 0.92,
     0.30,
-    0xf3c85b,
-    3.8
+    3.7
   );
 
-  label(
+  addLabel(
     "MPC • DRUMS • BEATS",
     beatX,
-    3.03,
+    3.0,
     beatZ - 0.25,
     0.17,
-    0xd4d4d4,
-    4.2
+    4.0
   );
 
   // ============================================================
-  // LEFT FRONT — VOCAL BOOTH
+  // VOCAL BOOTH
+  // FRONT LEFT
   // ============================================================
   //
-  // A true compact vocal booth.
+  // Compact enclosed booth.
   //
-  // The microphone sits toward the glass/window rather than
-  // floating in the middle of the room.
-  //
-  // Acoustic treatment is on the rear wall where it can
-  // actually serve the booth instead of simply decorating
-  // the microphone.
+  // Mic is positioned close to the front window.
+  // Acoustic treatment stays on the rear wall.
 
-  const vocalX = -5.20;
-  const vocalZ = 2.95;
+  const vocalX = -5.15;
+  const vocalZ = 2.75;
 
-  const boothWidth = 4.15;
-  const boothDepth = 3.35;
-  const boothHeight = 2.65;
+  const boothW = 4.0;
+  const boothD = 3.25;
+  const boothH = 2.55;
 
   // Rear acoustic wall
-  box(
-    boothWidth,
-    boothHeight,
-    0.18,
+  addBox(
+    boothW,
+    boothH,
+    0.16,
     vocalX,
-    1.38,
-    vocalZ + boothDepth / 2,
+    1.36,
+    vocalZ + boothD / 2,
     black,
-    "vocalBoothRearWall"
+    "vocalBoothRear"
   );
 
-  // Acoustic treatment on rear wall
-  acousticPanel(
-    vocalX - 1.20,
-    1.50,
-    vocalZ + boothDepth / 2 - 0.11,
-    0.75,
-    1.55
-  );
-
-  acousticPanel(
-    vocalX,
-    1.50,
-    vocalZ + boothDepth / 2 - 0.11,
-    0.75,
-    1.55
-  );
-
-  acousticPanel(
-    vocalX + 1.20,
-    1.50,
-    vocalZ + boothDepth / 2 - 0.11,
-    0.75,
-    1.55
-  );
-
-  // Left glass wall
-  box(
-    0.14,
-    boothHeight,
-    boothDepth,
-    vocalX - boothWidth / 2,
-    1.38,
-    vocalZ,
-    glass,
-    "vocalBoothLeftGlass"
-  );
-
-  // Right glass wall
-  box(
-    0.14,
-    boothHeight,
-    boothDepth,
-    vocalX + boothWidth / 2,
-    1.38,
-    vocalZ,
-    glass,
-    "vocalBoothRightGlass"
-  );
-
-  // Front glass window
-  box(
-    boothWidth,
-    boothHeight,
-    0.14,
-    vocalX,
-    1.38,
-    vocalZ - boothDepth / 2,
-    glass,
-    "vocalBoothFrontWindow"
-  );
-
-  // Gold frame around booth
-  box(
-    boothWidth + 0.16,
-    0.08,
-    0.12,
-    vocalX,
-    2.76,
-    vocalZ - boothDepth / 2,
-    goldGlow,
-    "vocalBoothTopFrame"
-  );
-
-  box(
-    boothWidth + 0.16,
-    0.08,
-    0.12,
-    vocalX,
-    0.06,
-    vocalZ - boothDepth / 2,
-    gold,
-    "vocalBoothBottomFrame"
-  );
-
-  // Vertical frame posts
-  [-boothWidth / 2, boothWidth / 2].forEach(
+  // Acoustic panels
+  [-1.15, 0, 1.15].forEach(
     (offset) => {
-      box(
+
+      addBox(
+        0.72,
+        1.35,
         0.08,
-        boothHeight,
-        0.10,
         vocalX + offset,
-        1.38,
-        vocalZ - boothDepth / 2,
-        gold,
-        "vocalBoothVerticalFrame"
+        1.48,
+        vocalZ + boothD / 2 - 0.10,
+        acoustic,
+        "vocalAcousticPanel"
       );
+
+    }
+  );
+
+  // Left glass
+  addBox(
+    0.12,
+    boothH,
+    boothD,
+    vocalX - boothW / 2,
+    1.36,
+    vocalZ,
+    glass,
+    "vocalBoothGlassLeft"
+  );
+
+  // Right glass
+  addBox(
+    0.12,
+    boothH,
+    boothD,
+    vocalX + boothW / 2,
+    1.36,
+    vocalZ,
+    glass,
+    "vocalBoothGlassRight"
+  );
+
+  // Front window
+  addBox(
+    boothW,
+    boothH,
+    0.12,
+    vocalX,
+    1.36,
+    vocalZ - boothD / 2,
+    glass,
+    "vocalBoothWindow"
+  );
+
+  // Gold top frame
+  addBox(
+    boothW + 0.10,
+    0.07,
+    0.10,
+    vocalX,
+    2.68,
+    vocalZ - boothD / 2,
+    goldGlow,
+    "vocalBoothTop"
+  );
+
+  // Vertical front frames
+  [-boothW / 2, boothW / 2].forEach(
+    (offset) => {
+
+      addBox(
+        0.07,
+        boothH,
+        0.08,
+        vocalX + offset,
+        1.36,
+        vocalZ - boothD / 2,
+        gold,
+        "vocalBoothFrame"
+      );
+
     }
   );
 
   // ============================================================
-  // MICROPHONE — TOWARD WINDOW
+  // MICROPHONE
+  // CLOSE TO WINDOW
   // ============================================================
 
   const micZ =
-    vocalZ - boothDepth / 2 + 0.72;
+    vocalZ - boothD / 2 + 0.62;
 
-  // Mic stand
-  cylinder(
-    0.045,
-    1.15,
+  // Stand
+  const micStand =
+    new THREE.Mesh(
+      new THREE.CylinderGeometry(
+        0.045,
+        0.045,
+        1.15,
+        16
+      ),
+      gold
+    );
+
+  micStand.position.set(
     vocalX,
-    0.72,
-    micZ,
-    gold,
-    "vocalMicStand",
-    16
+    0.70,
+    micZ
   );
 
-  // Mic head
-  cylinder(
-    0.13,
-    0.07,
-    vocalX,
-    1.32,
-    micZ,
-    black,
-    "vocalMicrophone",
-    20
-  );
+  micStand.name =
+    "vocalMicrophoneStand";
 
-  // Small shock-mount ring
-  const micRing = new THREE.Mesh(
-    new THREE.TorusGeometry(
-      0.15,
-      0.025,
-      8,
-      20
-    ),
-    gold
-  );
+  group.add(micStand);
 
-  micRing.position.set(
+  // Microphone body
+  const mic =
+    new THREE.Mesh(
+      new THREE.CylinderGeometry(
+        0.12,
+        0.12,
+        0.38,
+        20
+      ),
+      black
+    );
+
+  mic.position.set(
     vocalX,
     1.32,
     micZ
   );
 
-  micRing.rotation.x =
+  mic.rotation.z =
     Math.PI / 2;
 
-  micRing.name =
-    "vocalMicrophoneShockMount";
+  mic.name =
+    "vocalMicrophone";
 
-  group.add(micRing);
+  group.add(mic);
 
-  // Mic cable guide
-  box(
-    0.035,
-    0.025,
-    0.90,
+  // Small microphone mount
+  const micMount =
+    new THREE.Mesh(
+      new THREE.TorusGeometry(
+        0.14,
+        0.022,
+        8,
+        20
+      ),
+      gold
+    );
+
+  micMount.position.set(
     vocalX,
-    0.10,
-    micZ,
-    dark,
-    "microphoneCableGuide"
+    1.32,
+    micZ
   );
 
-  label(
+  micMount.rotation.x =
+    Math.PI / 2;
+
+  micMount.name =
+    "vocalMicrophoneMount";
+
+  group.add(micMount);
+
+  addLabel(
     "VOCAL BOOTH",
     vocalX,
-    3.02,
-    vocalZ - 1.62,
+    3.0,
+    vocalZ - 1.58,
     0.29,
-    0xf3c85b,
     4.0
   );
 
-  label(
+  addLabel(
     "RECORD • VOCALS • FX",
     vocalX,
-    3.03,
-    vocalZ - 0.98,
+    3.0,
+    vocalZ - 0.95,
     0.17,
-    0xd4d4d4,
     4.3
   );
 
   // ============================================================
-  // RIGHT REAR — PIANO
+  // PIANO
+  // RIGHT WALL
   // ============================================================
-  //
-  // Dedicated instrument station.
-  // Kept away from the Beat Lab and center circulation.
 
   const pianoX = 5.25;
   const pianoZ = -2.15;
 
-  box(
-    4.15,
-    0.18,
-    1.30,
+  addBox(
+    4.0,
+    0.16,
+    1.25,
     pianoX,
     0.82,
     pianoZ,
@@ -791,79 +724,79 @@ export function init(scene) {
     "pianoBody"
   );
 
-  box(
-    3.80,
+  addBox(
+    3.65,
     0.07,
-    0.58,
+    0.55,
     pianoX,
     1.00,
-    pianoZ - 0.05,
+    pianoZ - 0.04,
     gold,
     "pianoTrim"
   );
 
   // Piano keys
-  for (let i = 0; i < 12; i++) {
-    box(
-      0.24,
-      0.045,
-      0.36,
-      pianoX - 1.32 + i * 0.24,
+  for (
+    let i = 0;
+    i < 12;
+    i++
+  ) {
+
+    addBox(
+      0.23,
+      0.04,
+      0.35,
+      pianoX - 1.30 + i * 0.235,
       1.08,
-      pianoZ - 0.22,
-      i % 3 === 0
-        ? dark
-        : glass,
+      pianoZ - 0.20,
+      dark,
       "pianoKey"
     );
+
   }
 
-  // Rear instrument panel
-  box(
-    3.65,
-    1.35,
+  // Rear piano wall
+  addBox(
+    3.6,
+    1.25,
     0.10,
     pianoX,
-    1.72,
-    pianoZ + 0.62,
+    1.68,
+    pianoZ + 0.60,
     black,
-    "pianoRearPanel"
+    "pianoWall"
   );
 
-  label(
+  addLabel(
     "PIANO + MELODY",
     pianoX,
-    3.02,
-    pianoZ - 0.86,
+    3.0,
+    pianoZ - 0.82,
     0.28,
-    0xf3c85b,
     4.2
   );
 
-  label(
+  addLabel(
     "PLAY • WRITE • CREATE",
     pianoX,
-    3.03,
-    pianoZ - 0.20,
+    3.0,
+    pianoZ - 0.18,
     0.17,
-    0xd4d4d4,
     4.3
   );
 
   // ============================================================
-  // RIGHT FRONT — MOBILE STUDIO
+  // MOBILE STUDIO
+  // FRONT RIGHT
   // ============================================================
-  //
-  // Modern artist workstation:
-  // laptop + headphones + portable recording workflow.
 
   const mobileX = 5.25;
-  const mobileZ = 2.85;
+  const mobileZ = 2.75;
 
-  box(
-    4.15,
-    0.14,
-    1.45,
+  addBox(
+    4.0,
+    0.13,
+    1.40,
     mobileX,
     0.76,
     mobileZ,
@@ -871,143 +804,138 @@ export function init(scene) {
     "mobileStudioDesk"
   );
 
-  box(
-    3.85,
+  addBox(
+    3.70,
     0.07,
-    1.22,
+    1.18,
     mobileX,
     0.94,
     mobileZ,
     gold,
-    "mobileStudioDeskTrim"
+    "mobileStudioTrim"
   );
 
   // Laptop base
-  box(
-    1.75,
+  addBox(
+    1.65,
     0.08,
-    1.00,
-    mobileX - 0.35,
-    1.13,
-    mobileZ - 0.04,
+    0.95,
+    mobileX - 0.30,
+    1.12,
+    mobileZ - 0.03,
     dark,
-    "mobileLaptopBase"
+    "mobileLaptop"
   );
 
   // Laptop screen
-  box(
-    1.65,
-    0.98,
-    0.06,
-    mobileX - 0.35,
-    1.63,
-    mobileZ + 0.34,
+  addBox(
+    1.55,
+    0.90,
+    0.05,
+    mobileX - 0.30,
+    1.58,
+    mobileZ + 0.32,
     black,
     "mobileLaptopScreen"
   );
 
-  box(
-    1.38,
-    0.72,
-    0.025,
-    mobileX - 0.35,
-    1.63,
-    mobileZ + 0.305,
+  // Screen
+  addBox(
+    1.30,
+    0.68,
+    0.02,
+    mobileX - 0.30,
+    1.58,
+    mobileZ + 0.285,
     goldGlow,
     "mobileLaptopDisplay"
   );
 
   // Headphone stand
-  cylinder(
-    0.07,
-    0.82,
-    mobileX + 1.38,
+  const headphoneStand =
+    new THREE.Mesh(
+      new THREE.CylinderGeometry(
+        0.07,
+        0.07,
+        0.80,
+        20
+      ),
+      gold
+    );
+
+  headphoneStand.position.set(
+    mobileX + 1.30,
     1.35,
-    mobileZ,
-    gold,
-    "headphoneStand",
-    20
+    mobileZ
   );
 
-  cylinder(
-    0.28,
-    0.07,
-    mobileX + 1.38,
-    1.79,
+  headphoneStand.name =
+    "headphoneStand";
+
+  group.add(headphoneStand);
+
+  addBox(
+    0.55,
+    0.06,
+    0.35,
+    mobileX + 1.30,
+    1.78,
     mobileZ,
     black,
-    "headphoneSupport",
-    20
+    "headphoneSupport"
   );
 
-  cylinder(
-    0.28,
-    0.06,
-    mobileX + 1.38,
-    0.98,
-    mobileZ,
-    gold,
-    "headphoneBase",
-    20
-  );
-
-  label(
+  addLabel(
     "MOBILE STUDIO",
     mobileX,
-    3.02,
-    mobileZ - 1.00,
+    3.0,
+    mobileZ - 0.98,
     0.28,
-    0xf3c85b,
     4.2
   );
 
-  label(
+  addLabel(
     "LAPTOP • HEADPHONES • RECORD",
     mobileX,
-    3.03,
-    mobileZ - 0.38,
+    3.0,
+    mobileZ - 0.36,
     0.16,
-    0xd4d4d4,
     4.8
   );
 
   // ============================================================
-  // WALL ACOUSTICS
+  // SMALL WALL ACOUSTICS
   // ============================================================
   //
-  // Keep treatment visually tied to the production environment.
-  // Nothing is placed in the center.
+  // Keep these against the walls.
+  // Nothing goes into the center.
 
-  acousticPanel(
-    -7.0,
-    1.50,
-    -5.25,
-    0.70,
-    1.45
-  );
+  [-6.9, 6.9].forEach(
+    (x) => {
 
-  acousticPanel(
-    -7.0,
-    1.50,
-    -3.05,
-    0.70,
-    1.45
-  );
+      addBox(
+        0.10,
+        1.25,
+        0.75,
+        x,
+        1.45,
+        -4.65,
+        acoustic,
+        "wallAcousticPanel"
+      );
 
-  acousticPanel(
-    7.0,
-    1.50,
-    -4.75,
-    0.70,
-    1.45
-  );
+      addBox(
+        0.10,
+        1.25,
+        0.75,
+        x,
+        1.45,
+        -3.15,
+        acoustic,
+        "wallAcousticPanel"
+      );
 
-  acousticPanel(
-    7.0,
-    1.50,
-    -2.55,
-    0.70,
-    1.45
+    }
   );
 
   // ============================================================
@@ -1016,16 +944,18 @@ export function init(scene) {
 
   [-5.5, 0, 5.5].forEach(
     (x) => {
-      box(
-        2.7,
-        0.06,
-        0.10,
+
+      addBox(
+        2.6,
+        0.05,
+        0.08,
         x,
         3.72,
         0,
         goldGlow,
-        "studioCeilingAccent"
+        "floor2CeilingAccent"
       );
+
     }
   );
 
@@ -1033,29 +963,29 @@ export function init(scene) {
   // LIGHTING
   // ============================================================
 
-  const studioLight =
+  const mainLight =
     new THREE.PointLight(
       0xffd98a,
-      1.25,
+      1.15,
       15
     );
 
-  studioLight.position.set(
+  mainLight.position.set(
     0,
     3.4,
     0
   );
 
-  studioLight.name =
-    "floor2StudioLight";
+  mainLight.name =
+    "floor2MainLight";
 
-  group.add(studioLight);
+  group.add(mainLight);
 
   const controlLight =
     new THREE.PointLight(
       0xd7e7ff,
-      0.72,
-      10
+      0.65,
+      9
     );
 
   controlLight.position.set(
@@ -1069,7 +999,7 @@ export function init(scene) {
   const vocalLight =
     new THREE.PointLight(
       0xffc9c9,
-      0.42,
+      0.35,
       7
     );
 
@@ -1082,20 +1012,8 @@ export function init(scene) {
   group.add(vocalLight);
 
   // ============================================================
-  // FUTURE STUDIO APP INTERACTION ANCHORS
+  // FUTURE INTERACTION ANCHORS
   // ============================================================
-  //
-  // Empty by design.
-  //
-  // Future systems can attach:
-  //
-  // vocalBooth
-  // beatLab
-  // piano
-  // mobileStudio
-  // controlRoom
-  //
-  // No advanced interaction is being activated yet.
 
   const anchors =
     new THREE.Group();
@@ -1188,12 +1106,8 @@ export function init(scene) {
 }
 
 export function update(delta, context) {
-  // ============================================================
-  // PHASE 1
-  // ============================================================
+  // Visual-only during Phase 1.
   //
-  // Visual/spatial foundation only.
-  //
-  // The Studio App will be connected after the physical
-  // Music Lab layout is approved.
+  // Future Studio App interaction will connect
+  // to the anchors created above.
 }
