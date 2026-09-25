@@ -40,6 +40,7 @@ import RecordsHQFoundation from "./recordsHQFoundation.js";
 import RecordsHQFloor1 from "./recordsHQFloor1.js";
 import RecordsHQFloor2Studio from "./recordsHQFloor2Studio.js";
 import RecordsHQFloor3Executive from "./recordsHQFloor3Executive.js";
+import RecordsHQRooftopVIP from "./recordsHQRooftopVIP.js";
 import RecordsHQEntranceThreshold from "./recordsHQEntranceThreshold.js";
 import RecordsHQMediaDetails from "./recordsHQMediaDetails.js";
 import RecordsHQMerchDetails from "./recordsHQMerchDetails.js";
@@ -84,6 +85,7 @@ engine.registerSystems({
   recordsHQFloor1: RecordsHQFloor1,
   recordsHQFloor2Studio: RecordsHQFloor2Studio,
   recordsHQFloor3Executive: RecordsHQFloor3Executive,
+  recordsHQRooftopVIP: RecordsHQRooftopVIP,
   recordsHQEntranceThreshold: RecordsHQEntranceThreshold,
   recordsHQMediaDetails: RecordsHQMediaDetails,
   recordsHQMerchDetails: RecordsHQMerchDetails,
