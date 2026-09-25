@@ -39,6 +39,7 @@ import RecordsHQ from "./recordsHQ.js";
 import RecordsHQFoundation from "./recordsHQFoundation.js";
 import RecordsHQFloor1 from "./recordsHQFloor1.js";
 import RecordsHQEntranceThreshold from "./recordsHQEntranceThreshold.js";
+import RecordsHQMediaDetails from "./recordsHQMediaDetails.js";
 import RecordsHQMerchDetails from "./recordsHQMerchDetails.js";
 import BoardwalkOverlooks from "./boardwalkOverlooks.js";
 const engine = new Engine();
@@ -79,6 +80,7 @@ engine.registerSystems({
   recordsHQFoundation: RecordsHQFoundation,
   recordsHQFloor1: RecordsHQFloor1,
   recordsHQEntranceThreshold: RecordsHQEntranceThreshold,
+  recordsHQMediaDetails: RecordsHQMediaDetails,
   recordsHQMerchDetails: RecordsHQMerchDetails,
   boardwalkOverlooks: BoardwalkOverlooks,
   input: Input,
