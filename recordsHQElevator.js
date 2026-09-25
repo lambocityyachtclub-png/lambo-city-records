@@ -1,28 +1,27 @@
 // recordsHQElevator.js
 // LAMBO CITY RECORDS HQ — Functional Elevator
 //
-// Phase 1:
-// - Uses the existing glass elevator created by recordsHQFoundation.js
-// - Does NOT modify the HQ foundation
-// - Does NOT create new elevator geometry
-// - Provides Floor 1 / Floor 2 / Floor 3 / Rooftop selection
-// - Owns the E interaction while the player is inside the elevator zone
-// - Compatible with keyboard + existing mobile/iPad E input
-//
-// INTERACTION RULE:
-// Elevator interaction takes priority over the Records HQ
-// Music + Video interaction while the player is standing
-// inside the elevator activation zone.
+// Cinematic upgrade:
+// - Existing elevator mechanics preserved
+// - Existing floor mathematics preserved
+// - Adds cinematic travel state for camera.js
+// - Beginning of ride shows HERO inside elevator
+// - Ride transitions to first-person glass-elevator POV
 
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
+
 
 const ELEVATOR_POSITION = {
   x: 23,
   z: 14.15
 };
 
-const ACTIVATION_DISTANCE = 3.2;
-const TRAVEL_TIME = 1.25;
+const ACTIVATION_DISTANCE =
+  3.2;
+
+const TRAVEL_TIME =
+  1.25;
+
 
 let scene = null;
 
@@ -44,12 +43,15 @@ let travelTargetY = 1.3;
 let currentPlayer = null;
 let lastEState = false;
 
-function buildDOM() {
-  // ------------------------------------------------------------
-  // INTERACTION PROMPT
-  // ------------------------------------------------------------
 
-  promptEl = document.createElement("div");
+// ============================================================
+// DOM
+// ============================================================
+
+function buildDOM() {
+
+  promptEl =
+    document.createElement("div");
 
   promptEl.style.cssText = `
     position:fixed;
@@ -84,15 +86,22 @@ function buildDOM() {
     USE ELEVATOR
   `;
 
-  promptEl.addEventListener("click", openMenu);
+  promptEl.addEventListener(
+    "click",
+    openMenu
+  );
 
-  document.body.appendChild(promptEl);
+  document.body.appendChild(
+    promptEl
+  );
 
-  // ------------------------------------------------------------
-  // FLOOR SELECTION MENU
-  // ------------------------------------------------------------
 
-  menuEl = document.createElement("div");
+  // ==========================================================
+  // FLOOR MENU
+  // ==========================================================
+
+  menuEl =
+    document.createElement("div");
 
   menuEl.style.cssText = `
     position:fixed;
@@ -119,6 +128,7 @@ function buildDOM() {
       0 0 25px rgba(255,215,0,0.12);
     backdrop-filter:blur(12px);
   `;
+
 
   menuEl.innerHTML = `
     <div style="
@@ -152,15 +162,17 @@ function buildDOM() {
       SELECT DESTINATION
     </div>
 
-    <div id="records-hq-elevator-buttons"
+    <div
+      id="records-hq-elevator-buttons"
       style="
         display:grid;
         grid-template-columns:1fr 1fr;
         gap:10px;
-      ">
-    </div>
+      "
+    ></div>
 
-    <div id="records-hq-elevator-status"
+    <div
+      id="records-hq-elevator-status"
       style="
         min-height:18px;
         text-align:center;
@@ -168,10 +180,11 @@ function buildDOM() {
         font-size:10px;
         letter-spacing:1px;
         margin-top:16px;
-      ">
-    </div>
+      "
+    ></div>
 
-    <button id="records-hq-elevator-close"
+    <button
+      id="records-hq-elevator-close"
       style="
         display:block;
         margin:14px auto 0;
@@ -183,420 +196,716 @@ function buildDOM() {
         font-size:10px;
         letter-spacing:2px;
         cursor:pointer;
-      ">
+      "
+    >
       CLOSE
     </button>
   `;
 
-  document.body.appendChild(menuEl);
+
+  document.body.appendChild(
+    menuEl
+  );
+
 
   const buttonWrap =
     document.getElementById(
       "records-hq-elevator-buttons"
     );
 
+
   const floors = [
-  {
-    id: 1,
-    label: "FLOOR 1",
-    sub: "STUDIO + MERCH"
-  },
-  {
-    id: 2,
-    label: "FLOOR 2",
-    sub: "RECORDING STUDIO"
-  },
-  {
-    id: 3,
-    label: "FLOOR 3",
-    sub: "MEETINGS + EXECUTIVE"
-  },
-  {
-    id: 4,
-    label: "ROOFTOP",
-    sub: "VIP LOUNGE"
-  }
-];
 
-  floors.forEach(floor => {
-    const button = document.createElement("button");
+    {
+      id:1,
+      label:"FLOOR 1",
+      sub:"STUDIO + MERCH"
+    },
 
-    button.style.cssText = `
-      min-height:82px;
-      background:
-        linear-gradient(
-          145deg,
-          rgba(153,0,255,0.16),
-          rgba(255,0,170,0.08)
+    {
+      id:2,
+      label:"FLOOR 2",
+      sub:"RECORDING STUDIO"
+    },
+
+    {
+      id:3,
+      label:"FLOOR 3",
+      sub:"MEETINGS + EXECUTIVE"
+    },
+
+    {
+      id:4,
+      label:"ROOFTOP",
+      sub:"VIP LOUNGE"
+    }
+
+  ];
+
+
+  floors.forEach(
+    floor => {
+
+      const button =
+        document.createElement(
+          "button"
         );
-      border:1px solid rgba(255,215,0,0.18);
-      border-radius:12px;
-      color:white;
-      cursor:pointer;
-      padding:12px 8px;
-      font-family:Arial,sans-serif;
-    `;
 
-    button.innerHTML = `
-      <div style="
-        color:#ffd700;
-        font-size:13px;
-        font-weight:bold;
-        letter-spacing:1px;
-      ">
-        ${floor.label}
-      </div>
+      button.style.cssText = `
+        min-height:82px;
+        background:
+          linear-gradient(
+            145deg,
+            rgba(153,0,255,0.16),
+            rgba(255,0,170,0.08)
+          );
+        border:1px solid rgba(255,215,0,0.18);
+        border-radius:12px;
+        color:white;
+        cursor:pointer;
+        padding:12px 8px;
+        font-family:Arial,sans-serif;
+      `;
 
-      <div style="
-        color:#888;
-        font-size:8px;
-        letter-spacing:1px;
-        margin-top:6px;
-      ">
-        ${floor.sub}
-      </div>
-    `;
 
-    button.addEventListener("click", () => {
-      selectFloor(floor.id);
-    });
+      button.innerHTML = `
+        <div style="
+          color:#ffd700;
+          font-size:13px;
+          font-weight:bold;
+          letter-spacing:1px;
+        ">
+          ${floor.label}
+        </div>
 
-    button.addEventListener(
-      "touchstart",
-      e => {
-        e.preventDefault();
-        selectFloor(floor.id);
-      },
-      { passive:false }
-    );
+        <div style="
+          color:#888;
+          font-size:8px;
+          letter-spacing:1px;
+          margin-top:6px;
+        ">
+          ${floor.sub}
+        </div>
+      `;
 
-    buttonWrap.appendChild(button);
-  });
+
+      button.addEventListener(
+        "click",
+        () => {
+          selectFloor(
+            floor.id
+          );
+        }
+      );
+
+
+      button.addEventListener(
+        "touchstart",
+        e => {
+
+          e.preventDefault();
+
+          selectFloor(
+            floor.id
+          );
+
+        },
+        {
+          passive:false
+        }
+      );
+
+
+      buttonWrap.appendChild(
+        button
+      );
+
+    }
+  );
+
 
   const closeButton =
     document.getElementById(
       "records-hq-elevator-close"
     );
 
+
   closeButton.addEventListener(
     "click",
     closeMenu
   );
 
-  // ------------------------------------------------------------
+
+  // ==========================================================
   // KEYBOARD
-  // ------------------------------------------------------------
+  // ==========================================================
 
-  window.addEventListener("keydown", e => {
-    if (!e.key) return;
+  window.addEventListener(
+    "keydown",
+    e => {
 
-    const key = e.key.toLowerCase();
+      if (!e.key) return;
 
-    if (
-      key === "e" &&
-      inRange &&
-      !menuOpen &&
-      !traveling
-    ) {
-      e.preventDefault();
-      e.stopPropagation();
-      e.stopImmediatePropagation();
+      const key =
+        e.key.toLowerCase();
 
-      openMenu();
-      return;
+
+      if (
+        key === "e" &&
+        inRange &&
+        !menuOpen &&
+        !traveling
+      ) {
+
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+
+        openMenu();
+
+        return;
+      }
+
+
+      if (
+        e.key === "Escape" &&
+        menuOpen &&
+        !traveling
+      ) {
+
+        closeMenu();
+
+      }
+
     }
+  );
 
-    if (
-      e.key === "Escape" &&
-      menuOpen &&
-      !traveling
-    ) {
-      closeMenu();
-    }
-  });
 
   built = true;
+
 }
 
-// --------------------------------------------------------------
-// OPEN MENU
-// --------------------------------------------------------------
+
+// ============================================================
+// OPEN
+// ============================================================
 
 function openMenu() {
-  if (!menuEl || traveling) return;
 
-  if (!inRange) return;
+  if (
+    !menuEl ||
+    traveling
+  ) {
+
+    return;
+  }
+
+
+  if (!inRange) {
+    return;
+  }
+
 
   menuOpen = true;
 
+
   if (promptEl) {
-    promptEl.style.display = "none";
+    promptEl.style.display =
+      "none";
   }
 
-  menuEl.style.display = "block";
+
+  menuEl.style.display =
+    "block";
+
 
   setStatus(
     "SELECT YOUR DESTINATION"
   );
 
-  lockPlayerInput(true);
+
+  lockPlayerInput(
+    true
+  );
 }
 
-// --------------------------------------------------------------
-// CLOSE MENU
-// --------------------------------------------------------------
+
+// ============================================================
+// CLOSE
+// ============================================================
 
 function closeMenu() {
-  if (!menuEl || traveling) return;
+
+  if (
+    !menuEl ||
+    traveling
+  ) {
+
+    return;
+  }
+
 
   menuOpen = false;
 
-  menuEl.style.display = "none";
+  menuEl.style.display =
+    "none";
 
   setStatus("");
 
-  lockPlayerInput(false);
+  lockPlayerInput(
+    false
+  );
 }
 
-// --------------------------------------------------------------
+
+// ============================================================
 // FLOOR SELECTION
-// --------------------------------------------------------------
+// ============================================================
 
-function selectFloor(floor) {
-  if (traveling) return;
+function selectFloor(
+  floor
+) {
 
-  selectedFloor = floor;
+  if (traveling) {
+    return;
+  }
+
+
+  selectedFloor =
+    floor;
+
+
+  // ----------------------------------------------------------
+  // EXISTING FLOOR MATH — PRESERVED
+  // ----------------------------------------------------------
 
   const targets = {
-    1: 1.3,
-    2: 12.2,
-    3: 20.2,
-    4: 26.3
+
+    1:1.3,
+
+    2:12.2,
+
+    3:20.2,
+
+    4:26.3
+
   };
 
+
   travelTargetY =
-    targets[floor] ?? 1.3;
+    targets[floor] ??
+    1.3;
+
 
   startTravel();
 }
 
-// --------------------------------------------------------------
+
+// ============================================================
 // START TRAVEL
-// --------------------------------------------------------------
+// ============================================================
 
 function startTravel() {
+
   traveling = true;
+
   travelTimer = 0;
 
-  const player = getPlayer();
+
+  // ----------------------------------------------------------
+  // CINEMATIC CAMERA STATE
+  // ----------------------------------------------------------
+
+  window.__lamboCityElevatorTraveling =
+    true;
+
+  window.__lamboCityElevatorProgress =
+    0;
+
+
+  const player =
+    getPlayer();
+
 
   if (!player) {
+
     traveling = false;
+
+    window.__lamboCityElevatorTraveling =
+      false;
+
     closeMenu();
+
     return;
   }
 
+
   travelStartY =
-  player.position.y;
-// Hide the destination panel immediately after selection.
-// The player remains locked inside the elevator while traveling.
-// This leaves the glass elevator visible for the upcoming
-// cinematic camera treatment.
-menuOpen = false;
+    player.position.y;
 
-if (menuEl) {
-  menuEl.style.display = "none";
-}
 
-setStatus("");
-window.__lamboCityPlayerSystem
-  ?.setElevatorTravelY?.(travelStartY);
+  menuOpen = false;
 
-setStatus(
+
+  if (menuEl) {
+
+    menuEl.style.display =
+      "none";
+
+  }
+
+
+  setStatus("");
+
+
+  window.__lamboCityPlayerSystem
+    ?.setElevatorTravelY
+    ?.(
+      travelStartY
+    );
+
+
+  setStatus(
+
     selectedFloor === 4
+
       ? "TRAVELING TO ROOFTOP..."
+
       : `TRAVELING TO FLOOR ${selectedFloor}...`
+
   );
 
-  lockPlayerInput(true);
+
+  lockPlayerInput(
+    true
+  );
 }
 
-// --------------------------------------------------------------
-// FINISH TRAVEL
-// --------------------------------------------------------------
 
-function finishTravel(player) {
-  if (!player) return;
+// ============================================================
+// FINISH TRAVEL
+// ============================================================
+
+function finishTravel(
+  player
+) {
+
+  if (!player) {
+    return;
+  }
+
 
   player.position.x =
     ELEVATOR_POSITION.x;
 
   player.position.z =
-  ELEVATOR_POSITION.z;
+    ELEVATOR_POSITION.z;
 
-window.__lamboCityPlayerSystem
-  ?.setElevatorFloorY?.(travelTargetY);
 
-traveling = false;
+  window.__lamboCityPlayerSystem
+    ?.setElevatorFloorY
+    ?.(
+      travelTargetY
+    );
+
+
+  traveling = false;
+
   menuOpen = false;
 
+
+  // ----------------------------------------------------------
+  // END CINEMATIC CAMERA STATE
+  // ----------------------------------------------------------
+
+  window.__lamboCityElevatorTraveling =
+    false;
+
+  window.__lamboCityElevatorProgress =
+    1;
+
+
   if (menuEl) {
-    menuEl.style.display = "none";
+
+    menuEl.style.display =
+      "none";
+
   }
+
 
   setStatus("");
 
-  lockPlayerInput(false);
+
+  lockPlayerInput(
+    false
+  );
 }
 
-// --------------------------------------------------------------
+
+// ============================================================
 // PLAYER
-// --------------------------------------------------------------
+// ============================================================
 
 function getPlayer() {
+
   return currentPlayer;
+
 }
 
-// --------------------------------------------------------------
-// INPUT LOCK
-// --------------------------------------------------------------
 
-function lockPlayerInput(locked) {
+// ============================================================
+// INPUT LOCK
+// ============================================================
+
+function lockPlayerInput(
+  locked
+) {
+
   const input =
     window.__lamboCityInput;
 
-  if (!input) return;
+
+  if (!input) {
+    return;
+  }
+
 
   if (locked) {
-    input.keys["w"] = false;
-    input.keys["a"] = false;
-    input.keys["s"] = false;
-    input.keys["d"] = false;
-    input.keys["shift"] = false;
+
+    input.keys["w"] =
+      false;
+
+    input.keys["a"] =
+      false;
+
+    input.keys["s"] =
+      false;
+
+    input.keys["d"] =
+      false;
+
+    input.keys["shift"] =
+      false;
+
 
     if (input.joystick) {
-      input.joystick.x = 0;
-      input.joystick.y = 0;
-      input.joystick.active = false;
+
+      input.joystick.x =
+        0;
+
+      input.joystick.y =
+        0;
+
+      input.joystick.active =
+        false;
+
     }
+
   }
+
 }
 
-// --------------------------------------------------------------
-// STATUS
-// --------------------------------------------------------------
 
-function setStatus(message) {
+// ============================================================
+// STATUS
+// ============================================================
+
+function setStatus(
+  message
+) {
+
   statusEl =
     document.getElementById(
       "records-hq-elevator-status"
     );
 
+
   if (statusEl) {
-    statusEl.textContent = message;
+
+    statusEl.textContent =
+      message;
+
   }
+
 }
 
-// --------------------------------------------------------------
+
+// ============================================================
 // EXPORT
-// --------------------------------------------------------------
+// ============================================================
 
 export default {
 
   init(scene_) {
-    scene = scene_;
 
-    // Build immediately so the elevator's interaction state
-    // exists independently of the video system.
+    scene =
+      scene_;
+
+
     if (!built) {
+
       buildDOM();
+
     }
 
-    window.__lamboCityElevatorReady = true;
+
+    window.__lamboCityElevatorReady =
+      true;
+
   },
 
-  update(delta, context) {
-    if (!scene) return;
 
-    if (!built) {
-      buildDOM();
+  update(
+    delta,
+    context
+  ) {
+
+    if (!scene) {
+      return;
     }
 
+
+    if (!built) {
+
+      buildDOM();
+
+    }
+
+
     const player =
-      context.player;  
+      context.player;
 
-    if (!player) return;
-    if (context.systems?.player) {
-  window.__lamboCityPlayerSystem =
-    context.systems.player;
-}
-    currentPlayer = player;
 
-    // Existing input system.
+    if (!player) {
+      return;
+    }
+
+
+    if (
+      context.systems?.player
+    ) {
+
+      window.__lamboCityPlayerSystem =
+        context.systems.player;
+
+    }
+
+
+    currentPlayer =
+      player;
+
+
     if (
       context.systems &&
       context.systems.input
     ) {
+
       window.__lamboCityInput =
         context.systems.input;
+
     }
 
-    // ----------------------------------------------------------
+
+    // ========================================================
     // ELEVATOR TRAVEL
-    // ----------------------------------------------------------
+    // ========================================================
 
     if (traveling) {
-      travelTimer += delta;
+
+      travelTimer +=
+        delta;
+
 
       const progress =
         Math.min(
           1,
-          travelTimer / TRAVEL_TIME
+          travelTimer /
+            TRAVEL_TIME
         );
+
+
+      // ------------------------------------------------------
+      // SHARE CINEMATIC PROGRESS
+      // ------------------------------------------------------
+
+      window.__lamboCityElevatorTraveling =
+        true;
+
+      window.__lamboCityElevatorProgress =
+        progress;
+
 
       const eased =
         progress < 0.5
-          ? 2 * progress * progress
+
+          ? 2 *
+            progress *
+            progress
+
           : 1 -
             Math.pow(
-              -2 * progress + 2,
+              -2 *
+                progress +
+                2,
               2
-            ) / 2;
+            ) /
+            2;
+
 
       const travelY =
-  THREE.MathUtils.lerp(
-    travelStartY,
-    travelTargetY,
-    eased
-  );
+        THREE.MathUtils.lerp(
+          travelStartY,
+          travelTargetY,
+          eased
+        );
 
-window.__lamboCityPlayerSystem
-  ?.setElevatorTravelY?.(travelY);
 
-player.position.y = travelY;
+      window.__lamboCityPlayerSystem
+        ?.setElevatorTravelY
+        ?.(
+          travelY
+        );
 
-      // Elevator owns interaction while traveling.
-      window.__lamboCityElevatorInRange = true;
-      window.__lamboCityElevatorOpen = true;
 
-      if (progress >= 1) {
-        finishTravel(player);
+      player.position.y =
+        travelY;
+
+
+      window.__lamboCityElevatorInRange =
+        true;
+
+      window.__lamboCityElevatorOpen =
+        true;
+
+
+      if (
+        progress >= 1
+      ) {
+
+        finishTravel(
+          player
+        );
+
       }
+
 
       return;
     }
 
-    // ----------------------------------------------------------
+
+    // ========================================================
     // ELEVATOR RANGE
-    // ----------------------------------------------------------
+    // ========================================================
 
     const dx =
       player.position.x -
       ELEVATOR_POSITION.x;
 
+
     const dz =
       player.position.z -
       ELEVATOR_POSITION.z;
+
 
     const dist =
       Math.sqrt(
@@ -604,39 +913,36 @@ player.position.y = travelY;
         dz * dz
       );
 
-    inRange =
-      dist <= ACTIVATION_DISTANCE;
 
-    // ----------------------------------------------------------
-    // SHARE INTERACTION STATE
-    // ----------------------------------------------------------
-    //
-    // stageVideo.js reads these values.
-    //
-    // This creates a clean interaction boundary without
-    // rebuilding or duplicating either system.
+    inRange =
+      dist <=
+      ACTIVATION_DISTANCE;
+
+
+    // ========================================================
+    // SHARE STATE
+    // ========================================================
 
     window.__lamboCityElevatorInRange =
       inRange;
 
-    window.__lamboCityElevatorOpen =
-      menuOpen || traveling;
 
-    // ----------------------------------------------------------
-    // MOBILE / IPAD E BUTTON
-    // ----------------------------------------------------------
-    //
-    // input.js already exposes the E interaction as
-    // input.keys["e"].
-    //
-    // Detect only the rising edge so holding E does not
-    // repeatedly open the menu.
+    window.__lamboCityElevatorOpen =
+      menuOpen ||
+      traveling;
+
+
+    // ========================================================
+    // MOBILE / IPAD E
+    // ========================================================
 
     const input =
       window.__lamboCityInput;
 
+
     const ePressed =
       !!input?.keys?.["e"];
+
 
     if (
       ePressed &&
@@ -645,39 +951,62 @@ player.position.y = travelY;
       !menuOpen &&
       !traveling
     ) {
+
       openMenu();
 
-      // Consume the shared E press.
-      input.keys["e"] = false;
+      input.keys["e"] =
+        false;
+
     }
 
-    lastEState = ePressed;
 
-    // ----------------------------------------------------------
+    lastEState =
+      ePressed;
+
+
+    // ========================================================
     // PROMPT
-    // ----------------------------------------------------------
+    // ========================================================
 
     if (menuOpen) {
+
       if (promptEl) {
-        promptEl.style.display = "none";
+
+        promptEl.style.display =
+          "none";
+
       }
 
       return;
     }
 
+
     if (promptEl) {
+
       promptEl.style.display =
         inRange
           ? "block"
           : "none";
+
     }
+
   },
+
 
   isOpen() {
-    return menuOpen || traveling;
+
+    return (
+      menuOpen ||
+      traveling
+    );
+
   },
 
+
   isInRange() {
+
     return inRange;
+
   }
+
 };
