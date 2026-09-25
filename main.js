@@ -78,6 +78,7 @@ engine.registerSystems({
   recordsHQ: RecordsHQ,
   recordsHQFoundation: RecordsHQFoundation,
   recordsHQFloor1: RecordsHQFloor1,
+  recordsHQEntranceThreshold: RecordsHQEntranceThreshold,
   recordsHQMerchDetails: RecordsHQMerchDetails,
   boardwalkOverlooks: BoardwalkOverlooks,
   input: Input,
