@@ -38,6 +38,7 @@ import DockLuxuryOverhaul from "./dockLuxuryOverhaul.js";
 import RecordsHQ from "./recordsHQ.js";
 import RecordsHQFoundation from "./recordsHQFoundation.js";
 import RecordsHQFloor1 from "./recordsHQFloor1.js";
+import RecordsHQEntranceThreshold from "./recordsHQEntranceThreshold.js";
 import RecordsHQMerchDetails from "./recordsHQMerchDetails.js";
 import BoardwalkOverlooks from "./boardwalkOverlooks.js";
 const engine = new Engine();
