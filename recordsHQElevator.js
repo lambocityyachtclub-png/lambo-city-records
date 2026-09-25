@@ -196,27 +196,27 @@ function buildDOM() {
     );
 
   const floors = [
-    {
-      id: 1,
-      label: "FLOOR 1",
-      sub: "STUDIO + MERCH"
-    },
-    {
-      id: 2,
-      label: "FLOOR 2",
-      sub: "RECORDS LEVEL"
-    },
-    {
-      id: 3,
-      label: "FLOOR 3",
-      sub: "EXECUTIVE LEVEL"
-    },
-    {
-      id: 4,
-      label: "ROOFTOP",
-      sub: "SKY DECK"
-    }
-  ];
+  {
+    id: 1,
+    label: "FLOOR 1",
+    sub: "STUDIO + MERCH"
+  },
+  {
+    id: 2,
+    label: "FLOOR 2",
+    sub: "RECORDING STUDIO"
+  },
+  {
+    id: 3,
+    label: "FLOOR 3",
+    sub: "MEETINGS + EXECUTIVE"
+  },
+  {
+    id: 4,
+    label: "ROOFTOP",
+    sub: "VIP LOUNGE"
+  }
+];
 
   floors.forEach(floor => {
     const button = document.createElement("button");
@@ -398,7 +398,17 @@ function startTravel() {
 
   travelStartY =
   player.position.y;
+// Hide the destination panel immediately after selection.
+// The player remains locked inside the elevator while traveling.
+// This leaves the glass elevator visible for the upcoming
+// cinematic camera treatment.
+menuOpen = false;
 
+if (menuEl) {
+  menuEl.style.display = "none";
+}
+
+setStatus("");
 window.__lamboCityPlayerSystem
   ?.setElevatorTravelY?.(travelStartY);
 
