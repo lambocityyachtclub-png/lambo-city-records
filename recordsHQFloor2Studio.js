@@ -1,8 +1,8 @@
 // recordsHQFloor2Studio.js
 // LAMBO CITY RECORDS
-// FLOOR 2 — RECORDING STUDIO
+// FLOOR 2 — MUSIC LAB / RECORDING STUDIO
 //
-// Phase 1 interior visual layer.
+// Phase 1 interior spatial foundation.
 //
 // IMPORTANT:
 // - Uses the existing Floor 2 architectural slab.
@@ -12,8 +12,19 @@
 // - Does NOT modify Floor 1.
 // - Visual environment only.
 //
-// FLOOR 2 THEME:
-// Premium LAMBO CITY RECORDS recording / production level.
+// DESIGN DIRECTION:
+// Premium luxury studio with clear player circulation.
+//
+// FUTURE INTERACTION ZONES:
+// - CONTROL ROOM
+// - VOCAL BOOTH
+// - BEAT LAB / MPC
+// - PIANO
+// - MOBILE STUDIO
+// - LISTENING LOUNGE
+//
+// The physical room is intentionally being prepared for
+// the future LAMBO CITY STUDIO app layer.
 
 import * as THREE from
   "https://unpkg.com/three@0.160.0/build/three.module.js";
@@ -22,15 +33,30 @@ const HQ_X = 28;
 const HQ_Z = 22;
 const FLOOR_Y = 12.28;
 
+// =============================================================
+// HELPERS
+// =============================================================
+
 function material(color, options = {}) {
+
   return new THREE.MeshStandardMaterial({
+
     color,
-    roughness: options.roughness ?? 0.4,
-    metalness: options.metalness ?? 0.35,
-    emissive: options.emissive ?? 0x000000,
+
+    roughness:
+      options.roughness ?? 0.4,
+
+    metalness:
+      options.metalness ?? 0.35,
+
+    emissive:
+      options.emissive ?? 0x000000,
+
     emissiveIntensity:
       options.emissiveIntensity ?? 0
+
   });
+
 }
 
 function box(
@@ -41,10 +67,12 @@ function box(
   y,
   z
 ) {
-  const mesh = new THREE.Mesh(
-    geometry,
-    mat
-  );
+
+  const mesh =
+    new THREE.Mesh(
+      geometry,
+      mat
+    );
 
   mesh.position.set(
     x,
@@ -55,6 +83,7 @@ function box(
   parent.add(mesh);
 
   return mesh;
+
 }
 
 function cylinder(
@@ -65,10 +94,12 @@ function cylinder(
   y,
   z
 ) {
-  const mesh = new THREE.Mesh(
-    geometry,
-    mat
-  );
+
+  const mesh =
+    new THREE.Mesh(
+      geometry,
+      mat
+    );
 
   mesh.position.set(
     x,
@@ -79,6 +110,7 @@ function cylinder(
   parent.add(mesh);
 
   return mesh;
+
 }
 
 function label(
@@ -87,8 +119,9 @@ function label(
   x,
   y,
   z,
-  width = 5
+  width = 4.5
 ) {
+
   const canvas =
     document.createElement("canvas");
 
@@ -106,11 +139,16 @@ function label(
   );
 
   context.font =
-    "bold 46px Arial";
+    "bold 42px Arial";
 
-  context.textAlign = "center";
-  context.textBaseline = "middle";
-  context.fillStyle = "#ffd36a";
+  context.textAlign =
+    "center";
+
+  context.textBaseline =
+    "middle";
+
+  context.fillStyle =
+    "#ffd36a";
 
   context.fillText(
     text,
@@ -119,25 +157,35 @@ function label(
   );
 
   const texture =
-    new THREE.CanvasTexture(canvas);
+    new THREE.CanvasTexture(
+      canvas
+    );
 
   texture.colorSpace =
     THREE.SRGBColorSpace;
 
   const signMaterial =
     new THREE.MeshBasicMaterial({
+
       map: texture,
+
       transparent: true,
-      side: THREE.DoubleSide
+
+      side:
+        THREE.DoubleSide
+
     });
 
   const sign =
     new THREE.Mesh(
+
       new THREE.PlaneGeometry(
         width,
-        0.85
+        0.7
       ),
+
       signMaterial
+
     );
 
   sign.position.set(
@@ -149,7 +197,12 @@ function label(
   parent.add(sign);
 
   return sign;
+
 }
+
+// =============================================================
+// MAIN SYSTEM
+// =============================================================
 
 export default {
 
@@ -172,53 +225,94 @@ export default {
     // =========================================================
 
     const black =
-      material(0x070910, {
-        roughness: 0.28,
-        metalness: 0.7
-      });
+      material(
+        0x070910,
+        {
+          roughness: 0.28,
+          metalness: 0.7
+        }
+      );
 
     const dark =
-      material(0x11131b, {
-        roughness: 0.38,
-        metalness: 0.45
-      });
+      material(
+        0x11131b,
+        {
+          roughness: 0.38,
+          metalness: 0.45
+        }
+      );
 
     const gold =
-      material(0xffd36a, {
-        roughness: 0.25,
-        metalness: 0.82,
-        emissive: 0xff9d00,
-        emissiveIntensity: 0.5
-      });
+      material(
+        0xffd36a,
+        {
+          roughness: 0.25,
+          metalness: 0.82,
+          emissive: 0xff9d00,
+          emissiveIntensity: 0.5
+        }
+      );
 
     const goldGlow =
-      material(0xffbd45, {
-        roughness: 0.28,
-        metalness: 0.55,
-        emissive: 0xff8500,
-        emissiveIntensity: 1.3
-      });
+      material(
+        0xffbd45,
+        {
+          roughness: 0.28,
+          metalness: 0.55,
+          emissive: 0xff8500,
+          emissiveIntensity: 1.25
+        }
+      );
 
     const glass =
       new THREE.MeshStandardMaterial({
-        color: 0x55bfff,
-        emissive: 0x123c60,
-        emissiveIntensity: 0.3,
-        transparent: true,
-        opacity: 0.28,
-        roughness: 0.1,
-        metalness: 0.2,
-        side: THREE.DoubleSide
+
+        color:
+          0x55bfff,
+
+        emissive:
+          0x123c60,
+
+        emissiveIntensity:
+          0.3,
+
+        transparent:
+          true,
+
+        opacity:
+          0.28,
+
+        roughness:
+          0.1,
+
+        metalness:
+          0.2,
+
+        side:
+          THREE.DoubleSide
+
       });
 
     const red =
-      material(0x6d0b18, {
-        roughness: 0.4,
-        metalness: 0.2
-      });
+      material(
+        0x6d0b18,
+        {
+          roughness: 0.4,
+          metalness: 0.2
+        }
+      );
+
+    const soft =
+      material(
+        0x181a22,
+        {
+          roughness: 0.48,
+          metalness: 0.25
+        }
+      );
 
     // =========================================================
-    // FLOOR 2 ARRIVAL / IDENTITY
+    // FLOOR 2 ARRIVAL
     // =========================================================
 
     label(
@@ -226,16 +320,14 @@ export default {
       "RECORDING STUDIO",
       0,
       3.8,
-      6.7,
-      7.0
+      6.65,
+      6.5
     );
-
-    // Gold arrival strip
 
     box(
       group,
       new THREE.BoxGeometry(
-        5.2,
+        4.8,
         0.04,
         0.07
       ),
@@ -246,7 +338,10 @@ export default {
     );
 
     // =========================================================
-    // MAIN RECORDING CONTROL ROOM
+    // CONTROL ROOM
+    //
+    // Rear wall / production area.
+    // Kept visually contained so the main floor stays open.
     // =========================================================
 
     const controlRoom =
@@ -260,13 +355,13 @@ export default {
     box(
       controlRoom,
       new THREE.BoxGeometry(
-        7.2,
-        3.8,
+        7.0,
+        3.6,
         0.22
       ),
       black,
       0,
-      2.05,
+      2.0,
       -5.85
     );
 
@@ -275,13 +370,13 @@ export default {
     box(
       controlRoom,
       new THREE.BoxGeometry(
-        6.8,
+        6.6,
         0.07,
         0.08
       ),
       gold,
       0,
-      3.72,
+      3.68,
       -5.68
     );
 
@@ -290,108 +385,113 @@ export default {
     box(
       controlRoom,
       new THREE.BoxGeometry(
-        5.2,
-        0.85,
-        1.45
+        4.8,
+        0.8,
+        1.3
       ),
       dark,
       0,
       0.55,
-      -3.9
+      -4.0
     );
 
     box(
       controlRoom,
       new THREE.BoxGeometry(
-        5.25,
+        4.9,
         0.08,
-        1.5
+        1.35
       ),
       gold,
       0,
-      1.02,
-      -3.9
+      1.0,
+      -4.0
     );
 
-    // Console screens
+    // Three production screens
 
-    [-1.65, 0, 1.65].forEach(x => {
+    [-1.55, 0, 1.55].forEach(x => {
+
+      box(
+        controlRoom,
+        new THREE.BoxGeometry(
+          1.2,
+          0.8,
+          0.08
+        ),
+        glass,
+        x,
+        1.62,
+        -4.28
+      );
 
       box(
         controlRoom,
         new THREE.BoxGeometry(
           1.25,
-          0.85,
-          0.08
-        ),
-        glass,
-        x,
-        1.65,
-        -4.2
-      );
-
-      box(
-        controlRoom,
-        new THREE.BoxGeometry(
-          1.32,
           0.05,
           0.05
         ),
         goldGlow,
         x,
-        2.12,
-        -4.16
+        2.08,
+        -4.24
       );
 
     });
 
-    // Console center controller
+    // Center controller
 
     box(
       controlRoom,
       new THREE.BoxGeometry(
-        1.4,
+        1.35,
         0.08,
-        0.7
+        0.65
       ),
       black,
       0,
-      1.08,
-      -3.15
+      1.06,
+      -3.28
     );
 
-    [-0.45, -0.15, 0.15, 0.45]
+    [-0.42, -0.14, 0.14, 0.42]
       .forEach(x => {
 
         cylinder(
           controlRoom,
           new THREE.CylinderGeometry(
-            0.06,
-            0.06,
+            0.055,
+            0.055,
             0.04,
             12
           ),
           goldGlow,
           x,
-          1.15,
-          -3.15
+          1.14,
+          -3.28
         );
 
       });
 
     label(
       controlRoom,
-      "PRODUCTION",
+      "CONTROL ROOM",
       0,
-      3.15,
+      3.12,
       -5.68,
       3.8
     );
 
-    group.add(controlRoom);
+    group.add(
+      controlRoom
+    );
 
     // =========================================================
-    // RECORDING BOOTH
+    // VOCAL BOOTH
+    //
+    // Dedicated recording area.
+    // Positioned to create a clear walking approach.
     // =========================================================
 
     const booth =
@@ -400,87 +500,83 @@ export default {
     booth.name =
       "floor2RecordingBooth";
 
-    // Booth glass walls
+    // Rear glass wall
 
     box(
       booth,
       new THREE.BoxGeometry(
-        5.0,
-        3.5,
+        4.8,
+        3.4,
         0.12
       ),
       glass,
       0,
-      1.85,
-      2.25
+      1.82,
+      2.35
+    );
+
+    // Side walls
+
+    box(
+      booth,
+      new THREE.BoxGeometry(
+        0.12,
+        3.4,
+        3.6
+      ),
+      glass,
+      -2.35,
+      1.82,
+      0.55
     );
 
     box(
       booth,
       new THREE.BoxGeometry(
         0.12,
-        3.5,
-        3.9
+        3.4,
+        3.6
       ),
       glass,
-      -2.45,
-      1.85,
-      0.3
+      2.35,
+      1.82,
+      0.55
     );
+
+    // Gold upper frame
 
     box(
       booth,
       new THREE.BoxGeometry(
-        0.12,
-        3.5,
-        3.9
-      ),
-      glass,
-      2.45,
-      1.85,
-      0.3
-    );
-
-    // Gold booth frame
-
-    box(
-      booth,
-      new THREE.BoxGeometry(
-        5.15,
+        4.95,
         0.08,
         0.08
       ),
       gold,
       0,
-      3.58,
-      2.2
+      3.55,
+      2.32
     );
 
-    box(
-      booth,
-      new THREE.BoxGeometry(
-        0.08,
-        3.55,
-        0.08
-      ),
-      gold,
-      -2.5,
-      1.85,
-      2.2
-    );
+    // Gold vertical frames
 
-    box(
-      booth,
-      new THREE.BoxGeometry(
-        0.08,
-        3.55,
-        0.08
-      ),
-      gold,
-      2.5,
-      1.85,
-      2.2
-    );
+    [-2.42, 2.42]
+      .forEach(x => {
+
+        box(
+          booth,
+          new THREE.BoxGeometry(
+            0.08,
+            3.45,
+            0.08
+          ),
+          gold,
+          x,
+          1.82,
+          2.32
+        );
+
+      });
 
     // Microphone stand
 
@@ -494,8 +590,10 @@ export default {
       black,
       0,
       1.0,
-      1.05
+      1.1
     );
+
+    // Microphone head
 
     cylinder(
       booth,
@@ -508,7 +606,7 @@ export default {
       black,
       0,
       1.95,
-      1.05
+      1.1
     );
 
     cylinder(
@@ -522,65 +620,325 @@ export default {
       gold,
       0,
       2.0,
-      1.05
+      1.1
     );
 
     label(
       booth,
-      "RECORDING BOOTH",
+      "VOCAL BOOTH",
       0,
-      3.95,
-      2.2,
-      5.4
+      3.9,
+      2.32,
+      4.3
     );
 
-    group.add(booth);
+    group.add(
+      booth
+    );
 
     // =========================================================
-    // ACOUSTIC WALL PANELS
+    // BEAT LAB
+    //
+    // Dedicated future MPC / production interaction zone.
     // =========================================================
 
-    const acoustic =
+    const beatLab =
       new THREE.Group();
 
-    acoustic.name =
-      "floor2AcousticPanels";
+    beatLab.name =
+      "floor2BeatLab";
 
-    [-6.6, -4.9, 4.9, 6.6]
-      .forEach(x => {
+    // Workstation body
+
+    box(
+      beatLab,
+      new THREE.BoxGeometry(
+        3.2,
+        0.75,
+        1.25
+      ),
+      dark,
+      -5.15,
+      0.55,
+      -1.45
+    );
+
+    // Gold workstation edge
+
+    box(
+      beatLab,
+      new THREE.BoxGeometry(
+        3.25,
+        0.07,
+        1.3
+      ),
+      gold,
+      -5.15,
+      0.98,
+      -1.45
+    );
+
+    // MPC / controller
+
+    box(
+      beatLab,
+      new THREE.BoxGeometry(
+        1.45,
+        0.1,
+        0.82
+      ),
+      black,
+      -5.15,
+      1.08,
+      -1.42
+    );
+
+    // MPC pads
+
+    const padXs =
+      [-0.48, -0.16, 0.16, 0.48];
+
+    const padZs =
+      [-0.25, 0, 0.25];
+
+    padXs.forEach(px => {
+
+      padZs.forEach(pz => {
 
         box(
-          acoustic,
+          beatLab,
           new THREE.BoxGeometry(
-            1.15,
-            2.2,
+            0.16,
+            0.035,
             0.12
           ),
-          red,
-          x,
-          1.65,
-          0.0
-        );
-
-        box(
-          acoustic,
-          new THREE.BoxGeometry(
-            0.8,
-            0.05,
-            0.05
-          ),
           goldGlow,
-          x,
-          2.7,
-          -0.08
+          -5.15 + px,
+          1.15,
+          -1.42 + pz
         );
 
       });
 
-    group.add(acoustic);
+    });
+
+    label(
+      beatLab,
+      "BEAT LAB",
+      -5.15,
+      2.05,
+      -2.1,
+      2.8
+    );
+
+    group.add(
+      beatLab
+    );
+
+    // =========================================================
+    // PIANO AREA
+    //
+    // Kept separate from the MPC station.
+    // =========================================================
+
+    const piano =
+      new THREE.Group();
+
+    piano.name =
+      "floor2PianoArea";
+
+    // Piano body
+
+    box(
+      piano,
+      new THREE.BoxGeometry(
+        3.2,
+        0.85,
+        0.75
+      ),
+      black,
+      4.55,
+      0.65,
+      -0.9
+    );
+
+    // Piano top
+
+    box(
+      piano,
+      new THREE.BoxGeometry(
+        3.25,
+        0.08,
+        0.8
+      ),
+      gold,
+      4.55,
+      1.12,
+      -0.9
+    );
+
+    // Keyboard
+
+    box(
+      piano,
+      new THREE.BoxGeometry(
+        2.7,
+        0.08,
+        0.3
+      ),
+      soft,
+      4.55,
+      1.18,
+      -0.48
+    );
+
+    // Piano bench
+
+    box(
+      piano,
+      new THREE.BoxGeometry(
+        1.35,
+        0.18,
+        0.45
+      ),
+      dark,
+      4.55,
+      0.42,
+      -0.05
+    );
+
+    label(
+      piano,
+      "PIANO",
+      4.55,
+      2.0,
+      -1.3,
+      2.2
+    );
+
+    group.add(
+      piano
+    );
+
+    // =========================================================
+    // MOBILE STUDIO
+    //
+    // Future laptop / phone / headphone recording station.
+    // =========================================================
+
+    const mobile =
+      new THREE.Group();
+
+    mobile.name =
+      "floor2MobileStudio";
+
+    // Desk
+
+    box(
+      mobile,
+      new THREE.BoxGeometry(
+        3.0,
+        0.7,
+        1.0
+      ),
+      dark,
+      -4.85,
+      0.55,
+      2.75
+    );
+
+    // Gold desk surface
+
+    box(
+      mobile,
+      new THREE.BoxGeometry(
+        3.05,
+        0.07,
+        1.05
+      ),
+      gold,
+      -4.85,
+      0.98,
+      2.75
+    );
+
+    // Laptop screen
+
+    box(
+      mobile,
+      new THREE.BoxGeometry(
+        1.35,
+        0.85,
+        0.08
+      ),
+      glass,
+      -4.85,
+      1.58,
+      2.48
+    );
+
+    // Laptop base
+
+    box(
+      mobile,
+      new THREE.BoxGeometry(
+        1.55,
+        0.08,
+        0.8
+      ),
+      black,
+      -4.85,
+      1.08,
+      2.72
+    );
+
+    // Headphone stand
+
+    box(
+      mobile,
+      new THREE.BoxGeometry(
+        0.08,
+        0.8,
+        0.08
+      ),
+      gold,
+      -3.7,
+      1.35,
+      2.75
+    );
+
+    cylinder(
+      mobile,
+      new THREE.CylinderGeometry(
+        0.28,
+        0.28,
+        0.08,
+        20
+      ),
+      black,
+      -3.7,
+      1.78,
+      2.75
+    );
+
+    label(
+      mobile,
+      "MOBILE STUDIO",
+      -4.85,
+      2.45,
+      2.75,
+      4.0
+    );
+
+    group.add(
+      mobile
+    );
 
     // =========================================================
     // LISTENING LOUNGE
+    //
+    // Quiet / therapeutic area.
+    // Kept visually separated from production equipment.
     // =========================================================
 
     const lounge =
@@ -594,71 +952,73 @@ export default {
     box(
       lounge,
       new THREE.BoxGeometry(
-        4.2,
-        0.75,
-        1.25
+        4.0,
+        0.7,
+        1.2
       ),
       black,
-      5.0,
-      0.6,
-      -2.1
+      4.55,
+      0.58,
+      2.9
     );
+
+    // Sofa back
 
     box(
       lounge,
       new THREE.BoxGeometry(
-        3.9,
-        0.85,
-        0.42
+        3.75,
+        0.8,
+        0.4
       ),
       red,
-      5.0,
-      1.25,
-      -2.55
+      4.55,
+      1.18,
+      3.35
     );
 
-    // Table
+    // Coffee table
 
     box(
       lounge,
       new THREE.BoxGeometry(
-        1.7,
+        1.65,
         0.12,
-        1.0
+        0.9
       ),
       gold,
-      5.0,
-      0.95,
-      0.0
+      4.55,
+      0.92,
+      1.75
     );
 
     box(
       lounge,
       new THREE.BoxGeometry(
-        0.15,
-        0.9,
-        0.15
+        0.14,
+        0.85,
+        0.14
       ),
       black,
-      5.0,
-      0.5,
-      0.0
+      4.55,
+      0.48,
+      1.75
     );
 
-    // Vinyl display
+    // Vinyl
 
     cylinder(
       lounge,
       new THREE.CylinderGeometry(
-        0.65,
-        0.65,
+        0.62,
+        0.62,
         0.08,
         32
       ),
       black,
-      5.0,
-      1.08,
-      0.0
+      4.55,
+      1.07,
+      1.75
     );
 
     cylinder(
@@ -670,67 +1030,115 @@ export default {
         16
       ),
       goldGlow,
-      5.0,
-      1.15,
-      0.0
+      4.55,
+      1.14,
+      1.75
     );
 
     label(
       lounge,
       "LISTENING LOUNGE",
-      5.0,
-      2.45,
-      -2.55,
-      4.8
+      4.55,
+      2.35,
+      3.35,
+      4.4
     );
 
-    group.add(lounge);
+    group.add(
+      lounge
+    );
 
     // =========================================================
-    // GOLD FLOOR GUIDES
+    // SUBTLE ACOUSTIC TREATMENT
+    //
+    // Moved toward perimeter so it doesn't visually clutter
+    // the central walking area.
+    // =========================================================
+
+    const acoustic =
+      new THREE.Group();
+
+    acoustic.name =
+      "floor2AcousticPanels";
+
+    [
+      [-6.65, 1.65, 0],
+      [-6.65, 1.65, 2.5],
+      [6.65, 1.65, 0],
+      [6.65, 1.65, 2.5]
+    ].forEach(position => {
+
+      box(
+        acoustic,
+        new THREE.BoxGeometry(
+          1.0,
+          2.0,
+          0.12
+        ),
+        red,
+        position[0],
+        position[1],
+        position[2]
+      );
+
+    });
+
+    group.add(
+      acoustic
+    );
+
+    // =========================================================
+    // OPEN CENTRAL CIRCULATION
+    //
+    // Intentionally minimal.
+    // This is the player's main movement space.
     // =========================================================
 
     box(
       group,
       new THREE.BoxGeometry(
-        6.0,
+        6.4,
         0.035,
-        0.06
+        0.055
       ),
       goldGlow,
       0,
       0.1,
-      0.0
+      -0.05
+    );
+
+    // Small orientation markers rather than large floor graphics.
+
+    box(
+      group,
+      new THREE.BoxGeometry(
+        0.055,
+        0.035,
+        2.6
+      ),
+      goldGlow,
+      -3.25,
+      0.1,
+      -1.35
     );
 
     box(
       group,
       new THREE.BoxGeometry(
-        0.06,
+        0.055,
         0.035,
-        4.0
+        2.6
       ),
       goldGlow,
-      -3.0,
+      3.25,
       0.1,
-      -2.0
-    );
-
-    box(
-      group,
-      new THREE.BoxGeometry(
-        0.06,
-        0.035,
-        4.0
-      ),
-      goldGlow,
-      3.0,
-      0.1,
-      -2.0
+      -1.35
     );
 
     // =========================================================
-    // CEILING / AMBIENT LIGHTING
+    // CEILING LIGHTING
+    //
+    // Calm luxury lighting rather than an overloaded studio.
     // =========================================================
 
     const ceiling =
@@ -745,37 +1153,30 @@ export default {
         box(
           ceiling,
           new THREE.BoxGeometry(
-            2.6,
+            2.4,
             0.05,
-            0.14
+            0.12
           ),
           goldGlow,
           x,
           3.75,
-          0.8
-        );
-
-        box(
-          ceiling,
-          new THREE.BoxGeometry(
-            0.14,
-            0.05,
-            2.6
-          ),
-          goldGlow,
-          x,
-          3.75,
-          0.8
+          0.7
         );
 
       });
 
-    group.add(ceiling);
+    group.add(
+      ceiling
+    );
+
+    // =========================================================
+    // AMBIENT LIGHT
+    // =========================================================
 
     const light =
       new THREE.PointLight(
         0xffc36b,
-        1.15,
+        1.05,
         15
       );
 
@@ -785,11 +1186,81 @@ export default {
       0
     );
 
-    group.add(light);
+    group.add(
+      light
+    );
 
-    scene.add(group);
+    // =========================================================
+    // FUTURE INTERACTION ANCHORS
+    //
+    // These are empty Groups.
+    // They create stable locations for the future Studio App
+    // without implementing any functionality yet.
+    // =========================================================
+
+    const anchors =
+      new THREE.Group();
+
+    anchors.name =
+      "floor2FutureInteractionAnchors";
+
+    const anchorData = {
+
+      vocalBooth:
+        [0, 1.0, 1.1],
+
+      beatLab:
+        [-5.15, 1.0, -1.45],
+
+      piano:
+        [4.55, 1.0, -0.9],
+
+      mobileStudio:
+        [-4.85, 1.0, 2.75],
+
+      controlRoom:
+        [0, 1.0, -4.0],
+
+      listeningLounge:
+        [4.55, 1.0, 1.75]
+
+    };
+
+    Object.entries(anchorData)
+      .forEach(([name, position]) => {
+
+        const anchor =
+          new THREE.Group();
+
+        anchor.name =
+          `studioAnchor_${name}`;
+
+        anchor.position.set(
+          position[0],
+          position[1],
+          position[2]
+        );
+
+        anchors.add(
+          anchor
+        );
+
+      });
+
+    group.add(
+      anchors
+    );
+
+    // =========================================================
+    // FINAL
+    // =========================================================
+
+    scene.add(
+      group
+    );
 
     return group;
+
   },
 
   update() {}
