@@ -4,14 +4,15 @@
 //
 // THREE FLOORS + ROOFTOP + GLASS ELEVATOR
 //
-// Phase 1:
+// PHASE 1:
 // Architecture only.
 //
-// FLOOR 1:
-// Player-level interior is handled by recordsHQFloor1.js.
-// The Floor 1 structural element is intentionally thin and
-// integrated into the HQ footprint so it reads as architecture,
-// not as a second floor.
+// IMPORTANT:
+// Floor 1 walking surface is handled by recordsHQFloor1.js.
+// It is intentionally aligned with the boardwalk elevation.
+//
+// The old Y=4.2 Floor 1 slab has been removed.
+// That element visually made Floor 1 appear elevated.
 
 import * as THREE from
   "https://unpkg.com/three@0.160.0/build/three.module.js";
@@ -53,7 +54,8 @@ export default {
 
     const group = new THREE.Group();
 
-    group.name = "recordsHQFoundation";
+    group.name =
+      "recordsHQFoundation";
 
     group.position.set(
       HQ_X,
@@ -65,115 +67,49 @@ export default {
     // MATERIALS
     // =========================================================
 
-    const darkMetal = mat(0x080a10, {
-      roughness: 0.3,
-      metalness: 0.75
-    });
+    const darkMetal = mat(
+      0x080a10,
+      {
+        roughness: 0.3,
+        metalness: 0.75
+      }
+    );
 
-    const structuralMetal = mat(0x11131a, {
-      roughness: 0.35,
-      metalness: 0.65
-    });
+    const gold = mat(
+      0xffd36a,
+      {
+        roughness: 0.28,
+        metalness: 0.8,
+        emissive: 0xffa000,
+        emissiveIntensity: 0.6
+      }
+    );
 
-    const gold = mat(0xffd36a, {
-      roughness: 0.28,
-      metalness: 0.8,
-      emissive: 0xffa000,
-      emissiveIntensity: 0.6
-    });
-
-    const glass = new THREE.MeshStandardMaterial({
-      color: 0x66c9ff,
-      emissive: 0x103d66,
-      emissiveIntensity: 0.35,
-      transparent: true,
-      opacity: 0.3,
-      roughness: 0.12,
-      metalness: 0.2,
-      side: THREE.DoubleSide
-    });
+    const glass =
+      new THREE.MeshStandardMaterial({
+        color: 0x66c9ff,
+        emissive: 0x103d66,
+        emissiveIntensity: 0.35,
+        transparent: true,
+        opacity: 0.3,
+        roughness: 0.12,
+        metalness: 0.2,
+        side: THREE.DoubleSide
+      });
 
     // =========================================================
-    // FLOOR 1 ARCHITECTURAL EDGE
+    // FLOOR 1
+    //
+    // NO ELEVATED FLOOR 1 SLAB.
+    //
+    // The actual walking surface is created by
+    // recordsHQFloor1.js at boardwalk height.
     // =========================================================
+
+    // Intentionally empty.
     //
-    // IMPORTANT:
-    // This is NOT a player floor.
-    //
-    // It is a thin structural band that follows the HQ
-    // architecture and visually connects to the building.
-    //
-    // Slightly reduced from the previous 18.35 x 14.25 slab
-    // so it does not visually overpower the building.
-    //
-
-    box(
-      group,
-      new THREE.BoxGeometry(
-        17.95,
-        0.08,
-        13.85
-      ),
-      structuralMetal,
-      0,
-      4.20,
-      0
-    );
-
-    // Front architectural trim
-    box(
-      group,
-      new THREE.BoxGeometry(
-        17.85,
-        0.055,
-        0.07
-      ),
-      gold,
-      0,
-      4.28,
-      6.92
-    );
-
-    // Rear architectural trim
-    box(
-      group,
-      new THREE.BoxGeometry(
-        17.85,
-        0.055,
-        0.07
-      ),
-      gold,
-      0,
-      4.28,
-      -6.92
-    );
-
-    // Side architectural trims
-    box(
-      group,
-      new THREE.BoxGeometry(
-        0.07,
-        0.055,
-        13.75
-      ),
-      gold,
-      -8.92,
-      4.28,
-      0
-    );
-
-    box(
-      group,
-      new THREE.BoxGeometry(
-        0.07,
-        0.055,
-        13.75
-      ),
-      gold,
-      8.92,
-      4.28,
-      0
-    );
+    // This prevents the old Y=4.2 element from reading
+    // as a second/elevated first floor.
 
     // =========================================================
     // FLOOR 2
@@ -284,10 +220,12 @@ export default {
 
     // =========================================================
     // GLASS ELEVATOR
-    // PRESERVED — DO NOT MOVE
+    //
+    // POSITION LOCKED.
     // =========================================================
 
-    const elevator = new THREE.Group();
+    const elevator =
+      new THREE.Group();
 
     elevator.name =
       "recordsHQGlassElevator";
