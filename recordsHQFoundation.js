@@ -9,8 +9,9 @@
 //
 // FLOOR 1:
 // Player-level interior is handled by recordsHQFloor1.js.
-// The first architectural slab is kept as structure/ceiling trim
-// rather than a second visible black floor.
+// The Floor 1 structural element is intentionally thin and
+// integrated into the HQ footprint so it reads as architecture,
+// not as a second floor.
 
 import * as THREE from
   "https://unpkg.com/three@0.160.0/build/three.module.js";
@@ -60,9 +61,9 @@ export default {
       HQ_Z
     );
 
-    // ==================================================
+    // =========================================================
     // MATERIALS
-    // ==================================================
+    // =========================================================
 
     const darkMetal = mat(0x080a10, {
       roughness: 0.3,
@@ -92,60 +93,91 @@ export default {
       side: THREE.DoubleSide
     });
 
-    // ==================================================
-    // FLOOR / STRUCTURAL LEVELS
+    // =========================================================
+    // FLOOR 1 ARCHITECTURAL EDGE
+    // =========================================================
     //
-    // FLOOR 1 itself is handled by recordsHQFloor1.js
-    // at the player's Y level.
+    // IMPORTANT:
+    // This is NOT a player floor.
     //
-    // The old Y=4.2 dark slab visually appeared as a
-    // second black Floor 1, so it is now structural trim.
-    // ==================================================
-
-    // Floor 1 upper structural edge / ceiling band
+    // It is a thin structural band that follows the HQ
+    // architecture and visually connects to the building.
+    //
+    // Slightly reduced from the previous 18.35 x 14.25 slab
+    // so it does not visually overpower the building.
+    //
 
     box(
       group,
       new THREE.BoxGeometry(
-        18.35,
-        0.12,
-        14.25
+        17.95,
+        0.08,
+        13.85
       ),
       structuralMetal,
       0,
-      4.2,
+      4.20,
+      0
+    );
+
+    // Front architectural trim
+    box(
+      group,
+      new THREE.BoxGeometry(
+        17.85,
+        0.055,
+        0.07
+      ),
+      gold,
+      0,
+      4.28,
+      6.92
+    );
+
+    // Rear architectural trim
+    box(
+      group,
+      new THREE.BoxGeometry(
+        17.85,
+        0.055,
+        0.07
+      ),
+      gold,
+      0,
+      4.28,
+      -6.92
+    );
+
+    // Side architectural trims
+    box(
+      group,
+      new THREE.BoxGeometry(
+        0.07,
+        0.055,
+        13.75
+      ),
+      gold,
+      -8.92,
+      4.28,
       0
     );
 
     box(
       group,
       new THREE.BoxGeometry(
-        18.45,
-        0.06,
-        0.08
+        0.07,
+        0.055,
+        13.75
       ),
       gold,
-      0,
-      4.3,
-      7.16
+      8.92,
+      4.28,
+      0
     );
 
-    box(
-      group,
-      new THREE.BoxGeometry(
-        18.45,
-        0.06,
-        0.08
-      ),
-      gold,
-      0,
-      4.3,
-      -7.16
-    );
-
-    // ==================================================
+    // =========================================================
     // FLOOR 2
-    // ==================================================
+    // =========================================================
 
     box(
       group,
@@ -186,9 +218,9 @@ export default {
       -7.16
     );
 
-    // ==================================================
+    // =========================================================
     // FLOOR 3
-    // ==================================================
+    // =========================================================
 
     box(
       group,
@@ -229,9 +261,9 @@ export default {
       -7.16
     );
 
-    // ==================================================
+    // =========================================================
     // VERTICAL ARCHITECTURAL FRAMES
-    // ==================================================
+    // =========================================================
 
     [-6, -2, 2, 6].forEach(x => {
 
@@ -250,14 +282,10 @@ export default {
 
     });
 
-    // ==================================================
-    // BACKSIDE GLASS ELEVATOR
-    // STAGE / WATER FACING
-    //
-    // POSITION PRESERVED:
-    // local X = -5
-    // local Z = -7.85
-    // ==================================================
+    // =========================================================
+    // GLASS ELEVATOR
+    // PRESERVED — DO NOT MOVE
+    // =========================================================
 
     const elevator = new THREE.Group();
 
@@ -313,9 +341,6 @@ export default {
 
     });
 
-    // Elevator landings remain at the existing
-    // architectural levels.
-
     [4.2, 12.2, 20.2].forEach(y => {
 
       box(
@@ -335,9 +360,9 @@ export default {
 
     group.add(elevator);
 
-    // ==================================================
-    // ROOFTOP OBSERVATION DECK
-    // ==================================================
+    // =========================================================
+    // ROOFTOP
+    // =========================================================
 
     box(
       group,
@@ -406,10 +431,13 @@ export default {
       0
     );
 
+    // =========================================================
+    // ADD TO SCENE
+    // =========================================================
+
     scene.add(group);
 
     return group;
-
   },
 
   update() {}
