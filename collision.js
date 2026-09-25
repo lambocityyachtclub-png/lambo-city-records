@@ -2,16 +2,52 @@
 // LAMBO CITY — Player Collision System
 //
 // Phase 1:
-// - Keep Grand Stage solid.
-// - Keep Records HQ, stores, and estates solid.
-// - Keep public promenade walkable.
-// - Keep dock → Grand Stage connector walkable.
-// - Prevent access behind Grand Stage.
-// - Completely seal the water-facing edges.
-// - No giant circular movement blocker.
+// - Keeps existing world collision.
+// - Records HQ is now multi-level aware.
+// - Elevator opening remains physically accessible.
+// - Upper HQ floors use the same architectural boundaries
+//   without being trapped by the ground-floor movement logic.
 // - Simple AABB collision for iPad/mobile performance.
 
 const colliders = [];
+
+const HQ_FLOOR_RANGES = {
+  floor1: {
+    minY: 0.0,
+    maxY: 8.0
+  },
+
+  floor2: {
+    minY: 8.0,
+    maxY: 16.2
+  },
+
+  floor3: {
+    minY: 16.2,
+    maxY: 23.8
+  },
+
+  rooftop: {
+    minY: 23.8,
+    maxY: 1000
+  }
+};
+
+function getHQLevel(y = 1.3) {
+  if (y < HQ_FLOOR_RANGES.floor2.minY) {
+    return "floor1";
+  }
+
+  if (y < HQ_FLOOR_RANGES.floor3.minY) {
+    return "floor2";
+  }
+
+  if (y < HQ_FLOOR_RANGES.rooftop.minY) {
+    return "floor3";
+  }
+
+  return "rooftop";
+}
 
 export default {
 
@@ -46,59 +82,95 @@ export default {
     // ==========================================================
     // RECORDS HQ
     // ==========================================================
+    //
+    // Building footprint:
+    // X = 19 -> 37
+    // Z = 15 -> 29
+    //
+    // Elevator:
+    // X = 21.1 -> 24.9
+    // Z = approximately 12.8 -> 15.5
+    //
+    // IMPORTANT:
+    // The back wall is split around the elevator opening.
+    // This allows the player to physically walk from the
+    // elevator into every HQ level.
+    // ==========================================================
 
-   // ==========================================================
-// RECORDS HQ
-//
-// The HQ remains solid on the sides and back.
-// The front center is intentionally left open so the player
-// can walk from the boardwalk/plaza directly into Floor 1.
-//
-// Building footprint:
-// X = 19 -> 37
-// Z = 15 -> 29
-//
-// Public entrance:
-// X = 23 -> 33
-// Z = 28.75
-// ==========================================================
+    // Left exterior wall
+    this.registerBox("recordsHQLeftWall", {
+      x: 19.25,
+      z: 22,
+      width: 0.5,
+      depth: 14
+    });
 
-this.registerBox("recordsHQLeftWall", {
-  x: 19.25,
-  z: 22,
-  width: 0.5,
-  depth: 14
-});
+    // Right exterior wall
+    this.registerBox("recordsHQRightWall", {
+      x: 36.75,
+      z: 22,
+      width: 0.5,
+      depth: 14
+    });
 
-this.registerBox("recordsHQRightWall", {
-  x: 36.75,
-  z: 22,
-  width: 0.5,
-  depth: 14
-});
 
-this.registerBox("recordsHQBackWall", {
-  x: 28,
-  z: 15.25,
-  width: 18,
-  depth: 0.5
-});
+    // ==========================================================
+    // BACK WALL — LEFT OF ELEVATOR
+    // ==========================================================
 
-// Front facade — LEFT side of entrance
-this.registerBox("recordsHQFrontLeft", {
-  x: 21,
-  z: 28.75,
-  width: 4,
-  depth: 0.5
-});
+    this.registerBox("recordsHQBackWallLeft", {
+      x: 20.05,
+      z: 15.25,
+      width: 1.6,
+      depth: 0.5
+    });
 
-// Front facade — RIGHT side of entrance
-this.registerBox("recordsHQFrontRight", {
-  x: 35,
-  z: 28.75,
-  width: 4,
-  depth: 0.5
-});
+
+    // ==========================================================
+    // BACK WALL — RIGHT OF ELEVATOR
+    // ==========================================================
+
+    this.registerBox("recordsHQBackWallRight", {
+      x: 31.0,
+      z: 15.25,
+      width: 12.0,
+      depth: 0.5
+    });
+
+
+    // ==========================================================
+    // ELEVATOR OPENING
+    // ==========================================================
+    //
+    // Intentionally NO collider here.
+    //
+    // Existing glass elevator occupies this physical location.
+    // HERO must be able to exit the elevator into the HQ.
+    // ==========================================================
+
+
+    // ==========================================================
+    // FRONT FACADE — LEFT OF ENTRANCE
+    // ==========================================================
+
+    this.registerBox("recordsHQFrontLeft", {
+      x: 21,
+      z: 28.75,
+      width: 4,
+      depth: 0.5
+    });
+
+
+    // ==========================================================
+    // FRONT FACADE — RIGHT OF ENTRANCE
+    // ==========================================================
+
+    this.registerBox("recordsHQFrontRight", {
+      x: 35,
+      z: 28.75,
+      width: 4,
+      depth: 0.5
+    });
 
 
     // ==========================================================
@@ -135,17 +207,6 @@ this.registerBox("recordsHQFrontRight", {
 
     // ==========================================================
     // FRONT WATERFRONT GLASS
-    //
-    // LEFT / STORE SIDE
-    // X -65 -> -21
-    // Z = 10
-    //
-    // RIGHT / RECORDS HQ SIDE
-    // X 21 -> 65
-    // Z = 10
-    //
-    // CENTER REMAINS OPEN:
-    // X -21 -> 21
     // ==========================================================
 
     this.registerBox("waterfrontGlassFrontLeft", {
@@ -164,11 +225,7 @@ this.registerBox("recordsHQFrontRight", {
 
 
     // ==========================================================
-    // LEFT / STORE-SIDE OUTER WATER EDGE
-    //
-    // Fully seals the west edge of the waterfront.
-    // X = -65
-    // Z = 10 -> 45
+    // LEFT OUTER WATER EDGE
     // ==========================================================
 
     this.registerBox("waterfrontGlassWestSide", {
@@ -180,14 +237,7 @@ this.registerBox("recordsHQFrontRight", {
 
 
     // ==========================================================
-    // RIGHT / RECORDS HQ OUTER WATER EDGE
-    //
-    // Fully seals the east edge of the waterfront.
-    // X = 65
-    // Z = 10 -> 45
-    //
-    // Slightly widened/deepened to make the corner impossible
-    // to slip around with the player's radius-based movement.
+    // RIGHT OUTER WATER EDGE
     // ==========================================================
 
     this.registerBox("waterfrontGlassEastSide", {
@@ -200,12 +250,6 @@ this.registerBox("recordsHQFrontRight", {
 
     // ==========================================================
     // RIGHT WATERFRONT CORNER
-    //
-    // Extra-small corner seal where the front glass meets
-    // the Records HQ-side outer glass.
-    //
-    // This does NOT create a new movement boundary.
-    // It simply closes the physical corner.
     // ==========================================================
 
     this.registerBox("waterfrontGlassRightCorner", {
@@ -218,9 +262,6 @@ this.registerBox("recordsHQFrontRight", {
 
     // ==========================================================
     // LEFT WATERFRONT CORNER
-    //
-    // Matches the right-side corner treatment so both sides
-    // behave consistently.
     // ==========================================================
 
     this.registerBox("waterfrontGlassLeftCorner", {
@@ -239,15 +280,33 @@ this.registerBox("recordsHQFrontRight", {
 
   registerBox(
     name,
-    { x, z, width, depth, halfWidth, halfDepth }
+    {
+      x,
+      z,
+      width,
+      depth,
+      halfWidth,
+      halfDepth,
+      minY = -Infinity,
+      maxY = Infinity,
+      level = null
+    }
   ) {
 
     colliders.push({
       name,
       x,
       z,
-      halfWidth: halfWidth ?? width / 2,
-      halfDepth: halfDepth ?? depth / 2
+
+      halfWidth:
+        halfWidth ?? width / 2,
+
+      halfDepth:
+        halfDepth ?? depth / 2,
+
+      minY,
+      maxY,
+      level
     });
 
   },
@@ -256,7 +315,9 @@ this.registerBox("recordsHQFrontRight", {
   unregister(name) {
 
     const idx =
-      colliders.findIndex(c => c.name === name);
+      colliders.findIndex(
+        c => c.name === name
+      );
 
     if (idx !== -1) {
       colliders.splice(idx, 1);
@@ -266,7 +327,16 @@ this.registerBox("recordsHQFrontRight", {
 
 
   // ==========================================================
-  // GRAND STAGE / PIER BOUNDARY
+  // HQ LEVEL
+  // ==========================================================
+
+  getHQLevel(y = 1.3) {
+    return getHQLevel(y);
+  },
+
+
+  // ==========================================================
+  // GRAND STAGE / PIER
   // ==========================================================
 
   isOutsidePier(x, z, radius = 0.6) {
@@ -278,20 +348,55 @@ this.registerBox("recordsHQFrontRight", {
   // PLAYER COLLISION CHECK
   // ==========================================================
 
-  isBlocked(x, z, radius = 0.6) {
+  isBlocked(
+    x,
+    z,
+    radius = 0.6,
+    y = 1.3
+  ) {
 
-    return colliders.some(c =>
+    return colliders.some(c => {
 
-      x + radius > c.x - c.halfWidth &&
+      // Vertical filtering.
+      //
+      // A collider only affects the player when the player's
+      // current floor height overlaps the collider's Y range.
 
-      x - radius < c.x + c.halfWidth &&
+      if (
+        y < c.minY ||
+        y > c.maxY
+      ) {
+        return false;
+      }
 
-      z + radius > c.z - c.halfDepth &&
 
-      z - radius < c.z + c.halfDepth
+      return (
 
-    );
+        x + radius >
+        c.x - c.halfWidth &&
 
+        x - radius <
+        c.x + c.halfWidth &&
+
+        z + radius >
+        c.z - c.halfDepth &&
+
+        z - radius <
+        c.z + c.halfDepth
+
+      );
+
+    });
+
+  },
+
+
+  // ==========================================================
+  // DEBUG
+  // ==========================================================
+
+  getColliderCount() {
+    return colliders.length;
   },
 
 
