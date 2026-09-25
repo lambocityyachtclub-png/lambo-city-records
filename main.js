@@ -38,6 +38,7 @@ import DockLuxuryOverhaul from "./dockLuxuryOverhaul.js";
 import RecordsHQ from "./recordsHQ.js";
 import RecordsHQFoundation from "./recordsHQFoundation.js";
 import RecordsHQFloor1 from "./recordsHQFloor1.js";
+import RecordsHQFloor2Studio from "./recordsHQFloor2Studio.js";
 import RecordsHQEntranceThreshold from "./recordsHQEntranceThreshold.js";
 import RecordsHQMediaDetails from "./recordsHQMediaDetails.js";
 import RecordsHQMerchDetails from "./recordsHQMerchDetails.js";
@@ -80,6 +81,7 @@ engine.registerSystems({
   recordsHQ: RecordsHQ,
   recordsHQFoundation: RecordsHQFoundation,
   recordsHQFloor1: RecordsHQFloor1,
+  recordsHQFloor2Studio: RecordsHQFloor2Studio,
   recordsHQEntranceThreshold: RecordsHQEntranceThreshold,
   recordsHQMediaDetails: RecordsHQMediaDetails,
   recordsHQMerchDetails: RecordsHQMerchDetails,
