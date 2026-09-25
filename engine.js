@@ -49,6 +49,7 @@ this.systems.dockLuxuryOverhaul?.init?.(this.scene);
 this.systems.recordsHQ?.init?.(this.scene);
 this.systems.recordsHQFoundation?.init?.(this.scene);
 this.systems.recordsHQFloor1?.init?.(this.scene);
+this.systems.recordsHQFloor2Studio?.init?.(this.scene);
 this.systems.recordsHQEntranceThreshold?.init?.(this.scene);
 this.systems.recordsHQMediaDetails?.init?.(this.scene);
 this.systems.recordsHQMerchDetails?.init?.(this.scene);
