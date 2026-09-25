@@ -51,6 +51,7 @@ this.systems.recordsHQFoundation?.init?.(this.scene);
 this.systems.recordsHQFloor1?.init?.(this.scene);
 this.systems.recordsHQFloor2Studio?.init?.(this.scene);
 this.systems.recordsHQFloor3Executive?.init?.(this.scene);
+this.systems.recordsHQRooftopVIP?.init?.(this.scene);
 this.systems.recordsHQEntranceThreshold?.init?.(this.scene);
 this.systems.recordsHQMediaDetails?.init?.(this.scene);
 this.systems.recordsHQMerchDetails?.init?.(this.scene);
