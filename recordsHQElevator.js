@@ -5,13 +5,14 @@
 // - Uses the existing glass elevator created by recordsHQFoundation.js
 // - Does NOT modify the HQ foundation
 // - Does NOT create new elevator geometry
-// - Does NOT modify player movement
-// - Uses the existing E interaction pattern
 // - Provides Floor 1 / Floor 2 / Floor 3 / Rooftop selection
+// - Owns the E interaction while the player is inside the elevator zone
+// - Compatible with keyboard + existing mobile/iPad E input
 //
-// IMPORTANT:
-// This is the first functional pass.
-// Actual cinematic elevator travel can be layered on later.
+// INTERACTION RULE:
+// Elevator interaction takes priority over the Records HQ
+// Music + Video interaction while the player is standing
+// inside the elevator activation zone.
 
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 
@@ -20,14 +21,11 @@ const ELEVATOR_POSITION = {
   z: 14.15
 };
 
-// Player must be reasonably close to the elevator.
 const ACTIVATION_DISTANCE = 3.2;
-
-// Prototype travel time.
-// Later this can become a full cinematic elevator sequence.
 const TRAVEL_TIME = 1.25;
 
 let scene = null;
+
 let promptEl = null;
 let menuEl = null;
 let statusEl = null;
@@ -36,11 +34,15 @@ let built = false;
 let inRange = false;
 let menuOpen = false;
 let traveling = false;
-let travelTimer = 0;
 
+let travelTimer = 0;
 let selectedFloor = null;
+
 let travelStartY = 1.3;
 let travelTargetY = 1.3;
+
+let currentPlayer = null;
+let lastEState = false;
 
 function buildDOM() {
   // ------------------------------------------------------------
@@ -189,13 +191,31 @@ function buildDOM() {
   document.body.appendChild(menuEl);
 
   const buttonWrap =
-    document.getElementById("records-hq-elevator-buttons");
+    document.getElementById(
+      "records-hq-elevator-buttons"
+    );
 
   const floors = [
-    { id: 1, label: "FLOOR 1", sub: "STUDIO + MERCH" },
-    { id: 2, label: "FLOOR 2", sub: "RECORDS LEVEL" },
-    { id: 3, label: "FLOOR 3", sub: "EXECUTIVE LEVEL" },
-    { id: 4, label: "ROOFTOP", sub: "SKY DECK" }
+    {
+      id: 1,
+      label: "FLOOR 1",
+      sub: "STUDIO + MERCH"
+    },
+    {
+      id: 2,
+      label: "FLOOR 2",
+      sub: "RECORDS LEVEL"
+    },
+    {
+      id: 3,
+      label: "FLOOR 3",
+      sub: "EXECUTIVE LEVEL"
+    },
+    {
+      id: 4,
+      label: "ROOFTOP",
+      sub: "SKY DECK"
+    }
   ];
 
   floors.forEach(floor => {
@@ -241,18 +261,27 @@ function buildDOM() {
       selectFloor(floor.id);
     });
 
-    button.addEventListener("touchstart", e => {
-      e.preventDefault();
-      selectFloor(floor.id);
-    }, { passive:false });
+    button.addEventListener(
+      "touchstart",
+      e => {
+        e.preventDefault();
+        selectFloor(floor.id);
+      },
+      { passive:false }
+    );
 
     buttonWrap.appendChild(button);
   });
 
   const closeButton =
-    document.getElementById("records-hq-elevator-close");
+    document.getElementById(
+      "records-hq-elevator-close"
+    );
 
-  closeButton.addEventListener("click", closeMenu);
+  closeButton.addEventListener(
+    "click",
+    closeMenu
+  );
 
   // ------------------------------------------------------------
   // KEYBOARD
@@ -263,11 +292,6 @@ function buildDOM() {
 
     const key = e.key.toLowerCase();
 
-    // E opens the elevator.
-    //
-    // stopImmediatePropagation prevents the existing Records HQ
-    // video system from responding to the same E press while the
-    // player is standing directly at the elevator.
     if (
       key === "e" &&
       inRange &&
@@ -275,12 +299,18 @@ function buildDOM() {
       !traveling
     ) {
       e.preventDefault();
+      e.stopPropagation();
       e.stopImmediatePropagation();
+
       openMenu();
       return;
     }
 
-    if (e.key === "Escape" && menuOpen && !traveling) {
+    if (
+      e.key === "Escape" &&
+      menuOpen &&
+      !traveling
+    ) {
       closeMenu();
     }
   });
@@ -288,8 +318,14 @@ function buildDOM() {
   built = true;
 }
 
+// --------------------------------------------------------------
+// OPEN MENU
+// --------------------------------------------------------------
+
 function openMenu() {
   if (!menuEl || traveling) return;
+
+  if (!inRange) return;
 
   menuOpen = true;
 
@@ -299,9 +335,16 @@ function openMenu() {
 
   menuEl.style.display = "block";
 
-  setStatus("SELECT YOUR DESTINATION");
+  setStatus(
+    "SELECT YOUR DESTINATION"
+  );
+
   lockPlayerInput(true);
 }
+
+// --------------------------------------------------------------
+// CLOSE MENU
+// --------------------------------------------------------------
 
 function closeMenu() {
   if (!menuEl || traveling) return;
@@ -315,22 +358,14 @@ function closeMenu() {
   lockPlayerInput(false);
 }
 
+// --------------------------------------------------------------
+// FLOOR SELECTION
+// --------------------------------------------------------------
+
 function selectFloor(floor) {
   if (traveling) return;
 
   selectedFloor = floor;
-
-  // Floor heights match the existing HQ foundation:
-  //
-  // Floor 1 walking surface ≈ 1.355
-  // Floor 2 slab top       ≈ 12.26
-  // Floor 3 slab top       ≈ 20.26
-  // Rooftop slab           ≈ 26.39
-  //
-  // Player's visible base is controlled by player.js at y≈1.3,
-  // so these values are used as the elevator's internal travel
-  // target only. The first prototype keeps the player visually
-  // grounded after arrival.
 
   const targets = {
     1: 1.3,
@@ -339,10 +374,15 @@ function selectFloor(floor) {
     4: 26.3
   };
 
-  travelTargetY = targets[floor] ?? 1.3;
+  travelTargetY =
+    targets[floor] ?? 1.3;
 
   startTravel();
 }
+
+// --------------------------------------------------------------
+// START TRAVEL
+// --------------------------------------------------------------
 
 function startTravel() {
   traveling = true;
@@ -356,7 +396,8 @@ function startTravel() {
     return;
   }
 
-  travelStartY = player.position.y;
+  travelStartY =
+    player.position.y;
 
   setStatus(
     selectedFloor === 4
@@ -367,42 +408,46 @@ function startTravel() {
   lockPlayerInput(true);
 }
 
+// --------------------------------------------------------------
+// FINISH TRAVEL
+// --------------------------------------------------------------
+
 function finishTravel(player) {
   if (!player) return;
 
-  // Keep the player inside the elevator landing.
-  player.position.x = ELEVATOR_POSITION.x;
-  player.position.z = ELEVATOR_POSITION.z;
+  player.position.x =
+    ELEVATOR_POSITION.x;
 
-  // IMPORTANT:
-  // player.js owns the visible player Y position and resets it
-  // every frame. Therefore we don't fight that system here.
-  //
-  // The functional prototype uses the floor selection to establish
-  // the elevator destination. Later, the same module can replace
-  // this with a real cinematic vertical ride and floor-specific
-  // player placement.
+  player.position.z =
+    ELEVATOR_POSITION.z;
 
   traveling = false;
   menuOpen = false;
 
-  menuEl.style.display = "none";
+  if (menuEl) {
+    menuEl.style.display = "none";
+  }
 
   setStatus("");
 
   lockPlayerInput(false);
 }
 
+// --------------------------------------------------------------
+// PLAYER
+// --------------------------------------------------------------
+
 function getPlayer() {
-  // Engine places the player in context.player.
-  // We retain the reference from update() below.
   return currentPlayer;
 }
 
-let currentPlayer = null;
+// --------------------------------------------------------------
+// INPUT LOCK
+// --------------------------------------------------------------
 
 function lockPlayerInput(locked) {
-  const input = window.__lamboCityInput;
+  const input =
+    window.__lamboCityInput;
 
   if (!input) return;
 
@@ -421,24 +466,36 @@ function lockPlayerInput(locked) {
   }
 }
 
+// --------------------------------------------------------------
+// STATUS
+// --------------------------------------------------------------
+
 function setStatus(message) {
-  statusEl = document.getElementById(
-    "records-hq-elevator-status"
-  );
+  statusEl =
+    document.getElementById(
+      "records-hq-elevator-status"
+    );
 
   if (statusEl) {
     statusEl.textContent = message;
   }
 }
 
+// --------------------------------------------------------------
+// EXPORT
+// --------------------------------------------------------------
+
 export default {
+
   init(scene_) {
     scene = scene_;
 
-    // Give this system access to the existing input object
-    // without replacing or modifying input.js.
-    //
-    // The reference is assigned by main.js/engine initialization.
+    // Build immediately so the elevator's interaction state
+    // exists independently of the video system.
+    if (!built) {
+      buildDOM();
+    }
+
     window.__lamboCityElevatorReady = true;
   },
 
@@ -449,14 +506,14 @@ export default {
       buildDOM();
     }
 
-    const player = context.player;
+    const player =
+      context.player;
 
     if (!player) return;
 
     currentPlayer = player;
 
-    // Expose the existing input object only while this system
-    // needs it. No new input system is created.
+    // Existing input system.
     if (
       context.systems &&
       context.systems.input
@@ -473,13 +530,19 @@ export default {
       travelTimer += delta;
 
       const progress =
-        Math.min(1, travelTimer / TRAVEL_TIME);
+        Math.min(
+          1,
+          travelTimer / TRAVEL_TIME
+        );
 
-      // Smooth easing for the prototype.
       const eased =
         progress < 0.5
           ? 2 * progress * progress
-          : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+          : 1 -
+            Math.pow(
+              -2 * progress + 2,
+              2
+            ) / 2;
 
       player.position.y =
         THREE.MathUtils.lerp(
@@ -487,6 +550,10 @@ export default {
           travelTargetY,
           eased
         );
+
+      // Elevator owns interaction while traveling.
+      window.__lamboCityElevatorInRange = true;
+      window.__lamboCityElevatorOpen = true;
 
       if (progress >= 1) {
         finishTravel(player);
@@ -508,21 +575,77 @@ export default {
       ELEVATOR_POSITION.z;
 
     const dist =
-      Math.sqrt(dx * dx + dz * dz);
+      Math.sqrt(
+        dx * dx +
+        dz * dz
+      );
 
     inRange =
       dist <= ACTIVATION_DISTANCE;
+
+    // ----------------------------------------------------------
+    // SHARE INTERACTION STATE
+    // ----------------------------------------------------------
+    //
+    // stageVideo.js reads these values.
+    //
+    // This creates a clean interaction boundary without
+    // rebuilding or duplicating either system.
+
+    window.__lamboCityElevatorInRange =
+      inRange;
+
+    window.__lamboCityElevatorOpen =
+      menuOpen || traveling;
+
+    // ----------------------------------------------------------
+    // MOBILE / IPAD E BUTTON
+    // ----------------------------------------------------------
+    //
+    // input.js already exposes the E interaction as
+    // input.keys["e"].
+    //
+    // Detect only the rising edge so holding E does not
+    // repeatedly open the menu.
+
+    const input =
+      window.__lamboCityInput;
+
+    const ePressed =
+      !!input?.keys?.["e"];
+
+    if (
+      ePressed &&
+      !lastEState &&
+      inRange &&
+      !menuOpen &&
+      !traveling
+    ) {
+      openMenu();
+
+      // Consume the shared E press.
+      input.keys["e"] = false;
+    }
+
+    lastEState = ePressed;
+
+    // ----------------------------------------------------------
+    // PROMPT
+    // ----------------------------------------------------------
 
     if (menuOpen) {
       if (promptEl) {
         promptEl.style.display = "none";
       }
+
       return;
     }
 
     if (promptEl) {
       promptEl.style.display =
-        inRange ? "block" : "none";
+        inRange
+          ? "block"
+          : "none";
     }
   },
 
