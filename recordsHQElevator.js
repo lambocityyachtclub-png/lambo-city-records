@@ -397,9 +397,12 @@ function startTravel() {
   }
 
   travelStartY =
-    player.position.y;
+  player.position.y;
 
-  setStatus(
+window.__lamboCityPlayerSystem
+  ?.setElevatorTravelY?.(travelStartY);
+
+setStatus(
     selectedFloor === 4
       ? "TRAVELING TO ROOFTOP..."
       : `TRAVELING TO FLOOR ${selectedFloor}...`
@@ -419,9 +422,12 @@ function finishTravel(player) {
     ELEVATOR_POSITION.x;
 
   player.position.z =
-    ELEVATOR_POSITION.z;
+  ELEVATOR_POSITION.z;
 
-  traveling = false;
+window.__lamboCityPlayerSystem
+  ?.setElevatorFloorY?.(travelTargetY);
+
+traveling = false;
   menuOpen = false;
 
   if (menuEl) {
@@ -507,10 +513,13 @@ export default {
     }
 
     const player =
-      context.player;
+      context.player;  
 
     if (!player) return;
-
+    if (context.systems?.player) {
+  window.__lamboCityPlayerSystem =
+    context.systems.player;
+}
     currentPlayer = player;
 
     // Existing input system.
@@ -544,12 +553,17 @@ export default {
               2
             ) / 2;
 
-      player.position.y =
-        THREE.MathUtils.lerp(
-          travelStartY,
-          travelTargetY,
-          eased
-        );
+      const travelY =
+  THREE.MathUtils.lerp(
+    travelStartY,
+    travelTargetY,
+    eased
+  );
+
+window.__lamboCityPlayerSystem
+  ?.setElevatorTravelY?.(travelY);
+
+player.position.y = travelY;
 
       // Elevator owns interaction while traveling.
       window.__lamboCityElevatorInRange = true;
