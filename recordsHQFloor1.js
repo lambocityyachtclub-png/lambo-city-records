@@ -227,16 +227,102 @@ export default {
       });
 
     // ==================================================
-    // NO SECOND FLOOR
-    //
-    // IMPORTANT:
-    // Do NOT create another black floor here.
-    //
-    // The group sits at FLOOR_Y = 1.28 and all interior
-    // pieces are positioned relative to that existing
-    // player-level surface.
     // ==================================================
+// FLOOR 1 WALKING SURFACE
+//
+// This is the actual interior floor.
+//
+// It is intentionally placed at the same elevation
+// as the existing boardwalk surface so the visitor
+// walks naturally from the boardwalk into the HQ.
+//
+// Boardwalk:
+// base Y = 1.0
+// plank top ≈ 1.355
+//
+// HQ Floor 1:
+// top ≈ 1.34
+//
+// Result:
+// essentially flush transition.
+// ==================================================
 
+const floor1Surface = new THREE.Mesh(
+  new THREE.BoxGeometry(
+    17.9,
+    0.08,
+    13.8
+  ),
+  black
+);
+
+floor1Surface.position.set(
+  0,
+  0.035,
+  0
+);
+
+group.add(floor1Surface);
+
+// ==================================================
+// FLOOR 1 ARCHITECTURAL EDGE
+//
+// Very thin trim, sitting directly around the floor.
+// It should read as part of the building, not a slab.
+// ==================================================
+
+box(
+  group,
+  new THREE.BoxGeometry(
+    17.75,
+    0.035,
+    0.07
+  ),
+  gold,
+  0,
+  0.07,
+  6.82
+);
+
+box(
+  group,
+  new THREE.BoxGeometry(
+    17.75,
+    0.035,
+    0.07
+  ),
+  gold,
+  0,
+  0.07,
+  -6.82
+);
+
+box(
+  group,
+  new THREE.BoxGeometry(
+    0.07,
+    0.035,
+    13.65
+  ),
+  gold,
+  -8.82,
+  0.07,
+  0
+);
+
+box(
+  group,
+  new THREE.BoxGeometry(
+    0.07,
+    0.035,
+    13.65
+  ),
+  gold,
+  8.82,
+  0.07,
+  0
+);
+    
     // ==================================================
     // FRONT MERCHANDISE ZONE
     // ==================================================
