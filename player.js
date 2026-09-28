@@ -11,6 +11,23 @@ export default {
 
     player = new THREE.Group();
 
+    /*
+      The player group controls movement/facing.
+
+      The visual model is rotated 180 degrees inside
+      the player group because the character geometry
+      was originally built facing +Z while our movement
+      system defines forward as -Z.
+
+      This keeps movement mathematically correct
+      without making the character appear to walk backward.
+    */
+    const model = new THREE.Group();
+
+    model.rotation.y = Math.PI;
+
+    player.add(model);
+
     const bm =
       new THREE.MeshStandardMaterial({
         color: 0x111111,
@@ -28,7 +45,7 @@ export default {
       );
 
     body.position.y = 1.8;
-    player.add(body);
+    model.add(body);
 
     this._bodyMat = bm;
 
@@ -53,7 +70,7 @@ export default {
       0.38
     );
 
-    player.add(logo);
+    model.add(logo);
 
 
     const head =
@@ -70,7 +87,7 @@ export default {
       );
 
     head.position.y = 3.15;
-    player.add(head);
+    model.add(head);
 
 
     const cap =
@@ -86,7 +103,7 @@ export default {
       );
 
     cap.position.y = 3.65;
-    player.add(cap);
+    model.add(cap);
 
 
     const brim =
@@ -107,7 +124,7 @@ export default {
       0.55
     );
 
-    player.add(brim);
+    model.add(brim);
 
 
     this.armL =
@@ -128,7 +145,7 @@ export default {
       0
     );
 
-    player.add(this.armL);
+    model.add(this.armL);
 
 
     this.armR =
@@ -149,7 +166,7 @@ export default {
       0
     );
 
-    player.add(this.armR);
+    model.add(this.armR);
 
 
     this.legL =
@@ -170,7 +187,7 @@ export default {
       0
     );
 
-    player.add(this.legL);
+    model.add(this.legL);
 
 
     this.legR =
@@ -191,7 +208,7 @@ export default {
       0
     );
 
-    player.add(this.legR);
+    model.add(this.legR);
 
 
     [-0.35, 0.35].forEach(x => {
@@ -214,7 +231,7 @@ export default {
         0.1
       );
 
-      player.add(shoe);
+      model.add(shoe);
 
     });
 
@@ -245,7 +262,7 @@ export default {
     chain.rotation.x =
       Math.PI / 2;
 
-    player.add(chain);
+    model.add(chain);
 
 
     player.position.set(
@@ -261,12 +278,12 @@ export default {
     this.sprintSpeed = 18;
 
     /*
-      HERO starts facing the same direction
-      used by the previous movement system.
-
-      Rotation 0 = forward toward world -Z.
+      Rotation 0 = player forward toward world -Z.
     */
     this._facing = 0;
+
+    player.rotation.y =
+      this._facing;
 
     this._floorY = 1.3;
     this._elevatorY = null;
@@ -357,14 +374,13 @@ export default {
       PLAYER-RELATIVE MOVEMENT
       ------------------------------------------------
 
-      HERO's facing direction determines "forward".
-
       W  = forward
       S  = backward
       A  = left
       D  = right
 
-      The camera is NOT involved in this calculation.
+      Forward is based on HERO's current facing.
+      The camera is completely independent.
       ------------------------------------------------
     */
 
@@ -401,14 +417,6 @@ export default {
 
     /*
       MOBILE JOYSTICK
-
-      Joystick Y:
-        -1 = forward
-        +1 = backward
-
-      Joystick X:
-        -1 = left
-        +1 = right
     */
 
     if (input.joystick?.active) {
@@ -419,14 +427,12 @@ export default {
       const jy =
         input.joystick.y;
 
-
       if (
-        Math.abs(jx) > 0.08 ||
-        Math.abs(jy) > 0.08
+        Math.abs(jx) > 0.12 ||
+        Math.abs(jy) > 0.12
       ) {
 
         right = jx;
-
         forward = -jy;
 
         moving = true;
@@ -458,21 +464,12 @@ export default {
 
 
     /*
-      Convert player-relative input
+      Convert player-relative movement
       into world movement.
-
-      At rotation 0:
-
-        forward = world -Z
-        right   = world +X
-
-      As HERO rotates, these directions
-      rotate with him.
     */
 
     let dx = 0;
     let dz = 0;
-
 
     if (moving) {
 
@@ -486,11 +483,9 @@ export default {
           this._facing
         );
 
-
       dx =
         (sin * forward) +
         (cos * right);
-
 
       dz =
         (-cos * forward) +
@@ -498,10 +493,6 @@ export default {
 
     }
 
-
-    /*
-      Calculate the new position.
-    */
 
     const newX =
       player.position.x +
@@ -523,7 +514,7 @@ export default {
 
 
     /*
-      Collision remains exactly the same.
+      Collision.
     */
 
     if (
@@ -557,10 +548,7 @@ export default {
 
 
     /*
-      HERO turns toward the direction
-      he is actually moving.
-
-      This does NOT control the camera.
+      Turn HERO toward actual movement direction.
     */
 
     if (
@@ -615,7 +603,7 @@ export default {
 
 
     /*
-      ELEVATOR FLOOR CONTROL
+      ELEVATOR
     */
 
     if (
@@ -633,7 +621,7 @@ export default {
 
 
       /*
-        WALK / RUN ANIMATION
+        WALK ANIMATION
       */
 
       if (moving) {
@@ -651,7 +639,6 @@ export default {
 
         this.armR.rotation.x =
           -sw;
-
 
         this.legL.rotation.x =
           -sw;
