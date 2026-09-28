@@ -354,88 +354,86 @@ this._facing = Math.PI;
     let dz = 0;
 
 
-    // ==========================================================
-    // WORLD-RELATIVE MOVEMENT
-    // ==========================================================
-    //
-    // W = forward
-    // S = backward
-    // A = left strafe
-    // D = right strafe
-    //
-    // IMPORTANT:
-    // A/D do NOT automatically rotate HERO.
-    // ==========================================================
+ // ==========================================================
+// WORLD-RELATIVE MOVEMENT
+// ==========================================================
+//
+// W = forward
+// S = backward
+// A = left strafe
+// D = right strafe
+//
+// IMPORTANT:
+// A/D do NOT automatically rotate HERO.
+// ==========================================================
 
-    const forwardPressed =
-      !!input.keys?.w;
+const forwardPressed =
+  !!input.keys?.w;
 
-    const backwardPressed =
-      !!input.keys?.s;
+const backwardPressed =
+  !!input.keys?.s;
 
-    const leftPressed =
-      !!input.keys?.a;
+const leftPressed =
+  !!input.keys?.a;
 
-    const rightPressed =
-      !!input.keys?.d;
-
-
-    if (forwardPressed) {
-      dz = -1;
-      moving = true;
-    }
-
-    if (backwardPressed) {
-      dz = 1;
-      moving = true;
-    }
-
-    if (leftPressed) {
-      dx = -1;
-      moving = true;
-    }
-
-    if (rightPressed) {
-      dx = 1;
-      moving = true;
-    }
+const rightPressed =
+  !!input.keys?.d;
 
 
-    // ==========================================================
-    // MOBILE JOYSTICK
-    // ==========================================================
+if (forwardPressed) {
+  dz = -1;
+  moving = true;
+}
 
-    if (input.joystick?.active) {
+if (backwardPressed) {
+  dz = 1;
+  moving = true;
+}
 
-      if (
-        Math.abs(
-          input.joystick.x
-        ) > 0.08
-      ) {
+if (leftPressed) {
+  dx = -1;
+  moving = true;
+}
 
-        dx =
-          input.joystick.x;
-
-        moving = true;
-
-      }
+if (rightPressed) {
+  dx = 1;
+  moving = true;
+}
 
 
-      if (
-        Math.abs(
-          input.joystick.y
-        ) > 0.08
-      ) {
+// ==========================================================
+// MOBILE JOYSTICK
+// ==========================================================
 
-        dz =
-          input.joystick.y;
+if (input.joystick?.active) {
 
-        moving = true;
+  if (
+    Math.abs(
+      input.joystick.x
+    ) > 0.08
+  ) {
 
-      }
+    dx =
+      input.joystick.x;
 
-    }
+    moving = true;
 
+  }
+
+  if (
+    Math.abs(
+      input.joystick.y
+    ) > 0.08
+  ) {
+
+    dz =
+      input.joystick.y;
+
+    moving = true;
+
+  }
+
+}
 
     // ==========================================================
     // NORMALIZE DIAGONAL MOVEMENT
