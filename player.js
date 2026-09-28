@@ -7,176 +7,27 @@ let player, bobTime = 0;
 
 
 // ============================================================
-// CAMERA ACCESS
+// LAMBO CITY PLAYER
 // ============================================================
-
-function getActiveCamera(context) {
-
-  if (
-    context?.camera &&
-    context.camera.isCamera
-  ) {
-
-    return context.camera;
-
-  }
-
-
-  if (
-    context?.systems?.camera &&
-    typeof context.systems.camera.getCamera === "function"
-  ) {
-
-    const cam =
-      context.systems.camera.getCamera();
-
-    if (cam) {
-      return cam;
-    }
-
-  }
-
-
-  if (
-    typeof window !== "undefined" &&
-    window.__lamboCityCamera &&
-    window.__lamboCityCamera.isCamera
-  ) {
-
-    return window.__lamboCityCamera;
-
-  }
-
-
-  return null;
-
-}
-
-
-// ============================================================
-// CAMERA-RELATIVE MOVEMENT
-// ============================================================
+//
+// MOVEMENT RULE:
+//
+// W = FORWARD
+// S = BACKWARD
+// A = LEFT
+// D = RIGHT
 //
 // IMPORTANT:
 //
-// The camera looks TOWARD HERO.
+// Movement is based on HERO'S orientation.
 //
-// Therefore:
+// The camera does NOT determine where HERO walks.
 //
-// camera forward      = direction camera is looking
-// player forward      = opposite of camera forward
+// HERO determines his direction.
+// The camera follows HERO.
 //
-// This gives us:
+// HERO faces +Z when rotation is 0.
 //
-// W = away from camera / toward HERO's visible forward direction
-// S = toward camera
-// A = camera-left
-// D = camera-right
-//
-// This keeps controls intuitive when the camera is behind HERO.
-//
-
-function getCameraMovement(
-  camera,
-  inputX,
-  inputY
-) {
-
-  if (!camera) {
-    return null;
-  }
-
-
-  const cameraForward =
-    new THREE.Vector3();
-
-  camera.getWorldDirection(
-    cameraForward
-  );
-
-
-  // ----------------------------------------------------------
-  // KEEP MOVEMENT ON THE FLOOR
-  // ----------------------------------------------------------
-
-  cameraForward.y = 0;
-
-
-  if (
-    cameraForward.lengthSq() <
-    0.0001
-  ) {
-
-    return null;
-
-  }
-
-
-  cameraForward.normalize();
-
-
-  // ----------------------------------------------------------
-  // HERO FORWARD
-  // ----------------------------------------------------------
-  //
-  // The camera is looking toward HERO.
-  //
-  // Therefore HERO's forward direction is the opposite
-  // horizontal direction.
-  //
-
-  const playerForward =
-    cameraForward.clone()
-      .multiplyScalar(-1);
-
-
-  // ----------------------------------------------------------
-  // CAMERA RIGHT
-  // ----------------------------------------------------------
-  //
-  // For a camera looking toward -Z:
-  //
-  // right = +X
-  //
-  // This is the important correction for A/D.
-  //
-
-  const cameraRight =
-    new THREE.Vector3(
-      -cameraForward.z,
-      0,
-      cameraForward.x
-    );
-
-
-  cameraRight.normalize();
-
-
-  // ----------------------------------------------------------
-  // COMBINE INPUT
-  // ----------------------------------------------------------
-
-  const movement =
-    new THREE.Vector3();
-
-
-  // A/D
-  movement.addScaledVector(
-    cameraRight,
-    inputX
-  );
-
-
-  // W/S
-  movement.addScaledVector(
-    playerForward,
-    inputY
-  );
-
-
-  return movement;
-
-}
 
 
 export default {
@@ -196,7 +47,6 @@ export default {
         roughness: 0.8
       });
 
-
     const body =
       new THREE.Mesh(
         new THREE.BoxGeometry(
@@ -206,7 +56,6 @@ export default {
         ),
         bm
       );
-
 
     body.position.y = 1.8;
 
@@ -233,13 +82,11 @@ export default {
         })
       );
 
-
     logo.position.set(
       0,
       1.9,
       0.38
     );
-
 
     player.add(logo);
 
@@ -260,7 +107,6 @@ export default {
           roughness: 0.9
         })
       );
-
 
     head.position.y = 3.15;
 
@@ -283,7 +129,6 @@ export default {
         })
       );
 
-
     cap.position.y = 3.65;
 
     player.add(cap);
@@ -305,13 +150,11 @@ export default {
         })
       );
 
-
     brim.position.set(
       0,
       3.52,
       0.55
     );
-
 
     player.add(brim);
 
@@ -332,13 +175,11 @@ export default {
         })
       );
 
-
     this.armL.position.set(
       -0.8,
       1.8,
       0
     );
-
 
     player.add(this.armL);
 
@@ -359,13 +200,11 @@ export default {
         })
       );
 
-
     this.armR.position.set(
       0.8,
       1.8,
       0
     );
-
 
     player.add(this.armR);
 
@@ -386,13 +225,11 @@ export default {
         })
       );
 
-
     this.legL.position.set(
       -0.35,
       0.6,
       0
     );
-
 
     player.add(this.legL);
 
@@ -413,13 +250,11 @@ export default {
         })
       );
 
-
     this.legR.position.set(
       0.35,
       0.6,
       0
     );
-
 
     player.add(this.legR);
 
@@ -442,13 +277,11 @@ export default {
           })
         );
 
-
       shoe.position.set(
         x,
         -0.22,
         0.1
       );
-
 
       player.add(shoe);
 
@@ -476,17 +309,14 @@ export default {
         })
       );
 
-
     chain.position.set(
       0,
       2.1,
       0.36
     );
 
-
     chain.rotation.x =
       Math.PI / 2;
-
 
     player.add(chain);
 
@@ -501,7 +331,6 @@ export default {
       10
     );
 
-
     scene.add(player);
 
 
@@ -514,7 +343,8 @@ export default {
     this.sprintSpeed = 18;
 
 
-    // HERO faces +Z when rotation is 0.
+    // HERO faces +Z at rotation 0.
+
     this._facing = 0;
 
 
@@ -542,7 +372,6 @@ export default {
 
     this._elevatorY = y;
 
-
     if (player) {
 
       player.position.y = y;
@@ -560,7 +389,6 @@ export default {
 
     this._elevatorY = y;
 
-
     if (player) {
 
       player.position.y = y;
@@ -577,7 +405,6 @@ export default {
   clearElevatorControl() {
 
     this._elevatorY = null;
-
 
     if (player) {
 
@@ -601,12 +428,10 @@ export default {
         0x1a0040
       );
 
-
       this._bodyMat.emissive =
         new THREE.Color(
           0x9900ff
         );
-
 
       this._bodyMat.emissiveIntensity =
         0.2;
@@ -625,7 +450,6 @@ export default {
     const input =
       context.systems?.input;
 
-
     if (!input || !player) {
 
       return;
@@ -636,9 +460,12 @@ export default {
     bobTime += delta;
 
 
+    // ========================================================
+    // SPRINT
+    // ========================================================
+
     const sprint =
       input.keys?.shift;
-
 
     const speed =
       (
@@ -649,19 +476,15 @@ export default {
 
 
     // ========================================================
-    // LOGICAL INPUT
+    // INPUT
     // ========================================================
 
     let inputX = 0;
-
     let inputY = 0;
-
     let moving = false;
 
 
-    // --------------------------------------------------------
     // W = FORWARD
-    // --------------------------------------------------------
 
     if (input.keys?.w) {
 
@@ -672,9 +495,7 @@ export default {
     }
 
 
-    // --------------------------------------------------------
     // S = BACKWARD
-    // --------------------------------------------------------
 
     if (input.keys?.s) {
 
@@ -685,9 +506,7 @@ export default {
     }
 
 
-    // --------------------------------------------------------
     // A = LEFT
-    // --------------------------------------------------------
 
     if (input.keys?.a) {
 
@@ -698,9 +517,7 @@ export default {
     }
 
 
-    // --------------------------------------------------------
     // D = RIGHT
-    // --------------------------------------------------------
 
     if (input.keys?.d) {
 
@@ -730,7 +547,6 @@ export default {
 
       }
 
-
       if (
         Math.abs(
           input.joystick.y
@@ -738,7 +554,7 @@ export default {
       ) {
 
         inputY =
-          input.joystick.y;
+          -input.joystick.y;
 
         moving = true;
 
@@ -748,7 +564,7 @@ export default {
 
 
     // ========================================================
-    // NORMALIZE INPUT
+    // NORMALIZE
     // ========================================================
 
     if (
@@ -762,79 +578,42 @@ export default {
           inputY * inputY
         );
 
-
-      inputX /=
-        length;
-
-      inputY /=
-        length;
+      inputX /= length;
+      inputY /= length;
 
     }
 
 
     // ========================================================
-    // CAMERA-RELATIVE MOVEMENT
-    // ========================================================
-
-    let movement =
-      null;
-
-
-    const activeCamera =
-      getActiveCamera(
-        context
-      );
-
-
-    if (
-      activeCamera &&
-      (
-        inputX !== 0 ||
-        inputY !== 0
-      )
-    ) {
-
-      movement =
-        getCameraMovement(
-          activeCamera,
-          inputX,
-          inputY
-        );
-
-    }
-
-
-    // ========================================================
-    // SAFE FALLBACK
+    // HERO-RELATIVE MOVEMENT
     // ========================================================
     //
-    // If the camera is unavailable:
+    // HERO's local forward is +Z.
     //
-    // W = +Z
-    // S = -Z
-    // A = -X
-    // D = +X
+    // Therefore:
     //
-    // This matches HERO's model orientation.
+    // FORWARD = +Z
+    // BACKWARD = -Z
+    // LEFT = -X
+    // RIGHT = +X
+    //
+    // Rotate that local movement by HERO's current heading.
     //
 
-    if (!movement) {
+    const sin =
+      Math.sin(this._facing);
 
-      movement =
-        new THREE.Vector3(
-          inputX,
-          0,
-          inputY
-        );
-
-    }
+    const cos =
+      Math.cos(this._facing);
 
 
     const dx =
-      movement.x;
+      inputX * cos +
+      inputY * sin;
 
     const dz =
-      movement.z;
+      -inputX * sin +
+      inputY * cos;
 
 
     // ========================================================
@@ -844,7 +623,6 @@ export default {
     const newX =
       player.position.x +
       dx * speed;
-
 
     const newZ =
       player.position.z +
@@ -906,6 +684,16 @@ export default {
     // ========================================================
     // CHARACTER FACING
     // ========================================================
+    //
+    // W/S establish forward/backward movement.
+    //
+    // A/D are lateral movement and do NOT suddenly make
+    // HERO turn the entire camera system around.
+    //
+    // This keeps the relationship stable:
+    //
+    // HERO heading → camera heading.
+    //
 
     if (
       moving &&
@@ -915,48 +703,52 @@ export default {
       )
     ) {
 
-      const targetAngle =
-        Math.atan2(
-          dx,
-          dz
-        );
+      // When moving forward/backward,
+      // HERO turns toward the travel direction.
+      //
+      // Pure A/D remains a lateral movement.
+      //
+      if (Math.abs(inputY) > 0.001) {
 
+        const targetAngle =
+          Math.atan2(
+            dx,
+            dz
+          );
 
-      let diff =
-        targetAngle -
-        this._facing;
+        let diff =
+          targetAngle -
+          this._facing;
 
+        while (
+          diff > Math.PI
+        ) {
 
-      while (
-        diff > Math.PI
-      ) {
+          diff -=
+            Math.PI * 2;
 
-        diff -=
-          Math.PI * 2;
+        }
+
+        while (
+          diff < -Math.PI
+        ) {
+
+          diff +=
+            Math.PI * 2;
+
+        }
+
+        this._facing +=
+          diff *
+          Math.min(
+            1,
+            10 * delta
+          );
+
+        player.rotation.y =
+          this._facing;
 
       }
-
-
-      while (
-        diff < -Math.PI
-      ) {
-
-        diff +=
-          Math.PI * 2;
-
-      }
-
-
-      this._facing +=
-        diff *
-        Math.min(
-          1,
-          10 * delta
-        );
-
-
-      player.rotation.y =
-        this._facing;
 
     }
 
@@ -975,9 +767,7 @@ export default {
     } else {
 
       const floorY =
-        this._floorY ??
-        1.3;
-
+        this._floorY ?? 1.3;
 
       if (moving) {
 
@@ -989,25 +779,19 @@ export default {
                 ? 16
                 : 10
             )
-          ) *
-          0.45;
-
+          ) * 0.45;
 
         this.armL.rotation.x =
           sw;
 
-
         this.armR.rotation.x =
           -sw;
-
 
         this.legL.rotation.x =
           -sw;
 
-
         this.legR.rotation.x =
           sw;
-
 
         player.position.y =
           floorY +
@@ -1029,18 +813,14 @@ export default {
         this.armL.rotation.x *=
           0.82;
 
-
         this.armR.rotation.x *=
           0.82;
-
 
         this.legL.rotation.x *=
           0.82;
 
-
         this.legR.rotation.x *=
           0.82;
-
 
         player.position.y =
           floorY +
