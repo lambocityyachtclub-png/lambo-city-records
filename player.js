@@ -260,13 +260,7 @@ export default {
     this.speed = 10;
     this.sprintSpeed = 18;
 
-    // HERO's visual front is +Z.
-    // W moves HERO toward -Z.
-    // Therefore HERO initially faces -Z.
-    this._facing = Math.PI;
-
-    player.rotation.y =
-      this._facing;
+    this._facing = 0;
 
     this._floorY = 1.3;
     this._elevatorY = null;
@@ -357,117 +351,139 @@ export default {
     let dx = 0;
     let dz = 0;
 
-    let moveMode =
-      "idle";
 
+    if (input.keys?.w) {
+      dz = -1;
+      moving = true;
+    }
 
-    // ==========================================================
-    // HERO-RELATIVE CONTROLS
-    // ==========================================================
-    //
-    // W = HERO forward
-    // S = HERO backward
-    // A = HERO left
-    // D = HERO right
-    //
-    // The camera does NOT control movement.
-    // HERO's facing controls movement.
-    //
-    // ==========================================================
+    if (input.keys?.s) {
+      dz = 1;
+      moving = true;
+    }
 
-    const forwardPressed =
-      !!input.keys?.w;
+    if (input.keys?.a) {
+      dx = -1;
+      moving = true;
+    }
 
-    const backwardPressed =
-      !!input.keys?.s;
-
-    const leftPressed =
-      !!input.keys?.a;
-
-    const rightPressed =
-      !!input.keys?.d;
-
-
-    // ==========================================================
-    // HERO FACING
-    // ==========================================================
-    //
-    // W/S establish HERO's forward direction.
-    //
-    // A/D are pure strafing controls.
-    // They never rotate HERO.
-    //
-    // HERO visual front = +Z
-    //
-    // W = -Z = Math.PI
-    // S = +Z = 0
-    //
-    // ==========================================================
-
-    let targetFacing =
-      null;
-
-
-    if (
-      forwardPressed &&
-      !backwardPressed
-    ) {
-
-      targetFacing =
-        Math.PI;
-
-    } else if (
-      backwardPressed &&
-      !forwardPressed
-    ) {
-
-      targetFacing =
-        0;
-
+    if (input.keys?.d) {
+      dx = 1;
+      moving = true;
     }
 
 
-    // ==========================================================
-    // MOBILE JOYSTICK FACING
-    // ==========================================================
-
-    if (
-      input.joystick?.active &&
-      Math.abs(
-        input.joystick.y
-      ) > 0.18
-    ) {
+    if (input.joystick?.active) {
 
       if (
-        input.joystick.y < 0
+        Math.abs(
+          input.joystick.x
+        ) > 0.08
       ) {
 
-        // Joystick up = HERO forward.
-        targetFacing =
-          Math.PI;
+        dx =
+          input.joystick.x;
 
-      } else {
+        moving = true;
 
-        // Joystick down = HERO backward.
-        targetFacing =
-          0;
+      }
+
+
+      if (
+        Math.abs(
+          input.joystick.y
+        ) > 0.08
+      ) {
+
+        dz =
+          input.joystick.y;
+
+        moving = true;
 
       }
 
     }
 
 
-    // ==========================================================
-    // SMOOTH HERO ROTATION
-    // ==========================================================
-
     if (
-      targetFacing !== null
+      dx !== 0 &&
+      dz !== 0
     ) {
 
+      const l =
+        Math.sqrt(
+          dx * dx +
+          dz * dz
+        );
+
+      dx /= l;
+      dz /= l;
+
+    }
+
+
+    const newX =
+      player.position.x +
+      dx * speed;
+
+    const newZ =
+      player.position.z +
+      dz * speed;
+
+
+    const collisionY =
+      this._elevatorY !== null
+        ? this._elevatorY
+        : (
+            this._floorY ??
+            player.position.y ??
+            1.3
+          );
+
+
+    if (
+      !Collision.isBlocked(
+        newX,
+        player.position.z,
+        0.6,
+        collisionY
+      )
+    ) {
+
+      player.position.x =
+        newX;
+
+    }
+
+
+    if (
+      !Collision.isBlocked(
+        player.position.x,
+        newZ,
+        0.6,
+        collisionY
+      )
+    ) {
+
+      player.position.z =
+        newZ;
+
+    }
+
+
+    if (
+      moving &&
+      (dx !== 0 || dz !== 0)
+    ) {
+
+      const ta =
+        Math.atan2(
+          dx,
+          dz
+        );
+
       let diff =
-        targetFacing -
-        this._facing;
+        ta - this._facing;
 
 
       while (
@@ -503,332 +519,6 @@ export default {
     }
 
 
-    // ==========================================================
-    // LOCAL HERO MOVEMENT
-    // ==========================================================
-    //
-    // localX:
-    //
-    //   -1 = HERO left
-    //    1 = HERO right
-    //
-    // localZ:
-    //
-    //   -1 = HERO forward
-    //    1 = HERO backward
-    //
-    // ==========================================================
-
-    let localX =
-      0;
-
-    let localZ =
-      0;
-
-
-    if (
-      forwardPressed
-    ) {
-
-      localZ =
-        -1;
-
-      moving =
-        true;
-
-    }
-
-
-    if (
-      backwardPressed
-    ) {
-
-      localZ =
-        1;
-
-      moving =
-        true;
-
-    }
-
-
-    if (
-      leftPressed
-    ) {
-
-      localX =
-        -1;
-
-      moving =
-        true;
-
-    }
-
-
-    if (
-      rightPressed
-    ) {
-
-      localX =
-        1;
-
-      moving =
-        true;
-
-    }
-
-
-    // ==========================================================
-    // MOBILE JOYSTICK
-    // ==========================================================
-    //
-    // Up    = HERO forward
-    // Down  = HERO backward
-    // Left  = HERO left
-    // Right = HERO right
-    //
-    // ==========================================================
-
-    if (
-      input.joystick?.active
-    ) {
-
-      if (
-        Math.abs(
-          input.joystick.x
-        ) > 0.08
-      ) {
-
-        localX =
-          input.joystick.x;
-
-        moving =
-          true;
-
-      }
-
-
-      if (
-        Math.abs(
-          input.joystick.y
-        ) > 0.08
-      ) {
-
-        localZ =
-          input.joystick.y;
-
-        moving =
-          true;
-
-      }
-
-    }
-
-
-    // ==========================================================
-    // HERO LOCOMOTION STATE
-    // ==========================================================
-
-    if (
-      moving
-    ) {
-
-      const hasForward =
-        localZ < -0.08;
-
-      const hasBackward =
-        localZ > 0.08;
-
-      const hasLeft =
-        localX < -0.08;
-
-      const hasRight =
-        localX > 0.08;
-
-
-      if (
-        hasForward &&
-        !hasLeft &&
-        !hasRight
-      ) {
-
-        moveMode =
-          "forward";
-
-      } else if (
-        hasBackward &&
-        !hasLeft &&
-        !hasRight
-      ) {
-
-        moveMode =
-          "backward";
-
-      } else if (
-        hasLeft &&
-        !hasForward &&
-        !hasBackward
-      ) {
-
-        moveMode =
-          "strafe-left";
-
-      } else if (
-        hasRight &&
-        !hasForward &&
-        !hasBackward
-      ) {
-
-        moveMode =
-          "strafe-right";
-
-      } else {
-
-        moveMode =
-          "diagonal";
-
-      }
-
-    }
-
-
-    // ==========================================================
-    // NORMALIZE DIAGONAL INPUT
-    // ==========================================================
-
-    if (
-      localX !== 0 &&
-      localZ !== 0
-    ) {
-
-      const length =
-        Math.sqrt(
-          localX * localX +
-          localZ * localZ
-        );
-
-      localX /=
-        length;
-
-      localZ /=
-        length;
-
-    }
-
-
-    // ==========================================================
-    // CONVERT HERO-RELATIVE MOVEMENT
-    // TO WORLD MOVEMENT
-    // ==========================================================
-    //
-    // HERO forward:
-    //
-    //   forwardX = sin(rotation)
-    //   forwardZ = cos(rotation)
-    //
-    // HERO right:
-    //
-    //   rightX = cos(rotation)
-    //   rightZ = -sin(rotation)
-    //
-    // ==========================================================
-
-    const yaw =
-      this._facing;
-
-
-    const forwardX =
-      Math.sin(yaw);
-
-    const forwardZ =
-      Math.cos(yaw);
-
-
-    const rightX =
-      Math.cos(yaw);
-
-    const rightZ =
-      -Math.sin(yaw);
-
-
-    dx =
-      rightX * localX +
-      forwardX * localZ;
-
-    dz =
-      rightZ * localX +
-      forwardZ * localZ;
-
-
-    // ==========================================================
-    // CALCULATE NEW POSITION
-    // ==========================================================
-
-    const newX =
-      player.position.x +
-      dx * speed;
-
-    const newZ =
-      player.position.z +
-      dz * speed;
-
-
-    // ==========================================================
-    // CURRENT FLOOR HEIGHT
-    // ==========================================================
-
-    const collisionY =
-      this._elevatorY !== null
-        ? this._elevatorY
-        : (
-            this._floorY ??
-            player.position.y ??
-            1.3
-          );
-
-
-    // ==========================================================
-    // X COLLISION
-    // ==========================================================
-
-    if (
-      !Collision.isBlocked(
-        newX,
-        player.position.z,
-        0.6,
-        collisionY
-      )
-    ) {
-
-      player.position.x =
-        newX;
-
-    }
-
-
-    // ==========================================================
-    // Z COLLISION
-    // ==========================================================
-
-    if (
-      !Collision.isBlocked(
-        player.position.x,
-        newZ,
-        0.6,
-        collisionY
-      )
-    ) {
-
-      player.position.z =
-        newZ;
-
-    }
-
-
-    // ==========================================================
-    // VERTICAL POSITION / WALK ANIMATION
-    // ==========================================================
-
     if (
       this._elevatorY !== null
     ) {
@@ -843,9 +533,7 @@ export default {
         1.3;
 
 
-      if (
-        moving
-      ) {
+      if (moving) {
 
         const sw =
           Math.sin(
@@ -860,6 +548,7 @@ export default {
 
         this.armR.rotation.x =
           -sw;
+
 
         this.legL.rotation.x =
           -sw;
@@ -906,26 +595,16 @@ export default {
     }
 
 
-    // ==========================================================
-    // HOODIE
-    // ==========================================================
-
     if (
       !this._giftReceived &&
       context.hoodieGifted
     ) {
 
-      this._giftReceived =
-        true;
-
+      this._giftReceived = true;
       this.equipHoodie();
 
     }
 
-
-    // ==========================================================
-    // SHARE PLAYER
-    // ==========================================================
 
     context.player =
       player;
