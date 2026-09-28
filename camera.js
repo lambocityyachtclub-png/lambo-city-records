@@ -1,3 +1,35 @@
+// camera.js
+// LAMBO CITY
+// THIRD-PERSON CINEMATIC CAMERA
+//
+// CAMERA SYSTEM:
+//
+// WORLD
+// - GTA-style third-person
+//
+// RECORDS HQ FLOORS 1–3
+// - Enclosed third-person
+// - Camera remains inside HQ
+//
+// FLOOR 2 DIGITAL STUDIO
+// - Dedicated immersive studio camera
+// - Equipment becomes the visual focus
+// - No exterior-looking camera angle
+// - No first-person
+//
+// ELEVATOR
+// - Special glass cinematic
+// - Outside world intentionally visible
+//
+// ROOFTOP
+// - Wider cinematic third-person view
+//
+// IMPORTANT:
+// - Does NOT modify player movement.
+// - Does NOT modify collision.
+// - Does NOT modify elevator movement.
+// - Does NOT modify building architecture.
+
 import * as THREE from
   "https://unpkg.com/three@0.160.0/build/three.module.js";
 
@@ -8,17 +40,6 @@ let cinTime = 0;
 // ============================================================
 // RECORDS HQ WORLD BOUNDS
 // ============================================================
-//
-// Actual HQ center:
-// X = 28
-// Z = 22
-//
-// Interior is approximately:
-// X = 19 → 37
-// Z = 14 → 29
-//
-// Camera is kept inside these boundaries on Floors 1–3.
-//
 
 const HQ_MIN_X = 19.7;
 const HQ_MAX_X = 36.3;
@@ -28,11 +49,16 @@ const HQ_MAX_Z = 28.2;
 
 
 // ============================================================
-// CAMERA SETTINGS
+// WORLD CAMERA
 // ============================================================
 
 const WORLD_DISTANCE = 22;
 const WORLD_HEIGHT = 13;
+
+
+// ============================================================
+// STANDARD HQ CAMERA
+// ============================================================
 
 const HQ_DISTANCE = 8.0;
 const HQ_HEIGHT = 5.2;
@@ -40,6 +66,50 @@ const HQ_HEIGHT = 5.2;
 const HQ_LOOK_HEIGHT = 1.8;
 
 const HQ_SIDE_OFFSET = 1.15;
+
+
+// ============================================================
+// FLOOR 2 DIGITAL STUDIO CAMERA
+// ============================================================
+//
+// Floor 2 gets its own camera language.
+//
+// The studio should feel like:
+//
+// ENTER STUDIO
+//      ↓
+// HERO becomes the anchor
+//      ↓
+// EQUIPMENT fills the environment
+//      ↓
+// MPC / PIANO / BOOTH / CONSOLE / SPEAKERS
+//      ↓
+// PREMIUM RECORDING SESSION
+//
+// We deliberately keep the camera closer than the general HQ
+// camera and reduce the amount of room/exterior visible.
+//
+// The elevator remains the exception.
+//
+
+const STUDIO_DISTANCE = 5.8;
+const STUDIO_HEIGHT = 3.8;
+
+const STUDIO_LOOK_HEIGHT = 1.65;
+
+const STUDIO_SIDE_OFFSET = 0.85;
+
+
+// Studio camera boundaries.
+//
+// Slightly tighter than the entire architectural footprint.
+// This keeps the camera from hugging exterior edges.
+
+const STUDIO_MIN_X = 20.4;
+const STUDIO_MAX_X = 35.6;
+
+const STUDIO_MIN_Z = 15.2;
+const STUDIO_MAX_Z = 27.4;
 
 
 // ============================================================
@@ -138,11 +208,8 @@ function moveCamera(
 
 
 // ============================================================
-// NORMAL LAMBO CITY CAMERA
+// NORMAL WORLD CAMERA
 // ============================================================
-//
-// Existing world camera remains cinematic third-person.
-//
 
 function updateWorldCamera(
   player
@@ -169,22 +236,8 @@ function updateWorldCamera(
 
 
 // ============================================================
-// GTA-STYLE RECORDS HQ CAMERA
+// STANDARD HQ CAMERA
 // ============================================================
-//
-// This is the major change.
-//
-// NOT first-person.
-//
-// NOT looking down from above.
-//
-// NOT looking at the building.
-//
-// The player remains the visual anchor.
-//
-// Camera follows from behind/above like a cinematic
-// third-person action game.
-//
 
 function updateHQCamera(
   player,
@@ -194,24 +247,12 @@ function updateHQCamera(
   const yaw =
     player.rotation.y;
 
-
-  // ----------------------------------------------------------
-  // PLAYER FORWARD
-  // ----------------------------------------------------------
-
   const forwardX =
     Math.sin(yaw);
 
   const forwardZ =
     Math.cos(yaw);
 
-
-  // ----------------------------------------------------------
-  // CAMERA BEHIND PLAYER
-  // ----------------------------------------------------------
-  //
-  // Because the player moves toward -Z when facing forward,
-  // this places the camera behind the character.
 
   let cameraX =
     player.position.x -
@@ -222,10 +263,6 @@ function updateHQCamera(
     forwardZ * HQ_DISTANCE;
 
 
-  // ----------------------------------------------------------
-  // SLIGHT CINEMATIC SHOULDER
-  // ----------------------------------------------------------
-
   const sideX =
     Math.cos(yaw) *
     HQ_SIDE_OFFSET;
@@ -235,21 +272,9 @@ function updateHQCamera(
     HQ_SIDE_OFFSET;
 
 
-  cameraX +=
-    sideX;
+  cameraX += sideX;
+  cameraZ += sideZ;
 
-  cameraZ +=
-    sideZ;
-
-
-  // ----------------------------------------------------------
-  // KEEP CAMERA INSIDE HQ
-  // ----------------------------------------------------------
-  //
-  // This is critical.
-  //
-  // The camera must not drift through the HQ exterior
-  // walls simply because the player is near one.
 
   cameraX =
     THREE.MathUtils.clamp(
@@ -266,33 +291,18 @@ function updateHQCamera(
     );
 
 
-  // ----------------------------------------------------------
-  // FLOOR-SPECIFIC HEIGHT
-  // ----------------------------------------------------------
-
   let height =
     HQ_HEIGHT;
 
 
   if (floor === 2) {
-
-    height =
-      5.0;
-
+    height = 4.8;
   }
-
 
   if (floor === 3) {
-
-    height =
-      5.1;
-
+    height = 5.1;
   }
 
-
-  // ----------------------------------------------------------
-  // CAMERA POSITION
-  // ----------------------------------------------------------
 
   moveCamera(
     cameraX,
@@ -302,22 +312,13 @@ function updateHQCamera(
   );
 
 
-  // ----------------------------------------------------------
-  // LOOK TARGET
-  // ----------------------------------------------------------
-  //
-  // We don't look at the player's feet.
-  //
-  // We look slightly above the player's chest so the
-  // architecture naturally fills the upper frame.
-
   const lookX =
     player.position.x +
-    forwardX * 2.8;
+    forwardX * 2.0;
 
   const lookZ =
     player.position.z +
-    forwardZ * 2.8;
+    forwardZ * 2.0;
 
   const lookY =
     player.position.y +
@@ -333,18 +334,167 @@ function updateHQCamera(
 
 
 // ============================================================
+// FLOOR 2 — IMMERSIVE DIGITAL STUDIO CAMERA
+// ============================================================
+//
+// This is intentionally different from the normal HQ camera.
+//
+// The camera stays close to HERO.
+//
+// It is designed to make the studio equipment read as premium
+// digital real estate.
+//
+// The player should feel surrounded by:
+//
+// - MPC
+// - illuminated pads
+// - piano / keys
+// - recording booth
+// - mixing console
+// - studio displays
+// - future monitor speakers
+// - professional production hardware
+//
+// The outside world is NOT the subject here.
+//
+// The studio is the subject.
+//
+
+function updateStudioCamera(
+  player
+) {
+
+  const yaw =
+    player.rotation.y;
+
+
+  const forwardX =
+    Math.sin(yaw);
+
+  const forwardZ =
+    Math.cos(yaw);
+
+
+  // ----------------------------------------------------------
+  // CAMERA BEHIND HERO
+  // ----------------------------------------------------------
+
+  let cameraX =
+    player.position.x -
+    forwardX *
+    STUDIO_DISTANCE;
+
+  let cameraZ =
+    player.position.z -
+    forwardZ *
+    STUDIO_DISTANCE;
+
+
+  // ----------------------------------------------------------
+  // SUBTLE SHOULDER OFFSET
+  // ----------------------------------------------------------
+
+  const sideX =
+    Math.cos(yaw) *
+    STUDIO_SIDE_OFFSET;
+
+  const sideZ =
+    -Math.sin(yaw) *
+    STUDIO_SIDE_OFFSET;
+
+
+  cameraX += sideX;
+  cameraZ += sideZ;
+
+
+  // ----------------------------------------------------------
+  // TIGHTER STUDIO CAMERA BOUNDARY
+  // ----------------------------------------------------------
+
+  cameraX =
+    THREE.MathUtils.clamp(
+      cameraX,
+      STUDIO_MIN_X,
+      STUDIO_MAX_X
+    );
+
+  cameraZ =
+    THREE.MathUtils.clamp(
+      cameraZ,
+      STUDIO_MIN_Z,
+      STUDIO_MAX_Z
+    );
+
+
+  // ----------------------------------------------------------
+  // CAMERA HEIGHT
+  // ----------------------------------------------------------
+  //
+  // Lower than the previous HQ camera.
+  //
+  // This makes the room feel more like a real recording studio
+  // instead of an architectural fly-through.
+
+  const cameraY =
+    player.position.y +
+    STUDIO_HEIGHT;
+
+
+  moveCamera(
+    cameraX,
+    cameraY,
+    cameraZ,
+    0.12
+  );
+
+
+  // ----------------------------------------------------------
+  // LOOK TARGET
+  // ----------------------------------------------------------
+  //
+  // Shorter forward look distance keeps the camera focused on
+  // HERO and the equipment immediately around him.
+  //
+  // We intentionally do NOT look several meters through the
+  // building.
+
+  const lookX =
+    player.position.x +
+    forwardX * 1.4;
+
+  const lookZ =
+    player.position.z +
+    forwardZ * 1.4;
+
+  const lookY =
+    player.position.y +
+    STUDIO_LOOK_HEIGHT;
+
+
+  camera.lookAt(
+    lookX,
+    lookY,
+    lookZ
+  );
+}
+
+
+// ============================================================
 // ELEVATOR CINEMATIC
 // ============================================================
 //
-// GTA-style elevator sequence:
+// The elevator is intentionally different.
 //
-// 1. Exterior/side reveal of HERO
-// 2. Camera moves behind HERO
-// 3. Camera follows the elevator upward
-// 4. HERO remains visible
-// 5. World is visible through glass
+// This is the one place where:
 //
-// We do NOT switch to first-person.
+// GLASS
+// CITY
+// MARINA
+// HQ EXTERIOR
+//
+// are allowed to become part of the camera experience.
+//
+// We preserve this behavior.
 //
 
 function updateElevatorCamera(
@@ -396,7 +546,7 @@ function updateElevatorCamera(
 
 
   // ----------------------------------------------------------
-  // PHASE 2 — GTA THIRD-PERSON ELEVATOR VIEW
+  // PHASE 2 — THIRD-PERSON ELEVATOR VIEW
   // ----------------------------------------------------------
 
   const yaw =
@@ -449,15 +599,6 @@ function updateElevatorCamera(
 // ============================================================
 // ROOFTOP CAMERA
 // ============================================================
-//
-// Rooftop is deliberately more cinematic.
-//
-// But we don't constantly throw the player miles away.
-//
-// The default remains GTA-style third-person.
-//
-// A subtle orbit gives the rooftop a premium feel.
-//
 
 function updateRooftopCamera(
   player
@@ -521,7 +662,7 @@ export default {
 
     camera =
       new THREE.PerspectiveCamera(
-        70,
+        68,
         window.innerWidth /
           window.innerHeight,
         0.05,
@@ -558,6 +699,7 @@ export default {
 
 
     return camera;
+
   },
 
 
@@ -600,6 +742,7 @@ export default {
       );
 
       return;
+
     }
 
 
@@ -630,11 +773,29 @@ export default {
         );
 
         return;
+
       }
 
 
       // ------------------------------------------------------
-      // FLOORS 1–3
+      // FLOOR 2 DIGITAL STUDIO
+      // ------------------------------------------------------
+
+      if (
+        floor === 2
+      ) {
+
+        updateStudioCamera(
+          player
+        );
+
+        return;
+
+      }
+
+
+      // ------------------------------------------------------
+      // FLOORS 1 AND 3
       // ------------------------------------------------------
 
       updateHQCamera(
@@ -643,6 +804,7 @@ export default {
       );
 
       return;
+
     }
 
 
