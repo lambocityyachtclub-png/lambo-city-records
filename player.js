@@ -5,6 +5,159 @@ import Collision from "./collision.js";
 
 let player, bobTime = 0;
 
+
+// ============================================================
+// CAMERA ACCESS
+// ============================================================
+//
+// The player uses the active camera to determine movement
+// direction.
+//
+// This gives us one consistent control rule:
+//
+// W = toward camera view
+// S = away from camera view
+// A = left relative to camera
+// D = right relative to camera
+//
+// If a camera reference is not available, we fall back to the
+// original world movement so the player never becomes unusable.
+//
+
+function getActiveCamera(context) {
+
+  if (
+    context?.camera &&
+    context.camera.isCamera
+  ) {
+
+    return context.camera;
+
+  }
+
+
+  if (
+    context?.systems?.camera &&
+    typeof context.systems.camera.getCamera === "function"
+  ) {
+
+    const cam =
+      context.systems.camera.getCamera();
+
+    if (cam) {
+      return cam;
+    }
+
+  }
+
+
+  if (
+    typeof window !== "undefined" &&
+    window.__lamboCityCamera &&
+    window.__lamboCityCamera.isCamera
+  ) {
+
+    return window.__lamboCityCamera;
+
+  }
+
+
+  return null;
+
+}
+
+
+// ============================================================
+// CAMERA-RELATIVE MOVEMENT
+// ============================================================
+//
+// Returns a horizontal movement vector based on the direction
+// the active camera is looking.
+//
+// Three.js camera forward direction:
+//
+// camera.getWorldDirection()
+//
+// gives the direction the camera is looking.
+//
+// We flatten Y so movement stays on the current floor.
+//
+
+function getCameraMovement(
+  camera,
+  inputX,
+  inputY
+) {
+
+  if (!camera) {
+    return null;
+  }
+
+
+  const cameraForward =
+    new THREE.Vector3();
+
+  camera.getWorldDirection(
+    cameraForward
+  );
+
+
+  // Keep movement horizontal.
+  cameraForward.y = 0;
+
+
+  if (
+    cameraForward.lengthSq() < 0.0001
+  ) {
+
+    return null;
+
+  }
+
+
+  cameraForward.normalize();
+
+
+  // ----------------------------------------------------------
+  // CAMERA RIGHT
+  // ----------------------------------------------------------
+
+  const cameraRight =
+    new THREE.Vector3(
+      cameraForward.z,
+      0,
+      -cameraForward.x
+    );
+
+
+  cameraRight.normalize();
+
+
+  // ----------------------------------------------------------
+  // COMBINE INPUT
+  // ----------------------------------------------------------
+
+  const movement =
+    new THREE.Vector3();
+
+
+  movement.addScaledVector(
+    cameraRight,
+    inputX
+  );
+
+
+  movement.addScaledVector(
+    cameraForward,
+    inputY
+  );
+
+
+  return movement;
+
+}
+
+
 export default {
 
   init(scene) {
@@ -260,8 +413,8 @@ export default {
     this.speed = 10;
     this.sprintSpeed = 18;
 
-    // HERO faces +Z at rotation 0.
-    // Movement and facing now use the same coordinate system.
+    // HERO's visual forward direction is +Z
+    // when rotation.y === 0.
     this._facing = 0;
 
 
@@ -317,8 +470,10 @@ export default {
     this._elevatorY = null;
 
     if (player) {
+
       player.position.y =
         this._floorY ?? 1.3;
+
     }
 
   },
@@ -370,49 +525,58 @@ export default {
         : this.speed) * delta;
 
 
-    let moving = false;
+    // ----------------------------------------------------------
+    // RAW PLAYER INPUT
+    // ----------------------------------------------------------
 
-    let dx = 0;
-    let dz = 0;
+    let inputX = 0;
+    let inputY = 0;
+
+    let moving = false;
 
 
     // ----------------------------------------------------------
-    // KEYBOARD MOVEMENT
+    // KEYBOARD
     //
-    // HERO's forward direction is +Z.
+    // These are now logical directions rather than world axes.
     //
-    // W = forward  (+Z)
-    // S = backward (-Z)
-    // A = left     (-X)
-    // D = right    (+X)
+    // W = forward
+    // S = backward
+    // A = left
+    // D = right
     // ----------------------------------------------------------
 
     if (input.keys?.w) {
-      dz = 1;
+
+      inputY += 1;
       moving = true;
+
     }
 
     if (input.keys?.s) {
-      dz = -1;
+
+      inputY -= 1;
       moving = true;
+
     }
 
     if (input.keys?.a) {
-      dx = -1;
+
+      inputX -= 1;
       moving = true;
+
     }
 
     if (input.keys?.d) {
-      dx = 1;
+
+      inputX += 1;
       moving = true;
+
     }
 
 
     // ----------------------------------------------------------
     // TOUCH JOYSTICK
-    //
-    // Keep the existing joystick convention intact so
-    // iPad/mobile controls are not unnecessarily changed here.
     // ----------------------------------------------------------
 
     if (input.joystick?.active) {
@@ -423,7 +587,7 @@ export default {
         ) > 0.08
       ) {
 
-        dx =
+        inputX =
           input.joystick.x;
 
         moving = true;
@@ -437,7 +601,8 @@ export default {
         ) > 0.08
       ) {
 
-        dz =
+        // Preserve the joystick's existing forward convention.
+        inputY =
           input.joystick.y;
 
         moving = true;
@@ -448,25 +613,89 @@ export default {
 
 
     // ----------------------------------------------------------
-    // DIAGONAL NORMALIZATION
+    // NORMALIZE INPUT
     // ----------------------------------------------------------
 
     if (
-      dx !== 0 &&
-      dz !== 0
+      inputX !== 0 &&
+      inputY !== 0
     ) {
 
-      const l =
+      const length =
         Math.sqrt(
-          dx * dx +
-          dz * dz
+          inputX * inputX +
+          inputY * inputY
         );
 
-      dx /= l;
-      dz /= l;
+      inputX /=
+        length;
+
+      inputY /=
+        length;
 
     }
 
+
+    // ----------------------------------------------------------
+    // CAMERA-RELATIVE MOVEMENT
+    // ----------------------------------------------------------
+
+    let movement =
+      null;
+
+
+    const activeCamera =
+      getActiveCamera(
+        context
+      );
+
+
+    if (
+      activeCamera &&
+      (inputX !== 0 || inputY !== 0)
+    ) {
+
+      movement =
+        getCameraMovement(
+          activeCamera,
+          inputX,
+          inputY
+        );
+
+    }
+
+
+    // ----------------------------------------------------------
+    // SAFETY FALLBACK
+    // ----------------------------------------------------------
+    //
+    // If the camera isn't exposed through the engine context,
+    // preserve the original dock/world behavior instead of
+    // stopping the player.
+    //
+
+    if (!movement) {
+
+      movement =
+        new THREE.Vector3(
+          inputX,
+          0,
+          -inputY
+        );
+
+    }
+
+
+    const dx =
+      movement.x;
+
+    const dz =
+      movement.z;
+
+
+    // ----------------------------------------------------------
+    // NEW POSITION
+    // ----------------------------------------------------------
 
     const newX =
       player.position.x +
@@ -530,26 +759,32 @@ export default {
 
 
     // ----------------------------------------------------------
-    // CHARACTER FACING
-    //
-    // Rotation 0 = +Z.
-    // The character smoothly turns toward the direction
-    // he is actually moving.
+    // CHARACTER ROTATION
     // ----------------------------------------------------------
+    //
+    // HERO turns toward the direction he is actually moving.
+    //
+    // +Z is HERO's visual forward direction at rotation 0.
+    //
 
     if (
       moving &&
-      (dx !== 0 || dz !== 0)
+      (
+        Math.abs(dx) > 0.0001 ||
+        Math.abs(dz) > 0.0001
+      )
     ) {
 
-      const ta =
+      const targetAngle =
         Math.atan2(
           dx,
           dz
         );
 
+
       let diff =
-        ta - this._facing;
+        targetAngle -
+        this._facing;
 
 
       while (
@@ -578,6 +813,7 @@ export default {
           1,
           10 * delta
         );
+
 
       player.rotation.y =
         this._facing;
@@ -675,6 +911,7 @@ export default {
     ) {
 
       this._giftReceived = true;
+
       this.equipHoodie();
 
     }
