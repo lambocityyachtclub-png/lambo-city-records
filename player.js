@@ -260,8 +260,9 @@ export default {
     this.speed = 10;
     this.sprintSpeed = 18;
 
-    // HERO initially faces +Z.
-    this._facing = 0;
+    // HERO's visual front is +Z.
+// W moves HERO toward -Z, so HERO initially faces -Z.
+this._facing = Math.PI;
 
     this._floorY = 1.3;
     this._elevatorY = null;
@@ -536,16 +537,18 @@ export default {
 
     if (forwardPressed && !backwardPressed) {
 
-      targetFacing = 0;
+  // W moves toward -Z.
+  targetFacing = Math.PI;
 
-    } else if (
-      backwardPressed &&
-      !forwardPressed
-    ) {
+} else if (
+  backwardPressed &&
+  !forwardPressed
+) {
 
-      targetFacing = Math.PI;
+  // S moves toward +Z.
+  targetFacing = 0;
 
-    }
+}
 
 
     // Mobile joystick:
@@ -559,16 +562,18 @@ export default {
     ) {
 
       if (
-        input.joystick.y < 0
-      ) {
+  input.joystick.y < 0
+) {
 
-        targetFacing = 0;
+  // Joystick forward = -Z.
+  targetFacing = Math.PI;
 
-      } else {
+} else {
 
-        targetFacing = Math.PI;
+  // Joystick backward = +Z.
+  targetFacing = 0;
 
-      }
+}
 
     }
 
