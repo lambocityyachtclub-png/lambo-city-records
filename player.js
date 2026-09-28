@@ -260,6 +260,12 @@ export default {
     this.speed = 10;
     this.sprintSpeed = 18;
 
+    /*
+      HERO starts facing the same direction
+      used by the previous movement system.
+
+      Rotation 0 = forward toward world -Z.
+    */
     this._facing = 0;
 
     this._floorY = 1.3;
@@ -346,81 +352,156 @@ export default {
         : this.speed) * delta;
 
 
+    /*
+      ------------------------------------------------
+      PLAYER-RELATIVE MOVEMENT
+      ------------------------------------------------
+
+      HERO's facing direction determines "forward".
+
+      W  = forward
+      S  = backward
+      A  = left
+      D  = right
+
+      The camera is NOT involved in this calculation.
+      ------------------------------------------------
+    */
+
+    let forward = 0;
+    let right = 0;
+
     let moving = false;
+
+
+    /*
+      KEYBOARD
+    */
+
+    if (input.keys?.w) {
+      forward += 1;
+      moving = true;
+    }
+
+    if (input.keys?.s) {
+      forward -= 1;
+      moving = true;
+    }
+
+    if (input.keys?.a) {
+      right -= 1;
+      moving = true;
+    }
+
+    if (input.keys?.d) {
+      right += 1;
+      moving = true;
+    }
+
+
+    /*
+      MOBILE JOYSTICK
+
+      Joystick Y:
+        -1 = forward
+        +1 = backward
+
+      Joystick X:
+        -1 = left
+        +1 = right
+    */
+
+    if (input.joystick?.active) {
+
+      const jx =
+        input.joystick.x;
+
+      const jy =
+        input.joystick.y;
+
+
+      if (
+        Math.abs(jx) > 0.08 ||
+        Math.abs(jy) > 0.08
+      ) {
+
+        right = jx;
+
+        forward = -jy;
+
+        moving = true;
+
+      }
+
+    }
+
+
+    /*
+      Normalize diagonal movement.
+    */
+
+    const inputLength =
+      Math.sqrt(
+        forward * forward +
+        right * right
+      );
+
+    if (inputLength > 1) {
+
+      forward /=
+        inputLength;
+
+      right /=
+        inputLength;
+
+    }
+
+
+    /*
+      Convert player-relative input
+      into world movement.
+
+      At rotation 0:
+
+        forward = world -Z
+        right   = world +X
+
+      As HERO rotates, these directions
+      rotate with him.
+    */
 
     let dx = 0;
     let dz = 0;
 
 
-    if (input.keys?.w) {
-      dz = -1;
-      moving = true;
-    }
+    if (moving) {
 
-    if (input.keys?.s) {
-      dz = 1;
-      moving = true;
-    }
-
-    if (input.keys?.a) {
-      dx = -1;
-      moving = true;
-    }
-
-    if (input.keys?.d) {
-      dx = 1;
-      moving = true;
-    }
-
-
-    if (input.joystick?.active) {
-
-      if (
-        Math.abs(
-          input.joystick.x
-        ) > 0.08
-      ) {
-
-        dx =
-          input.joystick.x;
-
-        moving = true;
-
-      }
-
-
-      if (
-        Math.abs(
-          input.joystick.y
-        ) > 0.08
-      ) {
-
-        dz =
-          input.joystick.y;
-
-        moving = true;
-
-      }
-
-    }
-
-
-    if (
-      dx !== 0 &&
-      dz !== 0
-    ) {
-
-      const l =
-        Math.sqrt(
-          dx * dx +
-          dz * dz
+      const sin =
+        Math.sin(
+          this._facing
         );
 
-      dx /= l;
-      dz /= l;
+      const cos =
+        Math.cos(
+          this._facing
+        );
+
+
+      dx =
+        (sin * forward) +
+        (cos * right);
+
+
+      dz =
+        (-cos * forward) +
+        (sin * right);
 
     }
 
+
+    /*
+      Calculate the new position.
+    */
 
     const newX =
       player.position.x +
@@ -440,6 +521,10 @@ export default {
             1.3
           );
 
+
+    /*
+      Collision remains exactly the same.
+    */
 
     if (
       !Collision.isBlocked(
@@ -471,19 +556,28 @@ export default {
     }
 
 
+    /*
+      HERO turns toward the direction
+      he is actually moving.
+
+      This does NOT control the camera.
+    */
+
     if (
       moving &&
       (dx !== 0 || dz !== 0)
     ) {
 
-      const ta =
+      const targetAngle =
         Math.atan2(
           dx,
-          dz
+          -dz
         );
 
+
       let diff =
-        ta - this._facing;
+        targetAngle -
+        this._facing;
 
 
       while (
@@ -513,11 +607,16 @@ export default {
           10 * delta
         );
 
+
       player.rotation.y =
         this._facing;
 
     }
 
+
+    /*
+      ELEVATOR FLOOR CONTROL
+    */
 
     if (
       this._elevatorY !== null
@@ -532,6 +631,10 @@ export default {
         this._floorY ??
         1.3;
 
+
+      /*
+        WALK / RUN ANIMATION
+      */
 
       if (moving) {
 
@@ -595,12 +698,17 @@ export default {
     }
 
 
+    /*
+      HOODIE GIFT
+    */
+
     if (
       !this._giftReceived &&
       context.hoodieGifted
     ) {
 
       this._giftReceived = true;
+
       this.equipHoodie();
 
     }
