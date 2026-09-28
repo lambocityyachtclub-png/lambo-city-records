@@ -5,41 +5,11 @@ import Collision from "./collision.js";
 
 let player, bobTime = 0;
 
-
-// ============================================================
-// LAMBO CITY PLAYER
-// ============================================================
-//
-// MOVEMENT RULE:
-//
-// W = FORWARD
-// S = BACKWARD
-// A = LEFT
-// D = RIGHT
-//
-// IMPORTANT:
-//
-// Movement is based on HERO'S orientation.
-//
-// The camera does NOT determine where HERO walks.
-//
-// HERO determines his direction.
-// The camera follows HERO.
-//
-// HERO faces +Z when rotation is 0.
-//
-
-
 export default {
 
   init(scene) {
 
     player = new THREE.Group();
-
-
-    // ========================================================
-    // BODY
-    // ========================================================
 
     const bm =
       new THREE.MeshStandardMaterial({
@@ -58,15 +28,10 @@ export default {
       );
 
     body.position.y = 1.8;
-
     player.add(body);
 
     this._bodyMat = bm;
 
-
-    // ========================================================
-    // LOGO
-    // ========================================================
 
     const logo =
       new THREE.Mesh(
@@ -91,10 +56,6 @@ export default {
     player.add(logo);
 
 
-    // ========================================================
-    // HEAD
-    // ========================================================
-
     const head =
       new THREE.Mesh(
         new THREE.BoxGeometry(
@@ -109,13 +70,8 @@ export default {
       );
 
     head.position.y = 3.15;
-
     player.add(head);
 
-
-    // ========================================================
-    // CAP
-    // ========================================================
 
     const cap =
       new THREE.Mesh(
@@ -130,13 +86,8 @@ export default {
       );
 
     cap.position.y = 3.65;
-
     player.add(cap);
 
-
-    // ========================================================
-    // CAP BRIM
-    // ========================================================
 
     const brim =
       new THREE.Mesh(
@@ -159,10 +110,6 @@ export default {
     player.add(brim);
 
 
-    // ========================================================
-    // LEFT ARM
-    // ========================================================
-
     this.armL =
       new THREE.Mesh(
         new THREE.BoxGeometry(
@@ -183,10 +130,6 @@ export default {
 
     player.add(this.armL);
 
-
-    // ========================================================
-    // RIGHT ARM
-    // ========================================================
 
     this.armR =
       new THREE.Mesh(
@@ -209,10 +152,6 @@ export default {
     player.add(this.armR);
 
 
-    // ========================================================
-    // LEFT LEG
-    // ========================================================
-
     this.legL =
       new THREE.Mesh(
         new THREE.BoxGeometry(
@@ -234,10 +173,6 @@ export default {
     player.add(this.legL);
 
 
-    // ========================================================
-    // RIGHT LEG
-    // ========================================================
-
     this.legR =
       new THREE.Mesh(
         new THREE.BoxGeometry(
@@ -258,10 +193,6 @@ export default {
 
     player.add(this.legR);
 
-
-    // ========================================================
-    // SHOES
-    // ========================================================
 
     [-0.35, 0.35].forEach(x => {
 
@@ -287,10 +218,6 @@ export default {
 
     });
 
-
-    // ========================================================
-    // CHAIN
-    // ========================================================
 
     const chain =
       new THREE.Mesh(
@@ -321,10 +248,6 @@ export default {
     player.add(chain);
 
 
-    // ========================================================
-    // START POSITION
-    // ========================================================
-
     player.position.set(
       0,
       1.3,
@@ -334,91 +257,52 @@ export default {
     scene.add(player);
 
 
-    // ========================================================
-    // MOVEMENT
-    // ========================================================
-
     this.speed = 10;
-
     this.sprintSpeed = 18;
-
-
-    // HERO faces +Z at rotation 0.
 
     this._facing = 0;
 
-
-    // ========================================================
-    // FLOOR / ELEVATOR
-    // ========================================================
-
     this._floorY = 1.3;
-
     this._elevatorY = null;
 
-
     return player;
-
   },
 
-
-  // ==========================================================
-  // ELEVATOR ARRIVAL
-  // ==========================================================
 
   setElevatorFloorY(y) {
 
     this._floorY = y;
-
     this._elevatorY = y;
 
     if (player) {
-
       player.position.y = y;
-
     }
 
   },
 
-
-  // ==========================================================
-  // ELEVATOR TRAVEL
-  // ==========================================================
 
   setElevatorTravelY(y) {
 
     this._elevatorY = y;
 
     if (player) {
-
       player.position.y = y;
-
     }
 
   },
 
-
-  // ==========================================================
-  // RETURN CONTROL
-  // ==========================================================
 
   clearElevatorControl() {
 
     this._elevatorY = null;
 
     if (player) {
-
       player.position.y =
         this._floorY ?? 1.3;
-
     }
 
   },
 
-
-  // ==========================================================
-  // HOODIE
-  // ==========================================================
 
   equipHoodie() {
 
@@ -441,96 +325,61 @@ export default {
   },
 
 
-  // ==========================================================
-  // UPDATE
-  // ==========================================================
-
   update(delta, context) {
 
     const input =
       context.systems?.input;
 
     if (!input || !player) {
-
       return;
-
     }
-
 
     bobTime += delta;
 
-
-    // ========================================================
-    // SPRINT
-    // ========================================================
 
     const sprint =
       input.keys?.shift;
 
     const speed =
-      (
-        sprint
-          ? this.sprintSpeed
-          : this.speed
-      ) * delta;
+      (sprint
+        ? this.sprintSpeed
+        : this.speed) * delta;
 
 
-    // ========================================================
-    // INPUT
-    // ========================================================
-
-    let inputX = 0;
-    let inputY = 0;
     let moving = false;
 
+    let dx = 0;
+    let dz = 0;
 
-    // W = FORWARD
+
+    // ----------------------------------------------------------
+    // WORLD-RELATIVE MOVEMENT
+    // ----------------------------------------------------------
 
     if (input.keys?.w) {
-
-      inputY += 1;
-
+      dz = -1;
       moving = true;
-
     }
-
-
-    // S = BACKWARD
 
     if (input.keys?.s) {
-
-      inputY -= 1;
-
+      dz = 1;
       moving = true;
-
     }
-
-
-    // A = LEFT
 
     if (input.keys?.a) {
-
-      inputX -= 1;
-
+      dx = -1;
       moving = true;
-
     }
-
-
-    // D = RIGHT
 
     if (input.keys?.d) {
-
-      inputX += 1;
-
+      dx = 1;
       moving = true;
-
     }
 
 
-    // ========================================================
-    // JOYSTICK
-    // ========================================================
+    // ----------------------------------------------------------
+    // MOBILE JOYSTICK
+    // ----------------------------------------------------------
 
     if (input.joystick?.active) {
 
@@ -540,12 +389,13 @@ export default {
         ) > 0.08
       ) {
 
-        inputX =
+        dx =
           input.joystick.x;
 
         moving = true;
 
       }
+
 
       if (
         Math.abs(
@@ -553,8 +403,8 @@ export default {
         ) > 0.08
       ) {
 
-        inputY =
-          -input.joystick.y;
+        dz =
+          input.joystick.y;
 
         moving = true;
 
@@ -563,62 +413,26 @@ export default {
     }
 
 
-    // ========================================================
-    // NORMALIZE
-    // ========================================================
+    // ----------------------------------------------------------
+    // NORMALIZE DIAGONAL MOVEMENT
+    // ----------------------------------------------------------
 
     if (
-      inputX !== 0 &&
-      inputY !== 0
+      dx !== 0 &&
+      dz !== 0
     ) {
 
-      const length =
+      const l =
         Math.sqrt(
-          inputX * inputX +
-          inputY * inputY
+          dx * dx +
+          dz * dz
         );
 
-      inputX /= length;
-      inputY /= length;
+      dx /= l;
+      dz /= l;
 
     }
 
-
-    // ========================================================
-    // HERO-RELATIVE MOVEMENT
-    // ========================================================
-    //
-    // HERO's local forward is +Z.
-    //
-    // Therefore:
-    //
-    // FORWARD = +Z
-    // BACKWARD = -Z
-    // LEFT = -X
-    // RIGHT = +X
-    //
-    // Rotate that local movement by HERO's current heading.
-    //
-
-    const sin =
-      Math.sin(this._facing);
-
-    const cos =
-      Math.cos(this._facing);
-
-
-    const dx =
-      inputX * cos +
-      inputY * sin;
-
-    const dz =
-      -inputX * sin +
-      inputY * cos;
-
-
-    // ========================================================
-    // NEW POSITION
-    // ========================================================
 
     const newX =
       player.position.x +
@@ -629,9 +443,9 @@ export default {
       dz * speed;
 
 
-    // ========================================================
+    // ----------------------------------------------------------
     // CURRENT FLOOR HEIGHT
-    // ========================================================
+    // ----------------------------------------------------------
 
     const collisionY =
       this._elevatorY !== null
@@ -643,9 +457,9 @@ export default {
           );
 
 
-    // ========================================================
+    // ----------------------------------------------------------
     // X COLLISION
-    // ========================================================
+    // ----------------------------------------------------------
 
     if (
       !Collision.isBlocked(
@@ -662,9 +476,9 @@ export default {
     }
 
 
-    // ========================================================
+    // ----------------------------------------------------------
     // Z COLLISION
-    // ========================================================
+    // ----------------------------------------------------------
 
     if (
       !Collision.isBlocked(
@@ -681,81 +495,61 @@ export default {
     }
 
 
-    // ========================================================
-    // CHARACTER FACING
-    // ========================================================
-    //
-    // W/S establish forward/backward movement.
-    //
-    // A/D are lateral movement and do NOT suddenly make
-    // HERO turn the entire camera system around.
-    //
-    // This keeps the relationship stable:
-    //
-    // HERO heading → camera heading.
-    //
+    // ----------------------------------------------------------
+    // HERO FACING
+    // ----------------------------------------------------------
 
     if (
       moving &&
-      (
-        Math.abs(dx) > 0.0001 ||
-        Math.abs(dz) > 0.0001
-      )
+      (dx !== 0 || dz !== 0)
     ) {
 
-      // When moving forward/backward,
-      // HERO turns toward the travel direction.
-      //
-      // Pure A/D remains a lateral movement.
-      //
-      if (Math.abs(inputY) > 0.001) {
+      const ta =
+        Math.atan2(
+          dx,
+          dz
+        );
 
-        const targetAngle =
-          Math.atan2(
-            dx,
-            dz
-          );
+      let diff =
+        ta - this._facing;
 
-        let diff =
-          targetAngle -
-          this._facing;
 
-        while (
-          diff > Math.PI
-        ) {
+      while (
+        diff > Math.PI
+      ) {
 
-          diff -=
-            Math.PI * 2;
-
-        }
-
-        while (
-          diff < -Math.PI
-        ) {
-
-          diff +=
-            Math.PI * 2;
-
-        }
-
-        this._facing +=
-          diff *
-          Math.min(
-            1,
-            10 * delta
-          );
-
-        player.rotation.y =
-          this._facing;
+        diff -=
+          Math.PI * 2;
 
       }
+
+
+      while (
+        diff < -Math.PI
+      ) {
+
+        diff +=
+          Math.PI * 2;
+
+      }
+
+
+      this._facing +=
+        diff *
+        Math.min(
+          1,
+          10 * delta
+        );
+
+      player.rotation.y =
+        this._facing;
 
     }
 
 
-    // ========================================================
-    // VERTICAL POSITION
-    // ========================================================
+    // ----------------------------------------------------------
+    // VERTICAL POSITION / WALK ANIMATION
+    // ----------------------------------------------------------
 
     if (
       this._elevatorY !== null
@@ -767,19 +561,19 @@ export default {
     } else {
 
       const floorY =
-        this._floorY ?? 1.3;
+        this._floorY ??
+        1.3;
+
 
       if (moving) {
 
         const sw =
           Math.sin(
             bobTime *
-            (
-              sprint
-                ? 16
-                : 10
-            )
-          ) * 0.45;
+            (sprint ? 16 : 10)
+          ) *
+          0.45;
+
 
         this.armL.rotation.x =
           sw;
@@ -793,16 +587,13 @@ export default {
         this.legR.rotation.x =
           sw;
 
+
         player.position.y =
           floorY +
           Math.abs(
             Math.sin(
               bobTime *
-              (
-                sprint
-                  ? 16
-                  : 10
-              ) *
+              (sprint ? 16 : 10) *
               0.5
             )
           ) *
@@ -822,6 +613,7 @@ export default {
         this.legR.rotation.x *=
           0.82;
 
+
         player.position.y =
           floorY +
           Math.sin(
@@ -834,9 +626,9 @@ export default {
     }
 
 
-    // ========================================================
+    // ----------------------------------------------------------
     // HOODIE
-    // ========================================================
+    // ----------------------------------------------------------
 
     if (
       !this._giftReceived &&
@@ -844,15 +636,14 @@ export default {
     ) {
 
       this._giftReceived = true;
-
       this.equipHoodie();
 
     }
 
 
-    // ========================================================
+    // ----------------------------------------------------------
     // SHARE PLAYER
-    // ========================================================
+    // ----------------------------------------------------------
 
     context.player =
       player;
