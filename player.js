@@ -260,7 +260,10 @@ export default {
     this.speed = 10;
     this.sprintSpeed = 18;
 
+    // HERO faces +Z at rotation 0.
+    // Movement and facing now use the same coordinate system.
     this._facing = 0;
+
 
     // ----------------------------------------------------------
     // FLOOR / ELEVATOR VERTICAL CONTROL
@@ -373,13 +376,24 @@ export default {
     let dz = 0;
 
 
+    // ----------------------------------------------------------
+    // KEYBOARD MOVEMENT
+    //
+    // HERO's forward direction is +Z.
+    //
+    // W = forward  (+Z)
+    // S = backward (-Z)
+    // A = left     (-X)
+    // D = right    (+X)
+    // ----------------------------------------------------------
+
     if (input.keys?.w) {
-      dz = -1;
+      dz = 1;
       moving = true;
     }
 
     if (input.keys?.s) {
-      dz = 1;
+      dz = -1;
       moving = true;
     }
 
@@ -393,6 +407,13 @@ export default {
       moving = true;
     }
 
+
+    // ----------------------------------------------------------
+    // TOUCH JOYSTICK
+    //
+    // Keep the existing joystick convention intact so
+    // iPad/mobile controls are not unnecessarily changed here.
+    // ----------------------------------------------------------
 
     if (input.joystick?.active) {
 
@@ -425,6 +446,10 @@ export default {
 
     }
 
+
+    // ----------------------------------------------------------
+    // DIAGONAL NORMALIZATION
+    // ----------------------------------------------------------
 
     if (
       dx !== 0 &&
@@ -505,7 +530,11 @@ export default {
 
 
     // ----------------------------------------------------------
-    // ROTATION
+    // CHARACTER FACING
+    //
+    // Rotation 0 = +Z.
+    // The character smoothly turns toward the direction
+    // he is actually moving.
     // ----------------------------------------------------------
 
     if (
