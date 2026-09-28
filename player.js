@@ -352,7 +352,7 @@ this._facing = Math.PI;
 
     let dx = 0;
     let dz = 0;
-
+    let moveMode = "idle";
 
  // ==========================================================
 // WORLD-RELATIVE MOVEMENT
@@ -434,7 +434,73 @@ if (input.joystick?.active) {
   }
 
 }
+    // ==========================================================
+    // HERO LOCOMOTION STATE
+    // ==========================================================
+    //
+    // Movement itself is unchanged.
+    // This only tells the animation system what HERO is doing.
+    // ==========================================================
 
+    if (moving) {
+
+      const hasForward =
+        dz < -0.08;
+
+      const hasBackward =
+        dz > 0.08;
+
+      const hasLeft =
+        dx < -0.08;
+
+      const hasRight =
+        dx > 0.08;
+
+
+      if (
+        hasForward &&
+        !hasLeft &&
+        !hasRight
+      ) {
+
+        moveMode =
+          "forward";
+
+      } else if (
+        hasBackward &&
+        !hasLeft &&
+        !hasRight
+      ) {
+
+        moveMode =
+          "backward";
+
+      } else if (
+        hasLeft &&
+        !hasForward &&
+        !hasBackward
+      ) {
+
+        moveMode =
+          "strafe-left";
+
+      } else if (
+        hasRight &&
+        !hasForward &&
+        !hasBackward
+      ) {
+
+        moveMode =
+          "strafe-right";
+
+      } else {
+
+        moveMode =
+          "diagonal";
+
+      }
+
+    }
     // ==========================================================
     // NORMALIZE DIAGONAL MOVEMENT
     // ==========================================================
