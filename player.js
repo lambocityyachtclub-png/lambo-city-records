@@ -260,6 +260,7 @@ export default {
     this.speed = 10;
     this.sprintSpeed = 18;
 
+    // HERO initially faces +Z.
     this._facing = 0;
 
     this._floorY = 1.3;
@@ -352,34 +353,56 @@ export default {
     let dz = 0;
 
 
-    // ----------------------------------------------------------
+    // ==========================================================
     // WORLD-RELATIVE MOVEMENT
-    // ----------------------------------------------------------
+    // ==========================================================
+    //
+    // W = forward
+    // S = backward
+    // A = left strafe
+    // D = right strafe
+    //
+    // IMPORTANT:
+    // A/D do NOT automatically rotate HERO.
+    // ==========================================================
 
-    if (input.keys?.w) {
+    const forwardPressed =
+      !!input.keys?.w;
+
+    const backwardPressed =
+      !!input.keys?.s;
+
+    const leftPressed =
+      !!input.keys?.a;
+
+    const rightPressed =
+      !!input.keys?.d;
+
+
+    if (forwardPressed) {
       dz = -1;
       moving = true;
     }
 
-    if (input.keys?.s) {
+    if (backwardPressed) {
       dz = 1;
       moving = true;
     }
 
-    if (input.keys?.a) {
+    if (leftPressed) {
       dx = -1;
       moving = true;
     }
 
-    if (input.keys?.d) {
+    if (rightPressed) {
       dx = 1;
       moving = true;
     }
 
 
-    // ----------------------------------------------------------
+    // ==========================================================
     // MOBILE JOYSTICK
-    // ----------------------------------------------------------
+    // ==========================================================
 
     if (input.joystick?.active) {
 
@@ -413,9 +436,9 @@ export default {
     }
 
 
-    // ----------------------------------------------------------
+    // ==========================================================
     // NORMALIZE DIAGONAL MOVEMENT
-    // ----------------------------------------------------------
+    // ==========================================================
 
     if (
       dx !== 0 &&
@@ -443,9 +466,9 @@ export default {
       dz * speed;
 
 
-    // ----------------------------------------------------------
+    // ==========================================================
     // CURRENT FLOOR HEIGHT
-    // ----------------------------------------------------------
+    // ==========================================================
 
     const collisionY =
       this._elevatorY !== null
@@ -457,9 +480,9 @@ export default {
           );
 
 
-    // ----------------------------------------------------------
+    // ==========================================================
     // X COLLISION
-    // ----------------------------------------------------------
+    // ==========================================================
 
     if (
       !Collision.isBlocked(
@@ -476,9 +499,9 @@ export default {
     }
 
 
-    // ----------------------------------------------------------
+    // ==========================================================
     // Z COLLISION
-    // ----------------------------------------------------------
+    // ==========================================================
 
     if (
       !Collision.isBlocked(
@@ -495,23 +518,68 @@ export default {
     }
 
 
-    // ----------------------------------------------------------
+    // ==========================================================
     // HERO FACING
-    // ----------------------------------------------------------
+    // ==========================================================
+    //
+    // W/S establishes HERO's forward direction.
+    //
+    // A/D are strafing controls and therefore DO NOT cause
+    // HERO to suddenly turn 90 degrees.
+    //
+    // This is the important correction that prevents the
+    // camera from swinging around when A/D is pressed.
+    // ==========================================================
 
-    if (
-      moving &&
-      (dx !== 0 || dz !== 0)
+    let targetFacing = null;
+
+
+    if (forwardPressed && !backwardPressed) {
+
+      targetFacing = 0;
+
+    } else if (
+      backwardPressed &&
+      !forwardPressed
     ) {
 
-      const ta =
-        Math.atan2(
-          dx,
-          dz
-        );
+      targetFacing = Math.PI;
+
+    }
+
+
+    // Mobile joystick:
+    // Only meaningful forward/backward movement changes
+    // HERO's facing. Pure horizontal joystick movement
+    // behaves as a strafe.
+
+    if (
+      input.joystick?.active &&
+      Math.abs(input.joystick.y) > 0.18
+    ) {
+
+      if (
+        input.joystick.y < 0
+      ) {
+
+        targetFacing = 0;
+
+      } else {
+
+        targetFacing = Math.PI;
+
+      }
+
+    }
+
+
+    if (
+      targetFacing !== null
+    ) {
 
       let diff =
-        ta - this._facing;
+        targetFacing -
+        this._facing;
 
 
       while (
@@ -547,9 +615,9 @@ export default {
     }
 
 
-    // ----------------------------------------------------------
+    // ==========================================================
     // VERTICAL POSITION / WALK ANIMATION
-    // ----------------------------------------------------------
+    // ==========================================================
 
     if (
       this._elevatorY !== null
@@ -626,9 +694,9 @@ export default {
     }
 
 
-    // ----------------------------------------------------------
+    // ==========================================================
     // HOODIE
-    // ----------------------------------------------------------
+    // ==========================================================
 
     if (
       !this._giftReceived &&
@@ -641,9 +709,9 @@ export default {
     }
 
 
-    // ----------------------------------------------------------
+    // ==========================================================
     // SHARE PLAYER
-    // ----------------------------------------------------------
+    // ==========================================================
 
     context.player =
       player;
