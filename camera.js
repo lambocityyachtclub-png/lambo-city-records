@@ -1,652 +1,833 @@
+// camera.js
+// LAMBO CITY
+// THIRD-PERSON CINEMATIC CAMERA
+//
+// WORLD
+// - Starts with the existing Jumbotron presentation.
+// - Once HERO moves, camera follows HERO's heading.
+// - W/S/A/D movement remains independent from camera.
+//
+// RECORDS HQ FLOORS 1–3
+// - Enclosed third-person camera.
+//
+// FLOOR 2 DIGITAL STUDIO
+// - Dedicated immersive studio camera.
+//
+// ELEVATOR
+// - Glass cinematic with exterior visibility.
+//
+// ROOFTOP
+// - Wider cinematic third-person view.
+
 import * as THREE from
   "https://unpkg.com/three@0.160.0/build/three.module.js";
 
-import Collision from "./collision.js";
+let camera;
+let cinTime = 0;
 
-let player, bobTime = 0;
+
+// ============================================================
+// HQ BOUNDS
+// ============================================================
+
+const HQ_MIN_X = 19.7;
+const HQ_MAX_X = 36.3;
+
+const HQ_MIN_Z = 14.0;
+const HQ_MAX_Z = 28.2;
+
+
+// ============================================================
+// WORLD CAMERA
+// ============================================================
+
+const WORLD_DISTANCE = 22;
+const WORLD_HEIGHT = 13;
+
+
+// ============================================================
+// WORLD STARTUP CAMERA
+// ============================================================
+//
+// IMPORTANT:
+// This preserves the existing opening presentation.
+// HERO begins with the camera facing the Jumbotron.
+//
+// The follow camera does NOT take control until HERO moves.
+//
+
+const START_CAMERA_X = 0;
+const START_CAMERA_Y = 16;
+const START_CAMERA_Z = 30;
+
+const START_LOOK_X = 0;
+const START_LOOK_Y = 2;
+const START_LOOK_Z = 0;
+
+let worldFollowActive = false;
+
+let lastWorldX = null;
+let lastWorldZ = null;
+
+
+// ============================================================
+// STANDARD HQ CAMERA
+// ============================================================
+
+const HQ_DISTANCE = 8.0;
+const HQ_HEIGHT = 5.2;
+const HQ_LOOK_HEIGHT = 1.8;
+const HQ_SIDE_OFFSET = 1.15;
+
+
+// ============================================================
+// FLOOR 2 STUDIO CAMERA
+// ============================================================
+
+const STUDIO_DISTANCE = 5.8;
+const STUDIO_HEIGHT = 3.8;
+const STUDIO_LOOK_HEIGHT = 1.65;
+const STUDIO_SIDE_OFFSET = 0.85;
+
+const STUDIO_MIN_X = 20.4;
+const STUDIO_MAX_X = 35.6;
+
+const STUDIO_MIN_Z = 15.2;
+const STUDIO_MAX_Z = 27.4;
+
+
+// ============================================================
+// FLOOR DETECTION
+// ============================================================
+
+function getHQFloor(y) {
+
+  if (y < 8) {
+    return 1;
+  }
+
+  if (y < 16.2) {
+    return 2;
+  }
+
+  if (y < 23.8) {
+    return 3;
+  }
+
+  return 4;
+}
+
+
+// ============================================================
+// HQ DETECTION
+// ============================================================
+
+function isInsideHQ(player) {
+
+  const x =
+    player.position.x;
+
+  const z =
+    player.position.z;
+
+  return (
+    x >= HQ_MIN_X &&
+    x <= HQ_MAX_X &&
+    z >= HQ_MIN_Z &&
+    z <= HQ_MAX_Z
+  );
+}
+
+
+// ============================================================
+// SMOOTHING
+// ============================================================
+
+function damp(
+  current,
+  target,
+  amount
+) {
+
+  return (
+    current +
+    (target - current) *
+    amount
+  );
+}
+
+
+// ============================================================
+// CAMERA POSITION
+// ============================================================
+
+function moveCamera(
+  x,
+  y,
+  z,
+  smooth
+) {
+
+  camera.position.x =
+    damp(
+      camera.position.x,
+      x,
+      smooth
+    );
+
+  camera.position.y =
+    damp(
+      camera.position.y,
+      y,
+      smooth
+    );
+
+  camera.position.z =
+    damp(
+      camera.position.z,
+      z,
+      smooth
+    );
+}
+
+
+// ============================================================
+// NORMAL WORLD CAMERA
+// ============================================================
+//
+// The camera sits behind HERO according to HERO's heading.
+//
+// HERO rotation 0 = +Z.
+//
+// Therefore the camera is placed in the +Z direction behind
+// HERO, and looks toward the direction HERO is facing.
+//
+// This is intentionally different from the movement system:
+// player.js controls movement;
+// camera.js only follows the result.
+//
+
+function updateWorldCamera(
+  player
+) {
+
+  // ----------------------------------------------------------
+  // PRESERVE OPENING JUMBOTRON SHOT
+  // ----------------------------------------------------------
+
+  if (!worldFollowActive) {
+
+    if (
+      lastWorldX === null ||
+      lastWorldZ === null
+    ) {
+
+      lastWorldX =
+        player.position.x;
+
+      lastWorldZ =
+        player.position.z;
+
+    }
+
+
+    const moved =
+      Math.abs(
+        player.position.x -
+        lastWorldX
+      ) > 0.001 ||
+      Math.abs(
+        player.position.z -
+        lastWorldZ
+      ) > 0.001;
+
+
+    if (!moved) {
+
+      camera.position.set(
+        START_CAMERA_X,
+        START_CAMERA_Y,
+        START_CAMERA_Z
+      );
+
+      camera.lookAt(
+        START_LOOK_X,
+        START_LOOK_Y,
+        START_LOOK_Z
+      );
+
+      return;
+
+    }
+
+
+    worldFollowActive = true;
+
+  }
+
+
+  lastWorldX =
+    player.position.x;
+
+  lastWorldZ =
+    player.position.z;
+
+
+  // ----------------------------------------------------------
+  // HERO HEADING
+  // ----------------------------------------------------------
+
+  const yaw =
+    player.rotation.y;
+
+  const forwardX =
+    Math.sin(yaw);
+
+  const forwardZ =
+    Math.cos(yaw);
+
+
+  // ----------------------------------------------------------
+  // CAMERA BEHIND HERO
+  // ----------------------------------------------------------
+
+  const cameraX =
+    player.position.x +
+    forwardX *
+    WORLD_DISTANCE;
+
+  const cameraZ =
+    player.position.z +
+    forwardZ *
+    WORLD_DISTANCE;
+
+
+  moveCamera(
+    cameraX,
+    player.position.y +
+      WORLD_HEIGHT,
+    cameraZ,
+    0.08
+  );
+
+
+  // ----------------------------------------------------------
+  // LOOK AHEAD
+  // ----------------------------------------------------------
+
+  const lookX =
+    player.position.x -
+    forwardX * 5;
+
+  const lookZ =
+    player.position.z -
+    forwardZ * 5;
+
+
+  camera.lookAt(
+    lookX,
+    player.position.y + 2,
+    lookZ
+  );
+}
+
+
+// ============================================================
+// STANDARD HQ CAMERA
+// ============================================================
+
+function updateHQCamera(
+  player,
+  floor
+) {
+
+  const yaw =
+    player.rotation.y;
+
+  const forwardX =
+    Math.sin(yaw);
+
+  const forwardZ =
+    Math.cos(yaw);
+
+
+  let cameraX =
+    player.position.x -
+    forwardX *
+    HQ_DISTANCE;
+
+  let cameraZ =
+    player.position.z -
+    forwardZ *
+    HQ_DISTANCE;
+
+
+  const sideX =
+    Math.cos(yaw) *
+    HQ_SIDE_OFFSET;
+
+  const sideZ =
+    -Math.sin(yaw) *
+    HQ_SIDE_OFFSET;
+
+
+  cameraX += sideX;
+  cameraZ += sideZ;
+
+
+  cameraX =
+    THREE.MathUtils.clamp(
+      cameraX,
+      HQ_MIN_X,
+      HQ_MAX_X
+    );
+
+  cameraZ =
+    THREE.MathUtils.clamp(
+      cameraZ,
+      HQ_MIN_Z,
+      HQ_MAX_Z
+    );
+
+
+  let height =
+    HQ_HEIGHT;
+
+
+  if (floor === 2) {
+    height = 4.8;
+  }
+
+  if (floor === 3) {
+    height = 5.1;
+  }
+
+
+  moveCamera(
+    cameraX,
+    player.position.y + height,
+    cameraZ,
+    0.10
+  );
+
+
+  const lookX =
+    player.position.x +
+    forwardX * 2.0;
+
+  const lookZ =
+    player.position.z +
+    forwardZ * 2.0;
+
+  const lookY =
+    player.position.y +
+    HQ_LOOK_HEIGHT;
+
+
+  camera.lookAt(
+    lookX,
+    lookY,
+    lookZ
+  );
+}
+
+
+// ============================================================
+// FLOOR 2 DIGITAL STUDIO CAMERA
+// ============================================================
+
+function updateStudioCamera(
+  player
+) {
+
+  const yaw =
+    player.rotation.y;
+
+  const forwardX =
+    Math.sin(yaw);
+
+  const forwardZ =
+    Math.cos(yaw);
+
+
+  let cameraX =
+    player.position.x -
+    forwardX *
+    STUDIO_DISTANCE;
+
+  let cameraZ =
+    player.position.z -
+    forwardZ *
+    STUDIO_DISTANCE;
+
+
+  const sideX =
+    Math.cos(yaw) *
+    STUDIO_SIDE_OFFSET;
+
+  const sideZ =
+    -Math.sin(yaw) *
+    STUDIO_SIDE_OFFSET;
+
+
+  cameraX += sideX;
+  cameraZ += sideZ;
+
+
+  cameraX =
+    THREE.MathUtils.clamp(
+      cameraX,
+      STUDIO_MIN_X,
+      STUDIO_MAX_X
+    );
+
+  cameraZ =
+    THREE.MathUtils.clamp(
+      cameraZ,
+      STUDIO_MIN_Z,
+      STUDIO_MAX_Z
+    );
+
+
+  const cameraY =
+    player.position.y +
+    STUDIO_HEIGHT;
+
+
+  moveCamera(
+    cameraX,
+    cameraY,
+    cameraZ,
+    0.12
+  );
+
+
+  const lookX =
+    player.position.x +
+    forwardX * 1.4;
+
+  const lookZ =
+    player.position.z +
+    forwardZ * 1.4;
+
+  const lookY =
+    player.position.y +
+    STUDIO_LOOK_HEIGHT;
+
+
+  camera.lookAt(
+    lookX,
+    lookY,
+    lookZ
+  );
+}
+
+
+// ============================================================
+// ELEVATOR CINEMATIC
+// ============================================================
+
+function updateElevatorCamera(
+  player
+) {
+
+  const progress =
+    Number(
+      window.__lamboCityElevatorProgress ??
+      0
+    );
+
+
+  if (
+    progress < 0.30
+  ) {
+
+    const revealX =
+      player.position.x + 5.5;
+
+    const revealY =
+      player.position.y + 4.0;
+
+    const revealZ =
+      player.position.z + 6.5;
+
+
+    moveCamera(
+      revealX,
+      revealY,
+      revealZ,
+      0.075
+    );
+
+
+    camera.lookAt(
+      player.position.x,
+      player.position.y + 2,
+      player.position.z
+    );
+
+
+    return;
+  }
+
+
+  const yaw =
+    player.rotation.y;
+
+  const forwardX =
+    Math.sin(yaw);
+
+  const forwardZ =
+    Math.cos(yaw);
+
+
+  const cameraDistance =
+    5.0;
+
+
+  const cameraX =
+    player.position.x -
+    forwardX *
+    cameraDistance;
+
+  const cameraZ =
+    player.position.z -
+    forwardZ *
+    cameraDistance;
+
+
+  moveCamera(
+    cameraX,
+    player.position.y + 4.0,
+    cameraZ,
+    0.10
+  );
+
+
+  camera.lookAt(
+    player.position.x +
+      forwardX * 1.5,
+
+    player.position.y + 2.0,
+
+    player.position.z +
+      forwardZ * 1.5
+  );
+}
+
+
+// ============================================================
+// ROOFTOP CAMERA
+// ============================================================
+
+function updateRooftopCamera(
+  player
+) {
+
+  const yaw =
+    player.rotation.y;
+
+  const forwardX =
+    Math.sin(yaw);
+
+  const forwardZ =
+    Math.cos(yaw);
+
+
+  const distance =
+    9.5;
+
+
+  const cinematicDrift =
+    Math.sin(
+      cinTime * 0.18
+    ) * 1.2;
+
+
+  const cameraX =
+    player.position.x -
+    forwardX * distance +
+    cinematicDrift;
+
+  const cameraZ =
+    player.position.z -
+    forwardZ * distance;
+
+
+  moveCamera(
+    cameraX,
+    player.position.y + 6.0,
+    cameraZ,
+    0.055
+  );
+
+
+  camera.lookAt(
+    player.position.x,
+    player.position.y + 2,
+    player.position.z
+  );
+}
+
+
+// ============================================================
+// INITIALIZATION
+// ============================================================
 
 export default {
 
-  init(scene) {
+  init() {
 
-    player = new THREE.Group();
-
-    const bm =
-      new THREE.MeshStandardMaterial({
-        color: 0x111111,
-        roughness: 0.8
-      });
-
-    const body =
-      new THREE.Mesh(
-        new THREE.BoxGeometry(
-          1.2,
-          1.8,
-          0.7
-        ),
-        bm
+    camera =
+      new THREE.PerspectiveCamera(
+        68,
+        window.innerWidth /
+          window.innerHeight,
+        0.05,
+        2000
       );
 
-    body.position.y = 1.8;
-    player.add(body);
 
-    this._bodyMat = bm;
-
-
-    const logo =
-      new THREE.Mesh(
-        new THREE.BoxGeometry(
-          0.5,
-          0.4,
-          0.05
-        ),
-        new THREE.MeshStandardMaterial({
-          color: 0xffd700,
-          emissive: 0xffd700,
-          emissiveIntensity: 0.6
-        })
-      );
-
-    logo.position.set(
-      0,
-      1.9,
-      0.38
+    camera.position.set(
+      START_CAMERA_X,
+      START_CAMERA_Y,
+      START_CAMERA_Z
     );
 
-    player.add(logo);
 
-
-    const head =
-      new THREE.Mesh(
-        new THREE.BoxGeometry(
-          0.9,
-          0.9,
-          0.9
-        ),
-        new THREE.MeshStandardMaterial({
-          color: 0x8d5524,
-          roughness: 0.9
-        })
-      );
-
-    head.position.y = 3.15;
-    player.add(head);
-
-
-    const cap =
-      new THREE.Mesh(
-        new THREE.BoxGeometry(
-          0.95,
-          0.25,
-          0.95
-        ),
-        new THREE.MeshStandardMaterial({
-          color: 0x111111
-        })
-      );
-
-    cap.position.y = 3.65;
-    player.add(cap);
-
-
-    const brim =
-      new THREE.Mesh(
-        new THREE.BoxGeometry(
-          1.1,
-          0.08,
-          0.5
-        ),
-        new THREE.MeshStandardMaterial({
-          color: 0x111111
-        })
-      );
-
-    brim.position.set(
-      0,
-      3.52,
-      0.55
+    camera.lookAt(
+      START_LOOK_X,
+      START_LOOK_Y,
+      START_LOOK_Z
     );
 
-    player.add(brim);
 
+    window.addEventListener(
+      "resize",
+      () => {
 
-    this.armL =
-      new THREE.Mesh(
-        new THREE.BoxGeometry(
-          0.35,
-          1.4,
-          0.35
-        ),
-        new THREE.MeshStandardMaterial({
-          color: 0x111111
-        })
-      );
+        camera.aspect =
+          window.innerWidth /
+          window.innerHeight;
 
-    this.armL.position.set(
-      -0.8,
-      1.8,
-      0
+        camera.updateProjectionMatrix();
+
+      }
     );
 
-    player.add(this.armL);
 
-
-    this.armR =
-      new THREE.Mesh(
-        new THREE.BoxGeometry(
-          0.35,
-          1.4,
-          0.35
-        ),
-        new THREE.MeshStandardMaterial({
-          color: 0x111111
-        })
-      );
-
-    this.armR.position.set(
-      0.8,
-      1.8,
-      0
-    );
-
-    player.add(this.armR);
-
-
-    this.legL =
-      new THREE.Mesh(
-        new THREE.BoxGeometry(
-          0.45,
-          1.6,
-          0.45
-        ),
-        new THREE.MeshStandardMaterial({
-          color: 0x222222
-        })
-      );
-
-    this.legL.position.set(
-      -0.35,
-      0.6,
-      0
-    );
-
-    player.add(this.legL);
-
-
-    this.legR =
-      new THREE.Mesh(
-        new THREE.BoxGeometry(
-          0.45,
-          1.6,
-          0.45
-        ),
-        new THREE.MeshStandardMaterial({
-          color: 0x222222
-        })
-      );
-
-    this.legR.position.set(
-      0.35,
-      0.6,
-      0
-    );
-
-    player.add(this.legR);
-
-
-    [-0.35, 0.35].forEach(x => {
-
-      const shoe =
-        new THREE.Mesh(
-          new THREE.BoxGeometry(
-            0.5,
-            0.25,
-            0.7
-          ),
-          new THREE.MeshStandardMaterial({
-            color: 0xffffff
-          })
-        );
-
-      shoe.position.set(
-        x,
-        -0.22,
-        0.1
-      );
-
-      player.add(shoe);
-
-    });
-
-
-    const chain =
-      new THREE.Mesh(
-        new THREE.TorusGeometry(
-          0.25,
-          0.04,
-          6,
-          12
-        ),
-        new THREE.MeshStandardMaterial({
-          color: 0xffd700,
-          emissive: 0xffd700,
-          emissiveIntensity: 0.4,
-          metalness: 1,
-          roughness: 0.2
-        })
-      );
-
-    chain.position.set(
-      0,
-      2.1,
-      0.36
-    );
-
-    chain.rotation.x =
-      Math.PI / 2;
-
-    player.add(chain);
-
-
-    player.position.set(
-      0,
-      1.3,
-      10
-    );
-
-    scene.add(player);
-
-
-    this.speed = 10;
-    this.sprintSpeed = 18;
-
-    this._facing = 0;
-
-    this._floorY = 1.3;
-    this._elevatorY = null;
-
-    return player;
-  },
-
-
-  setElevatorFloorY(y) {
-
-    this._floorY = y;
-    this._elevatorY = y;
-
-    if (player) {
-      player.position.y = y;
-    }
+    return camera;
 
   },
 
 
-  setElevatorTravelY(y) {
+  // ==========================================================
+  // UPDATE
+  // ==========================================================
 
-    this._elevatorY = y;
+  update(
+    delta,
+    context
+  ) {
 
-    if (player) {
-      player.position.y = y;
-    }
-
-  },
-
-
-  clearElevatorControl() {
-
-    this._elevatorY = null;
-
-    if (player) {
-      player.position.y =
-        this._floorY ?? 1.3;
-    }
-
-  },
+    const player =
+      context.player;
 
 
-  equipHoodie() {
+    if (
+      !player ||
+      !camera
+    ) {
 
-    if (this._bodyMat) {
-
-      this._bodyMat.color.setHex(
-        0x1a0040
-      );
-
-      this._bodyMat.emissive =
-        new THREE.Color(
-          0x9900ff
-        );
-
-      this._bodyMat.emissiveIntensity =
-        0.2;
-
-    }
-
-  },
-
-
-  update(delta, context) {
-
-    const input =
-      context.systems?.input;
-
-    if (!input || !player) {
       return;
-    }
 
-    bobTime += delta;
-
-
-    const sprint =
-      input.keys?.shift;
-
-    const speed =
-      (sprint
-        ? this.sprintSpeed
-        : this.speed) * delta;
-
-
-    let moving = false;
-
-    let dx = 0;
-    let dz = 0;
-
-
-    // ----------------------------------------------------------
-    // WORLD-RELATIVE MOVEMENT
-    // ----------------------------------------------------------
-
-    if (input.keys?.w) {
-      dz = -1;
-      moving = true;
-    }
-
-    if (input.keys?.s) {
-      dz = 1;
-      moving = true;
-    }
-
-    if (input.keys?.a) {
-      dx = -1;
-      moving = true;
-    }
-
-    if (input.keys?.d) {
-      dx = 1;
-      moving = true;
     }
 
 
-    // ----------------------------------------------------------
-    // MOBILE JOYSTICK
-    // ----------------------------------------------------------
+    cinTime += delta;
 
-    if (input.joystick?.active) {
+
+    // ========================================================
+    // ELEVATOR
+    // ========================================================
+
+    if (
+      window.__lamboCityElevatorTraveling
+    ) {
+
+      updateElevatorCamera(
+        player
+      );
+
+      return;
+
+    }
+
+
+    // ========================================================
+    // RECORDS HQ
+    // ========================================================
+
+    if (
+      isInsideHQ(player)
+    ) {
+
+      const floor =
+        getHQFloor(
+          player.position.y
+        );
+
 
       if (
-        Math.abs(
-          input.joystick.x
-        ) > 0.08
+        floor === 4
       ) {
 
-        dx =
-          input.joystick.x;
+        updateRooftopCamera(
+          player
+        );
 
-        moving = true;
+        return;
 
       }
 
 
       if (
-        Math.abs(
-          input.joystick.y
-        ) > 0.08
+        floor === 2
       ) {
 
-        dz =
-          input.joystick.y;
-
-        moving = true;
-
-      }
-
-    }
-
-
-    // ----------------------------------------------------------
-    // NORMALIZE DIAGONAL MOVEMENT
-    // ----------------------------------------------------------
-
-    if (
-      dx !== 0 &&
-      dz !== 0
-    ) {
-
-      const l =
-        Math.sqrt(
-          dx * dx +
-          dz * dz
+        updateStudioCamera(
+          player
         );
 
-      dx /= l;
-      dz /= l;
-
-    }
-
-
-    const newX =
-      player.position.x +
-      dx * speed;
-
-    const newZ =
-      player.position.z +
-      dz * speed;
-
-
-    // ----------------------------------------------------------
-    // CURRENT FLOOR HEIGHT
-    // ----------------------------------------------------------
-
-    const collisionY =
-      this._elevatorY !== null
-        ? this._elevatorY
-        : (
-            this._floorY ??
-            player.position.y ??
-            1.3
-          );
-
-
-    // ----------------------------------------------------------
-    // X COLLISION
-    // ----------------------------------------------------------
-
-    if (
-      !Collision.isBlocked(
-        newX,
-        player.position.z,
-        0.6,
-        collisionY
-      )
-    ) {
-
-      player.position.x =
-        newX;
-
-    }
-
-
-    // ----------------------------------------------------------
-    // Z COLLISION
-    // ----------------------------------------------------------
-
-    if (
-      !Collision.isBlocked(
-        player.position.x,
-        newZ,
-        0.6,
-        collisionY
-      )
-    ) {
-
-      player.position.z =
-        newZ;
-
-    }
-
-
-    // ----------------------------------------------------------
-    // HERO FACING
-    // ----------------------------------------------------------
-
-    if (
-      moving &&
-      (dx !== 0 || dz !== 0)
-    ) {
-
-      const ta =
-        Math.atan2(
-          dx,
-          dz
-        );
-
-      let diff =
-        ta - this._facing;
-
-
-      while (
-        diff > Math.PI
-      ) {
-
-        diff -=
-          Math.PI * 2;
+        return;
 
       }
 
 
-      while (
-        diff < -Math.PI
-      ) {
+      updateHQCamera(
+        player,
+        floor
+      );
 
-        diff +=
-          Math.PI * 2;
-
-      }
-
-
-      this._facing +=
-        diff *
-        Math.min(
-          1,
-          10 * delta
-        );
-
-      player.rotation.y =
-        this._facing;
+      return;
 
     }
 
 
-    // ----------------------------------------------------------
-    // VERTICAL POSITION / WALK ANIMATION
-    // ----------------------------------------------------------
+    // ========================================================
+    // NORMAL WORLD
+    // ========================================================
 
-    if (
-      this._elevatorY !== null
-    ) {
+    updateWorldCamera(
+      player
+    );
 
-      player.position.y =
-        this._elevatorY;
-
-    } else {
-
-      const floorY =
-        this._floorY ??
-        1.3;
+  },
 
 
-      if (moving) {
+  getCamera() {
 
-        const sw =
-          Math.sin(
-            bobTime *
-            (sprint ? 16 : 10)
-          ) *
-          0.45;
-
-
-        this.armL.rotation.x =
-          sw;
-
-        this.armR.rotation.x =
-          -sw;
-
-        this.legL.rotation.x =
-          -sw;
-
-        this.legR.rotation.x =
-          sw;
-
-
-        player.position.y =
-          floorY +
-          Math.abs(
-            Math.sin(
-              bobTime *
-              (sprint ? 16 : 10) *
-              0.5
-            )
-          ) *
-          0.05;
-
-      } else {
-
-        this.armL.rotation.x *=
-          0.82;
-
-        this.armR.rotation.x *=
-          0.82;
-
-        this.legL.rotation.x *=
-          0.82;
-
-        this.legR.rotation.x *=
-          0.82;
-
-
-        player.position.y =
-          floorY +
-          Math.sin(
-            bobTime * 1.2
-          ) *
-          0.025;
-
-      }
-
-    }
-
-
-    // ----------------------------------------------------------
-    // HOODIE
-    // ----------------------------------------------------------
-
-    if (
-      !this._giftReceived &&
-      context.hoodieGifted
-    ) {
-
-      this._giftReceived = true;
-      this.equipHoodie();
-
-    }
-
-
-    // ----------------------------------------------------------
-    // SHARE PLAYER
-    // ----------------------------------------------------------
-
-    context.player =
-      player;
+    return camera;
 
   }
 
