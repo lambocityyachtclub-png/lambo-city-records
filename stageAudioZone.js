@@ -1,88 +1,211 @@
 // stageAudioZone.js
-// Plays "Let's Rage" — the reserved stage performance track in
-// ambientMusic.js — while the player is near the stage, based on
-// proximity to the stageScreenOuter mesh. Reuses the same distance-check
-// pattern already used by stageVideo.js — no changes to world.js needed.
+// LAMBO CITY
 //
-// stageScreenMedia.js's jumbotron loop stays visual-only/muted, as its own
-// header comment already says it should be; this file no longer unmutes it.
+// GRAND STAGE PROXIMITY SYSTEM
 //
-// Structured as a list of zones (one today) so additional stages — or a
-// future Broadcast Hub audio source — can be added later without changing
-// this file's public API (init/update + the status getter below).
- 
-import AmbientMusic from "./ambientMusic.js";
+// IMPORTANT:
+// This system no longer starts "Let's Rage".
+//
+// heroPerformance.js is the single owner of the
+// HERO performance and its performance music.
+//
+// This file only maintains the stage proximity state
+// and keeps the Jumbotron media muted.
+//
+// That prevents two separate audio systems from
+// fighting over the same performance track.
+
 import StageScreenMedia from "./stageScreenMedia.js";
- 
-const FADE_DURATION = 1.5; // seconds — matches the "1 to 2 seconds" spec
- 
-// Each zone: a stage's screen mesh name and its activation radius. Add
-// more entries here later for additional stages — nothing else in this
-// file needs to change.
+
+
 const ZONES = [
+
   {
     meshName: "stageScreenOuter",
-    radius: 45,
-    ambientVolume: 0.6,
-  },
+    radius: 45
+  }
+
 ];
- 
-let scene, externallyPaused = false;
-const zoneState = ZONES.map(() => ({ mesh: null, fade: 0, inZone: false })); // fade: 0=outside, 1=inside
- 
+
+
+let scene;
+
+let externallyPaused = false;
+
+const zoneState =
+  ZONES.map(() => ({
+
+    mesh: null,
+
+    inZone: false,
+
+    fade: 0
+
+  }));
+
+
 export default {
+
+
   init(scene_) {
-    scene = scene_;
+
+    scene =
+      scene_;
+
   },
- 
+
+
   update(delta, context) {
-    if (!scene || externallyPaused) return;
- 
-    const player = context.player;
-    if (!player) return;
- 
-    ZONES.forEach((zone, i) => {
-      const state = zoneState[i];
-      if (!state.mesh) {
-        state.mesh = scene.getObjectByName(zone.meshName);
-        if (!state.mesh) return; // world.js hasn't built the stage yet
+
+    if (
+      !scene ||
+      externallyPaused
+    ) {
+
+      return;
+
+    }
+
+
+    const player =
+      context.player;
+
+
+    if (!player) {
+      return;
+    }
+
+
+    ZONES.forEach(
+      (zone, i) => {
+
+        const state =
+          zoneState[i];
+
+
+        /*
+          Find the existing Jumbotron.
+        */
+
+        if (!state.mesh) {
+
+          state.mesh =
+            scene.getObjectByName(
+              zone.meshName
+            );
+
+          if (!state.mesh) {
+
+            return;
+
+          }
+
+        }
+
+
+        const dx =
+          player.position.x -
+          state.mesh.position.x;
+
+
+        const dz =
+          player.position.z -
+          state.mesh.position.z;
+
+
+        const distance =
+          Math.sqrt(
+            dx * dx +
+            dz * dz
+          );
+
+
+        const inZone =
+          distance <=
+          zone.radius;
+
+
+        state.inZone =
+          inZone;
+
+
+        /*
+          Keep a simple proximity fade value
+          available for future HUD/cinematic use.
+        */
+
+        const target =
+          inZone ? 1 : 0;
+
+
+        const step =
+          delta / 1.5;
+
+
+        if (
+          state.fade < target
+        ) {
+
+          state.fade =
+            Math.min(
+              target,
+              state.fade + step
+            );
+
+        } else if (
+          state.fade > target
+        ) {
+
+          state.fade =
+            Math.max(
+              target,
+              state.fade - step
+            );
+
+        }
+
+
+        /*
+          The Jumbotron's own loop remains visual-only.
+        */
+
+        StageScreenMedia.setVolume(
+          0
+        );
+
       }
- 
-      const dx = player.position.x - state.mesh.position.x;
-      const dz = player.position.z - state.mesh.position.z;
-      const dist = Math.sqrt(dx * dx + dz * dz);
-      const inZone = dist <= zone.radius;
- 
-      if (inZone && !state.inZone) {
-        AmbientMusic.playStageTrack(); // entering — the performance starts
-      } else if (!inZone && state.inZone) {
-        AmbientMusic.endStageTrack(); // leaving — performance ends, track unlocked
-      }
-      state.inZone = inZone;
- 
-      const target = inZone ? 1 : 0;
-      const step = delta / FADE_DURATION;
-      if (state.fade < target) state.fade = Math.min(target, state.fade + step);
-      else if (state.fade > target) state.fade = Math.max(target, state.fade - step);
- 
-      AmbientMusic.setVolume(zone.ambientVolume);
-      StageScreenMedia.setVolume(0); // jumbotron loop stays visual-only
-    });
+    );
+
   },
- 
-  // Called by stageVideo.js while the royalty-tracked modal is open, so this
-  // system doesn't fight with it over volume.
+
+
   pause() {
-    externallyPaused = true;
-    StageScreenMedia.setVolume(0);
+
+    externallyPaused =
+      true;
+
+    StageScreenMedia.setVolume(
+      0
+    );
+
   },
+
+
   resume() {
-    externallyPaused = false;
-    // next update() tick resumes automatically
+
+    externallyPaused =
+      false;
+
   },
- 
-  // Read-only status, useful later for debugging or a HUD indicator
+
+
   isInAnyZone() {
-    return zoneState.some(s => s.fade > 0.5);
-  },
+
+    return zoneState.some(
+      state =>
+        state.fade > 0.5
+    );
+
+  }
+
 };
