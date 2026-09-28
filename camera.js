@@ -2,22 +2,19 @@
 // LAMBO CITY
 // THIRD-PERSON CINEMATIC CAMERA
 //
-// WORLD
-// - Starts with the existing Jumbotron presentation.
-// - Once HERO moves, camera follows HERO's heading.
-// - W/S/A/D movement remains independent from camera.
+// Movement and camera are intentionally separate.
 //
-// RECORDS HQ FLOORS 1–3
-// - Enclosed third-person camera.
+// W/S:
+// HERO faces forward/backward.
+// Camera follows behind HERO.
 //
-// FLOOR 2 DIGITAL STUDIO
-// - Dedicated immersive studio camera.
+// A/D:
+// HERO strafes left/right.
+// Camera does NOT swing around.
 //
-// ELEVATOR
-// - Glass cinematic with exterior visibility.
-//
-// ROOFTOP
-// - Wider cinematic third-person view.
+// This creates a stable third-person presentation instead of
+// rotating the entire camera around HERO whenever the player
+// strafes.
 
 import * as THREE from
   "https://unpkg.com/three@0.160.0/build/three.module.js";
@@ -46,15 +43,8 @@ const WORLD_HEIGHT = 13;
 
 
 // ============================================================
-// WORLD STARTUP CAMERA
+// OPENING CAMERA
 // ============================================================
-//
-// IMPORTANT:
-// This preserves the existing opening presentation.
-// HERO begins with the camera facing the Jumbotron.
-//
-// The follow camera does NOT take control until HERO moves.
-//
 
 const START_CAMERA_X = 0;
 const START_CAMERA_Y = 16;
@@ -77,17 +67,15 @@ let lastWorldZ = null;
 const HQ_DISTANCE = 8.0;
 const HQ_HEIGHT = 5.2;
 const HQ_LOOK_HEIGHT = 1.8;
-const HQ_SIDE_OFFSET = 1.15;
 
 
 // ============================================================
-// FLOOR 2 STUDIO CAMERA
+// FLOOR 2 CAMERA
 // ============================================================
 
 const STUDIO_DISTANCE = 5.8;
 const STUDIO_HEIGHT = 3.8;
 const STUDIO_LOOK_HEIGHT = 1.65;
-const STUDIO_SIDE_OFFSET = 0.85;
 
 const STUDIO_MIN_X = 20.4;
 const STUDIO_MAX_X = 35.6;
@@ -192,28 +180,21 @@ function moveCamera(
 
 
 // ============================================================
-// NORMAL WORLD CAMERA
+// WORLD CAMERA
 // ============================================================
 //
-// The camera sits behind HERO according to HERO's heading.
+// HERO faces:
 //
-// HERO rotation 0 = +Z.
+// 0       = +Z
+// PI      = -Z
 //
-// Therefore the camera is placed in the +Z direction behind
-// HERO, and looks toward the direction HERO is facing.
+// The camera remains behind HERO.
 //
-// This is intentionally different from the movement system:
-// player.js controls movement;
-// camera.js only follows the result.
+// A/D strafing does not change HERO's facing, therefore
+// strafing cannot suddenly swing the camera around.
 //
 
-function updateWorldCamera(
-  player
-) {
-
-  // ----------------------------------------------------------
-  // PRESERVE OPENING JUMBOTRON SHOT
-  // ----------------------------------------------------------
+function updateWorldCamera(player) {
 
   if (!worldFollowActive) {
 
@@ -260,9 +241,7 @@ function updateWorldCamera(
 
     }
 
-
     worldFollowActive = true;
-
   }
 
 
@@ -272,10 +251,6 @@ function updateWorldCamera(
   lastWorldZ =
     player.position.z;
 
-
-  // ----------------------------------------------------------
-  // HERO HEADING
-  // ----------------------------------------------------------
 
   const yaw =
     player.rotation.y;
@@ -287,17 +262,15 @@ function updateWorldCamera(
     Math.cos(yaw);
 
 
-  // ----------------------------------------------------------
-  // CAMERA BEHIND HERO
-  // ----------------------------------------------------------
+  // Camera behind HERO.
 
   const cameraX =
-    player.position.x +
+    player.position.x -
     forwardX *
     WORLD_DISTANCE;
 
   const cameraZ =
-    player.position.z +
+    player.position.z -
     forwardZ *
     WORLD_DISTANCE;
 
@@ -311,17 +284,15 @@ function updateWorldCamera(
   );
 
 
-  // ----------------------------------------------------------
-  // LOOK AHEAD
-  // ----------------------------------------------------------
+  // Look slightly ahead of HERO.
 
   const lookX =
-    player.position.x -
-    forwardX * 5;
+    player.position.x +
+    forwardX * 4;
 
   const lookZ =
-    player.position.z -
-    forwardZ * 5;
+    player.position.z +
+    forwardZ * 4;
 
 
   camera.lookAt(
@@ -362,19 +333,6 @@ function updateHQCamera(
     HQ_DISTANCE;
 
 
-  const sideX =
-    Math.cos(yaw) *
-    HQ_SIDE_OFFSET;
-
-  const sideZ =
-    -Math.sin(yaw) *
-    HQ_SIDE_OFFSET;
-
-
-  cameraX += sideX;
-  cameraZ += sideZ;
-
-
   cameraX =
     THREE.MathUtils.clamp(
       cameraX,
@@ -413,20 +371,17 @@ function updateHQCamera(
 
   const lookX =
     player.position.x +
-    forwardX * 2.0;
+    forwardX * 2;
 
   const lookZ =
     player.position.z +
-    forwardZ * 2.0;
-
-  const lookY =
-    player.position.y +
-    HQ_LOOK_HEIGHT;
+    forwardZ * 2;
 
 
   camera.lookAt(
     lookX,
-    lookY,
+    player.position.y +
+      HQ_LOOK_HEIGHT,
     lookZ
   );
 }
@@ -435,10 +390,14 @@ function updateHQCamera(
 // ============================================================
 // FLOOR 2 DIGITAL STUDIO CAMERA
 // ============================================================
+//
+// Floor 2 gets its own camera treatment.
+//
+// It stays close and immersive but still remains third-person.
+// A/D strafing does not rotate the camera.
+//
 
-function updateStudioCamera(
-  player
-) {
+function updateStudioCamera(player) {
 
   const yaw =
     player.rotation.y;
@@ -461,19 +420,6 @@ function updateStudioCamera(
     STUDIO_DISTANCE;
 
 
-  const sideX =
-    Math.cos(yaw) *
-    STUDIO_SIDE_OFFSET;
-
-  const sideZ =
-    -Math.sin(yaw) *
-    STUDIO_SIDE_OFFSET;
-
-
-  cameraX += sideX;
-  cameraZ += sideZ;
-
-
   cameraX =
     THREE.MathUtils.clamp(
       cameraX,
@@ -489,14 +435,10 @@ function updateStudioCamera(
     );
 
 
-  const cameraY =
-    player.position.y +
-    STUDIO_HEIGHT;
-
-
   moveCamera(
     cameraX,
-    cameraY,
+    player.position.y +
+      STUDIO_HEIGHT,
     cameraZ,
     0.12
   );
@@ -510,14 +452,11 @@ function updateStudioCamera(
     player.position.z +
     forwardZ * 1.4;
 
-  const lookY =
-    player.position.y +
-    STUDIO_LOOK_HEIGHT;
-
 
   camera.lookAt(
     lookX,
-    lookY,
+    player.position.y +
+      STUDIO_LOOK_HEIGHT,
     lookZ
   );
 }
@@ -527,9 +466,7 @@ function updateStudioCamera(
 // ELEVATOR CINEMATIC
 // ============================================================
 
-function updateElevatorCamera(
-  player
-) {
+function updateElevatorCamera(player) {
 
   const progress =
     Number(
@@ -598,7 +535,7 @@ function updateElevatorCamera(
 
   moveCamera(
     cameraX,
-    player.position.y + 4.0,
+    player.position.y + 4,
     cameraZ,
     0.10
   );
@@ -608,7 +545,7 @@ function updateElevatorCamera(
     player.position.x +
       forwardX * 1.5,
 
-    player.position.y + 2.0,
+    player.position.y + 2,
 
     player.position.z +
       forwardZ * 1.5
@@ -620,9 +557,7 @@ function updateElevatorCamera(
 // ROOFTOP CAMERA
 // ============================================================
 
-function updateRooftopCamera(
-  player
-) {
+function updateRooftopCamera(player) {
 
   const yaw =
     player.rotation.y;
@@ -656,7 +591,7 @@ function updateRooftopCamera(
 
   moveCamera(
     cameraX,
-    player.position.y + 6.0,
+    player.position.y + 6,
     cameraZ,
     0.055
   );
@@ -717,13 +652,8 @@ export default {
 
 
     return camera;
-
   },
 
-
-  // ==========================================================
-  // UPDATE
-  // ==========================================================
 
   update(
     delta,
@@ -740,7 +670,6 @@ export default {
     ) {
 
       return;
-
     }
 
 
@@ -760,7 +689,6 @@ export default {
       );
 
       return;
-
     }
 
 
@@ -787,7 +715,6 @@ export default {
         );
 
         return;
-
       }
 
 
@@ -800,7 +727,6 @@ export default {
         );
 
         return;
-
       }
 
 
@@ -810,7 +736,6 @@ export default {
       );
 
       return;
-
     }
 
 
@@ -821,14 +746,12 @@ export default {
     updateWorldCamera(
       player
     );
-
   },
 
 
   getCamera() {
 
     return camera;
-
   }
 
 };
