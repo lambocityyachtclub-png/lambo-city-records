@@ -249,9 +249,16 @@ export default {
 
     scene.add(player);
 
-    this.speed = 10;
+    /*
+      FASTER LAMBO CITY MOVEMENT
 
-    this.sprintSpeed = 18;
+      Normal walking = 14
+      Sprint = 22
+    */
+
+    this.speed = 14;
+
+    this.sprintSpeed = 22;
 
     /*
       Original LAMBO CITY world-flow
@@ -532,9 +539,6 @@ export default {
       The character turns toward
       the direction he is actually
       walking.
-
-      This is the movement behavior
-      from the September 15 baseline.
     */
 
     if (
