@@ -29,16 +29,29 @@ const HQ_X = 28;
 const HQ_Z = 22;
 const FLOOR_Y = 1.28;
 
+
 function material(color, options = {}) {
+
   return new THREE.MeshStandardMaterial({
+
     color,
-    roughness: options.roughness ?? 0.4,
-    metalness: options.metalness ?? 0.35,
-    emissive: options.emissive ?? 0x000000,
+
+    roughness:
+      options.roughness ?? 0.4,
+
+    metalness:
+      options.metalness ?? 0.35,
+
+    emissive:
+      options.emissive ?? 0x000000,
+
     emissiveIntensity:
       options.emissiveIntensity ?? 0
+
   });
+
 }
+
 
 function box(
   parent,
@@ -49,10 +62,11 @@ function box(
   z
 ) {
 
-  const mesh = new THREE.Mesh(
-    geometry,
-    mat
-  );
+  const mesh =
+    new THREE.Mesh(
+      geometry,
+      mat
+    );
 
   mesh.position.set(
     x,
@@ -63,7 +77,9 @@ function box(
   parent.add(mesh);
 
   return mesh;
+
 }
+
 
 function cylinder(
   parent,
@@ -74,10 +90,11 @@ function cylinder(
   z
 ) {
 
-  const mesh = new THREE.Mesh(
-    geometry,
-    mat
-  );
+  const mesh =
+    new THREE.Mesh(
+      geometry,
+      mat
+    );
 
   mesh.position.set(
     x,
@@ -88,7 +105,9 @@ function cylinder(
   parent.add(mesh);
 
   return mesh;
+
 }
+
 
 function label(
   parent,
@@ -100,13 +119,17 @@ function label(
 ) {
 
   const canvas =
-    document.createElement("canvas");
+    document.createElement(
+      "canvas"
+    );
 
   canvas.width = 512;
   canvas.height = 128;
 
   const context =
-    canvas.getContext("2d");
+    canvas.getContext(
+      "2d"
+    );
 
   context.clearRect(
     0,
@@ -118,9 +141,14 @@ function label(
   context.font =
     "bold 42px Arial";
 
-  context.textAlign = "center";
-  context.textBaseline = "middle";
-  context.fillStyle = "#ffd36a";
+  context.textAlign =
+    "center";
+
+  context.textBaseline =
+    "middle";
+
+  context.fillStyle =
+    "#ffd36a";
 
   context.fillText(
     text,
@@ -129,25 +157,35 @@ function label(
   );
 
   const texture =
-    new THREE.CanvasTexture(canvas);
+    new THREE.CanvasTexture(
+      canvas
+    );
 
   texture.colorSpace =
     THREE.SRGBColorSpace;
 
   const signMaterial =
     new THREE.MeshBasicMaterial({
+
       map: texture,
+
       transparent: true,
-      side: THREE.DoubleSide
+
+      side:
+        THREE.DoubleSide
+
     });
 
   const sign =
     new THREE.Mesh(
+
       new THREE.PlaneGeometry(
         width,
         0.8
       ),
+
       signMaterial
+
     );
 
   sign.position.set(
@@ -159,7 +197,9 @@ function label(
   parent.add(sign);
 
   return sign;
+
 }
+
 
 export default {
 
@@ -177,152 +217,173 @@ export default {
       HQ_Z
     );
 
+
     // ==================================================
     // MATERIALS
     // ==================================================
 
     const black =
-      material(0x080a10, {
-        roughness: 0.3,
-        metalness: 0.65
-      });
+      material(
+        0x080a10,
+        {
+          roughness: 0.3,
+          metalness: 0.65
+        }
+      );
+
 
     const gold =
-      material(0xffd36a, {
-        roughness: 0.25,
-        metalness: 0.8,
-        emissive: 0xff9d00,
-        emissiveIntensity: 0.45
-      });
+      material(
+        0xffd36a,
+        {
+          roughness: 0.25,
+          metalness: 0.8,
+          emissive: 0xff9d00,
+          emissiveIntensity: 0.45
+        }
+      );
+
 
     const goldGlow =
-      material(0xffc14a, {
-        roughness: 0.3,
-        metalness: 0.55,
-        emissive: 0xff8500,
-        emissiveIntensity: 1.2
-      });
+      material(
+        0xffc14a,
+        {
+          roughness: 0.3,
+          metalness: 0.55,
+          emissive: 0xff8500,
+          emissiveIntensity: 1.2
+        }
+      );
+
 
     const glass =
       new THREE.MeshStandardMaterial({
+
         color: 0x4abaff,
+
         emissive: 0x123b5d,
+
         emissiveIntensity: 0.3,
+
         transparent: true,
+
         opacity: 0.3,
+
         roughness: 0.1,
+
         metalness: 0.2
+
       });
+
 
     const white =
-      material(0xf2eee5, {
-        roughness: 0.45,
-        metalness: 0.1
-      });
+      material(
+        0xf2eee5,
+        {
+          roughness: 0.45,
+          metalness: 0.1
+        }
+      );
+
 
     const red =
-      material(0x720b18, {
-        roughness: 0.4,
-        metalness: 0.2
-      });
+      material(
+        0x720b18,
+        {
+          roughness: 0.4,
+          metalness: 0.2
+        }
+      );
+
 
     // ==================================================
+    // FLOOR 1 WALKING SURFACE
     // ==================================================
-// FLOOR 1 WALKING SURFACE
-//
-// This is the actual interior floor.
-//
-// It is intentionally placed at the same elevation
-// as the existing boardwalk surface so the visitor
-// walks naturally from the boardwalk into the HQ.
-//
-// Boardwalk:
-// base Y = 1.0
-// plank top ≈ 1.355
-//
-// HQ Floor 1:
-// top ≈ 1.34
-//
-// Result:
-// essentially flush transition.
-// ==================================================
 
-const floor1Surface = new THREE.Mesh(
-  new THREE.BoxGeometry(
-    17.9,
-    0.08,
-    13.8
-  ),
-  black
-);
+    const floor1Surface =
+      new THREE.Mesh(
 
-floor1Surface.position.set(
-  0,
-  0.035,
-  0
-);
+        new THREE.BoxGeometry(
+          17.9,
+          0.08,
+          13.8
+        ),
 
-group.add(floor1Surface);
+        black
 
-// ==================================================
-// FLOOR 1 ARCHITECTURAL EDGE
-//
-// Very thin trim, sitting directly around the floor.
-// It should read as part of the building, not a slab.
-// ==================================================
+      );
 
-box(
-  group,
-  new THREE.BoxGeometry(
-    17.75,
-    0.035,
-    0.07
-  ),
-  gold,
-  0,
-  0.07,
-  6.82
-);
+    floor1Surface.position.set(
+      0,
+      0.035,
+      0
+    );
 
-box(
-  group,
-  new THREE.BoxGeometry(
-    17.75,
-    0.035,
-    0.07
-  ),
-  gold,
-  0,
-  0.07,
-  -6.82
-);
+    group.add(
+      floor1Surface
+    );
 
-box(
-  group,
-  new THREE.BoxGeometry(
-    0.07,
-    0.035,
-    13.65
-  ),
-  gold,
-  -8.82,
-  0.07,
-  0
-);
 
-box(
-  group,
-  new THREE.BoxGeometry(
-    0.07,
-    0.035,
-    13.65
-  ),
-  gold,
-  8.82,
-  0.07,
-  0
-);
-    
+    // ==================================================
+    // FLOOR 1 ARCHITECTURAL EDGE
+    // ==================================================
+
+    box(
+      group,
+      new THREE.BoxGeometry(
+        17.75,
+        0.035,
+        0.07
+      ),
+      gold,
+      0,
+      0.07,
+      6.82
+    );
+
+
+    box(
+      group,
+      new THREE.BoxGeometry(
+        17.75,
+        0.035,
+        0.07
+      ),
+      gold,
+      0,
+      0.07,
+      -6.82
+    );
+
+
+    box(
+      group,
+      new THREE.BoxGeometry(
+        0.07,
+        0.035,
+        13.65
+      ),
+      gold,
+      -8.82,
+      0.07,
+      0
+    );
+
+
+    box(
+      group,
+      new THREE.BoxGeometry(
+        0.07,
+        0.035,
+        13.65
+      ),
+      gold,
+      8.82,
+      0.07,
+      0
+    );
+
+
     // ==================================================
     // FRONT MERCHANDISE ZONE
     // ==================================================
@@ -332,6 +393,7 @@ box(
 
     merchandise.name =
       "floor1MerchandiseStore";
+
 
     box(
       merchandise,
@@ -346,6 +408,7 @@ box(
       5.25
     );
 
+
     box(
       merchandise,
       new THREE.BoxGeometry(
@@ -358,6 +421,7 @@ box(
       3.85,
       5.1
     );
+
 
     [-5.4, -1.8, 1.8, 5.4]
       .forEach(x => {
@@ -403,6 +467,7 @@ box(
 
       });
 
+
     [-5.4, -1.8, 1.8, 5.4]
       .forEach(x => {
 
@@ -447,6 +512,7 @@ box(
 
       });
 
+
     label(
       merchandise,
       "LAMBO CITY RECORDS",
@@ -456,7 +522,11 @@ box(
       6.0
     );
 
-    group.add(merchandise);
+
+    group.add(
+      merchandise
+    );
+
 
     // ==================================================
     // MERCHANDISE COUNTER
@@ -467,6 +537,7 @@ box(
 
     counter.name =
       "floor1MerchandiseCounter";
+
 
     box(
       counter,
@@ -481,6 +552,7 @@ box(
       3.15
     );
 
+
     box(
       counter,
       new THREE.BoxGeometry(
@@ -493,6 +565,7 @@ box(
       1.02,
       3.15
     );
+
 
     box(
       counter,
@@ -507,6 +580,7 @@ box(
       2.6
     );
 
+
     label(
       counter,
       "RECORDS",
@@ -516,7 +590,11 @@ box(
       2.6
     );
 
-    group.add(counter);
+
+    group.add(
+      counter
+    );
+
 
     // ==================================================
     // MUSIC + VIDEO
@@ -527,6 +605,7 @@ box(
 
     mediaStation.name =
       "floor1MusicVideoStation";
+
 
     box(
       mediaStation,
@@ -541,6 +620,7 @@ box(
       -3.25
     );
 
+
     box(
       mediaStation,
       new THREE.BoxGeometry(
@@ -553,6 +633,7 @@ box(
       2.0,
       -3.12
     );
+
 
     box(
       mediaStation,
@@ -567,6 +648,7 @@ box(
       -3.08
     );
 
+
     box(
       mediaStation,
       new THREE.BoxGeometry(
@@ -580,6 +662,7 @@ box(
       -2.2
     );
 
+
     box(
       mediaStation,
       new THREE.BoxGeometry(
@@ -592,6 +675,7 @@ box(
       0.8,
       -2.2
     );
+
 
     [-7.1, -4.0]
       .forEach(x => {
@@ -609,6 +693,7 @@ box(
           -2.3
         );
 
+
         cylinder(
           mediaStation,
           new THREE.CylinderGeometry(
@@ -625,6 +710,7 @@ box(
 
       });
 
+
     label(
       mediaStation,
       "MUSIC + VIDEO",
@@ -634,7 +720,11 @@ box(
       4.0
     );
 
-    group.add(mediaStation);
+
+    group.add(
+      mediaStation
+    );
+
 
     // ==================================================
     // RIGHT-SIDE PREMIUM DISPLAY
@@ -645,6 +735,7 @@ box(
 
     displayZone.name =
       "floor1DisplayTables";
+
 
     [3.0, 5.8]
       .forEach(x => {
@@ -662,6 +753,7 @@ box(
           -1.0
         );
 
+
         box(
           displayZone,
           new THREE.BoxGeometry(
@@ -675,6 +767,7 @@ box(
           -1.0
         );
 
+
         box(
           displayZone,
           new THREE.BoxGeometry(
@@ -687,6 +780,7 @@ box(
           1.35,
           -1.0
         );
+
 
         box(
           displayZone,
@@ -703,7 +797,11 @@ box(
 
       });
 
-    group.add(displayZone);
+
+    group.add(
+      displayZone
+    );
+
 
     // ==================================================
     // CENTRAL WALKWAY DETAIL
@@ -722,6 +820,7 @@ box(
       1.0
     );
 
+
     box(
       group,
       new THREE.BoxGeometry(
@@ -734,6 +833,7 @@ box(
       0.1,
       -0.5
     );
+
 
     box(
       group,
@@ -748,10 +848,9 @@ box(
       -0.5
     );
 
+
     // ==================================================
     // EXISTING ELEVATOR ARRIVAL
-    //
-    // Position preserved.
     // ==================================================
 
     const elevatorMarker =
@@ -759,6 +858,7 @@ box(
 
     elevatorMarker.name =
       "floor1ElevatorArrival";
+
 
     box(
       elevatorMarker,
@@ -773,6 +873,7 @@ box(
       -6.25
     );
 
+
     box(
       elevatorMarker,
       new THREE.BoxGeometry(
@@ -786,6 +887,7 @@ box(
       -6.25
     );
 
+
     label(
       elevatorMarker,
       "ELEVATOR",
@@ -795,11 +897,23 @@ box(
       2.8
     );
 
-    group.add(elevatorMarker);
+
+    group.add(
+      elevatorMarker
+    );
+
 
     // ==================================================
     // FLOOR 1 LIGHTING
     // ==================================================
+    //
+    // The previous fixtures formed three large X shapes.
+    // Those have intentionally been removed.
+    //
+    // These are now clean linear architectural lights.
+    // They read as premium ceiling illumination rather
+    // than floating symbols.
+    //
 
     const ceilingLights =
       new THREE.Group();
@@ -807,38 +921,63 @@ box(
     ceilingLights.name =
       "floor1CeilingLights";
 
-    [-5.5, 0, 5.5]
-      .forEach(x => {
 
-        box(
-          ceilingLights,
-          new THREE.BoxGeometry(
-            2.8,
-            0.05,
-            0.16
-          ),
-          goldGlow,
-          x,
-          3.75,
-          1.0
-        );
+    // Rear architectural light
 
-        box(
-          ceilingLights,
-          new THREE.BoxGeometry(
-            0.16,
-            0.05,
-            2.8
-          ),
-          goldGlow,
-          x,
-          3.75,
-          1.0
-        );
+    box(
+      ceilingLights,
+      new THREE.BoxGeometry(
+        7.0,
+        0.05,
+        0.12
+      ),
+      goldGlow,
+      0,
+      3.75,
+      -4.2
+    );
 
-      });
 
-    group.add(ceilingLights);
+    // Center architectural light
+
+    box(
+      ceilingLights,
+      new THREE.BoxGeometry(
+        6.0,
+        0.05,
+        0.12
+      ),
+      goldGlow,
+      0,
+      3.75,
+      0.4
+    );
+
+
+    // Front architectural light
+
+    box(
+      ceilingLights,
+      new THREE.BoxGeometry(
+        7.0,
+        0.05,
+        0.12
+      ),
+      goldGlow,
+      0,
+      3.75,
+      4.2
+    );
+
+
+    group.add(
+      ceilingLights
+    );
+
+
+    // ==================================================
+    // FLOOR 1 AMBIENT LIGHT
+    // ==================================================
 
     const light =
       new THREE.PointLight(
@@ -847,19 +986,28 @@ box(
         12
       );
 
+
     light.position.set(
       0,
       3.3,
       0
     );
 
-    group.add(light);
 
-    scene.add(group);
+    group.add(
+      light
+    );
+
+
+    scene.add(
+      group
+    );
+
 
     return group;
 
   },
+
 
   update() {}
 
