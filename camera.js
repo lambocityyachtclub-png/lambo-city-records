@@ -4,20 +4,12 @@
 //
 // WORLD
 // - Stable third-person camera
-// - Independent of player movement direction
 //
-// RECORDS HQ FLOORS 1–3
-// - Enclosed third-person
-// - Camera remains inside HQ
-//
-// FLOOR 2 DIGITAL STUDIO
-// - Dedicated immersive studio camera
-//
-// ELEVATOR
-// - Special glass cinematic
-//
-// ROOFTOP
-// - Wider cinematic third-person view
+// RECORDS HQ
+// - Floor 1: dedicated immersive interior camera
+// - Floor 2: dedicated immersive studio camera
+// - Floor 3: enclosed third-person camera
+// - Rooftop: wider cinematic camera
 //
 // IMPORTANT:
 // - Does NOT modify player movement.
@@ -44,6 +36,34 @@ const HQ_MAX_Z = 28.2;
 
 
 // ============================================================
+// FLOOR 1 INTERIOR CAMERA BOUNDS
+// ============================================================
+//
+// Floor 1 walking surface:
+//
+// World X:
+// 28 - 8.95 = 19.05
+// 28 + 8.95 = 36.95
+//
+// World Z:
+// 22 - 6.90 = 15.10
+// 22 + 6.90 = 28.90
+//
+// The camera intentionally stays inside the architectural
+// footprint with a safety margin.
+//
+// This prevents the camera from appearing outside the HQ
+// while HERO is entering or turning around near the entrance.
+//
+
+const FLOOR1_MIN_X = 20.15;
+const FLOOR1_MAX_X = 35.85;
+
+const FLOOR1_MIN_Z = 15.85;
+const FLOOR1_MAX_Z = 27.15;
+
+
+// ============================================================
 // WORLD CAMERA
 // ============================================================
 
@@ -52,17 +72,36 @@ const WORLD_HEIGHT = 13;
 
 
 // ============================================================
-// HQ CAMERA
+// FLOOR 1 CAMERA
+// ============================================================
+//
+// Floor 1 is a public retail/music environment.
+//
+// The camera is closer than the exterior world camera,
+// but slightly wider than the dedicated recording studio.
+//
+// This gives the room a natural GTA/Fortnite-style
+// third-person relationship without exposing the exterior.
+//
+
+const FLOOR1_DISTANCE = 4.8;
+const FLOOR1_HEIGHT = 3.8;
+const FLOOR1_LOOK_HEIGHT = 1.65;
+const FLOOR1_SIDE_OFFSET = 0.75;
+
+
+// ============================================================
+// FLOOR 3 CAMERA
 // ============================================================
 
-const HQ_DISTANCE = 8.0;
-const HQ_HEIGHT = 5.2;
+const HQ_DISTANCE = 7.0;
+const HQ_HEIGHT = 5.1;
 const HQ_LOOK_HEIGHT = 1.8;
-const HQ_SIDE_OFFSET = 1.15;
+const HQ_SIDE_OFFSET = 1.0;
 
 
 // ============================================================
-// STUDIO CAMERA
+// FLOOR 2 STUDIO CAMERA
 // ============================================================
 
 const STUDIO_DISTANCE = 5.8;
@@ -170,18 +209,6 @@ function moveCamera(
 // ============================================================
 // WORLD CAMERA
 // ============================================================
-//
-// IMPORTANT:
-//
-// This camera intentionally does NOT use
-// player.rotation.y.
-//
-// The player can turn and move independently
-// while the camera maintains the stable
-// LAMBO CITY third-person presentation.
-//
-// This is the behavior we are restoring.
-//
 
 function updateWorldCamera(player) {
 
@@ -221,13 +248,176 @@ function updateWorldCamera(player) {
 
 
 // ============================================================
-// HQ CAMERA
+// FLOOR 1 CAMERA
+// ============================================================
+//
+// This is deliberately separate from the generic HQ camera.
+//
+// The most important relationship is:
+//
+// BOARDWALK
+//     ↓
+// ENTRANCE
+//     ↓
+// FLOOR 1
+//
+// Once HERO crosses the entrance, the camera immediately
+// behaves like an interior camera.
+//
+// The camera is physically constrained to the Floor 1
+// architectural footprint so it cannot sit outside the
+// building and look inward.
+//
+
+function updateFloor1Camera(player) {
+
+  const yaw =
+    player.rotation.y;
+
+
+  const forwardX =
+    Math.sin(yaw);
+
+  const forwardZ =
+    Math.cos(yaw);
+
+
+  // ----------------------------------------------------------
+  // CAMERA POSITION
+  // ----------------------------------------------------------
+
+  let cameraX =
+    player.position.x -
+    forwardX *
+    FLOOR1_DISTANCE;
+
+
+  let cameraZ =
+    player.position.z -
+    forwardZ *
+    FLOOR1_DISTANCE;
+
+
+  // Slight shoulder offset.
+  const sideX =
+    Math.cos(yaw) *
+    FLOOR1_SIDE_OFFSET;
+
+  const sideZ =
+    -Math.sin(yaw) *
+    FLOOR1_SIDE_OFFSET;
+
+
+  cameraX += sideX;
+  cameraZ += sideZ;
+
+
+  // ----------------------------------------------------------
+  // HARD INTERIOR BOUNDS
+  // ----------------------------------------------------------
+  //
+  // These are intentionally tighter than the entire HQ
+  // footprint.
+  //
+  // The camera therefore remains physically inside Floor 1
+  // even when HERO is standing near the entrance.
+  //
+
+  cameraX =
+    THREE.MathUtils.clamp(
+      cameraX,
+      FLOOR1_MIN_X,
+      FLOOR1_MAX_X
+    );
+
+
+  cameraZ =
+    THREE.MathUtils.clamp(
+      cameraZ,
+      FLOOR1_MIN_Z,
+      FLOOR1_MAX_Z
+    );
+
+
+  // ----------------------------------------------------------
+  // CAMERA HEIGHT
+  // ----------------------------------------------------------
+
+  const cameraY =
+    player.position.y +
+    FLOOR1_HEIGHT;
+
+
+  moveCamera(
+
+    cameraX,
+
+    cameraY,
+
+    cameraZ,
+
+    0.12
+
+  );
+
+
+  // ----------------------------------------------------------
+  // LOOK TARGET
+  // ----------------------------------------------------------
+  //
+  // Keep the target close to HERO.
+  //
+  // This prevents the camera from looking too far through
+  // the front entrance when HERO is facing toward the
+  // boardwalk.
+  //
+
+  let lookX =
+    player.position.x +
+    forwardX * 1.4;
+
+  let lookZ =
+    player.position.z +
+    forwardZ * 1.4;
+
+
+  lookX =
+    THREE.MathUtils.clamp(
+      lookX,
+      FLOOR1_MIN_X,
+      FLOOR1_MAX_X
+    );
+
+
+  lookZ =
+    THREE.MathUtils.clamp(
+      lookZ,
+      FLOOR1_MIN_Z,
+      FLOOR1_MAX_Z
+    );
+
+
+  const lookY =
+    player.position.y +
+    FLOOR1_LOOK_HEIGHT;
+
+
+  camera.lookAt(
+
+    lookX,
+    lookY,
+    lookZ
+
+  );
+
+}
+
+
+// ============================================================
+// FLOOR 3 CAMERA
 // ============================================================
 
-function updateHQCamera(
-  player,
-  floor
-) {
+function updateHQCamera(player) {
 
   const yaw =
     player.rotation.y;
@@ -281,26 +471,12 @@ function updateHQCamera(
     );
 
 
-  let height =
-    HQ_HEIGHT;
-
-
-  if (floor === 2) {
-    height = 4.8;
-  }
-
-
-  if (floor === 3) {
-    height = 5.1;
-  }
-
-
   moveCamera(
 
     cameraX,
 
     player.position.y +
-      height,
+      HQ_HEIGHT,
 
     cameraZ,
 
@@ -336,7 +512,7 @@ function updateHQCamera(
 
 
 // ============================================================
-// STUDIO CAMERA
+// FLOOR 2 STUDIO CAMERA
 // ============================================================
 
 function updateStudioCamera(player) {
@@ -729,10 +905,21 @@ export default {
       }
 
 
-      // FLOORS 1 / 3
+      // FLOOR 1
+      if (floor === 1) {
+
+        updateFloor1Camera(
+          player
+        );
+
+        return;
+
+      }
+
+
+      // FLOOR 3
       updateHQCamera(
-        player,
-        floor
+        player
       );
 
       return;
