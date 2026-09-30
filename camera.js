@@ -11,7 +11,9 @@
 // - Floor 3: enclosed third-person camera
 // - Rooftop: wider cinematic camera
 //
-// IMPORTANT:
+// CAMERA TRANSITION
+// - Entering/exiting a building transitions quickly,
+//   like walking through a real doorway.
 // - Does NOT modify player movement.
 // - Does NOT modify collision.
 // - Does NOT modify elevator movement.
@@ -57,18 +59,6 @@ const WORLD_HEIGHT = 13;
 // ============================================================
 // FLOOR 1 CAMERA
 // ============================================================
-//
-// Elevated third-person retail perspective.
-//
-// The camera is intentionally:
-// - farther from HERO than the previous version
-// - slightly higher
-// - still close enough to feel immersive
-// - wide enough to show more of the Records environment
-//
-// This is designed to feel closer to a GTA/Fortnite-style
-// interior camera rather than a security camera.
-//
 
 const FLOOR1_DISTANCE = 5.8;
 const FLOOR1_HEIGHT = 4.5;
@@ -100,6 +90,26 @@ const STUDIO_MAX_X = 35.6;
 
 const STUDIO_MIN_Z = 15.2;
 const STUDIO_MAX_Z = 27.4;
+
+
+// ============================================================
+// FAST BUILDING TRANSITION
+// ============================================================
+//
+// When HERO crosses the building threshold, the camera needs
+// to react quickly instead of slowly easing between the world
+// and interior camera.
+//
+// This gives the feeling of:
+//     outside → doorway → interior
+//
+// without creating a separate cinematic camera system.
+//
+
+const BUILDING_TRANSITION_TIME = 0.30;
+
+let previousInsideHQ = false;
+let buildingTransition = 0;
 
 
 // ============================================================
@@ -196,7 +206,7 @@ function moveCamera(
 // WORLD CAMERA
 // ============================================================
 
-function updateWorldCamera(player) {
+function updateWorldCamera(player, smooth = 0.07) {
 
   const drift =
     Math.sin(
@@ -214,7 +224,7 @@ function updateWorldCamera(player) {
     player.position.z +
       WORLD_DISTANCE,
 
-    0.07
+    smooth
 
   );
 
@@ -234,15 +244,11 @@ function updateWorldCamera(player) {
 // ============================================================
 // FLOOR 1 CAMERA
 // ============================================================
-//
-// Elevated over-the-shoulder / third-person interior view.
-//
-// This keeps HERO visible while opening up the room around him.
-//
-// The camera remains inside the Floor 1 architectural footprint.
-//
 
-function updateFloor1Camera(player) {
+function updateFloor1Camera(
+  player,
+  smooth = 0.10
+) {
 
   const yaw =
     player.rotation.y;
@@ -320,7 +326,7 @@ function updateFloor1Camera(player) {
 
     cameraZ,
 
-    0.10
+    smooth
 
   );
 
@@ -373,7 +379,10 @@ function updateFloor1Camera(player) {
 // FLOOR 3 CAMERA
 // ============================================================
 
-function updateHQCamera(player) {
+function updateHQCamera(
+  player,
+  smooth = 0.10
+) {
 
   const yaw =
     player.rotation.y;
@@ -433,7 +442,7 @@ function updateHQCamera(player) {
 
     cameraZ,
 
-    0.10
+    smooth
 
   );
 
@@ -466,7 +475,10 @@ function updateHQCamera(player) {
 // FLOOR 2 STUDIO CAMERA
 // ============================================================
 
-function updateStudioCamera(player) {
+function updateStudioCamera(
+  player,
+  smooth = 0.12
+) {
 
   const yaw =
     player.rotation.y;
@@ -528,7 +540,7 @@ function updateStudioCamera(player) {
     cameraY,
     cameraZ,
 
-    0.12
+    smooth
 
   );
 
@@ -792,6 +804,70 @@ export default {
 
 
     // --------------------------------------------------------
+    // DETECT BUILDING ENTRY / EXIT
+    // --------------------------------------------------------
+
+    const insideHQ =
+      isInsideHQ(player);
+
+
+    if (
+      insideHQ !==
+      previousInsideHQ
+    ) {
+
+      // Start a short, fast doorway transition.
+
+      buildingTransition =
+        BUILDING_TRANSITION_TIME;
+
+      previousInsideHQ =
+        insideHQ;
+
+    }
+
+
+    // --------------------------------------------------------
+    // FAST TRANSITION TIMER
+    // --------------------------------------------------------
+
+    if (buildingTransition > 0) {
+
+      buildingTransition =
+        Math.max(
+          0,
+          buildingTransition -
+          delta
+        );
+
+    }
+
+
+    // --------------------------------------------------------
+    // CAMERA SMOOTHING
+    // --------------------------------------------------------
+    //
+    // Normal gameplay keeps the existing smooth camera.
+    //
+    // During the doorway transition we increase the response
+    // substantially so the interior perspective arrives quickly.
+
+    const transitionActive =
+      buildingTransition > 0;
+
+
+    const worldSmooth =
+      transitionActive
+        ? 0.30
+        : 0.07;
+
+    const interiorSmooth =
+      transitionActive
+        ? 0.30
+        : 0.10;
+
+
+    // --------------------------------------------------------
     // ELEVATOR
     // --------------------------------------------------------
 
@@ -813,7 +889,7 @@ export default {
     // --------------------------------------------------------
 
     if (
-      isInsideHQ(player)
+      insideHQ
     ) {
 
       const floor =
@@ -822,7 +898,9 @@ export default {
         );
 
 
+      // ------------------------------------------------------
       // ROOFTOP
+      // ------------------------------------------------------
 
       if (floor === 4) {
 
@@ -835,12 +913,15 @@ export default {
       }
 
 
+      // ------------------------------------------------------
       // FLOOR 2 STUDIO
+      // ------------------------------------------------------
 
       if (floor === 2) {
 
         updateStudioCamera(
-          player
+          player,
+          interiorSmooth
         );
 
         return;
@@ -848,12 +929,15 @@ export default {
       }
 
 
+      // ------------------------------------------------------
       // FLOOR 1
+      // ------------------------------------------------------
 
       if (floor === 1) {
 
         updateFloor1Camera(
-          player
+          player,
+          interiorSmooth
         );
 
         return;
@@ -861,10 +945,13 @@ export default {
       }
 
 
+      // ------------------------------------------------------
       // FLOOR 3
+      // ------------------------------------------------------
 
       updateHQCamera(
-        player
+        player,
+        interiorSmooth
       );
 
       return;
@@ -877,7 +964,8 @@ export default {
     // --------------------------------------------------------
 
     updateWorldCamera(
-      player
+      player,
+      worldSmooth
     );
 
   },
