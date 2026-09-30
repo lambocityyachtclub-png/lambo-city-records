@@ -6,16 +6,20 @@
 // - Records HQ uses architectural floor boundaries.
 // - Floor 1 entrance remains open.
 // - Elevator opening remains open.
-// - Floor 1 interior fixtures that occupy walking space
-//   receive collision.
-// - Upper HQ floors remain enclosed.
-// - Rooftop boundary will be handled in a dedicated pass.
-//
-// IMPORTANT:
+// - Upper HQ floors are enclosed.
+// - Floor 1 merch counter receives collision.
+// - Rooftop perimeter receives collision.
 // - Simple AABB collision.
 // - X/Z movement collision.
 // - Y-level filtering for HQ floors.
 // - Designed for iPad/mobile performance.
+//
+// IMPORTANT:
+// - Do NOT recreate visual geometry here.
+// - This file handles player movement collision only.
+// - Decorative objects should not receive collision unless
+//   they materially block player movement.
+
 
 const colliders = [];
 
@@ -45,6 +49,69 @@ const HQ_FLOOR_RANGES = {
     minY: 23.8,
     maxY: 1000
   }
+
+};
+
+
+// ============================================================
+// HQ ARCHITECTURAL CONSTANTS
+// ============================================================
+//
+// Records HQ center:
+//
+// X = 28
+// Z = 22
+//
+// Approximate architectural footprint:
+//
+// X = 19 → 37
+// Z = 15 → 29
+//
+// Front / boardwalk side:
+//
+// Z ≈ 28.75
+//
+// Rear / Jumbotron / elevator side:
+//
+// Z ≈ 15.25
+//
+// Elevator opening:
+//
+// X ≈ 21.65 → 31.00 architectural opening
+//
+// Actual elevator:
+//
+// X ≈ 23
+// Z ≈ 14.15
+//
+// Floor 1 front entrance:
+//
+// X ≈ 23 → 33
+//
+// Floor 2 / Floor 3 / Rooftop:
+//
+// Front entrance is CLOSED.
+// ============================================================
+
+
+const HQ = {
+
+  left: 19.25,
+  right: 36.75,
+
+  frontZ: 28.75,
+  backZ: 15.25,
+
+  frontCenterX: 28,
+
+  elevatorX: 23,
+  elevatorZ: 14.15,
+
+  rooftopLeft: 19.0,
+  rooftopRight: 37.0,
+
+  rooftopFrontZ: 29.15,
+  rooftopBackZ: 14.65
 
 };
 
@@ -139,20 +206,23 @@ export default {
     // RECORDS HQ
     // ========================================================
     //
-    // Architectural footprint:
+    // The HQ uses architectural wall collision.
     //
-    // X ≈ 19 → 37
-    // Z ≈ 15 → 29
+    // Floor 1:
+    // - Front entrance OPEN
+    // - Elevator opening OPEN
     //
-    // Front entrance:
+    // Floor 2:
+    // - Front entrance CLOSED
+    // - Elevator opening OPEN
     //
-    // X ≈ 23 → 33
+    // Floor 3:
+    // - Front entrance CLOSED
+    // - Elevator opening OPEN
     //
-    // Elevator opening:
-    //
-    // X ≈ 21.1 → 24.9
-    //
-    // The openings are deliberately left without collision.
+    // Rooftop:
+    // - Elevator access OPEN
+    // - Perimeter railing CLOSED
     // ========================================================
 
 
@@ -163,7 +233,7 @@ export default {
     this.registerBox(
       "recordsHQLeftWall",
       {
-        x: 19.25,
+        x: HQ.left,
         z: 22,
         width: 0.5,
         depth: 14,
@@ -186,7 +256,7 @@ export default {
     this.registerBox(
       "recordsHQRightWall",
       {
-        x: 36.75,
+        x: HQ.right,
         z: 22,
         width: 0.5,
         depth: 14,
@@ -205,17 +275,12 @@ export default {
     // ========================================================
     // BACK WALL — LEFT OF ELEVATOR
     // ========================================================
-    //
-    // Only a small section exists here.
-    //
-    // Elevator opening remains open.
-    // ========================================================
 
     this.registerBox(
       "recordsHQBackWallLeft",
       {
         x: 20.05,
-        z: 15.25,
+        z: HQ.backZ,
         width: 1.6,
         depth: 0.5,
 
@@ -238,7 +303,7 @@ export default {
       "recordsHQBackWallRight",
       {
         x: 31.0,
-        z: 15.25,
+        z: HQ.backZ,
         width: 12.0,
         depth: 0.5,
 
@@ -257,30 +322,31 @@ export default {
     // ELEVATOR OPENING
     // ========================================================
     //
-    // NO COLLIDER.
+    // INTENTIONALLY EMPTY.
     //
-    // HERO must be able to:
+    // The elevator is on the rear / Jumbotron side of HQ.
+    //
+    // HERO must be able to move:
     //
     // elevator
     //    ↓
-    // landing
+    // elevator landing
     //    ↓
-    // interior
+    // HQ interior
     //
-    // This opening is intentionally protected from
-    // accidental decorative collision.
+    // No collider is placed across this opening.
     // ========================================================
 
 
     // ========================================================
-    // FRONT FACADE — LEFT OF ENTRANCE
+    // FRONT FACADE — LEFT OF FLOOR 1 ENTRANCE
     // ========================================================
 
     this.registerBox(
       "recordsHQFrontLeft",
       {
         x: 21,
-        z: 28.75,
+        z: HQ.frontZ,
         width: 4,
         depth: 0.5,
 
@@ -296,14 +362,14 @@ export default {
 
 
     // ========================================================
-    // FRONT FACADE — RIGHT OF ENTRANCE
+    // FRONT FACADE — RIGHT OF FLOOR 1 ENTRANCE
     // ========================================================
 
     this.registerBox(
       "recordsHQFrontRight",
       {
         x: 35,
-        z: 28.75,
+        z: HQ.frontZ,
         width: 4,
         depth: 0.5,
 
@@ -319,28 +385,49 @@ export default {
 
 
     // ========================================================
-    // FLOOR 1 — SMALL MERCH COUNTER
+    // UPPER FLOOR FRONT WALL
     // ========================================================
     //
-    // The merchandise wall itself is mounted against the
-    // existing right architectural wall.
+    // Floor 1 has the public entrance.
     //
-    // Therefore we do NOT add a redundant wall collider.
+    // Floors 2 and 3 do NOT have an open doorway to the
+    // boardwalk.
     //
-    // The small counter projects into the room and needs
-    // its own collision.
+    // This collider closes the central opening beginning
+    // above Floor 1.
     //
-    // Current world position:
+    // Rooftop has its own perimeter collision below.
+    // ========================================================
+
+    this.registerBox(
+      "recordsHQUpperFrontWall",
+      {
+        x: 28,
+        z: HQ.frontZ,
+        width: 10,
+        depth: 0.5,
+
+        minY:
+          HQ_FLOOR_RANGES.floor2.minY,
+
+        maxY:
+          HQ_FLOOR_RANGES.floor3.maxY,
+
+        level: "upper-hq"
+      }
+    );
+
+
+    // ========================================================
+    // FLOOR 1 — MERCH COUNTER
+    // ========================================================
     //
-    // HQ center = 28
-    // local X   = +8.48
+    // Small physical counter projecting into the room.
     //
-    // Counter center ≈ X 35.93
+    // World position:
     //
-    // Local Z = +3.25
-    // World Z = 25.25
-    //
-    // The counter is intentionally small.
+    // X ≈ 35.93
+    // Z ≈ 25.25
     // ========================================================
 
     this.registerBox(
@@ -358,6 +445,168 @@ export default {
           HQ_FLOOR_RANGES.floor1.maxY,
 
         level: "floor1"
+      }
+    );
+
+
+    // ========================================================
+    // ROOFTOP PERIMETER
+    // ========================================================
+    //
+    // The rooftop is a real destination.
+    //
+    // HERO should NOT be able to simply walk off the roof.
+    //
+    // The existing rooftop glass/gold railing is visual.
+    // These colliders give that railing physical behavior.
+    //
+    // Elevator access remains open on the rear side.
+    // ========================================================
+
+
+    // --------------------------------------------------------
+    // ROOFTOP LEFT RAILING
+    // --------------------------------------------------------
+
+    this.registerBox(
+      "recordsHQRooftopLeftRail",
+      {
+        x: HQ.rooftopLeft,
+        z: 22,
+        width: 0.5,
+        depth: 14.5,
+
+        minY:
+          HQ_FLOOR_RANGES.rooftop.minY,
+
+        maxY:
+          HQ_FLOOR_RANGES.rooftop.maxY,
+
+        level: "rooftop"
+      }
+    );
+
+
+    // --------------------------------------------------------
+    // ROOFTOP RIGHT RAILING
+    // --------------------------------------------------------
+
+    this.registerBox(
+      "recordsHQRooftopRightRail",
+      {
+        x: HQ.rooftopRight,
+        z: 22,
+        width: 0.5,
+        depth: 14.5,
+
+        minY:
+          HQ_FLOOR_RANGES.rooftop.minY,
+
+        maxY:
+          HQ_FLOOR_RANGES.rooftop.maxY,
+
+        level: "rooftop"
+      }
+    );
+
+
+    // --------------------------------------------------------
+    // ROOFTOP FRONT RAILING — LEFT SECTION
+    // --------------------------------------------------------
+    //
+    // Leave the center area available for the elevator-side
+    // circulation and rooftop access flow.
+    // --------------------------------------------------------
+
+    this.registerBox(
+      "recordsHQRooftopFrontRailLeft",
+      {
+        x: 21.25,
+        z: HQ.rooftopFrontZ,
+        width: 4.5,
+        depth: 0.5,
+
+        minY:
+          HQ_FLOOR_RANGES.rooftop.minY,
+
+        maxY:
+          HQ_FLOOR_RANGES.rooftop.maxY,
+
+        level: "rooftop"
+      }
+    );
+
+
+    // --------------------------------------------------------
+    // ROOFTOP FRONT RAILING — RIGHT SECTION
+    // --------------------------------------------------------
+
+    this.registerBox(
+      "recordsHQRooftopFrontRailRight",
+      {
+        x: 34.75,
+        z: HQ.rooftopFrontZ,
+        width: 4.5,
+        depth: 0.5,
+
+        minY:
+          HQ_FLOOR_RANGES.rooftop.minY,
+
+        maxY:
+          HQ_FLOOR_RANGES.rooftop.maxY,
+
+        level: "rooftop"
+      }
+    );
+
+
+    // --------------------------------------------------------
+    // ROOFTOP REAR RAILING — LEFT OF ELEVATOR ACCESS
+    // --------------------------------------------------------
+    //
+    // Elevator is around X 23.
+    //
+    // Keep the elevator access area open.
+    // --------------------------------------------------------
+
+    this.registerBox(
+      "recordsHQRooftopRearRailLeft",
+      {
+        x: 20.25,
+        z: HQ.rooftopBackZ,
+        width: 2.0,
+        depth: 0.5,
+
+        minY:
+          HQ_FLOOR_RANGES.rooftop.minY,
+
+        maxY:
+          HQ_FLOOR_RANGES.rooftop.maxY,
+
+        level: "rooftop"
+      }
+    );
+
+
+    // --------------------------------------------------------
+    // ROOFTOP REAR RAILING — RIGHT OF ELEVATOR ACCESS
+    // --------------------------------------------------------
+
+    this.registerBox(
+      "recordsHQRooftopRearRailRight",
+      {
+        x: 30.5,
+        z: HQ.rooftopBackZ,
+        width: 12.5,
+        depth: 0.5,
+
+        minY:
+          HQ_FLOOR_RANGES.rooftop.minY,
+
+        maxY:
+          HQ_FLOOR_RANGES.rooftop.maxY,
+
+        level: "rooftop"
       }
     );
 
