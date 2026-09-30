@@ -1,26 +1,37 @@
 // recordsHQFloor1.js
 // LAMBO CITY RECORDS
-// FLOOR 1 — MERCHANDISE + MUSIC EXPERIENCE
+// FLOOR 1 — RECORDS EXPERIENCE
 //
-// Phase 1 interior layout pass.
+// Clean architectural Floor 1 layout.
+//
+// DESIGN:
+// - Open entrance
+// - Left-wall video installation
+// - Right-wall merchandise
+// - Open central circulation
+// - Completely clear elevator approach
 //
 // IMPORTANT:
-// The HQ architectural foundation is preserved.
-// Floor 1 uses the existing player-level surface.
-// This file does NOT create a second black floor.
+// - Uses the existing HQ floor architecture.
+// - Does not create a second architectural floor.
+// - Does not move the elevator.
+// - Does not change player movement.
+// - Does not create collision.
 //
-// FLOOR FLOW:
-// Entrance
-//    ↓
-// Open arrival space
-//    ↓
-// Merchandise + counter
-//    ↓
-// Central circulation
-//    ↓
-// Music + Video
-//    ↓
-// Existing elevator
+// Floor plan:
+//
+//              REAR / ELEVATOR
+//
+//       VIDEO WALL        ELEVATOR
+//       LEFT SIDE          CLEAR
+//
+//              OPEN SPACE
+//
+//                         MERCH
+//                         RIGHT
+//
+//              ENTRANCE
+//              BOARDWALK
 
 import * as THREE from
   "https://unpkg.com/three@0.160.0/build/three.module.js";
@@ -29,6 +40,10 @@ const HQ_X = 28;
 const HQ_Z = 22;
 const FLOOR_Y = 1.28;
 
+
+// ============================================================
+// MATERIAL
+// ============================================================
 
 function material(color, options = {}) {
 
@@ -52,6 +67,10 @@ function material(color, options = {}) {
 
 }
 
+
+// ============================================================
+// BOX
+// ============================================================
 
 function box(
   parent,
@@ -81,6 +100,10 @@ function box(
 }
 
 
+// ============================================================
+// CYLINDER
+// ============================================================
+
 function cylinder(
   parent,
   geometry,
@@ -109,13 +132,17 @@ function cylinder(
 }
 
 
+// ============================================================
+// WALL LABEL
+// ============================================================
+
 function label(
   parent,
   text,
   x,
   y,
   z,
-  width = 4.2
+  width = 3.5
 ) {
 
   const canvas =
@@ -126,31 +153,31 @@ function label(
   canvas.width = 512;
   canvas.height = 128;
 
-  const context =
+  const ctx =
     canvas.getContext(
       "2d"
     );
 
-  context.clearRect(
+  ctx.clearRect(
     0,
     0,
     canvas.width,
     canvas.height
   );
 
-  context.font =
-    "bold 42px Arial";
+  ctx.font =
+    "bold 38px Arial";
 
-  context.textAlign =
+  ctx.textAlign =
     "center";
 
-  context.textBaseline =
+  ctx.textBaseline =
     "middle";
 
-  context.fillStyle =
+  ctx.fillStyle =
     "#ffd36a";
 
-  context.fillText(
+  ctx.fillText(
     text,
     256,
     64
@@ -164,7 +191,7 @@ function label(
   texture.colorSpace =
     THREE.SRGBColorSpace;
 
-  const signMaterial =
+  const mat =
     new THREE.MeshBasicMaterial({
 
       map: texture,
@@ -176,30 +203,34 @@ function label(
 
     });
 
-  const sign =
+  const mesh =
     new THREE.Mesh(
 
       new THREE.PlaneGeometry(
         width,
-        0.8
+        0.55
       ),
 
-      signMaterial
+      mat
 
     );
 
-  sign.position.set(
+  mesh.position.set(
     x,
     y,
     z
   );
 
-  parent.add(sign);
+  parent.add(mesh);
 
-  return sign;
+  return mesh;
 
 }
 
+
+// ============================================================
+// SYSTEM
+// ============================================================
 
 export default {
 
@@ -218,9 +249,9 @@ export default {
     );
 
 
-    // ==================================================
+    // ========================================================
     // MATERIALS
-    // ==================================================
+    // ========================================================
 
     const black =
       material(
@@ -239,7 +270,7 @@ export default {
           roughness: 0.25,
           metalness: 0.8,
           emissive: 0xff9d00,
-          emissiveIntensity: 0.45
+          emissiveIntensity: 0.38
         }
       );
 
@@ -251,29 +282,9 @@ export default {
           roughness: 0.3,
           metalness: 0.55,
           emissive: 0xff8500,
-          emissiveIntensity: 1.2
+          emissiveIntensity: 1.0
         }
       );
-
-
-    const glass =
-      new THREE.MeshStandardMaterial({
-
-        color: 0x4abaff,
-
-        emissive: 0x123b5d,
-
-        emissiveIntensity: 0.3,
-
-        transparent: true,
-
-        opacity: 0.3,
-
-        roughness: 0.1,
-
-        metalness: 0.2
-
-      });
 
 
     const white =
@@ -296,11 +307,27 @@ export default {
       );
 
 
-    // ==================================================
-    // FLOOR 1 WALKING SURFACE
-    // ==================================================
+    const screen =
+      new THREE.MeshStandardMaterial({
 
-    const floor1Surface =
+        color: 0x11151c,
+
+        emissive: 0x101b2d,
+
+        emissiveIntensity: 0.65,
+
+        roughness: 0.15,
+
+        metalness: 0.35
+
+      });
+
+
+    // ========================================================
+    // EXISTING FLOOR WALKING SURFACE
+    // ========================================================
+
+    const floor =
       new THREE.Mesh(
 
         new THREE.BoxGeometry(
@@ -313,20 +340,23 @@ export default {
 
       );
 
-    floor1Surface.position.set(
+    floor.position.set(
       0,
       0.035,
       0
     );
 
-    group.add(
-      floor1Surface
-    );
+    group.add(floor);
 
 
-    // ==================================================
-    // FLOOR 1 ARCHITECTURAL EDGE
-    // ==================================================
+    // ========================================================
+    // MINIMAL ARCHITECTURAL FLOOR TRIM
+    // ========================================================
+    //
+    // Only perimeter trim.
+    // No floating guides.
+    // No center floor symbols.
+    //
 
     box(
       group,
@@ -384,474 +414,431 @@ export default {
     );
 
 
-    // ==================================================
-    // FRONT MERCHANDISE ZONE
-    // ==================================================
-
-    const merchandise =
-      new THREE.Group();
-
-    merchandise.name =
-      "floor1MerchandiseStore";
-
-
-    box(
-      merchandise,
-      new THREE.BoxGeometry(
-        13.8,
-        3.7,
-        0.22
-      ),
-      black,
-      0,
-      2.0,
-      5.25
-    );
-
-
-    box(
-      merchandise,
-      new THREE.BoxGeometry(
-        13.6,
-        0.1,
-        0.08
-      ),
-      gold,
-      0,
-      3.85,
-      5.1
-    );
-
-
-    [-5.4, -1.8, 1.8, 5.4]
-      .forEach(x => {
-
-        box(
-          merchandise,
-          new THREE.BoxGeometry(
-            2.7,
-            0.12,
-            0.8
-          ),
-          gold,
-          x,
-          1.05,
-          4.75
-        );
-
-        box(
-          merchandise,
-          new THREE.BoxGeometry(
-            2.7,
-            0.12,
-            0.8
-          ),
-          gold,
-          x,
-          2.05,
-          4.75
-        );
-
-        box(
-          merchandise,
-          new THREE.BoxGeometry(
-            2.7,
-            0.12,
-            0.8
-          ),
-          gold,
-          x,
-          3.05,
-          4.75
-        );
-
-      });
-
-
-    [-5.4, -1.8, 1.8, 5.4]
-      .forEach(x => {
-
-        box(
-          merchandise,
-          new THREE.BoxGeometry(
-            0.85,
-            0.75,
-            0.12
-          ),
-          white,
-          x,
-          1.48,
-          4.28
-        );
-
-        box(
-          merchandise,
-          new THREE.BoxGeometry(
-            0.85,
-            0.75,
-            0.12
-          ),
-          red,
-          x,
-          2.48,
-          4.28
-        );
-
-        box(
-          merchandise,
-          new THREE.BoxGeometry(
-            0.85,
-            0.75,
-            0.12
-          ),
-          white,
-          x,
-          3.48,
-          4.28
-        );
-
-      });
-
-
-    label(
-      merchandise,
-      "LAMBO CITY RECORDS",
-      0,
-      4.28,
-      5.08,
-      6.0
-    );
-
-
-    group.add(
-      merchandise
-    );
-
-
-    // ==================================================
-    // MERCHANDISE COUNTER
-    // ==================================================
-
-    const counter =
-      new THREE.Group();
-
-    counter.name =
-      "floor1MerchandiseCounter";
-
-
-    box(
-      counter,
-      new THREE.BoxGeometry(
-        4.6,
-        0.95,
-        1.05
-      ),
-      black,
-      0,
-      0.5,
-      3.15
-    );
-
-
-    box(
-      counter,
-      new THREE.BoxGeometry(
-        4.65,
-        0.08,
-        1.1
-      ),
-      gold,
-      0,
-      1.02,
-      3.15
-    );
-
-
-    box(
-      counter,
-      new THREE.BoxGeometry(
-        3.4,
-        0.08,
-        0.04
-      ),
-      goldGlow,
-      0,
-      0.52,
-      2.6
-    );
-
-
-    label(
-      counter,
-      "RECORDS",
-      0,
-      0.64,
-      2.58,
-      2.6
-    );
-
-
-    group.add(
-      counter
-    );
-
-
-    // ==================================================
-    // MUSIC + VIDEO
-    // ==================================================
-
-    const mediaStation =
-      new THREE.Group();
-
-    mediaStation.name =
-      "floor1MusicVideoStation";
-
-
-    box(
-      mediaStation,
-      new THREE.BoxGeometry(
-        4.3,
-        2.6,
-        0.18
-      ),
-      black,
-      -5.55,
-      1.6,
-      -3.25
-    );
-
-
-    box(
-      mediaStation,
-      new THREE.BoxGeometry(
-        3.4,
-        1.7,
-        0.08
-      ),
-      glass,
-      -5.55,
-      2.0,
-      -3.12
-    );
-
-
-    box(
-      mediaStation,
-      new THREE.BoxGeometry(
-        3.65,
-        0.08,
-        0.12
-      ),
-      gold,
-      -5.55,
-      2.95,
-      -3.08
-    );
-
-
-    box(
-      mediaStation,
-      new THREE.BoxGeometry(
-        4.0,
-        0.7,
-        1.0
-      ),
-      black,
-      -5.55,
-      0.4,
-      -2.2
-    );
-
-
-    box(
-      mediaStation,
-      new THREE.BoxGeometry(
-        4.1,
-        0.08,
-        1.1
-      ),
-      gold,
-      -5.55,
-      0.8,
-      -2.2
-    );
-
-
-    [-7.1, -4.0]
-      .forEach(x => {
-
-        box(
-          mediaStation,
-          new THREE.BoxGeometry(
-            0.55,
-            1.15,
-            0.45
-          ),
-          black,
-          x,
-          0.95,
-          -2.3
-        );
-
-
-        cylinder(
-          mediaStation,
-          new THREE.CylinderGeometry(
-            0.13,
-            0.13,
-            0.04,
-            16
-          ),
-          goldGlow,
-          x,
-          1.1,
-          -2.55
-        );
-
-      });
-
-
-    label(
-      mediaStation,
-      "MUSIC + VIDEO",
-      -5.55,
-      3.42,
-      -3.02,
-      4.0
-    );
-
-
-    group.add(
-      mediaStation
-    );
-
-
-    // ==================================================
-    // RIGHT-SIDE PREMIUM DISPLAY
-    // ==================================================
-
-    const displayZone =
-      new THREE.Group();
-
-    displayZone.name =
-      "floor1DisplayTables";
-
-
-    [3.0, 5.8]
-      .forEach(x => {
-
-        box(
-          displayZone,
-          new THREE.BoxGeometry(
-            2.0,
-            0.12,
-            1.15
-          ),
-          gold,
-          x,
-          1.0,
-          -1.0
-        );
-
-
-        box(
-          displayZone,
-          new THREE.BoxGeometry(
-            1.55,
-            0.75,
-            0.8
-          ),
-          black,
-          x,
-          0.55,
-          -1.0
-        );
-
-
-        box(
-          displayZone,
-          new THREE.BoxGeometry(
-            0.7,
-            0.45,
-            0.32
-          ),
-          white,
-          x,
-          1.35,
-          -1.0
-        );
-
-
-        box(
-          displayZone,
-          new THREE.BoxGeometry(
-            0.7,
-            0.45,
-            0.32
-          ),
-          red,
-          x,
-          1.8,
-          -1.0
-        );
-
-      });
-
-
-    group.add(
-      displayZone
-    );
-
-
-    // ==================================================
-    // CENTRAL WALKWAY DETAIL
-    // ==================================================
+    // ========================================================
+    // ENTRANCE ARRIVAL ZONE
+    // ========================================================
+    //
+    // Front entrance is approximately local Z = +6.8.
+    //
+    // Keep this entire area open.
+    //
 
     box(
       group,
       new THREE.BoxGeometry(
-        5.2,
-        0.035,
+        7.0,
+        0.025,
         0.06
       ),
       goldGlow,
       0,
-      0.1,
-      1.0
+      0.10,
+      5.95
+    );
+
+
+    label(
+      group,
+      "LAMBO CITY RECORDS",
+      0,
+      0.35,
+      5.72,
+      5.2
+    );
+
+
+    // ========================================================
+    // LEFT WALL — VIDEO INSTALLATION
+    // ========================================================
+    //
+    // World:
+    // X ≈ 19.5
+    //
+    // The display is attached to the architectural left wall
+    // instead of occupying walking space.
+    //
+    // It faces inward toward the room.
+    //
+
+    const videoWall =
+      new THREE.Group();
+
+    videoWall.name =
+      "floor1VideoWall";
+
+
+    const videoX =
+      -8.48;
+
+    const videoZ =
+      -1.0;
+
+
+    // Main architectural panel.
+
+    box(
+      videoWall,
+      new THREE.BoxGeometry(
+        0.18,
+        3.2,
+        5.4
+      ),
+      black,
+      videoX,
+      1.75,
+      videoZ
+    );
+
+
+    // Screen.
+
+    const videoScreen =
+      new THREE.Mesh(
+
+        new THREE.BoxGeometry(
+          0.06,
+          2.35,
+          4.35
+        ),
+
+        screen
+
+      );
+
+    videoScreen.position.set(
+      videoX + 0.12,
+      1.9,
+      videoZ
+    );
+
+    videoScreen.rotation.y =
+      Math.PI / 2;
+
+    videoWall.add(
+      videoScreen
+    );
+
+
+    // Screen frame.
+
+    box(
+      videoWall,
+      new THREE.BoxGeometry(
+        0.08,
+        2.65,
+        4.65
+      ),
+      gold,
+      videoX + 0.17,
+      1.9,
+      videoZ
+    );
+
+
+    // Inner screen placed in front of frame.
+
+    box(
+      videoWall,
+      new THREE.BoxGeometry(
+        0.05,
+        2.35,
+        4.35
+      ),
+      screen,
+      videoX + 0.22,
+      1.9,
+      videoZ
+    );
+
+
+    label(
+      videoWall,
+      "LAMBO CITY RECORDS",
+      videoX + 0.24,
+      3.35,
+      videoZ,
+      4.2
+    );
+
+
+    label(
+      videoWall,
+      "WATCH + LISTEN",
+      videoX + 0.25,
+      0.55,
+      videoZ,
+      3.0
+    );
+
+
+    // Small architectural console.
+    // Kept tight against the wall.
+
+    box(
+      videoWall,
+      new THREE.BoxGeometry(
+        0.65,
+        0.55,
+        2.0
+      ),
+      black,
+      videoX + 0.35,
+      0.48,
+      videoZ
     );
 
 
     box(
-      group,
+      videoWall,
       new THREE.BoxGeometry(
-        0.06,
-        0.035,
-        3.0
+        0.08,
+        0.05,
+        1.65
       ),
       goldGlow,
-      -2.6,
-      0.1,
-      -0.5
+      videoX + 0.70,
+      0.78,
+      videoZ
+    );
+
+
+    group.add(
+      videoWall
+    );
+
+
+    // ========================================================
+    // RIGHT WALL — MERCHANDISE
+    // ========================================================
+    //
+    // Merchandise is now architectural rather than a large
+    // freestanding wall in front of the entrance.
+    //
+
+    const merch =
+      new THREE.Group();
+
+    merch.name =
+      "floor1MerchandiseWall";
+
+
+    const merchX =
+      8.48;
+
+    const merchZ =
+      0.4;
+
+
+    // Slim merchandise wall.
+
+    box(
+      merch,
+      new THREE.BoxGeometry(
+        0.18,
+        3.15,
+        5.8
+      ),
+      black,
+      merchX,
+      1.75,
+      merchZ
+    );
+
+
+    // Gold frame.
+
+    box(
+      merch,
+      new THREE.BoxGeometry(
+        0.08,
+        2.8,
+        5.35
+      ),
+      gold,
+      merchX - 0.12,
+      1.8,
+      merchZ
+    );
+
+
+    // Apparel shelves.
+
+    [-1.65, 0, 1.65]
+      .forEach((z) => {
+
+        box(
+          merch,
+          new THREE.BoxGeometry(
+            0.85,
+            0.08,
+            1.35
+          ),
+          gold,
+          merchX - 0.45,
+          1.15,
+          merchZ + z
+        );
+
+      });
+
+
+    // Small apparel blocks.
+
+    [-1.65, 0, 1.65]
+      .forEach((z, index) => {
+
+        box(
+          merch,
+          new THREE.BoxGeometry(
+            0.42,
+            0.65,
+            0.55
+          ),
+          index === 1
+            ? red
+            : white,
+          merchX - 0.62,
+          1.55,
+          merchZ + z
+        );
+
+      });
+
+
+    // Hats.
+
+    [-1.65, 0, 1.65]
+      .forEach((z, index) => {
+
+        cylinder(
+          merch,
+          new THREE.CylinderGeometry(
+            0.22,
+            0.25,
+            0.15,
+            20
+          ),
+          index === 1
+            ? red
+            : black,
+          merchX - 0.58,
+          2.35,
+          merchZ + z
+        );
+
+      });
+
+
+    // Vinyl display.
+
+    cylinder(
+      merch,
+      new THREE.CylinderGeometry(
+        0.42,
+        0.42,
+        0.07,
+        32
+      ),
+      black,
+      merchX - 0.60,
+      3.15,
+      merchZ
+    );
+
+
+    cylinder(
+      merch,
+      new THREE.CylinderGeometry(
+        0.12,
+        0.12,
+        0.075,
+        24
+      ),
+      goldGlow,
+      merchX - 0.60,
+      3.15,
+      merchZ
+    );
+
+
+    label(
+      merch,
+      "MERCH",
+      merchX - 0.20,
+      3.85,
+      merchZ,
+      2.5
+    );
+
+
+    // ========================================================
+    // SMALL MERCH COUNTER
+    // ========================================================
+    //
+    // Counter is now against the right side instead of
+    // blocking the entrance.
+    //
+
+    box(
+      merch,
+      new THREE.BoxGeometry(
+        0.9,
+        0.75,
+        2.0
+      ),
+      black,
+      merchX - 0.55,
+      0.45,
+      3.25
     );
 
 
     box(
-      group,
+      merch,
       new THREE.BoxGeometry(
-        0.06,
-        0.035,
-        3.0
+        1.0,
+        0.08,
+        2.1
       ),
-      goldGlow,
-      2.6,
-      0.1,
-      -0.5
+      gold,
+      merchX - 0.55,
+      0.86,
+      3.25
     );
 
 
-    // ==================================================
-    // EXISTING ELEVATOR ARRIVAL
-    // ==================================================
+    label(
+      merch,
+      "RECORDS",
+      merchX - 0.15,
+      0.72,
+      3.25,
+      2.0
+    );
+
+
+    group.add(
+      merch
+    );
+
+
+    // ========================================================
+    // ELEVATOR CLEAR ZONE
+    // ========================================================
+    //
+    // IMPORTANT:
+    // Nothing decorative is placed here.
+    //
+    // Elevator world position:
+    // X = 23
+    // Z = 14.15
+    //
+    // Local:
+    // X = -5
+    // Z = -7.85
+    //
+    // We leave the entire rear-left approach open.
+    //
 
     const elevatorMarker =
       new THREE.Group();
@@ -860,41 +847,20 @@ export default {
       "floor1ElevatorArrival";
 
 
+    // Extremely subtle landing indicator.
+    // Kept flush with the floor.
+
     box(
       elevatorMarker,
       new THREE.BoxGeometry(
-        3.4,
-        0.04,
-        1.8
+        2.7,
+        0.025,
+        1.25
       ),
       gold,
       -5,
       0.09,
-      -6.25
-    );
-
-
-    box(
-      elevatorMarker,
-      new THREE.BoxGeometry(
-        2.8,
-        0.025,
-        1.2
-      ),
-      black,
-      -5,
-      0.12,
-      -6.25
-    );
-
-
-    label(
-      elevatorMarker,
-      "ELEVATOR",
-      -5,
-      0.2,
-      -5.55,
-      2.8
+      -6.45
     );
 
 
@@ -903,16 +869,13 @@ export default {
     );
 
 
-    // ==================================================
-    // FLOOR 1 LIGHTING
-    // ==================================================
+    // ========================================================
+    // CEILING LIGHTS
+    // ========================================================
     //
-    // The previous fixtures formed three large X shapes.
-    // Those have intentionally been removed.
-    //
-    // These are now clean linear architectural lights.
-    // They read as premium ceiling illumination rather
-    // than floating symbols.
+    // Clean architectural lighting.
+    // No X shapes.
+    // No floating symbols.
     //
 
     const ceilingLights =
@@ -922,51 +885,31 @@ export default {
       "floor1CeilingLights";
 
 
-    // Rear architectural light
-
     box(
       ceilingLights,
       new THREE.BoxGeometry(
-        7.0,
+        5.5,
         0.05,
-        0.12
+        0.10
       ),
       goldGlow,
       0,
       3.75,
-      -4.2
+      -3.8
     );
 
 
-    // Center architectural light
-
     box(
       ceilingLights,
       new THREE.BoxGeometry(
-        6.0,
+        5.5,
         0.05,
-        0.12
+        0.10
       ),
       goldGlow,
       0,
       3.75,
-      0.4
-    );
-
-
-    // Front architectural light
-
-    box(
-      ceilingLights,
-      new THREE.BoxGeometry(
-        7.0,
-        0.05,
-        0.12
-      ),
-      goldGlow,
-      0,
-      3.75,
-      4.2
+      1.0
     );
 
 
@@ -975,14 +918,14 @@ export default {
     );
 
 
-    // ==================================================
-    // FLOOR 1 AMBIENT LIGHT
-    // ==================================================
+    // ========================================================
+    // AMBIENT LIGHT
+    // ========================================================
 
     const light =
       new THREE.PointLight(
         0xffc36b,
-        1.0,
+        0.85,
         12
       );
 
@@ -998,6 +941,10 @@ export default {
       light
     );
 
+
+    // ========================================================
+    // ADD TO SCENE
+    // ========================================================
 
     scene.add(
       group
