@@ -12,26 +12,6 @@ export default {
 
     player = new THREE.Group();
 
-    /*
-      PLAYER MOVEMENT GROUP
-
-      The player group controls:
-      - position
-      - facing direction
-
-      The visual model is rotated 180 degrees because
-      the original character geometry was built facing
-      the opposite direction from the movement system.
-    */
-
-    const model =
-      new THREE.Group();
-
-    model.rotation.y =
-      Math.PI;
-
-    player.add(model);
-
     const bm =
       new THREE.MeshStandardMaterial({
         color: 0x111111,
@@ -48,13 +28,11 @@ export default {
         bm
       );
 
-    body.position.y =
-      1.8;
+    body.position.y = 1.8;
 
-    model.add(body);
+    player.add(body);
 
-    this._bodyMat =
-      bm;
+    this._bodyMat = bm;
 
     const logo =
       new THREE.Mesh(
@@ -76,7 +54,7 @@ export default {
       0.38
     );
 
-    model.add(logo);
+    player.add(logo);
 
     const head =
       new THREE.Mesh(
@@ -91,10 +69,9 @@ export default {
         })
       );
 
-    head.position.y =
-      3.15;
+    head.position.y = 3.15;
 
-    model.add(head);
+    player.add(head);
 
     const cap =
       new THREE.Mesh(
@@ -108,10 +85,9 @@ export default {
         })
       );
 
-    cap.position.y =
-      3.65;
+    cap.position.y = 3.65;
 
-    model.add(cap);
+    player.add(cap);
 
     const brim =
       new THREE.Mesh(
@@ -131,7 +107,7 @@ export default {
       0.55
     );
 
-    model.add(brim);
+    player.add(brim);
 
     this.armL =
       new THREE.Mesh(
@@ -151,7 +127,7 @@ export default {
       0
     );
 
-    model.add(this.armL);
+    player.add(this.armL);
 
     this.armR =
       new THREE.Mesh(
@@ -171,7 +147,7 @@ export default {
       0
     );
 
-    model.add(this.armR);
+    player.add(this.armR);
 
     this.legL =
       new THREE.Mesh(
@@ -191,7 +167,7 @@ export default {
       0
     );
 
-    model.add(this.legL);
+    player.add(this.legL);
 
     this.legR =
       new THREE.Mesh(
@@ -211,33 +187,31 @@ export default {
       0
     );
 
-    model.add(this.legR);
+    player.add(this.legR);
 
-    [-0.35, 0.35].forEach(
-      x => {
+    [-0.35, 0.35].forEach(x => {
 
-        const shoe =
-          new THREE.Mesh(
-            new THREE.BoxGeometry(
-              0.5,
-              0.25,
-              0.7
-            ),
-            new THREE.MeshStandardMaterial({
-              color: 0xffffff
-            })
-          );
-
-        shoe.position.set(
-          x,
-          -0.22,
-          0.1
+      const shoe =
+        new THREE.Mesh(
+          new THREE.BoxGeometry(
+            0.5,
+            0.25,
+            0.7
+          ),
+          new THREE.MeshStandardMaterial({
+            color: 0xffffff
+          })
         );
 
-        model.add(shoe);
+      shoe.position.set(
+        x,
+        -0.22,
+        0.1
+      );
 
-      }
-    );
+      player.add(shoe);
+
+    });
 
     const chain =
       new THREE.Mesh(
@@ -265,7 +239,7 @@ export default {
     chain.rotation.x =
       Math.PI / 2;
 
-    model.add(chain);
+    player.add(chain);
 
     player.position.set(
       0,
@@ -275,71 +249,62 @@ export default {
 
     scene.add(player);
 
-    this.speed =
-      10;
+    this.speed = 10;
 
-    this.sprintSpeed =
-      18;
+    this.sprintSpeed = 18;
 
     /*
-      Facing is independent from movement.
+      Original LAMBO CITY world-flow
+      facing system.
 
-      0 = facing forward toward world -Z.
-
-      IMPORTANT:
-      Movement will NOT automatically change
-      this direction.
-
-      This prevents A/D/S from making the character
-      spin around.
+      0 = facing world -Z.
     */
 
-    this._facing =
-      0;
+    this._facing = 0;
 
     player.rotation.y =
       this._facing;
 
-    this._floorY =
-      1.3;
+    /*
+      Preserve elevator support.
+    */
 
-    this._elevatorY =
-      null;
+    this._floorY = 1.3;
+
+    this._elevatorY = null;
 
     return player;
   },
 
   setElevatorFloorY(y) {
 
-    this._floorY =
-      y;
+    this._floorY = y;
 
-    this._elevatorY =
-      y;
+    this._elevatorY = y;
 
     if (player) {
-      player.position.y =
-        y;
+
+      player.position.y = y;
+
     }
 
   },
 
   setElevatorTravelY(y) {
 
-    this._elevatorY =
-      y;
+    this._elevatorY = y;
 
     if (player) {
-      player.position.y =
-        y;
+
+      player.position.y = y;
+
     }
 
   },
 
   clearElevatorControl() {
 
-    this._elevatorY =
-      null;
+    this._elevatorY = null;
 
     if (player) {
 
@@ -382,8 +347,7 @@ export default {
       return;
     }
 
-    bobTime +=
-      delta;
+    bobTime += delta;
 
     const sprint =
       input.keys?.shift;
@@ -395,157 +359,112 @@ export default {
           : this.speed
       ) * delta;
 
-    let forward =
-      0;
+    let moving = false;
 
-    let right =
-      0;
+    let dx = 0;
 
-    let moving =
-      false;
+    let dz = 0;
 
     /*
-      KEYBOARD
+      ORIGINAL WORLD MOVEMENT
 
-      W = forward
-      S = backward
-      A = left
-      D = right
+      W = world -Z
+      S = world +Z
+      A = world -X
+      D = world +X
     */
 
     if (input.keys?.w) {
 
-      forward += 1;
+      dz = -1;
+
       moving = true;
 
     }
 
     if (input.keys?.s) {
 
-      forward -= 1;
+      dz = 1;
+
       moving = true;
 
     }
 
     if (input.keys?.a) {
 
-      right -= 1;
+      dx = -1;
+
       moving = true;
 
     }
 
     if (input.keys?.d) {
 
-      right += 1;
+      dx = 1;
+
       moving = true;
 
     }
 
     /*
-      JOYSTICK
+      Joystick follows the same
+      world-relative movement.
 
-      Same movement system as keyboard.
-
-      Up    = forward
-      Down  = backward
-      Left  = left
-      Right = right
+      Up    = -Z
+      Down  = +Z
+      Left  = -X
+      Right = +X
     */
 
     if (
       input.joystick?.active
     ) {
 
-      const jx =
-        input.joystick.x;
-
-      const jy =
-        input.joystick.y;
-
       if (
-        Math.abs(jx) > 0.12 ||
-        Math.abs(jy) > 0.12
+        Math.abs(
+          input.joystick.x
+        ) > 0.08
       ) {
 
-        right =
-          jx;
+        dx =
+          input.joystick.x;
 
-        forward =
-          -jy;
+        moving = true;
 
-        moving =
-          true;
+      }
+
+      if (
+        Math.abs(
+          input.joystick.y
+        ) > 0.08
+      ) {
+
+        dz =
+          input.joystick.y;
+
+        moving = true;
 
       }
 
     }
 
     /*
-      Normalize diagonal movement
-      so W+A isn't faster than W.
+      Normalize diagonal movement.
     */
-
-    const inputLength =
-      Math.sqrt(
-        forward * forward +
-        right * right
-      );
 
     if (
-      inputLength > 1
+      dx !== 0 &&
+      dz !== 0
     ) {
 
-      forward /=
-        inputLength;
-
-      right /=
-        inputLength;
-
-    }
-
-    let dx =
-      0;
-
-    let dz =
-      0;
-
-    /*
-      Convert player-relative movement
-      into world movement.
-
-      The important part:
-
-      The player's facing direction
-      is NOT changed here.
-    */
-
-    if (moving) {
-
-      const sin =
-        Math.sin(
-          this._facing
+      const length =
+        Math.sqrt(
+          dx * dx +
+          dz * dz
         );
 
-      const cos =
-        Math.cos(
-          this._facing
-        );
-
-      dx =
-        (
-          sin * forward
-        ) +
-        (
-          cos * right
-        );
-
-      dz =
-        (
-          -cos * forward
-        ) +
-        (
-          sin * right
-        );
+      dx /= length;
+      dz /= length;
 
     }
 
@@ -557,6 +476,11 @@ export default {
       player.position.z +
       dz * speed;
 
+    /*
+      Preserve elevator/floor collision
+      behavior.
+    */
+
     const collisionY =
       this._elevatorY !== null
         ? this._elevatorY
@@ -567,7 +491,7 @@ export default {
           );
 
     /*
-      X collision
+      X collision.
     */
 
     if (
@@ -585,7 +509,7 @@ export default {
     }
 
     /*
-      Z collision
+      Z collision.
     */
 
     if (
@@ -603,14 +527,64 @@ export default {
     }
 
     /*
-      IMPORTANT:
+      ORIGINAL SMOOTH FACING
 
-      There is intentionally NO automatic
-      rotation here.
+      The character turns toward
+      the direction he is actually
+      walking.
 
-      The character keeps facing the same
-      direction while moving forward,
-      backward, left, or right.
+      This is the movement behavior
+      from the September 15 baseline.
+    */
+
+    if (
+      moving &&
+      (dx !== 0 || dz !== 0)
+    ) {
+
+      const targetAngle =
+        Math.atan2(
+          dx,
+          dz
+        );
+
+      let difference =
+        targetAngle -
+        this._facing;
+
+      while (
+        difference > Math.PI
+      ) {
+
+        difference -=
+          Math.PI * 2;
+
+      }
+
+      while (
+        difference < -Math.PI
+      ) {
+
+        difference +=
+          Math.PI * 2;
+
+      }
+
+      this._facing +=
+        difference *
+        Math.min(
+          1,
+          10 * delta
+        );
+
+      player.rotation.y =
+        this._facing;
+
+    }
+
+    /*
+      Preserve original walking
+      animation.
     */
 
     if (
@@ -623,8 +597,7 @@ export default {
     } else {
 
       const floorY =
-        this._floorY ??
-        1.3;
+        this._floorY ?? 1.3;
 
       if (moving) {
 
@@ -688,13 +661,16 @@ export default {
 
     }
 
+    /*
+      Preserve hoodie gift system.
+    */
+
     if (
       !this._giftReceived &&
       context.hoodieGifted
     ) {
 
-      this._giftReceived =
-        true;
+      this._giftReceived = true;
 
       this.equipHoodie();
 
