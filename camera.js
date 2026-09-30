@@ -6,7 +6,7 @@
 // - Stable third-person camera
 //
 // RECORDS HQ
-// - Floor 1: dedicated immersive interior camera
+// - Floor 1: elevated immersive retail camera
 // - Floor 2: dedicated immersive studio camera
 // - Floor 3: enclosed third-person camera
 // - Rooftop: wider cinematic camera
@@ -38,23 +38,6 @@ const HQ_MAX_Z = 28.2;
 // ============================================================
 // FLOOR 1 INTERIOR CAMERA BOUNDS
 // ============================================================
-//
-// Floor 1 walking surface:
-//
-// World X:
-// 28 - 8.95 = 19.05
-// 28 + 8.95 = 36.95
-//
-// World Z:
-// 22 - 6.90 = 15.10
-// 22 + 6.90 = 28.90
-//
-// The camera intentionally stays inside the architectural
-// footprint with a safety margin.
-//
-// This prevents the camera from appearing outside the HQ
-// while HERO is entering or turning around near the entrance.
-//
 
 const FLOOR1_MIN_X = 20.15;
 const FLOOR1_MAX_X = 35.85;
@@ -75,19 +58,22 @@ const WORLD_HEIGHT = 13;
 // FLOOR 1 CAMERA
 // ============================================================
 //
-// Floor 1 is a public retail/music environment.
+// Elevated third-person retail perspective.
 //
-// The camera is closer than the exterior world camera,
-// but slightly wider than the dedicated recording studio.
+// The camera is intentionally:
+// - farther from HERO than the previous version
+// - slightly higher
+// - still close enough to feel immersive
+// - wide enough to show more of the Records environment
 //
-// This gives the room a natural GTA/Fortnite-style
-// third-person relationship without exposing the exterior.
+// This is designed to feel closer to a GTA/Fortnite-style
+// interior camera rather than a security camera.
 //
 
-const FLOOR1_DISTANCE = 4.8;
-const FLOOR1_HEIGHT = 3.8;
-const FLOOR1_LOOK_HEIGHT = 1.65;
-const FLOOR1_SIDE_OFFSET = 0.75;
+const FLOOR1_DISTANCE = 5.8;
+const FLOOR1_HEIGHT = 4.5;
+const FLOOR1_LOOK_HEIGHT = 1.8;
+const FLOOR1_SIDE_OFFSET = 0.8;
 
 
 // ============================================================
@@ -217,7 +203,6 @@ function updateWorldCamera(player) {
       cinTime * 0.25
     ) * 1.2;
 
-
   moveCamera(
 
     player.position.x +
@@ -232,7 +217,6 @@ function updateWorldCamera(player) {
     0.07
 
   );
-
 
   camera.lookAt(
 
@@ -251,29 +235,17 @@ function updateWorldCamera(player) {
 // FLOOR 1 CAMERA
 // ============================================================
 //
-// This is deliberately separate from the generic HQ camera.
+// Elevated over-the-shoulder / third-person interior view.
 //
-// The most important relationship is:
+// This keeps HERO visible while opening up the room around him.
 //
-// BOARDWALK
-//     ↓
-// ENTRANCE
-//     ↓
-// FLOOR 1
-//
-// Once HERO crosses the entrance, the camera immediately
-// behaves like an interior camera.
-//
-// The camera is physically constrained to the Floor 1
-// architectural footprint so it cannot sit outside the
-// building and look inward.
+// The camera remains inside the Floor 1 architectural footprint.
 //
 
 function updateFloor1Camera(player) {
 
   const yaw =
     player.rotation.y;
-
 
   const forwardX =
     Math.sin(yaw);
@@ -291,7 +263,6 @@ function updateFloor1Camera(player) {
     forwardX *
     FLOOR1_DISTANCE;
 
-
   let cameraZ =
     player.position.z -
     forwardZ *
@@ -299,6 +270,7 @@ function updateFloor1Camera(player) {
 
 
   // Slight shoulder offset.
+
   const sideX =
     Math.cos(yaw) *
     FLOOR1_SIDE_OFFSET;
@@ -315,13 +287,6 @@ function updateFloor1Camera(player) {
   // ----------------------------------------------------------
   // HARD INTERIOR BOUNDS
   // ----------------------------------------------------------
-  //
-  // These are intentionally tighter than the entire HQ
-  // footprint.
-  //
-  // The camera therefore remains physically inside Floor 1
-  // even when HERO is standing near the entrance.
-  //
 
   cameraX =
     THREE.MathUtils.clamp(
@@ -329,7 +294,6 @@ function updateFloor1Camera(player) {
       FLOOR1_MIN_X,
       FLOOR1_MAX_X
     );
-
 
   cameraZ =
     THREE.MathUtils.clamp(
@@ -356,7 +320,7 @@ function updateFloor1Camera(player) {
 
     cameraZ,
 
-    0.12
+    0.10
 
   );
 
@@ -364,21 +328,14 @@ function updateFloor1Camera(player) {
   // ----------------------------------------------------------
   // LOOK TARGET
   // ----------------------------------------------------------
-  //
-  // Keep the target close to HERO.
-  //
-  // This prevents the camera from looking too far through
-  // the front entrance when HERO is facing toward the
-  // boardwalk.
-  //
 
   let lookX =
     player.position.x +
-    forwardX * 1.4;
+    forwardX * 1.8;
 
   let lookZ =
     player.position.z +
-    forwardZ * 1.4;
+    forwardZ * 1.8;
 
 
   lookX =
@@ -387,7 +344,6 @@ function updateFloor1Camera(player) {
       FLOOR1_MIN_X,
       FLOOR1_MAX_X
     );
-
 
   lookZ =
     THREE.MathUtils.clamp(
@@ -422,7 +378,6 @@ function updateHQCamera(player) {
   const yaw =
     player.rotation.y;
 
-
   const forwardX =
     Math.sin(yaw);
 
@@ -434,7 +389,6 @@ function updateHQCamera(player) {
     player.position.x -
     forwardX *
     HQ_DISTANCE;
-
 
   let cameraZ =
     player.position.z -
@@ -462,7 +416,6 @@ function updateHQCamera(player) {
       HQ_MAX_X
     );
 
-
   cameraZ =
     THREE.MathUtils.clamp(
       cameraZ,
@@ -489,11 +442,9 @@ function updateHQCamera(player) {
     player.position.x +
     forwardX * 2.0;
 
-
   const lookZ =
     player.position.z +
     forwardZ * 2.0;
-
 
   const lookY =
     player.position.y +
@@ -520,7 +471,6 @@ function updateStudioCamera(player) {
   const yaw =
     player.rotation.y;
 
-
   const forwardX =
     Math.sin(yaw);
 
@@ -532,7 +482,6 @@ function updateStudioCamera(player) {
     player.position.x -
     forwardX *
     STUDIO_DISTANCE;
-
 
   let cameraZ =
     player.position.z -
@@ -559,7 +508,6 @@ function updateStudioCamera(player) {
       STUDIO_MIN_X,
       STUDIO_MAX_X
     );
-
 
   cameraZ =
     THREE.MathUtils.clamp(
@@ -589,11 +537,9 @@ function updateStudioCamera(player) {
     player.position.x +
     forwardX * 1.4;
 
-
   const lookZ =
     player.position.z +
     forwardZ * 1.4;
-
 
   const lookY =
     player.position.y +
@@ -664,13 +610,11 @@ function updateElevatorCamera(player) {
   const yaw =
     player.rotation.y;
 
-
   const forwardX =
     Math.sin(yaw);
 
   const forwardZ =
     Math.cos(yaw);
-
 
   const cameraDistance = 5.0;
 
@@ -679,7 +623,6 @@ function updateElevatorCamera(player) {
     player.position.x -
     forwardX *
     cameraDistance;
-
 
   const cameraZ =
     player.position.z -
@@ -724,7 +667,6 @@ function updateRooftopCamera(player) {
   const yaw =
     player.rotation.y;
 
-
   const forwardX =
     Math.sin(yaw);
 
@@ -746,7 +688,6 @@ function updateRooftopCamera(player) {
     forwardX *
     distance +
     cinematicDrift;
-
 
   const cameraZ =
     player.position.z -
@@ -882,6 +823,7 @@ export default {
 
 
       // ROOFTOP
+
       if (floor === 4) {
 
         updateRooftopCamera(
@@ -894,6 +836,7 @@ export default {
 
 
       // FLOOR 2 STUDIO
+
       if (floor === 2) {
 
         updateStudioCamera(
@@ -906,6 +849,7 @@ export default {
 
 
       // FLOOR 1
+
       if (floor === 1) {
 
         updateFloor1Camera(
@@ -918,6 +862,7 @@ export default {
 
 
       // FLOOR 3
+
       updateHQCamera(
         player
       );
