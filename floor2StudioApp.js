@@ -39,7 +39,7 @@ export default {
     this.camera = context?.camera;
     this.renderer = context?.renderer;
     this.pattern = makeDefaultPattern();
-
+    this.soundProfile = "beatLab";
     this.audio = null;
     this.noiseBuffer = null;
     this.timer = null;
