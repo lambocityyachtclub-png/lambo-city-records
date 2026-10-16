@@ -329,43 +329,84 @@ export default {
   },
 
 
+
   async start() {
     const AudioContextClass =
       window.AudioContext || window.webkitAudioContext;
 
     if (!AudioContextClass) {
-      this.status("Web Audio is not supported by this browser.");
+      this.status("ERROR: Web Audio is not supported.");
       return;
     }
 
-    if (!this.audio) {
-      this.audio = new AudioContextClass();
-      this.noiseBuffer = this.createNoiseBuffer();
-    }
+    // Give visible feedback immediately when PLAY is tapped.
+    this.status("Starting playback...");
 
-    await this.audio.resume();
-
-    if (this.playing) return;
-
-    this.playing = true;
-    this.currentStep = 0;
-    this.nextStepTime = this.audio.currentTime + 0.05;
-
-    this.status("Beat playing. Adjust your pattern or tempo.");
-
-    this.timer = window.setInterval(() => {
-      if (!this.playing || !this.audio) return;
-
-      while (
-        this.nextStepTime <
-        this.audio.currentTime + 0.1
-      ) {
-        this.scheduleStep(this.currentStep, this.nextStepTime);
-        this.currentStep = (this.currentStep + 1) % 16;
-        this.nextStepTime += 60 / this.pattern.bpm / 4;
+    try {
+      if (!this.audio) {
+        this.audio = new AudioContextClass();
+        this.noiseBuffer = this.createNoiseBuffer();
       }
-    }, 25);
+
+      await this.audio.resume();
+
+      if (this.audio.state !== "running") {
+        this.status(
+          `Audio is not running: ${this.audio.state}`
+        );
+        return;
+      }
+
+      if (this.playing) {
+        this.status("Beat already playing.");
+        return;
+      }
+
+      this.playing = true;
+      this.currentStep = 0;
+      this.nextStepTime = this.audio.currentTime + 0.05;
+
+      this.status("Beat playing. Adjust your pattern or tempo.");
+
+      this.timer = window.setInterval(() => {
+        if (!this.playing || !this.audio) return;
+
+        while (
+          this.nextStepTime <
+          this.audio.currentTime + 0.1
+        ) {
+          this.scheduleStep(
+            this.currentStep,
+            this.nextStepTime
+          );
+
+          this.currentStep =
+            (this.currentStep + 1) % 16;
+
+          this.nextStepTime +=
+            60 / this.pattern.bpm / 4;
+        }
+      }, 25);
+    } catch (error) {
+      this.playing = false;
+
+      if (this.timer !== null) {
+        clearInterval(this.timer);
+        this.timer = null;
+      }
+
+      console.error(
+        "LAMBO CITY Beat Lab playback error:",
+        error
+      );
+
+      this.status(
+        `PLAYBACK ERROR: ${error?.message || error}`
+      );
+    }
   },
+
+  
   stop() {
     this.playing = false;
 
