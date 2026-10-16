@@ -400,16 +400,16 @@ export default {
         error
       );
 
+      
       this.status(
         `PLAYBACK ERROR: ${error?.message || error}`
       );
     }
   },
 
-  
   stop() {
     this.playing = false;
-
+    
     if (this.timer !== null) {
       clearInterval(this.timer);
       this.timer = null;
