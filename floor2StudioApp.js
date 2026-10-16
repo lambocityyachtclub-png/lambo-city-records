@@ -328,17 +328,22 @@ export default {
     }
   },
 
+
   async start() {
-   
-await StudioAudioEngine.resume();
+    const AudioContextClass =
+      window.AudioContext || window.webkitAudioContext;
 
-this.audio =
-  StudioAudioEngine.getContext();
+    if (!AudioContextClass) {
+      this.status("Web Audio is not supported by this browser.");
+      return;
+    }
 
-if (!this.noiseBuffer) {
-  this.noiseBuffer =
-    this.createNoiseBuffer();
-}
+    if (!this.audio) {
+      this.audio = new AudioContextClass();
+      this.noiseBuffer = this.createNoiseBuffer();
+    }
+
+    await this.audio.resume();
 
     if (this.playing) return;
 
@@ -361,7 +366,6 @@ if (!this.noiseBuffer) {
       }
     }, 25);
   },
-
   stop() {
     this.playing = false;
 
@@ -413,11 +417,11 @@ if (!this.noiseBuffer) {
   },
 
  
+
   playKick(time) {
     const osc = this.audio.createOscillator();
     const gain = this.audio.createGain();
 
-    // Punchy electronic kick with a short pitch drop.
     osc.type = "sine";
     osc.frequency.setValueAtTime(150, time);
     osc.frequency.exponentialRampToValueAtTime(45, time + 0.14);
@@ -425,9 +429,8 @@ if (!this.noiseBuffer) {
     gain.gain.setValueAtTime(0.9, time);
     gain.gain.exponentialRampToValueAtTime(0.001, time + 0.18);
 
-    // Route the kick through the shared studio mixer.
     osc.connect(gain);
-    gain.connect(StudioAudioEngine.getTrackGain("kick"));
+    gain.connect(this.audio.destination);
 
     osc.start(time);
     osc.stop(time + 0.19);
@@ -438,7 +441,6 @@ if (!this.noiseBuffer) {
     const filter = this.audio.createBiquadFilter();
     const gain = this.audio.createGain();
 
-    // Bright noise gives the snare its snap.
     noise.buffer = this.noiseBuffer;
     filter.type = "highpass";
     filter.frequency.value = 1400;
@@ -446,10 +448,9 @@ if (!this.noiseBuffer) {
     gain.gain.setValueAtTime(0.45, time);
     gain.gain.exponentialRampToValueAtTime(0.001, time + 0.16);
 
-    // Route the snare through the shared studio mixer.
     noise.connect(filter);
     filter.connect(gain);
-    gain.connect(StudioAudioEngine.getTrackGain("snare"));
+    gain.connect(this.audio.destination);
 
     noise.start(time);
     noise.stop(time + 0.17);
@@ -460,7 +461,6 @@ if (!this.noiseBuffer) {
     const filter = this.audio.createBiquadFilter();
     const gain = this.audio.createGain();
 
-    // High-frequency noise creates the hi-hat.
     noise.buffer = this.noiseBuffer;
     filter.type = "highpass";
     filter.frequency.value = 7000;
@@ -468,10 +468,9 @@ if (!this.noiseBuffer) {
     gain.gain.setValueAtTime(0.18, time);
     gain.gain.exponentialRampToValueAtTime(0.001, time + 0.045);
 
-    // Route the hi-hat through the shared studio mixer.
     noise.connect(filter);
     filter.connect(gain);
-    gain.connect(StudioAudioEngine.getTrackGain("hat"));
+    gain.connect(this.audio.destination);
 
     noise.start(time);
     noise.stop(time + 0.05);
