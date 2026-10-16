@@ -418,84 +418,78 @@ export default {
 
 
    
-
-   
-   
-    // LAMBO CITY — INTEGRATED MPC + MIXING CONSOLE
+    // LAMBO CITY — SIDE-BY-SIDE MPC + MIXER
 
     const mpcClickable = new THREE.Group();
 
     mpcClickable.name = "floor2MPCClickable";
     mpcClickable.userData.studioStation = "beatLab";
 
-    // Align the entire workstation with the existing desk
+    // Align the equipment with the existing production desk
     mpcClickable.position.set(beatX, 0, beatZ);
     mpcClickable.rotation.y = beatAngle;
 
-    // MPC body
+    // MPC body — left side of the workstation
     box(
       mpcClickable,
-      new THREE.BoxGeometry(0.95, 0.12, 1.18),
+      new THREE.BoxGeometry(0.62, 0.12, 1.05),
       black,
-      0,
+      -0.32,
       1.085,
-      -0.90,
-      0
+      -0.35
     );
 
-    // 16 illuminated performance pads
+    // 16 illuminated MPC pads
     for (let row = 0; row < 4; row++) {
       for (let col = 0; col < 4; col++) {
         box(
           mpcClickable,
-          new THREE.BoxGeometry(0.14, 0.045, 0.14),
+          new THREE.BoxGeometry(0.105, 0.045, 0.15),
           goldGlow,
-          -0.27 + col * 0.18,
+          -0.53 + col * 0.14,
           1.17,
-          -1.27 + row * 0.20,
-          0
+          -0.69 + row * 0.21
         );
       }
     }
 
-    // Integrated mixing-control panel
+    // Mixer — directly beside the MPC on the same desk
     box(
       mpcClickable,
-      new THREE.BoxGeometry(0.72, 0.07, 0.78),
-      black,
-      0,
+      new THREE.BoxGeometry(0.48, 0.08, 1.05),
+      dark,
+      0.30,
       1.065,
-      0.45,
-      0
+      -0.35
     );
 
-    // Mixing knobs
-    for (let row = 0; row < 3; row++) {
-      for (let col = 0; col < 4; col++) {
+    // Mixer controls
+    for (let row = 0; row < 4; row++) {
+      for (let col = 0; col < 3; col++) {
         cylinder(
           mpcClickable,
           new THREE.CylinderGeometry(0.045, 0.045, 0.045, 12),
-          col === 0 ? goldGlow : dark,
-          -0.24 + col * 0.16,
+          col === 0 ? goldGlow : black,
+          0.15 + col * 0.15,
           1.125,
-          0.20 + row * 0.20
+          -0.68 + row * 0.22
         );
       }
     }
 
-    // Gold console detailing
+    // Gold accent along the mixer
     box(
       mpcClickable,
-      new THREE.BoxGeometry(0.52, 0.025, 0.035),
+      new THREE.BoxGeometry(0.035, 0.025, 0.85),
       goldGlow,
-      0,
+      0.30,
       1.12,
-      0.92,
-      0
+      -0.35
     );
 
-    // Keep the complete workstation clickable
+    // Preserve the existing clickable workstation interaction
     beatLab.add(mpcClickable);
+
 
 
 
