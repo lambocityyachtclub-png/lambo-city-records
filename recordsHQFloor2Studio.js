@@ -420,6 +420,7 @@ export default {
    
 
    
+   
     // LAMBO CITY — INTEGRATED MPC + MIXING CONSOLE
 
     const mpcClickable = new THREE.Group();
@@ -427,15 +428,19 @@ export default {
     mpcClickable.name = "floor2MPCClickable";
     mpcClickable.userData.studioStation = "beatLab";
 
-    // MPC body — centered on the existing desktop
+    // Align the entire workstation with the existing desk
+    mpcClickable.position.set(beatX, 0, beatZ);
+    mpcClickable.rotation.y = beatAngle;
+
+    // MPC body
     box(
       mpcClickable,
       new THREE.BoxGeometry(0.95, 0.12, 1.18),
       black,
-      beatX,
+      0,
       1.085,
-      beatZ - 0.90,
-      beatAngle
+      -0.90,
+      0
     );
 
     // 16 illuminated performance pads
@@ -445,23 +450,23 @@ export default {
           mpcClickable,
           new THREE.BoxGeometry(0.14, 0.045, 0.14),
           goldGlow,
-          beatX - 0.27 + col * 0.18,
+          -0.27 + col * 0.18,
           1.17,
-          beatZ - 1.27 + row * 0.20,
-          beatAngle
+          -1.27 + row * 0.20,
+          0
         );
       }
     }
 
-    // Integrated mixing-control panel beside the MPC
+    // Integrated mixing-control panel
     box(
       mpcClickable,
       new THREE.BoxGeometry(0.72, 0.07, 0.78),
       black,
-      beatX,
+      0,
       1.065,
-      beatZ + 0.45,
-      beatAngle
+      0.45,
+      0
     );
 
     // Mixing knobs
@@ -471,9 +476,9 @@ export default {
           mpcClickable,
           new THREE.CylinderGeometry(0.045, 0.045, 0.045, 12),
           col === 0 ? goldGlow : dark,
-          beatX - 0.24 + col * 0.16,
+          -0.24 + col * 0.16,
           1.125,
-          beatZ + 0.20 + row * 0.20
+          0.20 + row * 0.20
         );
       }
     }
@@ -483,14 +488,15 @@ export default {
       mpcClickable,
       new THREE.BoxGeometry(0.52, 0.025, 0.035),
       goldGlow,
-      beatX,
+      0,
       1.12,
-      beatZ + 0.92,
-      beatAngle
+      0.92,
+      0
     );
 
-    // Keep the console grouped as one physical workstation
+    // Keep the complete workstation clickable
     beatLab.add(mpcClickable);
+
 
 
 
