@@ -63,7 +63,7 @@ export default {
 
     // Positioned along the room's right side, near the piano.
     // Coordinates are relative to the existing studio group.
-    station.position.set(5.05, 0, 2.25);
+    station.position.set(2.5, 0, 2.25);
 
     const addCylinder = (
       name,
