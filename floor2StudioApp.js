@@ -3,9 +3,10 @@ import * as THREE from
   "https://unpkg.com/three@0.160.0/build/three.module.js";
 import StudioAudioEngine from
   "./studioAudioEngine.js";
+
 // LAMBO CITY RECORDS — FLOOR TWO STUDIO APP
-// First milestone: interactive 16-step Beat Lab.
-// The 3D room remains a separate module.
+// V1: Interactive 16-step Beat Lab.
+// Uses the shared studio audio engine.
 
 const STORAGE_KEY = "lambocity-floor2-beatlab-v1";
 
@@ -38,6 +39,7 @@ export default {
     this.camera = context?.camera;
     this.renderer = context?.renderer;
     this.pattern = makeDefaultPattern();
+
     this.audio = null;
     this.noiseBuffer = null;
     this.timer = null;
@@ -45,9 +47,12 @@ export default {
     this.currentStep = 0;
     this.nextStepTime = 0;
     this.ui = null;
+    this.style = null;
 
     if (!this.camera || !this.renderer) {
-      console.warn("LAMBO CITY Beat Lab: camera or renderer unavailable.");
+      console.warn(
+        "LAMBO CITY Beat Lab: camera or renderer unavailable."
+      );
       return;
     }
 
@@ -58,13 +63,17 @@ export default {
       if (this.ui) return;
 
       const studio =
-        this.scene.getObjectByName("recordsHQFloor2Studio");
+        this.scene.getObjectByName(
+          "recordsHQFloor2Studio"
+        );
 
-      const beatLab = studio?.getObjectByName("floor2BeatLab");
+      const beatLab =
+        studio?.getObjectByName("floor2BeatLab");
 
       if (!beatLab) return;
 
-      const rect = this.renderer.domElement.getBoundingClientRect();
+      const rect =
+        this.renderer.domElement.getBoundingClientRect();
 
       this.pointer.x =
         ((event.clientX - rect.left) / rect.width) * 2 - 1;
@@ -72,19 +81,26 @@ export default {
       this.pointer.y =
         -((event.clientY - rect.top) / rect.height) * 2 + 1;
 
-      this.raycaster.setFromCamera(this.pointer, this.camera);
+      this.raycaster.setFromCamera(
+        this.pointer,
+        this.camera
+      );
 
-      const hits = this.raycaster.intersectObject(beatLab, true);
+      const hits =
+        this.raycaster.intersectObject(beatLab, true);
 
       if (!hits.length) return;
 
       let object = hits[0].object;
 
       while (object && object !== studio) {
-        if (object.userData?.studioStation === "beatLab") {
+        if (
+          object.userData?.studioStation === "beatLab"
+        ) {
           this.open();
           return;
         }
+
         object = object.parent;
       }
     };
@@ -190,6 +206,7 @@ export default {
     `;
 
     const style = document.createElement("style");
+
     style.textContent = `
       #lambo-city-beat-lab * { box-sizing:border-box; }
       #lambo-city-beat-lab .lc-action {
@@ -238,13 +255,15 @@ export default {
 
     document.head.appendChild(style);
     document.body.appendChild(root);
+
     this.ui = root;
     this.style = style;
 
     this.renderGrid();
 
     root.addEventListener("click", (event) => {
-      const stepButton = event.target.closest(".lc-step");
+      const stepButton =
+        event.target.closest(".lc-step");
 
       if (stepButton) {
         const track = stepButton.dataset.track;
@@ -258,34 +277,48 @@ export default {
           this.pattern.steps[track][step]
         );
 
+        stepButton.setAttribute(
+          "aria-pressed",
+          String(this.pattern.steps[track][step])
+        );
+
         this.status("Pattern updated.");
         return;
       }
 
-      const button = event.target.closest("[data-action]");
+      const button =
+        event.target.closest("[data-action]");
+
       if (!button) return;
 
       switch (button.dataset.action) {
         case "close":
           this.close();
           break;
+
         case "play":
           this.start();
           break;
+
         case "stop":
           this.stop();
           break;
+
         case "save":
           this.save();
           break;
+
         case "load":
           this.load();
           break;
+
         case "clear":
           this.stop();
+
           TRACKS.forEach(({ id }) =>
             this.pattern.steps[id].fill(false)
           );
+
           this.renderGrid();
           this.status("Pattern cleared.");
           break;
@@ -296,13 +329,17 @@ export default {
       "input",
       (event) => {
         this.pattern.bpm = Number(event.target.value);
-        root.querySelector("[data-bpm-label]").textContent =
-          `${this.pattern.bpm} BPM`;
+
+        root.querySelector(
+          "[data-bpm-label]"
+        ).textContent = `${this.pattern.bpm} BPM`;
       }
     );
   },
 
   renderGrid() {
+    if (!this.ui) return;
+
     const grid = this.ui.querySelector("[data-grid]");
 
     grid.innerHTML = TRACKS.map(({ id, label }) => `
@@ -324,37 +361,38 @@ export default {
 
   status(message) {
     if (this.ui) {
-      this.ui.querySelector("[data-status]").textContent = message;
+      const statusElement =
+        this.ui.querySelector("[data-status]");
+
+      if (statusElement) {
+        statusElement.textContent = message;
+      }
     }
   },
 
-
-
+  // START: initialize and resume the verified shared audio engine.
   async start() {
-    const AudioContextClass =
-      window.AudioContext || window.webkitAudioContext;
-
-    if (!AudioContextClass) {
-      this.status("ERROR: Web Audio is not supported.");
-      return;
-    }
-
-    // Give visible feedback immediately when PLAY is tapped.
-    this.status("Starting playback...");
+    this.status("Starting shared studio audio...");
 
     try {
-      if (!this.audio) {
-        this.audio = new AudioContextClass();
-        this.noiseBuffer = this.createNoiseBuffer();
-      }
+      // This creates the shared context if needed and resumes it.
+      this.audio = await StudioAudioEngine.resume();
 
-      await this.audio.resume();
+      if (!this.audio) {
+        throw new Error(
+          "The shared studio audio context was not created."
+        );
+      }
 
       if (this.audio.state !== "running") {
         this.status(
           `Audio is not running: ${this.audio.state}`
         );
         return;
+      }
+
+      if (!this.noiseBuffer) {
+        this.noiseBuffer = this.createNoiseBuffer();
       }
 
       if (this.playing) {
@@ -366,25 +404,46 @@ export default {
       this.currentStep = 0;
       this.nextStepTime = this.audio.currentTime + 0.05;
 
-      this.status("Beat playing. Adjust your pattern or tempo.");
+      this.status(
+        "Beat playing — shared audio engine running."
+      );
 
       this.timer = window.setInterval(() => {
         if (!this.playing || !this.audio) return;
 
-        while (
-          this.nextStepTime <
-          this.audio.currentTime + 0.1
-        ) {
-          this.scheduleStep(
-            this.currentStep,
-            this.nextStepTime
+        try {
+          // Schedule a short distance ahead for steady timing.
+          while (
+            this.nextStepTime <
+            this.audio.currentTime + 0.1
+          ) {
+            this.scheduleStep(
+              this.currentStep,
+              this.nextStepTime
+            );
+
+            this.currentStep =
+              (this.currentStep + 1) % 16;
+
+            this.nextStepTime +=
+              60 / this.pattern.bpm / 4;
+          }
+        } catch (error) {
+          this.playing = false;
+
+          if (this.timer !== null) {
+            clearInterval(this.timer);
+            this.timer = null;
+          }
+
+          console.error(
+            "LAMBO CITY sequencer error:",
+            error
           );
 
-          this.currentStep =
-            (this.currentStep + 1) % 16;
-
-          this.nextStepTime +=
-            60 / this.pattern.bpm / 4;
+          this.status(
+            `SEQUENCER ERROR: ${error?.message || error}`
+          );
         }
       }, 25);
     } catch (error) {
@@ -396,28 +455,27 @@ export default {
       }
 
       console.error(
-        "LAMBO CITY Beat Lab playback error:",
+        "LAMBO CITY shared audio error:",
         error
       );
 
-      
       this.status(
-        `PLAYBACK ERROR: ${error?.message || error}`
+        `AUDIO ERROR: ${error?.message || error}`
       );
     }
   },
 
   stop() {
     this.playing = false;
-    
+
     if (this.timer !== null) {
       clearInterval(this.timer);
       this.timer = null;
     }
 
     if (this.ui) {
-      this.ui.querySelectorAll(".lc-step").forEach((button) =>
-        button.classList.remove("playhead")
+      this.ui.querySelectorAll(".lc-step").forEach(
+        (button) => button.classList.remove("playhead")
       );
     }
 
@@ -426,9 +484,13 @@ export default {
 
   createNoiseBuffer() {
     const length = this.audio.sampleRate;
+
     const buffer = this.audio.createBuffer(
-      1, length, this.audio.sampleRate
+      1,
+      length,
+      this.audio.sampleRate
     );
+
     const data = buffer.getChannelData(0);
 
     for (let i = 0; i < length; i++) {
@@ -440,38 +502,49 @@ export default {
 
   scheduleStep(step, time) {
     TRACKS.forEach(({ id }) => {
-      if (this.pattern.steps[id][step]) {
-        if (id === "kick") this.playKick(time);
-        if (id === "snare") this.playSnare(time);
-        if (id === "hat") this.playHat(time);
-      }
+      if (!this.pattern.steps[id][step]) return;
+
+      if (id === "kick") this.playKick(time);
+      if (id === "snare") this.playSnare(time);
+      if (id === "hat") this.playHat(time);
     });
 
     if (this.ui) {
-      this.ui.querySelectorAll(".lc-step").forEach((button) => {
-        button.classList.toggle(
-          "playhead",
-          Number(button.dataset.step) === step
-        );
-      });
+      this.ui.querySelectorAll(".lc-step").forEach(
+        (button) => {
+          button.classList.toggle(
+            "playhead",
+            Number(button.dataset.step) === step
+          );
+        }
+      );
     }
   },
-
- 
 
   playKick(time) {
     const osc = this.audio.createOscillator();
     const gain = this.audio.createGain();
 
     osc.type = "sine";
+
     osc.frequency.setValueAtTime(150, time);
-    osc.frequency.exponentialRampToValueAtTime(45, time + 0.14);
+    osc.frequency.exponentialRampToValueAtTime(
+      45,
+      time + 0.14
+    );
 
     gain.gain.setValueAtTime(0.9, time);
-    gain.gain.exponentialRampToValueAtTime(0.001, time + 0.18);
+    gain.gain.exponentialRampToValueAtTime(
+      0.001,
+      time + 0.18
+    );
 
     osc.connect(gain);
-    gain.connect(this.audio.destination);
+
+    // Route kick through its verified shared mixer channel.
+    gain.connect(
+      StudioAudioEngine.getTrackGain("kick")
+    );
 
     osc.start(time);
     osc.stop(time + 0.19);
@@ -483,15 +556,23 @@ export default {
     const gain = this.audio.createGain();
 
     noise.buffer = this.noiseBuffer;
+
     filter.type = "highpass";
     filter.frequency.value = 1400;
 
     gain.gain.setValueAtTime(0.45, time);
-    gain.gain.exponentialRampToValueAtTime(0.001, time + 0.16);
+    gain.gain.exponentialRampToValueAtTime(
+      0.001,
+      time + 0.16
+    );
 
     noise.connect(filter);
     filter.connect(gain);
-    gain.connect(this.audio.destination);
+
+    // Route snare through its verified shared mixer channel.
+    gain.connect(
+      StudioAudioEngine.getTrackGain("snare")
+    );
 
     noise.start(time);
     noise.stop(time + 0.17);
@@ -503,15 +584,23 @@ export default {
     const gain = this.audio.createGain();
 
     noise.buffer = this.noiseBuffer;
+
     filter.type = "highpass";
     filter.frequency.value = 7000;
 
     gain.gain.setValueAtTime(0.18, time);
-    gain.gain.exponentialRampToValueAtTime(0.001, time + 0.045);
+    gain.gain.exponentialRampToValueAtTime(
+      0.001,
+      time + 0.045
+    );
 
     noise.connect(filter);
     filter.connect(gain);
-    gain.connect(this.audio.destination);
+
+    // Route hi-hat through its verified shared mixer channel.
+    gain.connect(
+      StudioAudioEngine.getTrackGain("hat")
+    );
 
     noise.start(time);
     noise.stop(time + 0.05);
@@ -523,9 +612,12 @@ export default {
         STORAGE_KEY,
         JSON.stringify(this.pattern)
       );
+
       this.status("Beat saved in this browser.");
     } catch (error) {
-      this.status("Save failed. Check browser storage settings.");
+      this.status(
+        "Save failed. Check browser storage settings."
+      );
     }
   },
 
@@ -534,7 +626,9 @@ export default {
       const saved = localStorage.getItem(STORAGE_KEY);
 
       if (!saved) {
-        this.status("No saved beat found in this browser yet.");
+        this.status(
+          "No saved beat found in this browser yet."
+        );
         return;
       }
 
@@ -563,12 +657,19 @@ export default {
 
       this.ui.querySelector("[data-bpm]").value =
         this.pattern.bpm;
-      this.ui.querySelector("[data-bpm-label]").textContent =
-        `${this.pattern.bpm} BPM`;
+
+      this.ui.querySelector(
+        "[data-bpm-label]"
+      ).textContent = `${this.pattern.bpm} BPM`;
 
       this.renderGrid();
       this.status("Saved beat loaded.");
     } catch (error) {
+      console.error(
+        "LAMBO CITY beat load error:",
+        error
+      );
+
       this.status("Could not load the saved beat.");
     }
   },
