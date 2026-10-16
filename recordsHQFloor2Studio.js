@@ -373,6 +373,8 @@ export default {
     beatLab.name =
       "floor2BeatLab";
 
+    beatLab.userData.studioStation = "beatLab";
+
     const beatX =
       -5.65;
 
