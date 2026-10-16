@@ -1,7 +1,8 @@
 
 import * as THREE from
   "https://unpkg.com/three@0.160.0/build/three.module.js";
-
+import StudioAudioEngine from
+  "./studioAudioEngine.js";
 // LAMBO CITY RECORDS — FLOOR TWO STUDIO APP
 // First milestone: interactive 16-step Beat Lab.
 // The 3D room remains a separate module.
