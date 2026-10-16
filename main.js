@@ -40,6 +40,7 @@ import RecordsHQ from "./recordsHQ.js";
 import RecordsHQFoundation from "./recordsHQFoundation.js";
 import RecordsHQFloor1 from "./recordsHQFloor1.js";
 import RecordsHQFloor2Studio from "./recordsHQFloor2Studio.js";
+import Floor2StudioApp from "./floor2StudioApp.js";
 import RecordsHQFloor3Executive from "./recordsHQFloor3Executive.js";
 import RecordsHQRooftopVIP from "./recordsHQRooftopVIP.js";
 import RecordsHQEntranceThreshold from "./recordsHQEntranceThreshold.js";
