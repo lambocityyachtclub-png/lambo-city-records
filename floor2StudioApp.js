@@ -162,7 +162,21 @@ export default {
             <strong data-bpm-label>${this.pattern.bpm} BPM</strong>
           </label>
         </section>
+          <label style="display:flex;align-items:center;gap:8px">
 
+  <span style="color:#e6bb69;font-size:12px">SOUND</span>
+
+  <select data-sound-profile
+
+    style="background:#1b1d25;color:#f5f4f0;border:1px solid #5a4b31;border-radius:8px;padding:10px;min-height:44px">
+
+    <option value="beatLab">DIGITAL</option>
+
+    <option value="mpc">VINTAGE MPC</option>
+
+  </select>
+
+</label>
         <section style="border:1px solid #34333a;border-radius:16px;
           padding:clamp(10px,2vw,20px);background:#11131a">
           <div style="display:flex;justify-content:space-between;
