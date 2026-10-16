@@ -419,41 +419,79 @@ export default {
 
    
 
-    // LAMBO CITY — MPC on the main mixing console
+   
+    // LAMBO CITY — INTEGRATED MPC + MIXING CONSOLE
 
     const mpcClickable = new THREE.Group();
 
     mpcClickable.name = "floor2MPCClickable";
     mpcClickable.userData.studioStation = "beatLab";
 
-    // MPC body — positioned beside the existing mixing controller
+    // MPC body — centered on the existing desktop
     box(
       mpcClickable,
-      new THREE.BoxGeometry(0.95, 0.16, 1.18),
+      new THREE.BoxGeometry(0.95, 0.12, 1.18),
       black,
-      -1.45,
-      1.13,
-      -4.95,
-      0
+      beatX,
+      1.085,
+      beatZ - 0.90,
+      beatAngle
     );
 
-    // 16 illuminated MPC pads
+    // 16 illuminated performance pads
     for (let row = 0; row < 4; row++) {
       for (let col = 0; col < 4; col++) {
         box(
           mpcClickable,
-          new THREE.BoxGeometry(0.14, 0.05, 0.14),
+          new THREE.BoxGeometry(0.14, 0.045, 0.14),
           goldGlow,
-          -1.72 + col * 0.18,
-          1.24,
-          -5.32 + row * 0.20,
-          0
+          beatX - 0.27 + col * 0.18,
+          1.17,
+          beatZ - 1.27 + row * 0.20,
+          beatAngle
         );
       }
     }
 
-    // Keep the MPC clickable through the existing Beat Lab
+    // Integrated mixing-control panel beside the MPC
+    box(
+      mpcClickable,
+      new THREE.BoxGeometry(0.72, 0.07, 0.78),
+      black,
+      beatX,
+      1.065,
+      beatZ + 0.45,
+      beatAngle
+    );
+
+    // Mixing knobs
+    for (let row = 0; row < 3; row++) {
+      for (let col = 0; col < 4; col++) {
+        cylinder(
+          mpcClickable,
+          new THREE.CylinderGeometry(0.045, 0.045, 0.045, 12),
+          col === 0 ? goldGlow : dark,
+          beatX - 0.24 + col * 0.16,
+          1.125,
+          beatZ + 0.20 + row * 0.20
+        );
+      }
+    }
+
+    // Gold console detailing
+    box(
+      mpcClickable,
+      new THREE.BoxGeometry(0.52, 0.025, 0.035),
+      goldGlow,
+      beatX,
+      1.12,
+      beatZ + 0.92,
+      beatAngle
+    );
+
+    // Keep the console grouped as one physical workstation
     beatLab.add(mpcClickable);
+
 
 
 
