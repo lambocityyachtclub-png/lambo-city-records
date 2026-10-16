@@ -42,6 +42,7 @@ import RecordsHQFloor1 from "./recordsHQFloor1.js";
 import RecordsHQFloor2Studio from "./recordsHQFloor2Studio.js";
 import Floor2StudioApp from "./floor2StudioApp.js";
 import Floor2InstrumentApp from "./floor2InstrumentApp.js";
+import Floor2DrumStation from "./floor2DrumStation.js";
 import RecordsHQFloor3Executive from "./recordsHQFloor3Executive.js";
 import RecordsHQRooftopVIP from "./recordsHQRooftopVIP.js";
 import RecordsHQEntranceThreshold from "./recordsHQEntranceThreshold.js";
@@ -90,6 +91,7 @@ engine.registerSystems({
   recordsHQFloor2Studio: RecordsHQFloor2Studio,
   floor2StudioApp: Floor2StudioApp,
   floor2InstrumentApp: Floor2InstrumentApp,
+  floor2DrumStation: Floor2DrumStation,
   recordsHQFloor3Executive: RecordsHQFloor3Executive,
   recordsHQRooftopVIP: RecordsHQRooftopVIP,
   recordsHQEntranceThreshold: RecordsHQEntranceThreshold,
