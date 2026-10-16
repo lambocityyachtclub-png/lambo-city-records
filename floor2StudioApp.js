@@ -162,7 +162,7 @@ export default {
             <strong data-bpm-label>${this.pattern.bpm} BPM</strong>
           </label>
         </section>
-          <label style="display:flex;align-items:center;gap:8px">
+<label style="display:flex;align-items:center;gap:8px">
 
   <span style="color:#e6bb69;font-size:12px">SOUND</span>
 
