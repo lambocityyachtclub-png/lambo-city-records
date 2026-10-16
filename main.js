@@ -89,6 +89,7 @@ engine.registerSystems({
   recordsHQFloor1: RecordsHQFloor1,
   recordsHQFloor2Studio: RecordsHQFloor2Studio,
   floor2StudioApp: Floor2StudioApp,
+  floor2InstrumentApp: Floor2InstrumentApp,
   recordsHQFloor3Executive: RecordsHQFloor3Executive,
   recordsHQRooftopVIP: RecordsHQRooftopVIP,
   recordsHQEntranceThreshold: RecordsHQEntranceThreshold,
