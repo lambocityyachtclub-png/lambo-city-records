@@ -417,20 +417,18 @@ export default {
     );
 
 
-    // MPC — dedicated clickable equipment only
+   
+    // LAMBO CITY — Integrated MPC + Mixing Workstation
 
     const mpcClickable = new THREE.Group();
 
     mpcClickable.name = "floor2MPCClickable";
     mpcClickable.userData.studioStation = "beatLab";
 
+    // Main MPC body
     box(
       mpcClickable,
-      new THREE.BoxGeometry(
-        0.95,
-        0.16,
-        1.18
-      ),
+      new THREE.BoxGeometry(0.95, 0.16, 1.18),
       black,
       beatX,
       1.08,
@@ -438,17 +436,12 @@ export default {
       beatAngle
     );
 
-    // MPC performance pads
-
+    // 16 illuminated performance pads
     for (let row = 0; row < 4; row++) {
       for (let col = 0; col < 4; col++) {
         box(
           mpcClickable,
-          new THREE.BoxGeometry(
-            0.14,
-            0.05,
-            0.14
-          ),
+          new THREE.BoxGeometry(0.14, 0.05, 0.14),
           goldGlow,
           beatX - 0.27 + col * 0.18,
           1.19,
@@ -458,7 +451,45 @@ export default {
       }
     }
 
+    // Compact mixing controller beside the MPC
+    box(
+      mpcClickable,
+      new THREE.BoxGeometry(0.80, 0.10, 0.68),
+      dark,
+      beatX,
+      1.08,
+      -0.34,
+      beatAngle
+    );
+
+    // Mixing controller surface
+    box(
+      mpcClickable,
+      new THREE.BoxGeometry(0.74, 0.025, 0.61),
+      black,
+      beatX,
+      1.145,
+      -0.34,
+      beatAngle
+    );
+
+    // Eight illuminated mixing knobs
+    for (let row = 0; row < 2; row++) {
+      for (let col = 0; col < 4; col++) {
+        cylinder(
+          mpcClickable,
+          new THREE.CylinderGeometry(0.045, 0.045, 0.055, 12),
+          goldGlow,
+          beatX - 0.27 + col * 0.18,
+          1.19,
+          -0.49 + row * 0.22
+        );
+      }
+    }
+
+    // Keep MPC and mixer together as one clickable station
     beatLab.add(mpcClickable);
+
 
 
     // Production screen
