@@ -1,6 +1,6 @@
 import * as THREE from
   "https://unpkg.com/three@0.160.0/build/three.module.js";
-import StudioAudioEngine from "./studioAudioEngine.js";
+
 import StudioSoundKit from "./studioSoundKit.js";
 
 // LAMBO CITY RECORDS — FLOOR TWO STUDIO APP
@@ -411,26 +411,28 @@ export default {
     this.status("Starting shared studio audio...");
 
     try {
-      this.audio = await StudioAudioEngine.resume();
+     
+      const AudioContextClass =
+        window.AudioContext || window.webkitAudioContext;
 
-      if (!this.audio || this.audio.state !== "running") {
+      if (!AudioContextClass) {
+        throw new Error("Web Audio is not supported by this browser.");
+      }
+
+      if (!this.audio) {
+        this.audio = new AudioContextClass();
+      }
+
+      if (this.audio.state !== "running") {
+        await this.audio.resume();
+      }
+
+      if (this.audio.state !== "running") {
         throw new Error(
-          `Studio audio is not running${this.audio ? ` (${this.audio.state})` : ""}.`
+          `Beat Lab audio did not start. State: ${this.audio.state}`
         );
       }
-      
-      // TEMPORARY AUDIO OUTPUT TEST — remove after testing
-      const testOscillator = this.audio.createOscillator();
-      const testGain = this.audio.createGain();
 
-      testOscillator.frequency.value = 440;
-      testGain.gain.value = 0.15;
-
-      testOscillator.connect(testGain);
-      testGain.connect(this.audio.destination);
-
-      testOscillator.start(this.audio.currentTime + 0.02);
-      testOscillator.stop(this.audio.currentTime + 0.27);
 
       if (!this.noiseBuffer) this.noiseBuffer = this.createNoiseBuffer();
 
@@ -498,12 +500,15 @@ export default {
   scheduleStep(step, time) {
     TRACKS.forEach(({ id }) => {
       if (this.pattern.steps[id][step]) {
-        StudioSoundKit.play(
-          this.soundProfile,
-          id,
-          time,
-          this.noiseBuffer
-        );
+        
+StudioSoundKit.play(
+  this.audio,
+  this.soundProfile,
+  id,
+  time,
+  this.noiseBuffer
+);
+
       }
     });
 
