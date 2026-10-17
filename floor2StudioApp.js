@@ -1,6 +1,7 @@
 import * as THREE from
   "https://unpkg.com/three@0.160.0/build/three.module.js";
 
+import StudioAudioEngine from "./studioAudioEngine.js";
 import StudioSoundKit from "./studioSoundKit.js";
 
 // LAMBO CITY RECORDS — FLOOR TWO STUDIO APP
@@ -412,8 +413,11 @@ export default {
 
     try {
      
-      const AudioContextClass =
-        window.AudioContext || window.webkitAudioContext;
+      this.audio = await StudioAudioEngine.resume();
+
+if (!this.audio || this.audio.state !== "running") {
+  throw new Error("Shared studio audio did not start.");
+}
 
       if (!AudioContextClass) {
         throw new Error("Web Audio is not supported by this browser.");
