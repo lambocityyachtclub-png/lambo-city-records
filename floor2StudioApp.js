@@ -418,6 +418,19 @@ export default {
           `Studio audio is not running${this.audio ? ` (${this.audio.state})` : ""}.`
         );
       }
+      
+      // TEMPORARY AUDIO OUTPUT TEST — remove after testing
+      const testOscillator = this.audio.createOscillator();
+      const testGain = this.audio.createGain();
+
+      testOscillator.frequency.value = 440;
+      testGain.gain.value = 0.15;
+
+      testOscillator.connect(testGain);
+      testGain.connect(this.audio.destination);
+
+      testOscillator.start(this.audio.currentTime + 0.02);
+      testOscillator.stop(this.audio.currentTime + 0.27);
 
       if (!this.noiseBuffer) this.noiseBuffer = this.createNoiseBuffer();
 
