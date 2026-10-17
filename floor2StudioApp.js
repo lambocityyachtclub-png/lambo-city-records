@@ -417,36 +417,68 @@ root.querySelector(".lc-controls")?.appendChild(testButton);
     if (statusElement) statusElement.textContent = message;
   },
 
+
 async testSound() {
   try {
-    this.status("Testing direct studio audio...");
+    this.status("Starting Web Audio output test...");
 
     const audio = await StudioAudioEngine.resume();
 
-    const oscillator = audio.createOscillator();
-    const gain = audio.createGain();
+    const playTone = (frequency, output, startTime) => {
+      const oscillator = audio.createOscillator();
+      const gain = audio.createGain();
 
-    oscillator.type = "sine";
-    oscillator.frequency.value = 440;
+      oscillator.type = "sine";
+      oscillator.frequency.value = frequency;
 
-    const now = audio.currentTime;
+      gain.gain.setValueAtTime(0.0001, startTime);
+      gain.gain.exponentialRampToValueAtTime(
+        0.12,
+        startTime + 0.04
+      );
+      gain.gain.setValueAtTime(
+        0.12,
+        startTime + 0.45
+      );
+      gain.gain.exponentialRampToValueAtTime(
+        0.0001,
+        startTime + 0.55
+      );
 
-    gain.gain.setValueAtTime(0.0001, now);
-    gain.gain.exponentialRampToValueAtTime(0.15, now + 0.03);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.8);
+      oscillator.connect(gain);
+      gain.connect(output);
 
-    oscillator.connect(gain);
-    gain.connect(audio.destination);
+      oscillator.start(startTime);
+      oscillator.stop(startTime + 0.6);
+    };
 
-    oscillator.start(now);
-    oscillator.stop(now + 0.85);
+    if (!StudioAudioEngine.master) {
+      throw new Error("Shared studio master output is missing.");
+    }
 
-    this.status("Test tone sent. Did you hear it?");
+    const start = audio.currentTime + 0.15;
+
+    // First tone: direct browser audio output.
+    playTone(440, audio.destination, start);
+
+    // Second tone: shared LAMBO CITY studio mixer.
+    playTone(880, StudioAudioEngine.master, start + 0.9);
+
+    window.setTimeout(() => {
+      this.status(
+        `Test complete · Context: ${audio.state} · ` +
+        `Clock: ${audio.currentTime.toFixed(2)} · ` +
+        `Sample rate: ${audio.sampleRate} Hz · ` +
+        `Master gain: ${StudioAudioEngine.master.gain.value}`
+      );
+    }, 1800);
+
   } catch (error) {
-    console.error("LAMBO CITY test sound error:", error);
-    this.status(`TEST SOUND ERROR: ${error?.message || error}`);
+    console.error("LAMBO CITY audio diagnostic:", error);
+    this.status(`TEST ERROR: ${error?.message || error}`);
   }
 },
+
 
 
   async start() {
