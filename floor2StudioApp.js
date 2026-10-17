@@ -291,10 +291,24 @@ export default {
       }
     `;
 
-    document.head.appendChild(style);
-    document.body.appendChild(root);
-    this.ui = root;
-    this.style = style;
+    
+document.head.appendChild(style);
+document.body.appendChild(root);
+this.ui = root;
+this.style = style;
+
+// TEMPORARY DIAGNOSTIC: direct studio audio test
+const testButton = document.createElement("button");
+testButton.type = "button";
+testButton.className = "lc-action";
+testButton.textContent = "TEST SOUND";
+
+testButton.addEventListener("click", () => {
+  void this.testSound();
+});
+
+root.querySelector(".lc-controls")?.appendChild(testButton);
+
 
     this.renderGrid();
 
@@ -402,6 +416,38 @@ export default {
     const statusElement = this.ui?.querySelector("[data-status]");
     if (statusElement) statusElement.textContent = message;
   },
+
+async testSound() {
+  try {
+    this.status("Testing direct studio audio...");
+
+    const audio = await StudioAudioEngine.resume();
+
+    const oscillator = audio.createOscillator();
+    const gain = audio.createGain();
+
+    oscillator.type = "sine";
+    oscillator.frequency.value = 440;
+
+    const now = audio.currentTime;
+
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(0.15, now + 0.03);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.8);
+
+    oscillator.connect(gain);
+    gain.connect(audio.destination);
+
+    oscillator.start(now);
+    oscillator.stop(now + 0.85);
+
+    this.status("Test tone sent. Did you hear it?");
+  } catch (error) {
+    console.error("LAMBO CITY test sound error:", error);
+    this.status(`TEST SOUND ERROR: ${error?.message || error}`);
+  }
+},
+
 
   async start() {
     if (this.playing) {
