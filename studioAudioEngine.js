@@ -1,13 +1,12 @@
 
 /*
  * LAMBO CITY RECORDS
- * SHARED STUDIO AUDIO ENGINE — V2
+ * SHARED STUDIO AUDIO ENGINE — V3
  *
- * One shared audio context.
+ * One shared AudioContext.
  * One master output chain.
  * Separate instrument channels.
- *
- * Keeps the existing API used by floor2StudioApp.js.
+ * Preserves the API used by existing Floor Two modules.
  */
 
 const StudioAudioEngine = {
@@ -28,15 +27,13 @@ const StudioAudioEngine = {
       );
     }
 
-    // Prevent multiple simultaneous initializations.
     if (this.initializing) {
       await this.initializing;
     }
 
     if (!this.context) {
-      this.initializing = this.initialize(
-        AudioContextClass
-      );
+      this.initializing =
+        this.initialize(AudioContextClass);
 
       try {
         await this.initializing;
@@ -45,29 +42,53 @@ const StudioAudioEngine = {
       }
     }
 
-    // Resume the same shared context on each PLAY request.
-    if (this.context.state !== "running") {
-      await this.context.resume();
+    const context = this.context;
+
+    // Request playback whenever a studio control is used.
+    if (context.state !== "running") {
+      await context.resume();
     }
 
-    if (this.context.state !== "running") {
+    if (context.state !== "running") {
       throw new Error(
-        `Studio audio did not start. State: ${this.context.state}`
+        `Audio context is not running: ${context.state}`
       );
     }
 
-    return this.context;
+    // Nudge the browser's output path from the user's
+    // interaction. This is inaudible and creates no
+    // additional persistent audio engine.
+    const oscillator = context.createOscillator();
+    const gain = context.createGain();
+
+    gain.gain.value = 0.000001;
+    oscillator.connect(gain);
+    gain.connect(context.destination);
+
+    const now = context.currentTime;
+    oscillator.start(now);
+    oscillator.stop(now + 0.05);
+
+    return context;
   },
 
   async initialize(AudioContextClass) {
-    const context = new AudioContextClass();
+    let context;
+
+    try {
+      context = new AudioContextClass({
+        latencyHint: "interactive"
+      });
+    } catch {
+      context = new AudioContextClass();
+    }
 
     const master = context.createGain();
     master.gain.value = 1;
 
-    const compressor = context.createDynamicsCompressor();
+    const compressor =
+      context.createDynamicsCompressor();
 
-    // Gentle protection against excessive output peaks.
     compressor.threshold.value = -8;
     compressor.knee.value = 12;
     compressor.ratio.value = 3;
@@ -85,20 +106,23 @@ const StudioAudioEngine = {
       channel.connect(master);
     });
 
-    // Shared signal path:
-    // instruments -> master -> compressor -> speakers
     master.connect(compressor);
     compressor.connect(context.destination);
 
+    // Keep the existing shared engine and its API.
     this.context = context;
     this.master = master;
     this.compressor = compressor;
     this.channels = channels;
 
-    // Resume immediately while the user's PLAY interaction
-    // is still initiating the audio workflow.
     if (context.state !== "running") {
       await context.resume();
+    }
+
+    if (context.state !== "running") {
+      throw new Error(
+        `Could not start studio audio: ${context.state}`
+      );
     }
   },
 
@@ -128,22 +152,15 @@ const StudioAudioEngine = {
       );
     }
 
-    const safeVolume = Math.max(
-      0,
-      Math.min(1, value)
-    );
-
     channel.gain.setTargetAtTime(
-      safeVolume,
+      Math.max(0, Math.min(1, value)),
       this.context.currentTime,
       0.015
     );
   },
 
   setMasterVolume(volume) {
-    if (!this.master || !this.context) {
-      return;
-    }
+    if (!this.master || !this.context) return;
 
     const value = Number(volume);
 
@@ -153,13 +170,8 @@ const StudioAudioEngine = {
       );
     }
 
-    const safeVolume = Math.max(
-      0,
-      Math.min(1, value)
-    );
-
     this.master.gain.setTargetAtTime(
-      safeVolume,
+      Math.max(0, Math.min(1, value)),
       this.context.currentTime,
       0.015
     );
