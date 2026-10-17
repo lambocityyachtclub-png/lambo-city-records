@@ -1,5 +1,4 @@
 
-import StudioAudioEngine from "./studioAudioEngine.js";
 
 // LAMBO CITY RECORDS
 // ORIGINAL SYNTH SOUND KIT V1
@@ -8,42 +7,39 @@ import StudioAudioEngine from "./studioAudioEngine.js";
 // Both sound profiles use the existing shared audio engine.
 
 const StudioSoundKit = {
-  play(profile, sound, time, noiseBuffer) {
-    const audio = StudioAudioEngine.getContext();
+ play(audio, profile, sound, time, noiseBuffer) {
+  if (!audio || audio.state !== "running") {
+    return;
+  }
 
-    if (!audio || audio.state !== "running") {
-      return;
-    }
+  const destination = audio.destination;
 
-    const destination = audio.destination;
+  if (sound === "kick") {
+    this.playKick(audio, destination, time, profile);
+    return;
+  }
 
-    if (sound === "kick") {
-      this.playKick(audio, destination, time, profile);
-      return;
-    }
+  if (sound === "snare") {
+    this.playSnare(
+      audio,
+      destination,
+      time,
+      profile,
+      noiseBuffer
+    );
+    return;
+  }
 
-    if (sound === "snare") {
-      this.playSnare(
-        audio,
-        destination,
-        time,
-        profile,
-        noiseBuffer
-      );
-      return;
-    }
-
-    if (sound === "hat") {
-      this.playHat(
-        audio,
-        destination,
-        time,
-        profile,
-        noiseBuffer
-      );
-    }
-  },
-
+  if (sound === "hat") {
+    this.playHat(
+      audio,
+      destination,
+      time,
+      profile,
+      noiseBuffer
+    );
+  }
+},
   playKick(audio, destination, time, profile) {
     const vintage = profile === "mpc";
     const osc = audio.createOscillator();
