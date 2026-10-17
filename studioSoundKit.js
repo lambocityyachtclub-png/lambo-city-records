@@ -15,7 +15,7 @@ const StudioSoundKit = {
       return;
     }
 
-    const destination = StudioAudioEngine.getTrackGain(sound);
+    const destination = audio.destination;
 
     if (sound === "kick") {
       this.playKick(audio, destination, time, profile);
