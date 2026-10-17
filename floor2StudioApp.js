@@ -419,23 +419,7 @@ if (!this.audio || this.audio.state !== "running") {
   throw new Error("Shared studio audio did not start.");
 }
 
-      if (!AudioContextClass) {
-        throw new Error("Web Audio is not supported by this browser.");
-      }
-
-      if (!this.audio) {
-        this.audio = new AudioContextClass();
-      }
-
-      if (this.audio.state !== "running") {
-        await this.audio.resume();
-      }
-
-      if (this.audio.state !== "running") {
-        throw new Error(
-          `Beat Lab audio did not start. State: ${this.audio.state}`
-        );
-      }
+     
 
 
       if (!this.noiseBuffer) this.noiseBuffer = this.createNoiseBuffer();
