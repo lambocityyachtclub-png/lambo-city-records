@@ -1,4 +1,6 @@
 
+import StudioAudioExport from "./studioAudioExport.js";
+
  // LAMBO CITY RECORDS
 // ORIGINAL SYNTH SOUND KIT V1
 // Beat Lab isolation: send sounds directly to this AudioContext's output.
@@ -9,7 +11,7 @@ const StudioSoundKit = {
     if (!audio || audio.state !== "running") return;
 
     // Bypass per-track routing for this focused audio test.
-    const destination = audio.destination;
+    const destination = StudioAudioExport.getOutput(audio);
 
     if (sound === "kick") {
       this.playKick(audio, destination, time, profile);
