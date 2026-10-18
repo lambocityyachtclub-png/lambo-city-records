@@ -3,6 +3,7 @@ import * as THREE from
 
 import StudioAudioEngine from "./studioAudioEngine.js";
 import StudioSoundKit from "./studioSoundKit.js";
+import StudioAudioExport from "./studioAudioExport.js";
 
 // LAMBO CITY RECORDS — FLOOR TWO STUDIO APP
 // 16-step Beat Lab using the shared studio audio engine.
@@ -195,17 +196,24 @@ export default {
           </div>
         </section>
 
-        <section class="lc-actions">
-          <button type="button" data-action="save" class="lc-action">
-            SAVE BEAT
-          </button>
-          <button type="button" data-action="load" class="lc-action">
-            LOAD BEAT
-          </button>
-          <button type="button" data-action="clear" class="lc-action">
-            CLEAR PATTERN
-          </button>
-        </section>
+  <section class="lc-actions">
+  <button type="button" data-action="record" class="lc-action">
+    ● RECORD AUDIO
+  </button>
+  <button type="button" data-action="export" class="lc-action">
+    ■ STOP &amp; EXPORT
+  </button>
+  <button type="button" data-action="save" class="lc-action">
+    SAVE BEAT
+  </button>
+  <button type="button" data-action="load" class="lc-action">
+    LOAD BEAT
+  </button>
+  <button type="button" data-action="clear" class="lc-action">
+    CLEAR PATTERN
+  </button>
+</section>
+
 
         <div data-status role="status" aria-live="polite" class="lc-status">
           Your studio is ready.
@@ -353,6 +361,14 @@ root.querySelector(".lc-controls")?.appendChild(testButton);
         case "stop":
           this.stop();
           break;
+          
+case "record":
+  void this.startRecording();
+  break;
+case "export":
+  void this.exportRecording();
+  break;
+
         case "save":
           this.save();
           break;
@@ -545,6 +561,37 @@ if (!this.audio || this.audio.state !== "running") {
     });
 
     this.status("Playback stopped.");
+  },
+
+  async startRecording() {
+    try {
+      this.audio = await StudioAudioEngine.resume();
+
+      if (!this.audio || this.audio.state !== "running") {
+        throw new Error("Studio audio is not running.");
+      }
+
+      StudioAudioExport.start(this.audio);
+      this.status(
+        "Recording audio… Play your beat, then tap STOP & EXPORT."
+      );
+    } catch (error) {
+      console.error("LAMBO CITY recording error:", error);
+      this.status(`RECORDING ERROR: ${error?.message || error}`);
+    }
+  },
+
+  async exportRecording() {
+    try {
+      const blob = await StudioAudioExport.stop();
+      StudioAudioExport.download(blob);
+      this.status(
+        "Audio export prepared. Check your browser download."
+      );
+    } catch (error) {
+      console.error("LAMBO CITY export error:", error);
+      this.status(`EXPORT ERROR: ${error?.message || error}`);
+    }
   },
 
   createNoiseBuffer() {
