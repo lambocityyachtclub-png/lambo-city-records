@@ -203,47 +203,45 @@ export default {
           </div>
         </section>
 
-  <section class="lc-actions">
+ 
+<section class="lc-actions">
   <button type="button" data-action="record" class="lc-action">
     ● RECORD AUDIO
   </button>
+
   <button type="button" data-action="export" class="lc-action">
     ■ STOP &amp; EXPORT
+  </button>
+
+  <button type="button" data-action="save" class="lc-action">
+    SAVE BEAT
+  </button>
+
+  <button type="button" data-action="load" class="lc-action">
+    LOAD BEAT
+  </button>
+
   <button type="button" data-action="save-song" class="lc-action">
-
     SAVE SONG PROJECT
-
   </button>
 
   <button type="button" data-action="load-song" class="lc-action">
-
     LOAD SONG PROJECT
-
   </button>
 
   <button type="button" data-action="export-song" class="lc-action">
-
     EXPORT SONG PROJECT
-
   </button>
 
   <button type="button" data-action="import-song" class="lc-action">
-
     IMPORT SONG PROJECT
-
-  </button>
-  
-  <button type="button" data-action="save-song" class="lc-action">
-    SAVE SONG PROJECT
-  </button>
-  <button type="button" data-action="load-song" class="lc-action">
-    LOAD SONG PROJECT
   </button>
 
   <button type="button" data-action="clear" class="lc-action">
     CLEAR PATTERN
   </button>
 </section>
+
 
 
         <div data-status role="status" aria-live="polite" class="lc-status">
