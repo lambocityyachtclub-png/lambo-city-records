@@ -216,6 +216,14 @@ export default {
   <button type="button" data-action="load" class="lc-action">
     LOAD BEAT
   </button>
+  
+  <button type="button" data-action="save-song" class="lc-action">
+    SAVE SONG PROJECT
+  </button>
+  <button type="button" data-action="load-song" class="lc-action">
+    LOAD SONG PROJECT
+  </button>
+
   <button type="button" data-action="clear" class="lc-action">
     CLEAR PATTERN
   </button>
