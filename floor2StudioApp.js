@@ -386,6 +386,12 @@ case "export":
 
         case "save":
           this.save();
+         case "save-song":
+          this.saveSongProject();
+          break;
+        case "load-song":
+          this.loadSongProject();
+          break;         
           break;
         case "load":
           this.load();
