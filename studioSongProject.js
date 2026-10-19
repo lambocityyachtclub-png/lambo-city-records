@@ -162,3 +162,136 @@ export function addClipToSection(
   project.metadata.updatedAt = new Date().toISOString();
 }
 
+ // LAMBO CITY RECORDS
+// Song Project Storage V1
+// Separate from the existing Beat Lab SAVE BEAT / LOAD BEAT storage.
+
+const SONG_PROJECTS_STORAGE_KEY = "lambo-city-song-projects-v1";
+
+function validateSongProject(project) {
+  if (
+    !project ||
+    project.schemaVersion !== PROJECT_VERSION ||
+    typeof project.id !== "string" ||
+    !project.metadata ||
+    !Array.isArray(project.patterns) ||
+    !project.arrangement ||
+    !Array.isArray(project.arrangement.sections)
+  ) {
+    throw new Error("This is not a valid LAMBO CITY song project.");
+  }
+
+  return project;
+}
+
+function readStoredSongProjects() {
+  let raw;
+
+  try {
+    raw = localStorage.getItem(SONG_PROJECTS_STORAGE_KEY);
+  } catch {
+    throw new Error(
+      "Song storage is unavailable in this browser."
+    );
+  }
+
+  if (!raw) return {};
+
+  try {
+    const projects = JSON.parse(raw);
+
+    if (
+      !projects ||
+      typeof projects !== "object" ||
+      Array.isArray(projects)
+    ) {
+      throw new Error("Invalid stored project collection.");
+    }
+
+    return projects;
+  } catch {
+    throw new Error(
+      "Saved song-project data could not be read."
+    );
+  }
+}
+
+export function saveSongProject(project) {
+  validateSongProject(project);
+
+  project.metadata.updatedAt = new Date().toISOString();
+
+  const projects = readStoredSongProjects();
+  projects[project.id] = project;
+
+  try {
+    localStorage.setItem(
+      SONG_PROJECTS_STORAGE_KEY,
+      JSON.stringify(projects)
+    );
+  } catch {
+    throw new Error(
+      "The song project could not be saved. Browser storage may be full or unavailable."
+    );
+  }
+
+  return project.id;
+}
+
+export function loadSongProject(projectId) {
+  const projects = readStoredSongProjects();
+  const project = projects[projectId];
+
+  if (!project) return null;
+
+  return validateSongProject(project);
+}
+
+export function listSongProjects() {
+  const projects = readStoredSongProjects();
+
+  return Object.values(projects)
+    .filter((project) => {
+      return (
+        project &&
+        project.schemaVersion === PROJECT_VERSION &&
+        typeof project.id === "string" &&
+        project.metadata
+      );
+    })
+    .map((project) => ({
+      id: project.id,
+      title: project.metadata.title || "Untitled Song",
+      createdAt: project.metadata.createdAt,
+      updatedAt: project.metadata.updatedAt
+    }))
+    .sort((a, b) => {
+      return (b.updatedAt || "").localeCompare(
+        a.updatedAt || ""
+      );
+    });
+}
+
+export function deleteSongProject(projectId) {
+  const projects = readStoredSongProjects();
+
+  if (!Object.prototype.hasOwnProperty.call(projects, projectId)) {
+    return false;
+  }
+
+  delete projects[projectId];
+
+  try {
+    localStorage.setItem(
+      SONG_PROJECTS_STORAGE_KEY,
+      JSON.stringify(projects)
+    );
+  } catch {
+    throw new Error(
+      "The song project could not be deleted from browser storage."
+    );
+  }
+
+  return true;
+}
+
