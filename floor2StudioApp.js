@@ -693,6 +693,119 @@ StudioSoundKit.play(
     }
   },
 
+  saveSongProject() {
+    const title = window.prompt("Name this song project:");
+
+    if (title === null) return;
+
+    const cleanTitle = title.trim();
+
+    if (!cleanTitle) {
+      this.status("Enter a song-project name before saving.");
+      return;
+    }
+
+    try {
+      const project = createSongProject({
+        title: cleanTitle,
+        pattern: this.pattern,
+        soundProfile: this.soundProfile
+      });
+
+      saveSongProject(project);
+
+      this.status(`Song project "${cleanTitle}" saved.`);
+    } catch (error) {
+      console.error("LAMBO CITY song-project save error:", error);
+      this.status(
+        `SONG PROJECT SAVE ERROR: ${error?.message || error}`
+      );
+    }
+  },
+
+  loadSongProject() {
+    try {
+      const projects = listSongProjects();
+
+      if (!projects.length) {
+        this.status("No saved song projects found in this browser.");
+        return;
+      }
+
+      const menu = projects
+        .map((project, index) =>
+          `${index + 1}. ${project.title}`
+        )
+        .join("\n");
+
+      const choice = window.prompt(
+        `Choose a song project by number:\n\n${menu}`
+      );
+
+      if (choice === null) return;
+
+      const index = Number(choice) - 1;
+
+      if (
+        !Number.isInteger(index) ||
+        index < 0 ||
+        index >= projects.length
+      ) {
+        this.status("Invalid song-project selection.");
+        return;
+      }
+
+      const project = loadSongProject(projects[index].id);
+
+      if (!project) {
+        this.status("That song project could not be found.");
+        return;
+      }
+
+      const savedPattern = project.patterns?.[0];
+
+      if (!savedPattern) {
+        this.status("This project has no saved beat pattern.");
+        return;
+      }
+
+      this.pattern = normalizePattern(savedPattern);
+
+      this.soundProfile =
+        project.settings?.soundProfile === "mpc"
+          ? "mpc"
+          : "beatLab";
+
+      const bpmInput = this.ui?.querySelector("[data-bpm]");
+      const bpmLabel = this.ui?.querySelector("[data-bpm-label]");
+      const soundSelect =
+        this.ui?.querySelector("[data-sound-profile]");
+
+      if (bpmInput) {
+        bpmInput.value = String(this.pattern.bpm);
+      }
+
+      if (bpmLabel) {
+        bpmLabel.textContent = `${this.pattern.bpm} BPM`;
+      }
+
+      if (soundSelect) {
+        soundSelect.value = this.soundProfile;
+      }
+
+      this.renderGrid();
+
+      this.status(
+        `Song project "${project.metadata?.title || "Untitled Song"}" loaded.`
+      );
+    } catch (error) {
+      console.error("LAMBO CITY song-project load error:", error);
+      this.status(
+        `SONG PROJECT LOAD ERROR: ${error?.message || error}`
+      );
+    }
+  },
+
   close() {
     this.stop();
 
