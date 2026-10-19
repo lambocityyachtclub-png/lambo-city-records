@@ -411,7 +411,12 @@ case "export":
         case "load-song":
           this.loadSongProject();
           break;
-
+        case "export-song":
+          this.exportSongProject();
+          break;
+        case "import-song":
+          this.importSongProject();
+          break;
         case "clear":
           this.stop();
           TRACKS.forEach(({ id }) => this.pattern.steps[id].fill(false));
@@ -818,6 +823,138 @@ StudioSoundKit.play(
         `SONG PROJECT LOAD ERROR: ${error?.message || error}`
       );
     }
+  },
+
+  exportSongProject() {
+    try {
+      const projects = listSongProjects();
+
+      if (!projects.length) {
+        this.status("Save a song project before exporting.");
+        return;
+      }
+
+      const menu = projects
+        .map((project, index) => `${index + 1}. ${project.title}`)
+        .join("\n");
+
+      const choice = window.prompt(
+        `Choose a song project to export:\n\n${menu}`
+      );
+
+      if (choice === null) return;
+
+      const index = Number(choice) - 1;
+
+      if (
+        !Number.isInteger(index) ||
+        index < 0 ||
+        index >= projects.length
+      ) {
+        this.status("Invalid song-project selection.");
+        return;
+      }
+
+      const project = loadSongProject(projects[index].id);
+      const pattern = project?.patterns?.[0];
+
+      if (!project || !pattern) {
+        this.status("The selected project has no saved beat.");
+        return;
+      }
+
+      const portableProject = {
+        format: "lambo-city-song-project",
+        schemaVersion: 1,
+        title: project.metadata?.title || "Untitled Song",
+        settings: {
+          bpm: pattern.bpm,
+          soundProfile:
+            project.settings?.soundProfile === "mpc"
+              ? "mpc"
+              : "beatLab"
+        },
+        pattern: normalizePattern(pattern)
+      };
+
+      const blob = new Blob(
+        [JSON.stringify(portableProject, null, 2)],
+        { type: "application/json" }
+      );
+
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      const safeName = portableProject.title
+        .replace(/[^a-z0-9 _-]/gi, "")
+        .trim()
+        .replace(/\s+/g, "-") || "lambo-city-song";
+
+      link.href = url;
+      link.download = `${safeName}.json`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+      this.status(`Exported "${portableProject.title}" as a project file.`);
+    } catch (error) {
+      console.error("Song-project export error:", error);
+      this.status(`PROJECT EXPORT ERROR: ${error?.message || error}`);
+    }
+  },
+
+  importSongProject() {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".json,application/json";
+
+    input.addEventListener("change", async () => {
+      const file = input.files?.[0];
+      if (!file) return;
+
+      if (file.size > 1000000) {
+        this.status("Project file is too large.");
+        return;
+      }
+
+      try {
+        const imported = JSON.parse(await file.text());
+
+        if (
+          imported?.format !== "lambo-city-song-project" ||
+          imported?.schemaVersion !== 1 ||
+          typeof imported.title !== "string" ||
+          !imported.pattern?.steps
+        ) {
+          throw new Error("This is not a supported LAMBO CITY project file.");
+        }
+
+        const pattern = normalizePattern(imported.pattern);
+        const title = imported.title.trim() || "Imported Song";
+        const soundProfile =
+          imported.settings?.soundProfile === "mpc"
+            ? "mpc"
+            : "beatLab";
+
+        const project = createSongProject({
+          title,
+          pattern,
+          soundProfile
+        });
+
+        saveSongProject(project);
+
+        this.status(
+          `Imported "${title}". Use LOAD SONG PROJECT to open it.`
+        );
+      } catch (error) {
+        console.error("Song-project import error:", error);
+        this.status(`PROJECT IMPORT ERROR: ${error?.message || error}`);
+      }
+    }, { once: true });
+
+    input.click();
   },
 
   close() {
