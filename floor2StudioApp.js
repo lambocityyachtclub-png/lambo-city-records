@@ -209,12 +209,28 @@ export default {
   </button>
   <button type="button" data-action="export" class="lc-action">
     ■ STOP &amp; EXPORT
+  <button type="button" data-action="save-song" class="lc-action">
+
+    SAVE SONG PROJECT
+
   </button>
-  <button type="button" data-action="save" class="lc-action">
-    SAVE BEAT
+
+  <button type="button" data-action="load-song" class="lc-action">
+
+    LOAD SONG PROJECT
+
   </button>
-  <button type="button" data-action="load" class="lc-action">
-    LOAD BEAT
+
+  <button type="button" data-action="export-song" class="lc-action">
+
+    EXPORT SONG PROJECT
+
+  </button>
+
+  <button type="button" data-action="import-song" class="lc-action">
+
+    IMPORT SONG PROJECT
+
   </button>
   
   <button type="button" data-action="save-song" class="lc-action">
