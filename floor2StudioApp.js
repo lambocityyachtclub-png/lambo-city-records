@@ -616,6 +616,140 @@ case "export":
   },
 
 
+  renderArranger() {
+    if (!this.ui) return;
+
+    const project = this.currentProject;
+    const sectionSelect = this.ui.querySelector("[data-arranger-section]");
+    const patternSelect = this.ui.querySelector("[data-arranger-pattern]");
+    const projectStatus = this.ui.querySelector("[data-project-status]");
+    const list = this.ui.querySelector("[data-arranger-list]");
+
+    if (!sectionSelect || !patternSelect || !projectStatus || !list) return;
+
+    if (!project) {
+      projectStatus.textContent = "Save or load a song project to begin arranging.";
+      sectionSelect.replaceChildren();
+      patternSelect.replaceChildren();
+      list.textContent = "No active song project.";
+      return;
+    }
+
+    const sections = project.arrangement?.sections || [];
+    const patterns = project.patterns || [];
+
+    projectStatus.textContent =
+      `Editing: ${project.metadata?.title || "Untitled Song"} · ${patterns.length} beat pattern(s)`;
+
+    sectionSelect.replaceChildren();
+    patternSelect.replaceChildren();
+    list.replaceChildren();
+
+    sections.forEach((section) => {
+      const option = document.createElement("option");
+      option.value = section.id;
+      option.textContent = section.name;
+      sectionSelect.appendChild(option);
+
+      const item = document.createElement("div");
+      item.className = "lc-arranger-item";
+
+      const heading = document.createElement("strong");
+      heading.textContent = section.name;
+      item.appendChild(heading);
+
+      const details = document.createElement("div");
+      const clips = section.clips || [];
+
+      if (!clips.length) {
+        details.textContent = "No patterns arranged yet.";
+      } else {
+        clips.forEach((clip, index) => {
+          if (index) details.appendChild(document.createElement("br"));
+
+          const pattern = patterns.find((entry) => entry.id === clip.patternId);
+          const line = document.createElement("span");
+          line.textContent =
+            `${pattern?.name || "Missing pattern"} · Bar ${clip.startBar + 1} · ${clip.lengthBars} bar(s)`;
+          details.appendChild(line);
+        });
+      }
+
+      item.appendChild(details);
+      list.appendChild(item);
+    });
+
+    patterns.forEach((pattern) => {
+      const option = document.createElement("option");
+      option.value = pattern.id;
+      option.textContent = pattern.name;
+      patternSelect.appendChild(option);
+    });
+  },
+
+  addArrangerPattern() {
+    if (!this.currentProject) {
+      this.status("Save or load a song project first.");
+      return;
+    }
+
+    const name = window.prompt("Name this beat pattern:");
+    if (name === null) return;
+
+    const cleanName = name.trim();
+    if (!cleanName) {
+      this.status("Enter a pattern name.");
+      return;
+    }
+
+    try {
+      addPatternToProject(this.currentProject, this.pattern, cleanName);
+      saveSongProject(this.currentProject);
+      this.renderArranger();
+      this.status(`Pattern "${cleanName}" saved to this song.`);
+    } catch (error) {
+      console.error("Arranger pattern error:", error);
+      this.status(`PATTERN ERROR: ${error?.message || error}`);
+    }
+  },
+
+  addArrangerClip() {
+    const project = this.currentProject;
+
+    if (!project) {
+      this.status("Save or load a song project first.");
+      return;
+    }
+
+    const sectionId = this.ui.querySelector("[data-arranger-section]")?.value;
+    const patternId = this.ui.querySelector("[data-arranger-pattern]")?.value;
+    const startBar = Number(this.ui.querySelector("[data-arranger-start]")?.value);
+    const lengthBars = Number(this.ui.querySelector("[data-arranger-length]")?.value);
+
+    if (
+      !sectionId ||
+      !patternId ||
+      !Number.isInteger(startBar) ||
+      startBar < 0 ||
+      !Number.isInteger(lengthBars) ||
+      lengthBars < 1
+    ) {
+      this.status("Choose a pattern, section, and valid bar lengths.");
+      return;
+    }
+
+    try {
+      addClipToSection(project, sectionId, patternId, startBar, lengthBars);
+      saveSongProject(project);
+      this.renderArranger();
+      this.status("Beat pattern added to the song arrangement.");
+    } catch (error) {
+      console.error("Arranger clip error:", error);
+      this.status(`ARRANGEMENT ERROR: ${error?.message || error}`);
+    }
+  },
+
+
 async testSound() {
   try {
     this.status("Starting Web Audio output test...");
