@@ -207,6 +207,60 @@ this.currentProject = null;
         </section>
 
  
+<section class="lc-arranger">
+  <div class="lc-arranger-heading">
+    <div>
+      <div class="lc-eyebrow">SONG WORKSPACE</div>
+      <h2>SONG ARRANGER</h2>
+      <p>Build your song from saved beat patterns.</p>
+    </div>
+  </div>
+
+  <div class="lc-arranger-project" data-project-status>
+    Save or load a song project to begin arranging.
+  </div>
+
+  <div class="lc-arranger-controls">
+    <button type="button" data-action="add-pattern" class="lc-action">
+      + SAVE BEAT AS PATTERN
+    </button>
+  </div>
+
+  <div class="lc-arranger-controls">
+    <label>
+      <span>SONG SECTION</span>
+      <select data-arranger-section></select>
+    </label>
+
+    <label>
+      <span>BEAT PATTERN</span>
+      <select data-arranger-pattern></select>
+    </label>
+  </div>
+
+  <div class="lc-arranger-controls">
+    <label>
+      <span>START BAR</span>
+      <input data-arranger-start type="number"
+        min="0" max="999" value="0">
+    </label>
+
+    <label>
+      <span>LENGTH (BARS)</span>
+      <input data-arranger-length type="number"
+        min="1" max="999" value="4">
+    </label>
+
+    <button type="button" data-action="add-clip" class="lc-action">
+      + ADD TO SONG
+    </button>
+  </div>
+
+  <div data-arranger-list class="lc-arranger-list">
+    Your song arrangement will appear here.
+  </div>
+</section>
+
 <section class="lc-actions">
   <button type="button" data-action="record" class="lc-action">
     ● RECORD AUDIO
@@ -322,6 +376,78 @@ this.currentProject = null;
         margin-top:20px;padding-top:14px;border-top:1px solid #34333a;
         color:#888995;font-size:12px;
       }
+      
+#lambo-city-beat-lab .lc-arranger {
+  margin: 20px 0;
+  padding: clamp(14px, 2vw, 22px);
+  border: 1px solid #5a4b31;
+  border-radius: 16px;
+  background: linear-gradient(145deg, #191a20, #101116);
+}
+
+#lambo-city-beat-lab .lc-arranger-heading h2 {
+  margin: 7px 0;
+  font-size: 21px;
+}
+
+#lambo-city-beat-lab .lc-arranger-heading p,
+#lambo-city-beat-lab .lc-arranger-project {
+  color: #a8a8b1;
+  font-size: 13px;
+}
+
+#lambo-city-beat-lab .lc-eyebrow,
+#lambo-city-beat-lab .lc-arranger-controls label span {
+  display: block;
+  color: #e6bb69;
+  font-size: 11px;
+  letter-spacing: 1px;
+  margin-bottom: 7px;
+}
+
+#lambo-city-beat-lab .lc-arranger-controls {
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+#lambo-city-beat-lab .lc-arranger-controls label {
+  flex: 1 1 130px;
+}
+
+#lambo-city-beat-lab .lc-arranger-controls select,
+#lambo-city-beat-lab .lc-arranger-controls input {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px;
+  color: #f5f4f0;
+  background: #1b1d25;
+  border: 1px solid #5a4b31;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+#lambo-city-beat-lab .lc-arranger-project {
+  margin-top: 12px;
+}
+
+#lambo-city-beat-lab .lc-arranger-list {
+  display: grid;
+  gap: 9px;
+  margin-top: 18px;
+}
+
+#lambo-city-beat-lab .lc-arranger-item {
+  padding: 12px;
+  border: 1px solid #34333a;
+  border-radius: 9px;
+  background: #11131a;
+  color: #f5f4f0;
+  font-size: 13px;
+}
+
       @media(max-width:540px) {
         #lambo-city-beat-lab .lc-track {
           grid-template-columns:48px repeat(16,minmax(0,1fr));gap:2px;
