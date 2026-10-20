@@ -9,7 +9,9 @@ import {
   createSongProject,
   saveSongProject,
   loadSongProject,
-  listSongProjects
+  listSongProjects,
+  addPatternToProject,
+  addClipToSection
 } from "./studioSongProject.js";
 
 // LAMBO CITY RECORDS — FLOOR TWO STUDIO APP
@@ -74,7 +76,8 @@ export default {
     this.camera = context?.camera;
     this.renderer = context?.renderer;
     this.pattern = makeDefaultPattern();
-    this.soundProfile = "beatLab";
+this.soundProfile = "beatLab";
+this.currentProject = null;
     this.audio = null;
     this.noiseBuffer = null;
     this.timer = null;
