@@ -543,10 +543,21 @@ case "export":
         case "export-song":
           this.exportSongProject();
           break;
+        
         case "import-song":
           this.importSongProject();
           break;
+
+        case "add-pattern":
+          this.addArrangerPattern();
+          break;
+
+        case "add-clip":
+          this.addArrangerClip();
+          break;
+
         case "clear":
+
           this.stop();
           TRACKS.forEach(({ id }) => this.pattern.steps[id].fill(false));
           this.renderGrid();
