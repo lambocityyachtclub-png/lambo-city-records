@@ -987,35 +987,43 @@ StudioSoundKit.play(
   },
 
   saveSongProject() {
-    const title = window.prompt("Name this song project:");
+  const title = window.prompt("Name this song project:");
 
-    if (title === null) return;
+  if (title === null) return;
 
-    const cleanTitle = title.trim();
+  const cleanTitle = title.trim();
 
-    if (!cleanTitle) {
-      this.status("Enter a song-project name before saving.");
-      return;
-    }
+  if (!cleanTitle) {
+    this.status("Enter a song-project name before saving.");
+    return;
+  }
 
-    try {
-      const project = createSongProject({
-        title: cleanTitle,
-        pattern: this.pattern,
-        soundProfile: this.soundProfile
-      });
+  try {
+    const project = createSongProject({
+      title: cleanTitle,
+      pattern: this.pattern,
+      soundProfile: this.soundProfile
+    });
 
-      saveSongProject(project);
+    saveSongProject(project);
 
-      this.status(`Song project "${cleanTitle}" saved.`);
-    } catch (error) {
-      console.error("LAMBO CITY song-project save error:", error);
-      this.status(
-        `SONG PROJECT SAVE ERROR: ${error?.message || error}`
-      );
-    }
-  },
+    // Make the newly saved project active.
+    this.currentProject = project;
 
+    // Refresh the song arranger.
+    this.renderArranger();
+
+    this.status(
+      `Song project "${cleanTitle}" saved and ready to arrange.`
+    );
+  } catch (error) {
+    console.error("LAMBO CITY song-project save error:", error);
+
+    this.status(
+      `SONG PROJECT SAVE ERROR: ${error?.message || error}`
+    );
+  }
+},
   loadSongProject() {
     try {
       const projects = listSongProjects();
