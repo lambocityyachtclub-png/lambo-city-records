@@ -1025,87 +1025,92 @@ StudioSoundKit.play(
   }
 },
   loadSongProject() {
-    try {
-      const projects = listSongProjects();
+  try {
+    const projects = listSongProjects();
 
-      if (!projects.length) {
-        this.status("No saved song projects found in this browser.");
-        return;
-      }
-
-      const menu = projects
-        .map((project, index) =>
-          `${index + 1}. ${project.title}`
-        )
-        .join("\n");
-
-      const choice = window.prompt(
-        `Choose a song project by number:\n\n${menu}`
-      );
-
-      if (choice === null) return;
-
-      const index = Number(choice) - 1;
-
-      if (
-        !Number.isInteger(index) ||
-        index < 0 ||
-        index >= projects.length
-      ) {
-        this.status("Invalid song-project selection.");
-        return;
-      }
-
-      const project = loadSongProject(projects[index].id);
-
-      if (!project) {
-        this.status("That song project could not be found.");
-        return;
-      }
-
-      const savedPattern = project.patterns?.[0];
-
-      if (!savedPattern) {
-        this.status("This project has no saved beat pattern.");
-        return;
-      }
-
-      this.pattern = normalizePattern(savedPattern);
-
-      this.soundProfile =
-        project.settings?.soundProfile === "mpc"
-          ? "mpc"
-          : "beatLab";
-
-      const bpmInput = this.ui?.querySelector("[data-bpm]");
-      const bpmLabel = this.ui?.querySelector("[data-bpm-label]");
-      const soundSelect =
-        this.ui?.querySelector("[data-sound-profile]");
-
-      if (bpmInput) {
-        bpmInput.value = String(this.pattern.bpm);
-      }
-
-      if (bpmLabel) {
-        bpmLabel.textContent = `${this.pattern.bpm} BPM`;
-      }
-
-      if (soundSelect) {
-        soundSelect.value = this.soundProfile;
-      }
-
-      this.renderGrid();
-
-      this.status(
-        `Song project "${project.metadata?.title || "Untitled Song"}" loaded.`
-      );
-    } catch (error) {
-      console.error("LAMBO CITY song-project load error:", error);
-      this.status(
-        `SONG PROJECT LOAD ERROR: ${error?.message || error}`
-      );
+    if (!projects.length) {
+      this.status("No saved song projects found in this browser.");
+      return;
     }
-  },
+
+    const menu = projects
+      .map((project, index) =>
+        `${index + 1}. ${project.title}`
+      )
+      .join("\n");
+
+    const choice = window.prompt(
+      `Choose a song project by number:\n\n${menu}`
+    );
+
+    if (choice === null) return;
+
+    const index = Number(choice) - 1;
+
+    if (
+      !Number.isInteger(index) ||
+      index < 0 ||
+      index >= projects.length
+    ) {
+      this.status("Invalid song-project selection.");
+      return;
+    }
+
+    const project = loadSongProject(projects[index].id);
+
+    if (!project) {
+      this.status("That song project could not be found.");
+      return;
+    }
+
+    const savedPattern = project.patterns?.[0];
+
+    if (!savedPattern) {
+      this.status("This project has no saved beat pattern.");
+      return;
+    }
+
+    // Restore the active project and its beat.
+    this.currentProject = project;
+    this.pattern = normalizePattern(savedPattern);
+
+    this.soundProfile =
+      project.settings?.soundProfile === "mpc"
+        ? "mpc"
+        : "beatLab";
+
+    const bpmInput = this.ui?.querySelector("[data-bpm]");
+    const bpmLabel = this.ui?.querySelector("[data-bpm-label]");
+    const soundSelect =
+      this.ui?.querySelector("[data-sound-profile]");
+
+    if (bpmInput) {
+      bpmInput.value = String(this.pattern.bpm);
+    }
+
+    if (bpmLabel) {
+      bpmLabel.textContent = `${this.pattern.bpm} BPM`;
+    }
+
+    if (soundSelect) {
+      soundSelect.value = this.soundProfile;
+    }
+
+    // Refresh both the sequencer and arranger.
+    this.renderGrid();
+    this.renderArranger();
+
+    this.status(
+      `Song project "${project.metadata?.title || "Untitled Song"}" loaded.`
+    );
+  } catch (error) {
+    console.error("LAMBO CITY song-project load error:", error);
+
+    this.status(
+      `SONG PROJECT LOAD ERROR: ${error?.message || error}`
+    );
+  }
+},
 
   exportSongProject() {
     try {
