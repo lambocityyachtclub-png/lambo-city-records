@@ -409,3 +409,120 @@ First establish the camera transition, preserve the existing controls, and verif
 Every subsequent change must build on the verified results of the previous step.
 
 END OF APPROVED FLOOR 2 DESIGN DIRECTION
+
+
+
+
+
+
+
+
+
+⸻
+
+LAMBO CITY — PROJECT CONTINUITY & MODULE STANDARD
+
+Last updated: October 26, 2026
+Status: Active development
+Permanent source of truth: This GitHub repository and its committed documentation.
+
+1. PROJECT CONTINUITY
+
+This repository records LAMBO CITY’s approved vision, technical decisions, completed milestones, and next steps.
+
+At the start of every new development session:
+
+* Read this blueprint before proposing changes.
+* Inspect the current repository and verify what already exists.
+* Preserve previously approved decisions.
+* Never restart completed work unnecessarily.
+* Record meaningful progress and the next unfinished task.
+
+2. OWNER’S DEVELOPMENT RULES
+
+* Maximize practical automation.
+* Build independent, reusable modules instead of unnecessary rewrites.
+* Commit directly to main, as requested by the owner.
+* Run automated checks before requesting manual testing.
+* Give exact copy-and-paste instructions when owner participation is required.
+* Make routine technical decisions using sound engineering practices.
+* Never claim a change or test succeeded without verification.
+* Preserve existing working features.
+
+3. REUSABLE MODULE STANDARD
+
+Every new component, such as an MPC sound kit, jumbotron, studio camera, or visual equipment system, should have one clear responsibility.
+
+Each module should:
+
+1. Initialize its own resources.
+2. Communicate through defined interfaces.
+3. Reuse the existing engine, scene, and audio services.
+4. Follow the established initialization and update patterns.
+5. Clean up resources it creates when appropriate.
+6. Separate visual presentation from interaction logic where practical.
+7. Declare dependencies and permitted files.
+8. Include automated checks wherever feasible.
+9. Avoid changing unrelated systems.
+10. Be upgradeable without requiring unrelated modules to be rewritten.
+
+The existing engine already provides a shared game loop. Do not create duplicate loops without a verified technical reason.
+
+4. EXISTING TASK REGISTRY
+
+File: floor2TaskRegistry.js
+
+The registry already contains basic mechanisms for:
+
+* Registering tasks.
+* Validating task definitions.
+* Registering and executing predefined handlers.
+* Tracking task statuses.
+* Recording execution history.
+
+It does not yet provide a complete automated module-generation pipeline.
+
+The next stage is to connect the registry to real, predefined operations with validated inputs, controlled file boundaries, and testable results.
+
+Important: allowedFiles describes a task’s permitted scope; it does not independently prevent a handler from modifying other files. That protection must be implemented before expanding automation.
+
+Never execute arbitrary task descriptions as code.
+
+5. CURRENT PROJECT POSITION
+
+* The Floor 2 blueprint exists and documents the approved studio direction.
+* The task registry exists.
+* The main engine initializes Floor 2 systems and updates registered systems through its shared loop.
+* The reusable module contract still needs implementation and verification.
+* A complete automated development pipeline has not yet been verified.
+* No new automated module-generation operation is confirmed complete.
+
+6. NEXT STEPS — IN ORDER
+
+1. Inspect the existing module-loading architecture and available automated checks.
+2. Define a reusable module contract compatible with the current engine.
+3. Test the registry’s successful execution, invalid inputs, missing handlers, and handler failures.
+4. Connect one safe, predefined demonstration operation.
+5. Verify that operation before developing controlled module-file generation from a fixed template.
+6. Preserve the working Beat Lab audio, song saving and loading, export, player movement, and unrelated world systems.
+7. Continue the approved Floor 2 development roadmap after the automation foundation is verified.
+
+7. FLOOR 2 DESIGN DIRECTION
+
+The long-term production workflow remains:
+
+CREATE BEAT → ARRANGE → RECORD VOCALS → EDIT → MIX → MASTER → EXPORT → SONG ARCHIVE
+
+The intended experience includes a cinematic elevator arrival, a seated producer camera with 360-degree viewing, workstation navigation, functional studio equipment, and a smooth return to third-person exploration.
+
+Implement these features incrementally after the module/task foundation is verified. Do not rebuild the studio or replace working systems unnecessarily.
+
+8. GOVERNING RULE
+
+INSPECT WHAT EXISTS.
+PRESERVE WHAT WORKS.
+AUTOMATE REPEATABLE WORK.
+VERIFY BEFORE EXPANDING.
+RECORD THE NEXT STEP.
+
+Every future session must resume from the last verified milestone instead of restarting the project.
