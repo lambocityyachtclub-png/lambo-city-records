@@ -469,7 +469,9 @@ document.head.appendChild(style);
 document.body.appendChild(root);
 this.ui = root;
 this.style = style;
-
+StudioMultitrackWorkspace.mount(
+  root.querySelector("div")
+);
 // TEMPORARY DIAGNOSTIC: direct studio audio test
 const testButton = document.createElement("button");
 testButton.type = "button";
