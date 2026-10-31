@@ -888,17 +888,7 @@ root.querySelector(".lc-controls")?.appendChild(testButton);
     });
   },
 
-      item.appendChild(details);
-      list.appendChild(item);
-    });
-
-    patterns.forEach((pattern) => {
-      const option = document.createElement("option");
-      option.value = pattern.id;
-      option.textContent = pattern.name;
-      patternSelect.appendChild(option);
-    });
-  },
+     
 
   addArrangerPattern() {
     if (!this.currentProject) {
