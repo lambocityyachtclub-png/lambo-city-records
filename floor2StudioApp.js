@@ -20,7 +20,7 @@ import {
 // LAMBO CITY RECORDS — FLOOR TWO STUDIO APP
 // 16-step Beat Lab using the shared studio audio engine.
 // The 3D studio and station are owned by recordsHQFloor2Studio.js.
-
+import StudioMultitrackWorkspace from "./studioMultitrackWorkspace.js";
 const STORAGE_KEY = "lambocity-floor2-beatlab-v1";
 const STEP_COUNT = 16;
 const MIN_BPM = 60;
