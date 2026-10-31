@@ -1187,57 +1187,111 @@ StudioSoundKit.play(
   },
 
 
-  importSongProject() {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = ".json,application/json";
+   importSongProject() {
+    try {
+      const input = document.createElement("input");
 
-    input.addEventListener("change", async () => {
-      const file = input.files?.[0];
-      if (!file) return;
+      input.type = "file";
+      input.accept = ".lcp,.json,application/json";
 
-      if (file.size > 1000000) {
-        this.status("Project file is too large.");
-        return;
-      }
+      input.onchange = async () => {
+        const file = input.files?.[0];
 
-      try {
-        const imported = JSON.parse(await file.text());
+        if (!file) return;
 
-        if (
-          imported?.format !== "lambo-city-song-project" ||
-          imported?.schemaVersion !== 1 ||
-          typeof imported.title !== "string" ||
-          !imported.pattern?.steps
-        ) {
-          throw new Error("This is not a supported LAMBO CITY project file.");
+        try {
+          if (file.size > 1000000) {
+            this.status("Project file is too large to import.");
+            return;
+          }
+
+          const fileText = await file.text();
+
+          let project;
+
+          // NEW FORMAT: Complete LAMBO CITY .lcp project
+          try {
+            project = importSongProjectPackage(fileText);
+          } catch (packageError) {
+            // OLD FORMAT: Legacy single-pattern JSON project
+            const data = JSON.parse(fileText);
+
+            if (
+              data.format !== "lambo-city-song-project" ||
+              data.schemaVersion !== 1 ||
+              !data.title ||
+              !data.pattern?.steps
+            ) {
+              throw packageError;
+            }
+
+            project = createSongProject({
+              title: data.title,
+              pattern: data.pattern,
+              soundProfile: data.soundProfile || "beatLab"
+            });
+          }
+
+          // Give the imported project a fresh ID
+          // so it cannot overwrite an existing saved project.
+          project.id =
+            `song-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+
+          if (project.metadata) {
+            project.metadata.updatedAt = new Date().toISOString();
+          }
+
+          saveSongProject(project);
+
+          this.currentProject = project;
+
+          const firstPattern = project.patterns?.[0];
+
+          if (firstPattern) {
+            this.pattern = this.normalizePattern(firstPattern.steps);
+
+            this.bpm = project.settings?.bpm || firstPattern.bpm || 100;
+
+            if (this.bpmInput) {
+              this.bpmInput.value = this.bpm;
+            }
+
+            if (this.bpmLabel) {
+              this.bpmLabel.textContent = this.bpm;
+            }
+
+            if (this.soundProfileSelect) {
+              this.soundProfileSelect.value =
+                project.settings?.soundProfile || "beatLab";
+            }
+
+            this.renderPattern();
+          }
+
+          this.renderArranger();
+
+          this.status(
+            `Imported "${project.metadata?.title || "Untitled Song"}". Your project is ready.`
+          );
+
+        } catch (error) {
+          console.error("LAMBO CITY project import error:", error);
+
+          this.status(
+            `PROJECT IMPORT ERROR: ${error?.message || error}`
+          );
         }
+      };
 
-        const pattern = normalizePattern(imported.pattern);
-        const title = imported.title.trim() || "Imported Song";
-        const soundProfile =
-          imported.settings?.soundProfile === "mpc"
-            ? "mpc"
-            : "beatLab";
+      input.click();
 
-        const project = createSongProject({
-          title,
-          pattern,
-          soundProfile
-        });
+    } catch (error) {
+      console.error("LAMBO CITY import setup error:", error);
 
-        saveSongProject(project);
-
-        this.status(
-          `Imported "${title}". Use LOAD SONG PROJECT to open it.`
-        );
-      } catch (error) {
-        console.error("Song-project import error:", error);
-        this.status(`PROJECT IMPORT ERROR: ${error?.message || error}`);
-      }
-    }, { once: true });
-
-    input.click();
+      this.status(
+        `IMPORT ERROR: ${error?.message || error}`
+      );
+    }
   },
 
   close() {
