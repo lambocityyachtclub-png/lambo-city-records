@@ -1115,6 +1115,7 @@ StudioSoundKit.play(
   }
 },
 
+ 
   exportSongProject() {
     try {
       const projects = listSongProjects();
@@ -1146,53 +1147,45 @@ StudioSoundKit.play(
       }
 
       const project = loadSongProject(projects[index].id);
-      const pattern = project?.patterns?.[0];
 
-      if (!project || !pattern) {
-        this.status("The selected project has no saved beat.");
+      if (!project) {
+        this.status("The selected song project could not be loaded.");
         return;
       }
 
-      const portableProject = {
-        format: "lambo-city-song-project",
-        schemaVersion: 1,
-        title: project.metadata?.title || "Untitled Song",
-        settings: {
-          bpm: pattern.bpm,
-          soundProfile:
-            project.settings?.soundProfile === "mpc"
-              ? "mpc"
-              : "beatLab"
-        },
-        pattern: normalizePattern(pattern)
-      };
+      const packageText = exportSongProjectPackage(project);
 
       const blob = new Blob(
-        [JSON.stringify(portableProject, null, 2)],
+        [packageText],
         { type: "application/json" }
       );
 
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
-      const safeName = portableProject.title
+
+      const title = project.metadata?.title || "Untitled Song";
+
+      const safeName = title
         .replace(/[^a-z0-9 _-]/gi, "")
         .trim()
         .replace(/\s+/g, "-") || "lambo-city-song";
 
       link.href = url;
-      link.download = `${safeName}.json`;
+      link.download = `${safeName}.lcp`;
+
       document.body.appendChild(link);
       link.click();
       link.remove();
 
       window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 
-      this.status(`Exported "${portableProject.title}" as a project file.`);
+      this.status(`Exported "${title}" as a complete LAMBO CITY project.`);
     } catch (error) {
-      console.error("Song-project export error:", error);
+      console.error("LAMBO CITY project export error:", error);
       this.status(`PROJECT EXPORT ERROR: ${error?.message || error}`);
     }
   },
+
 
   importSongProject() {
     const input = document.createElement("input");
