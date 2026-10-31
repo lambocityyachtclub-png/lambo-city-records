@@ -66,7 +66,10 @@ this.systems.floor2DrumStation?.init?.(
   this.scene,
   this.context
 );
-
+this.systems.floor2StudioNavigation?.init?.(
+  this.scene,
+  this.context
+);
 this.systems.recordsHQFloor3Executive?.init?.(this.scene);
 this.systems.recordsHQRooftopVIP?.init?.(this.scene);
 this.systems.recordsHQEntranceThreshold?.init?.(this.scene);
