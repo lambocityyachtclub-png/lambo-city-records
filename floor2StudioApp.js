@@ -1130,23 +1130,53 @@ StudioSoundKit.play(
         .join("\n");
 
       const choice = window.prompt(
-        `Choose a song project to export:\n\n${menu}`
+        `EXPORT SONG PROJECT\n\n${menu}\n\nEnter a project number or exact song title:`
       );
 
       if (choice === null) return;
 
-      const index = Number(choice) - 1;
+      const selection = choice.trim();
 
-      if (
-        !Number.isInteger(index) ||
-        index < 0 ||
-        index >= projects.length
-      ) {
-        this.status("Invalid song-project selection.");
+      if (!selection) {
+        this.status("No song project was selected.");
         return;
       }
 
-      const project = loadSongProject(projects[index].id);
+      let selectedProject;
+
+      if (/^\d+$/.test(selection)) {
+        const index = Number(selection) - 1;
+
+        if (index >= 0 && index < projects.length) {
+          selectedProject = projects[index];
+        }
+      } else {
+        const matches = projects.filter(
+          (project) =>
+            project.title.trim().toLowerCase() ===
+            selection.toLowerCase()
+        );
+
+        if (matches.length > 1) {
+          this.status(
+            "Multiple songs have that title. Select using its list number."
+          );
+          return;
+        }
+
+        if (matches.length === 1) {
+          selectedProject = matches[0];
+        }
+      }
+
+      if (!selectedProject) {
+        this.status(
+          "Song not found. Enter a listed number or exact song title."
+        );
+        return;
+      }
+
+      const project = loadSongProject(selectedProject.id);
 
       if (!project) {
         this.status("The selected song project could not be loaded.");
@@ -1179,12 +1209,15 @@ StudioSoundKit.play(
 
       window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 
-      this.status(`Exported "${title}" as a complete LAMBO CITY project.`);
+      this.status(
+        `Exported "${title}" as a complete LAMBO CITY project.`
+      );
     } catch (error) {
       console.error("LAMBO CITY project export error:", error);
       this.status(`PROJECT EXPORT ERROR: ${error?.message || error}`);
     }
   },
+
 
 
    importSongProject() {
