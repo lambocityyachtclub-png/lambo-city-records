@@ -526,3 +526,40 @@ VERIFY BEFORE EXPANDING.
 RECORD THE NEXT STEP.
 
 Every future session must resume from the last verified milestone instead of restarting the project.
+
+LAMBO CITY STUDIO
+PRODUCT DIRECTION + ARCHITECTURE + NEXT IMPLEMENTATION MILESTONE
+PRODUCT DECISION
+• Build BOTH: (1) a standalone LAMBO CITY Studio app and (2) the Floor 2 in-game studio. Both must use one shared music-production core, not two separate DAWs.
+• Song-project access: standalone-first. A song belongs to the creator as a portable project file, not only to one game session or browser.
+TARGET ARCHITECTURE
+• Shared Studio Core — audio engine, sound library (DIGITAL + VINTAGE MPC), project model, recording/mixing services, and project import/export.
+• Standalone Studio — independent full-screen music app; must not depend on Three.js.
+• Floor 2 Studio — 3D producer-chair/cockpit experience that opens the same production tools and projects.
+• Portable project format — LAMBO CITY project package, proposed extension .lcp; later able to include audio recordings, stems and media.
+WHAT EXISTS IN THE REPOSITORY
+• main.js / engine.js: Floor 2 studio systems are registered and initialized in the game.
+• floor2StudioApp.js: existing 16-step Beat Lab with DIGITAL and VINTAGE MPC sound profiles, audio playback/export, beat save/load and song-project controls.
+• studioSongProject.js: song metadata, patterns, arrangement sections/clips and browser storage.
+• floor2TaskRegistry.js: exists, but is not registered in main.js or engine.js. It is not required for the project-file milestone.
+IMPORTANT LIMITATIONS
+• Song projects currently use browser localStorage, so they are not automatically portable between devices.
+• The current song-project export is incomplete for the desired product: it must preserve the full arrangement, every pattern and project metadata. The future package can
+later add recorded audio/stems.
+• The current Beat Lab is not yet a complete DAW. Do not claim multitrack recording, full MIDI editing, automation, effects or mastering are finished.
+NEXT IMPLEMENTATION MILESTONE — BUILD THE .LCP PACKAGE
+• Create a focused module: studioProjectPackage.js.
+• Versioned export/import should include metadata, settings, all patterns, arrangement sections and clips; validate files before import; preserve project IDs and pattern/clip
+relationships.
+• Connect the existing Floor 2 export/import controls to this module only after the package is tested.
+• Verify a complete export → import → compare round trip. Keep existing localStorage save/load working.
+PRESERVATION RULES & WORKFLOW
+• Do not rewrite the working Beat Lab, audio engine, Floor 2 room, main.js or engine.js for this milestone unless inspection proves a change is necessary.
+• Make the smallest safe modular change; preserve backups/history; automated checks first, manual verification only where needed.
+• User works from iPad and prefers exact file-level instructions and minimal back-and-forth. No third-party AI coding agent and no AI runtime task system.
+ROADMAP AFTER PORTABILITY
+• 1. Complete and verify .lcp portability. 2. Build standalone Studio UI using the same core. 3. Expand shared tools toward multitrack recording/editing, MIDI, mixing, effects
+and mastering. 4. Connect Floor 2 cockpit/stations. 5. Add optional cloud archive/sync after standalone files are reliable.
+CURRENT STATUS
+• Architecture and milestone established; no code was changed or committed during this planning step. Repository: lambocityyachtclub-png/lambo-city-records ·
+default branch: main.
