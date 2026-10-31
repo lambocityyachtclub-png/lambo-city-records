@@ -563,3 +563,136 @@ and mastering. 4. Connect Floor 2 cockpit/stations. 5. Add optional cloud archiv
 CURRENT STATUS
 • Architecture and milestone established; no code was changed or committed during this planning step. Repository: lambocityyachtclub-png/lambo-city-records ·
 default branch: main.
+
+
+
+LAMBO CITY STUDIO
+
+Production Foundation & Floor 2 Blueprint
+
+Project direction: LOCKED
+
+1. The overall vision
+
+Build one professional, modular LAMBO CITY music-production system with two connected experiences:
+
+* Standalone LAMBO CITY Studio: The primary music-production workspace.
+* LAMBO CITY Floor 2: The immersive in-game studio that uses the same production engine.
+
+Both experiences share the same audio, recording, project, and export foundations. We do not build two separate DAWs.
+
+2. Device-first recording
+
+The first priority is making the studio work with the equipment the user already owns.
+
+Initial target:
+
+* iPad built-in microphone.
+* iPad touch-friendly controls.
+* Recording vocals over existing Beat Lab beats.
+* Multiple vocal takes.
+* Separate audio tracks.
+* Playback and basic mixing.
+* Support for phones and computers as the architecture expands.
+
+Future equipment support:
+
+* External microphones.
+* USB audio interfaces.
+* MIDI keyboards.
+* Audio keyboards and other instruments.
+
+External equipment must be an expansion, not a requirement for getting started.
+
+3. Shared modular architecture
+
+Build and maintain separate modules with clear responsibilities:
+
+Module	Responsibility
+Audio Engine	Shared audio playback and routing
+Recording Engine	Microphone access and recording
+Device Input	Built-in and external audio inputs
+MIDI Engine	MIDI keyboard input and instruments
+Multitrack Engine	Separate audio tracks and playback
+Mixing Engine	Track volume, effects, and routing
+Waveform Engine	Audio waveform visualization and editing
+Audio File Manager	Importing, organizing, and managing audio files
+Project Engine	Saving and reopening complete sessions
+Export Engine	WAV and other supported audio exports
+
+4. WAV files and waveform workflow
+
+This is a required part of the studio, not a decorative feature.
+
+Users must be able to:
+
+* View audio files and their names, formats, and durations.
+* See visual waveforms.
+* Import WAV files from the iPad Files app.
+* Organize beats, vocals, and recording takes.
+* Place recordings on separate timeline tracks.
+* Trim, move, and arrange audio clips.
+* Export individual tracks and complete mixes as WAV files.
+
+If the browser records in another format, the system must convert the audio to WAV when needed.
+
+5. Project saving and ownership
+
+* Preserve the existing song-project system.
+* Expand the project format to support audio recordings and track information.
+* Save and reopen complete sessions.
+* Preserve the transferable, user-owned .lcp project direction.
+* Support downloading and importing projects.
+* Keep cloud storage as a later expansion.
+
+6. Implementation order
+
+Phase A — Inspect and protect
+
+1. Review the existing audio engine, sound kit, recording/export system, song-project system, and Floor 2 integration.
+2. Identify existing working functionality.
+3. Confirm audio routing and avoid duplicate systems.
+
+Phase B — Recording foundation
+4. Implement iPad microphone access.
+5. Record vocals over Beat Lab playback.
+6. Support multiple takes and separate tracks.
+7. Verify playback and recording synchronization.
+
+Phase C — Audio files and projects
+8. Add waveform visualization and audio-file management.
+9. Add WAV import and export.
+10. Connect recordings, tracks, and audio files to saved projects.
+11. Verify reopening a complete session.
+
+Phase D — Integration and testing
+12. Connect the shared production core to the standalone Studio.
+13. Connect Floor 2 to the same core.
+14. Run automated checks and test the real workflow on the iPad.
+15. Commit verified changes to GitHub.
+
+Phase E — Room design
+16. Design Floor 2 around the actual working production stations.
+17. Connect the MPC, vocal booth, piano, recording controls, and mixing station to real software capabilities.
+
+7. Floor 2 design principles
+
+* Luxury, professional LAMBO CITY identity.
+* Functional equipment, not decorative controls.
+* Producer-chair point of view.
+* Interactive studio stations.
+* Clean central workspace.
+* Preserve existing Floor 2 structure and working systems.
+* Do not unnecessarily modify Floor 1, Floor 3, or collision systems.
+
+8. Development rules
+
+* Inspect before changing code.
+* Preserve working features.
+* Use focused, modular files.
+* Avoid unnecessary rewrites.
+* Automate checks wherever possible.
+* Do not claim a feature works until it has been tested.
+* Keep the standalone Studio and Floor 2 on one shared production foundation.
+
+THE NORTH STAR: Build a professional, device-first LAMBO CITY production studio that lets users record, see, organize, edit, save, and export their music, with Floor 2 serving as the immersive physical experience of that same system.
