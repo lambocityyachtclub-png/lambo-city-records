@@ -13,7 +13,10 @@ import {
   addPatternToProject,
   addClipToSection
 } from "./studioSongProject.js";
-
+import {
+  exportSongProjectPackage,
+  importSongProjectPackage
+} from "./studioProjectPackage.js";
 // LAMBO CITY RECORDS — FLOOR TWO STUDIO APP
 // 16-step Beat Lab using the shared studio audio engine.
 // The 3D studio and station are owned by recordsHQFloor2Studio.js.
