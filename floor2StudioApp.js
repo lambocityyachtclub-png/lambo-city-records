@@ -628,6 +628,7 @@ root.querySelector(".lc-controls")?.appendChild(testButton);
   },
 
 
+ 
   renderArranger() {
     if (!this.ui) return;
 
@@ -639,10 +640,21 @@ root.querySelector(".lc-controls")?.appendChild(testButton);
 
     if (!sectionSelect || !patternSelect || !projectStatus || !list) return;
 
+    sectionSelect.replaceChildren();
+    patternSelect.replaceChildren();
+    list.replaceChildren();
+
+    list.style.cssText = `
+      display:grid;
+      gap:16px;
+      margin-top:18px;
+      overflow-x:auto;
+      padding-bottom:8px;
+    `;
+
     if (!project) {
-      projectStatus.textContent = "Save or load a song project to begin arranging.";
-      sectionSelect.replaceChildren();
-      patternSelect.replaceChildren();
+      projectStatus.textContent =
+        "Save or load a song project to begin arranging.";
       list.textContent = "No active song project.";
       return;
     }
@@ -653,39 +665,228 @@ root.querySelector(".lc-controls")?.appendChild(testButton);
     projectStatus.textContent =
       `Editing: ${project.metadata?.title || "Untitled Song"} · ${patterns.length} beat pattern(s)`;
 
-    sectionSelect.replaceChildren();
-    patternSelect.replaceChildren();
-    list.replaceChildren();
-
     sections.forEach((section) => {
       const option = document.createElement("option");
       option.value = section.id;
       option.textContent = section.name;
       sectionSelect.appendChild(option);
+    });
 
-      const item = document.createElement("div");
-      item.className = "lc-arranger-item";
+    patterns.forEach((pattern) => {
+      const option = document.createElement("option");
+      option.value = pattern.id;
+      option.textContent = pattern.name;
+      patternSelect.appendChild(option);
+    });
 
-      const heading = document.createElement("strong");
-      heading.textContent = section.name;
-      item.appendChild(heading);
+    if (!sections.length) {
+      list.textContent = "This project has no song sections yet.";
+      return;
+    }
 
-      const details = document.createElement("div");
+    const trackDefinitions = [
+      { id: "kick", label: "KICK" },
+      { id: "snare", label: "SNARE" },
+      { id: "hat", label: "HI-HAT" }
+    ];
+
+    sections.forEach((section) => {
       const clips = section.clips || [];
 
-      if (!clips.length) {
-        details.textContent = "No patterns arranged yet.";
-      } else {
-        clips.forEach((clip, index) => {
-          if (index) details.appendChild(document.createElement("br"));
+      const totalBars = Math.max(
+        Number(section.bars) || 4,
+        1,
+        ...clips.map((clip) =>
+          Math.max(0, Number(clip.startBar) || 0) +
+          Math.max(1, Number(clip.lengthBars) || 1)
+        )
+      );
 
-          const pattern = patterns.find((entry) => entry.id === clip.patternId);
-          const line = document.createElement("span");
-          line.textContent =
-            `${pattern?.name || "Missing pattern"} · Bar ${clip.startBar + 1} · ${clip.lengthBars} bar(s)`;
-          details.appendChild(line);
-        });
+      const card = document.createElement("div");
+      card.style.cssText = `
+        min-width:100%;
+        padding:14px;
+        border:1px solid #51452f;
+        border-radius:12px;
+        background:#101116;
+      `;
+
+      const heading = document.createElement("div");
+      heading.textContent =
+        `${section.name.toUpperCase()} · ${totalBars} BARS`;
+
+      heading.style.cssText = `
+        color:#e6bb69;
+        font-size:12px;
+        font-weight:700;
+        letter-spacing:1.5px;
+        margin-bottom:12px;
+      `;
+
+      card.appendChild(heading);
+
+      const gridColumns =
+        `64px repeat(${totalBars}, minmax(42px, 1fr))`;
+
+      const ruler = document.createElement("div");
+      ruler.style.cssText = `
+        display:grid;
+        grid-template-columns:${gridColumns};
+        gap:3px;
+        min-width:${64 + totalBars * 42}px;
+        margin-bottom:5px;
+      `;
+
+      const rulerLabel = document.createElement("div");
+      rulerLabel.textContent = "BAR";
+      rulerLabel.style.cssText =
+        "font-size:9px;color:#888995;align-self:center;";
+      ruler.appendChild(rulerLabel);
+
+      for (let bar = 0; bar < totalBars; bar++) {
+        const marker = document.createElement("div");
+        marker.textContent = String(bar + 1);
+        marker.style.cssText = `
+          color:#a8a8b1;
+          font-size:10px;
+          text-align:center;
+          padding:5px 0;
+          border-bottom:1px solid #45434a;
+        `;
+        ruler.appendChild(marker);
       }
+
+      card.appendChild(ruler);
+
+      trackDefinitions.forEach((track) => {
+        const row = document.createElement("div");
+
+        row.style.cssText = `
+          display:grid;
+          grid-template-columns:${gridColumns};
+          gap:3px;
+          min-width:${64 + totalBars * 42}px;
+          min-height:38px;
+          margin-top:5px;
+        `;
+
+        const label = document.createElement("div");
+        label.textContent = track.label;
+        label.style.cssText = `
+          display:flex;
+          align-items:center;
+          color:#c9c3b7;
+          font-size:9px;
+          font-weight:700;
+        `;
+
+        row.appendChild(label);
+
+        for (let bar = 0; bar < totalBars; bar++) {
+          const cell = document.createElement("div");
+          cell.style.cssText = `
+            grid-column:${bar + 2};
+            grid-row:1;
+            border-left:1px solid #34343d;
+            background:${bar % 4 === 0 ? "#191a22" : "#14151c"};
+            min-height:38px;
+          `;
+          row.appendChild(cell);
+        }
+
+        clips.forEach((clip) => {
+          const pattern = patterns.find(
+            (entry) => entry.id === clip.patternId
+          );
+
+          if (!pattern) return;
+
+          const startBar = Math.max(
+            0,
+            Number(clip.startBar) || 0
+          );
+
+          const lengthBars = Math.max(
+            1,
+            Number(clip.lengthBars) || 1
+          );
+
+          const block = document.createElement("div");
+
+          block.style.cssText = `
+            grid-column:${startBar + 2} / span ${lengthBars};
+            grid-row:1;
+            z-index:1;
+            align-self:stretch;
+            min-width:0;
+            margin:3px 1px;
+            padding:4px;
+            overflow:hidden;
+            border:1px solid #b18a4b;
+            border-radius:5px;
+            background:#40321e;
+            color:#fff1d1;
+          `;
+
+          block.title =
+            `${pattern.name} · ${track.label} · Bar ${startBar + 1} · ${lengthBars} bars`;
+
+          const name = document.createElement("div");
+          name.textContent = pattern.name;
+          name.style.cssText = `
+            font-size:9px;
+            font-weight:700;
+            white-space:nowrap;
+            overflow:hidden;
+            text-overflow:ellipsis;
+          `;
+
+          block.appendChild(name);
+
+          const steps = pattern.steps?.[track.id] || [];
+
+          const stepDisplay = document.createElement("div");
+          stepDisplay.style.cssText = `
+            display:flex;
+            gap:2px;
+            margin-top:4px;
+            height:5px;
+          `;
+
+          steps.forEach((active) => {
+            const mark = document.createElement("span");
+            mark.style.cssText = `
+              flex:1;
+              min-width:1px;
+              border-radius:2px;
+              background:${active ? "#f3cf83" : "#716047"};
+              opacity:${active ? "1" : "0.35"};
+            `;
+            stepDisplay.appendChild(mark);
+          });
+
+          block.appendChild(stepDisplay);
+          row.appendChild(block);
+        });
+
+        card.appendChild(row);
+      });
+
+      const footer = document.createElement("div");
+      footer.textContent = clips.length
+        ? `${clips.length} beat clip(s) in this section`
+        : "Empty section · Add a beat pattern above";
+
+      footer.style.cssText = `
+        color:#888995;
+        font-size:10px;
+        margin-top:10px;
+      `;
+
+      card.appendChild(footer);
+      list.appendChild(card);
+    });
+  },
 
       item.appendChild(details);
       list.appendChild(item);
