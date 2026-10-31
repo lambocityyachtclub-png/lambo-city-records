@@ -269,8 +269,12 @@ this.currentProject = null;
     ● RECORD AUDIO
   </button>
 
-  <button type="button" data-action="export" class="lc-action">
-    ■ STOP &amp; EXPORT
+  <button type="button" data-action="stop-recording" class="lc-action">
+    ■ STOP RECORDING
+  </button>
+
+  <button type="button" data-action="export-audio" class="lc-action">
+    EXPORT AUDIO
   </button>
 
   <button type="button" data-action="save" class="lc-action">
@@ -523,12 +527,17 @@ root.querySelector(".lc-controls")?.appendChild(testButton);
           this.stop();
           break;
           
-case "record":
-  void this.startRecording();
-  break;
-case "export":
-  void this.exportRecording();
-  break;
+
+        case "record":
+          void this.startRecording();
+          break;
+        case "stop-recording":
+          void this.stopRecording();
+          break;
+        case "export-audio":
+          this.exportRecording();
+          break;
+
 
        
         case "save":
@@ -882,8 +891,16 @@ if (!this.audio || this.audio.state !== "running") {
     this.status("Playback stopped.");
   },
 
+ 
   async startRecording() {
     try {
+      if (this.pendingAudioExportBlob) {
+        this.status(
+          "Export your previous recording before starting another."
+        );
+        return;
+      }
+
       this.audio = await StudioAudioEngine.resume();
 
       if (!this.audio || this.audio.state !== "running") {
@@ -891,8 +908,9 @@ if (!this.audio || this.audio.state !== "running") {
       }
 
       StudioAudioExport.start(this.audio);
+
       this.status(
-        "Recording audio… Play your beat, then tap STOP & EXPORT."
+        "Recording audio… Tap STOP RECORDING when finished."
       );
     } catch (error) {
       console.error("LAMBO CITY recording error:", error);
@@ -900,18 +918,41 @@ if (!this.audio || this.audio.state !== "running") {
     }
   },
 
-  async exportRecording() {
+  async stopRecording() {
     try {
       const blob = await StudioAudioExport.stop();
-      StudioAudioExport.download(blob);
+
+      this.pendingAudioExportBlob = blob;
+
       this.status(
-        "Audio export prepared. Check your browser download."
+        "Recording finished. Tap EXPORT AUDIO to download it."
       );
     } catch (error) {
-      console.error("LAMBO CITY export error:", error);
-      this.status(`EXPORT ERROR: ${error?.message || error}`);
+      console.error("LAMBO CITY recording stop error:", error);
+      this.status(`STOP RECORDING ERROR: ${error?.message || error}`);
     }
   },
+
+  exportRecording() {
+    try {
+      if (!this.pendingAudioExportBlob) {
+        this.status("Stop a recording before exporting audio.");
+        return;
+      }
+
+      StudioAudioExport.download(this.pendingAudioExportBlob);
+
+      this.pendingAudioExportBlob = null;
+
+      this.status(
+        "Audio exported successfully. Check your browser downloads."
+      );
+    } catch (error) {
+      console.error("LAMBO CITY audio export error:", error);
+      this.status(`AUDIO EXPORT ERROR: ${error?.message || error}`);
+    }
+  },
+
 
   createNoiseBuffer() {
     if (!this.audio) {
