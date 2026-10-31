@@ -1245,27 +1245,34 @@ StudioSoundKit.play(
 
           this.currentProject = project;
 
-          const firstPattern = project.patterns?.[0];
+                   const firstPattern = project.patterns?.[0];
+
+          this.soundProfile =
+            project.settings?.soundProfile === "mpc"
+              ? "mpc"
+              : "beatLab";
 
           if (firstPattern) {
-            this.pattern = this.normalizePattern(firstPattern.steps);
+            this.pattern = normalizePattern(firstPattern);
 
-            this.bpm = project.settings?.bpm || firstPattern.bpm || 100;
+            const bpmInput = this.ui?.querySelector("[data-bpm]");
+            const bpmLabel = this.ui?.querySelector("[data-bpm-label]");
+            const soundSelect =
+              this.ui?.querySelector("[data-sound-profile]");
 
-            if (this.bpmInput) {
-              this.bpmInput.value = this.bpm;
+            if (bpmInput) {
+              bpmInput.value = String(this.pattern.bpm);
             }
 
-            if (this.bpmLabel) {
-              this.bpmLabel.textContent = this.bpm;
+            if (bpmLabel) {
+              bpmLabel.textContent = `${this.pattern.bpm} BPM`;
             }
 
-            if (this.soundProfileSelect) {
-              this.soundProfileSelect.value =
-                project.settings?.soundProfile || "beatLab";
+            if (soundSelect) {
+              soundSelect.value = this.soundProfile;
             }
 
-            this.renderPattern();
+            this.renderGrid();
           }
 
           this.renderArranger();
