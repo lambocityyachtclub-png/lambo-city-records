@@ -533,6 +533,105 @@ row.querySelectorAll("audio").forEach(player => {
       "Vocal, Beat Lab, and Master Mix recordings added."
     );
   },
+  
+  isPlaying() {
+    const players = Array.from(
+      this.root?.querySelectorAll("[data-track-list] audio") || []
+    );
+
+    return players.some(
+      player => !player.paused && !player.ended
+    );
+  },
+
+  async playAll() {
+    const players = Array.from(
+      this.root?.querySelectorAll("[data-track-list] audio") || []
+    );
+
+    if (!players.length) {
+      this.status("No recorded audio clips available.");
+      return;
+    }
+
+    this.stopAll();
+
+    const playerTracks = players.map(player => {
+      const row = player.closest("[data-track-id]");
+
+      return {
+        player,
+        track: this.tracks.find(
+          track => track.id === row?.dataset.trackId
+        )
+      };
+    }).filter(item => item.track);
+
+    const anySolo = this.tracks.some(track => track.solo);
+
+    const hasSeparateStems =
+      playerTracks.some(item => item.track.name === "Vocals") &&
+      playerTracks.some(item => item.track.name === "Beats");
+
+    const selectedPlayers = playerTracks.filter(({ track }) => {
+      if (track.muted) return false;
+
+      if (anySolo) return track.solo;
+
+      if (hasSeparateStems && track.name === "Master Mix") {
+        return false;
+      }
+
+      return true;
+    });
+
+    if (!selectedPlayers.length) {
+      this.status("No audible tracks selected for playback.");
+      return;
+    }
+
+    selectedPlayers.forEach(({ player }) => {
+      player.currentTime = 0;
+    });
+
+    try {
+      await Promise.all(
+        selectedPlayers.map(({ player }) => player.play())
+      );
+
+      this.status("Multitrack playback started.");
+    } catch (error) {
+      this.stopAll();
+
+      console.error("Multitrack playback error:", error);
+
+      this.status(
+        `PLAYBACK ERROR: ${error?.message || error}`
+      );
+    }
+  },
+
+  stopAll() {
+    const players = this.root?.querySelectorAll(
+      "[data-track-list] audio"
+    ) || [];
+
+    players.forEach(player => {
+      player.pause();
+      player.currentTime = 0;
+    });
+
+    this.status("Multitrack playback stopped.");
+  },
+
+  togglePlayback() {
+    if (this.isPlaying()) {
+      this.stopAll();
+    } else {
+      void this.playAll();
+    }
+  },
+
   render() {
     if (!this.root) return;
 
