@@ -1671,4 +1671,4 @@ StudioSoundKit.play(
   },
 
   update() {}
-}; So is this the correct code that I am supposed to be pasting?
+}; 
