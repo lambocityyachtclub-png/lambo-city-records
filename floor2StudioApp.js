@@ -525,16 +525,6 @@ this.handleStudioKeydown = (event) => {
 
   return;
 }
-    event.preventDefault();
-
-    if (this.playing) {
-      this.stop();
-    } else {
-      void this.start();
-    }
-
-    return;
-  }
 
   if (event.key.toLowerCase() === "r") {
     if (target instanceof HTMLElement && target.closest("button")) {
