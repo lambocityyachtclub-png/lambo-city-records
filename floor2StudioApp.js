@@ -518,7 +518,13 @@ this.handleStudioKeydown = (event) => {
     return;
   }
 
-  if (event.code === "Space") {
+ if (event.code === "Space") {
+  event.preventDefault();
+
+  StudioMultitrackWorkspace.togglePlayback();
+
+  return;
+}
     event.preventDefault();
 
     if (this.playing) {
