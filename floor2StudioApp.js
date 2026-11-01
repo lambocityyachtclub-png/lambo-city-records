@@ -498,6 +498,58 @@ document.head.appendChild(style);
 document.body.appendChild(root);
 this.ui = root;
 this.style = style;
+    
+this.handleStudioKeydown = (event) => {
+  if (!this.ui || !this.ui.isConnected) return;
+
+  if (event.repeat || event.ctrlKey || event.metaKey || event.altKey) {
+    return;
+  }
+
+  const target = event.target;
+
+  if (
+    target instanceof HTMLElement &&
+    (
+      target.isContentEditable ||
+      target.matches("input, textarea, select")
+    )
+  ) {
+    return;
+  }
+
+  if (event.code === "Space") {
+    event.preventDefault();
+
+    if (this.playing) {
+      this.stop();
+    } else {
+      void this.start();
+    }
+
+    return;
+  }
+
+  if (event.key.toLowerCase() === "r") {
+    if (target instanceof HTMLElement && target.closest("button")) {
+      return;
+    }
+
+    event.preventDefault();
+
+    if (StudioRecordingEngine.activeTake) {
+      void this.stopRecording();
+    } else {
+      void this.startRecording();
+    }
+  }
+};
+
+document.addEventListener(
+  "keydown",
+  this.handleStudioKeydown
+);
+
 StudioMultitrackWorkspace.mount(
   root.querySelector("div")
 );
@@ -1646,6 +1698,16 @@ StudioSoundKit.play(
   },
 
   close() {
+    
+    if (this.handleStudioKeydown) {
+      document.removeEventListener(
+        "keydown",
+        this.handleStudioKeydown
+      );
+
+      this.handleStudioKeydown = null;
+    }
+
     this.stop();
 
     if (this.ui) {
