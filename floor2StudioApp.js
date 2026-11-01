@@ -4,7 +4,8 @@ import * as THREE from
 import StudioAudioEngine from "./studioAudioEngine.js";
 import StudioSoundKit from "./studioSoundKit.js";
 import StudioAudioExport from "./studioAudioExport.js";
-
+import StudioRecordingEngine from "./studioRecordingEngine.js";
+import StudioVocalEffects from "./studioVocalEffects.js";
 import {
   createSongProject,
   saveSongProject,
@@ -81,8 +82,14 @@ export default {
     this.pattern = makeDefaultPattern();
 this.soundProfile = "beatLab";
 this.currentProject = null;
-    this.audio = null;
-    this.noiseBuffer = null;
+   this.audio = null;
+this.vocalEffects = null;
+this.vocalEffectSettings = {
+  delay: 0,
+  reverb: 0
+};
+this.lastRecordedTake = null;
+this.noiseBuffer = null;
     this.timer = null;
     this.playing = false;
     this.currentStep = 0;
@@ -263,7 +270,23 @@ this.currentProject = null;
     Your song arrangement will appear here.
   </div>
 </section>
+<section class="lc-actions" aria-label="Vocal effects controls">
+  <div style="width:100%;color:#e6bb69;font-size:12px;letter-spacing:2px">
+    LAMBO CITY VOCAL EFFECTS
+  </div>
 
+  <label style="display:flex;flex-direction:column;gap:6px;min-width:180px;color:#c9c7c1;font-size:11px">
+    DELAY MIX
+    <input type="range" min="0" max="1" step="0.01" value="0"
+      data-vocal-effect="delay">
+  </label>
+
+  <label style="display:flex;flex-direction:column;gap:6px;min-width:180px;color:#c9c7c1;font-size:11px">
+    REVERB MIX
+    <input type="range" min="0" max="1" step="0.01" value="0"
+      data-vocal-effect="reverb">
+  </label>
+</section>
 <section class="lc-actions">
   <button type="button" data-action="record" class="lc-action">
     ● RECORD AUDIO
@@ -273,9 +296,17 @@ this.currentProject = null;
     ■ STOP RECORDING
   </button>
 
-  <button type="button" data-action="export-audio" class="lc-action">
-    EXPORT AUDIO
-  </button>
+ <button type="button" data-action="export-audio" class="lc-action">
+  EXPORT MIX
+</button>
+
+<button type="button" data-action="export-vocals" class="lc-action">
+  EXPORT VOCALS
+</button>
+
+<button type="button" data-action="export-beat" class="lc-action">
+  EXPORT BEAT
+</button>
 
   <button type="button" data-action="save" class="lc-action">
     SAVE BEAT
@@ -483,7 +514,24 @@ testButton.addEventListener("click", () => {
 root.querySelector(".lc-controls")?.appendChild(testButton);
 
     this.renderGrid();
+root.addEventListener("input", (event) => {
+  const control = event.target;
+  if (!(control instanceof HTMLInputElement)) return;
 
+  const effectName = control.dataset.vocalEffect;
+  if (!effectName) return;
+
+  const value = Number(control.value);
+  this.vocalEffectSettings[effectName] = value;
+
+  if (!this.vocalEffects) return;
+
+  if (effectName === "delay") {
+    this.vocalEffects.setDelayMix(value);
+  } else if (effectName === "reverb") {
+    this.vocalEffects.setReverbMix(value);
+  }
+});
     root.addEventListener("click", (event) => {
       const target = event.target;
       if (!(target instanceof Element)) return;
@@ -536,7 +584,13 @@ root.querySelector(".lc-controls")?.appendChild(testButton);
         case "export-audio":
           this.exportRecording();
           break;
+        case "export-vocals":
+          this.exportRecordingTrack("vocal");
+          break;
 
+        case "export-beat":
+          this.exportRecordingTrack("beat");
+          break;
        
         case "save":
           this.save();
@@ -1076,12 +1130,10 @@ if (!this.audio || this.audio.state !== "running") {
   },
 
  
-  async startRecording() {
+   async startRecording() {
     try {
-      if (this.pendingAudioExportBlob) {
-        this.status(
-          "Export your previous recording before starting another."
-        );
+      if (StudioRecordingEngine.activeTake) {
+        this.status("A recording is already in progress.");
         return;
       }
 
@@ -1091,11 +1143,28 @@ if (!this.audio || this.audio.state !== "running") {
         throw new Error("Studio audio is not running.");
       }
 
-      StudioAudioExport.start(this.audio);
+      if (!this.vocalEffects) {
+        this.vocalEffects = StudioVocalEffects.create(this.audio);
+      }
+
+      this.vocalEffects.setDelayMix(
+        this.vocalEffectSettings.delay
+      );
+
+      this.vocalEffects.setReverbMix(
+        this.vocalEffectSettings.reverb
+      );
+
+      await StudioRecordingEngine.startTake({
+        audio: this.audio,
+        beatOutput: StudioAudioExport.getOutput(this.audio),
+        vocalEffects: this.vocalEffects
+      });
 
       this.status(
-        "Recording audio… Tap STOP RECORDING when finished."
+        "Recording vocals, Beat Lab, and mix… Tap STOP RECORDING when finished."
       );
+
     } catch (error) {
       console.error("LAMBO CITY recording error:", error);
       this.status(`RECORDING ERROR: ${error?.message || error}`);
@@ -1104,13 +1173,13 @@ if (!this.audio || this.audio.state !== "running") {
 
   async stopRecording() {
     try {
-      const blob = await StudioAudioExport.stop();
-
-      this.pendingAudioExportBlob = blob;
+      this.lastRecordedTake =
+        await StudioRecordingEngine.stopTake();
 
       this.status(
-        "Recording finished. Tap EXPORT AUDIO to download it."
+        "Recording finished. Export your mix, vocals, or beat below."
       );
+
     } catch (error) {
       console.error("LAMBO CITY recording stop error:", error);
       this.status(`STOP RECORDING ERROR: ${error?.message || error}`);
@@ -1118,19 +1187,35 @@ if (!this.audio || this.audio.state !== "running") {
   },
 
   exportRecording() {
+    this.exportRecordingTrack("mix");
+  },
+
+  exportRecordingTrack(trackName) {
     try {
-      if (!this.pendingAudioExportBlob) {
-        this.status("Stop a recording before exporting audio.");
+      const take = this.lastRecordedTake;
+
+      if (!take || !take[trackName]) {
+        this.status(
+          "Record and stop a take before exporting this track."
+        );
         return;
       }
 
-      StudioAudioExport.download(this.pendingAudioExportBlob);
+      const names = {
+        mix: "lambo-city-mix",
+        vocal: "lambo-city-vocals",
+        beat: "lambo-city-beat"
+      };
 
-      this.pendingAudioExportBlob = null;
+      StudioRecordingEngine.download(
+        take[trackName],
+        names[trackName]
+      );
 
       this.status(
-        "Audio exported successfully. Check your browser downloads."
+        `Exported ${trackName.toUpperCase()} recording. Check your browser downloads.`
       );
+
     } catch (error) {
       console.error("LAMBO CITY audio export error:", error);
       this.status(`AUDIO EXPORT ERROR: ${error?.message || error}`);
