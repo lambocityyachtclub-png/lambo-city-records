@@ -426,20 +426,67 @@ const StudioMultitrackWorkspace = {
     return root;
   },
 
-  addClip(id) {
+   addClip(id) {
     const track = this.tracks.find(item => item.id === id);
 
     if (!track) return;
 
     track.clips.push({
       id: `${id}-clip-${track.clips.length + 1}`,
-      name: `${track.name} Clip ${track.clips.length + 1}`
+      name: `${track.name} Clip ${track.clips.length + 1}`,
+      blob: null,
+      takeId: null
     });
 
     this.render();
     this.status(`${track.name} clip added.`);
   },
 
+  addRecordingTake(take) {
+    if (!take?.id || !take.beat || !take.vocal || !take.mix) {
+      throw new Error("The completed recording take is incomplete.");
+    }
+
+    const recordings = [
+      {
+        trackName: "Vocals",
+        clipName: "Vocal Recording",
+        blob: take.vocal
+      },
+      {
+        trackName: "Beats",
+        clipName: "Beat Lab Recording",
+        blob: take.beat
+      },
+      {
+        trackName: "Master Mix",
+        clipName: "Combined Master Recording",
+        blob: take.mix
+      }
+    ];
+
+    recordings.forEach((recording) => {
+      let track = this.tracks.find(
+        item => item.name === recording.trackName
+      );
+
+      if (!track) {
+        track = this.createTrack("audio", recording.trackName);
+      }
+
+      track.clips.push({
+        id: `${take.id}-${recording.trackName.toLowerCase().replace(/\s+/g, "-")}`,
+        name: recording.clipName,
+        blob: recording.blob,
+        takeId: take.id,
+        createdAt: new Date().toISOString()
+      });
+    });
+
+    this.render();
+
+    this.status("Recording added to Vocals, Beats, and Master Mix tracks.");
+  },
   render() {
     if (!this.root) return;
 
