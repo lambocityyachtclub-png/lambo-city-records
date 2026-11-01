@@ -442,8 +442,14 @@ const StudioMultitrackWorkspace = {
     this.status(`${track.name} clip added.`);
   },
 
+
   addRecordingTake(take) {
-    if (!take?.id || !take.beat || !take.vocal || !take.mix) {
+    if (
+      !take?.id ||
+      !take.beat ||
+      !take.vocal ||
+      !take.mix
+    ) {
       throw new Error("The completed recording take is incomplete.");
     }
 
@@ -465,7 +471,7 @@ const StudioMultitrackWorkspace = {
       }
     ];
 
-    recordings.forEach((recording) => {
+    recordings.forEach(recording => {
       let track = this.tracks.find(
         item => item.name === recording.trackName
       );
@@ -474,18 +480,27 @@ const StudioMultitrackWorkspace = {
         track = this.createTrack("audio", recording.trackName);
       }
 
-      track.clips.push({
+      const clip = {
         id: `${take.id}-${recording.trackName.toLowerCase().replace(/\s+/g, "-")}`,
         name: recording.clipName,
         blob: recording.blob,
         takeId: take.id,
-        createdAt: new Date().toISOString()
-      });
+        createdAt: new Date().toISOString(),
+        objectUrl: null
+      };
+
+      if (clip.blob.size > 0) {
+        clip.objectUrl = URL.createObjectURL(clip.blob);
+      }
+
+      track.clips.push(clip);
     });
 
     this.render();
 
-    this.status("Recording added to Vocals, Beats, and Master Mix tracks.");
+    this.status(
+      "Vocal, Beat Lab, and Master Mix recordings added."
+    );
   },
   render() {
     if (!this.root) return;
@@ -570,10 +585,34 @@ const StudioMultitrackWorkspace = {
         timeline.appendChild(empty);
       }
 
+     
       track.clips.forEach(clip => {
         const block = document.createElement("div");
         block.className = "lc-clip";
-        block.textContent = clip.name;
+
+        const label = document.createElement("div");
+        label.textContent = clip.name;
+        block.appendChild(label);
+
+        if (clip.blob && clip.blob.size > 0) {
+          if (!clip.objectUrl) {
+            clip.objectUrl = URL.createObjectURL(clip.blob);
+          }
+
+          const player = document.createElement("audio");
+          player.controls = true;
+          player.preload = "metadata";
+          player.src = clip.objectUrl;
+          player.style.width = "100%";
+          player.style.marginTop = "10px";
+
+          block.appendChild(player);
+        } else {
+          const empty = document.createElement("span");
+          empty.textContent = "No recorded audio";
+          block.appendChild(empty);
+        }
+
         timeline.appendChild(block);
       });
 
