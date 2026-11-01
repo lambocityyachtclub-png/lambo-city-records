@@ -200,6 +200,8 @@ if (vocalEffects) {
         vocalEffects,
         
         beatDestination,
+        vocalDestination,
+        mixDestination,
 
         beatRecorder,
         vocalRecorder,
@@ -284,14 +286,31 @@ try {
 
     } finally {
 
-      try {
-        take.microphoneSource.disconnect();
-      } catch {}
+  try {
+    take.microphoneSource.disconnect();
+  } catch {}
 
-      take.microphoneStream
-        .getTracks()
-        .forEach((track) => track.stop());
+  try {
+    if (take.vocalEffects) {
+      take.vocalEffects.output.disconnect(
+        take.vocalDestination
+      );
+
+      take.vocalEffects.output.disconnect(
+        take.mixDestination
+      );
     }
+  } catch {}
+
+  try {
+    take.beatOutput.disconnect(take.beatDestination);
+    take.beatOutput.disconnect(take.mixDestination);
+  } catch {}
+
+  take.microphoneStream
+    .getTracks()
+    .forEach((track) => track.stop());
+}
   },
 
   getTakes() {
