@@ -295,11 +295,21 @@ const StudioMultitrackWorkspace = {
         One LAMBO CITY recording environment.
       </p>
 
-      <div class="lc-toolbar">
-        <button type="button" data-action="add-clip">
-          + ADD CLIP
-        </button>
-      </div>
+      
+<div class="lc-toolbar">
+  <button type="button" data-action="transport-play">
+    ▶ PLAY ALL
+  </button>
+
+  <button type="button" data-action="transport-stop">
+    ■ STOP ALL
+  </button>
+
+  <button type="button" data-action="add-clip">
+    + ADD CLIP
+  </button>
+</div>
+
 
       <div class="lc-add-form">
         <input
@@ -336,6 +346,16 @@ const StudioMultitrackWorkspace = {
       if (!button || !root.contains(button)) return;
 
       const action = button.dataset.action;
+
+if (action === "transport-play") {
+  void this.playAll();
+  return;
+}
+
+if (action === "transport-stop") {
+  this.stopAll();
+  return;
+}
 
       if (action === "add-track") {
         const name = root.querySelector("[data-new-name]").value;
@@ -416,6 +436,17 @@ const StudioMultitrackWorkspace = {
       if (!track) return;
 
       track.volume = Number(event.target.value);
+
+row.querySelectorAll("audio").forEach(player => {
+  const anySolo = this.tracks.some(
+    item => item.solo
+  );
+
+  player.volume = (
+    track.muted ||
+    (anySolo && !track.solo)
+  ) ? 0 : track.volume / 100;
+});
 
       row.querySelector("[data-volume-label]").textContent =
         `${track.volume}%`;
@@ -600,9 +631,20 @@ const StudioMultitrackWorkspace = {
           }
 
           const player = document.createElement("audio");
-          player.controls = true;
-          player.preload = "metadata";
-          player.src = clip.objectUrl;
+          
+player.controls = true;
+player.preload = "metadata";
+player.src = clip.objectUrl;
+
+const anySolo = this.tracks.some(
+  item => item.solo
+);
+
+player.volume = (
+  track.muted ||
+  (anySolo && !track.solo)
+) ? 0 : track.volume / 100;
+
           player.style.width = "100%";
           player.style.marginTop = "10px";
 
