@@ -1171,13 +1171,17 @@ if (!this.audio || this.audio.state !== "running") {
     }
   },
 
-  async stopRecording() {
+   async stopRecording() {
     try {
       this.lastRecordedTake =
         await StudioRecordingEngine.stopTake();
 
+      StudioMultitrackWorkspace.addRecordingTake(
+        this.lastRecordedTake
+      );
+
       this.status(
-        "Recording finished. Export your mix, vocals, or beat below."
+        "Recording finished. Vocal, Beat Lab, and Master Mix clips added to Multitrack."
       );
 
     } catch (error) {
