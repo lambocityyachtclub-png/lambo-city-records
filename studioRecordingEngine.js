@@ -92,7 +92,7 @@ const StudioRecordingEngine = {
   takes: [],
   playback: null,
 
-  async startTake({ audio, beatOutput } = {}) {
+ async startTake({ audio, beatOutput, vocalEffects } = {}) {
 
     if (this.activeTake) {
       throw new Error(
@@ -111,7 +111,14 @@ const StudioRecordingEngine = {
         "The Beat Lab recording output is unavailable."
       );
     }
-
+if (
+  vocalEffects &&
+  (!vocalEffects.input || !vocalEffects.output)
+) {
+  throw new Error(
+    "The vocal effects audio connection is incomplete."
+  );
+}
     if (!navigator.mediaDevices?.getUserMedia) {
       throw new Error(
         "Microphone access is unavailable. Open LAMBO CITY over HTTPS."
@@ -150,12 +157,17 @@ const StudioRecordingEngine = {
       mixDestination =
         audio.createMediaStreamDestination();
 
-      // Keep the microphone isolated as its own track.
-      microphoneSource.connect(vocalDestination);
+      // Route vocals through LAMBO CITY effects when supplied.
+if (vocalEffects) {
+  microphoneSource.connect(vocalEffects.input);
 
-      // Also send the microphone into the combined mix.
-      microphoneSource.connect(mixDestination);
-
+  vocalEffects.output.connect(vocalDestination);
+  vocalEffects.output.connect(mixDestination);
+} else {
+  // Preserve the original clean microphone path.
+  microphoneSource.connect(vocalDestination);
+  microphoneSource.connect(mixDestination);
+}
       // Capture the Beat Lab output separately.
       beatOutput.connect(beatDestination);
 
@@ -185,7 +197,8 @@ const StudioRecordingEngine = {
         microphoneStream,
         microphoneSource,
         beatOutput,
-
+        vocalEffects,
+        
         beatDestination,
 
         beatRecorder,
@@ -200,11 +213,25 @@ const StudioRecordingEngine = {
 
     } catch (error) {
 
-      try {
-        if (microphoneSource) {
-          microphoneSource.disconnect();
-        }
-      } catch {}
+     try {
+  if (microphoneSource) {
+    microphoneSource.disconnect();
+  }
+} catch {}
+
+try {
+  if (vocalEffects) {
+    vocalEffects.output.disconnect(vocalDestination);
+    vocalEffects.output.disconnect(mixDestination);
+  }
+} catch {}
+
+try {
+  if (beatOutput && beatDestination) {
+    beatOutput.disconnect(beatDestination);
+    beatOutput.disconnect(mixDestination);
+  }
+} catch {}
 
       microphoneStream
         .getTracks()
