@@ -549,6 +549,7 @@ document.addEventListener(
 StudioMultitrackWorkspace.mount(
   root.querySelector("div")
 );
+StudioMultitrackWorkspace.setTempo(this.pattern.bpm);
 // TEMPORARY DIAGNOSTIC: direct studio audio test
 const testButton = document.createElement("button");
 testButton.type = "button";
