@@ -135,7 +135,7 @@ const StudioDAWApp = {
         panels: {
           mpc: this.panelHost
         },
-        initialView: "mpc"
+         initialView: "edit"
       });
 
       // Create a bridge to the EXISTING Beat Lab instance.
