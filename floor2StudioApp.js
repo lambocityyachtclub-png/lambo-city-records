@@ -683,6 +683,7 @@ root.addEventListener("input", (event) => {
       const bpm = Number(event.target.value);
       if (!Number.isFinite(bpm)) return;
       this.pattern.bpm = Math.max(MIN_BPM, Math.min(MAX_BPM, bpm));
+      StudioMultitrackWorkspace.setTempo(this.pattern.bpm);
       root.querySelector("[data-bpm-label]").textContent =
         `${this.pattern.bpm} BPM`;
     });
