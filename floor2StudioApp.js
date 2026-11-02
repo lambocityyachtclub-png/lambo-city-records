@@ -1648,7 +1648,7 @@ StudioSoundKit.play(
 
           if (firstPattern) {
             this.pattern = normalizePattern(firstPattern);
-
+          StudioMultitrackWorkspace.setTempo(this.pattern.bpm);
             const bpmInput = this.ui?.querySelector("[data-bpm]");
             const bpmLabel = this.ui?.querySelector("[data-bpm-label]");
             const soundSelect =
