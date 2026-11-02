@@ -13,6 +13,12 @@
 import {
   renderStudioDAWTimeline
 } from "./studioDAWTimeline.js";
+
+import StudioAudioEngine from "./studioAudioEngine.js";
+
+import {
+  createStudioDAWArrangementPlayback
+} from "./studioDAWArrangementPlayback.js";
 const TRACK_TYPES = [
   "audio",
   "midi",
@@ -24,8 +30,40 @@ const StudioMultitrackWorkspace = {
   tracks: [],
   nextTrackId: 1,
   root: null,
+  tempo: 100,
+  arrangementPlayback: null,
+
+  setTempo(value) {
+    const bpm = Number(value);
+
+    if (!Number.isFinite(bpm)) return;
+
+    this.tempo = Math.max(60, Math.min(180, bpm));
+  },
+
+  getArrangementPlayback() {
+    if (!this.arrangementPlayback) {
+      this.arrangementPlayback =
+        createStudioDAWArrangementPlayback({
+          getAudioContext: () =>
+            StudioAudioEngine.resume(),
+
+          getOutput: context =>
+            StudioAudioEngine.master ||
+            context.destination,
+
+          getTempo: () => this.tempo,
+
+          onStatus: message =>
+            this.status(message)
+        });
+    }
+
+    return this.arrangementPlayback;
+  },
 
   createTrack(type = "audio", name = "") {
+    
     if (!TRACK_TYPES.includes(type)) {
       throw new Error("Unsupported track type.");
     }
