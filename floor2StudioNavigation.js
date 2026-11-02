@@ -1,6 +1,6 @@
 
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
-
+import StudioDAWApp from "./studioDAWApp.js";
 /*
  * LAMBO CITY RECORDS
  * FLOOR 2 — STUDIO NAVIGATION V1
@@ -8,9 +8,9 @@ import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
  * Coordinates navigation for existing Floor 2 stations.
  * Does not replace the piano, drum, or Beat Lab systems.
  *
- * This first version opens a station information panel.
- * Actual recording, mixing, mastering, and archive workspaces
- * will be connected in later milestones.
+ * * RECORDING & EDITING opens the modular LAMBO CITY DAW.
+ * Other stations retain their information panels until
+ * their dedicated workspaces are connected.
  */
 
 export default {
@@ -106,11 +106,20 @@ export default {
           station.object,
           true
         );
+        
+        if (!hits.length) continue;
 
-        if (hits.length) {
-          this.openPanel(station);
+        // Open the modular DAW from the
+        // Floor 2 RECORD • EDIT workstation.
+        if (station.object.name === "floor2RecordingEditingStation") {
+          StudioDAWApp.open();
           return;
         }
+
+        // Preserve the existing behavior
+        // for all other Floor 2 stations.
+        this.openPanel(station);
+        return;
       }
     };
 
