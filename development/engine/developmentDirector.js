@@ -286,9 +286,13 @@ export function createDevelopmentDirector(options = {}) {
 
     ensureNoDependencyCycle(id, dependencies);
 
-    const requiresApproval =
-      input.requiresApproval === true ||
-      hasProtectedAction(protectedActions);
+   const policyDecision = evaluateDevelopmentTask({
+  title,
+  requiresApproval: input.requiresApproval === true,
+  protectedActions
+});
+
+const requiresApproval = policyDecision.requiresApproval;
 
     const task = {
       id,
