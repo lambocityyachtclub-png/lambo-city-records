@@ -14,13 +14,17 @@
 import StudioDAWWorkspace from "./studioDAWWorkspace.js";
 import Floor2StudioApp from "./floor2StudioApp.js";
 import {
+  createStudioDAWEditPanel
+} from "./studioDAWEditPanel.js";
+import {
   createStudioDAWBeatLabPanel
 } from "./studioDAWBeatLabPanel.js";
 
 const StudioDAWApp = {
   root: null,
   workspace: null,
-  beatLabPanel: null,
+   beatLabPanel: null,
+  editPanel: null,
   panelHost: null,
   handleOverlayClick: null,
 
@@ -140,10 +144,20 @@ const StudioDAWApp = {
       });
 
       // Mount the existing Beat Lab inside the MPC workspace.
-      this.beatLabPanel.mount(this.panelHost);
+           this.beatLabPanel.mount(this.panelHost);
+
+      // Connect the existing Multitrack Workspace
+      // to the modular DAW EDIT tab.
+      this.editPanel = createStudioDAWEditPanel({
+        beatLab: Floor2StudioApp
+      });
+
+      this.workspace.setPanel(
+        "edit",
+        this.editPanel.mount()
+      );
 
       return root;
-
     } catch (error) {
       console.error(
         "LAMBO CITY DAW startup error:",
@@ -164,6 +178,12 @@ const StudioDAWApp = {
         true
       );
     }
+
+       if (this.editPanel) {
+      this.editPanel.destroy();
+    }
+
+    this.editPanel = null;
 
     if (this.beatLabPanel) {
       this.beatLabPanel.destroy();
