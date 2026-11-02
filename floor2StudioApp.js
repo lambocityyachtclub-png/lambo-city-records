@@ -1439,7 +1439,7 @@ StudioSoundKit.play(
     // Restore the active project and its beat.
     this.currentProject = project;
     this.pattern = normalizePattern(savedPattern);
-
+    StudioMultitrackWorkspace.setTempo(this.pattern.bpm);
     this.soundProfile =
       project.settings?.soundProfile === "mpc"
         ? "mpc"
