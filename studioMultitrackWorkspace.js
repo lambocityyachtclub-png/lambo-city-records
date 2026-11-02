@@ -569,79 +569,34 @@ row.querySelectorAll("audio").forEach(player => {
       this.root?.querySelectorAll("[data-track-list] audio") || []
     );
 
-    return players.some(
-      player => !player.paused && !player.ended
-    );
+    return Boolean(this.arrangementPlayback?.playing) ||
+      players.some(
+        player => !player.paused && !player.ended
+      );
   },
 
   async playAll() {
-    const players = Array.from(
-      this.root?.querySelectorAll("[data-track-list] audio") || []
-    );
+    this.stopAll();
 
-    if (!players.length) {
+    if (!this.tracks.some(track =>
+      track.clips?.some(clip =>
+        clip.blob && clip.blob.size > 0
+      )
+    )) {
       this.status("No recorded audio clips available.");
       return;
     }
 
-    this.stopAll();
-
-    const playerTracks = players.map(player => {
-      const row = player.closest("[data-track-id]");
-
-      return {
-        player,
-        track: this.tracks.find(
-          track => track.id === row?.dataset.trackId
-        )
-      };
-    }).filter(item => item.track);
-
-    const anySolo = this.tracks.some(track => track.solo);
-
-    const hasSeparateStems =
-      playerTracks.some(item => item.track.name === "Vocals") &&
-      playerTracks.some(item => item.track.name === "Beats");
-
-    const selectedPlayers = playerTracks.filter(({ track }) => {
-      if (track.muted) return false;
-
-      if (anySolo) return track.solo;
-
-      if (hasSeparateStems && track.name === "Master Mix") {
-        return false;
-      }
-
-      return true;
-    });
-
-    if (!selectedPlayers.length) {
-      this.status("No audible tracks selected for playback.");
-      return;
-    }
-
-    selectedPlayers.forEach(({ player }) => {
-      player.currentTime = 0;
-    });
-
-    try {
-      await Promise.all(
-        selectedPlayers.map(({ player }) => player.play())
-      );
-
-      this.status("Multitrack playback started.");
-    } catch (error) {
-      this.stopAll();
-
-      console.error("Multitrack playback error:", error);
-
-      this.status(
-        `PLAYBACK ERROR: ${error?.message || error}`
-      );
-    }
+    await this.getArrangementPlayback().play(
+      this.tracks
+    );
   },
 
   stopAll() {
+    if (this.arrangementPlayback) {
+      this.arrangementPlayback.stop();
+    }
+
     const players = this.root?.querySelectorAll(
       "[data-track-list] audio"
     ) || [];
@@ -661,7 +616,6 @@ row.querySelectorAll("audio").forEach(player => {
       void this.playAll();
     }
   },
-
   render() {
     if (!this.root) return;
 
