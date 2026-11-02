@@ -468,18 +468,32 @@ const requiresApproval = policyDecision.requiresApproval;
       throw new Error("Invalid task status.");
     }
 
-    if (
-      updates.status === TASK_STATUS.COMPLETED &&
-      task.status !== TASK_STATUS.REVIEW
-    ) {
-      throw new Error(
-        "A task must pass review before completion."
-      );
-    }
+   if (updates.status !== undefined) {
+  const allowedTransitions = {
+    [TASK_STATUS.QUEUED]: [],
+    [TASK_STATUS.IN_PROGRESS]: [
+      TASK_STATUS.BLOCKED,
+      TASK_STATUS.REVIEW
+    ],
+    [TASK_STATUS.BLOCKED]: [
+      TASK_STATUS.QUEUED
+    ],
+    [TASK_STATUS.REVIEW]: [
+      TASK_STATUS.COMPLETED
+    ],
+    [TASK_STATUS.PENDING_APPROVAL]: [],
+    [TASK_STATUS.COMPLETED]: [],
+    [TASK_STATUS.REJECTED]: []
+  };
 
-    if (updates.status === TASK_STATUS.IN_PROGRESS) {
-      ensureDependenciesComplete(task);
-    }
+  const allowed = allowedTransitions[task.status] || [];
+
+  if (!allowed.includes(updates.status)) {
+    throw new Error(
+      `Invalid task status transition: ${task.status} -> ${updates.status}`
+    );
+  }
+}
 
     const previousStatus = task.status;
 
