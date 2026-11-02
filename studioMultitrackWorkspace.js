@@ -10,7 +10,9 @@
  * Audio recording and MIDI processing
  * will be connected in the next milestone.
  */
-
+import {
+  renderStudioDAWTimeline
+} from "./studioDAWTimeline.js";
 const TRACK_TYPES = [
   "audio",
   "midi",
@@ -234,24 +236,14 @@ const StudioMultitrackWorkspace = {
           min-height: 20px;
         }
 
-        #lc-multitrack-workspace .lc-timeline {
-          display: flex;
-          gap: 8px;
-          min-height: 75px;
-          overflow-x: auto;
-          padding: 9px;
-          background:
-            repeating-linear-gradient(
-              90deg,
-              #343946 0,
-              #343946 1px,
-              transparent 1px,
-              transparent 25%
-            ),
-            #10131a;
-          border: 1px solid #343946;
-          border-radius: 7px;
-        }
+       #lc-multitrack-workspace .lc-timeline {
+  display: block;
+  min-height: 110px;
+  overflow: visible;
+  padding: 0;
+  background: transparent;
+  border: 0;
+}
 
         #lc-multitrack-workspace .lc-clip {
           flex: 0 0 120px;
@@ -705,8 +697,19 @@ row.querySelectorAll("audio").forEach(player => {
 
       volume.append(volumeName, slider, volumeLabel);
 
-      const timeline = document.createElement("div");
-      timeline.className = "lc-timeline";
+     const timeline = document.createElement("div");
+timeline.className = "lc-timeline";
+
+renderStudioDAWTimeline({
+  container: timeline,
+  track,
+
+  onChange: clip => {
+    this.status(
+      `${clip.name} moved to bar ${clip.startBar}.`
+    );
+  }
+});
 
       if (track.clips.length === 0) {
         const empty = document.createElement("span");
