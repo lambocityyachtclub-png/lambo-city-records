@@ -710,55 +710,7 @@ renderStudioDAWTimeline({
     );
   }
 });
-
-      if (track.clips.length === 0) {
-        const empty = document.createElement("span");
-        empty.className = "lc-empty";
-        empty.textContent = "Empty timeline";
-        timeline.appendChild(empty);
-      }
-
-     
-      track.clips.forEach(clip => {
-        const block = document.createElement("div");
-        block.className = "lc-clip";
-
-        const label = document.createElement("div");
-        label.textContent = clip.name;
-        block.appendChild(label);
-
-        if (clip.blob && clip.blob.size > 0) {
-          if (!clip.objectUrl) {
-            clip.objectUrl = URL.createObjectURL(clip.blob);
-          }
-
-          const player = document.createElement("audio");
-          
-player.controls = true;
-player.preload = "metadata";
-player.src = clip.objectUrl;
-
-const anySolo = this.tracks.some(
-  item => item.solo
-);
-
-player.volume = (
-  track.muted ||
-  (anySolo && !track.solo)
-) ? 0 : track.volume / 100;
-
-          player.style.width = "100%";
-          player.style.marginTop = "10px";
-
-          block.appendChild(player);
-        } else {
-          const empty = document.createElement("span");
-          empty.textContent = "No recorded audio";
-          block.appendChild(empty);
-        }
-
-        timeline.appendChild(block);
-      });
+      
 
       row.append(header, volume, timeline);
       list.appendChild(row);
