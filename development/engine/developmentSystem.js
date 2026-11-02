@@ -3,17 +3,13 @@
  * LAMBO CITY — AUTONOMOUS DEVELOPMENT ENGINE
  * Development System Bootstrap
  *
- * Purpose:
- * - Connect the development engine modules.
- * - Create the central Development Director.
- * - Register the Studio Development Runner.
- * - Keep development separate from the live game.
+ * Connects the Registry, Director, Policy, and Studio Runner.
  *
- * Important:
- * - This is a setup layer, not a background worker.
- * - It does not write to project files.
- * - It does not execute generated code.
- * - It does not deploy changes.
+ * This module does not:
+ * - Modify game files.
+ * - Execute generated code.
+ * - Deploy changes.
+ * - Start a background worker.
  */
 
 import {
@@ -43,16 +39,12 @@ export const DEVELOPMENT_SYSTEM_STATUS = Object.freeze({
 });
 
 /**
- * Create and connect the LAMBO CITY development system.
+ * Create and initialize the development system.
  *
- * Optional:
- * storage:
- *   A future-compatible storage adapter for the Director.
- *
- * clock:
- *   An optional clock function for task timestamps.
+ * This is async because the Director must initialize
+ * its task storage before it can accept tasks.
  */
-export function createDevelopmentSystem(options = {}) {
+export async function createDevelopmentSystem(options = {}) {
   const {
     storage = null,
     clock
@@ -60,9 +52,7 @@ export function createDevelopmentSystem(options = {}) {
 
   const registry = createDevelopmentRegistry();
 
-  const directorOptions = {
-    storage
-  };
+  const directorOptions = { storage };
 
   if (typeof clock === "function") {
     directorOptions.clock = clock;
@@ -71,6 +61,9 @@ export function createDevelopmentSystem(options = {}) {
   const director = createDevelopmentDirector(
     directorOptions
   );
+
+  // Initialize the Director before connecting task runners.
+  await director.initialize();
 
   const studioRunner = createStudioDevelopmentRunner({
     developmentDirector: director
@@ -144,14 +137,12 @@ export function createDevelopmentSystem(options = {}) {
   function disable() {
     status = DEVELOPMENT_SYSTEM_STATUS.DISABLED;
     studioRunner.setEnabled(false);
-
     return getStatus();
   }
 
   function enable() {
     status = DEVELOPMENT_SYSTEM_STATUS.READY;
     studioRunner.setEnabled(true);
-
     return getStatus();
   }
 
