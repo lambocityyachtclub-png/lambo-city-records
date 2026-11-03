@@ -273,7 +273,49 @@ function createMixPanel({ beatLab, workspace } = {}) {
       panValue.dataset.trackPanLabel = track.id;
       panValue.textContent = !track.pan ? "C" : (track.pan < 0 ? "L " : "R ") + Math.round(Math.abs(track.pan) * 100);
       pan.append(panName, panSlider, panValue);
-      row.append(heading, volume, pan);
+      const inserts = document.createElement("details");
+      inserts.style.cssText = "padding:9px 10px;border:1px solid #343946;border-radius:8px;background:#12151d;color:#d8b36e";
+      const insertsTitle = document.createElement("summary");
+      insertsTitle.textContent = "INSERT FX · EQ / COMPRESSION";
+      insertsTitle.style.cssText = "font-size:10px;font-weight:800;letter-spacing:1px;cursor:pointer";
+      inserts.appendChild(insertsTitle);
+      [["low","LOW"],["mid","MID"],["high","HIGH"]].forEach(([band,label]) => {
+        const control = document.createElement("label");
+        control.style.cssText = "display:grid;grid-template-columns:52px 1fr 42px;gap:8px;align-items:center;margin-top:9px;color:#a8a8b1;font-size:10px";
+        const caption = document.createElement("span");
+        caption.textContent = label;
+        const eqSlider = document.createElement("input");
+        eqSlider.type = "range";
+        eqSlider.min = "-12";
+        eqSlider.max = "12";
+        eqSlider.step = "0.5";
+        eqSlider.value = String(track.eq?.[band] || 0);
+        eqSlider.dataset.eqBand = band;
+        eqSlider.dataset.trackId = track.id;
+        eqSlider.style.cssText = "width:100%;accent-color:#e6bb69";
+        const eqValue = document.createElement("span");
+        eqValue.textContent = (Number(track.eq?.[band]) || 0) + " dB";
+        eqValue.dataset.eqLabel = band + "-" + track.id;
+        control.append(caption, eqSlider, eqValue);
+        inserts.appendChild(control);
+      });
+      const compControl = document.createElement("label");
+      compControl.style.cssText = "display:grid;grid-template-columns:90px 1fr 35px;gap:8px;align-items:center;margin-top:9px;color:#a8a8b1;font-size:10px";
+      compControl.append("COMP RATIO");
+      const compSlider = document.createElement("input");
+      compSlider.type = "range";
+      compSlider.min = "1";
+      compSlider.max = "8";
+      compSlider.step = "0.1";
+      compSlider.value = String(track.compression?.ratio ?? 1);
+      compSlider.dataset.compRatio = track.id;
+      compSlider.style.cssText = "width:100%;accent-color:#e6bb69";
+      const compValue = document.createElement("span");
+      compValue.textContent = Number(track.compression?.ratio ?? 1).toFixed(1) + ":1";
+      compValue.dataset.compLabel = track.id;
+      compControl.append(compSlider, compValue);
+      inserts.appendChild(compControl);
+      row.append(heading, volume, pan, inserts);
       list.appendChild(row);
     });
   };
@@ -305,6 +347,27 @@ function createMixPanel({ beatLab, workspace } = {}) {
   });
 
   root.addEventListener("input", event => {
+    const eqSlider = event.target.closest("[data-eq-band]");
+    if (eqSlider) {
+      const track = StudioMultitrackWorkspace.tracks.find(item => item.id === eqSlider.dataset.trackId);
+      if (!track) return;
+      const band = eqSlider.dataset.eqBand;
+      track.eq = { ...(track.eq || {}), [band]: Number(eqSlider.value) };
+      const label = root.querySelector('[data-eq-label="' + band + "-" + track.id + '"]');
+      if (label) label.textContent = track.eq[band] + " dB";
+      StudioMultitrackWorkspace.arrangementPlayback?.setTrackEQ(track.id, band, track.eq[band]);
+      return;
+    }
+    const compSlider = event.target.closest("[data-comp-ratio]");
+    if (compSlider) {
+      const track = StudioMultitrackWorkspace.tracks.find(item => item.id === compSlider.dataset.compRatio);
+      if (!track) return;
+      track.compression = { ...(track.compression || {}), ratio: Number(compSlider.value) };
+      const label = root.querySelector('[data-comp-label="' + track.id + '"]');
+      if (label) label.textContent = track.compression.ratio.toFixed(1) + ":1";
+      StudioMultitrackWorkspace.arrangementPlayback?.setTrackCompression(track.id, track.compression.ratio);
+      return;
+    }
     const slider = event.target.closest("[data-track-volume], [data-track-pan]");
     if (slider) {
       const track = StudioMultitrackWorkspace.tracks.find(item => item.id === slider.dataset.trackVolume);
