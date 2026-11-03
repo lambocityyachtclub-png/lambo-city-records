@@ -134,8 +134,9 @@ function envelope(audio, destination, time, duration, peak = 0.65) {
 function playSound(audio, sound, time, bus, velocity = 1, padSettings = {}) {
   if (!audio || audio.state !== "running" || !sound) return false;
   const family = sound.family;
-  const duration = clamp(sound.decay, 0.06, 1.2);
-  const pitch = clamp(sound.frequency, 28, 900);
+  const padDecay = clamp(Number(padSettings.decay ?? 10), 0.05, 10) / 10;
+  const duration = clamp(sound.decay * padDecay, 0.06, 1.2);
+  const pitch = clamp(sound.frequency * clamp(Number(padSettings.pitch ?? 1), 0.5, 2), 28, 1800);
   const brightness = clamp(sound.brightness, 0.1, 1);
   const out = bus.input;
   const velocityScale = clamp(Number(velocity) || 1, 0, 1.5);
