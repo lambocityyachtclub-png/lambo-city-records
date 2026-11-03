@@ -126,15 +126,16 @@ export default {
 
     // Match the actual dock planks and private cabin walkways.
     // Keep a darker structural edge beneath the timber boards.
+    // Match the two timber tones used by dock.js:
+    // warm structural wood beneath the same cross-planked dock boards.
+    const dockWood = new THREE.MeshStandardMaterial({
+      color: 0x8b5e3c,
+      roughness: 0.9
+    });
+
     const premiumWood = new THREE.MeshStandardMaterial({
       color: 0x6d4327,
       roughness: 0.72,
-      metalness: 0.02
-    });
-
-    const darkWood = new THREE.MeshStandardMaterial({
-      color: 0x3a2415,
-      roughness: 0.82,
       metalness: 0.02
     });
 
@@ -163,7 +164,7 @@ export default {
     // Structural timber stringers make the spur feel built into the dock.
     const deckBase = new THREE.Mesh(
       new THREE.BoxGeometry(length, 0.22, PATH.width + 0.24),
-      darkWood
+      dockWood
     );
     deckBase.position.set(centerX, PATH.surfaceY - 0.11, PATH.centerZ);
     deckBase.receiveShadow = true;
@@ -190,7 +191,7 @@ export default {
     [-1, 1].forEach(side => {
       const fascia = new THREE.Mesh(
         new THREE.BoxGeometry(length, 0.12, 0.09),
-        darkWood
+        dockWood
       );
       fascia.position.set(
         centerX,
