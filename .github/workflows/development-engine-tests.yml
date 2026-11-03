@@ -33,5 +33,6 @@ jobs:
           node --experimental-default-type=module --test \
             development/tests/developmentSystem.test.js \
             development/tests/developmentTaskStorage.test.js \
-            development/tests/controlledDevelopmentExecutor.test.js \
-            development/tests/isolatedWorkspaceAdapter.test.js
+                        development/tests/controlledDevelopmentExecutor.test.js \
+            development/tests/isolatedWorkspaceAdapter.test.js \
+            development/tests/developmentReviewStorage.test.js
