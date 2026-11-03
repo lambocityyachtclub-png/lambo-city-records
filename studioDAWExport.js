@@ -78,7 +78,8 @@ export async function renderStudioSessionToWav({
   if (renderDuration > MAX_RENDER_SECONDS || decoded.some(item => item.start >= MAX_RENDER_SECONDS)) {
     throw new Error("The arrangement extends beyond the 15-minute WAV export limit.");
   }
-  renderDuration = Math.max(0.1, renderDuration + 0.1);
+  const reverbTail = Math.max(0.1, ...decoded.map(({ track }) => Number(track.effects?.reverbDecay) || 0.1));
+  renderDuration = Math.max(0.1, renderDuration + reverbTail + 0.1);
 
   const OfflineContext = window.OfflineAudioContext || window.webkitOfflineAudioContext;
   if (!OfflineContext) throw new Error("Offline audio rendering is not supported in this browser.");
