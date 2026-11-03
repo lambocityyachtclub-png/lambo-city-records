@@ -23,7 +23,7 @@ const PRODUCER_SEAT = {
   z: HQ_Z - 2.15
 };
 
-const ELEVATOR_ARRIVAL_SECONDS = 3.6;
+const ELEVATOR_ARRIVAL_SECONDS = 2.8;
 
 let playerSystem = null;
 let renderer = null;
