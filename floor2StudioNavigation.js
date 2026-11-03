@@ -42,43 +42,15 @@ export default {
       return;
     }
 
+    // Every physical production station now opens a real
+    // workspace in the shared Studio app. No placeholder panels.
     this.targets = [
-      {
-        object: stations.vocalBooth,
-        title: "VOCAL RECORDING",
-        description:
-          "Vocal recording workspace. Microphone input and multitrack recording integration are planned for this station."
-      },
-      {
-        object: stations.recordingEditing,
-        title: "RECORDING & EDITING",
-        description:
-          "Recording and editing workspace. This station will connect to the shared LAMBO CITY Studio project."
-      },
-      {
-        object: stations.controlRoom,
-        title: "MIXING CONSOLE",
-        description:
-          "Main mixing workspace. Track levels, effects, and mixing controls will connect here."
-      },
-      {
-        object: stations.mastering,
-        title: "MASTERING",
-        description:
-          "Mastering workspace. Final song processing and export controls will connect here."
-      },
-      {
-        object: stations.songArchive,
-        title: "SONG ARCHIVE",
-        description:
-          "Your saved LAMBO CITY song projects will be accessible here."
-      },
-      {
-        object: stations.mobileStudio,
-        title: "MOBILE STUDIO",
-        description:
-          "A compact workspace for creating and recording through your device."
-      }
+      { object: stations.vocalBooth, view: "vocals", title: "VOCAL RECORDING" },
+      { object: stations.recordingEditing, view: "edit", title: "RECORDING & EDITING" },
+      { object: stations.controlRoom, view: "mix", title: "MIXING CONSOLE" },
+      { object: stations.mastering, view: "mix", title: "MASTERING" },
+      { object: stations.songArchive, view: "mpc", title: "SONG ARCHIVE" },
+      { object: stations.mobileStudio, view: "vocals", title: "MOBILE STUDIO" }
     ].filter(item => item.object);
 
     this.handleClick = event => {
@@ -109,16 +81,9 @@ export default {
         
         if (!hits.length) continue;
 
-        // Open the modular DAW from the
-        // Floor 2 RECORD • EDIT workstation.
-        if (station.object.name === "floor2RecordingEditingStation") {
-          StudioDAWApp.open();
-          return;
-        }
-
-        // Preserve the existing behavior
-        // for all other Floor 2 stations.
-        this.openPanel(station);
+        // Route each physical station into its matching
+        // functional workspace inside the same Studio session.
+        StudioDAWApp.open(station.view || "edit");
         return;
       }
     };
