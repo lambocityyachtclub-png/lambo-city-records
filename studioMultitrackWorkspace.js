@@ -15,6 +15,7 @@ import {
 } from "./studioDAWTimeline.js";
 
 import StudioAudioEngine from "./studioAudioEngine.js";
+import StudioRecordingEngine from "./studioRecordingEngine.js";
 
 import {
   createStudioDAWArrangementPlayback
@@ -570,6 +571,56 @@ const StudioMultitrackWorkspace = {
     this.render();
 
     return root;
+  },
+
+  async startArmedRecording() {
+    const armedTracks = this.tracks.filter(track => track.armed && track.type === "audio");
+    if (armedTracks.length !== 1) {
+      this.status(armedTracks.length ? "Arm exactly one audio track to record." : "Arm the audio track you want to record into.");
+      return false;
+    }
+    try {
+      const audio = await StudioAudioEngine.resume();
+      await StudioRecordingEngine.startTrackRecording({ audio, trackId: armedTracks[0].id });
+      this.status("Recording into " + armedTracks[0].name + ". Perform into your microphone.");
+      return true;
+    } catch (error) {
+      this.status("RECORDING ERROR: " + (error?.message || error));
+      return false;
+    }
+  },
+
+  async stopArmedRecording() {
+    if (!StudioRecordingEngine.activeTrackTake) return false;
+    try {
+      const take = await StudioRecordingEngine.stopTrackRecording();
+      let track = this.tracks.find(item => item.id === take.trackId);
+      if (!track) track = this.createTrack("audio", "Recovered Recording");
+      const context = await StudioAudioEngine.resume();
+      const bytes = await take.blob.arrayBuffer();
+      const buffer = await context.decodeAudioData(bytes.slice(0));
+      const lengthBars = Math.max(1, Math.ceil(buffer.duration / (240 / this.tempo)));
+      track.clips.push({
+        id: take.id,
+        name: track.name + " Recording",
+        blob: take.blob,
+        takeId: take.id,
+        startBar: 1,
+        lengthBars,
+        duration: buffer.duration,
+        createdAt: take.startedAt
+      });
+      this.render();
+      this.status("Recording saved to " + track.name + " as a new waveform clip.");
+      return true;
+    } catch (error) {
+      this.status("RECORDING SAVE ERROR: " + (error?.message || error));
+      return false;
+    }
+  },
+
+  isTrackRecording() {
+    return Boolean(StudioRecordingEngine.activeTrackTake);
   },
 
   async importAudioFiles(files = []) {
