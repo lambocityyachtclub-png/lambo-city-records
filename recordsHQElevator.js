@@ -22,10 +22,10 @@ const ACTIVATION_DISTANCE =
 // Keep Floor 2's established ride timing untouched for the Studio.
 // Other destinations use a quicker transfer and faster landing-door response.
 const TRAVEL_TIME_BY_FLOOR = {
-  1: 1.35,
+  1: 2.8,
   2: 2.8,
-  3: 1.35,
-  4: 1.35
+  3: 2.8,
+  4: 2.8
 };
 
 
