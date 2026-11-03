@@ -341,7 +341,7 @@ function createMixPanel({ beatLab, workspace } = {}) {
       const automationControls = document.createElement("div");
       automationControls.style.cssText = "display:grid;grid-template-columns:70px 1fr auto;gap:7px;align-items:center;margin-top:10px";
       const barInput = document.createElement("input");
-      barInput.type = "number"; barInput.min = "1"; barInput.max = "32"; barInput.step = "1";
+      barInput.type = "number"; barInput.min = "1"; barInput.max = "128"; barInput.step = "1";
       barInput.value = "1"; barInput.dataset.automationBar = track.id;
       barInput.setAttribute("aria-label", "Automation bar");
       const levelInput = document.createElement("input");
@@ -379,7 +379,7 @@ function createMixPanel({ beatLab, workspace } = {}) {
       const track = StudioMultitrackWorkspace.tracks.find(item => item.id === addPoint.dataset.addVolumePoint);
       const row = addPoint.closest("[data-track-id]");
       if (!track || !row) return;
-      const bar = Math.max(1, Math.min(32, Number(row.querySelector("[data-automation-bar]").value) || 1));
+      const bar = Math.max(1, Math.min(128, Number(row.querySelector("[data-automation-bar]").value) || 1));
       const value = Math.max(0, Math.min(100, Number(row.querySelector("[data-automation-level]").value) || 0));
       track.automation = track.automation || { volume: [] };
       const existing = track.automation.volume.find(point => point.bar === bar);
