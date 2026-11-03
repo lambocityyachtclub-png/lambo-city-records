@@ -186,9 +186,10 @@ function updateExplorationCamera(player, delta, moving, insideHQ) {
   const t = dampFactor(delta);
   camera.position.lerp(desired, t);
 
-  // Keep a little look-ahead in the direction of travel without
-  // forcing the character to rotate when the player looks around.
-  const lookAhead = moving ? 0.35 : 0;
+  // Aim the view ahead of HERO, not at the back of the character.
+  // At startup this points the camera toward the stage/Jumbotron,
+  // while keeping the third-person camera positioned behind HERO.
+  const lookAhead = 8.0;
   const lookTarget = target.clone().add(new THREE.Vector3(
     Math.sin(player.rotation.y) * lookAhead,
     0,
