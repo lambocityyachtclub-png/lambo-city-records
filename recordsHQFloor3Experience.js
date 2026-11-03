@@ -237,7 +237,155 @@ function buildInterface() {
     directory.appendChild(button);
   });
 
-  const note = makeText("p", "INTERACTIVE FLOOR DIRECTORY  •  Room selection is a local experience preview; scheduling and external services are not connected.", {
+  const sessionModes = [
+    { id: "team", name: "TEAM MEETING", detail: "Internal updates, decisions and milestone reviews.", agenda: ["Opening updates", "Current priorities", "Decisions and next actions"] },
+    { id: "artist", name: "ARTIST SESSION", detail: "Private conversations with artists and creative collaborators.", agenda: ["Introductions and creative goals", "Music and project direction", "Collaboration next steps"] },
+    { id: "production", name: "PRODUCTION REVIEW", detail: "Beat, recording, arrangement and creative-production discussions.", agenda: ["Review the current production", "Creative notes and revisions", "Delivery milestones"] },
+    { id: "engineering", name: "ENGINEERING SESSION", detail: "Recording, mixing, mastering and technical workflow reviews.", agenda: ["Technical requirements", "Audio and workflow review", "Engineering action items"] },
+    { id: "partners", name: "PARTNER MEETING", detail: "Business development with invited industry partners and advisors.", agenda: ["Purpose and introductions", "Opportunity overview", "Partnership follow-up"] },
+    { id: "live", name: "LIVE PRESENTATION", detail: "A structured presentation or livestream-style team briefing.", agenda: ["Welcome and context", "Main presentation", "Questions and closing"] }
+  ];
+  let selectedMode = sessionModes[0];
+  let sessionPrepared = false;
+
+  const sessionDivider = document.createElement("div");
+  setStyles(sessionDivider, {
+    height: "1px",
+    margin: "30px 0 22px",
+    background: "linear-gradient(90deg,rgba(216,180,117,.7),rgba(216,180,117,0))"
+  });
+  const clubroomLabel = makeText("div", "LAMBO CITY EXECUTIVE CLUBROOM", {
+    color: "#d8b475",
+    fontSize: "10px",
+    fontWeight: "700",
+    letterSpacing: "2.2px"
+  });
+  const clubroomIntro = makeText("p", "An exclusive meeting destination for the LAMBO CITY team, artists, producers, engineers and invited business partners. Choose the purpose of your session and prepare a focused agenda.", {
+    margin: "10px 0 18px",
+    color: "rgba(245,240,232,.72)",
+    fontSize: "13px",
+    lineHeight: "1.65"
+  });
+  const modeTitle = makeText("div", "CHOOSE YOUR SESSION", {
+    marginBottom: "12px",
+    color: "rgba(245,240,232,.56)",
+    fontSize: "10px",
+    fontWeight: "700",
+    letterSpacing: "2px"
+  });
+  const modeGrid = document.createElement("div");
+  setStyles(modeGrid, {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,190px),1fr))",
+    gap: "9px"
+  });
+
+  const modeDetail = makeText("p", "", {
+    minHeight: "42px",
+    margin: "15px 0 10px",
+    color: "rgba(245,240,232,.72)",
+    fontSize: "12px",
+    lineHeight: "1.6"
+  });
+  const agendaTitle = makeText("div", "SUGGESTED AGENDA", {
+    margin: "14px 0 8px",
+    color: "#d8b475",
+    fontSize: "10px",
+    fontWeight: "700",
+    letterSpacing: "1.8px"
+  });
+  const agendaList = document.createElement("div");
+  const prepareButton = document.createElement("button");
+  prepareButton.type = "button";
+  prepareButton.textContent = "PREPARE SESSION PLAN";
+  setStyles(prepareButton, {
+    width: "100%",
+    minHeight: "48px",
+    marginTop: "18px",
+    padding: "12px 18px",
+    border: "1px solid rgba(225,190,126,.78)",
+    borderRadius: "9px",
+    background: "linear-gradient(110deg,rgba(128,91,43,.42),rgba(42,34,25,.72))",
+    color: "#f4dfb5",
+    font: "700 11px Arial,sans-serif",
+    letterSpacing: "1.4px",
+    cursor: "pointer"
+  });
+  const sessionStatus = makeText("div", "SESSION PLANNER READY  •  NO CALL HAS BEEN STARTED", {
+    marginTop: "12px",
+    padding: "11px 12px",
+    border: "1px solid rgba(255,255,255,.12)",
+    borderRadius: "8px",
+    background: "rgba(255,255,255,.035)",
+    color: "rgba(245,240,232,.56)",
+    fontSize: "10px",
+    lineHeight: "1.5",
+    letterSpacing: ".7px"
+  });
+
+  function renderSessionMode(mode) {
+    selectedMode = mode;
+    sessionPrepared = false;
+    modeGrid.querySelectorAll("button").forEach(button => {
+      const active = button.dataset.mode === mode.id;
+      button.style.borderColor = active ? "rgba(225,190,126,.9)" : "rgba(211,174,111,.25)";
+      button.style.background = active ? "rgba(151,111,54,.2)" : "rgba(255,255,255,.045)";
+      button.setAttribute("aria-pressed", active ? "true" : "false");
+    });
+    modeDetail.textContent = mode.detail;
+    agendaList.replaceChildren();
+    mode.agenda.forEach((item, index) => {
+      const line = makeText("div", "0" + (index + 1) + "   " + item, {
+        padding: "9px 0",
+        borderBottom: "1px solid rgba(255,255,255,.07)",
+        color: "rgba(245,240,232,.8)",
+        fontSize: "12px",
+        lineHeight: "1.5"
+      });
+      agendaList.appendChild(line);
+    });
+    sessionStatus.textContent = "SESSION PLANNER READY  •  " + mode.name + " SELECTED";
+    prepareButton.textContent = "PREPARE " + mode.name + " PLAN";
+  }
+
+  sessionModes.forEach(mode => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.dataset.mode = mode.id;
+    button.textContent = mode.name;
+    setStyles(button, {
+      minHeight: "48px",
+      padding: "11px 12px",
+      border: "1px solid rgba(211,174,111,.25)",
+      borderRadius: "9px",
+      background: "rgba(255,255,255,.045)",
+      color: "#eee5d6",
+      font: "700 10px/1.4 Arial,sans-serif",
+      letterSpacing: ".8px",
+      textAlign: "left",
+      cursor: "pointer"
+    });
+    button.addEventListener("click", () => renderSessionMode(mode));
+    modeGrid.appendChild(button);
+  });
+
+  prepareButton.addEventListener("click", () => {
+    sessionPrepared = true;
+    sessionStatus.textContent = "LOCAL SESSION PLAN PREPARED  •  " + selectedMode.name + "  •  AGENDA READY";
+    prepareButton.textContent = "SESSION PLAN PREPARED";
+  });
+
+  renderSessionMode(selectedMode);
+
+  const connectionNote = makeText("p", "PRIVATE VIDEO, MICROPHONE, INVITATIONS AND LIVESTREAM CONNECTIONS ARE NOT ACTIVE YET. This first build prepares the meeting experience locally; live participant communication will be added through a dedicated real-time service.", {
+    margin: "16px 0 0",
+    color: "rgba(245,240,232,.42)",
+    fontSize: "10px",
+    lineHeight: "1.65",
+    letterSpacing: ".25px"
+  });
+
+  const note = makeText("p", "FLOOR DIRECTORY  •  Select a room above to review its purpose. Meeting plans are local previews; invitations and scheduling are not connected.", {
     margin: "22px 0 0",
     color: "rgba(245,240,232,.38)",
     fontSize: "10px",
@@ -245,7 +393,7 @@ function buildInterface() {
     letterSpacing: ".5px"
   });
 
-  panel.append(header, eyebrow, title, description, divider, listTitle, points, directoryTitle, directory, note);
+  panel.append(header, clubroomLabel, clubroomIntro, sessionDivider, modeTitle, modeGrid, modeDetail, agendaTitle, agendaList, prepareButton, sessionStatus, connectionNote, divider, eyebrow, title, description, listTitle, points, directoryTitle, directory, note);
   modalEl.appendChild(panel);
   modalEl.addEventListener("click", event => {
     if (event.target === modalEl) closeModal();
