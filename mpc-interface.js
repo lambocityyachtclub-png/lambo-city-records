@@ -530,7 +530,11 @@ const MPCInterface = {
     this.root?.querySelector('[data-placeholder="REC"]')?.classList.remove("lit");
     const projectId = this.beatLab?.currentProject?.id || "unsaved";
     const lastEvent = this.take.events[this.take.events.length - 1];
-    this.take.duration = Math.max(this.take.duration || 0, lastEvent?.at || 0);
+    const elapsed = this.beatLab?.audio
+      ? Math.max(0, this.beatLab.audio.currentTime - this.recordingStartedAt + this.overdubOffset)
+      : 0;
+    const barDuration = 60 / (this.beatLab?.pattern?.bpm || 100) * 4;
+    this.take.duration = Math.max(this.take.duration || 0, elapsed, lastEvent?.at || 0, barDuration);
     try {
       this.take = StudioMPCLibrary.saveTake(projectId, this.take);
       this.setStatus("PAD TAKE SAVED · " + this.take.events.length + " HITS · READY WITH BEAT LAB");
@@ -546,6 +550,7 @@ const MPCInterface = {
     if (!audio) return;
     this.playbackStartedAt = audio.currentTime + 0.06;
     this.playbackIndex = 0;
+    const loopDuration = Math.max(0.25, this.take.duration || (60 / (this.beatLab?.pattern?.bpm || 100) * 4));
     this.playbackTimer = window.setInterval(() => {
       if (!this.beatLab?.playing || !this.beatLab.audio) { this.stopPerformancePlayback(); return; }
       const elapsed = this.beatLab.audio.currentTime - this.playbackStartedAt;
@@ -554,7 +559,10 @@ const MPCInterface = {
         const sound = StudioMPCLibrary.getSounds().find(item => item.id === event.soundId);
         if (sound) StudioMPCLibrary.play(this.beatLab.audio, sound, Math.max(this.beatLab.audio.currentTime, this.playbackStartedAt + event.at));
       }
-      if (elapsed > this.take.duration + 0.2) this.stopPerformancePlayback();
+      if (elapsed >= loopDuration) {
+        this.playbackStartedAt += loopDuration;
+        this.playbackIndex = 0;
+      }
     }, 20);
   },
 
