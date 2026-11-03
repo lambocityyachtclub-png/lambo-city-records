@@ -8,6 +8,7 @@ import StudioAudioExport from "./studioAudioExport.js";
 
 const STORAGE_KEY = "lambocity-mpc-library-v1";
 const TAKE_KEY = "lambocity-mpc-performance-v1:";
+const MASTER_KEY = "lambocity-mpc-master-level-v1";
 const FAMILIES = [
   ["KICK", "kick"], ["808", "bass"], ["SNARE", "snare"], ["CLAP", "clap"],
   ["HAT", "hat"], ["PERC", "perc"], ["BASS", "bass"], ["CHOP", "chop"],
@@ -270,7 +271,7 @@ const StudioMPCLibrary = {
   state: null,
   bus: null,
   audio: null,
-  masterLevel: 0.82,
+  masterLevel: (() => { try { const value = Number(localStorage.getItem(MASTER_KEY)); return Number.isFinite(value) && localStorage.getItem(MASTER_KEY) !== null ? Math.max(0, Math.min(1, value)) : 0.82; } catch { return 0.82; } })(),
 
   open() {
     const state = readState();
