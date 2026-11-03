@@ -539,6 +539,12 @@ function updateLandingDoors(delta) {
     const dockRight = landing.getObjectByName("doorLeafRightDock");
     if (dockLeft) dockLeft.position.x = -(0.8125 + amount * 0.98);
     if (dockRight) dockRight.position.x = 0.8125 + amount * 0.98;
+
+    // Patio-facing doors slide along the east-side portal axis.
+    const patioLeft = landing.getObjectByName("doorLeafLeftPatio");
+    const patioRight = landing.getObjectByName("doorLeafRightPatio");
+    if (patioLeft) patioLeft.position.x = -(0.8125 + amount * 0.98);
+    if (patioRight) patioRight.position.x = 0.8125 + amount * 0.98;
   });
 
   window.__lamboCityElevatorDoorOpen =
