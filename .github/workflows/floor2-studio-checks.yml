@@ -48,6 +48,9 @@ on:
       - "studioVocalEffects.js"
       - "studioSongProject.js"
       - "studioProjectPackage.js"
+      - "mpc-interface.js"
+      - "studioMPCLibrary.js"
+      - "studioMPCSampler.js"
       - ".github/workflows/floor2-studio-checks.yml"
 
   workflow_dispatch:
