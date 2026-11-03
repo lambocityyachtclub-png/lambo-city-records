@@ -573,34 +573,27 @@ function updateStudioCamera(
 // FLOOR 2 — CINEMATIC ELEVATOR-TO-STUDIO ARRIVAL CAMERA
 // ============================================================
 
-function updateStudioArrivalCamera(player, smooth = 0.12) {
-  const progress = THREE.MathUtils.clamp(
-    Number(window.__lamboCityFloor2ArrivalProgress ?? 0),
-    0,
-    1
-  );
-
+function updateStudioArrivalCamera(player, smooth = 0.34) {
   const yaw = player.rotation.y;
   const forwardX = Math.sin(yaw);
   const forwardZ = Math.cos(yaw);
-  const sideX = Math.cos(yaw);
-  const sideZ = -Math.sin(yaw);
 
-  // Begin inside the elevator, then ease back into a wider
-  // over-the-shoulder reveal as the producer enters the studio.
-  const distance = 1.45 + progress * 3.35;
-  const cameraX =
-    player.position.x - forwardX * distance + sideX * 0.42;
-  const cameraZ =
-    player.position.z - forwardZ * distance + sideZ * 0.42;
-  const cameraY = player.position.y + 2.55;
+  // Stay locked behind the moving character for the entire entrance.
+  // A tight trailing position avoids the wide side angle that allowed
+  // room architecture to sweep across the foreground.
+  const distance = 2.35;
+  const cameraX = player.position.x - forwardX * distance;
+  const cameraZ = player.position.z - forwardZ * distance;
+  const cameraY = player.position.y + 2.25;
 
   moveCamera(cameraX, cameraY, cameraZ, smooth);
 
+  // Keep the character as the visual anchor while looking just ahead
+  // along the clear walking route.
   camera.lookAt(
-    player.position.x + forwardX * 1.45,
-    player.position.y + 1.55,
-    player.position.z + forwardZ * 1.45
+    player.position.x + forwardX * 0.85,
+    player.position.y + 1.35,
+    player.position.z + forwardZ * 0.85
   );
 }
 
@@ -984,7 +977,7 @@ export default {
           window.__lamboCityFloor2SessionActive &&
           window.__lamboCityFloor2SessionMode === "arrival"
         ) {
-          updateStudioArrivalCamera(player, 0.12);
+          updateStudioArrivalCamera(player, 0.34);
         } else if (window.__lamboCityFloor2SessionActive) {
           updateStudioSessionCamera(player, 0.24);
         } else {
