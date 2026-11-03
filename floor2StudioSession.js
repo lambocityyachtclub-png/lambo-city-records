@@ -184,6 +184,9 @@ export default {
     window.__lamboCityReturnToFloor2Room = () => {
       this.returnToRoom();
     };
+    window.__lamboCityOpenFloor2Instrument = () => {
+      this.openInstrument();
+    };
 
     publishState();
   },
@@ -267,6 +270,7 @@ export default {
     delete window.__lamboCityBeginFloor2Session;
     delete window.__lamboCityEndFloor2Session;
     delete window.__lamboCityReturnToFloor2Room;
+    delete window.__lamboCityOpenFloor2Instrument;
     mode = "free";
     publishState();
   }
