@@ -700,7 +700,45 @@ export default {
       </div>
 
       <div style="
-        padding:16px;
+        padding:14px 16px 4px;
+        display:grid;
+        grid-template-columns:1fr 1fr;
+        gap:10px;
+      ">
+        <button id="lambo-phone-studio" type="button" style="
+          min-height:76px;
+          border:1px solid rgba(255,215,0,.55);
+          border-radius:13px;
+          background:linear-gradient(145deg,rgba(153,0,255,.28),rgba(255,215,0,.08));
+          color:#fff;
+          font:700 11px Arial,sans-serif;
+          letter-spacing:1.1px;
+          cursor:pointer;
+          touch-action:manipulation;
+        ">
+          <span style="display:block;font-size:22px;margin-bottom:6px;">🎛️</span>
+          STUDIO
+          <span style="display:block;margin-top:4px;color:#c7b7a0;font-size:8px;font-weight:400;letter-spacing:.6px;">FLOOR 02 • COCKPIT</span>
+        </button>
+        <button id="lambo-phone-meeting" type="button" style="
+          min-height:76px;
+          border:1px solid rgba(255,215,0,.38);
+          border-radius:13px;
+          background:linear-gradient(145deg,rgba(255,215,0,.15),rgba(255,255,255,.035));
+          color:#fff;
+          font:700 11px Arial,sans-serif;
+          letter-spacing:1.1px;
+          cursor:pointer;
+          touch-action:manipulation;
+        ">
+          <span style="display:block;font-size:22px;margin-bottom:6px;">🤝</span>
+          MEETING
+          <span style="display:block;margin-top:4px;color:#c7b7a0;font-size:8px;font-weight:400;letter-spacing:.6px;">FLOOR 03 • EXECUTIVE</span>
+        </button>
+      </div>
+
+      <div style="
+        padding:10px 16px 16px;
         display:grid;
         grid-template-columns:1fr 1fr;
         gap:10px;
@@ -758,6 +796,21 @@ export default {
       phone
     );
 
+    const navigateFromPhone = floor => {
+      const navigate = window.__lamboCityNavigateToFloor;
+      if (typeof navigate !== "function" || !navigate(floor)) return;
+      phone.remove();
+      this._phoneOpen = false;
+    };
+
+    phone.querySelector("#lambo-phone-studio")?.addEventListener(
+      "click",
+      () => navigateFromPhone(2)
+    );
+    phone.querySelector("#lambo-phone-meeting")?.addEventListener(
+      "click",
+      () => navigateFromPhone(3)
+    );
 
     const close =
       document.getElementById(
