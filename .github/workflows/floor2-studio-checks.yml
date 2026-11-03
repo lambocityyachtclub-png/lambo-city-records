@@ -28,6 +28,7 @@ on:
       - "scripts/test-mpc-project-package.mjs"
       - "scripts/test-mpc-library.mjs"
       - "scripts/test-mpc-audio-routing.mjs"
+      - "scripts/test-mpc-sampler-storage.mjs"
       - ".github/workflows/floor2-studio-checks.yml"
 
   pull_request:
@@ -57,6 +58,7 @@ on:
       - "scripts/test-mpc-project-package.mjs"
       - "scripts/test-mpc-library.mjs"
       - "scripts/test-mpc-audio-routing.mjs"
+      - "scripts/test-mpc-sampler-storage.mjs"
       - ".github/workflows/floor2-studio-checks.yml"
 
   workflow_dispatch:
@@ -112,3 +114,6 @@ jobs:
 
       - name: Test MPC audio routing and pad mix
         run: node --experimental-default-type=module scripts/test-mpc-audio-routing.mjs
+
+      - name: Test MPC sample storage and portable assets
+        run: node --experimental-default-type=module scripts/test-mpc-sampler-storage.mjs
