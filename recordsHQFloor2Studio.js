@@ -1437,7 +1437,7 @@ export default {
       new THREE.BoxGeometry(10.2, 0.12, 12.8),
       dark,
       3.55,
-      4.02,
+      5.82,
       0
     );
     box(
@@ -1445,7 +1445,7 @@ export default {
       new THREE.BoxGeometry(10.35, 0.045, 0.10),
       goldGlow,
       3.55,
-      3.94,
+      5.74,
       0
     );
 
@@ -1455,7 +1455,7 @@ export default {
       new THREE.BoxGeometry(7.0, 0.12, 12.8),
       dark,
       -5.2,
-      4.00,
+      5.80,
       0
     );
     liveRoomCeiling.rotation.z = -0.08;
@@ -1465,7 +1465,7 @@ export default {
         new THREE.BoxGeometry(1.75, 0.045, 1.45),
         windowGlass,
         -5.4,
-        4.08,
+        5.88,
         z
       );
       box(
@@ -1473,7 +1473,7 @@ export default {
         new THREE.BoxGeometry(1.88, 0.035, 0.07),
         goldGlow,
         -5.4,
-        4.12,
+        5.92,
         z - 0.76
       );
     });
@@ -1491,7 +1491,7 @@ export default {
             ),
             goldGlow,
             x,
-            3.75,
+            5.55,
             0.7
           );
 
