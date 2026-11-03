@@ -1,5 +1,9 @@
 // mpc-interface.js
 // LAMBO CITY RECORDS — Full-screen MPC hardware interface.
+
+import StudioAudioEngine from "./studioAudioEngine.js";
+import StudioMPCLibrary from "./studioMPCLibrary.js";
+import Floor2StudioApp from "./floor2StudioApp.js";
 // Standalone module: no Three.js dependency.
 // Integration:
 //   import MPCInterface from "./mpc-interface.js";
@@ -135,6 +139,13 @@ function makeStyles() {
 #${ROOT_ID} .transport-led.on{background:#a5ef3d;box-shadow:0 0 7px #9be83b}
 #${ROOT_ID} .mpc-footer{display:flex;justify-content:space-between;align-items:center;color:#737a6b;font-size:7px;letter-spacing:.12em;padding:0 3px}
 #${ROOT_ID} button:focus-visible{outline:2px solid #d3ff81;outline-offset:2px}
+#${ROOT_ID} .mpc-library-strip{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:6px;align-items:center;padding:7px;border:1px solid #4c4b3e;border-radius:7px;background:linear-gradient(145deg,#171b17,#080a08)}
+#${ROOT_ID} .mpc-library-strip label{display:flex;align-items:center;gap:7px;min-width:0;color:#d9d9c8;font-size:9px;font-weight:900;letter-spacing:.08em}
+#${ROOT_ID} .mpc-library-strip select{min-width:0;width:100%;height:34px;padding:4px 7px;border:1px solid #737b4b;border-radius:4px;background:#171d12;color:#e8edda;font-size:10px}
+#${ROOT_ID} .mpc-library-strip button{min-height:34px;padding:5px 8px;border:1px solid #806b43;border-radius:4px;background:linear-gradient(#45402e,#191a14);color:#e9d7a5;font-size:8px;font-weight:900}
+#${ROOT_ID} .mpc-library-status{grid-column:1/-1;min-height:13px;color:#b8d77d;font-size:8px;letter-spacing:.04em}
+#${ROOT_ID} .pad-label{overflow:hidden;text-overflow:ellipsis;padding:0 2px}
+@media(max-width:680px){#${ROOT_ID} .mpc-library-strip{grid-template-columns:minmax(0,1fr) auto;gap:5px}#${ROOT_ID} .mpc-library-strip label{grid-column:1/-1}#${ROOT_ID} .mpc-library-strip button{font-size:7px;padding:4px 6px}}
 @media(max-width:680px){
   #${ROOT_ID}{padding:0;align-items:stretch}
   #${ROOT_ID} .mpc-unit{width:100%;min-height:100dvh;border-radius:0;padding:7px;gap:7px}
@@ -288,6 +299,15 @@ function buildMarkup() {
       </aside>
     </section>
 
+    <section class="mpc-library-strip" aria-label="MPC sound library">
+      <label>PAD SOUND LIBRARY
+        <select data-mpc-sound-select aria-label="Choose a sound to assign"></select>
+      </label>
+      <button type="button" data-mpc-assign>ASSIGN TO PAD</button>
+      <button type="button" data-mpc-unlock>UNLOCK 200</button>
+      <div class="mpc-library-status" data-mpc-status role="status" aria-live="polite">100 DEMO SOUNDS · GROWING LIBRARY</div>
+    </section>
+
     <section class="bottom-modes">
       ${control("STEP SEQ", "AUTOMATION")}
       ${control("TC", "ON/OFF")}
@@ -308,12 +328,29 @@ const MPCInterface = {
   onClose: null,
   previousFocus: null,
   keyHandler: null,
+  beatLab: Floor2StudioApp,
+  bank: "A",
+  selectedPad: 1,
+  library: null,
+  take: null,
+  recording: false,
+  recordingStartedAt: 0,
+  overdubOffset: 0,
+  playbackTimer: null,
+  playbackStartedAt: 0,
+  playbackIndex: 0,
 
   open(options = {}) {
     if (this.root?.isConnected) return this.root;
 
     this.onClose = typeof options.onClose === "function" ? options.onClose : null;
     this.previousFocus = document.activeElement;
+    this.beatLab = options.beatLab || Floor2StudioApp;
+    this.bank = "A";
+    this.selectedPad = 1;
+    this.recording = false;
+    this.take = StudioMPCLibrary.loadTake(this.beatLab?.currentProject?.id || "unsaved");
+    this.library = StudioMPCLibrary.open();
 
     if (!document.getElementById(STYLE_ID)) {
       const style = document.createElement("style");
@@ -336,21 +373,22 @@ const MPCInterface = {
       const pad = event.target.closest("[data-pad]");
       if (pad) {
         pad.classList.remove("flash");
-        // Restart the flash animation even on repeated rapid taps.
         void pad.offsetWidth;
         pad.classList.add("flash");
-        window.setTimeout(() => pad.classList.remove("flash"), 150);
-        const padNumber = Number(pad.dataset.pad);
-        if (typeof window.__LAMBO_CITY_MPC_ON_PAD === "function") {
-          window.__LAMBO_CITY_MPC_ON_PAD(padNumber, event);
-        }
+        void this.handlePad(Number(pad.dataset.pad));
         return;
       }
 
-      // Screen tiles and hardware buttons are intentional placeholders.
+      if (event.target.closest("[data-mpc-assign]")) { this.assignSelectedSound(); return; }
+      if (event.target.closest("[data-mpc-unlock]")) { this.unlockLibrary(); return; }
+
+      // Screen tiles and hardware buttons remain responsive where assigned.
       // A future MPC engine can subscribe to this event without changing the UI.
       const placeholder = event.target.closest("[data-placeholder]");
       if (placeholder) {
+        const actionMap = { "REC": "record", "OVER DUB": "overdub", "STOP": "stop", "PLAY": "play", "PLAY START": "play-start" };
+        if (actionMap[placeholder.dataset.placeholder]) { void this.handleAction(actionMap[placeholder.dataset.placeholder]); return; }
+        if (placeholder.dataset.placeholder.indexOf("BANK ") === 0) { this.setBank(placeholder.dataset.placeholder.slice(-1)); return; }
         root.dispatchEvent(new CustomEvent("lambocity:mpc-control", {
           bubbles: true,
           detail: { control: placeholder.dataset.placeholder }
@@ -368,8 +406,155 @@ const MPCInterface = {
 
     document.body.appendChild(root);
     this.root = root;
+    this.refreshLibraryUI();
+    this.setStatus(this.library.total + " SOUNDS READY · +" + this.library.added + " NEW SOUNDS ADDED THIS VISIT");
     root.querySelector("[data-mpc-close]")?.focus({ preventScroll: true });
     return root;
+  },
+
+  async handlePad(padNumber) {
+    if (!this.root) return;
+    this.selectedPad = padNumber;
+    const sound = StudioMPCLibrary.getAssignment(this.bank, padNumber);
+    const select = this.root.querySelector("[data-mpc-sound-select]");
+    if (select) select.value = sound.id;
+    const label = this.root.querySelector('.pad-wrap [data-pad="' + padNumber + '"] + .pad-label');
+    if (label) label.textContent = padNumber + " · " + sound.name;
+    try {
+      const audio = await StudioAudioEngine.resume();
+      this.beatLab.audio = audio;
+      StudioMPCLibrary.play(audio, sound, audio.currentTime);
+      if (this.recording) {
+        const at = Math.max(0, audio.currentTime - this.recordingStartedAt + this.overdubOffset);
+        this.take.events.push({ pad: padNumber, bank: this.bank, soundId: sound.id, at });
+        this.take.duration = Math.max(this.take.duration || 0, at);
+      }
+      this.setStatus("PLAYING " + sound.name + (this.recording ? " · PAD PERFORMANCE RECORDING" : ""));
+    } catch (error) { this.setStatus("MPC AUDIO ERROR: " + (error?.message || error)); }
+  },
+
+  setStatus(message) {
+    const node = this.root?.querySelector("[data-mpc-status]");
+    if (node) node.textContent = message;
+  },
+
+  setBank(bank) {
+    if (!["A", "B", "C", "D"].includes(bank)) return;
+    this.bank = bank;
+    const title = this.root?.querySelector(".bank-title");
+    if (title) title.textContent = "BANK " + bank;
+    this.refreshLibraryUI();
+    this.setStatus("BANK " + bank + " SELECTED");
+  },
+
+  refreshLibraryUI() {
+    if (!this.root) return;
+    const sounds = StudioMPCLibrary.getSounds();
+    const select = this.root.querySelector("[data-mpc-sound-select]");
+    if (select) {
+      const current = StudioMPCLibrary.getAssignment(this.bank, this.selectedPad);
+      select.innerHTML = sounds.map(sound => '<option value="' + esc(sound.id) + '">' + esc(sound.name) + ' · ' + esc(sound.family.toUpperCase()) + '</option>').join("");
+      select.value = current.id;
+    }
+    for (const pad of this.root.querySelectorAll("[data-pad]")) {
+      const number = Number(pad.dataset.pad);
+      const sound = StudioMPCLibrary.getAssignment(this.bank, number);
+      const label = pad.parentElement?.querySelector(".pad-label");
+      if (label) label.textContent = number + " · " + sound.name;
+    }
+  },
+
+  assignSelectedSound() {
+    const select = this.root?.querySelector("[data-mpc-sound-select]");
+    if (!select?.value) return;
+    try {
+      const sound = StudioMPCLibrary.assign(this.bank, this.selectedPad, select.value);
+      this.refreshLibraryUI();
+      this.setStatus(sound.name + " ASSIGNED TO BANK " + this.bank + " PAD " + this.selectedPad);
+    } catch (error) { this.setStatus(error?.message || "Could not assign sound."); }
+  },
+
+  unlockLibrary() {
+    const state = StudioMPCLibrary.state || {};
+    const promptText = state.unlockHash
+      ? "Enter your MPC unlock code to open the additional 200 sounds:"
+      : "Create your MPC unlock code. This local browser code unlocks the additional 200 sounds:";
+    const code = window.prompt(promptText);
+    if (code === null) return;
+    try {
+      if (!StudioMPCLibrary.unlock(code)) { this.setStatus("UNLOCK CODE NOT RECOGNIZED."); return; }
+      this.refreshLibraryUI();
+      this.setStatus("200 ADDITIONAL SOUNDS UNLOCKED · " + StudioMPCLibrary.getSounds().length + " SOUNDS AVAILABLE");
+    } catch (error) { this.setStatus(error?.message || "Could not unlock the library."); }
+  },
+
+  async handleAction(action) {
+    if (!this.beatLab) return;
+    try {
+      if (action === "record" || action === "overdub") {
+        const audio = await StudioAudioEngine.resume();
+        this.beatLab.audio = audio;
+        if (!this.beatLab.playing) await this.beatLab.start();
+        if (action === "record") this.take = { events: [], duration: 0 };
+        this.recording = true;
+        this.overdubOffset = action === "overdub" ? (this.take.duration || 0) : 0;
+        this.recordingStartedAt = audio.currentTime;
+        this.root?.querySelector('[data-placeholder="REC"]')?.classList.add("lit");
+        this.setStatus(action === "overdub" ? "OVERDUB ARMED · PLAY PADS OVER YOUR SONG" : "PAD RECORDING ARMED · PLAY PADS OVER YOUR SONG");
+        return;
+      }
+      if (action === "stop") {
+        this.finishRecording();
+        this.stopPerformancePlayback();
+        this.beatLab.stop();
+        this.setStatus("MPC AND SONG PLAYBACK STOPPED.");
+        return;
+      }
+      if (action === "play" || action === "play-start") {
+        if (this.recording) this.finishRecording();
+        if (!this.beatLab.playing) await this.beatLab.start();
+        this.playSavedPerformance();
+        this.setStatus("SONG PLAYING · MPC PERFORMANCE PLAYING");
+      }
+    } catch (error) { this.setStatus("MPC CONTROL ERROR: " + (error?.message || error)); }
+  },
+
+  finishRecording() {
+    if (!this.recording) return;
+    this.recording = false;
+    this.root?.querySelector('[data-placeholder="REC"]')?.classList.remove("lit");
+    const projectId = this.beatLab?.currentProject?.id || "unsaved";
+    const lastEvent = this.take.events[this.take.events.length - 1];
+    this.take.duration = Math.max(this.take.duration || 0, lastEvent?.at || 0);
+    try {
+      this.take = StudioMPCLibrary.saveTake(projectId, this.take);
+      this.setStatus("PAD TAKE SAVED · " + this.take.events.length + " HITS · READY WITH BEAT LAB");
+    } catch (error) { this.setStatus(error?.message || "Could not save pad take."); }
+  },
+
+  playSavedPerformance() {
+    this.stopPerformancePlayback();
+    const projectId = this.beatLab?.currentProject?.id || "unsaved";
+    this.take = StudioMPCLibrary.loadTake(projectId);
+    if (!this.take.events.length) { this.setStatus("SONG PLAYING · NO SAVED MPC PAD TAKE YET"); return; }
+    const audio = this.beatLab.audio;
+    if (!audio) return;
+    this.playbackStartedAt = audio.currentTime + 0.06;
+    this.playbackIndex = 0;
+    this.playbackTimer = window.setInterval(() => {
+      if (!this.beatLab?.playing || !this.beatLab.audio) { this.stopPerformancePlayback(); return; }
+      const elapsed = this.beatLab.audio.currentTime - this.playbackStartedAt;
+      while (this.playbackIndex < this.take.events.length && this.take.events[this.playbackIndex].at <= elapsed + 0.09) {
+        const event = this.take.events[this.playbackIndex++];
+        const sound = StudioMPCLibrary.getSounds().find(item => item.id === event.soundId);
+        if (sound) StudioMPCLibrary.play(this.beatLab.audio, sound, Math.max(this.beatLab.audio.currentTime, this.playbackStartedAt + event.at));
+      }
+      if (elapsed > this.take.duration + 0.2) this.stopPerformancePlayback();
+    }, 20);
+  },
+
+  stopPerformancePlayback() {
+    if (this.playbackTimer !== null) { window.clearInterval(this.playbackTimer); this.playbackTimer = null; }
   },
 
   close() {
@@ -390,6 +575,8 @@ const MPCInterface = {
       this.previousFocus.focus({ preventScroll: true });
     }
     this.previousFocus = null;
+    this.recording = false;
+    this.take = null;
   },
 
   isOpen() {
