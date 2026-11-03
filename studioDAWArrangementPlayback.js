@@ -64,16 +64,34 @@ export function createStudioDAWArrangementPlayback({
 
     createTrackChannel(context, track, output) {
       const gain = context.createGain();
+      const low = context.createBiquadFilter();
+      const mid = context.createBiquadFilter();
+      const high = context.createBiquadFilter();
+      const compressor = context.createDynamicsCompressor();
       const panner = typeof context.createStereoPanner === "function"
         ? context.createStereoPanner()
         : null;
+      low.type = "lowshelf";
+      low.frequency.value = 120;
+      mid.type = "peaking";
+      mid.frequency.value = 1000;
+      mid.Q.value = 0.8;
+      high.type = "highshelf";
+      high.frequency.value = 8000;
+      compressor.knee.value = 18;
+      compressor.attack.value = 0.003;
+      compressor.release.value = 0.25;
+      gain.connect(low);
+      low.connect(mid);
+      mid.connect(high);
+      high.connect(compressor);
       if (panner) {
-        gain.connect(panner);
+        compressor.connect(panner);
         panner.connect(output);
       } else {
-        gain.connect(output);
+        compressor.connect(output);
       }
-      const channel = { gain, panner, track };
+      const channel = { gain, low, mid, high, compressor, panner, track };
       this.trackChannels.set(track.id, channel);
       this.applyTrackState(track);
       return channel;
@@ -93,6 +111,13 @@ export function createStudioDAWArrangementPlayback({
       const now = channel.gain.context.currentTime;
       channel.gain.gain.setTargetAtTime(muted ? 0 : volume, now, 0.015);
       if (channel.panner) channel.panner.pan.setTargetAtTime(pan, now, 0.015);
+      const eq = track.eq || {};
+      channel.low.gain.setTargetAtTime(Math.max(-12, Math.min(12, Number(eq.low) || 0)), now, 0.02);
+      channel.mid.gain.setTargetAtTime(Math.max(-12, Math.min(12, Number(eq.mid) || 0)), now, 0.02);
+      channel.high.gain.setTargetAtTime(Math.max(-12, Math.min(12, Number(eq.high) || 0)), now, 0.02);
+      const compression = track.compression || {};
+      channel.compressor.threshold.setTargetAtTime(Math.max(-48, Math.min(0, Number(compression.threshold ?? -18))), now, 0.02);
+      channel.compressor.ratio.setTargetAtTime(Math.max(1, Math.min(8, Number(compression.ratio ?? 1))), now, 0.02);
     },
 
     syncTrackState(tracks = this.activeTracks) {
@@ -111,6 +136,20 @@ export function createStudioDAWArrangementPlayback({
       const track = this.activeTracks.find(item => item.id === trackId);
       if (!track) return;
       track.pan = Math.max(-1, Math.min(1, Number(value) || 0));
+      this.applyTrackState(track);
+    },
+
+    setTrackEQ(trackId, band, value) {
+      const track = this.activeTracks.find(item => item.id === trackId);
+      if (!track || !["low", "mid", "high"].includes(band)) return;
+      track.eq = { ...(track.eq || {}), [band]: Math.max(-12, Math.min(12, Number(value) || 0)) };
+      this.applyTrackState(track);
+    },
+
+    setTrackCompression(trackId, ratio) {
+      const track = this.activeTracks.find(item => item.id === trackId);
+      if (!track) return;
+      track.compression = { ...(track.compression || {}), ratio: Math.max(1, Math.min(8, Number(ratio) || 1)) };
       this.applyTrackState(track);
     },
 
