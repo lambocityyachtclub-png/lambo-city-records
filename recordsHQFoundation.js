@@ -251,9 +251,21 @@ export default {
       depthWrite: false
     });
 
-    const elevatorBronze = mat(0x171b22, {
-      roughness: 0.24,
-      metalness: 0.82
+    const elevatorBronze = mat(0xd6ad62, {
+      roughness: 0.22,
+      metalness: 0.88
+    });
+
+    const elevatorDoorGlass = new THREE.MeshPhysicalMaterial({
+      color: 0xd8f0f7,
+      transparent: true,
+      opacity: 0.22,
+      roughness: 0.08,
+      metalness: 0.12,
+      transmission: 0.18,
+      thickness: 0.08,
+      side: THREE.DoubleSide,
+      depthWrite: false
     });
 
     // Enlarged panoramic cabin. The west wall has a real dock-facing
@@ -336,10 +348,10 @@ export default {
       [-1, 1].forEach(side => {
         box(
           portal,
-          new THREE.BoxGeometry(0.14, 3.30, 0.22),
+          new THREE.BoxGeometry(0.14, 5.40, 0.22),
           gold,
           side * (width / 2 + 0.08),
-          1.62,
+          2.70,
           0
         );
       });
@@ -360,19 +372,19 @@ export default {
         : doorSide === "patio"
           ? "doorLeafLeftPatio"
           : "doorLeafLeft";
-      leftLeaf.position.set(-leafWidth / 2, 1.62, 0.035);
+      leftLeaf.position.set(-leafWidth / 2, 2.70, 0.035);
       box(
         leftLeaf,
-        new THREE.BoxGeometry(leafWidth, 3.12, 0.12),
-        elevatorBronze,
+        new THREE.BoxGeometry(leafWidth, 5.20, 0.075),
+        elevatorDoorGlass,
         0,
         0,
         0
       );
       box(
         leftLeaf,
-        new THREE.BoxGeometry(0.035, 2.88, 0.035),
-        gold,
+        new THREE.BoxGeometry(0.035, 4.95, 0.035),
+        elevatorBronze,
         leafWidth / 2 - 0.10,
         0,
         0.075
@@ -385,7 +397,7 @@ export default {
         : doorSide === "patio"
           ? "doorLeafRightPatio"
           : "doorLeafRight";
-      rightLeaf.position.set(leafWidth / 2, 1.62, 0.035);
+      rightLeaf.position.set(leafWidth / 2, 2.70, 0.035);
       box(
         rightLeaf,
         new THREE.BoxGeometry(leafWidth, 3.12, 0.12),
@@ -396,8 +408,8 @@ export default {
       );
       box(
         rightLeaf,
-        new THREE.BoxGeometry(0.035, 2.88, 0.035),
-        gold,
+        new THREE.BoxGeometry(0.035, 4.95, 0.035),
+        elevatorBronze,
         -leafWidth / 2 + 0.10,
         0,
         0.075
@@ -409,7 +421,7 @@ export default {
         new THREE.BoxGeometry(0.62, 0.08, 0.10),
         gold,
         0,
-        3.05,
+        5.35,
         0.14
       );
 
