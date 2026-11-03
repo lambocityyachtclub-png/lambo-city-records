@@ -42,7 +42,7 @@ function createSignTexture() {
   const canvas = document.createElement("canvas");
 
   canvas.width = 1024;
-  canvas.height = 512;
+  canvas.height = 256;
 
   const ctx = canvas.getContext("2d");
 
@@ -52,7 +52,7 @@ function createSignTexture() {
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
 
-  ctx.font = "bold 110px Arial";
+  ctx.font = "bold 104px Arial";
 
   ctx.shadowColor = "#ff00aa";
   ctx.shadowBlur = 30;
@@ -62,53 +62,18 @@ function createSignTexture() {
   ctx.fillText(
     "LAMBO CITY",
     512,
-    280
+    108
   );
 
-  ctx.font = "bold 90px Arial";
+  ctx.font = "bold 78px Arial";
 
   ctx.fillText(
     "RECORDS",
     512,
-    400
+    194
   );
 
   ctx.shadowBlur = 0;
-
-  return canvas;
-}
-
-
-function createMarqueeTexture() {
-
-  const canvas = document.createElement("canvas");
-
-  canvas.width = 1024;
-  canvas.height = 128;
-
-  const ctx = canvas.getContext("2d");
-
-  ctx.fillStyle = "#000000";
-
-  ctx.fillRect(
-    0,
-    0,
-    1024,
-    128
-  );
-
-  ctx.font = "bold 42px Arial";
-
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-
-  ctx.fillStyle = "#ffffff";
-
-  ctx.fillText(
-    "LAMBO CITY RECORDS — THE SOUND OF THE CITY",
-    512,
-    64
-  );
 
   return canvas;
 }
@@ -660,70 +625,9 @@ export default {
     );
 
 
-    // ========================================================
-    // HQ BUILDING
-    // ========================================================
-
-    const building = new THREE.Mesh(
-
-      new THREE.BoxGeometry(
-        18,
-        26,
-        14
-      ),
-
-     new THREE.MeshStandardMaterial({
-
-  color: 0x0a0a0f,
-  roughness: .5,
-  metalness: .3,
-
-  transparent: true,
-  opacity: 0.16,
-  depthWrite: false
-
-})
-    );
-
-    building.position.y = 13;
-
-    group.add(building);
-
-
-    // ========================================================
-    // GOLD BUILDING TRIM
-    // ========================================================
-
-    [-9, 9].forEach(x => {
-
-      const trim = new THREE.Mesh(
-
-        new THREE.BoxGeometry(
-          .2,
-          26,
-          .2
-        ),
-
-        new THREE.MeshStandardMaterial({
-
-          color: 0xffd700,
-          emissive: 0xffd700,
-          emissiveIntensity: 1.5
-
-        })
-
-      );
-
-      trim.position.set(
-        x,
-        13,
-        7.05
-      );
-
-      group.add(trim);
-
-    });
-
+    // The previous translucent full-volume box has been removed.
+    // The facade is built from actual curtain-wall glazing, bronze
+    // mullions, floor bands and a restrained architectural crown.
 
     // ========================================================
     // GLASS CURTAIN WALL — wraps the two side faces and the back of
@@ -734,14 +638,37 @@ export default {
     // ========================================================
 
     const glassMat = new THREE.MeshStandardMaterial({
-      color: 0x87dfff,
-      emissive: 0x155d73,
-      emissiveIntensity: .35,
+      color: 0xa9c1d0,
+      emissive: 0x101c28,
+      emissiveIntensity: .12,
       transparent: true,
-      opacity: .42,
-      roughness: .12,
-      metalness: .15
+      opacity: .24,
+      roughness: .16,
+      metalness: .28,
+      side: THREE.DoubleSide,
+      depthWrite: false
     });
+
+    const facadeDark = new THREE.MeshStandardMaterial({
+      color: 0x11151b,
+      roughness: .38,
+      metalness: .62
+    });
+
+    const facadeBronze = new THREE.MeshStandardMaterial({
+      color: 0xb88e55,
+      roughness: .28,
+      metalness: .82,
+      emissive: 0x2a1708,
+      emissiveIntensity: .16
+    });
+
+    const addFacadePanel = (geometry, material, x, y, z) => {
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.position.set(x, y, z);
+      group.add(mesh);
+      return mesh;
+    };
 
     [-9.05, 9.05].forEach(x => {
 
@@ -753,13 +680,13 @@ export default {
       group.add(sideGlass);
 
       // Gold mullion lines across the glass, echoing the corner trim
-      [4, 10, 16, 22].forEach(y => {
+      [1.3, 12.2, 20.2, 25.8].forEach(y => {
         const mullion = new THREE.Mesh(
           new THREE.BoxGeometry(.18, .1, 13.1),
           new THREE.MeshStandardMaterial({
-            color: 0xffd700,
-            emissive: 0xffd700,
-            emissiveIntensity: 1.2
+            color: 0xb88e55,
+            emissive: 0x2a1708,
+            emissiveIntensity: .16
           })
         );
         mullion.position.set(x, y, 0);
@@ -768,12 +695,31 @@ export default {
 
     });
 
-    const backGlass = new THREE.Mesh(
-      new THREE.BoxGeometry(17.8, 24, .15),
+    // The rear curtain wall is split around the real 4.2-unit
+    // elevator-to-HQ doorway. No glass crosses the passenger route.
+    const rearLeftGlass = new THREE.Mesh(
+      new THREE.BoxGeometry(1.70, 24, .15),
       glassMat
     );
-    backGlass.position.set(0, 13, -7.05);
-    group.add(backGlass);
+    rearLeftGlass.position.set(-8.05, 13, -7.05);
+    group.add(rearLeftGlass);
+
+    const rearRightGlass = new THREE.Mesh(
+      new THREE.BoxGeometry(11.70, 24, .15),
+      glassMat
+    );
+    rearRightGlass.position.set(3.05, 13, -7.05);
+    group.add(rearRightGlass);
+
+    [-7.20, -2.80].forEach(x => {
+      addFacadePanel(
+        new THREE.BoxGeometry(.12, 25.6, .18),
+        facadeBronze,
+        x,
+        13,
+        -7.02
+      );
+    });
 
     // Gold back-corner trim, mirroring the existing front trim so the
     // wrap reads as one continuous gold-edged form
@@ -794,308 +740,167 @@ export default {
 
 
     // ========================================================
-    // WINDOWS
+    // FRONT CURTAIN WALL — CONSISTENT THREE-LEVEL FACADE
     // ========================================================
-
-    for (let row = 0; row < 7; row++) {
-
-      for (let col = 0; col < 5; col++) {
-
-        if (Math.random() < .35) continue;
-
-        const win = new THREE.Mesh(
-
-          new THREE.BoxGeometry(
-            1.4,
-            1.6,
-            .1
-          ),
-
-          new THREE.MeshStandardMaterial({
-
-            color: 0xffee88,
-            emissive: 0xffee88,
-            emissiveIntensity: .7
-
-          })
-
-        );
-
-        win.position.set(
-
-          -7 + col * 3.5,
-
-          21 - row * 2.6,
-
-          7.06
-
-        );
-
-        group.add(win);
-
-      }
-
-    }
-
-
-    // ========================================================
-    // MAIN SIGN
-    // ========================================================
-
-    const signTex = new THREE.CanvasTexture(
-      createSignTexture()
-    );
-
-    const sign = new THREE.Mesh(
-
-      new THREE.PlaneGeometry(
-        16,
-        8
-      ),
-
-      new THREE.MeshStandardMaterial({
-
-        map: signTex,
-        emissiveMap: signTex,
-        emissiveIntensity: 1.4
-
-      })
-
-    );
-
-    sign.position.set(
-      0,
-      22,
-      7.1
-    );
-
-    group.add(sign);
-
-
-    // ========================================================
-    // MARQUEE
-    // ========================================================
-
-    const marqueeTex = new THREE.CanvasTexture(
-      createMarqueeTexture()
-    );
-
-    const marquee = new THREE.Mesh(
-
-      new THREE.PlaneGeometry(
-        14,
-        1.5
-      ),
-
-      new THREE.MeshStandardMaterial({
-
-        map: marqueeTex,
-        emissiveMap: marqueeTex,
-        emissiveIntensity: 1.2
-
-      })
-
-    );
-
-    marquee.position.set(
-      0,
-      16.5,
-      7.1
-    );
-
-    group.add(marquee);
-
-
-    // ========================================================
-    // LOBBY GLASS ENTRANCE
-    // ========================================================
-
-    const lobbyGlow = new THREE.Mesh(
-
-      new THREE.BoxGeometry(
-        10,
-        6,
-        .3
-      ),
-
-      new THREE.MeshStandardMaterial({
-
-        color: 0xfff4d0,
-        emissive: 0xffe8a0,
-        emissiveIntensity: 1,
-        transparent: true,
-        opacity: .55
-
-      })
-
-    );
-
-    lobbyGlow.position.set(
-      0,
-      3,
-      7.2
-    );
-
-    group.add(lobbyGlow);
-
-
-    // ========================================================
-    // GOLD LOBBY EMBLEM
-    // ========================================================
-
-    const lobbyEmblem = new THREE.Mesh(
-
-      new THREE.CircleGeometry(
-        1.3,
-        24
-      ),
-
-      new THREE.MeshStandardMaterial({
-
-        color: 0xffd700,
-        emissive: 0xffd700,
-        emissiveIntensity: 1.8
-
-      })
-
-    );
-
-    lobbyEmblem.position.set(
-      0,
-      3.5,
-      6.9
-    );
-
-    group.add(lobbyEmblem);
-
-
-    // ========================================================
-    // RED CARPET VIP ARRIVAL
-    // ========================================================
-
-    const carpet = new THREE.Mesh(
-
-      new THREE.PlaneGeometry(
-        5,
-        8
-      ),
-
-      new THREE.MeshStandardMaterial({
-
-        color: 0x8b0018,
-        roughness: .7
-
-      })
-
-    );
-
-    carpet.rotation.x = -Math.PI / 2;
-
-    carpet.position.set(
-      0,
-      .03,
-      10.5
-    );
-
-    group.add(carpet);
-
-
-    // ========================================================
-    // VELVET ROPE ENTRANCE
-    // ========================================================
-
-    const ropeZ = [8.5, 11.5];
-
-    [-2.5, 2.5].forEach(x => {
-
-      ropeZ.forEach(z => {
-
-        group.add(
-          buildStanchion(x, z)
-        );
-
-      });
-
-      buildRope(
+    // Ground-floor glazing stays outside the ten-unit public entry.
+    // Upper floors use one aligned glass grid with restrained bronze
+    // mullions so the exterior reads as a single designed property.
+
+    [-7, 7].forEach(x => {
+      addFacadePanel(
+        new THREE.BoxGeometry(4.0, 4.7, .12),
+        glassMat,
         x,
-        ropeZ[0],
-        x,
-        ropeZ[1],
-        group
+        3.55,
+        7.02
       );
-
     });
 
+    addFacadePanel(
+      new THREE.BoxGeometry(17.8, 7.45, .12),
+      glassMat,
+      0,
+      16.15,
+      7.02
+    );
+
+    addFacadePanel(
+      new THREE.BoxGeometry(17.8, 3.05, .12),
+      glassMat,
+      0,
+      22.0,
+      7.02
+    );
+
+    [-8.9, -4.45, 0, 4.45, 8.9].forEach(x => {
+      addFacadePanel(
+        new THREE.BoxGeometry(.085, 7.35, .16),
+        facadeBronze,
+        x,
+        16.15,
+        7.12
+      );
+      addFacadePanel(
+        new THREE.BoxGeometry(.085, 3.0, .16),
+        facadeBronze,
+        x,
+        22.0,
+        7.12
+      );
+    });
+
+    [12.2, 20.2].forEach(y => {
+      addFacadePanel(
+        new THREE.BoxGeometry(18.35, .32, .42),
+        facadeDark,
+        0,
+        y,
+        7.10
+      );
+      [-9.05, 9.05].forEach(x => {
+        addFacadePanel(
+          new THREE.BoxGeometry(.42, .32, 14.1),
+          facadeDark,
+          x,
+          y,
+          0
+        );
+      });
+      addFacadePanel(
+        new THREE.BoxGeometry(18.35, .32, .42),
+        facadeDark,
+        0,
+        y,
+        -7.10
+      );
+    });
+
+    // A quiet canopy gives the public entrance a believable threshold.
+    addFacadePanel(
+      new THREE.BoxGeometry(10.4, .20, 1.25),
+      facadeDark,
+      0,
+      6.15,
+      7.62
+    );
+    addFacadePanel(
+      new THREE.BoxGeometry(10.2, .045, .08),
+      facadeBronze,
+      0,
+      6.03,
+      8.20
+    );
+
+    // ========================================================
+    // MAIN ARCHITECTURAL IDENTITY — TOP OF BUILDING
+    // ========================================================
+    const signTex = new THREE.CanvasTexture(createSignTexture());
+    signTex.colorSpace = THREE.SRGBColorSpace;
+
+    addFacadePanel(
+      new THREE.BoxGeometry(13.2, 2.9, .34),
+      facadeDark,
+      0,
+      24.75,
+      7.16
+    );
+
+    addFacadePanel(
+      new THREE.BoxGeometry(13.0, .055, .08),
+      facadeBronze,
+      0,
+      26.17,
+      7.36
+    );
+    addFacadePanel(
+      new THREE.BoxGeometry(13.0, .055, .08),
+      facadeBronze,
+      0,
+      23.33,
+      7.36
+    );
+    [-6.48, 6.48].forEach(x => {
+      addFacadePanel(
+        new THREE.BoxGeometry(.055, 2.85, .08),
+        facadeBronze,
+        x,
+        24.75,
+        7.36
+      );
+    });
+
+    const sign = new THREE.Mesh(
+      new THREE.PlaneGeometry(12.45, 2.62),
+      new THREE.MeshBasicMaterial({
+        map: signTex,
+        toneMapped: false
+      })
+    );
+    sign.position.set(0, 24.75, 7.39);
+    group.add(sign);
+
+    // The scrolling slogan marquee was removed. The building carries
+    // one permanent architectural identity at its crown.
+
+    // The center ten-unit opening remains unobstructed. The adjacent
+    // curtain-wall panels and canopy form the entrance architecture.
 
     // ========================================================
     // VIP MARBLE PLAZA
     // ========================================================
-
     const plaza = new THREE.Mesh(
-
-      new THREE.BoxGeometry(
-        22,
-        .08,
-        18
-      ),
-
+      new THREE.BoxGeometry(22, .08, 18),
       new THREE.MeshStandardMaterial({
-
-        color: 0xe9e4d8,
-        roughness: .25,
-        metalness: .2
-
+        color: 0xd6d1c7,
+        roughness: .32,
+        metalness: .12
       })
-
     );
-
-    plaza.position.set(
-
-      HQ_POSITION.x,
-      .04,
-      HQ_POSITION.z + 10
-
-    );
-
+    plaza.position.set(HQ_POSITION.x, .04, HQ_POSITION.z + 10);
     group.add(plaza);
 
 
-    // ========================================================
-    // GOLD MARBLE LINES
-    // ========================================================
-
-    [-8, -4, 0, 4, 8].forEach(x => {
-
-      const line = new THREE.Mesh(
-
-        new THREE.BoxGeometry(
-          .05,
-          .09,
-          18
-        ),
-
-        new THREE.MeshStandardMaterial({
-
-          color: 0xffd700,
-          emissive: 0xffd700,
-          emissiveIntensity: 1
-
-        })
-
-      );
-
-      line.position.set(
-
-        HQ_POSITION.x + x,
-        .09,
-        HQ_POSITION.z + 10
-
-      );
-
-      group.add(line);
-
-    });
-
+    // No bright parallel gold strips cross the entrance plaza.
 
     // ========================================================
     // PRIVATE VIP LOUNGE AREA
@@ -1312,37 +1117,8 @@ export default {
     group.add(ring);
 
 
-    // ========================================================
-    // VIP STREET CONTROL
-    // ========================================================
-
-    const barrier = new THREE.Mesh(
-
-      new THREE.BoxGeometry(
-        18,
-        .6,
-        1
-      ),
-
-      new THREE.MeshStandardMaterial({
-
-        color: 0x220000,
-        roughness: .5
-
-      })
-
-    );
-
-    barrier.position.set(
-
-      HQ_POSITION.x,
-      .3,
-      HQ_POSITION.z + 15
-
-    );
-
-    group.add(barrier);
-
+    // The old cross-plaza VIP barrier was removed; the entrance and
+    // boardwalk-to-HQ route remain visually continuous.
 
     // ========================================================
     // NEW — VIP WATERFRONT PROMENADE
