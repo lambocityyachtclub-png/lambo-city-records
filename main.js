@@ -56,6 +56,7 @@ import RecordsHQMerchDetails from "./recordsHQMerchDetails.js";
 import RecordsHQElevator from "./recordsHQElevator.js";
 import Elevator from "./elevator.js";
 import BoardwalkOverlooks from "./boardwalkOverlooks.js";
+import PerformanceMonitor from "./performanceMonitor.js";
 const engine = new Engine();
 engine.registerSystems({
   scene: Scene,
@@ -114,5 +115,6 @@ engine.registerSystems({
   recordsHQFloor3Details: RecordsHQFloor3Details,
   elevator: Elevator,
   hud: HUD,
+  performanceMonitor: PerformanceMonitor,
 });
 engine.init();
