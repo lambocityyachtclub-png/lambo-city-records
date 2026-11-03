@@ -29,6 +29,7 @@ on:
       - "scripts/test-mpc-library.mjs"
       - "scripts/test-mpc-audio-routing.mjs"
       - "scripts/test-mpc-sampler-storage.mjs"
+      - "scripts/test-daw-session-package.mjs"
       - ".github/workflows/floor2-studio-checks.yml"
 
   pull_request:
@@ -117,3 +118,6 @@ jobs:
 
       - name: Test MPC sample storage and portable assets
         run: node --experimental-default-type=module scripts/test-mpc-sampler-storage.mjs
+
+      - name: Test portable DAW session package
+        run: node --experimental-default-type=module scripts/test-daw-session-package.mjs
