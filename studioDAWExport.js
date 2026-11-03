@@ -106,7 +106,6 @@ export async function renderStudioSessionToWav({
     const high = offline.createBiquadFilter();
     const compressor = offline.createDynamicsCompressor();
     const panner = offline.createStereoPanner ? offline.createStereoPanner() : null;
-    const effects = StudioVocalEffects.create(offline);
     const trackEffects = StudioVocalEffects.create(offline);
     low.type = "lowshelf"; low.frequency.value = 120;
     mid.type = "peaking"; mid.frequency.value = 1000; mid.Q.value = 0.8;
