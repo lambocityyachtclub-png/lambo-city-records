@@ -63,7 +63,7 @@ export default {
 
     // Behind and to the right of the seated producer.
     // Coordinates are relative to the existing studio group.
-    station.position.set(1.9, 0, -4.65);
+    station.position.set(-4.65, 0, 3.65);
 
     const addCylinder = (
       name,
