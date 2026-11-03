@@ -319,6 +319,34 @@ export default {
 
 
     // ========================================================
+    // EXTERIOR ELEVATOR CABIN BOUNDARIES
+    // ========================================================
+    // The west wall is split to preserve the dock-facing doorway.
+    // The north side remains open to the HQ through its rear portal.
+    // These shaft-side boundaries stop the character walking through
+    // the glass cabin walls while keeping both entrances unobstructed.
+    const elevatorMinY = 0;
+    const elevatorMaxY = 27.6;
+
+    [
+      { x: 20.65, z: 12.57, width: 0.12, depth: 0.48 },
+      { x: 20.65, z: 15.73, width: 0.12, depth: 0.48 },
+      { x: 25.35, z: 14.15, width: 0.12, depth: 3.70 },
+      { x: 23.0, z: 12.30, width: 4.70, depth: 0.12 }
+    ].forEach((wall, index) => {
+      this.registerBox(
+        "recordsHQElevatorCabinWall_" + index,
+        {
+          ...wall,
+          minY: elevatorMinY,
+          maxY: elevatorMaxY,
+          level: "elevator"
+        }
+      );
+    });
+
+
+    // ========================================================
     // ELEVATOR OPENING
     // ========================================================
     //
