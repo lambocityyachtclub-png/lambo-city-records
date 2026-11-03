@@ -261,32 +261,32 @@ export default {
     // The cabin is intentionally larger than the original lift.
     box(
       elevator,
-      new THREE.BoxGeometry(0.10, 26.4, 3.55),
+      new THREE.BoxGeometry(0.10, 26.4, 4.45),
       elevatorGlass,
-      2.35,
+      2.90,
       13.2,
       0
     );
 
     // West / dock-facing glass is split around a wide passenger door.
-    [-1.58, 1.58].forEach(z => {
+    [-2.10, 2.10].forEach(z => {
       box(
         elevator,
-        new THREE.BoxGeometry(0.10, 26.4, 0.48),
+        new THREE.BoxGeometry(0.10, 26.4, 0.40),
         elevatorGlass,
-        -2.35,
+        -2.90,
         13.2,
         z
       );
     });
 
     // East / patio-facing glass is split around a third passenger doorway.
-    [-1.58, 1.58].forEach(z => {
+    [-2.10, 2.10].forEach(z => {
       box(
         elevator,
-        new THREE.BoxGeometry(0.10, 26.4, 0.48),
+        new THREE.BoxGeometry(0.10, 26.4, 0.40),
         elevatorGlass,
-        2.35,
+        2.90,
         13.2,
         z
       );
@@ -295,16 +295,16 @@ export default {
     // Rear panoramic wall.
     box(
       elevator,
-      new THREE.BoxGeometry(4.60, 26.4, 0.10),
+      new THREE.BoxGeometry(5.70, 26.4, 0.10),
       elevatorGlass,
       0,
       13.2,
-      -1.85
+      -2.30
     );
 
     // Brushed-gold structural corner rails.
-    [-2.28, 2.28].forEach(x => {
-      [-1.78, 1.78].forEach(z => {
+    [-2.82, 2.82].forEach(x => {
+      [-2.22, 2.22].forEach(z => {
         box(
           elevator,
           new THREE.BoxGeometry(0.15, 26.4, 0.15),
@@ -434,9 +434,9 @@ export default {
       buildLandingPortal(
         landing,
         "recordsDockSidePortal",
-        { x: -2.35, y: floorY, z: 0 },
+        { x: -2.90, y: floorY, z: 0 },
         -Math.PI / 2,
-        3.25,
+        3.80,
         "dock"
       );
 
@@ -444,9 +444,9 @@ export default {
       buildLandingPortal(
         landing,
         "recordsPatioSidePortal",
-        { x: 2.35, y: floorY, z: 0 },
+        { x: 2.90, y: floorY, z: 0 },
         Math.PI / 2,
-        3.25,
+        3.80,
         "patio"
       );
 
@@ -457,7 +457,7 @@ export default {
     [4.2, 12.2, 20.2].forEach(y => {
       box(
         elevator,
-        new THREE.BoxGeometry(4.60, 0.10, 3.70),
+        new THREE.BoxGeometry(5.70, 0.10, 4.60),
         gold,
         0,
         y,
