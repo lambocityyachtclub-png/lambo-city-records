@@ -224,6 +224,7 @@ function createMixPanel({ beatLab, workspace } = {}) {
     }
     tracks.forEach(track => {
       const row = document.createElement("section");
+      row.dataset.trackId = track.id;
       row.style.cssText = "display:grid;gap:10px;padding:13px;border:1px solid #343946;border-radius:10px;background:#191d27";
       const heading = document.createElement("div");
       heading.style.cssText = "display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap";
@@ -331,12 +332,73 @@ function createMixPanel({ beatLab, workspace } = {}) {
       compControl.append(compSlider, compValue);
       inserts.appendChild(compControl);
       row.append(heading, volume, pan, inserts);
+      const automation = document.createElement("details");
+      automation.style.cssText = "padding:9px 10px;border:1px solid #343946;border-radius:8px;background:#12151d;color:#d8b36e";
+      const automationTitle = document.createElement("summary");
+      automationTitle.textContent = "VOLUME AUTOMATION";
+      automationTitle.style.cssText = "font-size:10px;font-weight:800;letter-spacing:1px;cursor:pointer";
+      automation.appendChild(automationTitle);
+      const automationControls = document.createElement("div");
+      automationControls.style.cssText = "display:grid;grid-template-columns:70px 1fr auto;gap:7px;align-items:center;margin-top:10px";
+      const barInput = document.createElement("input");
+      barInput.type = "number"; barInput.min = "1"; barInput.max = "32"; barInput.step = "1";
+      barInput.value = "1"; barInput.dataset.automationBar = track.id;
+      barInput.setAttribute("aria-label", "Automation bar");
+      const levelInput = document.createElement("input");
+      levelInput.type = "number"; levelInput.min = "0"; levelInput.max = "100"; levelInput.step = "1";
+      levelInput.value = String(track.volume); levelInput.dataset.automationLevel = track.id;
+      levelInput.setAttribute("aria-label", "Automation volume");
+      const addPoint = document.createElement("button");
+      addPoint.type = "button"; addPoint.dataset.addVolumePoint = track.id;
+      addPoint.textContent = "ADD POINT";
+      addPoint.style.cssText = "min-height:34px;padding:6px 9px;border:1px solid #665438;border-radius:6px;background:#222631;color:#f1d49c;font-size:10px;font-weight:700";
+      automationControls.append(barInput, levelInput, addPoint);
+      automation.appendChild(automationControls);
+      const points = document.createElement("div");
+      points.style.cssText = "display:flex;flex-wrap:wrap;gap:6px;margin-top:9px";
+      (track.automation?.volume || []).forEach((point, pointIndex) => {
+        const item = document.createElement("span");
+        item.style.cssText = "display:flex;align-items:center;gap:5px;padding:5px 7px;border:1px solid #454958;border-radius:6px;color:#c9c7c1;font-size:10px";
+        item.textContent = "BAR " + point.bar + " · " + point.value + "%";
+        const remove = document.createElement("button");
+        remove.type = "button"; remove.dataset.removeVolumePoint = track.id;
+        remove.dataset.pointIndex = String(pointIndex); remove.textContent = "×";
+        remove.style.cssText = "min-height:22px;padding:0 5px;border:0;background:transparent;color:#e6bb69;font-size:14px";
+        item.appendChild(remove); points.appendChild(item);
+      });
+      automation.appendChild(points);
+      row.appendChild(automation);
       list.appendChild(row);
     });
   };
 
   renderTracks();
   root.addEventListener("click", event => {
+    const addPoint = event.target.closest("[data-add-volume-point]");
+    if (addPoint) {
+      const track = StudioMultitrackWorkspace.tracks.find(item => item.id === addPoint.dataset.addVolumePoint);
+      const row = addPoint.closest("[data-track-id]");
+      if (!track || !row) return;
+      const bar = Math.max(1, Math.min(32, Number(row.querySelector("[data-automation-bar]").value) || 1));
+      const value = Math.max(0, Math.min(100, Number(row.querySelector("[data-automation-level]").value) || 0));
+      track.automation = track.automation || { volume: [] };
+      const existing = track.automation.volume.find(point => point.bar === bar);
+      if (existing) existing.value = value;
+      else track.automation.volume.push({ bar, value });
+      track.automation.volume.sort((a, b) => a.bar - b.bar);
+      renderTracks();
+      status(track.name + " volume automation updated.");
+      return;
+    }
+    const removePoint = event.target.closest("[data-remove-volume-point]");
+    if (removePoint) {
+      const track = StudioMultitrackWorkspace.tracks.find(item => item.id === removePoint.dataset.removeVolumePoint);
+      if (!track?.automation?.volume) return;
+      track.automation.volume.splice(Number(removePoint.dataset.pointIndex), 1);
+      renderTracks();
+      status(track.name + " automation point removed.");
+      return;
+    }
     const button = event.target.closest("[data-mix-action], [data-track-control]");
     if (!button) return;
     if (button.dataset.mixAction === "edit") {
