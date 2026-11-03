@@ -89,12 +89,73 @@ function createRecorder(stream) {
 const StudioRecordingEngine = {
 
   activeTake: null,
+  activeTrackTake: null,
   takes: [],
   playback: null,
 
+  async startTrackRecording({ audio, trackId } = {}) {
+    if (this.activeTake || this.activeTrackTake) {
+      throw new Error("Another studio recording is already in progress.");
+    }
+    if (!audio || audio.state !== "running") throw new Error("Start the studio audio before recording.");
+    if (!trackId) throw new Error("Choose and arm an audio track before recording.");
+    if (!navigator.mediaDevices?.getUserMedia) {
+      throw new Error("Microphone access is unavailable. Open LAMBO CITY over HTTPS.");
+    }
+    const microphoneStream = await navigator.mediaDevices.getUserMedia({
+      audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
+    });
+    let microphoneSource;
+    let destination;
+    try {
+      microphoneSource = audio.createMediaStreamSource(microphoneStream);
+      destination = audio.createMediaStreamDestination();
+      microphoneSource.connect(destination);
+      const recorder = createRecorder(destination.stream);
+      recorder.recorder.start();
+      this.activeTrackTake = {
+        id: `track-take-${Date.now()}`,
+        trackId,
+        startedAt: new Date().toISOString(),
+        startedAtMs: Date.now(),
+        microphoneStream,
+        microphoneSource,
+        destination,
+        recorder
+      };
+      return { id: this.activeTrackTake.id, trackId, startedAt: this.activeTrackTake.startedAt };
+    } catch (error) {
+      try { microphoneSource?.disconnect(); } catch {}
+      try { destination?.disconnect(); } catch {}
+      microphoneStream.getTracks().forEach(track => track.stop());
+      throw error;
+    }
+  },
+
+  async stopTrackRecording() {
+    const take = this.activeTrackTake;
+    if (!take) throw new Error("There is no armed-track recording in progress.");
+    this.activeTrackTake = null;
+    try {
+      const blob = await take.recorder.finish();
+      return {
+        id: take.id,
+        trackId: take.trackId,
+        startedAt: take.startedAt,
+        stoppedAt: new Date().toISOString(),
+        durationMs: Math.max(0, Date.now() - take.startedAtMs),
+        blob
+      };
+    } finally {
+      try { take.microphoneSource.disconnect(); } catch {}
+      try { take.destination.disconnect(); } catch {}
+      take.microphoneStream.getTracks().forEach(track => track.stop());
+    }
+  },
+
  async startTake({ audio, beatOutput, vocalEffects } = {}) {
 
-    if (this.activeTake) {
+    if (this.activeTake || this.activeTrackTake) {
       throw new Error(
         "A recording is already in progress."
       );
