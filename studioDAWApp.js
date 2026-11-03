@@ -279,6 +279,21 @@ function createMixPanel({ beatLab, workspace } = {}) {
       insertsTitle.textContent = "INSERT FX · EQ / COMPRESSION";
       insertsTitle.style.cssText = "font-size:10px;font-weight:800;letter-spacing:1px;cursor:pointer";
       inserts.appendChild(insertsTitle);
+      const inputLabel = document.createElement("label");
+      inputLabel.style.cssText = "display:grid;grid-template-columns:92px 1fr;gap:8px;align-items:center;margin-top:10px;color:#a8a8b1;font-size:10px";
+      inputLabel.append("INPUT SOURCE");
+      const inputSelect = document.createElement("select");
+      inputSelect.dataset.trackInput = track.id;
+      inputSelect.style.cssText = "width:100%;min-height:34px;padding:6px;background:#20242e;color:#f4f1eb;border:1px solid #454958;border-radius:6px";
+      [["mic","MICROPHONE"],["beatlab","DIGITAL BEAT LAB"],["mpc","MPC OUTPUT"]].forEach(([value,label]) => {
+        const option = document.createElement("option");
+        option.value = value;
+        option.textContent = label;
+        inputSelect.appendChild(option);
+      });
+      inputSelect.value = track.inputSource || "mic";
+      inputLabel.appendChild(inputSelect);
+      inserts.appendChild(inputLabel);
       [["low","LOW"],["mid","MID"],["high","HIGH"]].forEach(([band,label]) => {
         const control = document.createElement("label");
         control.style.cssText = "display:grid;grid-template-columns:52px 1fr 42px;gap:8px;align-items:center;margin-top:9px;color:#a8a8b1;font-size:10px";
@@ -346,6 +361,14 @@ function createMixPanel({ beatLab, workspace } = {}) {
     status(track.name + ": " + (track.muted ? "muted" : "active") + (track.solo ? " · solo" : "") + ".");
   });
 
+  root.addEventListener("change", event => {
+    const inputSelect = event.target.closest("[data-track-input]");
+    if (!inputSelect) return;
+    const track = StudioMultitrackWorkspace.tracks.find(item => item.id === inputSelect.dataset.trackInput);
+    if (!track) return;
+    track.inputSource = inputSelect.value;
+    status(track.name + " input set to " + inputSelect.options[inputSelect.selectedIndex].text + ".");
+  });
   root.addEventListener("input", event => {
     const eqSlider = event.target.closest("[data-eq-band]");
     if (eqSlider) {
