@@ -106,32 +106,8 @@ export default {
       addBox(group, new THREE.BoxGeometry(0.42, 0.055, 0.08), brass, x, 0.54, -5.61);
     });
 
-    // The redundant side-boardroom microphone rail was removed with that furniture.
-
-    // Executive lounge: a low side table    // Executive lounge: a low side table and a subtle brass reading lamp.
-    const sideTop = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.55, 0.55, 0.12, 28),
-      brass
-    );
-    sideTop.position.set(7.45, 0.92, -2.0);
-    group.add(sideTop);
-    const sideBase = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.12, 0.2, 0.82, 16),
-      black
-    );
-    sideBase.position.set(7.45, 0.42, -2.0);
-    group.add(sideBase);
-    addBox(group, new THREE.BoxGeometry(0.055, 0.78, 0.055), brass, 7.65, 1.36, -1.72);
-    const lampShade = new THREE.Mesh(
-      new THREE.ConeGeometry(0.22, 0.25, 16, 1, true),
-      brassGlow
-    );
-    lampShade.position.set(7.65, 1.78, -1.72);
-    lampShade.rotation.x = Math.PI;
-    group.add(lampShade);
-    const loungeLight = new THREE.PointLight(0xffc77a, 0.34, 4.5);
-    loungeLight.position.set(7.65, 1.85, -1.72);
-    group.add(loungeLight);
+    // The extra lounge side table, reading lamp and lava lamp were
+    // removed to keep the lounge perimeter quiet and uncluttered.
 
     // Executive office: keyboard, document folio and pen cup.
     addBox(group, new THREE.BoxGeometry(1.12, 0.055, 0.32), dark, 5.0, 1.105, 4.35);
@@ -167,7 +143,6 @@ export default {
 
     // Private-room planting: contained within the existing room footprints.
     addPlant(group, -8.05, 3.45, pot, green);
-    addPlant(group, 8.05, -4.15, pot, green);
     addPlant(group, 7.55, 5.75, pot, green);
 
     // Keep the main circulation floor free of decorative strips and markers.
