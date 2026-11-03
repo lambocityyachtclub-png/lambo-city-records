@@ -14,6 +14,7 @@
 import StudioDAWWorkspace from "./studioDAWWorkspace.js";
 import Floor2StudioApp from "./floor2StudioApp.js";
 import Floor2InstrumentApp from "./floor2InstrumentApp.js";
+import Floor2DrumStation from "./floor2DrumStation.js";
 import StudioAudioEngine from "./studioAudioEngine.js";
 import StudioMultitrackWorkspace from "./studioMultitrackWorkspace.js";
 import {
@@ -23,6 +24,145 @@ import {
   createStudioDAWBeatLabPanel
 } from "./studioDAWBeatLabPanel.js";
 
+
+function createMPCPanel({ beatLab, workspace } = {}) {
+  const root = document.createElement("section");
+  root.style.cssText = "display:grid;gap:16px;width:100%;color:#f4f1eb";
+  root.innerHTML = `
+    <header style="display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap">
+      <div>
+        <div style="color:#e6bb69;font-size:11px;letter-spacing:2px">LAMBO CITY RECORDS · VINTAGE MPC</div>
+        <h2 style="margin:7px 0;font-size:24px">MPC PERFORMANCE</h2>
+        <p style="margin:0;color:#a8a8b1;font-size:13px">A focused 16-pad production surface connected to your current song.</p>
+      </div>
+      <button type="button" data-mpc-digital style="min-height:44px;padding:10px 14px;border:1px solid #80643a;border-radius:8px;background:#201c16;color:#f1d49c;font-weight:bold">OPEN DIGITAL BEAT LAB</button>
+    </header>
+    <div style="display:flex;gap:8px;flex-wrap:wrap" data-mpc-tracks>
+      <button type="button" data-track="kick">KICK</button>
+      <button type="button" data-track="snare">SNARE</button>
+      <button type="button" data-track="hat">HI-HAT</button>
+    </div>
+    <div data-mpc-pads style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;max-width:620px;margin:auto;width:100%"></div>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <button type="button" data-mpc-play style="min-height:46px;padding:11px 18px;border:1px solid #80643a;border-radius:8px;background:#594321;color:white;font-weight:bold">▶ PLAY</button>
+      <button type="button" data-mpc-stop style="min-height:46px;padding:11px 18px;border:1px solid #454958;border-radius:8px;background:#222631;color:white;font-weight:bold">■ STOP</button>
+      <label style="display:flex;gap:8px;align-items:center;color:#e6bb69;font-size:12px">TEMPO
+        <input data-mpc-tempo type="range" min="60" max="180" value="${beatLab?.pattern?.bpm || 100}">
+        <strong data-mpc-tempo-label>${beatLab?.pattern?.bpm || 100} BPM</strong>
+      </label>
+      <button type="button" data-mpc-save style="min-height:42px;padding:10px 14px;border:1px solid #665438;border-radius:8px;background:#222631;color:white;font-weight:bold">SAVE BEAT</button>
+    </div>
+    <div data-mpc-status role="status" aria-live="polite" style="min-height:22px;color:#e6bb69;font-size:12px"></div>
+    <div data-mpc-device-note style="color:#a8a8b1;font-size:12px;line-height:1.5"></div>
+  `;
+
+  let activeTrack = "kick";
+  const pads = root.querySelector("[data-mpc-pads]");
+  const status = message => {
+    root.querySelector("[data-mpc-status]").textContent = message;
+  };
+  const touchAvailable =
+    Number(navigator.maxTouchPoints || 0) > 0 ||
+    ("ontouchstart" in window);
+  root.querySelector("[data-mpc-device-note]").textContent = touchAvailable
+    ? "Touchscreen pad control available. Mouse and trackpad input are also supported."
+    : "For the most natural pad performance, use the Digital Beat Lab on this device. The MPC controls remain available here.";
+
+  root.querySelectorAll("[data-track]").forEach(button => {
+    button.style.cssText = "min-height:42px;padding:10px 16px;border:1px solid #665438;border-radius:8px;background:#222631;color:#f4f1eb;font-weight:bold";
+    button.addEventListener("click", () => {
+      activeTrack = button.dataset.track;
+      renderPads();
+    });
+  });
+
+  const renderPads = () => {
+    pads.replaceChildren();
+    const steps = beatLab?.pattern?.steps?.[activeTrack] || [];
+    for (let index = 0; index < 16; index++) {
+      const pad = document.createElement("button");
+      pad.type = "button";
+      pad.textContent = String(index + 1).padStart(2, "0");
+      pad.setAttribute("aria-pressed", String(Boolean(steps[index])));
+      pad.style.cssText = "aspect-ratio:1;min-height:58px;border:1px solid #80643a;border-radius:10px;background:" +
+        (steps[index] ? "linear-gradient(145deg,#f1d49c,#a87531)" : "linear-gradient(145deg,#282b34,#11131a)") +
+        ";color:" + (steps[index] ? "#17130d" : "#f4f1eb") +
+        ";font-size:16px;font-weight:800;touch-action:manipulation;box-shadow:inset 0 1px 0 rgba(255,255,255,.08)";
+      pad.addEventListener("click", () => {
+        beatLab.pattern.steps[activeTrack][index] =
+          !beatLab.pattern.steps[activeTrack][index];
+        renderPads();
+      });
+      pads.appendChild(pad);
+    }
+    root.querySelectorAll("[data-track]").forEach(button => {
+      button.style.background = button.dataset.track === activeTrack ? "#594321" : "#222631";
+      button.setAttribute("aria-pressed", String(button.dataset.track === activeTrack));
+    });
+  };
+
+  root.querySelector("[data-mpc-play]").addEventListener("click", async () => {
+    if (!beatLab) return;
+    beatLab.soundProfile = "mpc";
+    await beatLab.start();
+    status("Vintage MPC pattern playing.");
+  });
+  root.querySelector("[data-mpc-stop]").addEventListener("click", () => {
+    beatLab?.stop();
+    status("MPC playback stopped.");
+  });
+  root.querySelector("[data-mpc-tempo]").addEventListener("input", event => {
+    const bpm = Number(event.target.value);
+    if (beatLab?.pattern) beatLab.pattern.bpm = bpm;
+    root.querySelector("[data-mpc-tempo-label]").textContent = bpm + " BPM";
+  });
+  root.querySelector("[data-mpc-save]").addEventListener("click", () => {
+    beatLab?.save();
+    status("Current MPC beat saved.");
+  });
+  root.querySelector("[data-mpc-digital]").addEventListener("click", () => {
+    workspace?.setView("beatlab");
+  });
+
+  if (beatLab) beatLab.soundProfile = "mpc";
+  renderPads();
+  return root;
+}
+
+function createDrumsPanel() {
+  const root = document.createElement("section");
+  root.style.cssText = "display:grid;gap:18px;width:100%;color:#f4f1eb";
+  root.innerHTML = `
+    <div>
+      <div style="color:#e6bb69;font-size:11px;letter-spacing:2px">LAMBO CITY RECORDS · DRUM ROOM</div>
+      <h2 style="margin:8px 0;font-size:24px">DRUM PERFORMANCE</h2>
+      <p style="color:#a8a8b1;font-size:13px">Tap or click a drum pad to play through the shared studio mixer.</p>
+    </div>
+    <div data-drum-pads style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;max-width:620px"></div>
+  `;
+  const pads = root.querySelector("[data-drum-pads]");
+  [
+    ["KICK","kick"],["SNARE","snare"],
+    ["HI-HAT","hat"],["TOM","tom"],
+    ["CRASH","cymbal"]
+  ].forEach(([label,sound]) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.textContent = label;
+    button.style.cssText = "min-height:100px;border:1px solid #80643a;border-radius:12px;background:linear-gradient(145deg,#292b34,#11131a);color:#f1d49c;font-size:15px;font-weight:800;touch-action:manipulation";
+    button.addEventListener("pointerdown", event => {
+      event.preventDefault();
+      void Floor2DrumStation.playDrum(sound);
+      button.style.transform = "scale(.98)";
+    });
+    const release = () => { button.style.transform = ""; };
+    button.addEventListener("pointerup", release);
+    button.addEventListener("pointercancel", release);
+    button.addEventListener("pointerleave", release);
+    pads.appendChild(button);
+  });
+  return root;
+}
 
 function createMixPanel({ beatLab, workspace } = {}) {
   const root = document.createElement("section");
@@ -282,10 +422,14 @@ const StudioDAWApp = {
   mixPanel: null,
   vocalsPanel: null,
   pianoPanel: null,
+  mpcPanel: null,
+  drumsPanel: null,
 
   open(initialView = "edit") {
     if (this.root?.isConnected) {
       this.workspace?.setView(initialView);
+      const nav = this.workspace?.root?.querySelector(".lc-daw-navigation");
+      if (nav) nav.style.display = ["mpc","beatlab","piano","drums","vocals"].includes(initialView) ? "none" : "flex";
       return this.root;
     }
 
@@ -326,22 +470,10 @@ const StudioDAWApp = {
         LAMBO CITY DIGITAL STUDIO
       </strong>
 
-      <button
-        type="button"
-        data-daw-exit
-        style="
-          min-height:42px;
-          padding:10px 16px;
-          border:1px solid #80643a;
-          border-radius:7px;
-          background:#201c16;
-          color:#f1d49c;
-          font-weight:bold;
-          cursor:pointer;
-        "
-      >
-        EXIT STUDIO ✕
-      </button>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button type="button" data-daw-return style="min-height:42px;padding:10px 13px;border:1px solid #665438;border-radius:7px;background:#171923;color:#f1d49c;font-weight:bold">RETURN TO ROOM</button>
+        <button type="button" data-daw-end style="min-height:42px;padding:10px 13px;border:1px solid #80643a;border-radius:7px;background:#201c16;color:#f1d49c;font-weight:bold">END SESSION</button>
+      </div>
     `;
 
     const workspaceMount = document.createElement("div");
@@ -366,15 +498,22 @@ const StudioDAWApp = {
 
       if (!(target instanceof Element)) return;
 
-      if (
-        target.closest("[data-daw-exit]") ||
-        target.closest('#lambo-city-beat-lab [data-action="close"]')
-      ) {
+      const returnToRoom = target.closest("[data-daw-return]") ||
+        target.closest('#lambo-city-beat-lab [data-action="close"]');
+      const endSession = target.closest("[data-daw-end]");
+
+      if (returnToRoom || endSession) {
         event.preventDefault();
         event.stopPropagation();
         event.stopImmediatePropagation();
 
         this.close();
+
+        if (endSession) {
+          window.__lamboCityEndFloor2Session?.();
+        } else {
+          window.__lamboCityReturnToFloor2Room?.();
+        }
       }
     };
 
@@ -390,22 +529,29 @@ const StudioDAWApp = {
 
       this.workspace.mount({
         container: workspaceMount,
-        panels: {
-          mpc: this.panelHost
-        },
+        panels: {},
         initialView,
         onViewChange: viewId => {
           if (viewId === "mix") this.mixPanel?.refresh?.();
         }
       });
 
-      // Create a bridge to the EXISTING Beat Lab instance.
+      // Dedicated MPC performance surface and a separate Digital Beat Lab.
+      this.mpcPanel = createMPCPanel({
+        beatLab: Floor2StudioApp,
+        workspace: this.workspace
+      });
+      this.workspace.setPanel("mpc", this.mpcPanel);
+
       this.beatLabPanel = createStudioDAWBeatLabPanel({
         beatLab: Floor2StudioApp
       });
+      this.beatLabPanel.onReturn = () => this.workspace?.setView("mpc");
+      this.beatLabPanel.mount(this.panelHost);
+      this.workspace.setPanel("beatlab", this.panelHost);
 
-      // Mount the existing Beat Lab inside the MPC workspace.
-           this.beatLabPanel.mount(this.panelHost);
+      this.drumsPanel = createDrumsPanel();
+      this.workspace.setPanel("drums", this.drumsPanel);
 
       // Connect the existing Multitrack Workspace
       // to the modular DAW EDIT tab.
@@ -424,6 +570,11 @@ const StudioDAWApp = {
       this.workspace.setPanel("mix", this.mixPanel);
       this.workspace.setPanel("vocals", this.vocalsPanel);
       this.workspace.setPanel("piano", this.pianoPanel);
+
+      const nav = this.workspace.root?.querySelector(".lc-daw-navigation");
+      if (nav && ["mpc","beatlab","piano","drums","vocals"].includes(initialView)) {
+        nav.style.display = "none";
+      }
 
       return root;
     } catch (error) {
@@ -471,6 +622,8 @@ const StudioDAWApp = {
     this.mixPanel = null;
     this.vocalsPanel = null;
     this.pianoPanel = null;
+    this.mpcPanel = null;
+    this.drumsPanel = null;
     this.panelHost = null;
     this.handleOverlayClick = null;
   }
