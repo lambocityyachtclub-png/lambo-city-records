@@ -260,9 +260,9 @@ export default {
       This is the former Shift/sprint speed, now used all the time.
     */
 
-    this.speed = 22;
+    this.speed = 28;
 
-    this.sprintSpeed = 22;
+    this.sprintSpeed = 28;
 
     /*
       Original LAMBO CITY world-flow
