@@ -33,6 +33,7 @@ export default {
     player.add(body);
 
     this._bodyMat = bm;
+    this._studioBody = body;
 
     const logo =
       new THREE.Mesh(
@@ -55,6 +56,7 @@ export default {
     );
 
     player.add(logo);
+    this._studioLogo = logo;
 
     const head =
       new THREE.Mesh(
@@ -72,6 +74,7 @@ export default {
     head.position.y = 3.15;
 
     player.add(head);
+    this._studioHead = head;
 
     const cap =
       new THREE.Mesh(
@@ -88,6 +91,7 @@ export default {
     cap.position.y = 3.65;
 
     player.add(cap);
+    this._studioCap = cap;
 
     const brim =
       new THREE.Mesh(
@@ -108,6 +112,7 @@ export default {
     );
 
     player.add(brim);
+    this._studioBrim = brim;
 
     this.armL =
       new THREE.Mesh(
@@ -240,6 +245,7 @@ export default {
       Math.PI / 2;
 
     player.add(chain);
+    this._studioChain = chain;
 
     player.position.set(
       0,
@@ -322,6 +328,49 @@ export default {
 
   },
 
+  setStudioSeatedPose(active) {
+    if (!player) return;
+
+    if (active) {
+      this._studioBody.position.y = 1.45;
+      this._studioHead.position.y = 2.55;
+      this._studioCap.position.y = 3.05;
+      this._studioBrim.position.y = 2.92;
+      this._studioLogo.position.y = 1.58;
+      this._studioChain.position.y = 1.76;
+
+      this.armL.position.set(-0.8, 1.48, 0.28);
+      this.armR.position.set(0.8, 1.48, 0.28);
+      this.armL.rotation.x = -Math.PI / 2;
+      this.armR.rotation.x = -Math.PI / 2;
+
+      this.legL.position.set(-0.35, 0.70, 0.48);
+      this.legR.position.set(0.35, 0.70, 0.48);
+      this.legL.rotation.x = -Math.PI / 2;
+      this.legR.rotation.x = -Math.PI / 2;
+      this._studioPoseActive = true;
+      return;
+    }
+
+    this._studioBody.position.y = 1.8;
+    this._studioHead.position.y = 3.15;
+    this._studioCap.position.y = 3.65;
+    this._studioBrim.position.y = 3.52;
+    this._studioLogo.position.y = 1.9;
+    this._studioChain.position.y = 2.1;
+
+    this.armL.position.set(-0.8, 1.8, 0);
+    this.armR.position.set(0.8, 1.8, 0);
+    this.armL.rotation.set(0, 0, 0);
+    this.armR.rotation.set(0, 0, 0);
+
+    this.legL.position.set(-0.35, 0.6, 0);
+    this.legR.position.set(0.35, 0.6, 0);
+    this.legL.rotation.set(0, 0, 0);
+    this.legR.rotation.set(0, 0, 0);
+    this._studioPoseActive = false;
+  },
+
   equipHoodie() {
 
     if (this._bodyMat) {
@@ -353,6 +402,21 @@ export default {
     ) {
       return;
     }
+
+    context.player = player;
+
+    if (window.__lamboCityFloor2SessionActive) {
+      input.keys.w = input.keys.a = input.keys.s = input.keys.d = false;
+      input.keys.shift = false;
+      if (input.joystick) {
+        input.joystick.x = 0;
+        input.joystick.y = 0;
+        input.joystick.active = false;
+      }
+      return;
+    }
+
+    if (this._studioPoseActive) this.setStudioSeatedPose(false);
 
     bobTime += delta;
 
