@@ -172,25 +172,8 @@ function buildWaterfrontPromenade(group) {
   // GOLD INLAY LINES
   // ----------------------------------------------------------
 
-  [-10.5, -7, -3.5, 0].forEach(offset => {
-
-    const line = new THREE.Mesh(
-      new THREE.BoxGeometry(
-        .055,
-        .19,
-        18
-      ),
-      gold
-    );
-
-    line.position.set(
-      HQ_POSITION.x + offset,
-      .21,
-      HQ_POSITION.z + 18
-    );
-
-    group.add(line);
-  });
+  // The promenade remains a continuous stone walk; no decorative
+  // gold stripes compete with the HQ facade or pedestrian route.
 
 
   // ----------------------------------------------------------
@@ -345,31 +328,6 @@ function buildWaterfrontPromenade(group) {
 
     group.add(plant);
   });
-
-
-  // ----------------------------------------------------------
-  // CENTRAL LAMBO CITY EMBLEM
-  // ----------------------------------------------------------
-
-  const emblem = new THREE.Mesh(
-    new THREE.CylinderGeometry(
-      1.25,
-      1.25,
-      .08,
-      32
-    ),
-    gold
-  );
-
-  emblem.rotation.x = Math.PI / 2;
-
-  emblem.position.set(
-    HQ_POSITION.x - 7,
-    .23,
-    HQ_POSITION.z + 20
-  );
-
-  group.add(emblem);
 
 
   // ----------------------------------------------------------
