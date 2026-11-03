@@ -375,14 +375,11 @@ export default {
 
     
 
-    const beatX =
-      -5.65;
-
-    const beatZ =
-      -0.55;
-
-    const beatAngle =
-      Math.PI * 0.12;
+    // The primary producer workstation now occupies the former
+    // mix-control position: one desk for MPC, mixing and mastering.
+    const beatX = 0;
+    const beatZ = -4.1;
+    const beatAngle = 0;
 
     // Main production desk
 
@@ -832,11 +829,11 @@ export default {
 
     label(
       beatLab,
-      "MPC • BEAT LAB",
-      -5.55,
+      "PRODUCER • MPC • MIX • MASTER",
+      0,
       3.28,
-      -2.65,
-      4.0
+      -2.05,
+      5.4
     );
 
     group.add(
@@ -1338,272 +1335,115 @@ export default {
     );
 
     // =========================================================
-    // 5. CONTROL ROOM / MIXING CONSOLE
+    // 5. MIX / MASTER WORKSTATION
     //
-    // Rear center.
-    //
-    // The main production command center.
+    // The former rear-center mix-control position is now the
+    // single producer cockpit. MPC, mix and mastering share the
+    // same desk, chair, monitor display and speaker pair.
     // =========================================================
 
-    const controlRoom =
-      new THREE.Group();
+    const controlRoom = new THREE.Group();
+    controlRoom.name = "floor2ControlRoomArchitecture";
 
-    controlRoom.name =
-      "floor2ControlRoom";
-
-    // Rear wall
+    // Keep the rear acoustic feature wall and gold trim.
+    // The old oversized, separate console and three-screen bank
+    // are removed so they do not compete with the main desk.
 
     box(
       controlRoom,
-      new THREE.BoxGeometry(
-        6.9,
-        3.7,
-        0.22
-      ),
+      new THREE.BoxGeometry(6.9, 3.7, 0.22),
       black,
       0,
       2.0,
       -6.55
     );
 
-    // Gold architectural trim
-
     box(
       controlRoom,
-      new THREE.BoxGeometry(
-        6.7,
-        0.07,
-        0.08
-      ),
+      new THREE.BoxGeometry(6.7, 0.07, 0.08),
       gold,
       0,
       3.72,
       -6.38
     );
 
-    // Main console
-
-    box(
-      controlRoom,
-      new THREE.BoxGeometry(
-        5.5,
-        0.82,
-        1.45
-      ),
-      dark,
-      0,
-      0.55,
-      -4.85
-    );
-
-    box(
-      controlRoom,
-      new THREE.BoxGeometry(
-        5.55,
-        0.08,
-        1.5
-      ),
-      gold,
-      0,
-      1.01,
-      -4.85
-    );
-
-    // Three main displays
-
-    [-1.7, 0, 1.7].forEach(
-      x => {
-
-        box(
-          controlRoom,
-          new THREE.BoxGeometry(
-            1.3,
-            0.88,
-            0.08
-          ),
-          glass,
-          x,
-          1.65,
-          -5.15
-        );
-
-        box(
-          controlRoom,
-          new THREE.BoxGeometry(
-            1.38,
-            0.05,
-            0.05
-          ),
-          goldGlow,
-          x,
-          2.13,
-          -5.11
-        );
-
-      }
-    );
-
-    // Mixing controller
-
-    box(
-      controlRoom,
-      new THREE.BoxGeometry(
-        1.5,
-        0.08,
-        0.72
-      ),
-      black,
-      0,
-      1.08,
-      -4.05
-    );
-
-    [-0.45, -0.15, 0.15, 0.45]
-      .forEach(
-        x => {
-
-          cylinder(
-            controlRoom,
-            new THREE.CylinderGeometry(
-              0.06,
-              0.06,
-              0.04,
-              12
-            ),
-            goldGlow,
-            x,
-            1.15,
-            -4.05
-          );
-
-        }
-      );
-
     label(
       controlRoom,
-      "MIX • CONTROL",
+      "LAMBO CITY • PRODUCER CONTROL",
       0,
       3.15,
       -6.38,
-      4.4
+      5.4
     );
 
-    group.add(
-      controlRoom
-    );
+    group.add(controlRoom);
 
-    // =========================================================
-    // 6. MASTERING STATION
-    //
-    // Rear-right.
-    //
-    // Separate from the main mixing console so mastering reads
-    // as its own final-stage workflow.
-    // =========================================================
+    // Dedicated physical mix/master controls sit ON the same
+    // producer desk as the MPC. This remains a distinct raycast
+    // target so tapping the controls opens the MIX workspace,
+    // while the MPC itself retains its Beat Lab interaction.
 
-    const mastering =
-      new THREE.Group();
+    const mixMasterControls = new THREE.Group();
+    mixMasterControls.name = "floor2MixMasterControls";
+    mixMasterControls.position.set(beatX, 0, beatZ);
+    mixMasterControls.rotation.y = beatAngle;
 
-    mastering.name =
-      "floor2MasteringStation";
-
-    const masterX =
-      5.35;
-
-    const masterZ =
-      -4.65;
-
-    // Console
-
+    // Compact mastering section at the front end of the desk.
     box(
-      mastering,
-      new THREE.BoxGeometry(
-        2.35,
-        0.78,
-        0.95
-      ),
-      dark,
-      masterX,
-      0.78,
-      masterZ
+      mixMasterControls,
+      new THREE.BoxGeometry(0.92, 0.08, 0.72),
+      black,
+      -0.08,
+      1.105,
+      1.12
     );
 
     box(
-      mastering,
-      new THREE.BoxGeometry(
-        2.42,
-        0.07,
-        1.0
-      ),
+      mixMasterControls,
+      new THREE.BoxGeometry(0.94, 0.025, 0.74),
       gold,
-      masterX,
-      1.20,
-      masterZ
+      -0.08,
+      1.155,
+      1.12
     );
 
-    // Mastering display
-
-    box(
-      mastering,
-      new THREE.BoxGeometry(
-        1.7,
-        0.88,
-        0.08
-      ),
-      glass,
-      masterX,
-      1.78,
-      masterZ + 0.25
-    );
-
-    box(
-      mastering,
-      new THREE.BoxGeometry(
-        1.82,
-        0.05,
-        0.05
-      ),
-      goldGlow,
-      masterX,
-      2.25,
-      masterZ + 0.25
-    );
-
-    // Mastering controls
-
-    [-0.65, -0.22, 0.22, 0.65]
-      .forEach(
-        x => {
-
-          cylinder(
-            mastering,
-            new THREE.CylinderGeometry(
-              0.055,
-              0.055,
-              0.05,
-              12
-            ),
-            goldGlow,
-            masterX + x,
-            1.28,
-            masterZ - 0.22
-          );
-
-        }
+    // Four mastering / output controls.
+    [-0.38, -0.13, 0.13, 0.38].forEach(x => {
+      cylinder(
+        mixMasterControls,
+        new THREE.CylinderGeometry(0.055, 0.055, 0.055, 16),
+        goldGlow,
+        x - 0.08,
+        1.215,
+        1.12
       );
+    });
+
+    // Small output-meter strip beside the mastering controls.
+    box(
+      mixMasterControls,
+      new THREE.BoxGeometry(0.58, 0.035, 0.12),
+      glass,
+      -0.08,
+      1.205,
+      1.42
+    );
 
     label(
-      mastering,
-      "MASTERING",
-      masterX,
-      2.82,
-      masterZ - 0.62,
-      3.5
+      mixMasterControls,
+      "MIX • MASTER",
+      -0.08,
+      2.05,
+      1.12,
+      2.1
     );
 
-    group.add(
-      mastering
-    );
+    group.add(mixMasterControls);
+
+    // Both workflow references intentionally resolve to this
+    // single physical control surface; there is no second
+    // mastering station elsewhere in the room.
+    const mastering = mixMasterControls;
 
     // =========================================================
     // 7. SONG ARCHIVE / STUDIO LIBRARY
@@ -1991,9 +1831,11 @@ export default {
       recordingEditing:
         editing,
 
-      controlRoom,
+      controlRoom:
+        mixMasterControls,
 
-      mastering,
+      mastering:
+        mixMasterControls,
 
       songArchive:
         archive,
