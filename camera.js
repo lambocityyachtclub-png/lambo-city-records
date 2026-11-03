@@ -8,7 +8,7 @@
 // RECORDS HQ
 // - Floor 1: elevated immersive retail camera
 // - Floor 2: dedicated immersive studio camera
-// - Floor 3: enclosed third-person camera
+// - Floor 3: first-person character POV with touch / mouse look
 // - Rooftop: wider cinematic camera
 //
 // CAMERA TRANSITION
@@ -71,16 +71,6 @@ const FLOOR1_DISTANCE = 5.8;
 const FLOOR1_HEIGHT = 4.5;
 const FLOOR1_LOOK_HEIGHT = 1.8;
 const FLOOR1_SIDE_OFFSET = 0.8;
-
-
-// ============================================================
-// FLOOR 3 CAMERA
-// ============================================================
-
-const HQ_DISTANCE = 7.0;
-const HQ_HEIGHT = 5.1;
-const HQ_LOOK_HEIGHT = 1.8;
-const HQ_SIDE_OFFSET = 1.0;
 
 
 // ============================================================
@@ -369,102 +359,6 @@ function updateFloor1Camera(
   const lookY =
     player.position.y +
     FLOOR1_LOOK_HEIGHT;
-
-
-  camera.lookAt(
-
-    lookX,
-    lookY,
-    lookZ
-
-  );
-
-}
-
-
-// ============================================================
-// FLOOR 3 CAMERA
-// ============================================================
-
-function updateHQCamera(
-  player,
-  smooth = 0.10
-) {
-
-  const yaw =
-    player.rotation.y;
-
-  const forwardX =
-    Math.sin(yaw);
-
-  const forwardZ =
-    Math.cos(yaw);
-
-
-  let cameraX =
-    player.position.x -
-    forwardX *
-    HQ_DISTANCE;
-
-  let cameraZ =
-    player.position.z -
-    forwardZ *
-    HQ_DISTANCE;
-
-
-  const sideX =
-    Math.cos(yaw) *
-    HQ_SIDE_OFFSET;
-
-  const sideZ =
-    -Math.sin(yaw) *
-    HQ_SIDE_OFFSET;
-
-
-  cameraX += sideX;
-  cameraZ += sideZ;
-
-
-  cameraX =
-    THREE.MathUtils.clamp(
-      cameraX,
-      HQ_MIN_X,
-      HQ_MAX_X
-    );
-
-  cameraZ =
-    THREE.MathUtils.clamp(
-      cameraZ,
-      HQ_MIN_Z,
-      HQ_MAX_Z
-    );
-
-
-  moveCamera(
-
-    cameraX,
-
-    player.position.y +
-      HQ_HEIGHT,
-
-    cameraZ,
-
-    smooth
-
-  );
-
-
-  const lookX =
-    player.position.x +
-    forwardX * 2.0;
-
-  const lookZ =
-    player.position.z +
-    forwardZ * 2.0;
-
-  const lookY =
-    player.position.y +
-    HQ_LOOK_HEIGHT;
 
 
   camera.lookAt(
@@ -808,7 +702,7 @@ function installFloor3LookControls() {
   window.addEventListener("pointerdown", event => {
     if (event.button !== undefined && event.button !== 0) return;
     const target = event.target instanceof Element ? event.target : null;
-    if (target?.closest("#lambo-city-joystick, button, a, input, textarea, select, [role='button']")) return;
+    if (target?.closest("#lambo-city-joystick, #lambo-city-mobile-buttons, #hud, #lambo-phone, button, a, input, textarea, select, [role='button']")) return;
 
     lookDragPointerId = event.pointerId;
     lookPointerX = event.clientX;
