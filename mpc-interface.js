@@ -262,10 +262,9 @@ function buildMarkup() {
       <div class="mpc-screen-frame"><div class="mpc-screen">
         <div class="screen-header">
           <svg class="crest" viewBox="0 0 28 30" aria-hidden="true">${icon.shield.replace('<svg viewBox="0 0 28 30" aria-hidden="true">','').replace('</svg>','')}</svg>
-          <span class="project-title">PROJECT: NEON STREETS - TRACK: BEAT_1</span>
-          <span class="screen-stat">${icon.bluetooth}</span>
-          <span class="screen-stat">BPM: 128</span>
-          <span class="screen-stat">${icon.battery}</span>
+          <span class="project-title" data-mpc-project-title>PROJECT: UNTITLED SONG</span>
+          <span class="screen-stat" data-mpc-mode>PERFORMANCE</span>
+          <span class="screen-stat" data-mpc-bpm>BPM: 100</span>
         </div>
         <div class="screen-body mpc-screen-workspace">
           <p class="mpc-live-status" data-mpc-status role="status" aria-live="polite">MPC READY · TAP A PAD TO PLAY</p>
@@ -625,6 +624,7 @@ const MPCInterface = {
     this.root = root;
     this.refreshLibraryUI();
     this.refreshPadMixControls();
+    this.refreshProjectHeader();
     for (const button of root.querySelectorAll(".bank-btn")) button.classList.toggle("active", button.dataset.placeholder === "BANK A");
     void this.refreshImportedSamples();
     void this.preloadAssignedSamples();
@@ -632,6 +632,17 @@ const MPCInterface = {
     this.setStatus(this.library.total + " ORIGINAL SOUND PRESETS READY · +" + this.library.added + " NEW PRESETS ADDED THIS VISIT");
     root.querySelector("[data-mpc-close]")?.focus({ preventScroll: true });
     return root;
+  },
+
+  refreshProjectHeader() {
+    if (!this.root) return;
+    const project = this.beatLab?.currentProject;
+    const title = project?.metadata?.title || project?.title || "UNTITLED SONG";
+    const bpm = Number(this.beatLab?.pattern?.bpm) || 100;
+    const titleNode = this.root.querySelector("[data-mpc-project-title]");
+    const bpmNode = this.root.querySelector("[data-mpc-bpm]");
+    if (titleNode) titleNode.textContent = "PROJECT: " + String(title).toUpperCase().slice(0, 34);
+    if (bpmNode) bpmNode.textContent = "BPM: " + bpm;
   },
 
   async preloadAssignedSamples() {
@@ -1055,6 +1066,7 @@ const MPCInterface = {
   async handleAction(action) {
     if (!this.beatLab) return;
     try {
+      this.refreshProjectHeader();
       if (action === "record" || action === "overdub") {
         const audio = await StudioAudioEngine.resume();
         this.beatLab.audio = audio;
