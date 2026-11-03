@@ -474,6 +474,45 @@ export default {
       -0.92
     );
 
+    // Mobile Studio is a dedicated fourth display on the same copilot
+    // desk, not a separate workstation elsewhere in the room.
+    const mobile = new THREE.Group();
+    mobile.name = "floor2MobileStudio";
+    mobile.userData.studioStation = "vocals";
+    box(
+      mobile,
+      new THREE.BoxGeometry(0.78, 0.98, 0.085),
+      glass,
+      1.78,
+      1.98,
+      -0.92
+    );
+    box(
+      mobile,
+      new THREE.BoxGeometry(0.84, 0.055, 0.11),
+      goldGlow,
+      1.78,
+      2.50,
+      -0.92
+    );
+    box(
+      mobile,
+      new THREE.BoxGeometry(0.66, 0.055, 0.10),
+      black,
+      1.78,
+      1.47,
+      -0.92
+    );
+    label(
+      mobile,
+      "MOBILE STUDIO",
+      1.78,
+      2.70,
+      -1.0,
+      2.7
+    );
+    producerCockpit.add(mobile);
+
     // Chair is centered behind the desk, facing the exterior windows (-Z).
     const producerChair = new THREE.Group();
     producerChair.name = "floor2ProducerChair";
@@ -545,7 +584,7 @@ export default {
 
     label(
       beatLab,
-      "LAMBO CITY • MPC • MIX • MASTER",
+      "LAMBO CITY • COPILOT PRODUCTION DESK",
       beatX,
       3.18,
       beatZ - 1.45,
@@ -929,117 +968,8 @@ export default {
       booth
     );
 
-    // =========================================================
-    // 4. RECORDING / EDITING WORKSTATION
-    //
-    // Left live-room perimeter.
-    //
-    // This remains the dedicated recording and editing interaction point.
-    // =========================================================
-
-    const editing =
-      new THREE.Group();
-
-    editing.name =
-      "floor2RecordingEditingStation";
-
-    const editX =
-      -5.15;
-
-    const editZ =
-      -1.45;
-
-    const editAngle =
-      0;
-
-    // Desk
-
-    box(
-      editing,
-      new THREE.BoxGeometry(
-        3.15,
-        0.14,
-        0.95
-      ),
-      dark,
-      editX,
-      0.88,
-      editZ,
-      editAngle
-    );
-
-    // Gold desk edge
-
-    box(
-      editing,
-      new THREE.BoxGeometry(
-        3.1,
-        0.05,
-        0.05
-      ),
-      gold,
-      editX,
-      1.00,
-      editZ - 0.44,
-      editAngle
-    );
-
-    // The DAW display has been moved into the primary MPC cockpit so
-    // recording, editing and beat production share one visible workstation.
-
-    // Small controller
-
-    box(
-      editing,
-      new THREE.BoxGeometry(
-        0.75,
-        0.08,
-        0.48
-      ),
-      black,
-      editX,
-      1.05,
-      editZ - 0.18,
-      editAngle
-    );
-
-    // Knobs
-
-    for (
-      let i = 0;
-      i < 4;
-      i++
-    ) {
-
-      cylinder(
-        editing,
-        new THREE.CylinderGeometry(
-          0.05,
-          0.05,
-          0.04,
-          12
-        ),
-        goldGlow,
-        editX - 0.24 +
-          i * 0.16,
-        1.13,
-        editZ - 0.18
-      );
-
-    }
-
-    label(
-      editing,
-      "RECORD • EDIT",
-      editX,
-      2.75,
-      editZ - 0.55,
-      4.0
-    );
-
-    group.add(
-      editing
-    );
+    // Recording, editing and arrangement are handled from the
+    // main copilot desk. No separate production desk is built here.
 
     // =========================================================
     // 5. MIX / MASTER WORKSTATION
@@ -1210,7 +1140,7 @@ export default {
       2.1
     );
 
-    group.add(mixMasterControls);
+    beatLab.add(mixMasterControls);
 
     // Both workflow references intentionally resolve to this
     // single physical control surface; there is no second
@@ -1331,110 +1261,7 @@ export default {
       archive
     );
 
-    // =========================================================
-    // 8. MOBILE STUDIO
-    //
-    // Compact station for laptop + headphones.
-    //
-    // This is the physical placeholder for future recording
-    // directly through the artist's own device.
-    // =========================================================
-
-    const mobile =
-      new THREE.Group();
-
-    mobile.name =
-      "floor2MobileStudio";
-
-    const mobileX =
-      -5.35;
-
-    const mobileZ =
-      -5.15;
-
-    box(
-      mobile,
-      new THREE.BoxGeometry(
-        2.1,
-        0.14,
-        0.72
-      ),
-      dark,
-      mobileX,
-      0.88,
-      mobileZ
-    );
-
-    // Laptop
-
-    box(
-      mobile,
-      new THREE.BoxGeometry(
-        1.18,
-        0.08,
-        0.62
-      ),
-      black,
-      mobileX,
-      1.02,
-      mobileZ
-    );
-
-    box(
-      mobile,
-      new THREE.BoxGeometry(
-        1.18,
-        0.72,
-        0.07
-      ),
-      glass,
-      mobileX,
-      1.40,
-      mobileZ + 0.28
-    );
-
-    // Headphone stand
-
-    cylinder(
-      mobile,
-      new THREE.CylinderGeometry(
-        0.055,
-        0.055,
-        0.62,
-        12
-      ),
-      gold,
-      mobileX + 0.82,
-      1.28,
-      mobileZ
-    );
-
-    cylinder(
-      mobile,
-      new THREE.CylinderGeometry(
-        0.20,
-        0.20,
-        0.06,
-        16
-      ),
-      black,
-      mobileX + 0.82,
-      0.97,
-      mobileZ
-    );
-
-    label(
-      mobile,
-      "MOBILE STUDIO",
-      mobileX,
-      2.58,
-      mobileZ - 0.40,
-      4.0
-    );
-
-    group.add(
-      mobile
-    );
+    // Mobile Studio display is integrated into the copilot desk above.
 
     // =========================================================
     // 9. ACOUSTIC TREATMENT
@@ -1679,7 +1506,7 @@ export default {
       vocalBooth: booth,
 
       recordingEditing:
-        editing,
+        producerCockpit,
 
       controlRoom:
         mixMasterControls,
