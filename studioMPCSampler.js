@@ -54,7 +54,7 @@ const MPCSampler = {
     const imported = [];
     for (const file of accepted) {
       const id = "user-sample-" + (crypto.randomUUID?.() || Date.now() + "-" + Math.random().toString(36).slice(2));
-      const record = { id, name: file.name.replace(/\\.[^.]+$/, ""), fileName: file.name, type: file.type || "audio/wav", size: file.size, blob: file, createdAt: Date.now() };
+      const record = { id, name: file.name.replace(/\.[^.]+$/, ""), fileName: file.name, type: file.type || "audio/wav", size: file.size, blob: file, createdAt: Date.now() };
       store.put(record);
       imported.push(record);
     }
@@ -88,6 +88,20 @@ const MPCSampler = {
   async preload(sampleIds, audio) {
     const ids = [...new Set((sampleIds || []).filter(Boolean))];
     return Promise.all(ids.map(id => this.decode({ id }, audio)));
+  },
+
+  async getWaveform(sampleId, audio, bars = 96) {
+    const buffer = this.buffers.get(sampleId) || await this.decode({ id: sampleId }, audio);
+    const channel = buffer.getChannelData(0);
+    const peaks = [];
+    const block = Math.max(1, Math.floor(channel.length / bars));
+    for (let i = 0; i < bars; i++) {
+      let peak = 0;
+      const end = Math.min(channel.length, (i + 1) * block);
+      for (let j = i * block; j < end; j++) peak = Math.max(peak, Math.abs(channel[j]));
+      peaks.push(peak);
+    }
+    return { peaks, duration: buffer.duration };
   },
 
   getPadSettings(bank, pad) {
@@ -145,6 +159,9 @@ const MPCSampler = {
     const destination = StudioAudioEngine.master || audio.destination;
     gain.connect(destination);
     const when = Math.max(audio.currentTime, Number(options.when) || audio.currentTime);
+    if (Number.isFinite(Number(options.decay)) && Number(options.decay) < 10) {
+      gain.gain.setTargetAtTime(0.0001, when + Number(options.decay), 0.015);
+    }
     source.start(when, start, Math.max(0.01, end - start));
     return source;
   },
