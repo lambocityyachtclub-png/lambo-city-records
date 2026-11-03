@@ -268,7 +268,9 @@ function validateProject(project) {
       if (trackIds.has(track.id) || !["audio", "midi", "instrument"].includes(track.type) ||
           !Number.isFinite(Number(track.volume)) || Number(track.volume) < 0 || Number(track.volume) > 100 ||
           !Number.isFinite(Number(track.pan)) || Number(track.pan) < -1 || Number(track.pan) > 1 ||
-          !Array.isArray(track.clips) || track.clips.length > 256) {
+          !Array.isArray(track.clips) || track.clips.length > 256 ||
+          (track.eq !== undefined && (!Number.isFinite(Number(track.eq.low)) || !Number.isFinite(Number(track.eq.mid)) || !Number.isFinite(Number(track.eq.high)))) ||
+          (track.compression !== undefined && (!Number.isFinite(Number(track.compression.ratio)) || Number(track.compression.ratio) < 1 || Number(track.compression.ratio) > 8))) {
         throw new Error("DAW track settings are invalid.");
       }
       trackIds.add(track.id);
