@@ -52,7 +52,20 @@ const project = {
     assignments: { "A-1": "user-sample-test" },
     padSettings: { "A-1": { start: 0.1, end: 0.9, pitch: 1.05946, decay: 0.8, volume: 1.2, pan: -0.35 } }
   },
-  mpcLibraryAssignments: { "A-2": "DEMO-002" }
+  mpcLibraryAssignments: { "A-2": "DEMO-002" },
+  mpcLibrarySounds: [{
+    id: "DEMO-002",
+    name: "ROUND 808 002",
+    family: "bass",
+    style: "HARD 808 LOW END",
+    influence: "Original low-end design",
+    tone: "ROUND",
+    seed: 2,
+    frequency: 72,
+    decay: 0.2,
+    brightness: 0.55,
+    locked: false
+  }]
 };
 
 const packageText = exportSongProjectPackage(project);
@@ -64,9 +77,12 @@ assert.equal(imported.mpcPerformance.events[0].sampleSettings.pan, -0.35);
 assert.equal(imported.mpcAssets[0].data, "AQIDBA==");
 assert.equal(imported.mpcSamplerState.assignments["A-1"], "user-sample-test");
 assert.equal(imported.mpcLibraryAssignments["A-2"], "DEMO-002");
+assert.equal(imported.mpcLibrarySounds[0].id, "DEMO-002");
+assert.equal(imported.mpcLibrarySounds[0].frequency, 72);
 
 const missingAssetProject = structuredClone(project);
 missingAssetProject.mpcAssets = [];
+missingAssetProject.mpcSamplerState.assignments["B-1"] = "missing-pad-sample";
 assert.throws(
   () => exportSongProjectPackage(missingAssetProject),
   /sample that is missing/
