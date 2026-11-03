@@ -17,7 +17,7 @@ let canvas = null;
 let resizeHandler = null;
 let pointerState = null;
 let cameraYaw = 0;
-let cameraPitch = 0.16;
+let cameraPitch = 0.08;
 let lastOrbitInputAt = 0;
 let initialized = false;
 let currentMode = "world";
@@ -162,7 +162,7 @@ function updateExplorationCamera(player, delta, moving, insideHQ) {
   const horizontal = Math.cos(cameraPitch) * distance;
   const desired = new THREE.Vector3(
     target.x + Math.sin(cameraYaw) * horizontal,
-    target.y + height - 1.75 + Math.sin(cameraPitch) * distance,
+    player.position.y + (insideHQ ? 3.25 : 3.4) + Math.sin(cameraPitch) * distance,
     target.z + Math.cos(cameraYaw) * horizontal
   );
 
