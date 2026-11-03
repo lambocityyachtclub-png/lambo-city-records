@@ -490,6 +490,7 @@ export default {
 
     // Floor 3 uses reversed A/D strafe mapping only.
     const onFloor3 =
+      !window.__lamboCityElevatorPOV &&
       player.position.y >= 16.2 &&
       player.position.y < 23.8;
 
@@ -558,6 +559,16 @@ export default {
       dx /= length;
       dz /= length;
 
+    }
+
+    // Inside the glass elevator, WASD and the joystick move relative
+    // to the passenger's first-person viewing direction.
+    if (window.__lamboCityElevatorPOV) {
+      const yaw = window.__lamboCityElevatorLookYaw ?? 0;
+      const localX = dx;
+      const localZ = dz;
+      dx = localX * Math.cos(yaw) - localZ * Math.sin(yaw);
+      dz = localX * Math.sin(yaw) + localZ * Math.cos(yaw);
     }
 
     const newX =
