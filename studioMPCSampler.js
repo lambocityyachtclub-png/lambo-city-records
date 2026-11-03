@@ -286,9 +286,13 @@ const MPCSampler = {
     const audibleDuration = Number.isFinite(requestedDecay) && requestedDecay < 10
       ? Math.min(playbackDuration, Math.max(0.05, requestedDecay))
       : playbackDuration;
-    gain.gain.setValueAtTime(0.0001, when);
-    gain.gain.exponentialRampToValueAtTime(Math.max(0.001, peak), when + 0.003);
-    gain.gain.setTargetAtTime(0.0001, Math.max(when + 0.004, when + audibleDuration - 0.008), 0.008);
+    if (peak <= 0) {
+      gain.gain.value = 0;
+    } else {
+      gain.gain.setValueAtTime(0.0001, when);
+      gain.gain.exponentialRampToValueAtTime(Math.max(0.001, peak), when + 0.003);
+      gain.gain.setTargetAtTime(0.0001, Math.max(when + 0.004, when + audibleDuration - 0.008), 0.008);
+    }
     source.start(when, start, Math.max(0.01, end - start));
     return source;
   },
