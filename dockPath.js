@@ -1,15 +1,17 @@
 // dockPath.js
-// LAMBO CITY — Straight Dock-to-Records-HQ Marble Walkway
-// Three.js 0.160.0 | New visual module with a clear dock-side rail opening.
-// Collision for the decorative bollards is registered in collision.js.
+// LAMBO CITY — Continuous timber dock spur to the Records HQ elevator.
+// Uses the same warm premium-wood finish as dock.js and the private
+// cabin walkways in dockLuxuryOverhaul.js.
 
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 
 const PATH = {
   startX: 5.25,
-  endX: 20.45,
-  centerZ: 14.15,
-  width: 3.6,
+  endX: 20.65,
+  // Offset slightly toward the dock so the full walkway clears the
+  // Records HQ rear wall while remaining inside the elevator doorway.
+  centerZ: 13.75,
+  width: 2.4,
   surfaceY: 1.36
 };
 
@@ -20,42 +22,6 @@ const BOLLARDS = [
   [18.0, 11.8], [18.0, 16.5]
 ];
 
-function createMarbleTexture() {
-  const canvas = document.createElement("canvas");
-  canvas.width = 512;
-  canvas.height = 512;
-
-  const ctx = canvas.getContext("2d");
-  ctx.fillStyle = "#e9e7e0";
-  ctx.fillRect(0, 0, 512, 512);
-
-  const veins = [
-    [[-20, 95], [130, 35], [260, 180], [540, 105]],
-    [[-20, 310], [145, 205], [330, 390], [540, 275]],
-    [[70, 540], [180, 405], [350, 470], [500, 350]]
-  ];
-
-  veins.forEach((points, index) => {
-    ctx.beginPath();
-    ctx.moveTo(points[0][0], points[0][1]);
-    ctx.bezierCurveTo(
-      points[1][0], points[1][1],
-      points[2][0], points[2][1],
-      points[3][0], points[3][1]
-    );
-    ctx.strokeStyle = index === 1
-      ? "rgba(166, 137, 96, 0.13)"
-      : "rgba(92, 98, 105, 0.16)";
-    ctx.lineWidth = index === 1 ? 1.5 : 2.5;
-    ctx.stroke();
-  });
-
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.colorSpace = THREE.SRGBColorSpace;
-  texture.wrapS = THREE.RepeatWrapping;
-  texture.wrapT = THREE.RepeatWrapping;
-  return texture;
-}
 
 function openDockRailForPath(scene) {
   // dock.js creates one long right-hand rail at x=6.2.
@@ -158,19 +124,24 @@ export default {
     const group = new THREE.Group();
     group.name = "lamboCityDockToElevatorPath";
 
-    const marble = new THREE.MeshStandardMaterial({
-      map: createMarbleTexture(),
-      color: 0xffffff,
-      roughness: 0.25,
-      metalness: 0.10
+    // Match the actual dock planks and private cabin walkways.
+    // Keep a darker structural edge beneath the timber boards.
+    const premiumWood = new THREE.MeshStandardMaterial({
+      color: 0x6d4327,
+      roughness: 0.72,
+      metalness: 0.02
+    });
+
+    const darkWood = new THREE.MeshStandardMaterial({
+      color: 0x3a2415,
+      roughness: 0.82,
+      metalness: 0.02
     });
 
     const brass = new THREE.MeshStandardMaterial({
-      color: 0xd6ad62,
-      metalness: 0.92,
-      roughness: 0.19,
-      emissive: 0x5b3912,
-      emissiveIntensity: 0.18
+      color: 0xb78a42,
+      metalness: 0.8,
+      roughness: 0.28
     });
 
     const dark = new THREE.MeshStandardMaterial({
@@ -187,53 +158,76 @@ export default {
     });
 
     const length = PATH.endX - PATH.startX;
-    const tileCount = Math.ceil(length / 1.15);
-    const tileLength = length / tileCount - 0.035;
     const centerX = (PATH.startX + PATH.endX) / 2;
 
-    // Straight marble pavers, aligned with the dock and elevator.
-    for (let i = 0; i < tileCount; i++) {
-      const x = PATH.startX + (i + 0.5) * (length / tileCount);
+    // Structural timber stringers make the spur feel built into the dock.
+    const deckBase = new THREE.Mesh(
+      new THREE.BoxGeometry(length, 0.22, PATH.width + 0.24),
+      darkWood
+    );
+    deckBase.position.set(centerX, PATH.surfaceY - 0.11, PATH.centerZ);
+    deckBase.receiveShadow = true;
+    group.add(deckBase);
 
-      const tile = new THREE.Mesh(
-        new THREE.BoxGeometry(tileLength, 0.18, PATH.width),
-        marble
+    // Cross-planked boards follow the same warm timber finish as the
+    // main dock. Repeating them along the spur keeps the junction natural.
+    const boardPitch = 0.92;
+    const boardCount = Math.ceil(length / boardPitch);
+    const boardLength = length / boardCount - 0.045;
+
+    for (let i = 0; i < boardCount; i++) {
+      const x = PATH.startX + (i + 0.5) * (length / boardCount);
+      const board = new THREE.Mesh(
+        new THREE.BoxGeometry(boardLength, 0.15, PATH.width),
+        premiumWood
       );
-      tile.position.set(x, PATH.surfaceY - 0.09, PATH.centerZ);
-      tile.receiveShadow = true;
-      group.add(tile);
-
-      if (i % 2 === 0) {
-        const inlay = new THREE.Mesh(
-          new THREE.BoxGeometry(0.045, 0.024, PATH.width - 0.16),
-          brass
-        );
-        inlay.position.set(x, PATH.surfaceY + 0.012, PATH.centerZ);
-        group.add(inlay);
-      }
+      board.position.set(x, PATH.surfaceY - 0.075, PATH.centerZ);
+      board.receiveShadow = true;
+      group.add(board);
     }
 
-    // Continuous brass edging on both sides of the straight route.
+    // Low dark-wood fascia ties the timber spur into the dock structure.
+    [-1, 1].forEach(side => {
+      const fascia = new THREE.Mesh(
+        new THREE.BoxGeometry(length, 0.12, 0.09),
+        darkWood
+      );
+      fascia.position.set(
+        centerX,
+        PATH.surfaceY - 0.035,
+        PATH.centerZ + side * (PATH.width / 2 + 0.06)
+      );
+      group.add(fascia);
+    });
+
+    // Restrained brass edge pins provide a premium finish without
+    // changing the dock's natural timber character.
     [-1, 1].forEach(side => {
       const edge = new THREE.Mesh(
-        new THREE.BoxGeometry(length, 0.055, 0.07),
+        new THREE.BoxGeometry(length, 0.035, 0.035),
         brass
       );
       edge.position.set(
         centerX,
-        PATH.surfaceY + 0.025,
-        PATH.centerZ + side * (PATH.width / 2 - 0.035)
+        PATH.surfaceY + 0.012,
+        PATH.centerZ + side * (PATH.width / 2 - 0.045)
       );
       group.add(edge);
     });
 
-    // A fine center pinstripe runs the full length.
-    const centerLine = new THREE.Mesh(
-      new THREE.BoxGeometry(length, 0.018, 0.025),
-      brass
+    // A wider timber landing apron makes the transition into the
+    // elevator threshold read as one continuous dock-built walkway.
+    const landing = new THREE.Mesh(
+      new THREE.BoxGeometry(1.25, 0.16, PATH.width + 0.34),
+      premiumWood
     );
-    centerLine.position.set(centerX, PATH.surfaceY + 0.012, PATH.centerZ);
-    group.add(centerLine);
+    landing.position.set(
+      PATH.endX - 0.55,
+      PATH.surfaceY - 0.08,
+      PATH.centerZ
+    );
+    landing.receiveShadow = true;
+    group.add(landing);
 
     // Bollards are outside the walking lane and stop before the entrance.
     BOLLARDS.forEach(([x, z]) => {
@@ -243,7 +237,7 @@ export default {
     scene.add(group);
     window.__lamboCityDockPathReady = true;
     window.__lamboCityElevatorApproach = {
-      x: PATH.endX,
+      x: PATH.endX - 0.15,
       z: PATH.centerZ
     };
     return group;
