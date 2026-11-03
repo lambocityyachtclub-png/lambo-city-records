@@ -1341,12 +1341,13 @@ export default {
     );
 
     // =========================================================
-    // 8. MOBILE STUDIO
+    // 8. CO-PILOT STUDIO CONTROLS
     //
-    // Compact station for laptop + headphones.
-    //
-    // This is the physical placeholder for future recording
-    // directly through the artist's own device.
+    // The digital studio is part of the primary producer cockpit.
+    // It shares the cockpit's existing display pair; no second
+    // laptop screen or separate computer is placed on the desk.
+    // This low-profile touch surface remains the clickable entry
+    // point for the vocal/mobile workflow.
     // =========================================================
 
     const mobile =
@@ -1355,68 +1356,78 @@ export default {
     mobile.name =
       "floor2MobileStudio";
 
-    // The mobile workstation is integrated into the right-hand
-    // co-pilot side of the primary producer desk, not isolated
-    // across the room.
     const mobileX =
       2.65;
 
     const mobileZ =
       -3.72;
 
+    // Flush co-pilot control pad — integrated into the main desk.
     box(
       mobile,
       new THREE.BoxGeometry(
-        1.95,
-        0.16,
-        0.82
-      ),
-      dark,
-      mobileX,
-      0.88,
-      mobileZ
-    );
-
-    // Laptop
-
-    box(
-      mobile,
-      new THREE.BoxGeometry(
-        1.38,
-        0.10,
-        0.72
+        1.18,
+        0.075,
+        0.58
       ),
       black,
       mobileX,
-      1.02,
+      1.075,
       mobileZ
     );
 
+    // Restrained gold perimeter makes the touch area readable
+    // without introducing another screen or competing display.
     box(
       mobile,
       new THREE.BoxGeometry(
-        1.38,
-        0.82,
-        0.08
+        1.22,
+        0.025,
+        0.035
       ),
-      glass,
+      gold,
       mobileX,
-      1.40,
-      mobileZ + 0.28
+      1.125,
+      mobileZ - 0.29
+    );
+    box(
+      mobile,
+      new THREE.BoxGeometry(
+        1.22,
+        0.025,
+        0.035
+      ),
+      gold,
+      mobileX,
+      1.125,
+      mobileZ + 0.29
     );
 
-    // Headphone stand
+    // Compact tactile controls for the co-pilot vocal workflow.
+    for (let row = 0; row < 2; row++) {
+      for (let col = 0; col < 3; col++) {
+        box(
+          mobile,
+          new THREE.BoxGeometry(0.16, 0.025, 0.13),
+          (row === 0 && col === 0) ? goldGlow : dark,
+          mobileX - 0.28 + col * 0.28,
+          1.13,
+          mobileZ - 0.075 + row * 0.16
+        );
+      }
+    }
 
+    // Keep the headphone dock on the outer co-pilot edge.
     cylinder(
       mobile,
       new THREE.CylinderGeometry(
         0.055,
         0.055,
-        0.62,
+        0.48,
         12
       ),
       gold,
-      mobileX + 0.72,
+      mobileX + 0.78,
       1.34,
       mobileZ
     );
@@ -1424,29 +1435,20 @@ export default {
     cylinder(
       mobile,
       new THREE.CylinderGeometry(
-        0.20,
-        0.20,
+        0.18,
+        0.18,
         0.06,
         16
       ),
       black,
-      mobileX + 0.72,
-      1.00,
+      mobileX + 0.78,
+      1.10,
       mobileZ
     );
 
-    label(
-      mobile,
-      "MOBILE STUDIO",
-      mobileX,
-      2.72,
-      mobileZ - 0.40,
-      4.0
-    );
-
-    group.add(
-      mobile
-    );
+    // Attach to the same physical cockpit assembly as the MPC,
+    // speakers and shared production displays.
+    beatLab.add(mobile);
 
     // =========================================================
     // 9. ACOUSTIC TREATMENT
