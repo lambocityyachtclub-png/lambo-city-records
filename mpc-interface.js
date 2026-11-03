@@ -120,7 +120,7 @@ function makeStyles() {
 #${ROOT_ID} .pad:before{content:"";position:absolute;inset:5px;border:1px solid rgba(255,255,255,.08);border-radius:5px;pointer-events:none}
 #${ROOT_ID} .pad:active,#${ROOT_ID} .pad.flash{transform:scale(.96);filter:brightness(1.9);box-shadow:0 0 12px #d9ff9a,0 0 28px #9fe943,inset 0 0 18px rgba(213,255,160,.4)}
 #${ROOT_ID} .pad.red:active,#${ROOT_ID} .pad.red.flash{box-shadow:0 0 12px #ffb0a5,0 0 28px #ff5d53,inset 0 0 18px rgba(255,190,180,.4)}
-#${ROOT_ID} .pad-label{position:absolute;bottom:-16px;left:0;right:0;text-align:center;font-size:clamp(6px,.68vw,9px);font-weight:900;color:#d6dacd;white-space:nowrap}
+#${ROOT_ID} .pad-label{position:absolute;bottom:-20px;left:0;right:0;width:100%;min-height:20px;padding:2px 1px;border:0;border-radius:3px;background:transparent;color:#d6dacd;text-align:center;font-size:clamp(6px,.68vw,9px);font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;text-decoration:underline;text-decoration-color:rgba(183,228,91,.5);text-underline-offset:2px}#${ROOT_ID} .pad-label:active,#${ROOT_ID} .pad-label:focus-visible{background:rgba(164,220,75,.16);color:#d9ff9a}
 #${ROOT_ID} .pad-wrap{position:relative;margin-bottom:15px;min-width:0}
 #${ROOT_ID} .right-controls{display:grid;grid-template-columns:minmax(42px,.62fr) minmax(0,1.8fr) minmax(45px,.68fr);gap:clamp(4px,.65vw,9px);align-items:stretch}
 #${ROOT_ID} .side-stack{display:flex;flex-direction:column;justify-content:space-between;gap:5px}
@@ -294,7 +294,7 @@ function buildMarkup() {
     ["PAD 1", true], ["PAD 2", false], ["PAD 3", false], ["PAD 4", false]
   ].map(([label, red], i) => {
     const padNumbers = [13, 14, 15, 16, 9, 10, 11, 12, 5, 6, 7, 8, 1, 2, 3, 4];
-    return `<div class="pad-wrap"><button type="button" class="pad ${red ? "red" : ""}" data-pad="${padNumbers[i]}" aria-label="${label}"></button><span class="pad-label">${label}</span></div>`;
+    return `<div class="pad-wrap"><button type="button" class="pad ${red ? "red" : ""}" data-pad="${padNumbers[i]}" aria-label="${label}"></button><button type="button" class="pad-label" data-pad-sound-picker="${padNumbers[i]}" aria-label="Change sound for ${label}">${label}</button></div>`;
   }).join("");
 
   const bank = ["A", "B", "C", "D"]
@@ -417,6 +417,7 @@ function buildMarkup() {
             <div class="mpc-screen-actions">
               <button type="button" data-mpc-browser-preview>PREVIEW SOUND</button>
               <button type="button" data-mpc-browser-assign>ASSIGN TO PAD</button>
+              <button type="button" data-mpc-browser-import>IMPORT USER SAMPLE</button>
               <button type="button" data-mpc-unlock>UNLOCK SOUND SET</button>
             </div>
             <p class="mpc-help">Choose a sound, preview it, then assign it to the currently selected pad and bank.</p>
@@ -510,6 +511,7 @@ const MPCInterface = {
       if (event.target.matches("[data-mpc-quantize]")) this.quantize = event.target.value;
       if (event.target.matches("[data-mpc-repeat-rate]")) this.noteRepeatRate = event.target.value;
       if (event.target.matches("[data-mpc-sound-family]")) this.renderSoundBrowser();
+      if (event.target.matches("[data-mpc-browser-sound]")) void this.previewBrowserSound();
       if (event.target.matches("[data-mpc-swing]")) {
         this.swing = Number(event.target.value) || 0;
         const out = root.querySelector("[data-mpc-swing-value]");
@@ -627,7 +629,10 @@ const MPCInterface = {
       }
       if (event.target.closest("[data-mpc-preview]")) { void this.previewImportedSample(); return; }
       if (event.target.closest("[data-mpc-apply-sample]")) { this.assignImportedSample(true); return; }
-      if (event.target.closest("[data-mpc-browser-preview]")) { this.previewBrowserSound(); return; }
+      if (event.target.closest("[data-mpc-browser-preview]")) { void this.previewBrowserSound(); return; }
+      if (event.target.closest("[data-mpc-browser-import]")) { this.showScreen("SAMPLE"); return; }
+      const soundPicker = event.target.closest("[data-pad-sound-picker]");
+      if (soundPicker) { this.openPadSoundPicker(Number(soundPicker.dataset.padSoundPicker)); return; }
       if (event.target.closest("[data-mpc-browser-assign]")) { this.assignBrowserSound(); return; }
       if (event.target.closest("[data-mpc-delete-sample]")) { void this.deleteSelectedSample(); return; }
       if (event.target.closest("[data-mpc-unassign]")) { this.unassignSelectedPad(); return; }
@@ -1090,8 +1095,24 @@ const MPCInterface = {
     const id = this.root?.querySelector("[data-mpc-browser-sound]")?.value;
     const sound = StudioMPCLibrary.getSounds().find(item => item.id === id);
     if (!sound) return;
-    const audio = await this.getAudioContext();
-    StudioMPCLibrary.play(audio, sound, audio.currentTime);
+    try {
+      const audio = await this.getAudioContext();
+      StudioMPCLibrary.play(audio, sound, audio.currentTime);
+      this.setStatus("PREVIEWING " + sound.name + " · BANK " + this.bank + " PAD " + this.selectedPad);
+    } catch (error) { this.setStatus(error?.message || "SOUND PREVIEW FAILED"); }
+  },
+
+  openPadSoundPicker(padNumber) {
+    if (!Number.isInteger(padNumber) || padNumber < 1 || padNumber > 16) return;
+    this.selectedPad = padNumber;
+    this.updatePadReadout();
+    this.refreshPadMixControls();
+    this.refreshLibraryUI();
+    const current = StudioMPCLibrary.getAssignment(this.bank, this.selectedPad);
+    const select = this.root?.querySelector("[data-mpc-browser-sound]");
+    if (select) select.value = current.id;
+    this.showScreen("BROWSE");
+    this.setStatus("CHOOSE A SOUND FOR BANK " + this.bank + " PAD " + this.selectedPad + " · SELECT ANY SOUND TO AUDITION");
   },
 
   assignBrowserSound() {
