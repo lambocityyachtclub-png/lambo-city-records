@@ -887,7 +887,7 @@ export default {
     // physically crossed the rear elevator portal into the HQ.
     if (
       window.__lamboCityElevatorLandingFloor === 3 &&
-      player.position.z >= 15.8
+      player.position.z >= 14.7
     ) {
       window.__lamboCityElevatorLandingFloor = 0;
     }
