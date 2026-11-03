@@ -23,7 +23,7 @@ const PRODUCER_SEAT = {
   z: HQ_Z - 2.15
 };
 
-const ELEVATOR_ARRIVAL_SECONDS = 1.6;
+const ELEVATOR_ARRIVAL_SECONDS = 1.3;
 
 let playerSystem = null;
 let renderer = null;
@@ -31,6 +31,9 @@ let mode = "free";
 let arrivalElapsed = 0;
 let arrivalStart = null;
 let arrivalPlayer = null;
+let arrivalRoute = null;
+let arrivalRouteLengths = null;
+let arrivalRouteLength = 0;
 let pointerId = null;
 let pointerStartX = 0;
 let pointerStartY = 0;
@@ -229,6 +232,25 @@ export default {
       rotationY: player.rotation.y
     };
     arrivalElapsed = 0;
+
+    // Build the fixed elevator-to-chair route once per arrival.
+    // Its segment lengths do not change while the character walks.
+    arrivalRoute = [
+      { x: arrivalStart.x, z: arrivalStart.z },
+      { x: arrivalStart.x, z: PRODUCER_SEAT.z },
+      { x: PRODUCER_SEAT.x - 3.9, z: PRODUCER_SEAT.z },
+      { x: PRODUCER_SEAT.x, z: PRODUCER_SEAT.z }
+    ];
+    arrivalRouteLengths = [];
+    arrivalRouteLength = 0;
+    for (let i = 0; i < arrivalRoute.length - 1; i++) {
+      const dx = arrivalRoute[i + 1].x - arrivalRoute[i].x;
+      const dz = arrivalRoute[i + 1].z - arrivalRoute[i].z;
+      const length = Math.hypot(dx, dz);
+      arrivalRouteLengths.push(length);
+      arrivalRouteLength += length;
+    }
+
     window.__lamboCityFloor2OrbitYaw = 0;
     window.__lamboCityFloor2OrbitPitch = 0.08;
     window.__lamboCityFloor2ArrivalProgress = 0;
@@ -253,6 +275,9 @@ export default {
     playerSystem?.setStudioSeatedPose?.(false);
     arrivalPlayer = null;
     arrivalStart = null;
+    arrivalRoute = null;
+    arrivalRouteLengths = null;
+    arrivalRouteLength = 0;
     window.__lamboCityFloor2ArrivalProgress = 0;
     setMode("free");
   },
@@ -271,38 +296,22 @@ export default {
       window.__lamboCityFloor2ArrivalProgress = t;
       const eased = t; // steady walking pace from elevator to cockpit
 
-      // Route around the left end of the producer desk, then approach
-      // the chair from its open side. The previous straight-line
-      // interpolation crossed the desk despite its normal-walk collider.
-      const route = [
-        { x: arrivalStart.x, z: arrivalStart.z },
-        { x: arrivalStart.x, z: PRODUCER_SEAT.z },
-        { x: PRODUCER_SEAT.x - 3.9, z: PRODUCER_SEAT.z },
-        { x: PRODUCER_SEAT.x, z: PRODUCER_SEAT.z }
-      ];
-
-      const lengths = [];
-      let routeLength = 0;
-      for (let i = 0; i < route.length - 1; i++) {
-        const dx = route[i + 1].x - route[i].x;
-        const dz = route[i + 1].z - route[i].z;
-        const length = Math.hypot(dx, dz);
-        lengths.push(length);
-        routeLength += length;
-      }
-
-      let remaining = routeLength * eased;
+      // Follow the precomputed path around the desk without crossing it.
+      let remaining = arrivalRouteLength * eased;
       let segment = 0;
-      while (segment < lengths.length - 1 && remaining > lengths[segment]) {
-        remaining -= lengths[segment];
+      while (
+        segment < arrivalRouteLengths.length - 1 &&
+        remaining > arrivalRouteLengths[segment]
+      ) {
+        remaining -= arrivalRouteLengths[segment];
         segment++;
       }
 
-      const segmentProgress = lengths[segment] > 0
-        ? Math.min(1, remaining / lengths[segment])
+      const segmentProgress = arrivalRouteLengths[segment] > 0
+        ? Math.min(1, remaining / arrivalRouteLengths[segment])
         : 1;
-      const from = route[segment];
-      const to = route[segment + 1];
+      const from = arrivalRoute[segment];
+      const to = arrivalRoute[segment + 1];
 
       arrivalPlayer.position.set(
         from.x + (to.x - from.x) * segmentProgress,
