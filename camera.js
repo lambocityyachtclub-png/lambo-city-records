@@ -570,6 +570,42 @@ function updateStudioCamera(
 
 
 // ============================================================
+// FLOOR 2 — CINEMATIC ELEVATOR-TO-STUDIO ARRIVAL CAMERA
+// ============================================================
+
+function updateStudioArrivalCamera(player, smooth = 0.12) {
+  const progress = THREE.MathUtils.clamp(
+    Number(window.__lamboCityFloor2ArrivalProgress ?? 0),
+    0,
+    1
+  );
+
+  const yaw = player.rotation.y;
+  const forwardX = Math.sin(yaw);
+  const forwardZ = Math.cos(yaw);
+  const sideX = Math.cos(yaw);
+  const sideZ = -Math.sin(yaw);
+
+  // Begin inside the elevator, then ease back into a wider
+  // over-the-shoulder reveal as the producer enters the studio.
+  const distance = 1.45 + progress * 3.35;
+  const cameraX =
+    player.position.x - forwardX * distance + sideX * 0.42;
+  const cameraZ =
+    player.position.z - forwardZ * distance + sideZ * 0.42;
+  const cameraY = player.position.y + 2.55;
+
+  moveCamera(cameraX, cameraY, cameraZ, smooth);
+
+  camera.lookAt(
+    player.position.x + forwardX * 1.45,
+    player.position.y + 1.55,
+    player.position.z + forwardZ * 1.45
+  );
+}
+
+
+// ============================================================
 // FLOOR 2 — SEATED 360-DEGREE STUDIO CAMERA
 // ============================================================
 
@@ -946,8 +982,10 @@ export default {
 
         if (
           window.__lamboCityFloor2SessionActive &&
-          window.__lamboCityFloor2SessionMode !== "arrival"
+          window.__lamboCityFloor2SessionMode === "arrival"
         ) {
+          updateStudioArrivalCamera(player, 0.12);
+        } else if (window.__lamboCityFloor2SessionActive) {
           updateStudioSessionCamera(player, 0.24);
         } else {
           updateStudioCamera(player, interiorSmooth);
