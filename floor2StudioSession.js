@@ -305,9 +305,9 @@ export default {
       const to = route[segment + 1];
 
       arrivalPlayer.position.set(
-        THREE.MathUtils.lerp(from.x, to.x, segmentProgress),
+        from.x + (to.x - from.x) * segmentProgress,
         PRODUCER_SEAT.y,
-        THREE.MathUtils.lerp(from.z, to.z, segmentProgress)
+        from.z + (to.z - from.z) * segmentProgress
       );
 
       // Face the current leg of the path, then turn toward the desk
