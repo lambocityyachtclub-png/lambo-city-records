@@ -73,7 +73,7 @@ function setMode(nextMode) {
   const joystick = document.getElementById("lambo-city-joystick");
   const mobileButtons = document.getElementById("lambo-city-mobile-buttons");
   if (joystick) joystick.style.display = mode === "free" ? "" : "none";
-  if (mobileButtons) mobileButtons.style.display = mode === "free" ? "" : "none";
+  if (mobileButtons) mobileButtons.style.display = mode === "free" ? "flex" : "none";
 
   if (renderer?.domElement) {
     if (mode === "seated" || mode === "instrument" || mode === "arrival") {
