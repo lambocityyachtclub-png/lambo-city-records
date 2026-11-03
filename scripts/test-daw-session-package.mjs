@@ -76,7 +76,7 @@ invalidPan.dawSession.tracks[0].pan = 2;
 assert.throws(() => exportSongProjectPackage(invalidPan), /track settings are invalid/);
 
 const invalidAutomation = structuredClone(project);
-invalidAutomation.dawSession.tracks[0].automation.volume[0].bar = 33;
+invalidAutomation.dawSession.tracks[0].automation.volume[0].bar = 129;
 assert.throws(() => exportSongProjectPackage(invalidAutomation), /automation point is invalid/);
 
 const missingAudio = structuredClone(project);
