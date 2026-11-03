@@ -969,6 +969,14 @@ export default {
       dist <=
       ACTIVATION_DISTANCE;
 
+    // When a passenger approaches the exterior lift, present an
+    // already-open landing. The doors close before vertical travel
+    // and reopen only at the selected destination.
+    if (inRange && !traveling && !pendingLandingPlayer) {
+      landingDoorFloor = floorNumberFromY(player.position.y);
+      landingDoorTarget = 1;
+    }
+
 
     // ========================================================
     // SHARE STATE
