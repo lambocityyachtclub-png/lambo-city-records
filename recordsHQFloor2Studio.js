@@ -606,9 +606,7 @@ export default {
     // =========================================================
     // 2. INSTRUMENT / PIANO STATION
     //
-    // Right-middle.
-    //
-    // Deliberately angled rather than pushed flat against a wall.
+    // Right-front, within easy reach of the seated producer.
     // =========================================================
 
     const piano =
@@ -959,9 +957,9 @@ export default {
     // =========================================================
     // 4. RECORDING / EDITING WORKSTATION
     //
-    // Front-right.
+    // Left live-room perimeter.
     //
-    // This becomes the future DAW / editing interaction point.
+    // This remains the dedicated recording and editing interaction point.
     // =========================================================
 
     const editing =
@@ -1262,7 +1260,7 @@ export default {
     // =========================================================
     // 7. SONG ARCHIVE / STUDIO LIBRARY
     //
-    // Front-center/right.
+    // Rear-left live-room perimeter.
     //
     // This is deliberately physical but non-functional for now.
     //
