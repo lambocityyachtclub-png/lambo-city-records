@@ -278,6 +278,7 @@ function buildMarkup() {
               <button type="button" data-mpc-screen-action="mixer">MIXER</button>
             </div>
             <div class="mpc-screen-readout"><span>SELECTED PAD</span><b data-mpc-selected-readout>BANK A · PAD 01</b><span data-mpc-pad-readout>Choose a pad to see its sound and settings.</span></div>
+            <p class="mpc-help">Computer pads: Q W E R · A S D F · Z X C V · T Y G H</p>
           </section>
           <section class="mpc-screen-panel" data-mpc-panel="SEQ">
             <div class="mpc-panel-heading">PERFORMANCE TIMING <small>ADVANCED</small></div>
@@ -290,7 +291,8 @@ function buildMarkup() {
             <label class="mpc-field">SWING <output data-mpc-swing-value>0%</output>
               <input type="range" min="0" max="75" value="0" data-mpc-swing>
             </label>
-            <p class="mpc-help">Quantize tightens recorded pad hits to the song grid. Swing delays alternating subdivisions for a more human pocket.</p>
+            <button type="button" data-mpc-note-repeat-toggle class="mpc-primary-action">NOTE REPEAT: OFF</button>
+            <p class="mpc-help">Quantize tightens recorded pad hits to the song grid. Swing delays alternating subdivisions for a more human pocket. Hold a pad to repeat it at the selected rate.</p>
           </section>
           <section class="mpc-screen-panel" data-mpc-panel="SAMPLE">
             <div class="mpc-panel-heading">SAMPLE EDITOR <small>ADVANCED</small></div>
@@ -458,6 +460,10 @@ const MPCInterface = {
         const out = root.querySelector("[data-mpc-decay-value]");
         if (out) out.textContent = Number(target.value) >= 100 ? "FULL" : target.value + "%";
       }
+      if (target.matches("[data-mpc-start],[data-mpc-end]")) {
+        const sampleId = root.querySelector("[data-mpc-editor-sample]")?.value;
+        if (sampleId) void this.renderSampleWaveform(sampleId);
+      }
     });
 
     root.addEventListener("pointerdown", event => {
@@ -513,6 +519,13 @@ const MPCInterface = {
       if (event.target.closest("[data-mpc-browser-assign]")) { this.assignBrowserSound(); return; }
       if (event.target.closest("[data-mpc-delete-sample]")) { void this.deleteSelectedSample(); return; }
       if (event.target.closest("[data-mpc-unassign]")) { this.unassignSelectedPad(); return; }
+      if (event.target.closest("[data-mpc-note-repeat-toggle]")) {
+        this.noteRepeat = !this.noteRepeat;
+        const button = this.root.querySelector("[data-mpc-note-repeat-toggle]");
+        if (button) button.textContent = "NOTE REPEAT: " + (this.noteRepeat ? "ON" : "OFF");
+        this.setStatus("NOTE REPEAT " + (this.noteRepeat ? "ON" : "OFF") + " · HOLD A PAD TO REPEAT");
+        return;
+      }
       if (event.target.closest("[data-mpc-slice]")) { void this.sliceSampleToPads(); return; }
 
       if (event.target.closest("[data-mpc-assign]")) { this.assignSelectedSound(); return; }
@@ -797,7 +810,11 @@ const MPCInterface = {
     const settings = this.saveSampleEditorSettings(false);
     const firstPad = this.selectedPad;
     const available = Math.min(count, 17 - firstPad);
-    if (available < 1) return;
+    if (available < count) {
+      const status = this.root?.querySelector("[data-mpc-editor-status]");
+      if (status) status.textContent = "SELECT PAD 1 OR REDUCE SLICE COUNT · ONLY " + available + " PADS REMAIN IN THIS BANK.";
+      return;
+    }
     for (let index = 0; index < available; index++) {
       const pad = firstPad + index;
       const start = settings.start + (settings.end - settings.start) * index / count;
