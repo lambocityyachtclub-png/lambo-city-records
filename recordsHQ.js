@@ -5,14 +5,10 @@
 // x:28 z:22
 //
 // Includes:
-// - VIP red carpet arrival
-// - luxury HQ exterior
-// - marble VIP plaza
-// - exclusive headquarters atmosphere
-// - private VIP lounge
-// - roundabout turnaround
-// - VIP waterfront promenade
-// - luxury architectural transition from HQ -> waterfront
+// - cohesive three-floor glass-and-bronze HQ facade
+// - permanent crown identity signage
+// - clear public entrance and rear elevator portal
+// - exterior plaza, private patio and waterfront promenade
 //
 // PERFORMANCE:
 // - No new PointLights
@@ -47,15 +43,15 @@ function createSignTexture() {
   const ctx = canvas.getContext("2d");
 
   ctx.fillStyle = "#050505";
-  ctx.fillRect(0, 0, 1024, 512);
+  ctx.fillRect(0, 0, 1024, 256);
 
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
 
   ctx.font = "bold 104px Arial";
 
-  ctx.shadowColor = "#ff00aa";
-  ctx.shadowBlur = 30;
+  ctx.shadowColor = "#b88e55";
+  ctx.shadowBlur = 16;
 
   ctx.fillStyle = "#ffd700";
 
@@ -76,132 +72,6 @@ function createSignTexture() {
   ctx.shadowBlur = 0;
 
   return canvas;
-}
-
-
-// ============================================================
-// VIP STANCHION
-// ============================================================
-
-function buildStanchion(x, z) {
-
-  const group = new THREE.Group();
-
-  const base = new THREE.Mesh(
-    new THREE.CylinderGeometry(
-      .32,
-      .38,
-      .14,
-      12
-    ),
-    new THREE.MeshStandardMaterial({
-      color: 0x111111,
-      metalness: .7,
-      roughness: .35
-    })
-  );
-
-  base.position.y = .07;
-  group.add(base);
-
-
-  const pole = new THREE.Mesh(
-    new THREE.CylinderGeometry(
-      .07,
-      .07,
-      1.1,
-      10
-    ),
-    new THREE.MeshStandardMaterial({
-      color: 0xffd700,
-      emissive: 0xffd700,
-      emissiveIntensity: .4,
-      metalness: .8,
-      roughness: .3
-    })
-  );
-
-  pole.position.y = .65;
-  group.add(pole);
-
-
-  const top = new THREE.Mesh(
-    new THREE.SphereGeometry(
-      .13,
-      12,
-      12
-    ),
-    new THREE.MeshStandardMaterial({
-      color: 0xffd700,
-      emissive: 0xffd700,
-      emissiveIntensity: .5,
-      metalness: .6
-    })
-  );
-
-  top.position.y = 1.25;
-  group.add(top);
-
-
-  group.position.set(
-    x,
-    0,
-    z
-  );
-
-  return group;
-}
-
-
-// ============================================================
-// VIP ROPE
-// ============================================================
-
-function buildRope(
-  x1,
-  z1,
-  x2,
-  z2,
-  parent
-) {
-
-  const curve = new THREE.CatmullRomCurve3([
-
-    new THREE.Vector3(
-      x1,
-      1.2,
-      z1
-    ),
-
-    new THREE.Vector3(
-      (x1 + x2) / 2,
-      .8,
-      (z1 + z2) / 2
-    ),
-
-    new THREE.Vector3(
-      x2,
-      1.2,
-      z2
-    )
-
-  ]);
-
-  const rope = new THREE.Mesh(
-    new THREE.TubeGeometry(
-      curve,
-      12,
-      .055,
-      6,
-      false
-    ),
-    new THREE.MeshStandardMaterial({
-      color: 0x8b0018,
-      roughness: .6
-    })
-  );
-
-  parent.add(rope);
 }
 
 
@@ -683,11 +553,7 @@ export default {
       [1.3, 12.2, 20.2, 25.8].forEach(y => {
         const mullion = new THREE.Mesh(
           new THREE.BoxGeometry(.18, .1, 13.1),
-          new THREE.MeshStandardMaterial({
-            color: 0xb88e55,
-            emissive: 0x2a1708,
-            emissiveIntensity: .16
-          })
+          facadeBronze
         );
         mullion.position.set(x, y, 0);
         group.add(mullion);
@@ -727,11 +593,7 @@ export default {
 
       const backTrim = new THREE.Mesh(
         new THREE.BoxGeometry(.2, 26, .2),
-        new THREE.MeshStandardMaterial({
-          color: 0xffd700,
-          emissive: 0xffd700,
-          emissiveIntensity: 1.5
-        })
+        facadeBronze
       );
       backTrim.position.set(x, 13, -7.05);
       group.add(backTrim);
@@ -765,14 +627,14 @@ export default {
     );
 
     addFacadePanel(
-      new THREE.BoxGeometry(17.8, 3.05, .12),
+      new THREE.BoxGeometry(17.8, 2.8, .12),
       glassMat,
       0,
-      22.0,
+      21.8,
       7.02
     );
 
-    [-8.9, -4.45, 0, 4.45, 8.9].forEach(x => {
+    [-8, -5, 0, 5, 8].forEach(x => {
       addFacadePanel(
         new THREE.BoxGeometry(.085, 7.35, .16),
         facadeBronze,
@@ -781,10 +643,10 @@ export default {
         7.12
       );
       addFacadePanel(
-        new THREE.BoxGeometry(.085, 3.0, .16),
+        new THREE.BoxGeometry(.085, 2.75, .16),
         facadeBronze,
         x,
-        22.0,
+        21.8,
         7.12
       );
     });
