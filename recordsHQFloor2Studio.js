@@ -380,7 +380,7 @@ export default {
     // Left-wall producer cockpit beside the Floor 2 elevator.
     // The chair faces outward through the stage-side glazing.
     const beatX = -6.15;
-    const beatZ = -4.25;
+    const beatZ = -4.4;
     const beatAngle = -Math.PI / 2;
 
     // Main production desk
@@ -528,9 +528,10 @@ export default {
       leftSpeaker,
       new THREE.BoxGeometry(0.42, 0.78, 0.62),
       black,
-      -1.13,
+      0,
       1.40,
-      0.52
+      0.15,
+      Math.PI
     );
 
     // Speaker driver faces the seated producer
@@ -546,12 +547,12 @@ export default {
     );
 
     leftDriver.rotation.z =
-      Math.PI / 2;
+      -Math.PI / 2;
 
     leftDriver.position.set(
-      -0.90,
+      0.23,
       1.43,
-      0.52
+      0.15
     );
 
     leftSpeaker.add(leftDriver);
@@ -570,9 +571,9 @@ export default {
       Math.PI / 2;
 
     leftTweeter.position.set(
-      -0.89,
+      0.24,
       1.68,
-      0.52
+      0.15
     );
 
     leftSpeaker.add(leftTweeter);
@@ -592,9 +593,10 @@ export default {
       rightSpeaker,
       new THREE.BoxGeometry(0.42, 0.78, 0.62),
       black,
-      1.43,
+      1.12,
       1.40,
-      0.52
+      0.15,
+      Math.PI
     );
 
     const rightDriver = new THREE.Mesh(
@@ -608,12 +610,12 @@ export default {
     );
 
     rightDriver.rotation.z =
-      Math.PI / 2;
+      -Math.PI / 2;
 
     rightDriver.position.set(
-      1.66,
+      1.35,
       1.43,
-      0.52
+      0.15
     );
 
     rightSpeaker.add(rightDriver);
@@ -632,9 +634,9 @@ export default {
       Math.PI / 2;
 
     rightTweeter.position.set(
-      1.67,
+      1.36,
       1.68,
-      0.52
+      0.15
     );
 
     rightSpeaker.add(rightTweeter);
@@ -806,7 +808,7 @@ export default {
     // Keep the display in the cockpit's local coordinate space.
     // This makes it rotate and stay centered with the speaker pair
     // and the seated producer instead of drifting off-axis.
-    box(
+    const productionScreen = box(
       producerCockpit,
       new THREE.BoxGeometry(
         0.08,
@@ -818,6 +820,10 @@ export default {
       1.82,
       0.15
     );
+
+    // Screen faces back toward the seated producer; the chair
+    // itself faces outward toward the stage-side glazing.
+    productionScreen.rotation.y = Math.PI;
 
     box(
       producerCockpit,
