@@ -19,6 +19,27 @@ import StudioAudioEngine from "./studioAudioEngine.js";
 import {
   createStudioDAWArrangementPlayback
 } from "./studioDAWArrangementPlayback.js";
+const MAX_PORTABLE_SESSION_BYTES = 48000000;
+
+async function encodeAudioBlob(blob) {
+  const bytes = new Uint8Array(await blob.arrayBuffer());
+  let binary = "";
+  const chunkSize = 0x8000;
+  for (let offset = 0; offset < bytes.length; offset += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(offset, offset + chunkSize));
+  }
+  return btoa(binary);
+}
+
+function decodeAudioBlob(data, mimeType = "audio/webm") {
+  const binary = atob(data);
+  const bytes = new Uint8Array(binary.length);
+  for (let index = 0; index < binary.length; index += 1) {
+    bytes[index] = binary.charCodeAt(index);
+  }
+  return new Blob([bytes], { type: mimeType || "application/octet-stream" });
+}
+
 const TRACK_TYPES = [
   "audio",
   "midi",
@@ -93,6 +114,85 @@ const StudioMultitrackWorkspace = {
     this.status(`${track.name} created.`);
     return track;
   },
+
+  async exportSession() {
+    let encodedBytes = 0;
+    const tracks = [];
+    for (const track of this.tracks) {
+      const clips = [];
+      for (const clip of (track.clips || [])) {
+        if (!(clip.blob instanceof Blob) || !clip.blob.size) continue;
+        encodedBytes += clip.blob.size;
+        if (encodedBytes > MAX_PORTABLE_SESSION_BYTES) {
+          throw new Error("Session audio exceeds the 48 MB portable audio limit. Export fewer or shorter audio clips.");
+        }
+        clips.push({
+          id: clip.id,
+          name: clip.name || "Audio Clip",
+          startBar: Number(clip.startBar) || 1,
+          lengthBars: Number(clip.lengthBars) || 4,
+          duration: Number(clip.duration) || 0,
+          mimeType: clip.blob.type || "application/octet-stream",
+          data: await encodeAudioBlob(clip.blob),
+          takeId: clip.takeId || null,
+          createdAt: clip.createdAt || null
+        });
+      }
+      tracks.push({
+        id: track.id,
+        name: track.name,
+        type: TRACK_TYPES.includes(track.type) ? track.type : "audio",
+        volume: Math.max(0, Math.min(100, Number(track.volume) || 0)),
+        pan: Math.max(-1, Math.min(1, Number(track.pan) || 0)),
+        muted: Boolean(track.muted),
+        solo: Boolean(track.solo),
+        armed: Boolean(track.armed),
+        clips
+      });
+    }
+    return {
+      format: "lambo-city-daw-session",
+      version: 1,
+      tempo: this.tempo,
+      tracks
+    };
+  },
+
+  importSession(session) {
+    if (!session || session.format !== "lambo-city-daw-session" ||
+        session.version !== 1 || !Array.isArray(session.tracks)) {
+      throw new Error("The portable DAW session is invalid.");
+    }
+    this.stopAll();
+    this.tempo = Math.max(60, Math.min(180, Number(session.tempo) || 100));
+    this.tracks = session.tracks.map((savedTrack, index) => ({
+      id: savedTrack.id || `lc-track-import-${index + 1}`,
+      name: String(savedTrack.name || `Track ${index + 1}`),
+      type: TRACK_TYPES.includes(savedTrack.type) ? savedTrack.type : "audio",
+      volume: Math.max(0, Math.min(100, Number(savedTrack.volume) || 0)),
+      pan: Math.max(-1, Math.min(1, Number(savedTrack.pan) || 0)),
+      muted: Boolean(savedTrack.muted),
+      solo: Boolean(savedTrack.solo),
+      armed: Boolean(savedTrack.armed),
+      clips: (savedTrack.clips || []).map(clip => ({
+        id: clip.id,
+        name: clip.name || "Audio Clip",
+        startBar: Math.max(1, Number(clip.startBar) || 1),
+        lengthBars: Math.max(1, Number(clip.lengthBars) || 4),
+        duration: Number(clip.duration) || 0,
+        blob: decodeAudioBlob(clip.data, clip.mimeType),
+        takeId: clip.takeId || null,
+        createdAt: clip.createdAt || null
+      }))
+    }));
+    const ids = this.tracks.map(track => Number(track.id.match(/(\\d+)$/)?.[1]) || 0);
+    this.nextTrackId = Math.max(0, ...ids) + 1;
+    this.render();
+    this.status("Portable session loaded with " + this.tracks.length + " track(s).");
+    return true;
+  },
+
+
 
   removeTrack(id) {
     const index = this.tracks.findIndex(
