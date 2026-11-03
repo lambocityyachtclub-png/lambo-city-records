@@ -375,476 +375,216 @@ export default {
 
     
 
-    // The primary producer workstation now occupies the former
-    // mix-control position: one desk for MPC, mixing and mastering.
-    // Centered producer cockpit. The seated player faces +Z;
-    // the desk is directly in front, with the chair behind it.
-    const beatX = 0;
-    const beatZ = 2.2;
-    const beatAngle = Math.PI / 2;
+    // The producer faces the exterior stage through the rear glazing.
+    // The desk, MPC and mix/master surface share one physical cockpit.
+    const beatX = 1.1;
+    const beatZ = -3.7;
+    const beatAngle = 0;
 
-    // Main production desk
-
+    // Main producer desk — broad, shallow and aligned with the window wall.
     box(
       beatLab,
-      new THREE.BoxGeometry(
-        1.35,
-        0.18,
-        3.75
-      ),
+      new THREE.BoxGeometry(5.35, 0.18, 1.55),
       dark,
       beatX,
-      0.92,
-      beatZ,
-      beatAngle
+      0.94,
+      beatZ
     );
-
-    // Gold desk edge
 
     box(
       beatLab,
-      new THREE.BoxGeometry(
-        0.06,
-        0.05,
-        3.8
-      ),
+      new THREE.BoxGeometry(5.42, 0.055, 1.58),
       gold,
-      beatX - 0.62,
-      1.04,
-      beatZ,
-      beatAngle
+      beatX,
+      1.035,
+      beatZ
     );
 
+    // Dark pedestal supports keep the desk visually grounded.
+    [-2.05, 2.05].forEach(offset => {
+      box(
+        beatLab,
+        new THREE.BoxGeometry(0.48, 0.88, 1.12),
+        black,
+        beatX + offset,
+        0.48,
+        beatZ
+      );
+    });
 
-   
-    // LAMBO CITY — SIDE-BY-SIDE MPC + MIXER
-
+    // MPC is a distinct selectable surface on the left side of this desk.
     const mpcClickable = new THREE.Group();
-
     mpcClickable.name = "floor2MPCClickable";
     mpcClickable.userData.studioStation = "beatLab";
-
-    // Align the equipment with the existing production desk
-    mpcClickable.position.set(beatX, 0, beatZ);
-    mpcClickable.rotation.y = beatAngle;
-
-    // MPC body — left side of the workstation
+    mpcClickable.position.set(beatX - 1.25, 0, beatZ);
     box(
       mpcClickable,
-      new THREE.BoxGeometry(0.62, 0.12, 1.05),
+      new THREE.BoxGeometry(1.05, 0.12, 1.08),
       black,
-      -0.32,
-      1.085,
-      -0.35
+      0,
+      1.105,
+      0.02
     );
 
-    // 16 illuminated MPC pads
     for (let row = 0; row < 4; row++) {
       for (let col = 0; col < 4; col++) {
         box(
           mpcClickable,
-          new THREE.BoxGeometry(0.105, 0.045, 0.15),
+          new THREE.BoxGeometry(0.17, 0.045, 0.17),
           goldGlow,
-          -0.53 + col * 0.14,
-          1.17,
-          -0.69 + row * 0.21
+          -0.31 + col * 0.205,
+          1.19,
+          -0.29 + row * 0.205
         );
       }
     }
 
-    // Mixer — directly beside the MPC on the same desk
-    box(
-      mpcClickable,
-      new THREE.BoxGeometry(0.48, 0.08, 1.05),
-      dark,
-      0.30,
-      1.065,
-      -0.35
-    );
-
-    // Mixer controls
-    for (let row = 0; row < 4; row++) {
-      for (let col = 0; col < 3; col++) {
-        cylinder(
-          mpcClickable,
-          new THREE.CylinderGeometry(0.045, 0.045, 0.045, 12),
-          col === 0 ? goldGlow : black,
-          0.15 + col * 0.15,
-          1.125,
-          -0.68 + row * 0.22
-        );
-      }
-    }
-
-    // Gold accent along the mixer
-    box(
-      mpcClickable,
-      new THREE.BoxGeometry(0.035, 0.025, 0.85),
-      goldGlow,
-      0.30,
-      1.12,
-      -0.35
-    );
-
-    // Preserve the existing clickable workstation interaction
+    // Small vintage-style transport / encoder strip beside the pads.
+    [-0.34, -0.10, 0.14, 0.38].forEach((x, index) => {
+      cylinder(
+        mpcClickable,
+        new THREE.CylinderGeometry(0.055, 0.055, 0.055, 14),
+        index === 0 ? goldGlow : dark,
+        x,
+        1.19,
+        0.48
+      );
+    });
     beatLab.add(mpcClickable);
 
-
-
-
-
-
-    // Production screen
-
-    // =========================================================
-    // LAMBO CITY — PRIMARY PRODUCER COCKPIT
-    // Producer chair + symmetrical studio monitor speakers
-    // =========================================================
-
+    // Main control-room cockpit: speakers, display and centered producer chair.
     const producerCockpit = new THREE.Group();
+    producerCockpit.name = "floor2PrimaryProducerCockpit";
+    producerCockpit.position.set(beatX, 0, beatZ);
 
-    producerCockpit.name =
-      "floor2PrimaryProducerCockpit";
-
-    producerCockpit.position.set(
-      beatX,
-      0,
-      beatZ
-    );
-
-    producerCockpit.rotation.y =
-      beatAngle;
-
-    // ---------------------------------------------------------
-    // LEFT STUDIO MONITOR
-    // ---------------------------------------------------------
-
-    const leftSpeaker = new THREE.Group();
-
-    leftSpeaker.name =
-      "floor2LeftStudioMonitor";
-
-    box(
-      leftSpeaker,
-      new THREE.BoxGeometry(0.42, 0.78, 0.62),
-      black,
-      0,
-      1.40,
-      0.15,
-      Math.PI
-    );
-
-    // Speaker driver faces the seated producer
-
-    const leftDriver = new THREE.Mesh(
-      new THREE.CylinderGeometry(
-        0.17,
-        0.17,
-        0.045,
-        24
-      ),
-      dark
-    );
-
-    leftDriver.rotation.z =
-      Math.PI / 2;
-
-    leftDriver.position.set(
-      0.23,
-      1.43,
-      0.15
-    );
-
-    leftSpeaker.add(leftDriver);
-
-    const leftTweeter = new THREE.Mesh(
-      new THREE.CylinderGeometry(
-        0.065,
-        0.065,
-        0.05,
-        20
-      ),
-      goldGlow
-    );
-
-    leftTweeter.rotation.z =
-      Math.PI / 2;
-
-    leftTweeter.position.set(
-      0.24,
-      1.68,
-      0.15
-    );
-
-    leftSpeaker.add(leftTweeter);
-
-    producerCockpit.add(leftSpeaker);
-
-    // ---------------------------------------------------------
-    // RIGHT STUDIO MONITOR
-    // ---------------------------------------------------------
-
-    const rightSpeaker = new THREE.Group();
-
-    rightSpeaker.name =
-      "floor2RightStudioMonitor";
-
-    box(
-      rightSpeaker,
-      new THREE.BoxGeometry(0.42, 0.78, 0.62),
-      black,
-      1.12,
-      1.40,
-      0.15,
-      Math.PI
-    );
-
-    const rightDriver = new THREE.Mesh(
-      new THREE.CylinderGeometry(
-        0.17,
-        0.17,
-        0.045,
-        24
-      ),
-      dark
-    );
-
-    rightDriver.rotation.z =
-      Math.PI / 2;
-
-    rightDriver.position.set(
-      1.35,
-      1.43,
-      0.15
-    );
-
-    rightSpeaker.add(rightDriver);
-
-    const rightTweeter = new THREE.Mesh(
-      new THREE.CylinderGeometry(
-        0.065,
-        0.065,
-        0.05,
-        20
-      ),
-      goldGlow
-    );
-
-    rightTweeter.rotation.z =
-      Math.PI / 2;
-
-    rightTweeter.position.set(
-      1.36,
-      1.68,
-      0.15
-    );
-
-    rightSpeaker.add(rightTweeter);
-
-    producerCockpit.add(rightSpeaker);
-
-    // ---------------------------------------------------------
-    // PRODUCER CHAIR
-    // Faces the MPC and production display.
-    // ---------------------------------------------------------
-
-    const producerChair = new THREE.Group();
-
-    producerChair.name =
-      "floor2ProducerChair";
-
-    // Central seat cushion
-
-    box(
-      producerChair,
-      new THREE.BoxGeometry(
-        1.05,
-        0.24,
-        1.05
-      ),
-      black,
-      2.05,
-      0.91,
-      0.15
-    );
-
-    // Gold seat trim
-
-    box(
-      producerChair,
-      new THREE.BoxGeometry(
-        1.08,
-        0.055,
-        1.08
-      ),
-      gold,
-      2.05,
-      0.80,
-      0.15
-    );
-
-    // Upholstered backrest.
-    // Positioned behind the seated producer.
-
-    box(
-      producerChair,
-      new THREE.BoxGeometry(
-        0.30,
-        1.12,
-        1.02
-      ),
-      black,
-      2.54,
-      1.48,
-      0.15
-    );
-
-    // Backrest gold accent
-
-    box(
-      producerChair,
-      new THREE.BoxGeometry(
-        0.08,
-        0.85,
-        0.72
-      ),
-      gold,
-      2.70,
-      1.48,
-      0.15
-    );
-
-    // Armrests
-
-    [-0.48, 0.48].forEach(offset => {
+    [-2.25, 2.25].forEach((x, index) => {
+      const speaker = new THREE.Group();
+      speaker.name = index === 0
+        ? "floor2LeftStudioMonitor"
+        : "floor2RightStudioMonitor";
 
       box(
-        producerChair,
-        new THREE.BoxGeometry(
-          0.72,
-          0.12,
-          0.13
-        ),
-        dark,
-        2.08,
-        1.17,
-        0.15 + offset
+        speaker,
+        new THREE.BoxGeometry(0.48, 0.82, 0.58),
+        black,
+        x,
+        1.48,
+        -0.28
       );
 
+      const woofer = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.17, 0.17, 0.055, 24),
+        dark
+      );
+      woofer.rotation.x = Math.PI / 2;
+      woofer.position.set(x, 1.48, 0.025);
+      speaker.add(woofer);
+
+      const tweeter = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.065, 0.065, 0.06, 20),
+        goldGlow
+      );
+      tweeter.rotation.x = Math.PI / 2;
+      tweeter.position.set(x, 1.76, 0.025);
+      speaker.add(tweeter);
+
+      producerCockpit.add(speaker);
     });
 
-    // Central chair support
-
-    cylinder(
-      producerChair,
-      new THREE.CylinderGeometry(
-        0.09,
-        0.12,
-        0.48,
-        16
-      ),
-      gold,
-      2.05,
-      0.48,
-      0.15
-    );
-
-    // Five-star chair base
-
-    cylinder(
-      producerChair,
-      new THREE.CylinderGeometry(
-        0.48,
-        0.48,
-        0.10,
-        24
-      ),
-      black,
-      2.05,
-      0.20,
-      0.15
-    );
-
-    // Gold base hub
-
-    cylinder(
-      producerChair,
-      new THREE.CylinderGeometry(
-        0.15,
-        0.15,
-        0.12,
-        20
-      ),
-      goldGlow,
-      2.05,
-      0.26,
-      0.15
-    );
-
-    producerCockpit.add(producerChair);
-
-    // ---------------------------------------------------------
-    // PRESERVE WORKSTATION REFERENCES
-    // ---------------------------------------------------------
-
-    producerCockpit.userData.studioStation =
-      "beatLab";
-
-    producerCockpit.userData.mpcTarget =
-      "floor2MPCClickable";
-
-    producerCockpit.userData.viewDirection =
-      "forward-into-room-toward-exterior-view";
-
-    producerCockpit.userData.wallSide =
-      "centered-producer-position";
-
-    producerCockpit.userData.exteriorViewPreserved =
-      true;
-
-    beatLab.add(producerCockpit);
-
-    
-    // Keep the display in the cockpit's local coordinate space.
-    // This makes it rotate and stay centered with the speaker pair
-    // and the seated producer instead of drifting off-axis.
-    const productionScreen = box(
-      producerCockpit,
-      new THREE.BoxGeometry(
-        0.08,
-        1.0,
-        1.55
-      ),
-      glass,
-      0.56,
-      1.82,
-      0.15
-    );
-
-    // Screen faces back toward the seated producer; the chair
-    // itself faces outward toward the stage-side glazing.
-    productionScreen.rotation.y = Math.PI / 2;
-
+    // Wide production display faces the seated producer (+Z).
     box(
       producerCockpit,
-      new THREE.BoxGeometry(
-        0.75,
-        0.05,
-        0.05
-      ),
-      goldGlow,
-      0.56,
-      2.35,
-      0.15
+      new THREE.BoxGeometry(1.85, 1.08, 0.09),
+      glass,
+      0,
+      1.88,
+      -0.92
     );
+    box(
+      producerCockpit,
+      new THREE.BoxGeometry(1.98, 0.055, 0.12),
+      goldGlow,
+      0,
+      2.44,
+      -0.92
+    );
+
+    // Chair is centered behind the desk, facing the exterior windows (-Z).
+    const producerChair = new THREE.Group();
+    producerChair.name = "floor2ProducerChair";
+    box(
+      producerChair,
+      new THREE.BoxGeometry(1.12, 0.22, 1.02),
+      black,
+      0,
+      0.94,
+      1.55
+    );
+    box(
+      producerChair,
+      new THREE.BoxGeometry(1.16, 0.055, 1.06),
+      gold,
+      0,
+      0.82,
+      1.55
+    );
+    box(
+      producerChair,
+      new THREE.BoxGeometry(1.05, 1.08, 0.24),
+      black,
+      0,
+      1.48,
+      2.02
+    );
+    box(
+      producerChair,
+      new THREE.BoxGeometry(0.72, 0.86, 0.055),
+      gold,
+      0,
+      1.48,
+      2.16
+    );
+    [-0.52, 0.52].forEach(x => {
+      box(
+        producerChair,
+        new THREE.BoxGeometry(0.16, 0.12, 0.78),
+        dark,
+        x,
+        1.17,
+        1.52
+      );
+    });
+    cylinder(
+      producerChair,
+      new THREE.CylinderGeometry(0.10, 0.13, 0.48, 16),
+      gold,
+      0,
+      0.48,
+      1.55
+    );
+    cylinder(
+      producerChair,
+      new THREE.CylinderGeometry(0.48, 0.48, 0.10, 24),
+      black,
+      0,
+      0.20,
+      1.55
+    );
+    producerCockpit.add(producerChair);
+
+    producerCockpit.userData.studioStation = "beatLab";
+    producerCockpit.userData.mpcTarget = "floor2MPCClickable";
+    producerCockpit.userData.viewDirection = "toward-exterior-stage-windows";
+    producerCockpit.userData.exteriorViewPreserved = true;
+    beatLab.add(producerCockpit);
 
     label(
       beatLab,
-      "PRODUCER • MPC • MIX • MASTER",
-      0,
-      3.28,
-      1.95,
-      5.4
+      "LAMBO CITY • MPC • MIX • MASTER",
+      beatX,
+      3.18,
+      beatZ - 1.45,
+      5.6
     );
 
     group.add(
@@ -866,20 +606,20 @@ export default {
       "floor2InstrumentStation";
 
     const pianoX =
-      3.75;
+      5.25;
 
     const pianoZ =
-      2.55;
+      -2.25;
 
     const pianoAngle =
-      -Math.PI * 0.12;
+      0;
 
     box(
       piano,
       new THREE.BoxGeometry(
-        1.25,
+        4.15,
         0.62,
-        4.15
+        1.25
       ),
       black,
       pianoX,
@@ -891,9 +631,9 @@ export default {
     box(
       piano,
       new THREE.BoxGeometry(
-        1.3,
+        4.2,
         0.07,
-        4.2
+        1.3
       ),
       gold,
       pianoX,
@@ -913,17 +653,17 @@ export default {
       box(
         piano,
         new THREE.BoxGeometry(
-          0.52,
+          0.19,
           0.06,
-          0.19
+          0.52
         ),
         i % 2 === 0
           ? glass
           : white,
-        pianoX - 0.12,
-        1.10,
-        -1.90 +
+        pianoX - 1.90 +
           i * 0.22,
+        1.10,
+        pianoZ + 0.05,
         pianoAngle
       );
 
@@ -939,9 +679,9 @@ export default {
         1.65
       ),
       glass,
-      pianoX - 0.52,
+      pianoX,
       1.82,
-      -0.35,
+      pianoZ - 0.78,
       pianoAngle
     );
 
@@ -953,18 +693,18 @@ export default {
         1.75
       ),
       goldGlow,
-      pianoX - 0.57,
+      pianoX,
       2.36,
-      -0.35,
+      pianoZ - 0.78,
       pianoAngle
     );
 
     label(
       piano,
       "PIANO • INSTRUMENTS",
-      5.25,
+      pianoX,
       3.28,
-      2.0,
+      pianoZ - 1.0,
       5.0
     );
 
@@ -992,7 +732,7 @@ export default {
       4.8;
 
     const boothZ =
-      -1.8;
+      3.65;
 
     // Floor
 
@@ -1219,13 +959,13 @@ export default {
       "floor2RecordingEditingStation";
 
     const editX =
-      -4.2;
+      -5.15;
 
     const editZ =
-      2.6;
+      -1.45;
 
     const editAngle =
-      -Math.PI * 0.08;
+      0;
 
     // Desk
 
@@ -1360,34 +1100,85 @@ export default {
     // The old oversized, separate console and three-screen bank
     // are removed so they do not compete with the main desk.
 
+    // Panoramic three-bay glazing faces the exterior stage and water.
     box(
       controlRoom,
-      new THREE.BoxGeometry(6.9, 3.7, 0.22),
+      new THREE.BoxGeometry(16.6, 3.55, 0.16),
       glass,
       0,
-      2.0,
-      -6.55
+      2.05,
+      -6.88
     );
 
+    [-8.25, 8.25].forEach(x => {
+      box(controlRoom, new THREE.BoxGeometry(0.12, 3.72, 0.16), gold, x, 2.05, -6.82);
+    });
+    [-5.5, 0, 5.5].forEach(x => {
+      box(controlRoom, new THREE.BoxGeometry(0.075, 3.5, 0.12), gold, x, 2.05, -6.78);
+    });
     box(
       controlRoom,
-      new THREE.BoxGeometry(6.7, 0.07, 0.08),
+      new THREE.BoxGeometry(16.7, 0.075, 0.20),
       gold,
       0,
-      3.72,
-      -6.38
+      3.86,
+      -6.82
+    );
+    box(
+      controlRoom,
+      new THREE.BoxGeometry(16.7, 0.075, 0.20),
+      gold,
+      0,
+      0.28,
+      -6.82
     );
 
     label(
       controlRoom,
       "LAMBO CITY • PRODUCER CONTROL",
       0,
-      3.15,
-      -6.38,
+      3.55,
+      -6.55,
       5.4
     );
 
     group.add(controlRoom);
+
+    // Glass divider: live drum room on the left, producer control room on the right.
+    box(
+      controlRoom,
+      new THREE.BoxGeometry(0.10, 3.35, 12.0),
+      glass,
+      -1.65,
+      1.88,
+      0.05
+    );
+    box(
+      controlRoom,
+      new THREE.BoxGeometry(0.14, 0.08, 12.0),
+      gold,
+      -1.65,
+      3.58,
+      0.05
+    );
+    box(
+      controlRoom,
+      new THREE.BoxGeometry(0.14, 0.08, 12.0),
+      gold,
+      -1.65,
+      0.20,
+      0.05
+    );
+    [-5.9, 0, 5.9].forEach(z => {
+      box(
+        controlRoom,
+        new THREE.BoxGeometry(0.13, 3.35, 0.10),
+        gold,
+        -1.65,
+        1.88,
+        z
+      );
+    });
 
     // Dedicated physical mix/master controls sit ON the same
     // producer desk as the MPC. This remains a distinct raycast
@@ -1396,7 +1187,7 @@ export default {
 
     const mixMasterControls = new THREE.Group();
     mixMasterControls.name = "floor2MixMasterControls";
-    mixMasterControls.position.set(beatX, 0, beatZ);
+    mixMasterControls.position.set(beatX + 1.12, 0, beatZ);
     mixMasterControls.rotation.y = beatAngle;
 
     // Compact mastering section at the front end of the desk.
@@ -1481,10 +1272,10 @@ export default {
       "floor2SongArchive";
 
     const archiveX =
-      -2.8;
+      -5.45;
 
     const archiveZ =
-      -0.4;
+      5.35;
 
     // Low archive console
 
@@ -1586,10 +1377,10 @@ export default {
       "floor2MobileStudio";
 
     const mobileX =
-      -4.5;
+      -5.35;
 
     const mobileZ =
-      -3.6;
+      -5.15;
 
     box(
       mobile,
