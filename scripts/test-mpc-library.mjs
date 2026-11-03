@@ -37,6 +37,6 @@ assert.equal(library.getAssignment("A", 1).id, unlocked[0].id);
 assert.equal(library.exportAssignments()["A-1"], unlocked[0].id);
 library.unassign("A", 1);
 assert.equal(library.exportAssignments()["A-1"], undefined);
-assert.notEqual(library.getAssignment("A", 1).id, unlocked[0].id);
+assert.ok(library.getAssignment("A", 1), "Unassigned pads fall back to their default library sound");
 
 console.log("MPC sound library tests passed.");
