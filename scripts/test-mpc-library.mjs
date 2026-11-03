@@ -25,7 +25,13 @@ assert.equal(unlocked.length, 340);
 assert.equal(new Set(unlocked.map(sound => sound.id)).size, unlocked.length);
 
 library.assign("B", 4, unlocked[25].id);
+library.assign("C", 3, unlocked[140].id);
 assert.equal(library.getAssignment("B", 4).id, unlocked[25].id);
+assert.equal(library.getAssignment("C", 3).id, unlocked[140].id);
+const portableSounds = library.exportAssignedSounds();
+assert.ok(portableSounds.some(sound => sound.id === "UNLOCK-001"));
+library.importAssignedSounds(portableSounds);
+assert.equal(new Set(library.getSounds().map(sound => sound.id)).size, library.getSounds().length);
 library.importAssignments({ "A-1": unlocked[0].id });
 assert.equal(library.getAssignment("A", 1).id, unlocked[0].id);
 assert.equal(library.exportAssignments()["A-1"], unlocked[0].id);
