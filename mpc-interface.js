@@ -204,6 +204,36 @@ function makeStyles() {
   #${ROOT_ID} .mpc-unit{min-height:0}
   #${ROOT_ID} .mpc-upper{min-height:190px}
   #${ROOT_ID} .mpc-main{min-height:210px}
+#${ROOT_ID} .mpc-upper{grid-template-columns:minmax(0,1fr);min-height:clamp(270px,34vw,410px)}
+#${ROOT_ID} .mpc-screen-frame{width:100%;min-height:clamp(270px,34vw,410px)}
+#${ROOT_ID} .mpc-screen{min-height:clamp(255px,32vw,390px)}
+#${ROOT_ID} .mpc-screen-panel{font-size:clamp(10px,.9vw,13px);gap:10px}
+#${ROOT_ID} .mpc-screen-actions button,#${ROOT_ID} .mpc-primary-action{min-height:36px;font-size:9px}
+#${ROOT_ID} .mpc-field{font-size:9px;gap:5px}
+#${ROOT_ID} .mpc-field select{min-height:34px;font-size:10px}
+#${ROOT_ID} .mpc-bank-switcher{display:flex;align-items:center;justify-content:center;gap:14px;padding:10px 14px;border:1px solid #6d5a37;border-radius:10px;background:linear-gradient(110deg,#171a18,#090b0a);box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 5px 14px #000}
+#${ROOT_ID} .mpc-bank-switcher .bank-title{flex:0 0 auto;margin:0;font-size:11px;color:#e5d4a0;letter-spacing:.18em}
+#${ROOT_ID} .mpc-bank-switcher .bank-title:before,#${ROOT_ID} .mpc-bank-switcher .bank-title:after{display:none}
+#${ROOT_ID} .mpc-bank-switcher .bank-grid{display:grid;grid-template-columns:repeat(4,minmax(54px,90px));gap:8px}
+#${ROOT_ID} .mpc-bank-switcher .bank-btn{height:40px;border-radius:7px;font-size:14px;border-color:#9c8656;background:linear-gradient(145deg,#34352e,#111411)}
+#${ROOT_ID} .mpc-bank-switcher .bank-btn.active{background:linear-gradient(145deg,#e2cb91,#a78b52);color:#171b12;border-color:#f1dda7;box-shadow:0 0 13px rgba(220,190,117,.38)}
+#${ROOT_ID} .mpc-main{display:block;min-height:0;padding:4px 0}
+#${ROOT_ID} .pads-area{width:min(100%,900px);margin:0 auto;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(9px,1.4vw,20px);padding:6px}
+#${ROOT_ID} .pad-wrap{margin-bottom:18px}
+#${ROOT_ID} .pad{border-radius:clamp(10px,1.3vw,18px);border-width:2px;background:linear-gradient(145deg,#4b5148,#171d19 48%,#080b09);box-shadow:0 0 7px rgba(173,230,89,.55),0 9px 22px rgba(0,0,0,.55),inset 0 2px 8px rgba(255,255,255,.18),inset 0 -8px 14px #000}
+#${ROOT_ID} .pad-label{bottom:-18px;font-size:clamp(8px,.8vw,11px);letter-spacing:.035em}
+#${ROOT_ID} .transport{max-width:900px;width:100%;margin:0 auto}
+@media(max-width:680px){
+  #${ROOT_ID} .mpc-upper,#${ROOT_ID} .mpc-screen-frame{min-height:280px}
+  #${ROOT_ID} .mpc-screen{min-height:265px}
+  #${ROOT_ID} .mpc-bank-switcher{gap:8px;padding:8px}
+  #${ROOT_ID} .mpc-bank-switcher .bank-grid{grid-template-columns:repeat(4,minmax(45px,1fr));width:min(100%,340px);gap:5px}
+  #${ROOT_ID} .mpc-bank-switcher .bank-btn{height:36px}
+  #${ROOT_ID} .pads-area{gap:7px;padding:2px}
+  #${ROOT_ID} .pad-wrap{margin-bottom:16px}
+  #${ROOT_ID} .pad-label{font-size:7px}
+}
+
 }
 `;
 }
@@ -246,7 +276,7 @@ function buildMarkup() {
     return `<div class="pad-wrap"><button type="button" class="pad ${red ? "red" : ""}" data-pad="${padNumbers[i]}" aria-label="${label}"></button><span class="pad-label">${label}</span></div>`;
   }).join("");
 
-  const bank = [["A", "A"], ["B", "B"], ["C", "G"], ["D", "H"]]
+  const bank = [["A", "A"], ["B", "B"], ["C", "C"], ["D", "D"]]
     .map(([button, strip]) => `<div class="bank-cell"><button type="button" class="bank-btn" data-placeholder="BANK ${button}">${button}</button><span class="bank-strip">${strip}</span></div>`).join("");
 
   return `<section class="mpc-unit" role="dialog" aria-modal="true" aria-label="Lambo City MPC">
@@ -352,53 +382,17 @@ function buildMarkup() {
         </nav>
       </div></div>
 
-      <aside class="knob-column" aria-label="Hardware knobs and bank">
-        <div class="knob" aria-label="Knob one"></div>
-        <div class="led-row"><i class="led on"></i><i class="led"></i><i class="led"></i><i class="led"></i></div>
-        <div class="knob" aria-label="Knob two"></div>
-        <div class="knob" aria-label="Knob three"></div>
-        <div class="knob" aria-label="Knob four"></div>
-        <div class="qlink"><span>Q:LINK</span><button class="small-hardware" type="button" data-placeholder="Q:LINK" aria-label="Q:LINK"></button></div>
-        <div class="bank"><div class="bank-title">BANK</div><div class="bank-grid">${bank}</div></div>
-      </aside>
+      </div></div>
     </section>
+
+    <nav class="mpc-bank-switcher" aria-label="Pad bank selection">
+      <span class="bank-title">BANK A</span>
+      <div class="bank-grid">${bank}</div>
+    </nav>
 
     <section class="mpc-main">
-      <aside class="left-column">
-        ${control("FULL LEVEL", "HAF LEVELS", true)}
-        ${control("16 LEVELS", "NOTES")}
-        ${control("COPY", "DELETE")}
-        ${control("ERASE")}
-        ${control("NOTE REPEAT", "SLOPT", true)}
-      </aside>
-
-      <div class="pads-area" aria-label="Sixteen MPC pads">${pads}</div>
-
-      <aside class="right-controls">
-        <div class="side-stack">
-          ${control("MAIN", "GRID", true)}
-          ${control("GRID", "PREFS")}
-          ${control("", "SFIFT")}
-        </div>
-        <div class="middle-controls">
-          <div class="middle-top">
-            ${control("BROWSE", "SAVE")}
-            ${control("TRACK MIA", "RRO MIK")}
-            ${control("TRACK MATE", "PAO MUTE")}
-            ${control("NEXT SEQ", "XYPX")}
-          </div>
-          <div class="data-wheel-wrap">
-            <div class="data-wheel" aria-label="Data wheel"></div>
-            <div class="wheel-buttons"><button type="button" data-placeholder="–">–</button><button type="button" data-placeholder="+">+</button></div>
-          </div>
-        </div>
-        <div class="side-stack">
-          ${control("TAP TEMPO", "CLOBAL", true)}
-          ${control("UNDO", "REDO")}
-        </div>
-      </aside>
+      <div class="pads-area" aria-label="Sixteen MPC performance pads">${pads}</div>
     </section>
-
     <section class="transport">
       ${["REC", "OVER DUB", "STOP", "PLAY", "PLAY START"].map((label, i) => `<div class="transport-item">${i < 4 ? `<i class="transport-led ${i === 0 ? "on" : ""}"></i>` : ""}<button type="button" class="hw-button" data-placeholder="${label}">${label}</button></div>`).join("")}
     </section>
@@ -598,6 +592,7 @@ const MPCInterface = {
     document.body.appendChild(root);
     this.root = root;
     this.refreshLibraryUI();
+    for (const button of root.querySelectorAll(".bank-btn")) button.classList.toggle("active", button.dataset.placeholder === "BANK A");
     void this.refreshImportedSamples();
     this.showScreen("MAIN");
     this.setStatus(this.library.total + " SOUNDS READY · +" + this.library.added + " NEW SOUNDS ADDED THIS VISIT");
@@ -872,6 +867,9 @@ const MPCInterface = {
     this.bank = bank;
     const title = this.root?.querySelector(".bank-title");
     if (title) title.textContent = "BANK " + bank;
+    for (const button of this.root?.querySelectorAll(".bank-btn") || []) {
+      button.classList.toggle("active", button.dataset.placeholder === "BANK " + bank);
+    }
     this.refreshLibraryUI();
     if (this.root?.querySelector('[data-mpc-panel="SAMPLE"].active')) void this.refreshSampleEditor();
     this.setStatus("BANK " + bank + " SELECTED");
