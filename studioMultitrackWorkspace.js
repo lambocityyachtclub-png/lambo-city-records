@@ -131,7 +131,7 @@ const StudioMultitrackWorkspace = {
         if (!(clip.blob instanceof Blob) || !clip.blob.size) continue;
         encodedBytes += clip.blob.size;
         if (encodedBytes > MAX_PORTABLE_SESSION_BYTES) {
-          throw new Error("Session audio exceeds the 48 MB portable audio limit. Export fewer or shorter audio clips.");
+          throw new Error("Session audio exceeds the 30 MB portable audio limit. Export fewer or shorter audio clips.");
         }
         clips.push({
           id: clip.id,
