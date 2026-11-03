@@ -453,7 +453,10 @@ const MPCInterface = {
     if (velocitySlider) velocitySlider.value = String(this.velocitySensitivity);
     if (velocityReadout) velocityReadout.textContent = this.velocitySensitivity + "%";
     root.addEventListener("change", event => {
-      if (event.target.matches("[data-mpc-import]")) void this.importSamples(event.target.files);
+      if (event.target.matches("[data-mpc-import]")) {
+        const input = event.target;
+        void this.importSamples(input.files).finally(() => { input.value = ""; });
+      }
       if (event.target.matches("[data-mpc-editor-sample]")) void this.refreshSampleEditor();
       if (event.target.matches("[data-mpc-quantize]")) this.quantize = event.target.value;
       if (event.target.matches("[data-mpc-repeat-rate]")) this.noteRepeatRate = event.target.value;
@@ -742,7 +745,8 @@ const MPCInterface = {
     try {
       const audio = await this.getAudioContext();
       const imported = await StudioMPCSampler.importFiles(files, audio);
-      await this.refreshImportedSamples();
+      await this.refreshImportedSamples(imported[0]?.id);
+      await this.refreshSampleEditor();
       const status = this.root?.querySelector("[data-mpc-editor-status]");
       if (status) status.textContent = imported.length + " AUDIO SAMPLE(S) IMPORTED · READY TO ASSIGN";
     } catch (error) {
@@ -751,7 +755,7 @@ const MPCInterface = {
     }
   },
 
-  async refreshImportedSamples() {
+  async refreshImportedSamples(preferredSampleId = null) {
     if (!this.root) return;
     const select = this.root.querySelector("[data-mpc-sample-select]");
     const samples = await StudioMPCSampler.list();
@@ -761,7 +765,10 @@ const MPCInterface = {
       : '<option value="">IMPORT AUDIO TO BEGIN</option>';
     if (select) select.innerHTML = options;
     const editor = this.root.querySelector("[data-mpc-editor-sample]");
-    if (editor) editor.innerHTML = '<option value="">Choose an imported sample</option>' + (samples.length ? samples.map(sample => '<option value="' + esc(sample.id) + '">' + esc(sample.name) + '</option>').join("") : "");
+    if (editor) {
+      editor.innerHTML = '<option value="">Choose an imported sample</option>' + (samples.length ? samples.map(sample => '<option value="' + esc(sample.id) + '">' + esc(sample.name) + '</option>').join("") : "");
+      if (preferredSampleId && samples.some(sample => sample.id === preferredSampleId)) editor.value = preferredSampleId;
+    }
     this.refreshLibraryUI();
   },
 
