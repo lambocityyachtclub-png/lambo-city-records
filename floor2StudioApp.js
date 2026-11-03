@@ -1066,6 +1066,7 @@ if (!this.audio || this.audio.state !== "running") {
       this.playing = true;
       this.currentStep = 0;
       this.nextStepTime = this.audio.currentTime + 0.05;
+      this.playbackStartedAt = this.nextStepTime;
 
       this.status(
         `Playing · ${this.pattern.bpm} BPM · ${this.soundProfile === "mpc" ? "Vintage MPC" : "Digital"}`
@@ -1095,6 +1096,7 @@ if (!this.audio || this.audio.state !== "running") {
 
   stop() {
     this.playing = false;
+    this.playbackStartedAt = null;
 
     if (this.timer !== null) {
       window.clearInterval(this.timer);
