@@ -1202,49 +1202,9 @@ export default {
 
     group.add(controlRoom);
 
-    // Glass divider between the live room and control room.
-    // A full-height 2.8-unit opening aligns with the elevator-to-chair
-    // arrival path, so the character walks through a real doorway.
-    box(
-      controlRoom,
-      new THREE.BoxGeometry(0.10, 3.35, 9.15),
-      windowGlass,
-      -1.65,
-      1.88,
-      1.45
-    );
-
-    // Gold rails define the opening without blocking the walking line.
-    [[-0.85, 4.60], [3.75, 4.60]].forEach(([z, length]) => {
-      box(
-        controlRoom,
-        new THREE.BoxGeometry(0.14, 0.08, length),
-        gold,
-        -1.65,
-        3.58,
-        z
-      );
-      box(
-        controlRoom,
-        new THREE.BoxGeometry(0.14, 0.08, length),
-        gold,
-        -1.65,
-        0.20,
-        z
-      );
-    });
-
-    // Polished gold jambs frame the open passage.
-    [-5.95, -3.15, 1.45, 5.95].forEach(z => {
-      box(
-        controlRoom,
-        new THREE.BoxGeometry(0.13, 3.35, 0.10),
-        gold,
-        -1.65,
-        1.88,
-        z
-      );
-    });
+    // The glass partition beside the producer desk has been removed
+    // completely. Keep this side of the workstation open so the
+    // elevator-to-chair route feels like one continuous room.
 
     // Solid acoustic side walls give the room a more substantial,
     // architectural scale and balance the panoramic rear glazing.
