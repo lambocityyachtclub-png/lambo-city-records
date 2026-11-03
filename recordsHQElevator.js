@@ -699,6 +699,13 @@ function finishTravel(
       travelTargetY
     );
 
+  // Floor 3's first-person camera should begin facing into the HQ,
+  // not back toward the elevator shaft.
+  if (selectedFloor === 3) {
+    window.__lamboCityPlayerSystem
+      ?.setFacing
+      ?.(0);
+  }
 
   traveling = false;
   menuOpen = false;
