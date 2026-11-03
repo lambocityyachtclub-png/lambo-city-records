@@ -1,12 +1,11 @@
 // recordsHQElevator.js
 // LAMBO CITY RECORDS HQ — Functional Elevator
 //
-// Cinematic upgrade:
-// - Existing elevator mechanics preserved
-// - Existing floor mathematics preserved
-// - Adds cinematic travel state for camera.js
-// - Beginning of ride shows HERO inside elevator
-// - Ride transitions to first-person glass-elevator POV
+// Camera integration:
+// - Existing elevator mechanics and floor mathematics are preserved
+// - Shares travel state with camera.js for an exterior tracking angle
+// - Camera remains outside the cabin for the entire ride
+// - No passenger/first-person elevator camera
 
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 
@@ -706,8 +705,8 @@ function finishTravel(
       travelTargetY
     );
 
-  // Floor 3's first-person camera should begin facing into the HQ,
-  // not back toward the elevator shaft.
+  // Keep the character's arrival heading consistent with the original
+  // third-person exploration camera.
   if (selectedFloor === 3) {
     window.__lamboCityPlayerSystem
       ?.setFacing
@@ -719,7 +718,7 @@ function finishTravel(
 
   // Keep the passenger safely inside the lift while the destination
   // landing doors perform their opening animation. Floor 3 retains the
-  // elevator camera until the passenger clears the rear portal.
+  // exterior elevator tracking shot until the passenger clears the rear portal.
   window.__lamboCityElevatorLandingFloor = selectedFloor === 3 ? 3 : 0;
   landingDoorFloor = selectedFloor === 4 ? 3 : selectedFloor;
   landingDoorProgress = 0;
