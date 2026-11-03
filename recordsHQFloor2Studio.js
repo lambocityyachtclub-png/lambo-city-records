@@ -611,25 +611,96 @@ export default {
       producerCockpit.add(speaker);
     });
 
-    // Wide production display faces the seated producer (+Z).
-    [-0.48, 0.48].forEach(x => {
+    // Large primary song-editing monitor, centered directly beyond
+    // the MPC and facing the seated producer (+Z). The complete
+    // assembly is a dedicated raycast target for the Song Editor.
+    const songEditorDisplay = new THREE.Group();
+    songEditorDisplay.name = "floor2SongEditorDisplay";
+    songEditorDisplay.userData.studioStation = "songEditor";
+    songEditorDisplay.userData.workspaceView = "edit";
+
+    // Premium wide bezel and high-contrast display surface.
+    box(
+      songEditorDisplay,
+      new THREE.BoxGeometry(2.62, 1.68, 0.14),
+      black,
+      0,
+      2.02,
+      -0.92
+    );
+    box(
+      songEditorDisplay,
+      new THREE.BoxGeometry(2.52, 1.58, 0.035),
+      goldGlow,
+      0,
+      2.02,
+      -0.835
+    );
+    box(
+      songEditorDisplay,
+      new THREE.BoxGeometry(2.44, 1.50, 0.025),
+      glass,
+      0,
+      2.02,
+      -0.805
+    );
+
+    // Restrained DAW-style screen details make the enlarged display
+    // read as a live production monitor without cluttering the desk.
+    box(
+      songEditorDisplay,
+      new THREE.BoxGeometry(2.28, 0.10, 0.012),
+      dark,
+      0,
+      2.64,
+      -0.787
+    );
+    box(
+      songEditorDisplay,
+      new THREE.BoxGeometry(2.28, 0.045, 0.012),
+      mpcPadGreen,
+      0,
+      2.51,
+      -0.787
+    );
+    [-0.66, -0.20, 0.26, 0.72].forEach((x, index) => {
       box(
-        producerCockpit,
-        new THREE.BoxGeometry(0.90, 1.08, 0.09),
-        glass,
+        songEditorDisplay,
+        new THREE.BoxGeometry(0.34, 0.72, 0.012),
+        index === 1 ? mpcPadGreen : dark,
         x,
-        1.88,
-        -0.92
-      );
-      box(
-        producerCockpit,
-        new THREE.BoxGeometry(0.96, 0.055, 0.12),
-        goldGlow,
-        x,
-        2.44,
-        -0.92
+        2.03,
+        -0.787
       );
     });
+    box(
+      songEditorDisplay,
+      new THREE.BoxGeometry(2.28, 0.035, 0.012),
+      goldGlow,
+      0,
+      1.43,
+      -0.787
+    );
+
+    // A compact stand keeps the screen visually anchored to the desk.
+    box(
+      songEditorDisplay,
+      new THREE.BoxGeometry(0.48, 0.22, 0.12),
+      black,
+      0,
+      1.16,
+      -0.91
+    );
+    box(
+      songEditorDisplay,
+      new THREE.BoxGeometry(1.08, 0.055, 0.38),
+      gold,
+      0,
+      1.055,
+      -0.91
+    );
+
+    producerCockpit.add(songEditorDisplay);
 
     // Chair is centered behind the desk, facing the exterior windows (-Z).
     const producerChair = new THREE.Group();
