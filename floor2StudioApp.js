@@ -5,6 +5,7 @@ import StudioAudioEngine from "./studioAudioEngine.js";
 import StudioSoundKit from "./studioSoundKit.js";
 import StudioAudioExport from "./studioAudioExport.js";
 import StudioMPCSampler from "./studioMPCSampler.js";
+import StudioMPCLibrary from "./studioMPCLibrary.js";
 import StudioRecordingEngine from "./studioRecordingEngine.js";
 import StudioVocalEffects from "./studioVocalEffects.js";
 import {
@@ -1500,7 +1501,11 @@ StudioSoundKit.play(
 
       const sampleIds = (project.mpcPerformance?.events || []).map(event => event.sampleId).filter(Boolean);
       const mpcAssets = await StudioMPCSampler.exportAssets(sampleIds);
-      const packageText = exportSongProjectPackage({ ...project, mpcAssets });
+      const mpcSamplerState = StudioMPCSampler.exportState();
+      const mpcLibraryAssignments = StudioMPCLibrary.exportAssignments();
+      const packageText = exportSongProjectPackage({
+        ...project, mpcAssets, mpcSamplerState, mpcLibraryAssignments
+      });
 
       const blob = new Blob(
         [packageText],
@@ -1592,7 +1597,11 @@ StudioSoundKit.play(
           if (Array.isArray(project.mpcAssets) && project.mpcAssets.length) {
             await StudioMPCSampler.importAssets(project.mpcAssets);
           }
+          if (project.mpcSamplerState) StudioMPCSampler.importState(project.mpcSamplerState);
+          if (project.mpcLibraryAssignments) StudioMPCLibrary.importAssignments(project.mpcLibraryAssignments);
           delete project.mpcAssets;
+          delete project.mpcSamplerState;
+          delete project.mpcLibraryAssignments;
 
           saveSongProject(project);
 
