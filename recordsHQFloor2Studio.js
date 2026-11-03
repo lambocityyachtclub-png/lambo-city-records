@@ -1203,7 +1203,7 @@ export default {
     );
 
     // Gold rails define the opening without blocking the walking line.
-    [[-3.15, 1.40], [1.45, 4.60]].forEach(([z, length]) => {
+    [[-0.85, 4.60], [3.75, 4.60]].forEach(([z, length]) => {
       box(
         controlRoom,
         new THREE.BoxGeometry(0.14, 0.08, length),
@@ -1231,6 +1231,39 @@ export default {
         -1.65,
         1.88,
         z
+      );
+    });
+
+    // Solid acoustic side walls give the room a more substantial,
+    // architectural scale and balance the panoramic rear glazing.
+    [-8.88, 8.88].forEach(x => {
+      box(
+        controlRoom,
+        new THREE.BoxGeometry(0.18, 3.55, 12.65),
+        dark,
+        x,
+        1.98,
+        0
+      );
+
+      [-5.1, -1.7, 1.7, 5.1].forEach(z => {
+        box(
+          controlRoom,
+          new THREE.BoxGeometry(0.07, 2.75, 0.055),
+          gold,
+          x + (x < 0 ? 0.10 : -0.10),
+          2.02,
+          z
+        );
+      });
+
+      box(
+        controlRoom,
+        new THREE.BoxGeometry(0.10, 0.07, 12.5),
+        goldGlow,
+        x + (x < 0 ? 0.10 : -0.10),
+        0.30,
+        0
       );
     });
 
