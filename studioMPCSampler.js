@@ -37,6 +37,10 @@ function writeAssignments(value) {
 const MPCSampler = {
   buffers: new Map(),
   assignments: readAssignments(),
+  padSettings: (() => {
+    try { return JSON.parse(localStorage.getItem(ASSIGN_KEY + "-settings") || "{}"); }
+    catch { return {}; }
+  })(),
 
   async importFiles(files, audio) {
     if (!audio) throw new Error("Start the studio audio engine before importing samples.");
@@ -65,7 +69,44 @@ const MPCSampler = {
     const db = await openDB();
     const tx = db.transaction(STORE, "readonly");
     const records = await requestResult(tx.objectStore(STORE).getAll());
-    return records.map(({ id, name, fileName, size }) => ({ id, name, fileName, size }));
+    return records.map(({ id, name, fileName, size, type, createdAt }) => ({
+      id, name, fileName, size, type, createdAt
+    }));
+  },
+
+  async getSample(sampleId) {
+    const db = await openDB();
+    const tx = db.transaction(STORE, "readonly");
+    const record = await requestResult(tx.objectStore(STORE).get(sampleId));
+    if (!record) return null;
+    return {
+      id: record.id, name: record.name, fileName: record.fileName,
+      size: record.size, type: record.type, duration: this.buffers.get(sampleId)?.duration || 0
+    };
+  },
+
+  async preload(sampleIds, audio) {
+    const ids = [...new Set((sampleIds || []).filter(Boolean))];
+    return Promise.all(ids.map(id => this.decode({ id }, audio)));
+  },
+
+  getPadSettings(bank, pad) {
+    return { ...(this.padSettings[bank + "-" + pad] || {}) };
+  },
+
+  setPadSettings(bank, pad, settings = {}) {
+    const key = bank + "-" + pad;
+    const current = this.getPadSettings(bank, pad);
+    const next = {
+      start: Math.max(0, Math.min(0.99, Number(settings.start ?? current.start ?? 0))),
+      end: Math.max(0.01, Math.min(1, Number(settings.end ?? current.end ?? 1))),
+      pitch: Math.max(0.5, Math.min(2, Number(settings.pitch ?? current.pitch ?? 1))),
+      decay: Math.max(0.05, Math.min(10, Number(settings.decay ?? current.decay ?? 10)))
+    };
+    if (next.end <= next.start) next.end = Math.min(1, next.start + 0.01);
+    this.padSettings = { ...this.padSettings, [key]: next };
+    localStorage.setItem(ASSIGN_KEY + "-settings", JSON.stringify(this.padSettings));
+    return next;
   },
 
   async decode(sample, audio) {
@@ -90,9 +131,11 @@ const MPCSampler = {
   },
 
   async play(sampleId, audio, options = {}) {
-    const buffer = await this.decode({ id: sampleId }, audio);
-    const start = Math.max(0, Math.min(buffer.duration, Number(options.start) || 0));
-    const end = Math.max(start + 0.01, Math.min(buffer.duration, Number(options.end) || buffer.duration));
+    const buffer = this.buffers.get(sampleId) || await this.decode({ id: sampleId }, audio);
+    const startRatio = Math.max(0, Math.min(0.99, Number(options.start) || 0));
+    const endRatio = Math.max(startRatio + 0.01, Math.min(1, Number(options.end) || 1));
+    const start = Math.min(buffer.duration, startRatio * buffer.duration);
+    const end = Math.max(start + 0.01, Math.min(buffer.duration, endRatio * buffer.duration));
     const source = audio.createBufferSource();
     const gain = audio.createGain();
     source.buffer = buffer;
