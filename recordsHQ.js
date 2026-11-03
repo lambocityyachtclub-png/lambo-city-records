@@ -700,7 +700,7 @@ export default {
       facadeDark,
       0,
       25.05,
-      7.16
+      7.48
     );
 
     addFacadePanel(
@@ -708,14 +708,14 @@ export default {
       facadeBronze,
       0,
       26.08,
-      7.36
+      7.65
     );
     addFacadePanel(
       new THREE.BoxGeometry(13.0, .055, .08),
       facadeBronze,
       0,
       24.02,
-      7.36
+      7.65
     );
     [-6.48, 6.48].forEach(x => {
       addFacadePanel(
@@ -723,7 +723,7 @@ export default {
         facadeBronze,
         x,
         25.05,
-        7.36
+        7.65
       );
     });
 
@@ -734,7 +734,7 @@ export default {
         toneMapped: false
       })
     );
-    sign.position.set(0, 25.05, 7.39);
+    sign.position.set(0, 25.05, 7.68);
     group.add(sign);
 
     // The scrolling slogan marquee was removed. The building carries
