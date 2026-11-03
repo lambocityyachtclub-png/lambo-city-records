@@ -130,7 +130,7 @@ function envelope(audio, destination, time, duration, peak = 0.65) {
   return gain;
 }
 
-function playSound(audio, sound, time, bus, velocity = 1) {
+function playSound(audio, sound, time, bus, velocity = 1, padSettings = {}) {
   if (!audio || audio.state !== "running" || !sound) return false;
   const family = sound.family;
   const duration = clamp(sound.decay, 0.06, 1.2);
@@ -138,12 +138,19 @@ function playSound(audio, sound, time, bus, velocity = 1) {
   const brightness = clamp(sound.brightness, 0.1, 1);
   const out = bus.input;
   const velocityScale = clamp(Number(velocity) || 1, 0, 1.5);
+  const volumeScale = clamp(Number(padSettings.volume ?? 1), 0, 1.5);
+  const panner = audio.createStereoPanner ? audio.createStereoPanner() : null;
+  if (panner) {
+    panner.pan.value = clamp(Number(padSettings.pan) || 0, -1, 1);
+    panner.connect(out);
+  }
+  const destination = panner || out;
   const amp = (length = duration, peak = 0.6, attack = 0.004) => {
     const node = audio.createGain();
     node.gain.setValueAtTime(0.0001, time);
-    node.gain.exponentialRampToValueAtTime(Math.max(0.001, peak * velocityScale), time + attack);
+    node.gain.exponentialRampToValueAtTime(Math.max(0.001, peak * velocityScale * volumeScale), time + attack);
     node.gain.exponentialRampToValueAtTime(0.0001, time + length);
-    node.connect(out);
+    node.connect(destination);
     return node;
   };
   const tone = (frequency, type, destination, length = duration, endFrequency = frequency, detune = 0) => {
@@ -211,7 +218,7 @@ function playSound(audio, sound, time, bus, velocity = 1) {
         gain.gain.setValueAtTime(0.0001, time + offset);
         gain.gain.exponentialRampToValueAtTime(0.2, time + offset + 0.002);
         gain.gain.exponentialRampToValueAtTime(0.0001, time + offset + 0.052);
-        source.connect(filter); filter.connect(gain); gain.connect(out);
+        source.connect(filter); filter.connect(gain); gain.connect(destination);
         source.start(time + offset); source.stop(time + offset + 0.06);
       }
     } else if (!isHat) {
@@ -257,6 +264,7 @@ const StudioMPCLibrary = {
   state: null,
   bus: null,
   audio: null,
+  masterLevel: 0.76,
 
   open() {
     const state = readState();
@@ -324,7 +332,7 @@ const StudioMPCLibrary = {
     return sound;
   },
 
-  exportAssignments() {
+  setMasterVolume(value) {\n    this.masterLevel = clamp(Number(value) || 0, 0, 1);\n    if (this.bus) this.bus.input.gain.setTargetAtTime(this.masterLevel, this.audio.currentTime, 0.015);\n  },\n\n  exportAssignments() {
     const state = this.state || readState();
     return { ...(state.assignments || {}) };
   },
@@ -349,7 +357,7 @@ const StudioMPCLibrary = {
     return sounds[index % sounds.length];
   },
 
-  play(audio, sound, time = audio?.currentTime, velocity = 1) {
+  play(audio, sound, time = audio?.currentTime, velocity = 1, padSettings = {}) {
     if (!audio || !sound) return false;
     if (this.audio !== audio || !this.bus) {
       this.audio = audio;
