@@ -17,7 +17,7 @@ const ELEVATOR_POSITION = {
 };
 
 const ACTIVATION_DISTANCE =
-  3.2;
+  4.5;
 
 const TRAVEL_TIME =
   4.8;
@@ -88,7 +88,7 @@ function buildDOM() {
       font-weight:bold;
       margin-right:5px;
     ">[E]</span>
-    USE ELEVATOR
+    TAP TO USE ELEVATOR
   `;
 
   promptEl.addEventListener(
