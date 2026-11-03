@@ -1,620 +1,213 @@
 // camera.js
-// LAMBO CITY
-// THIRD-PERSON CINEMATIC CAMERA
+// LAMBO CITY — unified third-person camera controller
 //
-// WORLD
-// - Stable third-person camera
+// One consistent exploration camera for the outdoor world and all
+// walkable Records HQ floors. Camera orbit is independent of player
+// facing. The elevator uses an exterior tracking angle; it never
+// switches to a passenger/first-person view.
 //
-// RECORDS HQ
-// - Floor 1: elevated immersive retail camera
-// - Floor 2: dedicated immersive studio camera
-// - Floor 3: enclosed third-person camera
-// - Rooftop: wider cinematic camera
-//
-// CAMERA TRANSITION
-// - Entering/exiting a building transitions quickly,
-//   like walking through a real doorway.
-// - Does NOT modify player movement.
-// - Does NOT modify collision.
-// - Does NOT modify elevator movement.
-// - Does NOT modify building architecture.
+// Floor 2's seated producer camera remains a dedicated workstation view.
 
 import * as THREE from
   "https://unpkg.com/three@0.160.0/build/three.module.js";
 
-let camera;
-let cinTime = 0;
+let camera = null;
+let scene = null;
+let canvas = null;
+let resizeHandler = null;
+let pointerState = null;
+let cameraYaw = 0;
+let cameraPitch = 0.16;
+let lastOrbitInputAt = 0;
+let initialized = false;
+let currentMode = "world";
 
-
-// ============================================================
-// RECORDS HQ BOUNDS
-// ============================================================
+const FOLLOW_DISTANCE = 8.2;
+const FOLLOW_HEIGHT = 4.15;
+const LOOK_HEIGHT = 1.75;
+const FOLLOW_RESPONSE = 5.2;
+const ORBIT_SENSITIVITY = 0.006;
+const MIN_PITCH = -0.12;
+const MAX_PITCH = 0.62;
 
 const HQ_MIN_X = 19.7;
 const HQ_MAX_X = 36.3;
-
 const HQ_MIN_Z = 14.0;
 const HQ_MAX_Z = 28.2;
 
-
-// ============================================================
-// FLOOR 1 INTERIOR CAMERA BOUNDS
-// ============================================================
-
-const FLOOR1_MIN_X = 20.15;
-const FLOOR1_MAX_X = 35.85;
-
-const FLOOR1_MIN_Z = 15.85;
-const FLOOR1_MAX_Z = 27.15;
-
-
-// ============================================================
-// WORLD CAMERA
-// ============================================================
-
-const WORLD_DISTANCE = 22;
-const WORLD_HEIGHT = 13;
-
-
-// ============================================================
-// FLOOR 1 CAMERA
-// ============================================================
-
-const FLOOR1_DISTANCE = 5.8;
-const FLOOR1_HEIGHT = 4.5;
-const FLOOR1_LOOK_HEIGHT = 1.8;
-const FLOOR1_SIDE_OFFSET = 0.8;
-
-
-// ============================================================
-// FLOOR 3 CAMERA
-// ============================================================
-
-const HQ_DISTANCE = 7.0;
-const HQ_HEIGHT = 5.1;
-const HQ_LOOK_HEIGHT = 1.8;
-const HQ_SIDE_OFFSET = 1.0;
-
-
-// ============================================================
-// FLOOR 2 STUDIO CAMERA
-// ============================================================
-
-const STUDIO_DISTANCE = 5.8;
-const STUDIO_HEIGHT = 3.8;
-const STUDIO_LOOK_HEIGHT = 1.65;
-const STUDIO_SIDE_OFFSET = 0.85;
-
-const STUDIO_MIN_X = 20.4;
-const STUDIO_MAX_X = 35.6;
-
-const STUDIO_MIN_Z = 15.2;
-const STUDIO_MAX_Z = 27.4;
-
-
-// ============================================================
-// FAST BUILDING TRANSITION
-// ============================================================
-//
-// When HERO crosses the building threshold, the camera needs
-// to react quickly instead of slowly easing between the world
-// and interior camera.
-//
-// This gives the feeling of:
-//     outside → doorway → interior
-//
-// without creating a separate cinematic camera system.
-//
-
-const BUILDING_TRANSITION_TIME = 0.30;
-
-let previousInsideHQ = false;
-let buildingTransition = 0;
-
-
-// ============================================================
-// DETERMINE HQ FLOOR
-// ============================================================
-
-function getHQFloor(y) {
-
-  if (y < 8) {
-    return 1;
-  }
-
-  if (y < 16.2) {
-    return 2;
-  }
-
-  if (y < 23.8) {
-    return 3;
-  }
-
-  return 4;
-
+function dampFactor(delta, response = FOLLOW_RESPONSE) {
+  return 1 - Math.exp(-Math.max(0, delta) * response);
 }
 
-
-// ============================================================
-// HQ DETECTION
-// ============================================================
+function dampAngle(current, target, amount) {
+  let difference = (target - current + Math.PI) % (Math.PI * 2);
+  if (difference < 0) difference += Math.PI * 2;
+  difference -= Math.PI;
+  return current + difference * amount;
+}
 
 function isInsideHQ(player) {
-
-  const x = player.position.x;
-  const z = player.position.z;
-
-  return (
-    x >= HQ_MIN_X &&
-    x <= HQ_MAX_X &&
-    z >= HQ_MIN_Z &&
-    z <= HQ_MAX_Z
-  );
-
+  return player.position.x >= HQ_MIN_X &&
+    player.position.x <= HQ_MAX_X &&
+    player.position.z >= HQ_MIN_Z &&
+    player.position.z <= HQ_MAX_Z;
 }
 
-
-// ============================================================
-// CAMERA DAMPING
-// ============================================================
-
-function damp(current, target, amount) {
-
-  return current +
-    (target - current) *
-    amount;
-
+function getHQFloor(y) {
+  if (y < 8) return 1;
+  if (y < 16.2) return 2;
+  if (y < 23.8) return 3;
+  return 4;
 }
 
+function attachOrbitControls(renderer) {
+  if (canvas || !renderer?.domElement) return;
 
-// ============================================================
-// MOVE CAMERA
-// ============================================================
+  canvas = renderer.domElement;
+  canvas.style.touchAction = "none";
+  canvas.style.cursor = "grab";
 
-function moveCamera(
-  x,
-  y,
-  z,
-  smooth
-) {
+  const onPointerDown = event => {
+    if (window.__lamboCityFloor2SessionActive &&
+        window.__lamboCityFloor2SessionMode === "seated") return;
+    if (event.pointerType === "mouse" && event.button !== 0) return;
+    // Keep the left-side iPad movement joystick dedicated to movement.
+    if (event.pointerType !== "mouse" &&
+        event.clientX < window.innerWidth * 0.38) return;
+    if (event.target?.closest?.("button, input, textarea, select, a")) return;
 
-  camera.position.x =
-    damp(
-      camera.position.x,
-      x,
-      smooth
+    pointerState = {
+      id: event.pointerId,
+      x: event.clientX,
+      y: event.clientY,
+      moved: false
+    };
+    canvas.style.cursor = "grabbing";
+    try { canvas.setPointerCapture(event.pointerId); } catch (_) {}
+  };
+
+  const onPointerMove = event => {
+    if (!pointerState || event.pointerId !== pointerState.id) return;
+    const dx = event.clientX - pointerState.x;
+    const dy = event.clientY - pointerState.y;
+    pointerState.x = event.clientX;
+    pointerState.y = event.clientY;
+
+    if (Math.abs(dx) + Math.abs(dy) > 1) pointerState.moved = true;
+    cameraYaw -= dx * ORBIT_SENSITIVITY;
+    cameraPitch = THREE.MathUtils.clamp(
+      cameraPitch + dy * ORBIT_SENSITIVITY,
+      MIN_PITCH,
+      MAX_PITCH
     );
+    lastOrbitInputAt = performance.now();
 
-  camera.position.y =
-    damp(
-      camera.position.y,
-      y,
-      smooth
-    );
+    if (pointerState.moved) {
+      window.__lamboCitySuppressStationClickUntil =
+        Date.now() + 220;
+    }
+  };
 
-  camera.position.z =
-    damp(
-      camera.position.z,
-      z,
-      smooth
-    );
+  const endPointer = event => {
+    if (!pointerState || event.pointerId !== pointerState.id) return;
+    pointerState = null;
+    canvas.style.cursor = "grab";
+  };
 
+  canvas.addEventListener("pointerdown", onPointerDown);
+  canvas.addEventListener("pointermove", onPointerMove);
+  canvas.addEventListener("pointerup", endPointer);
+  canvas.addEventListener("pointercancel", endPointer);
+  canvas.addEventListener("lostpointercapture", endPointer);
+
+  this._removeOrbitControls = () => {
+    canvas?.removeEventListener("pointerdown", onPointerDown);
+    canvas?.removeEventListener("pointermove", onPointerMove);
+    canvas?.removeEventListener("pointerup", endPointer);
+    canvas?.removeEventListener("pointercancel", endPointer);
+    canvas?.removeEventListener("lostpointercapture", endPointer);
+    if (canvas) canvas.style.cursor = "";
+    canvas = null;
+  };
 }
 
+function updateExplorationCamera(player, delta, moving, insideHQ) {
+  const now = performance.now();
 
-// ============================================================
-// WORLD CAMERA
-// ============================================================
+  // When the player walks for a while, gently settle behind their
+  // travel direction. Manual orbit remains independent and takes priority.
+  if (moving && now - lastOrbitInputAt > 1500) {
+    cameraYaw = dampAngle(
+      cameraYaw,
+      player.rotation.y,
+      dampFactor(delta, 1.35)
+    );
+  }
 
-function updateWorldCamera(player, smooth = 0.07) {
+  let distance = FOLLOW_DISTANCE;
+  let height = FOLLOW_HEIGHT;
 
-  const drift =
-    Math.sin(
-      cinTime * 0.25
-    ) * 1.2;
+  if (insideHQ) {
+    // A slightly tighter framing keeps HERO and nearby room details visible.
+    distance = 6.7;
+    height = 3.65;
+  }
 
-  moveCamera(
-
-    player.position.x +
-      drift,
-
-    player.position.y +
-      WORLD_HEIGHT,
-
-    player.position.z +
-      WORLD_DISTANCE,
-
-    smooth
-
-  );
-
-  camera.lookAt(
-
+  const target = new THREE.Vector3(
     player.position.x,
-
-    player.position.y + 2,
-
-    player.position.z - 5
-
+    player.position.y + LOOK_HEIGHT,
+    player.position.z
   );
 
+  const horizontal = Math.cos(cameraPitch) * distance;
+  const desired = new THREE.Vector3(
+    target.x + Math.sin(cameraYaw) * horizontal,
+    target.y + height - 1.75 + Math.sin(cameraPitch) * distance,
+    target.z + Math.cos(cameraYaw) * horizontal
+  );
+
+  const t = dampFactor(delta);
+  camera.position.lerp(desired, t);
+
+  // Keep a little look-ahead in the direction of travel without
+  // forcing the character to rotate when the player looks around.
+  const lookAhead = moving ? 0.35 : 0;
+  const lookTarget = target.clone().add(new THREE.Vector3(
+    Math.sin(player.rotation.y) * lookAhead,
+    0,
+    Math.cos(player.rotation.y) * lookAhead
+  ));
+  camera.lookAt(lookTarget);
 }
 
-
-// ============================================================
-// FLOOR 1 CAMERA
-// ============================================================
-
-function updateFloor1Camera(
-  player,
-  smooth = 0.10
-) {
-
-  const yaw =
-    player.rotation.y;
-
-  const forwardX =
-    Math.sin(yaw);
-
-  const forwardZ =
-    Math.cos(yaw);
-
-
-  // ----------------------------------------------------------
-  // CAMERA POSITION
-  // ----------------------------------------------------------
-
-  let cameraX =
-    player.position.x -
-    forwardX *
-    FLOOR1_DISTANCE;
-
-  let cameraZ =
-    player.position.z -
-    forwardZ *
-    FLOOR1_DISTANCE;
-
-
-  // Slight shoulder offset.
-
-  const sideX =
-    Math.cos(yaw) *
-    FLOOR1_SIDE_OFFSET;
-
-  const sideZ =
-    -Math.sin(yaw) *
-    FLOOR1_SIDE_OFFSET;
-
-
-  cameraX += sideX;
-  cameraZ += sideZ;
-
-
-  // ----------------------------------------------------------
-  // HARD INTERIOR BOUNDS
-  // ----------------------------------------------------------
-
-  cameraX =
-    THREE.MathUtils.clamp(
-      cameraX,
-      FLOOR1_MIN_X,
-      FLOOR1_MAX_X
-    );
-
-  cameraZ =
-    THREE.MathUtils.clamp(
-      cameraZ,
-      FLOOR1_MIN_Z,
-      FLOOR1_MAX_Z
-    );
-
-
-  // ----------------------------------------------------------
-  // CAMERA HEIGHT
-  // ----------------------------------------------------------
-
-  const cameraY =
-    player.position.y +
-    FLOOR1_HEIGHT;
-
-
-  moveCamera(
-
-    cameraX,
-
-    cameraY,
-
-    cameraZ,
-
-    smooth
-
+function updateElevatorExteriorCamera(player, delta) {
+  // Exterior three-quarter tracking shot: the cabin travels vertically
+  // through frame while the camera remains outside the passenger space.
+  const target = new THREE.Vector3(
+    player.position.x,
+    player.position.y + 2.0,
+    player.position.z
   );
-
-
-  // ----------------------------------------------------------
-  // LOOK TARGET
-  // ----------------------------------------------------------
-
-  let lookX =
-    player.position.x +
-    forwardX * 1.8;
-
-  let lookZ =
-    player.position.z +
-    forwardZ * 1.8;
-
-
-  lookX =
-    THREE.MathUtils.clamp(
-      lookX,
-      FLOOR1_MIN_X,
-      FLOOR1_MAX_X
-    );
-
-  lookZ =
-    THREE.MathUtils.clamp(
-      lookZ,
-      FLOOR1_MIN_Z,
-      FLOOR1_MAX_Z
-    );
-
-
-  const lookY =
-    player.position.y +
-    FLOOR1_LOOK_HEIGHT;
-
-
-  camera.lookAt(
-
-    lookX,
-    lookY,
-    lookZ
-
+  const desired = new THREE.Vector3(
+    player.position.x + 7.4,
+    player.position.y + 4.2,
+    player.position.z + 8.2
   );
-
+  camera.position.lerp(desired, dampFactor(delta, 3.8));
+  camera.lookAt(target);
 }
 
-
-// ============================================================
-// FLOOR 3 CAMERA
-// ============================================================
-
-function updateHQCamera(
-  player,
-  smooth = 0.10
-) {
-
-  const yaw =
-    player.rotation.y;
-
-  const forwardX =
-    Math.sin(yaw);
-
-  const forwardZ =
-    Math.cos(yaw);
-
-
-  let cameraX =
-    player.position.x -
-    forwardX *
-    HQ_DISTANCE;
-
-  let cameraZ =
-    player.position.z -
-    forwardZ *
-    HQ_DISTANCE;
-
-
-  const sideX =
-    Math.cos(yaw) *
-    HQ_SIDE_OFFSET;
-
-  const sideZ =
-    -Math.sin(yaw) *
-    HQ_SIDE_OFFSET;
-
-
-  cameraX += sideX;
-  cameraZ += sideZ;
-
-
-  cameraX =
-    THREE.MathUtils.clamp(
-      cameraX,
-      HQ_MIN_X,
-      HQ_MAX_X
-    );
-
-  cameraZ =
-    THREE.MathUtils.clamp(
-      cameraZ,
-      HQ_MIN_Z,
-      HQ_MAX_Z
-    );
-
-
-  moveCamera(
-
-    cameraX,
-
-    player.position.y +
-      HQ_HEIGHT,
-
-    cameraZ,
-
-    smooth
-
-  );
-
-
-  const lookX =
-    player.position.x +
-    forwardX * 2.0;
-
-  const lookZ =
-    player.position.z +
-    forwardZ * 2.0;
-
-  const lookY =
-    player.position.y +
-    HQ_LOOK_HEIGHT;
-
-
-  camera.lookAt(
-
-    lookX,
-    lookY,
-    lookZ
-
-  );
-
-}
-
-
-// ============================================================
-// FLOOR 2 STUDIO CAMERA
-// ============================================================
-
-function updateStudioCamera(
-  player,
-  smooth = 0.12
-) {
-
-  const yaw =
-    player.rotation.y;
-
-  const forwardX =
-    Math.sin(yaw);
-
-  const forwardZ =
-    Math.cos(yaw);
-
-
-  let cameraX =
-    player.position.x -
-    forwardX *
-    STUDIO_DISTANCE;
-
-  let cameraZ =
-    player.position.z -
-    forwardZ *
-    STUDIO_DISTANCE;
-
-
-  const sideX =
-    Math.cos(yaw) *
-    STUDIO_SIDE_OFFSET;
-
-  const sideZ =
-    -Math.sin(yaw) *
-    STUDIO_SIDE_OFFSET;
-
-
-  cameraX += sideX;
-  cameraZ += sideZ;
-
-
-  cameraX =
-    THREE.MathUtils.clamp(
-      cameraX,
-      STUDIO_MIN_X,
-      STUDIO_MAX_X
-    );
-
-  cameraZ =
-    THREE.MathUtils.clamp(
-      cameraZ,
-      STUDIO_MIN_Z,
-      STUDIO_MAX_Z
-    );
-
-
-  const cameraY =
-    player.position.y +
-    STUDIO_HEIGHT;
-
-
-  moveCamera(
-
-    cameraX,
-    cameraY,
-    cameraZ,
-
-    smooth
-
-  );
-
-
-  const lookX =
-    player.position.x +
-    forwardX * 1.4;
-
-  const lookZ =
-    player.position.z +
-    forwardZ * 1.4;
-
-  const lookY =
-    player.position.y +
-    STUDIO_LOOK_HEIGHT;
-
-
-  camera.lookAt(
-
-    lookX,
-    lookY,
-    lookZ
-
-  );
-
-}
-
-
-// ============================================================
-// FLOOR 2 — CINEMATIC ELEVATOR-TO-STUDIO ARRIVAL CAMERA
-// ============================================================
-
-function updateStudioArrivalCamera(player, smooth = 0.34) {
-  const yaw = player.rotation.y;
-  const forwardX = Math.sin(yaw);
-  const forwardZ = Math.cos(yaw);
-
-  // Stay locked behind the moving character for the entire entrance.
-  // A tight trailing position avoids the wide side angle that allowed
-  // room architecture to sweep across the foreground.
-  const distance = 2.35;
-  const cameraX = player.position.x - forwardX * distance;
-  const cameraZ = player.position.z - forwardZ * distance;
-  const cameraY = player.position.y + 2.25;
-
-  moveCamera(cameraX, cameraY, cameraZ, smooth);
-
-  // Keep the character as the visual anchor while looking just ahead
-  // along the clear walking route.
-  camera.lookAt(
-    player.position.x + forwardX * 0.85,
-    player.position.y + 1.35,
-    player.position.z + forwardZ * 0.85
-  );
-}
-
-
-// ============================================================
-// FLOOR 2 — SEATED 360-DEGREE STUDIO CAMERA
-// ============================================================
-
-function updateStudioSessionCamera(player, smooth = 0.22) {
+function updateStudioSessionCamera(player, delta) {
   const yaw = Number(window.__lamboCityFloor2OrbitYaw ?? 0);
   const pitch = Number(window.__lamboCityFloor2OrbitPitch ?? 0.08);
   const radius = 5.25;
-
-  const cameraX = player.position.x + Math.sin(yaw) * radius;
-  const cameraZ = player.position.z + Math.cos(yaw) * radius;
-  const cameraY = player.position.y + 3.75 + pitch * 2.0;
-
-  moveCamera(cameraX, cameraY, cameraZ, smooth);
-
-  // The producer faces -Z toward the exterior stage windows.
-  // Keep the desk and panoramic glazing in the initial seated view.
+  const desired = new THREE.Vector3(
+    player.position.x + Math.sin(yaw) * radius,
+    player.position.y + 3.75 + pitch * 2.0,
+    player.position.z + Math.cos(yaw) * radius
+  );
+  camera.position.lerp(desired, dampFactor(delta, 4.5));
+  // Preserve the producer's established desk-facing direction.
   camera.lookAt(
     player.position.x,
     player.position.y + 1.7 + pitch * 0.45,
@@ -622,419 +215,73 @@ function updateStudioSessionCamera(player, smooth = 0.22) {
   );
 }
 
-
-// ============================================================
-// ELEVATOR CAMERA
-// ============================================================
-
-function updateElevatorCamera(player) {
-
-  const progress =
-    Number(
-      window.__lamboCityElevatorProgress ??
-      0
-    );
-
-
-  if (progress < 0.30) {
-
-    const revealX =
-      player.position.x + 5.5;
-
-    const revealY =
-      player.position.y + 4.0;
-
-    const revealZ =
-      player.position.z + 6.5;
-
-
-    moveCamera(
-
-      revealX,
-      revealY,
-      revealZ,
-
-      0.075
-
-    );
-
-
-    camera.lookAt(
-
-      player.position.x,
-      player.position.y + 2,
-      player.position.z
-
-    );
-
-
-    return;
-
-  }
-
-
-  const yaw =
-    player.rotation.y;
-
-  const forwardX =
-    Math.sin(yaw);
-
-  const forwardZ =
-    Math.cos(yaw);
-
-  const cameraDistance = 5.0;
-
-
-  const cameraX =
-    player.position.x -
-    forwardX *
-    cameraDistance;
-
-  const cameraZ =
-    player.position.z -
-    forwardZ *
-    cameraDistance;
-
-
-  moveCamera(
-
-    cameraX,
-
-    player.position.y + 4.0,
-
-    cameraZ,
-
-    0.10
-
-  );
-
-
-  camera.lookAt(
-
-    player.position.x +
-      forwardX * 1.5,
-
-    player.position.y + 2.0,
-
-    player.position.z +
-      forwardZ * 1.5
-
-  );
-
-}
-
-
-// ============================================================
-// ROOFTOP CAMERA
-// ============================================================
-
-function updateRooftopCamera(player) {
-
-  const yaw =
-    player.rotation.y;
-
-  const forwardX =
-    Math.sin(yaw);
-
-  const forwardZ =
-    Math.cos(yaw);
-
-
-  const distance = 9.5;
-
-
-  const cinematicDrift =
-    Math.sin(
-      cinTime * 0.18
-    ) * 1.2;
-
-
-  const cameraX =
-    player.position.x -
-    forwardX *
-    distance +
-    cinematicDrift;
-
-  const cameraZ =
-    player.position.z -
-    forwardZ *
-    distance;
-
-
-  moveCamera(
-
-    cameraX,
-
-    player.position.y + 6.0,
-
-    cameraZ,
-
-    0.055
-
-  );
-
-
-  camera.lookAt(
-
-    player.position.x,
-
-    player.position.y + 2,
-
-    player.position.z
-
-  );
-
-}
-
-
-// ============================================================
-// CAMERA SYSTEM
-// ============================================================
-
 export default {
-
   init() {
-
-    camera =
-      new THREE.PerspectiveCamera(
-
-        68,
-
-        window.innerWidth /
-          window.innerHeight,
-
-        0.05,
-
-        2000
-
-      );
-
-
-    camera.position.set(
-      0,
-      16,
-      30
+    camera = new THREE.PerspectiveCamera(
+      62,
+      window.innerWidth / window.innerHeight,
+      0.05,
+      2000
     );
+    camera.position.set(0, 8, 14);
+    camera.lookAt(0, 1.7, 0);
 
-
-    camera.lookAt(
-      0,
-      2,
-      0
-    );
-
-
-    window.addEventListener(
-      "resize",
-      () => {
-
-        camera.aspect =
-          window.innerWidth /
-          window.innerHeight;
-
+    if (!initialized) {
+      resizeHandler = () => {
+        if (!camera) return;
+        camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
-
-      }
-    );
-
-
+      };
+      window.addEventListener("resize", resizeHandler);
+      initialized = true;
+    }
     return camera;
-
   },
-
 
   update(delta, context) {
+    const player = context?.player;
+    if (!player || !camera) return;
 
-    const player =
-      context.player;
+    scene = context.scene || scene;
+    attachOrbitControls(context.renderer);
 
+    const insideHQ = isInsideHQ(player);
+    const floor = insideHQ ? getHQFloor(player.position.y) : 0;
+    const seatedStudio =
+      floor === 2 &&
+      window.__lamboCityFloor2SessionActive &&
+      window.__lamboCityFloor2SessionMode === "seated";
 
-    if (!player || !camera) {
+    if (seatedStudio) {
+      currentMode = "studio-seated";
+      updateStudioSessionCamera(player, delta);
       return;
     }
 
-
-    cinTime += delta;
-
-
-    // --------------------------------------------------------
-    // DETECT BUILDING ENTRY / EXIT
-    // --------------------------------------------------------
-
-    const insideHQ =
-      isInsideHQ(player);
-
-
-    if (
-      insideHQ !==
-      previousInsideHQ
-    ) {
-
-      // Start a short, fast doorway transition.
-
-      buildingTransition =
-        BUILDING_TRANSITION_TIME;
-
-      previousInsideHQ =
-        insideHQ;
-
-    }
-
-
-    // --------------------------------------------------------
-    // FAST TRANSITION TIMER
-    // --------------------------------------------------------
-
-    if (buildingTransition > 0) {
-
-      buildingTransition =
-        Math.max(
-          0,
-          buildingTransition -
-          delta
-        );
-
-    }
-
-
-    // --------------------------------------------------------
-    // CAMERA SMOOTHING
-    // --------------------------------------------------------
-    //
-    // Normal gameplay keeps the existing smooth camera.
-    //
-    // During the doorway transition we increase the response
-    // substantially so the interior perspective arrives quickly.
-
-    const transitionActive =
-      buildingTransition > 0;
-
-
-    const worldSmooth =
-      transitionActive
-        ? 0.30
-        : 0.07;
-
-    const interiorSmooth =
-      transitionActive
-        ? 0.30
-        : 0.10;
-
-
-    // --------------------------------------------------------
-    // ELEVATOR
-    // --------------------------------------------------------
-
-    if (
-      window.__lamboCityElevatorTraveling
-    ) {
-
-      updateElevatorCamera(
-        player
-      );
-
+    if (window.__lamboCityElevatorTraveling) {
+      currentMode = "elevator-exterior";
+      updateElevatorExteriorCamera(player, delta);
       return;
-
     }
 
+    currentMode = insideHQ ? "interior-third-person" : "world-third-person";
 
-    // --------------------------------------------------------
-    // RECORDS HQ
-    // --------------------------------------------------------
+    const moving =
+      !!window.__lamboCityFloor2SessionActive === false &&
+      (Math.abs(player.position.x - (this._lastX ?? player.position.x)) > 0.001 ||
+       Math.abs(player.position.z - (this._lastZ ?? player.position.z)) > 0.001);
 
-    if (
-      insideHQ
-    ) {
+    this._lastX = player.position.x;
+    this._lastZ = player.position.z;
 
-      const floor =
-        getHQFloor(
-          player.position.y
-        );
-
-
-      // ------------------------------------------------------
-      // ROOFTOP
-      // ------------------------------------------------------
-
-      if (floor === 4) {
-
-        updateRooftopCamera(
-          player
-        );
-
-        return;
-
-      }
-
-
-      // ------------------------------------------------------
-      // FLOOR 2 STUDIO
-      // ------------------------------------------------------
-
-      if (floor === 2) {
-
-        if (
-          window.__lamboCityFloor2SessionActive &&
-          window.__lamboCityFloor2SessionMode === "arrival"
-        ) {
-          updateStudioArrivalCamera(player, 0.34);
-        } else if (window.__lamboCityFloor2SessionActive) {
-          updateStudioSessionCamera(player, 0.24);
-        } else {
-          updateStudioCamera(player, interiorSmooth);
-        }
-
-        return;
-
-      }
-
-
-      // ------------------------------------------------------
-      // FLOOR 1
-      // ------------------------------------------------------
-
-      if (floor === 1) {
-
-        updateFloor1Camera(
-          player,
-          interiorSmooth
-        );
-
-        return;
-
-      }
-
-
-      // ------------------------------------------------------
-      // FLOOR 3
-      // ------------------------------------------------------
-
-      updateHQCamera(
-        player,
-        interiorSmooth
-      );
-
-      return;
-
-    }
-
-
-    // --------------------------------------------------------
-    // NORMAL WORLD
-    // --------------------------------------------------------
-
-    updateWorldCamera(
-      player,
-      worldSmooth
-    );
-
+    updateExplorationCamera(player, delta, moving, insideHQ);
   },
 
-
   getCamera() {
-
     return camera;
+  },
 
+  getMode() {
+    return currentMode;
   }
-
 };
