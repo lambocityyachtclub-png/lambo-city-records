@@ -498,8 +498,9 @@ export default {
       // D moves right and A moves left.
       if (input.keys?.w) dz = 1;
       if (input.keys?.s) dz = -1;
-      if (input.keys?.a) dx = -1;
-      if (input.keys?.d) dx = 1;
+      // Floor 3: reverse A/D from their current directions.
+      if (input.keys?.a) dx = 1;
+      if (input.keys?.d) dx = -1;
     }
 
     /*
