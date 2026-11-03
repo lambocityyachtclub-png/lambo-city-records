@@ -572,10 +572,24 @@ const MPCInterface = {
     this.refreshLibraryUI();
     for (const button of root.querySelectorAll(".bank-btn")) button.classList.toggle("active", button.dataset.placeholder === "BANK A");
     void this.refreshImportedSamples();
+    void this.preloadAssignedSamples();
     this.showScreen("MAIN");
     this.setStatus(this.library.total + " SOUNDS READY · +" + this.library.added + " NEW SOUNDS ADDED THIS VISIT");
     root.querySelector("[data-mpc-close]")?.focus({ preventScroll: true });
     return root;
+  },
+
+  async preloadAssignedSamples() {
+    try {
+      const audio = await StudioAudioEngine.resume();
+      const ids = Object.values(StudioMPCSampler.exportState().assignments || {});
+      if (ids.length) {
+        await StudioMPCSampler.preload(ids, audio);
+        this.setStatus("MPC READY · " + new Set(ids).size + " ASSIGNED SAMPLES PRELOADED");
+      }
+    } catch (error) {
+      this.setStatus("SAMPLE PRELOAD NOTICE · " + (error?.message || error));
+    }
   },
 
   async handlePad(padNumber, velocity = 0.9) {
@@ -667,7 +681,7 @@ const MPCInterface = {
 
   showScreen(name) {
     if (!this.root) return;
-    const panelName = name === "TIMING" ? "SEQ" : name;
+    const panelName = name === "TIMING" ? "SEQ" : name === "MIXER" ? "MIX" : name;
     for (const panel of this.root.querySelectorAll("[data-mpc-panel]")) {
       panel.classList.toggle("active", panel.dataset.mpcPanel === panelName);
     }
