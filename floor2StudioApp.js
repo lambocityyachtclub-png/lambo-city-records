@@ -1499,9 +1499,12 @@ StudioSoundKit.play(
         return;
       }
 
-      const sampleIds = (project.mpcPerformance?.events || []).map(event => event.sampleId).filter(Boolean);
-      const mpcAssets = await StudioMPCSampler.exportAssets(sampleIds);
       const mpcSamplerState = StudioMPCSampler.exportState();
+      const sampleIds = [
+        ...(project.mpcPerformance?.events || []).map(event => event.sampleId),
+        ...Object.values(mpcSamplerState.assignments || {})
+      ].filter(Boolean);
+      const mpcAssets = await StudioMPCSampler.exportAssets(sampleIds);
       const mpcLibraryAssignments = StudioMPCLibrary.exportAssignments();
       const packageText = exportSongProjectPackage({
         ...project, mpcAssets, mpcSamplerState, mpcLibraryAssignments
