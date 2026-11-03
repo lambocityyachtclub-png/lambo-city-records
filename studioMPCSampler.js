@@ -5,7 +5,7 @@ import StudioAudioExport from "./studioAudioExport.js";
 const DB_NAME = "lambo-city-mpc-samples";
 const STORE = "samples";
 const ASSIGN_KEY = "lambocity-mpc-sample-assignments-v1";
-const MASTER_KEY = "lambocity-mpc-master-level-v1";
+const MASTER_KEY = "lambocity-mpc-master-v1";
 let dbPromise;
 
 function openDB() {
