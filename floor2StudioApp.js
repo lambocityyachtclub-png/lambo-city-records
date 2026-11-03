@@ -1324,6 +1324,9 @@ StudioSoundKit.play(
         pad: Number(event.pad),
         bank: String(event.bank || "A"),
         soundId: String(event.soundId || ""),
+        sampleId: event.sampleId ? String(event.sampleId) : null,
+        sampleSettings: event.sampleSettings ? { ...event.sampleSettings } : null,
+        velocity: Math.max(0, Math.min(1.5, Number(event.velocity) || 0.9)),
         at: Math.max(0, Number(event.at) || 0),
         sound: event.sound ? { ...event.sound } : null
       })),
