@@ -131,6 +131,15 @@ function onPointerMove(event) {
   publishState();
 }
 
+function onWheel(event) {
+  if (mode !== "seated" || !event.deltaX) return;
+  event.preventDefault();
+  window.__lamboCityFloor2OrbitYaw =
+    (window.__lamboCityFloor2OrbitYaw ?? Math.PI) + event.deltaX * 0.006;
+  suppressStationClickUntil = Date.now() + 320;
+  publishState();
+}
+
 function onPointerUp(event) {
   if (pointerId === null || event.pointerId !== pointerId) return;
 
@@ -156,6 +165,7 @@ function attachOrbitControls() {
   canvas.addEventListener("pointermove", onPointerMove, { passive: false });
   canvas.addEventListener("pointerup", onPointerUp);
   canvas.addEventListener("pointercancel", onPointerUp);
+  canvas.addEventListener("wheel", onWheel, { passive: false });
   canvas.__lcStudioOrbitBound = true;
 }
 
@@ -167,6 +177,7 @@ function detachOrbitControls() {
   canvas.removeEventListener("pointermove", onPointerMove);
   canvas.removeEventListener("pointerup", onPointerUp);
   canvas.removeEventListener("pointercancel", onPointerUp);
+  canvas.removeEventListener("wheel", onWheel);
   canvas.style.touchAction = previousTouchAction;
   delete canvas.__lcStudioOrbitBound;
   pointerId = null;
