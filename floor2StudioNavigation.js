@@ -49,10 +49,9 @@ export default {
       { object: stations.instrumentStation, view: "piano", title: "PIANO" },
       { object: stations.drumStation, view: "drums", title: "DRUMS" },
       { object: stations.vocalBooth, view: "vocals", title: "VOCAL RECORDING" },
-      { object: stations.recordingEditing, view: "edit", title: "RECORDING & EDITING" },
       { object: stations.controlRoom, view: "mix", title: "MIX • MASTER WORKSTATION" },
       { object: stations.songArchive, view: "edit", title: "SONG ARCHIVE" },
-      { object: stations.mobileStudio, view: "vocals", title: "CO-PILOT STUDIO" }
+      { object: stations.mobileStudio, view: "edit", title: "CO-PILOT STUDIO" }
     ].filter(item => item.object);
 
     this.handleClick = event => {
