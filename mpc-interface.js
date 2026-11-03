@@ -412,6 +412,8 @@ const MPCInterface = {
   noteRepeat: false,
   noteRepeatRate: "1/8",
   noteRepeatTimer: null,
+  noteRepeatNextAt: 0,
+  noteRepeatPointerActive: false,
 
   open(options = {}) {
     if (this.root?.isConnected) return this.root;
@@ -509,11 +511,8 @@ const MPCInterface = {
       pad.classList.add("flash");
       void this.handlePad(padNumber, velocity);
       if (this.noteRepeat) {
-        this.stopNoteRepeat();
-        const divisions = { "1/4": 1, "1/8": 2, "1/16": 4, "1/32": 8 };
-        const beatMs = 60000 / (Number(this.beatLab?.pattern?.bpm) || 100);
-        const interval = beatMs / (divisions[this.noteRepeatRate] || 2);
-        this.noteRepeatTimer = window.setInterval(() => void this.handlePad(padNumber, velocity), interval);
+        this.noteRepeatPointerActive = true;
+        void this.startNoteRepeat(padNumber, velocity);
       }
     });
     root.addEventListener("pointerup", () => this.stopNoteRepeat());
@@ -664,7 +663,7 @@ const MPCInterface = {
     return audio;
   },
 
-  async handlePad(padNumber, velocity = 0.9) {
+  async handlePad(padNumber, velocity = 0.9, scheduledAt = null) {
     if (!this.root) return;
     this.selectedPad = padNumber;
     this.updatePadReadout();
@@ -678,17 +677,18 @@ const MPCInterface = {
     if (label) label.textContent = padNumber + " · " + (this.sampleNames?.[importedSampleId] || sound.name);
     try {
       const audio = await this.getAudioContext();
+      const hitAt = Math.max(audio.currentTime, Number.isFinite(Number(scheduledAt)) ? Number(scheduledAt) : audio.currentTime);
       const sampleSettings = StudioMPCSampler.getPadSettings(this.bank, padNumber);
       if (importedSampleId) {
         await StudioMPCSampler.play(importedSampleId, audio, {
           ...sampleSettings,
           pitch: sampleSettings.pitch || 1,
           velocity,
-          when: audio.currentTime
+          when: hitAt
         });
-      } else StudioMPCLibrary.play(audio, sound, audio.currentTime, velocity, sampleSettings);
+      } else StudioMPCLibrary.play(audio, sound, hitAt, velocity, sampleSettings);
       if (this.recording) {
-        const at = Math.max(0, audio.currentTime - this.recordingStartedAt + this.overdubOffset);
+        const at = Math.max(0, hitAt - this.recordingStartedAt + this.overdubOffset);
         this.take.events.push({
           pad: padNumber,
           bank: this.bank,
@@ -885,7 +885,35 @@ const MPCInterface = {
     }
   },
 
+  async startNoteRepeat(padNumber, velocity) {
+    this.stopNoteRepeat();
+    try {
+      const audio = await this.getAudioContext();
+      if (!this.noteRepeat || !this.noteRepeatPointerActive || !this.root) return;
+      const divisions = { "1/4": 1, "1/8": 2, "1/16": 4, "1/32": 8 };
+      const beatSeconds = 60 / (Number(this.beatLab?.pattern?.bpm) || 100);
+      const interval = beatSeconds / (divisions[this.noteRepeatRate] || 2);
+      this.noteRepeatNextAt = audio.currentTime + interval;
+      this.noteRepeatTimer = window.setInterval(() => {
+        if (!this.noteRepeat || !this.noteRepeatPointerActive) {
+          this.stopNoteRepeat();
+          return;
+        }
+        const now = audio.currentTime;
+        while (this.noteRepeatNextAt < now + 0.12) {
+          const scheduledAt = this.noteRepeatNextAt;
+          this.noteRepeatNextAt += interval;
+          void this.handlePad(padNumber, velocity, scheduledAt);
+        }
+      }, 20);
+    } catch (error) {
+      this.setStatus("NOTE REPEAT UNAVAILABLE · " + (error?.message || error));
+    }
+  },
+
   stopNoteRepeat() {
+    this.noteRepeatPointerActive = false;
+    this.noteRepeatNextAt = 0;
     if (this.noteRepeatTimer !== null) {
       window.clearInterval(this.noteRepeatTimer);
       this.noteRepeatTimer = null;
