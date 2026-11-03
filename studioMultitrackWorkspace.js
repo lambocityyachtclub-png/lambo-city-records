@@ -103,6 +103,7 @@ const StudioMultitrackWorkspace = {
       inputSource: "mic",
       eq: { low: 0, mid: 0, high: 0 },
       compression: { threshold: -18, ratio: 1 },
+      automation: { volume: [] },
       muted: false,
       solo: false,
       armed: false,
@@ -160,6 +161,12 @@ const StudioMultitrackWorkspace = {
           threshold: Number(track.compression?.threshold ?? -18),
           ratio: Math.max(1, Math.min(8, Number(track.compression?.ratio) || 1))
         },
+        automation: {
+          volume: Array.isArray(track.automation?.volume) ? track.automation.volume.map(point => ({
+            bar: Number(point.bar),
+            value: Number(point.value)
+          })) : []
+        },
         muted: Boolean(track.muted),
         solo: Boolean(track.solo),
         armed: Boolean(track.armed),
@@ -196,6 +203,12 @@ const StudioMultitrackWorkspace = {
       compression: {
         threshold: Number(savedTrack.compression?.threshold ?? -18),
         ratio: Math.max(1, Math.min(8, Number(savedTrack.compression?.ratio) || 1))
+      },
+      automation: {
+        volume: Array.isArray(savedTrack.automation?.volume) ? savedTrack.automation.volume.map(point => ({
+          bar: Number(point.bar),
+          value: Number(point.value)
+        })) : []
       },
       muted: Boolean(savedTrack.muted),
       solo: Boolean(savedTrack.solo),
