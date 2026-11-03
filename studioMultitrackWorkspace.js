@@ -573,7 +573,7 @@ const StudioMultitrackWorkspace = {
     return root;
   },
 
-  async startArmedRecording() {
+  async startArmedRecording({ vocalEffects } = {}) {
     const armedTracks = this.tracks.filter(track => track.armed && track.type === "audio");
     if (armedTracks.length !== 1) {
       this.status(armedTracks.length ? "Arm exactly one audio track to record." : "Arm the audio track you want to record into.");
@@ -581,7 +581,11 @@ const StudioMultitrackWorkspace = {
     }
     try {
       const audio = await StudioAudioEngine.resume();
-      await StudioRecordingEngine.startTrackRecording({ audio, trackId: armedTracks[0].id });
+      await StudioRecordingEngine.startTrackRecording({
+        audio,
+        trackId: armedTracks[0].id,
+        vocalEffects: /vocal/i.test(armedTracks[0].name) ? vocalEffects : null
+      });
       this.status("Recording into " + armedTracks[0].name + ". Perform into your microphone.");
       return true;
     } catch (error) {
