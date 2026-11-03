@@ -1150,7 +1150,8 @@ export default {
     // A 2.6-unit open portal aligns with the elevator exit path.
     // This prevents the character from walking through the window wall.
     [
-      { x: -6.775, width: 3.05 },
+      // The elevator-side left pane is intentionally removed.
+      // The player's shoulder/body was clipping its edge during entry.
       { x: 2.825, width: 10.95 }
     ].forEach(({ x, width }) => {
       box(
@@ -1180,7 +1181,7 @@ export default {
     });
 
     // Exterior glazing mullions and gold jambs around the open entry.
-    [-8.25, -5.25, -2.65, 0, 5.5, 8.25].forEach(x => {
+    [-2.65, 0, 5.5, 8.25].forEach(x => {
       box(
         controlRoom,
         new THREE.BoxGeometry(0.12, 3.72, 0.16),
