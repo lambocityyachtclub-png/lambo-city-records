@@ -45,16 +45,22 @@ export default {
     // Every physical production station now opens a real
     // workspace in the shared Studio app. No placeholder panels.
     this.targets = [
+      { object: studio.getObjectByName("floor2MPCClickable"), view: "mpc", title: "MPC" },
+      { object: stations.instrumentStation, view: "piano", title: "PIANO" },
+      { object: stations.drumStation, view: "drums", title: "DRUMS" },
       { object: stations.vocalBooth, view: "vocals", title: "VOCAL RECORDING" },
       { object: stations.recordingEditing, view: "edit", title: "RECORDING & EDITING" },
       { object: stations.controlRoom, view: "mix", title: "MIX • MASTER WORKSTATION" },
-      { object: stations.songArchive, view: "mpc", title: "SONG ARCHIVE" },
+      { object: stations.songArchive, view: "edit", title: "SONG ARCHIVE" },
       { object: stations.mobileStudio, view: "vocals", title: "MOBILE STUDIO" }
     ].filter(item => item.object);
 
     this.handleClick = event => {
-      // Do not intercept clicks while another Studio interface is open.
+      // A swipe rotates the seated camera; it must not select a station.
+      if (Date.now() < Number(window.__lamboCitySuppressStationClickUntil || 0)) return;
+      // Do not intercept clicks while an instrument/DAW interface is open.
       if (document.getElementById("lambo-city-beat-lab")) return;
+      if (document.getElementById("lambo-city-daw-app")) return;
       if (this.panel) return;
 
       const rect = this.renderer.domElement.getBoundingClientRect();
@@ -82,6 +88,7 @@ export default {
 
         // Route each physical station into its matching
         // functional workspace inside the same Studio session.
+        window.__lamboCityOpenFloor2Instrument?.();
         StudioDAWApp.open(station.view || "edit");
         return;
       }
