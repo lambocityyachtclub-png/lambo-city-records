@@ -249,6 +249,15 @@ function validateProject(project) {
     }
   }
 
+  if (project.mpcSamplerState !== undefined) {
+    requireObject(project.mpcSamplerState, "MPC pad state is invalid.");
+    if (project.mpcSamplerState.assignments !== undefined) requireObject(project.mpcSamplerState.assignments, "MPC sample assignments are invalid.");
+    if (project.mpcSamplerState.padSettings !== undefined) requireObject(project.mpcSamplerState.padSettings, "MPC pad settings are invalid.");
+  }
+  if (project.mpcLibraryAssignments !== undefined) {
+    requireObject(project.mpcLibraryAssignments, "MPC sound assignments are invalid.");
+  }
+
   if (project.mpcAssets !== undefined) {
     if (!Array.isArray(project.mpcAssets) || project.mpcAssets.length > 256) {
       throw new Error("MPC sample assets are invalid.");
