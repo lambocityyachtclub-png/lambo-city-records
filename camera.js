@@ -568,6 +568,7 @@ function updateElevatorCamera(player, delta = 0.016) {
     elevatorPOVActive = true;
   }
 
+  window.__lamboCityElevatorLookYaw = elevatorLookYaw;
   const input = window.__lamboCityInput;
   const turnSpeed = 1.7 * Math.max(0, delta);
   if (input?.keys?.arrowleft) elevatorLookYaw -= turnSpeed;
@@ -985,6 +986,7 @@ export default {
 
     elevatorPOVActive = false;
     elevatorLookPointerId = null;
+    window.__lamboCityElevatorLookYaw = 0;
 
 
     // --------------------------------------------------------
