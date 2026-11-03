@@ -1,3 +1,4 @@
+
 name: Development Engine Tests
 
 on:
@@ -28,4 +29,8 @@ jobs:
           node-version: 22
 
       - name: Run development engine tests
-        run: node --experimental-default-type=module --test development/tests/developmentSystem.test.js development/tests/developmentTaskStorage.test.js
+        run: |
+          node --experimental-default-type=module --test \
+            development/tests/developmentSystem.test.js \
+            development/tests/developmentTaskStorage.test.js \
+            development/tests/controlledDevelopmentExecutor.test.js
