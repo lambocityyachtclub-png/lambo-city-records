@@ -30,7 +30,7 @@ export default {
     const gl = new THREE.PointLight(0xffd700,2,8);
     gl.position.set(0,2,0); heroMesh.add(gl);
     heroMesh.position.set(2.5,1.3,6);
-    heroMesh.rotation.y = Math.PI;
+    heroMesh.rotation.y = 0;
     scene.add(heroMesh);
     setTimeout(() => showHeroDialogue(), 1500);
        const colors = [0xff2200,0x0044ff,0x00aa44,0xffaa00,0xaa00ff,0xff0088,0x00ffcc,0xffffff];
@@ -62,7 +62,7 @@ getHero() {
     time += delta;
     if (heroMesh && !performanceMode) {
   heroMesh.position.y = 1.3+Math.sin(time*1.2)*0.05;
-  heroMesh.rotation.y = Math.PI+Math.sin(time*0.4)*0.15;
+  heroMesh.rotation.y = Math.sin(time*0.4)*0.15;
 }
     crowdNPCs.forEach(c => {
       c.mesh.position.y = 1.3+Math.sin(time*3+c.offset)*0.12;
