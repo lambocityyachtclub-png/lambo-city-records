@@ -1504,7 +1504,7 @@ export default {
             ),
             goldGlow,
             x,
-            3.75,
+            5.55,
             0.7
           );
 
