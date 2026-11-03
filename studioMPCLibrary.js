@@ -304,9 +304,10 @@ const StudioMPCLibrary = {
   getSounds() {
     if (!this.state) this.state = readState();
     if (!Array.isArray(this.state.sounds)) this.state.sounds = [];
-    return this.state.unlocked
+    const available = this.state.unlocked
       ? [...this.state.sounds, ...Array.from({ length: 200 }, (_, index) => makeSound(index, true))]
       : this.state.sounds.slice();
+    return [...new Map(available.map(sound => [sound.id, sound])).values()];
   },
 
   unlock(code) {
@@ -361,7 +362,7 @@ const StudioMPCLibrary = {
   exportAssignedSounds() {
     const state = this.state || readState();
     const ids = new Set(Object.values(state.assignments || {}));
-    return (state.sounds || []).filter(sound => ids.has(sound.id)).map(sound => ({ ...sound }));
+    return this.getSounds().filter(sound => ids.has(sound.id)).map(sound => ({ ...sound }));
   },
 
   importAssignedSounds(sounds = []) {
