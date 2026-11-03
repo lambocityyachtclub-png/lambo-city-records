@@ -1,4 +1,5 @@
 import StudioAudioEngine from "./studioAudioEngine.js";
+import StudioVocalEffects from "./studioVocalEffects.js";
 
 const MAX_RENDER_SECONDS = 900;
 const SAMPLE_RATE = 44100;
@@ -104,6 +105,7 @@ export async function renderStudioSessionToWav({
     const high = offline.createBiquadFilter();
     const compressor = offline.createDynamicsCompressor();
     const panner = offline.createStereoPanner ? offline.createStereoPanner() : null;
+    const trackEffects = StudioVocalEffects.create(offline);
     low.type = "lowshelf"; low.frequency.value = 120;
     mid.type = "peaking"; mid.frequency.value = 1000; mid.Q.value = 0.8;
     high.type = "highshelf"; high.frequency.value = 8000;
@@ -118,6 +120,19 @@ export async function renderStudioSessionToWav({
     compressor.release.value = 0.25;
     gain.connect(automationGain); automationGain.connect(low);
     low.connect(mid); mid.connect(high); high.connect(compressor);
+    compressor.connect(trackEffects.input);
+    if (panner) {
+      trackEffects.output.connect(panner);
+      panner.connect(master);
+    } else {
+      trackEffects.output.connect(master);
+    }
+    const effects = track.effects || {};
+    trackEffects.setDelayTime(effects.delayTime ?? 0.28);
+    trackEffects.setDelayFeedback(effects.delayFeedback ?? 0.25);
+    trackEffects.setDelayMix(effects.delayMix ?? 0);
+    trackEffects.setReverbMix(effects.reverbMix ?? 0);
+    if (effects.reverbDecay !== undefined) trackEffects.setReverbDecay(effects.reverbDecay);
     automationGain.gain.setValueAtTime(1, 0);
     (track.automation?.volume || []).slice().sort((a, b) => a.bar - b.bar).forEach(point => {
       const time = (Math.max(1, Number(point.bar) || 1) - 1) * secondsPerBar;
@@ -125,10 +140,7 @@ export async function renderStudioSessionToWav({
       if (time <= 0.001) automationGain.gain.setValueAtTime(value, 0);
       else automationGain.gain.linearRampToValueAtTime(value, time);
     });
-    if (panner) {
-      panner.pan.value = Math.max(-1, Math.min(1, Number(track.pan) || 0));
-      compressor.connect(panner); panner.connect(master);
-    } else compressor.connect(master);
+    if (panner) panner.pan.value = Math.max(-1, Math.min(1, Number(track.pan) || 0));
     channels.set(track.id, gain);
   }
 
