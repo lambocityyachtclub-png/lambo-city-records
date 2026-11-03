@@ -271,7 +271,7 @@ export default {
       0 = facing world -Z.
     */
 
-    this._facing = 0;
+    this._facing = Math.PI;
 
     player.rotation.y =
       this._facing;
