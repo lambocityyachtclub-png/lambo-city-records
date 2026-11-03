@@ -457,7 +457,6 @@ const MPCInterface = {
         const value = Number(event.target.value) || 0;
         StudioMPCSampler.setMasterVolume(value / 100);
         StudioMPCLibrary.setMasterVolume(value / 100);
-        localStorage.setItem("lambocity-mpc-master-v1", String(value));
         const out = root.querySelector("[data-mpc-master-value]");
         if (out) out.textContent = value + "%";
       }
@@ -619,8 +618,8 @@ const MPCInterface = {
     this.refreshPadMixControls();
     this.refreshProjectHeader();
     const savedMasterRaw = localStorage.getItem("lambocity-mpc-master-v1");
-    const savedMaster = savedMasterRaw === null ? 82 : Number(savedMasterRaw);
-    const masterValue = Number.isFinite(savedMaster) ? Math.max(0, Math.min(100, savedMaster)) : 82;
+    const savedMaster = savedMasterRaw === null ? 0.82 : Number(savedMasterRaw);
+    const masterValue = Number.isFinite(savedMaster) ? Math.round(Math.max(0, Math.min(1, savedMaster)) * 100) : 82;
     const masterInput = root.querySelector("[data-mpc-master]");
     if (masterInput) masterInput.value = String(masterValue);
     StudioMPCSampler.setMasterVolume(masterValue / 100);
