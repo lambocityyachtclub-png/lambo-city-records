@@ -1,0 +1,90 @@
+name: Floor 2 Studio Checks
+
+on:
+  push:
+    paths:
+      - "floor2StudioApp.js"
+      - "floor2StudioNavigation.js"
+      - "floor2InstrumentApp.js"
+      - "floor2DrumStation.js"
+      - "recordsHQFloor2Studio.js"
+      - "studioDAWApp.js"
+      - "studioDAWWorkspace.js"
+      - "studioDAWBeatLabPanel.js"
+      - "studioDAWEditPanel.js"
+      - "studioDAWTimeline.js"
+      - "studioDAWArrangementPlayback.js"
+      - "studioMultitrackWorkspace.js"
+      - "studioAudioEngine.js"
+      - "studioSoundKit.js"
+      - "studioAudioExport.js"
+      - "studioRecordingEngine.js"
+      - "studioVocalEffects.js"
+      - "studioSongProject.js"
+      - "studioProjectPackage.js"
+      - ".github/workflows/floor2-studio-checks.yml"
+
+  pull_request:
+    paths:
+      - "floor2StudioApp.js"
+      - "floor2StudioNavigation.js"
+      - "floor2InstrumentApp.js"
+      - "floor2DrumStation.js"
+      - "recordsHQFloor2Studio.js"
+      - "studioDAWApp.js"
+      - "studioDAWWorkspace.js"
+      - "studioDAWBeatLabPanel.js"
+      - "studioDAWEditPanel.js"
+      - "studioDAWTimeline.js"
+      - "studioDAWArrangementPlayback.js"
+      - "studioMultitrackWorkspace.js"
+      - "studioAudioEngine.js"
+      - "studioSoundKit.js"
+      - "studioAudioExport.js"
+      - "studioRecordingEngine.js"
+      - "studioVocalEffects.js"
+      - "studioSongProject.js"
+      - "studioProjectPackage.js"
+      - ".github/workflows/floor2-studio-checks.yml"
+
+  workflow_dispatch:
+
+jobs:
+  syntax:
+    name: Check Floor 2 Studio JavaScript
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Parse Floor 2 production modules
+        run: |
+          for file in \
+            floor2StudioApp.js \
+            floor2StudioNavigation.js \
+            floor2InstrumentApp.js \
+            floor2DrumStation.js \
+            recordsHQFloor2Studio.js \
+            studioDAWApp.js \
+            studioDAWWorkspace.js \
+            studioDAWBeatLabPanel.js \
+            studioDAWEditPanel.js \
+            studioDAWTimeline.js \
+            studioDAWArrangementPlayback.js \
+            studioMultitrackWorkspace.js \
+            studioAudioEngine.js \
+            studioSoundKit.js \
+            studioAudioExport.js \
+            studioRecordingEngine.js \
+            studioVocalEffects.js \
+            studioSongProject.js \
+            studioProjectPackage.js
+          do
+            node --experimental-default-type=module --check "$file"
+          done
