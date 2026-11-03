@@ -413,6 +413,16 @@ export default {
         input.joystick.y = 0;
         input.joystick.active = false;
       }
+
+      if (window.__lamboCityFloor2SessionMode === "arrival") {
+        bobTime += delta;
+        const swing = Math.sin(bobTime * 10) * 0.32;
+        this.armL.rotation.x = swing;
+        this.armR.rotation.x = -swing;
+        this.legL.rotation.x = -swing * 0.6;
+        this.legR.rotation.x = swing * 0.6;
+      }
+
       return;
     }
 
