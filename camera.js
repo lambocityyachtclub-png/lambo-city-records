@@ -175,7 +175,7 @@ function isNearBuilding(player) {
   });
 }
 
-function updateExplorationCamera(player, delta, moving, insideHQ, npcSystem, hasMoved, backingUp) {
+function updateExplorationCamera(player, delta, moving, insideHQ, npcSystem, hasMoved) {
   const now = performance.now();
 
   // When the player walks for a while, gently settle behind their
@@ -193,11 +193,8 @@ function updateExplorationCamera(player, delta, moving, insideHQ, npcSystem, has
   const closeFraming = insideHQ ||
     (hasMoved && (isNearExistingCharacter(player, npcSystem) ||
       isNearBuilding(player)));
-  const startupWideView = !insideHQ && !hasMoved && !closeFraming;
-  const distance = insideHQ ? 6.7 :
-    closeFraming ? FOLLOW_DISTANCE : startupWideView ? 19.0 : 18.0;
-  const cameraHeight = insideHQ ? 3.25 :
-    closeFraming ? 3.4 : startupWideView ? 8.8 : 8.2;
+  const distance = insideHQ ? 6.7 : closeFraming ? FOLLOW_DISTANCE : 15.5;
+  const cameraHeight = insideHQ ? 3.25 : closeFraming ? 3.4 : 7.2;
 
   const target = new THREE.Vector3(
     player.position.x,
@@ -218,13 +215,11 @@ function updateExplorationCamera(player, delta, moving, insideHQ, npcSystem, has
   // Keep the marina/stage in the forward composition while wide;
   // restore the existing look-ahead when near a person or building.
   const lookAhead = closeFraming ? 8.0 : 13.5;
-  const lookTarget = backingUp
-    ? target.clone()
-    : target.clone().add(new THREE.Vector3(
-        Math.sin(player.rotation.y) * lookAhead,
-        0,
-        Math.cos(player.rotation.y) * lookAhead
-      ));
+  const lookTarget = target.clone().add(new THREE.Vector3(
+    Math.sin(player.rotation.y) * lookAhead,
+    0,
+    Math.cos(player.rotation.y) * lookAhead
+  ));
   camera.lookAt(lookTarget);
 }
 
@@ -412,8 +407,7 @@ export default {
       moving,
       insideHQ,
       context.systems?.npc,
-      this._hasMovedSinceStart,
-      !!context.systems?.input?.keys?.s
+      this._hasMovedSinceStart
     );
   },
 
