@@ -40,7 +40,7 @@ let floor3POVBlend = 0;
 const HQ_MIN_X = 19.0;
 const HQ_MAX_X = 37.0;
 
-const HQ_MIN_Z = 15.8;
+const HQ_MIN_Z = 14.5;
 const HQ_MAX_Z = 29.25;
 
 
@@ -860,15 +860,21 @@ export default {
       ? getHQFloor(player.position.y)
       : 0;
 
-    player.visible = currentHQFloor !== 3;
+    // Keep the elevator camera until the passenger clears the rear
+    // portal; only then enter the Floor 3 first-person view.
+    const floor3POVReady =
+      currentHQFloor === 3 &&
+      player.position.z >= 15.8;
 
-    const targetFov = currentHQFloor === 3 ? 72 : 68;
+    player.visible = !floor3POVReady;
+
+    const targetFov = floor3POVReady ? 72 : 68;
     if (camera.fov !== targetFov) {
       camera.fov = targetFov;
       camera.updateProjectionMatrix();
     }
 
-    if (window.__lamboCityElevatorTraveling || currentHQFloor !== 3) {
+    if (window.__lamboCityElevatorTraveling || !floor3POVReady) {
       if (floor3POVActive) {
         lookYawOffset = 0;
         lookPitchOffset = 0;
@@ -1018,10 +1024,14 @@ export default {
 
 
       // ------------------------------------------------------
-      // FLOOR 3 — CHARACTER EYE-LEVEL POV
+      // FLOOR 3 — ELEVATOR THRESHOLD → CHARACTER EYE-LEVEL POV
       // ------------------------------------------------------
 
-      updateFloor3POVCamera(player, delta);
+      if (!floor3POVReady) {
+        updateElevatorCamera(player);
+      } else {
+        updateFloor3POVCamera(player, delta);
+      }
 
       return;
 
