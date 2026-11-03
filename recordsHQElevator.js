@@ -17,7 +17,7 @@ const ELEVATOR_POSITION = {
 };
 
 const ACTIVATION_DISTANCE =
-  4.5;
+  10.5;
 
 const TRAVEL_TIME =
   4.8;
