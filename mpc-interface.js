@@ -270,10 +270,10 @@ function buildMarkup() {
         <div class="screen-body mpc-screen-workspace">
           <p class="mpc-live-status" data-mpc-status role="status" aria-live="polite">MPC READY · TAP A PAD TO PLAY</p>
           <section class="mpc-screen-panel active" data-mpc-panel="MAIN">
-            <div class="mpc-welcome"><strong>PERFORMANCE</strong><span>Tap a pad to play. Hold your groove while the song runs.</span></div>
+            <div class="mpc-welcome"><strong>PERFORMANCE · START HERE</strong><span>1. Choose a sound. 2. Tap the pads. 3. Press REC to record over your song. Use OVER DUB to add another layer.</span><small>TOUCH: TAP PADS · DESKTOP: QWER / ASDF / ZXCV / TYGH · BANKS: 1–4</small></div>
             <div class="mpc-screen-actions">
-              <button type="button" data-mpc-screen-action="browse">SOUND BROWSER</button>
-              <button type="button" data-mpc-screen-action="sample">SAMPLE EDIT</button>
+              <button type="button" data-mpc-screen-action="browse">CHOOSE SOUNDS</button>
+              <button type="button" data-mpc-screen-action="sample">EDIT SAMPLE</button>
               <button type="button" data-mpc-screen-action="timing">TIMING</button>
               <button type="button" data-mpc-screen-action="mixer">MIXER</button>
             </div>
@@ -372,7 +372,7 @@ function buildMarkup() {
           </section>
         </div>
         <nav class="screen-tabs">
-          ${["MAIN", "TIMING", "SAMPLE", "MIXER", "BROWSE"].map((label, i) => `<button type="button" class="screen-tab ${i === 0 ? "active" : ""}" data-mpc-tab="${["MAIN","SEQ","SAMPLE","MIX","BROWSE"][i]}">${esc(label)}</button>`).join("")}
+          ${["PLAY", "TIMING", "SAMPLE", "MIXER", "SOUNDS"].map((label, i) => `<button type="button" class="screen-tab ${i === 0 ? "active" : ""}" data-mpc-tab="${["MAIN","SEQ","SAMPLE","MIX","BROWSE"][i]}">${esc(label)}</button>`).join("")}
         </nav>
       </div></div>
     </section>
