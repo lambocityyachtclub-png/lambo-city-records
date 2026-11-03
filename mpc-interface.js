@@ -626,7 +626,8 @@ const MPCInterface = {
     this.refreshLibraryUI();
     this.refreshPadMixControls();
     this.refreshProjectHeader();
-    const savedMaster = Number(localStorage.getItem("lambocity-mpc-master-v1"));
+    const savedMasterRaw = localStorage.getItem("lambocity-mpc-master-v1");
+    const savedMaster = savedMasterRaw === null ? 82 : Number(savedMasterRaw);
     const masterValue = Number.isFinite(savedMaster) ? Math.max(0, Math.min(100, savedMaster)) : 82;
     const masterInput = root.querySelector("[data-mpc-master]");
     if (masterInput) masterInput.value = String(masterValue);
