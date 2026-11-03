@@ -434,25 +434,45 @@ export default {
       producerCockpit.add(speaker);
     });
 
-    // Wide production display faces the seated producer (+Z).
-    [-0.48, 0.48].forEach(x => {
+    // Three-screen producer display wall faces the seated producer (+Z).
+    // The former recording/editing DAW screen is integrated above the MPC,
+    // while the two primary production displays sit centered over the desk.
+    [-0.35, 0.85].forEach(x => {
       box(
         producerCockpit,
-        new THREE.BoxGeometry(0.90, 1.08, 0.09),
+        new THREE.BoxGeometry(1.10, 1.24, 0.09),
         glass,
         x,
-        1.88,
+        1.98,
         -0.92
       );
       box(
         producerCockpit,
-        new THREE.BoxGeometry(0.96, 0.055, 0.12),
+        new THREE.BoxGeometry(1.16, 0.055, 0.12),
         goldGlow,
         x,
-        2.44,
+        2.63,
         -0.92
       );
     });
+
+    // Dedicated DAW / recording screen, positioned directly above the MPC.
+    box(
+      producerCockpit,
+      new THREE.BoxGeometry(0.98, 0.92, 0.09),
+      glass,
+      -1.45,
+      1.88,
+      -0.92
+    );
+    box(
+      producerCockpit,
+      new THREE.BoxGeometry(1.04, 0.055, 0.12),
+      goldGlow,
+      -1.45,
+      2.37,
+      -0.92
+    );
 
     // Chair is centered behind the desk, facing the exterior windows (-Z).
     const producerChair = new THREE.Group();
@@ -964,37 +984,8 @@ export default {
       editAngle
     );
 
-    // Main DAW display
-
-    box(
-      editing,
-      new THREE.BoxGeometry(
-        1.65,
-        0.90,
-        0.08
-      ),
-      glass,
-      editX,
-      1.55,
-      editZ + 0.05,
-      editAngle
-    );
-
-    // Display frame
-
-    box(
-      editing,
-      new THREE.BoxGeometry(
-        1.78,
-        0.05,
-        0.05
-      ),
-      goldGlow,
-      editX,
-      2.03,
-      editZ + 0.05,
-      editAngle
-    );
+    // The DAW display has been moved into the primary MPC cockpit so
+    // recording, editing and beat production share one visible workstation.
 
     // Small controller
 
