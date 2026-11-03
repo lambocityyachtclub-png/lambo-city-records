@@ -98,6 +98,8 @@ const StudioMultitrackWorkspace = {
       type,
       volume: 80,
       pan: 0,
+      eq: { low: 0, mid: 0, high: 0 },
+      compression: { threshold: -18, ratio: 1 },
       muted: false,
       solo: false,
       armed: false,
@@ -145,6 +147,15 @@ const StudioMultitrackWorkspace = {
         type: TRACK_TYPES.includes(track.type) ? track.type : "audio",
         volume: Math.max(0, Math.min(100, Number(track.volume) || 0)),
         pan: Math.max(-1, Math.min(1, Number(track.pan) || 0)),
+        eq: {
+          low: Number(track.eq?.low) || 0,
+          mid: Number(track.eq?.mid) || 0,
+          high: Number(track.eq?.high) || 0
+        },
+        compression: {
+          threshold: Number(track.compression?.threshold ?? -18),
+          ratio: Math.max(1, Math.min(8, Number(track.compression?.ratio) || 1))
+        },
         muted: Boolean(track.muted),
         solo: Boolean(track.solo),
         armed: Boolean(track.armed),
@@ -172,6 +183,15 @@ const StudioMultitrackWorkspace = {
       type: TRACK_TYPES.includes(savedTrack.type) ? savedTrack.type : "audio",
       volume: Math.max(0, Math.min(100, Number(savedTrack.volume) || 0)),
       pan: Math.max(-1, Math.min(1, Number(savedTrack.pan) || 0)),
+      eq: {
+        low: Number(savedTrack.eq?.low) || 0,
+        mid: Number(savedTrack.eq?.mid) || 0,
+        high: Number(savedTrack.eq?.high) || 0
+      },
+      compression: {
+        threshold: Number(savedTrack.compression?.threshold ?? -18),
+        ratio: Math.max(1, Math.min(8, Number(savedTrack.compression?.ratio) || 1))
+      },
       muted: Boolean(savedTrack.muted),
       solo: Boolean(savedTrack.solo),
       armed: Boolean(savedTrack.armed),
