@@ -699,7 +699,12 @@ const StudioMultitrackWorkspace = {
         inputNode,
         vocalEffects: track.inputSource === "mic" && /vocal/i.test(track.name) ? vocalEffects : null
       });
-      this.status("Recording into " + armedTracks[0].name + ". Perform into your microphone.");
+      const sourceLabel = track.inputSource === "mpc"
+        ? "MPC output"
+        : track.inputSource === "beatlab"
+          ? "Digital Beat Lab output"
+          : "microphone";
+      this.status("Recording " + sourceLabel + " into " + track.name + ".");
       return true;
     } catch (error) {
       this.status("RECORDING ERROR: " + (error?.message || error));
