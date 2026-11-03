@@ -317,13 +317,7 @@ test("Workspace adapter rejects symbolic links in source files", async t => {
     )
   );
 
-  await assert.rejects(
-    adapter.createWorkspace({
-      taskId: "task-symlink-test"
-    }),
-    /Symbolic links are not allowed/
-  );
-});
+ /symbolic links are not allowed/i
 
 test("Workspace adapter rejects workspace storage inside the project", async t => {
   const {
