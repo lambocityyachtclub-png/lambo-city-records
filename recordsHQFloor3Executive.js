@@ -324,7 +324,7 @@ export default {
 
     lounge.name =
       "floor3ExecutiveLounge";
-    lounge.position.set(1.3, 0, 0);
+    lounge.position.set(1.3, 0, -0.7);
 
 
     // Sofa
@@ -440,7 +440,7 @@ export default {
 
     office.name =
       "floor3ExecutiveOffice";
-    office.position.set(2.0, 0, -8.5);
+    office.position.set(2.0, 0, -9.2);
 
 
     // Desk
@@ -632,9 +632,9 @@ export default {
       );
 
     loungeLight.position.set(
-      5,
+      6.3,
       2.8,
-      -2
+      -2.7
     );
 
     group.add(loungeLight);
