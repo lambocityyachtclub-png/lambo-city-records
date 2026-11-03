@@ -196,6 +196,13 @@ const MPCSampler = {
     writeAssignments(this.assignments);
   },
 
+  unassign(bank, pad) {
+    const next = { ...this.assignments };
+    delete next[bank + "-" + pad];
+    this.assignments = next;
+    writeAssignments(next);
+  },
+
   getAssignment(bank, pad) {
     return this.assignments[bank + "-" + pad] || null;
   },
