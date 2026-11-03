@@ -257,6 +257,24 @@ function validateProject(project) {
   if (project.mpcLibraryAssignments !== undefined) {
     requireObject(project.mpcLibraryAssignments, "MPC sound assignments are invalid.");
   }
+  if (project.mpcLibrarySounds !== undefined) {
+    if (!Array.isArray(project.mpcLibrarySounds) || project.mpcLibrarySounds.length > 320) {
+      throw new Error("MPC preset sound definitions are invalid.");
+    }
+    const soundIds = new Set();
+    for (const sound of project.mpcLibrarySounds) {
+      requireObject(sound, "Invalid MPC preset sound.");
+      requireId(sound.id, "MPC preset sound ID is missing.");
+      requireId(sound.name, "MPC preset sound name is missing.");
+      if (soundIds.has(sound.id) || !["kick", "bass", "snare", "clap", "hat", "perc", "chop", "stab", "fx"].includes(sound.family)) {
+        throw new Error("MPC preset sound definition is invalid.");
+      }
+      soundIds.add(sound.id);
+      for (const field of ["seed", "frequency", "decay", "brightness"]) {
+        if (!Number.isFinite(Number(sound[field]))) throw new Error("MPC preset sound settings are invalid.");
+      }
+    }
+  }
 
   if (project.mpcAssets !== undefined) {
     if (!Array.isArray(project.mpcAssets) || project.mpcAssets.length > 256) {
@@ -280,6 +298,9 @@ function validateProject(project) {
       if (event.sampleId && !assetIds.has(event.sampleId)) {
         throw new Error("An MPC pad event references a sample that is missing from this project package.");
       }
+    }
+    for (const sampleId of Object.values(project.mpcSamplerState?.assignments || {})) {
+      if (!assetIds.has(sampleId)) throw new Error("An MPC pad assignment references a sample that is missing from this project package.");
     }
   }
 
