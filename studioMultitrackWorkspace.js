@@ -18,6 +18,7 @@ import StudioAudioEngine from "./studioAudioEngine.js";
 import StudioRecordingEngine from "./studioRecordingEngine.js";
 import StudioAudioExport from "./studioAudioExport.js";
 import StudioMPCSampler from "./studioMPCSampler.js";
+import StudioDAWSessionStore from "./studioDAWSessionStore.js";
 
 import {
   createStudioDAWArrangementPlayback
@@ -120,6 +121,58 @@ const StudioMultitrackWorkspace = {
     this.render();
     this.status(`${track.name} created.`);
     return track;
+  },
+
+  async saveSession(projectId) {
+    const session = {
+      format: "lambo-city-daw-session",
+      version: 1,
+      tempo: this.tempo,
+      tracks: this.tracks.map(track => ({
+        ...track,
+        clips: (track.clips || []).filter(clip => clip.blob instanceof Blob && clip.blob.size > 0).map(clip => ({
+          ...clip,
+          objectUrl: undefined
+        }))
+      }))
+    };
+    await StudioDAWSessionStore.save(projectId, session);
+    return true;
+  },
+
+  async loadSession(projectId) {
+    const session = await StudioDAWSessionStore.load(projectId);
+    if (!session || session.format !== "lambo-city-daw-session" || session.version !== 1 || !Array.isArray(session.tracks)) {
+      return false;
+    }
+    this.stopAll();
+    this.tempo = Math.max(60, Math.min(180, Number(session.tempo) || 100));
+    this.tracks = session.tracks.map(track => ({
+      ...track,
+      clips: (track.clips || []).map(clip => ({ ...clip }))
+    }));
+    const ids = this.tracks.map(track => Number(track.id.match(/(\d+)$/)?.[1]) || 0);
+    this.nextTrackId = Math.max(0, ...ids) + 1;
+    this.render();
+    this.status("Saved song session restored with " + this.tracks.length + " track(s).");
+    return true;
+  },
+
+  async removeSavedSession(projectId) {
+    return StudioDAWSessionStore.remove(projectId);
+  },
+
+  resetSession({ tempo = 100 } = {}) {
+    this.stopAll();
+    this.tempo = Math.max(60, Math.min(180, Number(tempo) || 100));
+    this.tracks = [];
+    this.nextTrackId = 1;
+    this.createTrack("audio", "Vocals");
+    this.createTrack("audio", "Drums");
+    this.createTrack("instrument", "Instruments");
+    this.createTrack("audio", "Beats");
+    this.render();
+    this.status("New song session ready.");
   },
 
   async exportSession() {
