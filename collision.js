@@ -348,6 +348,28 @@ export default {
       );
     });
 
+    // Interior cabin glass returns: block side-wall walk-through while
+    // preserving the wide dock, HQ and patio passenger openings.
+    [
+      { x: 20.42, z: 12.35, width: 0.08, depth: 0.38 },
+      { x: 20.42, z: 15.95, width: 0.08, depth: 0.38 },
+      { x: 25.58, z: 12.35, width: 0.08, depth: 0.38 },
+      { x: 25.58, z: 15.95, width: 0.08, depth: 0.38 },
+      { x: 20.69, z: 16.11, width: 0.58, depth: 0.08 },
+      { x: 25.31, z: 16.11, width: 0.58, depth: 0.08 },
+      { x: 23.0, z: 12.19, width: 5.20, depth: 0.08 }
+    ].forEach((wall, index) => {
+      this.registerBox(
+        "recordsHQElevatorInteriorGlass_" + index,
+        {
+          ...wall,
+          minY: elevatorMinY,
+          maxY: elevatorMaxY,
+          level: "elevator"
+        }
+      );
+    });
+
 
     // ========================================================
     // ELEVATOR OPENING
