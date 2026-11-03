@@ -44,7 +44,7 @@ function encodeWav(audioBuffer) {
 export async function renderStudioSessionToWav({
   tracks = [],
   tempo = 100,
-  masterVolume = 1
+  masterVolume = StudioAudioEngine.master?.gain?.value ?? 1
 } = {}) {
   const bpm = Number(tempo);
   if (!Number.isFinite(bpm) || bpm < 60 || bpm > 180) {
@@ -74,18 +74,25 @@ export async function renderStudioSessionToWav({
   }
 
   if (!decoded.length) throw new Error("There are no audio clips to export.");
-  renderDuration = Math.min(MAX_RENDER_SECONDS, Math.max(0.1, renderDuration + 0.1));
-  if (decoded.some(item => item.start >= MAX_RENDER_SECONDS)) {
+  if (renderDuration > MAX_RENDER_SECONDS || decoded.some(item => item.start >= MAX_RENDER_SECONDS)) {
     throw new Error("The arrangement extends beyond the 15-minute WAV export limit.");
   }
+  renderDuration = Math.max(0.1, renderDuration + 0.1);
 
   const OfflineContext = window.OfflineAudioContext || window.webkitOfflineAudioContext;
   if (!OfflineContext) throw new Error("Offline audio rendering is not supported in this browser.");
   const frameCount = Math.ceil(renderDuration * SAMPLE_RATE);
   const offline = new OfflineContext(2, frameCount, SAMPLE_RATE);
   const master = offline.createGain();
+  const masterCompressor = offline.createDynamicsCompressor();
   master.gain.value = Math.max(0, Math.min(1, Number(masterVolume) || 0));
-  master.connect(offline.destination);
+  masterCompressor.threshold.value = -8;
+  masterCompressor.knee.value = 12;
+  masterCompressor.ratio.value = 3;
+  masterCompressor.attack.value = 0.003;
+  masterCompressor.release.value = 0.18;
+  master.connect(masterCompressor);
+  masterCompressor.connect(offline.destination);
 
   const channels = new Map();
   for (const { track } of decoded) {
