@@ -145,12 +145,12 @@ function playSound(audio, sound, time, bus, velocity = 1, padSettings = {}) {
     panner.connect(out);
   }
   const destination = panner || out;
-  const amp = (length = duration, peak = 0.6, attack = 0.004) => {
+  const amp = (length = duration, peak = 0.6, attack = 0.004, target = destination) => {
     const node = audio.createGain();
     node.gain.setValueAtTime(0.0001, time);
     node.gain.exponentialRampToValueAtTime(Math.max(0.001, peak * velocityScale * volumeScale), time + attack);
     node.gain.exponentialRampToValueAtTime(0.0001, time + length);
-    node.connect(destination);
+    node.connect(target);
     return node;
   };
   const tone = (frequency, type, destination, length = duration, endFrequency = frequency, detune = 0) => {
@@ -216,7 +216,7 @@ function playSound(audio, sound, time, bus, velocity = 1, padSettings = {}) {
         filter.type = "bandpass";
         filter.frequency.value = 1500 + brightness * 1800;
         gain.gain.setValueAtTime(0.0001, time + offset);
-        gain.gain.exponentialRampToValueAtTime(0.2, time + offset + 0.002);
+        gain.gain.exponentialRampToValueAtTime(0.2 * velocityScale * volumeScale, time + offset + 0.002);
         gain.gain.exponentialRampToValueAtTime(0.0001, time + offset + 0.052);
         source.connect(filter); filter.connect(gain); gain.connect(destination);
         source.start(time + offset); source.stop(time + offset + 0.06);
@@ -233,10 +233,10 @@ function playSound(audio, sound, time, bus, velocity = 1, padSettings = {}) {
     filter.type = "lowpass";
     filter.frequency.setValueAtTime(500 + brightness * 5200, time);
     filter.Q.value = family === "stab" ? 1.1 : 0.55;
-    filter.connect(out);
+    filter.connect(destination);
     const chord = family === "stab" ? [1, 1.25, 1.498] : [1, 1.5, 2];
     chord.forEach((ratio, index) => {
-      const gain = amp(duration, family === "stab" ? 0.24 : 0.2, 0.008);
+      const gain = amp(duration, family === "stab" ? 0.24 : 0.2, 0.008, filter);
       const osc = audio.createOscillator();
       osc.type = index === 1 ? "triangle" : "sawtooth";
       osc.frequency.setValueAtTime(pitch * ratio, time);
