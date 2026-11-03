@@ -592,6 +592,13 @@ const MPCInterface = {
     }
   },
 
+  async getAudioContext() {
+    const context = StudioAudioEngine.context;
+    const audio = context?.state === "running" ? context : await StudioAudioEngine.resume();
+    if (this.beatLab) this.beatLab.audio = audio;
+    return audio;
+  },
+
   async handlePad(padNumber, velocity = 0.9) {
     if (!this.root) return;
     this.selectedPad = padNumber;
@@ -603,8 +610,7 @@ const MPCInterface = {
     const label = this.root.querySelector('.pad-wrap [data-pad="' + padNumber + '"] + .pad-label');
     if (label) label.textContent = padNumber + " · " + (this.sampleNames?.[importedSampleId] || sound.name);
     try {
-      const audio = await StudioAudioEngine.resume();
-      this.beatLab.audio = audio;
+      const audio = await this.getAudioContext();
       const sampleSettings = StudioMPCSampler.getPadSettings(this.bank, padNumber);
       if (importedSampleId) {
         await StudioMPCSampler.play(importedSampleId, audio, {
@@ -638,8 +644,7 @@ const MPCInterface = {
 
   async importSamples(files) {
     try {
-      const audio = await StudioAudioEngine.resume();
-      this.beatLab.audio = audio;
+      const audio = await this.getAudioContext();
       const imported = await StudioMPCSampler.importFiles(files, audio);
       await this.refreshImportedSamples();
       const status = this.root?.querySelector("[data-mpc-editor-status]");
@@ -750,7 +755,7 @@ const MPCInterface = {
     const canvas = this.root?.querySelector("[data-mpc-waveform]");
     if (!canvas || !sampleId) return;
     try {
-      const audio = await StudioAudioEngine.resume();
+      const audio = await this.getAudioContext();
       const { peaks } = await StudioMPCSampler.getWaveform(sampleId, audio, 128);
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
@@ -834,7 +839,7 @@ const MPCInterface = {
     const id = this.root?.querySelector("[data-mpc-editor-sample]")?.value;
     if (!id) return;
     try {
-      const audio = await StudioAudioEngine.resume();
+      const audio = await this.getAudioContext();
       const settings = this.saveSampleEditorSettings(false);
       await StudioMPCSampler.play(id, audio, { ...settings, when: audio.currentTime, velocity: 0.9 });
     } catch (error) {
@@ -847,7 +852,7 @@ const MPCInterface = {
     const id = this.root?.querySelector("[data-mpc-browser-sound]")?.value;
     const sound = StudioMPCLibrary.getSounds().find(item => item.id === id);
     if (!sound) return;
-    const audio = await StudioAudioEngine.resume();
+    const audio = await this.getAudioContext();
     StudioMPCLibrary.play(audio, sound, audio.currentTime);
   },
 
