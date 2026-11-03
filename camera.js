@@ -584,12 +584,12 @@ function updateStudioSessionCamera(player, smooth = 0.22) {
 
   moveCamera(cameraX, cameraY, cameraZ, smooth);
 
-  // Aim slightly forward over the producer's shoulder so the
-  // workstation remains visible in the initial seated viewpoint.
+  // The producer faces -Z toward the exterior stage windows.
+  // Keep the desk and panoramic glazing in the initial seated view.
   camera.lookAt(
     player.position.x,
     player.position.y + 1.7 + pitch * 0.45,
-    player.position.z + 1.15
+    player.position.z - 1.15
   );
 }
 
