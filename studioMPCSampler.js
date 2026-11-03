@@ -85,6 +85,62 @@ const MPCSampler = {
     };
   },
 
+  async exportAssets(sampleIds) {
+    const ids = [...new Set((sampleIds || []).filter(Boolean))];
+    if (!ids.length) return [];
+    const db = await openDB();
+    const tx = db.transaction(STORE, "readonly");
+    const records = await Promise.all(ids.map(id => requestResult(tx.objectStore(STORE).get(id))));
+    let totalBytes = 0;
+    const assets = [];
+    for (const record of records) {
+      if (!record?.blob) throw new Error("A recorded MPC sample is missing from this device. Re-import it before exporting the song.");
+      totalBytes += record.blob.size;
+      if (totalBytes > 40000000) throw new Error("MPC sample assets exceed the 40 MB portable project limit. Remove or shorten large samples before export.");
+      const bytes = new Uint8Array(await record.blob.arrayBuffer());
+      let binary = "";
+      const chunkSize = 0x8000;
+      for (let offset = 0; offset < bytes.length; offset += chunkSize) {
+        binary += String.fromCharCode(...bytes.subarray(offset, offset + chunkSize));
+      }
+      assets.push({
+        id: record.id, name: record.name, fileName: record.fileName,
+        type: record.type || "audio/wav", size: record.blob.size, data: btoa(binary)
+      });
+    }
+    return assets;
+  },
+
+  async importAssets(assets) {
+    const list = Array.isArray(assets) ? assets : [];
+    if (!list.length) return 0;
+    let totalBytes = 0;
+    const db = await openDB();
+    const tx = db.transaction(STORE, "readwrite");
+    const store = tx.objectStore(STORE);
+    for (const asset of list) {
+      if (!asset || typeof asset.id !== "string" || typeof asset.data !== "string" || asset.data.length > 54000000) {
+        throw new Error("The project contains an invalid MPC sample asset.");
+      }
+      const binary = atob(asset.data);
+      totalBytes += binary.length;
+      if (totalBytes > 40000000) throw new Error("The project MPC sample assets exceed the 40 MB import limit.");
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      const blob = new Blob([bytes], { type: asset.type || "audio/wav" });
+      store.put({
+        id: asset.id, name: String(asset.name || asset.fileName || "Imported Sample"),
+        fileName: String(asset.fileName || "sample.wav"), type: asset.type || "audio/wav",
+        size: blob.size, blob, createdAt: Date.now()
+      });
+      this.buffers.delete(asset.id);
+    }
+    await new Promise((resolve, reject) => {
+      tx.oncomplete = resolve; tx.onerror = () => reject(tx.error); tx.onabort = () => reject(tx.error);
+    });
+    return list.length;
+  },
+
   async preload(sampleIds, audio) {
     const ids = [...new Set((sampleIds || []).filter(Boolean))];
     return Promise.all(ids.map(id => this.decode({ id }, audio)));
