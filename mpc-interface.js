@@ -290,6 +290,9 @@ function buildMarkup() {
             <label class="mpc-field">SWING <output data-mpc-swing-value>0%</output>
               <input type="range" min="0" max="75" value="0" data-mpc-swing>
             </label>
+            <label class="mpc-field">PAD VELOCITY RESPONSE <output data-mpc-velocity-value>100%</output>
+              <input type="range" min="50" max="150" value="100" data-mpc-velocity>
+            </label>
             <button type="button" data-mpc-note-repeat-toggle class="mpc-primary-action">NOTE REPEAT: OFF</button>
             <p class="mpc-help">Quantize tightens recorded pad hits to the song grid. Swing delays alternating subdivisions for a more human pocket. Hold a pad to repeat it at the selected rate.</p>
           </section>
@@ -414,6 +417,7 @@ const MPCInterface = {
   noteRepeatTimer: null,
   noteRepeatNextAt: 0,
   noteRepeatPointerActive: false,
+  velocitySensitivity: 100,
 
   open(options = {}) {
     if (this.root?.isConnected) return this.root;
@@ -429,6 +433,8 @@ const MPCInterface = {
     this.stopNoteRepeat();
     this.quantize = "1/16";
     this.swing = 0;
+    const savedVelocity = Number(localStorage.getItem("lambocity-mpc-velocity-v1"));
+    this.velocitySensitivity = Number.isFinite(savedVelocity) && savedVelocity > 0 ? Math.max(50, Math.min(150, savedVelocity)) : 100;
     this.take = this.beatLab?.currentProject?.mpcPerformance || StudioMPCLibrary.loadTake(this.beatLab?.currentProject?.id || "unsaved");
     this.library = StudioMPCLibrary.open();
 
@@ -442,6 +448,10 @@ const MPCInterface = {
     const root = document.createElement("div");
     root.id = ROOT_ID;
     root.innerHTML = buildMarkup();
+    const velocitySlider = root.querySelector("[data-mpc-velocity]");
+    const velocityReadout = root.querySelector("[data-mpc-velocity-value]");
+    if (velocitySlider) velocitySlider.value = String(this.velocitySensitivity);
+    if (velocityReadout) velocityReadout.textContent = this.velocitySensitivity + "%";
     root.addEventListener("change", event => {
       if (event.target.matches("[data-mpc-import]")) void this.importSamples(event.target.files);
       if (event.target.matches("[data-mpc-editor-sample]")) void this.refreshSampleEditor();
@@ -452,6 +462,12 @@ const MPCInterface = {
         this.swing = Number(event.target.value) || 0;
         const out = root.querySelector("[data-mpc-swing-value]");
         if (out) out.textContent = this.swing + "%";
+      }
+      if (event.target.matches("[data-mpc-velocity]")) {
+        this.velocitySensitivity = Math.max(50, Math.min(150, Number(event.target.value) || 100));
+        localStorage.setItem("lambocity-mpc-velocity-v1", String(this.velocitySensitivity));
+        const out = root.querySelector("[data-mpc-velocity-value]");
+        if (out) out.textContent = this.velocitySensitivity + "%";
       }
       if (event.target.matches("[data-mpc-start],[data-mpc-end],[data-mpc-pitch],[data-mpc-decay]")) this.saveSampleEditorSettings();
       if (event.target.matches("[data-mpc-pad-volume],[data-mpc-pad-pan]")) this.savePadMixSettings();
@@ -485,6 +501,10 @@ const MPCInterface = {
         if (out) out.textContent = Number(target.value) >= 100 ? "FULL" : target.value + "%";
       }
       if (target.matches("[data-mpc-sound-search]")) this.renderSoundBrowser();
+      if (target.matches("[data-mpc-velocity]")) {
+        const out = root.querySelector("[data-mpc-velocity-value]");
+        if (out) out.textContent = target.value + "%";
+      }
       if (target.matches("[data-mpc-pad-volume]")) {
         const out = root.querySelector("[data-mpc-pad-volume-value]");
         if (out) out.textContent = target.value + "%";
@@ -666,6 +686,7 @@ const MPCInterface = {
 
   async handlePad(padNumber, velocity = 0.9, scheduledAt = null) {
     if (!this.root) return;
+    velocity = Math.max(0, Math.min(1.5, (Number(velocity) || 0.9) * this.velocitySensitivity / 100));
     const bank = this.bank;
     this.selectedPad = padNumber;
     this.updatePadReadout();
