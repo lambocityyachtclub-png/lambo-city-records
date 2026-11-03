@@ -249,6 +249,48 @@ function validateProject(project) {
     }
   }
 
+  if (project.dawSession !== undefined) {
+    requireObject(project.dawSession, "DAW session data is invalid.");
+    const session = project.dawSession;
+    if (session.format !== "lambo-city-daw-session" || session.version !== 1 ||
+        !Number.isFinite(Number(session.tempo)) || Number(session.tempo) < 60 ||
+        Number(session.tempo) > 180 || !Array.isArray(session.tracks) ||
+        session.tracks.length > 64) {
+      throw new Error("DAW session settings are invalid.");
+    }
+    const trackIds = new Set();
+    const clipIds = new Set();
+    let totalAudioBytes = 0;
+    for (const track of session.tracks) {
+      requireObject(track, "Invalid DAW track.");
+      requireId(track.id, "DAW track ID is missing.");
+      requireId(track.name, "DAW track name is missing.");
+      if (trackIds.has(track.id) || !["audio", "midi", "instrument"].includes(track.type) ||
+          !Number.isFinite(Number(track.volume)) || Number(track.volume) < 0 || Number(track.volume) > 100 ||
+          !Number.isFinite(Number(track.pan)) || Number(track.pan) < -1 || Number(track.pan) > 1 ||
+          !Array.isArray(track.clips) || track.clips.length > 256) {
+        throw new Error("DAW track settings are invalid.");
+      }
+      trackIds.add(track.id);
+      for (const clip of track.clips) {
+        requireObject(clip, "Invalid DAW audio clip.");
+        requireId(clip.id, "DAW clip ID is missing.");
+        requireId(clip.name, "DAW clip name is missing.");
+        if (clipIds.has(clip.id) || typeof clip.data !== "string" ||
+            !Number.isFinite(Number(clip.startBar)) || Number(clip.startBar) < 1 ||
+            !Number.isFinite(Number(clip.lengthBars)) || Number(clip.lengthBars) < 1 ||
+            typeof clip.mimeType !== "string") {
+          throw new Error("DAW audio clip data is invalid.");
+        }
+        clipIds.add(clip.id);
+        totalAudioBytes += Math.floor(clip.data.length * 3 / 4);
+        if (totalAudioBytes > 48000000) {
+          throw new Error("DAW session audio exceeds the 48 MB portable limit.");
+        }
+      }
+    }
+  }
+
   if (project.mpcSamplerState !== undefined) {
     requireObject(project.mpcSamplerState, "MPC pad state is invalid.");
     if (project.mpcSamplerState.assignments !== undefined) requireObject(project.mpcSamplerState.assignments, "MPC sample assignments are invalid.");
