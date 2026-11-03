@@ -23,6 +23,19 @@ const HQ_X = 28;
 const HQ_Z = 22;
 const FLOOR_Y = 20.28;
 
+// Six live participants total per Executive Clubroom session.
+// Seat and screen positions share this slot map so the room layout,
+// future avatar seating, and live video grid stay in sync.
+const FLOOR3_CONFERENCE_SLOTS = [
+  { seat: [-2.35, 1.45, 0], tile: [-2.55, 1.38] },
+  { seat: [-0.78, 1.45, 0], tile: [0, 1.38] },
+  { seat: [0.78, 1.45, 0], tile: [2.55, 1.38] },
+  { seat: [2.35, 1.45, 0], tile: [-2.55, 2.83] },
+  { seat: [-3.62, -1.48, Math.PI / 2], tile: [0, 2.83] },
+  { seat: [3.62, -1.48, -Math.PI / 2], tile: [2.55, 2.83] }
+];
+export const FLOOR3_CONFERENCE_CAPACITY = FLOOR3_CONFERENCE_SLOTS.length;
+
 
 // =============================================================
 // MATERIAL HELPERS
@@ -225,14 +238,12 @@ export default {
     box(meeting, new THREE.BoxGeometry(1.25, 0.82, 1.15), black, 0, 0.52, 0);
     box(meeting, new THREE.BoxGeometry(2.1, 0.025, 0.16), goldGlow, 0, 1.19, 0);
 
-    const chairPositions = [
-      [-2.35, 1.45, 0], [-0.78, 1.45, 0],
-      [0.78, 1.45, 0], [2.35, 1.45, 0],
-      [-3.62, -1.48, Math.PI / 2],
-      [3.62, -1.48, -Math.PI / 2]
-    ];
-    chairPositions.forEach(([x, z, rotationY]) => {
+    meeting.userData.conferenceCapacity = FLOOR3_CONFERENCE_CAPACITY;
+    FLOOR3_CONFERENCE_SLOTS.forEach((slot, index) => {
+      const [x, z, rotationY] = slot.seat;
       const chair = new THREE.Group();
+      chair.name = "floor3ConferenceSeat-" + (index + 1);
+      chair.userData.conferenceSlotIndex = index;
       chair.position.set(x, 0, z);
       chair.rotation.y = rotationY;
       box(chair, new THREE.BoxGeometry(0.9, 0.22, 0.82), leather, 0, 0.57, 0);
@@ -268,13 +279,14 @@ export default {
     });
     box(presentation, new THREE.BoxGeometry(7.72, 3.08, 0.075), displayGlass, 0, 2.12, -5.53);
 
+    presentation.userData.conferenceCapacity = FLOOR3_CONFERENCE_CAPACITY;
     const tileMats = [0x152534, 0x24202a, 0x1b2a30, 0x25222b, 0x182832, 0x29251f]
       .map(color => material(color, { roughness: 0.32, metalness: 0.22 }));
-    const tileXs = [-2.55, 0, 2.55];
-    const tileYs = [1.38, 2.83];
-    let tileIndex = 0;
-    tileYs.forEach(y => tileXs.forEach(x => {
+    FLOOR3_CONFERENCE_SLOTS.forEach((slot, tileIndex) => {
+      const [x, y] = slot.tile;
       const tile = new THREE.Group();
+      tile.name = "floor3ConferenceScreenSlot-" + (tileIndex + 1);
+      tile.userData.conferenceSlotIndex = tileIndex;
       tile.position.set(x, y, -5.475);
       box(tile, new THREE.BoxGeometry(2.38, 1.27, 0.035), tileMats[tileIndex], 0, 0, 0);
       const avatarMat = material([0xb58b67, 0x9bafba, 0xc49a76, 0x8b9a9f, 0xc6a17d, 0xa6a0b6][tileIndex], { roughness: 0.82, metalness: 0.02 });
@@ -290,8 +302,7 @@ export default {
       tile.add(liveDot);
       box(tile, new THREE.BoxGeometry(0.52, 0.035, 0.018), gold, 0.62, -0.49, 0.06);
       presentation.add(tile);
-      tileIndex++;
-    }));
+    });
 
     // Integrated camera/soundbar and under-screen light.
     box(presentation, new THREE.BoxGeometry(1.05, 0.12, 0.16), black, 0, 0.13, -5.43);
