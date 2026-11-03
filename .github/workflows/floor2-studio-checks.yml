@@ -15,6 +15,7 @@ on:
       - "studioDAWTimeline.js"
       - "studioDAWArrangementPlayback.js"
       - "studioDAWExport.js"
+      - "studioDAWSessionStore.js"
       - "studioMultitrackWorkspace.js"
       - "studioAudioEngine.js"
       - "studioSoundKit.js"
@@ -47,6 +48,7 @@ on:
       - "studioDAWTimeline.js"
       - "studioDAWArrangementPlayback.js"
       - "studioDAWExport.js"
+      - "studioDAWSessionStore.js"
       - "studioMultitrackWorkspace.js"
       - "studioAudioEngine.js"
       - "studioSoundKit.js"
@@ -96,6 +98,7 @@ jobs:
             studioDAWTimeline.js \
             studioDAWArrangementPlayback.js \
             studioDAWExport.js \
+            studioDAWSessionStore.js \
             studioMultitrackWorkspace.js \
             studioAudioEngine.js \
             studioSoundKit.js \
