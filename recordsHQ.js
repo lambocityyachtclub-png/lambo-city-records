@@ -1140,7 +1140,7 @@ export default {
       })
     );
     patioWalk.position.set(
-      HQ_POSITION.x + 9.15,
+      HQ_POSITION.x + 3.75,
       .12,
       HQ_POSITION.z - 7.85
     );
@@ -1160,7 +1160,7 @@ export default {
         patioWalkGold
       );
       inlay.position.set(
-        HQ_POSITION.x + 9.15,
+        HQ_POSITION.x + 3.75,
         .205,
         HQ_POSITION.z - 7.85 + offset
       );
