@@ -537,7 +537,7 @@ export default {
 
     // Inner screen placed in front of frame.
 
-    box(
+    const mediaDisplayScreen = box(
       videoWall,
       new THREE.BoxGeometry(
         0.05,
@@ -549,6 +549,8 @@ export default {
       1.9,
       videoZ
     );
+
+    mediaDisplayScreen.name = "floor1MediaDisplayScreen";
 
 
     label(
