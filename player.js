@@ -289,6 +289,13 @@ export default {
     return player;
   },
 
+  setFacing(angle = 0) {
+    this._facing = angle;
+    if (player) {
+      player.rotation.y = angle;
+    }
+  },
+
   setElevatorFloorY(y) {
 
     this._floorY = y;
