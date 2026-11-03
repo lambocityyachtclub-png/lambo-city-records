@@ -494,6 +494,9 @@ export default {
       player.position.y < 23.8;
 
     if (onFloor3) {
+      // Floor 3 reverses W/S as well as A/D.
+      if (input.keys?.w) dz = 1;
+      if (input.keys?.s) dz = -1;
       if (input.keys?.a) dx = 1;
       if (input.keys?.d) dx = -1;
     }
