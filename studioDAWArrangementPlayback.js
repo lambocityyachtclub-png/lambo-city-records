@@ -172,7 +172,9 @@ export function createStudioDAWArrangementPlayback({
       parameter.setValueAtTime(1, startTime);
       points.forEach(point => {
         const time = startTime + (Math.max(1, Number(point.bar)) - 1) * secondsPerBar;
-        parameter.linearRampToValueAtTime(Math.max(0, Math.min(1, Number(point.value) / 100)), Math.max(startTime, time));
+        const value = Math.max(0, Math.min(1, Number(point.value) / 100));
+        if (time <= startTime + 0.001) parameter.setValueAtTime(value, startTime);
+        else parameter.linearRampToValueAtTime(value, time);
       });
     },
 
