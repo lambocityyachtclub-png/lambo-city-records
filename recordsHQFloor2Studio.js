@@ -457,8 +457,10 @@ export default {
     });
 
     // Dedicated DAW / recording screen, positioned directly above the MPC.
+    const producerEditControls = new THREE.Group();
+    producerEditControls.name = "floor2CopilotDAWControls";
     box(
-      producerCockpit,
+      producerEditControls,
       new THREE.BoxGeometry(0.98, 0.92, 0.09),
       glass,
       -1.45,
@@ -466,13 +468,14 @@ export default {
       -0.92
     );
     box(
-      producerCockpit,
+      producerEditControls,
       new THREE.BoxGeometry(1.04, 0.055, 0.12),
       goldGlow,
       -1.45,
       2.37,
       -0.92
     );
+    producerCockpit.add(producerEditControls);
 
     // Mobile Studio is a dedicated fourth display on the same copilot
     // desk, not a separate workstation elsewhere in the room.
@@ -1506,7 +1509,7 @@ export default {
       vocalBooth: booth,
 
       recordingEditing:
-        producerCockpit,
+        producerEditControls,
 
       controlRoom:
         mixMasterControls,
