@@ -34,46 +34,23 @@ const HQ_POSITION = {
 // ============================================================
 
 function createSignTexture() {
-
   const canvas = document.createElement("canvas");
-
-  canvas.width = 1024;
+  canvas.width = 1536;
   canvas.height = 256;
 
   const ctx = canvas.getContext("2d");
-
   ctx.fillStyle = "#050505";
-  ctx.fillRect(0, 0, 1024, 256);
-
+  ctx.fillRect(0, 0, 1536, 256);
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-
-  ctx.font = "bold 104px Arial";
-
+  ctx.font = "bold 112px Arial";
   ctx.shadowColor = "#b88e55";
-  ctx.shadowBlur = 16;
-
-  ctx.fillStyle = "#ffd700";
-
-  ctx.fillText(
-    "LAMBO CITY",
-    512,
-    108
-  );
-
-  ctx.font = "bold 78px Arial";
-
-  ctx.fillText(
-    "RECORDS",
-    512,
-    194
-  );
-
+  ctx.shadowBlur = 14;
+  ctx.fillStyle = "#e7c58a";
+  ctx.fillText("LAMBO CITY RECORDS", 768, 128);
   ctx.shadowBlur = 0;
-
   return canvas;
 }
-
 
 // ============================================================
 // WATERFRONT PROMENADE
@@ -638,10 +615,10 @@ export default {
     );
 
     addFacadePanel(
-      new THREE.BoxGeometry(17.8, 2.8, .12),
+      new THREE.BoxGeometry(17.8, 3.75, .12),
       glassMat,
       0,
-      21.8,
+      22.05,
       7.02
     );
 
@@ -654,10 +631,10 @@ export default {
         7.12
       );
       addFacadePanel(
-        new THREE.BoxGeometry(.085, 2.75, .16),
+        new THREE.BoxGeometry(.085, 3.7, .16),
         facadeBronze,
         x,
-        21.8,
+        22.05,
         7.12
       );
     });
@@ -719,10 +696,10 @@ export default {
     signTex.colorSpace = THREE.SRGBColorSpace;
 
     addFacadePanel(
-      new THREE.BoxGeometry(13.2, 2.9, .34),
+      new THREE.BoxGeometry(13.2, 2.1, .34),
       facadeDark,
       0,
-      24.75,
+      25.05,
       7.16
     );
 
@@ -730,34 +707,34 @@ export default {
       new THREE.BoxGeometry(13.0, .055, .08),
       facadeBronze,
       0,
-      26.17,
+      26.08,
       7.36
     );
     addFacadePanel(
       new THREE.BoxGeometry(13.0, .055, .08),
       facadeBronze,
       0,
-      23.33,
+      24.02,
       7.36
     );
     [-6.48, 6.48].forEach(x => {
       addFacadePanel(
-        new THREE.BoxGeometry(.055, 2.85, .08),
+        new THREE.BoxGeometry(.055, 2.06, .08),
         facadeBronze,
         x,
-        24.75,
+        25.05,
         7.36
       );
     });
 
     const sign = new THREE.Mesh(
-      new THREE.PlaneGeometry(12.45, 2.62),
+      new THREE.PlaneGeometry(12.6, 1.95),
       new THREE.MeshBasicMaterial({
         map: signTex,
         toneMapped: false
       })
     );
-    sign.position.set(0, 24.75, 7.39);
+    sign.position.set(0, 25.05, 7.39);
     group.add(sign);
 
     // The scrolling slogan marquee was removed. The building carries
