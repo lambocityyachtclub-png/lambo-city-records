@@ -1,4 +1,5 @@
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
+import { createHeroModel } from "./hero-model.js";
 let heroMesh, crowdNPCs = [], time = 0, giftGiven = false;
 let performanceMode = false;
 export default {
@@ -7,28 +8,13 @@ export default {
     const dm = new THREE.MeshStandardMaterial({color:0x0a0a0a});
     const sm = new THREE.MeshStandardMaterial({color:0x8d5524});
     const gm = new THREE.MeshStandardMaterial({color:0xffd700,emissive:0xffd700,emissiveIntensity:0.5});
-    const body = new THREE.Mesh(new THREE.BoxGeometry(1.2,1.8,0.7),dm);
-    body.position.y=1.8; heroMesh.add(body);
-    const logo = new THREE.Mesh(new THREE.BoxGeometry(0.55,0.45,0.06),gm);
-    logo.position.set(0,1.9,0.38); heroMesh.add(logo);
-    const head = new THREE.Mesh(new THREE.BoxGeometry(0.9,0.9,0.9),sm);
-    head.position.y=3.15; heroMesh.add(head);
-    const cap = new THREE.Mesh(new THREE.BoxGeometry(0.95,0.25,0.95),gm);
-    cap.position.y=3.65; heroMesh.add(cap);
-    [-0.8,0.8].forEach(x => {
-      const arm = new THREE.Mesh(new THREE.BoxGeometry(0.35,1.4,0.35),dm);
-      arm.position.set(x,1.8,0); heroMesh.add(arm);
-    });
-    [-0.35,0.35].forEach(x => {
-      const leg = new THREE.Mesh(new THREE.BoxGeometry(0.45,1.6,0.45),new THREE.MeshStandardMaterial({color:0x111111}));
-      leg.position.set(x,0.6,0); heroMesh.add(leg);
-      const shoe = new THREE.Mesh(new THREE.BoxGeometry(0.5,0.25,0.7),new THREE.MeshStandardMaterial({color:0xffffff}));
-      shoe.position.set(x,-0.22,0.1); heroMesh.add(shoe);
-    });
-    const chain = new THREE.Mesh(new THREE.TorusGeometry(0.25,0.04,6,12),new THREE.MeshStandardMaterial({color:0xffd700,emissive:0xffd700,emissiveIntensity:0.6,metalness:1,roughness:0.2}));
-    chain.position.set(0,2.1,0.36); chain.rotation.x=Math.PI/2; heroMesh.add(chain);
-    const gl = new THREE.PointLight(0xffd700,2,8);
-    gl.position.set(0,2,0); heroMesh.add(gl);
+    try {
+      const heroVisual = createHeroModel(THREE);
+      heroMesh.add(heroVisual);
+    } catch (error) {
+      console.error("[LAMBO CITY] HERO model failed; using original HERO visual.", error);
+      buildFallbackHero(THREE, heroMesh, dm, sm, gm);
+    }
     heroMesh.position.set(2.5,1.3,6);
     heroMesh.rotation.y = 0;
     scene.add(heroMesh);
@@ -89,4 +75,31 @@ function showGiftPopup() {
   gift.style.cssText = `position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:linear-gradient(135deg,#0a0020,#1a0040);border:2px solid #ffd700;border-radius:16px;padding:28px 36px;color:white;text-align:center;z-index:500;pointer-events:all;box-shadow:0 0 60px rgba(255,215,0,0.4);`;
   gift.innerHTML = `<div style="font-size:32px;margin-bottom:10px;">🎁</div><div style="color:#ffd700;font-size:11px;letter-spacing:3px;margin-bottom:8px;">HERO GIFTED YOU</div><div style="font-size:18px;font-weight:bold;margin-bottom:16px;">LAMBO CITY HOODIE</div><button onclick="this.parentElement.remove()" style="background:linear-gradient(90deg,#9900ff,#ff00aa);border:none;border-radius:20px;color:white;padding:10px 28px;font-size:12px;cursor:pointer;">WEAR IT →</button>`;
   document.body.appendChild(gift);
+}
+
+function buildFallbackHero(THREE, heroMesh, dm, sm, gm) {
+  const body = new THREE.Mesh(new THREE.BoxGeometry(1.2,1.8,0.7),dm);
+  body.position.y=1.8; heroMesh.add(body);
+  const logo = new THREE.Mesh(new THREE.BoxGeometry(0.55,0.45,0.06),gm);
+  logo.position.set(0,1.9,0.38); heroMesh.add(logo);
+  const head = new THREE.Mesh(new THREE.BoxGeometry(0.9,0.9,0.9),sm);
+  head.position.y=3.15; heroMesh.add(head);
+  const cap = new THREE.Mesh(new THREE.BoxGeometry(0.95,0.25,0.95),gm);
+  cap.position.y=3.65; heroMesh.add(cap);
+  [-0.8,0.8].forEach(x => {
+    const arm = new THREE.Mesh(new THREE.BoxGeometry(0.35,1.4,0.35),dm);
+    arm.position.set(x,1.8,0); heroMesh.add(arm);
+  });
+  [-0.35,0.35].forEach(x => {
+    const leg = new THREE.Mesh(new THREE.BoxGeometry(0.45,1.6,0.45),
+      new THREE.MeshStandardMaterial({color:0x111111}));
+    leg.position.set(x,0.6,0); heroMesh.add(leg);
+    const shoe = new THREE.Mesh(new THREE.BoxGeometry(0.5,0.25,0.7),
+      new THREE.MeshStandardMaterial({color:0xffffff}));
+    shoe.position.set(x,-0.22,0.1); heroMesh.add(shoe);
+  });
+  const chain = new THREE.Mesh(new THREE.TorusGeometry(0.25,0.04,6,12),
+    new THREE.MeshStandardMaterial({color:0xffd700,emissive:0xffd700,
+      emissiveIntensity:0.6,metalness:1,roughness:0.2}));
+  chain.position.set(0,2.1,0.36); chain.rotation.x=Math.PI/2; heroMesh.add(chain);
 }
