@@ -39,6 +39,7 @@ let pointerLastY = 0;
 let pointerMoved = false;
 let previousTouchAction = "";
 let suppressStationClickUntil = 0;
+let sessionExitButton = null;
 
 function publishState() {
   window.__lamboCityFloor2SessionMode = mode;
@@ -74,6 +75,9 @@ function setMode(nextMode) {
   const mobileButtons = document.getElementById("lambo-city-mobile-buttons");
   if (joystick) joystick.style.display = mode === "free" ? "" : "none";
   if (mobileButtons) mobileButtons.style.display = mode === "free" ? "flex" : "none";
+  if (sessionExitButton) {
+    sessionExitButton.style.display = mode === "seated" ? "block" : "none";
+  }
 
   if (renderer?.domElement) {
     if (mode === "seated" || mode === "instrument" || mode === "arrival") {
@@ -190,6 +194,14 @@ export default {
     renderer = context?.renderer || null;
     attachOrbitControls();
 
+    sessionExitButton = document.createElement("button");
+    sessionExitButton.id = "lc-floor2-end-session";
+    sessionExitButton.type = "button";
+    sessionExitButton.textContent = "END SESSION";
+    sessionExitButton.style.cssText = "display:none;position:fixed;top:16px;right:16px;z-index:9000;min-height:42px;padding:10px 15px;border:1px solid rgba(230,187,105,.8);border-radius:8px;background:rgba(12,14,20,.88);color:#f1d49c;font:700 11px Arial,sans-serif;letter-spacing:1px;touch-action:manipulation";
+    sessionExitButton.addEventListener("click", () => this.endSession());
+    document.body.appendChild(sessionExitButton);
+
     window.__lamboCityBeginFloor2Session = player => {
       this.beginArrival(player);
     };
@@ -286,6 +298,8 @@ export default {
     delete window.__lamboCityEndFloor2Session;
     delete window.__lamboCityReturnToFloor2Room;
     delete window.__lamboCityOpenFloor2Instrument;
+    sessionExitButton?.remove();
+    sessionExitButton = null;
     mode = "free";
     publishState();
   }
