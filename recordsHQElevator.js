@@ -850,10 +850,22 @@ export default {
     // Phone shortcuts use the same elevator travel, streaming, landing,
     // and arrival systems as the physical elevator controls.
     window.__lamboCityNavigateToFloor = floor => {
-      if (![2, 3].includes(Number(floor)) || traveling || pendingLandingPlayer) {
+      const destination = Number(floor);
+      if (![2, 3].includes(destination) || traveling || pendingLandingPlayer) {
         return false;
       }
-      selectFloor(Number(floor));
+
+      // After the first completed Floor 2 discovery walk, the phone
+      // shortcut returns directly to the producer cockpit. The physical
+      // elevator continues to use its normal cinematic route.
+      if (
+        destination === 2 &&
+        window.__lamboCityFloor2Discovered === true
+      ) {
+        return window.__lamboCityEnterFloor2CockpitDirect?.(currentPlayer) === true;
+      }
+
+      selectFloor(destination);
       return traveling;
     };
 
