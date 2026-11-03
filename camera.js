@@ -29,17 +29,19 @@ let lookPointerX = 0;
 let lookPointerY = 0;
 let lookYawOffset = 0;
 let lookPitchOffset = 0;
+let floor3POVActive = false;
+let floor3POVBlend = 0;
 
 
 // ============================================================
 // RECORDS HQ BOUNDS
 // ============================================================
 
-const HQ_MIN_X = 19.7;
-const HQ_MAX_X = 36.3;
+const HQ_MIN_X = 19.0;
+const HQ_MAX_X = 37.0;
 
-const HQ_MIN_Z = 14.0;
-const HQ_MAX_Z = 28.2;
+const HQ_MIN_Z = 14.5;
+const HQ_MAX_Z = 29.25;
 
 
 // ============================================================
@@ -50,7 +52,7 @@ const FLOOR1_MIN_X = 20.15;
 const FLOOR1_MAX_X = 35.85;
 
 const FLOOR1_MIN_Z = 15.85;
-const FLOOR1_MAX_Z = 27.15;
+const FLOOR1_MAX_Z = 28.15;
 
 
 // ============================================================
@@ -839,24 +841,38 @@ function installFloor3LookControls() {
   });
 }
 
-function updateFloor3POVCamera(player) {
+function updateFloor3POVCamera(player, delta = 0.016) {
   player.visible = false;
 
-  if (camera.fov !== 76) {
-    camera.fov = 76;
+  if (camera.fov !== 72) {
+    camera.fov = 72;
     camera.updateProjectionMatrix();
   }
 
   const yaw = player.rotation.y + lookYawOffset;
   const pitch = lookPitchOffset;
   const horizontal = Math.cos(pitch);
-  const eyeY = player.position.y + 2.9;
-
-  camera.position.set(
+  // The player head is centered at 3.15 units; place the camera at
+  // eye height and blend out of the elevator's trailing camera.
+  const eyeY = player.position.y + 3.15;
+  const targetPosition = new THREE.Vector3(
     player.position.x,
     eyeY,
     player.position.z
   );
+
+  if (!floor3POVActive) {
+    floor3POVActive = true;
+    floor3POVBlend = 0;
+  }
+
+  floor3POVBlend = Math.min(1, floor3POVBlend + delta / 0.32);
+  if (floor3POVBlend < 1) {
+    const blend = floor3POVBlend * floor3POVBlend * (3 - 2 * floor3POVBlend);
+    camera.position.lerp(targetPosition, blend);
+  } else {
+    camera.position.copy(targetPosition);
+  }
 
   camera.lookAt(
     player.position.x + Math.sin(yaw) * horizontal * 12,
@@ -951,6 +967,17 @@ export default {
     const insideHQ =
       isInsideHQ(player);
 
+    const currentHQFloor = insideHQ
+      ? getHQFloor(player.position.y)
+      : 0;
+    if (window.__lamboCityElevatorTraveling || currentHQFloor !== 3) {
+      if (floor3POVActive) {
+        lookYawOffset = 0;
+        lookPitchOffset = 0;
+      }
+      floor3POVActive = false;
+      floor3POVBlend = 0;
+    }
 
     if (
       insideHQ !==
@@ -1096,7 +1123,7 @@ export default {
       // FLOOR 3 — CHARACTER EYE-LEVEL POV
       // ------------------------------------------------------
 
-      updateFloor3POVCamera(player);
+      updateFloor3POVCamera(player, delta);
 
       return;
 
