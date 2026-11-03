@@ -220,7 +220,7 @@ export async function renderStudioSessionToMp3({
 
 export function downloadStudioMp3(blob, title = "lambo-city-song") {
   if (!(blob instanceof Blob) || !blob.size) throw new Error("The MP3 export is empty.");
-  const safeName = String(title).replace(/[^a-z0-9 _-]/gi, "").trim().replace(/\\s+/g, "-") || "lambo-city-song";
+  const safeName = String(title).replace(/[^a-z0-9 _-]/gi, "").trim().replace(/\s+/g, "-") || "lambo-city-song";
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
