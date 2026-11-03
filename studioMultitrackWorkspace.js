@@ -75,6 +75,7 @@ const StudioMultitrackWorkspace = {
       name: name.trim() || `Track ${this.nextTrackId - 1}`,
       type,
       volume: 80,
+      pan: 0,
       muted: false,
       solo: false,
       armed: false,
@@ -441,7 +442,7 @@ const StudioMultitrackWorkspace = {
     });
 
     root.addEventListener("input", event => {
-      if (!event.target.matches("[data-volume]")) return;
+      if (!event.target.matches("[data-volume], [data-pan]")) return;
 
       const row = event.target.closest("[data-track-id]");
       const track = this.tracks.find(
@@ -450,10 +451,18 @@ const StudioMultitrackWorkspace = {
 
       if (!track) return;
 
-      track.volume = Number(event.target.value);
-
-      row.querySelector("[data-volume-label]").textContent =
-        `${track.volume}%`;
+      if (event.target.matches("[data-volume]")) {
+        track.volume = Number(event.target.value);
+        row.querySelector("[data-volume-label]").textContent = `${track.volume}%`;
+        this.arrangementPlayback?.setTrackVolume(track.id, track.volume);
+      } else {
+        track.pan = Number(event.target.value) / 100;
+        const label = row.querySelector("[data-pan-label]");
+        if (label) label.textContent = track.pan === 0
+          ? "C"
+          : (track.pan < 0 ? "L " : "R ") + Math.round(Math.abs(track.pan) * 100);
+        this.arrangementPlayback?.setTrackPan(track.id, track.pan);
+      }
     });
 
     this.render();
@@ -692,6 +701,21 @@ const StudioMultitrackWorkspace = {
 
       volume.append(volumeName, slider, volumeLabel);
 
+      const pan = document.createElement("div");
+      pan.className = "lc-volume";
+      const panName = document.createElement("span");
+      panName.textContent = "PAN";
+      const panSlider = document.createElement("input");
+      panSlider.type = "range";
+      panSlider.min = "-100";
+      panSlider.max = "100";
+      panSlider.value = String(Math.round((track.pan || 0) * 100));
+      panSlider.dataset.pan = "";
+      const panLabel = document.createElement("span");
+      panLabel.dataset.panLabel = "";
+      panLabel.textContent = !track.pan ? "C" : (track.pan < 0 ? "L " : "R ") + Math.round(Math.abs(track.pan) * 100);
+      pan.append(panName, panSlider, panLabel);
+
      const timeline = document.createElement("div");
 timeline.className = "lc-timeline";
 
@@ -707,7 +731,7 @@ renderStudioDAWTimeline({
 });
       
 
-      row.append(header, volume, timeline);
+      row.append(header, volume, pan, timeline);
       list.appendChild(row);
     });
   },
