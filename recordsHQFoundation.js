@@ -280,6 +280,18 @@ export default {
       );
     });
 
+    // East / patio-facing glass is split around a third passenger doorway.
+    [-1.58, 1.58].forEach(z => {
+      box(
+        elevator,
+        new THREE.BoxGeometry(0.10, 26.4, 0.48),
+        elevatorGlass,
+        2.35,
+        13.2,
+        z
+      );
+    });
+
     // Rear panoramic wall.
     box(
       elevator,
@@ -306,7 +318,7 @@ export default {
 
     // Two perpendicular portals on every served level:
     // +Z faces into Records HQ; -X faces the dock approach.
-    function buildLandingPortal(parent, name, position, rotationY, width, dockSide = false) {
+    function buildLandingPortal(parent, name, position, rotationY, width, doorSide = "hq") {
       const portal = new THREE.Group();
       portal.name = name;
       portal.position.set(position.x, position.y, position.z);
@@ -343,7 +355,11 @@ export default {
 
       const leafWidth = width / 2;
       const leftLeaf = new THREE.Group();
-      leftLeaf.name = dockSide ? "doorLeafLeftDock" : "doorLeafLeft";
+      leftLeaf.name = doorSide === "dock"
+        ? "doorLeafLeftDock"
+        : doorSide === "patio"
+          ? "doorLeafLeftPatio"
+          : "doorLeafLeft";
       leftLeaf.position.set(-leafWidth / 2, 1.62, 0.035);
       box(
         leftLeaf,
@@ -364,7 +380,11 @@ export default {
       portal.add(leftLeaf);
 
       const rightLeaf = new THREE.Group();
-      rightLeaf.name = dockSide ? "doorLeafRightDock" : "doorLeafRight";
+      rightLeaf.name = doorSide === "dock"
+        ? "doorLeafRightDock"
+        : doorSide === "patio"
+          ? "doorLeafRightPatio"
+          : "doorLeafRight";
       rightLeaf.position.set(leafWidth / 2, 1.62, 0.035);
       box(
         rightLeaf,
@@ -407,7 +427,7 @@ export default {
         { x: 0, y: floorY, z: 1.30 },
         0,
         4.20,
-        false
+        "hq"
       );
 
       // Dock-side doorway faces -X toward the dock.
@@ -417,7 +437,17 @@ export default {
         { x: -2.35, y: floorY, z: 0 },
         -Math.PI / 2,
         3.25,
-        true
+        "dock"
+      );
+
+      // Patio-side doorway faces +X toward the outdoor arrival terrace.
+      buildLandingPortal(
+        landing,
+        "recordsPatioSidePortal",
+        { x: 2.35, y: floorY, z: 0 },
+        Math.PI / 2,
+        3.25,
+        "patio"
       );
 
       elevator.add(landing);
