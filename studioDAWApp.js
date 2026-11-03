@@ -16,6 +16,7 @@ import Floor2StudioApp from "./floor2StudioApp.js";
 import Floor2InstrumentApp from "./floor2InstrumentApp.js";
 import Floor2DrumStation from "./floor2DrumStation.js";
 import StudioAudioEngine from "./studioAudioEngine.js";
+import StudioSoundKit from "./studioSoundKit.js";
 import StudioMultitrackWorkspace from "./studioMultitrackWorkspace.js";
 import {
   createStudioDAWEditPanel
@@ -88,10 +89,30 @@ function createMPCPanel({ beatLab, workspace } = {}) {
         (steps[index] ? "linear-gradient(145deg,#f1d49c,#a87531)" : "linear-gradient(145deg,#282b34,#11131a)") +
         ";color:" + (steps[index] ? "#17130d" : "#f4f1eb") +
         ";font-size:16px;font-weight:800;touch-action:manipulation;box-shadow:inset 0 1px 0 rgba(255,255,255,.08)";
-      pad.addEventListener("click", () => {
+      pad.addEventListener("pointerdown", async event => {
+        event.preventDefault();
         beatLab.pattern.steps[activeTrack][index] =
           !beatLab.pattern.steps[activeTrack][index];
         renderPads();
+
+        try {
+          const audio = await StudioAudioEngine.resume();
+          if (!audio || audio.state !== "running") return;
+          beatLab.audio = audio;
+          if (!beatLab.noiseBuffer) {
+            beatLab.noiseBuffer = beatLab.createNoiseBuffer();
+          }
+          beatLab.soundProfile = "mpc";
+          StudioSoundKit.play(
+            audio,
+            "mpc",
+            activeTrack,
+            audio.currentTime,
+            beatLab.noiseBuffer
+          );
+        } catch (error) {
+          status("MPC audio could not start: " + (error?.message || error));
+        }
       });
       pads.appendChild(pad);
     }
