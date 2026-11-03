@@ -270,51 +270,17 @@ export default {
       window.__lamboCityFloor2ArrivalProgress = t;
       const eased = t * t * t * (t * (6 * t - 15) + 10); // smootherstep
 
-      // Route around the left end of the producer desk, then approach
-      // the chair from its open side. The previous straight-line
-      // interpolation crossed the desk despite its normal-walk collider.
-      const route = [
-        { x: arrivalStart.x, z: arrivalStart.z },
-        { x: arrivalStart.x, z: PRODUCER_SEAT.z },
-        { x: PRODUCER_SEAT.x - 3.9, z: PRODUCER_SEAT.z },
-        { x: PRODUCER_SEAT.x, z: PRODUCER_SEAT.z }
-      ];
-
-      const lengths = [];
-      let routeLength = 0;
-      for (let i = 0; i < route.length - 1; i++) {
-        const dx = route[i + 1].x - route[i].x;
-        const dz = route[i + 1].z - route[i].z;
-        const length = Math.hypot(dx, dz);
-        lengths.push(length);
-        routeLength += length;
-      }
-
-      let remaining = routeLength * eased;
-      let segment = 0;
-      while (segment < lengths.length - 1 && remaining > lengths[segment]) {
-        remaining -= lengths[segment];
-        segment++;
-      }
-
-      const segmentProgress = lengths[segment] > 0
-        ? Math.min(1, remaining / lengths[segment])
-        : 1;
-      const from = route[segment];
-      const to = route[segment + 1];
-
       arrivalPlayer.position.set(
-        from.x + (to.x - from.x) * segmentProgress,
+        arrivalStart.x + (PRODUCER_SEAT.x - arrivalStart.x) * eased,
         PRODUCER_SEAT.y,
-        from.z + (to.z - from.z) * segmentProgress
+        arrivalStart.z + (PRODUCER_SEAT.z - arrivalStart.z) * eased
       );
 
-      // Face the current leg of the path, then turn toward the desk
-      // as the character settles into the producer chair.
-      const travelX = to.x - from.x;
-      const travelZ = to.z - from.z;
+      // Keep the original walk-in direction from the first studio arrival design.
+      const travelX = PRODUCER_SEAT.x - arrivalStart.x;
+      const travelZ = PRODUCER_SEAT.z - arrivalStart.z;
       const travelYaw = Math.atan2(travelX, travelZ);
-      const turnProgress = Math.max(0, Math.min(1, (t - 0.88) / 0.12));
+      const turnProgress = Math.max(0, Math.min(1, (t - 0.78) / 0.22));
       const smoothTurn = turnProgress * turnProgress * (3 - 2 * turnProgress);
       const yawDelta = Math.atan2(
         Math.sin(Math.PI - travelYaw),
