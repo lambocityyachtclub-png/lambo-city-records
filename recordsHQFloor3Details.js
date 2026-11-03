@@ -172,10 +172,7 @@ export default {
     });
     addBox(group, new THREE.BoxGeometry(8.8, 0.018, 0.035), brass, 0, 0.025, 3.05);
 
-    // A restrained glazed accent panel adds depth beside the executive identity wall.
-    addBox(group, new THREE.BoxGeometry(0.72, 2.15, 0.055), glass, -5.0, 2.0, 5.72);
-    addBox(group, new THREE.BoxGeometry(0.78, 0.045, 0.075), brass, -5.0, 3.1, 5.68);
-    addBox(group, new THREE.BoxGeometry(0.78, 0.045, 0.075), brass, -5.0, 0.9, 5.68);
+    // Decorative glazed divider removed to keep Floor 3 circulation open.
 
     scene.add(group);
     return group;
