@@ -46,6 +46,7 @@ export function createStudioDAWEditPanel({
             BPM
             <input data-session-tempo type="number" min="60" max="180" step="1" value="${StudioMultitrackWorkspace.tempo}" style="width:68px;min-height:42px;padding:7px;border:1px solid #665438;border-radius:7px;background:#11151d;color:#f4f1eb">
           </label>
+          <button type="button" data-session-record style="min-height:46px;padding:10px 15px;border:1px solid #9b7948;border-radius:8px;background:#5a2525;color:#fff;font-weight:800">● REC</button>
           <button type="button" data-session-play style="min-height:46px;padding:10px 15px;border:1px solid #9b7948;border-radius:8px;background:#594321;color:#fff;font-weight:800">▶ PLAY</button>
           <button type="button" data-session-stop style="min-height:46px;padding:10px 15px;border:1px solid #454958;border-radius:8px;background:#222631;color:#f4f1eb;font-weight:800">■ STOP</button>
           <button type="button" data-switch-beatlab aria-label="Switch to Digital Beat Lab" style="min-height:46px;padding:10px 15px;border:1px solid #9b7948;border-radius:8px;background:#211d16;color:#f1d49c;font-weight:800;touch-action:manipulation">← DIGITAL BEAT LAB</button>
@@ -55,11 +56,18 @@ export function createStudioDAWEditPanel({
       header.querySelector("[data-switch-beatlab]").addEventListener("click", () => {
         this.onSwitchToBeatLab?.();
       });
+      header.querySelector("[data-session-record]").addEventListener("click", () => {
+        void StudioMultitrackWorkspace.startArmedRecording();
+      });
       header.querySelector("[data-session-play]").addEventListener("click", () => {
         void StudioMultitrackWorkspace.playAll();
       });
       header.querySelector("[data-session-stop]").addEventListener("click", () => {
-        StudioMultitrackWorkspace.stopAll();
+        if (StudioMultitrackWorkspace.isTrackRecording()) {
+          void StudioMultitrackWorkspace.stopArmedRecording();
+        } else {
+          StudioMultitrackWorkspace.stopAll();
+        }
       });
       const tempoInput = header.querySelector("[data-session-tempo]");
       tempoInput.addEventListener("change", () => {
