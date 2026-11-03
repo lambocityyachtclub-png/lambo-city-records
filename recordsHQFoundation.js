@@ -269,7 +269,7 @@ export default {
     );
 
     // West / dock-facing glass is split around a wide passenger door.
-    [-2.10, 2.10].forEach(z => {
+    [-2.35, 2.35].forEach(z => {
       box(
         elevator,
         new THREE.BoxGeometry(0.10, 26.4, 0.40),
@@ -436,7 +436,7 @@ export default {
         "recordsDockSidePortal",
         { x: -2.90, y: floorY, z: 0 },
         -Math.PI / 2,
-        3.80,
+        4.30,
         "dock"
       );
 
