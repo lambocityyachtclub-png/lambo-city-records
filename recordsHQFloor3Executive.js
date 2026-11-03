@@ -27,12 +27,12 @@ const FLOOR_Y = 20.28;
 // Seat and screen positions share this slot map so the room layout,
 // future avatar seating, and live video grid stay in sync.
 const FLOOR3_CONFERENCE_SLOTS = [
-  { seat: [-2.35, 1.45, 0], tile: [-3.25, 1.35] },
-  { seat: [-0.78, 1.45, 0], tile: [0, 1.35] },
-  { seat: [0.78, 1.45, 0], tile: [3.25, 1.35] },
-  { seat: [2.35, 1.45, 0], tile: [-3.25, 3.0] },
-  { seat: [-3.62, -1.48, Math.PI / 2], tile: [0, 3.0] },
-  { seat: [3.62, -1.48, -Math.PI / 2], tile: [3.25, 3.0] }
+  { seat: [-2.35, 1.45, 0], tile: [-3.25, 1.15] },
+  { seat: [-0.78, 1.45, 0], tile: [0, 1.15] },
+  { seat: [0.78, 1.45, 0], tile: [3.25, 1.15] },
+  { seat: [2.35, 1.45, 0], tile: [-3.25, 2.75] },
+  { seat: [-3.62, -1.48, Math.PI / 2], tile: [0, 2.75] },
+  { seat: [3.62, -1.48, -Math.PI / 2], tile: [3.25, 2.75] }
 ];
 export const FLOOR3_CONFERENCE_CAPACITY = FLOOR3_CONFERENCE_SLOTS.length;
 
@@ -245,11 +245,11 @@ export default {
     const acoustic = material(0x252832, { roughness: 0.94, metalness: 0.02 });
 
     // One clean architectural frame makes the larger display the room's focal point.
-    box(presentation, new THREE.BoxGeometry(11.2, 4.45, 0.24), walnut, 0, 2.2, -5.88);
-    box(presentation, new THREE.BoxGeometry(10.65, 4.18, 0.10), acoustic, 0, 2.2, -5.70);
-    box(presentation, new THREE.BoxGeometry(10.72, 0.075, 0.08), gold, 0, 4.43, -5.60);
-    box(presentation, new THREE.BoxGeometry(10.72, 0.075, 0.08), gold, 0, 0.0, -5.60);
-    [-5.35, 5.35].forEach(x => box(presentation, new THREE.BoxGeometry(0.075, 4.35, 0.08), gold, x, 2.2, -5.60));
+    box(presentation, new THREE.BoxGeometry(11.2, 3.35, 0.24), walnut, 0, 1.95, -5.88);
+    box(presentation, new THREE.BoxGeometry(10.65, 3.15, 0.10), acoustic, 0, 1.95, -5.70);
+    box(presentation, new THREE.BoxGeometry(10.72, 0.075, 0.08), gold, 0, 3.625, -5.60);
+    box(presentation, new THREE.BoxGeometry(10.72, 0.075, 0.08), gold, 0, 0.275, -5.60);
+    [-5.35, 5.35].forEach(x => box(presentation, new THREE.BoxGeometry(0.075, 3.35, 0.08), gold, x, 1.95, -5.60));
 
     const displayGlass = new THREE.MeshStandardMaterial({
       color: 0x080d16,
@@ -258,7 +258,7 @@ export default {
       roughness: 0.16,
       metalness: 0.34
     });
-    box(presentation, new THREE.BoxGeometry(10.25, 3.85, 0.075), displayGlass, 0, 2.3, -5.53);
+    box(presentation, new THREE.BoxGeometry(10.25, 2.95, 0.075), displayGlass, 0, 1.95, -5.53);
 
     presentation.userData.conferenceCapacity = FLOOR3_CONFERENCE_CAPACITY;
     const tileMats = [0x152534, 0x24202a, 0x1b2a30, 0x25222b, 0x182832, 0x29251f]
@@ -270,7 +270,7 @@ export default {
       tile.name = "floor3ConferenceScreenSlot-" + (tileIndex + 1);
       tile.userData.conferenceSlotIndex = tileIndex;
       tile.position.set(x, y, -5.475);
-      box(tile, new THREE.BoxGeometry(3.0, 1.55, 0.035), tileMats[tileIndex], 0, 0, 0);
+      box(tile, new THREE.BoxGeometry(3.0, 1.35, 0.035), tileMats[tileIndex], 0, 0, 0);
 
       const avatarMat = material(
         [0xb58b67, 0x9bafba, 0xc49a76, 0x8b9a9f, 0xc6a17d, 0xa6a0b6][tileIndex],
@@ -289,9 +289,9 @@ export default {
         new THREE.CircleGeometry(0.05, 12),
         new THREE.MeshBasicMaterial({ color: 0x71d6a1 })
       );
-      liveDot.position.set(-1.30, -0.62, 0.065);
+      liveDot.position.set(-1.30, -0.55, 0.065);
       tile.add(liveDot);
-      box(tile, new THREE.BoxGeometry(0.62, 0.04, 0.018), gold, 1.02, -0.62, 0.06);
+      box(tile, new THREE.BoxGeometry(0.62, 0.04, 0.018), gold, 1.02, -0.55, 0.06);
       presentation.add(tile);
     });
 
@@ -302,12 +302,12 @@ export default {
     for (let i = 0; i < 7; i++) {
       const rightSlatX = 5.78 + i * 0.18;
       const leftSlatX = -6.05 - i * 0.18;
-      box(presentation, new THREE.BoxGeometry(0.075, 3.2, 0.12), walnut, rightSlatX, 2.0, -5.53);
-      box(presentation, new THREE.BoxGeometry(0.075, 3.2, 0.12), walnut, leftSlatX, 2.0, -5.53);
+      box(presentation, new THREE.BoxGeometry(0.075, 2.8, 0.12), walnut, rightSlatX, 1.95, -5.53);
+      box(presentation, new THREE.BoxGeometry(0.075, 2.8, 0.12), walnut, leftSlatX, 1.95, -5.53);
     }
 
     const mediaGlow = new THREE.PointLight(0x8bb8ff, 0.28, 8);
-    mediaGlow.position.set(0, 2.5, -4.35);
+    mediaGlow.position.set(0, 1.95, -4.35);
     presentation.add(mediaGlow);
     group.add(presentation);
 
