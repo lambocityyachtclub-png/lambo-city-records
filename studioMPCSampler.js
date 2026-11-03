@@ -271,7 +271,7 @@ const MPCSampler = {
     const gain = audio.createGain();
     source.buffer = buffer;
     source.playbackRate.value = Math.max(0.5, Math.min(2, Number(options.pitch) || 1));
-    gain.gain.value = Math.max(0, Math.min(1.5, Number(options.velocity) || 1))
+    const peak = Math.max(0, Math.min(1.5, Number(options.velocity) || 1))
       * Math.max(0, Math.min(1.5, Number(options.volume ?? 1)));
     const panner = audio.createStereoPanner ? audio.createStereoPanner() : null;
     source.connect(gain);
@@ -281,9 +281,14 @@ const MPCSampler = {
       panner.connect(this.ensureOutput(audio));
     } else gain.connect(this.ensureOutput(audio));
     const when = Math.max(audio.currentTime, Number(options.when) || audio.currentTime);
-    if (Number.isFinite(Number(options.decay)) && Number(options.decay) < 10) {
-      gain.gain.setTargetAtTime(0.0001, when + Number(options.decay), 0.015);
-    }
+    const playbackDuration = Math.max(0.01, end - start) / source.playbackRate.value;
+    const requestedDecay = Number(options.decay);
+    const audibleDuration = Number.isFinite(requestedDecay) && requestedDecay < 10
+      ? Math.min(playbackDuration, Math.max(0.05, requestedDecay))
+      : playbackDuration;
+    gain.gain.setValueAtTime(0.0001, when);
+    gain.gain.exponentialRampToValueAtTime(Math.max(0.001, peak), when + 0.003);
+    gain.gain.setTargetAtTime(0.0001, Math.max(when + 0.004, when + audibleDuration - 0.008), 0.008);
     source.start(when, start, Math.max(0.01, end - start));
     return source;
   },
