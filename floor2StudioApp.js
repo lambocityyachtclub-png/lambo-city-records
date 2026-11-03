@@ -1317,6 +1317,26 @@ StudioSoundKit.play(
     );
   }
 },
+  saveMPCPerformance(take) {
+    if (!this.currentProject || !take || !Array.isArray(take.events)) return false;
+    this.currentProject.mpcPerformance = {
+      events: take.events.map(event => ({
+        pad: Number(event.pad),
+        bank: String(event.bank || "A"),
+        soundId: String(event.soundId || ""),
+        at: Math.max(0, Number(event.at) || 0)
+      })),
+      duration: Math.max(0, Number(take.duration) || 0)
+    };
+    try {
+      saveSongProject(this.currentProject);
+      return true;
+    } catch (error) {
+      console.error("LAMBO CITY MPC performance save error:", error);
+      return false;
+    }
+  },
+
   loadSongProject() {
   try {
     const projects = listSongProjects();
