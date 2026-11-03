@@ -574,7 +574,7 @@ function updateStudioCamera(
 // ============================================================
 
 function updateStudioSessionCamera(player, smooth = 0.22) {
-  const yaw = Number(window.__lamboCityFloor2OrbitYaw ?? Math.PI);
+  const yaw = Number(window.__lamboCityFloor2OrbitYaw ?? 0);
   const pitch = Number(window.__lamboCityFloor2OrbitPitch ?? 0.08);
   const radius = 5.25;
 
