@@ -219,6 +219,20 @@ function validateProject(project) {
       if (!Number.isFinite(event.at) || event.at < 0) {
         throw new Error("MPC pad event timing is invalid.");
       }
+      if (event.sampleId !== undefined && event.sampleId !== null) {
+        requireId(event.sampleId, "MPC sample reference is invalid.");
+      }
+      if (event.velocity !== undefined && (!Number.isFinite(Number(event.velocity)) || Number(event.velocity) < 0 || Number(event.velocity) > 1.5)) {
+        throw new Error("MPC pad velocity is invalid.");
+      }
+      if (event.sampleSettings !== undefined && event.sampleSettings !== null) {
+        requireObject(event.sampleSettings, "MPC sample settings are invalid.");
+        for (const field of ["start", "end", "pitch", "decay"]) {
+          if (event.sampleSettings[field] !== undefined && !Number.isFinite(Number(event.sampleSettings[field]))) {
+            throw new Error("MPC sample settings are invalid.");
+          }
+        }
+      }
       if (event.sound !== undefined && event.sound !== null) {
         requireObject(event.sound, "MPC sound preset data is invalid.");
         requireId(event.sound.id, "MPC sound preset ID is missing.");
@@ -231,6 +245,31 @@ function validateProject(project) {
             throw new Error("MPC sound preset settings are invalid.");
           }
         }
+      }
+    }
+  }
+
+  if (project.mpcAssets !== undefined) {
+    if (!Array.isArray(project.mpcAssets) || project.mpcAssets.length > 256) {
+      throw new Error("MPC sample assets are invalid.");
+    }
+    const assetIds = new Set();
+    let encodedBytes = 0;
+    for (const asset of project.mpcAssets) {
+      requireObject(asset, "Invalid MPC sample asset.");
+      requireId(asset.id, "MPC sample asset ID is missing.");
+      requireId(asset.name, "MPC sample asset name is missing.");
+      if (typeof asset.data !== "string" || asset.data.length > 54000000) {
+        throw new Error("MPC sample asset data is invalid.");
+      }
+      if (assetIds.has(asset.id)) throw new Error("Duplicate MPC sample asset.");
+      assetIds.add(asset.id);
+      encodedBytes += asset.data.length;
+      if (encodedBytes > 54000000) throw new Error("MPC sample assets exceed the portable project limit.");
+    }
+    for (const event of project.mpcPerformance?.events || []) {
+      if (event.sampleId && !assetIds.has(event.sampleId)) {
+        throw new Error("An MPC pad event references a sample that is missing from this project package.");
       }
     }
   }
