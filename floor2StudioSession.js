@@ -23,7 +23,7 @@ const PRODUCER_SEAT = {
   z: HQ_Z - 2.15
 };
 
-const ELEVATOR_ARRIVAL_SECONDS = 3.0;
+const ELEVATOR_ARRIVAL_SECONDS = 1.8;
 
 let playerSystem = null;
 let renderer = null;
@@ -269,7 +269,7 @@ export default {
       arrivalElapsed += delta;
       const t = Math.min(1, arrivalElapsed / ELEVATOR_ARRIVAL_SECONDS);
       window.__lamboCityFloor2ArrivalProgress = t;
-      const eased = t * t * (3 - 2 * t);
+      const eased = t * t * t * (t * (6 * t - 15) + 10); // smootherstep
 
       arrivalPlayer.position.set(
         arrivalStart.x + (PRODUCER_SEAT.x - arrivalStart.x) * eased,
