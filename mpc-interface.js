@@ -463,6 +463,7 @@ const MPCInterface = {
         const value = Number(event.target.value) || 0;
         StudioMPCSampler.setMasterVolume(value / 100);
         StudioMPCLibrary.setMasterVolume(value / 100);
+        localStorage.setItem("lambocity-mpc-master-v1", String(value));
         const out = root.querySelector("[data-mpc-master-value]");
         if (out) out.textContent = value + "%";
       }
@@ -625,6 +626,12 @@ const MPCInterface = {
     this.refreshLibraryUI();
     this.refreshPadMixControls();
     this.refreshProjectHeader();
+    const savedMaster = Number(localStorage.getItem("lambocity-mpc-master-v1"));
+    const masterValue = Number.isFinite(savedMaster) ? Math.max(0, Math.min(100, savedMaster)) : 82;
+    const masterInput = root.querySelector("[data-mpc-master]");
+    if (masterInput) masterInput.value = String(masterValue);
+    StudioMPCSampler.setMasterVolume(masterValue / 100);
+    StudioMPCLibrary.setMasterVolume(masterValue / 100);
     for (const button of root.querySelectorAll(".bank-btn")) button.classList.toggle("active", button.dataset.placeholder === "BANK A");
     void this.refreshImportedSamples();
     void this.preloadAssignedSamples();
@@ -669,6 +676,7 @@ const MPCInterface = {
     if (!this.root) return;
     this.selectedPad = padNumber;
     this.updatePadReadout();
+    if (this.root.querySelector('[data-mpc-panel="SAMPLE"].active')) void this.refreshSampleEditor();
     const importedSampleId = StudioMPCSampler.getAssignment(this.bank, padNumber);
     const sound = StudioMPCLibrary.getAssignment(this.bank, padNumber);
     this.refreshPadMixControls();
@@ -788,7 +796,10 @@ const MPCInterface = {
   async refreshSampleEditor() {
     if (!this.root) return;
     const select = this.root.querySelector("[data-mpc-editor-sample]");
-    if (!select?.value) return;
+    if (!select) return;
+    const assignedSample = StudioMPCSampler.getAssignment(this.bank, this.selectedPad);
+    if (assignedSample && Array.from(select.options).some(option => option.value === assignedSample)) select.value = assignedSample;
+    if (!select.value) return;
     const settings = StudioMPCSampler.getPadSettings(this.bank, this.selectedPad);
     const start = this.root.querySelector("[data-mpc-start]");
     const end = this.root.querySelector("[data-mpc-end]");
