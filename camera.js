@@ -712,16 +712,12 @@ function installFloor3LookControls() {
   window.addEventListener("pointermove", event => {
     if (lookDragPointerId !== event.pointerId) return;
     const dx = event.clientX - lookPointerX;
-    const dy = event.clientY - lookPointerY;
     lookPointerX = event.clientX;
     lookPointerY = event.clientY;
 
+    // Floor 3 rotates around the six-person display; vertical drag
+    // does not move the fixed screen focal point.
     lookYawOffset += dx * 0.0042;
-    lookPitchOffset = THREE.MathUtils.clamp(
-      lookPitchOffset - dy * 0.0036,
-      -0.55,
-      0.55
-    );
     event.preventDefault();
   }, { passive: false });
 
@@ -743,16 +739,17 @@ function updateFloor3POVCamera(player, delta = 0.016) {
     camera.updateProjectionMatrix();
   }
 
-  const yaw = player.rotation.y + lookYawOffset;
-  const pitch = lookPitchOffset;
-  const horizontal = Math.cos(pitch);
-  // The player head is centered at 3.15 units; place the camera at
-  // eye height and blend out of the elevator's trailing camera.
-  const eyeY = player.position.y + 3.15;
+  // The six-person display is the permanent focal point. The camera
+  // moves around it in a level 360-degree circle, keeping the same
+  // viewing height and radius instead of following player movement.
+  const focus = new THREE.Vector3(28, 22.23, 27.53);
+  const orbitRadius = 2.73;
+  const orbitHeight = 1.20;
+  const yaw = lookYawOffset;
   const targetPosition = new THREE.Vector3(
-    player.position.x,
-    eyeY,
-    player.position.z
+    focus.x + Math.sin(yaw) * orbitRadius,
+    focus.y + orbitHeight,
+    focus.z - Math.cos(yaw) * orbitRadius
   );
 
   if (!floor3POVActive) {
@@ -760,7 +757,7 @@ function updateFloor3POVCamera(player, delta = 0.016) {
     floor3POVBlend = 0;
   }
 
-  floor3POVBlend = Math.min(1, floor3POVBlend + delta / 0.12);
+  floor3POVBlend = Math.min(1, floor3POVBlend + delta / 0.45);
   if (floor3POVBlend < 1) {
     const blend = floor3POVBlend * floor3POVBlend * (3 - 2 * floor3POVBlend);
     camera.position.lerp(targetPosition, blend);
@@ -768,11 +765,7 @@ function updateFloor3POVCamera(player, delta = 0.016) {
     camera.position.copy(targetPosition);
   }
 
-  camera.lookAt(
-    player.position.x + Math.sin(yaw) * horizontal * 12,
-    eyeY + Math.sin(pitch) * 12,
-    player.position.z + Math.cos(yaw) * horizontal * 12
-  );
+  camera.lookAt(focus);
 }
 
 
