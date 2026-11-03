@@ -1197,7 +1197,7 @@ export default {
       black,
       -0.08,
       1.105,
-      1.12
+      0.12
     );
 
     box(
@@ -1206,7 +1206,7 @@ export default {
       gold,
       -0.08,
       1.155,
-      1.12
+      0.12
     );
 
     // Four mastering / output controls.
@@ -1217,7 +1217,7 @@ export default {
         goldGlow,
         x - 0.08,
         1.215,
-        1.12
+        0.12
       );
     });
 
@@ -1228,7 +1228,7 @@ export default {
       glass,
       -0.08,
       1.205,
-      1.42
+      0.42
     );
 
     label(
@@ -1236,7 +1236,7 @@ export default {
       "MIX • MASTER",
       -0.08,
       2.05,
-      1.12,
+      0.12,
       2.1
     );
 
