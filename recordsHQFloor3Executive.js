@@ -201,7 +201,6 @@ export default {
     // The rear elevator landing opens into an uninterrupted circulation aisle.
 
     // =========================================================
-    // EXECUTIVE CONFERENCE TABLE    // =========================================================
     // EXECUTIVE CONFERENCE TABLE — SIX SEATS, CLEAR ARRIVAL AISLE
     // =========================================================
     const meeting = new THREE.Group();
