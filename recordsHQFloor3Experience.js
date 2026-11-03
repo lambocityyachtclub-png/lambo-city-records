@@ -12,13 +12,13 @@ const ACTIVATION_DISTANCE = 3.8;
 const ROOMS = [
   {
     id: "meeting",
-    name: "Executive Meeting Room",
+    name: "Executive Conference Room",
     localX: 0,
-    localZ: 0.15,
+    localZ: -1.55,
     eyebrow: "STRATEGY • LEADERSHIP",
-    title: "The Executive Table",
+    title: "The Executive Conference Suite",
     description: "A private setting for leadership conversations, planning sessions and decisions shaping the next chapter of LAMBO CITY.",
-    points: ["Leadership discussions", "Project and milestone reviews", "Private working sessions"]
+    points: ["Six-seat conference table", "Large six-participant display wall", "Team decisions and project reviews"]
   },
   {
     id: "presentation",
@@ -32,12 +32,12 @@ const ROOMS = [
   },
   {
     id: "boardroom",
-    name: "Glass Boardroom",
-    localX: -6,
-    localZ: 0,
+    name: "Private Boardroom",
+    localX: -7.45,
+    localZ: 2.2,
     eyebrow: "PRIVATE • EXECUTIVE",
-    title: "The Boardroom",
-    description: "A focused glass-walled meeting space designed for smaller executive conversations and confidential planning.",
+    title: "The Private Boardroom",
+    description: "A quieter side-room for smaller executive conversations, set away from the elevator arrival route.",
     points: ["Executive reviews", "Private discussions", "Planning and evaluation"]
   },
   {
