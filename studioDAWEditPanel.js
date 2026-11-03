@@ -1,4 +1,5 @@
 import StudioMultitrackWorkspace from "./studioMultitrackWorkspace.js";
+import { renderStudioSessionToWav, downloadStudioWav } from "./studioDAWExport.js";
 
 /*
  * LAMBO CITY RECORDS
@@ -49,6 +50,7 @@ export function createStudioDAWEditPanel({
           <button type="button" data-session-record style="min-height:46px;padding:10px 15px;border:1px solid #9b7948;border-radius:8px;background:#5a2525;color:#fff;font-weight:800">● REC</button>
           <button type="button" data-session-play style="min-height:46px;padding:10px 15px;border:1px solid #9b7948;border-radius:8px;background:#594321;color:#fff;font-weight:800">▶ PLAY</button>
           <button type="button" data-session-stop style="min-height:46px;padding:10px 15px;border:1px solid #454958;border-radius:8px;background:#222631;color:#f4f1eb;font-weight:800">■ STOP</button>
+          <button type="button" data-session-export-wav style="min-height:46px;padding:10px 15px;border:1px solid #9b7948;border-radius:8px;background:#201c16;color:#f1d49c;font-weight:800">EXPORT WAV</button>
           <button type="button" data-switch-beatlab aria-label="Switch to Digital Beat Lab" style="min-height:46px;padding:10px 15px;border:1px solid #9b7948;border-radius:8px;background:#211d16;color:#f1d49c;font-weight:800;touch-action:manipulation">← DIGITAL BEAT LAB</button>
         </div>
       `;
@@ -66,6 +68,25 @@ export function createStudioDAWEditPanel({
         StudioMultitrackWorkspace.stopAll();
         if (StudioMultitrackWorkspace.isTrackRecording()) {
           void StudioMultitrackWorkspace.stopArmedRecording();
+        }
+      });
+      header.querySelector("[data-session-export-wav]").addEventListener("click", async event => {
+        const button = event.currentTarget;
+        button.disabled = true;
+        button.textContent = "RENDERING…";
+        try {
+          const wav = await renderStudioSessionToWav({
+            tracks: StudioMultitrackWorkspace.tracks,
+            tempo: StudioMultitrackWorkspace.tempo,
+            masterVolume: 1
+          });
+          downloadStudioWav(wav, beatLab.currentProject?.metadata?.title || "lambo-city-song");
+          StudioMultitrackWorkspace.status("WAV master exported.");
+        } catch (error) {
+          StudioMultitrackWorkspace.status("WAV EXPORT ERROR: " + (error?.message || error));
+        } finally {
+          button.disabled = false;
+          button.textContent = "EXPORT WAV";
         }
       });
       const tempoInput = header.querySelector("[data-session-tempo]");
