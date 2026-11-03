@@ -264,7 +264,8 @@ function updateStudioArrivalCamera(player, delta) {
   // Keep the same natural third-person follow used during normal walking.
   // No cinematic side-shot transitions, push-ins, or zoom toward the player.
   const yaw = player.rotation.y;
-  const back = FOLLOW_DISTANCE;
+  // A slightly wider arrival frame keeps the character and cockpit route visible.
+  const back = 9.2;
   const cameraX = THREE.MathUtils.clamp(
     player.position.x - Math.sin(yaw) * back,
     HQ_MIN_X + 0.9,
@@ -278,7 +279,7 @@ function updateStudioArrivalCamera(player, delta) {
 
   const desired = new THREE.Vector3(
     cameraX,
-    player.position.y + FOLLOW_HEIGHT,
+    player.position.y + 4.45,
     cameraZ
   );
 
