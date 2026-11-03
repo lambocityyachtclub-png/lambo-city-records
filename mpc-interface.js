@@ -204,6 +204,7 @@ function makeStyles() {
   #${ROOT_ID} .mpc-unit{min-height:0}
   #${ROOT_ID} .mpc-upper{min-height:190px}
   #${ROOT_ID} .mpc-main{min-height:210px}
+}
 #${ROOT_ID} .mpc-upper{grid-template-columns:minmax(0,1fr);min-height:clamp(270px,34vw,410px)}
 #${ROOT_ID} .mpc-screen-frame{width:100%;min-height:clamp(270px,34vw,410px)}
 #${ROOT_ID} .mpc-screen{min-height:clamp(255px,32vw,390px)}
@@ -232,8 +233,6 @@ function makeStyles() {
   #${ROOT_ID} .pads-area{gap:7px;padding:2px}
   #${ROOT_ID} .pad-wrap{margin-bottom:16px}
   #${ROOT_ID} .pad-label{font-size:7px}
-}
-
 }
 `;
 }
