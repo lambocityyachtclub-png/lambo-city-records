@@ -305,17 +305,31 @@ export default {
 
       });
 
-    // Smoky architectural glazing keeps the exterior view clear
-    // without making the room read as bright blue glass.
+    // Clear, low-tint architectural glass for the exterior windows.
     const windowGlass = new THREE.MeshStandardMaterial({
-      color: 0x8795a3,
-      emissive: 0x1b2630,
-      emissiveIntensity: 0.16,
+      color: 0xc6d3dc,
+      emissive: 0x101820,
+      emissiveIntensity: 0.06,
       transparent: true,
-      opacity: 0.20,
-      roughness: 0.16,
-      metalness: 0.28,
-      side: THREE.DoubleSide
+      opacity: 0.10,
+      roughness: 0.12,
+      metalness: 0.12,
+      side: THREE.DoubleSide,
+      depthWrite: false
+    });
+
+    // Near-clear booth glazing keeps the vocalist and acoustic
+    // treatment readable from the control room.
+    const boothGlass = new THREE.MeshStandardMaterial({
+      color: 0xe3edf2,
+      emissive: 0x17232c,
+      emissiveIntensity: 0.04,
+      transparent: true,
+      opacity: 0.075,
+      roughness: 0.08,
+      metalness: 0.05,
+      side: THREE.DoubleSide,
+      depthWrite: false
     });
 
     const red =
@@ -823,7 +837,7 @@ export default {
         3.15,
         0.10
       ),
-      glass,
+      boothGlass,
       boothX,
       1.8,
       boothZ - 1.52
@@ -838,7 +852,7 @@ export default {
         3.15,
         3.05
       ),
-      glass,
+      boothGlass,
       boothX + 2.12,
       1.8,
       boothZ
@@ -941,13 +955,35 @@ export default {
       micZ
     );
 
+    // Warm interior lighting reveals the microphone and burgundy panels.
+    const boothInteriorLight = new THREE.PointLight(0xffbd78, 0.85, 5.8);
+    boothInteriorLight.position.set(boothX, 2.75, boothZ + 0.15);
+    booth.add(boothInteriorLight);
+
+    // Distinct illuminated identity sign above the booth glazing.
+    box(
+      booth,
+      new THREE.BoxGeometry(2.15, 0.34, 0.08),
+      black,
+      boothX,
+      3.78,
+      boothZ - 1.62
+    );
+    box(
+      booth,
+      new THREE.BoxGeometry(1.98, 0.035, 0.10),
+      goldGlow,
+      boothX,
+      3.59,
+      boothZ - 1.62
+    );
     label(
       booth,
-      "VOCAL RECORDING",
+      "VOCAL BOOTH • RECORDING",
       boothX,
-      3.86,
-      boothZ - 1.62,
-      4.8
+      3.84,
+      boothZ - 1.68,
+      3.9
     );
 
     group.add(
@@ -1154,32 +1190,40 @@ export default {
 
     group.add(controlRoom);
 
-    // Glass divider: live drum room on the left, producer control room on the right.
+    // Glass divider between the live room and control room.
+    // A full-height 2.8-unit opening aligns with the elevator-to-chair
+    // arrival path, so the character walks through a real doorway.
     box(
       controlRoom,
-      new THREE.BoxGeometry(0.10, 3.35, 12.0),
+      new THREE.BoxGeometry(0.10, 3.35, 9.15),
       windowGlass,
       -1.65,
       1.88,
-      0.05
+      1.45
     );
-    box(
-      controlRoom,
-      new THREE.BoxGeometry(0.14, 0.08, 12.0),
-      gold,
-      -1.65,
-      3.58,
-      0.05
-    );
-    box(
-      controlRoom,
-      new THREE.BoxGeometry(0.14, 0.08, 12.0),
-      gold,
-      -1.65,
-      0.20,
-      0.05
-    );
-    [-5.9, 0, 5.9].forEach(z => {
+
+    // Gold rails define the opening without blocking the walking line.
+    [[-3.15, 1.40], [1.45, 4.60]].forEach(([z, length]) => {
+      box(
+        controlRoom,
+        new THREE.BoxGeometry(0.14, 0.08, length),
+        gold,
+        -1.65,
+        3.58,
+        z
+      );
+      box(
+        controlRoom,
+        new THREE.BoxGeometry(0.14, 0.08, length),
+        gold,
+        -1.65,
+        0.20,
+        z
+      );
+    });
+
+    // Polished gold jambs frame the open passage.
+    [-5.95, -3.15, 1.45, 5.95].forEach(z => {
       box(
         controlRoom,
         new THREE.BoxGeometry(0.13, 3.35, 0.10),
