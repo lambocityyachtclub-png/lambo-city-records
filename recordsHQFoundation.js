@@ -416,7 +416,7 @@ export default {
       parent.add(portal);
     }
 
-    [4.2, 12.2, 20.2].forEach((floorY, index) => {
+    [1.3, 12.2, 20.2].forEach((floorY, index) => {
       const landing = new THREE.Group();
       landing.name = `recordsHQElevatorLandingDoorF${index + 1}`;
 
@@ -454,7 +454,7 @@ export default {
     });
 
     // Wider luxury floor bands follow the enlarged cabin footprint.
-    [4.2, 12.2, 20.2].forEach(y => {
+    [1.3, 12.2, 20.2].forEach(y => {
       box(
         elevator,
         new THREE.BoxGeometry(5.70, 0.10, 4.60),
