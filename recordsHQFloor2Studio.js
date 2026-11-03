@@ -305,6 +305,19 @@ export default {
 
       });
 
+    // Smoky architectural glazing keeps the exterior view clear
+    // without making the room read as bright blue glass.
+    const windowGlass = new THREE.MeshStandardMaterial({
+      color: 0x8795a3,
+      emissive: 0x1b2630,
+      emissiveIntensity: 0.16,
+      transparent: true,
+      opacity: 0.20,
+      roughness: 0.16,
+      metalness: 0.28,
+      side: THREE.DoubleSide
+    });
+
     const red =
       material(
         0x6d0b18,
@@ -361,10 +374,7 @@ export default {
     // =========================================================
     // 1. MPC / BEAT LAB
     //
-    // Left-middle.
-    //
-    // Angled inward so the artist sits naturally toward the
-    // room / exterior view rather than facing a flat wall.
+    // Main control-room side, facing the exterior stage glazing.
     // =========================================================
 
     const beatLab =
@@ -1104,7 +1114,7 @@ export default {
     box(
       controlRoom,
       new THREE.BoxGeometry(16.6, 3.55, 0.16),
-      glass,
+      windowGlass,
       0,
       2.05,
       -6.88
@@ -1148,7 +1158,7 @@ export default {
     box(
       controlRoom,
       new THREE.BoxGeometry(0.10, 3.35, 12.0),
-      glass,
+      windowGlass,
       -1.65,
       1.88,
       0.05
@@ -1547,6 +1557,37 @@ export default {
       0.55
     );
 
+    // Amber inlaid floor paths visually connect the live room and control room.
+    const controlFloorCurve = new THREE.CatmullRomCurve3([
+      new THREE.Vector3(-0.9, 0.14, 5.8),
+      new THREE.Vector3(1.4, 0.14, 4.0),
+      new THREE.Vector3(2.9, 0.14, 1.8),
+      new THREE.Vector3(2.5, 0.14, -0.6),
+      new THREE.Vector3(4.0, 0.14, -3.8),
+      new THREE.Vector3(7.1, 0.14, -5.7)
+    ]);
+    const controlFloorLine = new THREE.Mesh(
+      new THREE.TubeGeometry(controlFloorCurve, 56, 0.022, 8, false),
+      goldGlow
+    );
+    controlFloorLine.name = "floor2ControlRoomAmberInlay";
+    group.add(controlFloorLine);
+
+    const liveFloorCurve = new THREE.CatmullRomCurve3([
+      new THREE.Vector3(-8.0, 0.14, 5.8),
+      new THREE.Vector3(-6.7, 0.14, 3.8),
+      new THREE.Vector3(-7.0, 0.14, 1.0),
+      new THREE.Vector3(-6.2, 0.14, -1.7),
+      new THREE.Vector3(-7.8, 0.14, -4.0),
+      new THREE.Vector3(-8.0, 0.14, -5.8)
+    ]);
+    const liveFloorLine = new THREE.Mesh(
+      new THREE.TubeGeometry(liveFloorCurve, 56, 0.022, 8, false),
+      goldGlow
+    );
+    liveFloorLine.name = "floor2LiveRoomAmberInlay";
+    group.add(liveFloorLine);
+
     // =========================================================
     // 11. CEILING ARCHITECTURAL DETAILS
     // =========================================================
@@ -1556,6 +1597,53 @@ export default {
 
     ceiling.name =
       "floor2CeilingDetails";
+
+    // Floating acoustic soffit above the control-room desk.
+    box(
+      ceiling,
+      new THREE.BoxGeometry(10.2, 0.12, 12.8),
+      dark,
+      3.55,
+      4.02,
+      0
+    );
+    box(
+      ceiling,
+      new THREE.BoxGeometry(10.35, 0.045, 0.10),
+      goldGlow,
+      3.55,
+      3.94,
+      0
+    );
+
+    // Angled acoustic ceiling plane and two skylights over the live room.
+    box(
+      ceiling,
+      new THREE.BoxGeometry(7.0, 0.12, 12.8),
+      dark,
+      -5.2,
+      4.00,
+      0,
+      -0.08
+    );
+    [-2.7, 2.7].forEach(z => {
+      box(
+        ceiling,
+        new THREE.BoxGeometry(1.75, 0.045, 1.45),
+        windowGlass,
+        -5.4,
+        4.08,
+        z
+      );
+      box(
+        ceiling,
+        new THREE.BoxGeometry(1.88, 0.035, 0.07),
+        goldGlow,
+        -5.4,
+        4.12,
+        z - 0.76
+      );
+    });
 
     [-5.5, 0, 5.5]
       .forEach(
