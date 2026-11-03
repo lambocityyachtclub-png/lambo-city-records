@@ -303,21 +303,45 @@ function updateStudioSessionCamera(player, delta) {
   // The previous camera height rose above the acoustic ceiling, and its
   // 5.25-unit orbit could carry the view beyond the room perimeter.
   const radius = 3.65;
+  // Floor 2's raised acoustic ceiling sits below the Floor 3 slab.
+  // Keep the full 360 orbit inside the room's actual interior volume,
+  // not merely inside the larger HQ building footprint.
+  const ROOM_MIN_X = 19.65;
+  const ROOM_MAX_X = 36.35;
+  const ROOM_MIN_Z = 15.45;
+  const ROOM_MAX_Z = 28.05;
+  const ROOM_CEILING_Y = 17.85;
+
   const desired = new THREE.Vector3(
     THREE.MathUtils.clamp(
       player.position.x + Math.sin(yaw) * radius,
-      HQ_MIN_X + 0.9,
-      HQ_MAX_X - 0.9
+      ROOM_MIN_X,
+      ROOM_MAX_X
     ),
-    player.position.y + 2.35 + pitch * 1.2,
+    THREE.MathUtils.clamp(
+      player.position.y + 2.35 + pitch * 1.2,
+      player.position.y + 1.55,
+      ROOM_CEILING_Y
+    ),
     THREE.MathUtils.clamp(
       player.position.z + Math.cos(yaw) * radius,
-      HQ_MIN_Z + 0.9,
-      HQ_MAX_Z - 0.9
+      ROOM_MIN_Z,
+      ROOM_MAX_Z
     )
   );
 
   camera.position.lerp(desired, dampFactor(delta, 4.5));
+  // Clamp after interpolation as well, so a camera arriving from the
+  // elevator/arrival view can never drift above or outside the studio.
+  camera.position.x = THREE.MathUtils.clamp(
+    camera.position.x, ROOM_MIN_X, ROOM_MAX_X
+  );
+  camera.position.y = THREE.MathUtils.clamp(
+    camera.position.y, player.position.y + 1.55, ROOM_CEILING_Y
+  );
+  camera.position.z = THREE.MathUtils.clamp(
+    camera.position.z, ROOM_MIN_Z, ROOM_MAX_Z
+  );
   camera.lookAt(
     player.position.x,
     player.position.y + 1.55 + pitch * 0.25,
