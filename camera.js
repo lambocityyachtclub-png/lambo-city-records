@@ -857,7 +857,8 @@ export default {
     // portal; only then enter the Floor 3 first-person view.
     const floor3POVReady =
       currentHQFloor === 3 &&
-      player.position.z >= 14.7;
+      player.position.z >= 14.7 &&
+      window.__lamboCityFloor3ArrivalComplete !== false;
 
     player.visible = !floor3POVReady;
 
