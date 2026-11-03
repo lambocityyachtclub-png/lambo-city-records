@@ -500,23 +500,6 @@ function updateStudioArrivalCamera(player, smooth = 0.48) {
   cameraX = THREE.MathUtils.clamp(cameraX, 21.25, 34.75);
   cameraZ = THREE.MathUtils.clamp(cameraZ, 16.0, 26.5);
 
-  if (progress >= 1) {
-    // Hold a wider, slightly elevated view from inside the room so
-    // the player can take in the complete studio before the seated view.
-    moveCamera(
-      28.0,
-      player.position.y + 3.65,
-      26.55,
-      0.20
-    );
-    camera.lookAt(
-      28.0,
-      player.position.y + 1.45,
-      21.15
-    );
-    return;
-  }
-
   const cameraY = player.position.y + 2.45;
   moveCamera(cameraX, cameraY, cameraZ, smooth);
 
