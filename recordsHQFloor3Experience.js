@@ -34,7 +34,7 @@ const ROOMS = [
     id: "boardroom",
     name: "Private Boardroom",
     localX: -7.45,
-    localZ: 2.2,
+    localZ: 0.6,
     eyebrow: "PRIVATE • EXECUTIVE",
     title: "The Private Boardroom",
     description: "A quieter side-room for smaller executive conversations, set away from the elevator arrival route.",
