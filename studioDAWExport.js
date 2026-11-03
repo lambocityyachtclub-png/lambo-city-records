@@ -42,7 +42,7 @@ function encodeWav(audioBuffer) {
   return new Blob([output], { type: "audio/wav" });
 }
 
-export async function renderStudioSessionToWav({
+async function renderStudioSessionToAudioBuffer({
   tracks = [],
   tempo = 100,
   masterVolume = StudioAudioEngine.master?.gain?.value ?? 1
@@ -153,7 +153,82 @@ export async function renderStudioSessionToWav({
   });
 
   const rendered = await offline.startRendering();
-  return encodeWav(rendered);
+  return rendered;
+}
+
+export async function renderStudioSessionToWav(options = {}) {
+  const audioBuffer = await renderStudioSessionToAudioBuffer(options);
+  return encodeWav(audioBuffer);
+}
+
+let mp3EncoderLibraryPromise = null;
+
+async function loadMp3EncoderLibrary() {
+  if (window.lamejs?.Mp3Encoder) return window.lamejs;
+  if (mp3EncoderLibraryPromise) return mp3EncoderLibraryPromise;
+  mp3EncoderLibraryPromise = new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.async = true;
+    script.src = new URL("./vendor/lamejs/lame.min.js", import.meta.url).href;
+    script.onload = () => {
+      if (window.lamejs?.Mp3Encoder) resolve(window.lamejs);
+      else reject(new Error("The MP3 encoder loaded but its API was unavailable."));
+    };
+    script.onerror = () => {
+      mp3EncoderLibraryPromise = null;
+      reject(new Error("The local MP3 encoder could not be loaded."));
+    };
+    document.head.appendChild(script);
+  });
+  return mp3EncoderLibraryPromise;
+}
+
+export async function renderStudioSessionToMp3({
+  tracks = [],
+  tempo = 100,
+  masterVolume
+} = {}) {
+  const audioBuffer = await renderStudioSessionToAudioBuffer({ tracks, tempo, masterVolume });
+  const lamejs = await loadMp3EncoderLibrary();
+  const encoder = new lamejs.Mp3Encoder(2, SAMPLE_RATE, 192);
+  const left = audioBuffer.getChannelData(0);
+  const right = audioBuffer.numberOfChannels > 1
+    ? audioBuffer.getChannelData(1)
+    : left;
+  const sampleBlockSize = 1152;
+  const mp3Chunks = [];
+
+  for (let offset = 0; offset < audioBuffer.length; offset += sampleBlockSize) {
+    const length = Math.min(sampleBlockSize, audioBuffer.length - offset);
+    const leftSamples = new Int16Array(length);
+    const rightSamples = new Int16Array(length);
+    for (let index = 0; index < length; index += 1) {
+      const l = Math.max(-1, Math.min(1, left[offset + index]));
+      const r = Math.max(-1, Math.min(1, right[offset + index]));
+      leftSamples[index] = l < 0 ? l * 0x8000 : l * 0x7fff;
+      rightSamples[index] = r < 0 ? r * 0x8000 : r * 0x7fff;
+    }
+    const encoded = encoder.encodeBuffer(leftSamples, rightSamples);
+    if (encoded?.length) mp3Chunks.push(encoded);
+  }
+
+  const finalChunk = encoder.flush();
+  if (finalChunk?.length) mp3Chunks.push(finalChunk);
+  if (!mp3Chunks.length) throw new Error("The MP3 encoder did not produce audio data.");
+  return new Blob(mp3Chunks, { type: "audio/mpeg" });
+}
+
+export function downloadStudioMp3(blob, title = "lambo-city-song") {
+  if (!(blob instanceof Blob) || !blob.size) throw new Error("The MP3 export is empty.");
+  const safeName = String(title).replace(/[^a-z0-9 _-]/gi, "").trim().replace(/\\s+/g, "-") || "lambo-city-song";
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = safeName + ".mp3";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 60000);
 }
 
 export function downloadStudioWav(blob, title = "lambo-city-song") {
