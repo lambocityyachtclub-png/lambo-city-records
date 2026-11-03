@@ -46,10 +46,6 @@ import Floor2InstrumentApp from "./floor2InstrumentApp.js";
 import Floor2DrumStation from "./floor2DrumStation.js";
 import Floor2StudioNavigation from "./floor2StudioNavigation.js";
 import Floor2StudioSession from "./floor2StudioSession.js";
-import RecordsHQFloor3Executive from "./recordsHQFloor3Executive.js";
-import RecordsHQFloor3Experience from "./recordsHQFloor3Experience.js";
-import RecordsHQFloor3Details from "./recordsHQFloor3Details.js";
-import RecordsHQRooftopVIP from "./recordsHQRooftopVIP.js";
 import RecordsHQEntranceThreshold from "./recordsHQEntranceThreshold.js";
 import RecordsHQMediaDetails from "./recordsHQMediaDetails.js";
 import RecordsHQMerchDetails from "./recordsHQMerchDetails.js";
@@ -102,8 +98,6 @@ engine.registerSystems({
   floor2DrumStation: Floor2DrumStation,
   floor2StudioNavigation: Floor2StudioNavigation,
   floor2StudioSession: Floor2StudioSession,
-  recordsHQFloor3Executive: RecordsHQFloor3Executive,
-  recordsHQRooftopVIP: RecordsHQRooftopVIP,
   recordsHQEntranceThreshold: RecordsHQEntranceThreshold,
   recordsHQMediaDetails: RecordsHQMediaDetails,
   recordsHQMerchDetails: RecordsHQMerchDetails,
@@ -111,10 +105,49 @@ engine.registerSystems({
   boardwalkOverlooks: BoardwalkOverlooks,
   input: Input,
   player: Player,
-  recordsHQFloor3Experience: RecordsHQFloor3Experience,
-  recordsHQFloor3Details: RecordsHQFloor3Details,
   elevator: Elevator,
   hud: HUD,
   performanceMonitor: PerformanceMonitor,
 });
+
+// Load upper floors only when selected in the elevator.
+// Each destination is cached so returning to a floor never rebuilds it.
+const destinationLoads = new Map();
+window.__lamboCityPrepareFloor = floor => {
+  if (floor !== 3 && floor !== 4) return Promise.resolve();
+
+  if (!destinationLoads.has(floor)) {
+    const load = (async () => {
+      if (floor === 3) {
+        const [executive, details, experience] = await Promise.all([
+          import("./recordsHQFloor3Executive.js"),
+          import("./recordsHQFloor3Details.js"),
+          import("./recordsHQFloor3Experience.js")
+        ]);
+
+        const systems = {
+          recordsHQFloor3Executive: executive.default,
+          recordsHQFloor3Details: details.default,
+          recordsHQFloor3Experience: experience.default
+        };
+        Object.assign(engine.systems, systems);
+        engine.context.systems = engine.systems;
+
+        systems.recordsHQFloor3Executive?.init?.(engine.scene);
+        systems.recordsHQFloor3Details?.init?.(engine.scene);
+        systems.recordsHQFloor3Experience?.init?.(engine.scene, engine.context);
+      } else {
+        const rooftop = await import("./recordsHQRooftopVIP.js");
+        engine.systems.recordsHQRooftopVIP = rooftop.default;
+        engine.context.systems = engine.systems;
+        engine.systems.recordsHQRooftopVIP?.init?.(engine.scene);
+      }
+    })();
+
+    destinationLoads.set(floor, load);
+  }
+
+  return destinationLoads.get(floor);
+};
+
 engine.init();
