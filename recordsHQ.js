@@ -119,11 +119,7 @@ function buildWaterfrontPromenade(group) {
     promenadeStone
   );
 
-  promenade.position.set(
-    HQ_POSITION.x - 7,
-    .12,
-    HQ_POSITION.z + 18
-  );
+  promenade.position.set(-7, .12, 18);
 
   group.add(promenade);
 
@@ -141,11 +137,7 @@ function buildWaterfrontPromenade(group) {
     promenadeEdge
   );
 
-  borderLeft.position.set(
-    HQ_POSITION.x - 12.85,
-    .19,
-    HQ_POSITION.z + 18
-  );
+  borderLeft.position.set(-12.85, .19, 18);
 
   group.add(borderLeft);
 
@@ -159,11 +151,7 @@ function buildWaterfrontPromenade(group) {
     promenadeEdge
   );
 
-  borderRight.position.set(
-    HQ_POSITION.x - 1.15,
-    .19,
-    HQ_POSITION.z + 18
-  );
+  borderRight.position.set(-1.15, .19, 18);
 
   group.add(borderRight);
 
@@ -189,11 +177,7 @@ function buildWaterfrontPromenade(group) {
     promenadeEdge
   );
 
-  endCap.position.set(
-    HQ_POSITION.x - 7,
-    .2,
-    HQ_POSITION.z + 27
-  );
+  endCap.position.set(-7, .2, 27);
 
   group.add(endCap);
 
@@ -211,11 +195,7 @@ function buildWaterfrontPromenade(group) {
     glass
   );
 
-  glassRail.position.set(
-    HQ_POSITION.x - 7,
-    .82,
-    HQ_POSITION.z + 26.6
-  );
+  glassRail.position.set(-7, .82, 26.6);
 
   group.add(glassRail);
 
@@ -233,11 +213,7 @@ function buildWaterfrontPromenade(group) {
     gold
   );
 
-  railTop.position.set(
-    HQ_POSITION.x - 7,
-    1.48,
-    HQ_POSITION.z + 26.6
-  );
+  railTop.position.set(-7, 1.48, 26.6);
 
   group.add(railTop);
 
@@ -266,11 +242,7 @@ function buildWaterfrontPromenade(group) {
       gold
     );
 
-    pillar.position.set(
-      HQ_POSITION.x + x,
-      .78,
-      HQ_POSITION.z + z
-    );
+    pillar.position.set(x, .78, z);
 
     group.add(pillar);
   });
@@ -306,11 +278,7 @@ function buildWaterfrontPromenade(group) {
       planterMat
     );
 
-    planter.position.set(
-      HQ_POSITION.x + x,
-      .36,
-      HQ_POSITION.z + z
-    );
+    planter.position.set(x, .36, z);
 
     group.add(planter);
 
@@ -320,11 +288,7 @@ function buildWaterfrontPromenade(group) {
       plantMat
     );
 
-    plant.position.set(
-      HQ_POSITION.x + x,
-      1.12,
-      HQ_POSITION.z + z
-    );
+    plant.position.set(x, 1.12, z);
 
     group.add(plant);
   });
@@ -343,11 +307,7 @@ function buildWaterfrontPromenade(group) {
     promenadeStone
   );
 
-  waterfrontPlaza.position.set(
-    HQ_POSITION.x - 7,
-    .13,
-    HQ_POSITION.z + 29
-  );
+  waterfrontPlaza.position.set(-7, .13, 29);
 
   group.add(waterfrontPlaza);
 
@@ -365,11 +325,7 @@ function buildWaterfrontPromenade(group) {
     gold
   );
 
-  plazaFront.position.set(
-    HQ_POSITION.x - 7,
-    .22,
-    HQ_POSITION.z + 31.35
-  );
+  plazaFront.position.set(-7, .22, 31.35);
 
   group.add(plazaFront);
 
@@ -401,11 +357,7 @@ function buildWaterfrontPromenade(group) {
       seatMat
     );
 
-    seat.position.set(
-      HQ_POSITION.x + x,
-      .42,
-      HQ_POSITION.z + z
-    );
+    seat.position.set(x, .42, z);
 
     group.add(seat);
   });
@@ -743,7 +695,7 @@ export default {
         metalness: .12
       })
     );
-    plaza.position.set(HQ_POSITION.x, .04, HQ_POSITION.z + 10);
+    plaza.position.set(0, .04, 10);
     group.add(plaza);
 
 
@@ -773,11 +725,7 @@ export default {
 
     // The patio sits outside the rear/east corner of Records HQ,
     // beside the exterior elevator landing and dock approach.
-    loungeFloor.position.set(
-      HQ_POSITION.x + 15,
-      .08,
-      HQ_POSITION.z - 7.85
-    );
+    loungeFloor.position.set(15, .08, -7.85);
 
     group.add(loungeFloor);
 
@@ -791,11 +739,7 @@ export default {
         metalness: .22
       })
     );
-    patioWalk.position.set(
-      HQ_POSITION.x + 3.75,
-      .12,
-      HQ_POSITION.z - 7.85
-    );
+    patioWalk.position.set(3.75, .12, -7.85);
     group.add(patioWalk);
 
     const patioWalkGold = new THREE.MeshStandardMaterial({
@@ -811,11 +755,7 @@ export default {
         new THREE.BoxGeometry(12.6, .035, .055),
         patioWalkGold
       );
-      inlay.position.set(
-        HQ_POSITION.x + 3.75,
-        .205,
-        HQ_POSITION.z - 7.85 + offset
-      );
+      inlay.position.set(3.75, .205, -7.85 + offset);
       group.add(inlay);
     });
 
