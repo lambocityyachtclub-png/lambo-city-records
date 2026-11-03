@@ -36,6 +36,9 @@ function writeAssignments(value) {
 }
 const MPCSampler = {
   buffers: new Map(),
+  output: null,
+  outputContext: null,
+  masterVolume: 0.82,
   assignments: readAssignments(),
   padSettings: (() => {
     try { return JSON.parse(localStorage.getItem(ASSIGN_KEY + "-settings") || "{}"); }
@@ -171,7 +174,9 @@ const MPCSampler = {
       start: Math.max(0, Math.min(0.99, Number(settings.start ?? current.start ?? 0))),
       end: Math.max(0.01, Math.min(1, Number(settings.end ?? current.end ?? 1))),
       pitch: Math.max(0.5, Math.min(2, Number(settings.pitch ?? current.pitch ?? 1))),
-      decay: Math.max(0.05, Math.min(10, Number(settings.decay ?? current.decay ?? 10)))
+      decay: Math.max(0.05, Math.min(10, Number(settings.decay ?? current.decay ?? 10))),
+      volume: Math.max(0, Math.min(1.5, Number(settings.volume ?? current.volume ?? 1))),
+      pan: Math.max(-1, Math.min(1, Number(settings.pan ?? current.pan ?? 0)))
     };
     if (next.end <= next.start) next.end = Math.min(1, next.start + 0.01);
     this.padSettings = { ...this.padSettings, [key]: next };
@@ -223,6 +228,37 @@ const MPCSampler = {
     localStorage.setItem(ASSIGN_KEY + "-settings", JSON.stringify(this.padSettings));
   },
 
+  ensureOutput(audio) {
+    if (this.output && this.outputContext === audio) return this.output;
+    const input = audio.createGain();
+    input.gain.value = this.masterVolume;
+    const compressor = audio.createDynamicsCompressor();
+    compressor.threshold.value = -9;
+    compressor.knee.value = 8;
+    compressor.ratio.value = 3.5;
+    compressor.attack.value = 0.003;
+    compressor.release.value = 0.14;
+    const limiter = audio.createDynamicsCompressor();
+    limiter.threshold.value = -1.5;
+    limiter.knee.value = 0;
+    limiter.ratio.value = 20;
+    limiter.attack.value = 0.001;
+    limiter.release.value = 0.08;
+    input.connect(compressor);
+    compressor.connect(limiter);
+    limiter.connect(StudioAudioEngine.master || audio.destination);
+    this.output = input;
+    this.outputContext = audio;
+    return input;
+  },
+
+  setMasterVolume(value) {
+    this.masterVolume = Math.max(0, Math.min(1, Number(value) || 0));
+    if (this.output && this.outputContext) {
+      this.output.gain.setTargetAtTime(this.masterVolume, this.outputContext.currentTime, 0.015);
+    }
+  },
+
   async play(sampleId, audio, options = {}) {
     const buffer = this.buffers.get(sampleId) || await this.decode({ id: sampleId }, audio);
     const startRatio = Math.max(0, Math.min(0.99, Number(options.start) || 0));
@@ -233,10 +269,15 @@ const MPCSampler = {
     const gain = audio.createGain();
     source.buffer = buffer;
     source.playbackRate.value = Math.max(0.5, Math.min(2, Number(options.pitch) || 1));
-    gain.gain.value = Math.max(0, Math.min(1.5, Number(options.velocity) || 1));
+    gain.gain.value = Math.max(0, Math.min(1.5, Number(options.velocity) || 1))
+      * Math.max(0, Math.min(1.5, Number(options.volume ?? 1)));
+    const panner = audio.createStereoPanner ? audio.createStereoPanner() : null;
     source.connect(gain);
-    const destination = StudioAudioEngine.master || audio.destination;
-    gain.connect(destination);
+    if (panner) {
+      panner.pan.value = Math.max(-1, Math.min(1, Number(options.pan) || 0));
+      gain.connect(panner);
+      panner.connect(this.ensureOutput(audio));
+    } else gain.connect(this.ensureOutput(audio));
     const when = Math.max(audio.currentTime, Number(options.when) || audio.currentTime);
     if (Number.isFinite(Number(options.decay)) && Number(options.decay) < 10) {
       gain.gain.setTargetAtTime(0.0001, when + Number(options.decay), 0.015);
