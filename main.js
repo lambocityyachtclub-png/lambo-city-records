@@ -4,6 +4,7 @@ import Camera from "./camera.js";
 import Renderer from "./renderer.js";
 import World from "./world.js";
 import Dock from "./dock.js";
+import DockPath from "./dockPath.js";
 import Water from "./water.js";
 import Sky from "./sky.js";
 import Lighting from "./lighting.js";
@@ -51,6 +52,7 @@ import RecordsHQEntranceThreshold from "./recordsHQEntranceThreshold.js";
 import RecordsHQMediaDetails from "./recordsHQMediaDetails.js";
 import RecordsHQMerchDetails from "./recordsHQMerchDetails.js";
 import RecordsHQElevator from "./recordsHQElevator.js";
+import Elevator from "./elevator.js";
 import BoardwalkOverlooks from "./boardwalkOverlooks.js";
 const engine = new Engine();
 engine.registerSystems({
@@ -60,6 +62,7 @@ engine.registerSystems({
   world: World,
   water: Water,
   dock: Dock,
+  dockPath: DockPath,
   sky: Sky,
   lighting: Lighting,
   palms: Palms,
@@ -105,6 +108,7 @@ engine.registerSystems({
   boardwalkOverlooks: BoardwalkOverlooks,
   input: Input,
   player: Player,
+  elevator: Elevator,
   hud: HUD,
 });
 engine.init();
