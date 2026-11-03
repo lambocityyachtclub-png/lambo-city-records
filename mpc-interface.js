@@ -155,7 +155,8 @@ function makeStyles() {
 #${ROOT_ID} .mpc-panel-heading{display:flex;justify-content:space-between;align-items:center}
 #${ROOT_ID} .mpc-panel-heading small{font-size:7px;color:#9cba68;border:1px solid #647b3d;padding:2px 5px;border-radius:3px}
 #${ROOT_ID} .mpc-screen-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}
-#${ROOT_ID} .mpc-screen-actions button{min-height:28px;border:1px solid #637b3e;border-radius:4px;background:linear-gradient(#3a4828,#182111);color:#e6f4d0;font-size:8px;font-weight:900;letter-spacing:.06em}
+#${ROOT_ID} .mpc-screen-actions button,#${ROOT_ID} .mpc-primary-action{min-height:28px;border:1px solid #637b3e;border-radius:4px;background:linear-gradient(#3a4828,#182111);color:#e6f4d0;font-size:8px;font-weight:900;letter-spacing:.06em;padding:5px 7px}
+#${ROOT_ID} .mpc-primary-action{width:100%;background:linear-gradient(110deg,#c4a86d,#ead7a0 45%,#8d7546);color:#1b2113;border-color:#e9d8a5}
 #${ROOT_ID} .mpc-screen-readout{display:grid;grid-template-columns:auto 1fr;gap:3px 8px;padding:6px;border:1px solid #455436;background:rgba(0,0,0,.24)}
 #${ROOT_ID} .mpc-screen-readout b{color:#c7f17d}
 #${ROOT_ID} .mpc-screen-readout span:last-child{grid-column:1/-1;color:#b6c49d}
@@ -280,6 +281,9 @@ function buildMarkup() {
             <label class="mpc-field">QUANTIZE
               <select data-mpc-quantize><option value="off">OFF · FREE PLAY</option><option value="1/4">1/4 NOTE</option><option value="1/8">1/8 NOTE</option><option value="1/16" selected>1/16 NOTE</option><option value="1/32">1/32 NOTE</option></select>
             </label>
+            <label class="mpc-field">NOTE REPEAT RATE
+              <select data-mpc-repeat-rate><option value="1/4">1/4 NOTE</option><option value="1/8" selected>1/8 NOTE</option><option value="1/16">1/16 NOTE</option><option value="1/32">1/32 NOTE</option></select>
+            </label>
             <label class="mpc-field">SWING <output data-mpc-swing-value>0%</output>
               <input type="range" min="0" max="75" value="0" data-mpc-swing>
             </label>
@@ -298,6 +302,10 @@ function buildMarkup() {
               <button type="button" data-mpc-apply-sample>ASSIGN TO SELECTED PAD</button>
               <button type="button" data-mpc-delete-sample>DELETE SAMPLE</button>
             </div>
+            <label class="mpc-field">EVEN SLICES
+              <select data-mpc-slices><option value="4">4 SLICES</option><option value="8" selected>8 SLICES</option><option value="16">16 SLICES</option></select>
+            </label>
+            <button type="button" data-mpc-slice class="mpc-primary-action">SPLIT SAMPLE ACROSS PADS</button>
             <canvas data-mpc-waveform width="640" height="100" aria-label="Audio waveform preview"></canvas>
             <label class="mpc-field">START <output data-mpc-start-value>0%</output>
               <input type="range" min="0" max="99" value="0" data-mpc-start>
@@ -416,6 +424,9 @@ const MPCInterface = {
   playbackIndex: 0,
   quantize: "1/16",
   swing: 0,
+  noteRepeat: false,
+  noteRepeatRate: "1/8",
+  noteRepeatTimer: null,
 
   open(options = {}) {
     if (this.root?.isConnected) return this.root;
@@ -446,6 +457,7 @@ const MPCInterface = {
       if (event.target.matches("[data-mpc-import]")) void this.importSamples(event.target.files);
       if (event.target.matches("[data-mpc-editor-sample]")) void this.refreshSampleEditor();
       if (event.target.matches("[data-mpc-quantize]")) this.quantize = event.target.value;
+      if (event.target.matches("[data-mpc-repeat-rate]")) this.noteRepeatRate = event.target.value;
       if (event.target.matches("[data-mpc-swing]")) {
         this.swing = Number(event.target.value) || 0;
         const out = root.querySelector("[data-mpc-swing-value]");
@@ -488,9 +500,19 @@ const MPCInterface = {
       pad.dataset.pointerHandled = "1";
       const pressure = Number(event.pressure);
       const velocity = pressure > 0 ? 0.35 + Math.min(1, pressure) * 1.15 : 0.9;
+      const padNumber = Number(pad.dataset.pad);
       pad.classList.add("flash");
-      void this.handlePad(Number(pad.dataset.pad), velocity);
+      void this.handlePad(padNumber, velocity);
+      if (this.noteRepeat) {
+        this.stopNoteRepeat();
+        const divisions = { "1/4": 1, "1/8": 2, "1/16": 4, "1/32": 8 };
+        const beatMs = 60000 / (Number(this.beatLab?.pattern?.bpm) || 100);
+        const interval = beatMs / (divisions[this.noteRepeatRate] || 2);
+        this.noteRepeatTimer = window.setInterval(() => void this.handlePad(padNumber, velocity), interval);
+      }
     });
+    root.addEventListener("pointerup", () => this.stopNoteRepeat());
+    root.addEventListener("pointercancel", () => this.stopNoteRepeat());
 
     root.addEventListener("click", event => {
       const closeButton = event.target.closest("[data-mpc-close]");
@@ -524,6 +546,7 @@ const MPCInterface = {
       if (event.target.closest("[data-mpc-browser-preview]")) { this.previewBrowserSound(); return; }
       if (event.target.closest("[data-mpc-browser-assign]")) { this.assignBrowserSound(); return; }
       if (event.target.closest("[data-mpc-delete-sample]")) { void this.deleteSelectedSample(); return; }
+      if (event.target.closest("[data-mpc-slice]")) { void this.sliceSampleToPads(); return; }
 
       if (event.target.closest("[data-mpc-assign]")) { this.assignSelectedSound(); return; }
       if (event.target.closest("[data-mpc-unlock]")) { this.unlockLibrary(); return; }
@@ -536,6 +559,13 @@ const MPCInterface = {
         const actionMap = { "REC": "record", "OVER DUB": "overdub", "STOP": "stop", "PLAY": "play", "PLAY START": "play-start" };
         if (actionMap[placeholder.dataset.placeholder]) { void this.handleAction(actionMap[placeholder.dataset.placeholder]); return; }
         if (placeholder.dataset.placeholder.indexOf("BANK ") === 0) { this.setBank(placeholder.dataset.placeholder.slice(-1)); return; }
+        if (placeholder.dataset.placeholder === "NOTE REPEAT") {
+          this.noteRepeat = !this.noteRepeat;
+          placeholder.classList.toggle("lit", this.noteRepeat);
+          if (!this.noteRepeat) this.stopNoteRepeat();
+          this.setStatus("NOTE REPEAT " + (this.noteRepeat ? "ON" : "OFF") + " · " + this.noteRepeatRate);
+          return;
+        }
         root.dispatchEvent(new CustomEvent("lambocity:mpc-control", {
           bubbles: true,
           detail: { control: placeholder.dataset.placeholder }
@@ -758,9 +788,43 @@ const MPCInterface = {
     }
   },
 
+  stopNoteRepeat() {
+    if (this.noteRepeatTimer !== null) {
+      window.clearInterval(this.noteRepeatTimer);
+      this.noteRepeatTimer = null;
+    }
+  },
+
+  async sliceSampleToPads() {
+    const id = this.root?.querySelector("[data-mpc-editor-sample]")?.value;
+    if (!id) return;
+    const count = Number(this.root.querySelector("[data-mpc-slices]")?.value || 8);
+    const settings = this.saveSampleEditorSettings(false);
+    const firstPad = this.selectedPad;
+    const available = Math.min(count, 17 - firstPad);
+    if (available < 1) return;
+    for (let index = 0; index < available; index++) {
+      const pad = firstPad + index;
+      const start = settings.start + (settings.end - settings.start) * index / count;
+      const end = settings.start + (settings.end - settings.start) * (index + 1) / count;
+      StudioMPCSampler.assign(this.bank, pad, id);
+      StudioMPCSampler.setPadSettings(this.bank, pad, {
+        start, end, pitch: settings.pitch || 1, decay: settings.decay || 10
+      });
+    }
+    this.refreshLibraryUI();
+    const status = this.root?.querySelector("[data-mpc-editor-status]");
+    if (status) status.textContent = available + " EVEN SLICES ASSIGNED · BANK " + this.bank + " PADS " + firstPad + "–" + (firstPad + available - 1);
+  },
+
   async deleteSelectedSample() {
     const id = this.root?.querySelector("[data-mpc-editor-sample]")?.value;
     if (!id) return;
+    if (this.take?.events?.some(event => event.sampleId === id)) {
+      const status = this.root?.querySelector("[data-mpc-editor-status]");
+      if (status) status.textContent = "THIS SAMPLE IS USED IN THE SAVED PAD TAKE. KEEP IT TO PRESERVE PLAYBACK.";
+      return;
+    }
     const sample = await StudioMPCSampler.getSample(id);
     if (!window.confirm('Delete "' + (sample?.name || "this sample") + '" from this device? Assigned pads will be cleared.')) return;
     await StudioMPCSampler.remove(id);
@@ -962,6 +1026,7 @@ const MPCInterface = {
 
   close() {
     if (!this.root) return;
+    this.stopNoteRepeat();
     this.root.remove();
     this.root = null;
 
