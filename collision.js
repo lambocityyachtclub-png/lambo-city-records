@@ -446,11 +446,10 @@ export default {
     // colliders only prevent the player from passing through the
     // decorative brass posts along the pathway edges.
     [
-      [8.2, 15.95], [8.2, 20.55],
-      [10.9, 15.75], [10.9, 20.25],
-      [13.8, 14.75], [13.8, 19.15],
-      [16.5, 12.85], [16.5, 17.15],
-      [18.5, 10.55], [18.5, 15.05]
+      [9.0, 14.85], [9.0, 19.55],
+      [12.0, 14.85], [12.0, 19.55],
+      [15.0, 14.85], [15.0, 19.55],
+      [18.0, 14.85], [18.0, 19.55]
     ].forEach(([x, z], index) => {
       this.registerBox(
         "lamboCityDockPathBollard_" + index,
