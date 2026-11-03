@@ -280,7 +280,7 @@ function validateProject(project) {
       trackIds.add(track.id);
       for (const point of track.automation?.volume || []) {
         requireObject(point, "Invalid track volume automation point.");
-        if (!Number.isInteger(Number(point.bar)) || Number(point.bar) < 1 || Number(point.bar) > 32 ||
+        if (!Number.isInteger(Number(point.bar)) || Number(point.bar) < 1 || Number(point.bar) > 128 ||
             !Number.isFinite(Number(point.value)) || Number(point.value) < 0 || Number(point.value) > 100) {
           throw new Error("Track volume automation point is invalid.");
         }
@@ -290,8 +290,8 @@ function validateProject(project) {
         requireId(clip.id, "DAW clip ID is missing.");
         requireId(clip.name, "DAW clip name is missing.");
         if (clipIds.has(clip.id) || typeof clip.data !== "string" ||
-            !Number.isFinite(Number(clip.startBar)) || Number(clip.startBar) < 1 ||
-            !Number.isFinite(Number(clip.lengthBars)) || Number(clip.lengthBars) < 1 ||
+            !Number.isFinite(Number(clip.startBar)) || Number(clip.startBar) < 1 || Number(clip.startBar) > 128 ||
+            !Number.isFinite(Number(clip.lengthBars)) || Number(clip.lengthBars) < 1 || Number(clip.lengthBars) > 128 ||
             typeof clip.mimeType !== "string") {
           throw new Error("DAW audio clip data is invalid.");
         }
