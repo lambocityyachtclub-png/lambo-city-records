@@ -24,6 +24,11 @@ import * as THREE from
 
 let camera;
 let cinTime = 0;
+let lookDragPointerId = null;
+let lookPointerX = 0;
+let lookPointerY = 0;
+let lookYawOffset = 0;
+let lookPitchOffset = 0;
 
 
 // ============================================================
@@ -787,6 +792,80 @@ function updateRooftopCamera(player) {
 }
 
 
+
+ // ============================================================
+ // FLOOR 3 FIRST-PERSON LOOK CONTROLS
+ // Drag open screen space to look around. The movement joystick
+ // and interface controls are excluded from camera input.
+ // ============================================================
+
+function installFloor3LookControls() {
+  if (window.__lamboCityFloor3LookControlsReady) return;
+  window.__lamboCityFloor3LookControlsReady = true;
+
+  window.addEventListener("pointerdown", event => {
+    if (event.button !== undefined && event.button !== 0) return;
+    const target = event.target instanceof Element ? event.target : null;
+    if (target?.closest("#lambo-city-joystick, button, a, input, textarea, select, [role='button']")) return;
+
+    lookDragPointerId = event.pointerId;
+    lookPointerX = event.clientX;
+    lookPointerY = event.clientY;
+  });
+
+  window.addEventListener("pointermove", event => {
+    if (lookDragPointerId !== event.pointerId) return;
+    const dx = event.clientX - lookPointerX;
+    const dy = event.clientY - lookPointerY;
+    lookPointerX = event.clientX;
+    lookPointerY = event.clientY;
+
+    lookYawOffset += dx * 0.0042;
+    lookPitchOffset = THREE.MathUtils.clamp(
+      lookPitchOffset - dy * 0.0036,
+      -0.55,
+      0.55
+    );
+    event.preventDefault();
+  }, { passive: false });
+
+  const releaseLook = event => {
+    if (lookDragPointerId === event.pointerId) lookDragPointerId = null;
+  };
+  window.addEventListener("pointerup", releaseLook);
+  window.addEventListener("pointercancel", releaseLook);
+  window.addEventListener("blur", () => {
+    lookDragPointerId = null;
+  });
+}
+
+function updateFloor3POVCamera(player) {
+  player.visible = false;
+
+  if (camera.fov !== 76) {
+    camera.fov = 76;
+    camera.updateProjectionMatrix();
+  }
+
+  const yaw = player.rotation.y + lookYawOffset;
+  const pitch = lookPitchOffset;
+  const horizontal = Math.cos(pitch);
+  const eyeY = player.position.y + 2.9;
+
+  camera.position.set(
+    player.position.x,
+    eyeY,
+    player.position.z
+  );
+
+  camera.lookAt(
+    player.position.x + Math.sin(yaw) * horizontal * 12,
+    eyeY + Math.sin(pitch) * 12,
+    player.position.z + Math.cos(yaw) * horizontal * 12
+  );
+}
+
+
 // ============================================================
 // CAMERA SYSTEM
 // ============================================================
@@ -794,6 +873,8 @@ function updateRooftopCamera(player) {
 export default {
 
   init() {
+
+    installFloor3LookControls();
 
     camera =
       new THREE.PerspectiveCamera(
@@ -856,6 +937,12 @@ export default {
 
     cinTime += delta;
 
+    // Reset the avatar and normal lens before selecting this frame's camera.
+    player.visible = true;
+    if (camera.fov !== 68) {
+      camera.fov = 68;
+      camera.updateProjectionMatrix();
+    }
 
     // --------------------------------------------------------
     // DETECT BUILDING ENTRY / EXIT
@@ -1006,13 +1093,10 @@ export default {
 
 
       // ------------------------------------------------------
-      // FLOOR 3
+      // FLOOR 3 — CHARACTER EYE-LEVEL POV
       // ------------------------------------------------------
 
-      updateHQCamera(
-        player,
-        interiorSmooth
-      );
+      updateFloor3POVCamera(player);
 
       return;
 
