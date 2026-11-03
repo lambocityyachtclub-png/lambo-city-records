@@ -429,7 +429,7 @@ const MPCInterface = {
         this.take.events.push({ pad: padNumber, bank: this.bank, soundId: sound.id, at });
         this.take.duration = Math.max(this.take.duration || 0, at);
       }
-      this.setStatus("PLAYING " + sound.name + (this.recording ? " · PAD PERFORMANCE RECORDING" : ""));
+      this.setStatus("PLAYING " + sound.name + " · " + sound.influence + (this.recording ? " · PAD PERFORMANCE RECORDING" : ""));
     } catch (error) { this.setStatus("MPC AUDIO ERROR: " + (error?.message || error)); }
   },
 
@@ -458,7 +458,7 @@ const MPCInterface = {
     const select = this.root.querySelector("[data-mpc-sound-select]");
     if (select) {
       const current = StudioMPCLibrary.getAssignment(this.bank, this.selectedPad);
-      select.innerHTML = sounds.map(sound => '<option value="' + esc(sound.id) + '">' + esc(sound.name) + ' · ' + esc(sound.family.toUpperCase()) + '</option>').join("");
+      select.innerHTML = sounds.map(sound => '<option value="' + esc(sound.id) + '">' + esc(sound.name) + ' · ' + esc(sound.family.toUpperCase()) + ' · ' + esc(sound.style) + '</option>').join("");
       select.value = current.id;
     }
     for (const pad of this.root.querySelectorAll("[data-pad]")) {
