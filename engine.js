@@ -15,6 +15,7 @@ export default class Engine {
     this.context.camera   = this.camera;
     this.context.renderer = this.renderer;
     this.context.systems  = this.systems;
+    this.systems.performanceMonitor?.init?.(this.renderer, this.context);
     this.systems.world?.init?.(this.scene);
     this.systems.water?.init?.(this.scene);
     this.systems.dock?.init?.(this.scene);
