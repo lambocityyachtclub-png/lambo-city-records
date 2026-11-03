@@ -450,6 +450,11 @@ const MPCInterface = {
   refreshLibraryUI() {
     if (!this.root) return;
     const sounds = StudioMPCLibrary.getSounds();
+    const projectTitle = this.beatLab?.currentProject?.metadata?.title || "UNTITLED SONG";
+    const titleNode = this.root.querySelector(".project-title");
+    if (titleNode) titleNode.textContent = "PROJECT: " + projectTitle.toUpperCase();
+    const stats = this.root.querySelectorAll(".screen-header .screen-stat");
+    if (stats[1]) stats[1].textContent = "BPM: " + (this.beatLab?.pattern?.bpm || 100);
     const select = this.root.querySelector("[data-mpc-sound-select]");
     if (select) {
       const current = StudioMPCLibrary.getAssignment(this.bank, this.selectedPad);
