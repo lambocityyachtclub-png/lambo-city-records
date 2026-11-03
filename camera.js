@@ -570,101 +570,47 @@ function updateStudioSessionCamera(player, smooth = 0.22) {
 // ============================================================
 
 function updateElevatorCamera(player) {
-
-  const progress =
-    Number(
-      window.__lamboCityElevatorProgress ??
-      0
-    );
-
-
-  if (progress < 0.30) {
-
-    const revealX =
-      player.position.x + 5.5;
-
-    const revealY =
-      player.position.y + 4.0;
-
-    const revealZ =
-      player.position.z + 6.5;
-
-
-    moveCamera(
-
-      revealX,
-      revealY,
-      revealZ,
-
-      0.075
-
-    );
-
-
-    camera.lookAt(
-
-      player.position.x,
-      player.position.y + 2,
-      player.position.z
-
-    );
-
-
-    return;
-
-  }
-
-
-  const yaw =
-    player.rotation.y;
-
-  const forwardX =
-    Math.sin(yaw);
-
-  const forwardZ =
-    Math.cos(yaw);
-
-  const cameraDistance = 5.0;
-
-
-  const cameraX =
-    player.position.x -
-    forwardX *
-    cameraDistance;
-
-  const cameraZ =
-    player.position.z -
-    forwardZ *
-    cameraDistance;
-
-
-  moveCamera(
-
-    cameraX,
-
-    player.position.y + 4.0,
-
-    cameraZ,
-
-    0.10
-
+  const progress = Number(
+    window.__lamboCityElevatorProgress ?? 0
   );
 
+  const yaw = player.rotation.y;
+  const forwardX = Math.sin(yaw);
+  const forwardZ = Math.cos(yaw);
+
+  // Blend the opening cabin-reveal shot into the moving follow shot.
+  // A hard switch at 30% made the camera direction change abruptly
+  // during the Floor 1-to-Floor 2 ride.
+  const blend = THREE.MathUtils.smoothstep(progress, 0.18, 0.42);
+
+  const revealX = player.position.x + 5.5;
+  const revealY = player.position.y + 4.0;
+  const revealZ = player.position.z + 6.5;
+
+  const followX = player.position.x - forwardX * 5.0;
+  const followY = player.position.y + 4.0;
+  const followZ = player.position.z - forwardZ * 5.0;
+
+  const cameraX = THREE.MathUtils.lerp(revealX, followX, blend);
+  const cameraY = THREE.MathUtils.lerp(revealY, followY, blend);
+  const cameraZ = THREE.MathUtils.lerp(revealZ, followZ, blend);
+
+  const revealTargetX = player.position.x;
+  const revealTargetY = player.position.y + 2.0;
+  const revealTargetZ = player.position.z;
+
+  const followTargetX = player.position.x + forwardX * 1.5;
+  const followTargetY = player.position.y + 2.0;
+  const followTargetZ = player.position.z + forwardZ * 1.5;
+
+  moveCamera(cameraX, cameraY, cameraZ, 0.10);
 
   camera.lookAt(
-
-    player.position.x +
-      forwardX * 1.5,
-
-    player.position.y + 2.0,
-
-    player.position.z +
-      forwardZ * 1.5
-
+    THREE.MathUtils.lerp(revealTargetX, followTargetX, blend),
+    THREE.MathUtils.lerp(revealTargetY, followTargetY, blend),
+    THREE.MathUtils.lerp(revealTargetZ, followTargetZ, blend)
   );
-
 }
-
 
 // ============================================================
 // ROOFTOP CAMERA
