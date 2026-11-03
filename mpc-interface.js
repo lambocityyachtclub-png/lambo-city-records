@@ -513,7 +513,6 @@ const MPCInterface = {
       const pressure = Number(event.pressure);
       const velocity = pressure > 0 ? 0.35 + Math.min(1, pressure) * 1.15 : 0.9;
       const padNumber = Number(pad.dataset.pad);
-      try { pad.setPointerCapture(event.pointerId); } catch {}
       pad.classList.add("flash");
       void this.handlePad(padNumber, velocity);
       if (this.noteRepeat) {
@@ -573,8 +572,7 @@ const MPCInterface = {
       if (event.target.closest("[data-mpc-unlock]")) { this.unlockLibrary(); return; }
       if (event.target.closest("[data-mpc-sample-assign]")) { this.assignImportedSample(); return; }
 
-      // Screen tiles and hardware buttons remain responsive where assigned.
-      // A future MPC engine can subscribe to this event without changing the UI.
+      // Route any additional hardware controls through one stable MPC event.
       const placeholder = event.target.closest("[data-placeholder]");
       if (placeholder) {
         const actionMap = { "REC": "record", "OVER DUB": "overdub", "STOP": "stop", "PLAY": "play", "PLAY START": "play-start" };
