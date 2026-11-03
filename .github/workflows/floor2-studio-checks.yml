@@ -32,6 +32,7 @@ on:
       - "scripts/test-mpc-audio-routing.mjs"
       - "scripts/test-mpc-sampler-storage.mjs"
       - "scripts/test-daw-session-package.mjs"
+      - "scripts/test-daw-arrangement-playback.mjs"
       - ".github/workflows/floor2-studio-checks.yml"
 
   pull_request:
@@ -65,6 +66,7 @@ on:
       - "scripts/test-mpc-audio-routing.mjs"
       - "scripts/test-mpc-sampler-storage.mjs"
       - "scripts/test-daw-session-package.mjs"
+      - "scripts/test-daw-arrangement-playback.mjs"
       - ".github/workflows/floor2-studio-checks.yml"
 
   workflow_dispatch:
@@ -128,3 +130,6 @@ jobs:
 
       - name: Test portable DAW session package
         run: node --experimental-default-type=module scripts/test-daw-session-package.mjs
+
+      - name: Test DAW arrangement playback and mixer
+        run: node --experimental-default-type=module scripts/test-daw-arrangement-playback.mjs
