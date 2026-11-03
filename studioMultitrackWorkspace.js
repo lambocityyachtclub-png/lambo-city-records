@@ -16,6 +16,8 @@ import {
 
 import StudioAudioEngine from "./studioAudioEngine.js";
 import StudioRecordingEngine from "./studioRecordingEngine.js";
+import StudioAudioExport from "./studioAudioExport.js";
+import StudioMPCSampler from "./studioMPCSampler.js";
 
 import {
   createStudioDAWArrangementPlayback
@@ -98,6 +100,7 @@ const StudioMultitrackWorkspace = {
       type,
       volume: 80,
       pan: 0,
+      inputSource: "mic",
       eq: { low: 0, mid: 0, high: 0 },
       compression: { threshold: -18, ratio: 1 },
       muted: false,
@@ -147,6 +150,7 @@ const StudioMultitrackWorkspace = {
         type: TRACK_TYPES.includes(track.type) ? track.type : "audio",
         volume: Math.max(0, Math.min(100, Number(track.volume) || 0)),
         pan: Math.max(-1, Math.min(1, Number(track.pan) || 0)),
+        inputSource: ["mic", "beatlab", "mpc"].includes(track.inputSource) ? track.inputSource : "mic",
         eq: {
           low: Number(track.eq?.low) || 0,
           mid: Number(track.eq?.mid) || 0,
@@ -183,6 +187,7 @@ const StudioMultitrackWorkspace = {
       type: TRACK_TYPES.includes(savedTrack.type) ? savedTrack.type : "audio",
       volume: Math.max(0, Math.min(100, Number(savedTrack.volume) || 0)),
       pan: Math.max(-1, Math.min(1, Number(savedTrack.pan) || 0)),
+      inputSource: ["mic", "beatlab", "mpc"].includes(savedTrack.inputSource) ? savedTrack.inputSource : "mic",
       eq: {
         low: Number(savedTrack.eq?.low) || 0,
         mid: Number(savedTrack.eq?.mid) || 0,
@@ -601,10 +606,17 @@ const StudioMultitrackWorkspace = {
     }
     try {
       const audio = await StudioAudioEngine.resume();
+      const track = armedTracks[0];
+      const inputNode = track.inputSource === "beatlab"
+        ? StudioAudioExport.getOutput(audio)
+        : track.inputSource === "mpc"
+          ? StudioMPCSampler.ensureOutput(audio)
+          : null;
       await StudioRecordingEngine.startTrackRecording({
         audio,
-        trackId: armedTracks[0].id,
-        vocalEffects: /vocal/i.test(armedTracks[0].name) ? vocalEffects : null
+        trackId: track.id,
+        inputNode,
+        vocalEffects: track.inputSource === "mic" && /vocal/i.test(track.name) ? vocalEffects : null
       });
       this.status("Recording into " + armedTracks[0].name + ". Perform into your microphone.");
       return true;
