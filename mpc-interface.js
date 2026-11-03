@@ -1119,7 +1119,7 @@ const MPCInterface = {
         if (!songWasPlaying) await this.beatLab.start();
         if (action === "record") this.take = { events: [], duration: 0 };
         this.recording = true;
-        this.overdubOffset = action === "overdub" && songWasPlaying
+        this.overdubOffset = songWasPlaying
           ? this.getSongPosition(audio)
           : 0;
         this.recordingStartedAt = audio.currentTime;
