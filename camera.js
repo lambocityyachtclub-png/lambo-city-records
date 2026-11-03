@@ -23,7 +23,7 @@ let lastOrbitInputAt = 0;
 let initialized = false;
 let currentMode = "world";
 
-const FOLLOW_DISTANCE = 8.2;
+const FOLLOW_DISTANCE = 10.0;
 const FOLLOW_HEIGHT = 4.15;
 const LOOK_HEIGHT = 1.75;
 const FOLLOW_RESPONSE = 5.2;
