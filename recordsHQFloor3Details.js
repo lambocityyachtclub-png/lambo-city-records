@@ -105,15 +105,15 @@ export default {
     // removed to keep the lounge perimeter quiet and uncluttered.
 
     // Executive office: keyboard, document folio and pen cup.
-    addBox(group, new THREE.BoxGeometry(1.12, 0.055, 0.32), dark, 7.0, 1.105, -4.15);
-    addBox(group, new THREE.BoxGeometry(0.82, 0.035, 0.42), standard(0x282a32, 0.72, 0.12), 7.0, 1.105, -5.25);
-    addBox(group, new THREE.BoxGeometry(0.34, 0.045, 0.24), brass, 8.22, 1.12, -4.62);
+    addBox(group, new THREE.BoxGeometry(1.12, 0.055, 0.32), dark, 7.0, 1.105, -4.85);
+    addBox(group, new THREE.BoxGeometry(0.82, 0.035, 0.42), standard(0x282a32, 0.72, 0.12), 7.0, 1.105, -5.95);
+    addBox(group, new THREE.BoxGeometry(0.34, 0.045, 0.24), brass, 8.22, 1.12, -5.32);
     const pen = new THREE.Mesh(
       new THREE.CylinderGeometry(0.018, 0.018, 0.38, 8),
       brassGlow
     );
     pen.rotation.z = Math.PI / 2;
-    pen.position.set(8.2, 1.19, -4.62);
+    pen.position.set(8.2, 1.19, -5.32);
     group.add(pen);
 
     // No additional freestanding lounge ornament is needed.
