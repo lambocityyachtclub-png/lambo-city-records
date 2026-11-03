@@ -94,76 +94,11 @@ function cylinder(
 // TEXT LABEL
 // =============================================================
 
-function label(
-  parent,
-  text,
-  x,
-  y,
-  z,
-  width = 5
-) {
-  const canvas =
-    document.createElement("canvas");
-
-  canvas.width = 768;
-  canvas.height = 160;
-
-  const context =
-    canvas.getContext("2d");
-
-  context.clearRect(
-    0,
-    0,
-    canvas.width,
-    canvas.height
-  );
-
-  context.font =
-    "bold 46px Arial";
-
-  context.textAlign = "center";
-  context.textBaseline = "middle";
-  context.fillStyle = "#ffd36a";
-
-  context.fillText(
-    text,
-    384,
-    80
-  );
-
-  const texture =
-    new THREE.CanvasTexture(canvas);
-
-  texture.colorSpace =
-    THREE.SRGBColorSpace;
-
-  const signMaterial =
-    new THREE.MeshBasicMaterial({
-      map: texture,
-      transparent: true,
-      side: THREE.DoubleSide
-    });
-
-  const sign =
-    new THREE.Mesh(
-      new THREE.PlaneGeometry(
-        width,
-        0.85
-      ),
-      signMaterial
-    );
-
-  sign.position.set(
-    x,
-    y,
-    z
-  );
-
-  parent.add(sign);
-
-  return sign;
+function label() {
+  // Floor 3 uses architecture, materials and lighting for identity.
+  // Floating canvas text has been intentionally removed.
+  return null;
 }
-
 
 // =============================================================
 // EXPORT
@@ -292,9 +227,9 @@ export default {
     box(
       meeting,
       new THREE.BoxGeometry(
-        7.2,
+        6.4,
         0.28,
-        2.15
+        1.95
       ),
       dark,
       0,
@@ -307,7 +242,7 @@ export default {
     box(
       meeting,
       new THREE.BoxGeometry(
-        7.25,
+        6.45,
         0.06,
         0.08
       ),
@@ -366,12 +301,12 @@ export default {
     // Meeting chairs
 
     const chairPositions = [
-      [-3.7, 0.0],
-      [-1.85, 0.0],
-      [1.85, 0.0],
-      [3.7, 0.0],
-      [0.0, -1.9],
-      [0.0, 2.15]
+      [-3.3, 0.0],
+      [-1.65, 0.0],
+      [1.65, 0.0],
+      [3.3, 0.0],
+      [0.0, -1.7],
+      [0.0, 1.85]
     ];
 
     chairPositions.forEach(
@@ -570,65 +505,8 @@ export default {
       "floor3GlassConferenceRoom";
 
 
-    // Rear glass wall
-
-    box(
-      conference,
-      new THREE.BoxGeometry(
-        5.0,
-        3.5,
-        0.12
-      ),
-      glass,
-      -6.0,
-      1.85,
-      1.7
-    );
-
-
-    // Side glass walls
-
-    box(
-      conference,
-      new THREE.BoxGeometry(
-        0.12,
-        3.5,
-        3.8
-      ),
-      glass,
-      -8.45,
-      1.85,
-      -0.15
-    );
-
-    box(
-      conference,
-      new THREE.BoxGeometry(
-        0.12,
-        3.5,
-        3.8
-      ),
-      glass,
-      -3.55,
-      1.85,
-      -0.15
-    );
-
-
-    // Gold upper frame
-
-    box(
-      conference,
-      new THREE.BoxGeometry(
-        5.1,
-        0.08,
-        0.08
-      ),
-      gold,
-      -6.0,
-      3.58,
-      1.68
-    );
+    // Open-plan boardroom: transparent enclosure removed to keep
+    // the route from the elevator into the executive floor clear.
 
 
     // Conference table
