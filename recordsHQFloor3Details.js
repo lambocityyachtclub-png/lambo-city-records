@@ -99,25 +99,16 @@ export default {
     const pot = standard(0x11131a, 0.26, 0.68);
 
     // Presentation suite: slim illuminated side pilasters and wall inlays.
-    [-3.95, 3.95].forEach(x => {
+    [-5.55, 5.55].forEach(x => {
       addBox(group, new THREE.BoxGeometry(0.16, 2.8, 0.16), black, x, 2.0, -5.72);
       addBox(group, new THREE.BoxGeometry(0.045, 2.45, 0.05), brassGlow, x, 2.0, -5.61);
       addBox(group, new THREE.BoxGeometry(0.42, 0.055, 0.08), brass, x, 3.48, -5.61);
       addBox(group, new THREE.BoxGeometry(0.42, 0.055, 0.08), brass, x, 0.54, -5.61);
     });
 
-    // Boardroom microphone rail follows the relocated side table.
-    addBox(group, new THREE.BoxGeometry(0.9, 0.075, 0.28), black, -7.45, 1.12, 0.18);
-    [-0.82, 0, 0.82].forEach(z => {
-      const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.035, 0.22, 10), brass);
-      stem.position.set(-7.45, 1.22, z + 0.6);
-      group.add(stem);
-      const head = new THREE.Mesh(new THREE.SphereGeometry(0.065, 10, 8), dark);
-      head.position.set(-7.45, 1.34, z + 2.2);
-      group.add(head);
-    });
+    // The redundant side-boardroom microphone rail was removed with that furniture.
 
-    // Executive lounge: a low side table and a subtle brass reading lamp.
+    // Executive lounge: a low side table    // Executive lounge: a low side table and a subtle brass reading lamp.
     const sideTop = new THREE.Mesh(
       new THREE.CylinderGeometry(0.55, 0.55, 0.12, 28),
       brass
@@ -176,15 +167,10 @@ export default {
 
     // Private-room planting: contained within the existing room footprints.
     addPlant(group, -8.05, 3.45, pot, green);
-    addPlant(group, -3.95, 3.45, pot, green);
     addPlant(group, 8.05, -4.15, pot, green);
     addPlant(group, 7.55, 5.75, pot, green);
 
-    // Brass floor markers subtly frame the central circulation path.
-    [-4.65, 4.65].forEach(x => {
-      addBox(group, new THREE.BoxGeometry(0.035, 0.018, 5.4), brass, x, 0.025, -0.55);
-    });
-    addBox(group, new THREE.BoxGeometry(8.8, 0.018, 0.035), brass, 0, 0.025, 3.05);
+    // Keep the main circulation floor free of decorative strips and markers.
 
     // Decorative glazed divider removed to keep Floor 3 circulation open.
 
