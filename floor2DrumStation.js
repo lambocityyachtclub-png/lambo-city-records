@@ -64,6 +64,9 @@ export default {
     // Behind-left of the seated producer in the glass-partitioned live room.
     // Coordinates are relative to the existing studio group.
     station.position.set(-4.65, 0, 3.65);
+    // Scale the complete kit as one coherent performance setup while
+    // keeping its center in the existing drum-station footprint.
+    station.scale.setScalar(1.32);
 
     const addCylinder = (
       name,
@@ -184,6 +187,32 @@ export default {
       "tom"
     );
 
+    // Second rack tom gives the kit a fuller five-piece stage layout.
+    addCylinder(
+      "floor2RackTomSecond",
+      0.27,
+      0.22,
+      black,
+      0.55,
+      1.22,
+      -0.16,
+      0,
+      "tom"
+    );
+
+    // Second floor tom for a broader live-performance configuration.
+    addCylinder(
+      "floor2FloorTomSecond",
+      0.31,
+      0.32,
+      red,
+      1.28,
+      0.88,
+      0.05,
+      0,
+      "tom"
+    );
+
     // Hi-hat stand and cymbals.
     addCylinder(
       "floor2HiHatStand",
@@ -278,78 +307,7 @@ export default {
       0.12
     );
 
-    // Clear acoustic glass enclosure around the drum kit.
-    // Three sides create the booth appearance while the producer-facing
-    // side stays completely open for easy access from the elevator aisle.
-    // These are visual-only meshes: they are not registered as movement
-    // colliders, and their raycast is disabled so drum pads remain clickable.
-    const drumBoothGlass = new THREE.MeshPhysicalMaterial({
-      color: 0xc9e8f2,
-      metalness: 0.05,
-      roughness: 0.08,
-      transmission: 0.28,
-      transparent: true,
-      opacity: 0.20,
-      thickness: 0.035,
-      depthWrite: false,
-      side: THREE.DoubleSide
-    });
-
-    const addDrumBoothPane = (name, width, height, depth, x, y, z) => {
-      const pane = new THREE.Mesh(
-        new THREE.BoxGeometry(width, height, depth),
-        drumBoothGlass
-      );
-      pane.name = name;
-      pane.position.set(x, y, z);
-      pane.userData.visualOnly = true;
-      pane.raycast = () => {};
-      station.add(pane);
-      return pane;
-    };
-
-    const drumBoothFrame = makeMaterial(0xb88b45, 0.78, 0.24);
-
-    // Back wall and two side walls; leave the front fully open.
-    addDrumBoothPane(
-      "floor2DrumBoothBackGlass",
-      3.35, 2.35, 0.045,
-      0, 1.24, -1.02
-    );
-    addDrumBoothPane(
-      "floor2DrumBoothLeftGlass",
-      0.045, 2.35, 2.05,
-      -1.65, 1.24, 0.005
-    );
-    addDrumBoothPane(
-      "floor2DrumBoothRightGlass",
-      0.045, 2.35, 2.05,
-      1.65, 1.24, 0.005
-    );
-
-    // Slim gold uprights and top rails make the glass enclosure legible
-    // without adding a threshold or anything underfoot.
-    [-1.65, 1.65].forEach((x) => {
-      addBox(
-        "floor2DrumBoothGoldUpright",
-        0.065, 2.42, 0.065,
-        drumBoothFrame,
-        x, 1.24, -1.02
-      );
-      addBox(
-        "floor2DrumBoothGoldSideRail",
-        0.065, 0.065, 2.05,
-        drumBoothFrame,
-        x, 2.45, 0.005
-      );
-    });
-    addBox(
-      "floor2DrumBoothGoldBackRail",
-      3.35, 0.065, 0.065,
-      drumBoothFrame,
-      0, 2.45, -1.02
-    );
-
+    // Open-air performance kit: no glass booth or visual barriers.
     // LAMBO CITY station label.
     const canvas = document.createElement("canvas");
     canvas.width = 768;
