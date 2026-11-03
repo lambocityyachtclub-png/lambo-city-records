@@ -411,6 +411,9 @@ const MPCInterface = {
     this.bank = "A";
     this.selectedPad = 1;
     this.recording = false;
+    this.noteRepeat = false;
+    this.noteRepeatRate = "1/8";
+    this.stopNoteRepeat();
     this.quantize = "1/16";
     this.swing = 0;
     this.take = this.beatLab?.currentProject?.mpcPerformance || StudioMPCLibrary.loadTake(this.beatLab?.currentProject?.id || "unsaved");
@@ -1114,6 +1117,7 @@ const MPCInterface = {
 
   close() {
     if (!this.root) return;
+    if (this.recording) this.finishRecording();
     this.stopNoteRepeat();
     this.root.remove();
     this.root = null;
@@ -1132,7 +1136,6 @@ const MPCInterface = {
     }
     this.previousFocus = null;
     this.recording = false;
-    this.take = null;
   },
 
   isOpen() {
