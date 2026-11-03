@@ -338,9 +338,19 @@ const StudioMPCLibrary = {
     return sound;
   },
 
+  getInput(audio) {
+    if (!audio) throw new Error("MPC audio is not ready.");
+    if (this.audio !== audio || !this.bus) {
+      this.audio = audio;
+      this.bus = createBus(audio);
+    }
+    this.bus.input.gain.value = this.masterLevel;
+    return this.bus.input;
+  },
+
   setMasterVolume(value) {
     this.masterLevel = clamp(Number(value) || 0, 0, 1);
-    if (this.bus) this.bus.input.gain.setTargetAtTime(this.masterLevel, this.audio.currentTime, 0.015);
+    if (this.bus && this.audio) this.bus.input.gain.setTargetAtTime(this.masterLevel, this.audio.currentTime, 0.015);
   },
 
   exportAssignments() {
@@ -390,11 +400,7 @@ const StudioMPCLibrary = {
 
   play(audio, sound, time = audio?.currentTime, velocity = 1, padSettings = {}) {
     if (!audio || !sound) return false;
-    if (this.audio !== audio || !this.bus) {
-      this.audio = audio;
-      this.bus = createBus(audio);
-    }
-    this.bus.input.gain.value = this.masterLevel;
+    this.getInput(audio);
     return playSound(audio, sound, time, this.bus, velocity, padSettings);
   },
 
