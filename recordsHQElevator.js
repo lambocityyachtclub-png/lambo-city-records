@@ -20,7 +20,7 @@ const ACTIVATION_DISTANCE =
   10.5;
 
 const TRAVEL_TIME =
-  4.8;
+  2.8; // Faster, direct floor-to-floor travel.
 
 
 let scene = null;
@@ -35,6 +35,7 @@ let menuOpen = false;
 let traveling = false;
 
 let travelTimer = 0;
+let travelStartedAt = 0;
 let selectedFloor = null;
 
 let travelStartY = 1.3;
@@ -566,6 +567,7 @@ function startTravel() {
   traveling = true;
 
   travelTimer = 0;
+  travelStartedAt = performance.now();
 
 
   // ----------------------------------------------------------
@@ -875,16 +877,11 @@ export default {
 
     if (traveling) {
 
-      travelTimer +=
-        delta;
+      // Use elapsed wall-clock time, not the engine's capped frame delta.
+      // This keeps the elevator's duration consistent when rendering dips.
+      travelTimer = Math.max(0, (performance.now() - travelStartedAt) / 1000);
 
-
-      const progress =
-        Math.min(
-          1,
-          travelTimer /
-            TRAVEL_TIME
-        );
+      const progress = Math.min(1, travelTimer / TRAVEL_TIME);
 
 
       // ------------------------------------------------------
