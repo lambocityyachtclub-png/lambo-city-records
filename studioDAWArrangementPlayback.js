@@ -42,8 +42,13 @@ export function createStudioDAWArrangementPlayback({
     },
 
     disposeChannels() {
-      this.trackChannels.forEach(({ gain, panner }) => {
+      this.trackChannels.forEach(({ gain, automationGain, low, mid, high, compressor, panner }) => {
         try { gain.disconnect(); } catch {}
+        try { automationGain.disconnect(); } catch {}
+        try { low.disconnect(); } catch {}
+        try { mid.disconnect(); } catch {}
+        try { high.disconnect(); } catch {}
+        try { compressor.disconnect(); } catch {}
         try { panner?.disconnect(); } catch {}
       });
       this.trackChannels.clear();
@@ -64,6 +69,7 @@ export function createStudioDAWArrangementPlayback({
 
     createTrackChannel(context, track, output) {
       const gain = context.createGain();
+      const automationGain = context.createGain();
       const low = context.createBiquadFilter();
       const mid = context.createBiquadFilter();
       const high = context.createBiquadFilter();
@@ -81,7 +87,8 @@ export function createStudioDAWArrangementPlayback({
       compressor.knee.value = 18;
       compressor.attack.value = 0.003;
       compressor.release.value = 0.25;
-      gain.connect(low);
+      gain.connect(automationGain);
+      automationGain.connect(low);
       low.connect(mid);
       mid.connect(high);
       high.connect(compressor);
@@ -91,7 +98,7 @@ export function createStudioDAWArrangementPlayback({
       } else {
         compressor.connect(output);
       }
-      const channel = { gain, low, mid, high, compressor, panner, track };
+      const channel = { gain, automationGain, low, mid, high, compressor, panner, track };
       this.trackChannels.set(track.id, channel);
       this.applyTrackState(track);
       return channel;
@@ -153,6 +160,22 @@ export function createStudioDAWArrangementPlayback({
       this.applyTrackState(track);
     },
 
+    scheduleVolumeAutomation(track, startTime, secondsPerBar) {
+      const channel = this.trackChannels.get(track.id);
+      if (!channel) return;
+      const parameter = channel.automationGain.gain;
+      const points = [...(track.automation?.volume || [])]
+        .filter(point => Number.isFinite(Number(point.bar)) && Number.isFinite(Number(point.value)))
+        .sort((a, b) => a.bar - b.bar);
+      const now = channel.gain.context.currentTime;
+      parameter.cancelScheduledValues(now);
+      parameter.setValueAtTime(1, startTime);
+      points.forEach(point => {
+        const time = startTime + (Math.max(1, Number(point.bar)) - 1) * secondsPerBar;
+        parameter.linearRampToValueAtTime(Math.max(0, Math.min(1, Number(point.value) / 100)), Math.max(startTime, time));
+      });
+    },
+
     async play(tracks = []) {
       this.stop();
       const runId = this.runId;
@@ -200,6 +223,7 @@ export function createStudioDAWArrangementPlayback({
 
         const secondsPerBar = (60 / tempo) * 4;
         const startTime = context.currentTime + 0.12;
+        tracks.forEach(track => this.scheduleVolumeAutomation(track, startTime, secondsPerBar));
 
         decoded.forEach(({ track, clip, buffer }) => {
           const channel = this.trackChannels.get(track.id);
