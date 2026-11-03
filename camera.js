@@ -847,12 +847,9 @@ export default {
 
     cinTime += delta;
 
-    // Reset the avatar and normal lens before selecting this frame's camera.
+    // The active camera mode selects the lens below.
+    // Do not reset the POV field of view every frame.
     player.visible = true;
-    if (camera.fov !== 68) {
-      camera.fov = 68;
-      camera.updateProjectionMatrix();
-    }
 
     // --------------------------------------------------------
     // DETECT BUILDING ENTRY / EXIT
@@ -864,6 +861,13 @@ export default {
     const currentHQFloor = insideHQ
       ? getHQFloor(player.position.y)
       : 0;
+
+    const targetFov = currentHQFloor === 3 ? 72 : 68;
+    if (camera.fov !== targetFov) {
+      camera.fov = targetFov;
+      camera.updateProjectionMatrix();
+    }
+
     if (window.__lamboCityElevatorTraveling || currentHQFloor !== 3) {
       if (floor3POVActive) {
         lookYawOffset = 0;
