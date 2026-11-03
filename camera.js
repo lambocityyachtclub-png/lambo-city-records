@@ -285,7 +285,10 @@ function updateStudioArrivalCamera(player, delta) {
 
   const desired = new THREE.Vector3(
     cameraX,
-    Math.min(player.position.y + 4.45, 17.25),
+    // Raise the arrival viewpoint while staying just below the lowest
+    // Floor 2 acoustic soffit. The current lower framing exposes the
+    // elevator shaft and the level below during the walk-out.
+    Math.min(player.position.y + 5.55, 17.78),
     cameraZ
   );
 
