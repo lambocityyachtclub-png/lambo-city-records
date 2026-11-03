@@ -119,23 +119,50 @@ window.__lamboCityPrepareFloor = floor => {
   if (!destinationLoads.has(floor)) {
     const load = (async () => {
       if (floor === 3) {
+        window.__lamboCityFloor3Ready = false;
         const [executive, details, experience] = await Promise.all([
           import("./recordsHQFloor3Executive.js"),
           import("./recordsHQFloor3Details.js"),
           import("./recordsHQFloor3Experience.js")
         ]);
 
+        if (!engine.scene) {
+          throw new Error("The LAMBO CITY scene is not ready for Floor 3.");
+        }
+
         const systems = {
           recordsHQFloor3Executive: executive.default,
           recordsHQFloor3Details: details.default,
           recordsHQFloor3Experience: experience.default
         };
+
+        for (const [name, system] of Object.entries(systems)) {
+          if (!system || typeof system.init !== "function") {
+            throw new Error("Floor 3 module failed to initialize: " + name);
+          }
+        }
+
         Object.assign(engine.systems, systems);
         engine.context.systems = engine.systems;
 
-        systems.recordsHQFloor3Executive?.init?.(engine.scene);
-        systems.recordsHQFloor3Details?.init?.(engine.scene);
-        systems.recordsHQFloor3Experience?.init?.(engine.scene, engine.context);
+        // Initialize each visual layer only when its scene root is absent.
+        if (!engine.scene.getObjectByName("recordsHQFloor3Executive")) {
+          systems.recordsHQFloor3Executive.init(engine.scene);
+        }
+        if (!engine.scene.getObjectByName("floor3ExecutiveDetails")) {
+          systems.recordsHQFloor3Details.init(engine.scene);
+        }
+        systems.recordsHQFloor3Experience.init(engine.scene, engine.context);
+
+        // Do not let the elevator report a successful arrival until the
+        // actual Floor 3 architecture is present in the live scene.
+        if (
+          !engine.scene.getObjectByName("recordsHQFloor3Executive") ||
+          !engine.scene.getObjectByName("floor3ExecutiveDetails")
+        ) {
+          throw new Error("Floor 3 scene layers did not attach to the live scene.");
+        }
+        window.__lamboCityFloor3Ready = true;
       } else {
         const rooftop = await import("./recordsHQRooftopVIP.js");
         engine.systems.recordsHQRooftopVIP = rooftop.default;
