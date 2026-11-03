@@ -478,23 +478,58 @@ function updateStudioArrivalCamera(player, smooth = 0.34) {
   const yaw = player.rotation.y;
   const forwardX = Math.sin(yaw);
   const forwardZ = Math.cos(yaw);
+  const rightX = Math.cos(yaw);
+  const rightZ = -Math.sin(yaw);
+  const progress = THREE.MathUtils.clamp(
+    Number(window.__lamboCityFloor2ArrivalProgress ?? 0),
+    0,
+    1
+  );
 
-  // Stay locked behind the moving character for the entire entrance.
-  // A tight trailing position avoids the wide side angle that allowed
-  // room architecture to sweep across the foreground.
-  const distance = 2.35;
-  const cameraX = player.position.x - forwardX * distance;
-  const cameraZ = player.position.z - forwardZ * distance;
-  const cameraY = player.position.y + 2.25;
+  // Three restrained camera beats make the walk feel like a real
+  // entrance without changing the character's route:
+  // 1) follow from behind, 2) reveal a side profile, 3) settle
+  // into a three-quarter view as HERO reaches the producer chair.
+  const shots = [
+    { start: 0.00, end: 0.38, back: -2.8, side: 0.0 },
+    { start: 0.38, end: 0.72, back: -0.65, side: 2.75 },
+    { start: 0.72, end: 1.00, back: 1.85, side: 1.25 }
+  ];
+
+  let shot = shots[shots.length - 1];
+  let previous = shots[0];
+  for (let i = 0; i < shots.length; i++) {
+    if (progress <= shots[i].end) {
+      shot = shots[i];
+      previous = shots[Math.max(0, i - 1)];
+      break;
+    }
+  }
+
+  const phase = THREE.MathUtils.clamp(
+    (progress - shot.start) / Math.max(0.001, shot.end - shot.start),
+    0,
+    1
+  );
+  const eased = phase * phase * (3 - 2 * phase);
+  const back = THREE.MathUtils.lerp(previous.back, shot.back, eased);
+  const side = THREE.MathUtils.lerp(previous.side, shot.side, eased);
+
+  let cameraX =
+    player.position.x + forwardX * back + rightX * side;
+  let cameraZ =
+    player.position.z + forwardZ * back + rightZ * side;
+
+  // Keep every shot inside the Floor 2 room footprint.
+  cameraX = THREE.MathUtils.clamp(cameraX, 20.75, 35.25);
+  cameraZ = THREE.MathUtils.clamp(cameraZ, 15.55, 27.05);
+  const cameraY = player.position.y + 2.45;
 
   moveCamera(cameraX, cameraY, cameraZ, smooth);
-
-  // Keep the character as the visual anchor while looking just ahead
-  // along the clear walking route.
   camera.lookAt(
-    player.position.x + forwardX * 0.85,
-    player.position.y + 1.35,
-    player.position.z + forwardZ * 0.85
+    player.position.x,
+    player.position.y + 1.25,
+    player.position.z
   );
 }
 
@@ -505,20 +540,26 @@ function updateStudioArrivalCamera(player, smooth = 0.34) {
 
 function updateStudioSessionCamera(player, smooth = 0.22) {
   const yaw = Number(window.__lamboCityFloor2OrbitYaw ?? 0);
-  const pitch = Number(window.__lamboCityFloor2OrbitPitch ?? 0.08);
-  const radius = 5.25;
+  const radius = 4.15;
 
-  const cameraX = player.position.x + Math.sin(yaw) * radius;
-  const cameraZ = player.position.z + Math.cos(yaw) * radius;
-  const cameraY = player.position.y + 3.75 + pitch * 2.0;
+  // The camera orbits the fixed producer-chair position, not the
+  // player's changing facing direction. The radius is deliberately
+  // smaller than the room's narrowest clearance so a full 360 stays
+  // inside the studio instead of passing through the walls.
+  let cameraX = player.position.x + Math.sin(yaw) * radius;
+  let cameraZ = player.position.z + Math.cos(yaw) * radius;
 
+  cameraX = THREE.MathUtils.clamp(cameraX, 20.75, 35.25);
+  cameraZ = THREE.MathUtils.clamp(cameraZ, 15.55, 27.05);
+
+  // Match Floor 3's steady, level camera treatment.
+  const cameraY = player.position.y + 3.75;
   moveCamera(cameraX, cameraY, cameraZ, smooth);
 
-  // The producer faces -Z toward the exterior stage windows.
-  // Keep the desk and panoramic glazing in the initial seated view.
+  // Fixed focal point on the producer's workstation; no pitch input.
   camera.lookAt(
     player.position.x,
-    player.position.y + 1.7 + pitch * 0.45,
+    player.position.y + 1.7,
     player.position.z - 1.15
   );
 }
