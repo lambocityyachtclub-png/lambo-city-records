@@ -570,6 +570,29 @@ function updateStudioCamera(
 
 
 // ============================================================
+// FLOOR 2 — SEATED 360-DEGREE STUDIO CAMERA
+// ============================================================
+
+function updateStudioSessionCamera(player, smooth = 0.22) {
+  const yaw = Number(window.__lamboCityFloor2OrbitYaw ?? Math.PI);
+  const pitch = Number(window.__lamboCityFloor2OrbitPitch ?? 0.08);
+  const radius = 5.25;
+
+  const cameraX = player.position.x + Math.sin(yaw) * radius;
+  const cameraZ = player.position.z + Math.cos(yaw) * radius;
+  const cameraY = player.position.y + 2.45 + pitch * 3.2;
+
+  moveCamera(cameraX, cameraY, cameraZ, smooth);
+
+  camera.lookAt(
+    player.position.x,
+    player.position.y + 1.55 + pitch * 0.65,
+    player.position.z
+  );
+}
+
+
+// ============================================================
 // ELEVATOR CAMERA
 // ============================================================
 
@@ -919,10 +942,11 @@ export default {
 
       if (floor === 2) {
 
-        updateStudioCamera(
-          player,
-          interiorSmooth
-        );
+        if (window.__lamboCityFloor2SessionActive) {
+          updateStudioSessionCamera(player, 0.24);
+        } else {
+          updateStudioCamera(player, interiorSmooth);
+        }
 
         return;
 
