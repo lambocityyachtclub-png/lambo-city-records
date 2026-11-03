@@ -1166,6 +1166,8 @@ const MPCInterface = {
       : 0;
     const barDuration = 60 / (this.beatLab?.pattern?.bpm || 100) * 4;
     this.take.duration = Math.max(this.take.duration || 0, elapsed, lastEvent?.at || 0, barDuration);
+    // Overdub hits are appended as performed; playback requires chronological ordering.
+    this.take.events.sort((a, b) => a.at - b.at);
     try {
       this.take = StudioMPCLibrary.saveTake(projectId, this.take);
       const savedToSong = this.beatLab?.saveMPCPerformance?.(this.take) === true;
