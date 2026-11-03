@@ -962,6 +962,13 @@ export default {
         arrival.player.position.z = arrival.targetZ;
         floor3AutoArrival = null;
         window.__lamboCityFloor3ArrivalComplete = true;
+        // Clear any stale elevator interaction prompt after the automatic
+        // Floor 3 arrival, so it cannot remain visible at the viewing position.
+        inRange = false;
+        window.__lamboCityElevatorInRange = false;
+        if (promptEl) {
+          promptEl.style.display = "none";
+        }
         lockPlayerInput(false);
         setStatus("");
       }
