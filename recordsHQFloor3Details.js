@@ -107,10 +107,10 @@ export default {
     });
 
     // Boardroom microphone rail follows the relocated side table.
-    addBox(group, new THREE.BoxGeometry(0.9, 0.075, 0.28), black, -7.45, 1.12, 1.78);
+    addBox(group, new THREE.BoxGeometry(0.9, 0.075, 0.28), black, -7.45, 1.12, 0.18);
     [-0.82, 0, 0.82].forEach(z => {
       const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.035, 0.22, 10), brass);
-      stem.position.set(-7.45, 1.22, z + 2.2);
+      stem.position.set(-7.45, 1.22, z + 0.6);
       group.add(stem);
       const head = new THREE.Mesh(new THREE.SphereGeometry(0.065, 10, 8), dark);
       head.position.set(-7.45, 1.34, z + 2.2);
