@@ -16,7 +16,7 @@ let scene = null;
 let canvas = null;
 let resizeHandler = null;
 let pointerState = null;
-let cameraYaw = 0;
+let cameraYaw = Math.PI;
 let cameraPitch = 0.08;
 let lastOrbitInputAt = 0;
 let initialized = false;
@@ -139,18 +139,16 @@ function updateExplorationCamera(player, delta, moving, insideHQ) {
   if (moving && now - lastOrbitInputAt > 1500) {
     cameraYaw = dampAngle(
       cameraYaw,
-      player.rotation.y,
+      player.rotation.y + Math.PI,
       dampFactor(delta, 1.35)
     );
   }
 
   let distance = FOLLOW_DISTANCE;
-  let height = FOLLOW_HEIGHT;
 
   if (insideHQ) {
     // A slightly tighter framing keeps HERO and nearby room details visible.
     distance = 6.7;
-    height = 3.65;
   }
 
   const target = new THREE.Vector3(
