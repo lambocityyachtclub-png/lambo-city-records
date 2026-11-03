@@ -329,8 +329,14 @@ function buildMarkup() {
           </section>
           <section class="mpc-screen-panel" data-mpc-panel="MIX">
             <div class="mpc-panel-heading">OUTPUT & PERFORMANCE <small>ADVANCED</small></div>
-            <label class="mpc-field">MASTER LEVEL <output data-mpc-master-value>100%</output>
-              <input type="range" min="0" max="100" value="100" data-mpc-master>
+            <label class="mpc-field">SELECTED PAD LEVEL <output data-mpc-pad-volume-value>100%</output>
+              <input type="range" min="0" max="150" value="100" data-mpc-pad-volume>
+            </label>
+            <label class="mpc-field">SELECTED PAD PAN <output data-mpc-pad-pan-value>CENTER</output>
+              <input type="range" min="-100" max="100" value="0" data-mpc-pad-pan>
+            </label>
+            <label class="mpc-field">MPC MASTER LEVEL <output data-mpc-master-value>82%</output>
+              <input type="range" min="0" max="100" value="82" data-mpc-master>
             </label>
             <div class="mpc-screen-actions">
               <button type="button" data-mpc-screen-action="record">RECORD PADS</button>
@@ -432,9 +438,11 @@ const MPCInterface = {
         if (out) out.textContent = this.swing + "%";
       }
       if (event.target.matches("[data-mpc-start],[data-mpc-end],[data-mpc-pitch],[data-mpc-decay]")) this.saveSampleEditorSettings();
+      if (event.target.matches("[data-mpc-pad-volume],[data-mpc-pad-pan]")) this.savePadMixSettings();
       if (event.target.matches("[data-mpc-master]")) {
         const value = Number(event.target.value) || 0;
-        StudioAudioEngine.setMasterVolume(value / 100);
+        StudioMPCSampler.setMasterVolume(value / 100);
+        StudioMPCLibrary.setMasterVolume(value / 100);
         const out = root.querySelector("[data-mpc-master-value]");
         if (out) out.textContent = value + "%";
       }
@@ -459,6 +467,15 @@ const MPCInterface = {
       if (target.matches("[data-mpc-decay]")) {
         const out = root.querySelector("[data-mpc-decay-value]");
         if (out) out.textContent = Number(target.value) >= 100 ? "FULL" : target.value + "%";
+      }
+      if (target.matches("[data-mpc-pad-volume]")) {
+        const out = root.querySelector("[data-mpc-pad-volume-value]");
+        if (out) out.textContent = target.value + "%";
+      }
+      if (target.matches("[data-mpc-pad-pan]")) {
+        const out = root.querySelector("[data-mpc-pad-pan-value]");
+        const value = Number(target.value);
+        if (out) out.textContent = value === 0 ? "CENTER" : (value < 0 ? "L " : "R ") + Math.abs(value) + "%";
       }
       if (target.matches("[data-mpc-start],[data-mpc-end]")) {
         const sampleId = root.querySelector("[data-mpc-editor-sample]")?.value;
@@ -583,6 +600,7 @@ const MPCInterface = {
     document.body.appendChild(root);
     this.root = root;
     this.refreshLibraryUI();
+    this.refreshPadMixControls();
     for (const button of root.querySelectorAll(".bank-btn")) button.classList.toggle("active", button.dataset.placeholder === "BANK A");
     void this.refreshImportedSamples();
     void this.preloadAssignedSamples();
@@ -618,6 +636,7 @@ const MPCInterface = {
     this.updatePadReadout();
     const importedSampleId = StudioMPCSampler.getAssignment(this.bank, padNumber);
     const sound = StudioMPCLibrary.getAssignment(this.bank, padNumber);
+    this.refreshPadMixControls();
     const select = this.root.querySelector("[data-mpc-sound-select]");
     if (select) select.value = sound.id;
     const label = this.root.querySelector('.pad-wrap [data-pad="' + padNumber + '"] + .pad-label');
@@ -632,7 +651,7 @@ const MPCInterface = {
           velocity,
           when: audio.currentTime
         });
-      } else StudioMPCLibrary.play(audio, sound, audio.currentTime, velocity);
+      } else StudioMPCLibrary.play(audio, sound, audio.currentTime, velocity, sampleSettings);
       if (this.recording) {
         const at = Math.max(0, audio.currentTime - this.recordingStartedAt + this.overdubOffset);
         this.take.events.push({
@@ -640,7 +659,7 @@ const MPCInterface = {
           bank: this.bank,
           soundId: sound.id,
           sampleId: importedSampleId || null,
-          sampleSettings: importedSampleId ? sampleSettings : null,
+          sampleSettings,
           velocity,
           at: this.quantizeTime(at),
           sound: {
@@ -748,6 +767,29 @@ const MPCInterface = {
     if (decay) decay.value = String(Math.round((settings.decay ?? 10) >= 10 ? 100 : (settings.decay / 10) * 100));
     this.saveSampleEditorSettings(false);
     await this.renderSampleWaveform(select.value);
+  },
+
+  refreshPadMixControls() {
+    if (!this.root) return;
+    const settings = StudioMPCSampler.getPadSettings(this.bank, this.selectedPad);
+    const volume = this.root.querySelector("[data-mpc-pad-volume]");
+    const pan = this.root.querySelector("[data-mpc-pad-pan]");
+    if (volume) volume.value = String(Math.round((settings.volume ?? 1) * 100));
+    if (pan) pan.value = String(Math.round((settings.pan ?? 0) * 100));
+    const volumeOut = this.root.querySelector("[data-mpc-pad-volume-value]");
+    const panOut = this.root.querySelector("[data-mpc-pad-pan-value]");
+    if (volumeOut) volumeOut.textContent = Math.round((settings.volume ?? 1) * 100) + "%";
+    const panValue = Math.round((settings.pan ?? 0) * 100);
+    if (panOut) panOut.textContent = panValue === 0 ? "CENTER" : (panValue < 0 ? "L " : "R ") + Math.abs(panValue) + "%";
+  },
+
+  savePadMixSettings() {
+    if (!this.root) return;
+    const volume = Number(this.root.querySelector("[data-mpc-pad-volume]")?.value ?? 100) / 100;
+    const pan = Number(this.root.querySelector("[data-mpc-pad-pan]")?.value ?? 0) / 100;
+    StudioMPCSampler.setPadSettings(this.bank, this.selectedPad, { volume, pan });
+    const status = this.root.querySelector("[data-mpc-editor-status]");
+    if (status) status.textContent = "PAD LEVEL AND PAN SAVED · BANK " + this.bank + " PAD " + this.selectedPad;
   },
 
   saveSampleEditorSettings(commit = true) {
@@ -901,6 +943,7 @@ const MPCInterface = {
       button.classList.toggle("active", button.dataset.placeholder === "BANK " + bank);
     }
     this.refreshLibraryUI();
+    this.refreshPadMixControls();
     if (this.root?.querySelector('[data-mpc-panel="SAMPLE"].active')) void this.refreshSampleEditor();
     this.setStatus("BANK " + bank + " SELECTED");
   },
@@ -1038,7 +1081,7 @@ const MPCInterface = {
           }).catch(() => {});
         } else {
           const sound = event.sound || StudioMPCLibrary.getSounds().find(item => item.id === event.soundId);
-          if (sound) StudioMPCLibrary.play(this.beatLab.audio, sound, Math.max(this.beatLab.audio.currentTime, this.playbackStartedAt + event.at), event.velocity || 0.9);
+          if (sound) StudioMPCLibrary.play(this.beatLab.audio, sound, Math.max(this.beatLab.audio.currentTime, this.playbackStartedAt + event.at), event.velocity || 0.9, event.sampleSettings || {});
         }
       }
       if (elapsed >= loopDuration) {
