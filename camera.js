@@ -37,6 +37,8 @@ let elevatorLookPitch = -0.02;
 let elevatorLookPointerId = null;
 let elevatorLookPointerX = 0;
 let elevatorLookPointerY = 0;
+let elevatorCanvas = null;
+let elevatorPreviousTouchAction = "";
 
 
 // ============================================================
@@ -561,6 +563,25 @@ function updateStudioSessionCamera(player, smooth = 0.22) {
 // ELEVATOR CAMERA
 // ============================================================
 
+function setElevatorTouchMode(enabled, renderer) {
+  const canvas = renderer?.domElement || elevatorCanvas;
+
+  if (enabled) {
+    if (!elevatorCanvas && canvas) {
+      elevatorCanvas = canvas;
+      elevatorPreviousTouchAction = canvas.style.touchAction || "";
+    }
+    if (canvas) canvas.style.touchAction = "none";
+    return;
+  }
+
+  if (elevatorCanvas) {
+    elevatorCanvas.style.touchAction = elevatorPreviousTouchAction;
+    elevatorCanvas = null;
+    elevatorPreviousTouchAction = "";
+  }
+}
+
 function updateElevatorCamera(player, delta = 0.016) {
   if (!elevatorPOVActive) {
     elevatorLookYaw = 0;
@@ -974,12 +995,14 @@ export default {
       window.__lamboCityElevatorLandingFloor === 3 &&
       player.position.z < 14.7;
 
-    if (
+    const elevatorCameraActive =
       elevatorPOV ||
       window.__lamboCityElevatorTraveling ||
       floor2LandingPending ||
-      floor3LandingPending
-    ) {
+      floor3LandingPending;
+    setElevatorTouchMode(elevatorCameraActive, context.renderer);
+
+    if (elevatorCameraActive) {
       updateElevatorCamera(player, delta);
       return;
     }
