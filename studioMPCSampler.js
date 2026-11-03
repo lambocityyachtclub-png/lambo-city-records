@@ -1,5 +1,7 @@
 // LAMBO CITY RECORDS — MPC SAMPLE ENGINE
 // Real user-owned audio samples, persistent in IndexedDB, independent of Beat Lab.
+import StudioAudioEngine from "./studioAudioEngine.js";
+
 const DB_NAME = "lambo-city-mpc-samples";
 const STORE = "samples";
 const ASSIGN_KEY = "lambocity-mpc-sample-assignments-v1";
@@ -97,9 +99,10 @@ const MPCSampler = {
     source.playbackRate.value = Math.max(0.5, Math.min(2, Number(options.pitch) || 1));
     gain.gain.value = Math.max(0, Math.min(1.5, Number(options.velocity) || 1));
     source.connect(gain);
-    const destination = window.__lamboCityMPCOutput || audio.destination;
+    const destination = StudioAudioEngine.master || audio.destination;
     gain.connect(destination);
-    source.start(audio.currentTime, start, Math.max(0.01, end - start));
+    const when = Math.max(audio.currentTime, Number(options.when) || audio.currentTime);
+    source.start(when, start, Math.max(0.01, end - start));
     return source;
   },
 
