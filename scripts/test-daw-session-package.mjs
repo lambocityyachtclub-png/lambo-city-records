@@ -34,6 +34,7 @@ const session = {
     inputSource: "mic",
     eq: { low: -1.5, mid: 2, high: 1 },
     compression: { threshold: -18, ratio: 2.5 },
+    effects: { delayTime: 0.42, delayFeedback: 0.3, delayMix: 0.25, reverbMix: 0.4, reverbDecay: 3.2 },
     automation: { volume: [{ bar: 1, value: 80 }, { bar: 9, value: 55 }] },
     muted: false,
     solo: true,
@@ -59,6 +60,9 @@ assert.equal(imported.dawSession.tracks[0].clips[0].data, "AQIDBA==");
 assert.equal(imported.dawSession.tracks[0].inputSource, "mic");
 assert.equal(imported.dawSession.tracks[0].eq.mid, 2);
 assert.equal(imported.dawSession.tracks[0].compression.ratio, 2.5);
+assert.deepEqual(imported.dawSession.tracks[0].effects, {
+  delayTime: 0.42, delayFeedback: 0.3, delayMix: 0.25, reverbMix: 0.4, reverbDecay: 3.2
+});
 assert.deepEqual(imported.dawSession.tracks[0].automation.volume, [
   { bar: 1, value: 80 },
   { bar: 9, value: 55 }
@@ -74,6 +78,10 @@ assert.throws(() => exportSongProjectPackage(invalidInput), /track settings are 
 const invalidPan = structuredClone(project);
 invalidPan.dawSession.tracks[0].pan = 2;
 assert.throws(() => exportSongProjectPackage(invalidPan), /track settings are invalid/);
+
+const invalidEffects = structuredClone(project);
+invalidEffects.dawSession.tracks[0].effects.reverbMix = 1.5;
+assert.throws(() => exportSongProjectPackage(invalidEffects), /track settings are invalid/);
 
 const invalidAutomation = structuredClone(project);
 invalidAutomation.dawSession.tracks[0].automation.volume[0].bar = 129;
