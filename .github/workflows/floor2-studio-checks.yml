@@ -33,6 +33,9 @@ on:
       - "scripts/test-mpc-sampler-storage.mjs"
       - "scripts/test-daw-session-package.mjs"
       - "scripts/test-daw-arrangement-playback.mjs"
+      - "scripts/test-daw-mp3-export.mjs"
+      - "vendor/lamejs/lame.min.js"
+      - "THIRD_PARTY_NOTICES.md"
       - ".github/workflows/floor2-studio-checks.yml"
 
   pull_request:
@@ -67,6 +70,9 @@ on:
       - "scripts/test-mpc-sampler-storage.mjs"
       - "scripts/test-daw-session-package.mjs"
       - "scripts/test-daw-arrangement-playback.mjs"
+      - "scripts/test-daw-mp3-export.mjs"
+      - "vendor/lamejs/lame.min.js"
+      - "THIRD_PARTY_NOTICES.md"
       - ".github/workflows/floor2-studio-checks.yml"
 
   workflow_dispatch:
@@ -133,3 +139,6 @@ jobs:
 
       - name: Test DAW arrangement playback and mixer
         run: node --experimental-default-type=module scripts/test-daw-arrangement-playback.mjs
+
+      - name: Test DAW MP3 encoder
+        run: node --experimental-default-type=module scripts/test-daw-mp3-export.mjs
