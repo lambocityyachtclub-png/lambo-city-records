@@ -1003,16 +1003,33 @@ const MPCInterface = {
     } catch (error) { this.setStatus(error?.message || "Could not unlock the library."); }
   },
 
+  getSongPosition(audio) {
+    const bpm = Number(this.beatLab?.pattern?.bpm) || 100;
+    const barDuration = 240 / bpm;
+    const loopDuration = Math.max(0.25, Number(this.take?.duration) || barDuration);
+    const origin = this.playbackTimer !== null
+      ? this.playbackStartedAt
+      : this.beatLab?.playbackStartedAt;
+    if (!Number.isFinite(Number(origin))) return 0;
+    const elapsed = audio.currentTime - Number(origin);
+    if (elapsed <= 0) return 0;
+    const duration = this.playbackTimer !== null ? loopDuration : Math.min(loopDuration, barDuration);
+    return ((elapsed % duration) + duration) % duration;
+  },
+
   async handleAction(action) {
     if (!this.beatLab) return;
     try {
       if (action === "record" || action === "overdub") {
         const audio = await StudioAudioEngine.resume();
         this.beatLab.audio = audio;
-        if (!this.beatLab.playing) await this.beatLab.start();
+        const songWasPlaying = Boolean(this.beatLab.playing);
+        if (!songWasPlaying) await this.beatLab.start();
         if (action === "record") this.take = { events: [], duration: 0 };
         this.recording = true;
-        this.overdubOffset = action === "overdub" ? (this.take.duration || 0) : 0;
+        this.overdubOffset = action === "overdub" && songWasPlaying
+          ? this.getSongPosition(audio)
+          : 0;
         this.recordingStartedAt = audio.currentTime;
         this.root?.querySelector('[data-placeholder="REC"]')?.classList.add("lit");
         this.setStatus(action === "overdub" ? "OVERDUB ARMED · PLAY PADS OVER YOUR SONG" : "PAD RECORDING ARMED · PLAY PADS OVER YOUR SONG");
