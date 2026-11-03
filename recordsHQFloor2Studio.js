@@ -547,7 +547,7 @@ export default {
     );
 
     leftDriver.rotation.z =
-      -Math.PI / 2;
+      Math.PI / 2;
 
     leftDriver.position.set(
       0.23,
@@ -610,7 +610,7 @@ export default {
     );
 
     rightDriver.rotation.z =
-      -Math.PI / 2;
+      Math.PI / 2;
 
     rightDriver.position.set(
       1.35,
