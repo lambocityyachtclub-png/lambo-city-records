@@ -352,6 +352,7 @@ const StudioMPCLibrary = {
 
   setMasterVolume(value) {
     this.masterLevel = clamp(Number(value) || 0, 0, 1);
+    try { localStorage.setItem(MASTER_KEY, String(this.masterLevel)); } catch {}
     if (this.bus && this.audio) this.bus.input.gain.setTargetAtTime(this.masterLevel, this.audio.currentTime, 0.015);
   },
 
