@@ -822,9 +822,14 @@ const MPCInterface = {
   async deleteSelectedSample() {
     const id = this.root?.querySelector("[data-mpc-editor-sample]")?.value;
     if (!id) return;
-    if (this.take?.events?.some(event => event.sampleId === id) || this.beatLab?.currentProject?.mpcPerformance?.events?.some(event => event.sampleId === id)) {
+    const assigned = Object.entries(StudioMPCSampler.exportState().assignments || {}).some(([, sampleId]) => sampleId === id);
+    const usedInTake = this.take?.events?.some(event => event.sampleId === id)
+      || this.beatLab?.currentProject?.mpcPerformance?.events?.some(event => event.sampleId === id);
+    if (assigned || usedInTake) {
       const status = this.root?.querySelector("[data-mpc-editor-status]");
-      if (status) status.textContent = "THIS SAMPLE IS USED IN THE SAVED PAD TAKE. KEEP IT TO PRESERVE PLAYBACK.";
+      if (status) status.textContent = assigned
+        ? "THIS SAMPLE IS ASSIGNED TO A PAD. UNASSIGN IT FIRST TO PROTECT YOUR KIT."
+        : "THIS SAMPLE IS USED IN THE SAVED PAD TAKE. KEEP IT TO PRESERVE PLAYBACK.";
       return;
     }
     const sample = await StudioMPCSampler.getSample(id);
