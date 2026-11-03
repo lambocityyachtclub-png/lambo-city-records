@@ -90,8 +90,13 @@ export default {
 
         // Route each physical station into its matching
         // functional workspace inside the same Studio session.
-        window.__lamboCityOpenFloor2Instrument?.();
-        StudioDAWApp.open(station.view || "edit");
+        try {
+          window.__lamboCityOpenFloor2Instrument?.();
+          StudioDAWApp.open(station.view || "edit");
+        } catch (error) {
+          window.__lamboCityReturnToFloor2Room?.();
+          console.error("LAMBO CITY station workspace failed to open:", error);
+        }
         return;
       }
     };
