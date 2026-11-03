@@ -76,12 +76,12 @@ export default {
     );
 
     const gold = mat(
-      0xffd36a,
+      0xb88e55,
       {
         roughness: 0.28,
-        metalness: 0.8,
-        emissive: 0xffa000,
-        emissiveIntensity: 0.6
+        metalness: 0.84,
+        emissive: 0x2a1708,
+        emissiveIntensity: 0.16
       }
     );
 
@@ -201,7 +201,7 @@ export default {
     // VERTICAL ARCHITECTURAL FRAMES
     // =========================================================
 
-    [-6, -2, 2, 6].forEach(x => {
+    [-8, -5, 5, 8].forEach(x => {
 
       box(
         group,
