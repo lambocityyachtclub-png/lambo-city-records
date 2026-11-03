@@ -261,68 +261,31 @@ function updateElevatorExteriorCamera(player, delta) {
 }
 
 function updateStudioArrivalCamera(player, delta) {
+  // Keep the same natural third-person follow used during normal walking.
+  // No cinematic side-shot transitions, push-ins, or zoom toward the player.
   const yaw = player.rotation.y;
-  const forwardX = Math.sin(yaw);
-  const forwardZ = Math.cos(yaw);
-  const rightX = Math.cos(yaw);
-  const rightZ = -Math.sin(yaw);
-  const progress = THREE.MathUtils.clamp(
-    Number(window.__lamboCityFloor2ArrivalProgress ?? 0),
-    0,
-    1
-  );
-
-  // Restore the original three-beat producer entrance:
-  // follow HERO from behind, reveal the walk from the side,
-  // then settle into a three-quarter view of the workstation.
-  // Keep the arrival camera behind and offset from HERO so the
-  // full character and the walk toward the producer cockpit stay visible.
-  // Never swing in front of the character or push into a close-up.
-  const shots = [
-    { start: 0.00, end: 0.38, back: -7.5, side: 0.0 },
-    { start: 0.38, end: 0.72, back: -6.9, side: 4.2 },
-    { start: 0.72, end: 1.00, back: -6.3, side: 3.6 }
-  ];
-
-  let shot = shots[shots.length - 1];
-  let previous = shots[0];
-  for (let i = 0; i < shots.length; i++) {
-    if (progress <= shots[i].end) {
-      shot = shots[i];
-      previous = shots[Math.max(0, i - 1)];
-      break;
-    }
-  }
-
-  const phase = THREE.MathUtils.clamp(
-    (progress - shot.start) / Math.max(0.001, shot.end - shot.start),
-    0,
-    1
-  );
-  const eased = phase * phase * (3 - 2 * phase);
-  const back = THREE.MathUtils.lerp(previous.back, shot.back, eased);
-  const side = THREE.MathUtils.lerp(previous.side, shot.side, eased);
-
+  const back = FOLLOW_DISTANCE;
   const cameraX = THREE.MathUtils.clamp(
-    player.position.x + forwardX * back + rightX * side,
-    20.75,
-    35.25
+    player.position.x - Math.sin(yaw) * back,
+    HQ_MIN_X + 0.9,
+    HQ_MAX_X - 0.9
   );
   const cameraZ = THREE.MathUtils.clamp(
-    player.position.z + forwardZ * back + rightZ * side,
-    15.55,
-    27.05
+    player.position.z - Math.cos(yaw) * back,
+    HQ_MIN_Z + 0.9,
+    HQ_MAX_Z - 0.9
   );
 
   const desired = new THREE.Vector3(
     cameraX,
-    player.position.y + 3.85,
+    player.position.y + FOLLOW_HEIGHT,
     cameraZ
   );
-  camera.position.lerp(desired, dampFactor(delta, 7.4));
+
+  camera.position.lerp(desired, dampFactor(delta, 8.5));
   camera.lookAt(
     player.position.x,
-    player.position.y + 1.4,
+    player.position.y + LOOK_HEIGHT,
     player.position.z
   );
 }
