@@ -275,10 +275,13 @@ function updateStudioArrivalCamera(player, delta) {
   // Restore the original three-beat producer entrance:
   // follow HERO from behind, reveal the walk from the side,
   // then settle into a three-quarter view of the workstation.
+  // Keep the arrival camera behind and offset from HERO so the
+  // full character and the walk toward the producer cockpit stay visible.
+  // Never swing in front of the character or push into a close-up.
   const shots = [
-    { start: 0.00, end: 0.38, back: -2.8, side: 0.0 },
-    { start: 0.38, end: 0.72, back: -0.65, side: 2.75 },
-    { start: 0.72, end: 1.00, back: 1.85, side: 1.25 }
+    { start: 0.00, end: 0.38, back: -6.0, side: 0.0 },
+    { start: 0.38, end: 0.72, back: -5.4, side: 3.6 },
+    { start: 0.72, end: 1.00, back: -4.8, side: 3.0 }
   ];
 
   let shot = shots[shots.length - 1];
@@ -313,10 +316,10 @@ function updateStudioArrivalCamera(player, delta) {
 
   const desired = new THREE.Vector3(
     cameraX,
-    player.position.y + 2.45,
+    player.position.y + 3.25,
     cameraZ
   );
-  camera.position.lerp(desired, dampFactor(delta, 5.8));
+  camera.position.lerp(desired, dampFactor(delta, 7.4));
   camera.lookAt(
     player.position.x,
     player.position.y + 1.25,
