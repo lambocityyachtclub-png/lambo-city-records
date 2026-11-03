@@ -23,7 +23,6 @@ let cinTime = 0;
 let lastOrbitInputAt = 0;
 let initialized = false;
 let currentMode = "world";
-let studioArrivalCameraOffset = null;
 
 const FOLLOW_DISTANCE = 8.2;
 const FOLLOW_HEIGHT = 4.15;
@@ -261,19 +260,26 @@ function updateElevatorExteriorCamera(player, delta) {
   camera.lookAt(target);
 }
 
-function updateStudioArrivalCamera(player) {
-  // Preserve the exact elevator camera offset for the entire walk to the
-  // cockpit. Translate the camera with the character without easing closer,
-  // changing its distance, or pushing in toward the character.
-  if (!studioArrivalCameraOffset) {
-    studioArrivalCameraOffset = camera.position.clone().sub(player.position);
-  }
+function updateStudioArrivalCamera(player, delta) {
+  // Reframe from the elevator's exterior angle into a stable three-quarter
+  // tracking shot of HERO walking toward the producer cockpit. The camera
+  // keeps a fixed offset from the player; it does not zoom toward the character.
+  const desired = new THREE.Vector3(
+    player.position.x + 5.2,
+    player.position.y + 4.8,
+    player.position.z + 8.2
+  );
 
-  camera.position.copy(player.position).add(studioArrivalCameraOffset);
+  // Blend into the arrival framing while continuing to track the walk.
+  camera.position.lerp(desired, dampFactor(delta, 5.5));
+
+  // Look slightly ahead along the character's current route so the
+  // elevator-to-cockpit movement and destination stay in view.
+  const heading = player.rotation.y;
   camera.lookAt(
-    player.position.x,
+    player.position.x + Math.sin(heading) * 1.4,
     player.position.y + LOOK_HEIGHT,
-    player.position.z
+    player.position.z + Math.cos(heading) * 1.4
   );
 }
 
@@ -380,11 +386,10 @@ export default {
 
     if (floor2Arrival) {
       currentMode = "studio-arrival";
-      updateStudioArrivalCamera(player);
+      updateStudioArrivalCamera(player, delta);
       return;
     }
 
-    studioArrivalCameraOffset = null;
 
     if (seatedStudio) {
       currentMode = "studio-seated";
