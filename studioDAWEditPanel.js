@@ -1,3 +1,5 @@
+import StudioMultitrackWorkspace from "./studioMultitrackWorkspace.js";
+
 /*
  * LAMBO CITY RECORDS
  * SONG EDITOR PANEL — V2
