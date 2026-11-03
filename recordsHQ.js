@@ -806,10 +806,18 @@ export default {
           0
         );
       });
+      // Keep the rear facade band split at the elevator entrance.
       addFacadePanel(
-        new THREE.BoxGeometry(18.35, .32, .42),
+        new THREE.BoxGeometry(1.70, .32, .42),
         facadeDark,
-        0,
+        -8.05,
+        y,
+        -7.10
+      );
+      addFacadePanel(
+        new THREE.BoxGeometry(11.70, .32, .42),
+        facadeDark,
+        3.05,
         y,
         -7.10
       );
