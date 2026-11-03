@@ -38,12 +38,6 @@ export const DEVELOPMENT_SYSTEM_STATUS = Object.freeze({
   DISABLED: "disabled"
 });
 
-/**
- * Create and initialize the development system.
- *
- * This is async because the Director must initialize
- * its task storage before it can accept tasks.
- */
 export async function createDevelopmentSystem(options = {}) {
   const {
     storage = null,
@@ -62,7 +56,6 @@ export async function createDevelopmentSystem(options = {}) {
     directorOptions
   );
 
-  // Initialize the Director before connecting task runners.
   await director.initialize();
 
   const studioRunner = createStudioDevelopmentRunner({
@@ -76,6 +69,7 @@ export async function createDevelopmentSystem(options = {}) {
     name: "Development Policy",
     type: MODULE_TYPES.POLICY,
     version: policy.version,
+    path: "development/policies/developmentPolicy.js",
     enabled: true,
     capabilities: [
       "task-protection",
@@ -91,6 +85,7 @@ export async function createDevelopmentSystem(options = {}) {
     name: "Development Director",
     type: MODULE_TYPES.ENGINE,
     version: DEVELOPMENT_SYSTEM_VERSION,
+    path: "development/engine/developmentDirector.js",
     enabled: true,
     capabilities: [
       "task-management",
@@ -106,6 +101,7 @@ export async function createDevelopmentSystem(options = {}) {
     name: "Studio Development Runner",
     type: MODULE_TYPES.RUNNER,
     version: STUDIO_RUNNER_VERSION,
+    path: "development/runners/studio/studioDevelopmentRunner.js",
     enabled: true,
     capabilities: [
       "studio-improvements",
