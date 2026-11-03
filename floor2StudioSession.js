@@ -23,7 +23,7 @@ const PRODUCER_SEAT = {
   z: HQ_Z - 2.15
 };
 
-const ELEVATOR_ARRIVAL_SECONDS = 2.2;
+const ELEVATOR_ARRIVAL_SECONDS = 3.0;
 
 let playerSystem = null;
 let renderer = null;
@@ -231,6 +231,7 @@ export default {
     arrivalElapsed = 0;
     window.__lamboCityFloor2OrbitYaw = 0;
     window.__lamboCityFloor2OrbitPitch = 0.08;
+    window.__lamboCityFloor2ArrivalProgress = 0;
     setMode("arrival");
   },
 
@@ -252,6 +253,7 @@ export default {
     playerSystem?.setStudioSeatedPose?.(false);
     arrivalPlayer = null;
     arrivalStart = null;
+    window.__lamboCityFloor2ArrivalProgress = 0;
     setMode("free");
   },
 
@@ -266,6 +268,7 @@ export default {
     if (mode === "arrival" && arrivalPlayer && arrivalStart) {
       arrivalElapsed += delta;
       const t = Math.min(1, arrivalElapsed / ELEVATOR_ARRIVAL_SECONDS);
+      window.__lamboCityFloor2ArrivalProgress = t;
       const eased = t * t * (3 - 2 * t);
 
       arrivalPlayer.position.set(
