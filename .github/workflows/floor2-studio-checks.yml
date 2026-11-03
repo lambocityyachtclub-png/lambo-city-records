@@ -26,6 +26,7 @@ on:
       - "studioMPCLibrary.js"
       - "studioMPCSampler.js"
       - "scripts/test-mpc-project-package.mjs"
+      - "scripts/test-mpc-library.mjs"
       - ".github/workflows/floor2-studio-checks.yml"
 
   pull_request:
@@ -53,6 +54,7 @@ on:
       - "studioMPCLibrary.js"
       - "studioMPCSampler.js"
       - "scripts/test-mpc-project-package.mjs"
+      - "scripts/test-mpc-library.mjs"
       - ".github/workflows/floor2-studio-checks.yml"
 
   workflow_dispatch:
@@ -102,3 +104,6 @@ jobs:
 
       - name: Test portable MPC song package
         run: node --experimental-default-type=module scripts/test-mpc-project-package.mjs
+
+      - name: Test MPC sound library persistence
+        run: node --experimental-default-type=module scripts/test-mpc-library.mjs
