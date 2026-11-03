@@ -341,6 +341,14 @@ const StudioMPCLibrary = {
     return sound;
   },
 
+  unassign(bank, pad) {
+    const state = this.state || readState();
+    state.assignments = { ...(state.assignments || {}) };
+    delete state.assignments[bank + "-" + pad];
+    this.state = state;
+    writeState(state);
+  },
+
   getInput(audio) {
     if (!audio) throw new Error("MPC audio is not ready.");
     if (this.audio !== audio || !this.bus) {
