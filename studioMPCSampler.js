@@ -5,6 +5,7 @@ import StudioAudioExport from "./studioAudioExport.js";
 const DB_NAME = "lambo-city-mpc-samples";
 const STORE = "samples";
 const ASSIGN_KEY = "lambocity-mpc-sample-assignments-v1";
+const MASTER_KEY = "lambocity-mpc-master-level-v1";
 let dbPromise;
 
 function openDB() {
@@ -38,7 +39,7 @@ const MPCSampler = {
   buffers: new Map(),
   output: null,
   outputContext: null,
-  masterVolume: 0.82,
+  masterVolume: (() => { try { const value = Number(localStorage.getItem(MASTER_KEY)); return Number.isFinite(value) && localStorage.getItem(MASTER_KEY) !== null ? Math.max(0, Math.min(1, value)) : 0.82; } catch { return 0.82; } })(),
   assignments: readAssignments(),
   padSettings: (() => {
     try { return JSON.parse(localStorage.getItem(ASSIGN_KEY + "-settings") || "{}"); }
@@ -254,6 +255,7 @@ const MPCSampler = {
 
   setMasterVolume(value) {
     this.masterVolume = Math.max(0, Math.min(1, Number(value) || 0));
+    localStorage.setItem(MASTER_KEY, String(this.masterVolume));
     if (this.output && this.outputContext) {
       this.output.gain.setTargetAtTime(this.masterVolume, this.outputContext.currentTime, 0.015);
     }
