@@ -1,25 +1,23 @@
 // dockPath.js
-// LAMBO CITY — Dock-to-Records-HQ Luxury Marble Pathway
-// Three.js 0.160.0 | Visual feature only; collision is registered in collision.js.
+// LAMBO CITY — Straight Dock-to-Records-HQ Marble Walkway
+// Three.js 0.160.0 | New visual module with a clear dock-side rail opening.
+// Collision for the decorative bollards is registered in collision.js.
 
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 
-const PATH_POINTS = [
-  new THREE.Vector3(6.8, 1.27, 18.3),
-  new THREE.Vector3(10.0, 1.27, 18.3),
-  new THREE.Vector3(13.0, 1.27, 17.2),
-  new THREE.Vector3(16.0, 1.27, 15.0),
-  new THREE.Vector3(19.0, 1.27, 12.8),
-  new THREE.Vector3(21.5, 1.27, 12.8),
-  new THREE.Vector3(23.0, 1.27, 14.15)
-];
+const PATH = {
+  startX: 5.25,
+  endX: 23.0,
+  centerZ: 17.2,
+  width: 3.6,
+  surfaceY: 1.36
+};
 
-const BOLLARD_POSITIONS = [
-  [8.2, 15.95], [8.2, 20.55],
-  [10.9, 15.75], [10.9, 20.25],
-  [13.8, 14.75], [13.8, 19.15],
-  [16.5, 12.85], [16.5, 17.15],
-  [18.5, 10.55], [18.5, 15.05]
+const BOLLARDS = [
+  [9.0, 14.85], [9.0, 19.55],
+  [12.0, 14.85], [12.0, 19.55],
+  [15.0, 14.85], [15.0, 19.55],
+  [18.0, 14.85], [18.0, 19.55]
 ];
 
 function createMarbleTexture() {
@@ -54,7 +52,57 @@ function createMarbleTexture() {
 
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
   return texture;
+}
+
+function openDockRailForPath(scene) {
+  // dock.js creates one long right-hand rail at x=6.2.
+  // Split only that rail to create a real, unobstructed walkway opening.
+  let rightRail = null;
+
+  scene.traverse(object => {
+    if (rightRail || !object.isMesh || !object.geometry?.parameters) return;
+
+    const p = object.geometry.parameters;
+    if (
+      Math.abs(object.position.x - 6.2) < 0.08 &&
+      Math.abs(object.position.y - 1.6) < 0.12 &&
+      Math.abs(p.width - 0.12) < 0.03 &&
+      Math.abs(p.height - 0.6) < 0.08 &&
+      p.depth > 70
+    ) {
+      rightRail = object;
+    }
+  });
+
+  if (!rightRail || rightRail.userData.lamboCityPathOpeningMade) return;
+
+  rightRail.visible = false;
+  rightRail.userData.lamboCityPathOpeningMade = true;
+
+  const railMaterial = rightRail.material;
+  const railX = rightRail.position.x;
+  const railY = rightRail.position.y;
+
+  // Preserve the original dock rail on both sides of a 4.4-unit gap.
+  const segments = [
+    { length: 56.0, centerZ: -13.0 },
+    { length: 15.6, centerZ: 27.2 }
+  ];
+
+  segments.forEach((segment, index) => {
+    const rail = new THREE.Mesh(
+      new THREE.BoxGeometry(0.12, 0.6, segment.length),
+      railMaterial
+    );
+    rail.name = "lamboCityDockPathRailSegment_" + index;
+    rail.position.set(railX, railY, segment.centerZ);
+    rail.castShadow = true;
+    rail.receiveShadow = true;
+    scene.add(rail);
+  });
 }
 
 function addBollard(group, x, z, brass, dark, glow) {
@@ -103,6 +151,10 @@ function addBollard(group, x, z, brass, dark, glow) {
 
 export default {
   init(scene) {
+    if (scene.getObjectByName("lamboCityDockToElevatorPath")) return;
+
+    openDockRailForPath(scene);
+
     const group = new THREE.Group();
     group.name = "lamboCityDockToElevatorPath";
 
@@ -134,81 +186,66 @@ export default {
       roughness: 0.24
     });
 
-    const curve = new THREE.CatmullRomCurve3(PATH_POINTS);
-    const length = curve.getLength();
+    const length = PATH.endX - PATH.startX;
     const tileCount = Math.ceil(length / 1.15);
     const tileLength = length / tileCount - 0.035;
+    const centerX = (PATH.startX + PATH.endX) / 2;
 
-    // Individual marble pavers follow the curved centerline. Their
-    // top surface is at the same height as the existing dock planks.
+    // Straight marble pavers, aligned with the dock and elevator.
     for (let i = 0; i < tileCount; i++) {
-      const t = (i + 0.5) / tileCount;
-      const point = curve.getPointAt(t);
-      const tangent = curve.getTangentAt(t);
-      const yaw = Math.atan2(-tangent.z, tangent.x);
-      const width = THREE.MathUtils.lerp(3.9, 3.15, Math.max(0, (t - 0.78) / 0.22));
+      const x = PATH.startX + (i + 0.5) * (length / tileCount);
 
       const tile = new THREE.Mesh(
-        new THREE.BoxGeometry(tileLength, 0.18, width),
+        new THREE.BoxGeometry(tileLength, 0.18, PATH.width),
         marble
       );
-      tile.position.set(point.x, 1.27, point.z);
-      tile.rotation.y = yaw;
+      tile.position.set(x, PATH.surfaceY - 0.09, PATH.centerZ);
       tile.receiveShadow = true;
-      tile.castShadow = false;
       group.add(tile);
 
       if (i % 2 === 0) {
         const inlay = new THREE.Mesh(
-          new THREE.BoxGeometry(0.045, 0.024, width - 0.16),
+          new THREE.BoxGeometry(0.045, 0.024, PATH.width - 0.16),
           brass
         );
-        inlay.position.set(point.x, 1.372, point.z);
-        inlay.rotation.y = yaw;
+        inlay.position.set(x, PATH.surfaceY + 0.012, PATH.centerZ);
         group.add(inlay);
       }
     }
 
-    // Continuous brass edge lines and a restrained center pinstripe.
+    // Continuous brass edging on both sides of the straight route.
     [-1, 1].forEach(side => {
-      const edgePoints = [];
-
-      for (let i = 0; i <= 64; i++) {
-        const t = i / 64;
-        const point = curve.getPointAt(t);
-        const tangent = curve.getTangentAt(t);
-        const normalX = -tangent.z;
-        const normalZ = tangent.x;
-        const width = THREE.MathUtils.lerp(1.95, 1.575, Math.max(0, (t - 0.78) / 0.22));
-
-        edgePoints.push(new THREE.Vector3(
-          point.x + normalX * width * side,
-          1.385,
-          point.z + normalZ * width * side
-        ));
-      }
-
-      const edgeCurve = new THREE.CatmullRomCurve3(edgePoints);
-      group.add(new THREE.Mesh(
-        new THREE.TubeGeometry(edgeCurve, 72, 0.035, 8, false),
+      const edge = new THREE.Mesh(
+        new THREE.BoxGeometry(length, 0.055, 0.07),
         brass
-      ));
+      );
+      edge.position.set(
+        centerX,
+        PATH.surfaceY + 0.025,
+        PATH.centerZ + side * (PATH.width / 2 - 0.035)
+      );
+      group.add(edge);
     });
 
+    // A fine center pinstripe runs the full length.
     const centerLine = new THREE.Mesh(
-      new THREE.TubeGeometry(curve, 72, 0.012, 6, false),
+      new THREE.BoxGeometry(length, 0.018, 0.025),
       brass
     );
-    centerLine.position.y = 0.105;
+    centerLine.position.set(centerX, PATH.surfaceY + 0.012, PATH.centerZ);
     group.add(centerLine);
 
-    // Low brass bollards with emissive crystal-like caps. No PointLights.
-    BOLLARD_POSITIONS.forEach(([x, z]) => {
+    // Bollards are outside the walking lane and stop before the entrance.
+    BOLLARDS.forEach(([x, z]) => {
       addBollard(group, x, z, brass, dark, glow);
     });
 
     scene.add(group);
     window.__lamboCityDockPathReady = true;
+    window.__lamboCityElevatorApproach = {
+      x: PATH.endX,
+      z: PATH.centerZ
+    };
     return group;
   },
 
