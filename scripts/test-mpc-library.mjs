@@ -35,5 +35,8 @@ assert.equal(new Set(library.getSounds().map(sound => sound.id)).size, library.g
 library.importAssignments({ "A-1": unlocked[0].id });
 assert.equal(library.getAssignment("A", 1).id, unlocked[0].id);
 assert.equal(library.exportAssignments()["A-1"], unlocked[0].id);
+library.unassign("A", 1);
+assert.equal(library.exportAssignments()["A-1"], undefined);
+assert.notEqual(library.getAssignment("A", 1).id, unlocked[0].id);
 
 console.log("MPC sound library tests passed.");
