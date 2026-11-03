@@ -367,6 +367,7 @@ function buildDOM() {
       if (
         key === "e" &&
         inRange &&
+        window.__lamboCityMerchInRange !== true &&
         !modalOpen
       ) {
 
@@ -402,7 +403,7 @@ function buildDOM() {
 function openModal() {
 
   // Never open the video from the elevator interaction zone.
-  if (elevatorOwnsInteraction()) {
+  if (elevatorOwnsInteraction() || window.__lamboCityMerchInRange === true) {
     return;
   }
 
@@ -525,7 +526,7 @@ export default {
 
     if (promptEl) {
       promptEl.style.display =
-        inRange && !elevatorActive
+        inRange && !elevatorActive && window.__lamboCityMerchInRange !== true
           ? "block"
           : "none";
     }
