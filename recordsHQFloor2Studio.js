@@ -832,7 +832,7 @@ export default {
       "PRODUCER • MPC • MIX • MASTER",
       0,
       3.28,
-      -2.05,
+      1.95,
       5.4
     );
 
