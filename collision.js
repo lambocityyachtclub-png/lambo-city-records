@@ -329,9 +329,12 @@ export default {
     const elevatorMaxY = 27.6;
 
     [
+      // West / dock-facing wall segments.
       { x: 20.65, z: 12.57, width: 0.12, depth: 0.48 },
       { x: 20.65, z: 15.73, width: 0.12, depth: 0.48 },
-      { x: 25.35, z: 14.15, width: 0.12, depth: 3.70 },
+      // East / patio-facing wall segments leave a matching doorway.
+      { x: 25.35, z: 12.57, width: 0.12, depth: 0.48 },
+      { x: 25.35, z: 15.73, width: 0.12, depth: 0.48 },
       { x: 23.0, z: 12.30, width: 4.70, depth: 0.12 }
     ].forEach((wall, index) => {
       this.registerBox(
