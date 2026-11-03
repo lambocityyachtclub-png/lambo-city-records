@@ -47,8 +47,7 @@ export default {
     this.targets = [
       { object: stations.vocalBooth, view: "vocals", title: "VOCAL RECORDING" },
       { object: stations.recordingEditing, view: "edit", title: "RECORDING & EDITING" },
-      { object: stations.controlRoom, view: "mix", title: "MIXING CONSOLE" },
-      { object: stations.mastering, view: "mix", title: "MASTERING" },
+      { object: stations.controlRoom, view: "mix", title: "MIX • MASTER WORKSTATION" },
       { object: stations.songArchive, view: "mpc", title: "SONG ARCHIVE" },
       { object: stations.mobileStudio, view: "vocals", title: "MOBILE STUDIO" }
     ].filter(item => item.object);
