@@ -225,6 +225,54 @@ function makeStyles() {
 #${ROOT_ID} .pad-label{bottom:-18px;font-size:clamp(8px,.8vw,11px);letter-spacing:.035em}
 #${ROOT_ID} .pad.selected{border-color:#e4cf93;box-shadow:0 0 0 2px rgba(226,202,141,.28),0 0 18px rgba(220,190,117,.62),inset 0 0 16px rgba(230,211,160,.22)}
 #${ROOT_ID} .transport{max-width:900px;width:100%;margin:0 auto}
+
+/* Performance-first MPC: pads and transport stay visible; advanced tools are optional. */
+#${ROOT_ID}{padding:0;overflow:hidden}
+#${ROOT_ID} .mpc-unit{width:min(100%,920px);height:100dvh;min-height:0;max-height:100dvh;padding:clamp(7px,1.2vw,14px);overflow-y:auto;gap:clamp(7px,1vh,11px)}
+#${ROOT_ID} .mpc-nameplate{flex:0 0 auto;min-height:48px;padding:5px 92px 5px 14px;justify-content:flex-start}
+#${ROOT_ID} .brand-script{font-size:clamp(23px,3.4vw,38px)}
+#${ROOT_ID} .brand-records{font-size:clamp(10px,1.3vw,15px);margin-top:5px}
+#${ROOT_ID} .mpc-close{right:7px;width:36px;height:36px;font-size:23px}
+#${ROOT_ID} .mpc-tools-toggle{position:absolute;right:52px;top:50%;transform:translateY(-50%);z-index:4;min-height:34px;padding:5px 10px;border:1px solid #75613a;border-radius:6px;background:linear-gradient(#3c4035,#111510);color:#ead7a5;font-size:9px;font-weight:900;letter-spacing:.08em}
+#${ROOT_ID} .mpc-upper{display:none;flex:0 0 auto;min-height:260px;grid-template-columns:minmax(0,1fr)}
+#${ROOT_ID} .mpc-screen-frame{width:100%;min-height:260px}
+#${ROOT_ID} .mpc-screen{min-height:245px}
+#${ROOT_ID} .tools-open .mpc-upper{display:grid}
+#${ROOT_ID} .mpc-bank-switcher{flex:0 0 auto;display:flex;align-items:center;justify-content:center;gap:12px;padding:7px 10px;border:1px solid #6d5a37;border-radius:8px;background:linear-gradient(110deg,#171a18,#090b0a)}
+#${ROOT_ID} .mpc-bank-switcher .bank-title{flex:0 0 auto;margin:0;font-size:10px;color:#e5d4a0;letter-spacing:.15em}
+#${ROOT_ID} .mpc-bank-switcher .bank-title:before,#${ROOT_ID} .mpc-bank-switcher .bank-title:after{display:none}
+#${ROOT_ID} .mpc-bank-switcher .bank-grid{display:grid;grid-template-columns:repeat(4,minmax(42px,64px));gap:7px}
+#${ROOT_ID} .mpc-bank-switcher .bank-btn{height:32px;border-radius:6px;font-size:12px}
+#${ROOT_ID} .mpc-main{display:flex;flex:1 0 auto;align-items:center;justify-content:center;min-height:0;padding:4px 0}
+#${ROOT_ID} .pads-area{width:min(100%,calc(100dvh - 175px));max-width:690px;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(7px,1.2vw,13px);padding:5px}
+#${ROOT_ID} .pad-wrap{margin:0;min-width:0}
+#${ROOT_ID} .pad{width:100%;aspect-ratio:1/1}
+#${ROOT_ID} .pad-label{bottom:-14px;font-size:clamp(7px,.75vw,10px)}
+#${ROOT_ID} .transport{flex:0 0 auto;max-width:690px;width:100%;margin:0 auto;padding-top:7px;gap:7px}
+#${ROOT_ID} .transport .hw-button{min-height:clamp(38px,5vh,48px);font-size:clamp(8px,.85vw,10px)}
+#${ROOT_ID} .mpc-footer{flex:0 0 auto;min-height:14px}
+@media(max-width:680px){
+  #${ROOT_ID} .mpc-unit{width:100%;padding:7px;gap:7px}
+  #${ROOT_ID} .mpc-nameplate{min-height:46px}
+  #${ROOT_ID} .mpc-bank-switcher{gap:8px;padding:6px}
+  #${ROOT_ID} .mpc-bank-switcher .bank-grid{grid-template-columns:repeat(4,minmax(42px,58px));gap:5px}
+  #${ROOT_ID} .pads-area{width:min(100%,calc(100dvh - 165px));gap:6px;padding:4px}
+  #${ROOT_ID} .transport{gap:5px}
+  #${ROOT_ID} .transport .hw-button{min-height:42px;font-size:7px;padding:3px 1px}
+}
+@media(max-height:560px){
+  #${ROOT_ID} .mpc-unit{gap:4px;padding:5px}
+  #${ROOT_ID} .mpc-nameplate{min-height:38px}
+  #${ROOT_ID} .mpc-bank-switcher{padding:3px}
+  #${ROOT_ID} .mpc-bank-switcher .bank-btn{height:26px}
+  #${ROOT_ID} .pads-area{width:min(100%,calc(100dvh - 135px));gap:4px}
+  #${ROOT_ID} .transport .hw-button{min-height:32px}
+}
+@media(max-width:390px){
+  #${ROOT_ID} .brand-script{font-size:22px}
+  #${ROOT_ID} .brand-records{font-size:9px}
+  #${ROOT_ID} .mpc-tools-toggle{right:48px;padding:4px 7px;font-size:8px}
+}
 @media(max-width:680px){
   #${ROOT_ID} .mpc-upper,#${ROOT_ID} .mpc-screen-frame{min-height:280px}
   #${ROOT_ID} .mpc-screen{min-height:265px}
@@ -255,7 +303,8 @@ function buildMarkup() {
   return `<section class="mpc-unit" role="dialog" aria-modal="true" aria-label="Lambo City MPC">
     <header class="mpc-nameplate">
       <span class="brand-script">Lambo City</span><span class="brand-records">RECORDS</span>
-      <button type="button" class="mpc-close" data-mpc-close aria-label="Close MPC">×</button>
+      <button type="button" class="mpc-tools-toggle" data-mpc-tools-toggle aria-expanded="false">TOOLS</button>
+      <button type="button" class="mpc-close" data-mpc-close aria-label="Exit MPC">×</button>
     </header>
 
     <section class="mpc-upper">
@@ -542,6 +591,14 @@ const MPCInterface = {
     root.addEventListener("pointercancel", () => this.stopNoteRepeat());
 
     root.addEventListener("click", event => {
+      const toolsToggle = event.target.closest("[data-mpc-tools-toggle]");
+      if (toolsToggle) {
+        const open = root.classList.toggle("tools-open");
+        toolsToggle.setAttribute("aria-expanded", String(open));
+        toolsToggle.textContent = open ? "HIDE TOOLS" : "TOOLS";
+        return;
+      }
+
       const closeButton = event.target.closest("[data-mpc-close]");
       if (closeButton || event.target === root) {
         this.close();
