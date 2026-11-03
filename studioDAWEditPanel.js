@@ -57,16 +57,15 @@ export function createStudioDAWEditPanel({
         this.onSwitchToBeatLab?.();
       });
       header.querySelector("[data-session-record]").addEventListener("click", () => {
-        void StudioMultitrackWorkspace.startArmedRecording();
+        void StudioMultitrackWorkspace.startArmedRecording({ vocalEffects: beatLab.vocalEffects });
       });
       header.querySelector("[data-session-play]").addEventListener("click", () => {
         void StudioMultitrackWorkspace.playAll();
       });
       header.querySelector("[data-session-stop]").addEventListener("click", () => {
+        StudioMultitrackWorkspace.stopAll();
         if (StudioMultitrackWorkspace.isTrackRecording()) {
           void StudioMultitrackWorkspace.stopArmedRecording();
-        } else {
-          StudioMultitrackWorkspace.stopAll();
         }
       });
       const tempoInput = header.querySelector("[data-session-tempo]");
