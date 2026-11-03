@@ -294,6 +294,7 @@ function buildMarkup() {
           <span class="screen-stat">${icon.battery}</span>
         </div>
         <div class="screen-body mpc-screen-workspace">
+          <p class="mpc-live-status" data-mpc-status role="status" aria-live="polite">MPC READY · TAP A PAD TO PLAY</p>
           <section class="mpc-screen-panel active" data-mpc-panel="MAIN">
             <div class="mpc-welcome"><strong>PERFORMANCE</strong><span>Tap a pad to play. Hold your groove while the song runs.</span></div>
             <div class="mpc-screen-actions">
@@ -303,7 +304,6 @@ function buildMarkup() {
               <button type="button" data-mpc-screen-action="mixer">MIXER</button>
             </div>
             <div class="mpc-screen-readout"><span>SELECTED PAD</span><b data-mpc-selected-readout>BANK A · PAD 01</b><span data-mpc-pad-readout>Choose a pad to see its sound and settings.</span></div>
-            <p class="mpc-live-status" data-mpc-status role="status" aria-live="polite">MPC READY · TAP A PAD TO PLAY</p>
           </section>
           <section class="mpc-screen-panel" data-mpc-panel="SEQ">
             <div class="mpc-panel-heading">PERFORMANCE TIMING <small>ADVANCED</small></div>
@@ -330,6 +330,7 @@ function buildMarkup() {
               <button type="button" data-mpc-preview>PREVIEW</button>
               <button type="button" data-mpc-apply-sample>ASSIGN TO SELECTED PAD</button>
               <button type="button" data-mpc-delete-sample>DELETE SAMPLE</button>
+              <button type="button" data-mpc-unassign>UNASSIGN PAD</button>
             </div>
             <label class="mpc-field">EVEN SLICES
               <select data-mpc-slices><option value="4">4 SLICES</option><option value="8" selected>8 SLICES</option><option value="16">16 SLICES</option></select>
@@ -537,6 +538,7 @@ const MPCInterface = {
       if (event.target.closest("[data-mpc-browser-preview]")) { this.previewBrowserSound(); return; }
       if (event.target.closest("[data-mpc-browser-assign]")) { this.assignBrowserSound(); return; }
       if (event.target.closest("[data-mpc-delete-sample]")) { void this.deleteSelectedSample(); return; }
+      if (event.target.closest("[data-mpc-unassign]")) { this.unassignSelectedPad(); return; }
       if (event.target.closest("[data-mpc-slice]")) { void this.sliceSampleToPads(); return; }
 
       if (event.target.closest("[data-mpc-assign]")) { this.assignSelectedSound(); return; }
@@ -647,10 +649,10 @@ const MPCInterface = {
       this.beatLab.audio = audio;
       const imported = await StudioMPCSampler.importFiles(files, audio);
       await this.refreshImportedSamples();
-      const status = this.root?.querySelector("[data-mpc-sample-status]");
+      const status = this.root?.querySelector("[data-mpc-editor-status]");
       if (status) status.textContent = imported.length + " AUDIO SAMPLE(S) IMPORTED · READY TO ASSIGN";
     } catch (error) {
-      const status = this.root?.querySelector("[data-mpc-sample-status]");
+      const status = this.root?.querySelector("[data-mpc-editor-status]");
       if (status) status.textContent = error?.message || "SAMPLE IMPORT FAILED";
     }
   },
@@ -809,10 +811,17 @@ const MPCInterface = {
     if (status) status.textContent = available + " EVEN SLICES ASSIGNED · BANK " + this.bank + " PADS " + firstPad + "–" + (firstPad + available - 1);
   },
 
+  unassignSelectedPad() {
+    StudioMPCSampler.unassign(this.bank, this.selectedPad);
+    this.refreshLibraryUI();
+    const status = this.root?.querySelector("[data-mpc-editor-status]");
+    if (status) status.textContent = "IMPORTED SAMPLE REMOVED FROM BANK " + this.bank + " PAD " + this.selectedPad;
+  },
+
   async deleteSelectedSample() {
     const id = this.root?.querySelector("[data-mpc-editor-sample]")?.value;
     if (!id) return;
-    if (this.take?.events?.some(event => event.sampleId === id)) {
+    if (this.take?.events?.some(event => event.sampleId === id) || this.beatLab?.currentProject?.mpcPerformance?.events?.some(event => event.sampleId === id)) {
       const status = this.root?.querySelector("[data-mpc-editor-status]");
       if (status) status.textContent = "THIS SAMPLE IS USED IN THE SAVED PAD TAKE. KEEP IT TO PRESERVE PLAYBACK.";
       return;
@@ -850,6 +859,7 @@ const MPCInterface = {
     const id = this.root?.querySelector("[data-mpc-browser-sound]")?.value;
     if (!id) return;
     const sound = StudioMPCLibrary.assign(this.bank, this.selectedPad, id);
+    StudioMPCSampler.unassign(this.bank, this.selectedPad);
     this.refreshLibraryUI();
     this.setStatus(sound.name + " ASSIGNED TO BANK " + this.bank + " PAD " + this.selectedPad);
   },
