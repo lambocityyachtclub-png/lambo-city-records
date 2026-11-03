@@ -23,6 +23,7 @@ let cinTime = 0;
 let lastOrbitInputAt = 0;
 let initialized = false;
 let currentMode = "world";
+let studioArrivalCameraOffset = null;
 
 const FOLLOW_DISTANCE = 8.2;
 const FOLLOW_HEIGHT = 4.15;
@@ -260,30 +261,15 @@ function updateElevatorExteriorCamera(player, delta) {
   camera.lookAt(target);
 }
 
-function updateStudioArrivalCamera(player, delta) {
-  // Keep the same natural third-person follow used during normal walking.
-  // No cinematic side-shot transitions, push-ins, or zoom toward the player.
-  const yaw = player.rotation.y;
-  // A slightly wider arrival frame keeps the character and cockpit route visible.
-  const back = 9.2;
-  const cameraX = THREE.MathUtils.clamp(
-    player.position.x - Math.sin(yaw) * back,
-    HQ_MIN_X + 0.9,
-    HQ_MAX_X - 0.9
-  );
-  const cameraZ = THREE.MathUtils.clamp(
-    player.position.z - Math.cos(yaw) * back,
-    HQ_MIN_Z + 0.9,
-    HQ_MAX_Z - 0.9
-  );
+function updateStudioArrivalCamera(player) {
+  // Preserve the exact elevator camera offset for the entire walk to the
+  // cockpit. Translate the camera with the character without easing closer,
+  // changing its distance, or pushing in toward the character.
+  if (!studioArrivalCameraOffset) {
+    studioArrivalCameraOffset = camera.position.clone().sub(player.position);
+  }
 
-  const desired = new THREE.Vector3(
-    cameraX,
-    player.position.y + 4.45,
-    cameraZ
-  );
-
-  camera.position.lerp(desired, dampFactor(delta, 8.5));
+  camera.position.copy(player.position).add(studioArrivalCameraOffset);
   camera.lookAt(
     player.position.x,
     player.position.y + LOOK_HEIGHT,
@@ -394,9 +380,11 @@ export default {
 
     if (floor2Arrival) {
       currentMode = "studio-arrival";
-      updateStudioArrivalCamera(player, delta);
+      updateStudioArrivalCamera(player);
       return;
     }
+
+    studioArrivalCameraOffset = null;
 
     if (seatedStudio) {
       currentMode = "studio-seated";
