@@ -307,7 +307,7 @@ export function renderStudioDAWTimeline({
 
   const help = document.createElement("div");
   help.className = "lc-arrangement-help";
-  help.textContent = "32-BAR SONG TIMELINE · Drag a clip name to move its waveform · Swipe horizontally to navigate the session.";
+  help.textContent = "128-BAR SONG TIMELINE · Drag a clip name to move its waveform · Swipe horizontally to navigate the session.";
 
   inner.append(ruler, lane, help);
   scroll.appendChild(inner);
