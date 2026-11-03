@@ -27,12 +27,12 @@ const FLOOR_Y = 20.28;
 // Seat and screen positions share this slot map so the room layout,
 // future avatar seating, and live video grid stay in sync.
 const FLOOR3_CONFERENCE_SLOTS = [
-  { seat: [-2.35, 1.45, 0], tile: [-2.55, 1.38] },
-  { seat: [-0.78, 1.45, 0], tile: [0, 1.38] },
-  { seat: [0.78, 1.45, 0], tile: [2.55, 1.38] },
-  { seat: [2.35, 1.45, 0], tile: [-2.55, 2.83] },
-  { seat: [-3.62, -1.48, Math.PI / 2], tile: [0, 2.83] },
-  { seat: [3.62, -1.48, -Math.PI / 2], tile: [2.55, 2.83] }
+  { seat: [-2.35, 1.45, 0], tile: [-3.25, 1.35] },
+  { seat: [-0.78, 1.45, 0], tile: [0, 1.35] },
+  { seat: [0.78, 1.45, 0], tile: [3.25, 1.35] },
+  { seat: [2.35, 1.45, 0], tile: [-3.25, 3.0] },
+  { seat: [-3.62, -1.48, Math.PI / 2], tile: [0, 3.0] },
+  { seat: [3.62, -1.48, -Math.PI / 2], tile: [3.25, 3.0] }
 ];
 export const FLOOR3_CONFERENCE_CAPACITY = FLOOR3_CONFERENCE_SLOTS.length;
 
@@ -229,7 +229,7 @@ export default {
     // =========================================================
     const meeting = new THREE.Group();
     meeting.name = "floor3ExecutiveMeetingRoom";
-    meeting.position.set(0, 0, -1.55);
+    meeting.position.set(0.9, 0, -1.55);
 
     box(meeting, new THREE.BoxGeometry(6.2, 0.22, 1.75), black, 0, 1.02, 0);
     box(meeting, new THREE.BoxGeometry(6.12, 0.045, 1.66), dark, 0, 1.15, 0);
@@ -256,83 +256,85 @@ export default {
     group.add(meeting);
 
 
-        // =========================================================
-    // EXECUTIVE MEDIA WALL — SIX PARTICIPANT CONFERENCE DISPLAY
+    // =========================================================
+    // EXECUTIVE MEDIA WALL — LARGE SIX-PERSON CONFERENCE DISPLAY
     // =========================================================
     const presentation = new THREE.Group();
     presentation.name = "floor3PresentationWall";
 
     const walnut = material(0x39271e, { roughness: 0.58, metalness: 0.12 });
     const acoustic = material(0x252832, { roughness: 0.94, metalness: 0.02 });
-    box(presentation, new THREE.BoxGeometry(9.0, 3.9, 0.24), walnut, 0, 2.05, -5.88);
-    box(presentation, new THREE.BoxGeometry(8.15, 3.52, 0.10), acoustic, 0, 2.1, -5.70);
 
-    // Brushed-gold perimeter restores the warm LAMBO CITY accent.
-    box(presentation, new THREE.BoxGeometry(8.25, 0.075, 0.08), gold, 0, 3.88, -5.60);
-    box(presentation, new THREE.BoxGeometry(8.25, 0.075, 0.08), gold, 0, 0.32, -5.60);
-    [-4.08, 4.08].forEach(x => box(presentation, new THREE.BoxGeometry(0.075, 3.62, 0.08), gold, x, 2.1, -5.60));
+    // One clean architectural frame makes the larger display the room's focal point.
+    box(presentation, new THREE.BoxGeometry(11.2, 4.45, 0.24), walnut, 0, 2.2, -5.88);
+    box(presentation, new THREE.BoxGeometry(10.65, 4.18, 0.10), acoustic, 0, 2.2, -5.70);
+    box(presentation, new THREE.BoxGeometry(10.72, 0.075, 0.08), gold, 0, 4.43, -5.60);
+    box(presentation, new THREE.BoxGeometry(10.72, 0.075, 0.08), gold, 0, 0.0, -5.60);
+    [-5.35, 5.35].forEach(x => box(presentation, new THREE.BoxGeometry(0.075, 4.35, 0.08), gold, x, 2.2, -5.60));
 
-    // The six tiles are visual participant placeholders, not live feeds yet.
     const displayGlass = new THREE.MeshStandardMaterial({
-      color: 0x080d16, emissive: 0x101b2b, emissiveIntensity: 0.55,
-      roughness: 0.16, metalness: 0.34
+      color: 0x080d16,
+      emissive: 0x101b2b,
+      emissiveIntensity: 0.55,
+      roughness: 0.16,
+      metalness: 0.34
     });
-    box(presentation, new THREE.BoxGeometry(7.72, 3.08, 0.075), displayGlass, 0, 2.12, -5.53);
+    box(presentation, new THREE.BoxGeometry(10.25, 3.85, 0.075), displayGlass, 0, 2.3, -5.53);
 
     presentation.userData.conferenceCapacity = FLOOR3_CONFERENCE_CAPACITY;
     const tileMats = [0x152534, 0x24202a, 0x1b2a30, 0x25222b, 0x182832, 0x29251f]
       .map(color => material(color, { roughness: 0.32, metalness: 0.22 }));
+
     FLOOR3_CONFERENCE_SLOTS.forEach((slot, tileIndex) => {
       const [x, y] = slot.tile;
       const tile = new THREE.Group();
       tile.name = "floor3ConferenceScreenSlot-" + (tileIndex + 1);
       tile.userData.conferenceSlotIndex = tileIndex;
       tile.position.set(x, y, -5.475);
-      box(tile, new THREE.BoxGeometry(2.38, 1.27, 0.035), tileMats[tileIndex], 0, 0, 0);
-      const avatarMat = material([0xb58b67, 0x9bafba, 0xc49a76, 0x8b9a9f, 0xc6a17d, 0xa6a0b6][tileIndex], { roughness: 0.82, metalness: 0.02 });
-      const head = new THREE.Mesh(new THREE.SphereGeometry(0.16, 14, 12), avatarMat);
-      head.position.set(0, 0.12, 0.045);
+      box(tile, new THREE.BoxGeometry(3.0, 1.55, 0.035), tileMats[tileIndex], 0, 0, 0);
+
+      const avatarMat = material(
+        [0xb58b67, 0x9bafba, 0xc49a76, 0x8b9a9f, 0xc6a17d, 0xa6a0b6][tileIndex],
+        { roughness: 0.82, metalness: 0.02 }
+      );
+      const head = new THREE.Mesh(new THREE.SphereGeometry(0.19, 14, 12), avatarMat);
+      head.position.set(0, 0.17, 0.045);
       tile.add(head);
-      const shoulders = new THREE.Mesh(new THREE.SphereGeometry(0.31, 14, 10), avatarMat);
+
+      const shoulders = new THREE.Mesh(new THREE.SphereGeometry(0.36, 14, 10), avatarMat);
       shoulders.scale.set(1.12, 0.56, 0.5);
-      shoulders.position.set(0, -0.31, 0.035);
+      shoulders.position.set(0, -0.39, 0.035);
       tile.add(shoulders);
-      const liveDot = new THREE.Mesh(new THREE.CircleGeometry(0.045, 12), new THREE.MeshBasicMaterial({ color: 0x71d6a1 }));
-      liveDot.position.set(-1.02, -0.48, 0.065);
+
+      const liveDot = new THREE.Mesh(
+        new THREE.CircleGeometry(0.05, 12),
+        new THREE.MeshBasicMaterial({ color: 0x71d6a1 })
+      );
+      liveDot.position.set(-1.30, -0.62, 0.065);
       tile.add(liveDot);
-      box(tile, new THREE.BoxGeometry(0.52, 0.035, 0.018), gold, 0.62, -0.49, 0.06);
+      box(tile, new THREE.BoxGeometry(0.62, 0.04, 0.018), gold, 1.02, -0.62, 0.06);
       presentation.add(tile);
     });
 
-    // Integrated camera/soundbar and under-screen light.
-    box(presentation, new THREE.BoxGeometry(1.05, 0.12, 0.16), black, 0, 0.13, -5.43);
-    box(presentation, new THREE.BoxGeometry(7.6, 0.035, 0.06), goldGlow, 0, 0.18, -5.35);
+    box(presentation, new THREE.BoxGeometry(1.45, 0.12, 0.16), black, 0, 0.17, -5.43);
+    box(presentation, new THREE.BoxGeometry(9.8, 0.035, 0.06), goldGlow, 0, 0.18, -5.35);
 
-    // Fluted smoked-oak acoustic slats frame the display.
-    for (let i = 0; i < 8; i++) {
-      const rightSlatX = 4.55 + i * 0.17;
-      const leftSlatX = -6.10 - i * 0.17;
-      box(presentation, new THREE.BoxGeometry(0.075, 2.95, 0.12), walnut, rightSlatX, 2.0, -5.53);
-      // Keep the lift-to-room arrival lane at local X≈-5 completely open.
-      box(presentation, new THREE.BoxGeometry(0.075, 2.95, 0.12), walnut, leftSlatX, 2.0, -5.53);
+    // Restrained vertical timber accents sit outside the screen and keep the aisle open.
+    for (let i = 0; i < 7; i++) {
+      const rightSlatX = 5.78 + i * 0.18;
+      const leftSlatX = -6.05 - i * 0.18;
+      box(presentation, new THREE.BoxGeometry(0.075, 3.2, 0.12), walnut, rightSlatX, 2.0, -5.53);
+      box(presentation, new THREE.BoxGeometry(0.075, 3.2, 0.12), walnut, leftSlatX, 2.0, -5.53);
     }
+
     const mediaGlow = new THREE.PointLight(0x8bb8ff, 0.28, 8);
-    mediaGlow.position.set(0, 2.35, -4.35);
+    mediaGlow.position.set(0, 2.5, -4.35);
     presentation.add(mediaGlow);
     group.add(presentation);
 
 
-        // =========================================================
-    // PRIVATE BOARDROOM — MOVED OFF THE ELEVATOR ARRIVAL AXIS
-    // =========================================================
-    const conference = new THREE.Group();
-    conference.name = "floor3GlassConferenceRoom";
-    conference.position.set(-1.45, 0, 0.6);
-    box(conference, new THREE.BoxGeometry(2.55, 0.20, 1.25), dark, -6.0, 0.95, 0);
-    box(conference, new THREE.BoxGeometry(2.35, 0.035, 0.06), goldGlow, -6.0, 1.08, 0);
-    [-0.95, 0, 0.95].forEach(z => box(conference, new THREE.BoxGeometry(0.72, 0.48, 0.65), leather, -6.0, 0.58, z));
-    group.add(conference);
-
+    // The former side-boardroom table and chairs were removed.
+    // The main six-seat conference suite is the single meeting zone.
 
         // =========================================================
     // EXECUTIVE LOUNGE
@@ -343,6 +345,7 @@ export default {
 
     lounge.name =
       "floor3ExecutiveLounge";
+    lounge.position.set(1.3, 0, 0);
 
 
     // Sofa
@@ -641,48 +644,9 @@ export default {
 
 
     // =========================================================
-    // GOLD FLOOR GUIDES
+    // OPEN CENTRAL CIRCULATION
     // =========================================================
-
-    box(
-      group,
-      new THREE.BoxGeometry(
-        6.5,
-        0.035,
-        0.06
-      ),
-      goldGlow,
-      0,
-      0.1,
-      0
-    );
-
-    box(
-      group,
-      new THREE.BoxGeometry(
-        0.06,
-        0.035,
-        4.0
-      ),
-      goldGlow,
-      -3.4,
-      0.1,
-      -2.0
-    );
-
-    box(
-      group,
-      new THREE.BoxGeometry(
-        0.06,
-        0.035,
-        4.0
-      ),
-      goldGlow,
-      3.4,
-      0.1,
-      -2.0
-    );
-
+    // No raised markers, rails, or decorative strips cross the walking floor.
 
     // =========================================================
     // CEILING DETAILS
