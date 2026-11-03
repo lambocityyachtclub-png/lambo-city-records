@@ -439,6 +439,33 @@ export default {
       }
     );
 
+    // ========================================================
+    // DOCK-TO-ELEVATOR PATH — LOW BOLLARD COLLISION
+    // ========================================================
+    // The marble surface remains fully walkable. These compact
+    // colliders only prevent the player from passing through the
+    // decorative brass posts along the pathway edges.
+    [
+      [8.2, 15.95], [8.2, 20.55],
+      [10.9, 15.75], [10.9, 20.25],
+      [13.8, 14.75], [13.8, 19.15],
+      [16.5, 12.85], [16.5, 17.15],
+      [18.5, 10.55], [18.5, 15.05]
+    ].forEach(([x, z], index) => {
+      this.registerBox(
+        "lamboCityDockPathBollard_" + index,
+        {
+          x,
+          z,
+          width: 0.42,
+          depth: 0.42,
+          minY: HQ_FLOOR_RANGES.floor1.minY,
+          maxY: HQ_FLOOR_RANGES.floor1.maxY,
+          level: "floor1"
+        }
+      );
+    });
+
 
     // ========================================================
     // FLOOR 1 — MERCH COUNTER
