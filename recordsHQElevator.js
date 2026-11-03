@@ -43,6 +43,11 @@ let travelTargetY = 1.3;
 let currentPlayer = null;
 let lastEState = false;
 
+let landingDoorFloor = 1;
+let landingDoorProgress = 1;
+let landingDoorTarget = 1;
+let pendingLandingPlayer = null;
+
 
 // ============================================================
 // DOM
@@ -501,6 +506,45 @@ function selectFloor(
 }
 
 
+
+// ============================================================
+// CINEMATIC LANDING DOORS
+// ============================================================
+
+function updateLandingDoors(delta) {
+  const difference = landingDoorTarget - landingDoorProgress;
+  landingDoorProgress += difference * Math.min(1, delta * 8);
+
+  if (Math.abs(landingDoorTarget - landingDoorProgress) < 0.008) {
+    landingDoorProgress = landingDoorTarget;
+  }
+
+  [1, 2, 3].forEach(floor => {
+    const landing = scene?.getObjectByName(
+      `recordsHQElevatorLandingDoorF${floor}`
+    );
+    if (!landing) return;
+
+    const amount = floor === landingDoorFloor
+      ? landingDoorProgress
+      : 0;
+    const left = landing.getObjectByName("doorLeafLeft");
+    const right = landing.getObjectByName("doorLeafRight");
+
+    if (left) left.position.x = -(0.78 + amount * 1.02);
+    if (right) right.position.x = 0.78 + amount * 1.02;
+  });
+
+  window.__lamboCityElevatorDoorOpen =
+    landingDoorProgress > 0.96 && landingDoorTarget > 0.96;
+}
+
+function floorNumberFromY(y) {
+  if (y >= 16.2) return 3;
+  if (y >= 8.0) return 2;
+  return 1;
+}
+
 // ============================================================
 // START TRAVEL
 // ============================================================
@@ -542,6 +586,10 @@ function startTravel() {
 
   travelStartY =
     player.position.y;
+
+  landingDoorFloor = floorNumberFromY(travelStartY);
+  landingDoorTarget = 0;
+  pendingLandingPlayer = null;
 
 
   menuOpen = false;
@@ -610,40 +658,25 @@ function finishTravel(
 
 
   traveling = false;
-
   menuOpen = false;
 
-  // Floor 2 arrival automatically transitions into the seated
-  // producer session. Other floors retain normal free movement.
-  if (selectedFloor === 2) {
-    window.__lamboCityBeginFloor2Session?.(player);
-  }
+  // Keep the passenger safely inside the lift while the destination
+  // landing doors perform their opening animation.
+  landingDoorFloor = selectedFloor === 4 ? 3 : selectedFloor;
+  landingDoorProgress = 0;
+  landingDoorTarget = 1;
+  pendingLandingPlayer = player;
 
-  // ----------------------------------------------------------
-  // END CINEMATIC CAMERA STATE
-  // ----------------------------------------------------------
-
-  window.__lamboCityElevatorTraveling =
-    false;
-
-  window.__lamboCityElevatorProgress =
-    1;
-
+  window.__lamboCityElevatorTraveling = false;
+  window.__lamboCityElevatorProgress = 1;
+  window.__lamboCityElevatorDoorOpen = false;
 
   if (menuEl) {
-
-    menuEl.style.display =
-      "none";
-
+    menuEl.style.display = "none";
   }
 
-
-  setStatus("");
-
-
-  lockPlayerInput(
-    false
-  );
+  setStatus("ARRIVING...");
+  lockPlayerInput(true);
 }
 
 
@@ -796,9 +829,22 @@ export default {
     }
 
 
-    currentPlayer =
-      player;
+    currentPlayer = player;
 
+    updateLandingDoors(delta);
+
+    // Only release the passenger after the landing doors are fully open.
+    if (pendingLandingPlayer && landingDoorProgress >= 0.995) {
+      const arrivedPlayer = pendingLandingPlayer;
+      pendingLandingPlayer = null;
+
+      if (selectedFloor === 2) {
+        window.__lamboCityBeginFloor2Session?.(arrivedPlayer);
+      } else {
+        lockPlayerInput(false);
+        setStatus("");
+      }
+    }
 
     if (
       context.systems &&
