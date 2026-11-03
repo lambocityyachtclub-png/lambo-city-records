@@ -933,6 +933,9 @@ export default {
       inRange || traveling ||
       (pendingLandingPlayer && landingDoorProgress < 0.995);
     setElevatorMovementMode(!!cabinPassengerActive);
+    if (menuOpen && window.__lamboCityPlayerSystem) {
+      window.__lamboCityPlayerSystem.speed = 0;
+    }
     if (cabinPassengerActive) {
       constrainPassengerToCabin(player);
     }
