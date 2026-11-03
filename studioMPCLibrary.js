@@ -331,7 +331,7 @@ const StudioMPCLibrary = {
 
   importAssignments(assignments = {}) {
     const state = this.state || readState();
-    state.assignments = { ...(state.assignments || {}), ...(assignments || {}) };
+    state.assignments = { ...(assignments || {}) };
     this.state = state;
     writeState(state);
   },
