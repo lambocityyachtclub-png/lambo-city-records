@@ -60,6 +60,8 @@ assert.equal(imported.dawSession.tracks[0].clips[0].data, "AQIDBA==");
 assert.equal(imported.dawSession.tracks[0].inputSource, "mic");
 assert.equal(imported.dawSession.tracks[0].eq.mid, 2);
 assert.equal(imported.dawSession.tracks[0].compression.ratio, 2.5);
+assert.equal(imported.dawSession.tracks[0].effects.delayMix, 0.25);
+assert.equal(imported.dawSession.tracks[0].effects.reverbDecay, 2.8);
 assert.deepEqual(imported.dawSession.tracks[0].effects, {
   delayTime: 0.42, delayFeedback: 0.3, delayMix: 0.25, reverbMix: 0.4, reverbDecay: 3.2
 });
