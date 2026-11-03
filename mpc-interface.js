@@ -549,11 +549,16 @@ const MPCInterface = {
       const target = event.target;
       if (target instanceof HTMLElement && target.matches("input,textarea,select,[contenteditable=true]")) return;
       if (event.repeat) return;
-      const padKeys = "qwerasdfzxcv";
-      const padIndex = padKeys.indexOf(event.key.toLowerCase());
-      if (padIndex >= 0) {
+      const padKeyMap = {
+        q: 13, w: 14, e: 15, r: 16,
+        a: 9, s: 10, d: 11, f: 12,
+        z: 5, x: 6, c: 7, v: 8,
+        t: 1, y: 2, g: 3, h: 4
+      };
+      const padNumber = padKeyMap[event.key.toLowerCase()];
+      if (padNumber) {
         event.preventDefault();
-        void this.handlePad(padIndex + 1, 0.9);
+        void this.handlePad(padNumber, 0.9);
       }
       const bankKeys = { "1": "A", "2": "B", "3": "C", "4": "D" };
       if (bankKeys[event.key]) {
