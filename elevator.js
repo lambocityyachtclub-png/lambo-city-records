@@ -128,30 +128,30 @@ function buildCabin() {
   }
 
   // One generous marble floor, with a restrained brass perimeter.
-  panel("elevatorCabinMarbleFloor", 5.45, 0.16, 4.25, marble, 0, 0.08, 0);
-  panel("elevatorCabinFloorInlayFront", 5.25, 0.025, 0.035, brass, 0, 0.17, 2.06);
-  panel("elevatorCabinFloorInlayRear", 5.25, 0.025, 0.035, brass, 0, 0.17, -2.06);
-  panel("elevatorCabinFloorInlayLeft", 0.035, 0.025, 4.10, brass, -2.68, 0.17, 0);
-  panel("elevatorCabinFloorInlayRight", 0.035, 0.025, 4.10, brass, 2.68, 0.17, 0);
+  panel("elevatorCabinMarbleFloor", 5.50, 0.16, 4.40, marble, 0, 0.08, 0);
+  panel("elevatorCabinFloorInlayFront", 5.30, 0.025, 0.035, brass, 0, 0.17, 2.13);
+  panel("elevatorCabinFloorInlayRear", 5.30, 0.025, 0.035, brass, 0, 0.17, -2.13);
+  panel("elevatorCabinFloorInlayLeft", 0.035, 0.025, 4.25, brass, -2.70, 0.17, 0);
+  panel("elevatorCabinFloorInlayRight", 0.035, 0.025, 4.25, brass, 2.70, 0.17, 0);
 
   // The cabin has three clear passenger openings: dock, HQ and patio.
   // The rear wall stays panoramic glass; the other three sides are
   // split into short glass returns so none of the exits is blocked.
-  panel("elevatorCabinRearGlass", 5.35, 4.72, 0.075, glass, 0, 2.48, -2.06);
+  panel("elevatorCabinRearGlass", 5.40, 4.72, 0.075, glass, 0, 2.48, -2.10);
 
   [-1, 1].forEach(side => {
-    panel("elevatorCabinWestGlassReturn", 0.075, 4.72, 0.38, glass, -2.68, 2.48, side * 1.90);
-    panel("elevatorCabinEastGlassReturn", 0.075, 4.72, 0.38, glass, 2.68, 2.48, side * 1.90);
-    panel("elevatorCabinHQGlassReturn", 0.58, 4.72, 0.075, glass, side * 2.40, 2.48, 2.06);
+    panel("elevatorCabinWestGlassReturn", 0.075, 4.72, 0.38, glass, -2.70, 2.48, side * 1.95);
+    panel("elevatorCabinEastGlassReturn", 0.075, 4.72, 0.38, glass, 2.70, 2.48, side * 1.95);
+    panel("elevatorCabinHQGlassReturn", 0.58, 4.72, 0.075, glass, side * 2.42, 2.48, 2.10);
   });
 
   // Warm espresso lower wall accents add richness without closing
   // the three passenger entrances.
-  panel("elevatorCabinRearWoodPanel", 5.22, 0.88, 0.09, wood, 0, 0.62, -2.00);
+  panel("elevatorCabinRearWoodPanel", 5.28, 0.88, 0.09, wood, 0, 0.62, -2.04);
   [-1, 1].forEach(side => {
-    panel("elevatorCabinWestWoodReturn", 0.09, 0.88, 0.32, wood, -2.63, 0.62, side * 1.90);
-    panel("elevatorCabinEastWoodReturn", 0.09, 0.88, 0.32, wood, 2.63, 0.62, side * 1.90);
-    panel("elevatorCabinHQWoodReturn", 0.50, 0.88, 0.09, wood, side * 2.40, 0.62, 2.01);
+    panel("elevatorCabinWestWoodReturn", 0.09, 0.88, 0.32, wood, -2.65, 0.62, side * 1.95);
+    panel("elevatorCabinEastWoodReturn", 0.09, 0.88, 0.32, wood, 2.65, 0.62, side * 1.95);
+    panel("elevatorCabinHQWoodReturn", 0.50, 0.88, 0.09, wood, side * 2.42, 0.62, 2.05);
   });
 
   // Four slim bronze corner uprights visually tie the glass together.
@@ -163,9 +163,9 @@ function buildCabin() {
         4.90,
         0.11,
         brass,
-        x * 2.67,
+        x * 2.69,
         2.48,
-        z * 2.04
+        z * 2.08
       );
     });
   });
@@ -176,18 +176,18 @@ function buildCabin() {
     warmBrass
   );
   handrail.rotation.z = Math.PI / 2;
-  handrail.position.set(0, 1.20, -1.92);
+  handrail.position.set(0, 1.20, -1.98);
   cabin.add(handrail);
 
   // Flush ceiling with warm perimeter light: no chandelier clutter.
-  panel("elevatorCabinCeiling", 5.45, 0.14, 4.25, darkStone, 0, 4.88, 0);
-  panel("elevatorCabinCeilingLightFront", 5.00, 0.035, 0.045, warmBrass, 0, 4.79, 1.98);
-  panel("elevatorCabinCeilingLightRear", 5.00, 0.035, 0.045, warmBrass, 0, 4.79, -1.98);
-  panel("elevatorCabinCeilingLightLeft", 0.045, 0.035, 3.90, warmBrass, -2.57, 4.79, 0);
-  panel("elevatorCabinCeilingLightRight", 0.045, 0.035, 3.90, warmBrass, 2.57, 4.79, 0);
+  panel("elevatorCabinCeiling", 5.50, 0.14, 4.40, darkStone, 0, 4.88, 0);
+  panel("elevatorCabinCeilingLightFront", 5.10, 0.035, 0.045, warmBrass, 0, 4.79, 2.05);
+  panel("elevatorCabinCeilingLightRear", 5.10, 0.035, 0.045, warmBrass, 0, 4.79, -2.05);
+  panel("elevatorCabinCeilingLightLeft", 0.045, 0.035, 4.00, warmBrass, -2.60, 4.79, 0);
+  panel("elevatorCabinCeilingLightRight", 0.045, 0.035, 4.00, warmBrass, 2.60, 4.79, 0);
 
   // A discreet illuminated destination panel sits beside the HQ exit.
-  panel("elevatorCabinControlPanel", 0.10, 1.05, 0.42, brass, 2.44, 1.72, 1.82);
+  panel("elevatorCabinControlPanel", 0.10, 1.05, 0.42, brass, 2.46, 1.72, 1.88);
 
   const cabinLight = new THREE.PointLight(0xffd19a, 0.9, 8.5, 2);
   cabinLight.position.set(0, 4.15, 0);
