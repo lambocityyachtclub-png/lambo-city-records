@@ -726,6 +726,7 @@ function finishTravel(
   landingDoorTarget = 1;
   pendingLandingPlayer = player;
   floor3AutoArrival = null;
+  window.__lamboCityFloor3ArrivalComplete = selectedFloor === 3 ? false : true;
 
   window.__lamboCityElevatorTraveling = false;
   window.__lamboCityElevatorProgress = 1;
@@ -923,9 +924,9 @@ export default {
           startX: arrivedPlayer.position.x,
           startZ: arrivedPlayer.position.z,
           targetX: 28,
-          targetZ: 19.60,
+          targetZ: 24.80,
           elapsed: 0,
-          duration: 2.6
+          duration: 3.4
         };
         setStatus("WELCOME TO THE EXECUTIVE ROOM");
       } else {
@@ -939,13 +940,25 @@ export default {
       arrival.elapsed = Math.min(arrival.duration, arrival.elapsed + Math.max(0, delta));
       const linear = arrival.elapsed / arrival.duration;
       const eased = linear * linear * (3 - 2 * linear);
-      arrival.player.position.x = THREE.MathUtils.lerp(arrival.startX, arrival.targetX, eased);
-      arrival.player.position.z = THREE.MathUtils.lerp(arrival.startZ, arrival.targetZ, eased);
+
+      // First follow the clear left-side aisle past the conference table,
+      // then cross to the centered viewing position in front of the screen.
+      if (linear < 0.72) {
+        const aisleProgress = eased / 0.72;
+        arrival.player.position.x = arrival.startX;
+        arrival.player.position.z = THREE.MathUtils.lerp(arrival.startZ, arrival.targetZ, aisleProgress);
+      } else {
+        const centerProgress = (linear - 0.72) / 0.28;
+        const centerEased = centerProgress * centerProgress * (3 - 2 * centerProgress);
+        arrival.player.position.x = THREE.MathUtils.lerp(arrival.startX, arrival.targetX, centerEased);
+        arrival.player.position.z = arrival.targetZ;
+      }
 
       if (linear >= 1) {
         arrival.player.position.x = arrival.targetX;
         arrival.player.position.z = arrival.targetZ;
         floor3AutoArrival = null;
+        window.__lamboCityFloor3ArrivalComplete = true;
         lockPlayerInput(false);
         setStatus("");
       }
