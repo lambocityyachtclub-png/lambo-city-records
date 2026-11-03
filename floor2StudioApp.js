@@ -111,7 +111,7 @@ this.noiseBuffer = null;
     this.pointer = new THREE.Vector2();
 
     this.handleCanvasClick = (event) => {
-      if (this.ui) return;
+      if (this.ui || window.__lamboCityFloor2SessionActive) return;
 
       const studio = this.scene?.getObjectByName(
         "recordsHQFloor2Studio"
