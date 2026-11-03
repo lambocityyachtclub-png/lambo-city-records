@@ -13,12 +13,12 @@ const ROOMS = [
   {
     id: "meeting",
     name: "Executive Conference Room",
-    localX: 0,
+    localX: 0.9,
     localZ: -1.55,
     eyebrow: "STRATEGY • LEADERSHIP",
     title: "The Executive Conference Suite",
     description: "A private setting for leadership conversations, planning sessions and decisions shaping the next chapter of LAMBO CITY.",
-    points: ["Six-seat conference table", "Large six-participant display wall", "Team decisions and project reviews"]
+    points: ["Six-seat conference table", "Expanded six-participant display wall", "Team decisions and project reviews"]
   },
   {
     id: "presentation",
@@ -31,19 +31,9 @@ const ROOMS = [
     points: ["Brand and world vision", "Creative direction", "Project walkthroughs"]
   },
   {
-    id: "boardroom",
-    name: "Private Boardroom",
-    localX: -7.45,
-    localZ: 0.6,
-    eyebrow: "PRIVATE • EXECUTIVE",
-    title: "The Private Boardroom",
-    description: "A quieter side-room for smaller executive conversations, set away from the elevator arrival route.",
-    points: ["Executive reviews", "Private discussions", "Planning and evaluation"]
-  },
-  {
     id: "lounge",
     name: "Executive Lounge",
-    localX: 5,
+    localX: 6.3,
     localZ: -2,
     eyebrow: "HOSPITALITY • CONNECTION",
     title: "The Executive Lounge",
