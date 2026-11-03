@@ -142,7 +142,10 @@ window.__lamboCityPrepareFloor = floor => {
         engine.context.systems = engine.systems;
         engine.systems.recordsHQRooftopVIP?.init?.(engine.scene);
       }
-    })();
+    })().catch(error => {
+      destinationLoads.delete(floor);
+      throw error;
+    });
 
     destinationLoads.set(floor, load);
   }
