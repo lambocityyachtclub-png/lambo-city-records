@@ -319,6 +319,8 @@ export default {
     this.pointer = new THREE.Vector2();
 
     this.handleClick = (event) => {
+      if (window.__lamboCityFloor2SessionActive) return;
+
       const rect =
         this.renderer.domElement.getBoundingClientRect();
 
