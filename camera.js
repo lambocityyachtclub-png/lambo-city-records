@@ -474,62 +474,31 @@ function updateStudioCamera(
 // FLOOR 2 — CINEMATIC ELEVATOR-TO-STUDIO ARRIVAL CAMERA
 // ============================================================
 
-function updateStudioArrivalCamera(player, smooth = 0.34) {
+function updateStudioArrivalCamera(player, smooth = 0.48) {
   const yaw = player.rotation.y;
   const forwardX = Math.sin(yaw);
   const forwardZ = Math.cos(yaw);
   const rightX = Math.cos(yaw);
   const rightZ = -Math.sin(yaw);
-  const progress = THREE.MathUtils.clamp(
-    Number(window.__lamboCityFloor2ArrivalProgress ?? 0),
-    0,
-    1
-  );
 
-  // Three restrained camera beats make the walk feel like a real
-  // entrance without changing the character's route:
-  // 1) follow from behind, 2) reveal a side profile, 3) settle
-  // into a three-quarter view as HERO reaches the producer chair.
-  const shots = [
-    { start: 0.00, end: 0.38, back: -2.8, side: 0.0 },
-    { start: 0.38, end: 0.72, back: -0.65, side: 2.75 },
-    { start: 0.72, end: 1.00, back: 1.85, side: 1.25 }
-  ];
-
-  let shot = shots[shots.length - 1];
-  let previous = shots[0];
-  for (let i = 0; i < shots.length; i++) {
-    if (progress <= shots[i].end) {
-      shot = shots[i];
-      previous = shots[Math.max(0, i - 1)];
-      break;
-    }
-  }
-
-  const phase = THREE.MathUtils.clamp(
-    (progress - shot.start) / Math.max(0.001, shot.end - shot.start),
-    0,
-    1
-  );
-  const eased = phase * phase * (3 - 2 * phase);
-  const back = THREE.MathUtils.lerp(previous.back, shot.back, eased);
-  const side = THREE.MathUtils.lerp(previous.side, shot.side, eased);
-
+  // Keep one steady, close follow angle for the entire entrance.
+  // No side-orbit or forward camera sweep: the camera stays within
+  // the studio footprint while HERO follows the existing path.
   let cameraX =
-    player.position.x + forwardX * back + rightX * side;
+    player.position.x - forwardX * 3.1 + rightX * 0.45;
   let cameraZ =
-    player.position.z + forwardZ * back + rightZ * side;
+    player.position.z - forwardZ * 3.1 + rightZ * 0.45;
 
-  // Keep every shot inside the Floor 2 room footprint.
-  cameraX = THREE.MathUtils.clamp(cameraX, 20.75, 35.25);
-  cameraZ = THREE.MathUtils.clamp(cameraZ, 15.55, 27.05);
+  cameraX = THREE.MathUtils.clamp(cameraX, 21.25, 34.75);
+  cameraZ = THREE.MathUtils.clamp(cameraZ, 16.0, 26.5);
+
   const cameraY = player.position.y + 2.45;
-
   moveCamera(cameraX, cameraY, cameraZ, smooth);
+
   camera.lookAt(
-    player.position.x,
-    player.position.y + 1.25,
-    player.position.z
+    player.position.x + forwardX * 0.45,
+    player.position.y + 1.3,
+    player.position.z + forwardZ * 0.45
   );
 }
 
@@ -980,7 +949,7 @@ export default {
           window.__lamboCityFloor2SessionActive &&
           window.__lamboCityFloor2SessionMode === "arrival"
         ) {
-          updateStudioArrivalCamera(player, 0.34);
+          updateStudioArrivalCamera(player, 0.48);
         } else if (window.__lamboCityFloor2SessionActive) {
           updateStudioSessionCamera(player, 0.24);
         } else {
