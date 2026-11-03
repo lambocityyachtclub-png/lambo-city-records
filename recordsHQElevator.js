@@ -689,8 +689,13 @@ function finishTravel(
   player.position.x =
     ELEVATOR_POSITION.x;
 
+  // Floor 3 starts just beyond the rear portal so its POV camera
+  // can engage as soon as the landing doors finish opening.
+  // Other floors keep the original centered elevator spawn.
   player.position.z =
-    ELEVATOR_POSITION.z;
+    selectedFloor === 3
+      ? 14.85
+      : ELEVATOR_POSITION.z;
 
 
   window.__lamboCityPlayerSystem
