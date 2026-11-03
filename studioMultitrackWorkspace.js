@@ -470,7 +470,7 @@ const StudioMultitrackWorkspace = {
       for (const file of audioFiles) {
         const bytes = await file.arrayBuffer();
         const buffer = await context.decodeAudioData(bytes.slice(0));
-        const baseName = file.name.replace(/\\.[^.]+$/, "") || "Imported Audio";
+        const baseName = file.name.replace(/\.[^.]+$/, "") || "Imported Audio";
         const track = this.createTrack("audio", baseName);
         const bars = Math.max(1, Math.min(32, Math.ceil(buffer.duration / (240 / this.tempo))));
         track.clips.push({
