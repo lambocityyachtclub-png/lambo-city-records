@@ -160,7 +160,7 @@ export default {
 
       if (i % 2 === 0) {
         const inlay = new THREE.Mesh(
-          new THREE.BoxGeometry(width - 0.16, 0.024, 0.045),
+          new THREE.BoxGeometry(0.045, 0.024, width - 0.16),
           brass
         );
         inlay.position.set(point.x, 1.372, point.z);
