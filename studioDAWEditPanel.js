@@ -39,11 +39,31 @@ export function createStudioDAWEditPanel({
           <h2 style="margin:6px 0 3px;font-size:clamp(20px,3vw,27px);letter-spacing:.5px">SONG EDITOR</h2>
           <div style="color:#a8a8b1;font-size:12px">Recorded audio · Waveform arrangement · Multitrack session</div>
         </div>
-        <button type="button" data-switch-beatlab aria-label="Switch to Digital Beat Lab" style="min-height:46px;padding:10px 15px;border:1px solid #9b7948;border-radius:8px;background:#211d16;color:#f1d49c;font-weight:800;touch-action:manipulation">← DIGITAL BEAT LAB</button>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <label style="display:flex;gap:7px;align-items:center;color:#d8b36e;font-size:11px;font-weight:700">
+            BPM
+            <input data-session-tempo type="number" min="60" max="180" step="1" value="${StudioMultitrackWorkspace.tempo}" style="width:68px;min-height:42px;padding:7px;border:1px solid #665438;border-radius:7px;background:#11151d;color:#f4f1eb">
+          </label>
+          <button type="button" data-session-play style="min-height:46px;padding:10px 15px;border:1px solid #9b7948;border-radius:8px;background:#594321;color:#fff;font-weight:800">▶ PLAY</button>
+          <button type="button" data-session-stop style="min-height:46px;padding:10px 15px;border:1px solid #454958;border-radius:8px;background:#222631;color:#f4f1eb;font-weight:800">■ STOP</button>
+          <button type="button" data-switch-beatlab aria-label="Switch to Digital Beat Lab" style="min-height:46px;padding:10px 15px;border:1px solid #9b7948;border-radius:8px;background:#211d16;color:#f1d49c;font-weight:800;touch-action:manipulation">← DIGITAL BEAT LAB</button>
+        </div>
       `;
 
       header.querySelector("[data-switch-beatlab]").addEventListener("click", () => {
         this.onSwitchToBeatLab?.();
+      });
+      header.querySelector("[data-session-play]").addEventListener("click", () => {
+        void StudioMultitrackWorkspace.playAll();
+      });
+      header.querySelector("[data-session-stop]").addEventListener("click", () => {
+        StudioMultitrackWorkspace.stopAll();
+      });
+      const tempoInput = header.querySelector("[data-session-tempo]");
+      tempoInput.addEventListener("change", () => {
+        const tempo = Math.max(60, Math.min(180, Number(tempoInput.value) || 100));
+        StudioMultitrackWorkspace.setTempo(tempo);
+        tempoInput.value = String(StudioMultitrackWorkspace.tempo);
       });
 
       const intro = document.createElement("div");
