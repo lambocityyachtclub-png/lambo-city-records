@@ -281,7 +281,13 @@ function validateProject(project) {
             !Number.isFinite(Number(track.effects.reverbMix)) || Number(track.effects.reverbMix) < 0 || Number(track.effects.reverbMix) > 1 ||
             !Number.isFinite(Number(track.effects.reverbDecay)) || Number(track.effects.reverbDecay) < 0.3 || Number(track.effects.reverbDecay) > 6
           )) ||
-          (track.automation !== undefined && (!Array.isArray(track.automation.volume) || track.automation.volume.length > 64))) {
+          (track.automation !== undefined && (!Array.isArray(track.automation.volume) || track.automation.volume.length > 64)) ||
+          (track.effects !== undefined && (
+            !Number.isFinite(Number(track.effects.delayTime)) || Number(track.effects.delayTime) < 0.05 || Number(track.effects.delayTime) > 1.5 ||
+            !Number.isFinite(Number(track.effects.delayFeedback)) || Number(track.effects.delayFeedback) < 0 || Number(track.effects.delayFeedback) > 0.75 ||
+            !Number.isFinite(Number(track.effects.delayMix)) || Number(track.effects.delayMix) < 0 || Number(track.effects.delayMix) > 1 ||
+            !Number.isFinite(Number(track.effects.reverbMix)) || Number(track.effects.reverbMix) < 0 || Number(track.effects.reverbMix) > 1 ||
+            !Number.isFinite(Number(track.effects.reverbDecay)) || Number(track.effects.reverbDecay) < 0.3 || Number(track.effects.reverbDecay) > 6))) {
         throw new Error("DAW track settings are invalid.");
       }
       trackIds.add(track.id);
