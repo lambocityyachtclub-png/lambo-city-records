@@ -324,19 +324,6 @@ const StudioMultitrackWorkspace = {
         Your recorded vocals, beats, and mix stems arranged on one shared song timeline.
       </p>
 
-      
-<div class="lc-toolbar">
-  <button type="button" data-action="transport-play">
-    ▶ PLAY ALL
-  </button>
-
-  <button type="button" data-action="transport-stop">
-    ■ STOP ALL
-  </button>
-
-</div>
-
-
       <div class="lc-add-form">
         <input
           type="text"
@@ -354,6 +341,10 @@ const StudioMultitrackWorkspace = {
         <button type="button" data-action="add-track">
           + ADD TRACK
         </button>
+        <button type="button" data-action="import-audio">
+          IMPORT AUDIO
+        </button>
+        <input type="file" data-audio-files accept="audio/*,.wav,.mp3,.m4a,.aac,.ogg,.webm" multiple hidden>
       </div>
 
       <div data-track-list></div>
@@ -373,16 +364,6 @@ const StudioMultitrackWorkspace = {
 
       const action = button.dataset.action;
 
-if (action === "transport-play") {
-  void this.playAll();
-  return;
-}
-
-if (action === "transport-stop") {
-  this.stopAll();
-  return;
-}
-
       if (action === "add-track") {
         const name = root.querySelector("[data-new-name]").value;
         const type = root.querySelector("[data-new-type]").value;
@@ -390,6 +371,11 @@ if (action === "transport-stop") {
         this.addTrack(type, name);
 
         root.querySelector("[data-new-name]").value = "";
+        return;
+      }
+
+      if (action === "import-audio") {
+        root.querySelector("[data-audio-files]").click();
         return;
       }
 
@@ -448,6 +434,12 @@ if (action === "transport-stop") {
 
     });
 
+    root.querySelector("[data-audio-files]").addEventListener("change", event => {
+      const files = Array.from(event.target.files || []);
+      if (files.length) void this.importAudioFiles(files);
+      event.target.value = "";
+    });
+
     root.addEventListener("input", event => {
       if (!event.target.matches("[data-volume]")) return;
 
@@ -467,6 +459,36 @@ if (action === "transport-stop") {
     this.render();
 
     return root;
+  },
+
+  async importAudioFiles(files = []) {
+    const audioFiles = files.filter(file => file instanceof Blob && file.size > 0);
+    if (!audioFiles.length) return;
+
+    try {
+      const context = await StudioAudioEngine.resume();
+      for (const file of audioFiles) {
+        const bytes = await file.arrayBuffer();
+        const buffer = await context.decodeAudioData(bytes.slice(0));
+        const baseName = file.name.replace(/\\.[^.]+$/, "") || "Imported Audio";
+        const track = this.createTrack("audio", baseName);
+        const bars = Math.max(1, Math.min(32, Math.ceil(buffer.duration / (240 / this.tempo))));
+        track.clips.push({
+          id: track.id + "-import-1",
+          name: file.name,
+          blob: file,
+          takeId: null,
+          startBar: 1,
+          lengthBars: bars,
+          duration: buffer.duration,
+          createdAt: new Date().toISOString()
+        });
+      }
+      this.render();
+      this.status(audioFiles.length + " audio file(s) imported into separate session track(s).");
+    } catch (error) {
+      this.status("AUDIO IMPORT ERROR: " + (error?.message || error));
+    }
   },
 
    addClip(id) {
