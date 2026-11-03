@@ -57,6 +57,7 @@ let landingDoorFloor = 1;
 let landingDoorProgress = 1;
 let landingDoorTarget = 1;
 let pendingLandingPlayer = null;
+let floor3AutoArrival = null;
 
 
 // ============================================================
@@ -689,12 +690,13 @@ function finishTravel(
   player.position.x =
     ELEVATOR_POSITION.x;
 
-  // Floor 3 starts just beyond the rear portal so its POV camera
-  // can engage as soon as the landing doors finish opening.
+  // Floor 3 begins just inside the elevator. Once the landing doors
+  // open, HERO automatically walks into the room and takes the
+  // established viewing position in front of the six-person display.
   // Other floors keep the original centered elevator spawn.
   player.position.z =
     selectedFloor === 3
-      ? 14.85
+      ? 14.35
       : ELEVATOR_POSITION.z;
 
 
@@ -723,6 +725,7 @@ function finishTravel(
   landingDoorProgress = 0;
   landingDoorTarget = 1;
   pendingLandingPlayer = player;
+  floor3AutoArrival = null;
 
   window.__lamboCityElevatorTraveling = false;
   window.__lamboCityElevatorProgress = 1;
@@ -912,7 +915,37 @@ export default {
 
       if (selectedFloor === 2) {
         window.__lamboCityBeginFloor2Session?.(arrivedPlayer);
+      } else if (selectedFloor === 3) {
+        // Smooth, hands-free arrival from the lift into the conference room.
+        // The route is deliberately clear of the table and six participant seats.
+        floor3AutoArrival = {
+          player: arrivedPlayer,
+          startX: arrivedPlayer.position.x,
+          startZ: arrivedPlayer.position.z,
+          targetX: 28,
+          targetZ: 19.60,
+          elapsed: 0,
+          duration: 2.6
+        };
+        setStatus("WELCOME TO THE EXECUTIVE ROOM");
       } else {
+        lockPlayerInput(false);
+        setStatus("");
+      }
+    }
+
+    if (floor3AutoArrival) {
+      const arrival = floor3AutoArrival;
+      arrival.elapsed = Math.min(arrival.duration, arrival.elapsed + Math.max(0, delta));
+      const linear = arrival.elapsed / arrival.duration;
+      const eased = linear * linear * (3 - 2 * linear);
+      arrival.player.position.x = THREE.MathUtils.lerp(arrival.startX, arrival.targetX, eased);
+      arrival.player.position.z = THREE.MathUtils.lerp(arrival.startZ, arrival.targetZ, eased);
+
+      if (linear >= 1) {
+        arrival.player.position.x = arrival.targetX;
+        arrival.player.position.z = arrival.targetZ;
+        floor3AutoArrival = null;
         lockPlayerInput(false);
         setStatus("");
       }
