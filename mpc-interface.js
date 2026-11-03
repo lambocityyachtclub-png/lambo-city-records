@@ -164,6 +164,9 @@ function makeStyles() {
 #${ROOT_ID} .mpc-field input[type=range]{width:100%;accent-color:#b5e85a}
 #${ROOT_ID} .mpc-field output{float:right;color:#d2f28d;font-weight:700}
 #${ROOT_ID} .mpc-help{margin:0;color:#bdc9a8;font-size:8px;line-height:1.35}
+#${ROOT_ID} [data-mpc-waveform]{display:block;width:100%;height:64px;border:1px solid #5d713d;border-radius:4px;background:#10170d}
+#${ROOT_ID} [data-mpc-import]{width:100%;font-size:8px;color:#dce8c9}
+#${ROOT_ID} [data-mpc-import]::file-selector-button{border:1px solid #71894a;border-radius:3px;background:#26351a;color:#edf7dc;padding:5px 8px;margin-right:8px}
 #${ROOT_ID} .screen-tabs{grid-template-columns:repeat(5,minmax(0,1fr))}
 #${ROOT_ID} .screen-tab{cursor:pointer}
 @media(max-width:680px){#${ROOT_ID} .mpc-library-strip{grid-template-columns:minmax(0,1fr) auto;gap:5px}#${ROOT_ID} .mpc-library-strip label{grid-column:1/-1}#${ROOT_ID} .mpc-library-strip button{font-size:7px;padding:4px 6px}}
@@ -283,13 +286,18 @@ function buildMarkup() {
           </section>
           <section class="mpc-screen-panel" data-mpc-panel="SAMPLE">
             <div class="mpc-panel-heading">SAMPLE EDITOR <small>ADVANCED</small></div>
-            <label class="mpc-field">IMPORTED SAMPLE
+            <label class="mpc-field">IMPORT AUDIO SAMPLE
+              <input type="file" data-mpc-import accept="audio/*,.wav,.aif,.aiff,.mp3,.ogg,.m4a" multiple>
+            </label>
+            <label class="mpc-field">SAMPLE
               <select data-mpc-editor-sample><option value="">Choose an imported sample</option></select>
             </label>
             <div class="mpc-screen-actions">
               <button type="button" data-mpc-preview>PREVIEW</button>
               <button type="button" data-mpc-apply-sample>ASSIGN TO SELECTED PAD</button>
+              <button type="button" data-mpc-delete-sample>DELETE SAMPLE</button>
             </div>
+            <canvas data-mpc-waveform width="640" height="100" aria-label="Audio waveform preview"></canvas>
             <label class="mpc-field">START <output data-mpc-start-value>0%</output>
               <input type="range" min="0" max="99" value="0" data-mpc-start>
             </label>
@@ -325,6 +333,7 @@ function buildMarkup() {
             <div class="mpc-screen-actions">
               <button type="button" data-mpc-browser-preview>PREVIEW SOUND</button>
               <button type="button" data-mpc-browser-assign>ASSIGN TO PAD</button>
+              <button type="button" data-mpc-unlock>UNLOCK SOUND SET</button>
             </div>
             <p class="mpc-help">Choose a sound, preview it, then assign it to the currently selected pad and bank.</p>
           </section>
@@ -379,33 +388,6 @@ function buildMarkup() {
           ${control("UNDO", "REDO")}
         </div>
       </aside>
-    </section>
-
-    <section class="mpc-library-strip" aria-label="MPC sound library">
-      <label>PAD SOUND LIBRARY
-        <select data-mpc-sound-select aria-label="Choose a sound to assign"></select>
-      </label>
-      <button type="button" data-mpc-assign>ASSIGN TO PAD</button>
-      <button type="button" data-mpc-unlock>UNLOCK 200</button>
-      <div class="mpc-library-status" data-mpc-status role="status" aria-live="polite">100 DEMO SOUNDS · GROWING LIBRARY</div>
-    </section>
-    <section class="mpc-library-strip" aria-label="User sample workstation">
-      <label>IMPORT YOUR OWN SAMPLES
-        <input type="file" data-mpc-import accept="audio/*,.wav,.aif,.aiff,.mp3,.ogg,.m4a" multiple>
-      </label>
-      <label>IMPORTED SAMPLE
-        <select data-mpc-sample-select aria-label="Choose imported sample"><option value="">IMPORT AUDIO TO BEGIN</option></select>
-      </label>
-      <button type="button" data-mpc-sample-assign>ASSIGN TO SELECTED PAD</button>
-      <div class="mpc-library-status" data-mpc-sample-status role="status" aria-live="polite">WAV / AIFF / MP3 / OGG / M4A · STORED ON THIS DEVICE</div>
-    </section>
-
-    <section class="bottom-modes">
-      ${control("STEP SEQ", "AUTOMATION")}
-      ${control("TC", "ON/OFF")}
-      ${control("SAMPLER", "LOOPER")}
-      ${control("SAMPLE EDIT", "O-LINK EDIT", true)}
-      ${control("PROGRAM EDIT", "MIDI CTRL")}
     </section>
 
     <section class="transport">
@@ -540,6 +522,7 @@ const MPCInterface = {
       if (event.target.closest("[data-mpc-apply-sample]")) { this.assignImportedSample(true); return; }
       if (event.target.closest("[data-mpc-browser-preview]")) { this.previewBrowserSound(); return; }
       if (event.target.closest("[data-mpc-browser-assign]")) { this.assignBrowserSound(); return; }
+      if (event.target.closest("[data-mpc-delete-sample]")) { void this.deleteSelectedSample(); return; }
 
       if (event.target.closest("[data-mpc-assign]")) { this.assignSelectedSound(); return; }
       if (event.target.closest("[data-mpc-unlock]")) { this.unlockLibrary(); return; }
@@ -586,7 +569,7 @@ const MPCInterface = {
     const select = this.root.querySelector("[data-mpc-sound-select]");
     if (select) select.value = sound.id;
     const label = this.root.querySelector('.pad-wrap [data-pad="' + padNumber + '"] + .pad-label');
-    if (label) label.textContent = padNumber + " · " + sound.name;
+    if (label) label.textContent = padNumber + " · " + (this.sampleNames?.[importedSampleId] || sound.name);
     try {
       const audio = await StudioAudioEngine.resume();
       this.beatLab.audio = audio;
@@ -638,13 +621,12 @@ const MPCInterface = {
   async refreshImportedSamples() {
     if (!this.root) return;
     const select = this.root.querySelector("[data-mpc-sample-select]");
-    if (!select) return;
     const samples = await StudioMPCSampler.list();
     this.sampleNames = Object.fromEntries(samples.map(sample => [sample.id, sample.name]));
     const options = samples.length
       ? samples.map(sample => '<option value="' + esc(sample.id) + '">' + esc(sample.name) + '</option>').join("")
       : '<option value="">IMPORT AUDIO TO BEGIN</option>';
-    select.innerHTML = options;
+    if (select) select.innerHTML = options;
     const editor = this.root.querySelector("[data-mpc-editor-sample]");
     if (editor) editor.innerHTML = '<option value="">Choose an imported sample</option>' + (samples.length ? samples.map(sample => '<option value="' + esc(sample.id) + '">' + esc(sample.name) + '</option>').join("") : "");
     const browser = this.root.querySelector("[data-mpc-browser-sound]");
@@ -652,7 +634,7 @@ const MPCInterface = {
     this.refreshLibraryUI();
   },
 
-  assignImportedSample(fromEditor = false) {
+  assignImportedSample(fromEditor = true) {
     const select = this.root?.querySelector(fromEditor ? "[data-mpc-editor-sample]" : "[data-mpc-sample-select]");
     if (!select?.value) return;
     StudioMPCSampler.assign(this.bank, this.selectedPad, select.value);
@@ -660,7 +642,7 @@ const MPCInterface = {
     const sample = select.selectedOptions[0]?.textContent || "SAMPLE";
     const label = this.root.querySelector('.pad-wrap [data-pad="' + this.selectedPad + '"] + .pad-label');
     if (label) label.textContent = this.selectedPad + " · " + sample;
-    const status = this.root.querySelector("[data-mpc-sample-status]");
+    const status = this.root.querySelector("[data-mpc-editor-status]");
     if (status) status.textContent = sample + " ASSIGNED · BANK " + this.bank + " PAD " + this.selectedPad;
     this.refreshLibraryUI();
   },
@@ -712,6 +694,7 @@ const MPCInterface = {
     if (pitch) pitch.value = String(Math.round(12 * Math.log2(settings.pitch || 1)));
     if (decay) decay.value = String(Math.round((settings.decay ?? 10) >= 10 ? 100 : (settings.decay / 10) * 100));
     this.saveSampleEditorSettings(false);
+    await this.renderSampleWaveform(select.value);
   },
 
   saveSampleEditorSettings(commit = true) {
@@ -726,6 +709,49 @@ const MPCInterface = {
     const status = this.root.querySelector("[data-mpc-editor-status]");
     if (status && commit) status.textContent = "EDIT SETTINGS SAVED · BANK " + this.bank + " PAD " + this.selectedPad;
     return settings;
+  },
+
+  async renderSampleWaveform(sampleId) {
+    const canvas = this.root?.querySelector("[data-mpc-waveform]");
+    if (!canvas || !sampleId) return;
+    try {
+      const audio = await StudioAudioEngine.resume();
+      const { peaks } = await StudioMPCSampler.getWaveform(sampleId, audio, 128);
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+      const width = canvas.width, height = canvas.height, mid = height / 2;
+      ctx.clearRect(0, 0, width, height);
+      ctx.fillStyle = "#10170d";
+      ctx.fillRect(0, 0, width, height);
+      ctx.strokeStyle = "#b9ed67";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      peaks.forEach((peak, index) => {
+        const x = index * width / peaks.length;
+        const amplitude = Math.max(2, peak * (height * 0.43));
+        ctx.moveTo(x, mid - amplitude);
+        ctx.lineTo(x, mid + amplitude);
+      });
+      ctx.stroke();
+      const settings = StudioMPCSampler.getPadSettings(this.bank, this.selectedPad);
+      ctx.fillStyle = "rgba(213,238,155,.14)";
+      ctx.fillRect(0, 0, width * (settings.start || 0), height);
+      ctx.fillRect(width * (settings.end ?? 1), 0, width * (1 - (settings.end ?? 1)), height);
+    } catch (error) {
+      const status = this.root?.querySelector("[data-mpc-editor-status]");
+      if (status) status.textContent = error?.message || "WAVEFORM UNAVAILABLE";
+    }
+  },
+
+  async deleteSelectedSample() {
+    const id = this.root?.querySelector("[data-mpc-editor-sample]")?.value;
+    if (!id) return;
+    const sample = await StudioMPCSampler.getSample(id);
+    if (!window.confirm('Delete "' + (sample?.name || "this sample") + '" from this device? Assigned pads will be cleared.')) return;
+    await StudioMPCSampler.remove(id);
+    await this.refreshImportedSamples();
+    const status = this.root?.querySelector("[data-mpc-editor-status]");
+    if (status) status.textContent = "SAMPLE DELETED FROM THIS DEVICE.";
   },
 
   async previewImportedSample() {
@@ -768,6 +794,7 @@ const MPCInterface = {
     const title = this.root?.querySelector(".bank-title");
     if (title) title.textContent = "BANK " + bank;
     this.refreshLibraryUI();
+    if (this.root?.querySelector('[data-mpc-panel="SAMPLE"].active')) void this.refreshSampleEditor();
     this.setStatus("BANK " + bank + " SELECTED");
   },
 
@@ -793,6 +820,7 @@ const MPCInterface = {
       const imported = importedId ? (this.sampleNames?.[importedId] || "USER SAMPLE") : null;
       if (label) label.textContent = number + " · " + (imported || sound.name);
     }
+    this.updatePadReadout();
   },
 
   assignSelectedSound() {
