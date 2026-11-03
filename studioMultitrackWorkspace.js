@@ -145,12 +145,12 @@ const StudioMultitrackWorkspace = {
     root.innerHTML = `
       <style>
         #lc-multitrack-workspace {
-          margin: 28px 0;
-          padding: 20px;
-          background: #101219;
+          margin: 0;
+          padding: 16px;
+          background: linear-gradient(145deg,#11151d,#0b0e14);
           color: #f5f4f0;
-          border: 1px solid #665438;
-          border-radius: 16px;
+          border: 1px solid #343946;
+          border-radius: 12px;
           font-family: Arial, sans-serif;
         }
 
@@ -218,11 +218,11 @@ const StudioMultitrackWorkspace = {
         }
 
         #lc-multitrack-workspace .lc-track {
-          margin: 12px 0;
-          padding: 13px;
-          background: #191d27;
+          margin: 10px 0;
+          padding: 11px;
+          background: #151a23;
           border: 1px solid #343946;
-          border-radius: 10px;
+          border-radius: 9px;
         }
 
         #lc-multitrack-workspace .lc-track-header {
@@ -253,8 +253,8 @@ const StudioMultitrackWorkspace = {
         }
 
         #lc-multitrack-workspace .lc-track-controls button {
-          min-height: 32px;
-          padding: 5px 9px;
+          min-height: 34px;
+          padding: 6px 9px;
           font-size: 10px;
         }
 
@@ -315,14 +315,13 @@ const StudioMultitrackWorkspace = {
       </style>
 
       <div class="lc-eyebrow">
-        LAMBO CITY RECORDS · RECORDING ENGINE V1
+        LAMBO CITY RECORDS · SONG EDITOR SESSION
       </div>
 
-      <h2>MULTITRACK WORKSPACE</h2>
+      <h2>SESSION TRACKS</h2>
 
       <p style="color:#a8a8b1;font-size:13px">
-        Professional production. Expandable tracks.
-        One LAMBO CITY recording environment.
+        Your recorded vocals, beats, and mix stems arranged on one shared song timeline.
       </p>
 
       
@@ -335,9 +334,6 @@ const StudioMultitrackWorkspace = {
     ■ STOP ALL
   </button>
 
-  <button type="button" data-action="add-clip">
-    + ADD CLIP
-  </button>
 </div>
 
 
@@ -450,9 +446,6 @@ if (action === "transport-stop") {
         this.status(`${track.name} record arm ${track.armed ? "on" : "off"}.`);
       }
 
-      if (control === "clip") {
-        this.addClip(id);
-      }
     });
 
     root.addEventListener("input", event => {
@@ -466,17 +459,6 @@ if (action === "transport-stop") {
       if (!track) return;
 
       track.volume = Number(event.target.value);
-
-row.querySelectorAll("audio").forEach(player => {
-  const anySolo = this.tracks.some(
-    item => item.solo
-  );
-
-  player.volume = (
-    track.muted ||
-    (anySolo && !track.solo)
-  ) ? 0 : track.volume / 100;
-});
 
       row.querySelector("[data-volume-label]").textContent =
         `${track.volume}%`;
@@ -654,7 +636,6 @@ row.querySelectorAll("audio").forEach(player => {
         ["solo", "SOLO", track.solo],
         ["arm", "REC ARM", track.armed],
         ["rename", "RENAME", false],
-        ["clip", "+ CLIP", false],
         ["delete", "DELETE", false]
       ].forEach(([control, label, active]) => {
         const button = document.createElement("button");
