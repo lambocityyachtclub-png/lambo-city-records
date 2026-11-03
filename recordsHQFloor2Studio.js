@@ -377,20 +377,20 @@ export default {
 
     // The primary producer workstation now occupies the former
     // mix-control position: one desk for MPC, mixing and mastering.
-    // Left-wall producer cockpit beside the Floor 2 elevator.
-    // The chair faces outward through the stage-side glazing.
-    const beatX = -6.15;
-    const beatZ = -4.4;
-    const beatAngle = -Math.PI / 2;
+    // Centered producer cockpit. The seated player faces +Z;
+    // the desk is directly in front, with the chair behind it.
+    const beatX = 0;
+    const beatZ = 2.2;
+    const beatAngle = Math.PI / 2;
 
     // Main production desk
 
     box(
       beatLab,
       new THREE.BoxGeometry(
-        3.75,
+        1.35,
         0.18,
-        1.35
+        3.75
       ),
       dark,
       beatX,
@@ -404,14 +404,14 @@ export default {
     box(
       beatLab,
       new THREE.BoxGeometry(
-        3.8,
+        0.06,
         0.05,
-        0.06
+        3.8
       ),
       gold,
-      beatX,
+      beatX - 0.62,
       1.04,
-      beatZ - 0.62,
+      beatZ,
       beatAngle
     );
 
@@ -794,10 +794,10 @@ export default {
       "floor2MPCClickable";
 
     producerCockpit.userData.viewDirection =
-      "outward-toward-exterior-stage";
+      "forward-into-room-toward-exterior-view";
 
     producerCockpit.userData.wallSide =
-      "left-elevator-entry-wall";
+      "centered-producer-position";
 
     producerCockpit.userData.exteriorViewPreserved =
       true;
@@ -823,7 +823,7 @@ export default {
 
     // Screen faces back toward the seated producer; the chair
     // itself faces outward toward the stage-side glazing.
-    productionScreen.rotation.y = Math.PI;
+    productionScreen.rotation.y = Math.PI / 2;
 
     box(
       producerCockpit,
@@ -866,10 +866,10 @@ export default {
       "floor2InstrumentStation";
 
     const pianoX =
-      5.35;
+      3.75;
 
     const pianoZ =
-      -0.55;
+      2.55;
 
     const pianoAngle =
       -Math.PI * 0.12;
@@ -975,7 +975,7 @@ export default {
     // =========================================================
     // 3. VOCAL RECORDING BOOTH
     //
-    // Front-left corner.
+    // Behind-right of the seated producer.
     //
     // Clear glass sightline.
     // Acoustic wall behind performer.
@@ -989,10 +989,10 @@ export default {
       "floor2RecordingBooth";
 
     const boothX =
-      -4.65;
+      4.8;
 
     const boothZ =
-      3.75;
+      -1.8;
 
     // Floor
 
@@ -1219,10 +1219,10 @@ export default {
       "floor2RecordingEditingStation";
 
     const editX =
-      3.85;
+      -4.2;
 
     const editZ =
-      4.35;
+      2.6;
 
     const editAngle =
       -Math.PI * 0.08;
@@ -1481,10 +1481,10 @@ export default {
       "floor2SongArchive";
 
     const archiveX =
-      0.85;
+      -2.8;
 
     const archiveZ =
-      5.65;
+      -0.4;
 
     // Low archive console
 
@@ -1586,10 +1586,10 @@ export default {
       "floor2MobileStudio";
 
     const mobileX =
-      -0.10;
+      -4.5;
 
     const mobileZ =
-      5.72;
+      -3.6;
 
     box(
       mobile,
