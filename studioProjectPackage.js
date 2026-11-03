@@ -227,7 +227,7 @@ function validateProject(project) {
       }
       if (event.sampleSettings !== undefined && event.sampleSettings !== null) {
         requireObject(event.sampleSettings, "MPC sample settings are invalid.");
-        for (const field of ["start", "end", "pitch", "decay"]) {
+        for (const field of ["start", "end", "pitch", "decay", "volume", "pan"]) {
           if (event.sampleSettings[field] !== undefined && !Number.isFinite(Number(event.sampleSettings[field]))) {
             throw new Error("MPC sample settings are invalid.");
           }
