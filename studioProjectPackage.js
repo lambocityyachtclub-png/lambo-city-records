@@ -6,8 +6,9 @@
 // Supported project data:
 // - Project metadata and settings
 // - All saved beat patterns
-// - Arrangement sections
-// - Arrangement clips and pattern references
+// - Arrangement sections and pattern references
+// - Multitrack DAW sessions, audio clips, mixer settings, and automation
+// - MPC performance and portable sample assets
 //
 // This module does not change Beat Lab playback or localStorage.
 
