@@ -549,7 +549,18 @@ export default {
       sideGlass.position.set(x, 13, 0);
       group.add(sideGlass);
 
-      // Gold mullion lines across the glass, echoing the corner trim
+      // Vertical bronze mullions divide the side curtain wall into
+      // evenly spaced architectural bays.
+      [-5.2, -1.75, 1.75, 5.2].forEach(z => {
+        const verticalMullion = new THREE.Mesh(
+          new THREE.BoxGeometry(.12, 24, .12),
+          facadeBronze
+        );
+        verticalMullion.position.set(x, 13, z);
+        group.add(verticalMullion);
+      });
+
+      // Horizontal lines align with the three-floor structure.
       [1.3, 12.2, 20.2, 25.8].forEach(y => {
         const mullion = new THREE.Mesh(
           new THREE.BoxGeometry(.18, .1, 13.1),
