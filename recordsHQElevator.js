@@ -613,6 +613,11 @@ function finishTravel(
 
   menuOpen = false;
 
+  // Floor 2 arrival automatically transitions into the seated
+  // producer session. Other floors retain normal free movement.
+  if (selectedFloor === 2) {
+    window.__lamboCityBeginFloor2Session?.(player);
+  }
 
   // ----------------------------------------------------------
   // END CINEMATIC CAMERA STATE
