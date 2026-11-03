@@ -944,7 +944,8 @@ export default {
       // First follow the clear left-side aisle past the conference table,
       // then cross to the centered viewing position in front of the screen.
       if (linear < 0.72) {
-        const aisleProgress = eased / 0.72;
+        const aislePhase = linear / 0.72;
+        const aisleProgress = aislePhase * aislePhase * (3 - 2 * aislePhase);
         arrival.player.position.x = arrival.startX;
         arrival.player.position.z = THREE.MathUtils.lerp(arrival.startZ, arrival.targetZ, aisleProgress);
       } else {
