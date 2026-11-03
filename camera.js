@@ -944,7 +944,10 @@ export default {
 
       if (floor === 2) {
 
-        if (window.__lamboCityFloor2SessionActive) {
+        if (
+          window.__lamboCityFloor2SessionActive &&
+          window.__lamboCityFloor2SessionMode !== "arrival"
+        ) {
           updateStudioSessionCamera(player, 0.24);
         } else {
           updateStudioCamera(player, interiorSmooth);
