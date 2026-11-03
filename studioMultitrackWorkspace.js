@@ -124,6 +124,9 @@ const StudioMultitrackWorkspace = {
   },
 
   async saveSession(projectId) {
+    if (this.isTrackRecording()) {
+      throw new Error("Stop the active track recording before saving the song session.");
+    }
     const session = {
       format: "lambo-city-daw-session",
       version: 1,
@@ -141,6 +144,9 @@ const StudioMultitrackWorkspace = {
   },
 
   async loadSession(projectId) {
+    if (this.isTrackRecording()) {
+      throw new Error("Stop the active track recording before loading another song session.");
+    }
     const session = await StudioDAWSessionStore.load(projectId);
     if (!session || session.format !== "lambo-city-daw-session" || session.version !== 1 || !Array.isArray(session.tracks)) {
       return false;
@@ -163,6 +169,9 @@ const StudioMultitrackWorkspace = {
   },
 
   resetSession({ tempo = 100 } = {}) {
+    if (this.isTrackRecording()) {
+      throw new Error("Stop the active track recording before starting a new song session.");
+    }
     this.stopAll();
     this.tempo = Math.max(60, Math.min(180, Number(tempo) || 100));
     this.tracks = [];
@@ -176,6 +185,9 @@ const StudioMultitrackWorkspace = {
   },
 
   async exportSession() {
+    if (this.isTrackRecording()) {
+      throw new Error("Stop the active track recording before exporting the song project.");
+    }
     let encodedBytes = 0;
     const tracks = [];
     for (const track of this.tracks) {
@@ -235,6 +247,9 @@ const StudioMultitrackWorkspace = {
   },
 
   importSession(session) {
+    if (this.isTrackRecording()) {
+      throw new Error("Stop the active track recording before importing another song session.");
+    }
     if (!session || session.format !== "lambo-city-daw-session" ||
         session.version !== 1 || !Array.isArray(session.tracks)) {
       throw new Error("The portable DAW session is invalid.");
