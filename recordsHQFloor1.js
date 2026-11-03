@@ -136,97 +136,11 @@ function cylinder(
 // WALL LABEL
 // ============================================================
 
-function label(
-  parent,
-  text,
-  x,
-  y,
-  z,
-  width = 3.5
-) {
-
-  const canvas =
-    document.createElement(
-      "canvas"
-    );
-
-  canvas.width = 512;
-  canvas.height = 128;
-
-  const ctx =
-    canvas.getContext(
-      "2d"
-    );
-
-  ctx.clearRect(
-    0,
-    0,
-    canvas.width,
-    canvas.height
-  );
-
-  ctx.font =
-    "bold 38px Arial";
-
-  ctx.textAlign =
-    "center";
-
-  ctx.textBaseline =
-    "middle";
-
-  ctx.fillStyle =
-    "#ffd36a";
-
-  ctx.fillText(
-    text,
-    256,
-    64
-  );
-
-  const texture =
-    new THREE.CanvasTexture(
-      canvas
-    );
-
-  texture.colorSpace =
-    THREE.SRGBColorSpace;
-
-  const mat =
-    new THREE.MeshBasicMaterial({
-
-      map: texture,
-
-      transparent: true,
-
-      side:
-        THREE.DoubleSide
-
-    });
-
-  const mesh =
-    new THREE.Mesh(
-
-      new THREE.PlaneGeometry(
-        width,
-        0.55
-      ),
-
-      mat
-
-    );
-
-  mesh.position.set(
-    x,
-    y,
-    z
-  );
-
-  parent.add(mesh);
-
-  return mesh;
-
+function label() {
+  // Interior identity is communicated through architecture and
+  // functional displays, not floating canvas text.
+  return null;
 }
-
 
 // ============================================================
 // SYSTEM
