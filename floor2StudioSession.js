@@ -273,7 +273,20 @@ export default {
         PRODUCER_SEAT.y,
         arrivalStart.z + (PRODUCER_SEAT.z - arrivalStart.z) * eased
       );
-      arrivalPlayer.rotation.y = Math.PI;
+
+      // Face the actual elevator-to-studio path while walking.
+      // The previous fixed 180-degree rotation made the character
+      // appear to slide sideways through the room on the arrival shot.
+      const travelX = PRODUCER_SEAT.x - arrivalStart.x;
+      const travelZ = PRODUCER_SEAT.z - arrivalStart.z;
+      const travelYaw = Math.atan2(travelX, travelZ);
+      const turnProgress = Math.max(0, Math.min(1, (t - 0.78) / 0.22));
+      const smoothTurn = turnProgress * turnProgress * (3 - 2 * turnProgress);
+      let yawDelta = Math.atan2(
+        Math.sin(Math.PI - travelYaw),
+        Math.cos(Math.PI - travelYaw)
+      );
+      arrivalPlayer.rotation.y = travelYaw + yawDelta * smoothTurn;
 
       if (t >= 1) {
         playerSystem?.setStudioSeatedPose?.(true);
