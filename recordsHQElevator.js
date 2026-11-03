@@ -936,6 +936,8 @@ export default {
     }
 
     if (floor3AutoArrival) {
+      // Ignore fresh keyboard/joystick input until the arrival walk is complete.
+      lockPlayerInput(true);
       const arrival = floor3AutoArrival;
       arrival.elapsed = Math.min(arrival.duration, arrival.elapsed + Math.max(0, delta));
       const linear = arrival.elapsed / arrival.duration;
