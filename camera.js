@@ -553,7 +553,7 @@ function updateStudioSessionCamera(player, smooth = 0.22) {
   cameraZ = THREE.MathUtils.clamp(cameraZ, 15.55, 27.05);
 
   // Match Floor 3's steady, level camera treatment.
-  const cameraY = player.position.y + 3.75;
+  const cameraY = player.position.y + 2.9;
   moveCamera(cameraX, cameraY, cameraZ, smooth);
 
   // Fixed focal point on the producer's workstation; no pitch input.
