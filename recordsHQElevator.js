@@ -37,6 +37,8 @@ let traveling = false;
 let travelTimer = 0;
 let travelStartedAt = 0;
 let selectedFloor = null;
+let destinationLoadReady = true;
+let destinationLoadError = null;
 
 let travelStartY = 1.3;
 let travelTargetY = 1.3;
@@ -568,6 +570,25 @@ function startTravel() {
 
   travelTimer = 0;
   travelStartedAt = performance.now();
+  destinationLoadReady = false;
+  destinationLoadError = null;
+
+  // Stream upper-floor modules during the elevator ride.
+  try {
+    Promise.resolve(
+      window.__lamboCityPrepareFloor?.(selectedFloor)
+    ).then(() => {
+      destinationLoadReady = true;
+    }).catch(error => {
+      destinationLoadError = error;
+      destinationLoadReady = true;
+      console.error("LAMBO CITY destination loading failed:", error);
+    });
+  } catch (error) {
+    destinationLoadError = error;
+    destinationLoadReady = true;
+    console.error("LAMBO CITY destination loading failed:", error);
+  }
 
 
   // ----------------------------------------------------------
@@ -938,14 +959,27 @@ export default {
         true;
 
 
-      if (
-        progress >= 1
-      ) {
+      if (progress >= 1) {
+        if (!destinationLoadReady) {
+          setStatus("PREPARING DESTINATION...");
+          return;
+        }
 
-        finishTravel(
-          player
-        );
+        if (destinationLoadError) {
+          // Fail safely: keep the passenger on the departure floor.
+          traveling = false;
+          player.position.y = travelStartY;
+          window.__lamboCityPlayerSystem
+            ?.setElevatorTravelY
+            ?. (travelStartY);
+          window.__lamboCityElevatorTraveling = false;
+          window.__lamboCityElevatorProgress = 0;
+          lockPlayerInput(false);
+          setStatus("DESTINATION UNAVAILABLE — PLEASE TRY AGAIN");
+          return;
+        }
 
+        finishTravel(player);
       }
 
 
