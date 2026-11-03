@@ -137,69 +137,118 @@ function playSound(audio, sound, time, bus) {
   const pitch = clamp(sound.frequency, 28, 900);
   const brightness = clamp(sound.brightness, 0.1, 1);
   const out = bus.input;
-
-  if (family === "kick" || family === "bass") {
+  const amp = (length = duration, peak = 0.6, attack = 0.004) => {
+    const node = audio.createGain();
+    node.gain.setValueAtTime(0.0001, time);
+    node.gain.exponentialRampToValueAtTime(Math.max(0.001, peak), time + attack);
+    node.gain.exponentialRampToValueAtTime(0.0001, time + length);
+    node.connect(out);
+    return node;
+  };
+  const tone = (frequency, type, destination, length = duration, endFrequency = frequency, detune = 0) => {
     const osc = audio.createOscillator();
-    const filter = audio.createBiquadFilter();
-    const amp = envelope(audio, out, time, duration, family === "kick" ? 0.82 : 0.56);
-    osc.type = family === "kick" ? "sine" : (sound.seed % 2 ? "sawtooth" : "square");
-    osc.frequency.setValueAtTime(family === "kick" ? pitch * 2.8 : pitch, time);
-    if (family === "kick") {
-      osc.frequency.exponentialRampToValueAtTime(Math.max(28, pitch * 0.42), time + Math.min(0.18, duration));
+    osc.type = type;
+    osc.detune.value = detune;
+    osc.frequency.setValueAtTime(Math.max(20, frequency), time);
+    if (endFrequency !== frequency) {
+      osc.frequency.exponentialRampToValueAtTime(Math.max(20, endFrequency), time + Math.min(length, 0.24));
     }
-    filter.type = "lowpass";
-    filter.frequency.setValueAtTime(180 + brightness * 520, time);
-    osc.connect(filter);
-    filter.connect(amp);
+    osc.connect(destination);
     osc.start(time);
-    osc.stop(time + duration + 0.025);
+    osc.stop(time + length + 0.025);
+    return osc;
+  };
+  const noise = (destination, length, filterType, cutoff, peak = 0.4, attack = 0.002) => {
+    const source = audio.createBufferSource();
+    const filter = audio.createBiquadFilter();
+    source.buffer = noiseBuffer(audio, Math.min(0.8, length + 0.04));
+    filter.type = filterType;
+    filter.frequency.setValueAtTime(cutoff, time);
+    filter.Q.value = filterType === "bandpass" ? 0.9 : 0.7;
+    const gain = amp(length, peak, attack);
+    source.connect(filter);
+    filter.connect(gain);
+    source.start(time);
+    source.stop(time + length + 0.02);
+  };
+
+  if (family === "kick") {
+    const body = amp(duration, 0.92, 0.002);
+    tone(pitch * 3.2, "sine", body, duration, pitch * 0.42);
+    noise(amp(0.028, 0.18, 0.001), 0.026, "highpass", 4200 + brightness * 2600, 0.18, 0.001);
+    return true;
+  }
+
+  if (family === "bass") {
+    const sub = amp(duration, 0.62, 0.006);
+    tone(pitch, "sine", sub, duration, pitch * (sound.seed % 3 === 0 ? 0.98 : 1));
+    const harmonic = amp(Math.min(duration, 0.8), 0.22, 0.004);
+    const filter = audio.createBiquadFilter();
+    filter.type = "lowpass";
+    filter.frequency.setValueAtTime(180 + brightness * 950, time);
+    filter.Q.value = 0.8;
+    tone(pitch, "sawtooth", filter, Math.min(duration, 0.8), pitch * 0.995);
+    filter.connect(harmonic);
     return true;
   }
 
   if (family === "snare" || family === "clap" || family === "hat" || family === "perc") {
-    const noise = audio.createBufferSource();
-    const filter = audio.createBiquadFilter();
-    const amp = envelope(audio, out, time, duration, family === "hat" ? 0.24 : 0.48);
-    noise.buffer = noiseBuffer(audio, Math.min(0.35, duration + 0.03));
-    filter.type = family === "hat" ? "highpass" : "bandpass";
-    filter.frequency.setValueAtTime(
-      family === "hat" ? 5200 + brightness * 4200 : 700 + brightness * 3600,
-      time
-    );
-    filter.Q.value = family === "clap" ? 0.65 : 0.9;
-    noise.connect(filter);
-    filter.connect(amp);
-    noise.start(time);
-    noise.stop(time + duration + 0.02);
-    if (family === "snare" || family === "perc") {
-      const tone = audio.createOscillator();
-      const toneAmp = envelope(audio, out, time, Math.min(0.16, duration), 0.22);
-      tone.type = "triangle";
-      tone.frequency.setValueAtTime(pitch, time);
-      tone.connect(toneAmp);
-      tone.start(time);
-      tone.stop(time + Math.min(0.18, duration + 0.02));
+    const isHat = family === "hat";
+    const isClap = family === "clap";
+    const noiseLength = isHat ? Math.min(duration, 0.22) : Math.min(duration, 0.42);
+    noise(out, noiseLength, isHat ? "highpass" : "bandpass",
+      isHat ? 6200 + brightness * 5600 : 850 + brightness * 4200,
+      isHat ? 0.25 : (isClap ? 0.42 : 0.52), 0.001);
+    if (isClap) {
+      for (const offset of [0.018, 0.041, 0.067]) {
+        const source = audio.createBufferSource();
+        const filter = audio.createBiquadFilter();
+        const gain = audio.createGain();
+        source.buffer = noiseBuffer(audio, 0.055);
+        filter.type = "bandpass";
+        filter.frequency.value = 1500 + brightness * 1800;
+        gain.gain.setValueAtTime(0.0001, time + offset);
+        gain.gain.exponentialRampToValueAtTime(0.2, time + offset + 0.002);
+        gain.gain.exponentialRampToValueAtTime(0.0001, time + offset + 0.052);
+        source.connect(filter); filter.connect(gain); gain.connect(out);
+        source.start(time + offset); source.stop(time + offset + 0.06);
+      }
+    } else if (!isHat) {
+      const body = amp(Math.min(0.19, duration), 0.3, 0.002);
+      tone(pitch, "triangle", body, Math.min(0.19, duration), pitch * 0.82);
     }
     return true;
   }
 
-  const osc = audio.createOscillator();
-  const second = audio.createOscillator();
+  if (family === "chop" || family === "stab") {
+    const filter = audio.createBiquadFilter();
+    filter.type = "lowpass";
+    filter.frequency.setValueAtTime(500 + brightness * 5200, time);
+    filter.Q.value = family === "stab" ? 1.1 : 0.55;
+    filter.connect(out);
+    const chord = family === "stab" ? [1, 1.25, 1.498] : [1, 1.5, 2];
+    chord.forEach((ratio, index) => {
+      const gain = amp(duration, family === "stab" ? 0.24 : 0.2, 0.008);
+      const osc = audio.createOscillator();
+      osc.type = index === 1 ? "triangle" : "sawtooth";
+      osc.frequency.setValueAtTime(pitch * ratio, time);
+      osc.detune.value = index === 2 ? 5 : -3;
+      osc.connect(gain); gain.connect(filter);
+      osc.start(time); osc.stop(time + duration + 0.025);
+    });
+    return true;
+  }
+
+  // FX: a filtered noise sweep layered with a rising/falling tone.
+  const sweepLength = Math.max(0.16, duration);
   const filter = audio.createBiquadFilter();
-  const amp = envelope(audio, out, time, duration, family === "fx" ? 0.28 : 0.42);
-  osc.type = sound.seed % 3 === 0 ? "triangle" : "sawtooth";
-  second.type = "sine";
-  osc.frequency.setValueAtTime(pitch, time);
-  second.frequency.setValueAtTime(pitch * (family === "chop" ? 1.5 : 2), time);
-  filter.type = "lowpass";
-  filter.frequency.setValueAtTime(350 + brightness * 4800, time);
-  osc.connect(filter);
-  second.connect(filter);
-  filter.connect(amp);
-  osc.start(time);
-  second.start(time);
-  osc.stop(time + duration + 0.025);
-  second.stop(time + duration + 0.025);
+  filter.type = "bandpass";
+  filter.frequency.setValueAtTime(260, time);
+  filter.frequency.exponentialRampToValueAtTime(2400 + brightness * 5200, time + Math.min(0.5, sweepLength));
+  filter.Q.value = 0.65;
+  noise(out, sweepLength, "bandpass", 1400 + brightness * 3600, 0.2, 0.012);
+  const fx = amp(sweepLength, 0.22, 0.015);
+  tone(pitch * 0.7, "sine", fx, sweepLength, pitch * (sound.seed % 2 ? 2.2 : 0.55));
   return true;
 }
 
@@ -210,26 +259,39 @@ const StudioMPCLibrary = {
 
   open() {
     const state = readState();
-    state.sounds = Array.from({ length: 100 }, (_, index) => makeSound(index));
-    state.growthCount = Math.max(0, Number(state.growthCount) || 0) + 1;
+    const priorGrowth = Math.max(0, Number(state.growthCount) || 0);
+    const expectedPrior = 100 + priorGrowth * 20;
+    if (!Array.isArray(state.sounds)) state.sounds = [];
+    // Migrate earlier browser saves while preserving every existing ID.
+    for (let index = state.sounds.length; index < expectedPrior; index++) {
+      state.sounds.push(makeSound(index));
+    }
+    const existingIds = new Set(state.sounds.map(sound => sound.id));
+    let added = 0;
+    for (let index = state.sounds.length; added < 20; index++) {
+      const sound = makeSound(index);
+      if (existingIds.has(sound.id)) continue;
+      state.sounds.push(sound);
+      existingIds.add(sound.id);
+      added++;
+    }
+    state.growthCount = priorGrowth + 1;
     this.state = state;
     writeState(state);
-    const total = 100 + state.growthCount * 20;
     return {
       sounds: this.getSounds(),
-      added: 20,
+      added,
       unlocked: Boolean(state.unlocked),
-      total: total + (state.unlocked ? 200 : 0)
+      total: state.sounds.length + (state.unlocked ? 200 : 0)
     };
   },
 
   getSounds() {
     if (!this.state) this.state = readState();
-    const count = 100 + Math.max(0, Number(this.state.growthCount) || 0) * 20;
-    const available = Array.from({ length: count }, (_, index) => makeSound(index));
+    if (!Array.isArray(this.state.sounds)) this.state.sounds = [];
     return this.state.unlocked
-      ? [...available, ...Array.from({ length: 200 }, (_, index) => makeSound(index, true))]
-      : available;
+      ? [...this.state.sounds, ...Array.from({ length: 200 }, (_, index) => makeSound(index, true))]
+      : this.state.sounds.slice();
   },
 
   unlock(code) {
