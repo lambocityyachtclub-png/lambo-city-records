@@ -69,7 +69,7 @@ assert.equal(panner.pan.value, -0.4);
 const oscillator = audio.nodes.find(node => node.kind === "oscillator");
 assert.ok(oscillator, "MPC creates a pitched oscillator for the kick");
 assert.equal(oscillator.frequency.values[0], kick.frequency * 2 * 3.2, "Pad pitch changes preset tuning");
-assert.ok(Math.abs(oscillator.stopTimes[0] - (audio.currentTime + kick.decay * 0.5 + 0.025)) < 0.000001, "Pad decay changes preset length");
+assert.ok(Math.abs(oscillator.stopTimes[0] - (audio.currentTime + Math.max(0.06, kick.decay * 0.5) + 0.025)) < 0.000001, "Pad decay changes preset length");
 const output = audio.nodes.find(node => node.kind === "gain" && node.connections.some(node => node.kind === "compressor"));
 assert.ok(output, "MPC preset output feeds its dynamics chain");
 
