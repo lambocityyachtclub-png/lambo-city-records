@@ -200,18 +200,85 @@ function updateExplorationCamera(player, delta, moving, insideHQ) {
 function updateElevatorExteriorCamera(player, delta) {
   // Exterior three-quarter tracking shot: the cabin travels vertically
   // through frame while the camera remains outside the passenger space.
+  // Anchor the camera to the building-side exterior of the lift shaft,
+  // not to the passenger. This prevents the camera from entering the
+  // cabin when HERO steps inside or while the lift is moving.
   const target = new THREE.Vector3(
-    player.position.x,
+    23,
     player.position.y + 2.0,
-    player.position.z
+    14.15
   );
   const desired = new THREE.Vector3(
-    player.position.x + 7.4,
+    30.4,
     player.position.y + 4.2,
-    player.position.z + 8.2
+    22.35
   );
   camera.position.lerp(desired, dampFactor(delta, 3.8));
   camera.lookAt(target);
+}
+
+function updateStudioArrivalCamera(player, delta) {
+  const yaw = player.rotation.y;
+  const forwardX = Math.sin(yaw);
+  const forwardZ = Math.cos(yaw);
+  const rightX = Math.cos(yaw);
+  const rightZ = -Math.sin(yaw);
+  const progress = THREE.MathUtils.clamp(
+    Number(window.__lamboCityFloor2ArrivalProgress ?? 0),
+    0,
+    1
+  );
+
+  // Restore the original three-beat producer entrance:
+  // follow HERO from behind, reveal the walk from the side,
+  // then settle into a three-quarter view of the workstation.
+  const shots = [
+    { start: 0.00, end: 0.38, back: -2.8, side: 0.0 },
+    { start: 0.38, end: 0.72, back: -0.65, side: 2.75 },
+    { start: 0.72, end: 1.00, back: 1.85, side: 1.25 }
+  ];
+
+  let shot = shots[shots.length - 1];
+  let previous = shots[0];
+  for (let i = 0; i < shots.length; i++) {
+    if (progress <= shots[i].end) {
+      shot = shots[i];
+      previous = shots[Math.max(0, i - 1)];
+      break;
+    }
+  }
+
+  const phase = THREE.MathUtils.clamp(
+    (progress - shot.start) / Math.max(0.001, shot.end - shot.start),
+    0,
+    1
+  );
+  const eased = phase * phase * (3 - 2 * phase);
+  const back = THREE.MathUtils.lerp(previous.back, shot.back, eased);
+  const side = THREE.MathUtils.lerp(previous.side, shot.side, eased);
+
+  const cameraX = THREE.MathUtils.clamp(
+    player.position.x + forwardX * back + rightX * side,
+    20.75,
+    35.25
+  );
+  const cameraZ = THREE.MathUtils.clamp(
+    player.position.z + forwardZ * back + rightZ * side,
+    15.55,
+    27.05
+  );
+
+  const desired = new THREE.Vector3(
+    cameraX,
+    player.position.y + 2.45,
+    cameraZ
+  );
+  camera.position.lerp(desired, dampFactor(delta, 5.8));
+  camera.lookAt(
+    player.position.x,
+    player.position.y + 1.25,
+    player.position.z
+  );
 }
 
 function updateStudioSessionCamera(player, delta) {
@@ -269,13 +336,29 @@ export default {
       window.__lamboCityFloor2SessionActive &&
       window.__lamboCityFloor2SessionMode === "seated";
 
+    const floor2Arrival =
+      floor === 2 &&
+      window.__lamboCityFloor2SessionActive &&
+      window.__lamboCityFloor2SessionMode === "arrival";
+
+    if (floor2Arrival) {
+      currentMode = "studio-arrival";
+      updateStudioArrivalCamera(player, delta);
+      return;
+    }
+
     if (seatedStudio) {
       currentMode = "studio-seated";
       updateStudioSessionCamera(player, delta);
       return;
     }
 
-    if (window.__lamboCityElevatorTraveling) {
+    if (
+      window.__lamboCityElevatorTraveling ||
+      window.__lamboCityElevatorInRange ||
+      window.__lamboCityElevatorLandingFloor === 2 ||
+      window.__lamboCityElevatorLandingFloor === 3
+    ) {
       currentMode = "elevator-exterior";
       updateElevatorExteriorCamera(player, delta);
       return;
