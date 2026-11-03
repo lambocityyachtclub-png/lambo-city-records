@@ -326,19 +326,35 @@ function updateStudioArrivalCamera(player, delta) {
 
 function updateStudioSessionCamera(player, delta) {
   const yaw = Number(window.__lamboCityFloor2OrbitYaw ?? 0);
-  const pitch = Number(window.__lamboCityFloor2OrbitPitch ?? 0.08);
-  const radius = 5.25;
-  const desired = new THREE.Vector3(
-    player.position.x + Math.sin(yaw) * radius,
-    player.position.y + 3.75 + pitch * 2.0,
-    player.position.z + Math.cos(yaw) * radius
+  const pitch = THREE.MathUtils.clamp(
+    Number(window.__lamboCityFloor2OrbitPitch ?? 0.08),
+    -0.12,
+    0.18
   );
+
+  // Keep the seated 360 view inside the actual Floor 2 studio volume.
+  // The previous camera height rose above the acoustic ceiling, and its
+  // 5.25-unit orbit could carry the view beyond the room perimeter.
+  const radius = 3.65;
+  const desired = new THREE.Vector3(
+    THREE.MathUtils.clamp(
+      player.position.x + Math.sin(yaw) * radius,
+      HQ_MIN_X + 0.9,
+      HQ_MAX_X - 0.9
+    ),
+    player.position.y + 2.35 + pitch * 1.2,
+    THREE.MathUtils.clamp(
+      player.position.z + Math.cos(yaw) * radius,
+      HQ_MIN_Z + 0.9,
+      HQ_MAX_Z - 0.9
+    )
+  );
+
   camera.position.lerp(desired, dampFactor(delta, 4.5));
-  // Preserve the producer's established desk-facing direction.
   camera.lookAt(
     player.position.x,
-    player.position.y + 1.7 + pitch * 0.45,
-    player.position.z - 1.15
+    player.position.y + 1.55 + pitch * 0.25,
+    player.position.z - 1.0
   );
 }
 
