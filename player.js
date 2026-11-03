@@ -498,7 +498,7 @@ export default {
       // D moves right and A moves left.
       if (input.keys?.w) dz = 1;
       if (input.keys?.s) dz = -1;
-      // Floor 3: reverse A/D from their current directions.
+      // Floor 3 strafe directions: A = right (+X), D = left (-X).
       if (input.keys?.a) dx = 1;
       if (input.keys?.d) dx = -1;
     }
