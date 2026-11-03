@@ -495,29 +495,26 @@ export default {
 
     if (onFloor3) {
       // Floor 3: W toward the boardwalk, S toward the stage.
-      // A moves right and D moves left.
+      // Swap A and D: A moves left and D moves right.
       if (input.keys?.w) dz = 1;
       if (input.keys?.s) dz = -1;
-      // Floor 3 strafe directions: A = right (+X), D = left (-X).
-      if (input.keys?.a) dx = 1;
-      if (input.keys?.d) dx = -1;
+      // Floor 3 strafe directions: A = left (-X), D = right (+X).
+      if (input.keys?.a) dx = -1;
+      if (input.keys?.d) dx = 1;
     }
 
     /*
       Joystick follows the keyboard's directional mapping.
-      On Floor 3, the keyboard directions are reversed, so
-      reverse both joystick axes there as well:
-      joystick Up = W, Down = S, Left = A, Right = D.
-      Other floors keep the original joystick directions.
+      Floor 3 joystick left/right now matches the swapped
+      A/D keyboard directions. Floor 3 vertical joystick
+      direction still matches W/S. Other floors are unchanged.
     */
 
     if (
       input.joystick?.active
     ) {
 
-      const joystickX = onFloor3
-        ? -input.joystick.x
-        : input.joystick.x;
+      const joystickX = input.joystick.x;
 
       const joystickY = onFloor3
         ? -input.joystick.y
