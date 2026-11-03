@@ -488,19 +488,19 @@ export default {
 
     }
 
-    // Floor 3 uses reversed A/D strafe mapping only.
+    // Floor 3 keeps its requested boardwalk/stage and
+    // opposite A/D directions.
     const onFloor3 =
       player.position.y >= 16.2 &&
       player.position.y < 23.8;
 
     if (onFloor3) {
-      // Floor 3: W toward the boardwalk, S toward the stage.
-      // Swap A and D: A moves left and D moves right.
+      // W = toward the boardwalk (+Z); S = toward the stage (-Z).
       if (input.keys?.w) dz = 1;
       if (input.keys?.s) dz = -1;
-      // Floor 3 strafe directions: A = left (-X), D = right (+X).
-      if (input.keys?.a) dx = -1;
-      if (input.keys?.d) dx = 1;
+      // A = right (+X); D = left (-X).
+      if (input.keys?.a) dx = 1;
+      if (input.keys?.d) dx = -1;
     }
 
     /*
@@ -514,7 +514,9 @@ export default {
       input.joystick?.active
     ) {
 
-      const joystickX = input.joystick.x;
+      const joystickX = onFloor3
+        ? -input.joystick.x
+        : input.joystick.x;
 
       const joystickY = onFloor3
         ? -input.joystick.y
