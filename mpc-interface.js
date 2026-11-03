@@ -507,6 +507,7 @@ const MPCInterface = {
       const pressure = Number(event.pressure);
       const velocity = pressure > 0 ? 0.35 + Math.min(1, pressure) * 1.15 : 0.9;
       const padNumber = Number(pad.dataset.pad);
+      try { pad.setPointerCapture(event.pointerId); } catch {}
       pad.classList.add("flash");
       void this.handlePad(padNumber, velocity);
       if (this.noteRepeat) {
@@ -622,7 +623,7 @@ const MPCInterface = {
     void this.refreshImportedSamples();
     void this.preloadAssignedSamples();
     this.showScreen("MAIN");
-    this.setStatus(this.library.total + " SOUNDS READY · +" + this.library.added + " NEW SOUNDS ADDED THIS VISIT");
+    this.setStatus(this.library.total + " ORIGINAL SOUND PRESETS READY · +" + this.library.added + " NEW PRESETS ADDED THIS VISIT");
     root.querySelector("[data-mpc-close]")?.focus({ preventScroll: true });
     return root;
   },
@@ -1027,7 +1028,7 @@ const MPCInterface = {
     try {
       if (!StudioMPCLibrary.unlock(code)) { this.setStatus("UNLOCK CODE NOT RECOGNIZED."); return; }
       this.refreshLibraryUI();
-      this.setStatus("200 ADDITIONAL SOUNDS UNLOCKED · " + StudioMPCLibrary.getSounds().length + " SOUNDS AVAILABLE");
+      this.setStatus("200 ADDITIONAL PRESETS UNLOCKED · " + StudioMPCLibrary.getSounds().length + " PRESETS AVAILABLE");
     } catch (error) { this.setStatus(error?.message || "Could not unlock the library."); }
   },
 
@@ -1084,6 +1085,7 @@ const MPCInterface = {
     this.recording = false;
     this.root?.querySelector('[data-placeholder="REC"]')?.classList.remove("lit");
     const projectId = this.beatLab?.currentProject?.id || "unsaved";
+    this.take.events.sort((a, b) => a.at - b.at);
     const lastEvent = this.take.events[this.take.events.length - 1];
     const elapsed = this.beatLab?.audio
       ? Math.max(0, this.beatLab.audio.currentTime - this.recordingStartedAt + this.overdubOffset)
