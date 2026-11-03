@@ -24,6 +24,22 @@ const PRODUCER_SEAT = {
 };
 
 const ELEVATOR_ARRIVAL_SECONDS = 1.0;
+const FLOOR_2_DISCOVERY_KEY = "lambo-city-floor2-discovered-v1";
+
+function readFloor2Discovery() {
+  try {
+    return localStorage.getItem(FLOOR_2_DISCOVERY_KEY) === "1";
+  } catch (_) {
+    return false;
+  }
+}
+
+function saveFloor2Discovery() {
+  window.__lamboCityFloor2Discovered = true;
+  try {
+    localStorage.setItem(FLOOR_2_DISCOVERY_KEY, "1");
+  } catch (_) {}
+}
 
 let playerSystem = null;
 let renderer = null;
@@ -205,8 +221,14 @@ export default {
     sessionExitButton.addEventListener("click", () => this.endSession());
     document.body.appendChild(sessionExitButton);
 
+    window.__lamboCityFloor2Discovered =
+      readFloor2Discovery() || window.__lamboCityFloor2Discovered === true;
+
     window.__lamboCityBeginFloor2Session = player => {
       this.beginArrival(player);
+    };
+    window.__lamboCityEnterFloor2CockpitDirect = player => {
+      return this.enterCockpitDirect(player);
     };
     window.__lamboCityEndFloor2Session = () => {
       this.endSession();
@@ -219,6 +241,45 @@ export default {
     };
 
     publishState();
+  },
+
+  enterCockpitDirect(player) {
+    if (
+      !player ||
+      !window.__lamboCityFloor2Discovered ||
+      mode !== "free"
+    ) {
+      return false;
+    }
+
+    // The discovery walk is complete. Phone re-entry places HERO
+    // directly in the established producer seat without replaying
+    // the elevator ride or the first-visit arrival walk.
+    playerSystem?.setElevatorFloorY?.(FLOOR_2_Y);
+    playerSystem?.clearElevatorControl?.();
+    player.position.set(
+      PRODUCER_SEAT.x,
+      FLOOR_2_Y,
+      PRODUCER_SEAT.z
+    );
+    playerSystem?.setFacing?.(Math.PI);
+    playerSystem?.setStudioSeatedPose?.(true);
+
+    arrivalPlayer = player;
+    arrivalStart = null;
+    arrivalRoute = null;
+    arrivalRouteLengths = null;
+    arrivalRouteLength = 0;
+    window.__lamboCityFloor2OrbitYaw = 0;
+    window.__lamboCityFloor2OrbitPitch = 0.08;
+    window.__lamboCityFloor2ArrivalProgress = 1;
+    window.__lamboCityElevatorTraveling = false;
+    window.__lamboCityElevatorLandingFloor = 0;
+    window.__lamboCityElevatorInRange = false;
+    window.__lamboCityElevatorOpen = false;
+    window.__lamboCityElevatorDoorOpen = false;
+    setMode("seated");
+    return true;
   },
 
   beginArrival(player) {
@@ -334,6 +395,7 @@ export default {
 
       if (t >= 1) {
         playerSystem?.setStudioSeatedPose?.(true);
+        saveFloor2Discovery();
         setMode("seated");
       }
     }
@@ -352,6 +414,7 @@ export default {
   destroy() {
     detachOrbitControls();
     delete window.__lamboCityBeginFloor2Session;
+    delete window.__lamboCityEnterFloor2CockpitDirect;
     delete window.__lamboCityEndFloor2Session;
     delete window.__lamboCityReturnToFloor2Room;
     delete window.__lamboCityOpenFloor2Instrument;
