@@ -40,7 +40,7 @@ let floor3POVBlend = 0;
 const HQ_MIN_X = 19.0;
 const HQ_MAX_X = 37.0;
 
-const HQ_MIN_Z = 14.5;
+const HQ_MIN_Z = 15.8;
 const HQ_MAX_Z = 29.25;
 
 
