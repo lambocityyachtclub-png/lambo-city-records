@@ -488,39 +488,13 @@ export default {
 
     }
 
-    // Floor 3 keeps its requested boardwalk/stage and
-    // opposite A/D directions.
-    const onFloor3 =
-      player.position.y >= 16.2 &&
-      player.position.y < 23.8;
-
-    if (onFloor3) {
-      // W = toward the boardwalk (+Z); S = toward the stage (-Z).
-      if (input.keys?.w) dz = 1;
-      if (input.keys?.s) dz = -1;
-      // A = right (+X); D = left (-X).
-      if (input.keys?.a) dx = 1;
-      if (input.keys?.d) dx = -1;
-    }
-
-    /*
-      Joystick follows the keyboard's directional mapping.
-      Floor 3 joystick left/right now matches the swapped
-      A/D keyboard directions. Floor 3 vertical joystick
-      direction still matches W/S. Other floors are unchanged.
-    */
 
     if (
       input.joystick?.active
     ) {
 
-      const joystickX = onFloor3
-        ? -input.joystick.x
-        : input.joystick.x;
-
-      const joystickY = onFloor3
-        ? -input.joystick.y
-        : input.joystick.y;
+      const joystickX = input.joystick.x;
+      const joystickY = input.joystick.y;
 
       if (
         Math.abs(joystickX) > 0.08
