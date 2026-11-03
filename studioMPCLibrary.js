@@ -337,6 +337,26 @@ const StudioMPCLibrary = {
     return { ...(state.assignments || {}) };
   },
 
+  exportAssignedSounds() {
+    const state = this.state || readState();
+    const ids = new Set(Object.values(state.assignments || {}));
+    return (state.sounds || []).filter(sound => ids.has(sound.id)).map(sound => ({ ...sound }));
+  },
+
+  importAssignedSounds(sounds = []) {
+    const state = this.state || readState();
+    if (!Array.isArray(state.sounds)) state.sounds = [];
+    const byId = new Map(state.sounds.map(sound => [sound.id, sound]));
+    for (const sound of sounds) {
+      if (sound && typeof sound.id === "string" && typeof sound.name === "string") {
+        byId.set(sound.id, { ...sound, locked: Boolean(sound.locked) });
+      }
+    }
+    state.sounds = [...byId.values()];
+    this.state = state;
+    writeState(state);
+  },
+
   importAssignments(assignments = {}) {
     const state = this.state || readState();
     state.assignments = { ...(assignments || {}) };
