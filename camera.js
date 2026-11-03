@@ -150,7 +150,32 @@ function keepCameraOutsideWalls(target, desired, cameraY) {
   return safe;
 }
 
-function updateExplorationCamera(player, delta, moving, insideHQ) {
+function isNearExistingCharacter(player, npcSystem) {
+  const targets = npcSystem?.getCameraTargets?.() || [];
+  return targets.some(target => {
+    if (!target?.position) return false;
+    const dx = player.position.x - target.position.x;
+    const dz = player.position.z - target.position.z;
+    return dx * dx + dz * dz <= 10.5 * 10.5;
+  });
+}
+
+function isNearBuilding(player) {
+  // These centers match the existing Records HQ and marina storefronts.
+  const buildings = [
+    { x: 28, z: 22, radius: 17 },
+    { x: -20, z: 31, radius: 15 },
+    { x: -32, z: 31, radius: 15 },
+    { x: -44, z: 31, radius: 15 }
+  ];
+  return buildings.some(building => {
+    const dx = player.position.x - building.x;
+    const dz = player.position.z - building.z;
+    return dx * dx + dz * dz <= building.radius * building.radius;
+  });
+}
+
+function updateExplorationCamera(player, delta, moving, insideHQ, npcSystem, hasMoved) {
   const now = performance.now();
 
   // When the player walks for a while, gently settle behind their
@@ -163,12 +188,13 @@ function updateExplorationCamera(player, delta, moving, insideHQ) {
     );
   }
 
-  let distance = FOLLOW_DISTANCE;
-
-  if (insideHQ) {
-    // A slightly tighter framing keeps HERO and nearby room details visible.
-    distance = 6.7;
-  }
+  // Start with a high, wide marina view. Once the player begins exploring,
+  // return to the familiar closer framing near existing characters/buildings.
+  const closeFraming = insideHQ ||
+    (hasMoved && (isNearExistingCharacter(player, npcSystem) ||
+      isNearBuilding(player)));
+  const distance = insideHQ ? 6.7 : closeFraming ? FOLLOW_DISTANCE : 15.5;
+  const cameraHeight = insideHQ ? 3.25 : closeFraming ? 3.4 : 7.2;
 
   const target = new THREE.Vector3(
     player.position.x,
@@ -179,17 +205,16 @@ function updateExplorationCamera(player, delta, moving, insideHQ) {
   const horizontal = Math.cos(cameraPitch) * distance;
   const desired = new THREE.Vector3(
     target.x + Math.sin(cameraYaw) * horizontal,
-    player.position.y + (insideHQ ? 3.25 : 3.4) + Math.sin(cameraPitch) * distance,
+    player.position.y + cameraHeight + Math.sin(cameraPitch) * distance,
     target.z + Math.cos(cameraYaw) * horizontal
   );
 
-  const t = dampFactor(delta);
+  const t = dampFactor(delta, closeFraming ? FOLLOW_RESPONSE : 2.8);
   camera.position.lerp(desired, t);
 
-  // Aim the view ahead of HERO, not at the back of the character.
-  // At startup this points the camera toward the stage/Jumbotron,
-  // while keeping the third-person camera positioned behind HERO.
-  const lookAhead = 8.0;
+  // Keep the marina/stage in the forward composition while wide;
+  // restore the existing look-ahead when near a person or building.
+  const lookAhead = closeFraming ? 8.0 : 13.5;
   const lookTarget = target.clone().add(new THREE.Vector3(
     Math.sin(player.rotation.y) * lookAhead,
     0,
@@ -375,7 +400,15 @@ export default {
     this._lastX = player.position.x;
     this._lastZ = player.position.z;
 
-    updateExplorationCamera(player, delta, moving, insideHQ);
+    this._hasMovedSinceStart = this._hasMovedSinceStart || moving;
+    updateExplorationCamera(
+      player,
+      delta,
+      moving,
+      insideHQ,
+      context.systems?.npc,
+      this._hasMovedSinceStart
+    );
   },
 
   getCamera() {
