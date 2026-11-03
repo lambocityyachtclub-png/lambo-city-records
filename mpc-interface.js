@@ -553,6 +553,7 @@ const MPCInterface = {
       if (event.target.closest("[data-mpc-unassign]")) { this.unassignSelectedPad(); return; }
       if (event.target.closest("[data-mpc-note-repeat-toggle]")) {
         this.noteRepeat = !this.noteRepeat;
+        if (!this.noteRepeat) this.stopNoteRepeat();
         const button = this.root.querySelector("[data-mpc-note-repeat-toggle]");
         if (button) button.textContent = "NOTE REPEAT: " + (this.noteRepeat ? "ON" : "OFF");
         this.setStatus("NOTE REPEAT " + (this.noteRepeat ? "ON" : "OFF") + " · HOLD A PAD TO REPEAT");
