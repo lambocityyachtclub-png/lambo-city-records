@@ -22,7 +22,7 @@ import StudioMPCSampler from "./studioMPCSampler.js";
 import {
   createStudioDAWArrangementPlayback
 } from "./studioDAWArrangementPlayback.js";
-const MAX_PORTABLE_SESSION_BYTES = 48000000;
+const MAX_PORTABLE_SESSION_BYTES = 30000000;
 
 async function encodeAudioBlob(blob) {
   const bytes = new Uint8Array(await blob.arrayBuffer());
