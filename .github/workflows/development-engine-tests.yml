@@ -1,0 +1,31 @@
+name: Development Engine Tests
+
+on:
+  push:
+    paths:
+      - "development/**"
+      - ".github/workflows/development-engine-tests.yml"
+
+  pull_request:
+    paths:
+      - "development/**"
+      - ".github/workflows/development-engine-tests.yml"
+
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Test Development Engine
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Run development engine tests
+        run: node --experimental-default-type=module --test development/tests/developmentSystem.test.js
