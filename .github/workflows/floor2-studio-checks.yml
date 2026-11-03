@@ -25,6 +25,7 @@ on:
       - "mpc-interface.js"
       - "studioMPCLibrary.js"
       - "studioMPCSampler.js"
+      - "scripts/test-mpc-project-package.mjs"
       - ".github/workflows/floor2-studio-checks.yml"
 
   pull_request:
@@ -97,3 +98,6 @@ jobs:
           do
             node --experimental-default-type=module --check "$file"
           done
+
+      - name: Test portable MPC song package
+        run: node --experimental-default-type=module scripts/test-mpc-project-package.mjs
