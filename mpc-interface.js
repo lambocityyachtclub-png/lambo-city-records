@@ -1103,9 +1103,16 @@ const MPCInterface = {
       }
       if (action === "play" || action === "play-start") {
         if (this.recording) this.finishRecording();
-        if (action === "play-start" && this.beatLab.playing) this.beatLab.stop();
-        if (!this.beatLab.playing) await this.beatLab.start();
-        await this.playSavedPerformance(action === "play-start");
+        const songWasPlaying = Boolean(this.beatLab.playing);
+        if (action === "play-start" && songWasPlaying) this.beatLab.stop();
+        if (!this.beatLab.playing) {
+          const projectId = this.beatLab?.currentProject?.id || "unsaved";
+          const take = this.beatLab?.currentProject?.mpcPerformance || StudioMPCLibrary.loadTake(projectId);
+          const audio = await this.getAudioContext();
+          await StudioMPCSampler.preload((take.events || []).map(event => event.sampleId), audio);
+          await this.beatLab.start();
+        }
+        await this.playSavedPerformance(action === "play-start" || !songWasPlaying);
         this.setStatus("SONG PLAYING · MPC PERFORMANCE PLAYING");
       }
     } catch (error) { this.setStatus("MPC CONTROL ERROR: " + (error?.message || error)); }
@@ -1144,7 +1151,9 @@ const MPCInterface = {
       return;
     }
     const songPosition = fromStart ? 0 : this.getSongPosition(audio);
-    this.playbackStartedAt = audio.currentTime - songPosition;
+    this.playbackStartedAt = fromStart
+      ? (Number(this.beatLab?.playbackStartedAt) || audio.currentTime + 0.05)
+      : audio.currentTime - songPosition;
     this.playbackIndex = this.take.events.findIndex(event => event.at >= songPosition);
     if (this.playbackIndex < 0) this.playbackIndex = 0;
     const loopDuration = Math.max(0.25, this.take.duration || (60 / (this.beatLab?.pattern?.bpm || 100) * 4));
