@@ -93,7 +93,7 @@ const StudioRecordingEngine = {
   takes: [],
   playback: null,
 
-  async startTrackRecording({ audio, trackId } = {}) {
+  async startTrackRecording({ audio, trackId, vocalEffects } = {}) {
     if (this.activeTake || this.activeTrackTake) {
       throw new Error("Another studio recording is already in progress.");
     }
@@ -110,7 +110,15 @@ const StudioRecordingEngine = {
     try {
       microphoneSource = audio.createMediaStreamSource(microphoneStream);
       destination = audio.createMediaStreamDestination();
-      microphoneSource.connect(destination);
+      if (vocalEffects) {
+        if (!vocalEffects.input || !vocalEffects.output) {
+          throw new Error("The vocal effects audio connection is incomplete.");
+        }
+        microphoneSource.connect(vocalEffects.input);
+        vocalEffects.output.connect(destination);
+      } else {
+        microphoneSource.connect(destination);
+      }
       const recorder = createRecorder(destination.stream);
       recorder.recorder.start();
       this.activeTrackTake = {
@@ -121,11 +129,13 @@ const StudioRecordingEngine = {
         microphoneStream,
         microphoneSource,
         destination,
+        vocalEffects,
         recorder
       };
       return { id: this.activeTrackTake.id, trackId, startedAt: this.activeTrackTake.startedAt };
     } catch (error) {
       try { microphoneSource?.disconnect(); } catch {}
+      try { if (vocalEffects) vocalEffects.output.disconnect(destination); } catch {}
       try { destination?.disconnect(); } catch {}
       microphoneStream.getTracks().forEach(track => track.stop());
       throw error;
@@ -148,6 +158,7 @@ const StudioRecordingEngine = {
       };
     } finally {
       try { take.microphoneSource.disconnect(); } catch {}
+      try { if (take.vocalEffects) take.vocalEffects.output.disconnect(take.destination); } catch {}
       try { take.destination.disconnect(); } catch {}
       take.microphoneStream.getTracks().forEach(track => track.stop());
     }
