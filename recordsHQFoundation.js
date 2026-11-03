@@ -256,34 +256,46 @@ export default {
       metalness: 0.82
     });
 
-    // Left and right panoramic walls.
-    [-1.84, 1.84].forEach(x => {
+    // Enlarged panoramic cabin. The west wall has a real dock-facing
+    // doorway; the north wall opens into the Records HQ rear entrance.
+    // The cabin is intentionally larger than the original lift.
+    box(
+      elevator,
+      new THREE.BoxGeometry(0.10, 26.4, 3.55),
+      elevatorGlass,
+      2.35,
+      13.2,
+      0
+    );
+
+    // West / dock-facing glass is split around a wide passenger door.
+    [-1.58, 1.58].forEach(z => {
       box(
         elevator,
-        new THREE.BoxGeometry(0.10, 26.4, 2.55),
+        new THREE.BoxGeometry(0.10, 26.4, 0.48),
         elevatorGlass,
-        x,
+        -2.35,
         13.2,
-        0
+        z
       );
     });
 
-    // Rear panoramic wall. No glazing spans the passenger exit.
+    // Rear panoramic wall.
     box(
       elevator,
-      new THREE.BoxGeometry(3.58, 26.4, 0.10),
+      new THREE.BoxGeometry(4.60, 26.4, 0.10),
       elevatorGlass,
       0,
       13.2,
-      -1.26
+      -1.85
     );
 
     // Brushed-gold structural corner rails.
-    [-1.78, 1.78].forEach(x => {
-      [-1.16, 1.16].forEach(z => {
+    [-2.28, 2.28].forEach(x => {
+      [-1.78, 1.78].forEach(z => {
         box(
           elevator,
-          new THREE.BoxGeometry(0.13, 26.4, 0.13),
+          new THREE.BoxGeometry(0.15, 26.4, 0.15),
           gold,
           x,
           13.2,
@@ -292,48 +304,50 @@ export default {
       });
     });
 
-    // Three luxury landing portals with paired sliding bronze doors.
-    // Door leaves are animated by recordsHQElevator.js.
-    [4.2, 12.2, 20.2].forEach((floorY, index) => {
-      const landing = new THREE.Group();
-      landing.name = `recordsHQElevatorLandingDoorF${index + 1}`;
-      landing.position.set(0, floorY, 1.30);
+    // Two perpendicular portals on every served level:
+    // +Z faces into Records HQ; -X faces the dock approach.
+    function buildLandingPortal(parent, name, position, rotationY, width, dockSide = false) {
+      const portal = new THREE.Group();
+      portal.name = name;
+      portal.position.set(position.x, position.y, position.z);
+      portal.rotation.y = rotationY;
 
-      // Outer portal frame and illuminated threshold.
       box(
-        landing,
-        new THREE.BoxGeometry(3.78, 0.16, 0.22),
+        portal,
+        new THREE.BoxGeometry(width + 0.34, 0.16, 0.22),
         gold,
         0,
         3.30,
         0
       );
-      [-1.82, 1.82].forEach(x => {
+
+      [-1, 1].forEach(side => {
         box(
-          landing,
+          portal,
           new THREE.BoxGeometry(0.14, 3.30, 0.22),
           gold,
-          x,
+          side * (width / 2 + 0.08),
           1.62,
           0
         );
       });
+
       box(
-        landing,
-        new THREE.BoxGeometry(3.45, 0.055, 0.34),
+        portal,
+        new THREE.BoxGeometry(width, 0.055, 0.34),
         gold,
         0,
         0.035,
         0.02
       );
 
-      // Sliding door leaves meet cleanly when closed.
+      const leafWidth = width / 2;
       const leftLeaf = new THREE.Group();
-      leftLeaf.name = "doorLeafLeft";
-      leftLeaf.position.set(-0.78, 1.62, 0.035);
+      leftLeaf.name = dockSide ? "doorLeafLeftDock" : "doorLeafLeft";
+      leftLeaf.position.set(-leafWidth / 2, 1.62, 0.035);
       box(
         leftLeaf,
-        new THREE.BoxGeometry(1.56, 3.12, 0.12),
+        new THREE.BoxGeometry(leafWidth, 3.12, 0.12),
         elevatorBronze,
         0,
         0,
@@ -343,18 +357,18 @@ export default {
         leftLeaf,
         new THREE.BoxGeometry(0.035, 2.88, 0.035),
         gold,
-        0.68,
+        leafWidth / 2 - 0.10,
         0,
         0.075
       );
-      landing.add(leftLeaf);
+      portal.add(leftLeaf);
 
       const rightLeaf = new THREE.Group();
-      rightLeaf.name = "doorLeafRight";
-      rightLeaf.position.set(0.78, 1.62, 0.035);
+      rightLeaf.name = dockSide ? "doorLeafRightDock" : "doorLeafRight";
+      rightLeaf.position.set(leafWidth / 2, 1.62, 0.035);
       box(
         rightLeaf,
-        new THREE.BoxGeometry(1.56, 3.12, 0.12),
+        new THREE.BoxGeometry(leafWidth, 3.12, 0.12),
         elevatorBronze,
         0,
         0,
@@ -364,30 +378,56 @@ export default {
         rightLeaf,
         new THREE.BoxGeometry(0.035, 2.88, 0.035),
         gold,
-        -0.68,
+        -leafWidth / 2 + 0.10,
         0,
         0.075
       );
-      landing.add(rightLeaf);
+      portal.add(rightLeaf);
 
-      // Small warm status lamps above each landing door.
       box(
-        landing,
-        new THREE.BoxGeometry(0.52, 0.07, 0.08),
+        portal,
+        new THREE.BoxGeometry(0.62, 0.08, 0.10),
         gold,
         0,
         3.05,
         0.14
       );
 
+      parent.add(portal);
+    }
+
+    [4.2, 12.2, 20.2].forEach((floorY, index) => {
+      const landing = new THREE.Group();
+      landing.name = `recordsHQElevatorLandingDoorF${index + 1}`;
+
+      // Building-side doorway faces +Z into the HQ.
+      buildLandingPortal(
+        landing,
+        "recordsHQSidePortal",
+        { x: 0, y: floorY, z: 1.30 },
+        0,
+        4.20,
+        false
+      );
+
+      // Dock-side doorway faces -X toward the dock.
+      buildLandingPortal(
+        landing,
+        "recordsDockSidePortal",
+        { x: -2.35, y: floorY, z: 0 },
+        -Math.PI / 2,
+        3.25,
+        true
+      );
+
       elevator.add(landing);
     });
 
-    // Gold floor bands retain the elevator's vertical exterior identity.
+    // Wider luxury floor bands follow the enlarged cabin footprint.
     [4.2, 12.2, 20.2].forEach(y => {
       box(
         elevator,
-        new THREE.BoxGeometry(3.65, 0.10, 2.5),
+        new THREE.BoxGeometry(4.60, 0.10, 3.70),
         gold,
         0,
         y,
