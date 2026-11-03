@@ -234,254 +234,131 @@ function makeArcPanel(radius, height, start, length, material, y) {
 function buildCabin() {
   cabin = new THREE.Group();
   cabin.name = "lamboCityLuxuryElevatorCabin";
-  cabin.position.set(ELEVATOR.x, ELEVATOR.initialY, ELEVATOR.z);
-
-  const blackGlass = new THREE.MeshStandardMaterial({
-    color: 0x07090d,
-    metalness: 0.72,
-    roughness: 0.16
-  });
-
-  const espresso = new THREE.MeshStandardMaterial({
-    color: 0x24140f,
-    metalness: 0.18,
-    roughness: 0.34
-  });
-
-  const espressoHighlight = new THREE.MeshStandardMaterial({
-    color: 0x4a2b1b,
-    metalness: 0.22,
-    roughness: 0.28
-  });
+  cabin.position.set(ELEVATOR.x, ELEVATOR.initialY - 0.505, ELEVATOR.z);
 
   const brass = new THREE.MeshStandardMaterial({
-    color: 0xd7ad65,
-    metalness: 0.94,
-    roughness: 0.17,
-    emissive: 0x6b4214,
+    color: 0xd6ad65,
+    metalness: 0.92,
+    roughness: 0.18,
+    emissive: 0x5b3914,
+    emissiveIntensity: 0.14
+  });
+
+  const warmBrass = new THREE.MeshStandardMaterial({
+    color: 0xf0d49b,
+    metalness: 0.9,
+    roughness: 0.16,
+    emissive: 0x8a5a1b,
     emissiveIntensity: 0.18
   });
 
   const glass = new THREE.MeshPhysicalMaterial({
-    color: 0xbfe7f2,
+    color: 0xc8e8f1,
     metalness: 0.08,
     roughness: 0.08,
     transparent: true,
-    opacity: 0.24,
+    opacity: 0.20,
+    transmission: 0.22,
+    thickness: 0.08,
     side: THREE.DoubleSide,
     depthWrite: false
   });
 
-  const crystal = new THREE.MeshPhysicalMaterial({
-    color: 0xeaf7ff,
-    metalness: 0.18,
-    roughness: 0.06,
-    transparent: true,
-    opacity: 0.82,
-    transmission: 0.18,
-    thickness: 0.35,
-    emissive: 0x6f8796,
-    emissiveIntensity: 0.12
+  const wood = new THREE.MeshStandardMaterial({
+    color: 0x3b2418,
+    metalness: 0.16,
+    roughness: 0.34
   });
 
-  const warmBulb = new THREE.MeshStandardMaterial({
-    color: 0xffd69a,
-    emissive: 0xffad4a,
-    emissiveIntensity: 1.35,
-    roughness: 0.3
+  const marble = new THREE.MeshStandardMaterial({
+    map: makeMarbleTexture(),
+    color: 0xffffff,
+    roughness: 0.26,
+    metalness: 0.08
   });
 
-  // Glossy black floor and thin brass perimeter inlay.
-  const floor = new THREE.Mesh(
-    new THREE.CylinderGeometry(1.22, 1.22, 0.13, 40),
-    blackGlass
-  );
-  floor.position.y = 0.07;
-  cabin.add(floor);
-
-  const floorRing = new THREE.Mesh(
-    new THREE.TorusGeometry(1.13, 0.018, 8, 48),
-    brass
-  );
-  floorRing.rotation.x = Math.PI / 2;
-  floorRing.position.y = 0.145;
-  cabin.add(floorRing);
-
-  // Three curved panoramic glass panels wrap the rear 270 degrees.
-  for (let panel = 0; panel < 3; panel++) {
-    const start = Math.PI / 4 + panel * (Math.PI / 2);
-    const pane = makeArcPanel(
-      1.205,
-      2.68,
-      start,
-      Math.PI / 2 - 0.025,
-      glass,
-      1.43
-    );
-    pane.name = "lamboCityElevatorCurvedGlassPanel";
-    cabin.add(pane);
-  }
-
-  // Espresso wood lower wall panels and vertical wood pilasters.
-  for (let panel = 0; panel < 3; panel++) {
-    const start = Math.PI / 4 + panel * (Math.PI / 2);
-    const woodPanel = makeArcPanel(
-      1.16,
-      0.54,
-      start,
-      Math.PI / 2 - 0.025,
-      espresso,
-      0.34
-    );
-    cabin.add(woodPanel);
-  }
-
-  [Math.PI / 4, (3 * Math.PI) / 4, (5 * Math.PI) / 4, (7 * Math.PI) / 4].forEach(angle => {
-    const post = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.045, 0.045, 2.58, 10),
-      espressoHighlight
-    );
-    post.position.set(
-      Math.cos(angle) * 1.17,
-      1.43,
-      Math.sin(angle) * 1.17
-    );
-    cabin.add(post);
-
-    const postTrim = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.018, 0.018, 2.62, 8),
-      brass
-    );
-    postTrim.position.set(
-      Math.cos(angle) * 1.205,
-      1.43,
-      Math.sin(angle) * 1.205
-    );
-    cabin.add(postTrim);
+  const darkStone = new THREE.MeshStandardMaterial({
+    color: 0x24262a,
+    metalness: 0.28,
+    roughness: 0.24
   });
 
-  // Curved brass handrail follows the panoramic glass.
-  const railPoints = [];
-  for (let i = 0; i <= 48; i++) {
-    const angle = Math.PI / 4 + (i / 48) * Math.PI * 1.5;
-    railPoints.push(new THREE.Vector3(
-      Math.cos(angle) * 1.12,
-      1.08,
-      Math.sin(angle) * 1.12
-    ));
+  function panel(name, width, height, depth, material, x, y, z) {
+    const mesh = new THREE.Mesh(
+      new THREE.BoxGeometry(width, height, depth),
+      material
+    );
+    mesh.name = name;
+    mesh.position.set(x, y, z);
+    cabin.add(mesh);
+    return mesh;
   }
 
-  const railCurve = new THREE.CatmullRomCurve3(railPoints);
-  cabin.add(new THREE.Mesh(
-    new THREE.TubeGeometry(railCurve, 64, 0.035, 10, false),
-    brass
-  ));
+  // One generous marble floor, with a restrained brass perimeter.
+  panel("elevatorCabinMarbleFloor", 5.25, 0.16, 4.05, marble, 0, 0.08, 0);
+  panel("elevatorCabinFloorInlayFront", 5.05, 0.025, 0.035, brass, 0, 0.17, 1.96);
+  panel("elevatorCabinFloorInlayRear", 5.05, 0.025, 0.035, brass, 0, 0.17, -1.96);
+  panel("elevatorCabinFloorInlayLeft", 0.035, 0.025, 3.90, brass, -2.58, 0.17, 0);
+  panel("elevatorCabinFloorInlayRight", 0.035, 0.025, 3.90, brass, 2.58, 0.17, 0);
 
-  // Brass entrance jambs remain clear of the open passenger doorway.
-  [-0.78, 0.78].forEach(x => {
-    const jamb = new THREE.Mesh(
-      new THREE.BoxGeometry(0.055, 2.72, 0.075),
-      brass
-    );
-    jamb.position.set(x, 1.42, 1.13);
-    cabin.add(jamb);
+  // The cabin has three clear passenger openings: dock, HQ and patio.
+  // The rear wall stays panoramic glass; the other three sides are
+  // split into short glass returns so none of the exits is blocked.
+  panel("elevatorCabinRearGlass", 5.20, 4.72, 0.075, glass, 0, 2.48, -1.96);
+
+  [-1, 1].forEach(side => {
+    panel("elevatorCabinWestGlassReturn", 0.075, 4.72, 0.38, glass, -2.58, 2.48, side * 1.80);
+    panel("elevatorCabinEastGlassReturn", 0.075, 4.72, 0.38, glass, 2.58, 2.48, side * 1.80);
+    panel("elevatorCabinHQGlassReturn", 0.58, 4.72, 0.075, glass, side * 2.31, 2.48, 1.96);
   });
 
-  // Gold-leaf domed ceiling with concentric brass detailing.
-  const ceilingDisk = new THREE.Mesh(
-    new THREE.CylinderGeometry(1.20, 1.20, 0.09, 36),
-    brass
+  // Warm espresso lower wall accents add richness without closing
+  // the three passenger entrances.
+  panel("elevatorCabinRearWoodPanel", 5.08, 0.88, 0.09, wood, 0, 0.62, -1.90);
+  [-1, 1].forEach(side => {
+    panel("elevatorCabinWestWoodReturn", 0.09, 0.88, 0.32, wood, -2.53, 0.62, side * 1.80);
+    panel("elevatorCabinEastWoodReturn", 0.09, 0.88, 0.32, wood, 2.53, 0.62, side * 1.80);
+    panel("elevatorCabinHQWoodReturn", 0.50, 0.88, 0.09, wood, side * 2.31, 0.62, 1.91);
+  });
+
+  // Four slim bronze corner uprights visually tie the glass together.
+  [-1, 1].forEach(x => {
+    [-1, 1].forEach(z => {
+      panel(
+        "elevatorCabinBronzeCorner",
+        0.11,
+        4.90,
+        0.11,
+        brass,
+        x * 2.57,
+        2.48,
+        z * 1.94
+      );
+    });
+  });
+
+  // A single quiet brass handrail on the rear panoramic wall.
+  const handrail = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.035, 0.035, 3.75, 12),
+    warmBrass
   );
-  ceilingDisk.position.y = 2.78;
-  cabin.add(ceilingDisk);
+  handrail.rotation.z = Math.PI / 2;
+  handrail.position.set(0, 1.20, -1.82);
+  cabin.add(handrail);
 
-  const dome = new THREE.Mesh(
-    new THREE.SphereGeometry(1.08, 28, 14, 0, Math.PI * 2, 0, Math.PI / 2),
-    new THREE.MeshStandardMaterial({
-      color: 0xb98a43,
-      metalness: 0.82,
-      roughness: 0.24,
-      emissive: 0x4a2a0d,
-      emissiveIntensity: 0.22,
-      side: THREE.DoubleSide
-    })
-  );
-  dome.position.y = 2.76;
-  cabin.add(dome);
+  // Flush ceiling with warm perimeter light: no chandelier clutter.
+  panel("elevatorCabinCeiling", 5.25, 0.14, 4.05, darkStone, 0, 4.88, 0);
+  panel("elevatorCabinCeilingLightFront", 4.80, 0.035, 0.045, warmBrass, 0, 4.79, 1.88);
+  panel("elevatorCabinCeilingLightRear", 4.80, 0.035, 0.045, warmBrass, 0, 4.79, -1.88);
+  panel("elevatorCabinCeilingLightLeft", 0.045, 0.035, 3.70, warmBrass, -2.47, 4.79, 0);
+  panel("elevatorCabinCeilingLightRight", 0.045, 0.035, 3.70, warmBrass, 2.47, 4.79, 0);
 
-  const ceilingRing = new THREE.Mesh(
-    new THREE.TorusGeometry(1.08, 0.035, 8, 48),
-    brass
-  );
-  ceilingRing.rotation.x = Math.PI / 2;
-  ceilingRing.position.y = 2.78;
-  cabin.add(ceilingRing);
+  // A discreet illuminated destination panel sits beside the HQ exit.
+  panel("elevatorCabinControlPanel", 0.10, 1.05, 0.42, brass, 2.34, 1.72, 1.72);
 
-  // Compact crystal candelabra chandelier.
-  const chandelier = new THREE.Group();
-  chandelier.name = "lamboCityElevatorCrystalChandelier";
-
-  const stem = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.025, 0.035, 0.48, 10),
-    brass
-  );
-  stem.position.y = 2.34;
-  chandelier.add(stem);
-
-  const hub = new THREE.Mesh(
-    new THREE.SphereGeometry(0.12, 14, 10),
-    brass
-  );
-  hub.position.y = 2.08;
-  chandelier.add(hub);
-
-  const chandelierRing = new THREE.Mesh(
-    new THREE.TorusGeometry(0.43, 0.025, 8, 32),
-    brass
-  );
-  chandelierRing.rotation.x = Math.PI / 2;
-  chandelierRing.position.y = 2.02;
-  chandelier.add(chandelierRing);
-
-  for (let i = 0; i < 6; i++) {
-    const angle = (i / 6) * Math.PI * 2;
-    const x = Math.cos(angle) * 0.42;
-    const z = Math.sin(angle) * 0.42;
-
-    const arm = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.018, 0.018, 0.28, 8),
-      brass
-    );
-    arm.rotation.z = Math.PI / 2;
-    arm.position.set(x * 0.52, 2.02, z * 0.52);
-    chandelier.add(arm);
-
-    const bulb = new THREE.Mesh(
-      new THREE.SphereGeometry(0.075, 12, 10),
-      warmBulb
-    );
-    bulb.position.set(x, 2.04, z);
-    chandelier.add(bulb);
-
-    const drop = new THREE.Mesh(
-      new THREE.OctahedronGeometry(0.085, 0),
-      crystal
-    );
-    drop.position.set(x, 1.86, z);
-    drop.scale.set(0.72, 1.55, 0.72);
-    chandelier.add(drop);
-  }
-
-  cabin.add(chandelier);
-
-  // One restrained real light for the entire elevator cabin.
-  const cabinLight = new THREE.PointLight(0xffc982, 0.72, 5.5, 2);
-  cabinLight.position.set(0, 2.25, 0);
+  const cabinLight = new THREE.PointLight(0xffd19a, 0.9, 8.5, 2);
+  cabinLight.position.set(0, 4.15, 0);
   cabin.add(cabinLight);
-
-  // Scale the complete cabin as one unit so the player has natural
-  // headroom and shoulder clearance without changing the player model.
-  cabin.scale.setScalar(1.65);
 
   scene.add(cabin);
 }
