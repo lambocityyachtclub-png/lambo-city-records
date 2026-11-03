@@ -55,6 +55,9 @@ export default {
 getHero() {
   return heroMesh;
 },
+getCameraTargets() {
+  return [heroMesh, ...crowdNPCs.map(character => character.mesh)].filter(Boolean);
+},
  setPerformanceMode(active) {
   performanceMode = !!active;
 }, 
