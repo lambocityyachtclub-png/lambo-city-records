@@ -23,7 +23,7 @@ const PRODUCER_SEAT = {
   z: HQ_Z - 2.15
 };
 
-const ELEVATOR_ARRIVAL_SECONDS = 1.65;
+const ELEVATOR_ARRIVAL_SECONDS = 3.6;
 
 let playerSystem = null;
 let renderer = null;
@@ -46,7 +46,7 @@ function publishState() {
   window.__lamboCityFloor2SessionActive =
     mode === "arrival" || mode === "seated" || mode === "instrument";
   window.__lamboCityFloor2OrbitYaw ??= 0;
-  window.__lamboCityFloor2OrbitPitch ??= 0.08;
+  window.__lamboCityFloor2OrbitPitch = 0;
   window.__lamboCitySuppressStationClickUntil =
     suppressStationClickUntil;
 }
@@ -120,16 +120,11 @@ function onPointerMove(event) {
   if (!pointerMoved) return;
 
   event.preventDefault();
+  // Horizontal swipe follows the camera's travel direction.
+  // Vertical movement is intentionally ignored to keep the seated
+  // producer camera at one consistent eye level.
   window.__lamboCityFloor2OrbitYaw =
-    (window.__lamboCityFloor2OrbitYaw ?? 0) - dx * 0.008;
-  window.__lamboCityFloor2OrbitPitch =
-    Math.max(
-      -0.18,
-      Math.min(
-        0.34,
-        (window.__lamboCityFloor2OrbitPitch ?? 0.08) + dy * 0.004
-      )
-    );
+    (window.__lamboCityFloor2OrbitYaw ?? 0) + dx * 0.008;
 
   suppressStationClickUntil = Date.now() + 280;
   publishState();
@@ -139,7 +134,7 @@ function onWheel(event) {
   if (mode !== "seated" || !event.deltaX) return;
   event.preventDefault();
   window.__lamboCityFloor2OrbitYaw =
-    (window.__lamboCityFloor2OrbitYaw ?? 0) + event.deltaX * 0.006;
+    (window.__lamboCityFloor2OrbitYaw ?? 0) - event.deltaX * 0.006;
   suppressStationClickUntil = Date.now() + 320;
   publishState();
 }
