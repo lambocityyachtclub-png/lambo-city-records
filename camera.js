@@ -261,25 +261,40 @@ function updateElevatorExteriorCamera(player, delta) {
 }
 
 function updateStudioArrivalCamera(player, delta) {
-  // Reframe from the elevator's exterior angle into a stable three-quarter
-  // tracking shot of HERO walking toward the producer cockpit. The camera
-  // keeps a fixed offset from the player; it does not zoom toward the character.
-  const desired = new THREE.Vector3(
-    player.position.x + 5.2,
-    player.position.y + 4.8,
-    player.position.z + 8.2
+  // Restore the original Floor 2 elevator-to-cockpit camera move:
+  // a natural third-person follow that keeps HERO and the room visible.
+  // Keep the camera boom inside the actual Floor 2 room so it cannot
+  // slip outside the room perimeter and look through the floor slab.
+  const ROOM_MIN_X = 19.65;
+  const ROOM_MAX_X = 36.35;
+  const ROOM_MIN_Z = 15.45;
+  const ROOM_MAX_Z = 28.05;
+  const yaw = player.rotation.y;
+  const back = 9.2;
+
+  const cameraX = THREE.MathUtils.clamp(
+    player.position.x - Math.sin(yaw) * back,
+    ROOM_MIN_X + 0.9,
+    ROOM_MAX_X - 0.9
+  );
+  const cameraZ = THREE.MathUtils.clamp(
+    player.position.z - Math.cos(yaw) * back,
+    ROOM_MIN_Z + 0.9,
+    ROOM_MAX_Z - 0.9
   );
 
-  // Blend into the arrival framing while continuing to track the walk.
-  camera.position.lerp(desired, dampFactor(delta, 5.5));
+  const desired = new THREE.Vector3(
+    cameraX,
+    Math.min(player.position.y + 4.45, 17.25),
+    cameraZ
+  );
 
-  // Look slightly ahead along the character's current route so the
-  // elevator-to-cockpit movement and destination stay in view.
-  const heading = player.rotation.y;
+  // Keep the same smooth follow response from the earlier sequence.
+  camera.position.lerp(desired, dampFactor(delta, 8.5));
   camera.lookAt(
-    player.position.x + Math.sin(heading) * 1.4,
+    player.position.x,
     player.position.y + LOOK_HEIGHT,
-    player.position.z + Math.cos(heading) * 1.4
+    player.position.z
   );
 }
 
