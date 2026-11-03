@@ -1107,7 +1107,9 @@ const MPCInterface = {
     if (!Number.isFinite(Number(origin))) return 0;
     const elapsed = audio.currentTime - Number(origin);
     if (elapsed <= 0) return 0;
-    const duration = this.playbackTimer !== null ? loopDuration : Math.min(loopDuration, barDuration);
+    // Beat Lab repeats its bar while an MPC take may span several bars.
+    // Keep the pad performance's full loop as the shared song clock.
+    const duration = loopDuration;
     return ((elapsed % duration) + duration) % duration;
   },
 
