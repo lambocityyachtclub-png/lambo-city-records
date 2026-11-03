@@ -1075,10 +1075,10 @@ export default {
     ].forEach(({ x, width }) => {
       box(
         controlRoom,
-        new THREE.BoxGeometry(width, 3.55, 0.16),
+        new THREE.BoxGeometry(width, 4.75, 0.16),
         windowGlass,
         x,
-        2.05,
+        2.55,
         -6.88
       );
       box(
@@ -1086,7 +1086,7 @@ export default {
         new THREE.BoxGeometry(width, 0.075, 0.20),
         gold,
         x,
-        3.86,
+        4.98,
         -6.82
       );
       box(
@@ -1103,10 +1103,10 @@ export default {
     [-2.65, 0, 5.5, 8.25].forEach(x => {
       box(
         controlRoom,
-        new THREE.BoxGeometry(0.12, 3.72, 0.16),
+        new THREE.BoxGeometry(0.12, 4.75, 0.16),
         gold,
         x,
-        2.05,
+        2.55,
         -6.82
       );
     });
@@ -1131,20 +1131,20 @@ export default {
     [-8.88, 8.88].forEach(x => {
       box(
         controlRoom,
-        new THREE.BoxGeometry(0.18, 3.55, 12.65),
+        new THREE.BoxGeometry(0.18, 4.75, 12.65),
         dark,
         x,
-        1.98,
+        2.55,
         0
       );
 
       [-5.1, -1.7, 1.7, 5.1].forEach(z => {
         box(
           controlRoom,
-          new THREE.BoxGeometry(0.07, 2.75, 0.055),
+          new THREE.BoxGeometry(0.07, 4.35, 0.055),
           gold,
           x + (x < 0 ? 0.10 : -0.10),
-          2.02,
+          2.55,
           z
         );
       });
@@ -1573,7 +1573,7 @@ export default {
       new THREE.BoxGeometry(10.2, 0.12, 12.8),
       dark,
       3.55,
-      4.02,
+      5.05,
       0
     );
     box(
@@ -1581,7 +1581,7 @@ export default {
       new THREE.BoxGeometry(10.35, 0.045, 0.10),
       goldGlow,
       3.55,
-      3.94,
+      4.97,
       0
     );
 
@@ -1591,7 +1591,7 @@ export default {
       new THREE.BoxGeometry(7.0, 0.12, 12.8),
       dark,
       -5.2,
-      4.00,
+      5.05,
       0
     );
     liveRoomCeiling.rotation.z = -0.08;
@@ -1601,7 +1601,7 @@ export default {
         new THREE.BoxGeometry(1.75, 0.045, 1.45),
         windowGlass,
         -5.4,
-        4.08,
+        5.13,
         z
       );
       box(
@@ -1609,7 +1609,7 @@ export default {
         new THREE.BoxGeometry(1.88, 0.035, 0.07),
         goldGlow,
         -5.4,
-        4.12,
+        5.17,
         z - 0.76
       );
     });
@@ -1627,7 +1627,7 @@ export default {
             ),
             goldGlow,
             x,
-            3.75,
+            4.80,
             0.7
           );
 
@@ -1640,7 +1640,7 @@ export default {
             ),
             goldGlow,
             x,
-            3.75,
+            4.80,
             0.7
           );
 
@@ -1664,7 +1664,7 @@ export default {
 
     light.position.set(
       0,
-      3.4,
+      4.25,
       0
     );
 
