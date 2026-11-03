@@ -349,7 +349,7 @@ const MPCInterface = {
     this.bank = "A";
     this.selectedPad = 1;
     this.recording = false;
-    this.take = StudioMPCLibrary.loadTake(this.beatLab?.currentProject?.id || "unsaved");
+    this.take = this.beatLab?.currentProject?.mpcPerformance || StudioMPCLibrary.loadTake(this.beatLab?.currentProject?.id || "unsaved");
     this.library = StudioMPCLibrary.open();
 
     if (!document.getElementById(STYLE_ID)) {
@@ -537,14 +537,15 @@ const MPCInterface = {
     this.take.duration = Math.max(this.take.duration || 0, elapsed, lastEvent?.at || 0, barDuration);
     try {
       this.take = StudioMPCLibrary.saveTake(projectId, this.take);
-      this.setStatus("PAD TAKE SAVED · " + this.take.events.length + " HITS · READY WITH BEAT LAB");
+      const savedToSong = this.beatLab?.saveMPCPerformance?.(this.take) === true;
+      this.setStatus("PAD TAKE SAVED · " + this.take.events.length + " HITS" + (savedToSong ? " · INCLUDED IN SONG PROJECT / .LCP" : " · BROWSER TAKE — SAVE A SONG PROJECT TO PACKAGE IT"));
     } catch (error) { this.setStatus(error?.message || "Could not save pad take."); }
   },
 
   playSavedPerformance() {
     this.stopPerformancePlayback();
     const projectId = this.beatLab?.currentProject?.id || "unsaved";
-    this.take = StudioMPCLibrary.loadTake(projectId);
+    this.take = this.beatLab?.currentProject?.mpcPerformance || StudioMPCLibrary.loadTake(projectId);
     if (!this.take.events.length) { this.setStatus("SONG PLAYING · NO SAVED MPC PAD TAKE YET"); return; }
     const audio = this.beatLab.audio;
     if (!audio) return;
