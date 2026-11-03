@@ -326,7 +326,7 @@ function buildCabin() {
   for (let panel = 0; panel < 3; panel++) {
     const start = Math.PI / 4 + panel * (Math.PI / 2);
     const woodPanel = makeArcPanel(
-      1.225,
+      1.16,
       0.54,
       start,
       Math.PI / 2 - 0.025,
