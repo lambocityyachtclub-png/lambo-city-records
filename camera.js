@@ -31,6 +31,12 @@ let lookYawOffset = 0;
 let lookPitchOffset = 0;
 let floor3POVActive = false;
 let floor3POVBlend = 0;
+let elevatorPOVActive = false;
+let elevatorLookYaw = 0;
+let elevatorLookPitch = -0.02;
+let elevatorLookPointerId = null;
+let elevatorLookPointerX = 0;
+let elevatorLookPointerY = 0;
 
 
 // ============================================================
@@ -555,26 +561,39 @@ function updateStudioSessionCamera(player, smooth = 0.22) {
 // ELEVATOR CAMERA
 // ============================================================
 
-function updateElevatorCamera(player) {
-  const yaw = player.rotation.y;
-  const forwardX = Math.sin(yaw);
-  const forwardZ = Math.cos(yaw);
-  const rightX = Math.cos(yaw);
-  const rightZ = -Math.sin(yaw);
+function updateElevatorCamera(player, delta = 0.016) {
+  if (!elevatorPOVActive) {
+    elevatorLookYaw = 0;
+    elevatorLookPitch = -0.02;
+    elevatorPOVActive = true;
+  }
 
-  // Keep the camera physically close to HERO and inside the glass
-  // elevator cabin for the entire ride and landing-door hold.
-  const cameraX =
-    player.position.x + rightX * 1.05 - forwardX * 0.75;
-  const cameraY = player.position.y + 2.15;
-  const cameraZ =
-    player.position.z + rightZ * 1.05 - forwardZ * 0.75;
+  const input = window.__lamboCityInput;
+  const turnSpeed = 1.7 * Math.max(0, delta);
+  if (input?.keys?.arrowleft) elevatorLookYaw -= turnSpeed;
+  if (input?.keys?.arrowright) elevatorLookYaw += turnSpeed;
+  if (input?.keys?.arrowup) elevatorLookPitch += turnSpeed;
+  if (input?.keys?.arrowdown) elevatorLookPitch -= turnSpeed;
+  elevatorLookPitch = THREE.MathUtils.clamp(
+    elevatorLookPitch,
+    -0.72,
+    0.72
+  );
 
-  moveCamera(cameraX, cameraY, cameraZ, 0.22);
-  camera.lookAt(
+  // Eye-level first-person view: HERO can explore the cabin and look
+  // through its panoramic glass while the elevator is moving.
+  player.visible = false;
+  camera.position.set(
     player.position.x,
-    player.position.y + 1.3,
+    player.position.y + 1.62,
     player.position.z
+  );
+
+  const horizontal = Math.cos(elevatorLookPitch);
+  camera.lookAt(
+    camera.position.x + Math.sin(elevatorLookYaw) * horizontal,
+    camera.position.y + Math.sin(elevatorLookPitch),
+    camera.position.z - Math.cos(elevatorLookYaw) * horizontal
   );
 }
 
@@ -722,6 +741,56 @@ function updateFloor3POVCamera(player, delta = 0.016) {
 }
 
 
+function installElevatorLookControls() {
+  if (window.__lamboCityElevatorLookControlsReady) return;
+  window.__lamboCityElevatorLookControlsReady = true;
+
+  window.addEventListener("pointerdown", event => {
+    if (!window.__lamboCityElevatorPOV) return;
+    if (event.button !== undefined && event.button !== 0) return;
+
+    const target = event.target instanceof Element ? event.target : null;
+    if (target?.closest(
+      "#lambo-city-joystick, #lambo-city-mobile-buttons, #records-hq-elevator-buttons, #records-hq-elevator-close, button, a, input, textarea, select, [role='button']"
+    )) return;
+
+    elevatorLookPointerId = event.pointerId;
+    elevatorLookPointerX = event.clientX;
+    elevatorLookPointerY = event.clientY;
+  });
+
+  window.addEventListener("pointermove", event => {
+    if (
+      elevatorLookPointerId !== event.pointerId ||
+      !window.__lamboCityElevatorPOV
+    ) return;
+
+    const dx = event.clientX - elevatorLookPointerX;
+    const dy = event.clientY - elevatorLookPointerY;
+    elevatorLookPointerX = event.clientX;
+    elevatorLookPointerY = event.clientY;
+
+    elevatorLookYaw -= dx * 0.0045;
+    elevatorLookPitch = THREE.MathUtils.clamp(
+      elevatorLookPitch - dy * 0.0035,
+      -0.72,
+      0.72
+    );
+    event.preventDefault();
+  }, { passive: false });
+
+  const release = event => {
+    if (elevatorLookPointerId === event.pointerId) {
+      elevatorLookPointerId = null;
+    }
+  };
+  window.addEventListener("pointerup", release);
+  window.addEventListener("pointercancel", release);
+  window.addEventListener("blur", () => {
+    elevatorLookPointerId = null;
+  });
+}
+
 // ============================================================
 // CAMERA SYSTEM
 // ============================================================
@@ -731,6 +800,7 @@ export default {
   init() {
 
     installFloor3LookControls();
+    installElevatorLookControls();
 
     camera =
       new THREE.PerspectiveCamera(
@@ -813,9 +883,10 @@ export default {
       player.position.z >= 14.7 &&
       window.__lamboCityFloor3ArrivalComplete !== false;
 
-    player.visible = !floor3POVReady;
+    const elevatorPOV = !!window.__lamboCityElevatorPOV;
+    player.visible = elevatorPOV ? false : !floor3POVReady;
 
-    const targetFov = floor3POVReady ? 72 : 68;
+    const targetFov = elevatorPOV ? 76 : floor3POVReady ? 72 : 68;
     if (camera.fov !== targetFov) {
       camera.fov = targetFov;
       camera.updateProjectionMatrix();
@@ -903,13 +974,17 @@ export default {
       player.position.z < 14.7;
 
     if (
+      elevatorPOV ||
       window.__lamboCityElevatorTraveling ||
       floor2LandingPending ||
       floor3LandingPending
     ) {
-      updateElevatorCamera(player);
+      updateElevatorCamera(player, delta);
       return;
     }
+
+    elevatorPOVActive = false;
+    elevatorLookPointerId = null;
 
 
     // --------------------------------------------------------
