@@ -273,10 +273,18 @@ function validateProject(project) {
           (track.inputSource !== undefined && !["mic", "beatlab", "mpc"].includes(track.inputSource)) ||
           !Array.isArray(track.clips) || track.clips.length > 256 ||
           (track.eq !== undefined && (!Number.isFinite(Number(track.eq.low)) || !Number.isFinite(Number(track.eq.mid)) || !Number.isFinite(Number(track.eq.high)))) ||
-          (track.compression !== undefined && (!Number.isFinite(Number(track.compression.ratio)) || Number(track.compression.ratio) < 1 || Number(track.compression.ratio) > 8))) {
+          (track.compression !== undefined && (!Number.isFinite(Number(track.compression.ratio)) || Number(track.compression.ratio) < 1 || Number(track.compression.ratio) > 8)) ||
+          (track.automation !== undefined && (!Array.isArray(track.automation.volume) || track.automation.volume.length > 64))) {
         throw new Error("DAW track settings are invalid.");
       }
       trackIds.add(track.id);
+      for (const point of track.automation?.volume || []) {
+        requireObject(point, "Invalid track volume automation point.");
+        if (!Number.isInteger(Number(point.bar)) || Number(point.bar) < 1 || Number(point.bar) > 32 ||
+            !Number.isFinite(Number(point.value)) || Number(point.value) < 0 || Number(point.value) > 100) {
+          throw new Error("Track volume automation point is invalid.");
+        }
+      }
       for (const clip of track.clips) {
         requireObject(clip, "Invalid DAW audio clip.");
         requireId(clip.id, "DAW clip ID is missing.");
