@@ -236,64 +236,163 @@ export default {
       -7.85
     );
 
-    box(
-      elevator,
-      new THREE.BoxGeometry(
-        3.8,
-        26.4,
-        2.65
-      ),
-      glass,
-      0,
-      13.2,
-      0
-    );
-
-    [-1.75, 1.75].forEach(x => {
-
-      box(
-        elevator,
-        new THREE.BoxGeometry(
-          0.16,
-          26.4,
-          0.16
-        ),
-        gold,
-        x,
-        13.2,
-        -1.18
-      );
-
-      box(
-        elevator,
-        new THREE.BoxGeometry(
-          0.16,
-          26.4,
-          0.16
-        ),
-        gold,
-        x,
-        13.2,
-        1.18
-      );
-
+    // Panoramic exterior elevator: clear side and rear glazing only.
+    // The front face is intentionally OPEN so the passenger exits
+    // through a real landing doorway rather than a glass wall.
+    const elevatorGlass = new THREE.MeshStandardMaterial({
+      color: 0xb8d8e8,
+      emissive: 0x17334a,
+      emissiveIntensity: 0.10,
+      transparent: true,
+      opacity: 0.12,
+      roughness: 0.12,
+      metalness: 0.18,
+      side: THREE.DoubleSide,
+      depthWrite: false
     });
 
-    [4.2, 12.2, 20.2].forEach(y => {
+    const elevatorBronze = mat(0x171b22, {
+      roughness: 0.24,
+      metalness: 0.82
+    });
 
+    // Left and right panoramic walls.
+    [-1.84, 1.84].forEach(x => {
       box(
         elevator,
-        new THREE.BoxGeometry(
-          3.65,
-          0.1,
-          2.5
-        ),
+        new THREE.BoxGeometry(0.10, 26.4, 2.55),
+        elevatorGlass,
+        x,
+        13.2,
+        0
+      );
+    });
+
+    // Rear panoramic wall. No glazing spans the passenger exit.
+    box(
+      elevator,
+      new THREE.BoxGeometry(3.58, 26.4, 0.10),
+      elevatorGlass,
+      0,
+      13.2,
+      -1.26
+    );
+
+    // Brushed-gold structural corner rails.
+    [-1.78, 1.78].forEach(x => {
+      [-1.16, 1.16].forEach(z => {
+        box(
+          elevator,
+          new THREE.BoxGeometry(0.13, 26.4, 0.13),
+          gold,
+          x,
+          13.2,
+          z
+        );
+      });
+    });
+
+    // Three luxury landing portals with paired sliding bronze doors.
+    // Door leaves are animated by recordsHQElevator.js.
+    [4.2, 12.2, 20.2].forEach((floorY, index) => {
+      const landing = new THREE.Group();
+      landing.name = `recordsHQElevatorLandingDoorF${index + 1}`;
+      landing.position.set(0, floorY, 1.30);
+
+      // Outer portal frame and illuminated threshold.
+      box(
+        landing,
+        new THREE.BoxGeometry(3.78, 0.16, 0.22),
+        gold,
+        0,
+        3.30,
+        0
+      );
+      [-1.82, 1.82].forEach(x => {
+        box(
+          landing,
+          new THREE.BoxGeometry(0.14, 3.30, 0.22),
+          gold,
+          x,
+          1.62,
+          0
+        );
+      });
+      box(
+        landing,
+        new THREE.BoxGeometry(3.45, 0.055, 0.34),
+        gold,
+        0,
+        0.035,
+        0.02
+      );
+
+      // Sliding door leaves meet cleanly when closed.
+      const leftLeaf = new THREE.Group();
+      leftLeaf.name = "doorLeafLeft";
+      leftLeaf.position.set(-0.78, 1.62, 0.035);
+      box(
+        leftLeaf,
+        new THREE.BoxGeometry(1.56, 3.12, 0.12),
+        elevatorBronze,
+        0,
+        0,
+        0
+      );
+      box(
+        leftLeaf,
+        new THREE.BoxGeometry(0.035, 2.88, 0.035),
+        gold,
+        0.68,
+        0,
+        0.075
+      );
+      landing.add(leftLeaf);
+
+      const rightLeaf = new THREE.Group();
+      rightLeaf.name = "doorLeafRight";
+      rightLeaf.position.set(0.78, 1.62, 0.035);
+      box(
+        rightLeaf,
+        new THREE.BoxGeometry(1.56, 3.12, 0.12),
+        elevatorBronze,
+        0,
+        0,
+        0
+      );
+      box(
+        rightLeaf,
+        new THREE.BoxGeometry(0.035, 2.88, 0.035),
+        gold,
+        -0.68,
+        0,
+        0.075
+      );
+      landing.add(rightLeaf);
+
+      // Small warm status lamps above each landing door.
+      box(
+        landing,
+        new THREE.BoxGeometry(0.52, 0.07, 0.08),
+        gold,
+        0,
+        3.05,
+        0.14
+      );
+
+      elevator.add(landing);
+    });
+
+    // Gold floor bands retain the elevator's vertical exterior identity.
+    [4.2, 12.2, 20.2].forEach(y => {
+      box(
+        elevator,
+        new THREE.BoxGeometry(3.65, 0.10, 2.5),
         gold,
         0,
         y,
         0
       );
-
     });
 
     group.add(elevator);
