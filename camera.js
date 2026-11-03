@@ -8,7 +8,7 @@
 // RECORDS HQ
 // - Floor 1: elevated immersive retail camera
 // - Floor 2: dedicated immersive studio camera
-// - Floor 3: first-person character POV with touch / mouse look
+// - Floor 3: enclosed third-person camera
 // - Rooftop: wider cinematic camera
 //
 // CAMERA TRANSITION
@@ -24,32 +24,17 @@ import * as THREE from
 
 let camera;
 let cinTime = 0;
-let lookDragPointerId = null;
-let lookPointerX = 0;
-let lookPointerY = 0;
-let lookYawOffset = 0;
-let lookPitchOffset = 0;
-let floor3POVActive = false;
-let floor3POVBlend = 0;
-let elevatorPOVActive = false;
-let elevatorLookYaw = 0;
-let elevatorLookPitch = -0.02;
-let elevatorLookPointerId = null;
-let elevatorLookPointerX = 0;
-let elevatorLookPointerY = 0;
-let elevatorCanvas = null;
-let elevatorPreviousTouchAction = "";
 
 
 // ============================================================
 // RECORDS HQ BOUNDS
 // ============================================================
 
-const HQ_MIN_X = 19.0;
-const HQ_MAX_X = 37.0;
+const HQ_MIN_X = 19.7;
+const HQ_MAX_X = 36.3;
 
-const HQ_MIN_Z = 14.5;
-const HQ_MAX_Z = 29.25;
+const HQ_MIN_Z = 14.0;
+const HQ_MAX_Z = 28.2;
 
 
 // ============================================================
@@ -60,7 +45,7 @@ const FLOOR1_MIN_X = 20.15;
 const FLOOR1_MAX_X = 35.85;
 
 const FLOOR1_MIN_Z = 15.85;
-const FLOOR1_MAX_Z = 28.15;
+const FLOOR1_MAX_Z = 27.15;
 
 
 // ============================================================
@@ -79,6 +64,16 @@ const FLOOR1_DISTANCE = 5.8;
 const FLOOR1_HEIGHT = 4.5;
 const FLOOR1_LOOK_HEIGHT = 1.8;
 const FLOOR1_SIDE_OFFSET = 0.8;
+
+
+// ============================================================
+// FLOOR 3 CAMERA
+// ============================================================
+
+const HQ_DISTANCE = 7.0;
+const HQ_HEIGHT = 5.1;
+const HQ_LOOK_HEIGHT = 1.8;
+const HQ_SIDE_OFFSET = 1.0;
 
 
 // ============================================================
@@ -381,6 +376,102 @@ function updateFloor1Camera(
 
 
 // ============================================================
+// FLOOR 3 CAMERA
+// ============================================================
+
+function updateHQCamera(
+  player,
+  smooth = 0.10
+) {
+
+  const yaw =
+    player.rotation.y;
+
+  const forwardX =
+    Math.sin(yaw);
+
+  const forwardZ =
+    Math.cos(yaw);
+
+
+  let cameraX =
+    player.position.x -
+    forwardX *
+    HQ_DISTANCE;
+
+  let cameraZ =
+    player.position.z -
+    forwardZ *
+    HQ_DISTANCE;
+
+
+  const sideX =
+    Math.cos(yaw) *
+    HQ_SIDE_OFFSET;
+
+  const sideZ =
+    -Math.sin(yaw) *
+    HQ_SIDE_OFFSET;
+
+
+  cameraX += sideX;
+  cameraZ += sideZ;
+
+
+  cameraX =
+    THREE.MathUtils.clamp(
+      cameraX,
+      HQ_MIN_X,
+      HQ_MAX_X
+    );
+
+  cameraZ =
+    THREE.MathUtils.clamp(
+      cameraZ,
+      HQ_MIN_Z,
+      HQ_MAX_Z
+    );
+
+
+  moveCamera(
+
+    cameraX,
+
+    player.position.y +
+      HQ_HEIGHT,
+
+    cameraZ,
+
+    smooth
+
+  );
+
+
+  const lookX =
+    player.position.x +
+    forwardX * 2.0;
+
+  const lookZ =
+    player.position.z +
+    forwardZ * 2.0;
+
+  const lookY =
+    player.position.y +
+    HQ_LOOK_HEIGHT;
+
+
+  camera.lookAt(
+
+    lookX,
+    lookY,
+    lookZ
+
+  );
+
+}
+
+
+// ============================================================
 // FLOOR 2 STUDIO CAMERA
 // ============================================================
 
@@ -486,58 +577,23 @@ function updateStudioArrivalCamera(player, smooth = 0.34) {
   const yaw = player.rotation.y;
   const forwardX = Math.sin(yaw);
   const forwardZ = Math.cos(yaw);
-  const rightX = Math.cos(yaw);
-  const rightZ = -Math.sin(yaw);
-  const progress = THREE.MathUtils.clamp(
-    Number(window.__lamboCityFloor2ArrivalProgress ?? 0),
-    0,
-    1
-  );
 
-  // Three restrained camera beats make the walk feel like a real
-  // entrance without changing the character's route:
-  // 1) follow from behind, 2) reveal a side profile, 3) settle
-  // into a three-quarter view as HERO reaches the producer chair.
-  const shots = [
-    { start: 0.00, end: 0.38, back: -2.8, side: 0.0 },
-    { start: 0.38, end: 0.72, back: -0.65, side: 2.75 },
-    { start: 0.72, end: 1.00, back: 1.85, side: 1.25 }
-  ];
-
-  let shot = shots[shots.length - 1];
-  let previous = shots[0];
-  for (let i = 0; i < shots.length; i++) {
-    if (progress <= shots[i].end) {
-      shot = shots[i];
-      previous = shots[Math.max(0, i - 1)];
-      break;
-    }
-  }
-
-  const phase = THREE.MathUtils.clamp(
-    (progress - shot.start) / Math.max(0.001, shot.end - shot.start),
-    0,
-    1
-  );
-  const eased = phase * phase * (3 - 2 * phase);
-  const back = THREE.MathUtils.lerp(previous.back, shot.back, eased);
-  const side = THREE.MathUtils.lerp(previous.side, shot.side, eased);
-
-  let cameraX =
-    player.position.x + forwardX * back + rightX * side;
-  let cameraZ =
-    player.position.z + forwardZ * back + rightZ * side;
-
-  // Keep every shot inside the Floor 2 room footprint.
-  cameraX = THREE.MathUtils.clamp(cameraX, 20.75, 35.25);
-  cameraZ = THREE.MathUtils.clamp(cameraZ, 15.55, 27.05);
-  const cameraY = player.position.y + 2.45;
+  // Stay locked behind the moving character for the entire entrance.
+  // A tight trailing position avoids the wide side angle that allowed
+  // room architecture to sweep across the foreground.
+  const distance = 2.35;
+  const cameraX = player.position.x - forwardX * distance;
+  const cameraZ = player.position.z - forwardZ * distance;
+  const cameraY = player.position.y + 2.25;
 
   moveCamera(cameraX, cameraY, cameraZ, smooth);
+
+  // Keep the character as the visual anchor while looking just ahead
+  // along the clear walking route.
   camera.lookAt(
-    player.position.x,
-    player.position.y + 1.25,
-    player.position.z
+    player.position.x + forwardX * 0.85,
+    player.position.y + 1.35,
+    player.position.z + forwardZ * 0.85
   );
 }
 
@@ -548,26 +604,20 @@ function updateStudioArrivalCamera(player, smooth = 0.34) {
 
 function updateStudioSessionCamera(player, smooth = 0.22) {
   const yaw = Number(window.__lamboCityFloor2OrbitYaw ?? 0);
-  const radius = 4.15;
+  const pitch = Number(window.__lamboCityFloor2OrbitPitch ?? 0.08);
+  const radius = 5.25;
 
-  // The camera orbits the fixed producer-chair position, not the
-  // player's changing facing direction. The radius is deliberately
-  // smaller than the room's narrowest clearance so a full 360 stays
-  // inside the studio instead of passing through the walls.
-  let cameraX = player.position.x + Math.sin(yaw) * radius;
-  let cameraZ = player.position.z + Math.cos(yaw) * radius;
+  const cameraX = player.position.x + Math.sin(yaw) * radius;
+  const cameraZ = player.position.z + Math.cos(yaw) * radius;
+  const cameraY = player.position.y + 3.75 + pitch * 2.0;
 
-  cameraX = THREE.MathUtils.clamp(cameraX, 20.75, 35.25);
-  cameraZ = THREE.MathUtils.clamp(cameraZ, 15.55, 27.05);
-
-  // Match Floor 3's steady, level camera treatment.
-  const cameraY = player.position.y + 2.9;
   moveCamera(cameraX, cameraY, cameraZ, smooth);
 
-  // Fixed focal point on the producer's workstation; no pitch input.
+  // The producer faces -Z toward the exterior stage windows.
+  // Keep the desk and panoramic glazing in the initial seated view.
   camera.lookAt(
     player.position.x,
-    player.position.y + 1.7,
+    player.position.y + 1.7 + pitch * 0.45,
     player.position.z - 1.15
   );
 }
@@ -577,61 +627,102 @@ function updateStudioSessionCamera(player, smooth = 0.22) {
 // ELEVATOR CAMERA
 // ============================================================
 
-function setElevatorTouchMode(enabled, renderer) {
-  const canvas = renderer?.domElement || elevatorCanvas;
+function updateElevatorCamera(player) {
 
-  if (enabled) {
-    if (!elevatorCanvas && canvas) {
-      elevatorCanvas = canvas;
-      elevatorPreviousTouchAction = canvas.style.touchAction || "";
-    }
-    if (canvas) canvas.style.touchAction = "none";
+  const progress =
+    Number(
+      window.__lamboCityElevatorProgress ??
+      0
+    );
+
+
+  if (progress < 0.30) {
+
+    const revealX =
+      player.position.x + 5.5;
+
+    const revealY =
+      player.position.y + 4.0;
+
+    const revealZ =
+      player.position.z + 6.5;
+
+
+    moveCamera(
+
+      revealX,
+      revealY,
+      revealZ,
+
+      0.075
+
+    );
+
+
+    camera.lookAt(
+
+      player.position.x,
+      player.position.y + 2,
+      player.position.z
+
+    );
+
+
     return;
+
   }
 
-  if (elevatorCanvas) {
-    elevatorCanvas.style.touchAction = elevatorPreviousTouchAction;
-    elevatorCanvas = null;
-    elevatorPreviousTouchAction = "";
-  }
-}
 
-function updateElevatorCamera(player, delta = 0.016) {
-  if (!elevatorPOVActive) {
-    elevatorLookYaw = 0;
-    elevatorLookPitch = -0.02;
-    elevatorPOVActive = true;
-  }
+  const yaw =
+    player.rotation.y;
 
-  const input = window.__lamboCityInput;
-  const turnSpeed = 1.7 * Math.max(0, delta);
-  if (input?.keys?.arrowleft) elevatorLookYaw -= turnSpeed;
-  if (input?.keys?.arrowright) elevatorLookYaw += turnSpeed;
-  if (input?.keys?.arrowup) elevatorLookPitch += turnSpeed;
-  if (input?.keys?.arrowdown) elevatorLookPitch -= turnSpeed;
-  elevatorLookPitch = THREE.MathUtils.clamp(
-    elevatorLookPitch,
-    -0.72,
-    0.72
+  const forwardX =
+    Math.sin(yaw);
+
+  const forwardZ =
+    Math.cos(yaw);
+
+  const cameraDistance = 5.0;
+
+
+  const cameraX =
+    player.position.x -
+    forwardX *
+    cameraDistance;
+
+  const cameraZ =
+    player.position.z -
+    forwardZ *
+    cameraDistance;
+
+
+  moveCamera(
+
+    cameraX,
+
+    player.position.y + 4.0,
+
+    cameraZ,
+
+    0.10
+
   );
-  window.__lamboCityElevatorLookYaw = elevatorLookYaw;
 
-  // Eye-level first-person view: HERO can explore the cabin and look
-  // through its panoramic glass while the elevator is moving.
-  player.visible = false;
-  camera.position.set(
-    player.position.x,
-    player.position.y + 1.62,
-    player.position.z
-  );
 
-  const horizontal = Math.cos(elevatorLookPitch);
   camera.lookAt(
-    camera.position.x + Math.sin(elevatorLookYaw) * horizontal,
-    camera.position.y + Math.sin(elevatorLookPitch),
-    camera.position.z - Math.cos(elevatorLookYaw) * horizontal
+
+    player.position.x +
+      forwardX * 1.5,
+
+    player.position.y + 2.0,
+
+    player.position.z +
+      forwardZ * 1.5
+
   );
+
 }
+
 
 // ============================================================
 // ROOFTOP CAMERA
@@ -696,137 +787,6 @@ function updateRooftopCamera(player) {
 }
 
 
-
- // ============================================================
- // FLOOR 3 FIRST-PERSON LOOK CONTROLS
- // Drag open screen space to look around. The movement joystick
- // and interface controls are excluded from camera input.
- // ============================================================
-
-function installFloor3LookControls() {
-  if (window.__lamboCityFloor3LookControlsReady) return;
-  window.__lamboCityFloor3LookControlsReady = true;
-
-  window.addEventListener("pointerdown", event => {
-    if (event.button !== undefined && event.button !== 0) return;
-    const target = event.target instanceof Element ? event.target : null;
-    if (target?.closest("#lambo-city-joystick, #lambo-city-mobile-buttons, #hud, #lambo-phone, button, a, input, textarea, select, [role='button']")) return;
-
-    lookDragPointerId = event.pointerId;
-    lookPointerX = event.clientX;
-    lookPointerY = event.clientY;
-  });
-
-  window.addEventListener("pointermove", event => {
-    if (lookDragPointerId !== event.pointerId) return;
-    const dx = event.clientX - lookPointerX;
-    lookPointerX = event.clientX;
-    lookPointerY = event.clientY;
-
-    // Floor 3 rotates around the six-person display; vertical drag
-    // does not move the fixed screen focal point.
-    lookYawOffset += dx * 0.0042;
-    event.preventDefault();
-  }, { passive: false });
-
-  const releaseLook = event => {
-    if (lookDragPointerId === event.pointerId) lookDragPointerId = null;
-  };
-  window.addEventListener("pointerup", releaseLook);
-  window.addEventListener("pointercancel", releaseLook);
-  window.addEventListener("blur", () => {
-    lookDragPointerId = null;
-  });
-}
-
-function updateFloor3POVCamera(player, delta = 0.016) {
-  player.visible = false;
-
-  if (camera.fov !== 72) {
-    camera.fov = 72;
-    camera.updateProjectionMatrix();
-  }
-
-  // The six-person display is the permanent focal point. The camera
-  // moves around it in a level 360-degree circle, keeping the same
-  // viewing height and radius instead of following player movement.
-  const focus = new THREE.Vector3(28, 22.23, 27.53);
-  const orbitRadius = 2.73;
-  const orbitHeight = 1.20;
-  const yaw = lookYawOffset;
-  const targetPosition = new THREE.Vector3(
-    focus.x + Math.sin(yaw) * orbitRadius,
-    focus.y + orbitHeight,
-    focus.z - Math.cos(yaw) * orbitRadius
-  );
-
-  if (!floor3POVActive) {
-    floor3POVActive = true;
-    floor3POVBlend = 0;
-  }
-
-  floor3POVBlend = Math.min(1, floor3POVBlend + delta / 0.45);
-  if (floor3POVBlend < 1) {
-    const blend = floor3POVBlend * floor3POVBlend * (3 - 2 * floor3POVBlend);
-    camera.position.lerp(targetPosition, blend);
-  } else {
-    camera.position.copy(targetPosition);
-  }
-
-  camera.lookAt(focus);
-}
-
-
-function installElevatorLookControls() {
-  if (window.__lamboCityElevatorLookControlsReady) return;
-  window.__lamboCityElevatorLookControlsReady = true;
-
-  window.addEventListener("pointerdown", event => {
-    if (!window.__lamboCityElevatorPOV) return;
-    if (event.button !== undefined && event.button !== 0) return;
-
-    const target = event.target instanceof Element ? event.target : null;
-    if (target?.closest(
-      "#lambo-city-joystick, #lambo-city-mobile-buttons, #records-hq-elevator-buttons, #records-hq-elevator-close, button, a, input, textarea, select, [role='button']"
-    )) return;
-
-    elevatorLookPointerId = event.pointerId;
-    elevatorLookPointerX = event.clientX;
-    elevatorLookPointerY = event.clientY;
-  });
-
-  window.addEventListener("pointermove", event => {
-    if (
-      elevatorLookPointerId !== event.pointerId ||
-      !window.__lamboCityElevatorPOV
-    ) return;
-
-    const dx = event.clientX - elevatorLookPointerX;
-    const dy = event.clientY - elevatorLookPointerY;
-    elevatorLookPointerX = event.clientX;
-    elevatorLookPointerY = event.clientY;
-
-    elevatorLookYaw -= dx * 0.0045;
-    elevatorLookPitch = THREE.MathUtils.clamp(
-      elevatorLookPitch - dy * 0.0035,
-      -0.72,
-      0.72
-    );
-    event.preventDefault();
-  }, { passive: false });
-
-  const release = event => {
-    if (elevatorLookPointerId === event.pointerId) {
-      elevatorLookPointerId = null;
-    }
-  };
-  window.addEventListener("pointerup", release);
-  window.addEventListener("pointercancel", release);
-  window.addEventListener("blur", () => {
-    elevatorLookPointerId = null;
-  });
-}
-
 // ============================================================
 // CAMERA SYSTEM
 // ============================================================
@@ -834,9 +794,6 @@ function installElevatorLookControls() {
 export default {
 
   init() {
-
-    installFloor3LookControls();
-    installElevatorLookControls();
 
     camera =
       new THREE.PerspectiveCamera(
@@ -899,7 +856,6 @@ export default {
 
     cinTime += delta;
 
-    // The active camera mode selects the lens and avatar visibility below.
 
     // --------------------------------------------------------
     // DETECT BUILDING ENTRY / EXIT
@@ -908,34 +864,6 @@ export default {
     const insideHQ =
       isInsideHQ(player);
 
-    const currentHQFloor = insideHQ
-      ? getHQFloor(player.position.y)
-      : 0;
-
-    // Keep the elevator camera until the passenger clears the rear
-    // portal; only then enter the Floor 3 first-person view.
-    const floor3POVReady =
-      currentHQFloor === 3 &&
-      player.position.z >= 14.7 &&
-      window.__lamboCityFloor3ArrivalComplete !== false;
-
-    const elevatorPOV = !!window.__lamboCityElevatorPOV;
-    player.visible = elevatorPOV ? false : !floor3POVReady;
-
-    const targetFov = elevatorPOV ? 76 : floor3POVReady ? 72 : 68;
-    if (camera.fov !== targetFov) {
-      camera.fov = targetFov;
-      camera.updateProjectionMatrix();
-    }
-
-    if (window.__lamboCityElevatorTraveling || !floor3POVReady) {
-      if (floor3POVActive) {
-        lookYawOffset = 0;
-        lookPitchOffset = 0;
-      }
-      floor3POVActive = false;
-      floor3POVBlend = 0;
-    }
 
     if (
       insideHQ !==
@@ -994,36 +922,20 @@ export default {
 
 
     // --------------------------------------------------------
-    // ELEVATOR / FLOOR 3 LANDING THRESHOLD
+    // ELEVATOR
     // --------------------------------------------------------
-    // The elevator sits just outside the HQ camera bounds. Keep the
-    // passenger in the glass-lift view while the doors open and until
-    // they physically cross the rear portal; never snap back to the
-    // distant world camera during this handoff.
 
-    const floor2LandingPending =
-      window.__lamboCityElevatorLandingFloor === 2 &&
-      player.position.z < 15.2;
+    if (
+      window.__lamboCityElevatorTraveling
+    ) {
 
-    const floor3LandingPending =
-      window.__lamboCityElevatorLandingFloor === 3 &&
-      player.position.z < 14.7;
+      updateElevatorCamera(
+        player
+      );
 
-    const elevatorCameraActive =
-      elevatorPOV ||
-      window.__lamboCityElevatorTraveling ||
-      floor2LandingPending ||
-      floor3LandingPending;
-    setElevatorTouchMode(elevatorCameraActive, context.renderer);
-
-    if (elevatorCameraActive) {
-      updateElevatorCamera(player, delta);
       return;
-    }
 
-    elevatorPOVActive = false;
-    elevatorLookPointerId = null;
-    window.__lamboCityElevatorLookYaw = 0;
+    }
 
 
     // --------------------------------------------------------
@@ -1065,7 +977,7 @@ export default {
           window.__lamboCityFloor2SessionActive &&
           window.__lamboCityFloor2SessionMode === "arrival"
         ) {
-          updateStudioArrivalCamera(player, 0.48);
+          updateStudioArrivalCamera(player, 0.34);
         } else if (window.__lamboCityFloor2SessionActive) {
           updateStudioSessionCamera(player, 0.24);
         } else {
@@ -1094,14 +1006,13 @@ export default {
 
 
       // ------------------------------------------------------
-      // FLOOR 3 — ELEVATOR THRESHOLD → CHARACTER EYE-LEVEL POV
+      // FLOOR 3
       // ------------------------------------------------------
 
-      if (!floor3POVReady) {
-        updateElevatorCamera(player);
-      } else {
-        updateFloor3POVCamera(player, delta);
-      }
+      updateHQCamera(
+        player,
+        interiorSmooth
+      );
 
       return;
 

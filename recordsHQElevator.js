@@ -22,10 +22,10 @@ const ACTIVATION_DISTANCE =
 // Keep Floor 2's established ride timing untouched for the Studio.
 // Other destinations use a quicker transfer and faster landing-door response.
 const TRAVEL_TIME_BY_FLOOR = {
-  1: 1.85,
-  2: 1.85,
-  3: 1.85,
-  4: 1.85
+  1: 2.8,
+  2: 2.8,
+  3: 2.8,
+  4: 2.8
 };
 
 
@@ -58,7 +58,6 @@ let landingDoorProgress = 1;
 let landingDoorTarget = 1;
 let pendingLandingPlayer = null;
 let floor3AutoArrival = null;
-let elevatorOriginalMoveSpeed = null;
 
 
 // ============================================================
@@ -525,7 +524,7 @@ function selectFloor(
 
 function updateLandingDoors(delta) {
   const difference = landingDoorTarget - landingDoorProgress;
-  const doorResponse = landingDoorFloor === 2 ? 16 : 20;
+  const doorResponse = landingDoorFloor === 2 ? 8 : 20;
   landingDoorProgress += difference * Math.min(1, delta * doorResponse);
 
   if (Math.abs(landingDoorTarget - landingDoorProgress) < 0.008) {
@@ -629,9 +628,6 @@ function startTravel() {
   }
 
 
-  setElevatorMovementMode(true);
-  window.__lamboCityElevatorPOV = true;
-
   travelStartY =
     player.position.y;
 
@@ -724,8 +720,7 @@ function finishTravel(
   // Keep the passenger safely inside the lift while the destination
   // landing doors perform their opening animation. Floor 3 retains the
   // elevator camera until the passenger clears the rear portal.
-  window.__lamboCityElevatorLandingFloor =
-    selectedFloor === 2 || selectedFloor === 3 ? selectedFloor : 0;
+  window.__lamboCityElevatorLandingFloor = selectedFloor === 3 ? 3 : 0;
   landingDoorFloor = selectedFloor === 4 ? 3 : selectedFloor;
   landingDoorProgress = 0;
   landingDoorTarget = 1;
@@ -734,7 +729,6 @@ function finishTravel(
   window.__lamboCityFloor3ArrivalComplete = selectedFloor === 3 ? false : true;
 
   window.__lamboCityElevatorTraveling = false;
-  window.__lamboCityElevatorPOV = true;
   window.__lamboCityElevatorProgress = 1;
   window.__lamboCityElevatorDoorOpen = false;
 
@@ -761,34 +755,6 @@ function getPlayer() {
 // ============================================================
 // INPUT LOCK
 // ============================================================
-
-function setElevatorMovementMode(enabled) {
-  const system = window.__lamboCityPlayerSystem;
-  if (!system) return;
-
-  if (enabled) {
-    if (elevatorOriginalMoveSpeed === null) {
-      elevatorOriginalMoveSpeed = system.speed ?? 28;
-    }
-    system.speed = 3.8;
-  } else if (elevatorOriginalMoveSpeed !== null) {
-    system.speed = elevatorOriginalMoveSpeed;
-    elevatorOriginalMoveSpeed = null;
-  }
-}
-
-function constrainPassengerToCabin(player) {
-  player.position.x = THREE.MathUtils.clamp(
-    player.position.x,
-    ELEVATOR_POSITION.x - 2.05,
-    ELEVATOR_POSITION.x + 2.05
-  );
-  player.position.z = THREE.MathUtils.clamp(
-    player.position.z,
-    ELEVATOR_POSITION.z - 1.55,
-    ELEVATOR_POSITION.z + 1.55
-  );
-}
 
 function lockPlayerInput(
   locked
@@ -884,7 +850,6 @@ export default {
 
     window.__lamboCityElevatorReady =
       true;
-    window.__lamboCityElevatorPOV = false;
 
   },
 
@@ -927,26 +892,11 @@ export default {
 
     currentPlayer = player;
 
-    // Keep the passenger at a comfortable walking pace while inside
-    // the cabin, and prevent walking through glass before the doors open.
-    const cabinPassengerActive =
-      inRange || traveling ||
-      (pendingLandingPlayer && landingDoorProgress < 0.995);
-    setElevatorMovementMode(!!cabinPassengerActive);
-    if (menuOpen && window.__lamboCityPlayerSystem) {
-      window.__lamboCityPlayerSystem.speed = 0;
-    }
-    if (cabinPassengerActive) {
-      constrainPassengerToCabin(player);
-    }
-
     // Release the Floor 3 landing-camera hold only after HERO has
     // physically crossed the rear elevator portal into the HQ.
     if (
-      (window.__lamboCityElevatorLandingFloor === 2 &&
-        player.position.z >= 15.2) ||
-      (window.__lamboCityElevatorLandingFloor === 3 &&
-        player.position.z >= 14.7)
+      window.__lamboCityElevatorLandingFloor === 3 &&
+      player.position.z >= 14.7
     ) {
       window.__lamboCityElevatorLandingFloor = 0;
     }
@@ -963,7 +913,6 @@ export default {
     if (pendingLandingPlayer && landingDoorProgress >= 0.995) {
       const arrivedPlayer = pendingLandingPlayer;
       pendingLandingPlayer = null;
-      setElevatorMovementMode(false);
 
       if (selectedFloor === 2) {
         window.__lamboCityBeginFloor2Session?.(arrivedPlayer);
@@ -1113,8 +1062,6 @@ export default {
         if (destinationLoadError) {
           // Fail safely: keep the passenger on the departure floor.
           traveling = false;
-          setElevatorMovementMode(false);
-          window.__lamboCityElevatorPOV = false;
           player.position.y = travelStartY;
           window.__lamboCityPlayerSystem
             ?.setElevatorTravelY
@@ -1163,18 +1110,6 @@ export default {
       player.position.x <= ELEVATOR_POSITION.x + 1.85 &&
       player.position.z >= ELEVATOR_POSITION.z - 1.55 &&
       player.position.z <= ELEVATOR_POSITION.z + 1.15;
-
-    const floor2ExitPending =
-      window.__lamboCityElevatorLandingFloor === 2 &&
-      player.position.z < 15.2;
-    const floor3ExitPending =
-      window.__lamboCityElevatorLandingFloor === 3 &&
-      player.position.z < 14.7;
-
-    window.__lamboCityElevatorPOV =
-      inRange || traveling ||
-      !!(pendingLandingPlayer && landingDoorProgress < 0.995) ||
-      floor2ExitPending || floor3ExitPending;
 
     if (nearElevator && !traveling && !pendingLandingPlayer) {
       landingDoorFloor = floorNumberFromY(player.position.y);

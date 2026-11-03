@@ -434,87 +434,25 @@ export default {
       producerCockpit.add(speaker);
     });
 
-    // Three-screen producer display wall faces the seated producer (+Z).
-    // The former recording/editing DAW screen is integrated above the MPC,
-    // while the two primary production displays sit centered over the desk.
-    [-0.35, 0.85].forEach(x => {
+    // Wide production display faces the seated producer (+Z).
+    [-0.48, 0.48].forEach(x => {
       box(
         producerCockpit,
-        new THREE.BoxGeometry(1.10, 1.24, 0.09),
+        new THREE.BoxGeometry(0.90, 1.08, 0.09),
         glass,
         x,
-        1.98,
+        1.88,
         -0.92
       );
       box(
         producerCockpit,
-        new THREE.BoxGeometry(1.16, 0.055, 0.12),
+        new THREE.BoxGeometry(0.96, 0.055, 0.12),
         goldGlow,
         x,
-        2.63,
+        2.44,
         -0.92
       );
     });
-
-    // Dedicated DAW / recording screen, positioned directly above the MPC.
-    const producerEditControls = new THREE.Group();
-    producerEditControls.name = "floor2CopilotDAWControls";
-    box(
-      producerEditControls,
-      new THREE.BoxGeometry(0.98, 0.92, 0.09),
-      glass,
-      -1.45,
-      1.88,
-      -0.92
-    );
-    box(
-      producerEditControls,
-      new THREE.BoxGeometry(1.04, 0.055, 0.12),
-      goldGlow,
-      -1.45,
-      2.37,
-      -0.92
-    );
-    producerCockpit.add(producerEditControls);
-
-    // Mobile Studio is a dedicated fourth display on the same copilot
-    // desk, not a separate workstation elsewhere in the room.
-    const mobile = new THREE.Group();
-    mobile.name = "floor2MobileStudio";
-    mobile.userData.studioStation = "vocals";
-    box(
-      mobile,
-      new THREE.BoxGeometry(0.78, 0.98, 0.085),
-      glass,
-      1.78,
-      1.98,
-      -0.92
-    );
-    box(
-      mobile,
-      new THREE.BoxGeometry(0.84, 0.055, 0.11),
-      goldGlow,
-      1.78,
-      2.50,
-      -0.92
-    );
-    box(
-      mobile,
-      new THREE.BoxGeometry(0.66, 0.055, 0.10),
-      black,
-      1.78,
-      1.47,
-      -0.92
-    );
-    label(
-      mobile,
-      "MOBILE STUDIO",
-      1.78,
-      2.70,
-      -1.0,
-      2.7
-    );
-    producerCockpit.add(mobile);
 
     // Chair is centered behind the desk, facing the exterior windows (-Z).
     const producerChair = new THREE.Group();
@@ -587,7 +525,7 @@ export default {
 
     label(
       beatLab,
-      "LAMBO CITY • COPILOT PRODUCTION DESK",
+      "LAMBO CITY • MPC • MIX • MASTER",
       beatX,
       3.18,
       beatZ - 1.45,
@@ -971,8 +909,146 @@ export default {
       booth
     );
 
-    // Recording, editing and arrangement are handled from the
-    // main copilot desk. No separate production desk is built here.
+    // =========================================================
+    // 4. RECORDING / EDITING WORKSTATION
+    //
+    // Left live-room perimeter.
+    //
+    // This remains the dedicated recording and editing interaction point.
+    // =========================================================
+
+    const editing =
+      new THREE.Group();
+
+    editing.name =
+      "floor2RecordingEditingStation";
+
+    const editX =
+      -5.15;
+
+    const editZ =
+      -1.45;
+
+    const editAngle =
+      0;
+
+    // Desk
+
+    box(
+      editing,
+      new THREE.BoxGeometry(
+        3.15,
+        0.14,
+        0.95
+      ),
+      dark,
+      editX,
+      0.88,
+      editZ,
+      editAngle
+    );
+
+    // Gold desk edge
+
+    box(
+      editing,
+      new THREE.BoxGeometry(
+        3.1,
+        0.05,
+        0.05
+      ),
+      gold,
+      editX,
+      1.00,
+      editZ - 0.44,
+      editAngle
+    );
+
+    // Main DAW display
+
+    box(
+      editing,
+      new THREE.BoxGeometry(
+        1.65,
+        0.90,
+        0.08
+      ),
+      glass,
+      editX,
+      1.55,
+      editZ + 0.05,
+      editAngle
+    );
+
+    // Display frame
+
+    box(
+      editing,
+      new THREE.BoxGeometry(
+        1.78,
+        0.05,
+        0.05
+      ),
+      goldGlow,
+      editX,
+      2.03,
+      editZ + 0.05,
+      editAngle
+    );
+
+    // Small controller
+
+    box(
+      editing,
+      new THREE.BoxGeometry(
+        0.75,
+        0.08,
+        0.48
+      ),
+      black,
+      editX,
+      1.05,
+      editZ - 0.18,
+      editAngle
+    );
+
+    // Knobs
+
+    for (
+      let i = 0;
+      i < 4;
+      i++
+    ) {
+
+      cylinder(
+        editing,
+        new THREE.CylinderGeometry(
+          0.05,
+          0.05,
+          0.04,
+          12
+        ),
+        goldGlow,
+        editX - 0.24 +
+          i * 0.16,
+        1.13,
+        editZ - 0.18
+      );
+
+    }
+
+    label(
+      editing,
+      "RECORD • EDIT",
+      editX,
+      2.75,
+      editZ - 0.55,
+      4.0
+    );
+
+    group.add(
+      editing
+    );
 
     // =========================================================
     // 5. MIX / MASTER WORKSTATION
@@ -999,10 +1075,10 @@ export default {
     ].forEach(({ x, width }) => {
       box(
         controlRoom,
-        new THREE.BoxGeometry(width, 4.75, 0.16),
+        new THREE.BoxGeometry(width, 3.55, 0.16),
         windowGlass,
         x,
-        2.55,
+        2.05,
         -6.88
       );
       box(
@@ -1010,7 +1086,7 @@ export default {
         new THREE.BoxGeometry(width, 0.075, 0.20),
         gold,
         x,
-        4.98,
+        3.86,
         -6.82
       );
       box(
@@ -1027,10 +1103,10 @@ export default {
     [-2.65, 0, 5.5, 8.25].forEach(x => {
       box(
         controlRoom,
-        new THREE.BoxGeometry(0.12, 4.75, 0.16),
+        new THREE.BoxGeometry(0.12, 3.72, 0.16),
         gold,
         x,
-        2.55,
+        2.05,
         -6.82
       );
     });
@@ -1055,20 +1131,20 @@ export default {
     [-8.88, 8.88].forEach(x => {
       box(
         controlRoom,
-        new THREE.BoxGeometry(0.18, 4.75, 12.65),
+        new THREE.BoxGeometry(0.18, 3.55, 12.65),
         dark,
         x,
-        2.55,
+        1.98,
         0
       );
 
       [-5.1, -1.7, 1.7, 5.1].forEach(z => {
         box(
           controlRoom,
-          new THREE.BoxGeometry(0.07, 4.35, 0.055),
+          new THREE.BoxGeometry(0.07, 2.75, 0.055),
           gold,
           x + (x < 0 ? 0.10 : -0.10),
-          2.55,
+          2.02,
           z
         );
       });
@@ -1143,7 +1219,7 @@ export default {
       2.1
     );
 
-    beatLab.add(mixMasterControls);
+    group.add(mixMasterControls);
 
     // Both workflow references intentionally resolve to this
     // single physical control surface; there is no second
@@ -1264,7 +1340,110 @@ export default {
       archive
     );
 
-    // Mobile Studio display is integrated into the copilot desk above.
+    // =========================================================
+    // 8. MOBILE STUDIO
+    //
+    // Compact station for laptop + headphones.
+    //
+    // This is the physical placeholder for future recording
+    // directly through the artist's own device.
+    // =========================================================
+
+    const mobile =
+      new THREE.Group();
+
+    mobile.name =
+      "floor2MobileStudio";
+
+    const mobileX =
+      -5.35;
+
+    const mobileZ =
+      -5.15;
+
+    box(
+      mobile,
+      new THREE.BoxGeometry(
+        2.1,
+        0.14,
+        0.72
+      ),
+      dark,
+      mobileX,
+      0.88,
+      mobileZ
+    );
+
+    // Laptop
+
+    box(
+      mobile,
+      new THREE.BoxGeometry(
+        1.18,
+        0.08,
+        0.62
+      ),
+      black,
+      mobileX,
+      1.02,
+      mobileZ
+    );
+
+    box(
+      mobile,
+      new THREE.BoxGeometry(
+        1.18,
+        0.72,
+        0.07
+      ),
+      glass,
+      mobileX,
+      1.40,
+      mobileZ + 0.28
+    );
+
+    // Headphone stand
+
+    cylinder(
+      mobile,
+      new THREE.CylinderGeometry(
+        0.055,
+        0.055,
+        0.62,
+        12
+      ),
+      gold,
+      mobileX + 0.82,
+      1.28,
+      mobileZ
+    );
+
+    cylinder(
+      mobile,
+      new THREE.CylinderGeometry(
+        0.20,
+        0.20,
+        0.06,
+        16
+      ),
+      black,
+      mobileX + 0.82,
+      0.97,
+      mobileZ
+    );
+
+    label(
+      mobile,
+      "MOBILE STUDIO",
+      mobileX,
+      2.58,
+      mobileZ - 0.40,
+      4.0
+    );
+
+    group.add(
+      mobile
+    );
 
     // =========================================================
     // 9. ACOUSTIC TREATMENT
@@ -1394,7 +1573,7 @@ export default {
       new THREE.BoxGeometry(10.2, 0.12, 12.8),
       dark,
       3.55,
-      5.05,
+      4.02,
       0
     );
     box(
@@ -1402,7 +1581,7 @@ export default {
       new THREE.BoxGeometry(10.35, 0.045, 0.10),
       goldGlow,
       3.55,
-      4.97,
+      3.94,
       0
     );
 
@@ -1412,7 +1591,7 @@ export default {
       new THREE.BoxGeometry(7.0, 0.12, 12.8),
       dark,
       -5.2,
-      5.05,
+      4.00,
       0
     );
     liveRoomCeiling.rotation.z = -0.08;
@@ -1422,7 +1601,7 @@ export default {
         new THREE.BoxGeometry(1.75, 0.045, 1.45),
         windowGlass,
         -5.4,
-        5.13,
+        4.08,
         z
       );
       box(
@@ -1430,7 +1609,7 @@ export default {
         new THREE.BoxGeometry(1.88, 0.035, 0.07),
         goldGlow,
         -5.4,
-        5.17,
+        4.12,
         z - 0.76
       );
     });
@@ -1448,7 +1627,7 @@ export default {
             ),
             goldGlow,
             x,
-            4.80,
+            3.75,
             0.7
           );
 
@@ -1461,7 +1640,7 @@ export default {
             ),
             goldGlow,
             x,
-            4.80,
+            3.75,
             0.7
           );
 
@@ -1485,7 +1664,7 @@ export default {
 
     light.position.set(
       0,
-      4.25,
+      3.4,
       0
     );
 
@@ -1509,7 +1688,7 @@ export default {
       vocalBooth: booth,
 
       recordingEditing:
-        producerEditControls,
+        editing,
 
       controlRoom:
         mixMasterControls,

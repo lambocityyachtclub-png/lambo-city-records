@@ -23,14 +23,12 @@ const PRODUCER_SEAT = {
   z: HQ_Z - 2.15
 };
 
-const ELEVATOR_ARRIVAL_SECONDS = 1.15;
+const ELEVATOR_ARRIVAL_SECONDS = 1.65;
 
 let playerSystem = null;
 let renderer = null;
 let mode = "free";
 let arrivalElapsed = 0;
-let arrivalHoldElapsed = 0;
-let arrivalPoseApplied = false;
 let arrivalStart = null;
 let arrivalPlayer = null;
 let pointerId = null;
@@ -48,7 +46,7 @@ function publishState() {
   window.__lamboCityFloor2SessionActive =
     mode === "arrival" || mode === "seated" || mode === "instrument";
   window.__lamboCityFloor2OrbitYaw ??= 0;
-  window.__lamboCityFloor2OrbitPitch = 0;
+  window.__lamboCityFloor2OrbitPitch ??= 0.08;
   window.__lamboCitySuppressStationClickUntil =
     suppressStationClickUntil;
 }
@@ -122,11 +120,16 @@ function onPointerMove(event) {
   if (!pointerMoved) return;
 
   event.preventDefault();
-  // Horizontal swipe follows the camera's travel direction.
-  // Vertical movement is intentionally ignored to keep the seated
-  // producer camera at one consistent eye level.
   window.__lamboCityFloor2OrbitYaw =
-    (window.__lamboCityFloor2OrbitYaw ?? 0) + dx * 0.008;
+    (window.__lamboCityFloor2OrbitYaw ?? 0) - dx * 0.008;
+  window.__lamboCityFloor2OrbitPitch =
+    Math.max(
+      -0.18,
+      Math.min(
+        0.34,
+        (window.__lamboCityFloor2OrbitPitch ?? 0.08) + dy * 0.004
+      )
+    );
 
   suppressStationClickUntil = Date.now() + 280;
   publishState();
@@ -226,8 +229,6 @@ export default {
       rotationY: player.rotation.y
     };
     arrivalElapsed = 0;
-    arrivalHoldElapsed = 0;
-    arrivalPoseApplied = false;
     window.__lamboCityFloor2OrbitYaw = 0;
     window.__lamboCityFloor2OrbitPitch = 0.08;
     window.__lamboCityFloor2ArrivalProgress = 0;
@@ -270,17 +271,51 @@ export default {
       window.__lamboCityFloor2ArrivalProgress = t;
       const eased = t * t * t * (t * (6 * t - 15) + 10); // smootherstep
 
+      // Route around the left end of the producer desk, then approach
+      // the chair from its open side. The previous straight-line
+      // interpolation crossed the desk despite its normal-walk collider.
+      const route = [
+        { x: arrivalStart.x, z: arrivalStart.z },
+        { x: arrivalStart.x, z: PRODUCER_SEAT.z },
+        { x: PRODUCER_SEAT.x - 3.9, z: PRODUCER_SEAT.z },
+        { x: PRODUCER_SEAT.x, z: PRODUCER_SEAT.z }
+      ];
+
+      const lengths = [];
+      let routeLength = 0;
+      for (let i = 0; i < route.length - 1; i++) {
+        const dx = route[i + 1].x - route[i].x;
+        const dz = route[i + 1].z - route[i].z;
+        const length = Math.hypot(dx, dz);
+        lengths.push(length);
+        routeLength += length;
+      }
+
+      let remaining = routeLength * eased;
+      let segment = 0;
+      while (segment < lengths.length - 1 && remaining > lengths[segment]) {
+        remaining -= lengths[segment];
+        segment++;
+      }
+
+      const segmentProgress = lengths[segment] > 0
+        ? Math.min(1, remaining / lengths[segment])
+        : 1;
+      const from = route[segment];
+      const to = route[segment + 1];
+
       arrivalPlayer.position.set(
-        arrivalStart.x + (PRODUCER_SEAT.x - arrivalStart.x) * eased,
+        from.x + (to.x - from.x) * segmentProgress,
         PRODUCER_SEAT.y,
-        arrivalStart.z + (PRODUCER_SEAT.z - arrivalStart.z) * eased
+        from.z + (to.z - from.z) * segmentProgress
       );
 
-      // Keep the original walk-in direction from the first studio arrival design.
-      const travelX = PRODUCER_SEAT.x - arrivalStart.x;
-      const travelZ = PRODUCER_SEAT.z - arrivalStart.z;
+      // Face the current leg of the path, then turn toward the desk
+      // as the character settles into the producer chair.
+      const travelX = to.x - from.x;
+      const travelZ = to.z - from.z;
       const travelYaw = Math.atan2(travelX, travelZ);
-      const turnProgress = Math.max(0, Math.min(1, (t - 0.78) / 0.22));
+      const turnProgress = Math.max(0, Math.min(1, (t - 0.88) / 0.12));
       const smoothTurn = turnProgress * turnProgress * (3 - 2 * turnProgress);
       const yawDelta = Math.atan2(
         Math.sin(Math.PI - travelYaw),
@@ -289,17 +324,8 @@ export default {
       arrivalPlayer.rotation.y = travelYaw + yawDelta * smoothTurn;
 
       if (t >= 1) {
-        if (!arrivalPoseApplied) {
-          playerSystem?.setStudioSeatedPose?.(true);
-          arrivalPoseApplied = true;
-        }
-
-        // Keep the arrival camera active briefly after reaching the
-        // producer chair, giving the player time to see the full room.
-        arrivalHoldElapsed += delta;
-        if (arrivalHoldElapsed >= 0.35) {
-          setMode("seated");
-        }
+        playerSystem?.setStudioSeatedPose?.(true);
+        setMode("seated");
       }
     }
 

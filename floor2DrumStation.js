@@ -64,9 +64,6 @@ export default {
     // Behind-left of the seated producer in the glass-partitioned live room.
     // Coordinates are relative to the existing studio group.
     station.position.set(-4.65, 0, 3.65);
-    // Scale the complete kit as one coherent performance setup while
-    // keeping its center in the existing drum-station footprint.
-    station.scale.setScalar(1.32);
 
     const addCylinder = (
       name,
@@ -187,32 +184,6 @@ export default {
       "tom"
     );
 
-    // Second rack tom gives the kit a fuller five-piece stage layout.
-    addCylinder(
-      "floor2RackTomSecond",
-      0.27,
-      0.22,
-      black,
-      0.55,
-      1.22,
-      -0.16,
-      0,
-      "tom"
-    );
-
-    // Second floor tom for a broader live-performance configuration.
-    addCylinder(
-      "floor2FloorTomSecond",
-      0.31,
-      0.32,
-      red,
-      1.28,
-      0.88,
-      0.05,
-      0,
-      "tom"
-    );
-
     // Hi-hat stand and cymbals.
     addCylinder(
       "floor2HiHatStand",
@@ -307,7 +278,6 @@ export default {
       0.12
     );
 
-    // Open-air performance kit: no glass booth or visual barriers.
     // LAMBO CITY station label.
     const canvas = document.createElement("canvas");
     canvas.width = 768;
