@@ -324,6 +324,18 @@ const StudioMPCLibrary = {
     return sound;
   },
 
+  exportAssignments() {
+    const state = this.state || readState();
+    return { ...(state.assignments || {}) };
+  },
+
+  importAssignments(assignments = {}) {
+    const state = this.state || readState();
+    state.assignments = { ...(state.assignments || {}), ...(assignments || {}) };
+    this.state = state;
+    writeState(state);
+  },
+
   getAssignment(bank, pad) {
     const sounds = this.getSounds();
     const state = this.state || readState();
