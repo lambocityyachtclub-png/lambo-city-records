@@ -23,7 +23,7 @@ const PRODUCER_SEAT = {
   z: HQ_Z - 2.15
 };
 
-const ELEVATOR_ARRIVAL_SECONDS = 2.4;
+const ELEVATOR_ARRIVAL_SECONDS = 1.15;
 
 let playerSystem = null;
 let renderer = null;
@@ -331,7 +331,7 @@ export default {
         // Keep the arrival camera active briefly after reaching the
         // producer chair, giving the player time to see the full room.
         arrivalHoldElapsed += delta;
-        if (arrivalHoldElapsed >= 1.8) {
+        if (arrivalHoldElapsed >= 0.35) {
           setMode("seated");
         }
       }
