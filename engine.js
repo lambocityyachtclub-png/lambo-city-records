@@ -76,7 +76,13 @@ this.systems.recordsHQEntranceThreshold?.init?.(this.scene);
 this.systems.recordsHQMediaDetails?.init?.(this.scene);
 this.systems.recordsHQMerchDetails?.init?.(this.scene);
 this.systems.recordsHQElevator?.init?.(this.scene);
-    
+
+// Session controls need the initialized renderer and the elevator arrival hook.
+this.systems.floor2StudioSession?.init?.(
+  this.scene,
+  this.context
+);
+
 this.systems.boardwalkOverlooks?.init?.(this.scene);
     this.systems.input?.init?.();
     this.systems.player?.init?.(this.scene);
