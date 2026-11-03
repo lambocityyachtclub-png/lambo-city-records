@@ -130,17 +130,18 @@ function envelope(audio, destination, time, duration, peak = 0.65) {
   return gain;
 }
 
-function playSound(audio, sound, time, bus) {
+function playSound(audio, sound, time, bus, velocity = 1) {
   if (!audio || audio.state !== "running" || !sound) return false;
   const family = sound.family;
   const duration = clamp(sound.decay, 0.06, 1.2);
   const pitch = clamp(sound.frequency, 28, 900);
   const brightness = clamp(sound.brightness, 0.1, 1);
   const out = bus.input;
+  const velocityScale = clamp(Number(velocity) || 1, 0, 1.5);
   const amp = (length = duration, peak = 0.6, attack = 0.004) => {
     const node = audio.createGain();
     node.gain.setValueAtTime(0.0001, time);
-    node.gain.exponentialRampToValueAtTime(Math.max(0.001, peak), time + attack);
+    node.gain.exponentialRampToValueAtTime(Math.max(0.001, peak * velocityScale), time + attack);
     node.gain.exponentialRampToValueAtTime(0.0001, time + length);
     node.connect(out);
     return node;
@@ -336,13 +337,13 @@ const StudioMPCLibrary = {
     return sounds[index % sounds.length];
   },
 
-  play(audio, sound, time = audio?.currentTime) {
+  play(audio, sound, time = audio?.currentTime, velocity = 1) {
     if (!audio || !sound) return false;
     if (this.audio !== audio || !this.bus) {
       this.audio = audio;
       this.bus = createBus(audio);
     }
-    return playSound(audio, sound, time, this.bus);
+    return playSound(audio, sound, time, this.bus, velocity);
   },
 
   loadTake(projectId = "unsaved") {
