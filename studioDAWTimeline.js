@@ -10,7 +10,7 @@
 import StudioAudioEngine from "./studioAudioEngine.js";
 
 const BAR_WIDTH = 72;
-const TOTAL_BARS = 32;
+const TOTAL_BARS = 128;
 const decodedWaveforms = new WeakMap();
 
 async function decodeClip(clip) {
