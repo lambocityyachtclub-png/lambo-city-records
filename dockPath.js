@@ -7,7 +7,7 @@ import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 
 const PATH = {
   startX: 5.25,
-  endX: 23.0,
+  endX: 20.45,
   centerZ: 14.15,
   width: 3.6,
   surfaceY: 1.36
