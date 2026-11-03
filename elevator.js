@@ -479,6 +479,10 @@ function buildCabin() {
   cabinLight.position.set(0, 2.25, 0);
   cabin.add(cabinLight);
 
+  // Scale the complete cabin as one unit so the player has natural
+  // headroom and shoulder clearance without changing the player model.
+  cabin.scale.setScalar(1.65);
+
   scene.add(cabin);
 }
 
@@ -494,7 +498,8 @@ export default {
       return;
     }
 
-    buildExteriorDetails();
+    // The foundation module already builds the panoramic shaft and
+    // landing frames. Keep this module focused on the cabin interior.
     buildCabin();
     initialized = true;
   },
@@ -513,7 +518,8 @@ export default {
     // cabin follows that same floor height, keeping the interior
     // aligned without taking over player or camera control.
     if (nearLift || traveling || doorsOpen) {
-      cabin.position.y = player.position.y;
+      // Keep the cabin floor aligned with the player's feet.
+      cabin.position.y = player.position.y - 0.56;
     }
 
     cabin.visible = true;
