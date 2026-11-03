@@ -508,6 +508,7 @@ const MPCInterface = {
     root.addEventListener("pointerdown", event => {
       const pad = event.target.closest("[data-pad]");
       if (!pad || event.button > 0) return;
+      try { pad.setPointerCapture(event.pointerId); } catch {}
       pad.dataset.pointerHandled = "1";
       const pressure = Number(event.pressure);
       const velocity = pressure > 0 ? 0.35 + Math.min(1, pressure) * 1.15 : 0.9;
