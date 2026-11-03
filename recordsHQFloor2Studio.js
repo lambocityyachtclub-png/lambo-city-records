@@ -130,92 +130,11 @@ function cylinder(
 
 }
 
-function label(
-  parent,
-  text,
-  x,
-  y,
-  z,
-  width = 4.5
-) {
-
-  const canvas =
-    document.createElement(
-      "canvas"
-    );
-
-  canvas.width = 768;
-  canvas.height = 160;
-
-  const context =
-    canvas.getContext("2d");
-
-  context.clearRect(
-    0,
-    0,
-    canvas.width,
-    canvas.height
-  );
-
-  context.font =
-    "bold 46px Arial";
-
-  context.textAlign =
-    "center";
-
-  context.textBaseline =
-    "middle";
-
-  context.fillStyle =
-    "#ffd36a";
-
-  context.fillText(
-    text,
-    384,
-    80
-  );
-
-  const texture =
-    new THREE.CanvasTexture(
-      canvas
-    );
-
-  texture.colorSpace =
-    THREE.SRGBColorSpace;
-
-  const signMaterial =
-    new THREE.MeshBasicMaterial({
-
-      map: texture,
-
-      transparent: true,
-
-      side:
-        THREE.DoubleSide
-
-    });
-
-  const sign =
-    new THREE.Mesh(
-      new THREE.PlaneGeometry(
-        width,
-        0.85
-      ),
-      signMaterial
-    );
-
-  sign.position.set(
-    x,
-    y,
-    z
-  );
-
-  parent.add(sign);
-
-  return sign;
-
+function label() {
+  // Interior identity is communicated through architecture and
+  // functional displays, not floating canvas text.
+  return null;
 }
-
 // =============================================================
 // INIT
 // =============================================================
