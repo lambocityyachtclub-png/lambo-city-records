@@ -258,7 +258,22 @@ function createMixPanel({ beatLab, workspace } = {}) {
       value.dataset.trackVolumeLabel = track.id;
       value.textContent = track.volume + "%";
       volume.append(volumeName, slider, value);
-      row.append(heading, volume);
+      const pan = document.createElement("label");
+      pan.style.cssText = "display:grid;grid-template-columns:58px 1fr 38px;gap:8px;align-items:center;color:#a8a8b1;font-size:11px";
+      const panName = document.createElement("span");
+      panName.textContent = "PAN";
+      const panSlider = document.createElement("input");
+      panSlider.type = "range";
+      panSlider.min = "-100";
+      panSlider.max = "100";
+      panSlider.value = String(Math.round((track.pan || 0) * 100));
+      panSlider.dataset.trackPan = track.id;
+      panSlider.style.cssText = "width:100%;accent-color:#e6bb69";
+      const panValue = document.createElement("span");
+      panValue.dataset.trackPanLabel = track.id;
+      panValue.textContent = !track.pan ? "C" : (track.pan < 0 ? "L " : "R ") + Math.round(Math.abs(track.pan) * 100);
+      pan.append(panName, panSlider, panValue);
+      row.append(heading, volume, pan);
       list.appendChild(row);
     });
   };
@@ -284,18 +299,27 @@ function createMixPanel({ beatLab, workspace } = {}) {
     if (!track) return;
     if (button.dataset.trackControl === "mute") track.muted = !track.muted;
     if (button.dataset.trackControl === "solo") track.solo = !track.solo;
+    StudioMultitrackWorkspace.arrangementPlayback?.syncTrackState(StudioMultitrackWorkspace.tracks);
     renderTracks();
     status(track.name + ": " + (track.muted ? "muted" : "active") + (track.solo ? " · solo" : "") + ".");
   });
 
   root.addEventListener("input", event => {
-    const slider = event.target.closest("[data-track-volume]");
+    const slider = event.target.closest("[data-track-volume], [data-track-pan]");
     if (slider) {
       const track = StudioMultitrackWorkspace.tracks.find(item => item.id === slider.dataset.trackVolume);
       if (!track) return;
-      track.volume = Number(slider.value);
-      const label = root.querySelector('[data-track-volume-label="' + track.id + '"]');
-      if (label) label.textContent = track.volume + "%";
+      if (slider.matches("[data-track-volume]")) {
+        track.volume = Number(slider.value);
+        const label = root.querySelector('[data-track-volume-label="' + track.id + '"]');
+        if (label) label.textContent = track.volume + "%";
+        StudioMultitrackWorkspace.arrangementPlayback?.setTrackVolume(track.id, track.volume);
+      } else {
+        track.pan = Number(slider.value) / 100;
+        const label = root.querySelector('[data-track-pan-label="' + track.id + '"]');
+        if (label) label.textContent = track.pan === 0 ? "C" : (track.pan < 0 ? "L " : "R ") + Math.round(Math.abs(track.pan) * 100);
+        StudioMultitrackWorkspace.arrangementPlayback?.setTrackPan(track.id, track.pan);
+      }
       return;
     }
     if (event.target.matches("[data-master-volume]")) {
