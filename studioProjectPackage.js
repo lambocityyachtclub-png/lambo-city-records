@@ -276,6 +276,12 @@ function validateProject(project) {
     }
   }
 
+  const hasMpcSampleReferences = (project.mpcPerformance?.events || []).some(event => event.sampleId)
+    || Object.keys(project.mpcSamplerState?.assignments || {}).length > 0;
+  if (hasMpcSampleReferences && project.mpcAssets === undefined) {
+    throw new Error("This MPC project references imported samples but does not include the audio assets.");
+  }
+
   if (project.mpcAssets !== undefined) {
     if (!Array.isArray(project.mpcAssets) || project.mpcAssets.length > 256) {
       throw new Error("MPC sample assets are invalid.");
