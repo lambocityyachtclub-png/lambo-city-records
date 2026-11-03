@@ -216,13 +216,14 @@ function makeStyles() {
 #${ROOT_ID} .mpc-bank-switcher .bank-title{flex:0 0 auto;margin:0;font-size:11px;color:#e5d4a0;letter-spacing:.18em}
 #${ROOT_ID} .mpc-bank-switcher .bank-title:before,#${ROOT_ID} .mpc-bank-switcher .bank-title:after{display:none}
 #${ROOT_ID} .mpc-bank-switcher .bank-grid{display:grid;grid-template-columns:repeat(4,minmax(54px,90px));gap:8px}
-#${ROOT_ID} .mpc-bank-switcher .bank-btn{height:40px;border-radius:7px;font-size:14px;border-color:#9c8656;background:linear-gradient(145deg,#34352e,#111411)}
+#${ROOT_ID} .mpc-bank-switcher .bank-btn{height:40px;border-radius:7px;font-size:14px;border:1px solid #9c8656;background:linear-gradient(145deg,#34352e,#111411)}
 #${ROOT_ID} .mpc-bank-switcher .bank-btn.active{background:linear-gradient(145deg,#e2cb91,#a78b52);color:#171b12;border-color:#f1dda7;box-shadow:0 0 13px rgba(220,190,117,.38)}
 #${ROOT_ID} .mpc-main{display:block;min-height:0;padding:4px 0}
 #${ROOT_ID} .pads-area{width:min(100%,900px);margin:0 auto;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(9px,1.4vw,20px);padding:6px}
 #${ROOT_ID} .pad-wrap{margin-bottom:18px}
 #${ROOT_ID} .pad{border-radius:clamp(10px,1.3vw,18px);border-width:2px;background:linear-gradient(145deg,#4b5148,#171d19 48%,#080b09);box-shadow:0 0 7px rgba(173,230,89,.55),0 9px 22px rgba(0,0,0,.55),inset 0 2px 8px rgba(255,255,255,.18),inset 0 -8px 14px #000}
 #${ROOT_ID} .pad-label{bottom:-18px;font-size:clamp(8px,.8vw,11px);letter-spacing:.035em}
+#${ROOT_ID} .pad.selected{border-color:#e4cf93;box-shadow:0 0 0 2px rgba(226,202,141,.28),0 0 18px rgba(220,190,117,.62),inset 0 0 16px rgba(230,211,160,.22)}
 #${ROOT_ID} .transport{max-width:900px;width:100%;margin:0 auto}
 @media(max-width:680px){
   #${ROOT_ID} .mpc-upper,#${ROOT_ID} .mpc-screen-frame{min-height:280px}
@@ -237,46 +238,19 @@ function makeStyles() {
 `;
 }
 
-function tile(label, svg, active = false, lower = false) {
-  return `<button type="button" class="screen-tile ${active ? "active" : ""} ${lower ? "lower-tile" : ""}" data-placeholder="${esc(label)}">
-    <span class="tile-icon">${svg}</span><span class="tile-label">${esc(label)}</span>
-  </button>`;
-}
-
-function control(main, strip = "", lit = false) {
-  return `<div class="hardware-control"><button type="button" class="hw-button ${lit ? "lit" : ""}" data-placeholder="${esc(main)}">${esc(main)}</button>${strip ? `<span class="label-strip">${esc(strip)}</span>` : ""}</div>`;
-}
-
 function buildMarkup() {
-  const topTiles = [
-    ["FA LOOP", icon.sliders, true], ["R2EG", icon.lines], ["COPY", icon.gamepad],
-    ["RECORD", icon.record], ["SLAPE", icon.window], ["NOTES", icon.keys]
-  ].map(([label, svg, active]) => tile(label, svg, active)).join("");
-
-  const lowerTiles = [
-    ["CONSPER", icon.note], ["LAER / WPM", icon.sliders],
-    ["LOOP / IOPM", icon.apple], ["LEGAN SOWL", icon.compass]
-  ].map(([label, svg]) => tile(label, svg, false, true)).join("");
-
-  const meterTop = ["11", "A6", "GO", "OO", "VO", "647", "GAV"];
-  const meterBottom = ["m", "1", "3", "5", "91", "97", ""];
-  const meterHeights = [38, 68, 48, 83, 57, 94, 63];
-  const meter = meterTop.map((top, i) => `<div class="meter-col">
-    <span class="meter-top">${top}</span><span class="meter-bar" style="--bar:${meterHeights[i]}%"></span>
-    <span class="meter-bottom">${meterBottom[i]}</span></div>`).join("");
-
   const pads = [
     ["PAD 13", true], ["PAD 14", false], ["PAD 15", false], ["PAD 16", false],
     ["PAD 9", true], ["PAD 10", false], ["PAD 11", false], ["PAD 12", false],
-    ["PAD S", true], ["PRO 6", false], ["PAD 7", false], ["PAD 8", false],
+    ["PAD 5", true], ["PAD 6", false], ["PAD 7", false], ["PAD 8", false],
     ["PAD 1", true], ["PAD 2", false], ["PAD 3", false], ["PAD 4", false]
   ].map(([label, red], i) => {
     const padNumbers = [13, 14, 15, 16, 9, 10, 11, 12, 5, 6, 7, 8, 1, 2, 3, 4];
     return `<div class="pad-wrap"><button type="button" class="pad ${red ? "red" : ""}" data-pad="${padNumbers[i]}" aria-label="${label}"></button><span class="pad-label">${label}</span></div>`;
   }).join("");
 
-  const bank = [["A", "A"], ["B", "B"], ["C", "C"], ["D", "D"]]
-    .map(([button, strip]) => `<div class="bank-cell"><button type="button" class="bank-btn" data-placeholder="BANK ${button}">${button}</button><span class="bank-strip">${strip}</span></div>`).join("");
+  const bank = ["A", "B", "C", "D"]
+    .map(button => `<button type="button" class="bank-btn" data-placeholder="BANK ${button}">${button}</button>`).join("");
 
   return `<section class="mpc-unit" role="dialog" aria-modal="true" aria-label="Lambo City MPC">
     <header class="mpc-nameplate">
@@ -703,6 +677,9 @@ const MPCInterface = {
     if (!this.root) return;
     const readout = this.root.querySelector("[data-mpc-selected-readout]");
     const detail = this.root.querySelector("[data-mpc-pad-readout]");
+    for (const pad of this.root.querySelectorAll("[data-pad]")) {
+      pad.classList.toggle("selected", Number(pad.dataset.pad) === this.selectedPad);
+    }
     const sampleId = StudioMPCSampler.getAssignment(this.bank, this.selectedPad);
     const sound = StudioMPCLibrary.getAssignment(this.bank, this.selectedPad);
     if (readout) readout.textContent = "BANK " + this.bank + " · PAD " + String(this.selectedPad).padStart(2, "0");
