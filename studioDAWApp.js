@@ -331,17 +331,25 @@ function createMixPanel({ beatLab, workspace } = {}) {
       compValue.dataset.compLabel = track.id;
       compControl.append(compSlider, compValue);
       inserts.appendChild(compControl);
-      [["delayMix","DELAY MIX"],["reverbMix","REVERB MIX"]].forEach(([key,label]) => {
+      [
+        ["delayMix","DELAY MIX",0,100,1],
+        ["delayTime","DELAY TIME",50,1500,10],
+        ["delayFeedback","FEEDBACK",0,75,1],
+        ["reverbMix","REVERB MIX",0,100,1],
+        ["reverbDecay","REVERB DECAY",300,6000,100]
+      ].forEach(([key,label,min,max,step]) => {
         const control = document.createElement("label");
-        control.style.cssText = "display:grid;grid-template-columns:90px 1fr 36px;gap:8px;align-items:center;margin-top:9px;color:#a8a8b1;font-size:10px";
+        control.style.cssText = "display:grid;grid-template-columns:90px 1fr 42px;gap:8px;align-items:center;margin-top:9px;color:#a8a8b1;font-size:10px";
         const caption = document.createElement("span"); caption.textContent = label;
         const slider = document.createElement("input");
-        slider.type = "range"; slider.min = "0"; slider.max = "100"; slider.step = "1";
-        slider.value = String(Math.round(Number(track.effects?.[key] || 0) * 100));
+        slider.type = "range"; slider.min = String(min); slider.max = String(max); slider.step = String(step);
+        const current = Number(track.effects?.[key] ?? (key === "delayTime" ? 0.28 : key === "delayFeedback" ? 0.25 : key === "reverbDecay" ? 2.2 : 0));
+        slider.value = String(key === "delayTime" || key === "reverbDecay" ? Math.round(current * 1000) : Math.round(current * 100));
         slider.dataset.trackEffect = key; slider.dataset.trackId = track.id;
         slider.style.cssText = "width:100%;accent-color:#e6bb69";
         const value = document.createElement("span"); value.dataset.effectLabel = key + "-" + track.id;
-        value.textContent = slider.value + "%";
+        value.textContent = key === "delayTime" ? Math.round(current * 1000) + " ms" :
+          key === "reverbDecay" ? current.toFixed(1) + " s" : Math.round(current * 100) + "%";
         control.append(caption, slider, value); inserts.appendChild(control);
       });
       row.append(heading, volume, pan, inserts);
@@ -461,10 +469,13 @@ function createMixPanel({ beatLab, workspace } = {}) {
       const track = StudioMultitrackWorkspace.tracks.find(item => item.id === effectSlider.dataset.trackId);
       if (!track) return;
       const key = effectSlider.dataset.trackEffect;
-      track.effects = { ...(track.effects || {}), [key]: Number(effectSlider.value) / 100 };
+      const raw = Number(effectSlider.value);
+      const value = key === "delayTime" || key === "reverbDecay" ? raw / 1000 : raw / 100;
+      track.effects = { ...(track.effects || {}), [key]: value };
       const label = root.querySelector('[data-effect-label="' + key + "-" + track.id + '"]');
-      if (label) label.textContent = effectSlider.value + "%";
-      StudioMultitrackWorkspace.arrangementPlayback?.setTrackEffects(track.id, { [key]: track.effects[key] });
+      if (label) label.textContent = key === "delayTime" ? Math.round(value * 1000) + " ms" :
+        key === "reverbDecay" ? value.toFixed(1) + " s" : Math.round(value * 100) + "%";
+      StudioMultitrackWorkspace.arrangementPlayback?.setTrackEffects(track.id, { [key]: value });
       return;
     }
     const compSlider = event.target.closest("[data-comp-ratio]");
