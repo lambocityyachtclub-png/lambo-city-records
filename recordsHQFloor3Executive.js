@@ -212,370 +212,115 @@ export default {
 
 
     // =========================================================
-    // CENTRAL EXECUTIVE MEETING TABLE
+    // EXECUTIVE CONFERENCE TABLE — SIX SEATS, CLEAR ARRIVAL AISLE
     // =========================================================
+    const meeting = new THREE.Group();
+    meeting.name = "floor3ExecutiveMeetingRoom";
+    meeting.position.set(0, 0, -1.55);
 
-    const meeting =
-      new THREE.Group();
-
-    meeting.name =
-      "floor3ExecutiveMeetingRoom";
-
-
-    // Main table
-
-    box(
-      meeting,
-      new THREE.BoxGeometry(
-        6.4,
-        0.28,
-        1.95
-      ),
-      dark,
-      0,
-      1.0,
-      0.15
-    );
-
-    // Gold table edge
-
-    box(
-      meeting,
-      new THREE.BoxGeometry(
-        6.45,
-        0.06,
-        0.08
-      ),
-      gold,
-      0,
-      1.17,
-      -0.91
-    );
-
-    box(
-      meeting,
-      new THREE.BoxGeometry(
-        7.25,
-        0.06,
-        0.08
-      ),
-      gold,
-      0,
-      1.17,
-      1.21
-    );
-
-
-    // Table pedestal
-
-    box(
-      meeting,
-      new THREE.BoxGeometry(
-        1.2,
-        0.9,
-        1.0
-      ),
-      black,
-      0,
-      0.48,
-      0.15
-    );
-
-
-    // Center table feature
-
-    box(
-      meeting,
-      new THREE.BoxGeometry(
-        2.2,
-        0.05,
-        0.32
-      ),
-      goldGlow,
-      0,
-      1.18,
-      0.15
-    );
-
-
-    // Meeting chairs
+    box(meeting, new THREE.BoxGeometry(6.2, 0.22, 1.75), black, 0, 1.02, 0);
+    box(meeting, new THREE.BoxGeometry(6.12, 0.045, 1.66), dark, 0, 1.15, 0);
+    box(meeting, new THREE.BoxGeometry(6.18, 0.035, 0.045), gold, 0, 1.17, -0.82);
+    box(meeting, new THREE.BoxGeometry(6.18, 0.035, 0.045), gold, 0, 1.17, 0.82);
+    box(meeting, new THREE.BoxGeometry(1.25, 0.82, 1.15), black, 0, 0.52, 0);
+    box(meeting, new THREE.BoxGeometry(2.1, 0.025, 0.16), goldGlow, 0, 1.19, 0);
 
     const chairPositions = [
-      [-3.3, 0.0],
-      [-1.65, 0.0],
-      [1.65, 0.0],
-      [3.3, 0.0],
-      [0.0, -1.7],
-      [0.0, 1.85]
+      [-2.35, 0.28, 0], [-0.78, 0.28, 0],
+      [0.78, 0.28, 0], [2.35, 0.28, 0],
+      [-3.62, -1.48, Math.PI / 2],
+      [3.62, -1.48, -Math.PI / 2]
     ];
-
-    chairPositions.forEach(
-      ([x, z], index) => {
-
-        box(
-          meeting,
-          new THREE.BoxGeometry(
-            1.15,
-            0.62,
-            0.95
-          ),
-          leather,
-          x,
-          0.68,
-          z
-        );
-
-        box(
-          meeting,
-          new THREE.BoxGeometry(
-            1.08,
-            1.0,
-            0.18
-          ),
-          leather,
-          x,
-          1.05,
-          z + (
-            index < 4
-              ? (z > 0 ? 0.32 : -0.32)
-              : 0
-          )
-        );
-
-      }
-    );
-
-
-    label(
-      meeting,
-      "EXECUTIVE MEETING",
-      0,
-      2.9,
-      1.3,
-      5.8
-    );
-
+    chairPositions.forEach(([x, z, rotationY]) => {
+      const chair = new THREE.Group();
+      chair.position.set(x, 0, z);
+      chair.rotation.y = rotationY;
+      box(chair, new THREE.BoxGeometry(0.9, 0.22, 0.82), leather, 0, 0.57, 0);
+      box(chair, new THREE.BoxGeometry(0.88, 0.76, 0.16), leather, 0, 0.98, 0.34);
+      box(chair, new THREE.BoxGeometry(0.10, 0.48, 0.72), black, -0.43, 0.76, 0.02);
+      box(chair, new THREE.BoxGeometry(0.10, 0.48, 0.72), black, 0.43, 0.76, 0.02);
+      box(chair, new THREE.BoxGeometry(0.12, 0.54, 0.12), gold, 0, 0.27, 0);
+      meeting.add(chair);
+    });
     group.add(meeting);
 
 
+        // =========================================================
+    // EXECUTIVE MEDIA WALL — SIX PARTICIPANT CONFERENCE DISPLAY
     // =========================================================
-    // EXECUTIVE PRESENTATION WALL
-    // =========================================================
+    const presentation = new THREE.Group();
+    presentation.name = "floor3PresentationWall";
 
-    const presentation =
-      new THREE.Group();
+    const walnut = material(0x39271e, { roughness: 0.58, metalness: 0.12 });
+    const acoustic = material(0x252832, { roughness: 0.94, metalness: 0.02 });
+    box(presentation, new THREE.BoxGeometry(9.0, 3.9, 0.24), walnut, 0, 2.05, -5.88);
+    box(presentation, new THREE.BoxGeometry(8.15, 3.52, 0.10), acoustic, 0, 2.1, -5.70);
 
-    presentation.name =
-      "floor3PresentationWall";
+    // Brushed-gold perimeter restores the warm LAMBO CITY accent.
+    box(presentation, new THREE.BoxGeometry(8.25, 0.075, 0.08), gold, 0, 3.88, -5.60);
+    box(presentation, new THREE.BoxGeometry(8.25, 0.075, 0.08), gold, 0, 0.32, -5.60);
+    [-4.08, 4.08].forEach(x => box(presentation, new THREE.BoxGeometry(0.075, 3.62, 0.08), gold, x, 2.1, -5.60));
 
+    // The six tiles are visual participant placeholders, not live feeds yet.
+    const displayGlass = new THREE.MeshStandardMaterial({
+      color: 0x080d16, emissive: 0x101b2b, emissiveIntensity: 0.55,
+      roughness: 0.16, metalness: 0.34
+    });
+    box(presentation, new THREE.BoxGeometry(7.72, 3.08, 0.075), displayGlass, 0, 2.12, -5.53);
 
-    // Back wall
+    const tileMats = [0x152534, 0x24202a, 0x1b2a30, 0x25222b, 0x182832, 0x29251f]
+      .map(color => material(color, { roughness: 0.32, metalness: 0.22 }));
+    const tileXs = [-2.55, 0, 2.55];
+    const tileYs = [1.38, 2.83];
+    let tileIndex = 0;
+    tileYs.forEach(y => tileXs.forEach(x => {
+      const tile = new THREE.Group();
+      tile.position.set(x, y, -5.475);
+      box(tile, new THREE.BoxGeometry(2.38, 1.27, 0.035), tileMats[tileIndex], 0, 0, 0);
+      const avatarMat = material([0xb58b67, 0x9bafba, 0xc49a76, 0x8b9a9f, 0xc6a17d, 0xa6a0b6][tileIndex], { roughness: 0.82, metalness: 0.02 });
+      const head = new THREE.Mesh(new THREE.SphereGeometry(0.16, 14, 12), avatarMat);
+      head.position.set(0, 0.12, 0.045);
+      tile.add(head);
+      const shoulders = new THREE.Mesh(new THREE.SphereGeometry(0.31, 14, 10), avatarMat);
+      shoulders.scale.set(1.12, 0.56, 0.5);
+      shoulders.position.set(0, -0.31, 0.035);
+      tile.add(shoulders);
+      const liveDot = new THREE.Mesh(new THREE.CircleGeometry(0.045, 12), new THREE.MeshBasicMaterial({ color: 0x71d6a1 }));
+      liveDot.position.set(-1.02, -0.48, 0.065);
+      tile.add(liveDot);
+      box(tile, new THREE.BoxGeometry(0.52, 0.035, 0.018), gold, 0.62, -0.49, 0.06);
+      presentation.add(tile);
+      tileIndex++;
+    }));
 
-    box(
-      presentation,
-      new THREE.BoxGeometry(
-        7.4,
-        3.6,
-        0.22
-      ),
-      black,
-      0,
-      2.0,
-      -5.85
-    );
+    // Integrated camera/soundbar and under-screen light.
+    box(presentation, new THREE.BoxGeometry(1.05, 0.12, 0.16), black, 0, 0.13, -5.43);
+    box(presentation, new THREE.BoxGeometry(7.6, 0.035, 0.06), goldGlow, 0, 0.18, -5.35);
 
-
-    // Gold wall frame
-
-    box(
-      presentation,
-      new THREE.BoxGeometry(
-        7.0,
-        0.08,
-        0.08
-      ),
-      gold,
-      0,
-      3.65,
-      -5.68
-    );
-
-    box(
-      presentation,
-      new THREE.BoxGeometry(
-        0.08,
-        3.45,
-        0.08
-      ),
-      gold,
-      -3.48,
-      2.0,
-      -5.68
-    );
-
-    box(
-      presentation,
-      new THREE.BoxGeometry(
-        0.08,
-        3.45,
-        0.08
-      ),
-      gold,
-      3.48,
-      2.0,
-      -5.68
-    );
-
-
-    // Main presentation screen
-
-    box(
-      presentation,
-      new THREE.BoxGeometry(
-        5.5,
-        2.25,
-        0.08
-      ),
-      glass,
-      0,
-      2.15,
-      -5.67
-    );
-
-
-    // Screen gold border
-
-    box(
-      presentation,
-      new THREE.BoxGeometry(
-        5.7,
-        0.07,
-        0.06
-      ),
-      goldGlow,
-      0,
-      3.3,
-      -5.61
-    );
-
-    box(
-      presentation,
-      new THREE.BoxGeometry(
-        5.7,
-        0.07,
-        0.06
-      ),
-      goldGlow,
-      0,
-      1.0,
-      -5.61
-    );
-
-
-    label(
-      presentation,
-      "LAMBO CITY RECORDS",
-      0,
-      2.25,
-      -5.55,
-      5.2
-    );
-
-
-    label(
-      presentation,
-      "EXECUTIVE PRESENTATION",
-      0,
-      3.82,
-      -5.55,
-      6.0
-    );
-
+    // Fluted smoked-oak acoustic slats frame the display.
+    for (let i = 0; i < 8; i++) {
+      const offset = 4.55 + i * 0.17;
+      [-1, 1].forEach(side => box(presentation, new THREE.BoxGeometry(0.075, 2.95, 0.12), walnut, side * offset, 2.0, -5.53));
+    }
+    const mediaGlow = new THREE.PointLight(0x8bb8ff, 0.28, 8);
+    mediaGlow.position.set(0, 2.35, -4.35);
+    presentation.add(mediaGlow);
     group.add(presentation);
 
 
+        // =========================================================
+    // PRIVATE BOARDROOM — MOVED OFF THE ELEVATOR ARRIVAL AXIS
     // =========================================================
-    // GLASS EXECUTIVE CONFERENCE ROOM
-    // =========================================================
-
-    const conference =
-      new THREE.Group();
-
-    conference.name =
-      "floor3GlassConferenceRoom";
-
-
-    // Open-plan boardroom: transparent enclosure removed to keep
-    // the route from the elevator into the executive floor clear.
-
-
-    // Conference table
-
-    box(
-      conference,
-      new THREE.BoxGeometry(
-        3.4,
-        0.22,
-        1.35
-      ),
-      dark,
-      -6.0,
-      0.95,
-      0.0
-    );
-
-
-    // Conference table center strip
-
-    box(
-      conference,
-      new THREE.BoxGeometry(
-        2.4,
-        0.04,
-        0.08
-      ),
-      goldGlow,
-      -6.0,
-      1.09,
-      0.0
-    );
-
-
-    // Conference chairs
-
-    [-1.0, 0, 1.0].forEach(
-      z => {
-
-        box(
-          conference,
-          new THREE.BoxGeometry(
-            0.72,
-            0.48,
-            0.65
-          ),
-          leather,
-          -6.0,
-          0.58,
-          z
-        );
-
-      }
-    );
-
-
-    label(
-      conference,
-      "BOARDROOM",
-      -6.0,
-      3.95,
-      1.65,
-      4.0
-    );
-
+    const conference = new THREE.Group();
+    conference.name = "floor3GlassConferenceRoom";
+    conference.position.set(-1.45, 0, 2.2);
+    box(conference, new THREE.BoxGeometry(2.55, 0.20, 1.25), dark, -6.0, 0.95, 0);
+    box(conference, new THREE.BoxGeometry(2.35, 0.035, 0.06), goldGlow, -6.0, 1.08, 0);
+    [-0.95, 0, 0.95].forEach(z => box(conference, new THREE.BoxGeometry(0.72, 0.48, 0.65), leather, -6.0, 0.58, z));
     group.add(conference);
 
 
-    // =========================================================
+        // =========================================================
     // EXECUTIVE LOUNGE
     // =========================================================
 
