@@ -528,11 +528,17 @@ function updateLandingDoors(delta) {
     const amount = floor === landingDoorFloor
       ? landingDoorProgress
       : 0;
+    // HQ-facing doors slide along their own portal axis.
     const left = landing.getObjectByName("doorLeafLeft");
     const right = landing.getObjectByName("doorLeafRight");
+    if (left) left.position.x = -(1.05 + amount * 1.15);
+    if (right) right.position.x = 1.05 + amount * 1.15;
 
-    if (left) left.position.x = -(0.78 + amount * 1.02);
-    if (right) right.position.x = 0.78 + amount * 1.02;
+    // Dock-facing doors use the perpendicular west-side portal.
+    const dockLeft = landing.getObjectByName("doorLeafLeftDock");
+    const dockRight = landing.getObjectByName("doorLeafRightDock");
+    if (dockLeft) dockLeft.position.x = -(0.8125 + amount * 0.98);
+    if (dockRight) dockRight.position.x = 0.8125 + amount * 0.98;
   });
 
   window.__lamboCityElevatorDoorOpen =
@@ -952,27 +958,26 @@ export default {
       player.position.x -
       ELEVATOR_POSITION.x;
 
-
     const dz =
       player.position.z -
       ELEVATOR_POSITION.z;
 
-
     const dist =
-      Math.sqrt(
-        dx * dx +
-        dz * dz
-      );
+      Math.sqrt(dx * dx + dz * dz);
 
+    // The doors begin opening as the character approaches either
+    // portal. The interaction prompt appears only after the player
+    // has crossed the threshold and is physically inside the cabin.
+    const nearElevator =
+      dist <= ACTIVATION_DISTANCE + 1.0;
 
     inRange =
-      dist <=
-      ACTIVATION_DISTANCE;
+      player.position.x >= ELEVATOR_POSITION.x - 1.85 &&
+      player.position.x <= ELEVATOR_POSITION.x + 1.85 &&
+      player.position.z >= ELEVATOR_POSITION.z - 1.55 &&
+      player.position.z <= ELEVATOR_POSITION.z + 1.15;
 
-    // When a passenger approaches the exterior lift, present an
-    // already-open landing. The doors close before vertical travel
-    // and reopen only at the selected destination.
-    if (inRange && !traveling && !pendingLandingPlayer) {
+    if (nearElevator && !traveling && !pendingLandingPlayer) {
       landingDoorFloor = floorNumberFromY(player.position.y);
       landingDoorTarget = 1;
     }
