@@ -98,6 +98,7 @@ export async function renderStudioSessionToWav({
   for (const { track } of decoded) {
     if (channels.has(track.id)) continue;
     const gain = offline.createGain();
+    const automationGain = offline.createGain();
     const low = offline.createBiquadFilter();
     const mid = offline.createBiquadFilter();
     const high = offline.createBiquadFilter();
@@ -115,7 +116,13 @@ export async function renderStudioSessionToWav({
     compressor.knee.value = 18;
     compressor.attack.value = 0.003;
     compressor.release.value = 0.25;
-    gain.connect(low); low.connect(mid); mid.connect(high); high.connect(compressor);
+    gain.connect(automationGain); automationGain.connect(low);
+    low.connect(mid); mid.connect(high); high.connect(compressor);
+    automationGain.gain.setValueAtTime(1, 0);
+    (track.automation?.volume || []).slice().sort((a, b) => a.bar - b.bar).forEach(point => {
+      const time = (Math.max(1, Number(point.bar) || 1) - 1) * secondsPerBar;
+      automationGain.gain.linearRampToValueAtTime(Math.max(0, Math.min(1, Number(point.value) / 100)), time);
+    });
     if (panner) {
       panner.pan.value = Math.max(-1, Math.min(1, Number(track.pan) || 0));
       compressor.connect(panner); panner.connect(master);
