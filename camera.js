@@ -10,6 +10,7 @@
 
 import * as THREE from
   "https://unpkg.com/three@0.160.0/build/three.module.js";
+import Collision from "./collision.js";
 
 let camera = null;
 let scene = null;
@@ -129,6 +130,24 @@ function attachOrbitControls(renderer) {
     if (canvas) canvas.style.cursor = "";
     canvas = null;
   };
+}
+
+function keepCameraOutsideWalls(target, desired, cameraY) {
+  // Sample the camera boom against the same architectural AABB collision
+  // data used by player movement. Stop just before the first wall hit.
+  const offset = desired.clone().sub(target);
+  const samples = 16;
+  let safe = target.clone();
+
+  for (let i = 1; i <= samples; i++) {
+    const candidate = target.clone().addScaledVector(offset, i / samples);
+    if (Collision.isBlocked(candidate.x, candidate.z, 0.24, cameraY)) {
+      break;
+    }
+    safe.copy(candidate);
+  }
+
+  return safe;
 }
 
 function updateExplorationCamera(player, delta, moving, insideHQ) {
