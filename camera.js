@@ -193,8 +193,11 @@ function updateExplorationCamera(player, delta, moving, insideHQ, npcSystem, has
   const closeFraming = insideHQ ||
     (hasMoved && (isNearExistingCharacter(player, npcSystem) ||
       isNearBuilding(player)));
-  const distance = insideHQ ? 6.7 : closeFraming ? FOLLOW_DISTANCE : 15.5;
-  const cameraHeight = insideHQ ? 3.25 : closeFraming ? 3.4 : 7.2;
+  const startupWideView = !insideHQ && !hasMoved && !closeFraming;
+  const distance = insideHQ ? 6.7 :
+    closeFraming ? FOLLOW_DISTANCE : startupWideView ? 17.0 : 15.5;
+  const cameraHeight = insideHQ ? 3.25 :
+    closeFraming ? 3.4 : startupWideView ? 8.0 : 7.2;
 
   const target = new THREE.Vector3(
     player.position.x,
