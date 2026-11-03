@@ -25,7 +25,7 @@ const project = {
       bank: "A",
       soundId: "DEMO-001",
       sampleId: "user-sample-test",
-      sampleSettings: { start: 0.1, end: 0.9, pitch: 1.05946, decay: 0.8 },
+      sampleSettings: { start: 0.1, end: 0.9, pitch: 1.05946, decay: 0.8, volume: 1.2, pan: -0.35 },
       velocity: 0.82,
       at: 0.25,
       sound: {
@@ -50,7 +50,7 @@ const project = {
   }],
   mpcSamplerState: {
     assignments: { "A-1": "user-sample-test" },
-    padSettings: { "A-1": { start: 0.1, end: 0.9, pitch: 1.05946, decay: 0.8 } }
+    padSettings: { "A-1": { start: 0.1, end: 0.9, pitch: 1.05946, decay: 0.8, volume: 1.2, pan: -0.35 } }
   },
   mpcLibraryAssignments: { "A-2": "DEMO-002" }
 };
@@ -59,6 +59,8 @@ const packageText = exportSongProjectPackage(project);
 const imported = importSongProjectPackage(packageText);
 assert.equal(imported.mpcPerformance.events[0].sampleId, "user-sample-test");
 assert.equal(imported.mpcPerformance.events[0].velocity, 0.82);
+assert.equal(imported.mpcPerformance.events[0].sampleSettings.volume, 1.2);
+assert.equal(imported.mpcPerformance.events[0].sampleSettings.pan, -0.35);
 assert.equal(imported.mpcAssets[0].data, "AQIDBA==");
 assert.equal(imported.mpcSamplerState.assignments["A-1"], "user-sample-test");
 assert.equal(imported.mpcLibraryAssignments["A-2"], "DEMO-002");
