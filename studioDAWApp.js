@@ -41,6 +41,11 @@ function createMixPanel({ beatLab, workspace } = {}) {
   ].join("");
 
   const list = root.querySelector("[data-mix-tracks]");
+  const masterSlider = root.querySelector("[data-master-volume]");
+  const masterLabel = root.querySelector("[data-master-label]");
+  const currentMaster = Math.round((StudioAudioEngine.master?.gain?.value ?? 1) * 100);
+  if (masterSlider) masterSlider.value = String(currentMaster);
+  if (masterLabel) masterLabel.textContent = currentMaster + "%";
   const status = message => {
     const node = root.querySelector("[data-mix-status]");
     if (node) node.textContent = message;
@@ -146,6 +151,7 @@ function createMixPanel({ beatLab, workspace } = {}) {
       }
     }
   });
+  root.refresh = renderTracks;
   return root;
 }
 
@@ -387,7 +393,10 @@ const StudioDAWApp = {
         panels: {
           mpc: this.panelHost
         },
-         initialView
+        initialView,
+        onViewChange: viewId => {
+          if (viewId === "mix") this.mixPanel?.refresh?.();
+        }
       });
 
       // Create a bridge to the EXISTING Beat Lab instance.
