@@ -47,6 +47,7 @@ export default {
     // workspace in the shared Studio app. No placeholder panels.
     this.targets = [
       { object: studio.getObjectByName("floor2MPCClickable"), view: "mpc", title: "MPC" },
+      { object: studio.getObjectByName("floor2SongEditorDisplay"), view: "edit", title: "SONG EDITOR DISPLAY" },
       { object: stations.instrumentStation, view: "piano", title: "PIANO" },
       { object: stations.drumStation, view: "drums", title: "DRUMS" },
       { object: stations.vocalBooth, view: "vocals", title: "VOCAL RECORDING" },
