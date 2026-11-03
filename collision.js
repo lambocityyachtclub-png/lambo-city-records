@@ -330,8 +330,8 @@ export default {
 
     [
       // West / dock-facing wall segments.
-      { x: 20.10, z: 12.05, width: 0.12, depth: 0.40 },
-      { x: 20.10, z: 16.25, width: 0.12, depth: 0.40 },
+      { x: 20.10, z: 11.80, width: 0.12, depth: 0.40 },
+      { x: 20.10, z: 16.50, width: 0.12, depth: 0.40 },
       // East / patio-facing wall segments leave a matching wider doorway.
       { x: 25.90, z: 12.05, width: 0.12, depth: 0.40 },
       { x: 25.90, z: 16.25, width: 0.12, depth: 0.40 },
