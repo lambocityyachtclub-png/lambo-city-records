@@ -134,7 +134,7 @@ function onWheel(event) {
   if (mode !== "seated" || !event.deltaX) return;
   event.preventDefault();
   window.__lamboCityFloor2OrbitYaw =
-    (window.__lamboCityFloor2OrbitYaw ?? 0) - event.deltaX * 0.006;
+    (window.__lamboCityFloor2OrbitYaw ?? 0) + event.deltaX * 0.006;
   suppressStationClickUntil = Date.now() + 320;
   publishState();
 }
