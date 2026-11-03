@@ -940,19 +940,23 @@ export default {
 
 
     // --------------------------------------------------------
-    // ELEVATOR
+    // ELEVATOR / FLOOR 3 LANDING THRESHOLD
     // --------------------------------------------------------
+    // The elevator sits just outside the HQ camera bounds. Keep the
+    // passenger in the glass-lift view while the doors open and until
+    // they physically cross the rear portal; never snap back to the
+    // distant world camera during this handoff.
+
+    const floor3LandingPending =
+      window.__lamboCityElevatorLandingFloor === 3 &&
+      player.position.z < 15.8;
 
     if (
-      window.__lamboCityElevatorTraveling
+      window.__lamboCityElevatorTraveling ||
+      floor3LandingPending
     ) {
-
-      updateElevatorCamera(
-        player
-      );
-
+      updateElevatorCamera(player);
       return;
-
     }
 
 
