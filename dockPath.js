@@ -8,16 +8,16 @@ import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 const PATH = {
   startX: 5.25,
   endX: 23.0,
-  centerZ: 17.2,
+  centerZ: 14.15,
   width: 3.6,
   surfaceY: 1.36
 };
 
 const BOLLARDS = [
-  [9.0, 14.85], [9.0, 19.55],
-  [12.0, 14.85], [12.0, 19.55],
-  [15.0, 14.85], [15.0, 19.55],
-  [18.0, 14.85], [18.0, 19.55]
+  [9.0, 11.8], [9.0, 16.5],
+  [12.0, 11.8], [12.0, 16.5],
+  [15.0, 11.8], [15.0, 16.5],
+  [18.0, 11.8], [18.0, 16.5]
 ];
 
 function createMarbleTexture() {
@@ -88,8 +88,8 @@ function openDockRailForPath(scene) {
 
   // Preserve the original dock rail on both sides of a 4.4-unit gap.
   const segments = [
-    { length: 56.0, centerZ: -13.0 },
-    { length: 15.6, centerZ: 27.2 }
+    { length: 52.95, centerZ: -14.525 },
+    { length: 18.65, centerZ: 25.675 }
   ];
 
   segments.forEach((segment, index) => {
