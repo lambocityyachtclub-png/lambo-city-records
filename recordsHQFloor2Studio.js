@@ -377,18 +377,20 @@ export default {
 
     // The primary producer workstation now occupies the former
     // mix-control position: one desk for MPC, mixing and mastering.
-    const beatX = 0;
-    const beatZ = -4.1;
-    const beatAngle = 0;
+    // Left-wall producer cockpit beside the Floor 2 elevator.
+    // The chair faces outward through the stage-side glazing.
+    const beatX = -6.15;
+    const beatZ = -4.25;
+    const beatAngle = -Math.PI / 2;
 
     // Main production desk
 
     box(
       beatLab,
       new THREE.BoxGeometry(
-        1.35,
+        3.75,
         0.18,
-        3.75
+        1.35
       ),
       dark,
       beatX,
@@ -402,14 +404,14 @@ export default {
     box(
       beatLab,
       new THREE.BoxGeometry(
-        0.06,
+        3.8,
         0.05,
-        3.8
+        0.06
       ),
       gold,
-      beatX + 0.62,
+      beatX,
       1.04,
-      beatZ,
+      beatZ - 0.62,
       beatAngle
     );
 
@@ -526,9 +528,9 @@ export default {
       leftSpeaker,
       new THREE.BoxGeometry(0.42, 0.78, 0.62),
       black,
-      0.52,
+      -1.13,
       1.40,
-      -1.13
+      0.52
     );
 
     // Speaker driver faces the seated producer
@@ -547,9 +549,9 @@ export default {
       Math.PI / 2;
 
     leftDriver.position.set(
-      0.75,
+      -0.90,
       1.43,
-      -1.13
+      0.52
     );
 
     leftSpeaker.add(leftDriver);
@@ -568,9 +570,9 @@ export default {
       Math.PI / 2;
 
     leftTweeter.position.set(
-      0.76,
+      -0.89,
       1.68,
-      -1.13
+      0.52
     );
 
     leftSpeaker.add(leftTweeter);
@@ -590,9 +592,9 @@ export default {
       rightSpeaker,
       new THREE.BoxGeometry(0.42, 0.78, 0.62),
       black,
-      0.52,
+      1.43,
       1.40,
-      1.43
+      0.52
     );
 
     const rightDriver = new THREE.Mesh(
@@ -609,9 +611,9 @@ export default {
       Math.PI / 2;
 
     rightDriver.position.set(
-      0.75,
+      1.66,
       1.43,
-      1.43
+      0.52
     );
 
     rightSpeaker.add(rightDriver);
@@ -630,9 +632,9 @@ export default {
       Math.PI / 2;
 
     rightTweeter.position.set(
-      0.76,
+      1.67,
       1.68,
-      1.43
+      0.52
     );
 
     rightSpeaker.add(rightTweeter);
@@ -790,7 +792,10 @@ export default {
       "floor2MPCClickable";
 
     producerCockpit.userData.viewDirection =
-      "toward-production-equipment";
+      "outward-toward-exterior-stage";
+
+    producerCockpit.userData.wallSide =
+      "left-elevator-entry-wall";
 
     producerCockpit.userData.exteriorViewPreserved =
       true;
@@ -1352,7 +1357,7 @@ export default {
     box(
       controlRoom,
       new THREE.BoxGeometry(6.9, 3.7, 0.22),
-      black,
+      glass,
       0,
       2.0,
       -6.55
@@ -1679,7 +1684,7 @@ export default {
     acoustic.name =
       "floor2AcousticTreatment";
 
-    [-4.7, -2.9, -1.0]
+    [1.1, 2.7, 4.3]
       .forEach(
         z => {
 
