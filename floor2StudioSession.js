@@ -29,6 +29,8 @@ let playerSystem = null;
 let renderer = null;
 let mode = "free";
 let arrivalElapsed = 0;
+let arrivalHoldElapsed = 0;
+let arrivalPoseApplied = false;
 let arrivalStart = null;
 let arrivalPlayer = null;
 let pointerId = null;
@@ -224,6 +226,8 @@ export default {
       rotationY: player.rotation.y
     };
     arrivalElapsed = 0;
+    arrivalHoldElapsed = 0;
+    arrivalPoseApplied = false;
     window.__lamboCityFloor2OrbitYaw = 0;
     window.__lamboCityFloor2OrbitPitch = 0.08;
     window.__lamboCityFloor2ArrivalProgress = 0;
@@ -319,8 +323,17 @@ export default {
       arrivalPlayer.rotation.y = travelYaw + yawDelta * smoothTurn;
 
       if (t >= 1) {
-        playerSystem?.setStudioSeatedPose?.(true);
-        setMode("seated");
+        if (!arrivalPoseApplied) {
+          playerSystem?.setStudioSeatedPose?.(true);
+          arrivalPoseApplied = true;
+        }
+
+        // Keep the arrival camera active briefly after reaching the
+        // producer chair, giving the player time to see the full room.
+        arrivalHoldElapsed += delta;
+        if (arrivalHoldElapsed >= 1.8) {
+          setMode("seated");
+        }
       }
     }
 
