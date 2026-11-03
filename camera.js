@@ -177,9 +177,9 @@ function isNearBuilding(player) {
 }
 
 function updateExplorationCamera(player, delta, moving, insideHQ, npcSystem, hasMoved) {
-  const closeFraming = insideHQ ||
-    (hasMoved && (isNearExistingCharacter(player, npcSystem) ||
-      isNearBuilding(player)));
+  // Outdoor docks, boardwalk, and stage keep the original steady wide camera.
+  // Only Records HQ uses the closer exploration framing below.
+  const closeFraming = insideHQ;
 
   // Restore the established dock / boardwalk travel shot from the
   // original camera version: high, wide, steady, and trailing the route.
