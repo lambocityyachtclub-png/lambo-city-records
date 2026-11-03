@@ -60,6 +60,18 @@ function elevatorOwnsInteraction() {
   );
 }
 
+// Floor 1 is the only location where the HERO music video is available.
+// Floors 2 and 3 are well above this height; the margin allows normal
+// player bobbing and the small floor-height differences.
+function isInsideFloor1(player) {
+  return !!(
+    player &&
+    player.position &&
+    Number.isFinite(player.position.y) &&
+    Math.abs(player.position.y - 1.3) <= 4
+  );
+}
+
 // --------------------------------------------------------------
 // DOM
 // --------------------------------------------------------------
@@ -403,7 +415,7 @@ function buildDOM() {
 function openModal() {
 
   // Never open the video from the elevator interaction zone.
-  if (elevatorOwnsInteraction() || window.__lamboCityMerchInRange === true) {
+  if (!inRange || elevatorOwnsInteraction() || window.__lamboCityMerchInRange === true) {
     return;
   }
 
@@ -483,15 +495,17 @@ export default {
     }
 
     // ----------------------------------------------------------
-    // VIDEO ALREADY OPEN
-    // ----------------------------------------------------------
+    // VIDEO MAY ONLY REMAIN OPEN WHILE THE PLAYER IS ON FLOOR 1.
+    // If the player leaves Floor 1, close playback immediately.
+    const onFloor1 = isInsideFloor1(player);
 
     if (modalOpen) {
+      if (!onFloor1) closeModal();
       return;
     }
 
     // ----------------------------------------------------------
-    // HQ DISTANCE
+    // HQ DISTANCE — FLOOR 1 ONLY
     // ----------------------------------------------------------
 
     const dx =
@@ -509,6 +523,7 @@ export default {
       );
 
     inRange =
+      onFloor1 &&
       dist <= ACTIVATION_DISTANCE;
 
     // ----------------------------------------------------------
