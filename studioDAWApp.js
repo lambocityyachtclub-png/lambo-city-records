@@ -568,6 +568,7 @@ const StudioDAWApp = {
         beatLab: Floor2StudioApp
       });
       this.beatLabPanel.onReturn = () => this.workspace?.setView("mpc");
+      this.beatLabPanel.onSwitchToEdit = () => this.workspace?.setView("edit");
       this.beatLabPanel.mount(this.panelHost);
       this.workspace.setPanel("beatlab", this.panelHost);
 
@@ -577,7 +578,8 @@ const StudioDAWApp = {
       // Connect the existing Multitrack Workspace
       // to the modular DAW EDIT tab.
       this.editPanel = createStudioDAWEditPanel({
-        beatLab: Floor2StudioApp
+        beatLab: Floor2StudioApp,
+        onSwitchToBeatLab: () => this.workspace?.setView("beatlab")
       });
 
       const editWorkspace = this.editPanel.mount();
