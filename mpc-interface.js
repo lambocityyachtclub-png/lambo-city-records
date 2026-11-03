@@ -294,7 +294,7 @@ function buildMarkup() {
             <p class="mpc-help">Quantize tightens recorded pad hits to the song grid. Swing delays alternating subdivisions for a more human pocket. Hold a pad to repeat it at the selected rate.</p>
           </section>
           <section class="mpc-screen-panel" data-mpc-panel="SAMPLE">
-            <div class="mpc-panel-heading">SAMPLE EDITOR <small>ADVANCED</small></div>
+            <div class="mpc-panel-heading">PAD & SAMPLE EDITOR <small>ADVANCED</small></div>
             <label class="mpc-field">IMPORT AUDIO SAMPLE
               <input type="file" data-mpc-import accept="audio/*,.wav,.aif,.aiff,.mp3,.ogg,.m4a" multiple>
             </label>
@@ -324,7 +324,7 @@ function buildMarkup() {
             <label class="mpc-field">DECAY <output data-mpc-decay-value>FULL</output>
               <input type="range" min="5" max="100" value="100" data-mpc-decay>
             </label>
-            <p class="mpc-help" data-mpc-editor-status>Trim and tune the selected sample, then assign it to the selected pad.</p>
+            <p class="mpc-help" data-mpc-editor-status>PAD TUNE works on every MPC sound. START / END trim the imported sample assigned to this pad.</p>
           </section>
           <section class="mpc-screen-panel" data-mpc-panel="MIX">
             <div class="mpc-panel-heading">OUTPUT & PERFORMANCE <small>ADVANCED</small></div>
@@ -792,7 +792,6 @@ const MPCInterface = {
     if (!select) return;
     const assignedSample = StudioMPCSampler.getAssignment(this.bank, this.selectedPad);
     if (assignedSample && Array.from(select.options).some(option => option.value === assignedSample)) select.value = assignedSample;
-    if (!select.value) return;
     const settings = StudioMPCSampler.getPadSettings(this.bank, this.selectedPad);
     const start = this.root.querySelector("[data-mpc-start]");
     const end = this.root.querySelector("[data-mpc-end]");
@@ -803,7 +802,19 @@ const MPCInterface = {
     if (pitch) pitch.value = String(Math.round(12 * Math.log2(settings.pitch || 1)));
     if (decay) decay.value = String(Math.round((settings.decay ?? 10) >= 10 ? 100 : (settings.decay / 10) * 100));
     this.saveSampleEditorSettings(false);
-    await this.renderSampleWaveform(select.value);
+    if (select.value) {
+      await this.renderSampleWaveform(select.value);
+    } else {
+      const canvas = this.root.querySelector("[data-mpc-waveform]");
+      const ctx = canvas?.getContext("2d");
+      if (ctx) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "#10170d";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+      const status = this.root.querySelector("[data-mpc-editor-status]");
+      if (status) status.textContent = "PAD TUNE READY · PITCH AND DECAY APPLY TO THE SELECTED PAD SOUND.";
+    }
   },
 
   refreshPadMixControls() {
