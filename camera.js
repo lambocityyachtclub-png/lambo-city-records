@@ -580,14 +580,16 @@ function updateStudioSessionCamera(player, smooth = 0.22) {
 
   const cameraX = player.position.x + Math.sin(yaw) * radius;
   const cameraZ = player.position.z + Math.cos(yaw) * radius;
-  const cameraY = player.position.y + 2.45 + pitch * 3.2;
+  const cameraY = player.position.y + 3.75 + pitch * 2.0;
 
   moveCamera(cameraX, cameraY, cameraZ, smooth);
 
+  // Aim slightly forward over the producer's shoulder so the
+  // workstation remains visible in the initial seated viewpoint.
   camera.lookAt(
     player.position.x,
-    player.position.y + 1.55 + pitch * 0.65,
-    player.position.z
+    player.position.y + 1.7 + pitch * 0.45,
+    player.position.z + 1.15
   );
 }
 
