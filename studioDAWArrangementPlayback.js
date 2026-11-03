@@ -7,6 +7,8 @@
  * Supports live gain, pan, mute, and solo changes.
  */
 
+import StudioVocalEffects from "./studioVocalEffects.js";
+
 export function createStudioDAWArrangementPlayback({
   getAudioContext,
   getOutput,
@@ -42,7 +44,7 @@ export function createStudioDAWArrangementPlayback({
     },
 
     disposeChannels() {
-      this.trackChannels.forEach(({ gain, automationGain, low, mid, high, compressor, panner }) => {
+      this.trackChannels.forEach(({ gain, automationGain, low, mid, high, compressor, panner, effects }) => {
         try { gain.disconnect(); } catch {}
         try { automationGain.disconnect(); } catch {}
         try { low.disconnect(); } catch {}
@@ -50,6 +52,7 @@ export function createStudioDAWArrangementPlayback({
         try { high.disconnect(); } catch {}
         try { compressor.disconnect(); } catch {}
         try { panner?.disconnect(); } catch {}
+        try { effects?.destroy(); } catch {}
       });
       this.trackChannels.clear();
       this.activeTracks = [];
@@ -92,13 +95,15 @@ export function createStudioDAWArrangementPlayback({
       low.connect(mid);
       mid.connect(high);
       high.connect(compressor);
+      const trackEffects = StudioVocalEffects.create(context);
+      compressor.connect(trackEffects.input);
       if (panner) {
-        compressor.connect(panner);
+        trackEffects.output.connect(panner);
         panner.connect(output);
       } else {
-        compressor.connect(output);
+        trackEffects.output.connect(output);
       }
-      const channel = { gain, automationGain, low, mid, high, compressor, panner, track };
+      const channel = { gain, automationGain, low, mid, high, compressor, panner, effects: trackEffects, track };
       this.trackChannels.set(track.id, channel);
       this.applyTrackState(track);
       return channel;
@@ -125,6 +130,12 @@ export function createStudioDAWArrangementPlayback({
       const compression = track.compression || {};
       channel.compressor.threshold.setTargetAtTime(Math.max(-48, Math.min(0, Number(compression.threshold ?? -18))), now, 0.02);
       channel.compressor.ratio.setTargetAtTime(Math.max(1, Math.min(8, Number(compression.ratio ?? 1))), now, 0.02);
+      const effects = track.effects || {};
+      channel.effects.setDelayTime(effects.delayTime ?? 0.28);
+      channel.effects.setDelayFeedback(effects.delayFeedback ?? 0.25);
+      channel.effects.setDelayMix(effects.delayMix ?? 0);
+      channel.effects.setReverbMix(effects.reverbMix ?? 0);
+      if (effects.reverbDecay !== undefined) channel.effects.setReverbDecay(effects.reverbDecay);
     },
 
     syncTrackState(tracks = this.activeTracks) {
@@ -157,6 +168,13 @@ export function createStudioDAWArrangementPlayback({
       const track = this.activeTracks.find(item => item.id === trackId);
       if (!track) return;
       track.compression = { ...(track.compression || {}), ratio: Math.max(1, Math.min(8, Number(ratio) || 1)) };
+      this.applyTrackState(track);
+    },
+
+    setTrackEffects(trackId, values = {}) {
+      const track = this.activeTracks.find(item => item.id === trackId);
+      if (!track) return;
+      track.effects = { ...(track.effects || {}), ...values };
       this.applyTrackState(track);
     },
 
