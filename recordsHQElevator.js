@@ -22,10 +22,10 @@ const ACTIVATION_DISTANCE =
 // Keep Floor 2's established ride timing untouched for the Studio.
 // Other destinations use a quicker transfer and faster landing-door response.
 const TRAVEL_TIME_BY_FLOOR = {
-  1: 1.9,
+  1: 1.35,
   2: 2.8,
-  3: 1.9,
-  4: 1.9
+  3: 1.35,
+  4: 1.35
 };
 
 
@@ -523,7 +523,7 @@ function selectFloor(
 
 function updateLandingDoors(delta) {
   const difference = landingDoorTarget - landingDoorProgress;
-  const doorResponse = landingDoorFloor === 2 ? 8 : 14;
+  const doorResponse = landingDoorFloor === 2 ? 8 : 20;
   landingDoorProgress += difference * Math.min(1, delta * doorResponse);
 
   if (Math.abs(landingDoorTarget - landingDoorProgress) < 0.008) {
