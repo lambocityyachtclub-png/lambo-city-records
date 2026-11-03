@@ -760,7 +760,7 @@ function updateFloor3POVCamera(player, delta = 0.016) {
     floor3POVBlend = 0;
   }
 
-  floor3POVBlend = Math.min(1, floor3POVBlend + delta / 0.32);
+  floor3POVBlend = Math.min(1, floor3POVBlend + delta / 0.12);
   if (floor3POVBlend < 1) {
     const blend = floor3POVBlend * floor3POVBlend * (3 - 2 * floor3POVBlend);
     camera.position.lerp(targetPosition, blend);
