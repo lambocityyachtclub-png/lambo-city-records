@@ -1119,15 +1119,53 @@ export default {
 
     );
 
+    // The patio sits outside the rear/east corner of Records HQ,
+    // beside the exterior elevator landing and dock approach.
     loungeFloor.position.set(
-
-      HQ_POSITION.x + 14,
+      HQ_POSITION.x + 15,
       .08,
-      HQ_POSITION.z + 8
-
+      HQ_POSITION.z - 7.85
     );
 
     group.add(loungeFloor);
+
+    // Dedicated stone walk connects the patio terrace to its elevator
+    // portal. It stays outside the building and leaves the dock route clear.
+    const patioWalk = new THREE.Mesh(
+      new THREE.BoxGeometry(12.8, .12, 3.8),
+      new THREE.MeshStandardMaterial({
+        color: 0x29292e,
+        roughness: .42,
+        metalness: .22
+      })
+    );
+    patioWalk.position.set(
+      HQ_POSITION.x + 9.15,
+      .12,
+      HQ_POSITION.z - 7.85
+    );
+    group.add(patioWalk);
+
+    const patioWalkGold = new THREE.MeshStandardMaterial({
+      color: 0xffd700,
+      emissive: 0xffb000,
+      emissiveIntensity: .65,
+      metalness: .72,
+      roughness: .3
+    });
+
+    [-1.82, 1.82].forEach(offset => {
+      const inlay = new THREE.Mesh(
+        new THREE.BoxGeometry(12.6, .035, .055),
+        patioWalkGold
+      );
+      inlay.position.set(
+        HQ_POSITION.x + 9.15,
+        .205,
+        HQ_POSITION.z - 7.85 + offset
+      );
+      group.add(inlay);
+    });
 
 
     const seatMat = new THREE.MeshStandardMaterial({
@@ -1161,11 +1199,11 @@ export default {
 
       seat.position.set(
 
-        HQ_POSITION.x + 14 + pos[0],
+        HQ_POSITION.x + 15 + pos[0],
 
         .45,
 
-        HQ_POSITION.z + 8 + pos[1]
+        HQ_POSITION.z - 7.85 + pos[1]
 
       );
 
@@ -1199,9 +1237,9 @@ export default {
 
     table.position.set(
 
-      HQ_POSITION.x + 14,
+      HQ_POSITION.x + 15,
       .7,
-      HQ_POSITION.z + 8
+      HQ_POSITION.z - 7.85
 
     );
 
