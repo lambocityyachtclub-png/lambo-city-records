@@ -98,48 +98,25 @@ export default {
     const green = standard(0x244532, 0.82, 0.02);
     const pot = standard(0x11131a, 0.26, 0.68);
 
-    // Presentation suite: slim illuminated side pilasters and wall inlays.
-    [-5.55, 5.55].forEach(x => {
-      addBox(group, new THREE.BoxGeometry(0.16, 2.8, 0.16), black, x, 2.0, -5.72);
-      addBox(group, new THREE.BoxGeometry(0.045, 2.45, 0.05), brassGlow, x, 2.0, -5.61);
-      addBox(group, new THREE.BoxGeometry(0.42, 0.055, 0.08), brass, x, 3.48, -5.61);
-      addBox(group, new THREE.BoxGeometry(0.42, 0.055, 0.08), brass, x, 0.54, -5.61);
-    });
+    // The rear elevator landing is kept free of decorative pilasters.
+    // The front conference display now carries the room's focal point.
 
     // The extra lounge side table, reading lamp and lava lamp were
     // removed to keep the lounge perimeter quiet and uncluttered.
 
     // Executive office: keyboard, document folio and pen cup.
-    addBox(group, new THREE.BoxGeometry(1.12, 0.055, 0.32), dark, 5.0, 1.105, 4.35);
-    addBox(group, new THREE.BoxGeometry(0.82, 0.035, 0.42), standard(0x282a32, 0.72, 0.12), 5.0, 1.105, 3.25);
-    addBox(group, new THREE.BoxGeometry(0.34, 0.045, 0.24), brass, 6.22, 1.12, 3.88);
+    addBox(group, new THREE.BoxGeometry(1.12, 0.055, 0.32), dark, 7.0, 1.105, -4.15);
+    addBox(group, new THREE.BoxGeometry(0.82, 0.035, 0.42), standard(0x282a32, 0.72, 0.12), 7.0, 1.105, -5.25);
+    addBox(group, new THREE.BoxGeometry(0.34, 0.045, 0.24), brass, 8.22, 1.12, -4.62);
     const pen = new THREE.Mesh(
       new THREE.CylinderGeometry(0.018, 0.018, 0.38, 8),
       brassGlow
     );
     pen.rotation.z = Math.PI / 2;
-    pen.position.set(6.2, 1.19, 3.88);
+    pen.position.set(8.2, 1.19, -4.62);
     group.add(pen);
 
-    // A single sculptural amber lava lamp adds a restrained lounge signature.
-    const lavaBase = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.22, 0.22, 18), black);
-    lavaBase.position.set(7.95, 0.12, -3.45);
-    group.add(lavaBase);
-    const lavaGlass = new THREE.MeshStandardMaterial({
-      color: 0x351b20, emissive: 0x4a1015, emissiveIntensity: 0.32,
-      transparent: true, opacity: 0.72, roughness: 0.16, metalness: 0.18
-    });
-    const lavaBody = new THREE.Mesh(new THREE.SphereGeometry(0.19, 16, 14), lavaGlass);
-    lavaBody.scale.set(0.78, 1.8, 0.78);
-    lavaBody.position.set(7.95, 0.55, -3.45);
-    group.add(lavaBody);
-    const lavaCore = new THREE.MeshStandardMaterial({ color: 0xff9b42, emissive: 0xff4b12, emissiveIntensity: 1.1, roughness: 0.28 });
-    const lavaBlob = new THREE.Mesh(new THREE.SphereGeometry(0.105, 12, 10), lavaCore);
-    lavaBlob.position.set(7.95, 0.58, -3.45);
-    group.add(lavaBlob);
-    const lavaLight = new THREE.PointLight(0xff7438, 0.22, 2.8);
-    lavaLight.position.set(7.95, 0.7, -3.45);
-    group.add(lavaLight);
+    // No additional freestanding lounge ornament is needed.
 
     // Private-room planting: contained within the existing room footprints.
     addPlant(group, -8.05, 3.45, pot, green);
