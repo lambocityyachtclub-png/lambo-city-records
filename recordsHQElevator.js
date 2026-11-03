@@ -711,7 +711,9 @@ function finishTravel(
   menuOpen = false;
 
   // Keep the passenger safely inside the lift while the destination
-  // landing doors perform their opening animation.
+  // landing doors perform their opening animation. Floor 3 retains the
+  // elevator camera until the passenger clears the rear portal.
+  window.__lamboCityElevatorLandingFloor = selectedFloor === 3 ? 3 : 0;
   landingDoorFloor = selectedFloor === 4 ? 3 : selectedFloor;
   landingDoorProgress = 0;
   landingDoorTarget = 1;
@@ -880,6 +882,15 @@ export default {
 
 
     currentPlayer = player;
+
+    // Release the Floor 3 landing-camera hold only after HERO has
+    // physically crossed the rear elevator portal into the HQ.
+    if (
+      window.__lamboCityElevatorLandingFloor === 3 &&
+      player.position.z >= 15.8
+    ) {
+      window.__lamboCityElevatorLandingFloor = 0;
+    }
 
     updateLandingDoors(delta);
 
