@@ -93,24 +93,24 @@ const StudioRecordingEngine = {
   takes: [],
   playback: null,
 
-  async startTrackRecording({ audio, trackId, vocalEffects } = {}) {
+  async startTrackRecording({ audio, trackId, vocalEffects, inputNode } = {}) {
     if (this.activeTake || this.activeTrackTake) {
       throw new Error("Another studio recording is already in progress.");
     }
     if (!audio || audio.state !== "running") throw new Error("Start the studio audio before recording.");
     if (!trackId) throw new Error("Choose and arm an audio track before recording.");
-    if (!navigator.mediaDevices?.getUserMedia) {
+    if (!inputNode && !navigator.mediaDevices?.getUserMedia) {
       throw new Error("Microphone access is unavailable. Open LAMBO CITY over HTTPS.");
     }
-    const microphoneStream = await navigator.mediaDevices.getUserMedia({
+    const microphoneStream = inputNode ? null : await navigator.mediaDevices.getUserMedia({
       audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
     });
     let microphoneSource;
     let destination;
     try {
-      microphoneSource = audio.createMediaStreamSource(microphoneStream);
+      microphoneSource = inputNode || audio.createMediaStreamSource(microphoneStream);
       destination = audio.createMediaStreamDestination();
-      if (vocalEffects) {
+      if (vocalEffects && !inputNode) {
         if (!vocalEffects.input || !vocalEffects.output) {
           throw new Error("The vocal effects audio connection is incomplete.");
         }
@@ -128,16 +128,17 @@ const StudioRecordingEngine = {
         startedAtMs: Date.now(),
         microphoneStream,
         microphoneSource,
+        inputNode: Boolean(inputNode),
         destination,
         vocalEffects,
         recorder
       };
       return { id: this.activeTrackTake.id, trackId, startedAt: this.activeTrackTake.startedAt };
     } catch (error) {
-      try { microphoneSource?.disconnect(); } catch {}
+      try { microphoneSource?.disconnect(destination); } catch {}
       try { if (vocalEffects) vocalEffects.output.disconnect(destination); } catch {}
       try { destination?.disconnect(); } catch {}
-      microphoneStream.getTracks().forEach(track => track.stop());
+      microphoneStream?.getTracks().forEach(track => track.stop());
       throw error;
     }
   },
@@ -157,7 +158,7 @@ const StudioRecordingEngine = {
         blob
       };
     } finally {
-      try { take.microphoneSource.disconnect(); } catch {}
+      try { take.microphoneSource.disconnect(take.destination); } catch {}
       try { if (take.vocalEffects) take.vocalEffects.output.disconnect(take.destination); } catch {}
       try { take.destination.disconnect(); } catch {}
       take.microphoneStream.getTracks().forEach(track => track.stop());
