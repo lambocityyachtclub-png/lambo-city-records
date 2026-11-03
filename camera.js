@@ -847,9 +847,7 @@ export default {
 
     cinTime += delta;
 
-    // The active camera mode selects the lens below.
-    // Do not reset the POV field of view every frame.
-    player.visible = true;
+    // The active camera mode selects the lens and avatar visibility below.
 
     // --------------------------------------------------------
     // DETECT BUILDING ENTRY / EXIT
@@ -861,6 +859,8 @@ export default {
     const currentHQFloor = insideHQ
       ? getHQFloor(player.position.y)
       : 0;
+
+    player.visible = currentHQFloor !== 3;
 
     const targetFov = currentHQFloor === 3 ? 72 : 68;
     if (camera.fov !== targetFov) {
