@@ -70,6 +70,11 @@ function setMode(nextMode) {
   publishState();
   if (mode !== "free") lockInput();
 
+  const joystick = document.getElementById("lambo-city-joystick");
+  const mobileButtons = document.getElementById("lambo-city-mobile-buttons");
+  if (joystick) joystick.style.display = mode === "free" ? "" : "none";
+  if (mobileButtons) mobileButtons.style.display = mode === "free" ? "" : "none";
+
   if (renderer?.domElement) {
     if (mode === "seated" || mode === "instrument" || mode === "arrival") {
       renderer.domElement.style.touchAction = "none";
@@ -147,7 +152,6 @@ function attachOrbitControls() {
 
   const canvas = renderer.domElement;
   previousTouchAction = canvas.style.touchAction || "";
-  canvas.style.touchAction = "none";
   canvas.addEventListener("pointerdown", onPointerDown);
   canvas.addEventListener("pointermove", onPointerMove, { passive: false });
   canvas.addEventListener("pointerup", onPointerUp);
