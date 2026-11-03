@@ -886,7 +886,9 @@ const MPCInterface = {
   },
 
   async startNoteRepeat(padNumber, velocity) {
-    this.stopNoteRepeat();
+    if (this.noteRepeatTimer !== null) window.clearInterval(this.noteRepeatTimer);
+    this.noteRepeatTimer = null;
+    this.noteRepeatNextAt = 0;
     try {
       const audio = await this.getAudioContext();
       if (!this.noteRepeat || !this.noteRepeatPointerActive || !this.root) return;
