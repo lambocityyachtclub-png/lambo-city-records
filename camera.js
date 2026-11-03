@@ -19,6 +19,7 @@ let resizeHandler = null;
 let pointerState = null;
 let cameraYaw = 0;
 let cameraPitch = 0.18;
+let cinTime = 0;
 let lastOrbitInputAt = 0;
 let initialized = false;
 let currentMode = "world";
@@ -176,10 +177,33 @@ function isNearBuilding(player) {
 }
 
 function updateExplorationCamera(player, delta, moving, insideHQ, npcSystem, hasMoved) {
-  const now = performance.now();
+  const closeFraming = insideHQ ||
+    (hasMoved && (isNearExistingCharacter(player, npcSystem) ||
+      isNearBuilding(player)));
 
-  // When the player walks for a while, gently settle behind their
-  // travel direction. Manual orbit remains independent and takes priority.
+  // Restore the established dock / boardwalk travel shot from the
+  // original camera version: high, wide, steady, and trailing the route.
+  // This avoids the newer orbit-follow behavior changing the travel angle.
+  if (!closeFraming) {
+    const drift = Math.sin(cinTime * 0.25) * 1.2;
+    const desired = new THREE.Vector3(
+      player.position.x + drift,
+      player.position.y + 13,
+      player.position.z + 22
+    );
+    const smooth = 0.07;
+    camera.position.x += (desired.x - camera.position.x) * smooth;
+    camera.position.y += (desired.y - camera.position.y) * smooth;
+    camera.position.z += (desired.z - camera.position.z) * smooth;
+    camera.lookAt(
+      player.position.x,
+      player.position.y + 2,
+      player.position.z - 5
+    );
+    return;
+  }
+
+  const now = performance.now();
   if (moving && now - lastOrbitInputAt > 1500) {
     cameraYaw = dampAngle(
       cameraYaw,
@@ -188,14 +212,8 @@ function updateExplorationCamera(player, delta, moving, insideHQ, npcSystem, has
     );
   }
 
-  // Start with a high, wide marina view. Once the player begins exploring,
-  // return to the familiar closer framing near existing characters/buildings.
-  const closeFraming = insideHQ ||
-    (hasMoved && (isNearExistingCharacter(player, npcSystem) ||
-      isNearBuilding(player)));
-  const distance = insideHQ ? 6.7 : closeFraming ? FOLLOW_DISTANCE : 15.5;
-  const cameraHeight = insideHQ ? 3.25 : closeFraming ? 3.4 : 7.2;
-
+  const distance = insideHQ ? 6.7 : FOLLOW_DISTANCE;
+  const cameraHeight = insideHQ ? 3.25 : 3.4;
   const target = new THREE.Vector3(
     player.position.x,
     player.position.y + LOOK_HEIGHT,
@@ -209,16 +227,15 @@ function updateExplorationCamera(player, delta, moving, insideHQ, npcSystem, has
     target.z + Math.cos(cameraYaw) * horizontal
   );
 
-  const t = dampFactor(delta, closeFraming ? FOLLOW_RESPONSE : 2.8);
-  camera.position.lerp(desired, t);
+  camera.position.lerp(
+    desired,
+    dampFactor(delta, FOLLOW_RESPONSE)
+  );
 
-  // Keep the marina/stage in the forward composition while wide;
-  // restore the existing look-ahead when near a person or building.
-  const lookAhead = closeFraming ? 8.0 : 13.5;
   const lookTarget = target.clone().add(new THREE.Vector3(
-    Math.sin(player.rotation.y) * lookAhead,
+    Math.sin(player.rotation.y) * 8.0,
     0,
-    Math.cos(player.rotation.y) * lookAhead
+    Math.cos(player.rotation.y) * 8.0
   ));
   camera.lookAt(lookTarget);
 }
@@ -353,6 +370,7 @@ export default {
     if (!player || !camera) return;
 
     scene = context.scene || scene;
+    cinTime += delta;
     attachOrbitControls(context.renderer);
 
     const insideHQ = isInsideHQ(player);
