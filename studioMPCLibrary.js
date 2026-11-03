@@ -264,7 +264,7 @@ const StudioMPCLibrary = {
   state: null,
   bus: null,
   audio: null,
-  masterLevel: 0.76,
+  masterLevel: 0.82,
 
   open() {
     const state = readState();
@@ -363,7 +363,8 @@ const StudioMPCLibrary = {
       this.audio = audio;
       this.bus = createBus(audio);
     }
-    return playSound(audio, sound, time, this.bus, velocity);
+    this.bus.input.gain.value = this.masterLevel;
+    return playSound(audio, sound, time, this.bus, velocity, padSettings);
   },
 
   loadTake(projectId = "unsaved") {
