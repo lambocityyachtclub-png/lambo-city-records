@@ -1283,7 +1283,7 @@ StudioSoundKit.play(
     }
   },
 
-  saveSongProject() {
+  async saveSongProject() {
   const title = window.prompt("Name this song project:");
 
   if (title === null) return;
@@ -1302,7 +1302,9 @@ StudioSoundKit.play(
       soundProfile: this.soundProfile
     });
 
+    StudioMultitrackWorkspace.setTempo(this.pattern.bpm);
     saveSongProject(project);
+    await StudioMultitrackWorkspace.saveSession(project.id);
 
     // Make the newly saved project active.
     this.currentProject = project;
@@ -1345,7 +1347,7 @@ StudioSoundKit.play(
     }
   },
 
-  loadSongProject() {
+  async loadSongProject() {
   try {
     const projects = listSongProjects();
 
@@ -1391,10 +1393,14 @@ StudioSoundKit.play(
       return;
     }
 
-    // Restore the active project and its beat.
+    // Restore the active project and its saved DAW session.
     this.currentProject = project;
+    const restoredSession = await StudioMultitrackWorkspace.loadSession(project.id);
+    if (!restoredSession) {
+      StudioMultitrackWorkspace.resetSession({ tempo: project.settings?.bpm || savedPattern.bpm });
+    }
     this.pattern = normalizePattern(savedPattern);
-    StudioMultitrackWorkspace.setTempo(this.pattern.bpm);
+    this.pattern.bpm = StudioMultitrackWorkspace.tempo;
     this.soundProfile =
       project.settings?.soundProfile === "mpc"
         ? "mpc"
@@ -1499,6 +1505,11 @@ StudioSoundKit.play(
       if (!project) {
         this.status("The selected song project could not be loaded.");
         return;
+      }
+
+      const restoredSession = await StudioMultitrackWorkspace.loadSession(selectedProject.id);
+      if (!restoredSession && this.currentProject?.id !== selectedProject.id) {
+        StudioMultitrackWorkspace.resetSession({ tempo: project.settings?.bpm || 100 });
       }
 
       const mpcSamplerState = StudioMPCSampler.exportState();
@@ -1610,6 +1621,8 @@ StudioSoundKit.play(
           if (project.dawSession) {
             StudioMultitrackWorkspace.importSession(project.dawSession);
             delete project.dawSession;
+          } else {
+            StudioMultitrackWorkspace.resetSession({ tempo: project.settings?.bpm || 100 });
           }
           delete project.mpcAssets;
           delete project.mpcSamplerState;
@@ -1617,6 +1630,7 @@ StudioSoundKit.play(
           delete project.mpcLibrarySounds;
 
           saveSongProject(project);
+          await StudioMultitrackWorkspace.saveSession(project.id);
 
           this.currentProject = project;
 
@@ -1629,7 +1643,7 @@ StudioSoundKit.play(
 
           if (firstPattern) {
             this.pattern = normalizePattern(firstPattern);
-          StudioMultitrackWorkspace.setTempo(this.pattern.bpm);
+            this.pattern.bpm = StudioMultitrackWorkspace.tempo;
             const bpmInput = this.ui?.querySelector("[data-bpm]");
             const bpmLabel = this.ui?.querySelector("[data-bpm-label]");
             const soundSelect =
