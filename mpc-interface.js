@@ -305,7 +305,7 @@ function buildMarkup() {
               <button type="button" data-mpc-preview>PREVIEW</button>
               <button type="button" data-mpc-apply-sample>ASSIGN TO SELECTED PAD</button>
               <button type="button" data-mpc-delete-sample>DELETE SAMPLE</button>
-              <button type="button" data-mpc-unassign>UNASSIGN PAD</button>
+              <button type="button" data-mpc-unassign>UNASSIGN PAD SOUND</button>
             </div>
             <label class="mpc-field">EVEN SLICES
               <select data-mpc-slices><option value="4">4 SLICES</option><option value="8" selected>8 SLICES</option><option value="16">16 SLICES</option></select>
@@ -741,6 +741,7 @@ const MPCInterface = {
     const select = this.root?.querySelector(fromEditor ? "[data-mpc-editor-sample]" : "[data-mpc-sample-select]");
     if (!select?.value) return;
     StudioMPCSampler.assign(this.bank, this.selectedPad, select.value);
+    StudioMPCLibrary.unassign(this.bank, this.selectedPad);
     this.saveSampleEditorSettings();
     const sample = select.selectedOptions[0]?.textContent || "SAMPLE";
     const label = this.root.querySelector('.pad-wrap [data-pad="' + this.selectedPad + '"] + .pad-label');
@@ -940,6 +941,7 @@ const MPCInterface = {
       const start = settings.start + (settings.end - settings.start) * index / count;
       const end = settings.start + (settings.end - settings.start) * (index + 1) / count;
       StudioMPCSampler.assign(this.bank, pad, id);
+      StudioMPCLibrary.unassign(this.bank, pad);
       StudioMPCSampler.setPadSettings(this.bank, pad, {
         start, end, pitch: settings.pitch || 1, decay: settings.decay || 10
       });
@@ -951,6 +953,7 @@ const MPCInterface = {
 
   unassignSelectedPad() {
     StudioMPCSampler.unassign(this.bank, this.selectedPad);
+    StudioMPCLibrary.unassign(this.bank, this.selectedPad);
     this.refreshLibraryUI();
     const status = this.root?.querySelector("[data-mpc-editor-status]");
     if (status) status.textContent = "IMPORTED SAMPLE REMOVED FROM BANK " + this.bank + " PAD " + this.selectedPad;
