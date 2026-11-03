@@ -61,9 +61,9 @@ export default {
     const station = new THREE.Group();
     station.name = "floor2DrumStation";
 
-    // Positioned along the room's right side, near the piano.
+    // Behind and to the right of the seated producer.
     // Coordinates are relative to the existing studio group.
-    station.position.set(2.5, 0, 2.25);
+    station.position.set(1.9, 0, -4.65);
 
     const addCylinder = (
       name,
