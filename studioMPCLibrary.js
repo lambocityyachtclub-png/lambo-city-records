@@ -15,8 +15,16 @@ const FAMILIES = [
 ];
 const TONES = ["DUST", "ROUND", "HARD", "DEEP", "TIGHT", "WARM", "DARK", "BRIGHT", "DIRTY", "CLEAN"];
 const STYLE_TAGS = [
-  "BOOM BAP", "WEST COAST", "SOUL CHOP", "JAZZ ROOM", "808 LOW END",
-  "MINIMAL BOUNCE", "DUSTY DRUMS", "CINEMATIC", "FUNK POCKET", "MODERN HIP-HOP"
+  "BOOM BAP", "WEST COAST FUNK POCKET", "SOUL CHOP SWING", "JAZZ ROOM", "HARD 808 LOW END",
+  "MINIMAL MELODIC BOUNCE", "SYNCOPATED PERCUSSION", "CINEMATIC SOUL DRUMS", "LIVE-BAND HIP-HOP", "POLYRHYTHMIC TEXTURES"
+];
+const PRODUCER_APPROACHES = [
+  "Dr. Dre — controlled low end and West Coast funk",
+  "Pharrell Williams — minimal bounce and negative space",
+  "Timbaland — syncopated percussion and rhythmic texture",
+  "J Dilla — swung sample-chop feel",
+  "Just Blaze — cinematic soul and hard drums",
+  "1500 or Nothin — live-band musicality"
 ];
 const BANKS = ["A", "B", "C", "D"];
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
@@ -40,6 +48,7 @@ function makeSound(index, locked = false) {
     name: `${tone} ${family[0]} ${serial}`,
     family: family[1],
     style,
+    influence: PRODUCER_APPROACHES[index % PRODUCER_APPROACHES.length],
     tone,
     seed: index + (locked ? 1000 : 0),
     frequency: 38 + ((index * 17) % 420),
