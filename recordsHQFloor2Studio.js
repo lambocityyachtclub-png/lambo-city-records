@@ -1147,37 +1147,49 @@ export default {
     // are removed so they do not compete with the main desk.
 
     // Panoramic three-bay glazing faces the exterior stage and water.
-    box(
-      controlRoom,
-      new THREE.BoxGeometry(16.6, 3.55, 0.16),
-      windowGlass,
-      0,
-      2.05,
-      -6.88
-    );
+    // A 2.6-unit open portal aligns with the elevator exit path.
+    // This prevents the character from walking through the window wall.
+    [
+      { x: -6.775, width: 3.05 },
+      { x: 2.825, width: 10.95 }
+    ].forEach(({ x, width }) => {
+      box(
+        controlRoom,
+        new THREE.BoxGeometry(width, 3.55, 0.16),
+        windowGlass,
+        x,
+        2.05,
+        -6.88
+      );
+      box(
+        controlRoom,
+        new THREE.BoxGeometry(width, 0.075, 0.20),
+        gold,
+        x,
+        3.86,
+        -6.82
+      );
+      box(
+        controlRoom,
+        new THREE.BoxGeometry(width, 0.075, 0.20),
+        gold,
+        x,
+        0.28,
+        -6.82
+      );
+    });
 
-    [-8.25, 8.25].forEach(x => {
-      box(controlRoom, new THREE.BoxGeometry(0.12, 3.72, 0.16), gold, x, 2.05, -6.82);
+    // Exterior glazing mullions and gold jambs around the open entry.
+    [-8.25, -5.25, -2.65, 0, 5.5, 8.25].forEach(x => {
+      box(
+        controlRoom,
+        new THREE.BoxGeometry(0.12, 3.72, 0.16),
+        gold,
+        x,
+        2.05,
+        -6.82
+      );
     });
-    [-5.5, 0, 5.5].forEach(x => {
-      box(controlRoom, new THREE.BoxGeometry(0.075, 3.5, 0.12), gold, x, 2.05, -6.78);
-    });
-    box(
-      controlRoom,
-      new THREE.BoxGeometry(16.7, 0.075, 0.20),
-      gold,
-      0,
-      3.86,
-      -6.82
-    );
-    box(
-      controlRoom,
-      new THREE.BoxGeometry(16.7, 0.075, 0.20),
-      gold,
-      0,
-      0.28,
-      -6.82
-    );
 
     label(
       controlRoom,
