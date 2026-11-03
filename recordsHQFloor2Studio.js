@@ -355,44 +355,221 @@ export default {
       );
     });
 
-    // MPC is a distinct selectable surface on the left side of this desk.
+    // Signature LAMBO CITY MPC hardware.
+    // Keep this as one selectable object, but give it the same visual
+    // language as the full-screen MPC: gold nameplate, olive display,
+    // illuminated 4x4 pads, bank keys, transport and rotary controls.
+    // The interface module itself is intentionally not modified.
     const mpcClickable = new THREE.Group();
     mpcClickable.name = "floor2MPCClickable";
     mpcClickable.userData.studioStation = "beatLab";
-    mpcClickable.position.set(beatX - 1.25, 0, beatZ);
+    mpcClickable.userData.mpcHardware = true;
+    mpcClickable.position.set(beatX - 0.9, 0, beatZ);
+
+    const mpcPadGreen = material(0x9bdc36, {
+      roughness: 0.28,
+      metalness: 0.22,
+      emissive: 0x4d9415,
+      emissiveIntensity: 0.72
+    });
+    const mpcPadRed = material(0xff695d, {
+      roughness: 0.3,
+      metalness: 0.18,
+      emissive: 0x9d211b,
+      emissiveIntensity: 0.55
+    });
+    const mpcDisplay = new THREE.MeshStandardMaterial({
+      color: 0x536b2a,
+      emissive: 0x253b0d,
+      emissiveIntensity: 0.55,
+      roughness: 0.2,
+      metalness: 0.08
+    });
+    const mpcTrim = material(0x777b69, {
+      roughness: 0.24,
+      metalness: 0.82
+    });
+
+    // Wide, low-profile chassis sized as a hero instrument on the desk.
     box(
       mpcClickable,
-      new THREE.BoxGeometry(1.05, 0.12, 1.08),
+      new THREE.BoxGeometry(2.05, 0.16, 1.43),
       black,
       0,
-      1.105,
-      0.02
+      1.15,
+      0
+    );
+    box(
+      mpcClickable,
+      new THREE.BoxGeometry(2.00, 0.035, 1.38),
+      dark,
+      0,
+      1.245,
+      0
     );
 
+    // Metallic perimeter rails and corner fasteners.
+    box(mpcClickable, new THREE.BoxGeometry(1.94, 0.025, 0.025), mpcTrim, 0, 1.268, -0.665);
+    box(mpcClickable, new THREE.BoxGeometry(1.94, 0.025, 0.025), mpcTrim, 0, 1.268, 0.665);
+    box(mpcClickable, new THREE.BoxGeometry(0.025, 0.025, 1.30), mpcTrim, -0.96, 1.268, 0);
+    box(mpcClickable, new THREE.BoxGeometry(0.025, 0.025, 1.30), mpcTrim, 0.96, 1.268, 0);
+    [-0.88, 0.88].forEach(x => {
+      [-0.57, 0.57].forEach(z => {
+        cylinder(
+          mpcClickable,
+          new THREE.CylinderGeometry(0.025, 0.025, 0.012, 12),
+          gold,
+          x,
+          1.282,
+          z
+        );
+      });
+    });
+
+    // Four-by-four performance pad bank — the visual centerpiece.
     for (let row = 0; row < 4; row++) {
       for (let col = 0; col < 4; col++) {
+        const x = -0.72 + col * 0.245;
+        const z = -0.36 + row * 0.245;
         box(
           mpcClickable,
-          new THREE.BoxGeometry(0.17, 0.045, 0.17),
-          goldGlow,
-          -0.31 + col * 0.205,
-          1.19,
-          -0.29 + row * 0.205
+          new THREE.BoxGeometry(0.215, 0.055, 0.215),
+          black,
+          x,
+          1.292,
+          z
+        );
+        box(
+          mpcClickable,
+          new THREE.BoxGeometry(0.178, 0.035, 0.178),
+          (row === 0 && col === 3) || (row === 3 && col === 0)
+            ? mpcPadRed
+            : mpcPadGreen,
+          x,
+          1.337,
+          z
         );
       }
     }
 
-    // Small vintage-style transport / encoder strip beside the pads.
-    [-0.34, -0.10, 0.14, 0.38].forEach((x, index) => {
-      cylinder(
+    // Compact olive-green status display with a gold surround.
+    box(
+      mpcClickable,
+      new THREE.BoxGeometry(0.67, 0.035, 0.43),
+      gold,
+      0.59,
+      1.285,
+      -0.405
+    );
+    box(
+      mpcClickable,
+      new THREE.BoxGeometry(0.61, 0.018, 0.37),
+      mpcDisplay,
+      0.59,
+      1.311,
+      -0.405
+    );
+    // Fine display lines and level meter give the screen readable detail.
+    [-0.52, -0.43, -0.34].forEach((z, index) => {
+      box(
         mpcClickable,
-        new THREE.CylinderGeometry(0.055, 0.055, 0.055, 14),
-        index === 0 ? goldGlow : dark,
-        x,
-        1.19,
-        0.48
+        new THREE.BoxGeometry(index === 1 ? 0.36 : 0.45, 0.008, 0.012),
+        mpcPadGreen,
+        0.52,
+        1.323,
+        z
       );
     });
+    [-0.5, -0.4, -0.3, -0.2].forEach((z, index) => {
+      box(
+        mpcClickable,
+        new THREE.BoxGeometry(0.035, 0.012, 0.045 + index * 0.018),
+        mpcPadGreen,
+        0.83,
+        1.326,
+        z
+      );
+    });
+
+    // Bank A–D selection keys.
+    ["A", "B", "C", "D"].forEach((bank, index) => {
+      const x = 0.31 + index * 0.205;
+      box(
+        mpcClickable,
+        new THREE.BoxGeometry(0.16, 0.045, 0.105),
+        index === 0 ? goldGlow : dark,
+        x,
+        1.295,
+        0.045
+      );
+      box(
+        mpcClickable,
+        new THREE.BoxGeometry(0.11, 0.008, 0.012),
+        gold,
+        x,
+        1.321,
+        0.045
+      );
+    });
+
+    // Three tactile rotary encoders beside the display.
+    [-0.13, 0.12, 0.37].forEach((z, index) => {
+      cylinder(
+        mpcClickable,
+        new THREE.CylinderGeometry(0.075, 0.085, 0.075, 20),
+        index === 0 ? gold : mpcTrim,
+        0.78,
+        1.305,
+        z
+      );
+      cylinder(
+        mpcClickable,
+        new THREE.CylinderGeometry(0.012, 0.012, 0.012, 10),
+        black,
+        0.78,
+        1.35,
+        z - 0.035
+      );
+    });
+
+    // Essential transport keys remain visible on the physical surface.
+    [-0.48, -0.22, 0.04, 0.30].forEach((x, index) => {
+      box(
+        mpcClickable,
+        new THREE.BoxGeometry(0.19, 0.045, 0.12),
+        index === 1 ? mpcPadRed : dark,
+        x,
+        1.295,
+        0.57
+      );
+      box(
+        mpcClickable,
+        new THREE.BoxGeometry(0.11, 0.009, 0.012),
+        index === 1 ? mpcPadRed : goldGlow,
+        x,
+        1.322,
+        0.57
+      );
+    });
+
+    // LAMBO CITY gold identity plate across the front lip.
+    box(
+      mpcClickable,
+      new THREE.BoxGeometry(0.78, 0.045, 0.075),
+      gold,
+      -0.53,
+      1.285,
+      0.685
+    );
+    box(
+      mpcClickable,
+      new THREE.BoxGeometry(0.70, 0.012, 0.012),
+      black,
+      -0.53,
+      1.311,
+      0.685
+    );
+
     beatLab.add(mpcClickable);
 
     // Main control-room cockpit: speakers, display and centered producer chair.
