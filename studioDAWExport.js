@@ -121,7 +121,9 @@ export async function renderStudioSessionToWav({
     automationGain.gain.setValueAtTime(1, 0);
     (track.automation?.volume || []).slice().sort((a, b) => a.bar - b.bar).forEach(point => {
       const time = (Math.max(1, Number(point.bar) || 1) - 1) * secondsPerBar;
-      automationGain.gain.linearRampToValueAtTime(Math.max(0, Math.min(1, Number(point.value) / 100)), time);
+      const value = Math.max(0, Math.min(1, Number(point.value) / 100));
+      if (time <= 0.001) automationGain.gain.setValueAtTime(value, 0);
+      else automationGain.gain.linearRampToValueAtTime(value, time);
     });
     if (panner) {
       panner.pan.value = Math.max(-1, Math.min(1, Number(track.pan) || 0));
