@@ -537,14 +537,14 @@ function updateLandingDoors(delta) {
     // Dock-facing doors use the perpendicular west-side portal.
     const dockLeft = landing.getObjectByName("doorLeafLeftDock");
     const dockRight = landing.getObjectByName("doorLeafRightDock");
-    if (dockLeft) dockLeft.position.x = -(0.8125 + amount * 0.98);
-    if (dockRight) dockRight.position.x = 0.8125 + amount * 0.98;
+    if (dockLeft) dockLeft.position.x = -(1.075 + amount * 1.075);
+    if (dockRight) dockRight.position.x = 1.075 + amount * 1.075;
 
-    // Patio-facing doors slide along the east-side portal axis.
+    // Patio-facing doors slide fully clear of the passenger opening.
     const patioLeft = landing.getObjectByName("doorLeafLeftPatio");
     const patioRight = landing.getObjectByName("doorLeafRightPatio");
-    if (patioLeft) patioLeft.position.x = -(0.8125 + amount * 0.98);
-    if (patioRight) patioRight.position.x = 0.8125 + amount * 0.98;
+    if (patioLeft) patioLeft.position.x = -(0.95 + amount * 0.95);
+    if (patioRight) patioRight.position.x = 0.95 + amount * 0.95;
   });
 
   window.__lamboCityElevatorDoorOpen =
