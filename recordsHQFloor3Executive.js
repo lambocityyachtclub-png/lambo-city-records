@@ -197,39 +197,16 @@ export default {
       });
 
 
-    // =========================================================
-    // FLOOR 3 ARRIVAL / IDENTITY
-    // =========================================================
-
-    label(
-      group,
-      "MEETINGS + EXECUTIVE",
-      0,
-      3.85,
-      6.65,
-      8.2
-    );
-
-    box(
-      group,
-      new THREE.BoxGeometry(
-        5.8,
-        0.04,
-        0.07
-      ),
-      goldGlow,
-      0,
-      0.12,
-      5.95
-    );
-
+    // The former floating arrival label and floor marker were removed.
+    // The rear elevator landing opens into an uninterrupted circulation aisle.
 
     // =========================================================
+    // EXECUTIVE CONFERENCE TABLE    // =========================================================
     // EXECUTIVE CONFERENCE TABLE — SIX SEATS, CLEAR ARRIVAL AISLE
     // =========================================================
     const meeting = new THREE.Group();
     meeting.name = "floor3ExecutiveMeetingRoom";
-    meeting.position.set(0.9, 0, -1.55);
+    meeting.position.set(1.2, 0, 0.4);
 
     box(meeting, new THREE.BoxGeometry(6.2, 0.22, 1.75), black, 0, 1.02, 0);
     box(meeting, new THREE.BoxGeometry(6.12, 0.045, 1.66), dark, 0, 1.15, 0);
@@ -261,6 +238,9 @@ export default {
     // =========================================================
     const presentation = new THREE.Group();
     presentation.name = "floor3PresentationWall";
+    // Mount the conference display on the front wall, facing the room.
+    // The rear elevator aisle remains completely open.
+    presentation.rotation.y = Math.PI;
 
     const walnut = material(0x39271e, { roughness: 0.58, metalness: 0.12 });
     const acoustic = material(0x252832, { roughness: 0.94, metalness: 0.02 });
@@ -461,6 +441,7 @@ export default {
 
     office.name =
       "floor3ExecutiveOffice";
+    office.position.set(2.0, 0, -8.5);
 
 
     // Desk
@@ -568,80 +549,8 @@ export default {
     group.add(office);
 
 
-    // =========================================================
-    // EXECUTIVE BRANDING WALL
-    // =========================================================
-
-    const branding =
-      new THREE.Group();
-
-    branding.name =
-      "floor3BrandingWall";
-
-
-    box(
-      branding,
-      new THREE.BoxGeometry(
-        4.8,
-        2.8,
-        0.16
-      ),
-      black,
-      -2.0,
-      2.0,
-      5.75
-    );
-
-
-    box(
-      branding,
-      new THREE.BoxGeometry(
-        4.5,
-        0.08,
-        0.08
-      ),
-      gold,
-      -2.0,
-      3.35,
-      5.62
-    );
-
-
-    box(
-      branding,
-      new THREE.BoxGeometry(
-        4.5,
-        0.08,
-        0.08
-      ),
-      gold,
-      -2.0,
-      0.65,
-      5.62
-    );
-
-
-    label(
-      branding,
-      "LAMBO CITY",
-      -2.0,
-      2.2,
-      5.62,
-      4.0
-    );
-
-
-    label(
-      branding,
-      "RECORDS",
-      -2.0,
-      1.25,
-      5.62,
-      3.4
-    );
-
-    group.add(branding);
-
+    // The separate interior branding wall was removed. The permanent
+    // LAMBO CITY RECORDS identity remains on the exterior crown.
 
     // =========================================================
     // OPEN CENTRAL CIRCULATION
