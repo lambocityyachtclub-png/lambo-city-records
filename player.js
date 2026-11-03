@@ -494,6 +494,16 @@ export default {
 
     }
 
+    // Floor 3 uses reversed A/D strafe mapping only.
+    const onFloor3 =
+      player.position.y >= 16.2 &&
+      player.position.y < 23.8;
+
+    if (onFloor3) {
+      if (input.keys?.a) dx = 1;
+      if (input.keys?.d) dx = -1;
+    }
+
     /*
       Joystick follows the same
       world-relative movement.
