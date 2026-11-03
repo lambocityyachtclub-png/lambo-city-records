@@ -106,20 +106,14 @@ export default {
       addBox(group, new THREE.BoxGeometry(0.42, 0.055, 0.08), brass, x, 0.54, -5.61);
     });
 
-    // Boardroom: discreet table microphones and a shared conference speaker.
-    addBox(group, new THREE.BoxGeometry(0.9, 0.075, 0.28), black, -6, 1.12, -0.42);
+    // Boardroom microphone rail follows the relocated side table.
+    addBox(group, new THREE.BoxGeometry(0.9, 0.075, 0.28), black, -7.45, 1.12, 1.78);
     [-0.82, 0, 0.82].forEach(z => {
-      const stem = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.025, 0.035, 0.22, 10),
-        brass
-      );
-      stem.position.set(-6, 1.22, z);
+      const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.035, 0.22, 10), brass);
+      stem.position.set(-7.45, 1.22, z + 2.2);
       group.add(stem);
-      const head = new THREE.Mesh(
-        new THREE.SphereGeometry(0.065, 10, 8),
-        dark
-      );
-      head.position.set(-6, 1.34, z);
+      const head = new THREE.Mesh(new THREE.SphereGeometry(0.065, 10, 8), dark);
+      head.position.set(-7.45, 1.34, z + 2.2);
       group.add(head);
     });
 
@@ -159,6 +153,26 @@ export default {
     pen.rotation.z = Math.PI / 2;
     pen.position.set(6.2, 1.19, 3.88);
     group.add(pen);
+
+    // A single sculptural amber lava lamp adds a restrained lounge signature.
+    const lavaBase = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.22, 0.22, 18), black);
+    lavaBase.position.set(7.95, 0.12, -3.45);
+    group.add(lavaBase);
+    const lavaGlass = new THREE.MeshStandardMaterial({
+      color: 0x351b20, emissive: 0x4a1015, emissiveIntensity: 0.32,
+      transparent: true, opacity: 0.72, roughness: 0.16, metalness: 0.18
+    });
+    const lavaBody = new THREE.Mesh(new THREE.SphereGeometry(0.19, 16, 14), lavaGlass);
+    lavaBody.scale.set(0.78, 1.8, 0.78);
+    lavaBody.position.set(7.95, 0.55, -3.45);
+    group.add(lavaBody);
+    const lavaCore = new THREE.MeshStandardMaterial({ color: 0xff9b42, emissive: 0xff4b12, emissiveIntensity: 1.1, roughness: 0.28 });
+    const lavaBlob = new THREE.Mesh(new THREE.SphereGeometry(0.105, 12, 10), lavaCore);
+    lavaBlob.position.set(7.95, 0.58, -3.45);
+    group.add(lavaBlob);
+    const lavaLight = new THREE.PointLight(0xff7438, 0.22, 2.8);
+    lavaLight.position.set(7.95, 0.7, -3.45);
+    group.add(lavaLight);
 
     // Private-room planting: contained within the existing room footprints.
     addPlant(group, -8.05, 3.45, pot, green);
