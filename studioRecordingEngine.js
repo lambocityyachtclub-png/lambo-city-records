@@ -135,7 +135,10 @@ const StudioRecordingEngine = {
       };
       return { id: this.activeTrackTake.id, trackId, startedAt: this.activeTrackTake.startedAt };
     } catch (error) {
-      try { microphoneSource?.disconnect(destination); } catch {}
+      try {
+        if (vocalEffects && !inputNode) microphoneSource?.disconnect(vocalEffects.input);
+        else microphoneSource?.disconnect(destination);
+      } catch {}
       try { if (vocalEffects) vocalEffects.output.disconnect(destination); } catch {}
       try { destination?.disconnect(); } catch {}
       microphoneStream?.getTracks().forEach(track => track.stop());
@@ -158,10 +161,13 @@ const StudioRecordingEngine = {
         blob
       };
     } finally {
-      try { take.microphoneSource.disconnect(take.destination); } catch {}
+      try {
+        if (take.vocalEffects && !take.inputNode) take.microphoneSource.disconnect(take.vocalEffects.input);
+        else take.microphoneSource.disconnect(take.destination);
+      } catch {}
       try { if (take.vocalEffects) take.vocalEffects.output.disconnect(take.destination); } catch {}
       try { take.destination.disconnect(); } catch {}
-      take.microphoneStream.getTracks().forEach(track => track.stop());
+      take.microphoneStream?.getTracks().forEach(track => track.stop());
     }
   },
 
