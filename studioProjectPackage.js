@@ -249,6 +249,8 @@ function validateProject(project) {
     }
   }
 
+  let totalPortableAudioChars = 0;
+
   if (project.dawSession !== undefined) {
     requireObject(project.dawSession, "DAW session data is invalid.");
     const session = project.dawSession;
@@ -287,8 +289,9 @@ function validateProject(project) {
         }
         clipIds.add(clip.id);
         totalAudioBytes += Math.floor(clip.data.length * 3 / 4);
-        if (totalAudioBytes > 48000000) {
-          throw new Error("DAW session audio exceeds the 48 MB portable limit.");
+        totalPortableAudioChars += clip.data.length;
+        if (totalAudioBytes > 30000000 || totalPortableAudioChars > 54000000) {
+          throw new Error("DAW session audio exceeds the portable project size limit.");
         }
       }
     }
@@ -343,7 +346,10 @@ function validateProject(project) {
       if (assetIds.has(asset.id)) throw new Error("Duplicate MPC sample asset.");
       assetIds.add(asset.id);
       encodedBytes += asset.data.length;
-      if (encodedBytes > 54000000) throw new Error("MPC sample assets exceed the portable project limit.");
+      totalPortableAudioChars += asset.data.length;
+      if (encodedBytes > 54000000 || totalPortableAudioChars > 54000000) {
+        throw new Error("Combined DAW and MPC audio assets exceed the portable project limit.");
+      }
     }
     for (const event of project.mpcPerformance?.events || []) {
       if (event.sampleId && !assetIds.has(event.sampleId)) {
