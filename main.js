@@ -48,6 +48,7 @@ import Floor2StudioNavigation from "./floor2StudioNavigation.js";
 import Floor2StudioSession from "./floor2StudioSession.js";
 import RecordsHQFloor3Executive from "./recordsHQFloor3Executive.js";
 import RecordsHQFloor3Experience from "./recordsHQFloor3Experience.js";
+import RecordsHQFloor3Details from "./recordsHQFloor3Details.js";
 import RecordsHQRooftopVIP from "./recordsHQRooftopVIP.js";
 import RecordsHQEntranceThreshold from "./recordsHQEntranceThreshold.js";
 import RecordsHQMediaDetails from "./recordsHQMediaDetails.js";
@@ -110,6 +111,7 @@ engine.registerSystems({
   input: Input,
   player: Player,
   recordsHQFloor3Experience: RecordsHQFloor3Experience,
+  recordsHQFloor3Details: RecordsHQFloor3Details,
   elevator: Elevator,
   hud: HUD,
 });
