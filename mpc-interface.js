@@ -431,6 +431,8 @@ const MPCInterface = {
   playbackTimer: null,
   playbackStartedAt: 0,
   playbackIndex: 0,
+  quantize: "1/16",
+  swing: 0,
 
   open(options = {}) {
     if (this.root?.isConnected) return this.root;
@@ -441,6 +443,8 @@ const MPCInterface = {
     this.bank = "A";
     this.selectedPad = 1;
     this.recording = false;
+    this.quantize = "1/16";
+    this.swing = 0;
     this.take = this.beatLab?.currentProject?.mpcPerformance || StudioMPCLibrary.loadTake(this.beatLab?.currentProject?.id || "unsaved");
     this.library = StudioMPCLibrary.open();
 
@@ -457,6 +461,52 @@ const MPCInterface = {
 
     root.addEventListener("change", event => {
       if (event.target.matches("[data-mpc-import]")) void this.importSamples(event.target.files);
+      if (event.target.matches("[data-mpc-editor-sample]")) void this.refreshSampleEditor();
+      if (event.target.matches("[data-mpc-quantize]")) this.quantize = event.target.value;
+      if (event.target.matches("[data-mpc-swing]")) {
+        this.swing = Number(event.target.value) || 0;
+        const out = root.querySelector("[data-mpc-swing-value]");
+        if (out) out.textContent = this.swing + "%";
+      }
+      if (event.target.matches("[data-mpc-start],[data-mpc-end],[data-mpc-pitch],[data-mpc-decay]")) this.saveSampleEditorSettings();
+      if (event.target.matches("[data-mpc-master]")) {
+        const value = Number(event.target.value) || 0;
+        StudioAudioEngine.setMasterVolume(value / 100);
+        const out = root.querySelector("[data-mpc-master-value]");
+        if (out) out.textContent = value + "%";
+      }
+    });
+
+    root.addEventListener("input", event => {
+      const target = event.target;
+      const map = {
+        "[data-mpc-start]": "[data-mpc-start-value]",
+        "[data-mpc-end]": "[data-mpc-end-value]"
+      };
+      for (const [selector, output] of Object.entries(map)) {
+        if (target.matches(selector)) {
+          const node = root.querySelector(output);
+          if (node) node.textContent = target.value + "%";
+        }
+      }
+      if (target.matches("[data-mpc-pitch]")) {
+        const out = root.querySelector("[data-mpc-pitch-value]");
+        if (out) out.textContent = (Number(target.value) > 0 ? "+" : "") + target.value + " st";
+      }
+      if (target.matches("[data-mpc-decay]")) {
+        const out = root.querySelector("[data-mpc-decay-value]");
+        if (out) out.textContent = Number(target.value) >= 100 ? "FULL" : target.value + "%";
+      }
+    });
+
+    root.addEventListener("pointerdown", event => {
+      const pad = event.target.closest("[data-pad]");
+      if (!pad || event.button > 0) return;
+      pad.dataset.pointerHandled = "1";
+      const pressure = Number(event.pressure);
+      const velocity = pressure > 0 ? 0.35 + Math.min(1, pressure) * 1.15 : 0.9;
+      pad.classList.add("flash");
+      void this.handlePad(Number(pad.dataset.pad), velocity);
     });
 
     root.addEventListener("click", event => {
@@ -468,12 +518,28 @@ const MPCInterface = {
 
       const pad = event.target.closest("[data-pad]");
       if (pad) {
+        if (pad.dataset.pointerHandled === "1") { delete pad.dataset.pointerHandled; return; }
         pad.classList.remove("flash");
         void pad.offsetWidth;
         pad.classList.add("flash");
-        void this.handlePad(Number(pad.dataset.pad));
+        void this.handlePad(Number(pad.dataset.pad), 0.9);
         return;
       }
+
+      const tab = event.target.closest("[data-mpc-tab]");
+      if (tab) { this.showScreen(tab.dataset.mpcTab); return; }
+
+      const screenAction = event.target.closest("[data-mpc-screen-action]");
+      if (screenAction) {
+        const action = screenAction.dataset.mpcScreenAction;
+        if (["record","overdub","stop","play"].includes(action)) { void this.handleAction(action); return; }
+        this.showScreen(action === "timing" ? "SEQ" : action.toUpperCase());
+        return;
+      }
+      if (event.target.closest("[data-mpc-preview]")) { void this.previewImportedSample(); return; }
+      if (event.target.closest("[data-mpc-apply-sample]")) { this.assignImportedSample(true); return; }
+      if (event.target.closest("[data-mpc-browser-preview]")) { this.previewBrowserSound(); return; }
+      if (event.target.closest("[data-mpc-browser-assign]")) { this.assignBrowserSound(); return; }
 
       if (event.target.closest("[data-mpc-assign]")) { this.assignSelectedSound(); return; }
       if (event.target.closest("[data-mpc-unlock]")) { this.unlockLibrary(); return; }
@@ -505,14 +571,16 @@ const MPCInterface = {
     this.root = root;
     this.refreshLibraryUI();
     void this.refreshImportedSamples();
+    this.showScreen("MAIN");
     this.setStatus(this.library.total + " SOUNDS READY · +" + this.library.added + " NEW SOUNDS ADDED THIS VISIT");
     root.querySelector("[data-mpc-close]")?.focus({ preventScroll: true });
     return root;
   },
 
-  async handlePad(padNumber) {
+  async handlePad(padNumber, velocity = 0.9) {
     if (!this.root) return;
     this.selectedPad = padNumber;
+    this.updatePadReadout();
     const importedSampleId = StudioMPCSampler.getAssignment(this.bank, padNumber);
     const sound = StudioMPCLibrary.getAssignment(this.bank, padNumber);
     const select = this.root.querySelector("[data-mpc-sound-select]");
@@ -522,8 +590,15 @@ const MPCInterface = {
     try {
       const audio = await StudioAudioEngine.resume();
       this.beatLab.audio = audio;
-      if (importedSampleId) await StudioMPCSampler.play(importedSampleId, audio);
-      else StudioMPCLibrary.play(audio, sound, audio.currentTime);
+      const sampleSettings = StudioMPCSampler.getPadSettings(this.bank, padNumber);
+      if (importedSampleId) {
+        await StudioMPCSampler.play(importedSampleId, audio, {
+          ...sampleSettings,
+          pitch: sampleSettings.pitch || 1,
+          velocity,
+          when: audio.currentTime
+        });
+      } else StudioMPCLibrary.play(audio, sound, audio.currentTime);
       if (this.recording) {
         const at = Math.max(0, audio.currentTime - this.recordingStartedAt + this.overdubOffset);
         this.take.events.push({
@@ -531,7 +606,9 @@ const MPCInterface = {
           bank: this.bank,
           soundId: sound.id,
           sampleId: importedSampleId || null,
-          at,
+          sampleSettings: importedSampleId ? sampleSettings : null,
+          velocity,
+          at: this.quantizeTime(at),
           sound: {
             id: sound.id, name: sound.name, family: sound.family, style: sound.style,
             influence: sound.influence, seed: sound.seed, frequency: sound.frequency,
@@ -563,20 +640,121 @@ const MPCInterface = {
     const select = this.root.querySelector("[data-mpc-sample-select]");
     if (!select) return;
     const samples = await StudioMPCSampler.list();
-    select.innerHTML = samples.length
+    this.sampleNames = Object.fromEntries(samples.map(sample => [sample.id, sample.name]));
+    const options = samples.length
       ? samples.map(sample => '<option value="' + esc(sample.id) + '">' + esc(sample.name) + '</option>').join("")
       : '<option value="">IMPORT AUDIO TO BEGIN</option>';
+    select.innerHTML = options;
+    const editor = this.root.querySelector("[data-mpc-editor-sample]");
+    if (editor) editor.innerHTML = '<option value="">Choose an imported sample</option>' + (samples.length ? samples.map(sample => '<option value="' + esc(sample.id) + '">' + esc(sample.name) + '</option>').join("") : "");
+    const browser = this.root.querySelector("[data-mpc-browser-sound]");
+    if (browser) browser.innerHTML = StudioMPCLibrary.getSounds().map(sound => '<option value="' + esc(sound.id) + '">' + esc(sound.name) + ' · ' + esc(sound.family.toUpperCase()) + '</option>').join("");
+    this.refreshLibraryUI();
   },
 
-  assignImportedSample() {
-    const select = this.root?.querySelector("[data-mpc-sample-select]");
+  assignImportedSample(fromEditor = false) {
+    const select = this.root?.querySelector(fromEditor ? "[data-mpc-editor-sample]" : "[data-mpc-sample-select]");
     if (!select?.value) return;
     StudioMPCSampler.assign(this.bank, this.selectedPad, select.value);
+    this.saveSampleEditorSettings();
     const sample = select.selectedOptions[0]?.textContent || "SAMPLE";
     const label = this.root.querySelector('.pad-wrap [data-pad="' + this.selectedPad + '"] + .pad-label');
     if (label) label.textContent = this.selectedPad + " · " + sample;
     const status = this.root.querySelector("[data-mpc-sample-status]");
     if (status) status.textContent = sample + " ASSIGNED · BANK " + this.bank + " PAD " + this.selectedPad;
+    this.refreshLibraryUI();
+  },
+
+  showScreen(name) {
+    if (!this.root) return;
+    const panelName = name === "TIMING" ? "SEQ" : name;
+    for (const panel of this.root.querySelectorAll("[data-mpc-panel]")) {
+      panel.classList.toggle("active", panel.dataset.mpcPanel === panelName);
+    }
+    for (const tab of this.root.querySelectorAll("[data-mpc-tab]")) {
+      tab.classList.toggle("active", tab.dataset.mpcTab === panelName);
+    }
+    if (panelName === "SAMPLE") void this.refreshSampleEditor();
+    if (panelName === "BROWSE") this.refreshLibraryUI();
+  },
+
+  updatePadReadout() {
+    if (!this.root) return;
+    const readout = this.root.querySelector("[data-mpc-selected-readout]");
+    const detail = this.root.querySelector("[data-mpc-pad-readout]");
+    const sampleId = StudioMPCSampler.getAssignment(this.bank, this.selectedPad);
+    const sound = StudioMPCLibrary.getAssignment(this.bank, this.selectedPad);
+    if (readout) readout.textContent = "BANK " + this.bank + " · PAD " + String(this.selectedPad).padStart(2, "0");
+    if (detail) detail.textContent = sampleId ? (this.sampleNames?.[sampleId] || "Imported sample") : sound.name + " · " + sound.family.toUpperCase();
+  },
+
+  quantizeTime(seconds) {
+    const bpm = Number(this.beatLab?.pattern?.bpm) || 100;
+    const divisions = { "1/4": 1, "1/8": 2, "1/16": 4, "1/32": 8 }[this.quantize];
+    if (!divisions) return seconds;
+    const step = (60 / bpm) / divisions;
+    const index = Math.round(seconds / step);
+    const swung = index % 2 === 1 ? step * (this.swing / 100) * 0.5 : 0;
+    return Math.max(0, index * step + swung);
+  },
+
+  async refreshSampleEditor() {
+    if (!this.root) return;
+    const select = this.root.querySelector("[data-mpc-editor-sample]");
+    if (!select?.value) return;
+    const settings = StudioMPCSampler.getPadSettings(this.bank, this.selectedPad);
+    const start = this.root.querySelector("[data-mpc-start]");
+    const end = this.root.querySelector("[data-mpc-end]");
+    const pitch = this.root.querySelector("[data-mpc-pitch]");
+    const decay = this.root.querySelector("[data-mpc-decay]");
+    if (start) start.value = String(Math.round((settings.start || 0) * 100));
+    if (end) end.value = String(Math.round((settings.end ?? 1) * 100));
+    if (pitch) pitch.value = String(Math.round(12 * Math.log2(settings.pitch || 1)));
+    if (decay) decay.value = String(Math.round((settings.decay ?? 10) >= 10 ? 100 : (settings.decay / 10) * 100));
+    this.saveSampleEditorSettings(false);
+  },
+
+  saveSampleEditorSettings(commit = true) {
+    if (!this.root) return;
+    const start = Number(this.root.querySelector("[data-mpc-start]")?.value || 0) / 100;
+    const end = Number(this.root.querySelector("[data-mpc-end]")?.value || 100) / 100;
+    const semitones = Number(this.root.querySelector("[data-mpc-pitch]")?.value || 0);
+    const decayPercent = Number(this.root.querySelector("[data-mpc-decay]")?.value || 100);
+    const settings = StudioMPCSampler.setPadSettings(this.bank, this.selectedPad, {
+      start, end, pitch: Math.pow(2, semitones / 12), decay: decayPercent >= 100 ? 10 : decayPercent / 10
+    });
+    const status = this.root.querySelector("[data-mpc-editor-status]");
+    if (status && commit) status.textContent = "EDIT SETTINGS SAVED · BANK " + this.bank + " PAD " + this.selectedPad;
+    return settings;
+  },
+
+  async previewImportedSample() {
+    const id = this.root?.querySelector("[data-mpc-editor-sample]")?.value;
+    if (!id) return;
+    try {
+      const audio = await StudioAudioEngine.resume();
+      const settings = this.saveSampleEditorSettings(false);
+      await StudioMPCSampler.play(id, audio, { ...settings, when: audio.currentTime, velocity: 0.9 });
+    } catch (error) {
+      const status = this.root?.querySelector("[data-mpc-editor-status]");
+      if (status) status.textContent = error?.message || "SAMPLE PREVIEW FAILED";
+    }
+  },
+
+  async previewBrowserSound() {
+    const id = this.root?.querySelector("[data-mpc-browser-sound]")?.value;
+    const sound = StudioMPCLibrary.getSounds().find(item => item.id === id);
+    if (!sound) return;
+    const audio = await StudioAudioEngine.resume();
+    StudioMPCLibrary.play(audio, sound, audio.currentTime);
+  },
+
+  assignBrowserSound() {
+    const id = this.root?.querySelector("[data-mpc-browser-sound]")?.value;
+    if (!id) return;
+    const sound = StudioMPCLibrary.assign(this.bank, this.selectedPad, id);
+    this.refreshLibraryUI();
+    this.setStatus(sound.name + " ASSIGNED TO BANK " + this.bank + " PAD " + this.selectedPad);
   },
 
   setStatus(message) {
@@ -611,7 +789,9 @@ const MPCInterface = {
       const number = Number(pad.dataset.pad);
       const sound = StudioMPCLibrary.getAssignment(this.bank, number);
       const label = pad.parentElement?.querySelector(".pad-label");
-      if (label) label.textContent = number + " · " + sound.name;
+      const importedId = StudioMPCSampler.getAssignment(this.bank, number);
+      const imported = importedId ? (this.sampleNames?.[importedId] || "USER SAMPLE") : null;
+      if (label) label.textContent = number + " · " + (imported || sound.name);
     }
   },
 
@@ -688,13 +868,19 @@ const MPCInterface = {
     } catch (error) { this.setStatus(error?.message || "Could not save pad take."); }
   },
 
-  playSavedPerformance() {
+  async playSavedPerformance() {
     this.stopPerformancePlayback();
     const projectId = this.beatLab?.currentProject?.id || "unsaved";
     this.take = this.beatLab?.currentProject?.mpcPerformance || StudioMPCLibrary.loadTake(projectId);
     if (!this.take.events.length) { this.setStatus("SONG PLAYING · NO SAVED MPC PAD TAKE YET"); return; }
     const audio = this.beatLab.audio;
     if (!audio) return;
+    try {
+      await StudioMPCSampler.preload(this.take.events.map(event => event.sampleId), audio);
+    } catch (error) {
+      this.setStatus("SAMPLE PRELOAD ERROR · " + (error?.message || error));
+      return;
+    }
     this.playbackStartedAt = audio.currentTime + 0.06;
     this.playbackIndex = 0;
     const loopDuration = Math.max(0.25, this.take.duration || (60 / (this.beatLab?.pattern?.bpm || 100) * 4));
@@ -704,7 +890,11 @@ const MPCInterface = {
       while (this.playbackIndex < this.take.events.length && this.take.events[this.playbackIndex].at <= elapsed + 0.09) {
         const event = this.take.events[this.playbackIndex++];
         if (event.sampleId) {
-          void StudioMPCSampler.play(event.sampleId, this.beatLab.audio, { when: Math.max(this.beatLab.audio.currentTime, this.playbackStartedAt + event.at) }).catch(() => {});
+          void StudioMPCSampler.play(event.sampleId, this.beatLab.audio, {
+            ...(event.sampleSettings || {}),
+            velocity: event.velocity || 0.9,
+            when: Math.max(this.beatLab.audio.currentTime, this.playbackStartedAt + event.at)
+          }).catch(() => {});
         } else {
           const sound = event.sound || StudioMPCLibrary.getSounds().find(item => item.id === event.soundId);
           if (sound) StudioMPCLibrary.play(this.beatLab.audio, sound, Math.max(this.beatLab.audio.currentTime, this.playbackStartedAt + event.at));
