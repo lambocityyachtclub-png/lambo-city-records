@@ -45,7 +45,7 @@ const MPCSampler = {
   async importFiles(files, audio) {
     if (!audio) throw new Error("Start the studio audio engine before importing samples.");
     const accepted = Array.from(files || []).filter(file =>
-      file instanceof File && (file.type.startsWith("audio/") || /\\.(wav|mp3|aif|aiff|ogg|m4a)$/i.test(file.name))
+      file instanceof File && (file.type.startsWith("audio/") || /\.(wav|mp3|aif|aiff|ogg|m4a)$/i.test(file.name))
     );
     if (!accepted.length) throw new Error("Choose WAV, AIFF, MP3, OGG or M4A audio files.");
     const db = await openDB();
