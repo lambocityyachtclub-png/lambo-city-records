@@ -299,8 +299,11 @@ export default {
 
     // Fluted smoked-oak acoustic slats frame the display.
     for (let i = 0; i < 8; i++) {
-      const offset = 4.55 + i * 0.17;
-      [-1, 1].forEach(side => box(presentation, new THREE.BoxGeometry(0.075, 2.95, 0.12), walnut, side * offset, 2.0, -5.53));
+      const rightSlatX = 4.55 + i * 0.17;
+      const leftSlatX = -6.10 - i * 0.17;
+      box(presentation, new THREE.BoxGeometry(0.075, 2.95, 0.12), walnut, rightSlatX, 2.0, -5.53);
+      // Keep the lift-to-room arrival lane at local X≈-5 completely open.
+      box(presentation, new THREE.BoxGeometry(0.075, 2.95, 0.12), walnut, leftSlatX, 2.0, -5.53);
     }
     const mediaGlow = new THREE.PointLight(0x8bb8ff, 0.28, 8);
     mediaGlow.position.set(0, 2.35, -4.35);
