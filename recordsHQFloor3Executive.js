@@ -226,8 +226,8 @@ export default {
     box(meeting, new THREE.BoxGeometry(2.1, 0.025, 0.16), goldGlow, 0, 1.19, 0);
 
     const chairPositions = [
-      [-2.35, 0.28, 0], [-0.78, 0.28, 0],
-      [0.78, 0.28, 0], [2.35, 0.28, 0],
+      [-2.35, 1.45, 0], [-0.78, 1.45, 0],
+      [0.78, 1.45, 0], [2.35, 1.45, 0],
       [-3.62, -1.48, Math.PI / 2],
       [3.62, -1.48, -Math.PI / 2]
     ];
@@ -313,7 +313,7 @@ export default {
     // =========================================================
     const conference = new THREE.Group();
     conference.name = "floor3GlassConferenceRoom";
-    conference.position.set(-1.45, 0, 2.2);
+    conference.position.set(-1.45, 0, 0.6);
     box(conference, new THREE.BoxGeometry(2.55, 0.20, 1.25), dark, -6.0, 0.95, 0);
     box(conference, new THREE.BoxGeometry(2.35, 0.035, 0.06), goldGlow, -6.0, 1.08, 0);
     [-0.95, 0, 0.95].forEach(z => box(conference, new THREE.BoxGeometry(0.72, 0.48, 0.65), leather, -6.0, 0.58, z));
