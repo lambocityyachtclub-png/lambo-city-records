@@ -215,20 +215,7 @@ export default {
       group.add(edge);
     });
 
-    // A wider timber landing apron makes the transition into the
-    // elevator threshold read as one continuous dock-built walkway.
-    const landing = new THREE.Mesh(
-      new THREE.BoxGeometry(1.25, 0.16, PATH.width + 0.34),
-      premiumWood
-    );
-    landing.position.set(
-      PATH.endX - 0.55,
-      PATH.surfaceY - 0.08,
-      PATH.centerZ
-    );
-    landing.receiveShadow = true;
-    group.add(landing);
-
+    // The cross-planked deck continues cleanly to the elevator threshold.
     // Bollards are outside the walking lane and stop before the entrance.
     BOLLARDS.forEach(([x, z]) => {
       addBollard(group, x, z, brass, dark, glow);
