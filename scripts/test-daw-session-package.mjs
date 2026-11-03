@@ -34,6 +34,7 @@ const session = {
     inputSource: "mic",
     eq: { low: -1.5, mid: 2, high: 1 },
     compression: { threshold: -18, ratio: 2.5 },
+    automation: { volume: [{ bar: 1, value: 80 }, { bar: 9, value: 55 }] },
     muted: false,
     solo: true,
     armed: false,
@@ -58,6 +59,10 @@ assert.equal(imported.dawSession.tracks[0].clips[0].data, "AQIDBA==");
 assert.equal(imported.dawSession.tracks[0].inputSource, "mic");
 assert.equal(imported.dawSession.tracks[0].eq.mid, 2);
 assert.equal(imported.dawSession.tracks[0].compression.ratio, 2.5);
+assert.deepEqual(imported.dawSession.tracks[0].automation.volume, [
+  { bar: 1, value: 80 },
+  { bar: 9, value: 55 }
+]);
 
 const legacy = importSongProjectPackage(exportSongProjectPackage(baseProject()));
 assert.equal(legacy.dawSession, undefined);
@@ -69,6 +74,10 @@ assert.throws(() => exportSongProjectPackage(invalidInput), /track settings are 
 const invalidPan = structuredClone(project);
 invalidPan.dawSession.tracks[0].pan = 2;
 assert.throws(() => exportSongProjectPackage(invalidPan), /track settings are invalid/);
+
+const invalidAutomation = structuredClone(project);
+invalidAutomation.dawSession.tracks[0].automation.volume[0].bar = 33;
+assert.throws(() => exportSongProjectPackage(invalidAutomation), /automation point is invalid/);
 
 const missingAudio = structuredClone(project);
 missingAudio.dawSession.tracks[0].clips[0].data = null;
