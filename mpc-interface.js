@@ -273,6 +273,7 @@ function buildMarkup() {
               <button type="button" data-mpc-screen-action="mixer">MIXER</button>
             </div>
             <div class="mpc-screen-readout"><span>SELECTED PAD</span><b data-mpc-selected-readout>BANK A · PAD 01</b><span data-mpc-pad-readout>Choose a pad to see its sound and settings.</span></div>
+            <p class="mpc-live-status" data-mpc-status role="status" aria-live="polite">MPC READY · TAP A PAD TO PLAY</p>
           </section>
           <section class="mpc-screen-panel" data-mpc-panel="SEQ">
             <div class="mpc-panel-heading">PERFORMANCE TIMING <small>ADVANCED</small></div>
@@ -546,6 +547,20 @@ const MPCInterface = {
       if (event.key === "Escape") {
         event.preventDefault();
         this.close();
+        return;
+      }
+      const target = event.target;
+      if (target instanceof HTMLElement && target.matches("input,textarea,select,[contenteditable=true]")) return;
+      if (event.repeat) return;
+      const padKeys = "qwerasdfzxcv";
+      const padIndex = padKeys.indexOf(event.key.toLowerCase());
+      if (padIndex >= 0) {
+        event.preventDefault();
+        void this.handlePad(padIndex + 1, 0.9);
+      }
+      const bankKeys = { "1": "A", "2": "B", "3": "C", "4": "D" };
+      if (bankKeys[event.key]) {
+        this.setBank(bankKeys[event.key]);
       }
     };
     document.addEventListener("keydown", this.keyHandler);
@@ -581,7 +596,7 @@ const MPCInterface = {
           velocity,
           when: audio.currentTime
         });
-      } else StudioMPCLibrary.play(audio, sound, audio.currentTime);
+      } else StudioMPCLibrary.play(audio, sound, audio.currentTime, velocity);
       if (this.recording) {
         const at = Math.max(0, audio.currentTime - this.recordingStartedAt + this.overdubOffset);
         this.take.events.push({
@@ -812,6 +827,12 @@ const MPCInterface = {
       select.innerHTML = sounds.map(sound => '<option value="' + esc(sound.id) + '">' + esc(sound.name) + ' · ' + esc(sound.family.toUpperCase()) + ' · ' + esc(sound.style) + '</option>').join("");
       select.value = current.id;
     }
+    const browser = this.root.querySelector("[data-mpc-browser-sound]");
+    if (browser) {
+      const selected = browser.value;
+      browser.innerHTML = sounds.map(sound => '<option value="' + esc(sound.id) + '">' + esc(sound.name) + ' · ' + esc(sound.family.toUpperCase()) + ' · ' + esc(sound.style) + '</option>').join("");
+      if (sounds.some(sound => sound.id === selected)) browser.value = selected;
+    }
     for (const pad of this.root.querySelectorAll("[data-pad]")) {
       const number = Number(pad.dataset.pad);
       const sound = StudioMPCLibrary.getAssignment(this.bank, number);
@@ -925,7 +946,7 @@ const MPCInterface = {
           }).catch(() => {});
         } else {
           const sound = event.sound || StudioMPCLibrary.getSounds().find(item => item.id === event.soundId);
-          if (sound) StudioMPCLibrary.play(this.beatLab.audio, sound, Math.max(this.beatLab.audio.currentTime, this.playbackStartedAt + event.at));
+          if (sound) StudioMPCLibrary.play(this.beatLab.audio, sound, Math.max(this.beatLab.audio.currentTime, this.playbackStartedAt + event.at), event.velocity || 0.9);
         }
       }
       if (elapsed >= loopDuration) {
