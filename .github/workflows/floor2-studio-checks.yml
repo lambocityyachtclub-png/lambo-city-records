@@ -52,6 +52,7 @@ on:
       - "mpc-interface.js"
       - "studioMPCLibrary.js"
       - "studioMPCSampler.js"
+      - "scripts/test-mpc-project-package.mjs"
       - ".github/workflows/floor2-studio-checks.yml"
 
   workflow_dispatch:
