@@ -523,7 +523,7 @@ function selectFloor(
 
 function updateLandingDoors(delta) {
   const difference = landingDoorTarget - landingDoorProgress;
-  const doorResponse = landingDoorFloor === 2 ? 8 : 20;
+  const doorResponse = landingDoorFloor === 2 ? 24 : 20;
   landingDoorProgress += difference * Math.min(1, delta * doorResponse);
 
   if (Math.abs(landingDoorTarget - landingDoorProgress) < 0.008) {
@@ -909,7 +909,7 @@ export default {
     }
 
     // Only release the passenger after the landing doors are fully open.
-    if (pendingLandingPlayer && landingDoorProgress >= 0.995) {
+    if (pendingLandingPlayer && landingDoorProgress >= (selectedFloor === 2 ? 0.72 : 0.995)) {
       const arrivedPlayer = pendingLandingPlayer;
       pendingLandingPlayer = null;
 
