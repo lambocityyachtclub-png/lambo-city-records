@@ -1156,10 +1156,10 @@ export default {
       dist <= ACTIVATION_DISTANCE + 1.0;
 
     inRange =
-      player.position.x >= ELEVATOR_POSITION.x - 2.05 &&
-      player.position.x <= ELEVATOR_POSITION.x + 2.05 &&
+      player.position.x >= ELEVATOR_POSITION.x - 1.85 &&
+      player.position.x <= ELEVATOR_POSITION.x + 1.85 &&
       player.position.z >= ELEVATOR_POSITION.z - 1.55 &&
-      player.position.z <= ELEVATOR_POSITION.z + 1.55;
+      player.position.z <= ELEVATOR_POSITION.z + 1.15;
 
     const floor2ExitPending =
       window.__lamboCityElevatorLandingFloor === 2 &&
