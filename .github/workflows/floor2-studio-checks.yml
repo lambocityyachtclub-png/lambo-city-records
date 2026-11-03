@@ -22,6 +22,9 @@ on:
       - "studioVocalEffects.js"
       - "studioSongProject.js"
       - "studioProjectPackage.js"
+      - "mpc-interface.js"
+      - "studioMPCLibrary.js"
+      - "studioMPCSampler.js"
       - ".github/workflows/floor2-studio-checks.yml"
 
   pull_request:
@@ -84,7 +87,10 @@ jobs:
             studioRecordingEngine.js \
             studioVocalEffects.js \
             studioSongProject.js \
-            studioProjectPackage.js
+            studioProjectPackage.js \
+            mpc-interface.js \
+            studioMPCLibrary.js \
+            studioMPCSampler.js
           do
             node --experimental-default-type=module --check "$file"
           done
