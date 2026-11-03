@@ -623,7 +623,7 @@ const MPCInterface = {
       while (this.playbackIndex < this.take.events.length && this.take.events[this.playbackIndex].at <= elapsed + 0.09) {
         const event = this.take.events[this.playbackIndex++];
         if (event.sampleId) {
-          void StudioMPCSampler.play(event.sampleId, this.beatLab.audio).catch(() => {});
+          void StudioMPCSampler.play(event.sampleId, this.beatLab.audio, { when: Math.max(this.beatLab.audio.currentTime, this.playbackStartedAt + event.at) }).catch(() => {});
         } else {
           const sound = event.sound || StudioMPCLibrary.getSounds().find(item => item.id === event.soundId);
           if (sound) StudioMPCLibrary.play(this.beatLab.audio, sound, Math.max(this.beatLab.audio.currentTime, this.playbackStartedAt + event.at));
