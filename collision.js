@@ -419,6 +419,28 @@ export default {
 
 
     // ========================================================
+    // FLOOR 2 — PRIMARY PRODUCER DESK
+    // ========================================================
+    //
+    // The desk is a solid physical obstacle, not decorative
+    // walk-through geometry. Coordinates match the visible desk
+    // in recordsHQFloor2Studio.js (HQ origin 28,22).
+    //
+    this.registerBox(
+      "recordsHQFloor2ProducerDesk",
+      {
+        x: 29.1,
+        z: 18.3,
+        width: 5.35,
+        depth: 1.55,
+        minY: HQ_FLOOR_RANGES.floor2.minY,
+        maxY: HQ_FLOOR_RANGES.floor2.maxY,
+        level: "floor2"
+      }
+    );
+
+
+    // ========================================================
     // FLOOR 1 — MERCH COUNTER
     // ========================================================
     //
