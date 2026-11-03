@@ -666,11 +666,19 @@ const MPCInterface = {
 
   async handlePad(padNumber, velocity = 0.9, scheduledAt = null) {
     if (!this.root) return;
+    const bank = this.bank;
     this.selectedPad = padNumber;
     this.updatePadReadout();
     if (this.root.querySelector('[data-mpc-panel="SAMPLE"].active')) void this.refreshSampleEditor();
-    const importedSampleId = StudioMPCSampler.getAssignment(this.bank, padNumber);
-    const sound = StudioMPCLibrary.getAssignment(this.bank, padNumber);
+    const importedSampleId = StudioMPCSampler.getAssignment(bank, padNumber);
+    const sound = StudioMPCLibrary.getAssignment(bank, padNumber);
+    const sampleSettings = StudioMPCSampler.getPadSettings(bank, padNumber);
+    const shouldRecord = this.recording;
+    const recordStart = this.recordingStartedAt;
+    const recordOffset = this.overdubOffset;
+    const requestedAt = scheduledAt !== null && scheduledAt !== undefined && Number.isFinite(Number(scheduledAt))
+      ? Number(scheduledAt)
+      : (StudioAudioEngine.context?.state === "running" ? StudioAudioEngine.context.currentTime : null);
     this.refreshPadMixControls();
     const select = this.root.querySelector("[data-mpc-sound-select]");
     if (select) select.value = sound.id;
@@ -678,8 +686,7 @@ const MPCInterface = {
     if (label) label.textContent = padNumber + " · " + (this.sampleNames?.[importedSampleId] || sound.name);
     try {
       const audio = await this.getAudioContext();
-      const hitAt = Math.max(audio.currentTime, Number.isFinite(Number(scheduledAt)) ? Number(scheduledAt) : audio.currentTime);
-      const sampleSettings = StudioMPCSampler.getPadSettings(this.bank, padNumber);
+      const hitAt = Math.max(audio.currentTime, requestedAt === null ? audio.currentTime : requestedAt);
       if (importedSampleId) {
         await StudioMPCSampler.play(importedSampleId, audio, {
           ...sampleSettings,
@@ -688,11 +695,11 @@ const MPCInterface = {
           when: hitAt
         });
       } else StudioMPCLibrary.play(audio, sound, hitAt, velocity, sampleSettings);
-      if (this.recording) {
-        const at = Math.max(0, hitAt - this.recordingStartedAt + this.overdubOffset);
+      if (shouldRecord) {
+        const at = Math.max(0, hitAt - recordStart + recordOffset);
         this.take.events.push({
           pad: padNumber,
-          bank: this.bank,
+          bank,
           soundId: sound.id,
           sampleId: importedSampleId || null,
           sampleSettings,
