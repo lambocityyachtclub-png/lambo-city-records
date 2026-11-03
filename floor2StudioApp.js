@@ -550,18 +550,6 @@ StudioMultitrackWorkspace.mount(
   root.querySelector("div")
 );
 StudioMultitrackWorkspace.setTempo(this.pattern.bpm);
-// TEMPORARY DIAGNOSTIC: direct studio audio test
-const testButton = document.createElement("button");
-testButton.type = "button";
-testButton.className = "lc-action";
-testButton.textContent = "TEST SOUND";
-
-testButton.addEventListener("click", () => {
-  void this.testSound();
-});
-
-root.querySelector(".lc-controls")?.appendChild(testButton);
-
     this.renderGrid();
 root.addEventListener("input", (event) => {
   const control = event.target;
@@ -1052,67 +1040,6 @@ root.addEventListener("input", (event) => {
       this.status(`ARRANGEMENT ERROR: ${error?.message || error}`);
     }
   },
-
-async testSound() {
-  try {
-    this.status("Starting Web Audio output test...");
-
-    const audio = await StudioAudioEngine.resume();
-
-    const playTone = (frequency, output, startTime) => {
-      const oscillator = audio.createOscillator();
-      const gain = audio.createGain();
-
-      oscillator.type = "sine";
-      oscillator.frequency.value = frequency;
-
-      gain.gain.setValueAtTime(0.0001, startTime);
-      gain.gain.exponentialRampToValueAtTime(
-        0.12,
-        startTime + 0.04
-      );
-      gain.gain.setValueAtTime(
-        0.12,
-        startTime + 0.45
-      );
-      gain.gain.exponentialRampToValueAtTime(
-        0.0001,
-        startTime + 0.55
-      );
-
-      oscillator.connect(gain);
-      gain.connect(output);
-
-      oscillator.start(startTime);
-      oscillator.stop(startTime + 0.6);
-    };
-
-    if (!StudioAudioEngine.master) {
-      throw new Error("Shared studio master output is missing.");
-    }
-
-    const start = audio.currentTime + 0.15;
-
-    // First tone: direct browser audio output.
-    playTone(440, audio.destination, start);
-
-    // Second tone: shared LAMBO CITY studio mixer.
-    playTone(880, StudioAudioEngine.master, start + 0.9);
-
-    window.setTimeout(() => {
-      this.status(
-        `Test complete · Context: ${audio.state} · ` +
-        `Clock: ${audio.currentTime.toFixed(2)} · ` +
-        `Sample rate: ${audio.sampleRate} Hz · ` +
-        `Master gain: ${StudioAudioEngine.master.gain.value}`
-      );
-    }, 1800);
-
-  } catch (error) {
-    console.error("LAMBO CITY audio diagnostic:", error);
-    this.status(`TEST ERROR: ${error?.message || error}`);
-  }
-},
 
   async start() {
     if (this.playing) {
