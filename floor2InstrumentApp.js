@@ -35,6 +35,8 @@ export default {
     }
 
     this.handleClick = (event) => {
+      if (window.__lamboCityFloor2SessionActive) return;
+
       const studio = this.scene.getObjectByName(
         "recordsHQFloor2Studio"
       );
