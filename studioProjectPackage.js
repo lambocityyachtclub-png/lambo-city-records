@@ -197,6 +197,44 @@ function validateProject(project) {
     }
   }
 
+  if (project.mpcPerformance !== undefined) {
+    requireObject(project.mpcPerformance, "MPC performance data is invalid.");
+    const performance = project.mpcPerformance;
+    if (!Array.isArray(performance.events) || performance.events.length > 12000) {
+      throw new Error("MPC performance events are invalid.");
+    }
+    if (!Number.isFinite(Number(performance.duration)) || Number(performance.duration) < 0) {
+      throw new Error("MPC performance duration is invalid.");
+    }
+    const soundFamilies = ["kick", "bass", "snare", "clap", "hat", "perc", "chop", "stab", "fx"];
+    for (const event of performance.events) {
+      requireObject(event, "Invalid MPC pad event.");
+      if (!Number.isInteger(event.pad) || event.pad < 1 || event.pad > 16) {
+        throw new Error("MPC pad number is invalid.");
+      }
+      if (!["A", "B", "C", "D"].includes(event.bank)) {
+        throw new Error("MPC pad bank is invalid.");
+      }
+      requireId(event.soundId, "MPC sound reference is missing.");
+      if (!Number.isFinite(event.at) || event.at < 0) {
+        throw new Error("MPC pad event timing is invalid.");
+      }
+      if (event.sound !== undefined && event.sound !== null) {
+        requireObject(event.sound, "MPC sound preset data is invalid.");
+        requireId(event.sound.id, "MPC sound preset ID is missing.");
+        requireId(event.sound.name, "MPC sound preset name is missing.");
+        if (event.sound.id !== event.soundId || !soundFamilies.includes(event.sound.family)) {
+          throw new Error("MPC sound preset reference is invalid.");
+        }
+        for (const field of ["frequency", "decay", "brightness", "seed"]) {
+          if (!Number.isFinite(Number(event.sound[field]))) {
+            throw new Error("MPC sound preset settings are invalid.");
+          }
+        }
+      }
+    }
+  }
+
   return project;
 }
 
