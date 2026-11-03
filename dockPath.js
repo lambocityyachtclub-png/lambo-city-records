@@ -7,7 +7,7 @@ import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 
 const PATH = {
   startX: 5.25,
-  endX: 20.65,
+  endX: 20.10,
   // Offset slightly toward the dock so the full walkway clears the
   // Records HQ rear wall while remaining inside the elevator doorway.
   centerZ: 13.75,
