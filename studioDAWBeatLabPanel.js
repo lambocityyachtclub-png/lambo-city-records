@@ -30,6 +30,7 @@ export function createStudioDAWBeatLabPanel({
     container: null,
     mounted: false,
     handleClose: null,
+    onSwitchToEdit: null,
 
     mount(container) {
       if (!container) {
@@ -67,14 +68,21 @@ export function createStudioDAWBeatLabPanel({
         box-sizing:border-box;
       `;
 
+      const switchBar = document.createElement("div");
+      switchBar.style.cssText = "display:flex;gap:9px;flex-wrap:wrap;margin:0 0 12px";
       const returnButton = document.createElement("button");
       returnButton.type = "button";
       returnButton.textContent = "← RETURN TO MPC";
-      returnButton.style.cssText = "min-height:42px;margin:0 0 12px;padding:10px 14px;border:1px solid #80643a;border-radius:8px;background:#201c16;color:#f1d49c;font-weight:bold";
-      returnButton.addEventListener("click", () => {
-        this.onReturn?.();
-      });
-      host.appendChild(returnButton);
+      returnButton.style.cssText = "min-height:42px;padding:10px 14px;border:1px solid #665438;border-radius:8px;background:#171923;color:#f1d49c;font-weight:bold;touch-action:manipulation";
+      returnButton.addEventListener("click", () => this.onReturn?.());
+      const editorButton = document.createElement("button");
+      editorButton.type = "button";
+      editorButton.textContent = "SONG EDITOR →";
+      editorButton.setAttribute("aria-label", "Switch to Song Editor");
+      editorButton.style.cssText = "min-height:42px;padding:10px 14px;border:1px solid #9b7948;border-radius:8px;background:#211d16;color:#f1d49c;font-weight:bold;touch-action:manipulation";
+      editorButton.addEventListener("click", () => this.onSwitchToEdit?.());
+      switchBar.append(returnButton, editorButton);
+      host.appendChild(switchBar);
 
       // Move the existing interface into the Digital Beat Lab view.
       // Keep the sequencer and transport, hide unrelated recording,
