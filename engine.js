@@ -18,6 +18,7 @@ export default class Engine {
     this.systems.world?.init?.(this.scene);
     this.systems.water?.init?.(this.scene);
     this.systems.dock?.init?.(this.scene);
+    this.systems.dockPath?.init?.(this.scene);
     this.systems.sky?.init?.(this.scene);
     this.systems.lighting?.init?.(this.scene);
     this.systems.palms?.init?.(this.scene);
@@ -49,6 +50,7 @@ this.systems.dockLuxuryOverhaul?.init?.(this.scene);
 
 this.systems.recordsHQ?.init?.(this.scene);
 this.systems.recordsHQFoundation?.init?.(this.scene);
+this.systems.elevator?.init?.(this.scene);
 this.systems.recordsHQFloor1?.init?.(this.scene);
 this.systems.recordsHQFloor2Studio?.init?.(this.scene);
 
