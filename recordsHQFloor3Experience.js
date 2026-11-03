@@ -21,16 +21,6 @@ const ROOMS = [
     points: ["Six-seat conference table", "Expanded six-participant display wall", "Team decisions and project reviews"]
   },
   {
-    id: "presentation",
-    name: "Presentation Suite",
-    localX: 0,
-    localZ: 5.65,
-    eyebrow: "PRESENT • ALIGN • BUILD",
-    title: "The Presentation Suite",
-    description: "A dedicated room for presenting the LAMBO CITY vision, reviewing creative direction and aligning the team around upcoming work.",
-    points: ["Brand and world vision", "Creative direction", "Project walkthroughs"]
-  },
-  {
     id: "lounge",
     name: "Executive Lounge",
     localX: 6.3,
