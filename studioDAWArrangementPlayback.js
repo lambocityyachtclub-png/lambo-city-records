@@ -96,6 +96,7 @@ export function createStudioDAWArrangementPlayback({
       mid.connect(high);
       high.connect(compressor);
       const trackEffects = StudioVocalEffects.create(context);
+      trackEffects.setReverbDecay(track.effects?.reverbDecay ?? 2.2);
       compressor.connect(trackEffects.input);
       if (panner) {
         trackEffects.output.connect(panner);
@@ -135,7 +136,6 @@ export function createStudioDAWArrangementPlayback({
       channel.effects.setDelayFeedback(effects.delayFeedback ?? 0.25);
       channel.effects.setDelayMix(effects.delayMix ?? 0);
       channel.effects.setReverbMix(effects.reverbMix ?? 0);
-      if (effects.reverbDecay !== undefined) channel.effects.setReverbDecay(effects.reverbDecay);
     },
 
     syncTrackState(tracks = this.activeTracks) {
