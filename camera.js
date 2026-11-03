@@ -492,6 +492,23 @@ function updateStudioArrivalCamera(player, smooth = 0.48) {
   cameraX = THREE.MathUtils.clamp(cameraX, 21.25, 34.75);
   cameraZ = THREE.MathUtils.clamp(cameraZ, 16.0, 26.5);
 
+  if (progress >= 1) {
+    // Hold a wider, slightly elevated view from inside the room so
+    // the player can take in the complete studio before the seated view.
+    moveCamera(
+      28.0,
+      player.position.y + 3.65,
+      26.55,
+      0.20
+    );
+    camera.lookAt(
+      28.0,
+      player.position.y + 1.45,
+      21.15
+    );
+    return;
+  }
+
   const cameraY = player.position.y + 2.45;
   moveCamera(cameraX, cameraY, cameraZ, smooth);
 
@@ -539,45 +556,25 @@ function updateStudioSessionCamera(player, smooth = 0.22) {
 // ============================================================
 
 function updateElevatorCamera(player) {
-  const progress = Number(
-    window.__lamboCityElevatorProgress ?? 0
-  );
-
   const yaw = player.rotation.y;
   const forwardX = Math.sin(yaw);
   const forwardZ = Math.cos(yaw);
+  const rightX = Math.cos(yaw);
+  const rightZ = -Math.sin(yaw);
 
-  // Blend the opening cabin-reveal shot into the moving follow shot.
-  // A hard switch at 30% made the camera direction change abruptly
-  // during the Floor 1-to-Floor 2 ride.
-  const blend = THREE.MathUtils.smoothstep(progress, 0.18, 0.42);
+  // Keep the camera physically close to HERO and inside the glass
+  // elevator cabin for the entire ride and landing-door hold.
+  const cameraX =
+    player.position.x + rightX * 1.05 - forwardX * 0.75;
+  const cameraY = player.position.y + 2.15;
+  const cameraZ =
+    player.position.z + rightZ * 1.05 - forwardZ * 0.75;
 
-  const revealX = player.position.x + 5.5;
-  const revealY = player.position.y + 4.0;
-  const revealZ = player.position.z + 6.5;
-
-  const followX = player.position.x - forwardX * 5.0;
-  const followY = player.position.y + 4.0;
-  const followZ = player.position.z - forwardZ * 5.0;
-
-  const cameraX = THREE.MathUtils.lerp(revealX, followX, blend);
-  const cameraY = THREE.MathUtils.lerp(revealY, followY, blend);
-  const cameraZ = THREE.MathUtils.lerp(revealZ, followZ, blend);
-
-  const revealTargetX = player.position.x;
-  const revealTargetY = player.position.y + 2.0;
-  const revealTargetZ = player.position.z;
-
-  const followTargetX = player.position.x + forwardX * 1.5;
-  const followTargetY = player.position.y + 2.0;
-  const followTargetZ = player.position.z + forwardZ * 1.5;
-
-  moveCamera(cameraX, cameraY, cameraZ, 0.10);
-
+  moveCamera(cameraX, cameraY, cameraZ, 0.22);
   camera.lookAt(
-    THREE.MathUtils.lerp(revealTargetX, followTargetX, blend),
-    THREE.MathUtils.lerp(revealTargetY, followTargetY, blend),
-    THREE.MathUtils.lerp(revealTargetZ, followTargetZ, blend)
+    player.position.x,
+    player.position.y + 1.3,
+    player.position.z
   );
 }
 
@@ -897,12 +894,17 @@ export default {
     // they physically cross the rear portal; never snap back to the
     // distant world camera during this handoff.
 
+    const floor2LandingPending =
+      window.__lamboCityElevatorLandingFloor === 2 &&
+      player.position.z < 15.2;
+
     const floor3LandingPending =
       window.__lamboCityElevatorLandingFloor === 3 &&
       player.position.z < 14.7;
 
     if (
       window.__lamboCityElevatorTraveling ||
+      floor2LandingPending ||
       floor3LandingPending
     ) {
       updateElevatorCamera(player);
