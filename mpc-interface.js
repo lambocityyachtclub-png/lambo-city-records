@@ -3,6 +3,7 @@
 
 import StudioAudioEngine from "./studioAudioEngine.js";
 import StudioMPCLibrary from "./studioMPCLibrary.js";
+import StudioMPCSampler from "./studioMPCSampler.js";
 import Floor2StudioApp from "./floor2StudioApp.js";
 // Standalone module: no Three.js dependency.
 // Integration:
@@ -307,6 +308,16 @@ function buildMarkup() {
       <button type="button" data-mpc-unlock>UNLOCK 200</button>
       <div class="mpc-library-status" data-mpc-status role="status" aria-live="polite">100 DEMO SOUNDS · GROWING LIBRARY</div>
     </section>
+    <section class="mpc-library-strip" aria-label="User sample workstation">
+      <label>IMPORT YOUR OWN SAMPLES
+        <input type="file" data-mpc-import accept="audio/*,.wav,.aif,.aiff,.mp3,.ogg,.m4a" multiple>
+      </label>
+      <label>IMPORTED SAMPLE
+        <select data-mpc-sample-select aria-label="Choose imported sample"><option value="">IMPORT AUDIO TO BEGIN</option></select>
+      </label>
+      <button type="button" data-mpc-sample-assign>ASSIGN TO SELECTED PAD</button>
+      <div class="mpc-library-status" data-mpc-sample-status role="status" aria-live="polite">WAV / AIFF / MP3 / OGG / M4A · STORED ON THIS DEVICE</div>
+    </section>
 
     <section class="bottom-modes">
       ${control("STEP SEQ", "AUTOMATION")}
@@ -363,6 +374,10 @@ const MPCInterface = {
     root.id = ROOT_ID;
     root.innerHTML = buildMarkup();
 
+    root.addEventListener("change", event => {
+      if (event.target.matches("[data-mpc-import]")) void this.importSamples(event.target.files);
+    });
+
     root.addEventListener("click", event => {
       const closeButton = event.target.closest("[data-mpc-close]");
       if (closeButton || event.target === root) {
@@ -381,6 +396,7 @@ const MPCInterface = {
 
       if (event.target.closest("[data-mpc-assign]")) { this.assignSelectedSound(); return; }
       if (event.target.closest("[data-mpc-unlock]")) { this.unlockLibrary(); return; }
+      if (event.target.closest("[data-mpc-sample-assign]")) { this.assignImportedSample(); return; }
 
       // Screen tiles and hardware buttons remain responsive where assigned.
       // A future MPC engine can subscribe to this event without changing the UI.
@@ -407,6 +423,7 @@ const MPCInterface = {
     document.body.appendChild(root);
     this.root = root;
     this.refreshLibraryUI();
+    void this.refreshImportedSamples();
     this.setStatus(this.library.total + " SOUNDS READY · +" + this.library.added + " NEW SOUNDS ADDED THIS VISIT");
     root.querySelector("[data-mpc-close]")?.focus({ preventScroll: true });
     return root;
@@ -415,6 +432,7 @@ const MPCInterface = {
   async handlePad(padNumber) {
     if (!this.root) return;
     this.selectedPad = padNumber;
+    const importedSampleId = StudioMPCSampler.getAssignment(this.bank, padNumber);
     const sound = StudioMPCLibrary.getAssignment(this.bank, padNumber);
     const select = this.root.querySelector("[data-mpc-sound-select]");
     if (select) select.value = sound.id;
@@ -423,13 +441,15 @@ const MPCInterface = {
     try {
       const audio = await StudioAudioEngine.resume();
       this.beatLab.audio = audio;
-      StudioMPCLibrary.play(audio, sound, audio.currentTime);
+      if (importedSampleId) await StudioMPCSampler.play(importedSampleId, audio);
+      else StudioMPCLibrary.play(audio, sound, audio.currentTime);
       if (this.recording) {
         const at = Math.max(0, audio.currentTime - this.recordingStartedAt + this.overdubOffset);
         this.take.events.push({
           pad: padNumber,
           bank: this.bank,
           soundId: sound.id,
+          sampleId: importedSampleId || null,
           at,
           sound: {
             id: sound.id, name: sound.name, family: sound.family, style: sound.style,
@@ -439,8 +459,43 @@ const MPCInterface = {
         });
         this.take.duration = Math.max(this.take.duration || 0, at);
       }
-      this.setStatus("PLAYING " + sound.name + " · " + sound.influence + (this.recording ? " · PAD PERFORMANCE RECORDING" : ""));
+      this.setStatus("PLAYING " + (importedSampleId ? "IMPORTED SAMPLE" : sound.name) + (this.recording ? " · PAD PERFORMANCE RECORDING" : ""));
     } catch (error) { this.setStatus("MPC AUDIO ERROR: " + (error?.message || error)); }
+  },
+
+  async importSamples(files) {
+    try {
+      const audio = await StudioAudioEngine.resume();
+      this.beatLab.audio = audio;
+      const imported = await StudioMPCSampler.importFiles(files, audio);
+      await this.refreshImportedSamples();
+      const status = this.root?.querySelector("[data-mpc-sample-status]");
+      if (status) status.textContent = imported.length + " AUDIO SAMPLE(S) IMPORTED · READY TO ASSIGN";
+    } catch (error) {
+      const status = this.root?.querySelector("[data-mpc-sample-status]");
+      if (status) status.textContent = error?.message || "SAMPLE IMPORT FAILED";
+    }
+  },
+
+  async refreshImportedSamples() {
+    if (!this.root) return;
+    const select = this.root.querySelector("[data-mpc-sample-select]");
+    if (!select) return;
+    const samples = await StudioMPCSampler.list();
+    select.innerHTML = samples.length
+      ? samples.map(sample => '<option value="' + esc(sample.id) + '">' + esc(sample.name) + '</option>').join("")
+      : '<option value="">IMPORT AUDIO TO BEGIN</option>';
+  },
+
+  assignImportedSample() {
+    const select = this.root?.querySelector("[data-mpc-sample-select]");
+    if (!select?.value) return;
+    StudioMPCSampler.assign(this.bank, this.selectedPad, select.value);
+    const sample = select.selectedOptions[0]?.textContent || "SAMPLE";
+    const label = this.root.querySelector('.pad-wrap [data-pad="' + this.selectedPad + '"] + .pad-label');
+    if (label) label.textContent = this.selectedPad + " · " + sample;
+    const status = this.root.querySelector("[data-mpc-sample-status]");
+    if (status) status.textContent = sample + " ASSIGNED · BANK " + this.bank + " PAD " + this.selectedPad;
   },
 
   setStatus(message) {
@@ -567,8 +622,12 @@ const MPCInterface = {
       const elapsed = this.beatLab.audio.currentTime - this.playbackStartedAt;
       while (this.playbackIndex < this.take.events.length && this.take.events[this.playbackIndex].at <= elapsed + 0.09) {
         const event = this.take.events[this.playbackIndex++];
-        const sound = event.sound || StudioMPCLibrary.getSounds().find(item => item.id === event.soundId);
-        if (sound) StudioMPCLibrary.play(this.beatLab.audio, sound, Math.max(this.beatLab.audio.currentTime, this.playbackStartedAt + event.at));
+        if (event.sampleId) {
+          void StudioMPCSampler.play(event.sampleId, this.beatLab.audio).catch(() => {});
+        } else {
+          const sound = event.sound || StudioMPCLibrary.getSounds().find(item => item.id === event.soundId);
+          if (sound) StudioMPCLibrary.play(this.beatLab.audio, sound, Math.max(this.beatLab.audio.currentTime, this.playbackStartedAt + event.at));
+        }
       }
       if (elapsed >= loopDuration) {
         this.playbackStartedAt += loopDuration;
