@@ -256,13 +256,11 @@ export default {
     scene.add(player);
 
     /*
-      FASTER LAMBO CITY MOVEMENT
-
-      Normal walking = 14
-      Sprint = 22
+      Standard LAMBO CITY movement speed.
+      This is the former Shift/sprint speed, now used all the time.
     */
 
-    this.speed = 14;
+    this.speed = 22;
 
     this.sprintSpeed = 22;
 
@@ -437,15 +435,11 @@ export default {
 
     bobTime += delta;
 
-    const sprint =
-      input.keys?.shift;
+    // Movement is always at the former Shift speed.
+    // Shift no longer changes movement or walk animation.
+    const sprint = false;
 
-    const speed =
-      (
-        sprint
-          ? this.sprintSpeed
-          : this.speed
-      ) * delta;
+    const speed = this.speed * delta;
 
     let moving = false;
 
