@@ -185,7 +185,7 @@ const StudioMultitrackWorkspace = {
         createdAt: clip.createdAt || null
       }))
     }));
-    const ids = this.tracks.map(track => Number(track.id.match(/(\\d+)$/)?.[1]) || 0);
+    const ids = this.tracks.map(track => Number(track.id.match(/(\d+)$/)?.[1]) || 0);
     this.nextTrackId = Math.max(0, ...ids) + 1;
     this.render();
     this.status("Portable session loaded with " + this.tracks.length + " track(s).");
