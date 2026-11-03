@@ -4,6 +4,7 @@ import * as THREE from
 import StudioAudioEngine from "./studioAudioEngine.js";
 import StudioSoundKit from "./studioSoundKit.js";
 import StudioAudioExport from "./studioAudioExport.js";
+import StudioMPCSampler from "./studioMPCSampler.js";
 import StudioRecordingEngine from "./studioRecordingEngine.js";
 import StudioVocalEffects from "./studioVocalEffects.js";
 import {
@@ -1430,7 +1431,7 @@ StudioSoundKit.play(
 },
 
  
-  exportSongProject() {
+  async exportSongProject() {
     try {
       const projects = listSongProjects();
 
@@ -1497,7 +1498,9 @@ StudioSoundKit.play(
         return;
       }
 
-      const packageText = exportSongProjectPackage(project);
+      const sampleIds = (project.mpcPerformance?.events || []).map(event => event.sampleId).filter(Boolean);
+      const mpcAssets = await StudioMPCSampler.exportAssets(sampleIds);
+      const packageText = exportSongProjectPackage({ ...project, mpcAssets });
 
       const blob = new Blob(
         [packageText],
@@ -1545,8 +1548,8 @@ StudioSoundKit.play(
         if (!file) return;
 
         try {
-          if (file.size > 1000000) {
-            this.status("Project file is too large to import.");
+          if (file.size > 60000000) {
+            this.status("Project file exceeds the 60 MB import limit.");
             return;
           }
 
@@ -1585,6 +1588,11 @@ StudioSoundKit.play(
           if (project.metadata) {
             project.metadata.updatedAt = new Date().toISOString();
           }
+
+          if (Array.isArray(project.mpcAssets) && project.mpcAssets.length) {
+            await StudioMPCSampler.importAssets(project.mpcAssets);
+          }
+          delete project.mpcAssets;
 
           saveSongProject(project);
 
