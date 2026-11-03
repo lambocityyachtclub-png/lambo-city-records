@@ -8,7 +8,7 @@ import StudioAudioExport from "./studioAudioExport.js";
 
 const STORAGE_KEY = "lambocity-mpc-library-v1";
 const TAKE_KEY = "lambocity-mpc-performance-v1:";
-const MASTER_KEY = "lambocity-mpc-master-level-v1";
+const MASTER_KEY = "lambocity-mpc-master-v1";
 const FAMILIES = [
   ["KICK", "kick"], ["808", "bass"], ["SNARE", "snare"], ["CLAP", "clap"],
   ["HAT", "hat"], ["PERC", "perc"], ["BASS", "bass"], ["CHOP", "chop"],
