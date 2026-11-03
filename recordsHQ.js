@@ -496,7 +496,7 @@ export default {
       });
 
       // Horizontal lines align with the three-floor structure.
-      [1.3, 12.2, 20.2, 25.8].forEach(y => {
+      [1.3, 25.8].forEach(y => {
         const mullion = new THREE.Mesh(
           new THREE.BoxGeometry(.18, .1, 13.1),
           facadeBronze
@@ -580,22 +580,22 @@ export default {
       7.02
     );
 
-    [-8, -5, 0, 5, 8].forEach(x => {
-      addFacadePanel(
-        new THREE.BoxGeometry(.085, 7.35, .16),
-        facadeBronze,
-        x,
-        16.15,
-        7.12
-      );
-      addFacadePanel(
-        new THREE.BoxGeometry(.085, 3.7, .16),
-        facadeBronze,
-        x,
-        22.05,
-        7.12
-      );
-    });
+    // The structural bronze piers in recordsHQFoundation.js carry
+    // the outer bays. Only the center mullion is added here.
+    addFacadePanel(
+      new THREE.BoxGeometry(.085, 7.35, .16),
+      facadeBronze,
+      0,
+      16.15,
+      7.12
+    );
+    addFacadePanel(
+      new THREE.BoxGeometry(.085, 3.7, .16),
+      facadeBronze,
+      0,
+      22.05,
+      7.12
+    );
 
     [12.2, 20.2].forEach(y => {
       addFacadePanel(
@@ -605,6 +605,14 @@ export default {
         y,
         7.10
       );
+      addFacadePanel(
+        new THREE.BoxGeometry(18.2, .035, .06),
+        facadeBronze,
+        0,
+        y + .17,
+        7.36
+      );
+
       [-9.05, 9.05].forEach(x => {
         addFacadePanel(
           new THREE.BoxGeometry(.42, .32, 14.1),
@@ -613,8 +621,17 @@ export default {
           y,
           0
         );
+        addFacadePanel(
+          new THREE.BoxGeometry(.06, .035, 13.9),
+          facadeBronze,
+          x + Math.sign(x) * .24,
+          y + .17,
+          0
+        );
       });
-      // Keep the rear facade band split at the elevator entrance.
+
+      // Keep both rear fascia and its bronze pinstripe split at the
+      // elevator-to-HQ doorway.
       addFacadePanel(
         new THREE.BoxGeometry(1.70, .32, .42),
         facadeDark,
@@ -623,11 +640,25 @@ export default {
         -7.10
       );
       addFacadePanel(
+        new THREE.BoxGeometry(1.65, .035, .06),
+        facadeBronze,
+        -8.05,
+        y + .17,
+        -7.36
+      );
+      addFacadePanel(
         new THREE.BoxGeometry(11.70, .32, .42),
         facadeDark,
         3.05,
         y,
         -7.10
+      );
+      addFacadePanel(
+        new THREE.BoxGeometry(11.65, .035, .06),
+        facadeBronze,
+        3.05,
+        y + .17,
+        -7.36
       );
     });
 
