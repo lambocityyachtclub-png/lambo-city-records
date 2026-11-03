@@ -146,6 +146,26 @@ function makeStyles() {
 #${ROOT_ID} .mpc-library-strip button{min-height:34px;padding:5px 8px;border:1px solid #806b43;border-radius:4px;background:linear-gradient(#45402e,#191a14);color:#e9d7a5;font-size:8px;font-weight:900}
 #${ROOT_ID} .mpc-library-status{grid-column:1/-1;min-height:13px;color:#b8d77d;font-size:8px;letter-spacing:.04em}
 #${ROOT_ID} .pad-label{overflow:hidden;text-overflow:ellipsis;padding:0 2px}
+
+#${ROOT_ID} .mpc-screen-workspace{min-height:0;overflow:auto}
+#${ROOT_ID} .mpc-screen-panel{display:none;gap:7px;min-height:0;overflow:auto;color:#e7edda;font-size:clamp(8px,.72vw,10px)}
+#${ROOT_ID} .mpc-screen-panel.active{display:flex;flex-direction:column}
+#${ROOT_ID} .mpc-welcome{display:flex;flex-direction:column;gap:4px;padding:4px 2px}
+#${ROOT_ID} .mpc-welcome strong,#${ROOT_ID} .mpc-panel-heading{font-size:clamp(10px,1vw,14px);letter-spacing:.12em;color:#d6f58d}
+#${ROOT_ID} .mpc-panel-heading{display:flex;justify-content:space-between;align-items:center}
+#${ROOT_ID} .mpc-panel-heading small{font-size:7px;color:#9cba68;border:1px solid #647b3d;padding:2px 5px;border-radius:3px}
+#${ROOT_ID} .mpc-screen-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}
+#${ROOT_ID} .mpc-screen-actions button{min-height:28px;border:1px solid #637b3e;border-radius:4px;background:linear-gradient(#3a4828,#182111);color:#e6f4d0;font-size:8px;font-weight:900;letter-spacing:.06em}
+#${ROOT_ID} .mpc-screen-readout{display:grid;grid-template-columns:auto 1fr;gap:3px 8px;padding:6px;border:1px solid #455436;background:rgba(0,0,0,.24)}
+#${ROOT_ID} .mpc-screen-readout b{color:#c7f17d}
+#${ROOT_ID} .mpc-screen-readout span:last-child{grid-column:1/-1;color:#b6c49d}
+#${ROOT_ID} .mpc-field{display:flex;flex-direction:column;gap:3px;color:#d7e6bd;font-size:8px;font-weight:900;letter-spacing:.06em}
+#${ROOT_ID} .mpc-field select{width:100%;min-height:27px;padding:4px;border:1px solid #61743e;border-radius:3px;background:#151d10;color:#edf4df;font-size:9px}
+#${ROOT_ID} .mpc-field input[type=range]{width:100%;accent-color:#b5e85a}
+#${ROOT_ID} .mpc-field output{float:right;color:#d2f28d;font-weight:700}
+#${ROOT_ID} .mpc-help{margin:0;color:#bdc9a8;font-size:8px;line-height:1.35}
+#${ROOT_ID} .screen-tabs{grid-template-columns:repeat(5,minmax(0,1fr))}
+#${ROOT_ID} .screen-tab{cursor:pointer}
 @media(max-width:680px){#${ROOT_ID} .mpc-library-strip{grid-template-columns:minmax(0,1fr) auto;gap:5px}#${ROOT_ID} .mpc-library-strip label{grid-column:1/-1}#${ROOT_ID} .mpc-library-strip button{font-size:7px;padding:4px 6px}}
 @media(max-width:680px){
   #${ROOT_ID}{padding:0;align-items:stretch}
@@ -240,16 +260,77 @@ function buildMarkup() {
           <span class="screen-stat">BPM: 128</span>
           <span class="screen-stat">${icon.battery}</span>
         </div>
-        <div class="screen-body">
-          <div class="tile-grid">${topTiles}</div>
-          <div class="screen-lower">
-            <div class="lower-tiles">${lowerTiles}</div>
-            <div class="meter">${meter}</div>
-          </div>
-          <div class="dots"><i></i><i></i><i></i></div>
+        <div class="screen-body mpc-screen-workspace">
+          <section class="mpc-screen-panel active" data-mpc-panel="MAIN">
+            <div class="mpc-welcome"><strong>PERFORMANCE</strong><span>Tap a pad to play. Hold your groove while the song runs.</span></div>
+            <div class="mpc-screen-actions">
+              <button type="button" data-mpc-screen-action="browse">SOUND BROWSER</button>
+              <button type="button" data-mpc-screen-action="sample">SAMPLE EDIT</button>
+              <button type="button" data-mpc-screen-action="timing">TIMING</button>
+              <button type="button" data-mpc-screen-action="mixer">MIXER</button>
+            </div>
+            <div class="mpc-screen-readout"><span>SELECTED PAD</span><b data-mpc-selected-readout>BANK A · PAD 01</b><span data-mpc-pad-readout>Choose a pad to see its sound and settings.</span></div>
+          </section>
+          <section class="mpc-screen-panel" data-mpc-panel="SEQ">
+            <div class="mpc-panel-heading">PERFORMANCE TIMING <small>ADVANCED</small></div>
+            <label class="mpc-field">QUANTIZE
+              <select data-mpc-quantize><option value="off">OFF · FREE PLAY</option><option value="1/4">1/4 NOTE</option><option value="1/8">1/8 NOTE</option><option value="1/16" selected>1/16 NOTE</option><option value="1/32">1/32 NOTE</option></select>
+            </label>
+            <label class="mpc-field">SWING <output data-mpc-swing-value>0%</output>
+              <input type="range" min="0" max="75" value="0" data-mpc-swing>
+            </label>
+            <p class="mpc-help">Quantize tightens recorded pad hits to the song grid. Swing delays alternating subdivisions for a more human pocket.</p>
+          </section>
+          <section class="mpc-screen-panel" data-mpc-panel="SAMPLE">
+            <div class="mpc-panel-heading">SAMPLE EDITOR <small>ADVANCED</small></div>
+            <label class="mpc-field">IMPORTED SAMPLE
+              <select data-mpc-editor-sample><option value="">Choose an imported sample</option></select>
+            </label>
+            <div class="mpc-screen-actions">
+              <button type="button" data-mpc-preview>PREVIEW</button>
+              <button type="button" data-mpc-apply-sample>ASSIGN TO SELECTED PAD</button>
+            </div>
+            <label class="mpc-field">START <output data-mpc-start-value>0%</output>
+              <input type="range" min="0" max="99" value="0" data-mpc-start>
+            </label>
+            <label class="mpc-field">END <output data-mpc-end-value>100%</output>
+              <input type="range" min="1" max="100" value="100" data-mpc-end>
+            </label>
+            <label class="mpc-field">PITCH <output data-mpc-pitch-value>0 st</output>
+              <input type="range" min="-12" max="12" value="0" data-mpc-pitch>
+            </label>
+            <label class="mpc-field">DECAY <output data-mpc-decay-value>FULL</output>
+              <input type="range" min="5" max="100" value="100" data-mpc-decay>
+            </label>
+            <p class="mpc-help" data-mpc-editor-status>Trim and tune the selected sample, then assign it to the selected pad.</p>
+          </section>
+          <section class="mpc-screen-panel" data-mpc-panel="MIX">
+            <div class="mpc-panel-heading">OUTPUT & PERFORMANCE <small>ADVANCED</small></div>
+            <label class="mpc-field">MASTER LEVEL <output data-mpc-master-value>100%</output>
+              <input type="range" min="0" max="100" value="100" data-mpc-master>
+            </label>
+            <div class="mpc-screen-actions">
+              <button type="button" data-mpc-screen-action="record">RECORD PADS</button>
+              <button type="button" data-mpc-screen-action="overdub">OVERDUB</button>
+              <button type="button" data-mpc-screen-action="play">PLAY TAKE</button>
+              <button type="button" data-mpc-screen-action="stop">STOP</button>
+            </div>
+            <p class="mpc-help">MPC pad audio routes through the shared studio master output. Your pad performance is saved with the active song project.</p>
+          </section>
+          <section class="mpc-screen-panel" data-mpc-panel="BROWSE">
+            <div class="mpc-panel-heading">SOUND BROWSER <small>LIBRARY</small></div>
+            <label class="mpc-field">SOUND
+              <select data-mpc-browser-sound></select>
+            </label>
+            <div class="mpc-screen-actions">
+              <button type="button" data-mpc-browser-preview>PREVIEW SOUND</button>
+              <button type="button" data-mpc-browser-assign>ASSIGN TO PAD</button>
+            </div>
+            <p class="mpc-help">Choose a sound, preview it, then assign it to the currently selected pad and bank.</p>
+          </section>
         </div>
         <nav class="screen-tabs">
-          ${["MAIN", "SEQ EDIT", "◄ NUOF ►", "SROWST", "XY FX"].map((label, i) => `<button type="button" class="screen-tab ${i === 0 ? "active" : ""}" data-placeholder="${esc(label)}">${esc(label)}</button>`).join("")}
+          ${["MAIN", "TIMING", "SAMPLE", "MIXER", "BROWSE"].map((label, i) => `<button type="button" class="screen-tab ${i === 0 ? "active" : ""}" data-mpc-tab="${["MAIN","SEQ","SAMPLE","MIX","BROWSE"][i]}">${esc(label)}</button>`).join("")}
         </nav>
       </div></div>
 
