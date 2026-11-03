@@ -90,11 +90,18 @@ function createBus(audio) {
   compressor.ratio.value = 3.5;
   compressor.attack.value = 0.004;
   compressor.release.value = 0.16;
+  const limiter = audio.createDynamicsCompressor();
+  limiter.threshold.value = -2;
+  limiter.knee.value = 0;
+  limiter.ratio.value = 20;
+  limiter.attack.value = 0.001;
+  limiter.release.value = 0.08;
   const gain = audio.createGain();
   gain.gain.value = 0.76;
   gain.connect(compressor);
-  compressor.connect(output);
-  return { input: gain, compressor, output };
+  compressor.connect(limiter);
+  limiter.connect(output);
+  return { input: gain, compressor, limiter, output };
 }
 
 function noiseBuffer(audio, duration = 0.22) {
@@ -194,27 +201,26 @@ const StudioMPCLibrary = {
 
   open() {
     const state = readState();
-    const startCount = state.sounds.length;
-    const firstNew = 100 + state.growthCount * 20;
-    for (let i = 0; i < 20; i++) {
-      state.sounds.push(makeSound(firstNew + i));
-    }
-    state.growthCount += 1;
+    state.sounds = Array.from({ length: 100 }, (_, index) => makeSound(index));
+    state.growthCount = Math.max(0, Number(state.growthCount) || 0) + 1;
     this.state = state;
     writeState(state);
+    const total = 100 + state.growthCount * 20;
     return {
-      sounds: state.sounds,
-      added: state.sounds.length - startCount,
+      sounds: this.getSounds(),
+      added: 20,
       unlocked: Boolean(state.unlocked),
-      total: state.sounds.length
+      total: total + (state.unlocked ? 200 : 0)
     };
   },
 
   getSounds() {
     if (!this.state) this.state = readState();
+    const count = 100 + Math.max(0, Number(this.state.growthCount) || 0) * 20;
+    const available = Array.from({ length: count }, (_, index) => makeSound(index));
     return this.state.unlocked
-      ? [...this.state.sounds, ...Array.from({ length: 200 }, (_, index) => makeSound(index, true))]
-      : this.state.sounds.slice();
+      ? [...available, ...Array.from({ length: 200 }, (_, index) => makeSound(index, true))]
+      : available;
   },
 
   unlock(code) {
