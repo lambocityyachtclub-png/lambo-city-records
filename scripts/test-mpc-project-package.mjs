@@ -88,4 +88,11 @@ assert.throws(
   /sample that is missing/
 );
 
+const noAssetFieldProject = structuredClone(project);
+delete noAssetFieldProject.mpcAssets;
+assert.throws(
+  () => exportSongProjectPackage(noAssetFieldProject),
+  /does not include the audio assets/
+);
+
 console.log("MPC project package tests passed.");
