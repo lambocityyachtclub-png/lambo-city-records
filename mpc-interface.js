@@ -441,6 +441,11 @@ const MPCInterface = {
     const root = document.createElement("div");
     root.id = ROOT_ID;
     root.innerHTML = buildMarkup();
+    const masterSlider = root.querySelector("[data-mpc-master]");
+    const masterReadout = root.querySelector("[data-mpc-master-value]");
+    const savedMaster = Math.round(StudioMPCSampler.masterVolume * 100);
+    if (masterSlider) masterSlider.value = String(savedMaster);
+    if (masterReadout) masterReadout.textContent = savedMaster + "%";
 
     root.addEventListener("change", event => {
       if (event.target.matches("[data-mpc-import]")) void this.importSamples(event.target.files);
