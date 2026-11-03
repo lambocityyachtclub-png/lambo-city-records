@@ -417,12 +417,14 @@ const StudioMultitrackWorkspace = {
 
       if (control === "mute") {
         track.muted = !track.muted;
+        this.arrangementPlayback?.syncTrackState(this.tracks);
         this.render();
         this.status(`${track.name} mute ${track.muted ? "on" : "off"}.`);
       }
 
       if (control === "solo") {
         track.solo = !track.solo;
+        this.arrangementPlayback?.syncTrackState(this.tracks);
         this.render();
         this.status(`${track.name} solo ${track.solo ? "on" : "off"}.`);
       }
