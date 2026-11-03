@@ -847,6 +847,16 @@ export default {
     }
 
 
+    // Phone shortcuts use the same elevator travel, streaming, landing,
+    // and arrival systems as the physical elevator controls.
+    window.__lamboCityNavigateToFloor = floor => {
+      if (![2, 3].includes(Number(floor)) || traveling || pendingLandingPlayer) {
+        return false;
+      }
+      selectFloor(Number(floor));
+      return traveling;
+    };
+
     window.__lamboCityElevatorReady =
       true;
 
