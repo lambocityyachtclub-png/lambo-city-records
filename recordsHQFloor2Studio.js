@@ -336,6 +336,15 @@ export default {
         }
       );
 
+    const producerWood =
+      material(
+        0x76543b,
+        {
+          roughness: 0.52,
+          metalness: 0.10
+        }
+      );
+
     // =========================================================
     // FLOOR 2 IDENTITY
     // =========================================================
@@ -395,7 +404,7 @@ export default {
     box(
       beatLab,
       new THREE.BoxGeometry(5.35, 0.18, 1.55),
-      dark,
+      producerWood,
       beatX,
       0.94,
       beatZ
@@ -502,22 +511,24 @@ export default {
     });
 
     // Wide production display faces the seated producer (+Z).
-    box(
-      producerCockpit,
-      new THREE.BoxGeometry(1.85, 1.08, 0.09),
-      glass,
-      0,
-      1.88,
-      -0.92
-    );
-    box(
-      producerCockpit,
-      new THREE.BoxGeometry(1.98, 0.055, 0.12),
-      goldGlow,
-      0,
-      2.44,
-      -0.92
-    );
+    [-0.48, 0.48].forEach(x => {
+      box(
+        producerCockpit,
+        new THREE.BoxGeometry(0.90, 1.08, 0.09),
+        glass,
+        x,
+        1.88,
+        -0.92
+      );
+      box(
+        producerCockpit,
+        new THREE.BoxGeometry(0.96, 0.055, 0.12),
+        goldGlow,
+        x,
+        2.44,
+        -0.92
+      );
+    });
 
     // Chair is centered behind the desk, facing the exterior windows (-Z).
     const producerChair = new THREE.Group();
@@ -619,7 +630,7 @@ export default {
       5.25;
 
     const pianoZ =
-      -2.25;
+      -3.2;
 
     const pianoAngle =
       0;
@@ -1617,15 +1628,15 @@ export default {
     );
 
     // Angled acoustic ceiling plane and two skylights over the live room.
-    box(
+    const liveRoomCeiling = box(
       ceiling,
       new THREE.BoxGeometry(7.0, 0.12, 12.8),
       dark,
       -5.2,
       4.00,
-      0,
-      -0.08
+      0
     );
+    liveRoomCeiling.rotation.z = -0.08;
     [-2.7, 2.7].forEach(z => {
       box(
         ceiling,
