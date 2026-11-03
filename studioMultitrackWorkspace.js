@@ -104,6 +104,7 @@ const StudioMultitrackWorkspace = {
       inputSource: "mic",
       eq: { low: 0, mid: 0, high: 0 },
       compression: { threshold: -18, ratio: 1 },
+      effects: { delayTime: 0.28, delayFeedback: 0.25, delayMix: 0, reverbMix: 0, reverbDecay: 2.2 },
       automation: { volume: [] },
       muted: false,
       solo: false,
@@ -226,6 +227,13 @@ const StudioMultitrackWorkspace = {
           threshold: Number(track.compression?.threshold ?? -18),
           ratio: Math.max(1, Math.min(8, Number(track.compression?.ratio) || 1))
         },
+        effects: {
+          delayTime: Number(track.effects?.delayTime ?? 0.28),
+          delayFeedback: Number(track.effects?.delayFeedback ?? 0.25),
+          delayMix: Number(track.effects?.delayMix ?? 0),
+          reverbMix: Number(track.effects?.reverbMix ?? 0),
+          reverbDecay: Number(track.effects?.reverbDecay ?? 2.2)
+        },
         automation: {
           volume: Array.isArray(track.automation?.volume) ? track.automation.volume.map(point => ({
             bar: Number(point.bar),
@@ -271,6 +279,13 @@ const StudioMultitrackWorkspace = {
       compression: {
         threshold: Number(savedTrack.compression?.threshold ?? -18),
         ratio: Math.max(1, Math.min(8, Number(savedTrack.compression?.ratio) || 1))
+      },
+      effects: {
+        delayTime: Number(savedTrack.effects?.delayTime ?? 0.28),
+        delayFeedback: Number(savedTrack.effects?.delayFeedback ?? 0.25),
+        delayMix: Number(savedTrack.effects?.delayMix ?? 0),
+        reverbMix: Number(savedTrack.effects?.reverbMix ?? 0),
+        reverbDecay: Number(savedTrack.effects?.reverbDecay ?? 2.2)
       },
       automation: {
         volume: Array.isArray(savedTrack.automation?.volume) ? savedTrack.automation.volume.map(point => ({
