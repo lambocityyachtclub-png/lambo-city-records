@@ -39,6 +39,7 @@ let travelStartedAt = 0;
 let selectedFloor = null;
 let destinationLoadReady = true;
 let destinationLoadError = null;
+let failedReturnDoorPending = false;
 
 let travelStartY = 1.3;
 let travelTargetY = 1.3;
@@ -868,6 +869,12 @@ export default {
 
     updateLandingDoors(delta);
 
+    if (failedReturnDoorPending && landingDoorProgress >= 0.995) {
+      failedReturnDoorPending = false;
+      lockPlayerInput(false);
+      setStatus("");
+    }
+
     // Only release the passenger after the landing doors are fully open.
     if (pendingLandingPlayer && landingDoorProgress >= 0.995) {
       const arrivedPlayer = pendingLandingPlayer;
@@ -974,8 +981,11 @@ export default {
             ?. (travelStartY);
           window.__lamboCityElevatorTraveling = false;
           window.__lamboCityElevatorProgress = 0;
-          lockPlayerInput(false);
-          setStatus("DESTINATION UNAVAILABLE — PLEASE TRY AGAIN");
+          landingDoorFloor = floorNumberFromY(travelStartY);
+          landingDoorProgress = 0;
+          landingDoorTarget = 1;
+          failedReturnDoorPending = true;
+          setStatus("DESTINATION UNAVAILABLE — RETURNING TO DEPARTURE FLOOR");
           return;
         }
 
