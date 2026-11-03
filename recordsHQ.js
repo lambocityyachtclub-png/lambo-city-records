@@ -789,15 +789,7 @@ export default {
 
       );
 
-      seat.position.set(
-
-        HQ_POSITION.x + 15 + pos[0],
-
-        .45,
-
-        HQ_POSITION.z - 7.85 + pos[1]
-
-      );
+      seat.position.set(15 + pos[0], .45, -7.85 + pos[1]);
 
       group.add(seat);
 
@@ -827,13 +819,7 @@ export default {
 
     );
 
-    table.position.set(
-
-      HQ_POSITION.x + 15,
-      .7,
-      HQ_POSITION.z - 7.85
-
-    );
+    table.position.set(15, .7, -7.85);
 
     group.add(table);
 
@@ -861,13 +847,7 @@ export default {
 
     );
 
-    roundabout.position.set(
-
-      HQ_POSITION.x + 2,
-      .1,
-      HQ_POSITION.z - 24
-
-    );
+    roundabout.position.set(2, .1, -24);
 
     group.add(roundabout);
 
@@ -893,13 +873,7 @@ export default {
 
     ring.rotation.x = Math.PI / 2;
 
-    ring.position.set(
-
-      HQ_POSITION.x + 2,
-      .25,
-      HQ_POSITION.z - 24
-
-    );
+    ring.position.set(2, .25, -24);
 
     group.add(ring);
 
