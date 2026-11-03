@@ -73,6 +73,7 @@ this.systems.floor2StudioNavigation?.init?.(
   this.context
 );
 this.systems.recordsHQFloor3Executive?.init?.(this.scene);
+this.systems.recordsHQFloor3Experience?.init?.(this.scene, this.context);
 this.systems.recordsHQRooftopVIP?.init?.(this.scene);
 this.systems.recordsHQEntranceThreshold?.init?.(this.scene);
 this.systems.recordsHQMediaDetails?.init?.(this.scene);
