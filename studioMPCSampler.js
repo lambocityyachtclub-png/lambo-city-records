@@ -200,6 +200,22 @@ const MPCSampler = {
     return this.assignments[bank + "-" + pad] || null;
   },
 
+  exportState() {
+    return {
+      assignments: { ...this.assignments },
+      padSettings: JSON.parse(JSON.stringify(this.padSettings || {}))
+    };
+  },
+
+  importState(state = {}) {
+    const assignments = state.assignments && typeof state.assignments === "object" ? state.assignments : {};
+    const padSettings = state.padSettings && typeof state.padSettings === "object" ? state.padSettings : {};
+    this.assignments = { ...this.assignments, ...assignments };
+    this.padSettings = { ...this.padSettings, ...padSettings };
+    writeAssignments(this.assignments);
+    localStorage.setItem(ASSIGN_KEY + "-settings", JSON.stringify(this.padSettings));
+  },
+
   async play(sampleId, audio, options = {}) {
     const buffer = this.buffers.get(sampleId) || await this.decode({ id: sampleId }, audio);
     const startRatio = Math.max(0, Math.min(0.99, Number(options.start) || 0));
