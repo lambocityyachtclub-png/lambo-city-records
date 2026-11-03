@@ -294,7 +294,7 @@ function buildMarkup() {
               <input type="range" min="50" max="150" value="100" data-mpc-velocity>
             </label>
             <button type="button" data-mpc-note-repeat-toggle class="mpc-primary-action">NOTE REPEAT: OFF</button>
-            <p class="mpc-help">Quantize tightens recorded pad hits to the song grid. Swing delays alternating subdivisions for a more human pocket. Hold a pad to repeat it at the selected rate.</p>
+            <p class="mpc-help">Quantize tightens recorded pad hits to the song grid. Swing delays alternating subdivisions for a more human pocket. Hold a pad to repeat it at the selected rate. Velocity response adjusts how strongly touch or stylus pressure changes each hit.</p>
           </section>
           <section class="mpc-screen-panel" data-mpc-panel="SAMPLE">
             <div class="mpc-panel-heading">PAD & SAMPLE EDITOR <small>ADVANCED</small></div>
@@ -982,6 +982,7 @@ const MPCInterface = {
       });
     }
     this.refreshLibraryUI();
+    void this.refreshSampleEditor();
     const status = this.root?.querySelector("[data-mpc-editor-status]");
     if (status) status.textContent = available + " EVEN SLICES ASSIGNED · BANK " + this.bank + " PADS " + firstPad + "–" + (firstPad + available - 1);
   },
