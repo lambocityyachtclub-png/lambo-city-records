@@ -716,7 +716,7 @@ const StudioMultitrackWorkspace = {
       const context = await StudioAudioEngine.resume();
       const bytes = await take.blob.arrayBuffer();
       const buffer = await context.decodeAudioData(bytes.slice(0));
-      const lengthBars = Math.max(1, Math.ceil(buffer.duration / (240 / this.tempo)));
+      const lengthBars = Math.max(1, Math.min(128, Math.ceil(buffer.duration / (240 / this.tempo))));
       track.clips.push({
         id: take.id,
         name: track.name + " Recording",
@@ -751,7 +751,7 @@ const StudioMultitrackWorkspace = {
         const buffer = await context.decodeAudioData(bytes.slice(0));
         const baseName = file.name.replace(/\.[^.]+$/, "") || "Imported Audio";
         const track = this.createTrack("audio", baseName);
-        const bars = Math.max(1, Math.min(32, Math.ceil(buffer.duration / (240 / this.tempo))));
+        const bars = Math.max(1, Math.min(128, Math.ceil(buffer.duration / (240 / this.tempo))));
         track.clips.push({
           id: track.id + "-import-1",
           name: file.name,
