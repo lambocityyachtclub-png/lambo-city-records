@@ -18,9 +18,9 @@ const FLOOR_2_Y = 12.2;
 // The producer chair is centered in the room. The workstation is
 // placed forward (+Z) from this point in the companion layout pass.
 const PRODUCER_SEAT = {
-  x: HQ_X,
+  x: HQ_X + 1.1,
   y: FLOOR_2_Y,
-  z: HQ_Z
+  z: HQ_Z - 2.15
 };
 
 const ELEVATOR_ARRIVAL_SECONDS = 2.2;
@@ -45,7 +45,7 @@ function publishState() {
   window.__lamboCityFloor2SessionMode = mode;
   window.__lamboCityFloor2SessionActive =
     mode === "arrival" || mode === "seated" || mode === "instrument";
-  window.__lamboCityFloor2OrbitYaw ??= Math.PI;
+  window.__lamboCityFloor2OrbitYaw ??= 0;
   window.__lamboCityFloor2OrbitPitch ??= 0.08;
   window.__lamboCitySuppressStationClickUntil =
     suppressStationClickUntil;
@@ -121,7 +121,7 @@ function onPointerMove(event) {
 
   event.preventDefault();
   window.__lamboCityFloor2OrbitYaw =
-    (window.__lamboCityFloor2OrbitYaw ?? Math.PI) - dx * 0.008;
+    (window.__lamboCityFloor2OrbitYaw ?? 0) - dx * 0.008;
   window.__lamboCityFloor2OrbitPitch =
     Math.max(
       -0.18,
@@ -139,7 +139,7 @@ function onWheel(event) {
   if (mode !== "seated" || !event.deltaX) return;
   event.preventDefault();
   window.__lamboCityFloor2OrbitYaw =
-    (window.__lamboCityFloor2OrbitYaw ?? Math.PI) + event.deltaX * 0.006;
+    (window.__lamboCityFloor2OrbitYaw ?? 0) + event.deltaX * 0.006;
   suppressStationClickUntil = Date.now() + 320;
   publishState();
 }
@@ -229,7 +229,7 @@ export default {
       rotationY: player.rotation.y
     };
     arrivalElapsed = 0;
-    window.__lamboCityFloor2OrbitYaw = Math.PI;
+    window.__lamboCityFloor2OrbitYaw = 0;
     window.__lamboCityFloor2OrbitPitch = 0.08;
     setMode("arrival");
   },
@@ -273,7 +273,7 @@ export default {
         PRODUCER_SEAT.y,
         arrivalStart.z + (PRODUCER_SEAT.z - arrivalStart.z) * eased
       );
-      arrivalPlayer.rotation.y = 0;
+      arrivalPlayer.rotation.y = Math.PI;
 
       if (t >= 1) {
         playerSystem?.setStudioSeatedPose?.(true);
