@@ -1,0 +1,73 @@
+import assert from "node:assert/strict";
+import {
+  exportSongProjectPackage,
+  importSongProjectPackage
+} from "../studioProjectPackage.js";
+
+const steps = () => Array.from({ length: 16 }, () => false);
+const project = {
+  schemaVersion: 1,
+  id: "test-song",
+  metadata: { title: "MPC Package Test" },
+  settings: { bpm: 100, soundProfile: "mpc" },
+  patterns: [{
+    id: "pattern-main",
+    name: "Main",
+    bpm: 100,
+    steps: { kick: steps(), snare: steps(), hat: steps() }
+  }],
+  arrangement: {
+    sections: [{ id: "section-intro", name: "Intro", order: 0, bars: 1, clips: [] }]
+  },
+  mpcPerformance: {
+    events: [{
+      pad: 1,
+      bank: "A",
+      soundId: "DEMO-001",
+      sampleId: "user-sample-test",
+      sampleSettings: { start: 0.1, end: 0.9, pitch: 1.05946, decay: 0.8 },
+      velocity: 0.82,
+      at: 0.25,
+      sound: {
+        id: "DEMO-001",
+        name: "Test Kick",
+        family: "kick",
+        seed: 1,
+        frequency: 60,
+        decay: 0.2,
+        brightness: 0.5
+      }
+    }],
+    duration: 2
+  },
+  mpcAssets: [{
+    id: "user-sample-test",
+    name: "Test Sample",
+    fileName: "test.wav",
+    type: "audio/wav",
+    size: 4,
+    data: "AQIDBA=="
+  }],
+  mpcSamplerState: {
+    assignments: { "A-1": "user-sample-test" },
+    padSettings: { "A-1": { start: 0.1, end: 0.9, pitch: 1.05946, decay: 0.8 } }
+  },
+  mpcLibraryAssignments: { "A-2": "DEMO-002" }
+};
+
+const packageText = exportSongProjectPackage(project);
+const imported = importSongProjectPackage(packageText);
+assert.equal(imported.mpcPerformance.events[0].sampleId, "user-sample-test");
+assert.equal(imported.mpcPerformance.events[0].velocity, 0.82);
+assert.equal(imported.mpcAssets[0].data, "AQIDBA==");
+assert.equal(imported.mpcSamplerState.assignments["A-1"], "user-sample-test");
+assert.equal(imported.mpcLibraryAssignments["A-2"], "DEMO-002");
+
+const missingAssetProject = structuredClone(project);
+missingAssetProject.mpcAssets = [];
+assert.throws(
+  () => exportSongProjectPackage(missingAssetProject),
+  /sample that is missing/
+);
+
+console.log("MPC project package tests passed.");
