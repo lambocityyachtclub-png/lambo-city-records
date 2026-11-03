@@ -801,32 +801,33 @@ export default {
     beatLab.add(producerCockpit);
 
     
+    // Keep the display in the cockpit's local coordinate space.
+    // This makes it rotate and stay centered with the speaker pair
+    // and the seated producer instead of drifting off-axis.
     box(
-      beatLab,
+      producerCockpit,
       new THREE.BoxGeometry(
         0.08,
         1.0,
         1.55
       ),
       glass,
-      beatX + 0.56,
+      0.56,
       1.82,
-      beatZ + 0.15,
-      beatAngle
+      0.15
     );
 
     box(
-      beatLab,
+      producerCockpit,
       new THREE.BoxGeometry(
         0.75,
         0.05,
         0.05
       ),
       goldGlow,
-      beatX + 0.56,
+      0.56,
       2.35,
-      beatZ + 0.15,
-      beatAngle
+      0.15
     );
 
     label(
