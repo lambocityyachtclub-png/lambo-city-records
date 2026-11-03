@@ -210,8 +210,8 @@ const MPCSampler = {
   importState(state = {}) {
     const assignments = state.assignments && typeof state.assignments === "object" ? state.assignments : {};
     const padSettings = state.padSettings && typeof state.padSettings === "object" ? state.padSettings : {};
-    this.assignments = { ...this.assignments, ...assignments };
-    this.padSettings = { ...this.padSettings, ...padSettings };
+    this.assignments = { ...assignments };
+    this.padSettings = { ...padSettings };
     writeAssignments(this.assignments);
     localStorage.setItem(ASSIGN_KEY + "-settings", JSON.stringify(this.padSettings));
   },
