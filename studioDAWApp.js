@@ -331,6 +331,19 @@ function createMixPanel({ beatLab, workspace } = {}) {
       compValue.dataset.compLabel = track.id;
       compControl.append(compSlider, compValue);
       inserts.appendChild(compControl);
+      [["delayMix","DELAY MIX"],["reverbMix","REVERB MIX"]].forEach(([key,label]) => {
+        const control = document.createElement("label");
+        control.style.cssText = "display:grid;grid-template-columns:90px 1fr 36px;gap:8px;align-items:center;margin-top:9px;color:#a8a8b1;font-size:10px";
+        const caption = document.createElement("span"); caption.textContent = label;
+        const slider = document.createElement("input");
+        slider.type = "range"; slider.min = "0"; slider.max = "100"; slider.step = "1";
+        slider.value = String(Math.round(Number(track.effects?.[key] || 0) * 100));
+        slider.dataset.trackEffect = key; slider.dataset.trackId = track.id;
+        slider.style.cssText = "width:100%;accent-color:#e6bb69";
+        const value = document.createElement("span"); value.dataset.effectLabel = key + "-" + track.id;
+        value.textContent = slider.value + "%";
+        control.append(caption, slider, value); inserts.appendChild(control);
+      });
       row.append(heading, volume, pan, inserts);
       const automation = document.createElement("details");
       automation.style.cssText = "padding:9px 10px;border:1px solid #343946;border-radius:8px;background:#12151d;color:#d8b36e";
@@ -441,6 +454,17 @@ function createMixPanel({ beatLab, workspace } = {}) {
       const label = root.querySelector('[data-eq-label="' + band + "-" + track.id + '"]');
       if (label) label.textContent = track.eq[band] + " dB";
       StudioMultitrackWorkspace.arrangementPlayback?.setTrackEQ(track.id, band, track.eq[band]);
+      return;
+    }
+    const effectSlider = event.target.closest("[data-track-effect]");
+    if (effectSlider) {
+      const track = StudioMultitrackWorkspace.tracks.find(item => item.id === effectSlider.dataset.trackId);
+      if (!track) return;
+      const key = effectSlider.dataset.trackEffect;
+      track.effects = { ...(track.effects || {}), [key]: Number(effectSlider.value) / 100 };
+      const label = root.querySelector('[data-effect-label="' + key + "-" + track.id + '"]');
+      if (label) label.textContent = effectSlider.value + "%";
+      StudioMultitrackWorkspace.arrangementPlayback?.setTrackEffects(track.id, { [key]: track.effects[key] });
       return;
     }
     const compSlider = event.target.closest("[data-comp-ratio]");
