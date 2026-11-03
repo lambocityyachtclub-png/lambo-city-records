@@ -416,7 +416,7 @@ export default {
 
       if (window.__lamboCityFloor2SessionMode === "arrival") {
         bobTime += delta;
-        const swing = Math.sin(bobTime * 10) * 0.32;
+        const swing = Math.sin(bobTime * 12) * 0.36;
         this.armL.rotation.x = swing;
         this.armR.rotation.x = -swing;
         this.legL.rotation.x = -swing * 0.6;
