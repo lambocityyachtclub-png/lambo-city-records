@@ -811,7 +811,7 @@ export default {
       glass,
       beatX + 0.56,
       1.82,
-      0.15,
+      beatZ + 0.15,
       beatAngle
     );
 
@@ -825,7 +825,7 @@ export default {
       goldGlow,
       beatX + 0.56,
       2.35,
-      0.15,
+      beatZ + 0.15,
       beatAngle
     );
 
