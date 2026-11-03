@@ -371,15 +371,6 @@ export default {
       5.9
     );
 
-    label(
-      group,
-      "CREATE • RECORD • PRODUCE",
-      0,
-      3.05,
-      -6.45,
-      7.4
-    );
-
     // =========================================================
     // 1. MPC / BEAT LAB
     //
@@ -695,9 +686,9 @@ export default {
     box(
       piano,
       new THREE.BoxGeometry(
-        0.08,
+        1.65,
         1.0,
-        1.65
+        0.08
       ),
       glass,
       pianoX,
@@ -709,9 +700,9 @@ export default {
     box(
       piano,
       new THREE.BoxGeometry(
+        1.75,
         0.05,
-        0.05,
-        1.75
+        0.05
       ),
       goldGlow,
       pianoX,
