@@ -341,7 +341,7 @@ export default {
         new THREE.BoxGeometry(width + 0.34, 0.16, 0.22),
         gold,
         0,
-        3.30,
+        5.35,
         0
       );
 
@@ -400,8 +400,8 @@ export default {
       rightLeaf.position.set(leafWidth / 2, 2.70, 0.035);
       box(
         rightLeaf,
-        new THREE.BoxGeometry(leafWidth, 3.12, 0.12),
-        elevatorBronze,
+        new THREE.BoxGeometry(leafWidth, 5.20, 0.075),
+        elevatorDoorGlass,
         0,
         0,
         0
