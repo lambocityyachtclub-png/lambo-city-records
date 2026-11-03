@@ -249,4 +249,78 @@ test("Development Policy exposes its version", () => {
 
   assert.equal(policy.version, "1.0.0");
   assert.ok(policy.autonomousPermissions.length > 0);
+}); 
+test("Development System restores tasks after a restart", async () => {
+  const {
+    mkdtemp,
+    rm
+  } = await import("node:fs/promises");
+
+  const os = await import("node:os");
+  const path = await import("node:path");
+
+  const {
+    createDevelopmentTaskStorage
+  } = await import("../storage/developmentTaskStorage.js");
+
+  const directory = await mkdtemp(
+    path.join(
+      os.tmpdir(),
+      "lambocity-system-persistence-"
+    )
+  );
+
+  try {
+    const storage = createDevelopmentTaskStorage({
+      filePath: path.join(
+        directory,
+        "development-tasks.json"
+      )
+    });
+
+    // Start the first Development System.
+    const firstSystem = await createDevelopmentSystem({
+      storage
+    });
+
+    // Create a task through the Studio Runner.
+    const submitted = await firstSystem.submitStudioFinding({
+      title: "Persistence restart verification",
+      description: "Verify that tasks survive a system restart.",
+      type: "improvement",
+      area: "beat_lab",
+      severity: "normal",
+      acceptanceCriteria: [
+        "The task survives a system restart."
+      ]
+    });
+
+    const originalTask = submitted.task;
+
+    // Start a completely new Development System
+    // using the same storage file.
+    const restartedSystem = await createDevelopmentSystem({
+      storage
+    });
+
+    // Retrieve the original task from the new system.
+    const restoredTask = restartedSystem.director.getTask(
+      originalTask.id
+    );
+
+    assert.equal(restoredTask.id, originalTask.id);
+    assert.equal(
+      restoredTask.title,
+      "Persistence restart verification"
+    );
+    assert.equal(restoredTask.runner, "studio");
+    assert.equal(restoredTask.area, "beat_lab");
+    assert.equal(restoredTask.status, "queued");
+
+  } finally {
+    await rm(directory, {
+      recursive: true,
+      force: true
+    });
+  }
 });
