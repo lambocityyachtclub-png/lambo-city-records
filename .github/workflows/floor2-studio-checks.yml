@@ -14,6 +14,7 @@ on:
       - "studioDAWEditPanel.js"
       - "studioDAWTimeline.js"
       - "studioDAWArrangementPlayback.js"
+      - "studioDAWExport.js"
       - "studioMultitrackWorkspace.js"
       - "studioAudioEngine.js"
       - "studioSoundKit.js"
@@ -92,6 +93,7 @@ jobs:
             studioDAWEditPanel.js \
             studioDAWTimeline.js \
             studioDAWArrangementPlayback.js \
+            studioDAWExport.js \
             studioMultitrackWorkspace.js \
             studioAudioEngine.js \
             studioSoundKit.js \
