@@ -463,6 +463,17 @@ export default {
       );
 
       elevator.add(landing);
+
+      // Floor 3 executive-side arrival stays completely clear:
+      // keep the bronze portal frame, but remove the glass leaves
+      // that visually obstruct the walk-out from the elevator.
+      if (index === 2) {
+        const hqPortal = landing.getObjectByName("recordsHQSidePortal");
+        const leftLeaf = hqPortal?.getObjectByName("doorLeafLeft");
+        const rightLeaf = hqPortal?.getObjectByName("doorLeafRight");
+        if (leftLeaf) leftLeaf.visible = false;
+        if (rightLeaf) rightLeaf.visible = false;
+      }
     });
 
     // Wider luxury floor bands follow the enlarged cabin footprint.
