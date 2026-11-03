@@ -1509,8 +1509,9 @@ StudioSoundKit.play(
       const mpcAssets = await StudioMPCSampler.exportAssets(sampleIds);
       const mpcLibraryAssignments = StudioMPCLibrary.exportAssignments();
       const mpcLibrarySounds = StudioMPCLibrary.exportAssignedSounds();
+      const dawSession = await StudioMultitrackWorkspace.exportSession();
       const packageText = exportSongProjectPackage({
-        ...project, mpcAssets, mpcSamplerState, mpcLibraryAssignments, mpcLibrarySounds
+        ...project, dawSession, mpcAssets, mpcSamplerState, mpcLibraryAssignments, mpcLibrarySounds
       });
 
       const blob = new Blob(
@@ -1606,6 +1607,10 @@ StudioSoundKit.play(
           if (project.mpcSamplerState) StudioMPCSampler.importState(project.mpcSamplerState);
           if (project.mpcLibrarySounds) StudioMPCLibrary.importAssignedSounds(project.mpcLibrarySounds);
           if (project.mpcLibraryAssignments) StudioMPCLibrary.importAssignments(project.mpcLibraryAssignments);
+          if (project.dawSession) {
+            StudioMultitrackWorkspace.importSession(project.dawSession);
+            delete project.dawSession;
+          }
           delete project.mpcAssets;
           delete project.mpcSamplerState;
           delete project.mpcLibraryAssignments;
