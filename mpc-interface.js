@@ -348,6 +348,18 @@ function buildMarkup() {
           </section>
           <section class="mpc-screen-panel" data-mpc-panel="BROWSE">
             <div class="mpc-panel-heading">SOUND BROWSER <small>LIBRARY</small></div>
+            <label class="mpc-field">SEARCH SOUNDS
+              <input type="search" data-mpc-sound-search placeholder="Search kicks, 808s, chops, style..." autocomplete="off">
+            </label>
+            <label class="mpc-field">CATEGORY
+              <select data-mpc-sound-family>
+                <option value="all">ALL CATEGORIES</option>
+                <option value="kick">KICKS</option><option value="bass">808 / BASS</option>
+                <option value="snare">SNARES</option><option value="clap">CLAPS</option>
+                <option value="hat">HI-HATS</option><option value="perc">PERCUSSION</option>
+                <option value="chop">CHOPS</option><option value="stab">STABS</option><option value="fx">FX</option>
+              </select>
+            </label>
             <label class="mpc-field">SOUND
               <select data-mpc-browser-sound></select>
             </label>
@@ -435,6 +447,7 @@ const MPCInterface = {
       if (event.target.matches("[data-mpc-editor-sample]")) void this.refreshSampleEditor();
       if (event.target.matches("[data-mpc-quantize]")) this.quantize = event.target.value;
       if (event.target.matches("[data-mpc-repeat-rate]")) this.noteRepeatRate = event.target.value;
+      if (event.target.matches("[data-mpc-sound-family]")) this.renderSoundBrowser();
       if (event.target.matches("[data-mpc-swing]")) {
         this.swing = Number(event.target.value) || 0;
         const out = root.querySelector("[data-mpc-swing-value]");
@@ -471,6 +484,7 @@ const MPCInterface = {
         const out = root.querySelector("[data-mpc-decay-value]");
         if (out) out.textContent = Number(target.value) >= 100 ? "FULL" : target.value + "%";
       }
+      if (target.matches("[data-mpc-sound-search]")) this.renderSoundBrowser();
       if (target.matches("[data-mpc-pad-volume]")) {
         const out = root.querySelector("[data-mpc-pad-volume-value]");
         if (out) out.textContent = target.value + "%";
@@ -701,8 +715,6 @@ const MPCInterface = {
     if (select) select.innerHTML = options;
     const editor = this.root.querySelector("[data-mpc-editor-sample]");
     if (editor) editor.innerHTML = '<option value="">Choose an imported sample</option>' + (samples.length ? samples.map(sample => '<option value="' + esc(sample.id) + '">' + esc(sample.name) + '</option>').join("") : "");
-    const browser = this.root.querySelector("[data-mpc-browser-sound]");
-    if (browser) browser.innerHTML = StudioMPCLibrary.getSounds().map(sound => '<option value="' + esc(sound.id) + '">' + esc(sound.name) + ' · ' + esc(sound.family.toUpperCase()) + '</option>').join("");
     this.refreshLibraryUI();
   },
 
@@ -965,12 +977,7 @@ const MPCInterface = {
       select.innerHTML = sounds.map(sound => '<option value="' + esc(sound.id) + '">' + esc(sound.name) + ' · ' + esc(sound.family.toUpperCase()) + ' · ' + esc(sound.style) + '</option>').join("");
       select.value = current.id;
     }
-    const browser = this.root.querySelector("[data-mpc-browser-sound]");
-    if (browser) {
-      const selected = browser.value;
-      browser.innerHTML = sounds.map(sound => '<option value="' + esc(sound.id) + '">' + esc(sound.name) + ' · ' + esc(sound.family.toUpperCase()) + ' · ' + esc(sound.style) + '</option>').join("");
-      if (sounds.some(sound => sound.id === selected)) browser.value = selected;
-    }
+    this.renderSoundBrowser();
     for (const pad of this.root.querySelectorAll("[data-pad]")) {
       const number = Number(pad.dataset.pad);
       const sound = StudioMPCLibrary.getAssignment(this.bank, number);
@@ -980,6 +987,24 @@ const MPCInterface = {
       if (label) label.textContent = number + " · " + (imported || sound.name);
     }
     this.updatePadReadout();
+  },
+
+  renderSoundBrowser() {
+    if (!this.root) return;
+    const select = this.root.querySelector("[data-mpc-browser-sound]");
+    if (!select) return;
+    const query = (this.root.querySelector("[data-mpc-sound-search]")?.value || "").trim().toLowerCase();
+    const family = this.root.querySelector("[data-mpc-sound-family]")?.value || "all";
+    const sounds = StudioMPCLibrary.getSounds().filter(sound => {
+      const matchesFamily = family === "all" || sound.family === family;
+      const haystack = [sound.name, sound.family, sound.style, sound.tone, sound.influence].join(" ").toLowerCase();
+      return matchesFamily && (!query || haystack.includes(query));
+    });
+    const current = select.value;
+    select.innerHTML = sounds.length
+      ? sounds.map(sound => '<option value="' + esc(sound.id) + '">' + esc(sound.name) + ' · ' + esc(sound.family.toUpperCase()) + ' · ' + esc(sound.style) + '</option>').join("")
+      : '<option value="">NO MATCHING SOUNDS</option>';
+    if (sounds.some(sound => sound.id === current)) select.value = current;
   },
 
   assignSelectedSound() {
