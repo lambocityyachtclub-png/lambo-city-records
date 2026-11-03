@@ -20,7 +20,9 @@ const VIEWS = [
   { id: "edit", label: "EDIT" },
   { id: "mix", label: "MIX" },
   { id: "mpc", label: "MPC" },
+  { id: "beatlab", label: "DIGITAL BEAT LAB" },
   { id: "piano", label: "PIANO" },
+  { id: "drums", label: "DRUMS" },
   { id: "vocals", label: "VOCALS" }
 ];
 
