@@ -67,9 +67,24 @@ export function createStudioDAWBeatLabPanel({
         box-sizing:border-box;
       `;
 
-      // Move the existing interface into the DAW.
-      // This is the same DOM and same controls.
+      const returnButton = document.createElement("button");
+      returnButton.type = "button";
+      returnButton.textContent = "← RETURN TO MPC";
+      returnButton.style.cssText = "min-height:42px;margin:0 0 12px;padding:10px 14px;border:1px solid #80643a;border-radius:8px;background:#201c16;color:#f1d49c;font-weight:bold";
+      returnButton.addEventListener("click", () => {
+        this.onReturn?.();
+      });
+      host.appendChild(returnButton);
+
+      // Move the existing interface into the Digital Beat Lab view.
+      // Keep the sequencer and transport, hide unrelated recording,
+      // vocal-effects and song-arranger sections from this focused view.
       host.appendChild(existingUI);
+
+      existingUI.querySelector(".lc-arranger")?.style.setProperty("display", "none");
+      existingUI.querySelectorAll(".lc-actions").forEach(node => {
+        node.style.display = "none";
+      });
 
       // Convert the old full-screen overlay into
       // a responsive embedded workspace panel.
