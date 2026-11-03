@@ -1355,18 +1355,21 @@ export default {
     mobile.name =
       "floor2MobileStudio";
 
+    // The mobile workstation is integrated into the right-hand
+    // co-pilot side of the primary producer desk, not isolated
+    // across the room.
     const mobileX =
-      -5.35;
+      2.65;
 
     const mobileZ =
-      -5.15;
+      -3.72;
 
     box(
       mobile,
       new THREE.BoxGeometry(
-        2.1,
-        0.14,
-        0.72
+        1.95,
+        0.16,
+        0.82
       ),
       dark,
       mobileX,
@@ -1379,9 +1382,9 @@ export default {
     box(
       mobile,
       new THREE.BoxGeometry(
-        1.18,
-        0.08,
-        0.62
+        1.38,
+        0.10,
+        0.72
       ),
       black,
       mobileX,
@@ -1392,9 +1395,9 @@ export default {
     box(
       mobile,
       new THREE.BoxGeometry(
-        1.18,
-        0.72,
-        0.07
+        1.38,
+        0.82,
+        0.08
       ),
       glass,
       mobileX,
@@ -1413,8 +1416,8 @@ export default {
         12
       ),
       gold,
-      mobileX + 0.82,
-      1.28,
+      mobileX + 0.72,
+      1.34,
       mobileZ
     );
 
@@ -1427,8 +1430,8 @@ export default {
         16
       ),
       black,
-      mobileX + 0.82,
-      0.97,
+      mobileX + 0.72,
+      1.00,
       mobileZ
     );
 
@@ -1436,7 +1439,7 @@ export default {
       mobile,
       "MOBILE STUDIO",
       mobileX,
-      2.58,
+      2.72,
       mobileZ - 0.40,
       4.0
     );
