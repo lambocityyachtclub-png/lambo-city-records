@@ -19,8 +19,14 @@ const ELEVATOR_POSITION = {
 const ACTIVATION_DISTANCE =
   10.5;
 
-const TRAVEL_TIME =
-  2.8; // Faster, direct floor-to-floor travel.
+// Keep Floor 2's established ride timing untouched for the Studio.
+// Other destinations use a quicker transfer and faster landing-door response.
+const TRAVEL_TIME_BY_FLOOR = {
+  1: 1.9,
+  2: 2.8,
+  3: 1.9,
+  4: 1.9
+};
 
 
 let scene = null;
@@ -517,7 +523,8 @@ function selectFloor(
 
 function updateLandingDoors(delta) {
   const difference = landingDoorTarget - landingDoorProgress;
-  landingDoorProgress += difference * Math.min(1, delta * 8);
+  const doorResponse = landingDoorFloor === 2 ? 8 : 14;
+  landingDoorProgress += difference * Math.min(1, delta * doorResponse);
 
   if (Math.abs(landingDoorTarget - landingDoorProgress) < 0.008) {
     landingDoorProgress = landingDoorTarget;
@@ -909,7 +916,8 @@ export default {
       // This keeps the elevator's duration consistent when rendering dips.
       travelTimer = Math.max(0, (performance.now() - travelStartedAt) / 1000);
 
-      const progress = Math.min(1, travelTimer / TRAVEL_TIME);
+      const travelDuration = TRAVEL_TIME_BY_FLOOR[selectedFloor] ?? 1.9;
+      const progress = Math.min(1, travelTimer / travelDuration);
 
 
       // ------------------------------------------------------
