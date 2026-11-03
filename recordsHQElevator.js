@@ -20,7 +20,7 @@ const ACTIVATION_DISTANCE =
   3.2;
 
 const TRAVEL_TIME =
-  1.25;
+  4.8;
 
 
 let scene = null;
