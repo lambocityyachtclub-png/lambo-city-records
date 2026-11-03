@@ -56,6 +56,8 @@ export default {
     ].filter(item => item.object);
 
     this.handleClick = event => {
+      // Physical station selection is available only from the seated room view.
+      if (window.__lamboCityFloor2SessionMode !== "seated") return;
       // A swipe rotates the seated camera; it must not select a station.
       if (Date.now() < Number(window.__lamboCitySuppressStationClickUntil || 0)) return;
       // Do not intercept clicks while an instrument/DAW interface is open.
