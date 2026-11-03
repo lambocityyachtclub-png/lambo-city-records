@@ -426,7 +426,17 @@ const MPCInterface = {
       StudioMPCLibrary.play(audio, sound, audio.currentTime);
       if (this.recording) {
         const at = Math.max(0, audio.currentTime - this.recordingStartedAt + this.overdubOffset);
-        this.take.events.push({ pad: padNumber, bank: this.bank, soundId: sound.id, at });
+        this.take.events.push({
+          pad: padNumber,
+          bank: this.bank,
+          soundId: sound.id,
+          at,
+          sound: {
+            id: sound.id, name: sound.name, family: sound.family, style: sound.style,
+            influence: sound.influence, seed: sound.seed, frequency: sound.frequency,
+            decay: sound.decay, brightness: sound.brightness
+          }
+        });
         this.take.duration = Math.max(this.take.duration || 0, at);
       }
       this.setStatus("PLAYING " + sound.name + " · " + sound.influence + (this.recording ? " · PAD PERFORMANCE RECORDING" : ""));
@@ -557,7 +567,7 @@ const MPCInterface = {
       const elapsed = this.beatLab.audio.currentTime - this.playbackStartedAt;
       while (this.playbackIndex < this.take.events.length && this.take.events[this.playbackIndex].at <= elapsed + 0.09) {
         const event = this.take.events[this.playbackIndex++];
-        const sound = StudioMPCLibrary.getSounds().find(item => item.id === event.soundId);
+        const sound = event.sound || StudioMPCLibrary.getSounds().find(item => item.id === event.soundId);
         if (sound) StudioMPCLibrary.play(this.beatLab.audio, sound, Math.max(this.beatLab.audio.currentTime, this.playbackStartedAt + event.at));
       }
       if (elapsed >= loopDuration) {
