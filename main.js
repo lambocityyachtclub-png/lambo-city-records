@@ -47,6 +47,7 @@ import Floor2DrumStation from "./floor2DrumStation.js";
 import Floor2StudioNavigation from "./floor2StudioNavigation.js";
 import Floor2StudioSession from "./floor2StudioSession.js";
 import RecordsHQFloor3Executive from "./recordsHQFloor3Executive.js";
+import RecordsHQFloor3Experience from "./recordsHQFloor3Experience.js";
 import RecordsHQRooftopVIP from "./recordsHQRooftopVIP.js";
 import RecordsHQEntranceThreshold from "./recordsHQEntranceThreshold.js";
 import RecordsHQMediaDetails from "./recordsHQMediaDetails.js";
@@ -108,6 +109,7 @@ engine.registerSystems({
   boardwalkOverlooks: BoardwalkOverlooks,
   input: Input,
   player: Player,
+  recordsHQFloor3Experience: RecordsHQFloor3Experience,
   elevator: Elevator,
   hud: HUD,
 });
