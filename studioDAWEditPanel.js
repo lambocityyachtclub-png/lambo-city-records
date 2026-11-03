@@ -77,8 +77,7 @@ export function createStudioDAWEditPanel({
         try {
           const wav = await renderStudioSessionToWav({
             tracks: StudioMultitrackWorkspace.tracks,
-            tempo: StudioMultitrackWorkspace.tempo,
-            masterVolume: 1
+            tempo: StudioMultitrackWorkspace.tempo
           });
           downloadStudioWav(wav, beatLab.currentProject?.metadata?.title || "lambo-city-song");
           StudioMultitrackWorkspace.status("WAV master exported.");
