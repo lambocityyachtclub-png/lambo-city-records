@@ -381,8 +381,6 @@ function buildMarkup() {
           ${["MAIN", "TIMING", "SAMPLE", "MIXER", "BROWSE"].map((label, i) => `<button type="button" class="screen-tab ${i === 0 ? "active" : ""}" data-mpc-tab="${["MAIN","SEQ","SAMPLE","MIX","BROWSE"][i]}">${esc(label)}</button>`).join("")}
         </nav>
       </div></div>
-
-      </div></div>
     </section>
 
     <nav class="mpc-bank-switcher" aria-label="Pad bank selection">
