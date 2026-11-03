@@ -173,7 +173,7 @@ function playSound(audio, sound, time, bus, velocity = 1, padSettings = {}) {
     filter.type = filterType;
     filter.frequency.setValueAtTime(cutoff, time);
     filter.Q.value = filterType === "bandpass" ? 0.9 : 0.7;
-    const gain = amp(length, peak, attack);
+    const gain = amp(length, peak, attack, destination);
     source.connect(filter);
     filter.connect(gain);
     source.start(time);
@@ -183,7 +183,7 @@ function playSound(audio, sound, time, bus, velocity = 1, padSettings = {}) {
   if (family === "kick") {
     const body = amp(duration, 0.92, 0.002);
     tone(pitch * 3.2, "sine", body, duration, pitch * 0.42);
-    noise(amp(0.028, 0.18, 0.001), 0.026, "highpass", 4200 + brightness * 2600, 0.18, 0.001);
+    noise(destination, 0.026, "highpass", 4200 + brightness * 2600, 0.18, 0.001);
     return true;
   }
 
@@ -204,7 +204,7 @@ function playSound(audio, sound, time, bus, velocity = 1, padSettings = {}) {
     const isHat = family === "hat";
     const isClap = family === "clap";
     const noiseLength = isHat ? Math.min(duration, 0.22) : Math.min(duration, 0.42);
-    noise(out, noiseLength, isHat ? "highpass" : "bandpass",
+    noise(destination, noiseLength, isHat ? "highpass" : "bandpass",
       isHat ? 6200 + brightness * 5600 : 850 + brightness * 4200,
       isHat ? 0.25 : (isClap ? 0.42 : 0.52), 0.001);
     if (isClap) {
@@ -241,7 +241,7 @@ function playSound(audio, sound, time, bus, velocity = 1, padSettings = {}) {
       osc.type = index === 1 ? "triangle" : "sawtooth";
       osc.frequency.setValueAtTime(pitch * ratio, time);
       osc.detune.value = index === 2 ? 5 : -3;
-      osc.connect(gain); gain.connect(filter);
+      osc.connect(gain);
       osc.start(time); osc.stop(time + duration + 0.025);
     });
     return true;
@@ -250,11 +250,17 @@ function playSound(audio, sound, time, bus, velocity = 1, padSettings = {}) {
   // FX: a filtered noise sweep layered with a rising/falling tone.
   const sweepLength = Math.max(0.16, duration);
   const filter = audio.createBiquadFilter();
+  const source = audio.createBufferSource();
+  const sweepGain = amp(sweepLength, 0.2, 0.012);
+  source.buffer = noiseBuffer(audio, sweepLength + 0.04);
   filter.type = "bandpass";
   filter.frequency.setValueAtTime(260, time);
   filter.frequency.exponentialRampToValueAtTime(2400 + brightness * 5200, time + Math.min(0.5, sweepLength));
   filter.Q.value = 0.65;
-  noise(out, sweepLength, "bandpass", 1400 + brightness * 3600, 0.2, 0.012);
+  source.connect(filter);
+  filter.connect(sweepGain);
+  source.start(time);
+  source.stop(time + sweepLength + 0.02);
   const fx = amp(sweepLength, 0.22, 0.015);
   tone(pitch * 0.7, "sine", fx, sweepLength, pitch * (sound.seed % 2 ? 2.2 : 0.55));
   return true;
@@ -332,7 +338,12 @@ const StudioMPCLibrary = {
     return sound;
   },
 
-  setMasterVolume(value) {\n    this.masterLevel = clamp(Number(value) || 0, 0, 1);\n    if (this.bus) this.bus.input.gain.setTargetAtTime(this.masterLevel, this.audio.currentTime, 0.015);\n  },\n\n  exportAssignments() {
+  setMasterVolume(value) {
+    this.masterLevel = clamp(Number(value) || 0, 0, 1);
+    if (this.bus) this.bus.input.gain.setTargetAtTime(this.masterLevel, this.audio.currentTime, 0.015);
+  },
+
+  exportAssignments() {
     const state = this.state || readState();
     return { ...(state.assignments || {}) };
   },
