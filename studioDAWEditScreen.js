@@ -149,7 +149,7 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
         '<button class="lc-metal-icon" data-action="undo" aria-label="Undo">▱</button>',
         '<button class="lc-metal-icon" data-action="mixer-focus" aria-label="Mixer">☷</button>',
         '</div>',
-        '<div class="lc-record-options" aria-label="Recording setup"><label>COUNT-IN <select data-count-in><option value="0">OFF</option><option value="1">1 BAR</option><option value="2">2 BARS</option><option value="4">4 BARS</option></select></label><label>PUNCH IN <input data-punch-in type="number" min="1" max="128" placeholder="LIVE"></label><label>PUNCH OUT <input data-punch-out type="number" min="1" max="128" placeholder="OFF"></label><label><input data-input-monitor type="checkbox"> MONITOR</label></div>',
+        '<div class="lc-record-options" aria-label="Recording setup"><label>COUNT-IN <select data-count-in><option value="0">OFF</option><option value="1">1 BAR</option><option value="2">2 BARS</option><option value="4">4 BARS</option></select></label><label>PUNCH IN <input data-punch-in type="number" min="1" max="128" placeholder="LIVE"></label><label>PUNCH OUT <input data-punch-out type="number" min="1" max="128" placeholder="OFF"></label><label title="Use headphones when monitoring a live microphone to prevent feedback"><input data-input-monitor type="checkbox"> MONITOR · HEADPHONES</label></div>',
         '<div class="lc-session-menu" data-session-menu>',
         '<button type="button" data-action="save-session">Save Session</button>',
         '<button type="button" data-action="open-session">Open Saved Session</button>',
