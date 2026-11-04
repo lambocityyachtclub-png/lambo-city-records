@@ -158,6 +158,24 @@ const StudioMultitrackWorkspace = {
     });
   },
 
+  duplicateSelectedClip() {
+    const track = this.tracks.find(item => item.id === this.selectedTrackId);
+    const clip = track?.clips?.find(item => item.id === this.selectedClipId);
+    if (!track || !clip) return false;
+    this.recordHistory("Duplicate audio region");
+    const copy = {
+      ...clip,
+      id: "lc-clip-copy-" + Date.now() + "-" + Math.floor(Math.random() * 100000),
+      name: (clip.name || "Audio Clip") + " Copy",
+      startBar: Math.min(128 - clip.lengthBars + 1, clip.startBar + clip.lengthBars)
+    };
+    track.clips.push(copy);
+    this.selectedClipId = copy.id;
+    this.render();
+    this.status("Duplicated region to bar " + copy.startBar + ".");
+    return true;
+  },
+
   deleteSelectedClip() {
     const track = this.tracks.find(item => item.id === this.selectedTrackId);
     const index = track?.clips?.findIndex(clip => clip.id === this.selectedClipId) ?? -1;
@@ -808,6 +826,7 @@ const StudioMultitrackWorkspace = {
         <button type="button" data-edit-action="zoom-in">＋ ZOOM</button>
         <button type="button" data-edit-action="fit">FIT SONG</button>
         <button type="button" data-edit-action="split">SPLIT AT CURSOR</button>
+        <button type="button" data-edit-action="duplicate">DUPLICATE</button>
         <button type="button" data-edit-action="delete-clip">DELETE REGION</button>
         <button type="button" data-edit-action="restore">RESTORE LAST DELETED</button>
       </div>
@@ -834,6 +853,7 @@ const StudioMultitrackWorkspace = {
         if (editAction === "zoom-out") this.setZoom(this.zoomBarWidth / 1.35);
         if (editAction === "fit") this.fitTimeline();
         if (editAction === "split") this.splitSelectedClip();
+        if (editAction === "duplicate") this.duplicateSelectedClip();
         if (editAction === "delete-clip") this.deleteSelectedClip();
         if (editAction === "restore") this.restoreLastDeleted();
         return;
@@ -956,6 +976,7 @@ const StudioMultitrackWorkspace = {
           : (track.pan < 0 ? "L " : "R ") + Math.round(Math.abs(track.pan) * 100);
         this.arrangementPlayback?.setTrackPan(track.id, track.pan);
       }
+      this.scheduleProjectAutosave();
     });
 
     root.addEventListener("change", event => {
@@ -1065,6 +1086,7 @@ const StudioMultitrackWorkspace = {
         });
       }
       this.render();
+      this.scheduleProjectAutosave();
       this.status(audioFiles.length + " audio file(s) imported into separate session track(s).");
     } catch (error) {
       this.status("AUDIO IMPORT ERROR: " + (error?.message || error));
@@ -1144,6 +1166,7 @@ const StudioMultitrackWorkspace = {
     });
 
     this.render();
+    this.scheduleProjectAutosave();
 
     this.status(
       "Vocal, Beat Lab, and Master Mix recordings added."
