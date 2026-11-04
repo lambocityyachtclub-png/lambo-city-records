@@ -466,6 +466,7 @@ export function createStudioMixMasterApp({ beatLab, workspace } = {}) {
       const label = root.querySelector('[data-pitch-value="' + key + "-" + track.id + '"]');
       if (label) label.textContent = pitchSlider.value + (key === "speedMs" ? " ms" : "%");
       StudioMultitrackWorkspace.scheduleProjectAutosave();
+      StudioMultitrackWorkspace.scheduleProjectAutosave();
       void StudioMultitrackWorkspace.arrangementPlayback?.setTrackEffects(track.id, { pitchCorrection: settings })
         .catch(error => status("PITCH CORRECTION: " + (error?.message || error)));
       return;
@@ -482,6 +483,7 @@ export function createStudioMixMasterApp({ beatLab, workspace } = {}) {
       if (label) label.textContent = key === "delayTime" ? Math.round(value * 1000) + " ms" :
         key === "reverbDecay" ? value.toFixed(1) + " s" : Math.round(value * 100) + "%";
       StudioMultitrackWorkspace.arrangementPlayback?.setTrackEffects(track.id, { [key]: value });
+      StudioMultitrackWorkspace.scheduleProjectAutosave();
       return;
     }
     const compSlider = event.target.closest("[data-comp-ratio]");
@@ -492,11 +494,12 @@ export function createStudioMixMasterApp({ beatLab, workspace } = {}) {
       const label = root.querySelector('[data-comp-label="' + track.id + '"]');
       if (label) label.textContent = track.compression.ratio.toFixed(1) + ":1";
       StudioMultitrackWorkspace.arrangementPlayback?.setTrackCompression(track.id, track.compression.ratio);
+      StudioMultitrackWorkspace.scheduleProjectAutosave();
       return;
     }
     const slider = event.target.closest("[data-track-volume], [data-track-pan]");
     if (slider) {
-      const track = StudioMultitrackWorkspace.tracks.find(item => item.id === slider.dataset.trackVolume);
+      const track = StudioMultitrackWorkspace.tracks.find(item => item.id === (slider.dataset.trackVolume || slider.dataset.trackPan));
       if (!track) return;
       if (slider.matches("[data-track-volume]")) {
         track.volume = Number(slider.value);
@@ -524,29 +527,21 @@ export function createStudioMixMasterApp({ beatLab, workspace } = {}) {
     }
     if (event.target.matches("[data-master-comp]")) {
       const value = Number(event.target.value);
-      if (StudioAudioEngine.compressor && StudioAudioEngine.context) {
-        StudioAudioEngine.setMasterCompressionRatio(value);
-        StudioMultitrackWorkspace.masterSettings = { ...(StudioMultitrackWorkspace.masterSettings || {}), compressionRatio: value };
-        StudioMultitrackWorkspace.scheduleProjectAutosave();
-        if (masterCompLabel) masterCompLabel.textContent = value.toFixed(1) + ":1";
-        status("Master compression ratio set to " + value.toFixed(1) + ":1.");
-      }
+      StudioAudioEngine.setMasterCompressionRatio(value);
+      StudioMultitrackWorkspace.masterSettings = { ...(StudioMultitrackWorkspace.masterSettings || {}), compressionRatio: value };
+      StudioMultitrackWorkspace.scheduleProjectAutosave();
+      if (masterCompLabel) masterCompLabel.textContent = value.toFixed(1) + ":1";
+      status("Master compression ratio set to " + value.toFixed(1) + ":1.");
       return;
     }
     if (event.target.matches("[data-master-volume]")) {
       const value = Number(event.target.value);
       const label = root.querySelector("[data-master-label]");
       if (label) label.textContent = value + "%";
-      const master = StudioAudioEngine.master;
-      const audio = StudioAudioEngine.context;
-      if (master?.gain && audio) {
-        master.gain.setTargetAtTime(value / 100, audio.currentTime, 0.025);
-        StudioMultitrackWorkspace.masterSettings = { ...(StudioMultitrackWorkspace.masterSettings || {}), volume: value };
-        StudioMultitrackWorkspace.scheduleProjectAutosave();
-        status("Studio master level set to " + value + "%.");
-      } else {
-        status("Start studio audio before adjusting the master output.");
-      }
+      StudioAudioEngine.setMasterVolume(value / 100);
+      StudioMultitrackWorkspace.masterSettings = { ...(StudioMultitrackWorkspace.masterSettings || {}), volume: value };
+      StudioMultitrackWorkspace.scheduleProjectAutosave();
+      status("Studio master level set to " + value + "%.");
     }
   });
   root.refresh = renderTracks;
