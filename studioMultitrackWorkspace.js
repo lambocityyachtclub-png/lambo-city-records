@@ -1051,13 +1051,30 @@ const StudioMultitrackWorkspace = {
       const delayMs = barsUntilRecord * 240 / this.tempo * 1000;
       if (delayMs > 0) {
         this.status("Pre-roll · recording begins at bar " + startBar + ".");
-        await new Promise((resolve, reject) => {
+        const beatsToCount = Math.max(0, Math.ceil(barsUntilRecord * 4));
+        const beatSeconds = 60 / this.tempo;
+        const countStart = audio.currentTime + 0.06;
+        for (let beat = 0; beat < beatsToCount; beat += 1) {
+          const at = countStart + beat * beatSeconds;
+          const oscillator = audio.createOscillator();
+          const clickGain = audio.createGain();
+          oscillator.frequency.value = beat % 4 === 0 ? 1450 : 980;
+          clickGain.gain.setValueAtTime(0.0001, at);
+          clickGain.gain.exponentialRampToValueAtTime(0.16, at + 0.004);
+          clickGain.gain.exponentialRampToValueAtTime(0.0001, at + 0.065);
+          oscillator.connect(clickGain);
+          clickGain.connect(audio.destination);
+          oscillator.start(at);
+          oscillator.stop(at + 0.07);
+          oscillator.onended = () => { try { oscillator.disconnect(); clickGain.disconnect(); } catch {} };
+        }
+        const ready = await new Promise(resolve => {
           this.recordingScheduleTimer = setTimeout(() => {
             this.recordingScheduleTimer = null;
-            if (!this.pendingRecording) { reject(new Error("Scheduled recording cancelled.")); return; }
-            resolve();
+            resolve(Boolean(this.pendingRecording));
           }, delayMs);
         });
+        if (!ready) return false;
       }
       if (!this.pendingRecording) return false;
       const inputNode = track.inputSource === "beatlab"
