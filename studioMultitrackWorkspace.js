@@ -101,6 +101,7 @@ const StudioMultitrackWorkspace = {
   dirty: false,
   saveState: "saved",
   savePromise: null,
+  masterSettings: { volume: 100, stereoWidth: 100, compressionRatio: 3 },
 
   captureSnapshot() {
     return {
@@ -492,6 +493,7 @@ const StudioMultitrackWorkspace = {
       inputDeviceId: this.inputDeviceId || "",
       inputLatencyMs: Math.max(0, Math.min(500, Number(this.inputLatencyMs) || 0)),
       inputLatencyByDevice: { ...(this.inputLatencyByDevice || {}) },
+      masterSettings: { ...(this.masterSettings || { volume: 100, stereoWidth: 100, compressionRatio: 3 }) },
       templateId: this.sessionTemplateId,
       templateName: this.sessionTemplateName,
       deletedItems: this.deletedItems,
@@ -574,6 +576,10 @@ const StudioMultitrackWorkspace = {
     this.inputDeviceId = session.inputDeviceId || "";
     this.inputLatencyMs = Math.max(0, Math.min(500, Number(session.inputLatencyMs) || 0));
     this.inputLatencyByDevice = session.inputLatencyByDevice && typeof session.inputLatencyByDevice === "object" ? { ...session.inputLatencyByDevice } : {};
+    this.masterSettings = { volume: Math.max(0, Math.min(100, Number(session.masterSettings?.volume ?? 100))), stereoWidth: Math.max(0, Math.min(200, Number(session.masterSettings?.stereoWidth ?? 100))), compressionRatio: Math.max(1, Math.min(8, Number(session.masterSettings?.compressionRatio ?? 3))) };
+    StudioAudioEngine.setMasterVolume(this.masterSettings.volume / 100);
+    StudioAudioEngine.setStereoWidth(this.masterSettings.stereoWidth);
+    if (StudioAudioEngine.compressor && StudioAudioEngine.context) StudioAudioEngine.compressor.ratio.setTargetAtTime(this.masterSettings.compressionRatio, StudioAudioEngine.context.currentTime, 0.025);
     this.sessionTemplateId = session.templateId || null;
     this.sessionTemplateName = session.templateName || null;
     this.activeProjectId = session.projectId || projectId;
@@ -767,6 +773,7 @@ const StudioMultitrackWorkspace = {
       inputDeviceId: this.inputDeviceId || "",
       inputLatencyMs: Math.max(0, Math.min(500, Number(this.inputLatencyMs) || 0)),
       inputLatencyByDevice: { ...(this.inputLatencyByDevice || {}) },
+      masterSettings: { ...(this.masterSettings || { volume: 100, stereoWidth: 100, compressionRatio: 3 }) },
       templateId: this.sessionTemplateId,
       templateName: this.sessionTemplateName,
       audioAssets,
