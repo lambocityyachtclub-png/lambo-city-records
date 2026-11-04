@@ -122,6 +122,7 @@ const StudioMultitrackWorkspace = {
       timeSignatureChanges: this.timeSignatureChanges.map(point => ({ ...point })),
       markers: this.markers.map(marker => ({ ...marker })),
       loopRange: { ...this.loopRange },
+      masterSettings: { ...(this.masterSettings || {}) },
       deletedItems: this.deletedItems.map(entry => ({ ...entry }))
     };
   },
@@ -141,7 +142,9 @@ const StudioMultitrackWorkspace = {
       compression: { ...(track.compression || {}) },
       effects: { ...(track.effects || {}), pitchCorrection: { ...(track.effects?.pitchCorrection || {}) } },
       automation: { volume: (track.automation?.volume || []).map(point => ({ ...point })) },
-      clips: (track.clips || []).map(clip => ({ ...clip }))
+      clips: (track.clips || []).map(clip => ({ ...clip })),
+      midiNotes: (track.midiNotes || []).map(note => ({ ...note })),
+      sends: (track.sends || []).map(send => ({ ...send }))
     }));
     this.nextTrackId = snapshot.nextTrackId;
     this.tempo = snapshot.tempo;
@@ -150,6 +153,10 @@ const StudioMultitrackWorkspace = {
     this.timeSignatureChanges = (snapshot.timeSignatureChanges || []).map(point => ({ ...point }));
     this.markers = (snapshot.markers || []).map(marker => ({ ...marker }));
     this.loopRange = { ...(snapshot.loopRange || { enabled: false, startBar: 1, endBar: 9 }) };
+    this.masterSettings = { volume: Math.max(0, Math.min(100, Number(snapshot.masterSettings?.volume ?? 100))), stereoWidth: Math.max(0, Math.min(200, Number(snapshot.masterSettings?.stereoWidth ?? 100))), compressionRatio: Math.max(1, Math.min(8, Number(snapshot.masterSettings?.compressionRatio ?? 3))) };
+    StudioAudioEngine.setMasterVolume(this.masterSettings.volume / 100);
+    StudioAudioEngine.setStereoWidth(this.masterSettings.stereoWidth);
+    StudioAudioEngine.setMasterCompressionRatio(this.masterSettings.compressionRatio);
     this.deletedItems = (snapshot.deletedItems || []).map(entry => ({ ...entry }));
     this.render();
   },
