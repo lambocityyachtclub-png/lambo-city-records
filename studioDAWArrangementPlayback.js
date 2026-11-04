@@ -8,6 +8,7 @@
  */
 
 import StudioVocalEffects from "./studioVocalEffects.js";
+import { createStudioPitchCorrectionNode, normalizePitchCorrectionSettings } from "./studioPitchCorrection.js";
 
 export function createStudioDAWArrangementPlayback({
   getAudioContext,
@@ -44,7 +45,7 @@ export function createStudioDAWArrangementPlayback({
     },
 
     disposeChannels() {
-      this.trackChannels.forEach(({ gain, automationGain, low, mid, high, compressor, panner, effects }) => {
+      this.trackChannels.forEach(({ gain, automationGain, low, mid, high, compressor, panner, effects, pitchCorrectionNode }) => {
         try { gain.disconnect(); } catch {}
         try { automationGain.disconnect(); } catch {}
         try { low.disconnect(); } catch {}
@@ -52,6 +53,7 @@ export function createStudioDAWArrangementPlayback({
         try { high.disconnect(); } catch {}
         try { compressor.disconnect(); } catch {}
         try { panner?.disconnect(); } catch {}
+        try { pitchCorrectionNode?.disconnect(); } catch {}
         try { effects?.destroy(); } catch {}
       });
       this.trackChannels.clear();
@@ -70,7 +72,7 @@ export function createStudioDAWArrangementPlayback({
       this.disposeChannels();
     },
 
-    createTrackChannel(context, track, output) {
+    async createTrackChannel(context, track, output) {
       const gain = context.createGain();
       const automationGain = context.createGain();
       const low = context.createBiquadFilter();
@@ -96,15 +98,24 @@ export function createStudioDAWArrangementPlayback({
       mid.connect(high);
       high.connect(compressor);
       const trackEffects = StudioVocalEffects.create(context);
+      const pitchSettings = normalizePitchCorrectionSettings(track.effects?.pitchCorrection);
+      const pitchCorrectionNode = pitchSettings.enabled
+        ? await createStudioPitchCorrectionNode(context, pitchSettings)
+        : null;
       trackEffects.setReverbDecay(track.effects?.reverbDecay ?? 2.2);
-      compressor.connect(trackEffects.input);
+      if (pitchCorrectionNode) {
+        compressor.connect(pitchCorrectionNode);
+        pitchCorrectionNode.connect(trackEffects.input);
+      } else {
+        compressor.connect(trackEffects.input);
+      }
       if (panner) {
         trackEffects.output.connect(panner);
         panner.connect(output);
       } else {
         trackEffects.output.connect(output);
       }
-      const channel = { gain, automationGain, low, mid, high, compressor, panner, effects: trackEffects, track };
+      const channel = { gain, automationGain, low, mid, high, compressor, panner, effects: trackEffects, pitchCorrectionNode, track };
       this.trackChannels.set(track.id, channel);
       this.applyTrackState(track);
       return channel;
@@ -136,6 +147,9 @@ export function createStudioDAWArrangementPlayback({
       channel.effects.setDelayFeedback(effects.delayFeedback ?? 0.25);
       channel.effects.setDelayMix(effects.delayMix ?? 0);
       channel.effects.setReverbMix(effects.reverbMix ?? 0);
+      if (channel.pitchCorrectionNode) {
+        channel.pitchCorrectionNode.port.postMessage(normalizePitchCorrectionSettings(effects.pitchCorrection));
+      }
     },
 
     syncTrackState(tracks = this.activeTracks) {
@@ -171,10 +185,21 @@ export function createStudioDAWArrangementPlayback({
       this.applyTrackState(track);
     },
 
-    setTrackEffects(trackId, values = {}) {
+    async setTrackEffects(trackId, values = {}) {
       const track = this.activeTracks.find(item => item.id === trackId);
       if (!track) return;
       track.effects = { ...(track.effects || {}), ...values };
+      const channel = this.trackChannels.get(trackId);
+      if (channel && track.effects.pitchCorrection?.enabled && !channel.pitchCorrectionNode) {
+        const node = await createStudioPitchCorrectionNode(
+          channel.gain.context,
+          track.effects.pitchCorrection
+        );
+        channel.compressor.disconnect();
+        channel.compressor.connect(node);
+        node.connect(channel.effects.input);
+        channel.pitchCorrectionNode = node;
+      }
       this.applyTrackState(track);
     },
 
@@ -234,11 +259,11 @@ export function createStudioDAWArrangementPlayback({
         if (!output) throw new Error("The studio playback output is unavailable.");
 
         this.activeTracks = tracks;
-        tracks.forEach(track => {
+        await Promise.all(tracks.map(async track => {
           if (!this.trackChannels.has(track.id)) {
-            this.createTrackChannel(context, track, output);
+            await this.createTrackChannel(context, track, output);
           }
-        });
+        }));
         this.syncTrackState(tracks);
 
         const secondsPerBar = (60 / tempo) * 4;
