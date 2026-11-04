@@ -66,6 +66,10 @@ const StudioMultitrackWorkspace = {
   playheadBar: 1,
   snapMode: "bars",
   slipMode: false,
+  pendingRecording: false,
+  recordingScheduleTimer: null,
+  punchOutTimer: null,
+  recordingStartBar: 1,
   undoStack: [],
   redoStack: [],
   deletedItems: [],
@@ -1008,15 +1012,44 @@ const StudioMultitrackWorkspace = {
     return root;
   },
 
-  async startArmedRecording({ vocalEffects } = {}) {
+  async startArmedRecording({ vocalEffects, countInBars = 0, punchInBar = null, punchOutBar = null } = {}) {
+    if (this.pendingRecording || this.isTrackRecording()) {
+      this.status("A recording is already scheduled or active.");
+      return false;
+    }
     const armedTracks = this.tracks.filter(track => track.armed && track.type === "audio");
     if (armedTracks.length !== 1) {
       this.status(armedTracks.length ? "Arm exactly one audio track to record." : "Arm the audio track you want to record into.");
       return false;
     }
+    const preRoll = Math.max(0, Math.min(4, Math.floor(Number(countInBars) || 0)));
+    const startBar = Math.max(this.playheadBar + preRoll, Math.min(128, Number(punchInBar) || 0));
+    const endBar = Number(punchOutBar) > 0 ? Math.min(128, Number(punchOutBar)) : null;
+    if (endBar !== null && endBar <= startBar) {
+      this.status("Punch-out must be after the recording start bar.");
+      return false;
+    }
     try {
       const audio = await StudioAudioEngine.resume();
       const track = armedTracks[0];
+      this.pendingRecording = true;
+      this.recordingStartBar = startBar;
+      const barsUntilRecord = Math.max(0, startBar - this.playheadBar);
+      if (barsUntilRecord > 0 && this.tracks.some(item => item.clips?.some(clip => clip.blob?.size))) {
+        await this.playAll();
+      }
+      const delayMs = barsUntilRecord * 240 / this.tempo * 1000;
+      if (delayMs > 0) {
+        this.status("Pre-roll · recording begins at bar " + startBar + ".");
+        await new Promise((resolve, reject) => {
+          this.recordingScheduleTimer = setTimeout(() => {
+            this.recordingScheduleTimer = null;
+            if (!this.pendingRecording) { reject(new Error("Scheduled recording cancelled.")); return; }
+            resolve();
+          }, delayMs);
+        });
+      }
+      if (!this.pendingRecording) return false;
       const inputNode = track.inputSource === "beatlab"
         ? StudioAudioExport.getOutput(audio)
         : track.inputSource === "mpc"
@@ -1032,20 +1065,40 @@ const StudioMultitrackWorkspace = {
         pitchCorrectionNode,
         vocalEffects: track.inputSource === "mic" && /vocal/i.test(track.name) ? vocalEffects : null
       });
+      this.pendingRecording = false;
+      if (endBar !== null) {
+        const punchDuration = (endBar - startBar) * 240 / this.tempo * 1000;
+        this.punchOutTimer = setTimeout(() => { this.punchOutTimer = null; void this.stopArmedRecording(); }, punchDuration);
+      }
       const sourceLabel = track.inputSource === "mpc"
         ? "MPC output"
         : track.inputSource === "beatlab"
           ? "Digital Beat Lab output"
           : "microphone";
-      this.status("Recording " + sourceLabel + " into " + track.name + ".");
+      this.status("Recording " + sourceLabel + " into " + track.name + " · bar " + startBar + (endBar !== null ? " → " + endBar : "") + ".");
       return true;
     } catch (error) {
+      this.pendingRecording = false;
+      if (this.recordingScheduleTimer) clearTimeout(this.recordingScheduleTimer);
+      this.recordingScheduleTimer = null;
       this.status("RECORDING ERROR: " + (error?.message || error));
       return false;
     }
   },
 
+  cancelScheduledRecording() {
+    if (!this.pendingRecording) return false;
+    this.pendingRecording = false;
+    if (this.recordingScheduleTimer) clearTimeout(this.recordingScheduleTimer);
+    this.recordingScheduleTimer = null;
+    this.stopAll();
+    this.status("Scheduled recording cancelled.");
+    return true;
+  },
+
   async stopArmedRecording() {
+    if (this.punchOutTimer) clearTimeout(this.punchOutTimer);
+    this.punchOutTimer = null;
     if (!StudioRecordingEngine.activeTrackTake) return false;
     try {
       const take = await StudioRecordingEngine.stopTrackRecording();
@@ -1060,13 +1113,17 @@ const StudioMultitrackWorkspace = {
         name: track.name + " Recording",
         blob: take.blob,
         takeId: take.id,
-        startBar: 1,
+        startBar: this.recordingStartBar,
         lengthBars,
         duration: buffer.duration,
+        takeGroupId: track.id + "-takes-" + this.recordingStartBar,
+        takeNumber: track.clips.filter(clip => clip.takeGroupId === track.id + "-takes-" + this.recordingStartBar).length + 1,
+        takeProtected: false,
         createdAt: take.startedAt
       });
+      this.scheduleProjectAutosave();
       this.render();
-      this.status("Recording saved to " + track.name + " as a new waveform clip.");
+      this.status("Take " + track.clips[track.clips.length - 1].takeNumber + " saved to " + track.name + " at bar " + this.recordingStartBar + ".");
       return true;
     } catch (error) {
       this.status("RECORDING SAVE ERROR: " + (error?.message || error));
