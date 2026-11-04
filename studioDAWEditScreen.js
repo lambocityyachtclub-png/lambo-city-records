@@ -218,6 +218,7 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
       const finish = useName => {
         const name = useName ? input.value.trim() : "";
         StudioMultitrackWorkspace.activeProjectName = (name || "Untitled Song").slice(0, 80);
+        StudioMultitrackWorkspace.scheduleProjectAutosave();
         overlay.remove();
         this.renderHeader();
         this.status("Session ready · " + StudioMultitrackWorkspace.activeProjectName);
