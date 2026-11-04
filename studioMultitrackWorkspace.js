@@ -958,6 +958,13 @@ const StudioMultitrackWorkspace = {
       }
     });
 
+    root.addEventListener("change", event => {
+      if (event.target.matches("[data-volume], [data-pan]")) {
+        delete event.target.dataset.historyStarted;
+        delete event.target.dataset.historyValue;
+      }
+    });
+
     this.render();
 
     return root;
