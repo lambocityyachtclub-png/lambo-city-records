@@ -115,6 +115,7 @@ const StudioAudioEngine = {
     const merger = context.createChannelMerger(2);
     const mid = context.createGain();
     const side = context.createGain();
+    const sideInvert = context.createGain();
     const sideWidth = context.createGain();
     const leftOut = context.createGain();
     const rightOut = context.createGain();
@@ -122,6 +123,7 @@ const StudioAudioEngine = {
     const sideRight = context.createGain();
     mid.gain.value = 0.5;
     side.gain.value = 0.5;
+    sideInvert.gain.value = -1;
     sideWidth.gain.value = this.stereoWidthValue;
     leftOut.gain.value = 1;
     rightOut.gain.value = 1;
@@ -129,7 +131,7 @@ const StudioAudioEngine = {
     sideRight.gain.value = -1;
     master.connect(splitter);
     splitter.connect(mid, 0); splitter.connect(mid, 1);
-    splitter.connect(side, 0); splitter.connect(side, 1);
+    splitter.connect(side, 0); splitter.connect(sideInvert, 1); sideInvert.connect(side);
     mid.connect(leftOut); mid.connect(rightOut);
     leftOut.connect(merger, 0, 0); rightOut.connect(merger, 0, 1);
     side.connect(sideWidth); sideWidth.connect(sideLeft); sideWidth.connect(sideRight);
@@ -142,7 +144,7 @@ const StudioAudioEngine = {
     this.master = master;
     this.compressor = compressor;
     this.stereoWidth = sideWidth;
-    this.stereoWidthNode = { splitter, merger, mid, side, sideLeft, sideRight, leftOut, rightOut };
+    this.stereoWidthNode = { splitter, merger, mid, side, sideInvert, sideLeft, sideRight, leftOut, rightOut };
     this.channels = channels;
 
     if (context.state !== "running") {
