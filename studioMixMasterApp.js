@@ -4,6 +4,8 @@
  */
 import StudioAudioEngine from "./studioAudioEngine.js";
 import StudioMultitrackWorkspace from "./studioMultitrackWorkspace.js";
+import { createStudioDAWMidiEditor } from "./studioDAWMidiEditor.js";
+import { renderStudioSessionToWav, downloadStudioWav } from "./studioDAWExport.js";
 
 export function createStudioMixMasterApp({ beatLab, workspace } = {}) {
   const root = document.createElement("section");
@@ -14,8 +16,11 @@ export function createStudioMixMasterApp({ beatLab, workspace } = {}) {
     '<p style="color:#a8a8b1;font-size:13px;line-height:1.6">Balance recorded tracks, control studio output, and export your current master mix.</p></div>',
     '<section style="padding:16px;border:1px solid #45404a;border-radius:12px;background:#151821">',
     '<label style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center"><strong style="font-size:12px;color:#e6bb69">STUDIO MASTER LEVEL</strong><strong data-master-label>100%</strong>',
-    '<input data-master-volume type="range" min="0" max="100" value="100" style="grid-column:1/-1;width:100%;accent-color:#e6bb69"></label></section>',
-    '<div><div style="margin-bottom:10px;color:#e6bb69;font-size:11px;letter-spacing:2px">TRACK MIXER</div><div data-mix-tracks style="display:grid;gap:10px"></div></div>',
+    '<input data-master-volume type="range" min="0" max="100" value="100" style="grid-column:1/-1;width:100%;accent-color:#e6bb69"></label>',
+    '<label style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;margin-top:14px"><strong style="font-size:12px;color:#e6bb69">STEREO WIDTH</strong><strong data-width-label>100%</strong><input data-stereo-width type="range" min="0" max="200" value="100" style="grid-column:1/-1;width:100%;accent-color:#e6bb69"></label>',
+    '<label style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;margin-top:14px"><strong style="font-size:12px;color:#e6bb69">MASTER COMPRESSION</strong><strong data-master-comp-label>3:1</strong><input data-master-comp type="range" min="1" max="8" step="0.1" value="3" style="grid-column:1/-1;width:100%;accent-color:#e6bb69"></label></section>',
+    '<div style="display:flex;flex-wrap:wrap;gap:8px"><button type="button" data-mix-action="add-bus" style="min-height:38px;padding:8px 11px;border:1px solid #80643a;border-radius:7px;background:#201c16;color:#f1d49c;font-weight:bold">＋ CREATE BUS</button><button type="button" data-mix-action="export-stems" style="min-height:38px;padding:8px 11px;border:1px solid #80643a;border-radius:7px;background:#201c16;color:#f1d49c;font-weight:bold">EXPORT ALL STEMS</button></div>',
+    '<div><div style="margin-bottom:10px;color:#e6bb69;font-size:11px;letter-spacing:2px">TRACK MIXER · ROUTING · AUTOMATION · MIDI</div><div data-mix-tracks style="display:grid;gap:10px"></div></div>',
     '<div style="display:flex;flex-wrap:wrap;gap:10px"><button type="button" data-mix-action="edit" style="min-height:44px;padding:11px 15px;border:1px solid #80643a;border-radius:8px;background:#201c16;color:#f1d49c;font-weight:bold">OPEN EDIT TIMELINE</button>',
     '<button type="button" data-mix-action="export" style="min-height:44px;padding:11px 15px;border:1px solid #80643a;border-radius:8px;background:#201c16;color:#f1d49c;font-weight:bold">EXPORT MASTER MIX</button></div>',
     '<div data-mix-status role="status" aria-live="polite" style="min-height:22px;color:#e6bb69;font-size:12px">Mixer ready.</div>'
@@ -24,6 +29,12 @@ export function createStudioMixMasterApp({ beatLab, workspace } = {}) {
   const list = root.querySelector("[data-mix-tracks]");
   const masterSlider = root.querySelector("[data-master-volume]");
   const masterLabel = root.querySelector("[data-master-label]");
+  const widthSlider = root.querySelector("[data-stereo-width]");
+  const widthLabel = root.querySelector("[data-width-label]");
+  const masterCompSlider = root.querySelector("[data-master-comp]");
+  const masterCompLabel = root.querySelector("[data-master-comp-label]");
+  if (masterCompSlider && StudioAudioEngine.compressor) masterCompSlider.value = String(StudioAudioEngine.compressor.ratio.value || 3);
+  if (masterCompLabel && masterCompSlider) masterCompLabel.textContent = Number(masterCompSlider.value).toFixed(1) + ":1";
   const currentMaster = Math.round((StudioAudioEngine.master?.gain?.value ?? 1) * 100);
   if (masterSlider) masterSlider.value = String(currentMaster);
   if (masterLabel) masterLabel.textContent = currentMaster + "%";
@@ -225,6 +236,35 @@ export function createStudioMixMasterApp({ beatLab, workspace } = {}) {
         inserts.appendChild(pitchPanel);
       }
       row.append(heading, volume, pan, inserts);
+      const routing = document.createElement("details");
+      routing.style.cssText = "padding:9px 10px;border:1px solid #343946;border-radius:8px;background:#12151d;color:#d8b36e";
+      const routingTitle = document.createElement("summary");
+      routingTitle.textContent = "OUTPUT ROUTING · SENDS";
+      routingTitle.style.cssText = "font-size:10px;font-weight:800;letter-spacing:1px;cursor:pointer";
+      routing.appendChild(routingTitle);
+      const outputLabel = document.createElement("label");
+      outputLabel.style.cssText = "display:grid;grid-template-columns:70px 1fr;gap:8px;align-items:center;margin-top:10px;color:#a8a8b1;font-size:10px";
+      outputLabel.append("OUTPUT");
+      const outputSelect = document.createElement("select");
+      outputSelect.dataset.trackOutput = track.id;
+      outputSelect.style.cssText = "min-height:34px;padding:6px;background:#20242e;color:#f4f1eb;border:1px solid #454958;border-radius:6px";
+      const mainOption = document.createElement("option"); mainOption.value = ""; mainOption.textContent = "STEREO OUT"; outputSelect.appendChild(mainOption);
+      StudioMultitrackWorkspace.tracks.filter(bus => bus.type === "bus" && bus.id !== track.id).forEach(bus => {
+        const option = document.createElement("option"); option.value = bus.id; option.textContent = bus.name; outputSelect.appendChild(option);
+      });
+      outputSelect.value = track.outputBusId || "";
+      outputLabel.appendChild(outputSelect); routing.appendChild(outputLabel);
+      StudioMultitrackWorkspace.tracks.filter(bus => bus.type === "bus" && bus.id !== track.id).forEach(bus => {
+        const sendLabel = document.createElement("label");
+        sendLabel.style.cssText = "display:grid;grid-template-columns:70px 1fr 35px;gap:8px;align-items:center;margin-top:9px;color:#a8a8b1;font-size:10px";
+        const caption = document.createElement("span"); caption.textContent = "SEND · " + bus.name.slice(0, 10);
+        const send = document.createElement("input"); send.type = "range"; send.min = "0"; send.max = "100"; send.value = String(track.sends?.find(item => item.busId === bus.id)?.level || 0);
+        send.dataset.trackSend = bus.id; send.dataset.trackId = track.id; send.style.cssText = "width:100%;accent-color:#e6bb69";
+        const sendValue = document.createElement("span"); sendValue.textContent = send.value + "%";
+        sendLabel.append(caption, send, sendValue); routing.appendChild(sendLabel);
+      });
+      row.appendChild(routing);
+
       const automation = document.createElement("details");
       automation.style.cssText = "padding:9px 10px;border:1px solid #343946;border-radius:8px;background:#12151d;color:#d8b36e";
       const automationTitle = document.createElement("summary");
@@ -261,6 +301,9 @@ export function createStudioMixMasterApp({ beatLab, workspace } = {}) {
       });
       automation.appendChild(points);
       row.appendChild(automation);
+      if (track.type === "midi" || track.type === "instrument") {
+        row.appendChild(createStudioDAWMidiEditor({ track, onChange: () => { StudioMultitrackWorkspace.scheduleProjectAutosave(); status(track.name + " MIDI notes updated."); } }));
+      }
       list.appendChild(row);
     });
   };
@@ -279,6 +322,7 @@ export function createStudioMixMasterApp({ beatLab, workspace } = {}) {
       if (existing) existing.value = value;
       else track.automation.volume.push({ bar, value });
       track.automation.volume.sort((a, b) => a.bar - b.bar);
+      StudioMultitrackWorkspace.scheduleProjectAutosave();
       renderTracks();
       status(track.name + " volume automation updated.");
       return;
@@ -288,12 +332,31 @@ export function createStudioMixMasterApp({ beatLab, workspace } = {}) {
       const track = StudioMultitrackWorkspace.tracks.find(item => item.id === removePoint.dataset.removeVolumePoint);
       if (!track?.automation?.volume) return;
       track.automation.volume.splice(Number(removePoint.dataset.pointIndex), 1);
+      StudioMultitrackWorkspace.scheduleProjectAutosave();
       renderTracks();
       status(track.name + " automation point removed.");
       return;
     }
     const button = event.target.closest("[data-mix-action], [data-track-control]");
     if (!button) return;
+    if (button.dataset.mixAction === "add-bus") {
+      const busCount = StudioMultitrackWorkspace.tracks.filter(item => item.type === "bus").length + 1;
+      StudioMultitrackWorkspace.recordHistory("Create routing bus");
+      StudioMultitrackWorkspace.addTrack("bus", "BUS " + busCount);
+      renderTracks();
+      status("Routing bus created. Assign tracks using OUTPUT ROUTING.");
+      return;
+    }
+    if (button.dataset.mixAction === "export-stems") {
+      const tracks = StudioMultitrackWorkspace.tracks.filter(track => track.type !== "bus" && (track.clips?.some(clip => clip.blob?.size) || track.midiNotes?.length));
+      if (!tracks.length) { status("No audio or MIDI tracks are available to export."); return; }
+      for (const track of tracks) {
+        const wav = await renderStudioSessionToWav({ tracks: [track], tempo: StudioMultitrackWorkspace.tempo, timeSignature: StudioMultitrackWorkspace.timeSignature, tempoChanges: StudioMultitrackWorkspace.tempoChanges, timeSignatureChanges: StudioMultitrackWorkspace.timeSignatureChanges });
+        downloadStudioWav(wav, (StudioMultitrackWorkspace.activeProjectName || "lambo-city-song") + "-" + track.name + "-stem");
+      }
+      status(tracks.length + " individual WAV stem(s) exported.");
+      return;
+    }
     if (button.dataset.mixAction === "edit") {
       workspace?.setView("edit");
       return;
@@ -309,20 +372,47 @@ export function createStudioMixMasterApp({ beatLab, workspace } = {}) {
     }
     const track = StudioMultitrackWorkspace.tracks.find(item => item.id === button.dataset.trackId);
     if (!track) return;
+    StudioMultitrackWorkspace.recordHistory("Mixer " + button.dataset.trackControl);
     if (button.dataset.trackControl === "mute") track.muted = !track.muted;
     if (button.dataset.trackControl === "solo") track.solo = !track.solo;
+    StudioMultitrackWorkspace.scheduleProjectAutosave();
     StudioMultitrackWorkspace.arrangementPlayback?.syncTrackState(StudioMultitrackWorkspace.tracks);
     renderTracks();
     status(track.name + ": " + (track.muted ? "muted" : "active") + (track.solo ? " · solo" : "") + ".");
   });
 
   root.addEventListener("change", event => {
+    const outputSelect = event.target.closest("[data-track-output]");
+    if (outputSelect) {
+      const track = StudioMultitrackWorkspace.tracks.find(item => item.id === outputSelect.dataset.trackOutput);
+      if (!track) return;
+      track.outputBusId = outputSelect.value || null;
+      StudioMultitrackWorkspace.arrangementPlayback?.stop();
+      StudioMultitrackWorkspace.scheduleProjectAutosave();
+      status(track.name + " routed to " + (outputSelect.selectedOptions[0]?.textContent || "Stereo Out") + " · press play to rebuild routing.");
+      return;
+    }
     const inputSelect = event.target.closest("[data-track-input]");
     if (inputSelect) {
       const track = StudioMultitrackWorkspace.tracks.find(item => item.id === inputSelect.dataset.trackInput);
       if (!track) return;
       track.inputSource = inputSelect.value;
+      StudioMultitrackWorkspace.scheduleProjectAutosave();
       status(track.name + " input set to " + inputSelect.options[inputSelect.selectedIndex].text + ".");
+      return;
+    }
+    const sendSlider = event.target.closest("[data-track-send]");
+    if (sendSlider) {
+      const track = StudioMultitrackWorkspace.tracks.find(item => item.id === sendSlider.dataset.trackId);
+      if (!track) return;
+      track.sends = Array.isArray(track.sends) ? track.sends : [];
+      const busId = sendSlider.dataset.trackSend;
+      const level = Number(sendSlider.value);
+      const existing = track.sends.find(item => item.busId === busId);
+      if (existing) existing.level = level;
+      else if (level > 0) track.sends.push({ busId, level });
+      const label = sendSlider.parentElement?.querySelector("span:last-child"); if (label) label.textContent = level + "%";
+      StudioMultitrackWorkspace.scheduleProjectAutosave();
       return;
     }
     const pitchControl = event.target.closest("[data-pitch-setting]");
@@ -404,6 +494,22 @@ export function createStudioMixMasterApp({ beatLab, workspace } = {}) {
         if (label) label.textContent = track.pan === 0 ? "C" : (track.pan < 0 ? "L " : "R ") + Math.round(Math.abs(track.pan) * 100);
         StudioMultitrackWorkspace.arrangementPlayback?.setTrackPan(track.id, track.pan);
       StudioMultitrackWorkspace.scheduleProjectAutosave();
+      }
+      return;
+    }
+    if (event.target.matches("[data-stereo-width]")) {
+      const value = Number(event.target.value);
+      if (widthLabel) widthLabel.textContent = value + "%";
+      StudioAudioEngine.setStereoWidth(value);
+      status("Stereo width set to " + value + "%.");
+      return;
+    }
+    if (event.target.matches("[data-master-comp]")) {
+      const value = Number(event.target.value);
+      if (StudioAudioEngine.compressor && StudioAudioEngine.context) {
+        StudioAudioEngine.compressor.ratio.setTargetAtTime(value, StudioAudioEngine.context.currentTime, 0.025);
+        if (masterCompLabel) masterCompLabel.textContent = value.toFixed(1) + ":1";
+        status("Master compression ratio set to " + value.toFixed(1) + ":1.");
       }
       return;
     }
