@@ -212,18 +212,19 @@ export function createStudioDAWArrangementPlayback({
       this.applyTrackState(track);
     },
 
-    scheduleVolumeAutomation(track, startTime, secondsPerBar) {
+    scheduleVolumeAutomation(track, startTime, startBar = 1) {
       const channel = this.trackChannels.get(track.id);
       if (!channel) return;
       const parameter = channel.automationGain.gain;
       const points = [...(track.automation?.volume || [])]
         .filter(point => Number.isFinite(Number(point.bar)) && Number.isFinite(Number(point.value)))
         .sort((a, b) => a.bar - b.bar);
+      const cursorPoint = points.filter(point => Number(point.bar) <= startBar).pop();
       const now = channel.gain.context.currentTime;
       parameter.cancelScheduledValues(now);
-      parameter.setValueAtTime(1, startTime);
-      points.forEach(point => {
-        const time = startTime + Math.max(0, getSecondsAtBar(Math.max(1, Number(point.bar))) - getSecondsAtBar(1));
+      parameter.setValueAtTime(cursorPoint ? Math.max(0, Math.min(1, Number(cursorPoint.value) / 100)) : 1, startTime);
+      points.filter(point => Number(point.bar) > startBar).forEach(point => {
+        const time = startTime + Math.max(0, getSecondsAtBar(Math.max(1, Number(point.bar))) - getSecondsAtBar(startBar));
         const value = Math.max(0, Math.min(1, Number(point.value) / 100));
         if (time <= startTime + 0.001) parameter.setValueAtTime(value, startTime);
         else parameter.linearRampToValueAtTime(value, time);
@@ -280,7 +281,7 @@ export function createStudioDAWArrangementPlayback({
         const actualStartBar = activeLoop && (cursorBar < activeLoop.startBar || cursorBar >= activeLoop.endBar) ? activeLoop.startBar : cursorBar;
         const cursorSeconds = getSecondsAtBar(actualStartBar);
         const startTime = context.currentTime + 0.12;
-        tracks.forEach(track => this.scheduleVolumeAutomation(track, startTime, 0));
+        tracks.forEach(track => this.scheduleVolumeAutomation(track, startTime, actualStartBar));
         decoded.forEach(({ track, clip, buffer }) => {
           const channel = this.trackChannels.get(track.id);
           if (!channel) return;
