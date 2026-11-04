@@ -342,7 +342,7 @@ export function createStudioDAWArrangementPlayback({
               this.playing = false;
               this.disposeChannels();
               if (!this.loopTimer && this.positionTimer) { clearInterval(this.positionTimer); this.positionTimer = null; }
-              onStatus("Arrangement playback finished.");
+              onStatus(this.loopTimer ? "Cycle pass complete · next cycle scheduled." : "Arrangement playback finished.");
             }
           };
           this.sources.push({ source, trackId: track.id });
