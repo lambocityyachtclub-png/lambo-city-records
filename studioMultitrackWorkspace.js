@@ -1218,17 +1218,21 @@ const StudioMultitrackWorkspace = {
       if (barsUntilRecord > 0 && this.tracks.some(item => item.clips?.some(clip => clip.blob?.size))) {
         await this.playAll();
       }
-      const delayMs = barsUntilRecord * 240 / this.tempo * 1000;
+      const delaySeconds = Math.max(0, this.getSecondsAtBar(startBar) - this.getSecondsAtBar(this.playheadBar));
+      const delayMs = delaySeconds * 1000;
       if (delayMs > 0) {
         this.status("Pre-roll · recording begins at bar " + startBar + ".");
-        const beatsToCount = Math.max(0, Math.ceil(barsUntilRecord * 4));
-        const beatSeconds = 60 / this.tempo;
         const countStart = audio.currentTime + 0.06;
-        for (let beat = 0; beat < beatsToCount; beat += 1) {
-          const at = countStart + beat * beatSeconds;
+        for (let bar = Math.floor(this.playheadBar); bar < startBar; bar += 1) {
+          const meter = this.getTimeSignatureAtBar(bar);
+          const bpm = this.getTempoAtBar(bar);
+          const beatSeconds = 60 / bpm * (4 / meter.denominator);
+          const firstBeat = Math.max(0, Math.ceil((this.playheadBar - bar) * meter.numerator));
+          for (let beat = firstBeat; beat < meter.numerator; beat += 1) {
+          const at = countStart + Math.max(0, this.getSecondsAtBar(bar + beat / meter.numerator) - this.getSecondsAtBar(this.playheadBar));
           const oscillator = audio.createOscillator();
           const clickGain = audio.createGain();
-          oscillator.frequency.value = beat % 4 === 0 ? 1450 : 980;
+          oscillator.frequency.value = beat === 0 ? 1450 : 980;
           clickGain.gain.setValueAtTime(0.0001, at);
           clickGain.gain.exponentialRampToValueAtTime(0.16, at + 0.004);
           clickGain.gain.exponentialRampToValueAtTime(0.0001, at + 0.065);
@@ -1237,6 +1241,7 @@ const StudioMultitrackWorkspace = {
           oscillator.start(at);
           oscillator.stop(at + 0.07);
           oscillator.onended = () => { try { oscillator.disconnect(); clickGain.disconnect(); } catch {} };
+          }
         }
         const ready = await new Promise(resolve => {
           this.recordingScheduleResolve = resolve;
@@ -1268,7 +1273,7 @@ const StudioMultitrackWorkspace = {
       });
       this.pendingRecording = false;
       if (endBar !== null) {
-        const punchDuration = (endBar - startBar) * 240 / this.tempo * 1000;
+        const punchDuration = Math.max(0, this.getSecondsAtBar(endBar) - this.getSecondsAtBar(startBar)) * 1000;
         this.punchOutTimer = setTimeout(() => { this.punchOutTimer = null; void this.stopArmedRecording(); }, punchDuration);
       }
       const sourceLabel = track.inputSource === "mpc"
@@ -1312,9 +1317,9 @@ const StudioMultitrackWorkspace = {
       const context = await StudioAudioEngine.resume();
       const bytes = await take.blob.arrayBuffer();
       const buffer = await context.decodeAudioData(bytes.slice(0));
-      const lengthBars = Math.max(1, Math.min(128, Math.ceil(buffer.duration / (240 / this.tempo))));
+      const lengthBars = Math.max(.25, Math.min(128, this.getBarAtSeconds(this.getSecondsAtBar(this.recordingStartBar) + buffer.duration) - this.recordingStartBar));
       const latencyMs = track.inputSource === "mic" ? Math.max(0, Math.min(500, Number(this.inputLatencyMs) || 0)) : 0;
-      const compensatedStartBar = Math.max(1, this.recordingStartBar - latencyMs / (240 / this.tempo * 1000));
+      const compensatedStartBar = Math.max(1, this.getBarAtSeconds(this.getSecondsAtBar(this.recordingStartBar) - latencyMs / 1000));
       track.clips.push({
         id: take.id,
         name: track.name + " Recording",
