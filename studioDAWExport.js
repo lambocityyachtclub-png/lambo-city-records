@@ -49,7 +49,8 @@ async function renderStudioSessionToAudioBuffer({
   timeSignature = "4/4",
   tempoChanges = [],
   timeSignatureChanges = [],
-  masterVolume = StudioAudioEngine.master?.gain?.value ?? 1
+  masterVolume = StudioAudioEngine.master?.gain?.value ?? 1,
+  masterSettings = {}
 } = {}) {
   const bpm = Number(tempo);
   if (!Number.isFinite(bpm) || bpm < 60 || bpm > 180) {
@@ -62,6 +63,7 @@ async function renderStudioSessionToAudioBuffer({
     tracks.some(track => track.name === "Vocals") &&
     tracks.some(track => track.name === "Beats");
   const decoded = [];
+  const midiTracks = [];
   let renderDuration = 0;
   const getTempoAtBar = bar => [...tempoChanges].filter(point=>Number(point.bar)<=bar).sort((a,b)=>a.bar-b.bar).pop()?.bpm || bpm;
   const getMeterAtBar = bar => { const point=[...timeSignatureChanges].filter(item=>Number(item.bar)<=bar).sort((a,b)=>a.bar-b.bar).pop(); const fallback=String(timeSignature||"4/4").split("/"); return {numerator:Number(point?.numerator)||Number(fallback[0])||4,denominator:Number(point?.denominator)||Number(fallback[1])||4}; };
@@ -70,6 +72,10 @@ async function renderStudioSessionToAudioBuffer({
   for (const track of tracks) {
     if (track.muted || (anySolo && !track.solo)) continue;
     if (!anySolo && hasSeparateStems && track.name === "Master Mix") continue;
+    if ((track.type === "midi" || track.type === "instrument") && Array.isArray(track.midiNotes) && track.midiNotes.length) {
+      midiTracks.push(track);
+      track.midiNotes.forEach(note => { renderDuration = Math.max(renderDuration, getSecondsAtBar(Math.max(1, Number(note.startBar) || 1) + Math.max(0.0625, Number(note.lengthBars) || 0.25))); });
+    }
     for (const clip of (track.clips || [])) {
       if (!(clip.blob instanceof Blob) || !clip.blob.size) continue;
       const bytes = await clip.blob.arrayBuffer();
@@ -92,11 +98,11 @@ async function renderStudioSessionToAudioBuffer({
     }
   }
 
-  if (!decoded.length) throw new Error("There are no audio clips to export.");
+  if (!decoded.length && !midiTracks.length) throw new Error("There are no audio clips or MIDI notes to export.");
   if (renderDuration > MAX_RENDER_SECONDS || decoded.some(item => item.start >= MAX_RENDER_SECONDS)) {
     throw new Error("The arrangement extends beyond the 15-minute WAV export limit.");
   }
-  const reverbTail = Math.max(0.1, ...decoded.map(({ track }) => Number(track.effects?.reverbDecay) || 0.1));
+  const reverbTail = Math.max(0.1, ...[...decoded.map(({ track }) => track), ...midiTracks].map(track => Number(track.effects?.reverbDecay) || 0.1));
   renderDuration = Math.max(0.1, renderDuration + reverbTail + 0.1);
 
   const OfflineContext = window.OfflineAudioContext || window.webkitOfflineAudioContext;
@@ -105,17 +111,30 @@ async function renderStudioSessionToAudioBuffer({
   const offline = new OfflineContext(2, frameCount, SAMPLE_RATE);
   const master = offline.createGain();
   const masterCompressor = offline.createDynamicsCompressor();
-  master.gain.value = Math.max(0, Math.min(1, Number(masterVolume) || 0));
+  master.gain.value = Math.max(0, Math.min(1, Number(masterSettings.volume ?? masterVolume) || 0));
   masterCompressor.threshold.value = -8;
   masterCompressor.knee.value = 12;
-  masterCompressor.ratio.value = 3;
+  masterCompressor.ratio.value = Math.max(1, Math.min(8, Number(masterSettings.compressionRatio ?? 3)));
   masterCompressor.attack.value = 0.003;
   masterCompressor.release.value = 0.18;
-  master.connect(masterCompressor);
-  masterCompressor.connect(offline.destination);
+  const splitter = offline.createChannelSplitter(2);
+  const merger = offline.createChannelMerger(2);
+  const mid = offline.createGain(); const side = offline.createGain(); const sideWidth = offline.createGain();
+  const leftOut = offline.createGain(); const rightOut = offline.createGain();
+  const sideLeft = offline.createGain(); const sideRight = offline.createGain();
+  mid.gain.value = 0.5; side.gain.value = 0.5; sideWidth.gain.value = Math.max(0, Math.min(2, Number(masterSettings.stereoWidth ?? 100) / 100));
+  sideLeft.gain.value = 1; sideRight.gain.value = -1;
+  master.connect(splitter); splitter.connect(mid, 0); splitter.connect(mid, 1); splitter.connect(side, 0); splitter.connect(side, 1);
+  mid.connect(leftOut); mid.connect(rightOut); leftOut.connect(merger, 0, 0); rightOut.connect(merger, 0, 1);
+  side.connect(sideWidth); sideWidth.connect(sideLeft); sideWidth.connect(sideRight); sideLeft.connect(merger, 0, 0); sideRight.connect(merger, 0, 1);
+  merger.connect(masterCompressor); masterCompressor.connect(offline.destination);
 
   const channels = new Map();
-  for (const { track } of decoded) {
+  const effectsOutputs = new Map();
+  const mixTracks = [...new Map([...decoded.map(item => item.track), ...midiTracks, ...tracks.filter(track => track.type === "bus")].map(track => [track.id, track])).values()]
+    .filter(track => !track.muted && (!anySolo || track.solo) && !( !anySolo && hasSeparateStems && track.name === "Master Mix"))
+    .sort((a, b) => (a.type === "bus" ? 0 : 1) - (b.type === "bus" ? 0 : 1));
+  for (const track of mixTracks) {
     if (channels.has(track.id)) continue;
     const gain = offline.createGain();
     const automationGain = offline.createGain();
@@ -148,11 +167,13 @@ async function renderStudioSessionToAudioBuffer({
     } else {
       compressor.connect(trackEffects.input);
     }
+    const outputBus = track.type !== "bus" && track.outputBusId ? channels.get(track.outputBusId) : null;
+    const routeOutput = outputBus || master;
     if (panner) {
       trackEffects.output.connect(panner);
-      panner.connect(master);
+      panner.connect(routeOutput);
     } else {
-      trackEffects.output.connect(master);
+      trackEffects.output.connect(routeOutput);
     }
     const effects = track.effects || {};
     trackEffects.setDelayTime(effects.delayTime ?? 0.28);
@@ -169,7 +190,16 @@ async function renderStudioSessionToAudioBuffer({
     });
     if (panner) panner.pan.value = Math.max(-1, Math.min(1, Number(track.pan) || 0));
     channels.set(track.id, gain);
+    effectsOutputs.set(track.id, trackEffects.output);
   }
+  mixTracks.forEach(track => (track.sends || []).forEach(send => {
+    const source = effectsOutputs.get(track.id);
+    const busGain = channels.get(send.busId);
+    if (!source || !busGain || track.id === send.busId) return;
+    const sendGain = offline.createGain();
+    sendGain.gain.value = Math.max(0, Math.min(1, Number(send.level) || 0) / 100);
+    source.connect(sendGain); sendGain.connect(busGain);
+  }));
 
   decoded.forEach(({ track, buffer, start, sourceOffset, sourceDuration, clipGainDb, fadeInSeconds, fadeOutSeconds }) => {
     const source = offline.createBufferSource();
@@ -200,6 +230,27 @@ async function renderStudioSessionToAudioBuffer({
     source.connect(clipGain);
     clipGain.connect(channels.get(track.id));
     source.start(start, sourceOffset, sourceDuration);
+  });
+
+  midiTracks.forEach(track => {
+    const channel = channels.get(track.id);
+    if (!channel) return;
+    (track.midiNotes || []).forEach(note => {
+      const pitch = Math.max(0, Math.min(127, Number(note.pitch) || 60));
+      const startBar = Math.max(1, Number(note.startBar) || 1);
+      const duration = Math.max(0.01, getSecondsAtBar(startBar + Math.max(0.0625, Number(note.lengthBars) || 0.25)) - getSecondsAtBar(startBar));
+      const start = getSecondsAtBar(startBar);
+      const velocity = Math.max(0, Math.min(1, Number(note.velocity ?? 0.8)));
+      const oscillator = offline.createOscillator();
+      const envelope = offline.createGain();
+      oscillator.type = track.instrumentWave || "triangle";
+      oscillator.frequency.value = 440 * Math.pow(2, (pitch - 69) / 12);
+      envelope.gain.setValueAtTime(0.0001, start);
+      envelope.gain.linearRampToValueAtTime(Math.max(0.0001, velocity * 0.22), start + Math.min(0.012, duration / 2));
+      envelope.gain.linearRampToValueAtTime(0.0001, start + duration);
+      oscillator.connect(envelope); envelope.connect(channel);
+      oscillator.start(start); oscillator.stop(start + duration + 0.01);
+    });
   });
 
   const rendered = await offline.startRendering();
