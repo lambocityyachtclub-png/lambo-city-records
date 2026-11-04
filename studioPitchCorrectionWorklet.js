@@ -41,8 +41,6 @@ class GranularPitchShifter {
     this.phaseA = 0;
     this.phaseB = 0.5;
     this.grain = 1024;
-    this.ratioSum = 0;
-    this.calls = 0;
   }
 
   read(delay) {
@@ -56,8 +54,6 @@ class GranularPitchShifter {
   }
 
   process(sample, ratio) {
-    this.ratioSum += ratio;
-    this.calls += 1;
     this.buffer[this.write & this.mask] = sample;
     this.write += 1;
     if (Math.abs(ratio - 1) < 0.0005) return sample;
@@ -94,7 +90,6 @@ class LamboCityPitchCorrectionProcessor extends AudioWorkletProcessor {
     this.currentRatio = 1;
     this.hasPitch = false;
     this.missedHops = 0;
-    this.pitchActiveSamples = 0;
     this.port.onmessage = event => {
       const next = event.data || {};
       if (Number.isFinite(Number(next.root))) this.settings.root = Math.max(0, Math.min(11, Math.round(Number(next.root))));
@@ -192,7 +187,6 @@ class LamboCityPitchCorrectionProcessor extends AudioWorkletProcessor {
     this.port.postMessage({
       detectedMidi: midi,
       correctedMidi: corrected,
-      targetRatio: this.targetRatio,
       confidence
     });
   }
@@ -220,7 +214,6 @@ class LamboCityPitchCorrectionProcessor extends AudioWorkletProcessor {
         this.detectPitch();
       }
 
-      if (this.settings.enabled && this.hasPitch) this.pitchActiveSamples += 1;
       const desired = this.settings.enabled && this.hasPitch ? this.targetRatio : 1;
       this.currentRatio += (desired - this.currentRatio) * smoothing;
       for (let channel = 0; channel < output.length; channel += 1) {
