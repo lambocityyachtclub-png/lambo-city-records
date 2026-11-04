@@ -465,7 +465,7 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
           } else if (action === "export-wav") {
             button.disabled = true;
             try {
-              const wav = await renderStudioSessionToWav({ tracks: workspace.tracks, tempo: workspace.tempo, timeSignature: workspace.timeSignature, tempoChanges: workspace.tempoChanges, timeSignatureChanges: workspace.timeSignatureChanges });
+              const wav = await renderStudioSessionToWav({ tracks: workspace.tracks, tempo: workspace.tempo, timeSignature: workspace.timeSignature, tempoChanges: workspace.tempoChanges, timeSignatureChanges: workspace.timeSignatureChanges, masterSettings: workspace.masterSettings });
               downloadStudioWav(wav, workspace.activeProjectName || "lambo-city-song");
               this.status("WAV master exported.");
             } finally { button.disabled = false; }
