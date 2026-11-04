@@ -309,6 +309,7 @@ const StudioMultitrackWorkspace = {
       tempo: this.tempo,
       templateId: this.sessionTemplateId,
       templateName: this.sessionTemplateName,
+      deletedItems: this.deletedItems,
       tracks: this.tracks.map(track => ({
         ...track,
         clips: (track.clips || []).filter(clip => clip.blob instanceof Blob && clip.blob.size > 0).map(clip => ({
@@ -336,6 +337,7 @@ const StudioMultitrackWorkspace = {
     this.sessionTemplateId = session.templateId || null;
     this.sessionTemplateName = session.templateName || null;
     this.activeProjectName = session.projectName || "Untitled Song";
+    this.deletedItems = Array.isArray(session.deletedItems) ? session.deletedItems : [];
     this.tracks = session.tracks.map(track => ({
       ...track,
       clips: (track.clips || []).map(clip => ({ ...clip }))
@@ -363,6 +365,9 @@ const StudioMultitrackWorkspace = {
     this.sessionTemplateId = null;
     this.sessionTemplateName = null;
     this.tracks = [];
+    this.deletedItems = [];
+    this.selectedClipId = null;
+    this.selectedTrackId = null;
     this.nextTrackId = 1;
     this.createTrack("audio", "Vocals");
     this.createTrack("audio", "Drums");
@@ -392,6 +397,8 @@ const StudioMultitrackWorkspace = {
           startBar: Number(clip.startBar) || 1,
           lengthBars: Number(clip.lengthBars) || 4,
           duration: Number(clip.duration) || 0,
+          sourceOffsetSeconds: Number(clip.sourceOffsetSeconds) || 0,
+          playDurationSeconds: Number(clip.playDurationSeconds) || 0,
           mimeType: clip.blob.type || "application/octet-stream",
           data: await encodeAudioBlob(clip.blob),
           takeId: clip.takeId || null,
@@ -446,6 +453,7 @@ const StudioMultitrackWorkspace = {
       tempo: this.tempo,
       templateId: this.sessionTemplateId,
       templateName: this.sessionTemplateName,
+      projectName: this.activeProjectName || "Untitled Song",
       tracks
     };
   },
@@ -507,6 +515,8 @@ const StudioMultitrackWorkspace = {
         startBar: Math.max(1, Number(clip.startBar) || 1),
         lengthBars: Math.max(1, Number(clip.lengthBars) || 4),
         duration: Number(clip.duration) || 0,
+        sourceOffsetSeconds: Number(clip.sourceOffsetSeconds) || 0,
+        playDurationSeconds: Number(clip.playDurationSeconds) || 0,
         blob: decodeAudioBlob(clip.data, clip.mimeType),
         takeId: clip.takeId || null,
         createdAt: clip.createdAt || null
