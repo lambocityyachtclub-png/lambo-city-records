@@ -4,7 +4,7 @@ function noteKey(note) {
   return Math.round(Number(note.pitch)) + ":" + Math.round((Number(note.startBar) - 1) * 4);
 }
 
-export function createStudioDAWMidiEditor({ track, onChange } = {}) {
+export function createStudioDAWMidiEditor({ track, onBeforeChange, onChange } = {}) {
   const root = document.createElement("section");
   root.style.cssText = "display:grid;gap:7px;margin-top:10px;padding:10px;border:1px solid #665438;border-radius:8px;background:#0d1423;color:#f4f1eb";
   const heading = document.createElement("div");
@@ -44,6 +44,7 @@ export function createStudioDAWMidiEditor({ track, onChange } = {}) {
     const step = Number(cell.dataset.step);
     const key = pitch + ":" + step;
     track.midiNotes = Array.isArray(track.midiNotes) ? track.midiNotes : [];
+    if (typeof onBeforeChange === "function") onBeforeChange(track);
     const index = track.midiNotes.findIndex(note => noteKey(note) === key);
     if (index >= 0) track.midiNotes.splice(index, 1);
     else track.midiNotes.push({
