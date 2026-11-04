@@ -16,6 +16,7 @@
 
 import StudioMultitrackWorkspace from "./studioMultitrackWorkspace.js";
 import { renderStudioDAWTimeline } from "./studioDAWTimeline.js";
+import { renderStudioSessionToWav, downloadStudioWav, renderStudioSessionToMp3, downloadStudioMp3 } from "./studioDAWExport.js";
 
 const COLORS = {
   navy: "#0B1A4A",
@@ -150,7 +151,11 @@ export function createStudioDAWEditScreen({ beatLab, onExit } = {}) {
         '<button type="button" data-action="new-session">New Session</button>',
         '<button type="button" data-action="export-wav">Export WAV</button>',
         '<button type="button" data-action="export-mp3">Export MP3</button>',
+        '<button type="button" data-action="export-session">Export Session File</button>',
+        '<button type="button" data-action="import-session">Import Session File</button>',
+        '<button type="button" data-action="delete-session">Delete Saved Session</button>',
         '<button type="button" data-action="exit">Close EDIT</button>',
+        '<input data-session-file type="file" accept=".lcsession,.json,application/json" hidden>',
         '</div>',
         '<div class="lc-main">',
         '<aside class="lc-inspector"><div class="lc-section-label">▸ TRACK / MIXER</div><div class="lc-strips" data-mixer-strips></div></aside>',
@@ -271,11 +276,44 @@ export function createStudioDAWEditScreen({ beatLab, onExit } = {}) {
           } else if (action === "new-session") {
             if (!window.confirm("Start a new session? Save your current work first if needed.")) return;
             workspace.activeProjectId = null;
-            workspace.activeProjectName = "Untitled Song";
+            workspace.activeProjectName = window.prompt("What is the name of the new song or beat?", "Untitled Song") || "Untitled Song";
+            workspace.undoStack = [];
+            workspace.redoStack = [];
             workspace.resetSession();
             this.render();
-          } else if (action === "export-wav" || action === "export-mp3") {
-            this.status("Use the existing EDIT export controls in the main DAW panel for WAV / MP3 rendering. This screen keeps export entry in SESSION without duplicating the exporter.");
+          } else if (action === "export-wav") {
+            button.disabled = true;
+            try {
+              const wav = await renderStudioSessionToWav({ tracks: workspace.tracks, tempo: workspace.tempo });
+              downloadStudioWav(wav, workspace.activeProjectName || "lambo-city-song");
+              this.status("WAV master exported.");
+            } finally { button.disabled = false; }
+          } else if (action === "export-mp3") {
+            button.disabled = true;
+            try {
+              const mp3 = await renderStudioSessionToMp3({ tracks: workspace.tracks, tempo: workspace.tempo });
+              downloadStudioMp3(mp3, workspace.activeProjectName || "lambo-city-song");
+              this.status("MP3 master exported at 192 kbps.");
+            } finally { button.disabled = false; }
+          } else if (action === "export-session") {
+            const data = await workspace.exportSession();
+            const blob = new Blob([JSON.stringify(data)], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = (workspace.activeProjectName || "lambo-city-song").replace(/[^a-z0-9-_]+/gi, "-") + ".lcsession";
+            link.click();
+            URL.revokeObjectURL(url);
+            this.status("Portable session file exported.");
+          } else if (action === "import-session") {
+            root.querySelector("[data-session-file]").click();
+          } else if (action === "delete-session") {
+            if (!workspace.activeProjectId) { this.status("Save this session before deleting it from the library."); return; }
+            if (!window.confirm("Permanently delete this saved session from this browser?")) return;
+            await workspace.removeSavedSession(workspace.activeProjectId);
+            workspace.activeProjectId = null;
+            this.status("Saved session deleted. The open arrangement remains in memory.");
+            root.querySelector("[data-session-menu]").classList.remove("open");
           } else if (action === "exit") {
             if (typeof this.onExit === "function") this.onExit();
             else this.status("Close EDIT from the studio navigation.");
@@ -325,6 +363,20 @@ export function createStudioDAWEditScreen({ beatLab, onExit } = {}) {
         if (event.target.matches("[data-track-volume], [data-track-pan]")) {
           delete event.target.dataset.historyStarted;
         }
+      });
+
+      root.querySelector("[data-session-file]").addEventListener("change", async event => {
+        const file = event.target.files && event.target.files[0];
+        if (!file) return;
+        try {
+          const session = JSON.parse(await file.text());
+          workspace.importSession(session);
+          workspace.activeProjectName = session.projectName || "Imported Song";
+          workspace.activeProjectId = null;
+          this.render();
+          this.status("Imported session: " + workspace.activeProjectName);
+        } catch (error) { this.status("SESSION IMPORT ERROR: " + (error && error.message ? error.message : error)); }
+        event.target.value = "";
       });
 
       root.querySelector("[data-audio-files]").addEventListener("change", async event => {
