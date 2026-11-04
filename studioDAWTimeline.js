@@ -212,7 +212,9 @@ export function renderStudioDAWTimeline({
         let changed=false;
         handle.setPointerCapture(event.pointerId);
         const move=e=>{
-          const delta=snapBar((e.clientX-startX)/width,snapMode,tempo,timeSignatureChanges,timeSignature);
+          const rawDelta=(e.clientX-startX)/width;
+          const resizeStep=getSnapStep(snapMode,originalStart,tempo,timeSignatureChanges,timeSignature);
+          const delta=snapMode==="off"?Math.round(rawDelta*1000)/1000:Math.round(rawDelta/resizeStep)*resizeStep;
           if(edge==="right"){
             const next=Math.max(.0625,Math.min(TOTAL_BARS-clip.startBar+1,originalLength+delta));
             if(next===clip.lengthBars)return;
