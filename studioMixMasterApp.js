@@ -33,10 +33,12 @@ export function createStudioMixMasterApp({ beatLab, workspace } = {}) {
   const widthLabel = root.querySelector("[data-width-label]");
   const masterCompSlider = root.querySelector("[data-master-comp]");
   const masterCompLabel = root.querySelector("[data-master-comp-label]");
-  if (masterCompSlider && StudioAudioEngine.compressor) masterCompSlider.value = String(StudioAudioEngine.compressor.ratio.value || 3);
+  if (masterCompSlider && StudioAudioEngine.compressor) masterCompSlider.value = String(StudioMultitrackWorkspace.masterSettings?.compressionRatio ?? StudioAudioEngine.compressor.ratio.value ?? 3);
+  if (widthSlider) widthSlider.value = String(StudioMultitrackWorkspace.masterSettings?.stereoWidth ?? 100);
+  if (widthLabel && widthSlider) widthLabel.textContent = widthSlider.value + "%";
   if (masterCompLabel && masterCompSlider) masterCompLabel.textContent = Number(masterCompSlider.value).toFixed(1) + ":1";
   const currentMaster = Math.round((StudioAudioEngine.master?.gain?.value ?? 1) * 100);
-  if (masterSlider) masterSlider.value = String(currentMaster);
+  if (masterSlider) masterSlider.value = String(StudioMultitrackWorkspace.masterSettings?.volume ?? currentMaster);
   if (masterLabel) masterLabel.textContent = currentMaster + "%";
   const status = message => {
     const node = root.querySelector("[data-mix-status]");
@@ -319,6 +321,7 @@ export function createStudioMixMasterApp({ beatLab, workspace } = {}) {
       const value = Math.max(0, Math.min(100, Number(row.querySelector("[data-automation-level]").value) || 0));
       track.automation = track.automation || { volume: [] };
       const existing = track.automation.volume.find(point => point.bar === bar);
+      StudioMultitrackWorkspace.recordHistory("Add volume automation point");
       if (existing) existing.value = value;
       else track.automation.volume.push({ bar, value });
       track.automation.volume.sort((a, b) => a.bar - b.bar);
@@ -331,6 +334,7 @@ export function createStudioMixMasterApp({ beatLab, workspace } = {}) {
     if (removePoint) {
       const track = StudioMultitrackWorkspace.tracks.find(item => item.id === removePoint.dataset.removeVolumePoint);
       if (!track?.automation?.volume) return;
+      StudioMultitrackWorkspace.recordHistory("Remove volume automation point");
       track.automation.volume.splice(Number(removePoint.dataset.pointIndex), 1);
       StudioMultitrackWorkspace.scheduleProjectAutosave();
       renderTracks();
@@ -386,6 +390,7 @@ export function createStudioMixMasterApp({ beatLab, workspace } = {}) {
     if (outputSelect) {
       const track = StudioMultitrackWorkspace.tracks.find(item => item.id === outputSelect.dataset.trackOutput);
       if (!track) return;
+      StudioMultitrackWorkspace.recordHistory("Change track output routing");
       track.outputBusId = outputSelect.value || null;
       StudioMultitrackWorkspace.arrangementPlayback?.stop();
       StudioMultitrackWorkspace.scheduleProjectAutosave();
@@ -408,6 +413,7 @@ export function createStudioMixMasterApp({ beatLab, workspace } = {}) {
       track.sends = Array.isArray(track.sends) ? track.sends : [];
       const busId = sendSlider.dataset.trackSend;
       const level = Number(sendSlider.value);
+      StudioMultitrackWorkspace.recordHistory("Adjust bus send");
       const existing = track.sends.find(item => item.busId === busId);
       if (existing) existing.level = level;
       else if (level > 0) track.sends.push({ busId, level });
@@ -501,6 +507,8 @@ export function createStudioMixMasterApp({ beatLab, workspace } = {}) {
       const value = Number(event.target.value);
       if (widthLabel) widthLabel.textContent = value + "%";
       StudioAudioEngine.setStereoWidth(value);
+      StudioMultitrackWorkspace.masterSettings = { ...(StudioMultitrackWorkspace.masterSettings || {}), stereoWidth: value };
+      StudioMultitrackWorkspace.scheduleProjectAutosave();
       status("Stereo width set to " + value + "%.");
       return;
     }
@@ -508,6 +516,8 @@ export function createStudioMixMasterApp({ beatLab, workspace } = {}) {
       const value = Number(event.target.value);
       if (StudioAudioEngine.compressor && StudioAudioEngine.context) {
         StudioAudioEngine.compressor.ratio.setTargetAtTime(value, StudioAudioEngine.context.currentTime, 0.025);
+        StudioMultitrackWorkspace.masterSettings = { ...(StudioMultitrackWorkspace.masterSettings || {}), compressionRatio: value };
+        StudioMultitrackWorkspace.scheduleProjectAutosave();
         if (masterCompLabel) masterCompLabel.textContent = value.toFixed(1) + ":1";
         status("Master compression ratio set to " + value.toFixed(1) + ":1.");
       }
@@ -521,6 +531,8 @@ export function createStudioMixMasterApp({ beatLab, workspace } = {}) {
       const audio = StudioAudioEngine.context;
       if (master?.gain && audio) {
         master.gain.setTargetAtTime(value / 100, audio.currentTime, 0.025);
+        StudioMultitrackWorkspace.masterSettings = { ...(StudioMultitrackWorkspace.masterSettings || {}), volume: value };
+        StudioMultitrackWorkspace.scheduleProjectAutosave();
         status("Studio master level set to " + value + "%.");
       } else {
         status("Start studio audio before adjusting the master output.");
