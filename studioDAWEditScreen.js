@@ -177,7 +177,7 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
         '<button type="button" data-action="zoom-out">−</button><input data-zoom type="range" min="24" max="288" step="6" value="72" aria-label="Timeline zoom" style="width:75px;accent-color:#c9a24a"><button type="button" data-action="zoom-in">＋</button><select data-snap aria-label="Timeline snap" style="max-width:105px;background:#101d3d;color:#e8edf8;border:1px solid #7184a8;border-radius:5px;padding:5px"><option value="bars">BAR</option><option value="beats">BEAT</option><option value="subdivisions">1/16</option><option value="seconds">SEC</option><option value="off">FREE</option></select><button type="button" data-action="slip-mode" title="Toggle slip editing">SLIP OFF</button>',
         '<span class="lc-spacer"></span><button type="button" data-action="play">▶</button><button type="button" data-action="stop">■</button>',
         '</div>',
-        '<div class="lc-track-tools"><div><button type="button" data-action="add-track">＋ TRACK</button> <button type="button" data-action="import-audio">⇧ IMPORT AUDIO</button><input data-audio-files type="file" accept="audio/*,.wav,.mp3,.m4a,.aac,.ogg,.webm" multiple hidden></div><strong data-song-title>LAMBO CITY · UNTITLED SESSION</strong></div>',
+        '<div class="lc-track-tools"><div><button type="button" data-action="add-track">＋ TRACK</button> <button type="button" data-action="add-midi-track">＋ MIDI</button> <button type="button" data-action="import-audio">⇧ IMPORT AUDIO</button><input data-audio-files type="file" accept="audio/*,.wav,.mp3,.m4a,.aac,.ogg,.webm" multiple hidden></div><strong data-song-title>LAMBO CITY · UNTITLED SESSION</strong></div>',
         '<div class="lc-ruler-head"><strong>TRACKS / REGIONS</strong><strong data-ruler-label>BAR 01 — 128</strong></div>',
         '<div class="lc-lanes" data-lanes></div>',
         '<div class="lc-status" data-status role="status" aria-live="polite">EDIT session ready · Select a track and arm it to record.</div>',
@@ -394,6 +394,12 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
             workspace.addTrack("audio", name);
             this.render();
             this.status("Track added.");
+          } else if (action === "add-midi-track") {
+            workspace.recordHistory("Add MIDI track");
+            const midiTrack = workspace.addTrack("midi", "MIDI " + (workspace.tracks.filter(track => track.type === "midi").length + 1));
+            midiTrack.midiNotes = [];
+            this.render();
+            this.status("MIDI track added · open MIX & MASTER to edit its piano roll.");
           } else if (action === "import-audio") {
             root.querySelector("[data-audio-files]").click();
           } else if (action === "undo") {
