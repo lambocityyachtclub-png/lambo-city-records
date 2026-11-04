@@ -7,9 +7,21 @@ import StudioAudioEngine from "./studioAudioEngine.js";
 const TOTAL_BARS = 128;
 const decodedWaveforms = new WeakMap();
 
-function snapBar(value, mode, tempo) {
+function getSnapStep(mode, bar, tempo, timeSignatureChanges = [], timeSignature = "4/4") {
+  if (mode === "off") return .001;
+  const point=[...timeSignatureChanges].filter(item=>Number(item.bar)<=Number(bar)).sort((x,y)=>x.bar-y.bar).pop();
+  const fallback=String(timeSignature||"4/4").split("/");
+  const numerator=Number(point?.numerator)||Number(fallback[0])||4;
+  const denominator=Number(point?.denominator)||Number(fallback[1])||4;
+  if(mode==="beats")return 1/numerator;
+  if(mode==="subdivisions")return denominator/(16*numerator);
+  if(mode==="seconds"){const secondsPerBar=60/(Number(tempo)||100)*numerator*(4/denominator);return .1/secondsPerBar;}
+  return 1;
+}
+
+function snapBar(value, mode, tempo, timeSignatureChanges = [], timeSignature = "4/4") {
   if (mode === "off") return Math.round(value * 1000) / 1000;
-  const step = mode === "beats" ? .25 : mode === "subdivisions" ? .0625 : mode === "seconds" ? (Number(tempo) || 100) / 240 / 10 : 1;
+  const step=getSnapStep(mode,value,tempo,timeSignatureChanges,timeSignature);
   return Math.round(value / step) * step;
 }
 
@@ -78,7 +90,7 @@ export function renderStudioDAWTimeline({
   onEditStart = () => {}, onPlayheadChange = () => {},
   barWidth = 72, selectedClipId = null, playheadBar = null,
   snapMode = "bars", tempo = 100, slipMode = false,
-  selectedClipIds = [], markers = [], loopRange = null, tempoChanges = [], timeSignatureChanges = []
+  selectedClipIds = [], markers = [], loopRange = null, tempoChanges = [], timeSignatureChanges = [], timeSignature = "4/4"
 }) {
   if (!container || !track) throw new Error("Timeline container or track unavailable.");
   const clips = Array.isArray(track.clips) ? track.clips : [];
@@ -122,7 +134,7 @@ export function renderStudioDAWTimeline({
   for (let bar=1; bar<=TOTAL_BARS; bar+=1) {
     const mark=document.createElement("button"); mark.type="button"; mark.textContent=String(bar).padStart(2,"0");
     if (Number(playheadBar)===bar) mark.classList.add("active");
-    mark.addEventListener("pointerdown",event=>{const fraction=Math.max(0,Math.min(.999,(event.clientX-mark.getBoundingClientRect().left)/width));onPlayheadChange(snapBar(bar+fraction,snapMode,tempo));});
+    mark.addEventListener("pointerdown",event=>{const fraction=Math.max(0,Math.min(.999,(event.clientX-mark.getBoundingClientRect().left)/width));onPlayheadChange(snapBar(bar+fraction,snapMode,tempo,timeSignatureChanges,timeSignature));});
     ruler.appendChild(mark);
   }
   markers.forEach(marker=>{const tag=document.createElement("button");tag.type="button";tag.className="lc-arrangement-marker";tag.textContent=marker.name;tag.title=marker.name+" · bar "+marker.bar;tag.style.left=((Number(marker.bar)-1)*width)+"px";tag.addEventListener("click",()=>onPlayheadChange(Number(marker.bar)));ruler.appendChild(tag);});
@@ -159,7 +171,7 @@ export function renderStudioDAWTimeline({
       title.setPointerCapture(event.pointerId);
       const move=e=>{
         const raw=(e.clientX-startX)/width;
-        const step=snapMode==="beats" ? 0.25 : snapMode==="subdivisions" ? 0.0625 : snapMode==="off" ? 0.001 : snapMode==="seconds" ? (Number(tempo)||100)/240/10:1;
+        const step=getSnapStep(snapMode,originalBar,tempo,timeSignatureChanges,timeSignature);
         const delta=Math.round(raw/step)*step;
         if(Math.abs(e.clientX-startX)<2)return;
         if(slipMode&&sourceDuration>0){
@@ -200,7 +212,7 @@ export function renderStudioDAWTimeline({
         let changed=false;
         handle.setPointerCapture(event.pointerId);
         const move=e=>{
-          const delta=snapBar((e.clientX-startX)/width,snapMode,tempo);
+          const delta=snapBar((e.clientX-startX)/width,snapMode,tempo,timeSignatureChanges,timeSignature);
           if(edge==="right"){
             const next=Math.max(.0625,Math.min(TOTAL_BARS-clip.startBar+1,originalLength+delta));
             if(next===clip.lengthBars)return;
@@ -278,5 +290,5 @@ export function renderStudioDAWTimeline({
   if(Number.isFinite(Number(playheadBar))){const line=document.createElement("div");line.className="lc-arrangement-playhead";line.style.left=((Number(playheadBar)-1)*width)+"px";lane.appendChild(line);}
   const help=document.createElement("div");help.className="lc-arrangement-help";help.textContent="128-BAR ARRANGEMENT · Select a region · Drag its title to move · Drag the right edge to trim · Tap a bar number to set the edit cursor.";
   inner.append(ruler,lane,help);scroll.appendChild(inner);container.append(style,scroll);
-  return {refresh(){renderStudioDAWTimeline({container,track,onChange,onSelect,onEditStart,onPlayheadChange,barWidth:width,selectedClipId,selectedClipIds,playheadBar,snapMode,tempo,slipMode,markers,loopRange,tempoChanges,timeSignatureChanges});}};
+  return {refresh(){renderStudioDAWTimeline({container,track,onChange,onSelect,onEditStart,onPlayheadChange,barWidth:width,selectedClipId,selectedClipIds,playheadBar,snapMode,tempo,slipMode,markers,loopRange,tempoChanges,timeSignatureChanges,timeSignature});}};
 }
