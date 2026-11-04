@@ -272,43 +272,10 @@ this.noiseBuffer = null;
     Your song arrangement will appear here.
   </div>
 </section>
-<section class="lc-actions" aria-label="Vocal effects controls">
-  <div style="width:100%;color:#e6bb69;font-size:12px;letter-spacing:2px">
-    LAMBO CITY VOCAL EFFECTS
-  </div>
-
-  <label style="display:flex;flex-direction:column;gap:6px;min-width:180px;color:#c9c7c1;font-size:11px">
-    DELAY MIX
-    <input type="range" min="0" max="1" step="0.01" value="0"
-      data-vocal-effect="delay">
-  </label>
-
-  <label style="display:flex;flex-direction:column;gap:6px;min-width:180px;color:#c9c7c1;font-size:11px">
-    REVERB MIX
-    <input type="range" min="0" max="1" step="0.01" value="0"
-      data-vocal-effect="reverb">
-  </label>
-</section>
 <section class="lc-actions">
-  <button type="button" data-action="record" class="lc-action">
-    ● RECORD AUDIO
+  <button type="button" data-action="export-beat" class="lc-action">
+    EXPORT BEAT
   </button>
-
-  <button type="button" data-action="stop-recording" class="lc-action">
-    ■ STOP RECORDING
-  </button>
-
- <button type="button" data-action="export-audio" class="lc-action">
-  EXPORT MIX
-</button>
-
-<button type="button" data-action="export-vocals" class="lc-action">
-  EXPORT VOCALS
-</button>
-
-<button type="button" data-action="export-beat" class="lc-action">
-  EXPORT BEAT
-</button>
 
   <button type="button" data-action="save" class="lc-action">
     SAVE BEAT
