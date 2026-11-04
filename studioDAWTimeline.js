@@ -126,16 +126,40 @@ export function renderStudioDAWTimeline({
       canvas.setAttribute("aria-label","Waveform for "+(clip.name||"audio clip"));block.appendChild(canvas);
       decodeClip(clip).then(buffer=>{if(buffer&&canvas.isConnected)paintWaveform(canvas,buffer);else if(canvas.isConnected){const fallback=document.createElement("div");fallback.className="lc-arrangement-wave-empty";fallback.textContent="Waveform unavailable";canvas.replaceWith(fallback);}});
     }else{const note=document.createElement("div");note.className="lc-arrangement-wave-empty";note.textContent="Empty audio region";block.appendChild(note);}
-    const resize=document.createElement("div");resize.className="lc-arrangement-resize";resize.title="Drag to trim the region end";
-    resize.addEventListener("pointerdown",event=>{
-      event.preventDefault();event.stopPropagation();onSelect(clip);onEditStart();
-      const startX=event.clientX,originalLength=clip.lengthBars,originalPlay=Number(clip.playDurationSeconds||clip.duration||0);
-      resize.setPointerCapture(event.pointerId);
-      const move=e=>{const next=Math.max(.25,Math.min(TOTAL_BARS-clip.startBar+1,originalLength+Math.round((e.clientX-startX)/width)));clip.lengthBars=next;if(originalPlay>0)clip.playDurationSeconds=originalPlay*(next/originalLength);update();};
-      const finish=()=>{resize.removeEventListener("pointermove",move);resize.removeEventListener("pointerup",finish);resize.removeEventListener("pointercancel",finish);onChange(clip);};
-      resize.addEventListener("pointermove",move);resize.addEventListener("pointerup",finish);resize.addEventListener("pointercancel",finish);
-    });
-    block.appendChild(resize);lane.appendChild(block);
+    const beginResize=(handle,edge)=>{
+      handle.addEventListener("pointerdown",event=>{
+        event.preventDefault();event.stopPropagation();onSelect(clip);onEditStart();
+        const startX=event.clientX,originalStart=clip.startBar,originalLength=clip.lengthBars;
+        const originalOffset=Number(clip.sourceOffsetSeconds)||0;
+        const originalPlay=Number(clip.playDurationSeconds||clip.duration||0);
+        handle.setPointerCapture(event.pointerId);
+        const move=e=>{
+          const delta=Math.round((e.clientX-startX)/width);
+          if(edge==="right"){
+            const next=Math.max(.25,Math.min(TOTAL_BARS-clip.startBar+1,originalLength+delta));
+            clip.lengthBars=next;
+            if(originalPlay>0)clip.playDurationSeconds=originalPlay*(next/originalLength);
+          }else{
+            const nextStart=Math.max(1,Math.min(originalStart+originalLength-.25,originalStart+delta));
+            const removed=nextStart-originalStart;
+            clip.startBar=nextStart;
+            clip.lengthBars=originalLength-removed;
+            if(originalPlay>0){
+              clip.sourceOffsetSeconds=originalOffset+originalPlay*(removed/originalLength);
+              clip.playDurationSeconds=originalPlay*(clip.lengthBars/originalLength);
+            }
+          }
+          update();
+        };
+        const finish=()=>{handle.removeEventListener("pointermove",move);handle.removeEventListener("pointerup",finish);handle.removeEventListener("pointercancel",finish);onChange(clip);};
+        handle.addEventListener("pointermove",move);handle.addEventListener("pointerup",finish);handle.addEventListener("pointercancel",finish);
+      });
+    };
+    const leftResize=document.createElement("div");leftResize.className="lc-arrangement-resize left";leftResize.title="Drag to trim the region start";leftResize.style.cssText="position:absolute;left:0;right:auto;top:0;bottom:0;width:12px;cursor:ew-resize;touch-action:none;background:linear-gradient(90deg,rgba(241,212,156,.22),transparent)";
+    beginResize(leftResize,"left");
+    const rightResize=document.createElement("div");rightResize.className="lc-arrangement-resize";rightResize.title="Drag to trim the region end";
+    beginResize(rightResize,"right");
+    block.append(leftResize,rightResize);lane.appendChild(block);
   });
   if(Number.isFinite(Number(playheadBar))){const line=document.createElement("div");line.className="lc-arrangement-playhead";line.style.left=((Number(playheadBar)-1)*width)+"px";lane.appendChild(line);}
   const help=document.createElement("div");help.className="lc-arrangement-help";help.textContent="128-BAR ARRANGEMENT · Select a region · Drag its title to move · Drag the right edge to trim · Tap a bar number to set the edit cursor.";
