@@ -152,12 +152,12 @@ export function createStudioDAWArrangementPlayback({
     applyTrackState(track) {
       const channel = this.trackChannels.get(track.id);
       if (!channel) return;
-      const anySolo = this.activeTracks.some(item => item.solo);
+      const anySolo = this.activeTracks.some(item => item.solo && item.type !== "bus");
       const hasSeparateStems =
         this.activeTracks.some(item => item.name === "Vocals") &&
         this.activeTracks.some(item => item.name === "Beats");
       const excludedMaster = !anySolo && hasSeparateStems && track.name === "Master Mix";
-      const muted = Boolean(track.muted || (anySolo && !track.solo) || excludedMaster);
+      const muted = Boolean(track.muted || (track.type !== "bus" && anySolo && !track.solo) || excludedMaster);
       const volume = Math.max(0, Math.min(1, Number(track.volume ?? 80) / 100));
       const pan = Math.max(-1, Math.min(1, Number(track.pan ?? 0)));
       const now = channel.gain.context.currentTime;
