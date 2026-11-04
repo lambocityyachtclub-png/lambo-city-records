@@ -184,6 +184,7 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
       ].join("");
 
       this.root = root;
+      StudioMultitrackWorkspace.root = root;
       this.bindEvents();
       this.render();
       void this.refreshInputDevices();
@@ -748,6 +749,7 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
 
     destroy() {
       this.stopInputMeter();
+      if (StudioMultitrackWorkspace.root === this.root) StudioMultitrackWorkspace.root = null;
       if (this.root) this.root.remove();
       this.root = null;
     }
