@@ -29,7 +29,7 @@ async function decodeClip(clip) {
   }
 }
 
-function paintWaveform(canvas, audioBuffer) {
+function paintWaveform(canvas, audioBuffer, clip = {}) {
   if (!canvas || !audioBuffer) return;
   const width = Math.max(1, Math.floor(canvas.clientWidth || 480));
   const height = Math.max(1, Math.floor(canvas.clientHeight || 38));
@@ -41,13 +41,19 @@ function paintWaveform(canvas, audioBuffer) {
   context.setTransform(ratio, 0, 0, ratio, 0, 0);
   context.clearRect(0, 0, width, height);
   const channel = audioBuffer.getChannelData(0);
-  const samplesPerPixel = Math.max(1, Math.floor(channel.length / width));
+  const sourceStart = Math.max(0, Math.min(audioBuffer.duration, Number(clip.sourceOffsetSeconds) || 0));
+  const sourceAvailable = Math.max(0, audioBuffer.duration - sourceStart);
+  const audibleDuration = Math.max(0, Math.min(sourceAvailable, Number(clip.playDurationSeconds) > 0 ? Number(clip.playDurationSeconds) : sourceAvailable));
+  const firstSample = Math.floor(sourceStart / audioBuffer.duration * channel.length);
+  const lastSample = Math.min(channel.length, Math.ceil((sourceStart + audibleDuration) / audioBuffer.duration * channel.length));
+  const audibleSamples = Math.max(1, lastSample - firstSample);
+  const samplesPerPixel = Math.max(1, audibleSamples / width);
   const center = height / 2;
   const amplitude = height * 0.43;
   context.fillStyle = "#d8b36e";
   for (let x = 0; x < width; x += 1) {
-    const start = x * samplesPerPixel;
-    const end = Math.min(channel.length, start + samplesPerPixel);
+    const start = Math.min(lastSample - 1, firstSample + Math.floor(x * samplesPerPixel));
+    const end = Math.min(lastSample, Math.max(start + 1, firstSample + Math.floor((x + 1) * samplesPerPixel)));
     let peak = 0;
     for (let sample = start; sample < end; sample += 1) peak = Math.max(peak, Math.abs(channel[sample]));
     const barHeight = Math.max(1, peak * amplitude);
@@ -64,7 +70,8 @@ function paintWaveform(canvas, audioBuffer) {
 export function renderStudioDAWTimeline({
   container, track, onChange = () => {}, onSelect = () => {},
   onEditStart = () => {}, onPlayheadChange = () => {},
-  barWidth = 72, selectedClipId = null, playheadBar = null
+  barWidth = 72, selectedClipId = null, playheadBar = null,
+  snapMode = "bars", tempo = 100, slipMode = false
 }) {
   if (!container || !track) throw new Error("Timeline container or track unavailable.");
   const clips = Array.isArray(track.clips) ? track.clips : [];
@@ -113,18 +120,32 @@ export function renderStudioDAWTimeline({
     const update=()=>{block.style.left=((clip.startBar-1)*width)+"px";block.style.width=Math.max(12,clip.lengthBars*width-3)+"px";};
     update();
     const title=document.createElement("div"); title.className="lc-arrangement-clip-title"; title.textContent=clip.name||"Audio Clip";
-    title.title="Select and drag to move this region";
+    title.title=slipMode?"Select and drag to slip source audio inside this region":"Select and drag to move this region";
     title.addEventListener("pointerdown",event=>{
       if(event.button!==0&&event.pointerType==="mouse")return;
       event.preventDefault(); onSelect(clip);
-      const startX=event.clientX, originalBar=clip.startBar, maxStart=TOTAL_BARS-clip.lengthBars+1;
+      const startX=event.clientX, originalBar=clip.startBar, originalOffset=Number(clip.sourceOffsetSeconds)||0;
+      const sourceDuration=Number(clip.playDurationSeconds||clip.duration||0);
       let changed=false;
       title.setPointerCapture(event.pointerId);
       const move=e=>{
-        const nextBar=Math.max(1,Math.min(maxStart,originalBar+Math.round((e.clientX-startX)/width)));
-        if(nextBar===clip.startBar)return;
-        if(!changed){onEditStart();changed=true;}
-        clip.startBar=nextBar;update();
+        const raw=(e.clientX-startX)/width;
+        const step=snapMode==="beats"?.25:snapMode==="subdivisions"?.0625:snapMode==="off"?.001:snapMode==="seconds"?(Number(tempo)||100)/240/10:1;
+        const delta=Math.round(raw/step)*step;
+        if(Math.abs(e.clientX-startX)<2)return;
+        if(slipMode&&sourceDuration>0){
+          const secondsPerBar=240/Math.max(1,Number(tempo)||100);
+          const next=Math.max(0,Math.min(Math.max(0,Number(clip.duration||sourceDuration)-sourceDuration),originalOffset+delta*secondsPerBar));
+          if(Math.abs(next-Number(clip.sourceOffsetSeconds||0))<.0001)return;
+          if(!changed){onEditStart("Slip audio source");changed=true;}
+          clip.sourceOffsetSeconds=next;
+        }else{
+          const next=Math.max(1,Math.min(TOTAL_BARS-clip.lengthBars+1,originalBar+delta));
+          if(next===clip.startBar)return;
+          if(!changed){onEditStart("Move audio region");changed=true;}
+          clip.startBar=next;
+        }
+        update();
       };
       const finish=()=>{
         title.removeEventListener("pointermove",move);title.removeEventListener("pointerup",finish);title.removeEventListener("pointercancel",finish);
@@ -137,7 +158,7 @@ export function renderStudioDAWTimeline({
     if(clip.blob&&clip.blob.size){
       const canvas=document.createElement("canvas");canvas.className="lc-arrangement-waveform";
       canvas.setAttribute("aria-label","Waveform for "+(clip.name||"audio clip"));block.appendChild(canvas);
-      decodeClip(clip).then(buffer=>{if(buffer&&canvas.isConnected)paintWaveform(canvas,buffer);else if(canvas.isConnected){const fallback=document.createElement("div");fallback.className="lc-arrangement-wave-empty";fallback.textContent="Waveform unavailable";canvas.replaceWith(fallback);}});
+      decodeClip(clip).then(buffer=>{if(buffer&&canvas.isConnected)paintWaveform(canvas,buffer,clip);else if(canvas.isConnected){const fallback=document.createElement("div");fallback.className="lc-arrangement-wave-empty";fallback.textContent="Waveform unavailable";canvas.replaceWith(fallback);}});
     }else{const note=document.createElement("div");note.className="lc-arrangement-wave-empty";note.textContent="Empty audio region";block.appendChild(note);}
     const beginResize=(handle,edge)=>{
       handle.addEventListener("pointerdown",event=>{
@@ -180,10 +201,18 @@ export function renderStudioDAWTimeline({
     beginResize(leftResize,"left");
     const rightResize=document.createElement("div");rightResize.className="lc-arrangement-resize";rightResize.title="Drag to trim the region end";
     beginResize(rightResize,"right");
-    block.append(leftResize,rightResize);lane.appendChild(block);
+    block.append(leftResize,rightResize);
+    const gainRow=document.createElement("label");gainRow.style.cssText="position:absolute;left:7px;right:7px;bottom:2px;height:14px;display:flex;align-items:center;gap:4px;color:#d8c69f;font-size:8px";
+    const gainLabel=document.createElement("span");gainLabel.textContent="CLIP";
+    const gain=document.createElement("input");gain.type="range";gain.min="-24";gain.max="12";gain.step="0.5";gain.value=String(Number(clip.clipGainDb)||0);gain.setAttribute("aria-label","Clip gain in decibels");gain.style.cssText="width:100%;height:12px;min-width:20px;accent-color:#d8b36e";
+    const gainValue=document.createElement("span");gainValue.textContent=(Number(clip.clipGainDb)||0).toFixed(1);
+    gain.addEventListener("pointerdown",()=>onEditStart("Clip gain"));
+    gain.addEventListener("input",()=>{clip.clipGainDb=Number(gain.value);gainValue.textContent=clip.clipGainDb.toFixed(1);});
+    gain.addEventListener("change",()=>onChange(clip));
+    gainRow.append(gainLabel,gain,gainValue);block.appendChild(gainRow);lane.appendChild(block);
   });
   if(Number.isFinite(Number(playheadBar))){const line=document.createElement("div");line.className="lc-arrangement-playhead";line.style.left=((Number(playheadBar)-1)*width)+"px";lane.appendChild(line);}
   const help=document.createElement("div");help.className="lc-arrangement-help";help.textContent="128-BAR ARRANGEMENT · Select a region · Drag its title to move · Drag the right edge to trim · Tap a bar number to set the edit cursor.";
   inner.append(ruler,lane,help);scroll.appendChild(inner);container.append(style,scroll);
-  return {refresh(){renderStudioDAWTimeline({container,track,onChange,onSelect,onEditStart,onPlayheadChange,barWidth:width,selectedClipId,playheadBar});}};
+  return {refresh(){renderStudioDAWTimeline({container,track,onChange,onSelect,onEditStart,onPlayheadChange,barWidth:width,selectedClipId,playheadBar,snapMode,tempo,slipMode});}};
 }
