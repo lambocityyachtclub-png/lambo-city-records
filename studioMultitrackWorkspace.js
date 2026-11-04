@@ -654,7 +654,7 @@ const StudioMultitrackWorkspace = {
   },
 
   resetSession({ tempo = 100 } = {}) {
-    if (this.isTrackRecording()) {
+    if (this.isTrackRecording() || this.pendingRecording) {
       throw new Error("Stop the active track recording before starting a new song session.");
     }
     this.stopAll();
@@ -678,7 +678,7 @@ const StudioMultitrackWorkspace = {
   },
 
   async exportSession() {
-    if (this.isTrackRecording()) {
+    if (this.isTrackRecording() || this.pendingRecording) {
       throw new Error("Stop the active track recording before exporting the song project.");
     }
     let encodedBytes = 0;
@@ -799,7 +799,7 @@ const StudioMultitrackWorkspace = {
   },
 
   importSession(session) {
-    if (this.isTrackRecording()) {
+    if (this.isTrackRecording() || this.pendingRecording) {
       throw new Error("Stop the active track recording before importing another song session.");
     }
     if (!session || session.format !== "lambo-city-daw-session" ||
