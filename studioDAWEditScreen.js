@@ -154,7 +154,7 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
         '<button class="lc-metal-icon" data-action="mixer-focus" aria-label="Mixer">☷</button>',
         '</div>',
         '<div class="lc-record-options" aria-label="Recording setup"><label>COUNT-IN <select data-count-in><option value="0">OFF</option><option value="1">1 BAR</option><option value="2">2 BARS</option><option value="4">4 BARS</option></select></label><label>PUNCH IN <input data-punch-in type="number" min="1" max="128" placeholder="LIVE"></label><label>PUNCH OUT <input data-punch-out type="number" min="1" max="128" placeholder="OFF"></label><label>INPUT <select data-input-device><option value="">Default microphone</option></select></label><label>LATENCY ms <input data-input-latency type="number" min="0" max="500" step="1" value="0" aria-label="Microphone latency compensation in milliseconds"></label><label class="lc-input-meter-wrap">INPUT <span class="lc-input-meter"><i data-input-meter></i></span></label><label title="Use headphones when monitoring a live microphone to prevent feedback"><input data-input-monitor type="checkbox"> MONITOR · HEADPHONES</label></div>',
-        '<div class="lc-arrangement-controls" aria-label="Arrangement controls"><label>MARKER <input data-marker-name placeholder="Verse / Hook" maxlength="32"></label><label>BAR <input data-marker-bar type="number" min="1" max="128" value="1"></label><button type="button" data-action="add-marker">+ MARKER</button><label>CYCLE <input data-loop-start type="number" min="1" max="127" value="1"> → <input data-loop-end type="number" min="2" max="129" value="9"></label><button type="button" data-action="set-cycle">SET RANGE</button><button type="button" data-action="toggle-cycle">CYCLE OFF</button><label>TEMPO AT BAR <input data-tempo-bar type="number" min="1" max="128" value="1"></label><label>BPM <input data-tempo-value type="number" min="20" max="300" value="100"></label><button type="button" data-action="add-tempo-point">+ TEMPO</button><label>METER AT BAR <input data-meter-bar type="number" min="1" max="128" value="1"></label><select data-meter-value aria-label="Time signature"><option>4/4</option><option>3/4</option><option>2/4</option><option>5/4</option><option>6/4</option><option>7/4</option><option>6/8</option><option>9/8</option><option>12/8</option></select><button type="button" data-action="add-meter-point">+ METER</button><button type="button" data-action="toggle-follow">FOLLOW ON</button></div>',
+        '<div class="lc-arrangement-controls" aria-label="Arrangement controls"><label>MARKER <input data-marker-name placeholder="Verse / Hook" maxlength="32"></label><label>BAR <input data-marker-bar type="number" min="1" max="128" value="1"></label><button type="button" data-action="add-marker">+ MARKER</button><label>CYCLE <input data-loop-start type="number" min="1" max="127" value="1"> → <input data-loop-end type="number" min="2" max="129" value="9"></label><button type="button" data-action="set-cycle">SET RANGE</button><button type="button" data-action="toggle-cycle">CYCLE OFF</button><label>TEMPO AT BAR <input data-tempo-bar type="number" min="1" max="128" value="1"></label><label>BPM <input data-tempo-value type="number" min="20" max="300" value="100"></label><button type="button" data-action="add-tempo-point">+ TEMPO</button><label>METER AT BAR <input data-meter-bar type="number" min="1" max="128" value="1"></label><select data-meter-value aria-label="Time signature"><option>4/4</option><option>3/4</option><option>2/4</option><option>5/4</option><option>6/4</option><option>7/4</option><option>6/8</option><option>9/8</option><option>12/8</option></select><button type="button" data-action="add-meter-point">+ METER</button><button type="button" data-action="toggle-follow">FOLLOW ON</button><button type="button" data-action="toggle-multi">MULTI OFF</button></div>',
         '<div class="lc-session-menu" data-session-menu>',
         '<button type="button" data-action="save-session">Save Session</button>',
         '<button type="button" data-action="open-session">Open Saved Session</button>',
@@ -337,7 +337,7 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
             const bar = Number(root.querySelector("[data-marker-bar]").value || workspace.playheadBar);
             if (workspace.addMarker(name, bar)) root.querySelector("[data-marker-name]").value = "";
           } else if (action === "set-cycle") {
-            workspace.setLoopRange(Number(root.querySelector("[data-loop-start]").value), Number(root.querySelector("[data-loop-end]").value), workspace.loopRange.enabled);
+            workspace.setLoopRange(Number(root.querySelector("[data-loop-start]").value), Number(root.querySelector("[data-loop-end]").value), true);
           } else if (action === "toggle-cycle") {
             workspace.setLoopRange(workspace.loopRange.startBar, workspace.loopRange.endBar, !workspace.loopRange.enabled);
           } else if (action === "add-tempo-point") {
@@ -346,6 +346,8 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
             workspace.addTimeSignatureChange(Number(root.querySelector("[data-meter-bar]").value), root.querySelector("[data-meter-value]").value);
           } else if (action === "toggle-follow") {
             workspace.toggleFollowPlayhead(); this.renderHeader();
+          } else if (action === "toggle-multi") {
+            workspace.toggleMultiSelect(); this.renderHeader();
           } else if (action === "track-group") {
             const row = button.closest("[data-track-id]"); const track = workspace.tracks.find(item => item.id === row?.dataset.trackId);
             const name = window.prompt("Track folder / group name:", track?.groupName || "Rhythm Section");
@@ -587,6 +589,10 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
       if(loopStart)loopStart.value=String(workspace.loopRange.startBar);if(loopEnd)loopEnd.value=String(workspace.loopRange.endBar);
       if(cycle){cycle.textContent=workspace.loopRange.enabled?"CYCLE ON":"CYCLE OFF";cycle.classList.toggle("active",Boolean(workspace.loopRange.enabled));}
       const follow=this.root.querySelector('[data-action="toggle-follow"]');if(follow){follow.textContent=workspace.followPlayhead?"FOLLOW ON":"FOLLOW OFF";follow.classList.toggle("active",Boolean(workspace.followPlayhead));}
+      const multi=this.root.querySelector('[data-action="toggle-multi"]');if(multi){multi.textContent=workspace.multiSelectMode?"MULTI ON":"MULTI OFF";multi.classList.toggle("active",Boolean(workspace.multiSelectMode));}
+      const tempoBar=this.root.querySelector("[data-tempo-bar]"),tempoValue=this.root.querySelector("[data-tempo-value]"),meterBar=this.root.querySelector("[data-meter-bar]"),meterValue=this.root.querySelector("[data-meter-value]");
+      if(tempoBar)tempoBar.value=String(Math.floor(workspace.playheadBar));if(tempoValue)tempoValue.value=String(Math.round(workspace.getTempoAtBar(workspace.playheadBar)));if(meterBar)meterBar.value=String(Math.floor(workspace.playheadBar));
+      if(meterValue){const meter=workspace.getTimeSignatureAtBar(workspace.playheadBar);meterValue.value=meter.numerator+"/"+meter.denominator;}
       const slip = this.root.querySelector('[data-action="slip-mode"]');
       if (slip) { slip.textContent = workspace.slipMode ? "SLIP ON" : "SLIP OFF"; slip.classList.toggle("active", Boolean(workspace.slipMode)); }
     },
