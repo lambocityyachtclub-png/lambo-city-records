@@ -120,6 +120,9 @@ export function createStudioDAWEditScreen({ beatLab, onExit } = {}) {
         '#lc-premium-daw-edit-screen .lc-track-timeline .lc-arrangement-waveform{height:35px;background:#062d51}',
         '#lc-premium-daw-edit-screen .lc-track-timeline .lc-arrangement-wave-empty{height:35px;color:#b3e7f4;background:#082b4b}',
         '#lc-premium-daw-edit-screen .lc-track-timeline .lc-arrangement-clip.selected{border:2px solid #f8d889;box-shadow:0 0 0 1px #c9a24a,0 0 12px #18d8ff55}',
+        '#lc-premium-daw-edit-screen .lc-track-timeline.lc-red-lane .lc-arrangement-clip{border-color:#e85a60;background:linear-gradient(180deg,#8e1827,#4d101e)}',
+        '#lc-premium-daw-edit-screen .lc-track-timeline.lc-red-lane .lc-arrangement-waveform{background:#3b101a}',
+        '#lc-premium-daw-edit-screen .lc-track-timeline.lc-red-lane .lc-arrangement-wave-empty{background:#32101a;color:#ffd5d8}',
         '#lc-premium-daw-edit-screen .lc-track-timeline .lc-arrangement-playhead{background:#fff;box-shadow:0 0 7px #fff}',
         '#lc-premium-daw-edit-screen .lc-status{flex:0 0 auto;padding:6px 9px;min-height:25px;background:#08132b;border-top:1px solid #2a4770;color:#9deaff;font-size:10px}',
         '#lc-premium-daw-edit-screen .lc-session-menu{position:absolute;z-index:30;right:10px;top:83px;display:none;min-width:190px;padding:7px;border:1px solid var(--gold);border-radius:8px;background:#0b1839;box-shadow:0 8px 20px #000b}',
@@ -178,6 +181,19 @@ export function createStudioDAWEditScreen({ beatLab, onExit } = {}) {
     bindEvents() {
       const root = this.root;
       root.addEventListener("click", async event => {
+        const trackControl = event.target.closest("[data-track-control]");
+        if (trackControl && root.contains(trackControl)) {
+          const trackRow = trackControl.closest("[data-track-id]");
+          const track = StudioMultitrackWorkspace.tracks.find(item => item.id === trackRow?.dataset.trackId);
+          if (!track) return;
+          const key = trackControl.dataset.trackControl === "mute" ? "muted" : trackControl.dataset.trackControl === "solo" ? "solo" : "armed";
+          StudioMultitrackWorkspace.recordHistory("Track " + key);
+          track[key] = !track[key];
+          if (key !== "armed" && StudioMultitrackWorkspace.arrangementPlayback) StudioMultitrackWorkspace.arrangementPlayback.syncTrackState(StudioMultitrackWorkspace.tracks);
+          this.render();
+          this.status(track.name + " " + key + (track[key] ? " on." : " off."));
+          return;
+        }
         const button = event.target.closest("[data-action]");
         if (!button || !root.contains(button)) return;
         const action = button.dataset.action;
@@ -297,6 +313,11 @@ export function createStudioDAWEditScreen({ beatLab, onExit } = {}) {
       });
 
       root.addEventListener("change", event => {
+        if (event.target.matches("[data-tempo]")) {
+          StudioMultitrackWorkspace.setTempo(Number(event.target.value));
+          this.renderHeader();
+          this.status("Tempo set to " + StudioMultitrackWorkspace.tempo + " BPM.");
+        }
         if (event.target.matches("[data-track-volume], [data-track-pan]")) {
           delete event.target.dataset.historyStarted;
         }
@@ -315,10 +336,10 @@ export function createStudioDAWEditScreen({ beatLab, onExit } = {}) {
     renderHeader() {
       const workspace = StudioMultitrackWorkspace;
       const title = this.root.querySelector("[data-song-title]");
-      const clock = this.root.querySelector("[data-clock]");
+      const tempo = this.root.querySelector("[data-tempo]");
       const zoom = this.root.querySelector("[data-zoom]");
       if (title) title.textContent = safeText(workspace.activeProjectName || "Untitled Song").toUpperCase();
-      if (clock) clock.textContent = safeText(workspace.tempo) + " BPM / 4/4";
+      if (tempo) tempo.value = String(workspace.tempo);
       if (zoom) zoom.value = String(workspace.zoomBarWidth);
     },
 
@@ -404,7 +425,7 @@ export function createStudioDAWEditScreen({ beatLab, onExit } = {}) {
           '<div class="lc-track-mix"><input type="range" min="0" max="100" value="' + Number(track.volume) + '" data-track-volume data-track-id="' + track.id + '" aria-label="' + safeText(track.name) + ' volume"><div class="lc-pan-mini" title="Pan ' + Math.round(Number(track.pan || 0) * 100) + '"></div></div>'
         ].join("");
         const lane = document.createElement("div");
-        lane.className = "lc-track-timeline";
+        lane.className = "lc-track-timeline" + (index < 3 ? " lc-cyan-lane" : " lc-red-lane");
         const timeline = document.createElement("div");
         lane.appendChild(timeline);
         renderStudioDAWTimeline({
