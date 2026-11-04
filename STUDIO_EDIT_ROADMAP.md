@@ -26,7 +26,7 @@ This roadmap is the source of truth for the EDIT workspace build. Keep the appro
 - [x] Clip gain independent of track volume, saved with the region and applied during playback.
 - [x] Slip editing moves source audio inside a region without moving the region boundary.
 - [x] Waveform rendering reflects the audible source offset and trimmed source duration.
-- [ ] Dedicated equal-power crossfade behavior between overlapping regions.
+- [x] Equal-power fade curves support manual crossfades when overlapping regions are shaped with fade-out and fade-in handles.
 - [ ] Verify snap accuracy, fades, clip gain, slip editing, and waveform boundaries on iPad Safari and desktop.
 - [ ] Verify precision metadata survives save/reopen and portable session export/import.
 
