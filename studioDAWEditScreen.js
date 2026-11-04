@@ -167,7 +167,7 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
         '<div class="lc-edit-tools">',
         '<button type="button" disabled>t</button><button type="button" data-action="edit-menu">Edit ▾</button><button type="button" data-action="functions-menu">Functions ▾</button><button type="button" data-action="view-menu">View ▾</button>',
         '<button type="button" data-action="undo" title="Undo">↶</button><button type="button" data-action="redo" title="Redo">↷</button><button type="button" data-action="split" title="Split at playhead">✂</button><button type="button" data-action="duplicate" title="Duplicate selected region">▣</button><button type="button" data-action="delete-clip" title="Delete selected region">⌫</button>',
-        '<button type="button" data-action="zoom-out">−</button><input data-zoom type="range" min="24" max="288" step="6" value="72" aria-label="Timeline zoom" style="width:75px;accent-color:#c9a24a"><button type="button" data-action="zoom-in">＋</button>',
+        '<button type="button" data-action="zoom-out">−</button><input data-zoom type="range" min="24" max="288" step="6" value="72" aria-label="Timeline zoom" style="width:75px;accent-color:#c9a24a"><button type="button" data-action="zoom-in">＋</button><select data-snap aria-label="Timeline snap" style="max-width:105px;background:#101d3d;color:#e8edf8;border:1px solid #7184a8;border-radius:5px;padding:5px"><option value="bars">BAR</option><option value="beats">BEAT</option><option value="subdivisions">1/16</option><option value="seconds">SEC</option><option value="off">FREE</option></select><button type="button" data-action="slip-mode" title="Toggle slip editing">SLIP OFF</button>',
         '<span class="lc-spacer"></span><button type="button" data-action="play">▶</button><button type="button" data-action="stop">■</button>',
         '</div>',
         '<div class="lc-track-tools"><div><button type="button" data-action="add-track">＋ TRACK</button> <button type="button" data-action="import-audio">⇧ IMPORT AUDIO</button><input data-audio-files type="file" accept="audio/*,.wav,.mp3,.m4a,.aac,.ogg,.webm" multiple hidden></div><strong data-song-title>LAMBO CITY · UNTITLED SESSION</strong></div>',
@@ -317,6 +317,11 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
             workspace.setZoom(workspace.zoomBarWidth / 1.25);
             root.querySelector("[data-zoom]").value = String(workspace.zoomBarWidth);
             this.render();
+          } else if (action === "slip-mode") {
+            workspace.slipMode = !workspace.slipMode;
+            button.textContent = workspace.slipMode ? "SLIP ON" : "SLIP OFF";
+            button.classList.toggle("active", workspace.slipMode);
+            this.status(workspace.slipMode ? "Slip editing enabled." : "Region move editing enabled.");
           } else if (action === "save-session") {
             const name = workspace.activeProjectName || window.prompt("Song name:", "Untitled Song") || "Untitled Song";
             const id = workspace.activeProjectId || ("lc-daw-" + (globalThis.crypto && globalThis.crypto.randomUUID ? globalThis.crypto.randomUUID() : Date.now()));
@@ -424,6 +429,12 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
       });
 
       root.addEventListener("change", event => {
+        if (event.target.matches("[data-snap]")) {
+          workspace.snapMode = ["bars", "beats", "subdivisions", "seconds", "off"].includes(event.target.value) ? event.target.value : "bars";
+          this.renderLanes();
+          workspace.scheduleProjectAutosave();
+          this.status("Snap mode · " + event.target.value.toUpperCase() + ".");
+        }
         if (event.target.matches("[data-tempo]")) {
           StudioMultitrackWorkspace.setTempo(Number(event.target.value));
           this.renderHeader();
@@ -466,6 +477,10 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
       if (title) title.textContent = safeText(workspace.activeProjectName || "Untitled Song").toUpperCase();
       if (tempo) tempo.value = String(workspace.tempo);
       if (zoom) zoom.value = String(workspace.zoomBarWidth);
+      const snap = this.root.querySelector("[data-snap]");
+      if (snap) snap.value = workspace.snapMode || "bars";
+      const slip = this.root.querySelector('[data-action="slip-mode"]');
+      if (slip) { slip.textContent = workspace.slipMode ? "SLIP ON" : "SLIP OFF"; slip.classList.toggle("active", Boolean(workspace.slipMode)); }
     },
 
     renderMixer() {
@@ -557,6 +572,9 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
           container: timeline,
           track: track,
           barWidth: workspace.zoomBarWidth,
+          snapMode: workspace.snapMode,
+          tempo: workspace.tempo,
+          slipMode: workspace.slipMode,
           selectedClipId: workspace.selectedClipId,
           playheadBar: workspace.playheadBar,
           onSelect: clip => {
@@ -565,8 +583,9 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
               node.classList.toggle("selected", node.dataset.clipId === workspace.selectedClipId);
             });
           },
-          onEditStart: () => workspace.recordHistory("Move / trim audio region"),
+          onEditStart: label => workspace.recordHistory(label || "Edit audio region"),
           onChange: clip => {
+            workspace.arrangementPlayback?.stop();
             workspace.scheduleProjectAutosave();
             this.status(clip.name + " updated at bar " + clip.startBar + ".");
           },
