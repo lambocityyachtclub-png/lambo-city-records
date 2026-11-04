@@ -78,7 +78,7 @@ export function renderStudioDAWTimeline({
   onEditStart = () => {}, onPlayheadChange = () => {},
   barWidth = 72, selectedClipId = null, playheadBar = null,
   snapMode = "bars", tempo = 100, slipMode = false,
-  selectedClipIds = [], markers = [], loopRange = null
+  selectedClipIds = [], markers = [], loopRange = null, tempoChanges = [], timeSignatureChanges = []
 }) {
   if (!container || !track) throw new Error("Timeline container or track unavailable.");
   const clips = Array.isArray(track.clips) ? track.clips : [];
@@ -109,6 +109,8 @@ export function renderStudioDAWTimeline({
     .lc-arrangement-help{padding:7px 9px;color:#999fad;font-size:10px;border-top:1px solid #343946}
     .lc-arrangement-playhead{position:absolute;top:0;bottom:0;width:2px;background:#f1d49c;z-index:5;pointer-events:none;box-shadow:0 0 7px rgba(241,212,156,.6)}
     .lc-arrangement-marker{position:absolute;top:0;height:28px;z-index:3;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;border:0;border-left:2px solid #f4c35d;background:rgba(125,85,23,.86);color:#fff4d5;font-size:9px;padding:2px 4px;min-height:24px}
+    .lc-arrangement-marker-tempo{border-left-color:#36c7e8;background:rgba(16,87,117,.92)}
+    .lc-arrangement-marker-meter{border-left-color:#b79cff;background:rgba(74,52,124,.92)}
     .lc-arrangement-marker-line{position:absolute;top:0;bottom:0;width:1px;border-left:1px dashed #e6bb69;z-index:2;pointer-events:none}
     .lc-arrangement-loop-range{position:absolute;top:0;bottom:0;background:rgba(37,175,211,.09);border-left:2px solid #28c6e8;border-right:2px solid #28c6e8;pointer-events:none;z-index:1}
     .lc-arrangement-resize{position:absolute;right:0;top:0;bottom:0;width:12px;cursor:ew-resize;touch-action:none;background:linear-gradient(90deg,transparent,rgba(241,212,156,.22))}
@@ -124,6 +126,7 @@ export function renderStudioDAWTimeline({
     ruler.appendChild(mark);
   }
   markers.forEach(marker=>{const tag=document.createElement("button");tag.type="button";tag.className="lc-arrangement-marker";tag.textContent=marker.name;tag.title=marker.name+" · bar "+marker.bar;tag.style.left=((Number(marker.bar)-1)*width)+"px";tag.addEventListener("click",()=>onPlayheadChange(Number(marker.bar)));ruler.appendChild(tag);});
+  [...tempoChanges.map(point=>({bar:point.bar,label:Number(point.bpm)+" BPM",kind:"tempo"})),...timeSignatureChanges.map(point=>({bar:point.bar,label:Number(point.numerator)+"/"+Number(point.denominator),kind:"meter"}))].forEach(point=>{const tag=document.createElement("span");tag.className="lc-arrangement-marker lc-arrangement-marker-"+point.kind;tag.textContent=point.label;tag.title=point.label+" begins at bar "+point.bar;tag.style.left=((Number(point.bar)-1)*width+3)+"px";tag.style.top=point.kind==="tempo"?"-25px":"2px";tag.style.height="20px";tag.style.pointerEvents="none";ruler.appendChild(tag);});
   const lane=document.createElement("div"); lane.className="lc-arrangement-lane";
   if(loopRange?.enabled){const cycle=document.createElement("div");cycle.className="lc-arrangement-loop-range";cycle.style.left=((Number(loopRange.startBar)-1)*width)+"px";cycle.style.width=Math.max(0,(Number(loopRange.endBar)-Number(loopRange.startBar))*width)+"px";lane.appendChild(cycle);}
   markers.forEach(marker=>{const line=document.createElement("div");line.className="lc-arrangement-marker-line";line.style.left=((Number(marker.bar)-1)*width)+"px";lane.appendChild(line);});
@@ -272,5 +275,5 @@ export function renderStudioDAWTimeline({
   if(Number.isFinite(Number(playheadBar))){const line=document.createElement("div");line.className="lc-arrangement-playhead";line.style.left=((Number(playheadBar)-1)*width)+"px";lane.appendChild(line);}
   const help=document.createElement("div");help.className="lc-arrangement-help";help.textContent="128-BAR ARRANGEMENT · Select a region · Drag its title to move · Drag the right edge to trim · Tap a bar number to set the edit cursor.";
   inner.append(ruler,lane,help);scroll.appendChild(inner);container.append(style,scroll);
-  return {refresh(){renderStudioDAWTimeline({container,track,onChange,onSelect,onEditStart,onPlayheadChange,barWidth:width,selectedClipId,selectedClipIds,playheadBar,snapMode,tempo,slipMode,markers,loopRange});}};
+  return {refresh(){renderStudioDAWTimeline({container,track,onChange,onSelect,onEditStart,onPlayheadChange,barWidth:width,selectedClipId,selectedClipIds,playheadBar,snapMode,tempo,slipMode,markers,loopRange,tempoChanges,timeSignatureChanges});}};
 }
