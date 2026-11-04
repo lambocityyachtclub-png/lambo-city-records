@@ -290,9 +290,10 @@ export async function renderStudioSessionToMp3({
   timeSignature = "4/4",
   tempoChanges = [],
   timeSignatureChanges = [],
-  masterVolume
+  masterVolume,
+  masterSettings = {}
 } = {}) {
-  const audioBuffer = await renderStudioSessionToAudioBuffer({ tracks, tempo, timeSignature, tempoChanges, timeSignatureChanges, masterVolume });
+  const audioBuffer = await renderStudioSessionToAudioBuffer({ tracks, tempo, timeSignature, tempoChanges, timeSignatureChanges, masterVolume, masterSettings });
   const lamejs = await loadMp3EncoderLibrary();
   const encoder = new lamejs.Mp3Encoder(2, SAMPLE_RATE, 192);
   const left = audioBuffer.getChannelData(0);
