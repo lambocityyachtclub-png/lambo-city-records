@@ -144,7 +144,7 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
         '<div class="lc-transport">',
         '<div class="lc-logo"><span>LAMBO CITY</span><span>RECORDS</span></div>',
         '<div class="lc-rec-well"><button class="lc-rec" data-action="record" aria-label="Record">●</button></div>',
-        '<div class="lc-lcd-wrap"><span>CLOCK</span><div class="lc-lcd" data-clock>100 BPM / 4/4</div></div>',
+        '<div class="lc-lcd-wrap"><span>CLOCK</span><div class="lc-lcd" data-clock>100 BPM / 4/4</div><span data-save-state aria-live="polite">SAVED</span></div>',
         '<div class="lc-lcd-wrap"><span>GRID</span><div class="lc-gridset"><button type="button" title="Grid 1/4">¼</button><button type="button" title="Grid 1/8">⅛</button><button type="button" title="Grid 1/16">⅟₁₆</button></div></div>',
         '<button class="lc-metal-icon" data-action="previous-view" aria-label="Previous studio interface">←</button>',
         '<button class="lc-metal-icon" data-action="next-view" aria-label="Next studio interface">→</button>',
@@ -158,6 +158,7 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
         '<div class="lc-session-menu" data-session-menu>',
         '<button type="button" data-action="save-session">Save Session</button>',
         '<button type="button" data-action="open-session">Open Saved Session</button>',
+        '<button type="button" data-action="session-versions">Version History / Restore</button>',
         '<button type="button" data-action="new-session">New Session</button>',
         '<button type="button" data-action="export-wav">Export WAV</button>',
         '<button type="button" data-action="export-mp3">Export MP3</button>',
@@ -189,6 +190,12 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
       this.bindEvents();
       this.render();
       void this.refreshInputDevices();
+      void StudioMultitrackWorkspace.findLatestRecovery().then(checkpoint => {
+        if (!checkpoint || !this.root?.isConnected) return;
+        const restore = window.confirm("LAMBO CITY found an interrupted session: " + checkpoint.projectName + " (" + checkpoint.trackCount + " tracks). Restore the latest recovery checkpoint?");
+        if (restore) return StudioMultitrackWorkspace.recoverUnsavedSession(checkpoint.projectId).then(() => this.render()).catch(error => this.status("RECOVERY ERROR: " + (error?.message || error)));
+        return undefined;
+      }).catch(error => this.status("Recovery check unavailable: " + (error?.message || error)));
       if (!StudioMultitrackWorkspace.activeProjectId && StudioMultitrackWorkspace.activeProjectName === "Untitled Song") {
         this.showSongNamePrompt();
       }
@@ -428,6 +435,7 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
             root.querySelector("[data-session-menu]").classList.remove("open");
             this.renderHeader();
           } else if (action === "open-session") {
+            if (!await this.confirmReplaceUnsaved(workspace, "open another session")) return;
             const projects = await workspace.listSavedSessions();
             if (!projects.length) {
               this.status("No saved sessions found in this browser.");
@@ -436,12 +444,11 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
             const options = projects.map((project, index) => (index + 1) + ". " + project.projectName).join("\n");
             const choice = Number(window.prompt("Enter the session number to open:\n" + options, "1"));
             if (!Number.isInteger(choice) || choice < 1 || choice > projects.length) return;
-            if (!window.confirm("Open " + projects[choice - 1].projectName + "? Current unsaved work may be replaced.")) return;
             await workspace.loadSession(projects[choice - 1].projectId);
             this.render();
             this.status("Opened " + workspace.activeProjectName + ".");
           } else if (action === "new-session") {
-            if (!window.confirm("Start a new session? Save your current work first if needed.")) return;
+            if (!await this.confirmReplaceUnsaved(workspace, "start a new session")) return;
             workspace.activeProjectId = null;
             workspace.activeProjectName = "Untitled Song";
             workspace.undoStack = [];
@@ -463,6 +470,16 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
               downloadStudioMp3(mp3, workspace.activeProjectName || "lambo-city-song");
               this.status("MP3 master exported at 192 kbps.");
             } finally { button.disabled = false; }
+          } else if (action === "session-versions") {
+            if (!workspace.activeProjectId) { this.status("Save this session once to create version history."); return; }
+            const versions = await workspace.listSessionVersions();
+            if (!versions.length) { this.status("No saved versions are available yet."); return; }
+            const options = versions.map((version, index) => (index + 1) + ". " + new Date(version.createdAt).toLocaleString() + " · " + version.label).join("\\n");
+            const choice = Number(window.prompt("Choose a restore point:\\n" + options, "1"));
+            if (!Number.isInteger(choice) || choice < 1 || choice > versions.length) return;
+            if (!await this.confirmReplaceUnsaved(workspace, "restore a previous version")) return;
+            await workspace.restoreSessionVersion(versions[choice - 1].versionId);
+            this.render();
           } else if (action === "export-session") {
             const data = await workspace.exportSession();
             const blob = new Blob([JSON.stringify(data)], { type: "application/json" });
@@ -562,12 +579,16 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
         const file = event.target.files && event.target.files[0];
         if (!file) return;
         try {
+          if (!await this.confirmReplaceUnsaved(workspace, "import a session file")) return;
           const session = JSON.parse(await file.text());
+          if (!workspace.validateSessionData(session)) throw new Error("The selected session file failed validation.");
           workspace.importSession(session);
           workspace.activeProjectName = session.projectName || "Imported Song";
           workspace.activeProjectId = null;
+          workspace.dirty = true;
+          workspace.scheduleProjectAutosave();
           this.render();
-          this.status("Imported session: " + workspace.activeProjectName);
+          this.status("Imported session: " + workspace.activeProjectName + " · auto-save pending.");
         } catch (error) { this.status("SESSION IMPORT ERROR: " + (error && error.message ? error.message : error)); }
         event.target.value = "";
       });
@@ -582,12 +603,25 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
       });
     },
 
+    async confirmReplaceUnsaved(workspace, targetLabel) {
+      if (!workspace.dirty) return true;
+      const saveFirst = window.confirm("This session has unsaved changes. Save them before " + targetLabel + "? Choose Cancel to keep working.");
+      if (saveFirst) {
+        const id = workspace.activeProjectId || ("lc-daw-" + (globalThis.crypto?.randomUUID?.() || Date.now()));
+        await workspace.saveSession(id, workspace.activeProjectName || "Untitled Song");
+        return true;
+      }
+      return window.confirm("Discard the unsaved changes and continue to " + targetLabel + "? This cannot be undone.");
+    },
+
     renderHeader() {
       const workspace = StudioMultitrackWorkspace;
       const title = this.root.querySelector("[data-song-title]");
       const tempo = this.root.querySelector("[data-tempo]");
       const zoom = this.root.querySelector("[data-zoom]");
       if (title) title.textContent = safeText(workspace.activeProjectName || "Untitled Song").toUpperCase();
+      const saveState = this.root.querySelector("[data-save-state]");
+      if (saveState) saveState.textContent = ({ saved: "SAVED", pending: "AUTO-SAVE PENDING", saving: "SAVING…", error: "SAVE ERROR" })[workspace.saveState] || "SAVED";
       if (tempo) tempo.value = String(workspace.tempo);
       if (zoom) zoom.value = String(workspace.zoomBarWidth);
       const snap = this.root.querySelector("[data-snap]");
