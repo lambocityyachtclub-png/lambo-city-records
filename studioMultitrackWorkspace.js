@@ -65,6 +65,13 @@ const StudioMultitrackWorkspace = {
   nextTrackId: 1,
   root: null,
   tempo: 100,
+  timeSignature: "4/4",
+  tempoChanges: [],
+  timeSignatureChanges: [],
+  markers: [],
+  loopRange: { enabled: false, startBar: 1, endBar: 9 },
+  followPlayhead: true,
+  selectedRegionIds: [],
   sessionTemplateId: null,
   sessionTemplateName: null,
   arrangementPlayback: null,
@@ -101,6 +108,11 @@ const StudioMultitrackWorkspace = {
       })),
       nextTrackId: this.nextTrackId,
       tempo: this.tempo,
+      timeSignature: this.timeSignature,
+      tempoChanges: this.tempoChanges.map(point => ({ ...point })),
+      timeSignatureChanges: this.timeSignatureChanges.map(point => ({ ...point })),
+      markers: this.markers.map(marker => ({ ...marker })),
+      loopRange: { ...this.loopRange },
       deletedItems: this.deletedItems.map(entry => ({ ...entry }))
     };
   },
@@ -131,6 +143,11 @@ const StudioMultitrackWorkspace = {
     }));
     this.nextTrackId = snapshot.nextTrackId;
     this.tempo = snapshot.tempo;
+    this.timeSignature = snapshot.timeSignature || "4/4";
+    this.tempoChanges = (snapshot.tempoChanges || []).map(point => ({ ...point }));
+    this.timeSignatureChanges = (snapshot.timeSignatureChanges || []).map(point => ({ ...point }));
+    this.markers = (snapshot.markers || []).map(marker => ({ ...marker }));
+    this.loopRange = { ...(snapshot.loopRange || { enabled: false, startBar: 1, endBar: 9 }) };
     this.deletedItems = (snapshot.deletedItems || []).map(entry => ({ ...entry }));
     this.render();
   },
@@ -172,13 +189,28 @@ const StudioMultitrackWorkspace = {
     this.status("Fit arrangement · " + bars + " bars.");
   },
 
-  selectClip(trackId, clip) {
-    this.selectedTrackId = trackId;
-    this.selectedClipId = clip?.id || null;
-    this.root?.querySelectorAll(".lc-arrangement-clip").forEach(node => {
-      node.classList.toggle("selected", node.dataset.clipId === this.selectedClipId);
-    });
+  selectClip(trackId, clip, event = null) {
+    this.selectedTrackId = trackId; this.selectedClipId = clip?.id || null;
+    const toggle = Boolean(event?.shiftKey || event?.metaKey || event?.ctrlKey);
+    if (!clip) this.selectedRegionIds = [];
+    else if (toggle) { const current = new Set(this.selectedRegionIds || []); if (current.has(clip.id)) current.delete(clip.id); else current.add(clip.id); this.selectedRegionIds = [...current]; }
+    else this.selectedRegionIds = [clip.id];
+    this.root?.querySelectorAll(".lc-arrangement-clip").forEach(node => node.classList.toggle("selected", this.selectedRegionIds.includes(node.dataset.clipId)));
+    return this.getSelectedClips();
   },
+  getSelectedClips() { const ids=new Set(this.selectedRegionIds||[]); return this.tracks.flatMap(track=>(track.clips||[]).filter(clip=>ids.has(clip.id))); },
+  getTempoAtBar(bar) { const point=[...this.tempoChanges].filter(item=>Number(item.bar)<=Number(bar)).sort((a,b)=>a.bar-b.bar).pop(); return Math.max(20,Math.min(300,Number(point?.bpm)||this.tempo||100)); },
+  getTimeSignatureAtBar(bar) { const point=[...this.timeSignatureChanges].filter(item=>Number(item.bar)<=Number(bar)).sort((a,b)=>a.bar-b.bar).pop(); const fallback=String(this.timeSignature||"4/4").split("/"); return {numerator:Number(point?.numerator)||Number(fallback[0])||4,denominator:Number(point?.denominator)||Number(fallback[1])||4}; },
+  getSecondsAtBar(bar) { const target=Math.max(1,Math.min(129,Number(bar)||1)); const boundaries=[...new Set([1,target,...this.tempoChanges.map(point=>Number(point.bar)),...this.timeSignatureChanges.map(point=>Number(point.bar))].filter(value=>value>=1&&value<=target))].sort((a,b)=>a-b); let seconds=0; for(let i=0;i<boundaries.length-1;i+=1){const start=boundaries[i],end=boundaries[i+1],meter=this.getTimeSignatureAtBar(start);seconds+=(end-start)*60/this.getTempoAtBar(start)*meter.numerator*(4/meter.denominator);} return seconds; },
+  getBarAtSeconds(seconds) { const target=Math.max(0,Number(seconds)||0);let low=1,high=129;for(let i=0;i<24;i+=1){const mid=(low+high)/2;if(this.getSecondsAtBar(mid)<target)low=mid;else high=mid;}return Math.max(1,Math.min(128,low)); },
+  addMarker(name,bar=this.playheadBar) { const label=String(name||"").trim().slice(0,32);if(!label)return false;this.recordHistory("Add song marker");const marker={id:"lc-marker-"+Date.now(),name:label,bar:Math.max(1,Math.min(128,Number(bar)||1))};this.markers.push(marker);this.markers.sort((a,b)=>a.bar-b.bar);this.scheduleProjectAutosave();this.render();this.status("Marker "+label+" added at bar "+marker.bar+".");return marker; },
+  addTempoChange(bar,bpm) { const at=Math.max(1,Math.min(128,Math.round(Number(bar)||1))),value=Math.max(20,Math.min(300,Number(bpm)||this.tempo));this.recordHistory("Add tempo change");this.tempoChanges=this.tempoChanges.filter(point=>point.bar!==at);this.tempoChanges.push({bar:at,bpm:value});this.tempoChanges.sort((a,b)=>a.bar-b.bar);this.scheduleProjectAutosave();this.render();this.status("Tempo change · "+value+" BPM at bar "+at+".");return true; },
+  addTimeSignatureChange(bar,signature) { const match=/^(2|3|4|5|6|7|8|9|12)\/(2|4|8|16)$/.exec(String(signature||""));if(!match)return false;const at=Math.max(1,Math.min(128,Math.round(Number(bar)||1)));this.recordHistory("Add time signature change");this.timeSignatureChanges=this.timeSignatureChanges.filter(point=>point.bar!==at);this.timeSignatureChanges.push({bar:at,numerator:Number(match[1]),denominator:Number(match[2])});this.timeSignatureChanges.sort((a,b)=>a.bar-b.bar);this.scheduleProjectAutosave();this.render();this.status("Time signature "+signature+" begins at bar "+at+".");return true; },
+  setLoopRange(startBar,endBar,enabled=true) { const start=Math.max(1,Math.min(127,Number(startBar)||1)),end=Math.max(start+.25,Math.min(129,Number(endBar)||start+8));this.recordHistory("Set cycle range");this.loopRange={enabled:Boolean(enabled),startBar:start,endBar:end};this.scheduleProjectAutosave();this.render();this.status((enabled?"Cycle enabled · ":"Cycle range set · ")+"bar "+start+" to "+end+"."); },
+  assignTrackGroup(trackId,name) { const track=this.tracks.find(item=>item.id===trackId),label=String(name||"").trim().slice(0,32);if(!track||!label)return false;this.recordHistory("Assign track group");const groupId="lc-group-"+label.toLowerCase().replace(/[^a-z0-9]+/g,"-");track.groupId=groupId;track.groupName=label;track.groupCollapsed=false;this.tracks.filter(item=>item.groupId===groupId).forEach(item=>item.groupName=label);this.scheduleProjectAutosave();this.render();this.status(track.name+" assigned to "+label+".");return true; },
+  toggleTrackGroup(trackId) { const track=this.tracks.find(item=>item.id===trackId);if(!track?.groupId)return false;const members=this.tracks.filter(item=>item.groupId===track.groupId),collapsed=!members.every(item=>item.groupCollapsed);this.recordHistory("Toggle track folder");members.forEach(item=>item.groupCollapsed=collapsed);this.render();this.scheduleProjectAutosave();return true; },
+  toggleFollowPlayhead() { this.followPlayhead=!this.followPlayhead;this.scheduleProjectAutosave();this.status("Follow playhead "+(this.followPlayhead?"on.":"off."));return this.followPlayhead; },
+
 
   compSelectedTake() {
     const sourceTrack = this.tracks.find(track => track.id === this.selectedTrackId);
@@ -405,6 +437,12 @@ const StudioMultitrackWorkspace = {
       projectName: String(projectName || "Untitled Song").trim() || "Untitled Song",
       updatedAt: new Date().toISOString(),
       tempo: this.tempo,
+      timeSignature: this.timeSignature,
+      tempoChanges: this.tempoChanges.map(point=>({...point})),
+      timeSignatureChanges: this.timeSignatureChanges.map(point=>({...point})),
+      markers: this.markers.map(marker=>({...marker})),
+      loopRange: {...this.loopRange},
+      followPlayhead: this.followPlayhead,
       zoomBarWidth: this.zoomBarWidth,
       playheadBar: this.playheadBar,
       snapMode: this.snapMode,
@@ -583,6 +621,12 @@ const StudioMultitrackWorkspace = {
       version: 1,
       projectName: this.activeProjectName || "Untitled Song",
       tempo: this.tempo,
+      timeSignature: this.timeSignature,
+      tempoChanges: this.tempoChanges.map(point=>({...point})),
+      timeSignatureChanges: this.timeSignatureChanges.map(point=>({...point})),
+      markers: this.markers.map(marker=>({...marker})),
+      loopRange: {...this.loopRange},
+      followPlayhead: this.followPlayhead,
       zoomBarWidth: this.zoomBarWidth,
       playheadBar: this.playheadBar,
       inputDeviceId: this.inputDeviceId || "",
