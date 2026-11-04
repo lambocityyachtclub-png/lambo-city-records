@@ -57,6 +57,8 @@ const StudioMultitrackWorkspace = {
   nextTrackId: 1,
   root: null,
   tempo: 100,
+  sessionTemplateId: null,
+  sessionTemplateName: null,
   arrangementPlayback: null,
 
   setTempo(value) {
@@ -133,6 +135,8 @@ const StudioMultitrackWorkspace = {
       format: "lambo-city-daw-session",
       version: 1,
       tempo: this.tempo,
+      templateId: this.sessionTemplateId,
+      templateName: this.sessionTemplateName,
       tracks: this.tracks.map(track => ({
         ...track,
         clips: (track.clips || []).filter(clip => clip.blob instanceof Blob && clip.blob.size > 0).map(clip => ({
@@ -155,6 +159,8 @@ const StudioMultitrackWorkspace = {
     }
     this.stopAll();
     this.tempo = Math.max(60, Math.min(180, Number(session.tempo) || 100));
+    this.sessionTemplateId = session.templateId || null;
+    this.sessionTemplateName = session.templateName || null;
     this.tracks = session.tracks.map(track => ({
       ...track,
       clips: (track.clips || []).map(clip => ({ ...clip }))
@@ -176,6 +182,8 @@ const StudioMultitrackWorkspace = {
     }
     this.stopAll();
     this.tempo = Math.max(60, Math.min(180, Number(tempo) || 100));
+    this.sessionTemplateId = null;
+    this.sessionTemplateName = null;
     this.tracks = [];
     this.nextTrackId = 1;
     this.createTrack("audio", "Vocals");
@@ -258,6 +266,8 @@ const StudioMultitrackWorkspace = {
       format: "lambo-city-daw-session",
       version: 1,
       tempo: this.tempo,
+      templateId: this.sessionTemplateId,
+      templateName: this.sessionTemplateName,
       tracks
     };
   },
@@ -272,6 +282,8 @@ const StudioMultitrackWorkspace = {
     }
     this.stopAll();
     this.tempo = Math.max(60, Math.min(180, Number(session.tempo) || 100));
+    this.sessionTemplateId = session.templateId || null;
+    this.sessionTemplateName = session.templateName || null;
     this.tracks = session.tracks.map((savedTrack, index) => ({
       id: savedTrack.id || `lc-track-import-${index + 1}`,
       name: String(savedTrack.name || `Track ${index + 1}`),
