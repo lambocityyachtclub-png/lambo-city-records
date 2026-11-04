@@ -7,6 +7,12 @@ import StudioAudioEngine from "./studioAudioEngine.js";
 const TOTAL_BARS = 128;
 const decodedWaveforms = new WeakMap();
 
+function snapBar(value, mode, tempo) {
+  if (mode === "off") return Math.round(value * 1000) / 1000;
+  const step = mode === "beats" ? .25 : mode === "subdivisions" ? .0625 : mode === "seconds" ? (Number(tempo) || 100) / 240 / 10 : 1;
+  return Math.round(value / step) * step;
+}
+
 async function decodeClip(clip) {
   if (!clip?.blob || !clip.blob.size) return null;
   if (decodedWaveforms.has(clip.blob)) return decodedWaveforms.get(clip.blob);
@@ -109,7 +115,7 @@ export function renderStudioDAWTimeline({
   for (let bar=1; bar<=TOTAL_BARS; bar+=1) {
     const mark=document.createElement("button"); mark.type="button"; mark.textContent=String(bar).padStart(2,"0");
     if (Number(playheadBar)===bar) mark.classList.add("active");
-    mark.addEventListener("click",()=>onPlayheadChange(bar));
+    mark.addEventListener("click",()=>onPlayheadChange(snapBar(bar,snapMode,tempo)));
     ruler.appendChild(mark);
   }
   const lane=document.createElement("div"); lane.className="lc-arrangement-lane";
@@ -169,7 +175,7 @@ export function renderStudioDAWTimeline({
         let changed=false;
         handle.setPointerCapture(event.pointerId);
         const move=e=>{
-          const delta=Math.round((e.clientX-startX)/width);
+          const delta=snapBar((e.clientX-startX)/width,snapMode,tempo);
           if(edge==="right"){
             const next=Math.max(.25,Math.min(TOTAL_BARS-clip.startBar+1,originalLength+delta));
             if(next===clip.lengthBars)return;
@@ -202,6 +208,39 @@ export function renderStudioDAWTimeline({
     const rightResize=document.createElement("div");rightResize.className="lc-arrangement-resize";rightResize.title="Drag to trim the region end";
     beginResize(rightResize,"right");
     block.append(leftResize,rightResize);
+    const addFadeHandle=(edge)=>{
+      const handle=document.createElement("div");
+      handle.style.cssText="position:absolute;top:0;width:16px;height:14px;z-index:4;touch-action:none;cursor:ew-resize;border-top:3px solid #f1d49c;"+(edge==="in"?"left:0;border-left:3px solid #f1d49c":"right:0;border-right:3px solid #f1d49c");
+      handle.title=edge==="in"?"Drag to set fade in":"Drag to set fade out";
+      handle.addEventListener("pointerdown",event=>{
+        event.preventDefault();event.stopPropagation();onSelect(clip);
+        const startX=event.clientX;
+        const key=edge==="in"?"fadeInSeconds":"fadeOutSeconds";
+        const initial=Math.max(0,Number(clip[key])||0);
+        const clipSeconds=Math.max(.01,Number(clip.playDurationSeconds||clip.duration||clip.lengthBars*240/tempo));
+        const maxFade=clipSeconds/2;
+        let changed=false;
+        handle.setPointerCapture(event.pointerId);
+        const move=e=>{
+          const direction=edge==="in"?1:-1;
+          const next=Math.max(0,Math.min(maxFade,initial+direction*(e.clientX-startX)/Math.max(1,block.clientWidth)*clipSeconds));
+          if(Math.abs(next-(Number(clip[key])||0))<.005)return;
+          if(!changed){onEditStart(edge==="in"?"Fade in":"Fade out");changed=true;}
+          clip[key]=next;
+          handle.style.width=Math.max(16,next/clipSeconds*block.clientWidth)+"px";
+        };
+        const finish=()=>{
+          handle.removeEventListener("pointermove",move);handle.removeEventListener("pointerup",finish);handle.removeEventListener("pointercancel",finish);
+          if(changed)onChange(clip);
+        };
+        handle.addEventListener("pointermove",move);handle.addEventListener("pointerup",finish);handle.addEventListener("pointercancel",finish);
+      });
+      const seconds=Math.max(0,Number(clip[edge==="in"?"fadeInSeconds":"fadeOutSeconds"])||0);
+      const duration=Math.max(.01,Number(clip.playDurationSeconds||clip.duration||clip.lengthBars*240/tempo));
+      handle.style.width=Math.max(16,seconds/duration*Math.max(18,block.clientWidth))+"px";
+      block.appendChild(handle);
+    };
+    addFadeHandle("in");addFadeHandle("out");
     const gainRow=document.createElement("label");gainRow.style.cssText="position:absolute;left:7px;right:7px;bottom:2px;height:14px;display:flex;align-items:center;gap:4px;color:#d8c69f;font-size:8px";
     const gainLabel=document.createElement("span");gainLabel.textContent="CLIP";
     const gain=document.createElement("input");gain.type="range";gain.min="-24";gain.max="12";gain.step="0.5";gain.value=String(Number(clip.clipGainDb)||0);gain.setAttribute("aria-label","Clip gain in decibels");gain.style.cssText="width:100%;height:12px;min-width:20px;accent-color:#d8b36e";
