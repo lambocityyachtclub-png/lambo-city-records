@@ -23,7 +23,8 @@ This roadmap is the source of truth for the EDIT workspace build. Keep the appro
 - [x] Timeline zoom and horizontal navigation using the existing zoomable 128-bar timeline.
 - [x] Snap modes: bars, beats, 1/16 subdivisions, seconds, and snap-off/free positioning for region movement, trimming, and cursor placement.
 - [x] Non-destructive fade-in and fade-out handles with playback gain envelopes; overlapping regions can be shaped as manual crossfades.
-- [x] Clip gain independent of track volume, saved with the region and applied during playback.
+- [x] Clip gain independent of track volume, saved with the region, applied during playback, and included in WAV/MP3 renders.
+- [x] Source trim/slip boundaries and fade envelopes are respected by both live playback and offline WAV/MP3 export.
 - [x] Slip editing moves source audio inside a region without moving the region boundary.
 - [x] Waveform rendering reflects the audible source offset and trimmed source duration.
 - [x] Equal-power fade curves support manual crossfades when overlapping regions are shaped with fade-out and fade-in handles.
