@@ -50,7 +50,7 @@ export function createStudioDAWArrangementPlayback({
     },
 
     disposeChannels() {
-      this.trackChannels.forEach(({ gain, automationGain, low, mid, high, compressor, panner, effects, pitchCorrectionNode }) => {
+      this.trackChannels.forEach(({ gain, automationGain, low, mid, high, compressor, panner, effects, pitchCorrectionNode, sendNodes }) => {
         try { gain.disconnect(); } catch {}
         try { automationGain.disconnect(); } catch {}
         try { low.disconnect(); } catch {}
@@ -59,6 +59,7 @@ export function createStudioDAWArrangementPlayback({
         try { compressor.disconnect(); } catch {}
         try { panner?.disconnect(); } catch {}
         try { pitchCorrectionNode?.disconnect(); } catch {}
+        (sendNodes || []).forEach(node => { try { node.disconnect(); } catch {} });
         try { effects?.destroy(); } catch {}
       });
       this.trackChannels.clear();
@@ -118,16 +119,34 @@ export function createStudioDAWArrangementPlayback({
       } else {
         compressor.connect(trackEffects.input);
       }
+      const outputBus = track.type !== "bus" && track.outputBusId ? this.trackChannels.get(track.outputBusId) : null;
+      const routeOutput = outputBus?.gain || output;
       if (panner) {
         trackEffects.output.connect(panner);
-        panner.connect(output);
+        panner.connect(routeOutput);
       } else {
-        trackEffects.output.connect(output);
+        trackEffects.output.connect(routeOutput);
       }
-      const channel = { gain, automationGain, low, mid, high, compressor, panner, effects: trackEffects, pitchCorrectionNode, track };
+      const channel = { gain, automationGain, low, mid, high, compressor, panner, effects: trackEffects, pitchCorrectionNode, track, sendNodes: [] };
       this.trackChannels.set(track.id, channel);
       this.applyTrackState(track);
       return channel;
+    },
+
+    connectTrackSends(tracks = this.activeTracks) {
+      tracks.forEach(track => {
+        const source = this.trackChannels.get(track.id);
+        if (!source || track.type === "bus") return;
+        (track.sends || []).forEach(send => {
+          const bus = this.trackChannels.get(send.busId);
+          if (!bus || bus === source) return;
+          const gain = source.gain.context.createGain();
+          gain.gain.value = Math.max(0, Math.min(1, Number(send.level) || 0) / 100);
+          source.effects.output.connect(gain);
+          gain.connect(bus.gain);
+          source.sendNodes.push(gain);
+        });
+      });
     },
 
     applyTrackState(track) {
@@ -235,6 +254,7 @@ export function createStudioDAWArrangementPlayback({
       this.stop();
       const runId = this.runId;
       const clips = [];
+      const midiTracks = tracks.filter(track => (track.type === "midi" || track.type === "instrument") && Array.isArray(track.midiNotes) && track.midiNotes.length);
 
       tracks.forEach(track => {
         (Array.isArray(track.clips) ? track.clips : []).forEach(clip => {
@@ -242,8 +262,8 @@ export function createStudioDAWArrangementPlayback({
         });
       });
 
-      if (!clips.length) {
-        onStatus("No recorded audio clips available for arrangement playback.");
+      if (!clips.length && !midiTracks.length) {
+        onStatus("No audio regions or MIDI notes are available for arrangement playback.");
         return false;
       }
 
@@ -269,11 +289,11 @@ export function createStudioDAWArrangementPlayback({
         if (!output) throw new Error("The studio playback output is unavailable.");
 
         this.activeTracks = tracks;
-        await Promise.all(tracks.map(async track => {
-          if (!this.trackChannels.has(track.id)) {
-            await this.createTrackChannel(context, track, output);
-          }
-        }));
+        const orderedTracks = [...tracks].sort((a, b) => (a.type === "bus" ? 0 : 1) - (b.type === "bus" ? 0 : 1));
+        for (const track of orderedTracks) {
+          if (!this.trackChannels.has(track.id)) await this.createTrackChannel(context, track, output);
+        }
+        this.connectTrackSends(tracks);
         this.syncTrackState(tracks);
 
         const cursorBar = Math.max(1, Math.min(128, Number(startBar) || 1));
@@ -349,6 +369,47 @@ export function createStudioDAWArrangementPlayback({
           source.start(clipStartTime, sourceOffset, remainingDuration);
         });
 
+        midiTracks.forEach(track => {
+          const channel = this.trackChannels.get(track.id);
+          if (!channel) return;
+          (track.midiNotes || []).forEach(note => {
+            const pitch = Math.max(0, Math.min(127, Number(note.pitch) || 60));
+            const noteStartBar = Math.max(1, Number(note.startBar) || 1);
+            const noteEndBar = noteStartBar + Math.max(0.0625, Number(note.lengthBars) || 0.25);
+            const scheduleStartSeconds = Math.max(getSecondsAtBar(noteStartBar), cursorSeconds, activeLoop ? getSecondsAtBar(activeLoop.startBar) : cursorSeconds);
+            const scheduleEndSeconds = Math.min(getSecondsAtBar(noteEndBar), activeLoop ? getSecondsAtBar(activeLoop.endBar) : Infinity);
+            const duration = scheduleEndSeconds - scheduleStartSeconds;
+            if (duration <= 0.001) return;
+            const oscillator = context.createOscillator();
+            const envelope = context.createGain();
+            oscillator.type = track.instrumentWave || "triangle";
+            oscillator.frequency.value = 440 * Math.pow(2, (pitch - 69) / 12);
+            const velocity = Math.max(0, Math.min(1, Number(note.velocity ?? 0.8)));
+            const at = startTime + Math.max(0, scheduleStartSeconds - cursorSeconds);
+            envelope.gain.setValueAtTime(0.0001, at);
+            envelope.gain.linearRampToValueAtTime(Math.max(0.0001, velocity * 0.22), at + Math.min(0.012, duration / 4));
+            envelope.gain.setValueAtTime(Math.max(0.0001, velocity * 0.22), Math.max(at + 0.013, at + duration - 0.025));
+            envelope.gain.linearRampToValueAtTime(0.0001, at + duration);
+            oscillator.connect(envelope);
+            envelope.connect(channel.gain);
+            oscillator.onended = () => {
+              try { envelope.disconnect(); } catch {}
+              try { oscillator.disconnect(); } catch {}
+              if (runId !== this.runId) return;
+              this.sources = this.sources.filter(item => item.source !== oscillator);
+              if (!this.sources.length) {
+                this.playing = false;
+                this.disposeChannels();
+                if (!this.loopTimer && this.positionTimer) { clearInterval(this.positionTimer); this.positionTimer = null; }
+                onStatus(this.loopTimer ? "Cycle pass complete · next cycle scheduled." : "Arrangement playback finished.");
+              }
+            };
+            this.sources.push({ source: oscillator, trackId: track.id });
+            oscillator.start(at);
+            oscillator.stop(at + duration + 0.01);
+          });
+        });
+
         this.playing = this.sources.length > 0;
         if (this.sources.length || activeLoop) this.positionTimer = setInterval(() => {
           const elapsed = Math.max(0, context.currentTime - startTime);
@@ -358,7 +419,7 @@ export function createStudioDAWArrangementPlayback({
           const loopDuration = getSecondsAtBar(activeLoop.endBar) - getSecondsAtBar(actualStartBar);
           if (loopDuration > 0.05) this.loopTimer = setTimeout(() => { void this.play(tracks, activeLoop.startBar, loopRange); }, loopDuration * 1000);
         }
-        onStatus(`Arrangement playing from bar ${actualStartBar} · ${tempo} BPM · ${decoded.length} audio clip(s).`);
+        onStatus(`Arrangement playing from bar ${actualStartBar} · ${tempo} BPM · ${decoded.length} audio clip(s) · ${midiTracks.reduce((count, track) => count + track.midiNotes.length, 0)} MIDI note(s).`);
         return this.playing;
       } catch (error) {
         if (runId === this.runId) {
