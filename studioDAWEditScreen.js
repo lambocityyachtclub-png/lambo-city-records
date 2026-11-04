@@ -230,7 +230,11 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
           option.textContent = device.label || "Microphone " + (index + 1);
           select.appendChild(option);
         });
-        select.value = selected;
+        if (selected && !devices.some(device => device.deviceId === selected)) {
+          StudioMultitrackWorkspace.inputDeviceId = "";
+          StudioMultitrackWorkspace.inputLatencyMs = Math.max(0, Number(StudioMultitrackWorkspace.inputLatencyByDevice[""]) || 0);
+        }
+        select.value = StudioMultitrackWorkspace.inputDeviceId || "";
         const latency = this.root.querySelector("[data-input-latency]");
         if (latency) latency.value = String(StudioMultitrackWorkspace.inputLatencyByDevice[selected] ?? StudioMultitrackWorkspace.inputLatencyMs ?? 0);
       } catch (error) {
