@@ -119,15 +119,24 @@ export function renderStudioDAWTimeline({
     ruler.appendChild(mark);
   }
   const lane=document.createElement("div"); lane.className="lc-arrangement-lane";
+  const takeLaneCount=Math.max(1,...clips.map(clip=>Number(clip.takeNumber)||1));
+  lane.style.minHeight=(takeLaneCount*110)+"px";
   if (!clips.length) { const empty=document.createElement("div"); empty.className="lc-arrangement-empty"; empty.textContent="Import audio or record a take to create a waveform region."; lane.appendChild(empty); }
   clips.forEach(clip=>{
     const block=document.createElement("div"); block.className="lc-arrangement-clip"+(clip.id===selectedClipId?" selected":"");
     block.dataset.clipId=clip.id;
+    const takeLane=Math.max(0,(Number(clip.takeNumber)||1)-1);
+    block.style.top=(7+takeLane*110)+"px";
     const update=()=>{block.style.left=((clip.startBar-1)*width)+"px";block.style.width=Math.max(12,clip.lengthBars*width-3)+"px";};
     const repaintWaveform=()=>{const canvas=block.querySelector(".lc-arrangement-waveform");if(canvas)decodeClip(clip).then(buffer=>{if(buffer&&canvas.isConnected)paintWaveform(canvas,buffer,clip);});};
     update();
-    const title=document.createElement("div"); title.className="lc-arrangement-clip-title"; title.textContent=clip.name||"Audio Clip";
+    const title=document.createElement("div"); title.className="lc-arrangement-clip-title"; title.textContent=(clip.takeNumber ? "TAKE "+clip.takeNumber+" · " : "")+(clip.name||"Audio Clip");
     title.title=slipMode?"Select and drag to slip source audio inside this region":"Select and drag to move this region";
+    if (clip.takeGroupId) {
+      const protect=document.createElement("button"); protect.type="button"; protect.textContent=clip.takeProtected?"🔒":"◇"; protect.title=clip.takeProtected?"Take protected · tap to unlock":"Protect this take"; protect.style.cssText="position:absolute;right:13px;top:3px;z-index:6;border:0;background:#111a;color:#f1d49c;border-radius:4px;padding:1px 4px;font-size:10px";
+      protect.addEventListener("click",event=>{event.stopPropagation();onEditStart("Take protection");clip.takeProtected=!clip.takeProtected;protect.textContent=clip.takeProtected?"🔒":"◇";protect.title=clip.takeProtected?"Take protected · tap to unlock":"Protect this take";onChange(clip);});
+      block.appendChild(protect);
+    }
     title.addEventListener("pointerdown",event=>{
       if(event.button!==0&&event.pointerType==="mouse")return;
       event.preventDefault(); onSelect(clip);
