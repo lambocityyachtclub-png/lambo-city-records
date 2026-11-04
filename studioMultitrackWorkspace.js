@@ -1012,7 +1012,7 @@ const StudioMultitrackWorkspace = {
     return root;
   },
 
-  async startArmedRecording({ vocalEffects, countInBars = 0, punchInBar = null, punchOutBar = null } = {}) {
+  async startArmedRecording({ vocalEffects, countInBars = 0, punchInBar = null, punchOutBar = null, monitorInput = false } = {}) {
     if (this.pendingRecording || this.isTrackRecording()) {
       this.status("A recording is already scheduled or active.");
       return false;
@@ -1063,6 +1063,7 @@ const StudioMultitrackWorkspace = {
         trackId: track.id,
         inputNode,
         pitchCorrectionNode,
+        monitorInput: Boolean(monitorInput),
         vocalEffects: track.inputSource === "mic" && /vocal/i.test(track.name) ? vocalEffects : null
       });
       this.pendingRecording = false;
