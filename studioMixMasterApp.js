@@ -312,6 +312,15 @@ export function createStudioMixMasterApp({ beatLab, workspace } = {}) {
   };
 
   renderTracks();
+  root.addEventListener("pointerdown", event => {
+    const control = event.target.closest("[data-eq-band], [data-comp-ratio], [data-track-effect], [data-pitch-setting], [data-track-volume], [data-track-pan], [data-track-send], [data-stereo-width], [data-master-comp], [data-master-volume]");
+    if (control) StudioMultitrackWorkspace.recordHistory("Adjust mixer control");
+  });
+  root.addEventListener("keydown", event => {
+    const control = event.target.closest("[data-eq-band], [data-comp-ratio], [data-track-effect], [data-pitch-setting], [data-track-volume], [data-track-pan], [data-track-send], [data-stereo-width], [data-master-comp], [data-master-volume]");
+    if (control && ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Home", "End"].includes(event.key)) StudioMultitrackWorkspace.recordHistory("Adjust mixer control");
+  });
+
   root.addEventListener("click", async event => {
     const addPoint = event.target.closest("[data-add-volume-point]");
     if (addPoint) {
@@ -439,6 +448,7 @@ export function createStudioMixMasterApp({ beatLab, workspace } = {}) {
     const key = pitchControl.dataset.pitchSetting;
     settings[key] = key === "enabled" ? pitchControl.checked : key === "scale" ? pitchControl.value : Number(pitchControl.value);
     track.effects = { ...(track.effects || {}), pitchCorrection: settings };
+    StudioMultitrackWorkspace.scheduleProjectAutosave();
     void StudioMultitrackWorkspace.arrangementPlayback?.setTrackEffects(track.id, { pitchCorrection: settings })
       .catch(error => status("PITCH CORRECTION: " + (error?.message || error)));
     status(settings.enabled ? "Vocal pitch correction enabled · " + ["C","C♯","D","D♯","E","F","F♯","G","G♯","A","A♯","B"][settings.root] + " " + settings.scale + "." : "Vocal pitch correction bypassed.");
@@ -465,7 +475,6 @@ export function createStudioMixMasterApp({ beatLab, workspace } = {}) {
       track.effects = { ...(track.effects || {}), pitchCorrection: settings };
       const label = root.querySelector('[data-pitch-value="' + key + "-" + track.id + '"]');
       if (label) label.textContent = pitchSlider.value + (key === "speedMs" ? " ms" : "%");
-      StudioMultitrackWorkspace.scheduleProjectAutosave();
       StudioMultitrackWorkspace.scheduleProjectAutosave();
       void StudioMultitrackWorkspace.arrangementPlayback?.setTrackEffects(track.id, { pitchCorrection: settings })
         .catch(error => status("PITCH CORRECTION: " + (error?.message || error)));
