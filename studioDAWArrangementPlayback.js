@@ -139,7 +139,7 @@ export function createStudioDAWArrangementPlayback({
         if (!source || track.type === "bus") return;
         (track.sends || []).forEach(send => {
           const bus = this.trackChannels.get(send.busId);
-          if (!bus || bus === source) return;
+          if (!bus || bus === source || track.outputBusId === send.busId) return;
           const gain = source.gain.context.createGain();
           gain.gain.value = Math.max(0, Math.min(1, Number(send.level) || 0) / 100);
           source.effects.output.connect(gain);
