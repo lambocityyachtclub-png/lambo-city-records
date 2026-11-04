@@ -704,6 +704,7 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
           loopRange: workspace.loopRange,
           tempoChanges: workspace.tempoChanges,
           timeSignatureChanges: workspace.timeSignatureChanges,
+          timeSignature: workspace.timeSignature,
           playheadBar: workspace.playheadBar,
           onSelect: (clip, event) => {
             const selected = workspace.selectClip(track.id, clip, event);
