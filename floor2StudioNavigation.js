@@ -50,7 +50,7 @@ export default {
       { object: studio.getObjectByName("floor2SongEditorDisplay"), view: "edit", title: "SONG EDITOR DISPLAY" },
       { object: stations.instrumentStation, view: "piano", title: "PIANO" },
       { object: stations.drumStation, view: "drums", title: "DRUMS" },
-      { object: stations.vocalBooth, view: "vocals", title: "VOCAL RECORDING" },
+      { object: stations.vocalBooth, view: "edit", title: "VOCAL RECORDING" },
       { object: stations.controlRoom, view: "mix", title: "MIX • MASTER WORKSTATION" },
       { object: stations.songArchive, view: "edit", title: "SONG ARCHIVE" },
       { object: stations.mobileStudio, view: "edit", title: "CO-PILOT STUDIO" }
