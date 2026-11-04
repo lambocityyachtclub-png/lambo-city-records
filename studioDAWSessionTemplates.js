@@ -239,6 +239,8 @@ export function applyStudioDAWSessionTemplate(workspace, templateId) {
               ? template.tracks.adlib
               : template.tracks.harmony;
     Object.assign(track, clone(settings));
+    if (layout.name.includes("LEFT")) track.pan = -0.3;
+    if (layout.name.includes("RIGHT")) track.pan = 0.3;
     track.id = `lc-track-${index + 1}`;
     track.type = "audio";
     track.clips = [];
