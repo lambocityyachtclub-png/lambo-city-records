@@ -304,7 +304,7 @@ export function createStudioMixMasterApp({ beatLab, workspace } = {}) {
       automation.appendChild(points);
       row.appendChild(automation);
       if (track.type === "midi" || track.type === "instrument") {
-        row.appendChild(createStudioDAWMidiEditor({ track, onChange: () => { StudioMultitrackWorkspace.scheduleProjectAutosave(); status(track.name + " MIDI notes updated."); } }));
+        row.appendChild(createStudioDAWMidiEditor({ track, onBeforeChange: () => StudioMultitrackWorkspace.recordHistory("Edit MIDI notes"), onChange: () => { StudioMultitrackWorkspace.scheduleProjectAutosave(); status(track.name + " MIDI notes updated."); } }));
       }
       list.appendChild(row);
     });
