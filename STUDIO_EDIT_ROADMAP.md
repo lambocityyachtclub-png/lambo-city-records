@@ -18,7 +18,7 @@ This roadmap is the source of truth for the EDIT workspace build. Keep the appro
 - [ ] Verify undo/redo across split, trim, move, duplicate, delete, restore, and session save/reopen.
 
 ## Stage 2 — Waveform precision
-**Code status: core controls implemented; crossfade behavior and device/browser verification remain.**
+**Code status: Stage 2 core implementation committed; device/browser and save/reopen verification remain.**
 
 - [x] Timeline zoom and horizontal navigation using the existing zoomable 128-bar timeline.
 - [x] Snap modes: bars, beats, 1/16 subdivisions, seconds, and snap-off/free positioning for region movement, trimming, and cursor placement.
