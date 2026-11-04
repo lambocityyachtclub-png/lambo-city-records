@@ -116,11 +116,20 @@ export function renderStudioDAWTimeline({
     title.title="Select and drag to move this region";
     title.addEventListener("pointerdown",event=>{
       if(event.button!==0&&event.pointerType==="mouse")return;
-      event.preventDefault(); onSelect(clip); onEditStart();
+      event.preventDefault(); onSelect(clip);
       const startX=event.clientX, originalBar=clip.startBar, maxStart=TOTAL_BARS-clip.lengthBars+1;
+      let changed=false;
       title.setPointerCapture(event.pointerId);
-      const move=e=>{clip.startBar=Math.max(1,Math.min(maxStart,originalBar+Math.round((e.clientX-startX)/width)));update();};
-      const finish=()=>{title.removeEventListener("pointermove",move);title.removeEventListener("pointerup",finish);title.removeEventListener("pointercancel",finish);onChange(clip);};
+      const move=e=>{
+        const nextBar=Math.max(1,Math.min(maxStart,originalBar+Math.round((e.clientX-startX)/width)));
+        if(nextBar===clip.startBar)return;
+        if(!changed){onEditStart();changed=true;}
+        clip.startBar=nextBar;update();
+      };
+      const finish=()=>{
+        title.removeEventListener("pointermove",move);title.removeEventListener("pointerup",finish);title.removeEventListener("pointercancel",finish);
+        if(changed)onChange(clip);
+      };
       title.addEventListener("pointermove",move);title.addEventListener("pointerup",finish);title.addEventListener("pointercancel",finish);
     });
     title.addEventListener("click",()=>onSelect(clip));
@@ -132,19 +141,24 @@ export function renderStudioDAWTimeline({
     }else{const note=document.createElement("div");note.className="lc-arrangement-wave-empty";note.textContent="Empty audio region";block.appendChild(note);}
     const beginResize=(handle,edge)=>{
       handle.addEventListener("pointerdown",event=>{
-        event.preventDefault();event.stopPropagation();onSelect(clip);onEditStart();
+        event.preventDefault();event.stopPropagation();onSelect(clip);
         const startX=event.clientX,originalStart=clip.startBar,originalLength=clip.lengthBars;
         const originalOffset=Number(clip.sourceOffsetSeconds)||0;
         const originalPlay=Number(clip.playDurationSeconds||clip.duration||0);
+        let changed=false;
         handle.setPointerCapture(event.pointerId);
         const move=e=>{
           const delta=Math.round((e.clientX-startX)/width);
           if(edge==="right"){
             const next=Math.max(.25,Math.min(TOTAL_BARS-clip.startBar+1,originalLength+delta));
+            if(next===clip.lengthBars)return;
+            if(!changed){onEditStart();changed=true;}
             clip.lengthBars=next;
             if(originalPlay>0)clip.playDurationSeconds=originalPlay*(next/originalLength);
           }else{
             const nextStart=Math.max(1,Math.min(originalStart+originalLength-.25,originalStart+delta));
+            if(nextStart===clip.startBar)return;
+            if(!changed){onEditStart();changed=true;}
             const removed=nextStart-originalStart;
             clip.startBar=nextStart;
             clip.lengthBars=originalLength-removed;
@@ -155,7 +169,10 @@ export function renderStudioDAWTimeline({
           }
           update();
         };
-        const finish=()=>{handle.removeEventListener("pointermove",move);handle.removeEventListener("pointerup",finish);handle.removeEventListener("pointercancel",finish);onChange(clip);};
+        const finish=()=>{
+          handle.removeEventListener("pointermove",move);handle.removeEventListener("pointerup",finish);handle.removeEventListener("pointercancel",finish);
+          if(changed)onChange(clip);
+        };
         handle.addEventListener("pointermove",move);handle.addEventListener("pointerup",finish);handle.addEventListener("pointercancel",finish);
       });
     };
