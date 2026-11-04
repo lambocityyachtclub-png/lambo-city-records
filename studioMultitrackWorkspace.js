@@ -876,7 +876,7 @@ const StudioMultitrackWorkspace = {
       groupCollapsed: Boolean(savedTrack.groupCollapsed),
       outputBusId: savedTrack.outputBusId || null,
       sends: Array.isArray(savedTrack.sends) ? savedTrack.sends.map(send => ({ busId: send.busId, level: Math.max(0, Math.min(100, Number(send.level) || 0)) })) : [],
-      midiNotes: Array.isArray(savedTrack.midiNotes) ? savedTrack.midiNotes.map(note => ({ id: note.id || "midi-" + Date.now(), pitch: Math.max(0, Math.min(127, Number(note.pitch) || 60)), startBar: Math.max(1, Math.min(128, Number(note.startBar) || 1)), lengthBars: Math.max(0.0625, Math.min(16, Number(note.lengthBars) || 0.25)), velocity: Math.max(0, Math.min(1, Number(note.velocity ?? 0.8)) })) : [],
+      midiNotes: Array.isArray(savedTrack.midiNotes) ? savedTrack.midiNotes.map(note => ({ id: note.id || "midi-" + Date.now(), pitch: Math.max(0, Math.min(127, Number(note.pitch) || 60)), startBar: Math.max(1, Math.min(128, Number(note.startBar) || 1)), lengthBars: Math.max(0.0625, Math.min(16, Number(note.lengthBars) || 0.25)), velocity: Math.max(0, Math.min(1, Number(note.velocity ?? 0.8))) })) : [],
       clips: (savedTrack.clips || []).map(clip => ({
         id: clip.id,
         name: clip.name || "Audio Clip",
