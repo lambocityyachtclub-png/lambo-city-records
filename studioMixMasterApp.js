@@ -432,7 +432,6 @@ export function createStudioMixMasterApp({ beatLab, workspace } = {}) {
       track.sends = Array.isArray(track.sends) ? track.sends : [];
       const busId = sendSlider.dataset.trackSend;
       const level = Number(sendSlider.value);
-      StudioMultitrackWorkspace.recordHistory("Adjust bus send");
       const existing = track.sends.find(item => item.busId === busId);
       if (existing) existing.level = level;
       else if (level > 0) track.sends.push({ busId, level });
