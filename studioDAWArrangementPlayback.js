@@ -221,7 +221,7 @@ export function createStudioDAWArrangementPlayback({
       });
     },
 
-    async play(tracks = []) {
+    async play(tracks = [], startBar = 1) {
       this.stop();
       const runId = this.runId;
       const clips = [];
@@ -270,11 +270,29 @@ export function createStudioDAWArrangementPlayback({
         const startTime = context.currentTime + 0.12;
         tracks.forEach(track => this.scheduleVolumeAutomation(track, startTime, secondsPerBar));
 
+        const cursorBar = Math.max(1, Math.min(128, Number(startBar) || 1));
         decoded.forEach(({ track, clip, buffer }) => {
           const channel = this.trackChannels.get(track.id);
           if (!channel) return;
+
+          const clipStartBar = Number.isFinite(Number(clip.startBar))
+            ? Math.max(1, Number(clip.startBar))
+            : 1;
+          const clipSourceOffset = Math.max(0, Number(clip.sourceOffsetSeconds) || 0);
+          const sourceDuration = Number(clip.playDurationSeconds) > 0
+            ? Math.min(Number(clip.playDurationSeconds), Math.max(0, buffer.duration - clipSourceOffset))
+            : Math.max(0, buffer.duration - clipSourceOffset);
+          const elapsedBeforeCursor = Math.max(0, cursorBar - clipStartBar) * secondsPerBar;
+
+          // Skip regions that have already finished before the edit cursor.
+          if (elapsedBeforeCursor >= sourceDuration) return;
+
+          const sourceOffset = clipSourceOffset + elapsedBeforeCursor;
+          const remainingDuration = sourceDuration - elapsedBeforeCursor;
+          const timelineDelay = Math.max(0, clipStartBar - cursorBar) * secondsPerBar;
+          if (remainingDuration <= 0.001) return;
+
           const source = context.createBufferSource();
-          const startBar = Number.isFinite(clip.startBar) ? Math.max(1, clip.startBar) : 1;
           source.buffer = buffer;
           source.connect(channel.gain);
           source.onended = () => {
@@ -288,15 +306,11 @@ export function createStudioDAWArrangementPlayback({
             }
           };
           this.sources.push({ source, trackId: track.id });
-          const sourceOffset = Math.max(0, Number(clip.sourceOffsetSeconds) || 0);
-          const playDuration = Number(clip.playDurationSeconds) > 0
-            ? Math.min(Number(clip.playDurationSeconds), Math.max(0.001, buffer.duration - sourceOffset))
-            : Math.max(0.001, buffer.duration - sourceOffset);
-          source.start(startTime + ((startBar - 1) * secondsPerBar), sourceOffset, playDuration);
+          source.start(startTime + timelineDelay, sourceOffset, remainingDuration);
         });
 
         this.playing = this.sources.length > 0;
-        onStatus(`Arrangement playing · ${tempo} BPM · ${decoded.length} audio clip(s).`);
+        onStatus(`Arrangement playing from bar ${cursorBar} · ${tempo} BPM · ${decoded.length} audio clip(s).`);
         return this.playing;
       } catch (error) {
         if (runId === this.runId) {
