@@ -2,7 +2,7 @@
  * LAMBO CITY RECORDS
  * MONOPHONIC VOCAL PITCH CORRECTION — AUDIO WORKLET
  *
- * Original YIN-style pitch detector and two-head granular shifter.
+ * Original normalized-autocorrelation pitch detector and two-head granular shifter.
  * Designed for a single lead-vocal signal, not polyphonic instruments.
  */
 const PITCH_INTERVALS = {
@@ -104,8 +104,14 @@ class LamboCityPitchCorrectionProcessor extends AudioWorkletProcessor {
     for (let index = 0; index < this.windowSize; index += 1) {
       frame[index] = this.ring[(this.write + index) % this.windowSize];
     }
+    let mean = 0;
+    for (let index = 0; index < this.windowSize; index += 1) mean += frame[index];
+    mean /= this.windowSize;
     let energy = 0;
-    for (let index = 0; index < this.windowSize; index += 1) energy += frame[index] * frame[index];
+    for (let index = 0; index < this.windowSize; index += 1) {
+      frame[index] -= mean;
+      energy += frame[index] * frame[index];
+    }
     if (energy / this.windowSize < 0.000002) {
       this.hasPitch = false;
       this.targetRatio = 1;
@@ -113,50 +119,47 @@ class LamboCityPitchCorrectionProcessor extends AudioWorkletProcessor {
     }
 
     const minLag = Math.max(2, Math.floor(sampleRate / 1200));
-    const maxLag = Math.min(550, Math.floor(sampleRate / 82));
-    const compareLength = this.windowSize - maxLag;
-    const difference = new Float32Array(maxLag + 1);
+    const maxLag = Math.min(551, Math.floor(sampleRate / 80));
+    const correlations = new Float32Array(maxLag + 2);
     for (let lag = minLag; lag <= maxLag; lag += 1) {
-      let sum = 0;
-      for (let index = 0; index < compareLength; index += 2) {
-        const delta = frame[index] - frame[index + lag];
-        sum += delta * delta;
+      let cross = 0;
+      let energyA = 0;
+      let energyB = 0;
+      for (let index = 0; index < this.windowSize - lag; index += 2) {
+        const a = frame[index];
+        const b = frame[index + lag];
+        cross += a * b;
+        energyA += a * a;
+        energyB += b * b;
       }
-      difference[lag] = sum;
+      const normalization = Math.sqrt(energyA * energyB);
+      correlations[lag] = normalization > 1e-9 ? cross / normalization : 0;
     }
 
-    let running = 0;
     let bestLag = -1;
-    let bestScore = 1;
-    for (let lag = minLag; lag <= maxLag; lag += 1) {
-      running += difference[lag];
-      const score = running > 0 ? difference[lag] * lag / running : 1;
-      difference[lag] = score;
-      if (score < bestScore) {
-        bestScore = score;
+    let confidence = 0;
+    for (let lag = minLag + 1; lag < maxLag; lag += 1) {
+      const value = correlations[lag];
+      if (value >= 0.72 && value >= correlations[lag - 1] && value >= correlations[lag + 1]) {
         bestLag = lag;
-      }
-      if (score < 0.14 && lag > minLag && difference[lag] <= difference[lag - 1]) {
-        bestLag = lag;
-        bestScore = score;
+        confidence = value;
         break;
       }
     }
-
-    if (bestLag < 0 || bestScore > 0.22) {
+    if (bestLag < 0) {
       this.hasPitch = false;
       this.targetRatio = 1;
       return;
     }
 
-    const left = difference[Math.max(minLag, bestLag - 1)];
-    const center = difference[bestLag];
-    const right = difference[Math.min(maxLag, bestLag + 1)];
+    const left = correlations[bestLag - 1];
+    const center = correlations[bestLag];
+    const right = correlations[bestLag + 1];
     const denominator = left - 2 * center + right;
     const correction = Math.abs(denominator) > 1e-9 ? 0.5 * (left - right) / denominator : 0;
     const period = bestLag + Math.max(-0.5, Math.min(0.5, correction));
     const frequency = sampleRate / period;
-    if (!Number.isFinite(frequency) || frequency < 82 || frequency > 1200) {
+    if (!Number.isFinite(frequency) || frequency < 80 || frequency > 1200) {
       this.hasPitch = false;
       this.targetRatio = 1;
       return;
@@ -173,7 +176,7 @@ class LamboCityPitchCorrectionProcessor extends AudioWorkletProcessor {
     this.port.postMessage({
       detectedMidi: midi,
       correctedMidi: corrected,
-      confidence: 1 - bestScore
+      confidence
     });
   }
 
