@@ -100,6 +100,7 @@ export function renderStudioDAWTimeline({
     .lc-arrangement-lane{position:relative;width:${width * TOTAL_BARS}px;min-height:110px;background:repeating-linear-gradient(90deg,transparent 0,transparent ${width-1}px,#343946 ${width-1}px,#343946 ${width}px),repeating-linear-gradient(90deg,transparent 0,transparent ${width*4-1}px,#665438 ${width*4-1}px,#665438 ${width*4}px),#10141c}
     .lc-arrangement-clip{position:absolute;top:7px;height:94px;padding:0 7px 18px;overflow:hidden;background:linear-gradient(180deg,rgba(105,129,104,.26),rgba(52,73,59,.32));border:1px solid #8d9d75;border-radius:6px;box-sizing:border-box}
     .lc-arrangement-clip.selected{border:2px solid #f1d49c;box-shadow:0 0 0 1px #d8b36e,0 0 12px rgba(216,179,110,.2)}
+    .lc-arrangement-clip.is-comp{border-color:#e6bb69;background:linear-gradient(180deg,rgba(145,105,42,.48),rgba(74,49,18,.55))}
     .lc-arrangement-clip-title{display:block;width:100%;height:22px;padding:4px 2px;overflow:hidden;color:#e9e5d9;font-size:10px;font-weight:700;white-space:nowrap;text-overflow:ellipsis;cursor:grab;touch-action:none;user-select:none}
     .lc-arrangement-waveform{display:block;width:100%;height:38px;border-radius:3px;background:rgba(9,13,16,.42);pointer-events:none}
     .lc-arrangement-wave-empty{display:flex;align-items:center;height:38px;padding-left:7px;color:#b8b4a8;font-size:10px;background:rgba(9,13,16,.35);border-radius:3px}
@@ -123,14 +124,14 @@ export function renderStudioDAWTimeline({
   lane.style.minHeight=(takeLaneCount*110)+"px";
   if (!clips.length) { const empty=document.createElement("div"); empty.className="lc-arrangement-empty"; empty.textContent="Import audio or record a take to create a waveform region."; lane.appendChild(empty); }
   clips.forEach(clip=>{
-    const block=document.createElement("div"); block.className="lc-arrangement-clip"+(clip.id===selectedClipId?" selected":"");
+    const block=document.createElement("div"); block.className="lc-arrangement-clip"+(clip.id===selectedClipId?" selected":"")+(clip.isComp?" is-comp":"");
     block.dataset.clipId=clip.id;
     const takeLane=Math.max(0,(Number(clip.takeNumber)||1)-1);
     block.style.top=(7+takeLane*110)+"px";
     const update=()=>{block.style.left=((clip.startBar-1)*width)+"px";block.style.width=Math.max(12,clip.lengthBars*width-3)+"px";};
     const repaintWaveform=()=>{const canvas=block.querySelector(".lc-arrangement-waveform");if(canvas)decodeClip(clip).then(buffer=>{if(buffer&&canvas.isConnected)paintWaveform(canvas,buffer,clip);});};
     update();
-    const title=document.createElement("div"); title.className="lc-arrangement-clip-title"; title.textContent=(clip.takeNumber ? "TAKE "+clip.takeNumber+" · " : "")+(clip.name||"Audio Clip");
+    const title=document.createElement("div"); title.className="lc-arrangement-clip-title"; title.textContent=clip.isComp ? "COMP · TAKE "+(Number(clip.compSourceTakeNumber)||1)+" · "+(clip.name||"Audio Clip") : (clip.takeNumber ? "TAKE "+clip.takeNumber+" · " : "")+(clip.name||"Audio Clip");
     title.title=slipMode?"Select and drag to slip source audio inside this region":"Select and drag to move this region";
     if (clip.takeGroupId) {
       const protect=document.createElement("button"); protect.type="button"; protect.textContent=clip.takeProtected?"🔒":"◇"; protect.title=clip.takeProtected?"Take protected · tap to unlock":"Protect this take"; protect.style.cssText="position:absolute;right:13px;top:3px;z-index:6;border:0;background:#111a;color:#f1d49c;border-radius:4px;padding:1px 4px;font-size:10px";
