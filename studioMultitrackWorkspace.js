@@ -122,6 +122,7 @@ const StudioMultitrackWorkspace = {
     if (!entry) return false;
     this.redoStack.push({ label: entry.label, snapshot: this.captureSnapshot() });
     this.restoreSnapshot(entry.snapshot);
+    this.scheduleProjectAutosave();
     this.status("Undo · " + entry.label);
     return true;
   },
@@ -131,6 +132,7 @@ const StudioMultitrackWorkspace = {
     if (!entry) return false;
     this.undoStack.push({ label: entry.label, snapshot: this.captureSnapshot() });
     this.restoreSnapshot(entry.snapshot);
+    this.scheduleProjectAutosave();
     this.status("Redo · " + entry.label);
     return true;
   },
@@ -138,6 +140,7 @@ const StudioMultitrackWorkspace = {
   setZoom(value) {
     this.zoomBarWidth = Math.max(24, Math.min(288, Number(value) || 72));
     this.render();
+    this.scheduleProjectAutosave();
     this.status("Timeline zoom · " + Math.round(this.zoomBarWidth / 72 * 100) + "%.");
   },
 
@@ -147,6 +150,7 @@ const StudioMultitrackWorkspace = {
     const width = this.root?.querySelector("[data-track-list]")?.clientWidth || 720;
     this.zoomBarWidth = Math.max(24, Math.min(288, Math.floor((width - 24) / bars)));
     this.render();
+    this.scheduleProjectAutosave();
     this.status("Fit arrangement · " + bars + " bars.");
   },
 
@@ -252,8 +256,10 @@ const StudioMultitrackWorkspace = {
     const bpm = Number(value);
 
     if (!Number.isFinite(bpm)) return;
-
-    this.tempo = Math.max(60, Math.min(180, bpm));
+    const next = Math.max(60, Math.min(180, bpm));
+    if (next !== this.tempo) this.recordHistory("Change tempo");
+    this.tempo = next;
+    this.scheduleProjectAutosave();
   },
 
   getArrangementPlayback() {
