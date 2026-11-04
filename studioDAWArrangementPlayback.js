@@ -341,6 +341,7 @@ export function createStudioDAWArrangementPlayback({
             if (!this.sources.length) {
               this.playing = false;
               this.disposeChannels();
+              if (!this.loopTimer && this.positionTimer) { clearInterval(this.positionTimer); this.positionTimer = null; }
               onStatus("Arrangement playback finished.");
             }
           };
@@ -349,7 +350,7 @@ export function createStudioDAWArrangementPlayback({
         });
 
         this.playing = this.sources.length > 0;
-        this.positionTimer = setInterval(() => {
+        if (this.sources.length || activeLoop) this.positionTimer = setInterval(() => {
           const elapsed = Math.max(0, context.currentTime - startTime);
           onPosition(Math.max(1, Math.min(128, Number(getBarAtSeconds(cursorSeconds + elapsed)) || actualStartBar)));
         }, 80);
