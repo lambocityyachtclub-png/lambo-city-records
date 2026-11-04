@@ -136,7 +136,7 @@ export function renderStudioDAWTimeline({
       title.setPointerCapture(event.pointerId);
       const move=e=>{
         const raw=(e.clientX-startX)/width;
-        const step=snapMode==="beats"?.25:snapMode==="subdivisions"?.0625:snapMode==="off"?.001:snapMode==="seconds"?(Number(tempo)||100)/240/10:1;
+        const step=snapMode==="beats" ? 0.25 : snapMode==="subdivisions" ? 0.0625 : snapMode==="off" ? 0.001 : snapMode==="seconds" ? (Number(tempo)||100)/240/10:1;
         const delta=Math.round(raw/step)*step;
         if(Math.abs(e.clientX-startX)<2)return;
         if(slipMode&&sourceDuration>0){
