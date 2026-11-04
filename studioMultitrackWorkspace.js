@@ -521,7 +521,7 @@ const StudioMultitrackWorkspace = {
   async restoreSessionVersion(versionId) {
     const record = await StudioDAWSessionStore.loadVersion(versionId);
     if (!record?.session) throw new Error("The selected session version is unavailable.");
-    this.importSession(record.session);
+    await this.loadSession(record.projectId, { sessionOverride: record.session });
     this.activeProjectId = record.projectId;
     this.activeProjectName = record.projectName || record.session.projectName || "Untitled Song";
     this.dirty = true;
@@ -539,7 +539,7 @@ const StudioMultitrackWorkspace = {
       await StudioDAWSessionStore.clearRecovery(projectId);
       return false;
     }
-    this.importSession(recovery);
+    await this.loadSession(projectId, { sessionOverride: recovery });
     this.activeProjectId = projectId;
     this.activeProjectName = recovery.projectName || "Recovered Song";
     this.dirty = true;
@@ -548,11 +548,11 @@ const StudioMultitrackWorkspace = {
     this.status("Recovered unsaved work · saving checkpoint.");
     return true;
   },
-  async loadSession(projectId) {
-    if (this.isTrackRecording()) {
+  async loadSession(projectId, { sessionOverride = null } = {}) {
+    if (this.isTrackRecording() || this.pendingRecording) {
       throw new Error("Stop the active track recording before loading another song session.");
     }
-    const session = await StudioDAWSessionStore.load(projectId);
+    const session = sessionOverride || await StudioDAWSessionStore.load(projectId);
     if (!this.validateSessionData(session)) throw new Error("Saved session failed validation and was not opened.");
     this.stopAll();
     this.tempo = Math.max(60, Math.min(180, Number(session.tempo) || 100));
