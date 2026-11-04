@@ -377,9 +377,19 @@ const StudioMultitrackWorkspace = {
             context.destination,
 
           getTempo: () => this.tempo,
-
-          onStatus: message =>
-            this.status(message)
+          getSecondsAtBar: bar => this.getSecondsAtBar(bar),
+          getBarAtSeconds: seconds => this.getBarAtSeconds(seconds),
+          onPosition: bar => {
+            this.playheadBar = bar;
+            const x = (bar - 1) * this.zoomBarWidth;
+            this.root?.querySelectorAll(".lc-arrangement-playhead").forEach(line => { line.style.left = x + "px"; });
+            const label = this.root?.querySelector("[data-ruler-label]");
+            if (label) label.textContent = "BAR 01 — 128 · PLAYHEAD " + String(bar).padStart(2, "0");
+            if (this.followPlayhead) this.root?.querySelectorAll(".lc-arrangement").forEach(scroll => {
+              if (x < scroll.scrollLeft + 18 || x > scroll.scrollLeft + scroll.clientWidth - 40) scroll.scrollLeft = Math.max(0, x - scroll.clientWidth * .25);
+            });
+          },
+          onStatus: message => this.status(message)
         });
     }
 
@@ -1468,10 +1478,8 @@ const StudioMultitrackWorkspace = {
       return;
     }
 
-    await this.getArrangementPlayback().play(
-      this.tracks,
-      this.playheadBar
-    );
+    const loop = this.loopRange?.enabled ? this.loopRange : null;
+    await this.getArrangementPlayback().play(this.tracks, this.playheadBar, loop);
   },
 
   stopAll() {
