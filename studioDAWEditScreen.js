@@ -40,11 +40,13 @@ function createButton(label, action, className) {
   return button;
 }
 
-export function createStudioDAWEditScreen({ beatLab, onExit } = {}) {
+export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext } = {}) {
   return {
     root: null,
     beatLab,
     onExit,
+    onPrevious,
+    onNext,
 
     mount() {
       if (this.root && this.root.isConnected) return this.root;
@@ -54,7 +56,7 @@ export function createStudioDAWEditScreen({ beatLab, onExit } = {}) {
       root.className = "lc-premium-edit";
       root.innerHTML = [
         '<style>',
-        '#lc-premium-daw-edit-screen{--navy:#0B1A4A;--navy2:#14275F;--cyan:#18D8FF;--red:#E0242B;--steel:#B8BCC4;--gold:#C9A24A;width:100%;height:100%;min-height:680px;max-height:100%;overflow:hidden;box-sizing:border-box;padding:9px;background:linear-gradient(145deg,#07112f,#14275f 55%,#080f2a);border:2px solid var(--gold);border-radius:15px;color:#f3f7ff;font-family:Arial,sans-serif;display:flex;flex-direction:column;gap:8px;position:relative}',
+        '#lc-premium-daw-edit-screen{--navy:#0B1A4A;--navy2:#14275F;--cyan:#18D8FF;--red:#E0242B;--steel:#B8BCC4;--gold:#C9A24A;width:100%;height:100%;min-height:0;max-height:none;overflow:hidden;box-sizing:border-box;padding:9px;background:linear-gradient(145deg,#07112f,#14275f 55%,#080f2a);border:2px solid var(--gold);border-radius:15px;color:#f3f7ff;font-family:Arial,sans-serif;display:flex;flex-direction:column;gap:8px;position:relative}',
         '#lc-premium-daw-edit-screen *{box-sizing:border-box}',
         '#lc-premium-daw-edit-screen button,#lc-premium-daw-edit-screen input{font:inherit}',
         '#lc-premium-daw-edit-screen button{cursor:pointer;touch-action:manipulation}',
@@ -140,6 +142,8 @@ export function createStudioDAWEditScreen({ beatLab, onExit } = {}) {
         '<div class="lc-rec-well"><button class="lc-rec" data-action="record" aria-label="Record">●</button></div>',
         '<div class="lc-lcd-wrap"><span>CLOCK</span><div class="lc-lcd" data-clock>100 BPM / 4/4</div></div>',
         '<div class="lc-lcd-wrap"><span>GRID</span><div class="lc-gridset"><button type="button" title="Grid 1/4">¼</button><button type="button" title="Grid 1/8">⅛</button><button type="button" title="Grid 1/16">⅟₁₆</button></div></div>',
+        '<button class="lc-metal-icon" data-action="previous-view" aria-label="Previous studio interface">←</button>',
+        '<button class="lc-metal-icon" data-action="next-view" aria-label="Next studio interface">→</button>',
         '<div class="lc-spacer"></div>',
         '<button class="lc-metal-icon" data-action="session-menu" aria-label="Session menu">☰</button>',
         '<button class="lc-metal-icon" data-action="undo" aria-label="Undo">▱</button>',
@@ -321,6 +325,10 @@ export function createStudioDAWEditScreen({ beatLab, onExit } = {}) {
             workspace.activeProjectId = null;
             this.status("Saved session deleted. The open arrangement remains in memory.");
             root.querySelector("[data-session-menu]").classList.remove("open");
+          } else if (action === "previous-view") {
+            if (typeof this.onPrevious === "function") this.onPrevious();
+          } else if (action === "next-view") {
+            if (typeof this.onNext === "function") this.onNext();
           } else if (action === "exit") {
             if (typeof this.onExit === "function") this.onExit();
             else this.status("Close EDIT from the studio navigation.");
