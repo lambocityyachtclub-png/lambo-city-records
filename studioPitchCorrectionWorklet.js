@@ -192,6 +192,7 @@ class LamboCityPitchCorrectionProcessor extends AudioWorkletProcessor {
     this.port.postMessage({
       detectedMidi: midi,
       correctedMidi: corrected,
+      targetRatio: this.targetRatio,
       confidence
     });
   }
