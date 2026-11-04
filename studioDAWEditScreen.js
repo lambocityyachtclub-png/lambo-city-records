@@ -187,6 +187,13 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
       this.root = root;
       StudioMultitrackWorkspace.root = root;
       StudioMultitrackWorkspace.onRender = () => this.render();
+      this.beforeUnloadHandler = event => {
+        if (!StudioMultitrackWorkspace.dirty || StudioMultitrackWorkspace.saveState === "saved") return;
+        event.preventDefault();
+        event.returnValue = "LAMBO CITY has unsaved session changes.";
+        return event.returnValue;
+      };
+      window.addEventListener("beforeunload", this.beforeUnloadHandler);
       this.bindEvents();
       this.render();
       void this.refreshInputDevices();
@@ -797,6 +804,8 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
 
     destroy() {
       this.stopInputMeter();
+      if (this.beforeUnloadHandler) window.removeEventListener("beforeunload", this.beforeUnloadHandler);
+      this.beforeUnloadHandler = null;
       if (StudioMultitrackWorkspace.root === this.root) { StudioMultitrackWorkspace.root = null; StudioMultitrackWorkspace.onRender = null; }
       if (this.root) this.root.remove();
       this.root = null;
