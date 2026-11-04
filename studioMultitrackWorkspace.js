@@ -1203,7 +1203,8 @@ const StudioMultitrackWorkspace = {
     }
 
     await this.getArrangementPlayback().play(
-      this.tracks
+      this.tracks,
+      this.playheadBar
     );
   },
 
