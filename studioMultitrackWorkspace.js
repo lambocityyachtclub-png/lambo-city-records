@@ -56,7 +56,8 @@ function decodeSessionClipAudio(clip, audioAssets, cache) {
 const TRACK_TYPES = [
   "audio",
   "midi",
-  "instrument"
+  "instrument",
+  "bus"
 ];
 
 const StudioMultitrackWorkspace = {
@@ -109,7 +110,11 @@ const StudioMultitrackWorkspace = {
         compression: { ...(track.compression || {}) },
         effects: { ...(track.effects || {}), pitchCorrection: { ...(track.effects?.pitchCorrection || {}) } },
         automation: { volume: (track.automation?.volume || []).map(point => ({ ...point })) },
-        clips: (track.clips || []).map(clip => ({ ...clip }))
+        clips: (track.clips || []).map(clip => ({ ...clip })),
+      midiNotes: (track.midiNotes || []).map(note => ({ ...note })),
+      sends: (track.sends || []).map(send => ({ ...send })),
+        midiNotes: (track.midiNotes || []).map(note => ({ ...note })),
+        sends: (track.sends || []).map(send => ({ ...send }))
       })),
       nextTrackId: this.nextTrackId,
       tempo: this.tempo,
@@ -448,6 +453,9 @@ const StudioMultitrackWorkspace = {
       groupId: null,
       groupName: null,
       groupCollapsed: false,
+      outputBusId: null,
+      sends: [],
+      midiNotes: [],
       clips: []
     };
 
@@ -595,13 +603,17 @@ const StudioMultitrackWorkspace = {
     const trackIds = new Set();
     const clipIds = new Set();
     for (const track of session.tracks) {
-      if (!track || typeof track.id !== "string" || !track.id || trackIds.has(track.id) || !Array.isArray(track.clips) || track.clips.length > 512) return false;
+      if (!track || typeof track.id !== "string" || !track.id || trackIds.has(track.id) || !TRACK_TYPES.includes(track.type || "audio") || !Array.isArray(track.clips) || track.clips.length > 512) return false;
       trackIds.add(track.id);
       for (const clip of track.clips) {
         if (!clip || typeof clip.id !== "string" || !clip.id || clipIds.has(clip.id) || !Number.isFinite(Number(clip.startBar)) || Number(clip.startBar) < 1 || Number(clip.startBar) > 128 || !Number.isFinite(Number(clip.lengthBars)) || Number(clip.lengthBars) <= 0) return false;
         clipIds.add(clip.id);
         if (clip.blob !== undefined && !(clip.blob instanceof Blob)) return false;
       }
+    }
+    for (const track of session.tracks) {
+      if (track.midiNotes !== undefined && (!Array.isArray(track.midiNotes) || track.midiNotes.length > 4096 || !track.midiNotes.every(note => Number.isInteger(Number(note.pitch)) && Number(note.pitch) >= 0 && Number(note.pitch) <= 127 && Number.isFinite(Number(note.startBar)) && Number(note.startBar) >= 1 && Number(note.startBar) <= 128 && Number.isFinite(Number(note.lengthBars)) && Number(note.lengthBars) > 0 && Number(note.lengthBars) <= 16))) return false;
+      if (track.sends !== undefined && (!Array.isArray(track.sends) || track.sends.length > 32 || !track.sends.every(send => typeof send.busId === "string" && Number.isFinite(Number(send.level)) && Number(send.level) >= 0 && Number(send.level) <= 100))) return false;
     }
     return Number.isFinite(Number(session.tempo)) && Number(session.tempo) >= 20 && Number(session.tempo) <= 300;
   },
@@ -735,6 +747,9 @@ const StudioMultitrackWorkspace = {
         groupId: track.groupId || null,
         groupName: track.groupName || null,
         groupCollapsed: Boolean(track.groupCollapsed),
+        outputBusId: track.outputBusId || null,
+        sends: (track.sends || []).map(send => ({ busId: send.busId, level: Math.max(0, Math.min(100, Number(send.level) || 0)) })),
+        midiNotes: (track.midiNotes || []).map(note => ({ id: note.id, pitch: Number(note.pitch), startBar: Number(note.startBar), lengthBars: Number(note.lengthBars), velocity: Number(note.velocity ?? 0.8) })),
         clips
       });
     }
@@ -830,6 +845,9 @@ const StudioMultitrackWorkspace = {
       groupId: savedTrack.groupId || null,
       groupName: savedTrack.groupName || null,
       groupCollapsed: Boolean(savedTrack.groupCollapsed),
+      outputBusId: savedTrack.outputBusId || null,
+      sends: Array.isArray(savedTrack.sends) ? savedTrack.sends.map(send => ({ busId: send.busId, level: Math.max(0, Math.min(100, Number(send.level) || 0)) })) : [],
+      midiNotes: Array.isArray(savedTrack.midiNotes) ? savedTrack.midiNotes.map(note => ({ id: note.id || "midi-" + Date.now(), pitch: Math.max(0, Math.min(127, Number(note.pitch) || 60)), startBar: Math.max(1, Math.min(128, Number(note.startBar) || 1)), lengthBars: Math.max(0.0625, Math.min(16, Number(note.lengthBars) || 0.25)), velocity: Math.max(0, Math.min(1, Number(note.velocity ?? 0.8)) })) : [],
       clips: (savedTrack.clips || []).map(clip => ({
         id: clip.id,
         name: clip.name || "Audio Clip",
