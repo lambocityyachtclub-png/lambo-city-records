@@ -18,7 +18,7 @@
 
 const VIEWS = [
   { id: "edit", label: "EDIT" },
-  { id: "mix", label: "MIX" },
+  { id: "mix", label: "MIX & MASTER" },
   { id: "mpc", label: "MPC" },
   { id: "beatlab", label: "DIGITAL BEAT LAB" },
   { id: "piano", label: "PIANO" },
@@ -141,7 +141,7 @@ const StudioDAWWorkspace = {
 
       <footer class="lc-daw-footer">
         <span>LAMBO CITY DIGITAL STUDIO</span>
-        <span>MODULAR WORKSPACE V1</span>
+        <span>EDIT PRODUCTION MOTHERBOARD · MIX & MASTER</span>
       </footer>
     `;
 

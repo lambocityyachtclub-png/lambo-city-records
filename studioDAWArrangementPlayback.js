@@ -288,7 +288,11 @@ export function createStudioDAWArrangementPlayback({
             }
           };
           this.sources.push({ source, trackId: track.id });
-          source.start(startTime + ((startBar - 1) * secondsPerBar));
+          const sourceOffset = Math.max(0, Number(clip.sourceOffsetSeconds) || 0);
+          const playDuration = Number(clip.playDurationSeconds) > 0
+            ? Math.min(Number(clip.playDurationSeconds), Math.max(0.001, buffer.duration - sourceOffset))
+            : Math.max(0.001, buffer.duration - sourceOffset);
+          source.start(startTime + ((startBar - 1) * secondsPerBar), sourceOffset, playDuration);
         });
 
         this.playing = this.sources.length > 0;
