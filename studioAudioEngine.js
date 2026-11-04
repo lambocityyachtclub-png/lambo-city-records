@@ -15,6 +15,9 @@ const StudioAudioEngine = {
   compressor: null,
   stereoWidth: null,
   stereoWidthNode: null,
+  masterVolumeValue: 1,
+  stereoWidthValue: 1,
+  masterCompressionRatio: 3,
   channels: null,
   initializing: null,
 
@@ -86,14 +89,14 @@ const StudioAudioEngine = {
     }
 
     const master = context.createGain();
-    master.gain.value = 1;
+    master.gain.value = this.masterVolumeValue;
 
     const compressor =
       context.createDynamicsCompressor();
 
     compressor.threshold.value = -8;
     compressor.knee.value = 12;
-    compressor.ratio.value = 3;
+    compressor.ratio.value = this.masterCompressionRatio;
     compressor.attack.value = 0.003;
     compressor.release.value = 0.18;
 
@@ -119,7 +122,7 @@ const StudioAudioEngine = {
     const sideRight = context.createGain();
     mid.gain.value = 0.5;
     side.gain.value = 0.5;
-    sideWidth.gain.value = 1;
+    sideWidth.gain.value = this.stereoWidthValue;
     leftOut.gain.value = 1;
     rightOut.gain.value = 1;
     sideLeft.gain.value = 1;
@@ -187,14 +190,18 @@ const StudioAudioEngine = {
   },
 
   setStereoWidth(percent) {
-    if (!this.stereoWidth || !this.context) return;
     const value = Math.max(0, Math.min(200, Number(percent) || 0)) / 100;
-    this.stereoWidth.gain.setTargetAtTime(value, this.context.currentTime, 0.025);
+    this.stereoWidthValue = value;
+    if (this.stereoWidth && this.context) this.stereoWidth.gain.setTargetAtTime(value, this.context.currentTime, 0.025);
+  },
+
+  setMasterCompressionRatio(ratio) {
+    const value = Math.max(1, Math.min(8, Number(ratio) || 1));
+    this.masterCompressionRatio = value;
+    if (this.compressor && this.context) this.compressor.ratio.setTargetAtTime(value, this.context.currentTime, 0.025);
   },
 
   setMasterVolume(volume) {
-    if (!this.master || !this.context) return;
-
     const value = Number(volume);
 
     if (!Number.isFinite(value)) {
@@ -203,11 +210,8 @@ const StudioAudioEngine = {
       );
     }
 
-    this.master.gain.setTargetAtTime(
-      Math.max(0, Math.min(1, value)),
-      this.context.currentTime,
-      0.015
-    );
+    this.masterVolumeValue = Math.max(0, Math.min(1, value));
+    if (this.master && this.context) this.master.gain.setTargetAtTime(this.masterVolumeValue, this.context.currentTime, 0.015);
   }
 };
 
