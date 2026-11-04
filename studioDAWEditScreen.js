@@ -15,6 +15,7 @@
  */
 
 import StudioMultitrackWorkspace from "./studioMultitrackWorkspace.js";
+import StudioRecordingEngine from "./studioRecordingEngine.js";
 import { renderStudioDAWTimeline } from "./studioDAWTimeline.js";
 import { renderStudioSessionToWav, downloadStudioWav, renderStudioSessionToMp3, downloadStudioMp3 } from "./studioDAWExport.js";
 
@@ -43,6 +44,7 @@ function createButton(label, action, className) {
 export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext } = {}) {
   return {
     root: null,
+    inputMeterFrame: null,
     beatLab,
     onExit,
     onPrevious,
@@ -132,7 +134,7 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
         '#lc-premium-daw-edit-screen .lc-track-timeline.lc-red-lane .lc-arrangement-wave-empty{background:#32101a;color:#ffd5d8}',
         '#lc-premium-daw-edit-screen .lc-track-timeline .lc-arrangement-playhead{background:#fff;box-shadow:0 0 7px #fff}',
         '#lc-premium-daw-edit-screen .lc-status{flex:0 0 auto;padding:6px 9px;min-height:25px;background:#08132b;border-top:1px solid #2a4770;color:#9deaff;font-size:10px}',
-        '#lc-premium-daw-edit-screen .lc-record-options{display:flex;align-items:center;gap:7px;flex-wrap:wrap;padding:6px 10px;background:#0c1732;border-bottom:1px solid #263e68;color:#aebbd0;font-size:9px}#lc-premium-daw-edit-screen .lc-record-options label{display:flex;align-items:center;gap:4px}#lc-premium-daw-edit-screen .lc-record-options input,#lc-premium-daw-edit-screen .lc-record-options select{width:54px;min-height:28px;background:#101d3d;color:#f4f1eb;border:1px solid #53698f;border-radius:4px;padding:3px}#lc-premium-daw-edit-screen .lc-record-options select{width:62px}#lc-premium-daw-edit-screen .lc-record-options input[type=checkbox]{width:15px;min-height:15px;accent-color:#d8b36e}#lc-premium-daw-edit-screen .lc-session-menu{position:absolute;z-index:30;right:10px;top:83px;display:none;min-width:190px;padding:7px;border:1px solid var(--gold);border-radius:8px;background:#0b1839;box-shadow:0 8px 20px #000b}',
+        '#lc-premium-daw-edit-screen .lc-input-meter{display:inline-block;width:54px;height:9px;overflow:hidden;border:1px solid #56708f;border-radius:4px;background:#07152b;vertical-align:middle}#lc-premium-daw-edit-screen .lc-input-meter i{display:block;width:100%;height:100%;background:linear-gradient(90deg,#12a66a 0 65%,#d5c52a 82%,#e33a36);transform:scaleX(.015);transform-origin:left center}#lc-premium-daw-edit-screen .lc-record-options{display:flex;align-items:center;gap:7px;flex-wrap:wrap;padding:6px 10px;background:#0c1732;border-bottom:1px solid #263e68;color:#aebbd0;font-size:9px}#lc-premium-daw-edit-screen .lc-record-options label{display:flex;align-items:center;gap:4px}#lc-premium-daw-edit-screen .lc-record-options input,#lc-premium-daw-edit-screen .lc-record-options select{width:54px;min-height:28px;background:#101d3d;color:#f4f1eb;border:1px solid #53698f;border-radius:4px;padding:3px}#lc-premium-daw-edit-screen .lc-record-options select{width:62px}#lc-premium-daw-edit-screen .lc-record-options input[type=checkbox]{width:15px;min-height:15px;accent-color:#d8b36e}#lc-premium-daw-edit-screen .lc-session-menu{position:absolute;z-index:30;right:10px;top:83px;display:none;min-width:190px;padding:7px;border:1px solid var(--gold);border-radius:8px;background:#0b1839;box-shadow:0 8px 20px #000b}',
         '#lc-premium-daw-edit-screen .lc-session-menu.open{display:grid;gap:5px}',
         '#lc-premium-daw-edit-screen .lc-session-menu button{min-height:34px;text-align:left;background:#14275f;color:#fff;border:1px solid #48618d;border-radius:5px;padding:6px 9px;font-size:10px}',
         '@media(max-width:760px){#lc-premium-daw-edit-screen{min-height:620px;padding:5px}#lc-premium-daw-edit-screen .lc-main{grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr)}#lc-premium-daw-edit-screen .lc-inspector{max-height:205px}#lc-premium-daw-edit-screen .lc-strips{grid-template-columns:repeat(2,minmax(0,1fr))}#lc-premium-daw-edit-screen .lc-workarea{min-height:420px}#lc-premium-daw-edit-screen .lc-transport{padding-left:80px;gap:5px;flex-wrap:wrap}#lc-premium-daw-edit-screen .lc-logo{width:72px;height:72px}#lc-premium-daw-edit-screen .lc-lcd{font-size:12px}}',
@@ -149,7 +151,7 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
         '<button class="lc-metal-icon" data-action="undo" aria-label="Undo">▱</button>',
         '<button class="lc-metal-icon" data-action="mixer-focus" aria-label="Mixer">☷</button>',
         '</div>',
-        '<div class="lc-record-options" aria-label="Recording setup"><label>COUNT-IN <select data-count-in><option value="0">OFF</option><option value="1">1 BAR</option><option value="2">2 BARS</option><option value="4">4 BARS</option></select></label><label>PUNCH IN <input data-punch-in type="number" min="1" max="128" placeholder="LIVE"></label><label>PUNCH OUT <input data-punch-out type="number" min="1" max="128" placeholder="OFF"></label><label title="Use headphones when monitoring a live microphone to prevent feedback"><input data-input-monitor type="checkbox"> MONITOR · HEADPHONES</label></div>',
+        '<div class="lc-record-options" aria-label="Recording setup"><label>COUNT-IN <select data-count-in><option value="0">OFF</option><option value="1">1 BAR</option><option value="2">2 BARS</option><option value="4">4 BARS</option></select></label><label>PUNCH IN <input data-punch-in type="number" min="1" max="128" placeholder="LIVE"></label><label>PUNCH OUT <input data-punch-out type="number" min="1" max="128" placeholder="OFF"></label><label>INPUT <select data-input-device><option value="">Default microphone</option></select></label><label>LATENCY ms <input data-input-latency type="number" min="0" max="500" step="1" value="0" aria-label="Microphone latency compensation in milliseconds"></label><label class="lc-input-meter-wrap">INPUT <span class="lc-input-meter"><i data-input-meter></i></span></label><label title="Use headphones when monitoring a live microphone to prevent feedback"><input data-input-monitor type="checkbox"> MONITOR · HEADPHONES</label></div>',
         '<div class="lc-session-menu" data-session-menu>',
         '<button type="button" data-action="save-session">Save Session</button>',
         '<button type="button" data-action="open-session">Open Saved Session</button>',
@@ -167,7 +169,7 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
         '<section class="lc-workarea">',
         '<div class="lc-edit-tools">',
         '<button type="button" disabled>t</button><button type="button" data-action="edit-menu">Edit ▾</button><button type="button" data-action="functions-menu">Functions ▾</button><button type="button" data-action="view-menu">View ▾</button>',
-        '<button type="button" data-action="undo" title="Undo">↶</button><button type="button" data-action="redo" title="Redo">↷</button><button type="button" data-action="split" title="Split at playhead">✂</button><button type="button" data-action="duplicate" title="Duplicate selected region">▣</button><button type="button" data-action="delete-clip" title="Delete selected region">⌫</button>',
+        '<button type="button" data-action="undo" title="Undo">↶</button><button type="button" data-action="redo" title="Redo">↷</button><button type="button" data-action="split" title="Split at playhead">✂</button><button type="button" data-action="duplicate" title="Duplicate selected region">▣</button><button type="button" data-action="delete-clip" title="Delete selected region">⌫</button><button type="button" data-action="comp-take" title="Place selected take section into the non-destructive comp lane">COMP TAKE</button>',
         '<button type="button" data-action="zoom-out">−</button><input data-zoom type="range" min="24" max="288" step="6" value="72" aria-label="Timeline zoom" style="width:75px;accent-color:#c9a24a"><button type="button" data-action="zoom-in">＋</button><select data-snap aria-label="Timeline snap" style="max-width:105px;background:#101d3d;color:#e8edf8;border:1px solid #7184a8;border-radius:5px;padding:5px"><option value="bars">BAR</option><option value="beats">BEAT</option><option value="subdivisions">1/16</option><option value="seconds">SEC</option><option value="off">FREE</option></select><button type="button" data-action="slip-mode" title="Toggle slip editing">SLIP OFF</button>',
         '<span class="lc-spacer"></span><button type="button" data-action="play">▶</button><button type="button" data-action="stop">■</button>',
         '</div>',
@@ -181,6 +183,7 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
       this.root = root;
       this.bindEvents();
       this.render();
+      void this.refreshInputDevices();
       if (!StudioMultitrackWorkspace.activeProjectId && StudioMultitrackWorkspace.activeProjectName === "Untitled Song") {
         this.showSongNamePrompt();
       }
@@ -208,6 +211,53 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
       });
       this.root.appendChild(overlay);
       input.focus();
+    },
+
+    async refreshInputDevices() {
+      const select = this.root?.querySelector("[data-input-device]");
+      if (!select || !navigator.mediaDevices?.enumerateDevices) return;
+      try {
+        const devices = (await navigator.mediaDevices.enumerateDevices()).filter(device => device.kind === "audioinput");
+        const selected = StudioMultitrackWorkspace.inputDeviceId || "";
+        select.replaceChildren();
+        const fallback = document.createElement("option");
+        fallback.value = "";
+        fallback.textContent = "Default microphone";
+        select.appendChild(fallback);
+        devices.forEach((device, index) => {
+          const option = document.createElement("option");
+          option.value = device.deviceId;
+          option.textContent = device.label || "Microphone " + (index + 1);
+          select.appendChild(option);
+        });
+        select.value = selected;
+        const latency = this.root.querySelector("[data-input-latency]");
+        if (latency) latency.value = String(StudioMultitrackWorkspace.inputLatencyByDevice[selected] ?? StudioMultitrackWorkspace.inputLatencyMs ?? 0);
+      } catch (error) {
+        this.status("INPUT DEVICE LIST UNAVAILABLE · " + (error?.message || error));
+      }
+    },
+
+    startInputMeter() {
+      this.stopInputMeter();
+      const meter = this.root?.querySelector("[data-input-meter]");
+      const tick = () => {
+        if (!this.root || !StudioMultitrackWorkspace.isTrackRecording()) {
+          this.stopInputMeter();
+          return;
+        }
+        const level = StudioRecordingEngine.getInputLevel();
+        if (meter?.isConnected) meter.style.transform = "scaleX(" + Math.max(.015, level) + ")";
+        this.inputMeterFrame = requestAnimationFrame(tick);
+      };
+      this.inputMeterFrame = requestAnimationFrame(tick);
+    },
+
+    stopInputMeter() {
+      if (this.inputMeterFrame !== null) cancelAnimationFrame(this.inputMeterFrame);
+      this.inputMeterFrame = null;
+      const meter = this.root?.querySelector("[data-input-meter]");
+      if (meter) meter.style.transform = "scaleX(.015)";
     },
 
     status(message) {
@@ -278,6 +328,7 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
             root.querySelector("[data-session-menu]").classList.toggle("open");
           } else if (action === "record") {
             await workspace.startArmedRecording({ vocalEffects: this.beatLab && this.beatLab.vocalEffects, countInBars: Number(root.querySelector("[data-count-in]")?.value || 0), punchInBar: root.querySelector("[data-punch-in]")?.value || null, punchOutBar: root.querySelector("[data-punch-out]")?.value || null, monitorInput: Boolean(root.querySelector("[data-input-monitor]")?.checked) });
+            if (workspace.isTrackRecording()) this.startInputMeter();
             if (!workspace.pendingRecording && !workspace.isTrackRecording()) this.status("Record command finished · check the armed track and recording settings.");
           } else if (action === "play") {
             await workspace.playAll();
@@ -286,6 +337,7 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
             workspace.stopAll();
             if (workspace.pendingRecording) workspace.cancelScheduledRecording();
             if (workspace.isTrackRecording()) await workspace.stopArmedRecording();
+            this.stopInputMeter();
             this.status("Playback / recording stopped.");
           } else if (action === "add-track") {
             const name = window.prompt("Name the new track:", "New Audio Track");
@@ -301,6 +353,9 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
             this.render();
           } else if (action === "redo") {
             workspace.redo();
+            this.render();
+          } else if (action === "comp-take") {
+            workspace.compSelectedTake();
             this.render();
           } else if (action === "split") {
             workspace.splitSelectedClip();
@@ -431,6 +486,21 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
       });
 
       root.addEventListener("change", event => {
+        if (event.target.matches("[data-input-device]")) {
+          const selected = event.target.value || "";
+          workspace.inputDeviceId = selected;
+          workspace.inputLatencyMs = Math.max(0, Math.min(500, Number(workspace.inputLatencyByDevice[selected]) || 0));
+          const latency = root.querySelector("[data-input-latency]");
+          if (latency) latency.value = String(workspace.inputLatencyMs);
+          workspace.scheduleProjectAutosave();
+          this.status("Recording input changed · " + (event.target.selectedOptions[0]?.textContent || "Default microphone") + ".");
+        }
+        if (event.target.matches("[data-input-latency]")) {
+          workspace.inputLatencyMs = Math.max(0, Math.min(500, Number(event.target.value) || 0));
+          workspace.inputLatencyByDevice[workspace.inputDeviceId || ""] = workspace.inputLatencyMs;
+          workspace.scheduleProjectAutosave();
+          this.status("Input timing compensation · " + workspace.inputLatencyMs + " ms.");
+        }
         if (event.target.matches("[data-snap]")) {
           workspace.snapMode = ["bars", "beats", "subdivisions", "seconds", "off"].includes(event.target.value) ? event.target.value : "bars";
           this.renderLanes();
@@ -617,6 +687,7 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
     },
 
     destroy() {
+      this.stopInputMeter();
       if (this.root) this.root.remove();
       this.root = null;
     }
