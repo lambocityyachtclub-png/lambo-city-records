@@ -89,6 +89,7 @@ class LamboCityPitchCorrectionProcessor extends AudioWorkletProcessor {
     this.targetRatio = 1;
     this.currentRatio = 1;
     this.hasPitch = false;
+    this.missedHops = 0;
     this.port.onmessage = event => {
       const next = event.data || {};
       if (Number.isFinite(Number(next.root))) this.settings.root = Math.max(0, Math.min(11, Math.round(Number(next.root))));
@@ -113,8 +114,11 @@ class LamboCityPitchCorrectionProcessor extends AudioWorkletProcessor {
       energy += frame[index] * frame[index];
     }
     if (energy / this.windowSize < 0.000002) {
-      this.hasPitch = false;
-      this.targetRatio = 1;
+      this.missedHops += 1;
+      if (this.missedHops > 24) {
+        this.hasPitch = false;
+        this.targetRatio = 1;
+      }
       return;
     }
 
@@ -147,8 +151,11 @@ class LamboCityPitchCorrectionProcessor extends AudioWorkletProcessor {
       }
     }
     if (bestLag < 0) {
-      this.hasPitch = false;
-      this.targetRatio = 1;
+      this.missedHops += 1;
+      if (this.missedHops > 24) {
+        this.hasPitch = false;
+        this.targetRatio = 1;
+      }
       return;
     }
 
@@ -160,8 +167,11 @@ class LamboCityPitchCorrectionProcessor extends AudioWorkletProcessor {
     const period = bestLag + Math.max(-0.5, Math.min(0.5, correction));
     const frequency = sampleRate / period;
     if (!Number.isFinite(frequency) || frequency < 80 || frequency > 1200) {
-      this.hasPitch = false;
-      this.targetRatio = 1;
+      this.missedHops += 1;
+      if (this.missedHops > 24) {
+        this.hasPitch = false;
+        this.targetRatio = 1;
+      }
       return;
     }
 
@@ -169,6 +179,7 @@ class LamboCityPitchCorrectionProcessor extends AudioWorkletProcessor {
     const corrected = nearestScaleNote(midi, this.settings.root, this.settings.scale);
     const strength = this.settings.enabled ? this.settings.amount / 100 : 0;
     const targetMidi = midi + (corrected - midi) * strength;
+    this.missedHops = 0;
     this.detectedMidi = midi;
     this.correctedMidi = corrected;
     this.hasPitch = true;
