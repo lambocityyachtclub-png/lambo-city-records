@@ -182,7 +182,7 @@ class LamboCityPitchCorrectionProcessor extends AudioWorkletProcessor {
     const output = outputs[0];
     if (!input || !input.length || !output || !output.length) return true;
 
-    const channels = Math.min(output.length, Math.max(1, input.length));
+    const channels = output.length;
     while (this.shifters.length < channels) this.shifters.push(new GranularPitchShifter());
     const frames = output[0].length;
     const speedSeconds = Math.max(0, this.settings.speedMs) / 1000;
