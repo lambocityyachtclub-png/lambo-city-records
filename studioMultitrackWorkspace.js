@@ -408,6 +408,9 @@ const StudioMultitrackWorkspace = {
       muted: false,
       solo: false,
       armed: false,
+      groupId: null,
+      groupName: null,
+      groupCollapsed: false,
       clips: []
     };
 
@@ -476,6 +479,12 @@ const StudioMultitrackWorkspace = {
     }
     this.stopAll();
     this.tempo = Math.max(60, Math.min(180, Number(session.tempo) || 100));
+    this.timeSignature = /^(2|3|4|5|6|7|8|9|12)\/(2|4|8|16)$/.test(session.timeSignature) ? session.timeSignature : "4/4";
+    this.tempoChanges = Array.isArray(session.tempoChanges) ? session.tempoChanges.map(point=>({bar:Math.max(1,Math.min(128,Number(point.bar)||1)),bpm:Math.max(20,Math.min(300,Number(point.bpm)||100))})) : [];
+    this.timeSignatureChanges = Array.isArray(session.timeSignatureChanges) ? session.timeSignatureChanges.map(point=>({bar:Math.max(1,Math.min(128,Number(point.bar)||1)),numerator:Number(point.numerator)||4,denominator:Number(point.denominator)||4})) : [];
+    this.markers = Array.isArray(session.markers) ? session.markers.map(marker=>({id:marker.id||"lc-marker-"+Date.now(),name:String(marker.name||"Marker").slice(0,32),bar:Math.max(1,Math.min(128,Number(marker.bar)||1))})) : [];
+    this.loopRange = {enabled:Boolean(session.loopRange?.enabled),startBar:Math.max(1,Math.min(127,Number(session.loopRange?.startBar)||1)),endBar:Math.max(2,Math.min(129,Number(session.loopRange?.endBar)||9))};
+    this.followPlayhead = session.followPlayhead !== false;
     this.zoomBarWidth = Math.max(24, Math.min(288, Number(session.zoomBarWidth) || 72));
     this.playheadBar = Math.max(1, Math.min(128, Number(session.playheadBar) || 1));
     this.snapMode = ["bars", "beats", "subdivisions", "seconds", "off"].includes(session.snapMode) ? session.snapMode : "bars";
@@ -511,6 +520,7 @@ const StudioMultitrackWorkspace = {
     }
     this.stopAll();
     this.tempo = Math.max(60, Math.min(180, Number(tempo) || 100));
+    this.timeSignature = "4/4"; this.tempoChanges = []; this.timeSignatureChanges = []; this.markers = []; this.loopRange = { enabled: false, startBar: 1, endBar: 9 }; this.followPlayhead = true; this.selectedRegionIds = [];
     this.sessionTemplateId = null;
     this.sessionTemplateName = null;
     this.tracks = [];
@@ -613,6 +623,9 @@ const StudioMultitrackWorkspace = {
         solo: Boolean(track.solo),
         armed: Boolean(track.armed),
         compForTrackId: track.compForTrackId || null,
+        groupId: track.groupId || null,
+        groupName: track.groupName || null,
+        groupCollapsed: Boolean(track.groupCollapsed),
         clips
       });
     }
@@ -649,6 +662,12 @@ const StudioMultitrackWorkspace = {
     }
     this.stopAll();
     this.tempo = Math.max(60, Math.min(180, Number(session.tempo) || 100));
+    this.timeSignature = /^(2|3|4|5|6|7|8|9|12)\/(2|4|8|16)$/.test(session.timeSignature) ? session.timeSignature : "4/4";
+    this.tempoChanges = Array.isArray(session.tempoChanges) ? session.tempoChanges.map(point=>({bar:Math.max(1,Math.min(128,Number(point.bar)||1)),bpm:Math.max(20,Math.min(300,Number(point.bpm)||100))})) : [];
+    this.timeSignatureChanges = Array.isArray(session.timeSignatureChanges) ? session.timeSignatureChanges.map(point=>({bar:Math.max(1,Math.min(128,Number(point.bar)||1)),numerator:Number(point.numerator)||4,denominator:Number(point.denominator)||4})) : [];
+    this.markers = Array.isArray(session.markers) ? session.markers.map(marker=>({id:marker.id||"lc-marker-"+Date.now(),name:String(marker.name||"Marker").slice(0,32),bar:Math.max(1,Math.min(128,Number(marker.bar)||1))})) : [];
+    this.loopRange = {enabled:Boolean(session.loopRange?.enabled),startBar:Math.max(1,Math.min(127,Number(session.loopRange?.startBar)||1)),endBar:Math.max(2,Math.min(129,Number(session.loopRange?.endBar)||9))};
+    this.followPlayhead = session.followPlayhead !== false;
     this.zoomBarWidth = Math.max(24, Math.min(288, Number(session.zoomBarWidth) || 72));
     this.playheadBar = Math.max(1, Math.min(128, Number(session.playheadBar) || 1));
     this.snapMode = ["bars", "beats", "subdivisions", "seconds", "off"].includes(session.snapMode) ? session.snapMode : "bars";
@@ -699,6 +718,9 @@ const StudioMultitrackWorkspace = {
       solo: Boolean(savedTrack.solo),
       armed: Boolean(savedTrack.armed),
       compForTrackId: savedTrack.compForTrackId || null,
+      groupId: savedTrack.groupId || null,
+      groupName: savedTrack.groupName || null,
+      groupCollapsed: Boolean(savedTrack.groupCollapsed),
       clips: (savedTrack.clips || []).map(clip => ({
         id: clip.id,
         name: clip.name || "Audio Clip",
