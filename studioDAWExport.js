@@ -119,12 +119,12 @@ async function renderStudioSessionToAudioBuffer({
   masterCompressor.release.value = 0.18;
   const splitter = offline.createChannelSplitter(2);
   const merger = offline.createChannelMerger(2);
-  const mid = offline.createGain(); const side = offline.createGain(); const sideWidth = offline.createGain();
+  const mid = offline.createGain(); const side = offline.createGain(); const sideInvert = offline.createGain(); const sideWidth = offline.createGain();
   const leftOut = offline.createGain(); const rightOut = offline.createGain();
   const sideLeft = offline.createGain(); const sideRight = offline.createGain();
-  mid.gain.value = 0.5; side.gain.value = 0.5; sideWidth.gain.value = Math.max(0, Math.min(2, Number(masterSettings.stereoWidth ?? 100) / 100));
+  mid.gain.value = 0.5; side.gain.value = 0.5; sideInvert.gain.value = -1; sideWidth.gain.value = Math.max(0, Math.min(2, Number(masterSettings.stereoWidth ?? 100) / 100));
   sideLeft.gain.value = 1; sideRight.gain.value = -1;
-  master.connect(splitter); splitter.connect(mid, 0); splitter.connect(mid, 1); splitter.connect(side, 0); splitter.connect(side, 1);
+  master.connect(splitter); splitter.connect(mid, 0); splitter.connect(mid, 1); splitter.connect(side, 0); splitter.connect(sideInvert, 1); sideInvert.connect(side);
   mid.connect(leftOut); mid.connect(rightOut); leftOut.connect(merger, 0, 0); rightOut.connect(merger, 0, 1);
   side.connect(sideWidth); sideWidth.connect(sideLeft); sideWidth.connect(sideRight); sideLeft.connect(merger, 0, 0); sideRight.connect(merger, 0, 1);
   merger.connect(masterCompressor); masterCompressor.connect(offline.destination);
