@@ -58,7 +58,7 @@ async function renderStudioSessionToAudioBuffer({
   }
 
   const liveContext = await StudioAudioEngine.resume();
-  const anySolo = tracks.some(track => track.solo);
+  const anySolo = tracks.some(track => track.solo && track.type !== "bus");
   const hasSeparateStems =
     tracks.some(track => track.name === "Vocals") &&
     tracks.some(track => track.name === "Beats");
@@ -132,7 +132,7 @@ async function renderStudioSessionToAudioBuffer({
   const channels = new Map();
   const effectsOutputs = new Map();
   const mixTracks = [...new Map([...decoded.map(item => item.track), ...midiTracks, ...tracks.filter(track => track.type === "bus")].map(track => [track.id, track])).values()]
-    .filter(track => !track.muted && (!anySolo || track.solo) && !( !anySolo && hasSeparateStems && track.name === "Master Mix"))
+    .filter(track => track.type === "bus" || (!track.muted && (!anySolo || track.solo) && !( !anySolo && hasSeparateStems && track.name === "Master Mix")))
     .sort((a, b) => (a.type === "bus" ? 0 : 1) - (b.type === "bus" ? 0 : 1));
   for (const track of mixTracks) {
     if (channels.has(track.id)) continue;
@@ -150,7 +150,7 @@ async function renderStudioSessionToAudioBuffer({
     low.type = "lowshelf"; low.frequency.value = 120;
     mid.type = "peaking"; mid.frequency.value = 1000; mid.Q.value = 0.8;
     high.type = "highshelf"; high.frequency.value = 8000;
-    gain.gain.value = Math.max(0, Math.min(1, Number(track.volume ?? 80) / 100));
+    gain.gain.value = track.muted ? 0 : Math.max(0, Math.min(1, Number(track.volume ?? 80) / 100));
     low.gain.value = Math.max(-12, Math.min(12, Number(track.eq?.low) || 0));
     mid.gain.value = Math.max(-12, Math.min(12, Number(track.eq?.mid) || 0));
     high.gain.value = Math.max(-12, Math.min(12, Number(track.eq?.high) || 0));
