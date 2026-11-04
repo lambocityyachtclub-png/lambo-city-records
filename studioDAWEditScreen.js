@@ -114,6 +114,10 @@ export function createStudioDAWEditScreen({ beatLab, onExit } = {}) {
         '#lc-premium-daw-edit-screen .lc-track-timeline{min-width:0;overflow:hidden;padding:3px 0;background:#091735}',
         '#lc-premium-daw-edit-screen .lc-track-timeline .lc-arrangement{border:0;border-radius:0;background:#091735;overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;scrollbar-color:#1475bd #091735}',
         '#lc-premium-daw-edit-screen .lc-track-timeline .lc-arrangement-ruler{height:0;overflow:hidden;border:0}',
+        '#lc-premium-daw-edit-screen .lc-track-timeline.lc-first-lane .lc-arrangement-ruler{height:30px;overflow:hidden;border-bottom:1px solid #d44b55;display:grid}',
+        '#lc-premium-daw-edit-screen .lc-track-timeline.lc-first-lane .lc-arrangement-ruler button{height:30px;color:#fff;background:#a61d29;border-right:1px solid #e16a70}',
+        '#lc-premium-daw-edit-screen .lc-track-timeline.lc-cyan-lane .lc-arrangement-waveform{filter:hue-rotate(130deg) saturate(1.8)}',
+        '#lc-premium-daw-edit-screen .lc-track-timeline.lc-red-lane .lc-arrangement-waveform{filter:hue-rotate(-40deg) saturate(1.7)}',
         '#lc-premium-daw-edit-screen .lc-track-timeline .lc-arrangement-lane{min-height:88px;background:repeating-linear-gradient(90deg,transparent 0,transparent 71px,#263c62 71px,#263c62 72px),repeating-linear-gradient(90deg,transparent 0,transparent 287px,#567092 287px,#567092 288px),#091735}',
         '#lc-premium-daw-edit-screen .lc-track-timeline .lc-arrangement-clip{height:72px;top:7px;border:1px solid #20c9f4;border-radius:7px;background:linear-gradient(180deg,#0c6b91,#083b68);padding:0 7px 5px}',
         '#lc-premium-daw-edit-screen .lc-track-timeline .lc-arrangement-clip-title{height:25px;color:#e8fbff;font-size:10px;padding:5px 2px}',
@@ -425,7 +429,7 @@ export function createStudioDAWEditScreen({ beatLab, onExit } = {}) {
           '<div class="lc-track-mix"><input type="range" min="0" max="100" value="' + Number(track.volume) + '" data-track-volume data-track-id="' + track.id + '" aria-label="' + safeText(track.name) + ' volume"><div class="lc-pan-mini" title="Pan ' + Math.round(Number(track.pan || 0) * 100) + '"></div></div>'
         ].join("");
         const lane = document.createElement("div");
-        lane.className = "lc-track-timeline" + (index < 3 ? " lc-cyan-lane" : " lc-red-lane");
+        lane.className = "lc-track-timeline" + (index === 0 ? " lc-first-lane" : "") + (index < 3 ? " lc-cyan-lane" : " lc-red-lane");
         const timeline = document.createElement("div");
         lane.appendChild(timeline);
         renderStudioDAWTimeline({
