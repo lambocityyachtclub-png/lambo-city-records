@@ -68,6 +68,7 @@ const StudioMultitrackWorkspace = {
   slipMode: false,
   pendingRecording: false,
   recordingScheduleTimer: null,
+  recordingScheduleResolve: null,
   punchOutTimer: null,
   recordingStartBar: 1,
   undoStack: [],
@@ -1069,8 +1070,10 @@ const StudioMultitrackWorkspace = {
           oscillator.onended = () => { try { oscillator.disconnect(); clickGain.disconnect(); } catch {} };
         }
         const ready = await new Promise(resolve => {
+          this.recordingScheduleResolve = resolve;
           this.recordingScheduleTimer = setTimeout(() => {
             this.recordingScheduleTimer = null;
+            this.recordingScheduleResolve = null;
             resolve(Boolean(this.pendingRecording));
           }, delayMs);
         });
@@ -1109,6 +1112,8 @@ const StudioMultitrackWorkspace = {
       this.pendingRecording = false;
       if (this.recordingScheduleTimer) clearTimeout(this.recordingScheduleTimer);
       this.recordingScheduleTimer = null;
+      this.recordingScheduleResolve?.(false);
+      this.recordingScheduleResolve = null;
       this.status("RECORDING ERROR: " + (error?.message || error));
       return false;
     }
@@ -1119,6 +1124,8 @@ const StudioMultitrackWorkspace = {
     this.pendingRecording = false;
     if (this.recordingScheduleTimer) clearTimeout(this.recordingScheduleTimer);
     this.recordingScheduleTimer = null;
+    this.recordingScheduleResolve?.(false);
+    this.recordingScheduleResolve = null;
     this.stopAll();
     this.status("Scheduled recording cancelled.");
     return true;
