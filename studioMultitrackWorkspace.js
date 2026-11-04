@@ -530,8 +530,7 @@ const StudioMultitrackWorkspace = {
     return true;
   },
 
-  async recoverUnsavedSession() {
-    const projectId = this.activeProjectId;
+  async recoverUnsavedSession(projectId = this.activeProjectId) {
     if (!projectId) return false;
     const recovery = await StudioDAWSessionStore.loadRecovery(projectId);
     if (!recovery || recovery.format !== "lambo-city-daw-session" || !Array.isArray(recovery.tracks)) return false;
@@ -605,6 +604,17 @@ const StudioMultitrackWorkspace = {
       }
     }
     return Number.isFinite(Number(session.tempo)) && Number(session.tempo) >= 20 && Number(session.tempo) <= 300;
+  },
+
+  async findLatestRecovery() {
+    const checkpoints = await StudioDAWSessionStore.listRecovery();
+    for (const checkpoint of checkpoints) {
+      const recovery = await StudioDAWSessionStore.loadRecovery(checkpoint.projectId);
+      const saved = await StudioDAWSessionStore.load(checkpoint.projectId);
+      if (recovery && (!saved?.updatedAt || !recovery.updatedAt || recovery.updatedAt > saved.updatedAt)) return checkpoint;
+      await StudioDAWSessionStore.clearRecovery(checkpoint.projectId);
+    }
+    return null;
   },
 
   async removeSavedSession(projectId) {
