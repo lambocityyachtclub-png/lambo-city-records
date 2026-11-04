@@ -385,6 +385,8 @@ const StudioMultitrackWorkspace = {
             this.root?.querySelectorAll(".lc-arrangement-playhead").forEach(line => { line.style.left = x + "px"; });
             const label = this.root?.querySelector("[data-ruler-label]");
             if (label) label.textContent = "BAR 01 — 128 · PLAYHEAD " + String(bar).padStart(2, "0");
+            const clock = this.root?.querySelector("[data-clock]");
+            if (clock) { const meter=this.getTimeSignatureAtBar(bar); clock.textContent=Math.round(this.getTempoAtBar(bar))+" BPM / "+meter.numerator+"/"+meter.denominator+" · BAR "+Math.floor(bar); }
             if (this.followPlayhead) this.root?.querySelectorAll(".lc-arrangement").forEach(scroll => {
               if (x < scroll.scrollLeft + 18 || x > scroll.scrollLeft + scroll.clientWidth - 40) scroll.scrollLeft = Math.max(0, x - scroll.clientWidth * .25);
             });
@@ -515,6 +517,7 @@ const StudioMultitrackWorkspace = {
     this.undoStack = [];
     this.redoStack = [];
     this.selectedClipId = null;
+    this.selectedRegionIds = [];
     this.render();
     this.status("Saved song session restored with " + this.tracks.length + " track(s).");
     return true;
