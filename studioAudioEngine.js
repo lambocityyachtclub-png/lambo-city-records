@@ -13,6 +13,8 @@ const StudioAudioEngine = {
   context: null,
   master: null,
   compressor: null,
+  stereoWidth: null,
+  stereoWidthNode: null,
   channels: null,
   initializing: null,
 
@@ -106,13 +108,38 @@ const StudioAudioEngine = {
       channel.connect(master);
     });
 
-    master.connect(compressor);
+    const splitter = context.createChannelSplitter(2);
+    const merger = context.createChannelMerger(2);
+    const mid = context.createGain();
+    const side = context.createGain();
+    const sideWidth = context.createGain();
+    const leftOut = context.createGain();
+    const rightOut = context.createGain();
+    const sideLeft = context.createGain();
+    const sideRight = context.createGain();
+    mid.gain.value = 0.5;
+    side.gain.value = 0.5;
+    sideWidth.gain.value = 1;
+    leftOut.gain.value = 1;
+    rightOut.gain.value = 1;
+    sideLeft.gain.value = 1;
+    sideRight.gain.value = -1;
+    master.connect(splitter);
+    splitter.connect(mid, 0); splitter.connect(mid, 1);
+    splitter.connect(side, 0); splitter.connect(side, 1);
+    mid.connect(leftOut); mid.connect(rightOut);
+    leftOut.connect(merger, 0, 0); rightOut.connect(merger, 0, 1);
+    side.connect(sideWidth); sideWidth.connect(sideLeft); sideWidth.connect(sideRight);
+    sideLeft.connect(merger, 0, 0); sideRight.connect(merger, 0, 1);
+    merger.connect(compressor);
     compressor.connect(context.destination);
 
     // Keep the existing shared engine and its API.
     this.context = context;
     this.master = master;
     this.compressor = compressor;
+    this.stereoWidth = sideWidth;
+    this.stereoWidthNode = { splitter, merger, mid, side, sideLeft, sideRight, leftOut, rightOut };
     this.channels = channels;
 
     if (context.state !== "running") {
@@ -157,6 +184,12 @@ const StudioAudioEngine = {
       this.context.currentTime,
       0.015
     );
+  },
+
+  setStereoWidth(percent) {
+    if (!this.stereoWidth || !this.context) return;
+    const value = Math.max(0, Math.min(200, Number(percent) || 0)) / 100;
+    this.stereoWidth.gain.setTargetAtTime(value, this.context.currentTime, 0.025);
   },
 
   setMasterVolume(volume) {
