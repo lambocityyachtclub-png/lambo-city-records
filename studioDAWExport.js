@@ -46,6 +46,9 @@ function encodeWav(audioBuffer) {
 async function renderStudioSessionToAudioBuffer({
   tracks = [],
   tempo = 100,
+  timeSignature = "4/4",
+  tempoChanges = [],
+  timeSignatureChanges = [],
   masterVolume = StudioAudioEngine.master?.gain?.value ?? 1
 } = {}) {
   const bpm = Number(tempo);
@@ -60,7 +63,9 @@ async function renderStudioSessionToAudioBuffer({
     tracks.some(track => track.name === "Beats");
   const decoded = [];
   let renderDuration = 0;
-  const secondsPerBar = 240 / bpm;
+  const getTempoAtBar = bar => [...tempoChanges].filter(point=>Number(point.bar)<=bar).sort((a,b)=>a.bar-b.bar).pop()?.bpm || bpm;
+  const getMeterAtBar = bar => { const point=[...timeSignatureChanges].filter(item=>Number(item.bar)<=bar).sort((a,b)=>a.bar-b.bar).pop(); const fallback=String(timeSignature||"4/4").split("/"); return {numerator:Number(point?.numerator)||Number(fallback[0])||4,denominator:Number(point?.denominator)||Number(fallback[1])||4}; };
+  const getSecondsAtBar = bar => { const target=Math.max(1,Math.min(129,Number(bar)||1)); const boundaries=[...new Set([1,target,...tempoChanges.map(point=>Number(point.bar)),...timeSignatureChanges.map(point=>Number(point.bar))].filter(value=>value>=1&&value<=target))].sort((a,b)=>a-b); let seconds=0; for(let index=0;index<boundaries.length-1;index+=1){const start=boundaries[index],end=boundaries[index+1],meter=getMeterAtBar(start);seconds+=(end-start)*60/Math.max(1,Number(getTempoAtBar(start))||bpm)*meter.numerator*(4/meter.denominator);} return seconds; };
 
   for (const track of tracks) {
     if (track.muted || (anySolo && !track.solo)) continue;
@@ -69,10 +74,13 @@ async function renderStudioSessionToAudioBuffer({
       if (!(clip.blob instanceof Blob) || !clip.blob.size) continue;
       const bytes = await clip.blob.arrayBuffer();
       const buffer = await liveContext.decodeAudioData(bytes.slice(0));
-      const start = (Math.max(1, Number(clip.startBar) || 1) - 1) * secondsPerBar;
+      const startBar = Math.max(1, Number(clip.startBar) || 1);
+      const start = getSecondsAtBar(startBar);
       const sourceOffset = Math.max(0, Math.min(buffer.duration, Number(clip.sourceOffsetSeconds) || 0));
       const sourceAvailable = Math.max(0, buffer.duration - sourceOffset);
-      const sourceDuration = Math.max(0, Math.min(sourceAvailable, Number(clip.playDurationSeconds) > 0 ? Number(clip.playDurationSeconds) : sourceAvailable));
+      const clipBars = Math.max(.0625, Number(clip.lengthBars) || 4);
+      const clipTimelineDuration = Math.max(0, getSecondsAtBar(startBar + clipBars) - start);
+      const sourceDuration = Math.max(0, Math.min(sourceAvailable, clipTimelineDuration, Number(clip.playDurationSeconds) > 0 ? Number(clip.playDurationSeconds) : sourceAvailable));
       if (sourceDuration <= 0.001) continue;
       decoded.push({
         track, buffer, start, sourceOffset, sourceDuration,
@@ -154,7 +162,7 @@ async function renderStudioSessionToAudioBuffer({
     if (effects.reverbDecay !== undefined) trackEffects.setReverbDecay(effects.reverbDecay);
     automationGain.gain.setValueAtTime(1, 0);
     (track.automation?.volume || []).slice().sort((a, b) => a.bar - b.bar).forEach(point => {
-      const time = (Math.max(1, Number(point.bar) || 1) - 1) * secondsPerBar;
+      const time = getSecondsAtBar(Math.max(1, Number(point.bar) || 1));
       const value = Math.max(0, Math.min(1, Number(point.value) / 100));
       if (time <= 0.001) automationGain.gain.setValueAtTime(value, 0);
       else automationGain.gain.linearRampToValueAtTime(value, time);
@@ -228,9 +236,12 @@ async function loadMp3EncoderLibrary() {
 export async function renderStudioSessionToMp3({
   tracks = [],
   tempo = 100,
+  timeSignature = "4/4",
+  tempoChanges = [],
+  timeSignatureChanges = [],
   masterVolume
 } = {}) {
-  const audioBuffer = await renderStudioSessionToAudioBuffer({ tracks, tempo, masterVolume });
+  const audioBuffer = await renderStudioSessionToAudioBuffer({ tracks, tempo, timeSignature, tempoChanges, timeSignatureChanges, masterVolume });
   const lamejs = await loadMp3EncoderLibrary();
   const encoder = new lamejs.Mp3Encoder(2, SAMPLE_RATE, 192);
   const left = audioBuffer.getChannelData(0);
