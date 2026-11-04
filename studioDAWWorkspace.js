@@ -141,7 +141,7 @@ const StudioDAWWorkspace = {
 
       <footer class="lc-daw-footer">
         <span>LAMBO CITY DIGITAL STUDIO</span>
-        <span>MODULAR WORKSPACE V1</span>
+        <span>EDIT PRODUCTION MOTHERBOARD · MIX & MASTER</span>
       </footer>
     `;
 
