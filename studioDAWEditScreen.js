@@ -190,15 +190,21 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
       this.bindEvents();
       this.render();
       void this.refreshInputDevices();
-      void StudioMultitrackWorkspace.findLatestRecovery().then(checkpoint => {
-        if (!checkpoint || !this.root?.isConnected) return;
-        const restore = window.confirm("LAMBO CITY found an interrupted session: " + checkpoint.projectName + " (" + checkpoint.trackCount + " tracks). Restore the latest recovery checkpoint?");
-        if (restore) return StudioMultitrackWorkspace.recoverUnsavedSession(checkpoint.projectId).then(() => this.render()).catch(error => this.status("RECOVERY ERROR: " + (error?.message || error)));
-        return undefined;
-      }).catch(error => this.status("Recovery check unavailable: " + (error?.message || error)));
-      if (!StudioMultitrackWorkspace.activeProjectId && StudioMultitrackWorkspace.activeProjectName === "Untitled Song") {
-        this.showSongNamePrompt();
-      }
+      void StudioMultitrackWorkspace.findLatestRecovery().then(async checkpoint => {
+        if (!this.root?.isConnected) return;
+        if (checkpoint) {
+          const restore = window.confirm("LAMBO CITY found an interrupted session: " + checkpoint.projectName + " (" + checkpoint.trackCount + " tracks). Restore the latest recovery checkpoint?");
+          if (restore) {
+            await StudioMultitrackWorkspace.recoverUnsavedSession(checkpoint.projectId);
+            this.render();
+            return;
+          }
+        }
+        if (!StudioMultitrackWorkspace.activeProjectId && StudioMultitrackWorkspace.activeProjectName === "Untitled Song") this.showSongNamePrompt();
+      }).catch(error => {
+        this.status("Recovery check unavailable: " + (error?.message || error));
+        if (!StudioMultitrackWorkspace.activeProjectId && StudioMultitrackWorkspace.activeProjectName === "Untitled Song") this.showSongNamePrompt();
+      });
       return root;
     },
 
