@@ -93,7 +93,7 @@ const StudioRecordingEngine = {
   takes: [],
   playback: null,
 
-  async startTrackRecording({ audio, trackId, vocalEffects, inputNode, pitchCorrectionNode } = {}) {
+  async startTrackRecording({ audio, trackId, vocalEffects, inputNode, pitchCorrectionNode, monitorInput = false } = {}) {
     if (this.activeTake || this.activeTrackTake) {
       throw new Error("Another studio recording is already in progress.");
     }
@@ -106,12 +106,18 @@ const StudioRecordingEngine = {
     let microphoneStream;
     let microphoneSource;
     let destination;
+    let monitorGain;
     try {
       microphoneStream = inputNode ? null : await navigator.mediaDevices.getUserMedia({
-        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
+        audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
       });
       microphoneSource = inputNode || audio.createMediaStreamSource(microphoneStream);
       destination = audio.createMediaStreamDestination();
+      if (!inputNode && monitorInput) {
+        monitorGain = audio.createGain();
+        monitorGain.gain.value = 0.65;
+        monitorGain.connect(audio.destination);
+      }
       if (!inputNode && pitchCorrectionNode) {
         microphoneSource.connect(pitchCorrectionNode);
         if (vocalEffects) {
@@ -120,8 +126,10 @@ const StudioRecordingEngine = {
           }
           pitchCorrectionNode.connect(vocalEffects.input);
           vocalEffects.output.connect(destination);
+          if (monitorGain) vocalEffects.output.connect(monitorGain);
         } else {
           pitchCorrectionNode.connect(destination);
+          if (monitorGain) pitchCorrectionNode.connect(monitorGain);
         }
       } else if (vocalEffects && !inputNode) {
         if (!vocalEffects.input || !vocalEffects.output) {
@@ -129,8 +137,10 @@ const StudioRecordingEngine = {
         }
         microphoneSource.connect(vocalEffects.input);
         vocalEffects.output.connect(destination);
+        if (monitorGain) vocalEffects.output.connect(monitorGain);
       } else {
         microphoneSource.connect(destination);
+        if (monitorGain) microphoneSource.connect(monitorGain);
       }
       const recorder = createRecorder(destination.stream);
       recorder.recorder.start();
@@ -143,6 +153,7 @@ const StudioRecordingEngine = {
         microphoneSource,
         inputNode: Boolean(inputNode),
         destination,
+        monitorGain,
         vocalEffects,
         pitchCorrectionNode,
         recorder
@@ -157,6 +168,7 @@ const StudioRecordingEngine = {
       try { pitchCorrectionNode?.disconnect(); } catch {}
       try { if (vocalEffects) vocalEffects.output.disconnect(destination); } catch {}
       try { destination?.disconnect(); } catch {}
+      try { monitorGain?.disconnect(); } catch {}
       microphoneStream?.getTracks().forEach(track => track.stop());
       throw error;
     }
@@ -185,6 +197,7 @@ const StudioRecordingEngine = {
       try { take.pitchCorrectionNode?.disconnect(); } catch {}
       try { if (take.vocalEffects) take.vocalEffects.output.disconnect(take.destination); } catch {}
       try { take.destination.disconnect(); } catch {}
+      try { take.monitorGain?.disconnect(); } catch {}
       take.microphoneStream?.getTracks().forEach(track => track.stop());
     }
   },
