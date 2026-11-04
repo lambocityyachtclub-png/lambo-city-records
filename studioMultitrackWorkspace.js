@@ -881,7 +881,7 @@ const StudioMultitrackWorkspace = {
         id: clip.id,
         name: clip.name || "Audio Clip",
         startBar: Math.max(1, Number(clip.startBar) || 1),
-        lengthBars: Math.max(1, Number(clip.lengthBars) || 4),
+        lengthBars: Math.max(0.0625, Number(clip.lengthBars) || 4),
         duration: Number(clip.duration) || 0,
         sourceOffsetSeconds: Number(clip.sourceOffsetSeconds) || 0,
         playDurationSeconds: Number(clip.playDurationSeconds) || 0,
