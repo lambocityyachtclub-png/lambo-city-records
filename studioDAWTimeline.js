@@ -14,7 +14,11 @@ async function decodeClip(clip) {
     const context = StudioAudioEngine.context;
     if (!context || context.state === "closed") return null;
     const bytes = await clip.blob.arrayBuffer();
-    return context.decodeAudioData(bytes.slice(0));
+    const buffer = await context.decodeAudioData(bytes.slice(0));
+    if (!Number.isFinite(Number(clip.duration)) || Number(clip.duration) <= 0) {
+      clip.duration = buffer.duration;
+    }
+    return buffer;
   })();
   decodedWaveforms.set(clip.blob, pending);
   try { return await pending; }
