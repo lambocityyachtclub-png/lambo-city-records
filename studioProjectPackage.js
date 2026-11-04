@@ -268,7 +268,7 @@ function validateProject(project) {
       requireObject(track, "Invalid DAW track.");
       requireId(track.id, "DAW track ID is missing.");
       requireId(track.name, "DAW track name is missing.");
-      if (trackIds.has(track.id) || !["audio", "midi", "instrument"].includes(track.type) ||
+      if (trackIds.has(track.id) || !["audio", "midi", "instrument", "bus"].includes(track.type) ||
           !Number.isFinite(Number(track.volume)) || Number(track.volume) < 0 || Number(track.volume) > 100 ||
           !Number.isFinite(Number(track.pan)) || Number(track.pan) < -1 || Number(track.pan) > 1 ||
           (track.inputSource !== undefined && !["mic", "beatlab", "mpc"].includes(track.inputSource)) ||
@@ -298,6 +298,9 @@ function validateProject(project) {
             !Number.isFinite(Number(track.effects.reverbDecay)) || Number(track.effects.reverbDecay) < 0.3 || Number(track.effects.reverbDecay) > 6))) {
         throw new Error("DAW track settings are invalid.");
       }
+      if (track.outputBusId !== undefined && track.outputBusId !== null && (typeof track.outputBusId !== "string" || !track.outputBusId.trim())) throw new Error("DAW output bus reference is invalid.");
+      if (track.sends !== undefined && (!Array.isArray(track.sends) || track.sends.length > 32 || !track.sends.every(send => send && typeof send.busId === "string" && Number.isFinite(Number(send.level)) && Number(send.level) >= 0 && Number(send.level) <= 100))) throw new Error("DAW bus sends are invalid.");
+      if (track.midiNotes !== undefined && (!Array.isArray(track.midiNotes) || track.midiNotes.length > 4096 || !track.midiNotes.every(note => note && Number.isInteger(Number(note.pitch)) && Number(note.pitch) >= 0 && Number(note.pitch) <= 127 && Number.isFinite(Number(note.startBar)) && Number(note.startBar) >= 1 && Number(note.startBar) <= 128 && Number.isFinite(Number(note.lengthBars)) && Number(note.lengthBars) > 0 && Number(note.lengthBars) <= 16 && Number.isFinite(Number(note.velocity ?? 0.8)) && Number(note.velocity ?? 0.8) >= 0 && Number(note.velocity ?? 0.8) <= 1))) throw new Error("DAW MIDI note data is invalid.");
       trackIds.add(track.id);
       for (const point of track.automation?.volume || []) {
         requireObject(point, "Invalid track volume automation point.");
