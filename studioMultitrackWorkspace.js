@@ -449,6 +449,7 @@ const StudioMultitrackWorkspace = {
       volume: 80,
       pan: 0,
       inputSource: "mic",
+      instrumentWave: "triangle",
       eq: { low: 0, mid: 0, high: 0 },
       compression: { threshold: -18, ratio: 1 },
       effects: { delayTime: 0.28, delayFeedback: 0.25, delayMix: 0, reverbMix: 0, reverbDecay: 2.2, pitchCorrection: { enabled: false, root: 0, scale: "major", amount: 100, speedMs: 25 } },
@@ -729,6 +730,7 @@ const StudioMultitrackWorkspace = {
         volume: Math.max(0, Math.min(100, Number(track.volume) || 0)),
         pan: Math.max(-1, Math.min(1, Number(track.pan) || 0)),
         inputSource: ["mic", "beatlab", "mpc"].includes(track.inputSource) ? track.inputSource : "mic",
+        instrumentWave: ["sine", "triangle", "sawtooth", "square"].includes(track.instrumentWave) ? track.instrumentWave : "triangle",
         eq: {
           low: Number(track.eq?.low) || 0,
           mid: Number(track.eq?.mid) || 0,
@@ -832,6 +834,7 @@ const StudioMultitrackWorkspace = {
       volume: Math.max(0, Math.min(100, Number(savedTrack.volume) || 0)),
       pan: Math.max(-1, Math.min(1, Number(savedTrack.pan) || 0)),
       inputSource: ["mic", "beatlab", "mpc"].includes(savedTrack.inputSource) ? savedTrack.inputSource : "mic",
+      instrumentWave: ["sine", "triangle", "sawtooth", "square"].includes(savedTrack.instrumentWave) ? savedTrack.instrumentWave : "triangle",
       eq: {
         low: Number(savedTrack.eq?.low) || 0,
         mid: Number(savedTrack.eq?.mid) || 0,
