@@ -450,14 +450,14 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
           } else if (action === "export-wav") {
             button.disabled = true;
             try {
-              const wav = await renderStudioSessionToWav({ tracks: workspace.tracks, tempo: workspace.tempo });
+              const wav = await renderStudioSessionToWav({ tracks: workspace.tracks, tempo: workspace.tempo, timeSignature: workspace.timeSignature, tempoChanges: workspace.tempoChanges, timeSignatureChanges: workspace.timeSignatureChanges });
               downloadStudioWav(wav, workspace.activeProjectName || "lambo-city-song");
               this.status("WAV master exported.");
             } finally { button.disabled = false; }
           } else if (action === "export-mp3") {
             button.disabled = true;
             try {
-              const mp3 = await renderStudioSessionToMp3({ tracks: workspace.tracks, tempo: workspace.tempo });
+              const mp3 = await renderStudioSessionToMp3({ tracks: workspace.tracks, tempo: workspace.tempo, timeSignature: workspace.timeSignature, tempoChanges: workspace.tempoChanges, timeSignatureChanges: workspace.timeSignatureChanges });
               downloadStudioMp3(mp3, workspace.activeProjectName || "lambo-city-song");
               this.status("MP3 master exported at 192 kbps.");
             } finally { button.disabled = false; }
