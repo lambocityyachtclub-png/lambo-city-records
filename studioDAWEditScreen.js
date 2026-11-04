@@ -219,6 +219,40 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
 
     bindEvents() {
       const root = this.root;
+      root.tabIndex = 0;
+      root.addEventListener("pointerdown", event => {
+        if (event.target.closest("input,textarea,select,button")) return;
+        root.focus({ preventScroll: true });
+      });
+      root.addEventListener("keydown", event => {
+        const target = event.target;
+        if (target && (target.matches("input,textarea,select") || target.isContentEditable)) return;
+        const workspace = StudioMultitrackWorkspace;
+        const key = String(event.key || "").toLowerCase();
+        const modifier = event.metaKey || event.ctrlKey;
+        let handled = false;
+        if (modifier && key === "z") {
+          if (event.shiftKey) workspace.redo();
+          else workspace.undo();
+          handled = true;
+        } else if (modifier && key === "y") {
+          workspace.redo();
+          handled = true;
+        } else if (modifier && key === "d" && workspace.selectedClipId) {
+          workspace.duplicateSelectedClip();
+          handled = true;
+        } else if ((key === "delete" || key === "backspace") && workspace.selectedClipId) {
+          workspace.deleteSelectedClip();
+          handled = true;
+        } else if (key === "s" && workspace.selectedClipId) {
+          workspace.splitSelectedClip();
+          handled = true;
+        }
+        if (handled) {
+          event.preventDefault();
+          this.render();
+        }
+      });
       root.addEventListener("click", async event => {
         const trackControl = event.target.closest("[data-track-control]");
         if (trackControl && root.contains(trackControl)) {
