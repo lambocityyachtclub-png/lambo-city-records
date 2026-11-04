@@ -71,12 +71,16 @@ This roadmap is the source of truth for the EDIT workspace build. Keep the appro
 - [ ] Verify large audio sessions and portable session round-trips with all region-edit metadata.
 
 ## Stage 6 — Advanced production integration
-- [ ] Automation lanes and editable automation points.
-- [ ] Audio routing, buses, sends, and groups.
-- [ ] MIDI/piano-roll editing and instrument workflow integrated into the same song session.
-- [ ] Shared track/session state handoff to the separate MIX & MASTER interface.
-- [ ] MIX & MASTER processing: EQ, compression, effects, pitch correction, stereo processing, and master chain.
-- [ ] Final mix and stem export options.
+**Code status: implemented and committed. The shared EDIT/MIX session now carries automation, routing, MIDI note data, and master settings through playback and offline export. iPad Safari / desktop workflow testing and audio-quality listening checks remain.**
+
+- [x] Volume automation points with editable bar/value controls, shared undo history, autosave, playback scheduling, and offline-render automation.
+- [x] Audio routing with terminal buses, per-track output assignment, level-controlled sends, and existing track-group mute/solo behavior.
+- [x] MIDI piano-roll editing on shared MIDI/instrument tracks, note length and waveform selection, note persistence, arrangement playback, and WAV/MP3 rendering.
+- [x] Shared track/session state handoff between EDIT and the separate MIX & MASTER interface using the same workspace and project model.
+- [x] MIX & MASTER processing controls for three-band EQ, track compression, delay, reverb, vocal pitch correction, stereo width, and master compression.
+- [x] Session-based final WAV/MP3 master export and individual WAV stem export, including MIDI, automation, track processing, buses, sends, and master settings.
+- [ ] Verify automation playback, bus routing/sends, MIDI note timing, master stereo image, final WAV/MP3 output, stem alignment, and save/reopen on iPad Safari and desktop.
+- [ ] Replace the V1 oscillator voice with the planned richer instrument library and verify latency/audio performance on supported devices.
 
 ## Build rules
 1. Preserve the approved EDIT visual design unless HERO explicitly asks for a redesign.
