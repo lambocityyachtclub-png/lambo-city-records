@@ -104,7 +104,7 @@ const StudioMultitrackWorkspace = {
       inputSource: "mic",
       eq: { low: 0, mid: 0, high: 0 },
       compression: { threshold: -18, ratio: 1 },
-      effects: { delayTime: 0.28, delayFeedback: 0.25, delayMix: 0, reverbMix: 0, reverbDecay: 2.2 },
+      effects: { delayTime: 0.28, delayFeedback: 0.25, delayMix: 0, reverbMix: 0, reverbDecay: 2.2, pitchCorrection: { enabled: false, root: 0, scale: "major", amount: 100, speedMs: 25 } },
       automation: { volume: [] },
       muted: false,
       solo: false,
@@ -232,7 +232,14 @@ const StudioMultitrackWorkspace = {
           delayFeedback: Number(track.effects?.delayFeedback ?? 0.25),
           delayMix: Number(track.effects?.delayMix ?? 0),
           reverbMix: Number(track.effects?.reverbMix ?? 0),
-          reverbDecay: Number(track.effects?.reverbDecay ?? 2.2)
+          reverbDecay: Number(track.effects?.reverbDecay ?? 2.2),
+          pitchCorrection: {
+            enabled: Boolean(track.effects?.pitchCorrection?.enabled),
+            root: Math.max(0, Math.min(11, Math.round(Number(track.effects?.pitchCorrection?.root) || 0))),
+            scale: ["major", "minor", "chromatic"].includes(track.effects?.pitchCorrection?.scale) ? track.effects.pitchCorrection.scale : "major",
+            amount: Math.max(0, Math.min(100, Number(track.effects?.pitchCorrection?.amount ?? 100))),
+            speedMs: Math.max(0, Math.min(120, Number(track.effects?.pitchCorrection?.speedMs ?? 25)))
+          }
         },
         automation: {
           volume: Array.isArray(track.automation?.volume) ? track.automation.volume.map(point => ({
@@ -285,7 +292,14 @@ const StudioMultitrackWorkspace = {
         delayFeedback: Number(savedTrack.effects?.delayFeedback ?? 0.25),
         delayMix: Number(savedTrack.effects?.delayMix ?? 0),
         reverbMix: Number(savedTrack.effects?.reverbMix ?? 0),
-        reverbDecay: Number(savedTrack.effects?.reverbDecay ?? 2.2)
+        reverbDecay: Number(savedTrack.effects?.reverbDecay ?? 2.2),
+        pitchCorrection: {
+          enabled: Boolean(savedTrack.effects?.pitchCorrection?.enabled),
+          root: Math.max(0, Math.min(11, Math.round(Number(savedTrack.effects?.pitchCorrection?.root) || 0))),
+          scale: ["major", "minor", "chromatic"].includes(savedTrack.effects?.pitchCorrection?.scale) ? savedTrack.effects.pitchCorrection.scale : "major",
+          amount: Math.max(0, Math.min(100, Number(savedTrack.effects?.pitchCorrection?.amount ?? 100))),
+          speedMs: Math.max(0, Math.min(120, Number(savedTrack.effects?.pitchCorrection?.speedMs ?? 25)))
+        }
       },
       automation: {
         volume: Array.isArray(savedTrack.automation?.volume) ? savedTrack.automation.volume.map(point => ({
