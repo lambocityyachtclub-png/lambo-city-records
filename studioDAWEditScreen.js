@@ -656,6 +656,7 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
       host.replaceChildren();
       const workspace = StudioMultitrackWorkspace;
       workspace.tracks.forEach((track, index) => {
+        if (track.groupId && track.groupCollapsed && workspace.tracks.findIndex(item => item.groupId === track.groupId) !== index) return;
         const row = document.createElement("div");
         row.className = "lc-track-row";
         row.dataset.trackId = track.id;
@@ -665,7 +666,7 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
         head.className = "lc-track-head";
         head.innerHTML = [
           '<div class="lc-track-title"><i class="lc-track-color" style="background:' + color + '"></i><span class="lc-car-icon">' + icon + '</span><span title="' + safeText(track.name) + '">' + safeText(track.name) + '</span></div>',
-          '<div class="lc-track-buttons">',
+          '<div class="lc-track-buttons"><button type="button" data-action="track-group" title="Assign this track to a folder/group">' + (track.groupName ? 'GROUP · ' + safeText(track.groupName) : 'GROUP +') + '</button>' + (track.groupId ? '<button type="button" data-action="toggle-track-group" title="Collapse or expand track folder">' + (track.groupCollapsed ? '▸' : '▾') + '</button>' : ''),
           '<button type="button" data-track-control="mute" class="' + (track.muted ? "active" : "") + '">M</button>',
           '<button type="button" data-track-control="solo" class="' + (track.solo ? "active" : "") + '">S</button>',
           '<button type="button" data-track-control="arm" class="' + (track.armed ? "active" : "") + '">R</button>',
@@ -684,21 +685,27 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
           tempo: workspace.tempo,
           slipMode: workspace.slipMode,
           selectedClipId: workspace.selectedClipId,
+          selectedClipIds: workspace.selectedRegionIds,
+          markers: workspace.markers,
+          loopRange: workspace.loopRange,
           playheadBar: workspace.playheadBar,
-          onSelect: clip => {
-            workspace.selectClip(track.id, clip);
+          onSelect: (clip, event) => {
+            const selected = workspace.selectClip(track.id, clip, event);
             host.querySelectorAll(".lc-arrangement-clip").forEach(node => {
-              node.classList.toggle("selected", node.dataset.clipId === workspace.selectedClipId);
+              node.classList.toggle("selected", workspace.selectedRegionIds.includes(node.dataset.clipId));
             });
+            return selected;
           },
           onEditStart: label => workspace.recordHistory(label || "Edit audio region"),
           onChange: clip => {
             workspace.arrangementPlayback?.stop();
             workspace.scheduleProjectAutosave();
+            this.renderLanes();
             this.status(clip.name + " updated at bar " + clip.startBar + ".");
           },
           onPlayheadChange: bar => {
             workspace.playheadBar = bar;
+            this.renderHeader();
             this.renderLanes();
           }
         });
