@@ -109,6 +109,7 @@ const StudioRecordingEngine = {
     let microphoneSource;
     let destination;
     let monitorGain;
+    let inputAnalyser;
     try {
       microphoneStream = inputNode ? null : await navigator.mediaDevices.getUserMedia({
         audio: {
@@ -119,7 +120,7 @@ const StudioRecordingEngine = {
         }
       });
       microphoneSource = inputNode || audio.createMediaStreamSource(microphoneStream);
-      const inputAnalyser = audio.createAnalyser();
+      inputAnalyser = audio.createAnalyser();
       inputAnalyser.fftSize = 512;
       microphoneSource.connect(inputAnalyser);
       this.inputAnalyser = inputAnalyser;
@@ -178,8 +179,9 @@ const StudioRecordingEngine = {
         else microphoneSource?.disconnect(destination);
       } catch {}
       try { pitchCorrectionNode?.disconnect(); } catch {}
-      try { microphoneSource?.disconnect(); } catch {}
-      try { if (this.inputAnalyser) this.inputAnalyser = null; } catch {}
+      try { microphoneSource?.disconnect(inputAnalyser); } catch {}
+      try { inputAnalyser?.disconnect(); } catch {}
+      try { if (this.inputAnalyser === inputAnalyser) this.inputAnalyser = null; } catch {}
       try { if (vocalEffects) vocalEffects.output.disconnect(destination); } catch {}
       try { destination?.disconnect(); } catch {}
       try { monitorGain?.disconnect(); } catch {}
@@ -221,6 +223,7 @@ const StudioRecordingEngine = {
       try { take.pitchCorrectionNode?.disconnect(); } catch {}
       try { if (take.vocalEffects) take.vocalEffects.output.disconnect(take.destination); } catch {}
       try { take.destination.disconnect(); } catch {}
+      try { take.microphoneSource.disconnect(take.inputAnalyser); } catch {}
       try { take.inputAnalyser?.disconnect(); } catch {}
       if (this.inputAnalyser === take.inputAnalyser) this.inputAnalyser = null;
       try { take.monitorGain?.disconnect(); } catch {}
