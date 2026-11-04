@@ -15,6 +15,7 @@ import StudioDAWWorkspace from "./studioDAWWorkspace.js";
 import Floor2StudioApp from "./floor2StudioApp.js";
 import Floor2InstrumentApp from "./floor2InstrumentApp.js";
 import Floor2DrumStation from "./floor2DrumStation.js";
+import MPCInterface from "./mpc-interface.js";
 import StudioAudioEngine from "./studioAudioEngine.js";
 import StudioSoundKit from "./studioSoundKit.js";
 import StudioMultitrackWorkspace from "./studioMultitrackWorkspace.js";
@@ -421,6 +422,15 @@ const StudioDAWApp = {
         initialView,
         onViewChange: viewId => {
           if (viewId === "mix") this.mixPanel?.refresh?.();
+          if (viewId === "mpc" && !MPCInterface.isOpen()) {
+            MPCInterface.open({
+              onClose: () => {
+                if (this.workspace?.activeView === "mpc") {
+                  this.workspace.setView("beatlab");
+                }
+              }
+            });
+          }
         }
       });
 
