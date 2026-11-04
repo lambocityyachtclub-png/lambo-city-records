@@ -66,7 +66,7 @@ export function createStudioMixMasterApp({ beatLab, workspace } = {}) {
       name.style.cssText = "color:#e6bb69;font-size:13px";
       const controls = document.createElement("div");
       controls.style.cssText = "display:flex;gap:6px";
-      [["mute","MUTE",track.muted],["solo","SOLO",track.solo]].forEach(([control,label,active]) => {
+      (track.type === "bus" ? [["mute","MUTE",track.muted]] : [["mute","MUTE",track.muted],["solo","SOLO",track.solo]]).forEach(([control,label,active]) => {
         const button = document.createElement("button");
         button.type = "button";
         button.dataset.trackControl = control;
