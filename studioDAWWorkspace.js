@@ -17,13 +17,12 @@
  */
 
 const VIEWS = [
-  { id: "edit", label: "EDIT" },
-  { id: "mix", label: "MIX & MASTER" },
   { id: "mpc", label: "MPC" },
   { id: "beatlab", label: "DIGITAL BEAT LAB" },
   { id: "piano", label: "PIANO" },
   { id: "drums", label: "DRUMS" },
-  { id: "vocals", label: "VOCALS" }
+  { id: "edit", label: "EDIT" },
+  { id: "mix", label: "MIX & MASTER" }
 ];
 
 const StudioDAWWorkspace = {
@@ -95,22 +94,12 @@ const StudioDAWWorkspace = {
 
       </header>
 
-      <nav
-        class="lc-daw-navigation"
-        aria-label="Studio workspaces"
-      >
-        ${VIEWS.map(view => `
-          <button
-            type="button"
-            class="lc-daw-tab"
-            data-daw-view="${view.id}"
-            aria-pressed="${
-              view.id === this.activeView
-            }"
-          >
-            ${view.label}
-          </button>
-        `).join("")}
+      <nav class="lc-daw-navigation" aria-label="Production workflow">
+        <button type="button" class="lc-daw-step-arrow" data-daw-step="-1" aria-label="Previous workspace">←</button>
+        <div class="lc-daw-flow-track" aria-hidden="true">
+          ${VIEWS.map((view, index) => `<span data-flow-step="${index}"></span>`).join("")}
+        </div>
+        <button type="button" class="lc-daw-step-arrow" data-daw-step="1" aria-label="Next workspace">→</button>
       </nav>
 
       <main class="lc-daw-main">
@@ -229,40 +218,25 @@ const StudioDAWWorkspace = {
       }
 
       #lambo-city-daw-workspace .lc-daw-navigation {
-        display: flex;
-        gap: 5px;
-        padding: 12px 16px;
-        overflow-x: auto;
-        border-bottom: 1px solid var(--lc-border);
-        background: #0e0f14;
-        -webkit-overflow-scrolling: touch;
+        display:flex;align-items:center;justify-content:space-between;gap:18px;
+        padding:12px 20px;border-bottom:1px solid var(--lc-border);background:#0e0f14;
       }
-
-      #lambo-city-daw-workspace .lc-daw-tab {
-        flex: 1 0 auto;
-        min-width: 76px;
-        min-height: 46px;
-        padding: 12px 16px;
-        border: 1px solid transparent;
-        border-radius: 7px;
-        color: #a7a8b0;
-        background: transparent;
-        font-size: 11px;
-        font-weight: 700;
-        letter-spacing: 1px;
-        cursor: pointer;
-        touch-action: manipulation;
+      #lambo-city-daw-workspace .lc-daw-step-arrow {
+        flex:0 0 48px;width:48px;min-height:44px;border:1px solid #80643a;
+        border-radius:9px;background:#201c16;color:var(--lc-gold-light);
+        font-size:25px;font-weight:700;cursor:pointer;touch-action:manipulation;
       }
-
-      #lambo-city-daw-workspace .lc-daw-tab:hover {
-        color: var(--lc-text);
-        background: #20212a;
+      #lambo-city-daw-workspace .lc-daw-step-arrow:disabled { opacity:.28;cursor:default; }
+      #lambo-city-daw-workspace .lc-daw-flow-track {
+        display:grid;grid-template-columns:repeat(6,minmax(0,1fr));align-items:center;
+        gap:8px;width:min(100%,620px);
       }
-
-      #lambo-city-daw-workspace .lc-daw-tab[aria-pressed="true"] {
-        color: var(--lc-gold-light);
-        background: #292319;
-        border-color: #80643a;
+      #lambo-city-daw-workspace .lc-daw-flow-track span {
+        height:5px;border-radius:99px;background:#343640;
+        transition:background .18s ease,box-shadow .18s ease;
+      }
+      #lambo-city-daw-workspace .lc-daw-flow-track span[aria-current="step"] {
+        background:var(--lc-gold);box-shadow:0 0 12px rgba(217,173,98,.38);
       }
 
       #lambo-city-daw-workspace .lc-daw-main {
@@ -359,21 +333,18 @@ const StudioDAWWorkspace = {
           padding: 10px;
         }
 
-        #lambo-city-daw-workspace .lc-daw-tab {
-          min-width: 70px;
-          padding: 10px;
-        }
+        #lambo-city-daw-workspace .lc-daw-navigation { gap:10px; padding:10px 12px; }
+        #lambo-city-daw-workspace .lc-daw-step-arrow { flex-basis:44px; width:44px; }
+        #lambo-city-daw-workspace .lc-daw-flow-track { gap:5px; }
       }
     `;
 
     root.addEventListener("click", event => {
-      const button = event.target.closest(
-        "[data-daw-view]"
-      );
-
-      if (!button || !root.contains(button)) return;
-
-      this.setView(button.dataset.dawView);
+      const button = event.target.closest("[data-daw-step]");
+      if (!button || !root.contains(button) || button.disabled) return;
+      const currentIndex = VIEWS.findIndex(view => view.id === this.activeView);
+      const nextView = VIEWS[currentIndex + Number(button.dataset.dawStep)];
+      if (nextView) this.setView(nextView.id);
     });
 
     this.handleClick = null;
@@ -389,26 +360,23 @@ const StudioDAWWorkspace = {
   },
 
   setView(viewId) {
-    const view = VIEWS.find(
-      item => item.id === viewId
-    );
-
+    // Legacy booth links now open the integrated vocal workflow inside EDIT.
+    if (viewId === "vocals") viewId = "edit";
+    const view = VIEWS.find(item => item.id === viewId);
     if (!view || !this.root) return false;
 
     this.activeView = viewId;
-
-    const panel = this.root.querySelector(
-      "[data-daw-panel]"
-    );
-
-    this.root.querySelectorAll(
-      "[data-daw-view]"
-    ).forEach(button => {
-      button.setAttribute(
-        "aria-pressed",
-        String(button.dataset.dawView === viewId)
-      );
+    const currentIndex = VIEWS.findIndex(item => item.id === viewId);
+    const previous = this.root.querySelector('[data-daw-step="-1"]');
+    const next = this.root.querySelector('[data-daw-step="1"]');
+    if (previous) previous.disabled = currentIndex <= 0;
+    if (next) next.disabled = currentIndex >= VIEWS.length - 1;
+    this.root.querySelectorAll("[data-flow-step]").forEach((step, index) => {
+      if (index === currentIndex) step.setAttribute("aria-current", "step");
+      else step.removeAttribute("aria-current");
     });
+
+    const panel = this.root.querySelector("[data-daw-panel]");
 
     this.root.querySelector(
       "[data-daw-active-label]"
