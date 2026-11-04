@@ -60,12 +60,15 @@ This roadmap is the source of truth for the EDIT workspace build. Keep the appro
 - [ ] Verify loop boundaries, tempo/meter transitions, grouped editing, folder controls, and save/reopen on iPad Safari and desktop.
 
 ## Stage 5 — Session reliability
-- [ ] Reliable autosave with visible save state.
-- [ ] Crash/reload recovery for unsaved work.
-- [ ] Version history and restore points.
-- [ ] Safer session open/new/import flows that protect unsaved changes.
-- [ ] Validate portable project export/import, including all region-edit metadata.
-- [ ] Verify session persistence across browser restarts and supported devices.
+**Code status: implemented and committed. IndexedDB autosave/recovery/version paths and guarded session replacement are in place; browser restart, quota, and cross-device interaction testing remains.**
+
+- [x] Debounced autosave for the active session, including first-edit session identity creation and a visible SAVED / PENDING / SAVING / ERROR indicator.
+- [x] Recovery checkpoints written before autosave commit, with startup discovery and an explicit restore prompt after interrupted work.
+- [x] Version history with restore points on manual saves, capped to the 20 most recent versions per project.
+- [x] Safer session open/new/import flows that offer save, discard, or cancel before replacing unsaved work.
+- [x] Validate stored and imported session track/region structure before replacing the current arrangement; retain clip trim, slip, gain, fade, take, comp, and group metadata in the portable session path.
+- [ ] Verify autosave timing, browser restart recovery, version restore, storage quota handling, and persistence on iPad Safari and desktop.
+- [ ] Verify large audio sessions and portable session round-trips with all region-edit metadata.
 
 ## Stage 6 — Advanced production integration
 - [ ] Automation lanes and editable automation points.
