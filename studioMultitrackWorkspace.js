@@ -630,6 +630,7 @@ const StudioMultitrackWorkspace = {
       }
     }
     for (const track of session.tracks) {
+      if (track.instrumentWave !== undefined && !["sine", "triangle", "sawtooth", "square"].includes(track.instrumentWave)) return false;
       if (track.midiNotes !== undefined && (!Array.isArray(track.midiNotes) || track.midiNotes.length > 4096 || !track.midiNotes.every(note => Number.isInteger(Number(note.pitch)) && Number(note.pitch) >= 0 && Number(note.pitch) <= 127 && Number.isFinite(Number(note.startBar)) && Number(note.startBar) >= 1 && Number(note.startBar) <= 128 && Number.isFinite(Number(note.lengthBars)) && Number(note.lengthBars) > 0 && Number(note.lengthBars) <= 16))) return false;
       if (track.sends !== undefined && (!Array.isArray(track.sends) || track.sends.length > 32 || !track.sends.every(send => typeof send.busId === "string" && Number.isFinite(Number(send.level)) && Number(send.level) >= 0 && Number(send.level) <= 100))) return false;
     }
