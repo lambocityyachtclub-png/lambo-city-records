@@ -336,14 +336,19 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
             const name = root.querySelector("[data-marker-name]").value.trim();
             const bar = Number(root.querySelector("[data-marker-bar]").value || workspace.playheadBar);
             if (workspace.addMarker(name, bar)) root.querySelector("[data-marker-name]").value = "";
+            this.render();
           } else if (action === "set-cycle") {
             workspace.setLoopRange(Number(root.querySelector("[data-loop-start]").value), Number(root.querySelector("[data-loop-end]").value), true);
+            this.render();
           } else if (action === "toggle-cycle") {
             workspace.setLoopRange(workspace.loopRange.startBar, workspace.loopRange.endBar, !workspace.loopRange.enabled);
+            this.render();
           } else if (action === "add-tempo-point") {
             workspace.addTempoChange(Number(root.querySelector("[data-tempo-bar]").value), Number(root.querySelector("[data-tempo-value]").value));
+            this.render();
           } else if (action === "add-meter-point") {
             workspace.addTimeSignatureChange(Number(root.querySelector("[data-meter-bar]").value), root.querySelector("[data-meter-value]").value);
+            this.render();
           } else if (action === "toggle-follow") {
             workspace.toggleFollowPlayhead(); this.renderHeader();
           } else if (action === "toggle-multi") {
@@ -352,8 +357,10 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
             const row = button.closest("[data-track-id]"); const track = workspace.tracks.find(item => item.id === row?.dataset.trackId);
             const name = window.prompt("Track folder / group name:", track?.groupName || "Rhythm Section");
             if (name !== null && name.trim()) workspace.assignTrackGroup(track.id, name);
+            this.render();
           } else if (action === "toggle-track-group") {
             const row = button.closest("[data-track-id]"); workspace.toggleTrackGroup(row?.dataset.trackId);
+            this.render();
           } else if (action === "session-menu") {
             root.querySelector("[data-session-menu]").classList.toggle("open");
           } else if (action === "record") {
@@ -591,6 +598,7 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
       const follow=this.root.querySelector('[data-action="toggle-follow"]');if(follow){follow.textContent=workspace.followPlayhead?"FOLLOW ON":"FOLLOW OFF";follow.classList.toggle("active",Boolean(workspace.followPlayhead));}
       const multi=this.root.querySelector('[data-action="toggle-multi"]');if(multi){multi.textContent=workspace.multiSelectMode?"MULTI ON":"MULTI OFF";multi.classList.toggle("active",Boolean(workspace.multiSelectMode));}
       const tempoBar=this.root.querySelector("[data-tempo-bar]"),tempoValue=this.root.querySelector("[data-tempo-value]"),meterBar=this.root.querySelector("[data-meter-bar]"),meterValue=this.root.querySelector("[data-meter-value]");
+      const markerBar=this.root.querySelector("[data-marker-bar]");if(markerBar)markerBar.value=String(Math.floor(workspace.playheadBar));
       if(tempoBar)tempoBar.value=String(Math.floor(workspace.playheadBar));if(tempoValue)tempoValue.value=String(Math.round(workspace.getTempoAtBar(workspace.playheadBar)));if(meterBar)meterBar.value=String(Math.floor(workspace.playheadBar));
       if(meterValue){const meter=workspace.getTimeSignatureAtBar(workspace.playheadBar);meterValue.value=meter.numerator+"/"+meter.denominator;}
       const slip = this.root.querySelector('[data-action="slip-mode"]');
