@@ -64,6 +64,7 @@ const StudioMultitrackWorkspace = {
   tracks: [],
   nextTrackId: 1,
   root: null,
+  onRender: null,
   tempo: 100,
   timeSignature: "4/4",
   tempoChanges: [],
@@ -1522,7 +1523,7 @@ const StudioMultitrackWorkspace = {
 
     const list = this.root.querySelector("[data-track-list]");
 
-    if (!list) return;
+    if (!list) { this.onRender?.(); return; }
 
     list.replaceChildren();
 
