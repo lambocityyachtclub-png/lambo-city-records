@@ -336,6 +336,7 @@ const StudioMultitrackWorkspace = {
     this.tempo = Math.max(60, Math.min(180, Number(session.tempo) || 100));
     this.sessionTemplateId = session.templateId || null;
     this.sessionTemplateName = session.templateName || null;
+    this.activeProjectId = session.projectId || projectId;
     this.activeProjectName = session.projectName || "Untitled Song";
     this.deletedItems = Array.isArray(session.deletedItems) ? session.deletedItems : [];
     this.tracks = session.tracks.map(track => ({
