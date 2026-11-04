@@ -307,6 +307,15 @@ const StudioDAWWorkspace = {
         line-height: 1.7;
       }
 
+      #lambo-city-daw-workspace.lc-daw-edit-mode {
+        height:100dvh;min-height:0;display:flex;flex-direction:column;overflow:hidden;
+      }
+      #lambo-city-daw-workspace.lc-daw-edit-mode .lc-daw-header,
+      #lambo-city-daw-workspace.lc-daw-edit-mode .lc-daw-navigation,
+      #lambo-city-daw-workspace.lc-daw-edit-mode .lc-daw-panel-heading,
+      #lambo-city-daw-workspace.lc-daw-edit-mode .lc-daw-footer { display:none; }
+      #lambo-city-daw-workspace.lc-daw-edit-mode .lc-daw-main { flex:1;min-height:0;padding:0; }
+      #lambo-city-daw-workspace.lc-daw-edit-mode .lc-daw-panel { height:100%;min-height:0;padding:0;overflow:hidden;border:0;border-radius:0;background:transparent; }
       #lambo-city-daw-workspace .lc-daw-footer {
         display: flex;
         justify-content: space-between;
@@ -366,6 +375,7 @@ const StudioDAWWorkspace = {
     if (!view || !this.root) return false;
 
     this.activeView = viewId;
+    this.root.classList.toggle("lc-daw-edit-mode", viewId === "edit");
     const currentIndex = VIEWS.findIndex(item => item.id === viewId);
     const previous = this.root.querySelector('[data-daw-step="-1"]');
     const next = this.root.querySelector('[data-daw-step="1"]');
