@@ -97,6 +97,9 @@ const StudioMultitrackWorkspace = {
   activeProjectId: null,
   activeProjectName: "Untitled Song",
   autosaveTimer: null,
+  dirty: false,
+  saveState: "saved",
+  savePromise: null,
 
   captureSnapshot() {
     return {
@@ -350,13 +353,38 @@ const StudioMultitrackWorkspace = {
   },
 
   scheduleProjectAutosave() {
-    if (!this.activeProjectId) return;
+    if (this.isTrackRecording()) return;
+    if (!this.activeProjectId) {
+      this.activeProjectId = "lc-daw-" + (globalThis.crypto?.randomUUID?.() || (Date.now() + "-" + Math.random().toString(36).slice(2, 8)));
+    }
+    this.dirty = true;
+    this.saveState = "pending";
+    this.status("Unsaved changes · auto-save pending.");
     clearTimeout(this.autosaveTimer);
     this.autosaveTimer = setTimeout(() => {
-      this.saveSession(this.activeProjectId, this.activeProjectName)
-        .then(() => this.status("Auto-saved " + this.activeProjectName + "."))
-        .catch(error => this.status("AUTO-SAVE ERROR: " + (error?.message || error)));
-    }, 900);
+      if (this.savePromise) {
+        this.savePromise.finally(() => this.scheduleProjectAutosave());
+        return;
+      }
+      const projectId = this.activeProjectId;
+      const projectName = this.activeProjectName;
+      this.saveState = "saving";
+      this.status("Saving " + projectName + "…");
+      this.savePromise = (async () => {
+        const session = this.createSessionSnapshot(projectName);
+        await StudioDAWSessionStore.saveRecovery(projectId, session);
+        await StudioDAWSessionStore.save(projectId, session);
+        await StudioDAWSessionStore.clearRecovery(projectId);
+        if (this.activeProjectId === projectId) {
+          this.dirty = false;
+          this.saveState = "saved";
+          this.status("All changes saved · " + projectName + ".");
+        }
+      })().catch(error => {
+        this.saveState = "error";
+        this.status("AUTO-SAVE FAILED · " + (error?.message || error) + " · Export a session backup.");
+      }).finally(() => { this.savePromise = null; });
+    }, 850);
   },
 
   setTempo(value) {
@@ -446,21 +474,18 @@ const StudioMultitrackWorkspace = {
     return StudioDAWSessionStore.list();
   },
 
-  async saveSession(projectId, projectName = this.activeProjectName) {
-    if (this.isTrackRecording()) {
-      throw new Error("Stop the active track recording before saving the song session.");
-    }
-    const session = {
+  createSessionSnapshot(projectName = this.activeProjectName) {
+    return {
       format: "lambo-city-daw-session",
       version: 1,
       projectName: String(projectName || "Untitled Song").trim() || "Untitled Song",
       updatedAt: new Date().toISOString(),
       tempo: this.tempo,
       timeSignature: this.timeSignature,
-      tempoChanges: this.tempoChanges.map(point=>({...point})),
-      timeSignatureChanges: this.timeSignatureChanges.map(point=>({...point})),
-      markers: this.markers.map(marker=>({...marker})),
-      loopRange: {...this.loopRange},
+      tempoChanges: this.tempoChanges.map(point => ({ ...point })),
+      timeSignatureChanges: this.timeSignatureChanges.map(point => ({ ...point })),
+      markers: this.markers.map(marker => ({ ...marker })),
+      loopRange: { ...this.loopRange },
       followPlayhead: this.followPlayhead,
       zoomBarWidth: this.zoomBarWidth,
       playheadBar: this.playheadBar,
@@ -473,26 +498,70 @@ const StudioMultitrackWorkspace = {
       deletedItems: this.deletedItems,
       tracks: this.tracks.map(track => ({
         ...track,
-        clips: (track.clips || []).filter(clip => clip.blob instanceof Blob && clip.blob.size > 0).map(clip => ({
-          ...clip,
-          objectUrl: undefined
-        }))
+        clips: (track.clips || []).filter(clip => clip.blob instanceof Blob && clip.blob.size > 0).map(clip => ({ ...clip, objectUrl: undefined }))
       }))
     };
+  },
+
+  async saveSession(projectId, projectName = this.activeProjectName, { createVersion = true } = {}) {
+    if (this.isTrackRecording() || this.pendingRecording) throw new Error("Stop the active or scheduled recording before saving the song session.");
+    if (!projectId) throw new Error("A project ID is required before saving.");
+    const session = this.createSessionSnapshot(projectName);
+    const previous = createVersion ? await StudioDAWSessionStore.load(projectId) : null;
+    if (createVersion && previous) await StudioDAWSessionStore.saveVersion(projectId, previous, "Before manual save");
     await StudioDAWSessionStore.save(projectId, session);
+    if (createVersion) await StudioDAWSessionStore.saveVersion(projectId, session, "Manual save");
+    await StudioDAWSessionStore.clearRecovery(projectId);
     this.activeProjectId = projectId;
     this.activeProjectName = session.projectName;
+    this.dirty = false;
+    this.saveState = "saved";
+    clearTimeout(this.autosaveTimer);
+    this.status("Saved · " + this.activeProjectName + ".");
     return true;
   },
 
+  async listSessionVersions(projectId = this.activeProjectId) {
+    return projectId ? StudioDAWSessionStore.listVersions(projectId) : [];
+  },
+
+  async restoreSessionVersion(versionId) {
+    const record = await StudioDAWSessionStore.loadVersion(versionId);
+    if (!record?.session) throw new Error("The selected session version is unavailable.");
+    this.importSession(record.session);
+    this.activeProjectId = record.projectId;
+    this.activeProjectName = record.projectName || record.session.projectName || "Untitled Song";
+    this.dirty = true;
+    this.scheduleProjectAutosave();
+    this.status("Version restored · " + record.label + ".");
+    return true;
+  },
+
+  async recoverUnsavedSession() {
+    const projectId = this.activeProjectId;
+    if (!projectId) return false;
+    const recovery = await StudioDAWSessionStore.loadRecovery(projectId);
+    if (!recovery || recovery.format !== "lambo-city-daw-session" || !Array.isArray(recovery.tracks)) return false;
+    const saved = await StudioDAWSessionStore.load(projectId);
+    if (saved?.updatedAt && recovery.updatedAt && saved.updatedAt >= recovery.updatedAt) {
+      await StudioDAWSessionStore.clearRecovery(projectId);
+      return false;
+    }
+    this.importSession(recovery);
+    this.activeProjectId = projectId;
+    this.activeProjectName = recovery.projectName || "Recovered Song";
+    this.dirty = true;
+    this.saveState = "pending";
+    this.scheduleProjectAutosave();
+    this.status("Recovered unsaved work · saving checkpoint.");
+    return true;
+  },
   async loadSession(projectId) {
     if (this.isTrackRecording()) {
       throw new Error("Stop the active track recording before loading another song session.");
     }
     const session = await StudioDAWSessionStore.load(projectId);
-    if (!session || session.format !== "lambo-city-daw-session" || session.version !== 1 || !Array.isArray(session.tracks)) {
-      return false;
-    }
+    if (!this.validateSessionData(session)) throw new Error("Saved session failed validation and was not opened.");
     this.stopAll();
     this.tempo = Math.max(60, Math.min(180, Number(session.tempo) || 100));
     this.timeSignature = /^(2|3|4|5|6|7|8|9|12)\/(2|4|8|16)$/.test(session.timeSignature) ? session.timeSignature : "4/4";
@@ -523,8 +592,26 @@ const StudioMultitrackWorkspace = {
     this.selectedClipId = null;
     this.selectedRegionIds = [];
     this.render();
+    this.dirty = false;
+    this.saveState = "saved";
     this.status("Saved song session restored with " + this.tracks.length + " track(s).");
     return true;
+  },
+
+  validateSessionData(session) {
+    if (!session || session.format !== "lambo-city-daw-session" || session.version !== 1 || !Array.isArray(session.tracks) || session.tracks.length > 64) return false;
+    const trackIds = new Set();
+    const clipIds = new Set();
+    for (const track of session.tracks) {
+      if (!track || typeof track.id !== "string" || !track.id || trackIds.has(track.id) || !Array.isArray(track.clips) || track.clips.length > 512) return false;
+      trackIds.add(track.id);
+      for (const clip of track.clips) {
+        if (!clip || typeof clip.id !== "string" || !clip.id || clipIds.has(clip.id) || !Number.isFinite(Number(clip.startBar)) || Number(clip.startBar) < 1 || Number(clip.startBar) > 128 || !Number.isFinite(Number(clip.lengthBars)) || Number(clip.lengthBars) <= 0) return false;
+        clipIds.add(clip.id);
+        if (clip.blob !== undefined && !(clip.blob instanceof Blob)) return false;
+      }
+    }
+    return Number.isFinite(Number(session.tempo)) && Number(session.tempo) >= 20 && Number(session.tempo) <= 300;
   },
 
   async removeSavedSession(projectId) {
@@ -542,6 +629,8 @@ const StudioMultitrackWorkspace = {
     this.sessionTemplateName = null;
     this.tracks = [];
     this.deletedItems = [];
+    this.dirty = true;
+    this.saveState = "pending";
     this.selectedClipId = null;
     this.selectedTrackId = null;
     this.nextTrackId = 1;
