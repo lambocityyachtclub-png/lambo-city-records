@@ -64,6 +64,8 @@ const StudioMultitrackWorkspace = {
   selectedTrackId: null,
   zoomBarWidth: 72,
   playheadBar: 1,
+  snapMode: "bars",
+  slipMode: false,
   undoStack: [],
   redoStack: [],
   deletedItems: [],
@@ -336,6 +338,7 @@ const StudioMultitrackWorkspace = {
       tempo: this.tempo,
       zoomBarWidth: this.zoomBarWidth,
       playheadBar: this.playheadBar,
+      snapMode: this.snapMode,
       templateId: this.sessionTemplateId,
       templateName: this.sessionTemplateName,
       deletedItems: this.deletedItems,
@@ -365,6 +368,7 @@ const StudioMultitrackWorkspace = {
     this.tempo = Math.max(60, Math.min(180, Number(session.tempo) || 100));
     this.zoomBarWidth = Math.max(24, Math.min(288, Number(session.zoomBarWidth) || 72));
     this.playheadBar = Math.max(1, Math.min(128, Number(session.playheadBar) || 1));
+    this.snapMode = ["bars", "beats", "subdivisions", "seconds", "off"].includes(session.snapMode) ? session.snapMode : "bars";
     this.sessionTemplateId = session.templateId || null;
     this.sessionTemplateName = session.templateName || null;
     this.activeProjectId = session.projectId || projectId;
@@ -431,6 +435,9 @@ const StudioMultitrackWorkspace = {
           duration: Number(clip.duration) || 0,
           sourceOffsetSeconds: Number(clip.sourceOffsetSeconds) || 0,
           playDurationSeconds: Number(clip.playDurationSeconds) || 0,
+          clipGainDb: Math.max(-24, Math.min(12, Number(clip.clipGainDb) || 0)),
+          fadeInSeconds: Math.max(0, Number(clip.fadeInSeconds) || 0),
+          fadeOutSeconds: Math.max(0, Number(clip.fadeOutSeconds) || 0),
           mimeType: clip.blob.type || "application/octet-stream",
           data: await encodeAudioBlob(clip.blob),
           takeId: clip.takeId || null,
