@@ -82,7 +82,8 @@ const StudioMultitrackWorkspace = {
         clips: (track.clips || []).map(clip => ({ ...clip }))
       })),
       nextTrackId: this.nextTrackId,
-      tempo: this.tempo
+      tempo: this.tempo,
+      deletedItems: this.deletedItems.map(entry => ({ ...entry }))
     };
   },
 
@@ -112,6 +113,7 @@ const StudioMultitrackWorkspace = {
     }));
     this.nextTrackId = snapshot.nextTrackId;
     this.tempo = snapshot.tempo;
+    this.deletedItems = (snapshot.deletedItems || []).map(entry => ({ ...entry }));
     this.render();
   },
 
@@ -202,9 +204,10 @@ const StudioMultitrackWorkspace = {
   },
 
   restoreLastDeleted() {
-    const deleted = this.deletedItems.pop();
+    const deleted = this.deletedItems[this.deletedItems.length - 1];
     if (!deleted) return false;
     this.recordHistory("Restore deleted item");
+    this.deletedItems.pop();
     if (deleted.type === "clip") {
       const track = this.tracks.find(item => item.id === deleted.trackId);
       if (track) track.clips.push(deleted.item);
@@ -451,6 +454,7 @@ const StudioMultitrackWorkspace = {
     return {
       format: "lambo-city-daw-session",
       version: 1,
+      projectName: this.activeProjectName || "Untitled Song",
       tempo: this.tempo,
       templateId: this.sessionTemplateId,
       templateName: this.sessionTemplateName,
@@ -1026,6 +1030,7 @@ const StudioMultitrackWorkspace = {
     if (!audioFiles.length) return;
 
     try {
+      this.recordHistory("Import audio files");
       const context = await StudioAudioEngine.resume();
       for (const file of audioFiles) {
         const bytes = await file.arrayBuffer();
@@ -1055,6 +1060,7 @@ const StudioMultitrackWorkspace = {
     const track = this.tracks.find(item => item.id === id);
 
     if (!track) return;
+    this.recordHistory("Add audio region");
 
     track.clips.push({
       id: `${id}-clip-${track.clips.length + 1}`,
@@ -1096,6 +1102,7 @@ const StudioMultitrackWorkspace = {
       }
     ];
 
+    this.recordHistory("Add recorded takes");
     recordings.forEach(recording => {
       let track = this.tracks.find(
         item => item.name === recording.trackName
