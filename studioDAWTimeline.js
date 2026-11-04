@@ -7,7 +7,7 @@ import StudioAudioEngine from "./studioAudioEngine.js";
 const TOTAL_BARS = 128;
 const decodedWaveforms = new WeakMap();
 
-function getSnapStep(mode, bar, tempo, timeSignatureChanges = [], timeSignature = "4/4") {
+function getSnapStep(mode, bar, tempo, tempoChanges = [], timeSignatureChanges = [], timeSignature = "4/4") {
   if (mode === "off") return .001;
   const point=[...timeSignatureChanges].filter(item=>Number(item.bar)<=Number(bar)).sort((x,y)=>x.bar-y.bar).pop();
   const fallback=String(timeSignature||"4/4").split("/");
@@ -15,13 +15,13 @@ function getSnapStep(mode, bar, tempo, timeSignatureChanges = [], timeSignature 
   const denominator=Number(point?.denominator)||Number(fallback[1])||4;
   if(mode==="beats")return 1/numerator;
   if(mode==="subdivisions")return denominator/(16*numerator);
-  if(mode==="seconds"){const secondsPerBar=60/(Number(tempo)||100)*numerator*(4/denominator);return .1/secondsPerBar;}
+  if(mode==="seconds"){const tempoPoint=[...tempoChanges].filter(item=>Number(item.bar)<=Number(bar)).sort((x,y)=>x.bar-y.bar).pop();const activeTempo=Number(tempoPoint?.bpm)||Number(tempo)||100;const secondsPerBar=60/activeTempo*numerator*(4/denominator);return .1/secondsPerBar;}
   return 1;
 }
 
-function snapBar(value, mode, tempo, timeSignatureChanges = [], timeSignature = "4/4") {
+function snapBar(value, mode, tempo, tempoChanges = [], timeSignatureChanges = [], timeSignature = "4/4") {
   if (mode === "off") return Math.round(value * 1000) / 1000;
-  const step=getSnapStep(mode,value,tempo,timeSignatureChanges,timeSignature);
+  const step=getSnapStep(mode,value,tempo,tempoChanges,timeSignatureChanges,timeSignature);
   return Math.round(value / step) * step;
 }
 
@@ -134,7 +134,7 @@ export function renderStudioDAWTimeline({
   for (let bar=1; bar<=TOTAL_BARS; bar+=1) {
     const mark=document.createElement("button"); mark.type="button"; mark.textContent=String(bar).padStart(2,"0");
     if (Number(playheadBar)===bar) mark.classList.add("active");
-    mark.addEventListener("pointerdown",event=>{const fraction=Math.max(0,Math.min(.999,(event.clientX-mark.getBoundingClientRect().left)/width));onPlayheadChange(snapBar(bar+fraction,snapMode,tempo,timeSignatureChanges,timeSignature));});
+    mark.addEventListener("pointerdown",event=>{const fraction=Math.max(0,Math.min(.999,(event.clientX-mark.getBoundingClientRect().left)/width));onPlayheadChange(snapBar(bar+fraction,snapMode,tempo,tempoChanges,timeSignatureChanges,timeSignature));});
     ruler.appendChild(mark);
   }
   markers.forEach(marker=>{const tag=document.createElement("button");tag.type="button";tag.className="lc-arrangement-marker";tag.textContent=marker.name;tag.title=marker.name+" · bar "+marker.bar;tag.style.left=((Number(marker.bar)-1)*width)+"px";tag.addEventListener("click",()=>onPlayheadChange(Number(marker.bar)));ruler.appendChild(tag);});
@@ -171,7 +171,7 @@ export function renderStudioDAWTimeline({
       title.setPointerCapture(event.pointerId);
       const move=e=>{
         const raw=(e.clientX-startX)/width;
-        const step=getSnapStep(snapMode,originalBar,tempo,timeSignatureChanges,timeSignature);
+        const step=getSnapStep(snapMode,originalBar,tempo,tempoChanges,timeSignatureChanges,timeSignature);
         const delta=Math.round(raw/step)*step;
         if(Math.abs(e.clientX-startX)<2)return;
         if(slipMode&&sourceDuration>0){
@@ -213,7 +213,7 @@ export function renderStudioDAWTimeline({
         handle.setPointerCapture(event.pointerId);
         const move=e=>{
           const rawDelta=(e.clientX-startX)/width;
-          const resizeStep=getSnapStep(snapMode,originalStart,tempo,timeSignatureChanges,timeSignature);
+          const resizeStep=getSnapStep(snapMode,originalStart,tempo,tempoChanges,timeSignatureChanges,timeSignature);
           const delta=snapMode==="off"?Math.round(rawDelta*1000)/1000:Math.round(rawDelta/resizeStep)*resizeStep;
           if(edge==="right"){
             const next=Math.max(.0625,Math.min(TOTAL_BARS-clip.startBar+1,originalLength+delta));
