@@ -25,6 +25,8 @@ const session = {
   format: "lambo-city-daw-session",
   version: 1,
   tempo: 112,
+  templateId: "hard-tuned-melodic",
+  templateName: "Hard-Tuned Melodic",
   tracks: [{
     id: "lc-track-1",
     name: "Vocals",
@@ -57,6 +59,8 @@ const project = { ...baseProject(), dawSession: session };
 const imported = importSongProjectPackage(exportSongProjectPackage(project));
 assert.deepEqual(imported.dawSession, session);
 assert.equal(imported.dawSession.tracks[0].clips[0].data, "AQIDBA==");
+assert.equal(imported.dawSession.templateId, "hard-tuned-melodic");
+assert.equal(imported.dawSession.templateName, "Hard-Tuned Melodic");
 assert.equal(imported.dawSession.tracks[0].inputSource, "mic");
 assert.equal(imported.dawSession.tracks[0].eq.mid, 2);
 assert.equal(imported.dawSession.tracks[0].compression.ratio, 2.5);
