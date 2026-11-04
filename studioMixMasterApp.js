@@ -312,7 +312,7 @@ export function createStudioMixMasterApp({ beatLab, workspace } = {}) {
   };
 
   renderTracks();
-  root.addEventListener("click", event => {
+  root.addEventListener("click", async event => {
     const addPoint = event.target.closest("[data-add-volume-point]");
     if (addPoint) {
       const track = StudioMultitrackWorkspace.tracks.find(item => item.id === addPoint.dataset.addVolumePoint);
