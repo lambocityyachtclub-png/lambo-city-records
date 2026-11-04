@@ -388,7 +388,6 @@ export function createStudioDAWArrangementPlayback({
             const at = startTime + Math.max(0, scheduleStartSeconds - cursorSeconds);
             envelope.gain.setValueAtTime(0.0001, at);
             envelope.gain.linearRampToValueAtTime(Math.max(0.0001, velocity * 0.22), at + Math.min(0.012, duration / 4));
-            envelope.gain.setValueAtTime(Math.max(0.0001, velocity * 0.22), Math.max(at + 0.013, at + duration - 0.025));
             envelope.gain.linearRampToValueAtTime(0.0001, at + duration);
             oscillator.connect(envelope);
             envelope.connect(channel.gain);
