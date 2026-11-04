@@ -60,6 +60,172 @@ const StudioMultitrackWorkspace = {
   sessionTemplateId: null,
   sessionTemplateName: null,
   arrangementPlayback: null,
+  selectedClipId: null,
+  selectedTrackId: null,
+  zoomBarWidth: 72,
+  playheadBar: 1,
+  undoStack: [],
+  redoStack: [],
+  deletedItems: [],
+  activeProjectId: null,
+  activeProjectName: "Untitled Song",
+  autosaveTimer: null,
+
+  captureSnapshot() {
+    return {
+      tracks: this.tracks.map(track => ({
+        ...track,
+        eq: { ...(track.eq || {}) },
+        compression: { ...(track.compression || {}) },
+        effects: { ...(track.effects || {}), pitchCorrection: { ...(track.effects?.pitchCorrection || {}) } },
+        automation: { volume: (track.automation?.volume || []).map(point => ({ ...point })) },
+        clips: (track.clips || []).map(clip => ({ ...clip }))
+      })),
+      nextTrackId: this.nextTrackId,
+      tempo: this.tempo
+    };
+  },
+
+  recordHistory(label = "Edit") {
+    this.undoStack.push({ label, snapshot: this.captureSnapshot() });
+    if (this.undoStack.length > 80) this.undoStack.shift();
+    this.redoStack = [];
+    if (this.activeProjectId) {
+      clearTimeout(this.autosaveTimer);
+      this.autosaveTimer = setTimeout(() => {
+        this.saveSession(this.activeProjectId, this.activeProjectName)
+          .then(() => this.status("Auto-saved " + this.activeProjectName + "."))
+          .catch(error => this.status("AUTO-SAVE ERROR: " + (error?.message || error)));
+      }, 900);
+    }
+  },
+
+  restoreSnapshot(snapshot) {
+    this.stopAll();
+    this.tracks = snapshot.tracks.map(track => ({
+      ...track,
+      eq: { ...(track.eq || {}) },
+      compression: { ...(track.compression || {}) },
+      effects: { ...(track.effects || {}), pitchCorrection: { ...(track.effects?.pitchCorrection || {}) } },
+      automation: { volume: (track.automation?.volume || []).map(point => ({ ...point })) },
+      clips: (track.clips || []).map(clip => ({ ...clip }))
+    }));
+    this.nextTrackId = snapshot.nextTrackId;
+    this.tempo = snapshot.tempo;
+    this.render();
+  },
+
+  undo() {
+    const entry = this.undoStack.pop();
+    if (!entry) return false;
+    this.redoStack.push({ label: entry.label, snapshot: this.captureSnapshot() });
+    this.restoreSnapshot(entry.snapshot);
+    this.status("Undo · " + entry.label);
+    return true;
+  },
+
+  redo() {
+    const entry = this.redoStack.pop();
+    if (!entry) return false;
+    this.undoStack.push({ label: entry.label, snapshot: this.captureSnapshot() });
+    this.restoreSnapshot(entry.snapshot);
+    this.status("Redo · " + entry.label);
+    return true;
+  },
+
+  setZoom(value) {
+    this.zoomBarWidth = Math.max(24, Math.min(288, Number(value) || 72));
+    this.render();
+    this.status("Timeline zoom · " + Math.round(this.zoomBarWidth / 72 * 100) + "%.");
+  },
+
+  fitTimeline() {
+    const ends = this.tracks.flatMap(track => (track.clips || []).map(clip => clip.startBar + clip.lengthBars - 1));
+    const bars = Math.max(8, Math.min(128, Math.ceil(Math.max(8, ...ends))));
+    const width = this.root?.querySelector("[data-track-list]")?.clientWidth || 720;
+    this.zoomBarWidth = Math.max(24, Math.min(288, Math.floor((width - 24) / bars)));
+    this.render();
+    this.status("Fit arrangement · " + bars + " bars.");
+  },
+
+  selectClip(trackId, clip) {
+    this.selectedTrackId = trackId;
+    this.selectedClipId = clip?.id || null;
+    this.root?.querySelectorAll(".lc-arrangement-clip").forEach(node => {
+      node.classList.toggle("selected", node.dataset.clipId === this.selectedClipId);
+    });
+  },
+
+  deleteSelectedClip() {
+    const track = this.tracks.find(item => item.id === this.selectedTrackId);
+    const index = track?.clips?.findIndex(clip => clip.id === this.selectedClipId) ?? -1;
+    if (!track || index < 0) return false;
+    this.recordHistory("Delete audio region");
+    const [clip] = track.clips.splice(index, 1);
+    this.deletedItems.push({ type: "clip", trackId: track.id, item: clip });
+    this.selectedClipId = null;
+    this.render();
+    this.status("Region moved to session trash. Undo or restore it if needed.");
+    return true;
+  },
+
+  splitSelectedClip() {
+    const track = this.tracks.find(item => item.id === this.selectedTrackId);
+    const clip = track?.clips?.find(item => item.id === this.selectedClipId);
+    const splitBar = Number(this.playheadBar);
+    if (!track || !clip || splitBar <= clip.startBar || splitBar >= clip.startBar + clip.lengthBars) {
+      this.status("Place the edit cursor inside the selected region to split it.");
+      return false;
+    }
+    this.recordHistory("Split audio region");
+    const leftBars = splitBar - clip.startBar;
+    const ratio = leftBars / clip.lengthBars;
+    const totalDuration = Number(clip.playDurationSeconds || clip.duration || 0);
+    const leftDuration = totalDuration > 0 ? totalDuration * ratio : 0;
+    const right = {
+      ...clip,
+      id: "lc-clip-" + Date.now() + "-" + Math.floor(Math.random() * 100000),
+      name: (clip.name || "Audio Clip") + " · B",
+      startBar: splitBar,
+      lengthBars: clip.lengthBars - leftBars,
+      sourceOffsetSeconds: (Number(clip.sourceOffsetSeconds) || 0) + leftDuration,
+      playDurationSeconds: totalDuration > 0 ? totalDuration - leftDuration : undefined
+    };
+    clip.name = (clip.name || "Audio Clip") + " · A";
+    clip.lengthBars = leftBars;
+    if (totalDuration > 0) clip.playDurationSeconds = leftDuration;
+    track.clips.splice(track.clips.indexOf(clip) + 1, 0, right);
+    this.selectedClipId = right.id;
+    this.render();
+    this.status("Audio region split at bar " + splitBar + ".");
+    return true;
+  },
+
+  restoreLastDeleted() {
+    const deleted = this.deletedItems.pop();
+    if (!deleted) return false;
+    this.recordHistory("Restore deleted item");
+    if (deleted.type === "clip") {
+      const track = this.tracks.find(item => item.id === deleted.trackId);
+      if (track) track.clips.push(deleted.item);
+      else this.deletedItems.push(deleted);
+    } else if (deleted.type === "track") {
+      this.tracks.splice(Math.min(deleted.index, this.tracks.length), 0, deleted.item);
+    }
+    this.render();
+    this.status("Restored deleted " + deleted.type + ".");
+    return true;
+  },
+
+  scheduleProjectAutosave() {
+    if (!this.activeProjectId) return;
+    clearTimeout(this.autosaveTimer);
+    this.autosaveTimer = setTimeout(() => {
+      this.saveSession(this.activeProjectId, this.activeProjectName)
+        .then(() => this.status("Auto-saved " + this.activeProjectName + "."))
+        .catch(error => this.status("AUTO-SAVE ERROR: " + (error?.message || error)));
+    }, 900);
+  },
 
   setTempo(value) {
     const bpm = Number(value);
@@ -127,13 +293,19 @@ const StudioMultitrackWorkspace = {
     return track;
   },
 
-  async saveSession(projectId) {
+  async listSavedSessions() {
+    return StudioDAWSessionStore.list();
+  },
+
+  async saveSession(projectId, projectName = this.activeProjectName) {
     if (this.isTrackRecording()) {
       throw new Error("Stop the active track recording before saving the song session.");
     }
     const session = {
       format: "lambo-city-daw-session",
       version: 1,
+      projectName: String(projectName || "Untitled Song").trim() || "Untitled Song",
+      updatedAt: new Date().toISOString(),
       tempo: this.tempo,
       templateId: this.sessionTemplateId,
       templateName: this.sessionTemplateName,
@@ -146,6 +318,8 @@ const StudioMultitrackWorkspace = {
       }))
     };
     await StudioDAWSessionStore.save(projectId, session);
+    this.activeProjectId = projectId;
+    this.activeProjectName = session.projectName;
     return true;
   },
 
@@ -161,12 +335,16 @@ const StudioMultitrackWorkspace = {
     this.tempo = Math.max(60, Math.min(180, Number(session.tempo) || 100));
     this.sessionTemplateId = session.templateId || null;
     this.sessionTemplateName = session.templateName || null;
+    this.activeProjectName = session.projectName || "Untitled Song";
     this.tracks = session.tracks.map(track => ({
       ...track,
       clips: (track.clips || []).map(clip => ({ ...clip }))
     }));
     const ids = this.tracks.map(track => Number(track.id.match(/(\d+)$/)?.[1]) || 0);
     this.nextTrackId = Math.max(0, ...ids) + 1;
+    this.undoStack = [];
+    this.redoStack = [];
+    this.selectedClipId = null;
     this.render();
     this.status("Saved song session restored with " + this.tracks.length + " track(s).");
     return true;
@@ -351,10 +529,12 @@ const StudioMultitrackWorkspace = {
     if (index === -1) return;
 
     const track = this.tracks[index];
+    this.recordHistory("Delete track");
     this.tracks.splice(index, 1);
+    this.deletedItems.push({ type: "track", index, item: track });
 
     this.render();
-    this.status(`${track.name} deleted.`);
+    this.status(track.name + " moved to session trash.");
   },
 
   renameTrack(id, name) {
@@ -364,6 +544,7 @@ const StudioMultitrackWorkspace = {
 
     if (!track || !name.trim()) return;
 
+    this.recordHistory("Rename track");
     track.name = name.trim();
     this.render();
     this.status("Track renamed.");
@@ -597,6 +778,16 @@ const StudioMultitrackWorkspace = {
         <input type="file" data-audio-files accept="audio/*,.wav,.mp3,.m4a,.aac,.ogg,.webm" multiple hidden>
       </div>
 
+      <div class="lc-edit-toolbar" style="display:flex;flex-wrap:wrap;gap:7px;align-items:center;margin:0 0 14px">
+        <button type="button" data-edit-action="undo">↶ UNDO</button>
+        <button type="button" data-edit-action="redo">↷ REDO</button>
+        <button type="button" data-edit-action="zoom-out">− ZOOM</button>
+        <button type="button" data-edit-action="zoom-in">＋ ZOOM</button>
+        <button type="button" data-edit-action="fit">FIT SONG</button>
+        <button type="button" data-edit-action="split">SPLIT AT CURSOR</button>
+        <button type="button" data-edit-action="delete-clip">DELETE REGION</button>
+        <button type="button" data-edit-action="restore">RESTORE LAST DELETED</button>
+      </div>
       <div data-track-list></div>
 
       <div class="lc-status" data-status role="status">
@@ -612,9 +803,23 @@ const StudioMultitrackWorkspace = {
 
       if (!button || !root.contains(button)) return;
 
+      const editAction = button.dataset.editAction;
+      if (editAction) {
+        if (editAction === "undo") this.undo();
+        if (editAction === "redo") this.redo();
+        if (editAction === "zoom-in") this.setZoom(this.zoomBarWidth * 1.35);
+        if (editAction === "zoom-out") this.setZoom(this.zoomBarWidth / 1.35);
+        if (editAction === "fit") this.fitTimeline();
+        if (editAction === "split") this.splitSelectedClip();
+        if (editAction === "delete-clip") this.deleteSelectedClip();
+        if (editAction === "restore") this.restoreLastDeleted();
+        return;
+      }
+
       const action = button.dataset.action;
 
       if (action === "add-track") {
+        this.recordHistory("Add track");
         const name = root.querySelector("[data-new-name]").value;
         const type = root.querySelector("[data-new-type]").value;
 
@@ -650,7 +855,7 @@ const StudioMultitrackWorkspace = {
       const control = button.dataset.control;
 
       if (control === "delete") {
-        this.removeTrack(id);
+        if (window.confirm("Move track “" + track.name + "” and its regions to session trash?")) this.removeTrack(id);
       }
 
       if (control === "rename") {
@@ -665,6 +870,7 @@ const StudioMultitrackWorkspace = {
       }
 
       if (control === "mute") {
+        this.recordHistory("Toggle mute");
         track.muted = !track.muted;
         this.arrangementPlayback?.syncTrackState(this.tracks);
         this.render();
@@ -672,6 +878,7 @@ const StudioMultitrackWorkspace = {
       }
 
       if (control === "solo") {
+        this.recordHistory("Toggle solo");
         track.solo = !track.solo;
         this.arrangementPlayback?.syncTrackState(this.tracks);
         this.render();
@@ -679,6 +886,7 @@ const StudioMultitrackWorkspace = {
       }
 
       if (control === "arm") {
+        this.recordHistory("Toggle record arm");
         track.armed = !track.armed;
         this.render();
         this.status(`${track.name} record arm ${track.armed ? "on" : "off"}.`);
@@ -703,10 +911,21 @@ const StudioMultitrackWorkspace = {
       if (!track) return;
 
       if (event.target.matches("[data-volume]")) {
+        if (event.target.dataset.historyValue !== event.target.value) {
+          if (event.type === "input" && !event.target.dataset.historyStarted) {
+            this.recordHistory("Track volume");
+            event.target.dataset.historyStarted = "1";
+          }
+          event.target.dataset.historyValue = event.target.value;
+        }
         track.volume = Number(event.target.value);
         row.querySelector("[data-volume-label]").textContent = `${track.volume}%`;
         this.arrangementPlayback?.setTrackVolume(track.id, track.volume);
       } else {
+        if (event.type === "input" && !event.target.dataset.historyStarted) {
+          this.recordHistory("Track pan");
+          event.target.dataset.historyStarted = "1";
+        }
         track.pan = Number(event.target.value) / 100;
         const label = row.querySelector("[data-pan-label]");
         if (label) label.textContent = track.pan === 0
