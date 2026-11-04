@@ -55,7 +55,6 @@ const StudioDAWSessionStore = {
       request.onerror = () => reject(request.error || new Error("Could not load the saved studio session."));
     });
     await transactionComplete(transaction);
-    if (record) delete record.projectId;
     return record;
   },
 
