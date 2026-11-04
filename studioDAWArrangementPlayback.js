@@ -293,9 +293,28 @@ export function createStudioDAWArrangementPlayback({
           if (remainingDuration <= 0.001) return;
 
           const source = context.createBufferSource();
+          const clipGain = context.createGain();
           source.buffer = buffer;
-          source.connect(channel.gain);
+          const gainDb = Math.max(-24, Math.min(12, Number(clip.clipGainDb) || 0));
+          const linearGain = Math.pow(10, gainDb / 20);
+          const fadeIn = Math.max(0, Math.min(remainingDuration, Number(clip.fadeInSeconds) || 0));
+          const fadeOut = Math.max(0, Math.min(remainingDuration, Number(clip.fadeOutSeconds) || 0));
+          const clipStartTime = startTime + timelineDelay;
+          const clipEndTime = clipStartTime + remainingDuration;
+          clipGain.gain.setValueAtTime(linearGain, clipStartTime);
+          if (fadeIn > 0) {
+            clipGain.gain.setValueAtTime(0, clipStartTime);
+            clipGain.gain.linearRampToValueAtTime(linearGain, clipStartTime + fadeIn);
+          }
+          if (fadeOut > 0) {
+            const fadeStart = Math.max(clipStartTime, clipEndTime - fadeOut);
+            clipGain.gain.setValueAtTime(linearGain, fadeStart);
+            clipGain.gain.linearRampToValueAtTime(0, clipEndTime);
+          }
+          source.connect(clipGain);
+          clipGain.connect(channel.gain);
           source.onended = () => {
+            try { clipGain.disconnect(); } catch {} 
             try { source.disconnect(); } catch {}
             if (runId !== this.runId) return;
             this.sources = this.sources.filter(item => item.source !== source);
@@ -306,7 +325,7 @@ export function createStudioDAWArrangementPlayback({
             }
           };
           this.sources.push({ source, trackId: track.id });
-          source.start(startTime + timelineDelay, sourceOffset, remainingDuration);
+          source.start(clipStartTime, sourceOffset, remainingDuration);
         });
 
         this.playing = this.sources.length > 0;
