@@ -59,17 +59,19 @@ const StudioDAWSessionStore = {
     if (typeof projectId !== "string" || !projectId.trim()) return null;
     const database = await openDatabase();
     const transaction = database.transaction(STORE_NAME, "readonly");
+    const complete = transactionComplete(transaction);
     const request = transaction.objectStore(STORE_NAME).get(projectId);
     const record = await requestResult(request, "Could not load the saved studio session.");
-    await transactionComplete(transaction);
+    await complete;
     return record;
   },
 
   async list() {
     const database = await openDatabase();
     const transaction = database.transaction(STORE_NAME, "readonly");
+    const complete = transactionComplete(transaction);
     const records = await requestResult(transaction.objectStore(STORE_NAME).getAll(), "Could not list saved studio sessions.");
-    await transactionComplete(transaction);
+    await complete;
     return (records || []).map(record => ({
       projectId: record.projectId,
       projectName: record.projectName || "Untitled Song",
@@ -87,12 +89,27 @@ const StudioDAWSessionStore = {
     return true;
   },
 
+  async listRecovery() {
+    const database = await openDatabase();
+    const transaction = database.transaction(RECOVERY_STORE, "readonly");
+    const complete = transactionComplete(transaction);
+    const records = await requestResult(transaction.objectStore(RECOVERY_STORE).getAll(), "Could not scan recovery checkpoints.");
+    await complete;
+    return (records || []).map(record => ({
+      projectId: record.projectId,
+      projectName: record.projectName || "Untitled Song",
+      recoveryAt: record.recoveryAt || record.updatedAt || null,
+      trackCount: Array.isArray(record.tracks) ? record.tracks.length : 0
+    })).sort((a, b) => String(b.recoveryAt || "").localeCompare(String(a.recoveryAt || "")));
+  },
+
   async loadRecovery(projectId) {
     if (!projectId) return null;
     const database = await openDatabase();
     const transaction = database.transaction(RECOVERY_STORE, "readonly");
+    const complete = transactionComplete(transaction);
     const record = await requestResult(transaction.objectStore(RECOVERY_STORE).get(projectId), "Could not read the recovery checkpoint.");
-    await transactionComplete(transaction);
+    await complete;
     return record;
   },
 
@@ -121,9 +138,10 @@ const StudioDAWSessionStore = {
   async listVersions(projectId) {
     const database = await openDatabase();
     const transaction = database.transaction(VERSION_STORE, "readonly");
+    const complete = transactionComplete(transaction);
     const index = transaction.objectStore(VERSION_STORE).index("projectId");
     const records = await requestResult(index.getAll(projectId), "Could not list session versions.");
-    await transactionComplete(transaction);
+    await complete;
     return (records || []).map(({ versionId, projectName, label, createdAt }) => ({ versionId, projectName, label, createdAt }))
       .sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
   },
@@ -131,8 +149,9 @@ const StudioDAWSessionStore = {
   async loadVersion(versionId) {
     const database = await openDatabase();
     const transaction = database.transaction(VERSION_STORE, "readonly");
+    const complete = transactionComplete(transaction);
     const record = await requestResult(transaction.objectStore(VERSION_STORE).get(versionId), "Could not load the selected session version.");
-    await transactionComplete(transaction);
+    await complete;
     return record || null;
   },
 
