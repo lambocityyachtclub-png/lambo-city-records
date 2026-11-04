@@ -58,8 +58,6 @@ const last = detected.at(-1);
 assert.ok(Math.abs(last.detectedMidi - 66) < 0.35, "The detector should identify F-sharp 4.");
 assert.equal(last.correctedMidi, 65, "F-sharp should correct to F in C major.");
 assert.ok(last.confidence > 0.75, "The sustained tone should have strong pitch confidence.");
-const meanDetectedMidi = detected.reduce((sum, message) => sum + message.detectedMidi, 0) / detected.length;
-const meanTargetRatio = detected.reduce((sum, message) => sum + message.targetRatio, 0) / detected.length;
 assert.ok(peak > 0.1, "The processor should pass audible signal output.");
 let positiveCrossings = 0;
 for (let index = 1; index < renderedTail.length; index += 1) {
@@ -68,7 +66,7 @@ for (let index = 1; index < renderedTail.length; index += 1) {
 const renderedDuration = renderedTail.length / 44100;
 const correctedFrequency = positiveCrossings / renderedDuration;
 assert.ok(correctedFrequency > 330 && correctedFrequency < 365,
-  "Corrected output should move the sustained F-sharp toward F; measured " + correctedFrequency.toFixed(1) + " Hz (target ratio " + processor.targetRatio.toFixed(4) + ", active ratio " + processor.currentRatio.toFixed(4) + ", phase " + (processor.shifters[0].ratioSum / processor.shifters[0].calls).toFixed(4) + ", phase " + processor.shifters[0].phaseA.toFixed(4) + ", hasPitch " + processor.hasPitch + ", mean midi " + meanDetectedMidi.toFixed(3) + ", mean target " + meanTargetRatio.toFixed(4) + ", detections " + detected.length + ", active samples " + processor.pitchActiveSamples + ", enabled " + processor.settings.enabled + ").");
+  "Corrected output should move the sustained F-sharp toward F; measured " + correctedFrequency.toFixed(1) + " Hz.");
 
 processor.port.onmessage({ data: { enabled: false } });
 assert.equal(processor.settings.enabled, false, "The effect should support bypass updates.");
