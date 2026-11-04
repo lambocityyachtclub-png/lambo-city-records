@@ -59,6 +59,23 @@ const StudioDAWSessionStore = {
     return record;
   },
 
+  async list() {
+    const database = await openDatabase();
+    const transaction = database.transaction(STORE_NAME, "readonly");
+    const request = transaction.objectStore(STORE_NAME).getAll();
+    const records = await new Promise((resolve, reject) => {
+      request.onsuccess = () => resolve(request.result || []);
+      request.onerror = () => reject(request.error || new Error("Could not list saved studio sessions."));
+    });
+    await transactionComplete(transaction);
+    return records.map(record => ({
+      projectId: record.projectId,
+      projectName: record.projectName || "Untitled Song",
+      updatedAt: record.updatedAt || null,
+      trackCount: Array.isArray(record.tracks) ? record.tracks.length : 0
+    })).sort((a, b) => String(b.updatedAt || "").localeCompare(String(a.updatedAt || "")));
+  },
+
   async remove(projectId) {
     if (typeof projectId !== "string" || !projectId.trim()) return false;
     const database = await openDatabase();
