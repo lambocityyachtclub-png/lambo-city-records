@@ -454,7 +454,7 @@ const StudioDAWApp = {
 
       const editWorkspace = this.editPanel.mount();
       this.workspace.setPanel("edit", editWorkspace);
-      this.mixPanel = createMixPanel({
+      this.mixPanel = createStudioMixMasterApp({
         beatLab: Floor2StudioApp,
         workspace: this.workspace
       });
