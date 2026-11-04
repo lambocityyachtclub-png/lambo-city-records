@@ -625,6 +625,7 @@ const StudioMultitrackWorkspace = {
       if (track.midiNotes !== undefined && (!Array.isArray(track.midiNotes) || track.midiNotes.length > 4096 || !track.midiNotes.every(note => Number.isInteger(Number(note.pitch)) && Number(note.pitch) >= 0 && Number(note.pitch) <= 127 && Number.isFinite(Number(note.startBar)) && Number(note.startBar) >= 1 && Number(note.startBar) <= 128 && Number.isFinite(Number(note.lengthBars)) && Number(note.lengthBars) > 0 && Number(note.lengthBars) <= 16))) return false;
       if (track.sends !== undefined && (!Array.isArray(track.sends) || track.sends.length > 32 || !track.sends.every(send => typeof send.busId === "string" && Number.isFinite(Number(send.level)) && Number(send.level) >= 0 && Number(send.level) <= 100))) return false;
     }
+    if (session.masterSettings !== undefined && (!Number.isFinite(Number(session.masterSettings.volume)) || Number(session.masterSettings.volume) < 0 || Number(session.masterSettings.volume) > 100 || !Number.isFinite(Number(session.masterSettings.stereoWidth)) || Number(session.masterSettings.stereoWidth) < 0 || Number(session.masterSettings.stereoWidth) > 200 || !Number.isFinite(Number(session.masterSettings.compressionRatio)) || Number(session.masterSettings.compressionRatio) < 1 || Number(session.masterSettings.compressionRatio) > 8)) return false;
     return Number.isFinite(Number(session.tempo)) && Number(session.tempo) >= 20 && Number(session.tempo) <= 300;
   },
 
