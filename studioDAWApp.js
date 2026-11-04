@@ -19,9 +19,7 @@ import MPCInterface from "./mpc-interface.js";
 import StudioAudioEngine from "./studioAudioEngine.js";
 import StudioSoundKit from "./studioSoundKit.js";
 import StudioMultitrackWorkspace from "./studioMultitrackWorkspace.js";
-import {
-  createStudioDAWEditPanel
-} from "./studioDAWEditPanel.js";
+import { createStudioDAWEditScreen } from "./studioDAWEditScreen.js";
 import {
   createStudioDAWBeatLabPanel
 } from "./studioDAWBeatLabPanel.js";
@@ -308,7 +306,7 @@ const StudioDAWApp = {
   root: null,
   workspace: null,
    beatLabPanel: null,
-  editPanel: null,
+  editScreen: null,
   panelHost: null,
   handleOverlayClick: null,
   mixPanel: null,
@@ -454,23 +452,13 @@ const StudioDAWApp = {
 
       // Connect the existing Multitrack Workspace
       // to the modular DAW EDIT tab.
-      this.editPanel = createStudioDAWEditPanel({
+      // Dedicated LAMBO CITY Records arrangement screen.
+      // Uses the existing shared Multitrack Workspace and recording engine.
+      this.editScreen = createStudioDAWEditScreen({
         beatLab: Floor2StudioApp,
-        onSwitchToBeatLab: () => this.workspace?.setView("beatlab")
+        onExit: () => this.workspace?.setView("beatlab")
       });
-
-      const editWorkspace = this.editPanel.mount();
-      // Vocal capture is now a focused tool inside EDIT, not a separate destination.
-      const vocalTools = createVocalsPanel({ beatLab: Floor2StudioApp });
-      const vocalWorkflow = document.createElement("details");
-      vocalWorkflow.open = false;
-      vocalWorkflow.style.cssText = "margin-top:16px;padding:14px;border:1px solid #665438;border-radius:10px;background:linear-gradient(135deg,#191b21,#11141b);color:#f4f1eb";
-      const vocalSummary = document.createElement("summary");
-      vocalSummary.textContent = "VOCAL RECORDING · MICROPHONE / TAKES";
-      vocalSummary.style.cssText = "color:#e6bb69;font-size:11px;font-weight:800;letter-spacing:1.5px;cursor:pointer;padding:4px";
-      vocalWorkflow.append(vocalSummary, vocalTools);
-      editWorkspace.appendChild(vocalWorkflow);
-
+      const editWorkspace = this.editScreen.mount();
       this.workspace.setPanel("edit", editWorkspace);
       this.mixPanel = createStudioMixMasterApp({
         beatLab: Floor2StudioApp,
@@ -502,11 +490,10 @@ const StudioDAWApp = {
       );
     }
 
-       if (this.editPanel) {
-      this.editPanel.destroy();
+    if (this.editScreen) {
+      this.editScreen.destroy();
     }
-
-    this.editPanel = null;
+    this.editScreen = null;
 
     if (this.beatLabPanel) {
       this.beatLabPanel.destroy();
