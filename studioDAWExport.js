@@ -195,7 +195,7 @@ async function renderStudioSessionToAudioBuffer({
   mixTracks.forEach(track => (track.sends || []).forEach(send => {
     const source = effectsOutputs.get(track.id);
     const busGain = channels.get(send.busId);
-    if (!source || !busGain || track.id === send.busId) return;
+    if (!source || !busGain || track.id === send.busId || track.outputBusId === send.busId) return;
     const sendGain = offline.createGain();
     sendGain.gain.value = Math.max(0, Math.min(1, Number(send.level) || 0) / 100);
     source.connect(sendGain); sendGain.connect(busGain);
