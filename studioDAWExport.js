@@ -70,8 +70,17 @@ async function renderStudioSessionToAudioBuffer({
       const bytes = await clip.blob.arrayBuffer();
       const buffer = await liveContext.decodeAudioData(bytes.slice(0));
       const start = (Math.max(1, Number(clip.startBar) || 1) - 1) * secondsPerBar;
-      decoded.push({ track, buffer, start });
-      renderDuration = Math.max(renderDuration, start + buffer.duration);
+      const sourceOffset = Math.max(0, Math.min(buffer.duration, Number(clip.sourceOffsetSeconds) || 0));
+      const sourceAvailable = Math.max(0, buffer.duration - sourceOffset);
+      const sourceDuration = Math.max(0, Math.min(sourceAvailable, Number(clip.playDurationSeconds) > 0 ? Number(clip.playDurationSeconds) : sourceAvailable));
+      if (sourceDuration <= 0.001) continue;
+      decoded.push({
+        track, buffer, start, sourceOffset, sourceDuration,
+        clipGainDb: Math.max(-24, Math.min(12, Number(clip.clipGainDb) || 0)),
+        fadeInSeconds: Math.max(0, Number(clip.fadeInSeconds) || 0),
+        fadeOutSeconds: Math.max(0, Number(clip.fadeOutSeconds) || 0)
+      });
+      renderDuration = Math.max(renderDuration, start + sourceDuration);
     }
   }
 
@@ -154,11 +163,35 @@ async function renderStudioSessionToAudioBuffer({
     channels.set(track.id, gain);
   }
 
-  decoded.forEach(({ track, buffer, start }) => {
+  decoded.forEach(({ track, buffer, start, sourceOffset, sourceDuration, clipGainDb, fadeInSeconds, fadeOutSeconds }) => {
     const source = offline.createBufferSource();
+    const clipGain = offline.createGain();
     source.buffer = buffer;
-    source.connect(channels.get(track.id));
-    source.start(start);
+    const linearGain = Math.pow(10, clipGainDb / 20);
+    const fadeIn = Math.max(0, Math.min(sourceDuration, fadeInSeconds));
+    const fadeOut = Math.max(0, Math.min(sourceDuration, fadeOutSeconds));
+    const end = start + sourceDuration;
+    clipGain.gain.setValueAtTime(linearGain, start);
+    if (fadeIn > 0) {
+      const curve = new Float32Array(32);
+      for (let index = 0; index < curve.length; index += 1) {
+        curve[index] = linearGain * Math.sin((index / (curve.length - 1)) * Math.PI / 2);
+      }
+      clipGain.gain.setValueAtTime(0, start);
+      clipGain.gain.setValueCurveAtTime(curve, start, fadeIn);
+    }
+    if (fadeOut > 0) {
+      const curve = new Float32Array(32);
+      for (let index = 0; index < curve.length; index += 1) {
+        curve[index] = linearGain * Math.cos((index / (curve.length - 1)) * Math.PI / 2);
+      }
+      const fadeStart = Math.max(start, end - fadeOut);
+      clipGain.gain.setValueAtTime(linearGain, fadeStart);
+      clipGain.gain.setValueCurveAtTime(curve, fadeStart, end - fadeStart);
+    }
+    source.connect(clipGain);
+    clipGain.connect(channels.get(track.id));
+    source.start(start, sourceOffset, sourceDuration);
   });
 
   const rendered = await offline.startRendering();
