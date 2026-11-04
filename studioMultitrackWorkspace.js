@@ -209,6 +209,8 @@ const StudioMultitrackWorkspace = {
       takeProtected: false
     };
     compTrack.clips.push(compClip);
+    sourceTrack.muted = true;
+    this.arrangementPlayback?.syncTrackState(this.tracks);
     this.selectedTrackId = compTrack.id;
     this.selectedClipId = compClip.id;
     this.render();
