@@ -317,7 +317,7 @@ function validateProject(project) {
         requireId(clip.name, "DAW clip name is missing.");
         if (clipIds.has(clip.id) || typeof clip.data !== "string" ||
             !Number.isFinite(Number(clip.startBar)) || Number(clip.startBar) < 1 || Number(clip.startBar) > 128 ||
-            !Number.isFinite(Number(clip.lengthBars)) || Number(clip.lengthBars) < 1 || Number(clip.lengthBars) > 128 ||
+            !Number.isFinite(Number(clip.lengthBars)) || Number(clip.lengthBars) < 0.0625 || Number(clip.lengthBars) > 128 ||
             typeof clip.mimeType !== "string") {
           throw new Error("DAW audio clip data is invalid.");
         }
@@ -328,6 +328,11 @@ function validateProject(project) {
           throw new Error("DAW session audio exceeds the portable project size limit.");
         }
       }
+    }
+    const busIds = new Set(session.tracks.filter(track => track.type === "bus").map(track => track.id));
+    for (const track of session.tracks) {
+      if (track.outputBusId && (!busIds.has(track.outputBusId) || track.type === "bus")) throw new Error("A DAW track routes to a missing or invalid bus.");
+      if ((track.sends || []).some(send => !busIds.has(send.busId) || track.type === "bus")) throw new Error("A DAW send references a missing or invalid bus.");
     }
   }
 
