@@ -49,12 +49,15 @@ This roadmap is the source of truth for the EDIT workspace build. Keep the appro
 - [ ] Verify count-in timing, punch boundaries, monitoring, input selection, meter behavior, take lanes, comp playback, undo, and protection on iPad Safari and desktop.
 
 ## Stage 4 — Arrangement and navigation
-- [ ] Song markers and named sections.
-- [ ] Loop/cycle range with clear start/end controls.
-- [ ] Track folders, groups, and linked editing.
-- [ ] Follow-playhead and scroll-to-cursor behavior.
-- [ ] Multi-region selection and group move/edit.
-- [ ] Tempo and time-signature changes across the arrangement.
+**Code status: implemented and committed. Source syntax and static integration checks pass; iPad Safari / desktop interaction testing remains.**
+
+- [x] Song markers and named sections, visible on the arrangement ruler and saved in sessions.
+- [x] Loop/cycle range with editable start/end bars, visual range shading, and repeating arrangement playback.
+- [x] Track folders and groups with collapse/expand plus linked mute/solo controls.
+- [x] Follow-playhead and automatic horizontal scroll-to-cursor, with a manual follow toggle.
+- [x] Touch-friendly multi-region selection and linked group moves across tracks, with relative spacing preserved.
+- [x] Tempo and time-signature changes across the arrangement, reflected in playback, recording count-in/punch timing, automation, and offline WAV/MP3 export.
+- [ ] Verify loop boundaries, tempo/meter transitions, grouped editing, folder controls, and save/reopen on iPad Safari and desktop.
 
 ## Stage 5 — Session reliability
 - [ ] Reliable autosave with visible save state.
