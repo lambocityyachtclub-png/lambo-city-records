@@ -190,6 +190,10 @@ const StudioMultitrackWorkspace = {
     const track = this.tracks.find(item => item.id === this.selectedTrackId);
     const index = track?.clips?.findIndex(clip => clip.id === this.selectedClipId) ?? -1;
     if (!track || index < 0) return false;
+    if (track.clips[index].takeProtected) {
+      this.status("This recording take is protected. Unlock it before deleting.");
+      return false;
+    }
     this.recordHistory("Delete audio region");
     const [clip] = track.clips.splice(index, 1);
     this.deletedItems.push({ type: "clip", trackId: track.id, item: clip });
@@ -445,6 +449,9 @@ const StudioMultitrackWorkspace = {
           mimeType: clip.blob.type || "application/octet-stream",
           data: await encodeAudioBlob(clip.blob),
           takeId: clip.takeId || null,
+          takeGroupId: clip.takeGroupId || null,
+          takeNumber: Math.max(0, Number(clip.takeNumber) || 0),
+          takeProtected: Boolean(clip.takeProtected),
           createdAt: clip.createdAt || null
         });
       }
@@ -571,6 +578,9 @@ const StudioMultitrackWorkspace = {
         fadeOutSeconds: Math.max(0, Number(clip.fadeOutSeconds) || 0),
         blob: decodeAudioBlob(clip.data, clip.mimeType),
         takeId: clip.takeId || null,
+        takeGroupId: clip.takeGroupId || null,
+        takeNumber: Math.max(0, Number(clip.takeNumber) || 0),
+        takeProtected: Boolean(clip.takeProtected),
         createdAt: clip.createdAt || null
       }))
     }));
