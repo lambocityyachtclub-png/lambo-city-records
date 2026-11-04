@@ -591,7 +591,7 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
         const file = event.target.files && event.target.files[0];
         if (!file) return;
         try {
-          if (!await this.confirmReplaceUnsaved(workspace, "import a session file")) return;
+          if (!await this.confirmReplaceUnsaved(workspace, "import a session file")) { event.target.value = ""; return; }
           const session = JSON.parse(await file.text());
           if (!workspace.validateSessionData(session)) throw new Error("The selected session file failed validation.");
           workspace.importSession(session);
