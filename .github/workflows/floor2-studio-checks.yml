@@ -12,6 +12,7 @@ on:
       - "studioDAWWorkspace.js"
       - "studioDAWBeatLabPanel.js"
       - "studioDAWEditPanel.js"
+      - "studioDAWSessionTemplates.js"
       - "studioDAWTimeline.js"
       - "studioDAWArrangementPlayback.js"
       - "studioDAWExport.js"
@@ -35,6 +36,7 @@ on:
       - "scripts/test-mpc-audio-routing.mjs"
       - "scripts/test-mpc-sampler-storage.mjs"
       - "scripts/test-daw-session-package.mjs"
+      - "scripts/test-daw-session-templates.mjs"
       - "scripts/test-daw-arrangement-playback.mjs"
       - "scripts/test-daw-mp3-export.mjs"
       - "vendor/lamejs/lame.min.js"
@@ -106,6 +108,7 @@ jobs:
             studioDAWWorkspace.js \
             studioDAWBeatLabPanel.js \
             studioDAWEditPanel.js \
+            studioDAWSessionTemplates.js \
             studioDAWTimeline.js \
             studioDAWArrangementPlayback.js \
             studioDAWExport.js \
@@ -141,6 +144,9 @@ jobs:
 
       - name: Test portable DAW session package
         run: node --experimental-default-type=module scripts/test-daw-session-package.mjs
+
+      - name: Test DAW session starter templates
+        run: node --experimental-default-type=module scripts/test-daw-session-templates.mjs
 
       - name: Test DAW arrangement playback and mixer
         run: node --experimental-default-type=module scripts/test-daw-arrangement-playback.mjs
