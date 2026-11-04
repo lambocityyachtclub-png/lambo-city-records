@@ -220,7 +220,7 @@ export function createStudioDAWEditPanel({
           const data = JSON.parse(await file.text());
           StudioMultitrackWorkspace.importSession(data);
           StudioMultitrackWorkspace.activeProjectId = null;
-          StudioMultitrackWorkspace.activeProjectName = data.projectName || file.name.replace(/\\.lcsession$/i, "");
+          StudioMultitrackWorkspace.activeProjectName = data.projectName || file.name.replace(/\.lcsession$/i, "");
           projectNameInput.value = StudioMultitrackWorkspace.activeProjectName;
           projectStatus.textContent = "Imported session. Save it to add it to this browser's project library.";
         } catch (error) { projectStatus.textContent = "IMPORT ERROR: " + (error?.message || error); }
