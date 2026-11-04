@@ -172,7 +172,10 @@ export function renderStudioDAWTimeline({
           const next=Math.max(1,Math.min(TOTAL_BARS-clip.lengthBars+1,originalBar+delta));
           if(next===clip.startBar)return;
           if(!changed){onEditStart("Move audio region");changed=true;}
-          group.forEach(item=>{item.startBar=Math.max(1,Math.min(TOTAL_BARS-item.lengthBars+1,(originalBars.get(item.id)||1)+delta));});
+          const minDelta=Math.max(...group.map(item=>1-(originalBars.get(item.id)||1)));
+          const maxDelta=Math.min(...group.map(item=>TOTAL_BARS-item.lengthBars+1-(originalBars.get(item.id)||1)));
+          const groupDelta=Math.max(minDelta,Math.min(maxDelta,delta));
+          group.forEach(item=>{item.startBar=(originalBars.get(item.id)||1)+groupDelta;});
         }
         update();
       };
