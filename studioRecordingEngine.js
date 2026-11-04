@@ -93,7 +93,7 @@ const StudioRecordingEngine = {
   takes: [],
   playback: null,
 
-  async startTrackRecording({ audio, trackId, vocalEffects, inputNode } = {}) {
+  async startTrackRecording({ audio, trackId, vocalEffects, inputNode, pitchCorrectionNode } = {}) {
     if (this.activeTake || this.activeTrackTake) {
       throw new Error("Another studio recording is already in progress.");
     }
@@ -110,7 +110,18 @@ const StudioRecordingEngine = {
     try {
       microphoneSource = inputNode || audio.createMediaStreamSource(microphoneStream);
       destination = audio.createMediaStreamDestination();
-      if (vocalEffects && !inputNode) {
+      if (!inputNode && pitchCorrectionNode) {
+        microphoneSource.connect(pitchCorrectionNode);
+        if (vocalEffects) {
+          if (!vocalEffects.input || !vocalEffects.output) {
+            throw new Error("The vocal effects audio connection is incomplete.");
+          }
+          pitchCorrectionNode.connect(vocalEffects.input);
+          vocalEffects.output.connect(destination);
+        } else {
+          pitchCorrectionNode.connect(destination);
+        }
+      } else if (vocalEffects && !inputNode) {
         if (!vocalEffects.input || !vocalEffects.output) {
           throw new Error("The vocal effects audio connection is incomplete.");
         }
@@ -131,14 +142,17 @@ const StudioRecordingEngine = {
         inputNode: Boolean(inputNode),
         destination,
         vocalEffects,
+        pitchCorrectionNode,
         recorder
       };
       return { id: this.activeTrackTake.id, trackId, startedAt: this.activeTrackTake.startedAt };
     } catch (error) {
       try {
-        if (vocalEffects && !inputNode) microphoneSource?.disconnect(vocalEffects.input);
+        if (pitchCorrectionNode && !inputNode) microphoneSource?.disconnect(pitchCorrectionNode);
+        else if (vocalEffects && !inputNode) microphoneSource?.disconnect(vocalEffects.input);
         else microphoneSource?.disconnect(destination);
       } catch {}
+      try { pitchCorrectionNode?.disconnect(); } catch {}
       try { if (vocalEffects) vocalEffects.output.disconnect(destination); } catch {}
       try { destination?.disconnect(); } catch {}
       microphoneStream?.getTracks().forEach(track => track.stop());
@@ -162,9 +176,11 @@ const StudioRecordingEngine = {
       };
     } finally {
       try {
-        if (take.vocalEffects && !take.inputNode) take.microphoneSource.disconnect(take.vocalEffects.input);
+        if (take.pitchCorrectionNode && !take.inputNode) take.microphoneSource.disconnect(take.pitchCorrectionNode);
+        else if (take.vocalEffects && !take.inputNode) take.microphoneSource.disconnect(take.vocalEffects.input);
         else take.microphoneSource.disconnect(take.destination);
       } catch {}
+      try { take.pitchCorrectionNode?.disconnect(); } catch {}
       try { if (take.vocalEffects) take.vocalEffects.output.disconnect(take.destination); } catch {}
       try { take.destination.disconnect(); } catch {}
       take.microphoneStream?.getTracks().forEach(track => track.stop());
