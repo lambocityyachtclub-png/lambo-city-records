@@ -126,14 +126,7 @@ const StudioMultitrackWorkspace = {
     this.undoStack.push({ label, snapshot: this.captureSnapshot() });
     if (this.undoStack.length > 80) this.undoStack.shift();
     this.redoStack = [];
-    if (this.activeProjectId) {
-      clearTimeout(this.autosaveTimer);
-      this.autosaveTimer = setTimeout(() => {
-        this.saveSession(this.activeProjectId, this.activeProjectName)
-          .then(() => this.status("Auto-saved " + this.activeProjectName + "."))
-          .catch(error => this.status("AUTO-SAVE ERROR: " + (error?.message || error)));
-      }, 900);
-    }
+    this.scheduleProjectAutosave();
   },
 
   restoreSnapshot(snapshot) {
