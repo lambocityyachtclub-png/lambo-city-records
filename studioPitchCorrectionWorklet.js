@@ -41,6 +41,8 @@ class GranularPitchShifter {
     this.phaseA = 0;
     this.phaseB = 0.5;
     this.grain = 1024;
+    this.ratioSum = 0;
+    this.calls = 0;
   }
 
   read(delay) {
@@ -54,6 +56,8 @@ class GranularPitchShifter {
   }
 
   process(sample, ratio) {
+    this.ratioSum += ratio;
+    this.calls += 1;
     this.buffer[this.write & this.mask] = sample;
     this.write += 1;
     if (Math.abs(ratio - 1) < 0.0005) return sample;
