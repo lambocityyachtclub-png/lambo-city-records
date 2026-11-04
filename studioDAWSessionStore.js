@@ -131,7 +131,7 @@ const StudioDAWSessionStore = {
     transaction.objectStore(VERSION_STORE).put(record);
     await transactionComplete(transaction);
     const versions = await this.listVersions(projectId);
-    for (const old of versions.slice(20)) await this.removeVersion(old.versionId);
+    for (const old of versions.slice(5)) await this.removeVersion(old.versionId);
     return versionId;
   },
 
