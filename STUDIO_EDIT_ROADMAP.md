@@ -64,7 +64,7 @@ This roadmap is the source of truth for the EDIT workspace build. Keep the appro
 
 - [x] Debounced autosave for the active session, including first-edit session identity creation and a visible SAVED / PENDING / SAVING / ERROR indicator.
 - [x] Recovery checkpoints written before autosave commit, with startup discovery and an explicit restore prompt after interrupted work.
-- [x] Version history with restore points on manual saves, capped to the 20 most recent versions per project.
+- [x] Version history with restore points on manual saves, capped to the 5 most recent versions per project.
 - [x] Safer session open/new/import flows that offer save, discard, or cancel before replacing unsaved work.
 - [x] Validate stored and imported session track/region structure before replacing the current arrangement; retain clip trim, slip, gain, fade, take, comp, and group metadata in the portable session path.
 - [ ] Verify autosave timing, browser restart recovery, version restore, storage quota handling, and persistence on iPad Safari and desktop.
