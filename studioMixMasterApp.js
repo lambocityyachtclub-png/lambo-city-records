@@ -251,12 +251,13 @@ export function createStudioMixMasterApp({ beatLab, workspace } = {}) {
       outputSelect.dataset.trackOutput = track.id;
       outputSelect.style.cssText = "min-height:34px;padding:6px;background:#20242e;color:#f4f1eb;border:1px solid #454958;border-radius:6px";
       const mainOption = document.createElement("option"); mainOption.value = ""; mainOption.textContent = "STEREO OUT"; outputSelect.appendChild(mainOption);
-      StudioMultitrackWorkspace.tracks.filter(bus => bus.type === "bus" && bus.id !== track.id).forEach(bus => {
+      if (track.type !== "bus") StudioMultitrackWorkspace.tracks.filter(bus => bus.type === "bus" && bus.id !== track.id).forEach(bus => {
         const option = document.createElement("option"); option.value = bus.id; option.textContent = bus.name; outputSelect.appendChild(option);
       });
       outputSelect.value = track.outputBusId || "";
+      if (track.type === "bus") outputSelect.disabled = true;
       outputLabel.appendChild(outputSelect); routing.appendChild(outputLabel);
-      StudioMultitrackWorkspace.tracks.filter(bus => bus.type === "bus" && bus.id !== track.id).forEach(bus => {
+      if (track.type !== "bus") StudioMultitrackWorkspace.tracks.filter(bus => bus.type === "bus" && bus.id !== track.id).forEach(bus => {
         const sendLabel = document.createElement("label");
         sendLabel.style.cssText = "display:grid;grid-template-columns:70px 1fr 35px;gap:8px;align-items:center;margin-top:9px;color:#a8a8b1;font-size:10px";
         const caption = document.createElement("span"); caption.textContent = "SEND · " + bus.name.slice(0, 10);
