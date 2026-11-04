@@ -77,7 +77,8 @@ export function renderStudioDAWTimeline({
   container, track, onChange = () => {}, onSelect = () => {},
   onEditStart = () => {}, onPlayheadChange = () => {},
   barWidth = 72, selectedClipId = null, playheadBar = null,
-  snapMode = "bars", tempo = 100, slipMode = false
+  snapMode = "bars", tempo = 100, slipMode = false,
+  selectedClipIds = [], markers = [], loopRange = null
 }) {
   if (!container || !track) throw new Error("Timeline container or track unavailable.");
   const clips = Array.isArray(track.clips) ? track.clips : [];
@@ -93,7 +94,7 @@ export function renderStudioDAWTimeline({
   style.textContent = `
     .lc-arrangement{width:100%;overflow:auto;background:#0b0e14;border:1px solid #343946;border-radius:8px;-webkit-overflow-scrolling:touch;scrollbar-color:#80643a #171a22;touch-action:pan-x pan-y}
     .lc-arrangement-inner{width:${width * TOTAL_BARS}px;min-width:${width * TOTAL_BARS}px;position:relative}
-    .lc-arrangement-ruler{display:grid;grid-template-columns:repeat(${TOTAL_BARS},${width}px);height:30px;background:#1b202a;border-bottom:1px solid #665438}
+    .lc-arrangement-ruler{display:grid;grid-template-columns:repeat(${TOTAL_BARS},${width}px);height:30px;background:#1b202a;border-bottom:1px solid #665438;position:relative}
     .lc-arrangement-ruler button{display:flex;align-items:center;justify-content:center;padding:0;border:0;border-right:1px solid #343946;background:transparent;color:#d8b36e;font-size:10px;min-height:30px;touch-action:manipulation}
     .lc-arrangement-ruler button:nth-child(4n+1){border-right-color:#80643a}
     .lc-arrangement-ruler button.active{background:#594321;color:#fff}
@@ -107,6 +108,9 @@ export function renderStudioDAWTimeline({
     .lc-arrangement-empty{padding:18px 12px;color:#777f90;font-size:11px}
     .lc-arrangement-help{padding:7px 9px;color:#999fad;font-size:10px;border-top:1px solid #343946}
     .lc-arrangement-playhead{position:absolute;top:0;bottom:0;width:2px;background:#f1d49c;z-index:5;pointer-events:none;box-shadow:0 0 7px rgba(241,212,156,.6)}
+    .lc-arrangement-marker{position:absolute;top:0;height:28px;z-index:3;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;border:0;border-left:2px solid #f4c35d;background:rgba(125,85,23,.86);color:#fff4d5;font-size:9px;padding:2px 4px;min-height:24px}
+    .lc-arrangement-marker-line{position:absolute;top:0;bottom:0;width:1px;border-left:1px dashed #e6bb69;z-index:2;pointer-events:none}
+    .lc-arrangement-loop-range{position:absolute;top:0;bottom:0;background:rgba(37,175,211,.09);border-left:2px solid #28c6e8;border-right:2px solid #28c6e8;pointer-events:none;z-index:1}
     .lc-arrangement-resize{position:absolute;right:0;top:0;bottom:0;width:12px;cursor:ew-resize;touch-action:none;background:linear-gradient(90deg,transparent,rgba(241,212,156,.22))}
     @media(pointer:coarse){.lc-arrangement-resize{width:18px}}
   `;
@@ -119,12 +123,15 @@ export function renderStudioDAWTimeline({
     mark.addEventListener("pointerdown",event=>{const fraction=Math.max(0,Math.min(.999,(event.clientX-mark.getBoundingClientRect().left)/width));onPlayheadChange(snapBar(bar+fraction,snapMode,tempo));});
     ruler.appendChild(mark);
   }
+  markers.forEach(marker=>{const tag=document.createElement("button");tag.type="button";tag.className="lc-arrangement-marker";tag.textContent=marker.name;tag.title=marker.name+" · bar "+marker.bar;tag.style.left=((Number(marker.bar)-1)*width)+"px";tag.addEventListener("click",()=>onPlayheadChange(Number(marker.bar)));ruler.appendChild(tag);});
   const lane=document.createElement("div"); lane.className="lc-arrangement-lane";
+  if(loopRange?.enabled){const cycle=document.createElement("div");cycle.className="lc-arrangement-loop-range";cycle.style.left=((Number(loopRange.startBar)-1)*width)+"px";cycle.style.width=Math.max(0,(Number(loopRange.endBar)-Number(loopRange.startBar))*width)+"px";lane.appendChild(cycle);}
+  markers.forEach(marker=>{const line=document.createElement("div");line.className="lc-arrangement-marker-line";line.style.left=((Number(marker.bar)-1)*width)+"px";lane.appendChild(line);});
   const takeLaneCount=Math.max(1,...clips.map(clip=>Number(clip.takeNumber)||1));
   lane.style.minHeight=(takeLaneCount*110)+"px";
   if (!clips.length) { const empty=document.createElement("div"); empty.className="lc-arrangement-empty"; empty.textContent="Import audio or record a take to create a waveform region."; lane.appendChild(empty); }
   clips.forEach(clip=>{
-    const block=document.createElement("div"); block.className="lc-arrangement-clip"+(clip.id===selectedClipId?" selected":"")+(clip.isComp?" is-comp":"");
+    const block=document.createElement("div"); block.className="lc-arrangement-clip"+((selectedClipIds.includes(clip.id)||clip.id===selectedClipId)?" selected":"")+(clip.isComp?" is-comp":"");
     block.dataset.clipId=clip.id;
     const takeLane=Math.max(0,(Number(clip.takeNumber)||1)-1);
     block.style.top=(7+takeLane*110)+"px";
@@ -140,7 +147,9 @@ export function renderStudioDAWTimeline({
     }
     title.addEventListener("pointerdown",event=>{
       if(event.button!==0&&event.pointerType==="mouse")return;
-      event.preventDefault(); onSelect(clip);
+      event.preventDefault(); const selectedClips=onSelect(clip,event)||[clip];
+      const group=(!slipMode&&selectedClips.length>1)?selectedClips:[clip];
+      const originalBars=new Map(group.map(item=>[item.id,Number(item.startBar)||1]));
       const startX=event.clientX, originalBar=clip.startBar, originalOffset=Number(clip.sourceOffsetSeconds)||0;
       const sourceDuration=Number(clip.playDurationSeconds||clip.duration||0);
       let changed=false;
@@ -160,7 +169,7 @@ export function renderStudioDAWTimeline({
           const next=Math.max(1,Math.min(TOTAL_BARS-clip.lengthBars+1,originalBar+delta));
           if(next===clip.startBar)return;
           if(!changed){onEditStart("Move audio region");changed=true;}
-          clip.startBar=next;
+          group.forEach(item=>{item.startBar=Math.max(1,Math.min(TOTAL_BARS-item.lengthBars+1,(originalBars.get(item.id)||1)+delta));});
         }
         update();
       };
@@ -170,7 +179,6 @@ export function renderStudioDAWTimeline({
       };
       title.addEventListener("pointermove",move);title.addEventListener("pointerup",finish);title.addEventListener("pointercancel",finish);
     });
-    title.addEventListener("click",()=>onSelect(clip));
     block.appendChild(title);
     if(clip.blob&&clip.blob.size){
       const canvas=document.createElement("canvas");canvas.className="lc-arrangement-waveform";
@@ -264,5 +272,5 @@ export function renderStudioDAWTimeline({
   if(Number.isFinite(Number(playheadBar))){const line=document.createElement("div");line.className="lc-arrangement-playhead";line.style.left=((Number(playheadBar)-1)*width)+"px";lane.appendChild(line);}
   const help=document.createElement("div");help.className="lc-arrangement-help";help.textContent="128-BAR ARRANGEMENT · Select a region · Drag its title to move · Drag the right edge to trim · Tap a bar number to set the edit cursor.";
   inner.append(ruler,lane,help);scroll.appendChild(inner);container.append(style,scroll);
-  return {refresh(){renderStudioDAWTimeline({container,track,onChange,onSelect,onEditStart,onPlayheadChange,barWidth:width,selectedClipId,playheadBar,snapMode,tempo,slipMode});}};
+  return {refresh(){renderStudioDAWTimeline({container,track,onChange,onSelect,onEditStart,onPlayheadChange,barWidth:width,selectedClipId,selectedClipIds,playheadBar,snapMode,tempo,slipMode,markers,loopRange});}};
 }
