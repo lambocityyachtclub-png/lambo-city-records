@@ -328,6 +328,7 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
             root.querySelector("[data-session-menu]").classList.toggle("open");
           } else if (action === "record") {
             await workspace.startArmedRecording({ vocalEffects: this.beatLab && this.beatLab.vocalEffects, countInBars: Number(root.querySelector("[data-count-in]")?.value || 0), punchInBar: root.querySelector("[data-punch-in]")?.value || null, punchOutBar: root.querySelector("[data-punch-out]")?.value || null, monitorInput: Boolean(root.querySelector("[data-input-monitor]")?.checked) });
+            await this.refreshInputDevices();
             if (workspace.isTrackRecording()) this.startInputMeter();
             if (!workspace.pendingRecording && !workspace.isTrackRecording()) this.status("Record command finished · check the armed track and recording settings.");
           } else if (action === "play") {
@@ -338,6 +339,7 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
             if (workspace.pendingRecording) workspace.cancelScheduledRecording();
             if (workspace.isTrackRecording()) await workspace.stopArmedRecording();
             this.stopInputMeter();
+            await this.refreshInputDevices();
             this.status("Playback / recording stopped.");
           } else if (action === "add-track") {
             const name = window.prompt("Name the new track:", "New Audio Track");
