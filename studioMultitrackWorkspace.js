@@ -71,6 +71,9 @@ const StudioMultitrackWorkspace = {
   recordingScheduleResolve: null,
   punchOutTimer: null,
   recordingStartBar: 1,
+  inputDeviceId: "",
+  inputLatencyMs: 0,
+  inputLatencyByDevice: {},
   undoStack: [],
   redoStack: [],
   deletedItems: [],
@@ -168,6 +171,52 @@ const StudioMultitrackWorkspace = {
       node.classList.toggle("selected", node.dataset.clipId === this.selectedClipId);
     });
   },
+
+  compSelectedTake() {
+    const sourceTrack = this.tracks.find(track => track.id === this.selectedTrackId);
+    const sourceClip = sourceTrack?.clips?.find(clip => clip.id === this.selectedClipId);
+    if (!sourceTrack || !sourceClip || !sourceClip.blob?.size || !sourceClip.takeGroupId || sourceClip.isComp) {
+      this.status("Select an audio take region to add it to the vocal comp.");
+      return false;
+    }
+    let compTrack = this.tracks.find(track => track.compForTrackId === sourceTrack.id);
+    const start = Number(sourceClip.startBar) || 1;
+    const end = start + Math.max(.0625, Number(sourceClip.lengthBars) || 1);
+    if (compTrack) {
+      const overlap = compTrack.clips.find(clip => start < clip.startBar + clip.lengthBars && end > clip.startBar);
+      if (overlap && (Math.abs(overlap.startBar - start) > .001 || Math.abs(overlap.lengthBars - (end - start)) > .001)) {
+        this.status("This comp section overlaps a different range. Split or trim the comp first.");
+        return false;
+      }
+    }
+    this.recordHistory("Add take region to comp");
+    if (!compTrack) {
+      compTrack = this.createTrack("audio", sourceTrack.name + " · COMP");
+      compTrack.compForTrackId = sourceTrack.id;
+      compTrack.volume = sourceTrack.volume;
+      compTrack.pan = sourceTrack.pan;
+    }
+    if (compTrack) compTrack.clips = compTrack.clips.filter(clip => !(Math.abs(clip.startBar - start) < .001 && Math.abs(clip.lengthBars - (end - start)) < .001));
+    const compClip = {
+      ...sourceClip,
+      id: "lc-comp-" + Date.now() + "-" + Math.floor(Math.random() * 100000),
+      name: "COMP · TAKE " + (Number(sourceClip.takeNumber) || 1),
+      isComp: true,
+      compSourceClipId: sourceClip.id,
+      compSourceTakeNumber: Number(sourceClip.takeNumber) || 1,
+      takeGroupId: null,
+      takeNumber: 0,
+      takeProtected: false
+    };
+    compTrack.clips.push(compClip);
+    this.selectedTrackId = compTrack.id;
+    this.selectedClipId = compClip.id;
+    this.render();
+    this.scheduleProjectAutosave();
+    this.status("Take " + compClip.compSourceTakeNumber + " placed in " + compTrack.name + ". Original take preserved.");
+    return true;
+  },
+
 
   duplicateSelectedClip() {
     const track = this.tracks.find(item => item.id === this.selectedTrackId);
@@ -453,7 +502,10 @@ const StudioMultitrackWorkspace = {
           takeGroupId: clip.takeGroupId || null,
           takeNumber: Math.max(0, Number(clip.takeNumber) || 0),
           takeProtected: Boolean(clip.takeProtected),
-          createdAt: clip.createdAt || null
+          createdAt: clip.createdAt || null,
+          isComp: Boolean(clip.isComp),
+          compSourceClipId: clip.compSourceClipId || null,
+          compSourceTakeNumber: Math.max(0, Number(clip.compSourceTakeNumber) || 0)
         });
       }
       tracks.push({
@@ -495,6 +547,7 @@ const StudioMultitrackWorkspace = {
         muted: Boolean(track.muted),
         solo: Boolean(track.solo),
         armed: Boolean(track.armed),
+        compForTrackId: track.compForTrackId || null,
         clips
       });
     }
@@ -566,6 +619,7 @@ const StudioMultitrackWorkspace = {
       muted: Boolean(savedTrack.muted),
       solo: Boolean(savedTrack.solo),
       armed: Boolean(savedTrack.armed),
+      compForTrackId: savedTrack.compForTrackId || null,
       clips: (savedTrack.clips || []).map(clip => ({
         id: clip.id,
         name: clip.name || "Audio Clip",
@@ -582,7 +636,10 @@ const StudioMultitrackWorkspace = {
         takeGroupId: clip.takeGroupId || null,
         takeNumber: Math.max(0, Number(clip.takeNumber) || 0),
         takeProtected: Boolean(clip.takeProtected),
-        createdAt: clip.createdAt || null
+        createdAt: clip.createdAt || null,
+        isComp: Boolean(clip.isComp),
+        compSourceClipId: clip.compSourceClipId || null,
+        compSourceTakeNumber: Math.max(0, Number(clip.compSourceTakeNumber) || 0)
       }))
     }));
     const ids = this.tracks.map(track => Number(track.id.match(/(\d+)$/)?.[1]) || 0);
@@ -1094,6 +1151,7 @@ const StudioMultitrackWorkspace = {
         inputNode,
         pitchCorrectionNode,
         monitorInput: Boolean(monitorInput),
+        inputDeviceId: track.inputSource === "mic" ? this.inputDeviceId : "",
         vocalEffects: track.inputSource === "mic" && /vocal/i.test(track.name) ? vocalEffects : null
       });
       this.pendingRecording = false;
@@ -1143,17 +1201,20 @@ const StudioMultitrackWorkspace = {
       const bytes = await take.blob.arrayBuffer();
       const buffer = await context.decodeAudioData(bytes.slice(0));
       const lengthBars = Math.max(1, Math.min(128, Math.ceil(buffer.duration / (240 / this.tempo))));
+      const latencyMs = track.inputSource === "mic" ? Math.max(0, Math.min(500, Number(this.inputLatencyMs) || 0)) : 0;
+      const compensatedStartBar = Math.max(1, this.recordingStartBar - latencyMs / (240 / this.tempo * 1000));
       track.clips.push({
         id: take.id,
         name: track.name + " Recording",
         blob: take.blob,
         takeId: take.id,
-        startBar: this.recordingStartBar,
+        startBar: compensatedStartBar,
         lengthBars,
         duration: buffer.duration,
         takeGroupId: track.id + "-takes-" + this.recordingStartBar,
         takeNumber: track.clips.filter(clip => clip.takeGroupId === track.id + "-takes-" + this.recordingStartBar).length + 1,
         takeProtected: false,
+        latencyCompensationMs: latencyMs,
         createdAt: take.startedAt
       });
       this.scheduleProjectAutosave();
