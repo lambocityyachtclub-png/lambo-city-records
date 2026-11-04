@@ -181,7 +181,7 @@ class LamboCityPitchCorrectionProcessor extends AudioWorkletProcessor {
     }
 
     const midi = 69 + 12 * Math.log2(frequency / 440);
-    const corrected = nearestScaleNote(midi, this.settings.root, this.settings.scale);
+    const corrected = nearestScaleNote(Math.round(midi), this.settings.root, this.settings.scale);
     const strength = this.settings.enabled ? this.settings.amount / 100 : 0;
     const targetMidi = midi + (corrected - midi) * strength;
     this.missedHops = 0;
