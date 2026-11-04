@@ -40,6 +40,7 @@ const processor = new Processor({
 const input = [new Float32Array(128)];
 const output = [new Float32Array(128), new Float32Array(128)];
 let peak = 0;
+const renderedTail = [];
 for (let block = 0; block < 500; block += 1) {
   for (let index = 0; index < 128; index += 1) {
     const sampleIndex = block * 128 + index;
@@ -49,6 +50,7 @@ for (let block = 0; block < 500; block += 1) {
   for (const channel of output) {
     for (const sample of channel) peak = Math.max(peak, Math.abs(sample));
   }
+  if (block >= 300) renderedTail.push(...output[0]);
 }
 const detected = messages.filter(message => Number.isFinite(message.detectedMidi));
 assert.ok(detected.length > 0, "A sustained sung note should be detected.");
@@ -57,6 +59,14 @@ assert.ok(Math.abs(last.detectedMidi - 66) < 0.35, "The detector should identify
 assert.equal(last.correctedMidi, 65, "F-sharp should correct to F in C major.");
 assert.ok(last.confidence > 0.75, "The sustained tone should have strong pitch confidence.");
 assert.ok(peak > 0.1, "The processor should pass audible signal output.");
+let positiveCrossings = 0;
+for (let index = 1; index < renderedTail.length; index += 1) {
+  if (renderedTail[index - 1] <= 0 && renderedTail[index] > 0) positiveCrossings += 1;
+}
+const renderedDuration = renderedTail.length / 44100;
+const correctedFrequency = positiveCrossings / renderedDuration;
+assert.ok(correctedFrequency > 330 && correctedFrequency < 365,
+  "Corrected output should move the sustained F-sharp toward F; measured " + correctedFrequency.toFixed(1) + " Hz.");
 
 processor.port.onmessage({ data: { enabled: false } });
 assert.equal(processor.settings.enabled, false, "The effect should support bypass updates.");
