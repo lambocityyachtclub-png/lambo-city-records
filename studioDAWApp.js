@@ -419,6 +419,8 @@ const StudioDAWApp = {
         panels: {},
         initialView,
         onViewChange: viewId => {
+          const appHeader = root.querySelector(":scope > header");
+          if (appHeader) appHeader.style.display = viewId === "edit" ? "none" : "flex";
           if (viewId === "mix") this.mixPanel?.refresh?.();
           if (viewId === "mpc" && !MPCInterface.isOpen()) {
             MPCInterface.open({
@@ -456,7 +458,9 @@ const StudioDAWApp = {
       // Uses the existing shared Multitrack Workspace and recording engine.
       this.editScreen = createStudioDAWEditScreen({
         beatLab: Floor2StudioApp,
-        onExit: () => this.workspace?.setView("beatlab")
+        onExit: () => this.workspace?.setView("beatlab"),
+        onPrevious: () => this.workspace?.setView("drums"),
+        onNext: () => this.workspace?.setView("mix")
       });
       const editWorkspace = this.editScreen.mount();
       this.workspace.setPanel("edit", editWorkspace);
