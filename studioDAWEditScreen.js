@@ -176,6 +176,13 @@ export function createStudioDAWEditScreen({ beatLab, onExit } = {}) {
       this.root = root;
       this.bindEvents();
       this.render();
+      if (!StudioMultitrackWorkspace.activeProjectId && StudioMultitrackWorkspace.activeProjectName === "Untitled Song") {
+        const songName = window.prompt("What is the name of this song or beat?", "Untitled Song");
+        if (songName && songName.trim()) {
+          StudioMultitrackWorkspace.activeProjectName = songName.trim().slice(0, 80);
+          this.renderHeader();
+        }
+      }
       return root;
     },
 
