@@ -5,7 +5,7 @@
 import StudioAudioEngine from "./studioAudioEngine.js";
 import StudioMultitrackWorkspace from "./studioMultitrackWorkspace.js";
 import { createStudioDAWMidiEditor } from "./studioDAWMidiEditor.js";
-import { renderStudioSessionToWav, downloadStudioWav } from "./studioDAWExport.js";
+import { renderStudioSessionToWav, downloadStudioWav, renderStudioSessionToMp3, downloadStudioMp3 } from "./studioDAWExport.js";
 
 export function createStudioMixMasterApp({ beatLab, workspace } = {}) {
   const root = document.createElement("section");
@@ -22,7 +22,7 @@ export function createStudioMixMasterApp({ beatLab, workspace } = {}) {
     '<div style="display:flex;flex-wrap:wrap;gap:8px"><button type="button" data-mix-action="add-bus" style="min-height:38px;padding:8px 11px;border:1px solid #80643a;border-radius:7px;background:#201c16;color:#f1d49c;font-weight:bold">＋ CREATE BUS</button><button type="button" data-mix-action="export-stems" style="min-height:38px;padding:8px 11px;border:1px solid #80643a;border-radius:7px;background:#201c16;color:#f1d49c;font-weight:bold">EXPORT ALL STEMS</button></div>',
     '<div><div style="margin-bottom:10px;color:#e6bb69;font-size:11px;letter-spacing:2px">TRACK MIXER · ROUTING · AUTOMATION · MIDI</div><div data-mix-tracks style="display:grid;gap:10px"></div></div>',
     '<div style="display:flex;flex-wrap:wrap;gap:10px"><button type="button" data-mix-action="edit" style="min-height:44px;padding:11px 15px;border:1px solid #80643a;border-radius:8px;background:#201c16;color:#f1d49c;font-weight:bold">OPEN EDIT TIMELINE</button>',
-    '<button type="button" data-mix-action="export" style="min-height:44px;padding:11px 15px;border:1px solid #80643a;border-radius:8px;background:#201c16;color:#f1d49c;font-weight:bold">EXPORT MASTER MIX</button></div>',
+    '<button type="button" data-mix-action="export" style="min-height:44px;padding:11px 15px;border:1px solid #80643a;border-radius:8px;background:#201c16;color:#f1d49c;font-weight:bold">EXPORT MASTER WAV</button><button type="button" data-mix-action="export-mp3" style="min-height:44px;padding:11px 15px;border:1px solid #80643a;border-radius:8px;background:#201c16;color:#f1d49c;font-weight:bold">EXPORT MASTER MP3</button></div>',
     '<div data-mix-status role="status" aria-live="polite" style="min-height:22px;color:#e6bb69;font-size:12px">Mixer ready.</div>'
   ].join("");
 
@@ -355,7 +355,9 @@ export function createStudioMixMasterApp({ beatLab, workspace } = {}) {
       const tracks = StudioMultitrackWorkspace.tracks.filter(track => track.type !== "bus" && (track.clips?.some(clip => clip.blob?.size) || track.midiNotes?.length));
       if (!tracks.length) { status("No audio or MIDI tracks are available to export."); return; }
       for (const track of tracks) {
-        const wav = await renderStudioSessionToWav({ tracks: [track], tempo: StudioMultitrackWorkspace.tempo, timeSignature: StudioMultitrackWorkspace.timeSignature, tempoChanges: StudioMultitrackWorkspace.tempoChanges, timeSignatureChanges: StudioMultitrackWorkspace.timeSignatureChanges });
+        const busIds = new Set([track.outputBusId, ...(track.sends || []).map(send => send.busId)].filter(Boolean));
+        const stemTracks = [track, ...StudioMultitrackWorkspace.tracks.filter(item => item.type === "bus" && busIds.has(item.id))];
+        const wav = await renderStudioSessionToWav({ tracks: stemTracks, tempo: StudioMultitrackWorkspace.tempo, timeSignature: StudioMultitrackWorkspace.timeSignature, tempoChanges: StudioMultitrackWorkspace.tempoChanges, timeSignatureChanges: StudioMultitrackWorkspace.timeSignatureChanges, masterSettings: StudioMultitrackWorkspace.masterSettings });
         downloadStudioWav(wav, (StudioMultitrackWorkspace.activeProjectName || "lambo-city-song") + "-" + track.name + "-stem");
       }
       status(tracks.length + " individual WAV stem(s) exported.");
@@ -365,13 +367,20 @@ export function createStudioMixMasterApp({ beatLab, workspace } = {}) {
       workspace?.setView("edit");
       return;
     }
-    if (button.dataset.mixAction === "export") {
-      if (!beatLab?.lastRecordedTake?.mix?.size) {
-        status("Record a take before exporting the master mix.");
-        return;
-      }
-      beatLab.exportRecordingTrack("mix");
-      status("Master mix export requested. Check your browser downloads.");
+    if (button.dataset.mixAction === "export" || button.dataset.mixAction === "export-mp3") {
+      button.disabled = true;
+      try {
+        const options = { tracks: StudioMultitrackWorkspace.tracks, tempo: StudioMultitrackWorkspace.tempo, timeSignature: StudioMultitrackWorkspace.timeSignature, tempoChanges: StudioMultitrackWorkspace.tempoChanges, timeSignatureChanges: StudioMultitrackWorkspace.timeSignatureChanges, masterSettings: StudioMultitrackWorkspace.masterSettings };
+        if (button.dataset.mixAction === "export-mp3") {
+          const mp3 = await renderStudioSessionToMp3(options);
+          downloadStudioMp3(mp3, StudioMultitrackWorkspace.activeProjectName || "lambo-city-song");
+          status("Final MP3 master exported.");
+        } else {
+          const wav = await renderStudioSessionToWav(options);
+          downloadStudioWav(wav, StudioMultitrackWorkspace.activeProjectName || "lambo-city-song");
+          status("Final WAV master exported.");
+        }
+      } finally { button.disabled = false; }
       return;
     }
     const track = StudioMultitrackWorkspace.tracks.find(item => item.id === button.dataset.trackId);
