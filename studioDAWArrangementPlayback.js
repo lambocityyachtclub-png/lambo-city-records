@@ -14,6 +14,9 @@ export function createStudioDAWArrangementPlayback({
   getAudioContext,
   getOutput,
   getTempo,
+  getSecondsAtBar = bar => (Math.max(1, Number(bar) || 1) - 1) * 240 / Math.max(1, Number(getTempo()) || 100),
+  getBarAtSeconds = seconds => 1 + Number(seconds || 0) * Math.max(1, Number(getTempo()) || 100) / 240,
+  onPosition = () => {},
   onStatus = () => {}
 } = {}) {
   if (typeof getAudioContext !== "function" || typeof getTempo !== "function") {
@@ -28,6 +31,8 @@ export function createStudioDAWArrangementPlayback({
     activeTracks: [],
     runId: 0,
     playing: false,
+    loopTimer: null,
+    positionTimer: null,
 
     async decodeClip(context, blob) {
       if (decodedBuffers.has(blob)) return decodedBuffers.get(blob);
@@ -63,6 +68,10 @@ export function createStudioDAWArrangementPlayback({
     stop() {
       this.runId += 1;
       this.playing = false;
+      if (this.loopTimer) clearTimeout(this.loopTimer);
+      if (this.positionTimer) clearInterval(this.positionTimer);
+      this.loopTimer = null;
+      this.positionTimer = null;
       const active = this.sources.splice(0);
       active.forEach(({ source }) => {
         source.onended = null;
@@ -214,14 +223,14 @@ export function createStudioDAWArrangementPlayback({
       parameter.cancelScheduledValues(now);
       parameter.setValueAtTime(1, startTime);
       points.forEach(point => {
-        const time = startTime + (Math.max(1, Number(point.bar)) - 1) * secondsPerBar;
+        const time = startTime + Math.max(0, getSecondsAtBar(Math.max(1, Number(point.bar))) - getSecondsAtBar(1));
         const value = Math.max(0, Math.min(1, Number(point.value) / 100));
         if (time <= startTime + 0.001) parameter.setValueAtTime(value, startTime);
         else parameter.linearRampToValueAtTime(value, time);
       });
     },
 
-    async play(tracks = [], startBar = 1) {
+    async play(tracks = [], startBar = 1, loopRange = null) {
       this.stop();
       const runId = this.runId;
       const clips = [];
@@ -266,11 +275,12 @@ export function createStudioDAWArrangementPlayback({
         }));
         this.syncTrackState(tracks);
 
-        const secondsPerBar = (60 / tempo) * 4;
-        const startTime = context.currentTime + 0.12;
-        tracks.forEach(track => this.scheduleVolumeAutomation(track, startTime, secondsPerBar));
-
         const cursorBar = Math.max(1, Math.min(128, Number(startBar) || 1));
+        const activeLoop = loopRange?.enabled && Number(loopRange.endBar) > Number(loopRange.startBar) ? { startBar: Math.max(1, Number(loopRange.startBar)), endBar: Math.min(129, Number(loopRange.endBar)) } : null;
+        const actualStartBar = activeLoop && (cursorBar < activeLoop.startBar || cursorBar >= activeLoop.endBar) ? activeLoop.startBar : cursorBar;
+        const cursorSeconds = getSecondsAtBar(actualStartBar);
+        const startTime = context.currentTime + 0.12;
+        tracks.forEach(track => this.scheduleVolumeAutomation(track, startTime, 0));
         decoded.forEach(({ track, clip, buffer }) => {
           const channel = this.trackChannels.get(track.id);
           if (!channel) return;
@@ -279,18 +289,19 @@ export function createStudioDAWArrangementPlayback({
             ? Math.max(1, Number(clip.startBar))
             : 1;
           const clipSourceOffset = Math.max(0, Number(clip.sourceOffsetSeconds) || 0);
-          const sourceDuration = Number(clip.playDurationSeconds) > 0
-            ? Math.min(Number(clip.playDurationSeconds), Math.max(0, buffer.duration - clipSourceOffset))
-            : Math.max(0, buffer.duration - clipSourceOffset);
-          const elapsedBeforeCursor = Math.max(0, cursorBar - clipStartBar) * secondsPerBar;
-
-          // Skip regions that have already finished before the edit cursor.
-          if (elapsedBeforeCursor >= sourceDuration) return;
-
+          const clipEndBar = clipStartBar + Math.max(.0625, Number(clip.lengthBars) || 4);
+          const clipStartSeconds = getSecondsAtBar(clipStartBar);
+          const clipTimelineDuration = Math.max(0, getSecondsAtBar(clipEndBar) - clipStartSeconds);
+          const sourceDuration = Math.min(clipTimelineDuration, Number(clip.playDurationSeconds) > 0 ? Number(clip.playDurationSeconds) : buffer.duration - clipSourceOffset, Math.max(0, buffer.duration - clipSourceOffset));
+          const clipEndSeconds = clipStartSeconds + sourceDuration;
+          const cycleEndSeconds = activeLoop ? getSecondsAtBar(activeLoop.endBar) : Infinity;
+          const scheduleStartSeconds = Math.max(clipStartSeconds, cursorSeconds, activeLoop ? getSecondsAtBar(activeLoop.startBar) : cursorSeconds);
+          const scheduleEndSeconds = Math.min(clipEndSeconds, cycleEndSeconds);
+          const elapsedBeforeCursor = Math.max(0, scheduleStartSeconds - clipStartSeconds);
           const sourceOffset = clipSourceOffset + elapsedBeforeCursor;
-          const remainingDuration = sourceDuration - elapsedBeforeCursor;
-          const timelineDelay = Math.max(0, clipStartBar - cursorBar) * secondsPerBar;
-          if (remainingDuration <= 0.001) return;
+          const remainingDuration = scheduleEndSeconds - scheduleStartSeconds;
+          const timelineDelay = Math.max(0, scheduleStartSeconds - cursorSeconds);
+          if (remainingDuration <= 0.001 || sourceOffset >= buffer.duration) return;
 
           const source = context.createBufferSource();
           const clipGain = context.createGain();
@@ -337,7 +348,15 @@ export function createStudioDAWArrangementPlayback({
         });
 
         this.playing = this.sources.length > 0;
-        onStatus(`Arrangement playing from bar ${cursorBar} · ${tempo} BPM · ${decoded.length} audio clip(s).`);
+        this.positionTimer = setInterval(() => {
+          const elapsed = Math.max(0, context.currentTime - startTime);
+          onPosition(Math.max(1, Math.min(128, Number(getBarAtSeconds(cursorSeconds + elapsed)) || actualStartBar)));
+        }, 80);
+        if (activeLoop) {
+          const loopDuration = getSecondsAtBar(activeLoop.endBar) - getSecondsAtBar(actualStartBar);
+          if (loopDuration > 0.05) this.loopTimer = setTimeout(() => { void this.play(tracks, activeLoop.startBar, loopRange); }, loopDuration * 1000);
+        }
+        onStatus(`Arrangement playing from bar ${actualStartBar} · ${tempo} BPM · ${decoded.length} audio clip(s).`);
         return this.playing;
       } catch (error) {
         if (runId === this.runId) {
