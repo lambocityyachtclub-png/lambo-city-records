@@ -94,6 +94,7 @@ class LamboCityPitchCorrectionProcessor extends AudioWorkletProcessor {
     this.currentRatio = 1;
     this.hasPitch = false;
     this.missedHops = 0;
+    this.pitchActiveSamples = 0;
     this.port.onmessage = event => {
       const next = event.data || {};
       if (Number.isFinite(Number(next.root))) this.settings.root = Math.max(0, Math.min(11, Math.round(Number(next.root))));
@@ -218,6 +219,7 @@ class LamboCityPitchCorrectionProcessor extends AudioWorkletProcessor {
         this.detectPitch();
       }
 
+      if (this.settings.enabled && this.hasPitch) this.pitchActiveSamples += 1;
       const desired = this.settings.enabled && this.hasPitch ? this.targetRatio : 1;
       this.currentRatio += (desired - this.currentRatio) * smoothing;
       for (let channel = 0; channel < output.length; channel += 1) {
