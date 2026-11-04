@@ -397,6 +397,9 @@ const StudioMultitrackWorkspace = {
       zoomBarWidth: this.zoomBarWidth,
       playheadBar: this.playheadBar,
       snapMode: this.snapMode,
+      inputDeviceId: this.inputDeviceId || "",
+      inputLatencyMs: Math.max(0, Math.min(500, Number(this.inputLatencyMs) || 0)),
+      inputLatencyByDevice: { ...(this.inputLatencyByDevice || {}) },
       templateId: this.sessionTemplateId,
       templateName: this.sessionTemplateName,
       deletedItems: this.deletedItems,
@@ -427,6 +430,9 @@ const StudioMultitrackWorkspace = {
     this.zoomBarWidth = Math.max(24, Math.min(288, Number(session.zoomBarWidth) || 72));
     this.playheadBar = Math.max(1, Math.min(128, Number(session.playheadBar) || 1));
     this.snapMode = ["bars", "beats", "subdivisions", "seconds", "off"].includes(session.snapMode) ? session.snapMode : "bars";
+    this.inputDeviceId = session.inputDeviceId || "";
+    this.inputLatencyMs = Math.max(0, Math.min(500, Number(session.inputLatencyMs) || 0));
+    this.inputLatencyByDevice = session.inputLatencyByDevice && typeof session.inputLatencyByDevice === "object" ? { ...session.inputLatencyByDevice } : {};
     this.sessionTemplateId = session.templateId || null;
     this.sessionTemplateName = session.templateName || null;
     this.activeProjectId = session.projectId || projectId;
@@ -558,6 +564,9 @@ const StudioMultitrackWorkspace = {
       tempo: this.tempo,
       zoomBarWidth: this.zoomBarWidth,
       playheadBar: this.playheadBar,
+      inputDeviceId: this.inputDeviceId || "",
+      inputLatencyMs: Math.max(0, Math.min(500, Number(this.inputLatencyMs) || 0)),
+      inputLatencyByDevice: { ...(this.inputLatencyByDevice || {}) },
       templateId: this.sessionTemplateId,
       templateName: this.sessionTemplateName,
       tracks
@@ -577,6 +586,9 @@ const StudioMultitrackWorkspace = {
     this.zoomBarWidth = Math.max(24, Math.min(288, Number(session.zoomBarWidth) || 72));
     this.playheadBar = Math.max(1, Math.min(128, Number(session.playheadBar) || 1));
     this.snapMode = ["bars", "beats", "subdivisions", "seconds", "off"].includes(session.snapMode) ? session.snapMode : "bars";
+    this.inputDeviceId = session.inputDeviceId || "";
+    this.inputLatencyMs = Math.max(0, Math.min(500, Number(session.inputLatencyMs) || 0));
+    this.inputLatencyByDevice = session.inputLatencyByDevice && typeof session.inputLatencyByDevice === "object" ? { ...session.inputLatencyByDevice } : {};
     this.sessionTemplateId = session.templateId || null;
     this.sessionTemplateName = session.templateName || null;
     this.deletedItems = [];
