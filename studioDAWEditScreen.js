@@ -181,13 +181,32 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
       this.bindEvents();
       this.render();
       if (!StudioMultitrackWorkspace.activeProjectId && StudioMultitrackWorkspace.activeProjectName === "Untitled Song") {
-        const songName = window.prompt("What is the name of this song or beat?", "Untitled Song");
-        if (songName && songName.trim()) {
-          StudioMultitrackWorkspace.activeProjectName = songName.trim().slice(0, 80);
-          this.renderHeader();
-        }
+        this.showSongNamePrompt();
       }
       return root;
+    },
+
+    showSongNamePrompt() {
+      if (!this.root || this.root.querySelector("[data-song-name-overlay]")) return;
+      const overlay = document.createElement("div");
+      overlay.dataset.songNameOverlay = "";
+      overlay.style.cssText = "position:absolute;inset:0;z-index:40;display:grid;place-items:center;padding:20px;background:rgba(3,8,24,.78);backdrop-filter:blur(8px)";
+      overlay.innerHTML = '<section style="width:min(440px,100%);padding:26px;border:1px solid #C9A24A;border-radius:14px;background:linear-gradient(145deg,#172b63,#08132f);box-shadow:0 18px 50px #000b;color:#fff"><div style="color:#18D8FF;font-size:10px;font-weight:900;letter-spacing:2px">LAMBO CITY RECORDS · NEW SESSION</div><h2 style="margin:10px 0 6px;font-size:22px">Name your song or beat</h2><p style="margin:0 0 18px;color:#b8c8e4;font-size:12px;line-height:1.5">Give this session a name. You can change it later from SESSION.</p><input data-song-name-input type="text" maxlength="80" value="" placeholder="Enter song name" style="width:100%;min-height:46px;padding:11px;border:1px solid #6682b2;border-radius:7px;background:#06132d;color:#fff;font-size:16px"><div style="display:flex;justify-content:flex-end;gap:8px;margin-top:15px"><button type="button" data-song-name-skip style="min-height:40px;padding:9px 13px;border:1px solid #68799b;border-radius:7px;background:#17264a;color:#d9e4f7">SKIP</button><button type="button" data-song-name-start style="min-height:40px;padding:9px 15px;border:1px solid #e7c36d;border-radius:7px;background:linear-gradient(#e7c36d,#9b702b);color:#111a31;font-weight:900">START SESSION</button></div></section>';
+      const input = overlay.querySelector("[data-song-name-input]");
+      const finish = useName => {
+        const name = useName ? input.value.trim() : "";
+        StudioMultitrackWorkspace.activeProjectName = (name || "Untitled Song").slice(0, 80);
+        overlay.remove();
+        this.renderHeader();
+        this.status("Session ready · " + StudioMultitrackWorkspace.activeProjectName);
+      };
+      overlay.querySelector("[data-song-name-start]").addEventListener("click", () => finish(true));
+      overlay.querySelector("[data-song-name-skip]").addEventListener("click", () => finish(false));
+      input.addEventListener("keydown", event => {
+        if (event.key === "Enter") finish(true);
+      });
+      this.root.appendChild(overlay);
+      input.focus();
     },
 
     status(message) {
@@ -287,11 +306,12 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
           } else if (action === "new-session") {
             if (!window.confirm("Start a new session? Save your current work first if needed.")) return;
             workspace.activeProjectId = null;
-            workspace.activeProjectName = window.prompt("What is the name of the new song or beat?", "Untitled Song") || "Untitled Song";
+            workspace.activeProjectName = "Untitled Song";
             workspace.undoStack = [];
             workspace.redoStack = [];
             workspace.resetSession();
             this.render();
+            this.showSongNamePrompt();
           } else if (action === "export-wav") {
             button.disabled = true;
             try {
