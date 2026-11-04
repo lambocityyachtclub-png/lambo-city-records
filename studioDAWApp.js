@@ -311,7 +311,6 @@ const StudioDAWApp = {
   panelHost: null,
   handleOverlayClick: null,
   mixPanel: null,
-  vocalsPanel: null,
   pianoPanel: null,
   mpcPanel: null,
   drumsPanel: null,
@@ -319,8 +318,6 @@ const StudioDAWApp = {
   open(initialView = "edit") {
     if (this.root?.isConnected) {
       this.workspace?.setView(initialView);
-      const nav = this.workspace?.root?.querySelector(".lc-daw-navigation");
-      if (nav) nav.style.display = ["mpc","beatlab","piano","drums","vocals"].includes(initialView) ? "none" : "flex";
       return this.root;
     }
 
@@ -453,21 +450,25 @@ const StudioDAWApp = {
       });
 
       const editWorkspace = this.editPanel.mount();
+      // Vocal capture is now a focused tool inside EDIT, not a separate destination.
+      const vocalTools = createVocalsPanel({ beatLab: Floor2StudioApp });
+      const vocalWorkflow = document.createElement("details");
+      vocalWorkflow.open = false;
+      vocalWorkflow.style.cssText = "margin-top:16px;padding:14px;border:1px solid #665438;border-radius:10px;background:linear-gradient(135deg,#191b21,#11141b);color:#f4f1eb";
+      const vocalSummary = document.createElement("summary");
+      vocalSummary.textContent = "VOCAL RECORDING · MICROPHONE / TAKES";
+      vocalSummary.style.cssText = "color:#e6bb69;font-size:11px;font-weight:800;letter-spacing:1.5px;cursor:pointer;padding:4px";
+      vocalWorkflow.append(vocalSummary, vocalTools);
+      editWorkspace.appendChild(vocalWorkflow);
+
       this.workspace.setPanel("edit", editWorkspace);
       this.mixPanel = createStudioMixMasterApp({
         beatLab: Floor2StudioApp,
         workspace: this.workspace
       });
-      this.vocalsPanel = createVocalsPanel({ beatLab: Floor2StudioApp });
       this.pianoPanel = createPianoPanel();
       this.workspace.setPanel("mix", this.mixPanel);
-      this.workspace.setPanel("vocals", this.vocalsPanel);
       this.workspace.setPanel("piano", this.pianoPanel);
-
-      const nav = this.workspace.root?.querySelector(".lc-daw-navigation");
-      if (nav && ["mpc","beatlab","piano","drums","vocals"].includes(initialView)) {
-        nav.style.display = "none";
-      }
 
       return root;
     } catch (error) {
@@ -513,7 +514,6 @@ const StudioDAWApp = {
     this.workspace = null;
     this.beatLabPanel = null;
     this.mixPanel = null;
-    this.vocalsPanel = null;
     this.pianoPanel = null;
     this.mpcPanel = null;
     this.drumsPanel = null;
