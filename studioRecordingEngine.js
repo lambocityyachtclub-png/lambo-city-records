@@ -100,14 +100,16 @@ const StudioRecordingEngine = {
     if (!audio || audio.state !== "running") throw new Error("Start the studio audio before recording.");
     if (!trackId) throw new Error("Choose and arm an audio track before recording.");
     if (!inputNode && !navigator.mediaDevices?.getUserMedia) {
+      try { pitchCorrectionNode?.disconnect(); } catch {}
       throw new Error("Microphone access is unavailable. Open LAMBO CITY over HTTPS.");
     }
-    const microphoneStream = inputNode ? null : await navigator.mediaDevices.getUserMedia({
-      audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
-    });
+    let microphoneStream;
     let microphoneSource;
     let destination;
     try {
+      microphoneStream = inputNode ? null : await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
+      });
       microphoneSource = inputNode || audio.createMediaStreamSource(microphoneStream);
       destination = audio.createMediaStreamDestination();
       if (!inputNode && pitchCorrectionNode) {
