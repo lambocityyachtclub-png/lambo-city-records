@@ -115,7 +115,7 @@ export function renderStudioDAWTimeline({
   for (let bar=1; bar<=TOTAL_BARS; bar+=1) {
     const mark=document.createElement("button"); mark.type="button"; mark.textContent=String(bar).padStart(2,"0");
     if (Number(playheadBar)===bar) mark.classList.add("active");
-    mark.addEventListener("click",()=>onPlayheadChange(snapBar(bar,snapMode,tempo)));
+    mark.addEventListener("pointerdown",event=>{const fraction=Math.max(0,Math.min(.999,(event.clientX-mark.getBoundingClientRect().left)/width));onPlayheadChange(snapBar(bar+fraction,snapMode,tempo));});
     ruler.appendChild(mark);
   }
   const lane=document.createElement("div"); lane.className="lc-arrangement-lane";
