@@ -32,18 +32,20 @@ This roadmap is the source of truth for the EDIT workspace build. Keep the appro
 - [ ] Verify precision metadata survives save/reopen and portable session export/import.
 
 ## Stage 3 — Recording and vocal comping
-**Code status: first recording workflow slice committed; full Stage 3 remains in progress.**
+**Code status: core workflow implemented and committed; hands-on iPad Safari / desktop verification remains. Automatic loopback latency measurement is still deferred.**
 
 - [x] Count-in / pre-roll with audible beat clicks before the armed track begins recording.
 - [x] Punch-in at a selected bar and automatic punch-out at a selected bar; manual record/stop remains available.
 - [x] Optional microphone input monitoring, off by default; use headphones to avoid acoustic feedback.
 - [x] Multiple takes are retained as separate, vertically stacked take lanes on the armed track.
 - [x] Take protection lock prevents accidental deletion and is preserved in portable session export/import.
-- [ ] Live input/record-level meters and input-device selection.
-- [ ] Comping: choose sections from multiple takes into one composite performance.
-- [ ] Overdub workflow and non-destructive take management improvements.
-- [ ] Recording latency measurement/compensation and device-specific calibration.
-- [ ] Verify count-in timing, punch boundaries, monitoring, take lanes, and protection on iPad Safari and desktop.
+- [x] Recording-level meter reads the active input while recording.
+- [x] Select an available microphone/input device; fall back to the browser default if a saved device is unavailable.
+- [x] Comp selected sections from different takes into a normal audio comp track; source takes remain intact and are muted while the comp is auditioned.
+- [x] Overdub by recording additional passes onto the same armed track; each pass remains a separate take.
+- [x] Per-device manual latency compensation (0–500 ms) is applied to the recorded region start and saved with the session / portable session.
+- [ ] Automatic input-latency measurement / loopback calibration.
+- [ ] Verify count-in timing, punch boundaries, monitoring, input selection, meter behavior, take lanes, comp playback, undo, and protection on iPad Safari and desktop.
 
 ## Stage 4 — Arrangement and navigation
 - [ ] Song markers and named sections.
