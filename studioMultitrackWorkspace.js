@@ -45,6 +45,14 @@ function decodeAudioBlob(data, mimeType = "audio/webm") {
   return new Blob([bytes], { type: mimeType || "application/octet-stream" });
 }
 
+function decodeSessionClipAudio(clip, audioAssets, cache) {
+  const assetId = clip.audioAssetId;
+  const asset = assetId && audioAssets && audioAssets[assetId];
+  if (!asset) return decodeAudioBlob(clip.data, clip.mimeType);
+  if (!cache.has(assetId)) cache.set(assetId, decodeAudioBlob(asset.data, asset.mimeType));
+  return cache.get(assetId);
+}
+
 const TRACK_TYPES = [
   "audio",
   "midi",
@@ -189,6 +197,7 @@ const StudioMultitrackWorkspace = {
         return false;
       }
     }
+    this.arrangementPlayback?.stop();
     this.recordHistory("Add take region to comp");
     if (!compTrack) {
       compTrack = this.createTrack("audio", sourceTrack.name + " · COMP");
@@ -484,14 +493,23 @@ const StudioMultitrackWorkspace = {
       throw new Error("Stop the active track recording before exporting the song project.");
     }
     let encodedBytes = 0;
+    let nextAudioAssetId = 1;
+    const audioAssets = {};
+    const audioAssetIds = new Map();
     const tracks = [];
     for (const track of this.tracks) {
       const clips = [];
       for (const clip of (track.clips || [])) {
         if (!(clip.blob instanceof Blob) || !clip.blob.size) continue;
-        encodedBytes += clip.blob.size;
-        if (encodedBytes > MAX_PORTABLE_SESSION_BYTES) {
-          throw new Error("Session audio exceeds the 30 MB portable audio limit. Export fewer or shorter audio clips.");
+        let audioAssetId = audioAssetIds.get(clip.blob);
+        if (!audioAssetId) {
+          encodedBytes += clip.blob.size;
+          if (encodedBytes > MAX_PORTABLE_SESSION_BYTES) {
+            throw new Error("Session audio exceeds the 30 MB portable audio limit. Export fewer or shorter audio clips.");
+          }
+          audioAssetId = "audio-" + nextAudioAssetId++;
+          audioAssetIds.set(clip.blob, audioAssetId);
+          audioAssets[audioAssetId] = { mimeType: clip.blob.type || "application/octet-stream", data: await encodeAudioBlob(clip.blob) };
         }
         clips.push({
           id: clip.id,
@@ -506,7 +524,7 @@ const StudioMultitrackWorkspace = {
           fadeOutSeconds: Math.max(0, Number(clip.fadeOutSeconds) || 0),
           latencyCompensationMs: Math.max(0, Math.min(500, Number(clip.latencyCompensationMs) || 0)),
           mimeType: clip.blob.type || "application/octet-stream",
-          data: await encodeAudioBlob(clip.blob),
+          audioAssetId,
           takeId: clip.takeId || null,
           takeGroupId: clip.takeGroupId || null,
           takeNumber: Math.max(0, Number(clip.takeNumber) || 0),
@@ -572,6 +590,7 @@ const StudioMultitrackWorkspace = {
       inputLatencyByDevice: { ...(this.inputLatencyByDevice || {}) },
       templateId: this.sessionTemplateId,
       templateName: this.sessionTemplateName,
+      audioAssets,
       tracks
     };
   },
@@ -595,6 +614,7 @@ const StudioMultitrackWorkspace = {
     this.sessionTemplateId = session.templateId || null;
     this.sessionTemplateName = session.templateName || null;
     this.deletedItems = [];
+    const importedAudioAssets = new Map();
     this.tracks = session.tracks.map((savedTrack, index) => ({
       id: savedTrack.id || `lc-track-import-${index + 1}`,
       name: String(savedTrack.name || `Track ${index + 1}`),
@@ -647,7 +667,7 @@ const StudioMultitrackWorkspace = {
         fadeInSeconds: Math.max(0, Number(clip.fadeInSeconds) || 0),
         fadeOutSeconds: Math.max(0, Number(clip.fadeOutSeconds) || 0),
         latencyCompensationMs: Math.max(0, Math.min(500, Number(clip.latencyCompensationMs) || 0)),
-        blob: decodeAudioBlob(clip.data, clip.mimeType),
+        blob: decodeSessionClipAudio(clip, session.audioAssets, importedAudioAssets),
         takeId: clip.takeId || null,
         takeGroupId: clip.takeGroupId || null,
         takeNumber: Math.max(0, Number(clip.takeNumber) || 0),
