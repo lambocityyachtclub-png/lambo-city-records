@@ -515,7 +515,7 @@ export function createStudioMixMasterApp({ beatLab, workspace } = {}) {
     if (event.target.matches("[data-master-comp]")) {
       const value = Number(event.target.value);
       if (StudioAudioEngine.compressor && StudioAudioEngine.context) {
-        StudioAudioEngine.compressor.ratio.setTargetAtTime(value, StudioAudioEngine.context.currentTime, 0.025);
+        StudioAudioEngine.setMasterCompressionRatio(value);
         StudioMultitrackWorkspace.masterSettings = { ...(StudioMultitrackWorkspace.masterSettings || {}), compressionRatio: value };
         StudioMultitrackWorkspace.scheduleProjectAutosave();
         if (masterCompLabel) masterCompLabel.textContent = value.toFixed(1) + ":1";
