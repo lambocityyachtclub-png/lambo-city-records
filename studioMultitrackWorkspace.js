@@ -614,6 +614,11 @@ const StudioMultitrackWorkspace = {
         if (!clip || typeof clip.id !== "string" || !clip.id || clipIds.has(clip.id) || !Number.isFinite(Number(clip.startBar)) || Number(clip.startBar) < 1 || Number(clip.startBar) > 128 || !Number.isFinite(Number(clip.lengthBars)) || Number(clip.lengthBars) <= 0) return false;
         clipIds.add(clip.id);
         if (clip.blob !== undefined && !(clip.blob instanceof Blob)) return false;
+        if (clip.blob === undefined) {
+          const asset = clip.audioAssetId ? session.audioAssets?.[clip.audioAssetId] : null;
+          const encoded = asset?.data || clip.data;
+          if (typeof encoded !== "string" || !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(encoded)) return false;
+        }
       }
     }
     for (const track of session.tracks) {
