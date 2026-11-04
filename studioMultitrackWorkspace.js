@@ -111,8 +111,6 @@ const StudioMultitrackWorkspace = {
         effects: { ...(track.effects || {}), pitchCorrection: { ...(track.effects?.pitchCorrection || {}) } },
         automation: { volume: (track.automation?.volume || []).map(point => ({ ...point })) },
         clips: (track.clips || []).map(clip => ({ ...clip })),
-      midiNotes: (track.midiNotes || []).map(note => ({ ...note })),
-      sends: (track.sends || []).map(send => ({ ...send })),
         midiNotes: (track.midiNotes || []).map(note => ({ ...note })),
         sends: (track.sends || []).map(send => ({ ...send }))
       })),
