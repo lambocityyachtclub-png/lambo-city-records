@@ -129,6 +129,7 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
         '#lc-premium-daw-edit-screen .lc-track-timeline .lc-arrangement-waveform{height:35px;background:#062d51}',
         '#lc-premium-daw-edit-screen .lc-track-timeline .lc-arrangement-wave-empty{height:35px;color:#b3e7f4;background:#082b4b}',
         '#lc-premium-daw-edit-screen .lc-track-timeline .lc-arrangement-clip.selected{border:2px solid #f8d889;box-shadow:0 0 0 1px #c9a24a,0 0 12px #18d8ff55}',
+         '#lc-premium-daw-edit-screen .lc-track-timeline .lc-arrangement-clip.is-comp{border-color:#e6bb69;background:linear-gradient(180deg,#80602c,#3f2d13)}',
         '#lc-premium-daw-edit-screen .lc-track-timeline.lc-red-lane .lc-arrangement-clip{border-color:#e85a60;background:linear-gradient(180deg,#8e1827,#4d101e)}',
         '#lc-premium-daw-edit-screen .lc-track-timeline.lc-red-lane .lc-arrangement-waveform{background:#3b101a}',
         '#lc-premium-daw-edit-screen .lc-track-timeline.lc-red-lane .lc-arrangement-wave-empty{background:#32101a;color:#ffd5d8}',
