@@ -22,6 +22,9 @@ on:
       - "studioAudioExport.js"
       - "studioRecordingEngine.js"
       - "studioVocalEffects.js"
+      - "studioPitchCorrection.js"
+      - "studioPitchCorrectionWorklet.js"
+      - "scripts/test-studio-pitch-correction.mjs"
       - "studioSongProject.js"
       - "studioProjectPackage.js"
       - "mpc-interface.js"
@@ -113,6 +116,8 @@ jobs:
             studioAudioExport.js \
             studioRecordingEngine.js \
             studioVocalEffects.js \
+            studioPitchCorrection.js \
+            studioPitchCorrectionWorklet.js \
             studioSongProject.js \
             studioProjectPackage.js \
             mpc-interface.js \
@@ -142,3 +147,6 @@ jobs:
 
       - name: Test DAW MP3 encoder
         run: node --experimental-default-type=module scripts/test-daw-mp3-export.mjs
+
+      - name: Test vocal pitch correction DSP
+        run: node --experimental-default-type=module scripts/test-studio-pitch-correction.mjs
