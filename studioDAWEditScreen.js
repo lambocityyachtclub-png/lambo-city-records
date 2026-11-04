@@ -319,7 +319,8 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
           if (!track) return;
           const key = trackControl.dataset.trackControl === "mute" ? "muted" : trackControl.dataset.trackControl === "solo" ? "solo" : "armed";
           StudioMultitrackWorkspace.recordHistory("Track " + key);
-          track[key] = !track[key];
+          const linked = track.groupId ? StudioMultitrackWorkspace.tracks.filter(item => item.groupId === track.groupId) : [track];
+          linked.forEach(item => { item[key] = !track[key]; });
           if (key !== "armed" && StudioMultitrackWorkspace.arrangementPlayback) StudioMultitrackWorkspace.arrangementPlayback.syncTrackState(StudioMultitrackWorkspace.tracks);
           this.render();
           this.status(track.name + " " + key + (track[key] ? " on." : " off."));
@@ -331,7 +332,27 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
         const workspace = StudioMultitrackWorkspace;
 
         try {
-          if (action === "session-menu") {
+          if (action === "add-marker") {
+            const name = root.querySelector("[data-marker-name]").value.trim();
+            const bar = Number(root.querySelector("[data-marker-bar]").value || workspace.playheadBar);
+            if (workspace.addMarker(name, bar)) root.querySelector("[data-marker-name]").value = "";
+          } else if (action === "set-cycle") {
+            workspace.setLoopRange(Number(root.querySelector("[data-loop-start]").value), Number(root.querySelector("[data-loop-end]").value), workspace.loopRange.enabled);
+          } else if (action === "toggle-cycle") {
+            workspace.setLoopRange(workspace.loopRange.startBar, workspace.loopRange.endBar, !workspace.loopRange.enabled);
+          } else if (action === "add-tempo-point") {
+            workspace.addTempoChange(Number(root.querySelector("[data-tempo-bar]").value), Number(root.querySelector("[data-tempo-value]").value));
+          } else if (action === "add-meter-point") {
+            workspace.addTimeSignatureChange(Number(root.querySelector("[data-meter-bar]").value), root.querySelector("[data-meter-value]").value);
+          } else if (action === "toggle-follow") {
+            workspace.toggleFollowPlayhead(); this.renderHeader();
+          } else if (action === "track-group") {
+            const row = button.closest("[data-track-id]"); const track = workspace.tracks.find(item => item.id === row?.dataset.trackId);
+            const name = window.prompt("Track folder / group name:", track?.groupName || "Rhythm Section");
+            if (name !== null && name.trim()) workspace.assignTrackGroup(track.id, name);
+          } else if (action === "toggle-track-group") {
+            const row = button.closest("[data-track-id]"); workspace.toggleTrackGroup(row?.dataset.trackId);
+          } else if (action === "session-menu") {
             root.querySelector("[data-session-menu]").classList.toggle("open");
           } else if (action === "record") {
             await workspace.startArmedRecording({ vocalEffects: this.beatLab && this.beatLab.vocalEffects, countInBars: Number(root.querySelector("[data-count-in]")?.value || 0), punchInBar: root.querySelector("[data-punch-in]")?.value || null, punchOutBar: root.querySelector("[data-punch-out]")?.value || null, monitorInput: Boolean(root.querySelector("[data-input-monitor]")?.checked) });
@@ -560,6 +581,12 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
       if (zoom) zoom.value = String(workspace.zoomBarWidth);
       const snap = this.root.querySelector("[data-snap]");
       if (snap) snap.value = workspace.snapMode || "bars";
+      const meter = this.root.querySelector("[data-clock]");
+      if (meter) meter.textContent = Math.round(workspace.getTempoAtBar(workspace.playheadBar)) + " BPM / " + (()=>{const m=workspace.getTimeSignatureAtBar(workspace.playheadBar);return m.numerator+"/"+m.denominator;})() + " · BAR " + Math.floor(workspace.playheadBar);
+      const loopStart=this.root.querySelector("[data-loop-start]"),loopEnd=this.root.querySelector("[data-loop-end]"),cycle=this.root.querySelector('[data-action="toggle-cycle"]');
+      if(loopStart)loopStart.value=String(workspace.loopRange.startBar);if(loopEnd)loopEnd.value=String(workspace.loopRange.endBar);
+      if(cycle){cycle.textContent=workspace.loopRange.enabled?"CYCLE ON":"CYCLE OFF";cycle.classList.toggle("active",Boolean(workspace.loopRange.enabled));}
+      const follow=this.root.querySelector('[data-action="toggle-follow"]');if(follow){follow.textContent=workspace.followPlayhead?"FOLLOW ON":"FOLLOW OFF";follow.classList.toggle("active",Boolean(workspace.followPlayhead));}
       const slip = this.root.querySelector('[data-action="slip-mode"]');
       if (slip) { slip.textContent = workspace.slipMode ? "SLIP ON" : "SLIP OFF"; slip.classList.toggle("active", Boolean(workspace.slipMode)); }
     },
