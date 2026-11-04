@@ -39,7 +39,7 @@ export function createStudioMixMasterApp({ beatLab, workspace } = {}) {
   if (masterCompLabel && masterCompSlider) masterCompLabel.textContent = Number(masterCompSlider.value).toFixed(1) + ":1";
   const currentMaster = Math.round((StudioAudioEngine.master?.gain?.value ?? 1) * 100);
   if (masterSlider) masterSlider.value = String(StudioMultitrackWorkspace.masterSettings?.volume ?? currentMaster);
-  if (masterLabel) masterLabel.textContent = currentMaster + "%";
+  if (masterLabel) masterLabel.textContent = (masterSlider?.value ?? currentMaster) + "%";
   const status = message => {
     const node = root.querySelector("[data-mix-status]");
     if (node) node.textContent = message;
