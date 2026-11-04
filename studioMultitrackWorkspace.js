@@ -598,6 +598,7 @@ const StudioMultitrackWorkspace = {
     this.render();
     this.dirty = false;
     this.saveState = "saved";
+    if (!sessionOverride) await StudioDAWSessionStore.clearRecovery(projectId);
     this.status("Saved song session restored with " + this.tracks.length + " track(s).");
     return true;
   },
