@@ -310,6 +310,8 @@ const StudioMultitrackWorkspace = {
       projectName: String(projectName || "Untitled Song").trim() || "Untitled Song",
       updatedAt: new Date().toISOString(),
       tempo: this.tempo,
+      zoomBarWidth: this.zoomBarWidth,
+      playheadBar: this.playheadBar,
       templateId: this.sessionTemplateId,
       templateName: this.sessionTemplateName,
       deletedItems: this.deletedItems,
@@ -337,6 +339,8 @@ const StudioMultitrackWorkspace = {
     }
     this.stopAll();
     this.tempo = Math.max(60, Math.min(180, Number(session.tempo) || 100));
+    this.zoomBarWidth = Math.max(24, Math.min(288, Number(session.zoomBarWidth) || 72));
+    this.playheadBar = Math.max(1, Math.min(128, Number(session.playheadBar) || 1));
     this.sessionTemplateId = session.templateId || null;
     this.sessionTemplateName = session.templateName || null;
     this.activeProjectId = session.projectId || projectId;
@@ -456,9 +460,10 @@ const StudioMultitrackWorkspace = {
       version: 1,
       projectName: this.activeProjectName || "Untitled Song",
       tempo: this.tempo,
+      zoomBarWidth: this.zoomBarWidth,
+      playheadBar: this.playheadBar,
       templateId: this.sessionTemplateId,
       templateName: this.sessionTemplateName,
-      projectName: this.activeProjectName || "Untitled Song",
       tracks
     };
   },
@@ -473,8 +478,11 @@ const StudioMultitrackWorkspace = {
     }
     this.stopAll();
     this.tempo = Math.max(60, Math.min(180, Number(session.tempo) || 100));
+    this.zoomBarWidth = Math.max(24, Math.min(288, Number(session.zoomBarWidth) || 72));
+    this.playheadBar = Math.max(1, Math.min(128, Number(session.playheadBar) || 1));
     this.sessionTemplateId = session.templateId || null;
     this.sessionTemplateName = session.templateName || null;
+    this.deletedItems = [];
     this.tracks = session.tracks.map((savedTrack, index) => ({
       id: savedTrack.id || `lc-track-import-${index + 1}`,
       name: String(savedTrack.name || `Track ${index + 1}`),
