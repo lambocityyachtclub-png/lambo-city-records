@@ -44,6 +44,7 @@ This roadmap is the source of truth for the EDIT workspace build. Keep the appro
 - [x] Comp selected sections from different takes into a normal audio comp track; source takes remain intact and are muted while the comp is auditioned.
 - [x] Overdub by recording additional passes onto the same armed track; each pass remains a separate take.
 - [x] Per-device manual latency compensation (0–500 ms) is applied to the recorded region start and saved with the session / portable session.
+- [x] Portable comp sessions deduplicate shared take audio assets so comp regions do not repeatedly embed the same recording.
 - [ ] Automatic input-latency measurement / loopback calibration.
 - [ ] Verify count-in timing, punch boundaries, monitoring, input selection, meter behavior, take lanes, comp playback, undo, and protection on iPad Safari and desktop.
 
