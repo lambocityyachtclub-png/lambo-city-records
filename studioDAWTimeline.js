@@ -177,13 +177,13 @@ export function renderStudioDAWTimeline({
         const move=e=>{
           const delta=snapBar((e.clientX-startX)/width,snapMode,tempo);
           if(edge==="right"){
-            const next=Math.max(.25,Math.min(TOTAL_BARS-clip.startBar+1,originalLength+delta));
+            const next=Math.max(.0625,Math.min(TOTAL_BARS-clip.startBar+1,originalLength+delta));
             if(next===clip.lengthBars)return;
             if(!changed){onEditStart();changed=true;}
             clip.lengthBars=next;
             if(originalPlay>0)clip.playDurationSeconds=originalPlay*(next/originalLength);
           }else{
-            const nextStart=Math.max(1,Math.min(originalStart+originalLength-.25,originalStart+delta));
+            const nextStart=Math.max(1,Math.min(originalStart+originalLength-.0625,originalStart+delta));
             if(nextStart===clip.startBar)return;
             if(!changed){onEditStart();changed=true;}
             const removed=nextStart-originalStart;
@@ -237,7 +237,7 @@ export function renderStudioDAWTimeline({
       });
       const seconds=Math.max(0,Number(clip[edge==="in"?"fadeInSeconds":"fadeOutSeconds"])||0);
       const duration=Math.max(.01,Number(clip.playDurationSeconds||clip.duration||clip.lengthBars*240/tempo));
-      handle.style.width=Math.max(16,seconds/duration*Math.max(18,block.clientWidth))+"px";
+      handle.style.width=Math.max(16,seconds/duration*Math.max(18,clip.lengthBars*width-3))+"px";
       block.appendChild(handle);
     };
     addFadeHandle("in");addFadeHandle("out");
