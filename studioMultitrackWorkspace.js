@@ -19,6 +19,7 @@ import StudioRecordingEngine from "./studioRecordingEngine.js";
 import StudioAudioExport from "./studioAudioExport.js";
 import StudioMPCSampler from "./studioMPCSampler.js";
 import StudioDAWSessionStore from "./studioDAWSessionStore.js";
+import { createStudioPitchCorrectionNode } from "./studioPitchCorrection.js";
 
 import {
   createStudioDAWArrangementPlayback
@@ -722,10 +723,14 @@ const StudioMultitrackWorkspace = {
         : track.inputSource === "mpc"
           ? StudioMPCSampler.ensureOutput(audio)
           : null;
+      const pitchCorrectionNode = track.inputSource === "mic" && /vocal/i.test(track.name) && track.effects?.pitchCorrection?.enabled
+        ? await createStudioPitchCorrectionNode(audio, track.effects.pitchCorrection)
+        : null;
       await StudioRecordingEngine.startTrackRecording({
         audio,
         trackId: track.id,
         inputNode,
+        pitchCorrectionNode,
         vocalEffects: track.inputSource === "mic" && /vocal/i.test(track.name) ? vocalEffects : null
       });
       const sourceLabel = track.inputSource === "mpc"
