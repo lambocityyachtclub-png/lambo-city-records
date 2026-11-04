@@ -18,12 +18,17 @@ This roadmap is the source of truth for the EDIT workspace build. Keep the appro
 - [ ] Verify undo/redo across split, trim, move, duplicate, delete, restore, and session save/reopen.
 
 ## Stage 2 — Waveform precision
-- [ ] Timeline zoom and horizontal navigation that remain accurate at all zoom levels.
-- [ ] Snap modes: bars, beats, subdivisions, seconds, and snap-off/free positioning.
-- [ ] Non-destructive fades and crossfades.
-- [ ] Clip gain independent of track volume.
-- [ ] Slip editing (move source audio inside a region without moving the region).
-- [ ] Clear trim boundaries and waveform rendering that reflects the audible source range.
+**Code status: core controls implemented; crossfade behavior and device/browser verification remain.**
+
+- [x] Timeline zoom and horizontal navigation using the existing zoomable 128-bar timeline.
+- [x] Snap modes: bars, beats, 1/16 subdivisions, seconds, and snap-off/free positioning for region movement, trimming, and cursor placement.
+- [x] Non-destructive fade-in and fade-out handles with playback gain envelopes; overlapping regions can be shaped as manual crossfades.
+- [x] Clip gain independent of track volume, saved with the region and applied during playback.
+- [x] Slip editing moves source audio inside a region without moving the region boundary.
+- [x] Waveform rendering reflects the audible source offset and trimmed source duration.
+- [ ] Dedicated equal-power crossfade behavior between overlapping regions.
+- [ ] Verify snap accuracy, fades, clip gain, slip editing, and waveform boundaries on iPad Safari and desktop.
+- [ ] Verify precision metadata survives save/reopen and portable session export/import.
 
 ## Stage 3 — Recording and vocal comping
 - [ ] Punch-in and punch-out recording.
