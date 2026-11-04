@@ -44,7 +44,9 @@ export function createStudioDAWMidiEditor({ track, onBeforeChange, onChange } = 
       grid.appendChild(button);
     }
   }
-  waveSelect.addEventListener("change", () => { if (track) { track.instrumentWave = waveSelect.value; if (typeof onBeforeChange === "function") onBeforeChange(track); if (typeof onChange === "function") onChange(track); } });
+  waveSelect.addEventListener("pointerdown", () => { if (track && typeof onBeforeChange === "function") onBeforeChange(track); });
+  waveSelect.addEventListener("keydown", () => { if (track && typeof onBeforeChange === "function") onBeforeChange(track); });
+  waveSelect.addEventListener("change", () => { if (track) { track.instrumentWave = waveSelect.value; if (typeof onChange === "function") onChange(track); } });
   root.appendChild(grid);
   const hint = document.createElement("div");
   hint.textContent = "Tap a cell to add or remove a note · 2-octave range · velocity 80%.";
@@ -55,7 +57,6 @@ export function createStudioDAWMidiEditor({ track, onBeforeChange, onChange } = 
     if (!cell || !track) return;
     const pitch = Number(cell.dataset.pitch);
     const step = Number(cell.dataset.step);
-    track.instrumentWave = waveSelect.value;
     const key = pitch + ":" + step;
     track.midiNotes = Array.isArray(track.midiNotes) ? track.midiNotes : [];
     if (typeof onBeforeChange === "function") onBeforeChange(track);
