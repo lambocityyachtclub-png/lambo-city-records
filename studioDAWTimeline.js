@@ -124,6 +124,7 @@ export function renderStudioDAWTimeline({
     const block=document.createElement("div"); block.className="lc-arrangement-clip"+(clip.id===selectedClipId?" selected":"");
     block.dataset.clipId=clip.id;
     const update=()=>{block.style.left=((clip.startBar-1)*width)+"px";block.style.width=Math.max(12,clip.lengthBars*width-3)+"px";};
+    const repaintWaveform=()=>{const canvas=block.querySelector(".lc-arrangement-waveform");if(canvas)decodeClip(clip).then(buffer=>{if(buffer&&canvas.isConnected)paintWaveform(canvas,buffer,clip);});};
     update();
     const title=document.createElement("div"); title.className="lc-arrangement-clip-title"; title.textContent=clip.name||"Audio Clip";
     title.title=slipMode?"Select and drag to slip source audio inside this region":"Select and drag to move this region";
@@ -155,7 +156,7 @@ export function renderStudioDAWTimeline({
       };
       const finish=()=>{
         title.removeEventListener("pointermove",move);title.removeEventListener("pointerup",finish);title.removeEventListener("pointercancel",finish);
-        if(changed)onChange(clip);
+        if(changed){onChange(clip);repaintWaveform();}
       };
       title.addEventListener("pointermove",move);title.addEventListener("pointerup",finish);title.addEventListener("pointercancel",finish);
     });
