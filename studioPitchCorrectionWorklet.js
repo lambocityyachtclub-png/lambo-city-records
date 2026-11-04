@@ -130,7 +130,7 @@ class LamboCityPitchCorrectionProcessor extends AudioWorkletProcessor {
     let bestScore = 1;
     for (let lag = minLag; lag <= maxLag; lag += 1) {
       running += difference[lag];
-      const score = running > 0 ? difference[lag] * (lag - minLag + 1) / running : 1;
+      const score = running > 0 ? difference[lag] * lag / running : 1;
       difference[lag] = score;
       if (score < bestScore) {
         bestScore = score;
