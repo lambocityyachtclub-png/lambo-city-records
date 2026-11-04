@@ -303,13 +303,21 @@ export function createStudioDAWArrangementPlayback({
           const clipEndTime = clipStartTime + remainingDuration;
           clipGain.gain.setValueAtTime(linearGain, clipStartTime);
           if (fadeIn > 0) {
+            const curve = new Float32Array(32);
+            for (let index = 0; index < curve.length; index += 1) {
+              curve[index] = linearGain * Math.sin((index / (curve.length - 1)) * Math.PI / 2);
+            }
             clipGain.gain.setValueAtTime(0, clipStartTime);
-            clipGain.gain.linearRampToValueAtTime(linearGain, clipStartTime + fadeIn);
+            clipGain.gain.setValueCurveAtTime(curve, clipStartTime, fadeIn);
           }
           if (fadeOut > 0) {
+            const curve = new Float32Array(32);
+            for (let index = 0; index < curve.length; index += 1) {
+              curve[index] = linearGain * Math.cos((index / (curve.length - 1)) * Math.PI / 2);
+            }
             const fadeStart = Math.max(clipStartTime, clipEndTime - fadeOut);
             clipGain.gain.setValueAtTime(linearGain, fadeStart);
-            clipGain.gain.linearRampToValueAtTime(0, clipEndTime);
+            clipGain.gain.setValueCurveAtTime(curve, fadeStart, clipEndTime - fadeStart);
           }
           source.connect(clipGain);
           clipGain.connect(channel.gain);
