@@ -1,5 +1,6 @@
 import StudioAudioEngine from "./studioAudioEngine.js";
 import StudioVocalEffects from "./studioVocalEffects.js";
+import { createStudioPitchCorrectionNode } from "./studioPitchCorrection.js";
 
 const MAX_RENDER_SECONDS = 900;
 const SAMPLE_RATE = 44100;
@@ -107,6 +108,9 @@ async function renderStudioSessionToAudioBuffer({
     const compressor = offline.createDynamicsCompressor();
     const panner = offline.createStereoPanner ? offline.createStereoPanner() : null;
     const trackEffects = StudioVocalEffects.create(offline);
+    const pitchCorrectionNode = track.effects?.pitchCorrection?.enabled
+      ? await createStudioPitchCorrectionNode(offline, track.effects.pitchCorrection)
+      : null;
     low.type = "lowshelf"; low.frequency.value = 120;
     mid.type = "peaking"; mid.frequency.value = 1000; mid.Q.value = 0.8;
     high.type = "highshelf"; high.frequency.value = 8000;
@@ -121,7 +125,12 @@ async function renderStudioSessionToAudioBuffer({
     compressor.release.value = 0.25;
     gain.connect(automationGain); automationGain.connect(low);
     low.connect(mid); mid.connect(high); high.connect(compressor);
-    compressor.connect(trackEffects.input);
+    if (pitchCorrectionNode) {
+      compressor.connect(pitchCorrectionNode);
+      pitchCorrectionNode.connect(trackEffects.input);
+    } else {
+      compressor.connect(trackEffects.input);
+    }
     if (panner) {
       trackEffects.output.connect(panner);
       panner.connect(master);
