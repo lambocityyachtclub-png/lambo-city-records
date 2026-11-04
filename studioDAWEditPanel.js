@@ -1,9 +1,13 @@
 import StudioMultitrackWorkspace from "./studioMultitrackWorkspace.js";
+import {
+  listStudioDAWSessionTemplates,
+  applyStudioDAWSessionTemplate
+} from "./studioDAWSessionTemplates.js";
 import { renderStudioSessionToWav, downloadStudioWav, renderStudioSessionToMp3, downloadStudioMp3 } from "./studioDAWExport.js";
 
 /*
  * LAMBO CITY RECORDS
- * SONG EDITOR PANEL — V2
+ * SONG EDITOR PANEL — V3
  *
  * Dedicated recorded-audio editing workspace.
  * Reuses the existing multitrack session and clips.
@@ -108,6 +112,53 @@ export function createStudioDAWEditPanel({
         }
       });
 
+      const templatePanel = document.createElement("section");
+      templatePanel.style.cssText = "display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:end;padding:13px 15px;border:1px solid #665438;border-radius:11px;background:linear-gradient(135deg,#191b21,#11141b)";
+      templatePanel.innerHTML = `
+        <label style="display:grid;gap:7px;min-width:0;color:#d8b36e;font-size:10px;font-weight:800;letter-spacing:1px">
+          STARTING SESSION
+          <select data-session-template style="width:100%;min-height:44px;padding:9px;border:1px solid #665438;border-radius:7px;background:#11151d;color:#f4f1eb;font-size:13px;letter-spacing:0">
+            <option value="">Choose a vocal workflow…</option>
+          </select>
+        </label>
+        <button type="button" data-load-template style="min-height:44px;padding:10px 15px;border:1px solid #9b7948;border-radius:8px;background:#594321;color:#fff;font-weight:800">LOAD TEMPLATE</button>
+        <div data-template-guidance role="status" aria-live="polite" style="grid-column:1/-1;color:#a8a8b1;font-size:11px;line-height:1.5">Four original vocal-session concepts. Loading a template replaces the current track layout; existing audio clips are protected by a confirmation prompt.</div>
+      `;
+      const templateSelect = templatePanel.querySelector("[data-session-template]");
+      const templateGuidance = templatePanel.querySelector("[data-template-guidance]");
+      listStudioDAWSessionTemplates().forEach(template => {
+        const option = document.createElement("option");
+        option.value = template.id;
+        option.textContent = template.name;
+        templateSelect.appendChild(option);
+      });
+      if (StudioMultitrackWorkspace.sessionTemplateId) {
+        templateSelect.value = StudioMultitrackWorkspace.sessionTemplateId;
+        const activeTemplate = listStudioDAWSessionTemplates().find(item => item.id === templateSelect.value);
+        if (activeTemplate) templateGuidance.textContent = activeTemplate.concept + " " + activeTemplate.guidance;
+      }
+      templatePanel.querySelector("[data-load-template]").addEventListener("click", () => {
+        const templateId = templateSelect.value;
+        if (!templateId) {
+          templateGuidance.textContent = "Choose one of the four session concepts first.";
+          return;
+        }
+        const hasAudio = StudioMultitrackWorkspace.tracks.some(track =>
+          (track.clips || []).some(clip => clip.blob instanceof Blob && clip.blob.size > 0)
+        );
+        if (hasAudio && !window.confirm("Loading this template will replace the current track layout and remove its audio clips. Save or export the song first. Continue?")) {
+          return;
+        }
+        try {
+          const template = applyStudioDAWSessionTemplate(StudioMultitrackWorkspace, templateId);
+          templateGuidance.textContent = template.concept + " " + template.guidance;
+          const tempoInput = header.querySelector("[data-session-tempo]");
+          if (tempoInput) tempoInput.value = String(StudioMultitrackWorkspace.tempo);
+        } catch (error) {
+          templateGuidance.textContent = "TEMPLATE ERROR: " + (error?.message || error);
+        }
+      });
+
       const tempoInput = header.querySelector("[data-session-tempo]");
       tempoInput.addEventListener("change", () => {
         const tempo = Math.max(60, Math.min(180, Number(tempoInput.value) || 100));
@@ -117,9 +168,9 @@ export function createStudioDAWEditPanel({
 
       const intro = document.createElement("div");
       intro.style.cssText = "padding:0 2px;color:#a8a8b1;font-size:12px;line-height:1.6";
-      intro.textContent = "Arrange your vocal takes, beat recordings, and master recordings on one shared timeline. Move clips across bars and play the session as a complete song.";
+      intro.textContent = "Import your instrumental, record each verse and hook on its own track, then build doubles, ad-libs, and harmonies around the same song timeline.";
 
-      root.append(header, intro, multitrack);
+      root.append(header, templatePanel, intro, multitrack);
       this.root = root;
       return root;
     },
