@@ -132,7 +132,7 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
         '#lc-premium-daw-edit-screen .lc-track-timeline.lc-red-lane .lc-arrangement-wave-empty{background:#32101a;color:#ffd5d8}',
         '#lc-premium-daw-edit-screen .lc-track-timeline .lc-arrangement-playhead{background:#fff;box-shadow:0 0 7px #fff}',
         '#lc-premium-daw-edit-screen .lc-status{flex:0 0 auto;padding:6px 9px;min-height:25px;background:#08132b;border-top:1px solid #2a4770;color:#9deaff;font-size:10px}',
-        '#lc-premium-daw-edit-screen .lc-session-menu{position:absolute;z-index:30;right:10px;top:83px;display:none;min-width:190px;padding:7px;border:1px solid var(--gold);border-radius:8px;background:#0b1839;box-shadow:0 8px 20px #000b}',
+        '#lc-premium-daw-edit-screen .lc-record-options{display:flex;align-items:center;gap:7px;flex-wrap:wrap;padding:6px 10px;background:#0c1732;border-bottom:1px solid #263e68;color:#aebbd0;font-size:9px}#lc-premium-daw-edit-screen .lc-record-options label{display:flex;align-items:center;gap:4px}#lc-premium-daw-edit-screen .lc-record-options input,#lc-premium-daw-edit-screen .lc-record-options select{width:54px;min-height:28px;background:#101d3d;color:#f4f1eb;border:1px solid #53698f;border-radius:4px;padding:3px}#lc-premium-daw-edit-screen .lc-record-options select{width:62px}#lc-premium-daw-edit-screen .lc-record-options input[type=checkbox]{width:15px;min-height:15px;accent-color:#d8b36e}#lc-premium-daw-edit-screen .lc-session-menu{position:absolute;z-index:30;right:10px;top:83px;display:none;min-width:190px;padding:7px;border:1px solid var(--gold);border-radius:8px;background:#0b1839;box-shadow:0 8px 20px #000b}',
         '#lc-premium-daw-edit-screen .lc-session-menu.open{display:grid;gap:5px}',
         '#lc-premium-daw-edit-screen .lc-session-menu button{min-height:34px;text-align:left;background:#14275f;color:#fff;border:1px solid #48618d;border-radius:5px;padding:6px 9px;font-size:10px}',
         '@media(max-width:760px){#lc-premium-daw-edit-screen{min-height:620px;padding:5px}#lc-premium-daw-edit-screen .lc-main{grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr)}#lc-premium-daw-edit-screen .lc-inspector{max-height:205px}#lc-premium-daw-edit-screen .lc-strips{grid-template-columns:repeat(2,minmax(0,1fr))}#lc-premium-daw-edit-screen .lc-workarea{min-height:420px}#lc-premium-daw-edit-screen .lc-transport{padding-left:80px;gap:5px;flex-wrap:wrap}#lc-premium-daw-edit-screen .lc-logo{width:72px;height:72px}#lc-premium-daw-edit-screen .lc-lcd{font-size:12px}}',
@@ -149,6 +149,7 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
         '<button class="lc-metal-icon" data-action="undo" aria-label="Undo">▱</button>',
         '<button class="lc-metal-icon" data-action="mixer-focus" aria-label="Mixer">☷</button>',
         '</div>',
+        '<div class="lc-record-options" aria-label="Recording setup"><label>COUNT-IN <select data-count-in><option value="0">OFF</option><option value="1">1 BAR</option><option value="2">2 BARS</option><option value="4">4 BARS</option></select></label><label>PUNCH IN <input data-punch-in type="number" min="1" max="128" placeholder="LIVE"></label><label>PUNCH OUT <input data-punch-out type="number" min="1" max="128" placeholder="OFF"></label><label><input data-input-monitor type="checkbox"> MONITOR</label></div>',
         '<div class="lc-session-menu" data-session-menu>',
         '<button type="button" data-action="save-session">Save Session</button>',
         '<button type="button" data-action="open-session">Open Saved Session</button>',
@@ -276,13 +277,14 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
           if (action === "session-menu") {
             root.querySelector("[data-session-menu]").classList.toggle("open");
           } else if (action === "record") {
-            await workspace.startArmedRecording({ vocalEffects: this.beatLab && this.beatLab.vocalEffects });
-            this.status("Record command sent · arm one audio track first.");
+            await workspace.startArmedRecording({ vocalEffects: this.beatLab && this.beatLab.vocalEffects, countInBars: Number(root.querySelector("[data-count-in]")?.value || 0), punchInBar: root.querySelector("[data-punch-in]")?.value || null, punchOutBar: root.querySelector("[data-punch-out]")?.value || null, monitorInput: Boolean(root.querySelector("[data-input-monitor]")?.checked) });
+            if (!workspace.pendingRecording && !workspace.isTrackRecording()) this.status("Record command finished · check the armed track and recording settings.");
           } else if (action === "play") {
             await workspace.playAll();
             this.status("Arrangement playback requested.");
           } else if (action === "stop") {
             workspace.stopAll();
+            if (workspace.pendingRecording) workspace.cancelScheduledRecording();
             if (workspace.isTrackRecording()) await workspace.stopArmedRecording();
             this.status("Playback / recording stopped.");
           } else if (action === "add-track") {
