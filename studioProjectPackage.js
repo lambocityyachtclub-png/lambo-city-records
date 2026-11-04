@@ -282,6 +282,13 @@ function validateProject(project) {
             !Number.isFinite(Number(track.effects.reverbMix)) || Number(track.effects.reverbMix) < 0 || Number(track.effects.reverbMix) > 1 ||
             !Number.isFinite(Number(track.effects.reverbDecay)) || Number(track.effects.reverbDecay) < 0.3 || Number(track.effects.reverbDecay) > 6
           )) ||
+          (track.effects?.pitchCorrection !== undefined && (
+            typeof track.effects.pitchCorrection.enabled !== "boolean" ||
+            !Number.isInteger(Number(track.effects.pitchCorrection.root)) || Number(track.effects.pitchCorrection.root) < 0 || Number(track.effects.pitchCorrection.root) > 11 ||
+            !["major", "minor", "chromatic"].includes(track.effects.pitchCorrection.scale) ||
+            !Number.isFinite(Number(track.effects.pitchCorrection.amount)) || Number(track.effects.pitchCorrection.amount) < 0 || Number(track.effects.pitchCorrection.amount) > 100 ||
+            !Number.isFinite(Number(track.effects.pitchCorrection.speedMs)) || Number(track.effects.pitchCorrection.speedMs) < 0 || Number(track.effects.pitchCorrection.speedMs) > 120
+          )) ||
           (track.automation !== undefined && (!Array.isArray(track.automation.volume) || track.automation.volume.length > 64)) ||
           (track.effects !== undefined && (
             !Number.isFinite(Number(track.effects.delayTime)) || Number(track.effects.delayTime) < 0.05 || Number(track.effects.delayTime) > 1.5 ||
