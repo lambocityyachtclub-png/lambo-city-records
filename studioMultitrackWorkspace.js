@@ -1719,8 +1719,12 @@ renderStudioDAWTimeline({
 
   status(message) {
     const element = this.root?.querySelector("[data-status]");
-
     if (element) element.textContent = message;
+    const saveState = this.root?.querySelector("[data-save-state]");
+    if (saveState) {
+      saveState.textContent = ({ saved: "SAVED", pending: "AUTO-SAVE PENDING", saving: "SAVING…", error: "SAVE ERROR" })[this.saveState] || "SAVED";
+      saveState.dataset.state = this.saveState || "saved";
+    }
   }
 };
 
