@@ -66,7 +66,7 @@ for (let index = 1; index < renderedTail.length; index += 1) {
 const renderedDuration = renderedTail.length / 44100;
 const correctedFrequency = positiveCrossings / renderedDuration;
 assert.ok(correctedFrequency > 330 && correctedFrequency < 365,
-  "Corrected output should move the sustained F-sharp toward F; measured " + correctedFrequency.toFixed(1) + " Hz (target ratio " + processor.targetRatio.toFixed(4) + ", active ratio " + processor.currentRatio.toFixed(4) + ", phase " + processor.shifters[0].phaseA.toFixed(4) + ", hasPitch " + processor.hasPitch + ", detections " + detected.length + ").");
+  "Corrected output should move the sustained F-sharp toward F; measured " + correctedFrequency.toFixed(1) + " Hz (target ratio " + processor.targetRatio.toFixed(4) + ", active ratio " + processor.currentRatio.toFixed(4) + ", phase " + (processor.shifters[0].ratioSum / processor.shifters[0].calls).toFixed(4) + ", phase " + processor.shifters[0].phaseA.toFixed(4) + ", hasPitch " + processor.hasPitch + ", detections " + detected.length + ").");
 
 processor.port.onmessage({ data: { enabled: false } });
 assert.equal(processor.settings.enabled, false, "The effect should support bypass updates.");
