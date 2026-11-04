@@ -347,6 +347,7 @@ export function createStudioMixMasterApp({ beatLab, workspace } = {}) {
       const label = root.querySelector('[data-eq-label="' + band + "-" + track.id + '"]');
       if (label) label.textContent = track.eq[band] + " dB";
       StudioMultitrackWorkspace.arrangementPlayback?.setTrackEQ(track.id, band, track.eq[band]);
+      StudioMultitrackWorkspace.scheduleProjectAutosave();
       return;
     }
     const pitchSlider = event.target.closest('input[type="range"][data-pitch-setting]');
@@ -358,6 +359,7 @@ export function createStudioMixMasterApp({ beatLab, workspace } = {}) {
       track.effects = { ...(track.effects || {}), pitchCorrection: settings };
       const label = root.querySelector('[data-pitch-value="' + key + "-" + track.id + '"]');
       if (label) label.textContent = pitchSlider.value + (key === "speedMs" ? " ms" : "%");
+      StudioMultitrackWorkspace.scheduleProjectAutosave();
       void StudioMultitrackWorkspace.arrangementPlayback?.setTrackEffects(track.id, { pitchCorrection: settings })
         .catch(error => status("PITCH CORRECTION: " + (error?.message || error)));
       return;
@@ -395,11 +397,13 @@ export function createStudioMixMasterApp({ beatLab, workspace } = {}) {
         const label = root.querySelector('[data-track-volume-label="' + track.id + '"]');
         if (label) label.textContent = track.volume + "%";
         StudioMultitrackWorkspace.arrangementPlayback?.setTrackVolume(track.id, track.volume);
+      StudioMultitrackWorkspace.scheduleProjectAutosave();
       } else {
         track.pan = Number(slider.value) / 100;
         const label = root.querySelector('[data-track-pan-label="' + track.id + '"]');
         if (label) label.textContent = track.pan === 0 ? "C" : (track.pan < 0 ? "L " : "R ") + Math.round(Math.abs(track.pan) * 100);
         StudioMultitrackWorkspace.arrangementPlayback?.setTrackPan(track.id, track.pan);
+      StudioMultitrackWorkspace.scheduleProjectAutosave();
       }
       return;
     }
