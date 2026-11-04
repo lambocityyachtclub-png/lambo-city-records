@@ -352,6 +352,58 @@ function createMixPanel({ beatLab, workspace } = {}) {
           key === "reverbDecay" ? current.toFixed(1) + " s" : Math.round(current * 100) + "%";
         control.append(caption, slider, value); inserts.appendChild(control);
       });
+      if (/vocal/i.test(track.name)) {
+        const pitch = track.effects?.pitchCorrection || { enabled: false, root: 0, scale: "major", amount: 100, speedMs: 25 };
+        track.effects = { ...(track.effects || {}), pitchCorrection: pitch };
+        const pitchPanel = document.createElement("section");
+        pitchPanel.style.cssText = "display:grid;gap:9px;margin-top:14px;padding:11px;border:1px solid #665438;border-radius:8px;background:#191710";
+        const pitchTitle = document.createElement("div");
+        pitchTitle.textContent = "VOCAL PITCH CORRECTION";
+        pitchTitle.style.cssText = "font-size:10px;font-weight:800;letter-spacing:1px;color:#d8b36e";
+        const enabledLabel = document.createElement("label");
+        enabledLabel.style.cssText = "display:flex;gap:9px;align-items:center;color:#f4f1eb;font-size:11px";
+        const enabled = document.createElement("input");
+        enabled.type = "checkbox";
+        enabled.checked = Boolean(pitch.enabled);
+        enabled.dataset.pitchSetting = "enabled";
+        enabled.dataset.trackId = track.id;
+        enabledLabel.append(enabled, "ENABLE PITCH CORRECTION");
+        const keyScale = document.createElement("div");
+        keyScale.style.cssText = "display:grid;grid-template-columns:1fr 1fr;gap:8px";
+        const keySelect = document.createElement("select");
+        keySelect.dataset.pitchSetting = "root";
+        keySelect.dataset.trackId = track.id;
+        keySelect.style.cssText = "min-height:36px;padding:6px;background:#20242e;color:#f4f1eb;border:1px solid #454958;border-radius:6px";
+        ["C","C♯","D","D♯","E","F","F♯","G","G♯","A","A♯","B"].forEach((name,index) => {
+          const option = document.createElement("option"); option.value = String(index); option.textContent = "KEY · " + name; keySelect.appendChild(option);
+        });
+        keySelect.value = String(pitch.root ?? 0);
+        const scaleSelect = document.createElement("select");
+        scaleSelect.dataset.pitchSetting = "scale";
+        scaleSelect.dataset.trackId = track.id;
+        scaleSelect.style.cssText = keySelect.style.cssText;
+        [["major","MAJOR"],["minor","MINOR"],["chromatic","CHROMATIC"]].forEach(([value,label]) => {
+          const option = document.createElement("option"); option.value = value; option.textContent = label; scaleSelect.appendChild(option);
+        });
+        scaleSelect.value = pitch.scale || "major";
+        keyScale.append(keySelect, scaleSelect);
+        pitchPanel.append(pitchTitle, enabledLabel, keyScale);
+        [["amount","CORRECTION",0,100,1,"%"],["speedMs","SPEED",0,120,1," ms"]].forEach(([key,label,min,max,step,unit]) => {
+          const control = document.createElement("label");
+          control.style.cssText = "display:grid;grid-template-columns:78px 1fr 44px;gap:7px;align-items:center;color:#a8a8b1;font-size:10px";
+          const caption = document.createElement("span"); caption.textContent = label;
+          const slider = document.createElement("input");
+          slider.type = "range"; slider.min = String(min); slider.max = String(max); slider.step = String(step);
+          slider.value = String(Math.round(Number(pitch[key] ?? (key === "amount" ? 100 : 25))));
+          slider.dataset.pitchSetting = key; slider.dataset.trackId = track.id;
+          slider.style.cssText = "width:100%;accent-color:#e6bb69";
+          const value = document.createElement("span");
+          value.dataset.pitchValue = key + "-" + track.id;
+          value.textContent = slider.value + unit;
+          control.append(caption, slider, value); pitchPanel.appendChild(control);
+        });
+        inserts.appendChild(pitchPanel);
+      }
       row.append(heading, volume, pan, inserts);
       const automation = document.createElement("details");
       automation.style.cssText = "padding:9px 10px;border:1px solid #343946;border-radius:8px;background:#12151d;color:#d8b36e";
@@ -446,11 +498,24 @@ function createMixPanel({ beatLab, workspace } = {}) {
 
   root.addEventListener("change", event => {
     const inputSelect = event.target.closest("[data-track-input]");
-    if (!inputSelect) return;
-    const track = StudioMultitrackWorkspace.tracks.find(item => item.id === inputSelect.dataset.trackInput);
+    if (inputSelect) {
+      const track = StudioMultitrackWorkspace.tracks.find(item => item.id === inputSelect.dataset.trackInput);
+      if (!track) return;
+      track.inputSource = inputSelect.value;
+      status(track.name + " input set to " + inputSelect.options[inputSelect.selectedIndex].text + ".");
+      return;
+    }
+    const pitchControl = event.target.closest("[data-pitch-setting]");
+    if (!pitchControl) return;
+    const track = StudioMultitrackWorkspace.tracks.find(item => item.id === pitchControl.dataset.trackId);
     if (!track) return;
-    track.inputSource = inputSelect.value;
-    status(track.name + " input set to " + inputSelect.options[inputSelect.selectedIndex].text + ".");
+    const settings = { ...(track.effects?.pitchCorrection || { enabled: false, root: 0, scale: "major", amount: 100, speedMs: 25 }) };
+    const key = pitchControl.dataset.pitchSetting;
+    settings[key] = key === "enabled" ? pitchControl.checked : key === "scale" ? pitchControl.value : Number(pitchControl.value);
+    track.effects = { ...(track.effects || {}), pitchCorrection: settings };
+    void StudioMultitrackWorkspace.arrangementPlayback?.setTrackEffects(track.id, { pitchCorrection: settings })
+      .catch(error => status("PITCH CORRECTION: " + (error?.message || error)));
+    status(settings.enabled ? "Vocal pitch correction enabled · " + ["C","C♯","D","D♯","E","F","F♯","G","G♯","A","A♯","B"][settings.root] + " " + settings.scale + "." : "Vocal pitch correction bypassed.");
   });
   root.addEventListener("input", event => {
     const eqSlider = event.target.closest("[data-eq-band]");
@@ -462,6 +527,19 @@ function createMixPanel({ beatLab, workspace } = {}) {
       const label = root.querySelector('[data-eq-label="' + band + "-" + track.id + '"]');
       if (label) label.textContent = track.eq[band] + " dB";
       StudioMultitrackWorkspace.arrangementPlayback?.setTrackEQ(track.id, band, track.eq[band]);
+      return;
+    }
+    const pitchSlider = event.target.closest('input[type="range"][data-pitch-setting]');
+    if (pitchSlider) {
+      const track = StudioMultitrackWorkspace.tracks.find(item => item.id === pitchSlider.dataset.trackId);
+      if (!track) return;
+      const key = pitchSlider.dataset.pitchSetting;
+      const settings = { ...(track.effects?.pitchCorrection || { enabled: false, root: 0, scale: "major", amount: 100, speedMs: 25 }), [key]: Number(pitchSlider.value) };
+      track.effects = { ...(track.effects || {}), pitchCorrection: settings };
+      const label = root.querySelector('[data-pitch-value="' + key + "-" + track.id + '"]');
+      if (label) label.textContent = pitchSlider.value + (key === "speedMs" ? " ms" : "%");
+      void StudioMultitrackWorkspace.arrangementPlayback?.setTrackEffects(track.id, { pitchCorrection: settings })
+        .catch(error => status("PITCH CORRECTION: " + (error?.message || error)));
       return;
     }
     const effectSlider = event.target.closest("[data-track-effect]");
