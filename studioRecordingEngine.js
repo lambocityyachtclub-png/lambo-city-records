@@ -90,10 +90,12 @@ const StudioRecordingEngine = {
 
   activeTake: null,
   activeTrackTake: null,
+  inputAnalyser: null,
+  inputMeterBuffer: new Float32Array(512),
   takes: [],
   playback: null,
 
-  async startTrackRecording({ audio, trackId, vocalEffects, inputNode, pitchCorrectionNode, monitorInput = false } = {}) {
+  async startTrackRecording({ audio, trackId, vocalEffects, inputNode, pitchCorrectionNode, monitorInput = false, inputDeviceId = "" } = {}) {
     if (this.activeTake || this.activeTrackTake) {
       throw new Error("Another studio recording is already in progress.");
     }
@@ -109,9 +111,18 @@ const StudioRecordingEngine = {
     let monitorGain;
     try {
       microphoneStream = inputNode ? null : await navigator.mediaDevices.getUserMedia({
-        audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
+        audio: {
+          echoCancellation: false,
+          noiseSuppression: false,
+          autoGainControl: false,
+          ...(inputDeviceId ? { deviceId: { exact: inputDeviceId } } : {})
+        }
       });
       microphoneSource = inputNode || audio.createMediaStreamSource(microphoneStream);
+      const inputAnalyser = audio.createAnalyser();
+      inputAnalyser.fftSize = 512;
+      microphoneSource.connect(inputAnalyser);
+      this.inputAnalyser = inputAnalyser;
       destination = audio.createMediaStreamDestination();
       if (!inputNode && monitorInput) {
         monitorGain = audio.createGain();
@@ -154,6 +165,7 @@ const StudioRecordingEngine = {
         inputNode: Boolean(inputNode),
         destination,
         monitorGain,
+        inputAnalyser,
         vocalEffects,
         pitchCorrectionNode,
         recorder
@@ -166,12 +178,24 @@ const StudioRecordingEngine = {
         else microphoneSource?.disconnect(destination);
       } catch {}
       try { pitchCorrectionNode?.disconnect(); } catch {}
+      try { microphoneSource?.disconnect(); } catch {}
+      try { if (this.inputAnalyser) this.inputAnalyser = null; } catch {}
       try { if (vocalEffects) vocalEffects.output.disconnect(destination); } catch {}
       try { destination?.disconnect(); } catch {}
       try { monitorGain?.disconnect(); } catch {}
       microphoneStream?.getTracks().forEach(track => track.stop());
       throw error;
     }
+  },
+
+  getInputLevel() {
+    const analyser = this.inputAnalyser;
+    if (!analyser) return 0;
+    const samples = this.inputMeterBuffer;
+    analyser.getFloatTimeDomainData(samples);
+    let sum = 0;
+    for (let i = 0; i < samples.length; i += 1) sum += samples[i] * samples[i];
+    return Math.min(1, Math.sqrt(sum / samples.length) * 3.2);
   },
 
   async stopTrackRecording() {
@@ -197,6 +221,8 @@ const StudioRecordingEngine = {
       try { take.pitchCorrectionNode?.disconnect(); } catch {}
       try { if (take.vocalEffects) take.vocalEffects.output.disconnect(take.destination); } catch {}
       try { take.destination.disconnect(); } catch {}
+      try { take.inputAnalyser?.disconnect(); } catch {}
+      if (this.inputAnalyser === take.inputAnalyser) this.inputAnalyser = null;
       try { take.monitorGain?.disconnect(); } catch {}
       take.microphoneStream?.getTracks().forEach(track => track.stop());
     }
