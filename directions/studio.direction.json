@@ -680,6 +680,47 @@
         "Define levels, benefits, eligibility review, granting authority, duration, suspension, revocation, and appeal or review procedures in a later owner-approved design."
       ],
       "ownerIntent": "The owner described the Boarding Pass as the ticket toward the BIG LAMBO CITY Yacht Club parties and future exclusive experiences, with a minimum $100,000 earned in-game cash milestone plus additional qualities. The owner also described a future marketplace and a luxury social scene involving yachts, influential entrepreneurial and technology communities, crypto/NFT participants, and digital-real-estate portfolio holders."
+    },
+    "creatorEconomyRecognitionAndMedia": {
+      "ownerApprovalDate": "2026-11-05",
+      "coreVision": "LAMBO CITY should create meaningful pathways for producers, artists, and other contributors to build careers, sell creative work, gain recognition, rank on public charts, and grow their reputation within the ecosystem.",
+      "creatorRecognition": {
+        "producerSales": "Track legitimate beat and other approved producer-product sales as measurable milestones. Producers who reach defined sales levels and bring customers and positive attention to LAMBO CITY should receive meaningful recognition and incentives.",
+        "artistRecognition": "Create comparable recognition pathways for artists and other creator categories, using metrics appropriate to their contributions rather than forcing every role into one measure.",
+        "respectAndReputation": "Respect matters. Recognition should consider trustworthiness, quality, reliability, creativity, collaboration, positive conduct, and meaningful contribution in addition to commercial performance.",
+        "incentiveTypes": "Potential incentives include milestone awards, profile achievements, increased visibility, featured placements, invitations, creator opportunities, and consideration toward defined Yacht Club Boarding Pass eligibility. Exact rewards and thresholds require later owner approval.",
+        "integrity": "Use transparent metric definitions and anti-fraud protections. Do not equate sales, wealth, followers, or popularity alone with trustworthiness or automatic access to sensitive privileges."
+      },
+      "chartsAndRankings": {
+        "vision": "Create Billboard-style rankings and charts within LAMBO CITY for producers, artists, and other relevant creator categories.",
+        "possibleMeasures": [
+          "Verified beat and approved creative-product sales",
+          "Artist releases and legitimate listening or engagement activity where available",
+          "Meaningful audience growth and community participation",
+          "Creative milestones, collaborations, and quality contributions",
+          "Trust and conduct signals under transparent, privacy-conscious rules"
+        ],
+        "governance": "Define separate charts by creator role and metric, transparent time windows and eligibility rules, verified transaction and engagement signals, anti-bot and anti-manipulation controls, correction and appeal processes, and privacy protections. Avoid presenting a single opaque popularity score as a complete measure of a creator's worth."
+      },
+      "marketplaceAndRevenue": {
+        "vision": "A future marketplace where producers and other creators can offer approved creative products and services, including beats, to customers within the LAMBO CITY ecosystem.",
+        "platformRevenue": "LAMBO CITY Records is intended to receive a commission from eligible marketplace sales.",
+        "requirements": "Before launch, clearly disclose commission rates, seller payouts, refunds, chargebacks, transaction fees, tax responsibilities, licensing and usage rights, ownership representations, prohibited listings, dispute handling, and payment operations. Obtain appropriate legal and operational review.",
+        "status": "Long-term product direction only; not a currently implemented marketplace or a promise of earnings."
+      },
+      "jumbotronMediaNetwork": {
+        "vision": "Use the LAMBO CITY Jumbotron as a recurring media and educational channel for artists, producers, and the wider community.",
+        "content": [
+          "Music-business education and practical guidance for scaling as an artist or producer",
+          "Producer and artist spotlights, rankings, milestones, and success stories",
+          "Music-industry and relevant technology news",
+          "Interviews, podcast-style segments, discussions, and community announcements",
+          "Information about opportunities, marketplace participation, and ways to grow within LAMBO CITY"
+        ],
+        "automatedWorkflow": "Explore a future workflow that researches, drafts, assembles, and schedules recurring podcast-style episodes and news/education segments for the Jumbotron.",
+        "editorialSafeguards": "Automated content must be checked for accuracy, dates, source quality, rights to music/images/clips, fair presentation, sponsorship disclosure, and misleading financial or career claims. Require editorial approval before publication, especially for news, rankings, financial topics, and claims about real people or businesses."
+      },
+      "ownerIntent": "The owner wants producer beat sales and other creator achievements to create incentives and recognition, with respect as an important factor. The owner envisions a Billboard-style ranking system for producers, artists, and other creators; a future marketplace in which LAMBO CITY Records receives a commission on sales; and an automated podcast/news/educational media workflow on the LAMBO CITY Jumbotron to help musicians and producers learn how to grow."
     }
   },
   "openDecisions": [
