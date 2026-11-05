@@ -1,6 +1,7 @@
 let THREE = null;
 import StudioAudioEngine from "./studioAudioEngine.js";
 import StudioMultitrackWorkspace from "./studioMultitrackWorkspace.js";
+import StudioRecordingEngine from "./studioRecordingEngine.js";
 
 const CHANNELS = 13;
 const clamp = (value,min,max)=>Math.max(min,Math.min(max,value));
@@ -259,7 +260,9 @@ export default {
         const instrumentChannel=StudioAudioEngine.channels?.instrument;
         if(instrumentChannel)instrumentChannel.gain.value=isAudible?volume/100:0;
       }
-      const meter=track.type==="midi"?(StudioAudioEngine.getInstrumentMeter?.()||{peak:0}):(StudioMultitrackWorkspace.arrangementPlayback?.getTrackMeter?.(track.id)||{peak:0});
+      const recordingInputActive=Boolean(StudioRecordingEngine.activeTake||StudioRecordingEngine.activeTrackTake);
+      const isVocalInput=recordingInputActive&&/vocal|voice note/i.test(track.name||"");
+      const meter=isVocalInput?{peak:StudioRecordingEngine.getInputLevel?.()||0}:(track.type==="midi"?(StudioAudioEngine.getInstrumentMeter?.()||{peak:0}):(StudioMultitrackWorkspace.arrangementPlayback?.getTrackMeter?.(track.id)||{peak:0}));
       const active=Math.round(clamp(meter.peak*18,0,12));
       item.meter.forEach((segment,index)=>{segment.visible=index>=12-active;});
     });
