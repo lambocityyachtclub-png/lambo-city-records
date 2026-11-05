@@ -20,7 +20,8 @@
       "livingCityVision": "answered",
       "worldStyleAndEvolution": "answered",
       "cityPlayerFreedomAndActivities": "answered",
-      "cityAmbientActivity": "answered"
+      "cityAmbientActivity": "answered",
+      "npcBehavior": "answered"
     }
   },
   "ownerDirection": {
@@ -267,6 +268,26 @@
         ],
         "designConstraint": "Build in modular, scalable phases with performance budgets and distance/visibility-aware simulation; preserve the ambition of a fully living city.",
         "ownerApproval": "The owner stated on 2026-11-04 that Option B is the desired experience, while recognizing Option C as the right staged development approach."
+      },
+      "npcBehavior": {
+        "selectedDevelopmentApproach": "C",
+        "longTermAmbition": "B",
+        "principle": "NPCs should ultimately feel like individual residents of LAMBO CITY with lives and purposes of their own, rather than decorative background characters. Option C is the staged development strategy; Option B is the intended long-term experience.",
+        "targetCapabilities": [
+          "Individual routines and schedules",
+          "Jobs, roles, and believable destinations",
+          "Distinct personalities and behavioral variation",
+          "Relationships and social interactions",
+          "Contextual reactions to the environment and player activity",
+          "Believable ambient movement and activity throughout the city"
+        ],
+        "progression": [
+          "Begin with convincing ambient movement and simple contextual behaviors.",
+          "Expand NPC routines, roles, destinations, and schedules in modular stages.",
+          "Develop richer personalities, relationships, and reactive behavior over time."
+        ],
+        "designConstraint": "Use scalable, performance-conscious simulation, prioritizing detail for nearby or relevant NPCs while maintaining the impression of a living city.",
+        "ownerApproval": "The owner selected Option C with Option B as the long-term ambition on 2026-11-04."
       }
     }
   },
@@ -295,6 +316,6 @@
   "approval": {
     "status": "draft",
     "approvedByOwner": false,
-    "note": "Captures the owner's direction answers to date. The living-city style is Option C, progressing toward the realism and functionality of Option A; player freedom and optional guided activities are both supported; the ultimate city activity ambition is Option B, delivered progressively using Option C. This is not yet a complete or approved Studio specification."
+    "note": "Captures the owner's direction answers to date. The living-city style is Option C, progressing toward the realism and functionality of Option A; player freedom and optional guided activities are both supported; the ultimate city activity ambition is Option B, delivered progressively using Option C; NPC behavior follows Option C as the development approach with Option B as the long-term ambition. This is not yet a complete or approved Studio specification."
   }
 }
