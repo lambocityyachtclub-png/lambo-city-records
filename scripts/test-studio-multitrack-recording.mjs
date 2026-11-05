@@ -81,6 +81,7 @@ try {
   ]);
   assert.equal(await StudioMultitrackWorkspace.startArmedRecording.call(twoInputs), true);
   assert.equal(starts.length, 2);
+  assert.equal(starts[0].inputChannel, null);
 } finally {
   StudioAudioEngine.resume = originalResume;
   StudioAudioExport.getOutput = originalGetOutput;
