@@ -13,6 +13,7 @@ const files = [
   "floor2CitySynth.js",
   "studioDAWArrangementPlayback.js",
   "studioRecordingEngine.js",
+  "studioAudioEngine.js",
   "mpc-interface.js"
 ];
 const source = Object.fromEntries(await Promise.all(files.map(async file => [
@@ -74,6 +75,10 @@ const playback = source["studioDAWArrangementPlayback.js"];
 assert.match(playback,/createAnalyser\(\)/);
 assert.match(playback,/getTrackMeter\(trackId\)/);
 const recording = source["studioRecordingEngine.js"];
+const audioEngine = source["studioAudioEngine.js"];
+assert.match(audioEngine,/instrument:\s*context\.createGain\(\)/);
+assert.match(audioEngine,/getInstrumentMeter\(\)/);
+assert.match(source["floor2CitySynth.js"],/getTrackGain\("instrument"\)/);
 assert.match(recording,/getInputWaveform\(\)/);
 
 assert.match(source["studioMixMasterConsole3D.js"],/getTrackMeter/);
