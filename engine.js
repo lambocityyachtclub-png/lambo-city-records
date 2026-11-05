@@ -72,26 +72,14 @@ this.initializeSystem("recordsHQ", this.scene);
 this.initializeSystem("recordsHQFoundation", this.scene);
 this.initializeSystem("elevator", this.scene);
 this.initializeSystem("recordsHQFloor1", this.scene);
-this.systems.recordsHQFloor2Studio?.init?.(this.scene);
 
-this.systems.floor2StudioApp?.init?.(
-  this.scene,
-  this.context
-);
 
-this.systems.floor2InstrumentApp?.init?.(
-  this.scene,
-  this.context
-);
 
-this.systems.floor2DrumStation?.init?.(
-  this.scene,
-  this.context
-);
-this.systems.floor2StudioNavigation?.init?.(
-  this.scene,
-  this.context
-);
+
+
+
+
+
 this.initializeSystem("recordsHQFloor3Executive", this.scene);
 this.initializeSystem("recordsHQFloor3Details", this.scene);
 this.initializeSystem("recordsHQFloor3Experience", this.scene, this.context);
@@ -101,11 +89,7 @@ this.initializeSystem("recordsHQMediaDetails", this.scene);
 this.initializeSystem("recordsHQMerchDetails", this.scene);
 this.initializeSystem("recordsHQElevator", this.scene);
 
-// Session controls need the initialized renderer and the elevator arrival hook.
-this.systems.floor2StudioSession?.init?.(
-  this.scene,
-  this.context
-);
+
 
 this.initializeSystem("boardwalkOverlooks", this.scene);
     this.initializeSystem("input");
