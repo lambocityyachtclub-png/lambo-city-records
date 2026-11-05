@@ -183,7 +183,7 @@ function createDrumsPanel({ beatLab } = {}) {
           beatLab.soundProfile = "mpc";
         }
         const channel = sound === "snare" ? "snare" : sound === "hat" || sound === "cymbal" ? "hat" : "kick";
-        StudioSoundKit.play(audio, "mpc", channel, audio.currentTime, beatLab?.noiseBuffer || null);
+        StudioSoundKit.play(audio, "mpc", channel, audio.currentTime, beatLab?.noiseBuffer || null, StudioAudioEngine.getTrackGain(channel));
         button.style.transform = "scale(.98)";
         status(label + " triggered.");
       } catch (error) {
