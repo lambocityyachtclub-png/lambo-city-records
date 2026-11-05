@@ -14,7 +14,8 @@
       "collaborationExperience": "answered",
       "artistIdentityAndAvatar": "answered",
       "avatarApprovalAndCustomization": "answered",
-      "unifiedIdentityAndInWorldNameDisplay": "answered"
+      "unifiedIdentityAndInWorldNameDisplay": "answered",
+      "artistProfilesAndSocialFollowing": "answered"
     }
   },
   "ownerDirection": {
@@ -166,10 +167,31 @@
         "ownerDelegatedDesignChoice": true,
         "revisable": true,
         "status": "Recommended default accepted for initial direction; may be revised by owner after seeing it in the game."
+      },
+      "artistProfiles": {
+        "profilePage": {
+          "approved": true,
+          "features": [
+            "Consistent username and personalized 3D character",
+            "Profile picture",
+            "Music and projects the artist explicitly chooses to share",
+            "LAMBO CITY achievements"
+          ],
+          "privacy": "Artists control which music, projects, and profile details are public, private, or shared with selected collaborators."
+        },
+        "socialFollowing": {
+          "approved": true,
+          "feature": "Players can follow other players within LAMBO CITY.",
+          "futureScale": "Start with a clear, manageable profile and follow foundation; expand social features over time under owner direction.",
+          "safeguards": "Plan privacy controls, blocking/reporting, moderation, and age-appropriate safety before launching public social features."
+        },
+        "status": "Approved long-term platform direction. Do not implement accounts, public profiles, social graph, or backend services in the current single-player foundation without a separately approved architecture and rollout."
       }
     }
   },
   "openDecisions": [
+    "Define profile visibility defaults, public/private music sharing, and who can follow or message whom.",
+    "Define safety, moderation, blocking/reporting, and age-appropriate controls for the future social layer.",
     "Define the third profile photo's purpose and the exact photo requirements for avatar generation.",
     "Define account onboarding, username rules, profile privacy, image consent and retention, and avatar review/editing controls.",
     "Design a shared project/session architecture supporting both browser-only collaboration and immersive 3D collaboration.",
