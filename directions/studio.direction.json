@@ -543,6 +543,18 @@
           "Define event severity, delivery timing, retention, user controls, and incident-response escalation in the future security architecture."
         ],
         "ownerApproval": "The owner selected Option C on 2026-11-05: both notifications for important security events and a persistent security history inside each account."
+      },
+      "compromisedAccountResponseDecision": {
+        "selectedOption": "C",
+        "name": "Adaptive emergency protection",
+        "responsePolicy": "Adjust the response to the severity and confidence of the threat. For serious suspected compromise, automatically revoke suspicious sessions, temporarily restrict sensitive account actions, require appropriate identity verification before restoring protected actions, and notify the account holder through established channels. For lower-risk signals, alert the user and request additional verification where warranted without unnecessarily interrupting legitimate access.",
+        "safeguards": [
+          "Use risk-based thresholds and avoid treating a single weak signal as proof of compromise.",
+          "Preserve a safe, accessible recovery path for the legitimate account holder.",
+          "Log protective actions and provide clear explanations to the user.",
+          "Keep emergency controls and incident-response procedures under the platform's security policy and owner oversight."
+        ],
+        "ownerApproval": "The owner selected Option C on 2026-11-05: adaptive emergency protection based on threat severity."
       }
     }
   },
@@ -562,7 +574,8 @@
     "Define eligibility and approval/revocation rules for artist- and player-organized events, plus event-level visibility and publishing permissions.",
     "Define detailed authentication, account recovery, session/device management, security-alert severity and delivery timing, audit-log retention, incident response, and access-review requirements for the future identity and security architecture.",
     "Define recovery-code enrollment, secure display and storage guidance, regeneration and invalidation, high-risk recovery verification, security notifications, and fallback procedures when users lose both passkeys and verified email.",
-    "Define risk signals, notification channels, step-up verification methods, trusted-device lifecycle, and user controls for new-device and suspicious sign-ins."
+    "Define risk signals, notification channels, step-up verification methods, trusted-device lifecycle, and user controls for new-device and suspicious sign-ins.",
+    "Define whether phone numbers are collected for account verification, recovery, security alerts, community contact, or separate business communications; determine which purposes are required or optional, consent and opt-out rules, retention/deletion, access controls, and whether any aggregate community analytics may be used for business negotiations."
   ],
   "protectionRules": [
     "Do not redesign the approved EDIT interface.",
