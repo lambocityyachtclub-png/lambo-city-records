@@ -78,7 +78,6 @@ const StudioMultitrackWorkspace = {
   sessionTemplateId: null,
   sessionTemplateName: null,
   arrangementPlayback: null,
-  metronomeEnabled: true,
   selectedClipId: null,
   selectedTrackId: null,
   zoomBarWidth: 72,
@@ -416,8 +415,6 @@ const StudioMultitrackWorkspace = {
           getTempo: () => this.tempo,
           getSecondsAtBar: bar => this.getSecondsAtBar(bar),
           getBarAtSeconds: seconds => this.getBarAtSeconds(seconds),
-          getTempoAtBar: bar => this.getTempoAtBar(bar),
-          getTimeSignatureAtBar: bar => this.getTimeSignatureAtBar(bar),
           onPosition: bar => {
             this.playheadBar = bar;
             const x = (bar - 1) * this.zoomBarWidth;
@@ -1381,30 +1378,25 @@ const StudioMultitrackWorkspace = {
       const delayMs = delaySeconds * 1000;
       if (delayMs > 0) {
         this.status("Pre-roll · recording begins at bar " + startBar + ".");
-        // The persistent session metronome already supplies these beats when enabled.
-        // Keep this one-shot count-in for the case where the click track is switched off
-        // or the session has no accompaniment playing yet.
-        if (!this.arrangementPlayback?.metronomeActive) {
-          const countStart = audio.currentTime + 0.06;
-          for (let bar = Math.floor(this.playheadBar); bar < startBar; bar += 1) {
-            const meter = this.getTimeSignatureAtBar(bar);
-            const firstBeat = Math.max(0, Math.ceil((this.playheadBar - bar) * meter.numerator));
-            for (let beat = firstBeat; beat < meter.numerator; beat += 1) {
-              const beatBar = bar + beat / meter.numerator;
-              if (beatBar >= startBar - 0.000001) break;
-              const at = countStart + Math.max(0, this.getSecondsAtBar(beatBar) - this.getSecondsAtBar(this.playheadBar));
-              const oscillator = audio.createOscillator();
-              const clickGain = audio.createGain();
-              oscillator.frequency.value = beat === 0 ? 1450 : 980;
-              clickGain.gain.setValueAtTime(0.0001, at);
-              clickGain.gain.exponentialRampToValueAtTime(0.16, at + 0.004);
-              clickGain.gain.exponentialRampToValueAtTime(0.0001, at + 0.065);
-              oscillator.connect(clickGain);
-              clickGain.connect(audio.destination);
-              oscillator.start(at);
-              oscillator.stop(at + 0.07);
-              oscillator.onended = () => { try { oscillator.disconnect(); clickGain.disconnect(); } catch {} };
-            }
+        const countStart = audio.currentTime + 0.06;
+        for (let bar = Math.floor(this.playheadBar); bar < startBar; bar += 1) {
+          const meter = this.getTimeSignatureAtBar(bar);
+          const bpm = this.getTempoAtBar(bar);
+          const beatSeconds = 60 / bpm * (4 / meter.denominator);
+          const firstBeat = Math.max(0, Math.ceil((this.playheadBar - bar) * meter.numerator));
+          for (let beat = firstBeat; beat < meter.numerator; beat += 1) {
+          const at = countStart + Math.max(0, this.getSecondsAtBar(bar + beat / meter.numerator) - this.getSecondsAtBar(this.playheadBar));
+          const oscillator = audio.createOscillator();
+          const clickGain = audio.createGain();
+          oscillator.frequency.value = beat === 0 ? 1450 : 980;
+          clickGain.gain.setValueAtTime(0.0001, at);
+          clickGain.gain.exponentialRampToValueAtTime(0.16, at + 0.004);
+          clickGain.gain.exponentialRampToValueAtTime(0.0001, at + 0.065);
+          oscillator.connect(clickGain);
+          clickGain.connect(audio.destination);
+          oscillator.start(at);
+          oscillator.stop(at + 0.07);
+          oscillator.onended = () => { try { oscillator.disconnect(); clickGain.disconnect(); } catch {} };
           }
         }
         const ready = await new Promise(resolve => {
@@ -1445,10 +1437,6 @@ const StudioMultitrackWorkspace = {
         : track.inputSource === "beatlab"
           ? "Digital Beat Lab output"
           : "microphone";
-      if (this.metronomeEnabled && !this.arrangementPlayback?.metronomeActive) {
-        this.getArrangementPlayback().startMetronome(audio, startBar, this.loopRange?.enabled ? this.loopRange : null);
-        this.arrangementPlayback.playing = true;
-      }
       this.status("Recording " + sourceLabel + " into " + track.name + " · bar " + startBar + (endBar !== null ? " → " + endBar : "") + ".");
       return true;
     } catch (error) {
@@ -1480,16 +1468,6 @@ const StudioMultitrackWorkspace = {
     if (!StudioRecordingEngine.activeTrackTake) return false;
     try {
       const take = await StudioRecordingEngine.stopTrackRecording();
-      // If recording was running against the click alone, stop the click with the take.
-      // Leave it running when arrangement audio or a cycle is still playing.
-      if (!this.arrangementPlayback?.sources?.length && !this.arrangementPlayback?.loopTimer) {
-        this.arrangementPlayback?.stopMetronome();
-        if (this.arrangementPlayback) {
-          this.arrangementPlayback.playing = false;
-          if (this.arrangementPlayback.positionTimer) clearInterval(this.arrangementPlayback.positionTimer);
-          this.arrangementPlayback.positionTimer = null;
-        }
-      }
       let track = this.tracks.find(item => item.id === take.trackId);
       if (!track) track = this.createTrack("audio", "Recovered Recording");
       const context = await StudioAudioEngine.resume();
@@ -1652,17 +1630,17 @@ const StudioMultitrackWorkspace = {
   async playAll() {
     this.stopAll();
 
-    const hasArrangementContent = this.tracks.some(track =>
-      track.clips?.some(clip => clip.blob && clip.blob.size > 0) ||
-      ((track.type === "midi" || track.type === "instrument") && track.midiNotes?.length)
-    );
-    if (!hasArrangementContent && !this.metronomeEnabled) {
-      this.status("Nothing to play yet. Turn on METRONOME to hear the session click.");
+    if (!this.tracks.some(track =>
+      track.clips?.some(clip =>
+        clip.blob && clip.blob.size > 0
+      )
+    )) {
+      this.status("No recorded audio clips available.");
       return;
     }
 
     const loop = this.loopRange?.enabled ? this.loopRange : null;
-    await this.getArrangementPlayback().play(this.tracks, this.playheadBar, loop, this.metronomeEnabled);
+    await this.getArrangementPlayback().play(this.tracks, this.playheadBar, loop);
   },
 
   stopAll() {
