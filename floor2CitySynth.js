@@ -78,7 +78,7 @@ export function createCitySynthPanel({ session = StudioMultitrackWorkspace } = {
       envelope.gain.exponentialRampToValueAtTime(settings.volume, audio.currentTime + settings.attack);
       oscillator.connect(filter);
       filter.connect(envelope);
-      envelope.connect(StudioAudioEngine.master || audio.destination);
+      envelope.connect(StudioAudioEngine.getTrackGain("instrument"));
       oscillator.start(audio.currentTime);
       const record = { oscillator, filter, envelope, audio, startedAt:audio.currentTime, midi:null };
       activeNotes.set(note.pitch, record);
