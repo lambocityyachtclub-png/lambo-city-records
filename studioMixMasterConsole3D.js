@@ -25,6 +25,50 @@ function metal(color,emissive=0x000000,intensity=0){
   return new THREE.MeshStandardMaterial({color,metalness:.82,roughness:.26,emissive,emissiveIntensity:intensity});
 }
 
+const labelMaterials = new Map();
+
+function makeLabelMaterial(text, color = "#e8e6df", background = "#080b10", glow = null) {
+  const key = [text,color,background,glow].join("|");
+  if (labelMaterials.has(key)) return labelMaterials.get(key);
+  const canvas = document.createElement("canvas");
+  canvas.width = 512;
+  canvas.height = 128;
+  const ctx = canvas.getContext("2d");
+  ctx.fillStyle = background;
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.font = "bold 62px Arial";
+  if (glow) { ctx.shadowColor = glow; ctx.shadowBlur = 18; }
+  ctx.fillStyle = color;
+  ctx.fillText(text,256,66);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  const material = new THREE.MeshBasicMaterial({ map:texture, transparent:true });
+  labelMaterials.set(key,material);
+  return material;
+}
+
+function makeDynamicReadout() {
+  const canvas=document.createElement("canvas");
+  canvas.width=256;canvas.height=96;
+  const ctx=canvas.getContext("2d");
+  const texture=new THREE.CanvasTexture(canvas);
+  texture.colorSpace=THREE.SRGBColorSpace;
+  const material=new THREE.MeshBasicMaterial({map:texture});
+  const mesh=new THREE.Mesh(new THREE.PlaneGeometry(.13,.045),material);
+  let last="";
+  const draw=value=>{
+    if(value===last)return;
+    last=value;
+    ctx.fillStyle="#05080d";ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle="#dce2e8";ctx.font="bold 62px monospace";ctx.textAlign="center";ctx.textBaseline="middle";
+    ctx.fillText(value,128,48);
+    texture.needsUpdate=true;
+  };
+  return {mesh,draw};
+}
+
 function dbText(value){
   if(value<=0.01)return "-∞";
   return (20*Math.log10(value/100)).toFixed(1);
@@ -93,6 +137,15 @@ export default {
       }
       makeBox("routeLabel",stripWidth*.8,.018,.045,dark,0,.024,.25,strip);
       makeBox("automationRead",stripWidth*.78,.018,.045,green,0,.024,.31,strip);
+      const insertLabels=["KONTAKT","SSL EQ","COMP","DE-ESS"];
+      insertLabels.forEach((text,slot)=>{
+        const label=new THREE.Mesh(new THREE.PlaneGeometry(stripWidth*.74,.035),makeLabelMaterial(text,"#e5efff","#2f5fa8"));
+        label.rotation.x=-Math.PI/2;label.position.set(0,.034,-.37+slot*.07);strip.add(label);
+      });
+      const readLabel=new THREE.Mesh(new THREE.PlaneGeometry(stripWidth*.72,.032),makeLabelMaterial("READ","#ffffff","#277a42"));
+      readLabel.rotation.x=-Math.PI/2;readLabel.position.set(0,.036,.31);strip.add(readLabel);
+      const nameLabel=new THREE.Mesh(new THREE.PlaneGeometry(stripWidth*.82,.035),makeLabelMaterial("TRACK "+String(i+1).padStart(2,"0"),"#d8dce2","#080b10"));
+      nameLabel.rotation.x=-Math.PI/2;nameLabel.position.set(0,.034,-.47);strip.add(nameLabel);
       const pan=new THREE.Mesh(new THREE.CylinderGeometry(.043,.043,.025,20),dark);
       pan.position.set(0,.045,.40);pan.userData.control="pan";pan.userData.channelIndex=i;strip.add(pan);
       const faderRail=makeBox("faderRail",.035,.012,.30,dark,0,.03,.61,strip);
@@ -108,14 +161,19 @@ export default {
       }
       const mute=makeBox("muteButton",.065,.025,.055,dark,-.04,.045,.70,strip);mute.userData.control="mute";mute.userData.channelIndex=i;
       const solo=makeBox("soloButton",.065,.025,.055,dark,.04,.045,.70,strip);solo.userData.control="solo";solo.userData.channelIndex=i;
+      const muteText=new THREE.Mesh(new THREE.PlaneGeometry(.045,.028),makeLabelMaterial("M","#ffffff","#10151d"));muteText.rotation.x=-Math.PI/2;muteText.position.set(-.04,.06,.70);strip.add(muteText);
+      const soloText=new THREE.Mesh(new THREE.PlaneGeometry(.045,.028),makeLabelMaterial("S","#ffffff","#10151d"));soloText.rotation.x=-Math.PI/2;soloText.position.set(.04,.06,.70);strip.add(soloText);
+      const readout=makeDynamicReadout();readout.mesh.rotation.x=-Math.PI/2;readout.mesh.position.set(0,.036,.48);strip.add(readout.mesh);
       const label=makeBox("channelNameplate",stripWidth*.8,.015,.045,dark,0,.025,-.47,strip);
       label.userData.channelIndex=i;
-      this.strips.push({strip,fader,meter:segments,mute,solo,pan,index:i});
+      this.strips.push({strip,fader,meter:segments,mute,solo,pan,index:i,readout});
     }
     const masterX=1.27;
     const master=new THREE.Group();master.name="mixMasterOut";master.position.set(masterX,.055,0);group.add(master);
     makeBox("masterPlate",.28,.03,.90,dark,0,0,0,master);
     makeBox("masterLabel",.23,.02,.08,gold,0,.025,-.39,master);
+    const masterText=new THREE.Mesh(new THREE.PlaneGeometry(.22,.045),makeLabelMaterial("MASTER OUT","#241805","#d4ad63"));
+    masterText.rotation.x=-Math.PI/2;masterText.position.set(0,.04,-.39);master.add(masterText);
     const masterSegments=[];
     for(let side=0;side<2;side++){
       const meter=new THREE.Group();meter.position.set(side===0?-.065:.065,.035,-.05);master.add(meter);
@@ -181,6 +239,7 @@ export default {
     this.strips.forEach(item=>{
       const track=tracks[item.index];if(!track)return;
       const volume=clamp(Number(track.volume??80),0,100);
+      item.readout?.draw(dbText(volume));
       item.fader.position.z=.765-(volume/100)*.31;
       item.mute.material=track.muted?this.controlMaterials.muteActive:this.controlMaterials.muteIdle;
       item.solo.material=track.solo?this.controlMaterials.soloActive:this.controlMaterials.soloIdle;
