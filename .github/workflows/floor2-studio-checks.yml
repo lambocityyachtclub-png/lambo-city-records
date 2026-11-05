@@ -9,6 +9,8 @@ on:
       - "floor2DrumStation.js"
       - "recordsHQFloor2Studio.js"
       - "studioDAWApp.js"
+      - "studioDAWEditScreen.js"
+      - "studioMixMasterApp.js"
       - "studioDAWWorkspace.js"
       - "studioDAWBeatLabPanel.js"
       - "studioDAWEditPanel.js"
@@ -107,6 +109,8 @@ jobs:
             floor2DrumStation.js \
             recordsHQFloor2Studio.js \
             studioDAWApp.js \
+            studioDAWEditScreen.js \
+            studioMixMasterApp.js \
             studioDAWWorkspace.js \
             studioDAWBeatLabPanel.js \
             studioDAWEditPanel.js \
