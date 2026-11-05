@@ -385,7 +385,7 @@ const StudioDAWApp = {
   },
 
   async toggleSessionPlayback() {
-    if (StudioMultitrackWorkspace.isPlaying() || Floor2StudioApp?.playing) {
+    if (this.transportActionPending || StudioMultitrackWorkspace.isPlaying() || Floor2StudioApp?.playing) {
       this.stopSessionPlayback();
       return false;
     }
@@ -610,7 +610,10 @@ const StudioDAWApp = {
         }
 
         event.preventDefault();
-        if (this.transportActionPending) return;
+        if (this.transportActionPending) {
+          this.stopSessionPlayback();
+          return;
+        }
 
         const beatLab = Floor2StudioApp;
         const multitrack = StudioMultitrackWorkspace;
