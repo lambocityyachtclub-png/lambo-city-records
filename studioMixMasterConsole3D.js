@@ -1,6 +1,7 @@
 let THREE = null;
 import StudioAudioEngine from "./studioAudioEngine.js";
 import StudioMultitrackWorkspace from "./studioMultitrackWorkspace.js";
+import StudioRecordingEngine from "./studioRecordingEngine.js";
 
 const CHANNELS = 13;
 const clamp = (value,min,max)=>Math.max(min,Math.min(max,value));
@@ -80,6 +81,7 @@ export default {
   consoleGroup:null,
   strips:[],
   dragging:null,
+  frameElapsed:0,
   pointerDown:null,
   async init(scene,context){
     THREE = await import("https://unpkg.com/three@0.160.0/build/three.module.js");
@@ -210,11 +212,11 @@ export default {
       const target=hit.object;
       const index=target.userData.channelIndex;
       const track=StudioMultitrackWorkspace.tracks[index];
-      if(target.userData.control==="faderSurface"&&track){this.dragging={index};this.setFaderFromHit(hit.point,index);event.preventDefault();}
-      else if(target.userData.control==="mute"&&track){track.muted=!track.muted;StudioMultitrackWorkspace.arrangementPlayback?.syncTrackState(StudioMultitrackWorkspace.tracks);}
-      else if(target.userData.control==="solo"&&track){track.solo=!track.solo;StudioMultitrackWorkspace.arrangementPlayback?.syncTrackState(StudioMultitrackWorkspace.tracks);}
-      else if(target.userData.control==="pan"&&track){const local=target.parent.worldToLocal(hit.point.clone());track.pan=clamp(local.x/.05,-1,1);StudioMultitrackWorkspace.arrangementPlayback?.setTrackPan(track.id,track.pan);StudioMultitrackWorkspace.scheduleProjectAutosave();}
-      else if(target.userData.control==="masterFader"){const local=master.worldToLocal(hit.point.clone());const value=clamp(100-(local.z-.455)/.31*100,0,100);StudioAudioEngine.setMasterVolume(value/100);}
+      if(target.userData.control==="faderSurface"&&track){StudioMultitrackWorkspace.recordHistory("Track volume");this.dragging={index};this.setFaderFromHit(hit.point,index);event.preventDefault();}
+      else if(target.userData.control==="mute"&&track){StudioMultitrackWorkspace.recordHistory("Toggle mute");track.muted=!track.muted;StudioMultitrackWorkspace.arrangementPlayback?.syncTrackState(StudioMultitrackWorkspace.tracks);StudioMultitrackWorkspace.scheduleProjectAutosave();}
+      else if(target.userData.control==="solo"&&track){StudioMultitrackWorkspace.recordHistory("Toggle solo");track.solo=!track.solo;StudioMultitrackWorkspace.arrangementPlayback?.syncTrackState(StudioMultitrackWorkspace.tracks);StudioMultitrackWorkspace.scheduleProjectAutosave();}
+      else if(target.userData.control==="pan"&&track){StudioMultitrackWorkspace.recordHistory("Track pan");const local=target.parent.worldToLocal(hit.point.clone());track.pan=clamp(local.x/.05,-1,1);StudioMultitrackWorkspace.arrangementPlayback?.setTrackPan(track.id,track.pan);StudioMultitrackWorkspace.scheduleProjectAutosave();}
+      else if(target.userData.control==="masterFader"){StudioMultitrackWorkspace.recordHistory("Master volume");const local=master.worldToLocal(hit.point.clone());const value=clamp(100-(local.z-.455)/.31*100,0,100);StudioAudioEngine.setMasterVolume(value/100);StudioMultitrackWorkspace.scheduleProjectAutosave();}
     };
     this.pointerMove=event=>{
       if(!this.dragging||!this.renderer?.domElement)return;
@@ -235,9 +237,17 @@ export default {
     const local=item.strip.worldToLocal(point.clone());
     const value=clamp(100-(local.z-.455)/.31*100,0,100);
     track.volume=value;
-    StudioMultitrackWorkspace.arrangementPlayback?.setTrackVolume(track.id,value);
+    if(track.type==="midi"){
+      const anySolo=StudioMultitrackWorkspace.tracks.some(other=>other.solo);
+      const isAudible=!track.muted&&(!anySolo||track.solo);
+      const instrumentChannel=StudioAudioEngine.channels?.instrument;
+      if(instrumentChannel)instrumentChannel.gain.value=isAudible?value/100:0;
+    } else StudioMultitrackWorkspace.arrangementPlayback?.setTrackVolume(track.id,value);
   },
-  update(){
+  update(delta){
+    this.frameElapsed+=Math.max(0,Number(delta)||0);
+    if(this.frameElapsed<0.033)return;
+    this.frameElapsed=0;
     const tracks=StudioMultitrackWorkspace.tracks||[];
     this.strips.forEach(item=>{
       const track=tracks[item.index];if(!track)return;
@@ -248,7 +258,15 @@ export default {
       item.fader.position.z=.765-(volume/100)*.31;
       item.mute.material=track.muted?this.controlMaterials.muteActive:this.controlMaterials.muteIdle;
       item.solo.material=track.solo?this.controlMaterials.soloActive:this.controlMaterials.soloIdle;
-      const meter=StudioMultitrackWorkspace.arrangementPlayback?.getTrackMeter?.(track.id)||{peak:0};
+      if(track.type==="midi"){
+        const anySolo=tracks.some(other=>other.solo);
+        const isAudible=!track.muted&&(!anySolo||track.solo);
+        const instrumentChannel=StudioAudioEngine.channels?.instrument;
+        if(instrumentChannel)instrumentChannel.gain.value=isAudible?volume/100:0;
+      }
+      const recordingInputActive=Boolean(StudioRecordingEngine.activeTake||StudioRecordingEngine.activeTrackTake);
+      const isVocalInput=recordingInputActive&&/vocal|voice note/i.test(track.name||"");
+      const meter=isVocalInput?{peak:StudioRecordingEngine.getInputLevel?.()||0}:(track.type==="midi"?(StudioAudioEngine.getInstrumentMeter?.()||{peak:0}):(StudioMultitrackWorkspace.arrangementPlayback?.getTrackMeter?.(track.id)||{peak:0}));
       const active=Math.round(clamp(meter.peak*18,0,12));
       item.meter.forEach((segment,index)=>{segment.visible=index>=12-active;});
     });

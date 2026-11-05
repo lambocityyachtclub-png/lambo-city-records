@@ -78,7 +78,7 @@ export function createCitySynthPanel({ session = StudioMultitrackWorkspace } = {
       envelope.gain.exponentialRampToValueAtTime(settings.volume, audio.currentTime + settings.attack);
       oscillator.connect(filter);
       filter.connect(envelope);
-      envelope.connect(StudioAudioEngine.master || audio.destination);
+      envelope.connect(StudioAudioEngine.getTrackGain("instrument"));
       oscillator.start(audio.currentTime);
       const record = { oscillator, filter, envelope, audio, startedAt:audio.currentTime, midi:null };
       activeNotes.set(note.pitch, record);
@@ -197,6 +197,28 @@ export default {
     station.userData.citySynthReady=true;
     const gold=goldMaterial();
     const dark=new THREE.MeshStandardMaterial({color:0x10131a,metalness:.68,roughness:.24});
+    const blackKeyMaterial=new THREE.MeshStandardMaterial({color:0x080a0e,metalness:.55,roughness:.19});
+    const ivoryKeyMaterial=new THREE.MeshStandardMaterial({color:0xf5f1e7,metalness:.04,roughness:.17});
+    station.traverse(object=>{
+      const p=object.geometry?.parameters;
+      if(object.isMesh&&p?.width===.19&&p?.height===.06&&p?.depth===.52){
+        object.material=ivoryKeyMaterial;
+        object.userData.pianoKeyIndex=Math.round((object.position.x-3.35)/.22);
+      }
+    });
+    const blackKeySpecs=[
+      [0,61,277.18],[1,63,311.13],[3,66,369.99],[4,68,415.30],[5,70,466.16],
+      [7,73,554.37],[8,75,622.25],[10,78,739.99],[11,80,830.61],[12,82,932.33],[14,85,1108.73]
+    ];
+    blackKeySpecs.forEach(([after,pitch,frequency])=>{
+      const key=new THREE.Mesh(new THREE.BoxGeometry(.12,.13,.32),blackKeyMaterial);
+      key.name="floor2CitySynthBlackKey"+pitch;
+      key.position.set(3.35+(after+.5)*.22,1.18,-3.32);
+      key.userData.pianoPitch=pitch;
+      key.userData.pianoFrequency=frequency;
+      key.userData.pianoKeyIndex=after*2+1;
+      station.add(key);
+    });
     const x=5.25,y=1.18,z=-3.62;
     const panel=new THREE.Mesh(new THREE.BoxGeometry(3.72,.10,.54),gold);
     panel.name="floor2CitySynthGoldControlSurface";
@@ -209,7 +231,7 @@ export default {
     ctx.fillStyle="#9efaff";ctx.font="bold 18px Arial";ctx.fillText("LC-NK I · GOLD EDITION",16,24);
     const texture=new THREE.CanvasTexture(screenCanvas);texture.colorSpace=THREE.SRGBColorSpace;
     const screen=new THREE.Mesh(new THREE.PlaneGeometry(1.12,.30),new THREE.MeshBasicMaterial({map:texture}));
-    screen.position.set(x-.92,y+.07,z-.16);screen.rotation.x=-.48;station.add(screen);
+    screen.position.set(x,y+.64,z-.31);station.add(screen);
     this.screenCanvas=screenCanvas;this.screenContext=ctx;this.screenTexture=texture;
     for(let i=0;i<8;i++){
       const angle=i%4;
@@ -220,25 +242,29 @@ export default {
       const ring=new THREE.Mesh(new THREE.TorusGeometry(.09,.009,5,24),new THREE.MeshBasicMaterial({color:[0x4ce4db,0x4e9eff,0x9b6bff,0xf16be2][angle]}));
       ring.rotation.x=-Math.PI/2;ring.position.set(knob.position.x,y+.06,knob.position.z);station.add(ring);
     }
-    for(let i=0;i<16;i++){
-      const led=new THREE.Mesh(new THREE.BoxGeometry(.19,.018,.025),new THREE.MeshBasicMaterial({color:new THREE.Color().setHSL(.54-i*.025,.9,.55),transparent:true,opacity:.35}));
-      led.position.set(5.25-1.90+i*.22,1.145,-2.76);
+    for(let i=0;i<32;i++){
+      const led=new THREE.Mesh(new THREE.BoxGeometry(.085,.018,.025),new THREE.MeshBasicMaterial({color:new THREE.Color().setHSL(.54-i*.014,.9,.55),transparent:true,opacity:.35}));
+      led.position.set(3.35+i*.11,1.145,-2.76);
+      led.userData.baseColor=led.material.color.clone();
       station.add(led);this.leds.push(led);
     }
     const plaque=new THREE.Mesh(new THREE.BoxGeometry(1.10,.045,.13),dark);
     plaque.position.set(x+1.18,y+.09,z-.13);station.add(plaque);
     this.noteHandler=event=>{
       const pitch=Number(event.detail?.pitch);
-      const index=pitch-60;
+      const requestedIndex=Number(event.detail?.keyIndex);
+      const index=Number.isFinite(requestedIndex)?requestedIndex:Math.round((pitch-60)*2);
       if(index>=0&&index<this.leds.length){
         this.leds[index].material.opacity=event.detail.active?1:.35;
-        this.leds[index].material.emissive=new THREE.Color(0x1d9db0);
-        this.leds[index].material.emissiveIntensity=event.detail.active?.8:0;
+        this.leds[index].material.color.set(event.detail.active?0xffffff:this.leds[index].userData.baseColor);
       }
     };
     window.addEventListener("lc-city-synth-note",this.noteHandler);
   },
-  update(){
+  update(delta){
+    this.frameElapsed+=Math.max(0,Number(delta)||0);
+    if(this.frameElapsed<0.05)return;
+    this.frameElapsed=0;
     const meter=StudioAudioEngine.getMasterMeter?.()||{peak:0,rms:0};
     const draw=(ctx,width,height)=>{
       ctx.fillStyle="#070c16";ctx.fillRect(0,0,width,height);
