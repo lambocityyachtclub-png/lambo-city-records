@@ -107,14 +107,14 @@ export default {
             systems.studioDAWApp = dawModule.default;
           }
           Object.assign(context.systems, systems);
-          context.initializeSystem?.("floor2StudioApp", scene, context);
+          if (!context.initializeSystem?.("floor2StudioApp", scene, context)) throw new Error("The shared studio audio engine could not initialize.");
           if (station.view === "mpc") {
             systems.mpcInterface.open({
               onClose: () => window.__lamboCityReturnToFloor2Room?.()
             });
           } else {
-            context.initializeSystem?.("floor2InstrumentApp", scene, context);
-            context.initializeSystem?.("floor2DrumStation", scene, context);
+            if (!context.initializeSystem?.("floor2InstrumentApp", scene, context)) throw new Error("The instrument station could not initialize.");
+            if (!context.initializeSystem?.("floor2DrumStation", scene, context)) throw new Error("The drum station could not initialize.");
             systems.studioDAWApp.open(station.view || "edit");
           }
         };
