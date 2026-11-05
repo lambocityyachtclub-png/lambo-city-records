@@ -302,11 +302,13 @@ function createPianoPanel() {
     button.textContent = label;
     button.setAttribute("aria-label", label + " piano note");
     button.style.cssText = "min-width:0;min-height:150px;border:1px solid #aeb3bd;border-radius:0 0 9px 9px;background:linear-gradient(#fff,#dfe2e8);color:#151821;font-size:13px;font-weight:bold;box-shadow:inset 0 -8px 0 rgba(0,0,0,.08);touch-action:manipulation";
+    let pointerHeld = false;
     button.addEventListener("pointerdown", async event => {
       event.preventDefault();
+      pointerHeld = true;
       try {
         const audio = await StudioAudioEngine.resume();
-        if (!audio || audio.state !== "running") return;
+        if (!pointerHeld || !audio || audio.state !== "running") return;
         const oscillator = audio.createOscillator();
         const envelope = audio.createGain();
         oscillator.type = "triangle";
@@ -323,6 +325,7 @@ function createPianoPanel() {
       }
     });
     const release = () => {
+      pointerHeld = false;
       const note = button._studioActiveNote;
       if (note) {
         const now = note.audio.currentTime;
