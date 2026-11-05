@@ -13,11 +13,18 @@ const StudioAudioEngine = {
   context: null,
   master: null,
   compressor: null,
+  limiter: null,
+  limiterOutput: null,
+  limiterBypass: null,
+  masterAnalyser: null,
+  masterMeterBuffer: new Float32Array(2048),
   stereoWidth: null,
   stereoWidthNode: null,
   masterVolumeValue: 1,
   stereoWidthValue: 1,
   masterCompressionRatio: 3,
+  limiterEnabledValue: true,
+  limiterCeilingDb: -1,
   channels: null,
   initializing: null,
 
@@ -100,6 +107,22 @@ const StudioAudioEngine = {
     compressor.attack.value = 0.003;
     compressor.release.value = 0.18;
 
+    // A separate sample-peak safety stage protects the final output.
+    // The bypass path remains available for deliberate mastering decisions.
+    const limiter = context.createDynamicsCompressor();
+    limiter.threshold.value = this.limiterCeilingDb;
+    limiter.knee.value = 0;
+    limiter.ratio.value = 20;
+    limiter.attack.value = 0.001;
+    limiter.release.value = 0.12;
+    const limiterOutput = context.createGain();
+    const limiterBypass = context.createGain();
+    limiterOutput.gain.value = this.limiterEnabledValue ? 1 : 0;
+    limiterBypass.gain.value = this.limiterEnabledValue ? 0 : 1;
+    const masterAnalyser = context.createAnalyser();
+    masterAnalyser.fftSize = this.masterMeterBuffer.length;
+    masterAnalyser.smoothingTimeConstant = 0.12;
+
     const channels = {
       kick: context.createGain(),
       snare: context.createGain(),
@@ -137,12 +160,21 @@ const StudioAudioEngine = {
     side.connect(sideWidth); sideWidth.connect(sideLeft); sideWidth.connect(sideRight);
     sideLeft.connect(merger, 0, 0); sideRight.connect(merger, 0, 1);
     merger.connect(compressor);
-    compressor.connect(context.destination);
+    compressor.connect(limiter);
+    limiter.connect(limiterOutput);
+    limiterOutput.connect(masterAnalyser);
+    compressor.connect(limiterBypass);
+    limiterBypass.connect(masterAnalyser);
+    masterAnalyser.connect(context.destination);
 
     // Keep the existing shared engine and its API.
     this.context = context;
     this.master = master;
     this.compressor = compressor;
+    this.limiter = limiter;
+    this.limiterOutput = limiterOutput;
+    this.limiterBypass = limiterBypass;
+    this.masterAnalyser = masterAnalyser;
     this.stereoWidth = sideWidth;
     this.stereoWidthNode = { splitter, merger, mid, side, sideInvert, sideLeft, sideRight, leftOut, rightOut };
     this.channels = channels;
@@ -201,6 +233,41 @@ const StudioAudioEngine = {
     const value = Math.max(1, Math.min(8, Number(ratio) || 1));
     this.masterCompressionRatio = value;
     if (this.compressor && this.context) this.compressor.ratio.setTargetAtTime(value, this.context.currentTime, 0.025);
+  },
+
+  setMasterLimiter(enabled, ceilingDb = this.limiterCeilingDb) {
+    const ceiling = Math.max(-6, Math.min(0, Number(ceilingDb)));
+    if (!Number.isFinite(ceiling)) throw new Error("Limiter ceiling must be between -6 and 0 dBFS.");
+    this.limiterEnabledValue = Boolean(enabled);
+    this.limiterCeilingDb = ceiling;
+    if (this.limiter && this.context) {
+      this.limiter.threshold.setTargetAtTime(ceiling, this.context.currentTime, 0.01);
+      this.limiterOutput.gain.setTargetAtTime(this.limiterEnabledValue ? 1 : 0, this.context.currentTime, 0.01);
+      this.limiterBypass.gain.setTargetAtTime(this.limiterEnabledValue ? 0 : 1, this.context.currentTime, 0.01);
+    }
+    return { enabled: this.limiterEnabledValue, ceilingDb: this.limiterCeilingDb };
+  },
+
+  getMasterMeter() {
+    if (!this.masterAnalyser) return { peak: 0, rms: 0, peakDb: -120, rmsDb: -120, clipping: false };
+    const samples = this.masterMeterBuffer;
+    this.masterAnalyser.getFloatTimeDomainData(samples);
+    let peak = 0;
+    let sum = 0;
+    for (let index = 0; index < samples.length; index += 1) {
+      const value = Math.abs(samples[index]);
+      peak = Math.max(peak, value);
+      sum += samples[index] * samples[index];
+    }
+    const rms = Math.sqrt(sum / samples.length);
+    const toDb = value => value > 0 ? 20 * Math.log10(value) : -120;
+    return {
+      peak,
+      rms,
+      peakDb: toDb(peak),
+      rmsDb: toDb(rms),
+      clipping: peak >= 0.999
+    };
   },
 
   setMasterVolume(volume) {
