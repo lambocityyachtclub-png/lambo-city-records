@@ -36,6 +36,7 @@ export function createStudioDAWArrangementPlayback({
     playing: false,
     loopTimer: null,
     positionTimer: null,
+    transportTimer: null,
     metronomeSources: [],
     playbackContext: null,
     playbackStartBar: 1,
@@ -95,8 +96,10 @@ export function createStudioDAWArrangementPlayback({
       this.playing = false;
       if (this.loopTimer) clearTimeout(this.loopTimer);
       if (this.positionTimer) clearInterval(this.positionTimer);
+      if (this.transportTimer) clearTimeout(this.transportTimer);
       this.loopTimer = null;
       this.positionTimer = null;
+      this.transportTimer = null;
       stopStudioMetronome(this.metronomeSources);
       this.playbackContext = null;
       this.playbackEndBar = 1;
@@ -289,11 +292,6 @@ export function createStudioDAWArrangementPlayback({
         });
       });
 
-      if (!clips.length && !midiTracks.length) {
-        onStatus("No audio regions or MIDI notes are available for arrangement playback.");
-        return false;
-      }
-
       try {
         const context = await getAudioContext();
         if (!context || context.state !== "running") {
@@ -408,13 +406,6 @@ export function createStudioDAWArrangementPlayback({
             try { source.disconnect(); } catch {}
             if (runId !== this.runId) return;
             this.sources = this.sources.filter(item => item.source !== source);
-            if (!this.sources.length) {
-              this.playing = false;
-              if (!this.loopTimer) stopStudioMetronome(this.metronomeSources);
-              this.disposeChannels();
-              if (!this.loopTimer && this.positionTimer) { clearInterval(this.positionTimer); this.positionTimer = null; }
-              onStatus(this.loopTimer ? "Cycle pass complete · next cycle scheduled." : "Arrangement playback finished.");
-            }
           };
           this.sources.push({ source, trackId: track.id });
           source.start(clipStartTime, sourceOffset, remainingDuration);
@@ -447,13 +438,6 @@ export function createStudioDAWArrangementPlayback({
               try { oscillator.disconnect(); } catch {}
               if (runId !== this.runId) return;
               this.sources = this.sources.filter(item => item.source !== oscillator);
-              if (!this.sources.length) {
-                this.playing = false;
-                if (!this.loopTimer) stopStudioMetronome(this.metronomeSources);
-                this.disposeChannels();
-                if (!this.loopTimer && this.positionTimer) { clearInterval(this.positionTimer); this.positionTimer = null; }
-                onStatus(this.loopTimer ? "Cycle pass complete · next cycle scheduled." : "Arrangement playback finished.");
-              }
             };
             this.sources.push({ source: oscillator, trackId: track.id });
             oscillator.start(at);
@@ -461,18 +445,39 @@ export function createStudioDAWArrangementPlayback({
           });
         });
 
-        this.playing = this.sources.length > 0;
-        if (this.playing && getMetronomeSettings()?.enabled) this.refreshMetronome(actualStartBar);
-        if (this.sources.length || activeLoop) this.positionTimer = setInterval(() => {
+        // The DAW transport is a song-session clock, not an audio-file player.
+        // Keep it moving across empty bars and gaps between regions.
+        if (!clips.length && !midiTracks.length) contentEndBar = 129;
+        this.playbackEndBar = activeLoop
+          ? activeLoop.endBar
+          : Math.min(129, Math.max(actualStartBar + 0.0625, contentEndBar));
+        this.lastPositionBar = actualStartBar;
+        this.playing = true;
+        if (getMetronomeSettings()?.enabled) this.refreshMetronome(actualStartBar);
+        this.positionTimer = setInterval(() => {
+          if (!this.playing || !this.playbackContext) return;
           const elapsed = Math.max(0, context.currentTime - startTime);
-          this.lastPositionBar = Math.max(1, Math.min(128, Number(getBarAtSeconds(cursorSeconds + elapsed)) || actualStartBar));
+          this.lastPositionBar = Math.max(actualStartBar, Math.min(this.playbackEndBar,
+            Number(getBarAtSeconds(cursorSeconds + elapsed)) || actualStartBar));
           onPosition(this.lastPositionBar);
-        }, 80);
+        }, 50);
         if (activeLoop) {
           const loopDuration = getSecondsAtBar(activeLoop.endBar) - getSecondsAtBar(actualStartBar);
-          if (loopDuration > 0.05) this.loopTimer = setTimeout(() => { void this.play(tracks, activeLoop.startBar, loopRange); }, loopDuration * 1000);
+          if (loopDuration > 0.05) this.loopTimer = setTimeout(() => {
+            this.loopTimer = null;
+            void this.play(tracks, activeLoop.startBar, loopRange);
+          }, loopDuration * 1000);
+        } else {
+          const sessionDuration = Math.max(0.05, getSecondsAtBar(this.playbackEndBar) - cursorSeconds);
+          this.transportTimer = setTimeout(() => {
+            if (runId !== this.runId) return;
+            this.lastPositionBar = this.playbackEndBar;
+            onPosition(this.lastPositionBar);
+            this.stop();
+            onStatus("Song session reached its end.");
+          }, sessionDuration * 1000);
         }
-        onStatus(`Arrangement playing from bar ${actualStartBar} · ${tempo} BPM · ${decoded.length} audio clip(s) · ${midiTracks.reduce((count, track) => count + track.midiNotes.length, 0)} MIDI note(s).`);
+        onStatus(`Song session playing from bar ${actualStartBar} · ${tempo} BPM · ${decoded.length} audio clip(s) · ${midiTracks.reduce((count, track) => count + track.midiNotes.length, 0)} MIDI note(s).`);
         return this.playing;
       } catch (error) {
         if (runId === this.runId) {
