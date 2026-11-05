@@ -18,6 +18,10 @@ import StudioAudioEngine from "./studioAudioEngine.js";
 import StudioSoundKit from "./studioSoundKit.js";
 import StudioRecordingEngine from "./studioRecordingEngine.js";
 import StudioMultitrackWorkspace from "./studioMultitrackWorkspace.js";
+import { createLiveDrummerPanel } from "./floor2LiveDrummer.js";
+import { createCitySynthPanel } from "./floor2CitySynth.js";
+import { createVocalBoothPanel } from "./floor2VocalBooth3D.js";
+import { styleMixMasterPanel } from "./studioMixMasterConsole3D.js";
 import { createStudioDAWEditScreen } from "./studioDAWEditScreen.js";
 import {
   createStudioDAWBeatLabPanel
@@ -712,7 +716,7 @@ const StudioDAWApp = {
       this.beatLabPanel.mount(this.panelHost);
       this.workspace.setPanel("beatlab", this.panelHost);
 
-      this.drumsPanel = createDrumsPanel({ beatLab: Floor2StudioApp });
+      this.drumsPanel = createLiveDrummerPanel({ beatLab: Floor2StudioApp });
       this.workspace.setPanel("drums", this.drumsPanel);
 
       // Connect the existing Multitrack Workspace
@@ -729,12 +733,12 @@ const StudioDAWApp = {
       });
       const editWorkspace = this.editScreen.mount();
       this.workspace.setPanel("edit", editWorkspace);
-      this.mixPanel = createStudioMixMasterApp({
+      this.mixPanel = styleMixMasterPanel(createStudioMixMasterApp({
         beatLab: Floor2StudioApp,
         workspace: this.workspace
-      });
-      this.vocalsPanel = createVocalsPanel({ beatLab: Floor2StudioApp });
-      this.pianoPanel = createPianoPanel(StudioMultitrackWorkspace);
+      }));
+      this.vocalsPanel = createVocalBoothPanel({ beatLab: Floor2StudioApp });
+      this.pianoPanel = createCitySynthPanel({ session: StudioMultitrackWorkspace });
       this.workspace.setPanel("mix", this.mixPanel);
       this.workspace.setPanel("piano", this.pianoPanel);
       this.workspace.setPanel("vocals", this.vocalsPanel);
