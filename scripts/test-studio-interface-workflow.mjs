@@ -43,15 +43,17 @@ const orderedSteps = [
   /id:\s*"mpc",\s*label:\s*"MPC"/,
   /id:\s*"piano",\s*label:\s*"PIANO \/ CITY SYNTH"/,
   /id:\s*"vocals",\s*label:\s*"VOCAL BOOTH"/,
-  /id:\s*"beatlab",\s*label:\s*"BEAT LAB"/
+  /id:\s*"beatlab",\s*label:\s*"BEAT LAB"/,
+  /id:\s*"mix",\s*label:\s*"MIX & MASTER"/
 ];
 let last = -1;
 for (const pattern of orderedSteps) {
   const index = workspace.search(pattern);
-  assert.ok(index > last, "Primary workflow order must be EDIT → MPC → PIANO → VOCALS → BEAT LAB");
+  assert.ok(index > last, "Primary workflow order must be EDIT → MPC → PIANO → VOCALS → BEAT LAB → MIX & MASTER");
   last = index;
 }
 assert.match(workspace,/const ALL_VIEWS = \[\.\.\.VIEWS, \.\.\.SECONDARY_VIEWS\]/);
+assert.match(workspace,/data-daw-view="\$\{view\.id\}"/);
 assert.match(workspace,/data-daw-secondary="edit"/);
 assert.match(workspace,/data-daw-secondary="mix"/);
 assert.match(workspace,/data-daw-secondary="drums"/);
@@ -76,6 +78,11 @@ assert.match(app,/styleMixMasterPanel\(createStudioMixMasterApp/);
 assert.match(app,/onNext:\s*\(\)\s*=>\s*this\.workspace\?\.setView\("piano"\)/);
 
 const mpc = source["mpc-interface.js"];
+assert.match(app,/performancePanel:\s*this\.mpcPanel/);
+assert.match(mpc,/data-mpc-open-performance/);
+assert.match(mpc,/data-mpc-return-hardware/);
+assert.match(mpc,/showPerformance\(\)/);
+assert.match(mpc,/showHardware\(\)/);
 assert.match(mpc,/data-mpc-next/);
 assert.match(mpc,/onNext\?\.\(\)/);
 
@@ -100,4 +107,4 @@ for (const file of ["studioMixMasterConsole3D.js","floor2LiveDrummer.js","floor2
   assert.match(source[file],/update\(/,"Each world feature must expose an update lifecycle.");
 }
 
-console.log("Five-step workflow and four shared-session music interface checks passed.");
+console.log("Six-step workflow and linked MPC performance interface checks passed.");

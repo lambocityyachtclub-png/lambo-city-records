@@ -112,6 +112,8 @@ function makeStyles() {
 #${ROOT_ID} .hardware-control{display:flex;flex-direction:column;align-items:stretch;gap:3px;min-width:0}
 #${ROOT_ID} .hw-button{min-height:clamp(28px,3.4vw,43px);border:1px solid #4b4e45;border-radius:5px;background:linear-gradient(145deg,#3a3d38,#151815 65%,#080a08);color:#d9ddd1;font-size:clamp(6px,.68vw,9px);font-weight:900;letter-spacing:.025em;box-shadow:inset 0 1px 2px rgba(255,255,255,.12),0 2px 4px #000;padding:3px 2px}
 #${ROOT_ID} .hw-button.lit{background:linear-gradient(145deg,#d2f879,#78b82b 55%,#3e7018);border-color:#d5ff8c;color:#14210a;box-shadow:0 0 10px rgba(154,235,54,.72),inset 0 1px 2px #f4ffd9}
+#${ROOT_ID} .mpc-performance-launch,#${ROOT_ID} .mpc-performance-return{min-height:36px;border:1px solid #d8bd7c;border-radius:6px;background:linear-gradient(145deg,#e8d6a5,#a8874c);color:#17180f;font-size:clamp(8px,.78vw,11px);font-weight:900;letter-spacing:.06em;padding:7px 11px;box-shadow:0 0 10px rgba(216,189,124,.24),inset 0 1px 2px rgba(255,255,255,.45)}
+#${ROOT_ID} .mpc-performance-launch:focus-visible,#${ROOT_ID} .mpc-performance-return:focus-visible{outline:2px solid #d3ff81;outline-offset:3px}
 #${ROOT_ID} .label-strip{min-height:11px;padding:2px 1px;border:1px solid #739b2b;border-radius:2px;background:linear-gradient(#202d13,#10170b);color:#b7e45b;text-align:center;font-size:clamp(5px,.55vw,7px);font-weight:900;letter-spacing:.06em;line-height:1}
 #${ROOT_ID} .pads-area{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(5px,.8vw,12px);align-content:center;padding:2px}
 #${ROOT_ID} .pad{position:relative;min-width:0;aspect-ratio:1/1;border:2px solid #9bdc36;border-radius:clamp(7px,1vw,13px);background:linear-gradient(145deg,#3a3d3b,#151817 55%,#090b0a);box-shadow:0 0 4px #a3e947,0 0 11px rgba(139,223,45,.55),inset 0 2px 5px rgba(255,255,255,.13),inset 0 -5px 9px #000;display:flex;align-items:center;justify-content:center;transition:filter .08s,transform .08s,box-shadow .08s}
@@ -448,6 +450,9 @@ const MPCInterface = {
   root: null,
   onClose: null,
   onNext: null,
+  performancePanel: null,
+  performanceView: null,
+  performanceToggleHandler: null,
   previousFocus: null,
   keyHandler: null,
   beatLab: null,
@@ -475,6 +480,9 @@ const MPCInterface = {
 
     this.onClose = typeof options.onClose === "function" ? options.onClose : null;
     this.onNext = typeof options.onNext === "function" ? options.onNext : null;
+    this.performancePanel = options.performancePanel instanceof HTMLElement
+      ? options.performancePanel
+      : null;
     this.previousFocus = document.activeElement;
     this.beatLab = options.beatLab || window.__lamboCityFloor2BeatLab || null;
     this.bank = "A";
@@ -500,6 +508,48 @@ const MPCInterface = {
     const root = document.createElement("div");
     root.id = ROOT_ID;
     root.innerHTML = buildMarkup();
+
+    if (this.performancePanel) {
+      const nameplate = root.querySelector(".mpc-nameplate");
+      const performanceButton = document.createElement("button");
+      performanceButton.type = "button";
+      performanceButton.className = "hw-button mpc-performance-launch";
+      performanceButton.dataset.mpcOpenPerformance = "";
+      performanceButton.textContent = "MPC PERFORMANCE";
+      performanceButton.setAttribute("aria-label", "Open MPC performance mode");
+      const nextButton = nameplate?.querySelector("[data-mpc-next]");
+      if (nameplate) nameplate.insertBefore(performanceButton, nextButton || null);
+
+      const performanceView = document.createElement("section");
+      performanceView.dataset.mpcPerformanceView = "";
+      performanceView.setAttribute("aria-label", "MPC performance mode");
+      performanceView.style.cssText = "position:absolute;inset:0;z-index:5;display:none;overflow:auto;overscroll-behavior:contain;padding:clamp(14px,2vw,28px);background:radial-gradient(ellipse at top,#24252c 0%,#11131a 52%,#080a0e 100%);color:#f4f1eb";
+      const performanceHeader = document.createElement("header");
+      performanceHeader.style.cssText = "display:flex;justify-content:flex-end;max-width:1100px;margin:0 auto 14px";
+      const returnButton = document.createElement("button");
+      returnButton.type = "button";
+      returnButton.className = "hw-button mpc-performance-return";
+      returnButton.dataset.mpcReturnHardware = "";
+      returnButton.textContent = "← RETURN TO MPC HARDWARE";
+      returnButton.setAttribute("aria-label", "Return to MPC hardware interface");
+      performanceHeader.appendChild(returnButton);
+      performanceView.appendChild(performanceHeader);
+      this.performancePanel.style.width = "100%";
+      this.performancePanel.style.maxWidth = "1100px";
+      this.performancePanel.style.margin = "0 auto";
+      performanceView.appendChild(this.performancePanel);
+      root.appendChild(performanceView);
+      this.performanceView = performanceView;
+      this.performanceToggleHandler = event => {
+        if (event.target.closest("[data-mpc-open-performance]")) {
+          this.showPerformance();
+        } else if (event.target.closest("[data-mpc-return-hardware]")) {
+          this.showHardware();
+        }
+      };
+      root.addEventListener("click", this.performanceToggleHandler);
+    }
+
     const velocitySlider = root.querySelector("[data-mpc-velocity]");
     const velocityReadout = root.querySelector("[data-mpc-velocity-value]");
     if (velocitySlider) velocitySlider.value = String(this.velocitySensitivity);
@@ -1349,12 +1399,35 @@ const MPCInterface = {
     if (this.playbackTimer !== null) { window.clearInterval(this.playbackTimer); this.playbackTimer = null; }
   },
 
+  showPerformance() {
+    if (!this.root || !this.performanceView || !this.performancePanel) return false;
+    const hardware = this.root.querySelector(".mpc-unit");
+    if (hardware) hardware.style.display = "none";
+    this.performanceView.style.display = "block";
+    this.performanceView.querySelector("[data-mpc-return-hardware]")?.focus({ preventScroll: true });
+    return true;
+  },
+
+  showHardware() {
+    if (!this.root || !this.performanceView) return false;
+    this.performanceView.style.display = "none";
+    const hardware = this.root.querySelector(".mpc-unit");
+    if (hardware) hardware.style.display = "";
+    this.root.querySelector("[data-mpc-open-performance]")?.focus({ preventScroll: true });
+    return true;
+  },
+
   close() {
     if (!this.root) return;
     if (this.recording) this.finishRecording();
     this.stopNoteRepeat();
+    if (this.performanceToggleHandler) {
+      this.root.removeEventListener("click", this.performanceToggleHandler);
+      this.performanceToggleHandler = null;
+    }
     this.root.remove();
     this.root = null;
+    this.performanceView = null;
 
     if (this.keyHandler) {
       document.removeEventListener("keydown", this.keyHandler);
