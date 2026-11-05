@@ -1576,7 +1576,7 @@ const StudioMultitrackWorkspace = {
             pitchCorrectionNode,
             monitorInput: Boolean(monitorInput && track.inputSource === "mic"),
             inputDeviceId: track.inputSource === "mic" ? (track.inputDeviceId || this.inputDeviceId) : "",
-            inputChannel: track.inputSource === "mic" ? track.inputChannel : null,
+            inputChannel: track.inputSource === "mic" && Number.isInteger(track.inputChannel) ? track.inputChannel : null,
             vocalEffects: track.inputSource === "mic" && /vocal/i.test(track.name) ? vocalEffects : null,
             allowConcurrent: true
           });
