@@ -1343,9 +1343,19 @@ const StudioMultitrackWorkspace = {
       this.status("A recording is already scheduled or active.");
       return false;
     }
-    const armedTracks = this.tracks.filter(track => track.armed && track.type === "audio");
+    let armedTracks = this.tracks.filter(track => track.armed && track.type === "audio");
+    if (armedTracks.length === 0) {
+      const defaultInputTrack = this.tracks.find(track => track.type === "audio" && /vocal/i.test(track.name))
+        || this.tracks.find(track => track.type === "audio");
+      if (defaultInputTrack) {
+        defaultInputTrack.armed = true;
+        armedTracks = [defaultInputTrack];
+        this.render();
+        this.status("Automatically armed " + defaultInputTrack.name + " for microphone recording.");
+      }
+    }
     if (armedTracks.length !== 1) {
-      this.status(armedTracks.length ? "Arm exactly one audio track to record." : "Arm the audio track you want to record into.");
+      this.status(armedTracks.length ? "Arm exactly one audio track to record." : "Add an audio track before recording.");
       return false;
     }
     const preRoll = Math.max(0, Math.min(4, Math.floor(Number(countInBars) || 0)));
