@@ -528,6 +528,7 @@ const StudioMultitrackWorkspace = {
           getBarAtSeconds: seconds => this.getBarAtSeconds(seconds),
           onPosition: bar => {
             this.playheadBar = bar;
+            this.onTransportChange?.();
             const x = (bar - 1) * this.zoomBarWidth;
             this.root?.querySelectorAll(".lc-arrangement-playhead").forEach(line => { line.style.left = x + "px"; });
             const label = this.root?.querySelector("[data-ruler-label]");
