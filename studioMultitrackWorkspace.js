@@ -479,8 +479,8 @@ const StudioMultitrackWorkspace = {
     if (channel === null || channel === "" || channel === "all") track.inputChannel = null;
     else {
       const value = Number(channel);
-      if (!Number.isInteger(value) || value < 0 || value > 31) throw new Error("Input channel must be between 1 and 32.");
-      track.inputChannel = value;
+      if (!Number.isInteger(value) || value < 1 || value > 32) throw new Error("Input channel must be between 1 and 32.");
+      track.inputChannel = value - 1;
     }
     this.scheduleProjectAutosave();
     this.status(track.name + " input channel updated.");
