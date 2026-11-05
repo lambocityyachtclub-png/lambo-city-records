@@ -9,7 +9,7 @@ const originalGetOutput = StudioAudioExport.getOutput;
 const originalStart = StudioRecordingEngine.startTrackRecording;
 const originalStop = StudioRecordingEngine.stopTrackRecording;
 const starts = [];
-const fakeAudio = { state: "running", currentTime: 0, createOscillator() { throw new Error("unexpected click"); } };
+const fakeAudio = { state: "running", currentTime: 0, decodeAudioData: async () => ({ duration: 2 }), createOscillator() { throw new Error("unexpected click"); } };
 StudioAudioEngine.resume = async () => fakeAudio;
 StudioAudioExport.getOutput = () => ({ name: "Beat Lab output" });
 StudioRecordingEngine.startTrackRecording = async options => {
@@ -23,7 +23,7 @@ StudioRecordingEngine.stopTrackRecording = async trackId => {
   const take = StudioRecordingEngine.activeTrackTakes.find(item => item.trackId === trackId);
   StudioRecordingEngine.activeTrackTakes = StudioRecordingEngine.activeTrackTakes.filter(item => item !== take);
   StudioRecordingEngine.activeTrackTake = StudioRecordingEngine.activeTrackTakes[0] || null;
-  return { trackId };
+  return { trackId, blob: new Blob([new Uint8Array([1, 2, 3])], { type: "audio/wav" }), startedAt: new Date().toISOString(), recordingFormat: "24-bit PCM WAV" };
 };
 
 function workspace(tracks) {
@@ -34,6 +34,7 @@ function workspace(tracks) {
     inputLatencyByDevice: {}, inputLatencyMs: 0,
     isTrackRecording() { return false; },
     getSecondsAtBar(bar) { return (bar - 1) * 2.4; },
+    getBarAtSeconds(seconds) { return 1 + seconds / 2.4; },
     getTimeSignatureAtBar() { return { numerator: 4, denominator: 4 }; },
     getTempoAtBar() { return 100; },
     status(message) { this.lastStatus = message; },
@@ -55,6 +56,9 @@ try {
   assert.ok(starts.every(item => item.allowConcurrent === true));
   assert.equal(starts[0].inputDeviceId, "mic-a");
   assert.ok(mixed.lastStatus.includes("Lead Vocal") && mixed.lastStatus.includes("Beat Print"));
+  assert.equal(await StudioMultitrackWorkspace.stopArmedRecording.call(mixed), true);
+  assert.equal(mixed.tracks[0].clips.length, 1);
+  assert.equal(mixed.tracks[1].clips.length, 1);
 
   StudioRecordingEngine.activeTrackTakes = [];
   StudioRecordingEngine.activeTrackTake = null;
