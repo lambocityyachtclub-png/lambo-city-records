@@ -726,7 +726,7 @@ const StudioDAWApp = {
       this.editScreen = createStudioDAWEditScreen({
         beatLab: Floor2StudioApp,
         onExit: () => this.workspace?.setView("beatlab"),
-        onPrevious: () => this.workspace?.setView("edit"),
+        onPrevious: null,
         onNext: () => this.workspace?.setView("mpc"),
         onTransportPlay: () => this.startSessionPlayback(),
         onTransportStop: () => this.stopSessionPlayback()
