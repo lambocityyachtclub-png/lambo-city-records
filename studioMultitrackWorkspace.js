@@ -22,6 +22,7 @@ import StudioDAWSessionStore from "./studioDAWSessionStore.js";
 import { createStudioPitchCorrectionNode } from "./studioPitchCorrection.js";
 import { scheduleStudioMetronome, stopStudioMetronome } from "./studioMetronome.js";
 import { listStudioDAWSessionLayouts, applyStudioDAWSessionLayout } from "./studioDAWSessionLayouts.js";
+import { parseStudioMidi, createStudioMidiBlob, quantizeStudioMidiNotes, swingStudioMidiNotes, humanizeStudioMidiNotes } from "./studioMidiFile.js";
 
 import {
   createStudioDAWArrangementPlayback
@@ -1606,6 +1607,63 @@ const StudioMultitrackWorkspace = {
 
   isTrackRecording() {
     return Boolean(StudioRecordingEngine.activeTrackTake);
+  },
+
+  async importMidiFile(file) {
+    if (!(file instanceof Blob) || !file.size) throw new Error("Choose a MIDI file to import.");
+    if (this.isTrackRecording() || this.pendingRecording) throw new Error("Stop recording before importing MIDI.");
+    const parsed = parseStudioMidi(await file.arrayBuffer());
+    const sourceTracks = parsed.tracks.filter(track => track.notes.length);
+    if (!sourceTracks.length) throw new Error("The MIDI file contains no playable note data.");
+    if (this.tracks.length + sourceTracks.length > 64) throw new Error("The session would exceed the 64-track limit.");
+    this.stopAll();
+    this.recordHistory("Import MIDI file");
+    this.tempo = Math.max(60, Math.min(180, Math.round(parsed.tempo)));
+    this.timeSignature = parsed.timeSignature.numerator + "/" + parsed.timeSignature.denominator;
+    for (const source of sourceTracks) {
+      const track = this.createTrack("instrument", source.name || "Imported MIDI");
+      track.midiNotes = source.notes.slice(0, 4096).map(note => ({ ...note }));
+    }
+    this.render();
+    this.scheduleProjectAutosave();
+    this.status(sourceTracks.length + " MIDI track(s) imported · " + Math.round(parsed.tempo) + " BPM.");
+    return { trackCount: sourceTracks.length, tempo: parsed.tempo, timeSignature: parsed.timeSignature };
+  },
+
+  exportMidiFile({ trackIds = null } = {}) {
+    const selected = trackIds ? new Set(trackIds) : null;
+    const tracks = this.tracks.filter(track => (!selected || selected.has(track.id)) && (track.type === "midi" || track.type === "instrument") && (track.midiNotes || []).length);
+    return createStudioMidiBlob({ tracks, tempo: this.tempo, timeSignature: this.timeSignature });
+  },
+
+  downloadMidiFile(options = {}) {
+    const blob = this.exportMidiFile(options);
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = (String(this.activeProjectName || "LAMBO-CITY").replace(/[^a-z0-9-_]+/gi, "-") || "LAMBO-CITY") + ".mid";
+    anchor.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    return blob;
+  },
+
+  processMidiTrack(trackId, operation, options = {}) {
+    const track = this.tracks.find(item => item.id === trackId);
+    if (!track || !["midi", "instrument"].includes(track.type) || !Array.isArray(track.midiNotes) || !track.midiNotes.length) {
+      throw new Error("Choose an instrument or MIDI track that contains notes.");
+    }
+    const operations = {
+      quantize: () => quantizeStudioMidiNotes(track.midiNotes, options.grid ?? 0.25, options.strength ?? 1),
+      swing: () => swingStudioMidiNotes(track.midiNotes, options.amount ?? 0.5, options.subdivision ?? 0.125),
+      humanize: () => humanizeStudioMidiNotes(track.midiNotes, options.timingBars ?? 0.008, options.velocityAmount ?? 0.08)
+    };
+    if (!operations[operation]) throw new Error("Unknown MIDI processing operation.");
+    this.recordHistory("MIDI " + operation);
+    track.midiNotes = operations[operation]();
+    this.render();
+    this.scheduleProjectAutosave();
+    this.status("MIDI " + operation + " applied to " + track.name + ".");
+    return track.midiNotes.length;
   },
 
   async importAudioFiles(files = []) {
