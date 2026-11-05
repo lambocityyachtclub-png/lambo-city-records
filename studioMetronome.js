@@ -25,7 +25,8 @@ export function scheduleStudioMetronome(context, {
   const firstBar = Math.max(1, Number(startBar) || 1);
   const lastBar = Math.max(firstBar, Math.min(129, Number(endBar) || 129));
   const anchorSeconds = getSecondsAtBar(firstBar);
-  const safeVolume = Math.max(0, Math.min(0.4, Number(volume) || 0.16));
+  const parsedVolume = Number(volume);
+  const safeVolume = Math.max(0, Math.min(0.4, Number.isFinite(parsedVolume) ? parsedVolume : 0.16));
   const sources = [];
 
   for (let bar = Math.floor(firstBar); bar < lastBar; bar += 1) {
