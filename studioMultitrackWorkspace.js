@@ -711,7 +711,16 @@ const StudioMultitrackWorkspace = {
       if (track.sends !== undefined && (!Array.isArray(track.sends) || track.sends.length > 32 || !track.sends.every(send => typeof send.busId === "string" && busIds.has(send.busId) && track.type !== "bus" && Number.isFinite(Number(send.level)) && Number(send.level) >= 0 && Number(send.level) <= 100))) return false;
     }
     if (session.metronomeSettings !== undefined && (typeof session.metronomeSettings.enabled !== "boolean" || !Number.isFinite(Number(session.metronomeSettings.volume)) || Number(session.metronomeSettings.volume) < 0 || Number(session.metronomeSettings.volume) > 0.4 || typeof session.metronomeSettings.accent !== "boolean")) return false;
-    if (session.masterSettings !== undefined && (!Number.isFinite(Number(session.masterSettings.volume)) || Number(session.masterSettings.volume) < 0 || Number(session.masterSettings.volume) > 100 || !Number.isFinite(Number(session.masterSettings.stereoWidth)) || Number(session.masterSettings.stereoWidth) < 0 || Number(session.masterSettings.stereoWidth) > 200 || !Number.isFinite(Number(session.masterSettings.compressionRatio)) || Number(session.masterSettings.compressionRatio) < 1 || Number(session.masterSettings.compressionRatio) > 8 || (session.masterSettings.limiterEnabled !== undefined && typeof session.masterSettings.limiterEnabled !== "boolean") || (session.masterSettings.limiterCeilingDb !== undefined && (!Number.isFinite(Number(session.masterSettings.limiterCeilingDb)) || Number(session.masterSettings.limiterCeilingDb) < -6 || Number(session.masterSettings.limiterCeilingDb) > 0))) return false;
+    if (session.masterSettings !== undefined) {
+      const settings = session.masterSettings;
+      if (
+        !Number.isFinite(Number(settings.volume)) || Number(settings.volume) < 0 || Number(settings.volume) > 100 ||
+        !Number.isFinite(Number(settings.stereoWidth)) || Number(settings.stereoWidth) < 0 || Number(settings.stereoWidth) > 200 ||
+        !Number.isFinite(Number(settings.compressionRatio)) || Number(settings.compressionRatio) < 1 || Number(settings.compressionRatio) > 8 ||
+        (settings.limiterEnabled !== undefined && typeof settings.limiterEnabled !== "boolean") ||
+        (settings.limiterCeilingDb !== undefined && (!Number.isFinite(Number(settings.limiterCeilingDb)) || Number(settings.limiterCeilingDb) < -6 || Number(settings.limiterCeilingDb) > 0))
+      ) return false;
+    }
     return Number.isFinite(Number(session.tempo)) && Number(session.tempo) >= 20 && Number(session.tempo) <= 300;
   },
 
