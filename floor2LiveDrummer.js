@@ -93,10 +93,19 @@ export function createLiveDrummerPanel({ beatLab } = {}) {
         const channel = sound === "snare" ? "snare" : "hat";
         StudioSoundKit.play(audio, "mpc", channel, at, noiseBuffer, StudioAudioEngine.getTrackGain(channel));
       }
-      score += 100;
+      const bpm = Math.max(60, Number(StudioMultitrackWorkspace.getTempoAtBar(StudioMultitrackWorkspace.playheadBar)) || Number(StudioMultitrackWorkspace.tempo) || 110);
+      const beatSeconds = 60 / bpm;
+      const playback = StudioMultitrackWorkspace.arrangementPlayback;
+      const clock = playback?.playing && Number.isFinite(playback.playbackStartTime)
+        ? audio.currentTime - playback.playbackStartTime
+        : audio.currentTime;
+      const phase = ((clock % beatSeconds) + beatSeconds) % beatSeconds;
+      const distance = Math.min(phase, beatSeconds - phase);
+      const points = distance <= 0.075 ? 100 : distance <= 0.16 ? 75 : 50;
+      score += points;
       updateScore();
-      status.textContent = label + " · +100";
-      window.dispatchEvent(new CustomEvent("lc-live-drum-hit", { detail: { sound, score } }));
+      status.textContent = label + " · " + (points === 100 ? "ON BEAT" : points === 75 ? "GOOD TIMING" : "HIT") + " · +" + points;
+      window.dispatchEvent(new CustomEvent("lc-live-drum-hit", { detail: { sound, score, points } }));
     } catch (error) {
       status.textContent = "DRUM AUDIO ERROR · " + (error?.message || error);
     }
