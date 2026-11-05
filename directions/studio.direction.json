@@ -16,7 +16,8 @@
       "avatarApprovalAndCustomization": "answered",
       "unifiedIdentityAndInWorldNameDisplay": "answered",
       "artistProfilesAndSocialFollowing": "answered",
-      "artistFollowingAndMessaging": "answered"
+      "artistFollowingAndMessaging": "answered",
+      "livingCityVision": "answered"
     }
   },
   "ownerDirection": {
@@ -211,6 +212,20 @@
         },
         "rollout": "Build the social foundation in stages. Do not implement accounts, messaging, following, or backend services in the current single-player foundation until the separate platform architecture and rollout are approved."
       }
+    },
+    "worldAndEnvironmentVision": {
+      "approved": true,
+      "vision": "LAMBO CITY should eventually feel like a living luxury city and destination, not only a music-making game or a Studio environment.",
+      "experiences": [
+        "Explore the city and discover places",
+        "Visit businesses and digital real estate",
+        "Attend events and entertainment",
+        "Meet and interact with other artists and players",
+        "Discover creative, social, and label-related opportunities",
+        "Enjoy the world even when not actively making music"
+      ],
+      "roleOfStudio": "LAMBO CITY Records Studio remains the musical headquarters and a central creative anchor, while the broader city is a complete destination and experience.",
+      "continuity": "Build on the existing world and its established architecture. Preserve working areas and systems; expand in deliberate, modular phases rather than replacing the world."
     }
   },
   "openDecisions": [
