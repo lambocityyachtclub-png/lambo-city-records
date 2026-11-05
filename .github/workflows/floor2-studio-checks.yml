@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - "main.js"
+      - "engine.js"
       - "studioMixMasterConsole3D.js"
       - "floor2LiveDrummer.js"
       - "floor2VocalBooth3D.js"
@@ -72,6 +73,7 @@ on:
   pull_request:
     paths:
       - "main.js"
+      - "engine.js"
       - "studioMixMasterConsole3D.js"
       - "floor2LiveDrummer.js"
       - "floor2VocalBooth3D.js"
@@ -139,6 +141,7 @@ jobs:
         run: |
           for file in \
             main.js \
+            engine.js \
             studioMixMasterConsole3D.js \
             floor2LiveDrummer.js \
             floor2VocalBooth3D.js \
