@@ -11,6 +11,8 @@
  * and the Floor 2 in-game studio.
  */
 
+import { createStudioPCMRecorder } from "./studioPCMRecorder.js";
+
 function getSupportedMimeType() {
   if (!window.MediaRecorder) {
     throw new Error(
@@ -108,6 +110,7 @@ const StudioRecordingEngine = {
     let microphoneStream;
     let microphoneSource;
     let destination;
+    let pcmRecorder;
     let monitorGain;
     let inputAnalyser;
     try {
@@ -124,7 +127,12 @@ const StudioRecordingEngine = {
       inputAnalyser.fftSize = 512;
       microphoneSource.connect(inputAnalyser);
       this.inputAnalyser = inputAnalyser;
-      destination = audio.createMediaStreamDestination();
+      try {
+        pcmRecorder = await createStudioPCMRecorder(audio);
+      } catch (error) {
+        console.warn("LAMBO CITY PCM capture unavailable; using browser MediaRecorder fallback:", error);
+      }
+      destination = pcmRecorder?.node || audio.createMediaStreamDestination();
       if (!inputNode && monitorInput) {
         monitorGain = audio.createGain();
         monitorGain.gain.value = 0.65;
@@ -154,8 +162,8 @@ const StudioRecordingEngine = {
         microphoneSource.connect(destination);
         if (monitorGain) microphoneSource.connect(monitorGain);
       }
-      const recorder = createRecorder(destination.stream);
-      recorder.recorder.start();
+      const recorder = pcmRecorder || createRecorder(destination.stream);
+      if (recorder.recorder) recorder.recorder.start();
       this.activeTrackTake = {
         id: `track-take-${Date.now()}`,
         trackId,
@@ -165,13 +173,15 @@ const StudioRecordingEngine = {
         microphoneSource,
         inputNode: Boolean(inputNode),
         destination,
+        pcmRecorder,
+        recordingFormat: pcmRecorder?.recordingFormat || "Browser MediaRecorder",
         monitorGain,
         inputAnalyser,
         vocalEffects,
         pitchCorrectionNode,
         recorder
       };
-      return { id: this.activeTrackTake.id, trackId, startedAt: this.activeTrackTake.startedAt };
+      return { id: this.activeTrackTake.id, trackId, startedAt: this.activeTrackTake.startedAt, recordingFormat: this.activeTrackTake.recordingFormat };
     } catch (error) {
       try {
         if (pitchCorrectionNode && !inputNode) microphoneSource?.disconnect(pitchCorrectionNode);
@@ -184,6 +194,7 @@ const StudioRecordingEngine = {
       try { if (this.inputAnalyser === inputAnalyser) this.inputAnalyser = null; } catch {}
       try { if (vocalEffects) vocalEffects.output.disconnect(destination); } catch {}
       try { destination?.disconnect(); } catch {}
+      try { pcmRecorder?.dispose(); } catch {}
       try { monitorGain?.disconnect(); } catch {}
       microphoneStream?.getTracks().forEach(track => track.stop());
       throw error;
@@ -212,6 +223,7 @@ const StudioRecordingEngine = {
         startedAt: take.startedAt,
         stoppedAt: new Date().toISOString(),
         durationMs: Math.max(0, Date.now() - take.startedAtMs),
+        recordingFormat: take.recordingFormat,
         blob
       };
     } finally {
@@ -223,6 +235,7 @@ const StudioRecordingEngine = {
       try { take.pitchCorrectionNode?.disconnect(); } catch {}
       try { if (take.vocalEffects) take.vocalEffects.output.disconnect(take.destination); } catch {}
       try { take.destination.disconnect(); } catch {}
+      try { take.pcmRecorder?.dispose(); } catch {}
       try { take.microphoneSource.disconnect(take.inputAnalyser); } catch {}
       try { take.inputAnalyser?.disconnect(); } catch {}
       if (this.inputAnalyser === take.inputAnalyser) this.inputAnalyser = null;
