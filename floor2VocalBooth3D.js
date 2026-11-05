@@ -181,7 +181,7 @@ export default {
     ctx.fillStyle="#bd72e6";ctx.font="bold 17px Arial";ctx.fillText("VOCAL MONITOR",384,112);
     const texture=new THREE.CanvasTexture(tvCanvas);texture.colorSpace=THREE.SRGBColorSpace;
     const screen=new THREE.Mesh(new THREE.PlaneGeometry(2.5,1.05),new THREE.MeshBasicMaterial({map:texture}));
-    screen.position.set(boothX,2.45,boothZ+1.31);booth.add(screen);
+    screen.position.set(boothX,2.45,boothZ+1.31);screen.rotation.y=Math.PI;booth.add(screen);
     this.screenCanvas=tvCanvas;this.screenContext=ctx;this.screenTexture=texture;
     const stand=new THREE.Mesh(new THREE.CylinderGeometry(.025,.035,1.55,12),material(0x11131a,.8,.25));
     stand.position.set(boothX+.45,.88,boothZ+.55);booth.add(stand);
