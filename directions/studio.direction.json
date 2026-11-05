@@ -9,7 +9,8 @@
       "purposeAndMission": "answered",
       "remainingCoreQuestions": 11,
       "centralWorkspaceAndNavigation": "answered",
-      "collaborationModel": "answered"
+      "collaborationModel": "answered",
+      "collaborationAccess": "answered"
     }
   },
   "ownerDirection": {
@@ -92,7 +93,7 @@
       "realTimeCollaboration": "Artists can invite other authorized artists or producers into the same Studio project and work together in real time.",
       "asynchronousCollaboration": "Artists can share projects with collaborators who can contribute at different times, with changes saved and tracked safely.",
       "artistIdentity": "The long-term experience includes individual artist identities and profiles, with in-world characters and customizable appearance.",
-      "phaseStatus": "Approved product direction and long-term target. Do not silently introduce accounts, backend, persistent profiles, shared cloud projects, or multiplayer into the current single-player foundation. Plan and approve those as a distinct architecture and delivery phase.",
+      "phaseStatus": "Approved long-term product direction. Collaboration is private and invitation-only, controlled by the owner. Do not silently introduce accounts, backend, persistent profiles, shared cloud projects, or multiplayer into the current single-player foundation. Plan and approve those as a distinct architecture and delivery phase.",
       "requiredFutureCapabilities": [
         "Artist accounts and profiles",
         "Project ownership and collaborator permissions",
@@ -101,12 +102,19 @@
         "Conflict handling, version history, and recovery",
         "Audio recording and playback synchronization for live collaboration"
       ],
-      "ownerApproval": "The owner explicitly selected Option C: both real-time collaboration and asynchronous project sharing, on 2026-11-04."
+      "ownerApproval": "The owner explicitly selected Option C: both real-time collaboration and asynchronous project sharing, on 2026-11-04.",
+      "accessPolicy": {
+        "model": "Private, owner-controlled, invitation-only collaboration",
+        "rule": "Real-time co-production and asynchronous project sharing are available only to people the LAMBO CITY Records owner personally selects and invites. Do not make collaboration access public or automatically available to every Studio user.",
+        "permissions": "The owner must be able to decide who is invited, which projects they can access, and whether they may view, contribute, record, edit, or manage project content. Define detailed roles and revocation controls in the future collaboration architecture.",
+        "distinction": "This restriction applies to the collaborative co-production feature. It does not by itself mean the general Studio or every future artist profile must be invite-only.",
+        "ownerApproval": "The owner clarified on 2026-11-04 that collaboration is an exclusive feature for people they personally choose to collaborate with."
+      }
     }
   },
   "openDecisions": [
+    "Define the owner-controlled invitation workflow, collaborator roles, project-level permissions, and access revocation for private collaboration.",
     "Define the central Studio entrance and the artist journey from opening Studio through creating, recording, editing, mixing, mastering, and exporting a song.",
-    "Decide how the long-term online co-op and artist-profile vision should be phased relative to the current single-player foundation.",
     "Define the professional acceptance standard for recording, mixing, mastering, latency, and exports.",
     "Define which features are essential for the first complete Studio release versus later expansion."
   ],
