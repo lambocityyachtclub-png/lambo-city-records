@@ -1381,25 +1381,28 @@ const StudioMultitrackWorkspace = {
       const delayMs = delaySeconds * 1000;
       if (delayMs > 0) {
         this.status("Pre-roll · recording begins at bar " + startBar + ".");
-        const countStart = audio.currentTime + 0.06;
-        for (let bar = Math.floor(this.playheadBar); bar < startBar; bar += 1) {
-          const meter = this.getTimeSignatureAtBar(bar);
-          const bpm = this.getTempoAtBar(bar);
-          const beatSeconds = 60 / bpm * (4 / meter.denominator);
-          const firstBeat = Math.max(0, Math.ceil((this.playheadBar - bar) * meter.numerator));
-          for (let beat = firstBeat; beat < meter.numerator; beat += 1) {
-          const at = countStart + Math.max(0, this.getSecondsAtBar(bar + beat / meter.numerator) - this.getSecondsAtBar(this.playheadBar));
-          const oscillator = audio.createOscillator();
-          const clickGain = audio.createGain();
-          oscillator.frequency.value = beat === 0 ? 1450 : 980;
-          clickGain.gain.setValueAtTime(0.0001, at);
-          clickGain.gain.exponentialRampToValueAtTime(0.16, at + 0.004);
-          clickGain.gain.exponentialRampToValueAtTime(0.0001, at + 0.065);
-          oscillator.connect(clickGain);
-          clickGain.connect(audio.destination);
-          oscillator.start(at);
-          oscillator.stop(at + 0.07);
-          oscillator.onended = () => { try { oscillator.disconnect(); clickGain.disconnect(); } catch {} };
+        // The persistent session metronome already supplies these beats when enabled.
+        // Keep this one-shot count-in for the case where the click track is switched off
+        // or the session has no accompaniment playing yet.
+        if (!this.arrangementPlayback?.metronomeActive) {
+          const countStart = audio.currentTime + 0.06;
+          for (let bar = Math.floor(this.playheadBar); bar < startBar; bar += 1) {
+            const meter = this.getTimeSignatureAtBar(bar);
+            const firstBeat = Math.max(0, Math.ceil((this.playheadBar - bar) * meter.numerator));
+            for (let beat = firstBeat; beat < meter.numerator; beat += 1) {
+              const at = countStart + Math.max(0, this.getSecondsAtBar(bar + beat / meter.numerator) - this.getSecondsAtBar(this.playheadBar));
+              const oscillator = audio.createOscillator();
+              const clickGain = audio.createGain();
+              oscillator.frequency.value = beat === 0 ? 1450 : 980;
+              clickGain.gain.setValueAtTime(0.0001, at);
+              clickGain.gain.exponentialRampToValueAtTime(0.16, at + 0.004);
+              clickGain.gain.exponentialRampToValueAtTime(0.0001, at + 0.065);
+              oscillator.connect(clickGain);
+              clickGain.connect(audio.destination);
+              oscillator.start(at);
+              oscillator.stop(at + 0.07);
+              oscillator.onended = () => { try { oscillator.disconnect(); clickGain.disconnect(); } catch {} };
+            }
           }
         }
         const ready = await new Promise(resolve => {
