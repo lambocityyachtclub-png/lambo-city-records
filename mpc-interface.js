@@ -1402,6 +1402,7 @@ const MPCInterface = {
     const unit = this.root.querySelector(".mpc-unit");
     unit?.classList.add("tools-open");
     this.root.querySelector("[data-mpc-tools-toggle]")?.setAttribute("aria-expanded", "true");
+    this.performancePanel.refreshPattern?.();
     this.showScreen("PATTERN");
     this.root.querySelector('[data-mpc-tab="PATTERN"]')?.focus({ preventScroll: true });
     return true;
