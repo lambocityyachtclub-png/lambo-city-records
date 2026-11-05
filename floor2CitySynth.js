@@ -36,7 +36,7 @@ export function createCitySynthPanel({ session = StudioMultitrackWorkspace } = {
         '<label data-synth-knob="attack">ATTACK<input type="range" min="1" max="500" value="18"></label><label data-synth-knob="release">RELEASE<input type="range" min="20" max="1200" value="180"></label><label data-synth-knob="resonance">RESONANCE<input type="range" min="0.1" max="18" step=".1" value="0.8"></label><label data-synth-knob="octave">OCTAVE<input type="range" min="-2" max="2" value="0"></label>' +
       '</div></div>' +
     '</div>' +
-    '<div style="padding:12px;border-radius:10px;background:linear-gradient(180deg,#20232a,#080b12);border:2px solid #d7b568"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;color:#d7bd84;font-size:10px;letter-spacing:1.4px;margin-bottom:10px"><span>PERFORMANCE KEYBED</span><span data-midi-status>MIDI CAPTURE OFF</span></div><div data-synth-keys style="position:relative;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));height:clamp(150px,28vh,250px);touch-action:pan-y"></div></div>' +
+    '<div style="padding:12px;border-radius:10px;background:linear-gradient(180deg,#20232a,#080b12);border:2px solid #d7b568"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;color:#d7bd84;font-size:10px;letter-spacing:1.4px;margin-bottom:10px"><span>PERFORMANCE KEYBED</span><span data-midi-status>MIDI CAPTURE OFF</span></div><div data-synth-keys style="position:relative;display:grid;grid-template-columns:repeat(8,minmax(0,1fr));height:clamp(150px,28vh,250px);touch-action:pan-y"></div></div>' +
     '<div style="font-size:10px;color:#45351a">Playable original synth voice · MIDI notes are stored in the shared LAMBO CITY session.</div>';
   const style = document.createElement("style");
   style.textContent = ".lc-city-synth [data-synth-knob]{display:grid;gap:7px;font-size:8px;letter-spacing:.5px;color:#d6c59f}.lc-city-synth [data-synth-knob] input{width:100%;accent-color:#d7b568}.lc-city-synth [data-synth-white]{position:relative;z-index:1;border:1px solid #9d9b94;border-radius:0 0 6px 6px;background:linear-gradient(90deg,#c8c8c4,#fff 18%,#f4f0e5 80%,#c6c4bb);color:#222;touch-action:none}.lc-city-synth [data-synth-black]{position:absolute;z-index:2;top:0;width:8%;height:62%;transform:translateX(-50%);border:1px solid #111;border-radius:0 0 5px 5px;background:linear-gradient(90deg,#050608,#333842 50%,#050608);color:#fff;font-size:8px;touch-action:none}.lc-city-synth [data-synth-white].active,.lc-city-synth [data-synth-black].active{background:linear-gradient(#9bf6ff,#56a5cf);box-shadow:0 0 16px rgba(90,222,255,.8)}@media(max-width:650px){.lc-city-synth>div:nth-of-type(1){grid-template-columns:1fr!important}.lc-city-synth [data-synth-knob]{font-size:7px}}";
@@ -142,7 +142,7 @@ export function createCitySynthPanel({ session = StudioMultitrackWorkspace } = {
     button.type="button";
     button.dataset.synthBlack=String(note.pitch);
     button.textContent="♯";
-    button.style.left=((item.after+1)/7*100)+"%";
+    button.style.left=((item.after+1)/8*100)+"%";
     button.setAttribute("aria-label","Play "+note.name);
     button.addEventListener("pointerdown",event=>{event.preventDefault();button.setPointerCapture?.(event.pointerId);startNote(note,button);});
     const release=()=>stopNote(note,button);
