@@ -1047,7 +1047,16 @@ if (!this.audio || this.audio.state !== "running") {
           while (this.nextStepTime < this.audio.currentTime + 0.1) {
             this.scheduleStep(this.currentStep, this.nextStepTime);
             this.currentStep = (this.currentStep + 1) % STEP_COUNT;
-            this.nextStepTime += 60 / this.pattern.bpm / 4;
+            const transport = StudioMultitrackWorkspace.arrangementPlayback;
+            let stepDuration = 60 / this.pattern.bpm / 4;
+            if (transport?.playing && Number.isFinite(transport.playbackStartTime)) {
+              const sessionSeconds = StudioMultitrackWorkspace.getSecondsAtBar(transport.playbackStartBar) + (this.nextStepTime - transport.playbackStartTime);
+              const sessionBar = StudioMultitrackWorkspace.getBarAtSeconds(sessionSeconds);
+              const sessionTempo = StudioMultitrackWorkspace.getTempoAtBar(sessionBar);
+              const meter = StudioMultitrackWorkspace.getTimeSignatureAtBar(sessionBar);
+              stepDuration = 60 / sessionTempo * (4 / meter.denominator) * meter.numerator / STEP_COUNT;
+            }
+            this.nextStepTime += stepDuration;
           }
         } catch (error) {
           console.error("LAMBO CITY sequencer error:", error);
