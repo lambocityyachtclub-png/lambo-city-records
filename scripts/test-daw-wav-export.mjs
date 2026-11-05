@@ -27,6 +27,8 @@ for (const bitDepth of [16, 24, 32]) {
 
 const wav24 = new Uint8Array(await encodeStudioWav(audioBuffer, { bitDepth: 24 }).arrayBuffer());
 assert.deepEqual(Array.from(wav24.slice(47, 50)), [255, 255, 127], "Positive full scale should encode as signed 24-bit PCM.");
+const stringDepth = new DataView(await encodeStudioWav(audioBuffer, { bitDepth: "16" }).arrayBuffer());
+assert.equal(stringDepth.getUint16(34, true), 16, "String-valued UI options should normalize safely.");
 assert.throws(() => encodeStudioWav(audioBuffer, { bitDepth: 20 }), /16, 24, or 32-bit/);
 
 console.log("Studio WAV PCM depth and header tests passed.");
