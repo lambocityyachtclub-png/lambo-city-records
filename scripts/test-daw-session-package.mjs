@@ -25,6 +25,7 @@ const session = {
   format: "lambo-city-daw-session",
   version: 1,
   tempo: 112,
+  metronomeSettings: { enabled: true, volume: 0.12, accent: false },
   templateId: "hard-tuned-melodic",
   templateName: "Hard-Tuned Melodic",
   tracks: [{
@@ -59,6 +60,7 @@ const project = { ...baseProject(), dawSession: session };
 const imported = importSongProjectPackage(exportSongProjectPackage(project));
 assert.deepEqual(imported.dawSession, session);
 assert.equal(imported.dawSession.tracks[0].clips[0].data, "AQIDBA==");
+assert.deepEqual(imported.dawSession.metronomeSettings, { enabled: true, volume: 0.12, accent: false });
 assert.equal(imported.dawSession.templateId, "hard-tuned-melodic");
 assert.equal(imported.dawSession.templateName, "Hard-Tuned Melodic");
 assert.equal(imported.dawSession.tracks[0].inputSource, "mic");
@@ -81,6 +83,10 @@ assert.equal(legacy.dawSession, undefined);
 const invalidInput = structuredClone(project);
 invalidInput.dawSession.tracks[0].inputSource = "unknown";
 assert.throws(() => exportSongProjectPackage(invalidInput), /track settings are invalid/);
+
+const invalidMetronome = structuredClone(project);
+invalidMetronome.dawSession.metronomeSettings.volume = 0.8;
+assert.throws(() => exportSongProjectPackage(invalidMetronome), /metronome settings are invalid/);
 
 const invalidPan = structuredClone(project);
 invalidPan.dawSession.tracks[0].pan = 2;
