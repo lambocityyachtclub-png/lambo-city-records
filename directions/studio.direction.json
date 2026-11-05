@@ -7,7 +7,7 @@
     "status": "in-discovery",
     "questionnaireProgress": {
       "purposeAndMission": "answered",
-      "remainingCoreQuestions": 8,
+      "remainingCoreQuestions": 7,
       "centralWorkspaceAndNavigation": "answered",
       "collaborationModel": "answered",
       "collaborationAccess": "answered",
@@ -23,7 +23,8 @@
       "cityAmbientActivity": "answered",
       "npcBehavior": "answered",
       "businessFunctionality": "answered",
-      "vehicleAndRoadDirection": "answered"
+      "vehicleAndRoadDirection": "answered",
+      "propertyOwnership": "answered"
     }
   },
   "ownerDirection": {
@@ -328,6 +329,36 @@
         ],
         "sequencingAndScopeControl": "Do not expand into detailed vehicle, road-network, apartment, villa, golf, jet-ski, or skatepark planning during the current direction questionnaire. Preserve these as future ideas and continue the current system-by-system discovery workflow.",
         "ownerApproval": "The owner described this staged vehicle and boardwalk direction on 2026-11-04 and explicitly asked to keep the current workflow moving without getting distracted."
+      },
+      "digitalRealEstate": {
+        "selectedDevelopmentApproach": "C",
+        "longTermAmbition": "A full digital real-estate experience, subject to a legally reviewed ownership and rights structure.",
+        "principle": "Begin with selected interactive properties and expand progressively. Do not represent a player as legally owning real estate, land, or a property interest unless the underlying legal structure actually establishes and supports that claim.",
+        "progression": [
+          "Start with selected interactive properties and clearly defined in-platform access or use features.",
+          "Develop property customization, persistence, and additional experiences as the platform matures.",
+          "Only introduce any purchase, ownership, transferable interest, or other property-right claim after qualified legal counsel has reviewed and approved the structure, disclosures, contracts, jurisdictional requirements, and operational obligations."
+        ],
+        "legalProtection": {
+          "ownerConcern": "The owner wants to understand and establish the legal structure before telling users they own anything, in order to protect the owner and the business.",
+          "rule": "Do not market or describe a virtual property as legally owned by a user, or imply title to land or real-world real estate, unless qualified legal counsel confirms that the specific structure and claim are legally supportable.",
+          "distinguishRights": [
+            "In-platform access or permission to use a location",
+            "A revocable or limited digital content license",
+            "A purchase of digital items or customization rights",
+            "A transferable contractual right, if legally structured and permitted",
+            "Legally recognized ownership or title, only if separately established and verified"
+          ],
+          "requiredReview": [
+            "Applicable jurisdictions and consumer-protection requirements",
+            "Terms of service, purchase terms, disclosures, and refund rules",
+            "Whether any token, security, investment, property, or other regulated-interest rules could apply",
+            "Transferability, resale, inheritance, account termination, and dispute handling",
+            "Tax, accounting, payment, privacy, and recordkeeping obligations"
+          ],
+          "implementationGate": "No sale or ownership claim should be launched until the owner has obtained qualified legal advice and explicitly approved the documented rights model."
+        },
+        "ownerApproval": "The owner selected Option C on 2026-11-04 and emphasized that the legal structure must be established and reviewed before LAMBO CITY tells anyone they own a digital property."
       }
     }
   },
@@ -341,7 +372,8 @@
     "Define the owner-controlled invitation workflow, collaborator roles, project-level permissions, and access revocation for private collaboration.",
     "Define the central Studio entrance and the artist journey from opening Studio through creating, recording, editing, mixing, mastering, and exporting a song.",
     "Define the professional acceptance standard for recording, mixing, mastering, latency, and exports.",
-    "Define which features are essential for the first complete Studio release versus later expansion."
+    "Define which features are essential for the first complete Studio release versus later expansion.",
+    "Obtain qualified legal review and define the rights model, disclosures, and jurisdictional obligations before offering any digital real-estate ownership or making ownership claims."
   ],
   "protectionRules": [
     "Do not redesign the approved EDIT interface.",
@@ -356,6 +388,6 @@
   "approval": {
     "status": "draft",
     "approvedByOwner": false,
-    "note": "Captures the owner's direction answers to date. The living-city style is Option C, progressing toward the realism and functionality of Option A; player freedom and optional guided activities are both supported; the ultimate city activity ambition is Option B, delivered progressively using Option C; NPC and business functionality follow Option C as the development approach with Option B as the long-term ambition; vehicle development begins with luxury decorative/showcase presentation while the road network and future interactive driving scope are developed later. This is not yet a complete or approved Studio specification."
+    "note": "Captures the owner's direction answers to date. The living-city style is Option C, progressing toward the realism and functionality of Option A; player freedom and optional guided activities are both supported; the ultimate city activity ambition is Option B, delivered progressively using Option C; NPC and business functionality follow Option C as the development approach with Option B as the long-term ambition; vehicle development begins with luxury decorative/showcase presentation while the road network and future interactive driving scope are developed later. This is not yet a complete or approved Studio specification. Digital real estate follows Option C as the staged development approach, with any ownership claims gated on a legally reviewed and owner-approved rights structure."
   }
 }
