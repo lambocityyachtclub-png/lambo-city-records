@@ -111,7 +111,8 @@ The workflow research covers hip-hop beat production and vocal overdubs as well 
 - [ ] Add a dedicated master true-peak limiter and loudness/peak metering; current master processing includes compression but not a dedicated final limiter or loudness target workflow.
 - [ ] Add independent headphone/cue mixes and a practical monitor workflow; current microphone monitoring is a fixed direct-to-output path.
 - [ ] Replace the V1 oscillator piano voice with a richer sample-based instrument library, preserving MIDI note editing, session state, and mixer routing.
-- [ ] Expand starter layouts beyond vocal-processing presets to cover hip-hop beat production, vocal overdubs, and full-band / live-instrument tracking.
+- [x] Add data-driven starter layouts for hip-hop beat production, hip-hop vocal overdubs, full-band tracking, and singer-songwriter sessions; keep vocal-processing chain presets as a separate capability.
+- [ ] Add the final layout-selection controls during the user's interface design pass.
 - [ ] Complete Ambassador station/workspace routing through the same full-screen Studio open/return flow; preserve its design for the user's final visual pass.
 - [ ] Complete the remaining piano, drum, MIX, Ambassador, and Beat Lab interface wiring; do not redesign unfinished visual surfaces during this pass.
 - [ ] Run the full iPad Safari and desktop acceptance checklist before calling the Studio finished.
