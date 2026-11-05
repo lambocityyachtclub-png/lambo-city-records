@@ -45,6 +45,7 @@ for (const pattern of orderedSteps) {
   last = index;
 }
 assert.match(workspace,/const ALL_VIEWS = \[\.\.\.VIEWS, \.\.\.SECONDARY_VIEWS\]/);
+assert.match(workspace,/data-daw-secondary="edit"/);
 assert.match(workspace,/data-daw-secondary="mix"/);
 assert.match(workspace,/data-daw-secondary="drums"/);
 assert.match(workspace,/workflowNav\?\.addEventListener\("pointerup"/);
