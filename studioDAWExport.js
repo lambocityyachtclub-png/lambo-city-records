@@ -135,6 +135,18 @@ async function renderStudioSessionToAudioBuffer({
   masterCompressor.ratio.value = Math.max(1, Math.min(8, Number(masterSettings.compressionRatio ?? 3)));
   masterCompressor.attack.value = 0.003;
   masterCompressor.release.value = 0.18;
+  const limiter = offline.createDynamicsCompressor();
+  const limiterCeilingDb = Math.max(-6, Math.min(0, Number(masterSettings.limiterCeilingDb ?? -1)));
+  const limiterEnabled = masterSettings.limiterEnabled !== false;
+  limiter.threshold.value = limiterCeilingDb;
+  limiter.knee.value = 0;
+  limiter.ratio.value = 20;
+  limiter.attack.value = 0.001;
+  limiter.release.value = 0.12;
+  const limiterOutput = offline.createGain();
+  const limiterBypass = offline.createGain();
+  limiterOutput.gain.value = limiterEnabled ? 1 : 0;
+  limiterBypass.gain.value = limiterEnabled ? 0 : 1;
   const splitter = offline.createChannelSplitter(2);
   const merger = offline.createChannelMerger(2);
   const mid = offline.createGain(); const side = offline.createGain(); const sideInvert = offline.createGain(); const sideWidth = offline.createGain();
@@ -145,7 +157,7 @@ async function renderStudioSessionToAudioBuffer({
   master.connect(splitter); splitter.connect(mid, 0); splitter.connect(mid, 1); splitter.connect(side, 0); splitter.connect(sideInvert, 1); sideInvert.connect(side);
   mid.connect(leftOut); mid.connect(rightOut); leftOut.connect(merger, 0, 0); rightOut.connect(merger, 0, 1);
   side.connect(sideWidth); sideWidth.connect(sideLeft); sideWidth.connect(sideRight); sideLeft.connect(merger, 0, 0); sideRight.connect(merger, 0, 1);
-  merger.connect(masterCompressor); masterCompressor.connect(offline.destination);
+  merger.connect(masterCompressor); masterCompressor.connect(limiter); limiter.connect(limiterOutput); limiterOutput.connect(offline.destination); masterCompressor.connect(limiterBypass); limiterBypass.connect(offline.destination);
 
   const channels = new Map();
   const effectsOutputs = new Map();
