@@ -329,12 +329,7 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
         const key = String(event.key || "").toLowerCase();
         const modifier = event.metaKey || event.ctrlKey;
         let handled = false;
-        if (!modifier && (key === " " || key === "spacebar")) {
-          event.preventDefault();
-          workspace.togglePlayback();
-          this.status(workspace.isPlaying() ? "Playback running." : "Playback stopped.");
-          handled = true;
-        } else if (!modifier && key === "enter") {
+        if (!modifier && key === "enter") {
           event.preventDefault();
           workspace.stopAll();
           workspace.playheadBar = 1;
