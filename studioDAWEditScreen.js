@@ -45,7 +45,7 @@ function createButton(label, action, className) {
   return button;
 }
 
-export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext } = {}) {
+export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext, onTransportPlay, onTransportStop } = {}) {
   return {
     root: null,
     inputMeterFrame: null,
@@ -53,6 +53,8 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
     onExit,
     onPrevious,
     onNext,
+    onTransportPlay,
+    onTransportStop,
 
     mount() {
       if (this.root && this.root.isConnected) return this.root;
@@ -417,13 +419,15 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
             if (workspace.isTrackRecording()) this.startInputMeter();
             if (!workspace.pendingRecording && !workspace.isTrackRecording()) this.status("Recording did not start. Arm exactly one AUDIO track using its R button, then press RECORD again.");
           } else if (action === "play") {
-            await workspace.playAll();
-            this.status(workspace.isPlaying() ? "Playback running." : "Nothing to play yet. Record or import audio into a track first.");
+            if (this.onTransportPlay) await this.onTransportPlay();
+            else await workspace.playAll();
+            this.status(workspace.isPlaying() ? "Song session playing." : "The song session could not start.");
           } else if (action === "toggle-metronome") {
             workspace.toggleMetronome();
             this.renderHeader();
           } else if (action === "stop") {
-            workspace.stopAll();
+            if (this.onTransportStop) this.onTransportStop();
+            else workspace.stopAll();
             if (workspace.pendingRecording) workspace.cancelScheduledRecording();
             if (workspace.isTrackRecording()) await workspace.stopArmedRecording();
             this.stopInputMeter();
