@@ -551,6 +551,10 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
                 bpm: dawSession.tempo,
                 soundProfile: this.beatLab?.soundProfile === "mpc" ? "mpc" : "beatLab"
               };
+              if (!Array.isArray(project.patterns)) project.patterns = [];
+              if (!project.arrangement || !Array.isArray(project.arrangement.sections)) {
+                project.arrangement = createSongProject({ title: project.metadata.title }).arrangement;
+              }
 
               if (activePattern?.steps && !project.patterns.some(pattern =>
                 JSON.stringify(pattern.steps) === JSON.stringify(activePattern.steps)
@@ -678,6 +682,7 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
         if (!file) return;
         try {
           if (!await this.confirmReplaceUnsaved(workspace, "import a project file")) { event.target.value = ""; return; }
+          if (file.size > 60000000) throw new Error("Project file exceeds the 60 MB import limit.");
           const fileText = await file.text();
           let project = null;
 
@@ -695,6 +700,7 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
             workspace.scheduleProjectAutosave();
             this.render();
             this.status("Imported legacy session · auto-save pending.");
+            event.target.value = "";
             return;
           }
 
