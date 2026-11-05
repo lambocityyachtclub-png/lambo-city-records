@@ -15,7 +15,7 @@ class FakeOscillator {
   frequency = { value: 0 };
   connect() {}
   start(time) { this.startedAt = time; }
-  stop(time) { this.stoppedAt = time; }
+  stop(time) { this.stopCalls = (this.stopCalls || 0) + 1; if (Number.isFinite(time)) this.stoppedAt = time; }
   disconnect() { this.disconnected = true; }
 }
 const context = {
@@ -56,6 +56,6 @@ assert.equal(scheduled[4].frequency.value, 1480, "The next bar downbeat should b
 
 stopStudioMetronome(scheduled);
 assert.equal(scheduled.length, 0, "Stopping should clear the scheduled click list.");
-assert.ok(context.oscillators.every(node => node.stoppedAt !== undefined), "Stopping should stop all scheduled oscillators.");
+assert.ok(context.oscillators.every(node => node.stopCalls > 0), "Stopping should stop all scheduled oscillators.");
 
 console.log("Studio metronome scheduling checks passed.");
