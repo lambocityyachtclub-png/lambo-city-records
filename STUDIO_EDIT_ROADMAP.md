@@ -110,7 +110,8 @@ The workflow research covers hip-hop beat production and vocal overdubs as well 
 - [ ] Add visible WAV bit-depth and sample-rate choices during the final interface design pass.
 - [ ] Add a dedicated master true-peak limiter and loudness/peak metering; current master processing includes compression but not a dedicated final limiter or loudness target workflow.
 - [ ] Add independent headphone/cue mixes and a practical monitor workflow; current microphone monitoring is a fixed direct-to-output path.
-- [ ] Add a dedicated sample-peak safety limiter and output peak/RMS metering; current master chain has compression but no final limiter or master meter.
+- [x] Add a bypassable sample-peak safety limiter, adjustable ceiling, and output peak/RMS meter; persist limiter settings and apply the same protection to live playback and offline master renders.
+- [ ] Add true-peak / LUFS measurement and final limiter controls during the mastering interface pass.
 - [ ] Extend automation beyond track volume to pan, effect parameters, and sends.
 - [ ] Add MIDI file import/export plus quantize, swing, and humanize tools for beat programming and external instrument workflows.
 - [ ] Replace the current 30 MB JSON/base64 portable-audio ceiling with a scalable binary or compressed `.lcp` package while retaining legacy import compatibility.
