@@ -356,6 +356,8 @@ const StudioDAWApp = {
   mpcPanel: null,
   drumsPanel: null,
   standalone: false,
+  handleStudioKeydown: null,
+  transportActionPending: false,
 
   open(initialView = "edit", options = {}) {
     if (this.root?.isConnected) {
@@ -521,6 +523,75 @@ const StudioDAWApp = {
       this.workspace.setPanel("mix", this.mixPanel);
       this.workspace.setPanel("piano", this.pianoPanel);
 
+      // One shared Spacebar transport for every Studio workspace.
+      // Text fields retain normal typing; buttons do not steal the DAW shortcut.
+      this.handleStudioKeydown = event => {
+        if (!this.root?.isConnected || event.code !== "Space" || event.repeat ||
+            event.ctrlKey || event.metaKey || event.altKey || event.shiftKey) return;
+
+        const target = event.target;
+        if (target instanceof HTMLElement &&
+            (target.isContentEditable || target.closest("input, textarea, select, [contenteditable='true']"))) {
+          return;
+        }
+
+        event.preventDefault();
+        if (this.transportActionPending) return;
+
+        const beatLab = Floor2StudioApp;
+        const multitrack = StudioMultitrackWorkspace;
+        if (!beatLab || !multitrack) return;
+
+        const arrangementPlaying = multitrack.isPlaying();
+        const beatLabPlaying = Boolean(beatLab.playing);
+
+        // Space always stops any active Studio playback before starting another source.
+        if (arrangementPlaying || beatLabPlaying) {
+          if (arrangementPlaying) multitrack.stopAll();
+          if (beatLabPlaying) beatLab.stop();
+          if (this.workspace?.activeView === "edit") {
+            this.editScreen?.status("Playback stopped.");
+          } else {
+            beatLab.status?.("Playback stopped.");
+          }
+          return;
+        }
+
+        const view = this.workspace?.activeView || "edit";
+        const hasArrangementAudio = multitrack.tracks.some(track =>
+          (track.clips || []).some(clip => Number(clip.blob?.size) > 0)
+        );
+        const useArrangement = (view === "edit" || view === "mix") && hasArrangementAudio;
+
+        if (view === "mpc") beatLab.soundProfile = "mpc";
+
+        this.transportActionPending = true;
+        const startPlayback = useArrangement
+          ? multitrack.playAll()
+          : beatLab.start();
+
+        Promise.resolve(startPlayback)
+          .then(() => {
+            if (useArrangement) {
+              this.editScreen?.status(multitrack.isPlaying()
+                ? "Playback running."
+                : "Nothing to play yet. Record or import audio into a track first.");
+            } else {
+              beatLab.status?.("Playback running.");
+            }
+          })
+          .catch(error => {
+            const message = "Playback could not start: " + (error?.message || error);
+            if (useArrangement) this.editScreen?.status(message);
+            else beatLab.status?.(message);
+          })
+          .finally(() => {
+            this.transportActionPending = false;
+          });
+      };
+
+      document.addEventListener("keydown", this.handleStudioKeydown);
+
       return root;
     } catch (error) {
       console.error(
@@ -535,6 +606,12 @@ const StudioDAWApp = {
   },
 
   close() {
+    if (this.handleStudioKeydown) {
+      document.removeEventListener("keydown", this.handleStudioKeydown);
+      this.handleStudioKeydown = null;
+    }
+    this.transportActionPending = false;
+
     if (this.root && this.handleOverlayClick) {
       this.root.removeEventListener(
         "click",
