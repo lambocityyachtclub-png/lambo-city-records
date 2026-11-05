@@ -358,6 +358,60 @@ const StudioDAWApp = {
   standalone: false,
   handleStudioKeydown: null,
   transportActionPending: false,
+  globalTransportHandlers: null,
+
+  async startSessionPlayback() {
+    if (this.transportActionPending) return false;
+    const beatLab = Floor2StudioApp;
+    const multitrack = StudioMultitrackWorkspace;
+    if (!beatLab || !multitrack) return false;
+    this.transportActionPending = true;
+    try {
+      if (beatLab.playing) beatLab.stop();
+      const started = await multitrack.playAll();
+      this.syncTransportControls();
+      return Boolean(started);
+    } finally {
+      this.transportActionPending = false;
+      this.syncTransportControls();
+    }
+  },
+
+  stopSessionPlayback() {
+    StudioMultitrackWorkspace?.stopAll();
+    if (Floor2StudioApp?.playing) Floor2StudioApp.stop();
+    this.syncTransportControls();
+    return true;
+  },
+
+  async toggleSessionPlayback() {
+    if (StudioMultitrackWorkspace.isPlaying() || Floor2StudioApp?.playing) {
+      this.stopSessionPlayback();
+      return false;
+    }
+    return this.startSessionPlayback();
+  },
+
+  async toggleSessionMetronome() {
+    const enabled = await StudioMultitrackWorkspace.toggleMetronome();
+    this.syncTransportControls();
+    this.editScreen?.renderHeader?.();
+    return enabled;
+  },
+
+  syncTransportControls() {
+    const playing = Boolean(StudioMultitrackWorkspace.isPlaying());
+    const clickOn = Boolean(StudioMultitrackWorkspace.metronomeSettings?.enabled);
+    this.root?.querySelectorAll('[data-global-transport="play"]').forEach(button => {
+      button.textContent = playing ? "▶ SESSION PLAYING" : "▶ PLAY SESSION";
+      button.setAttribute("aria-pressed", String(playing));
+    });
+    this.root?.querySelectorAll('[data-global-transport="click"]').forEach(button => {
+      button.textContent = clickOn ? "CLICK ON" : "CLICK OFF";
+      button.setAttribute("aria-pressed", String(clickOn));
+      button.style.background = clickOn ? "linear-gradient(#f1d49c,#b8863b)" : "linear-gradient(#e4e8ef,#929baa)";
+    });
+  },
 
   open(initialView = "edit", options = {}) {
     if (this.root?.isConnected) {
@@ -405,6 +459,11 @@ const StudioDAWApp = {
       </strong>
 
       <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-right:auto;margin-left:16px">
+          <button type="button" data-global-transport="play" style="min-height:42px;padding:10px 13px;border:1px solid #9be0b3;border-radius:7px;background:linear-gradient(#dff9e9,#71b98b);color:#082b17;font-weight:900">▶ PLAY SESSION</button>
+          <button type="button" data-global-transport="stop" style="min-height:42px;padding:10px 13px;border:1px solid #f3b9b9;border-radius:7px;background:linear-gradient(#f5e1e1,#bd777b);color:#3c080c;font-weight:900">■ STOP</button>
+          <button type="button" data-global-transport="click" aria-pressed="false" style="min-height:42px;min-width:112px;padding:10px 13px;border:2px solid #e6bb69;border-radius:7px;background:linear-gradient(#e4e8ef,#929baa);color:#17213a;font-weight:900;letter-spacing:1px">CLICK OFF</button>
+        </div>
         <button type="button" data-daw-return style="min-height:42px;padding:10px 13px;border:1px solid #665438;border-radius:7px;background:#171923;color:#f1d49c;font-weight:bold">${this.standalone ? "BACK TO LAMBO CITY" : "RETURN TO ROOM"}</button>
         ${this.standalone ? "" : '<button type="button" data-daw-end style="min-height:42px;padding:10px 13px;border:1px solid #80643a;border-radius:7px;background:#201c16;color:#f1d49c;font-weight:bold">END SESSION</button>'}
       </div>
@@ -424,6 +483,16 @@ const StudioDAWApp = {
     document.body.appendChild(root);
 
     this.root = root;
+    this.globalTransportHandlers = event => {
+      const button = event.target.closest("[data-global-transport]");
+      if (!button || !root.contains(button)) return;
+      event.preventDefault();
+      const action = button.dataset.globalTransport;
+      if (action === "play") void this.toggleSessionPlayback();
+      else if (action === "stop") this.stopSessionPlayback();
+      else if (action === "click") void this.toggleSessionMetronome();
+    };
+    header.addEventListener("click", this.globalTransportHandlers);
 
     // Catch both the application exit button and
     // the original Beat Lab CLOSE button.
@@ -542,52 +611,9 @@ const StudioDAWApp = {
         const multitrack = StudioMultitrackWorkspace;
         if (!beatLab || !multitrack) return;
 
-        const arrangementPlaying = multitrack.isPlaying();
-        const beatLabPlaying = Boolean(beatLab.playing);
-
-        // Space always stops any active Studio playback before starting another source.
-        if (arrangementPlaying || beatLabPlaying) {
-          if (arrangementPlaying) multitrack.stopAll();
-          if (beatLabPlaying) beatLab.stop();
-          if (this.workspace?.activeView === "edit") {
-            this.editScreen?.status("Playback stopped.");
-          } else {
-            beatLab.status?.("Playback stopped.");
-          }
-          return;
-        }
-
-        const view = this.workspace?.activeView || "edit";
-        const hasArrangementAudio = multitrack.tracks.some(track =>
-          (track.clips || []).some(clip => Number(clip.blob?.size) > 0)
-        );
-        const useArrangement = (view === "edit" || view === "mix") && hasArrangementAudio;
-
-        if (view === "mpc") beatLab.soundProfile = "mpc";
-
-        this.transportActionPending = true;
-        const startPlayback = useArrangement
-          ? multitrack.playAll()
-          : beatLab.start();
-
-        Promise.resolve(startPlayback)
-          .then(() => {
-            if (useArrangement) {
-              this.editScreen?.status(multitrack.isPlaying()
-                ? "Playback running."
-                : "Nothing to play yet. Record or import audio into a track first.");
-            } else {
-              beatLab.status?.("Playback running.");
-            }
-          })
-          .catch(error => {
-            const message = "Playback could not start: " + (error?.message || error);
-            if (useArrangement) this.editScreen?.status(message);
-            else beatLab.status?.(message);
-          })
-          .finally(() => {
-            this.transportActionPending = false;
-          });
+        void this.toggleSessionPlayback()
+          .then(playing => this.editScreen?.status(playing ? "Song session playing." : "Song session stopped."))
+          .catch(error => this.editScreen?.status("Session transport error: " + (error?.message || error)));
       };
 
       document.addEventListener("keydown", this.handleStudioKeydown);
@@ -611,6 +637,10 @@ const StudioDAWApp = {
       this.handleStudioKeydown = null;
     }
     this.transportActionPending = false;
+    if (this.globalTransportHandlers) {
+      this.root?.querySelector("header")?.removeEventListener("click", this.globalTransportHandlers);
+      this.globalTransportHandlers = null;
+    }
 
     if (this.root && this.handleOverlayClick) {
       this.root.removeEventListener(
