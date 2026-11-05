@@ -81,6 +81,7 @@ const StudioMultitrackWorkspace = {
   sessionTemplateId: null,
   sessionTemplateName: null,
   arrangementPlayback: null,
+  onTransportChange: null,
   selectedClipId: null,
   selectedTrackId: null,
   zoomBarWidth: 72,
@@ -537,7 +538,7 @@ const StudioMultitrackWorkspace = {
               if (x < scroll.scrollLeft + 18 || x > scroll.scrollLeft + scroll.clientWidth - 40) scroll.scrollLeft = Math.max(0, x - scroll.clientWidth * .25);
             });
           },
-          onStatus: message => this.status(message)
+          onStatus: message => { this.status(message); this.onTransportChange?.(); }
         });
     }
 
@@ -1880,6 +1881,7 @@ const StudioMultitrackWorkspace = {
     const loop = this.loopRange?.enabled ? this.loopRange : null;
     const started = await this.getArrangementPlayback().play(this.tracks, this.playheadBar, loop);
     if (started) this.status("Song session playing · " + Math.round(this.getTempoAtBar(this.playheadBar)) + " BPM.");
+    this.onTransportChange?.();
     return Boolean(started);
   },
 
@@ -1898,6 +1900,7 @@ const StudioMultitrackWorkspace = {
     });
 
     this.status("Multitrack playback stopped.");
+    this.onTransportChange?.();
   },
 
   togglePlayback() {
