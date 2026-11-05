@@ -130,14 +130,17 @@ export default {
         makeBox("insertSlot",stripWidth*.78,.018,.055,blue,0,.023,-.37+slot*.07,strip);
       }
       makeBox("pluginWindow",stripWidth*.78,.012,.13,dark,0,.023,-.06,strip);
+      const sendKnobs=[];
       for(let send=0;send<3;send++){
         makeBox("sendSlot",stripWidth*.48,.018,.035,dark,-.025,.024,.04+send*.06,strip);
-        const sendKnob=new THREE.Mesh(new THREE.CylinderGeometry(.018,.018,.018,12),green);
-        sendKnob.position.set(.045,.038,.04+send*.06);strip.add(sendKnob);
+        const sendKnob=new THREE.Mesh(new THREE.CylinderGeometry(.018,.018,.018,12),dark);
+        sendKnob.position.set(.045,.038,.04+send*.06);strip.add(sendKnob);sendKnobs.push(sendKnob);
       }
       makeBox("routeLabel",stripWidth*.8,.018,.045,dark,0,.024,.25,strip);
-      makeBox("automationRead",stripWidth*.78,.018,.045,green,0,.024,.31,strip);
-      const insertLabels=["KONTAKT","SSL EQ","COMP","DE-ESS"];
+      const routeText=new THREE.Mesh(new THREE.PlaneGeometry(stripWidth*.72,.03),makeLabelMaterial("ST OUT","#d5dbe3","#111722"));
+      routeText.rotation.x=-Math.PI/2;routeText.position.set(0,.036,.25);strip.add(routeText);
+      const readButton=makeBox("automationRead",stripWidth*.78,.018,.045,dark,0,.024,.31,strip);
+      const insertLabels=["EQ","COMP","DELAY","REVERB"];
       insertLabels.forEach((text,slot)=>{
         const label=new THREE.Mesh(new THREE.PlaneGeometry(stripWidth*.74,.035),makeLabelMaterial(text,"#e5efff","#2f5fa8"));
         label.rotation.x=-Math.PI/2;label.position.set(0,.034,-.37+slot*.07);strip.add(label);
@@ -166,7 +169,7 @@ export default {
       const readout=makeDynamicReadout();readout.mesh.rotation.x=-Math.PI/2;readout.mesh.position.set(0,.036,.48);strip.add(readout.mesh);
       const label=makeBox("channelNameplate",stripWidth*.8,.015,.045,dark,0,.025,-.47,strip);
       label.userData.channelIndex=i;
-      this.strips.push({strip,fader,meter:segments,mute,solo,pan,index:i,readout});
+      this.strips.push({strip,fader,meter:segments,mute,solo,pan,index:i,readout,readButton,sendKnobs});
     }
     const masterX=1.27;
     const master=new THREE.Group();master.name="mixMasterOut";master.position.set(masterX,.055,0);group.add(master);
@@ -240,6 +243,8 @@ export default {
       const track=tracks[item.index];if(!track)return;
       const volume=clamp(Number(track.volume??80),0,100);
       item.readout?.draw(dbText(volume));
+      item.readButton.material=track.automation?.volume?.length?green:dark;
+      item.sendKnobs.forEach((knob,index)=>{knob.material=track.sends?.[index]?green:dark;});
       item.fader.position.z=.765-(volume/100)*.31;
       item.mute.material=track.muted?this.controlMaterials.muteActive:this.controlMaterials.muteIdle;
       item.solo.material=track.solo?this.controlMaterials.soloActive:this.controlMaterials.soloIdle;
