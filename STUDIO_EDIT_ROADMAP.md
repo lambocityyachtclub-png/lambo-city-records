@@ -105,7 +105,7 @@ The workflow research covers hip-hop beat production and vocal overdubs as well 
 
 - [x] Add the tempo-aware metronome engine and transport toggle without replacing the existing recording count-in.
 - [x] Add uncompressed 24-bit PCM WAV capture through AudioWorklet for both armed-track recording and the separate Beat Lab / vocal / master-stem recording path; retain MediaRecorder as the compatibility fallback.
-- [x] Add simultaneous armed-track recording across distinct Studio sources and per-track microphone device assignments; each armed input records to its own track, with independent PCM/MediaRecorder capture. Multi-channel splitting from a single interface input remains a separate enhancement.
+- [x] Add simultaneous armed-track recording across distinct Studio sources and per-track microphone device assignments; each armed input records to its own track, with independent PCM/MediaRecorder capture. Selectable per-track channels from multichannel microphone devices are also supported.
 - [ ] Verify PCM capture and fallback behavior on iPad Safari and desktop, including microphone, Beat Lab/MPC inputs, vocal effects, long takes, and save/reopen.
 - [x] Extend the WAV export engine to 16-, 24-, and 32-bit PCM at 44.1, 48, or 96 kHz; default master export is now 24-bit / 44.1 kHz, while the existing MP3 path remains intact.
 - [ ] Add visible WAV bit-depth and sample-rate choices during the final interface design pass.
