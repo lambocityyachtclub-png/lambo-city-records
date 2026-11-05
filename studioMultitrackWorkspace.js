@@ -461,6 +461,18 @@ const StudioMultitrackWorkspace = {
     return settings;
   },
 
+  setTrackInputDevice(trackId, deviceId = "") {
+    const track = this.tracks.find(item => item.id === trackId);
+    if (!track || track.type !== "audio") throw new Error("Choose an audio track before assigning its input.");
+    if (this.isTrackRecording() || this.pendingRecording) throw new Error("Stop recording before changing an input device.");
+    const selected = String(deviceId || "").slice(0, 256);
+    track.inputDeviceId = selected;
+    track.inputLatencyMs = Math.max(0, Math.min(500, Number(this.inputLatencyByDevice[selected] ?? this.inputLatencyMs) || 0));
+    this.scheduleProjectAutosave();
+    this.status(track.name + " input device updated.");
+    return selected;
+  },
+
   setTempo(value) {
     const bpm = Number(value);
 
@@ -820,6 +832,8 @@ const StudioMultitrackWorkspace = {
         volume: Math.max(0, Math.min(100, Number(track.volume) || 0)),
         pan: Math.max(-1, Math.min(1, Number(track.pan) || 0)),
         inputSource: ["mic", "beatlab", "mpc"].includes(track.inputSource) ? track.inputSource : "mic",
+        inputDeviceId: String(track.inputDeviceId || "").slice(0, 256),
+        inputLatencyMs: Math.max(0, Math.min(500, Number(track.inputLatencyMs) || 0)),
         instrumentWave: ["sine", "triangle", "sawtooth", "square"].includes(track.instrumentWave) ? track.instrumentWave : "triangle",
         eq: {
           low: Number(track.eq?.low) || 0,
@@ -1444,6 +1458,10 @@ const StudioMultitrackWorkspace = {
     }
     if (!armedTracks.length) {
       this.status("Add an audio track before recording.");
+      return false;
+    }
+    if (vocalEffects && armedTracks.filter(track => track.inputSource === "mic" && /vocal/i.test(track.name)).length > 1) {
+      this.status("Use one shared vocal-effects chain per recording pass; arm only one processed vocal track at a time.");
       return false;
     }
     const inputKeys = armedTracks.map(track => track.inputSource === "mic"
