@@ -700,7 +700,23 @@
           "Creative milestones, collaborations, and quality contributions",
           "Trust and conduct signals under transparent, privacy-conscious rules"
         ],
-        "governance": "Define separate charts by creator role and metric, transparent time windows and eligibility rules, verified transaction and engagement signals, anti-bot and anti-manipulation controls, correction and appeal processes, and privacy protections. Avoid presenting a single opaque popularity score as a complete measure of a creator's worth."
+        "governance": "Define separate charts by creator role and metric, transparent time windows and eligibility rules, verified transaction and engagement signals, anti-bot and anti-manipulation controls, correction and appeal processes, and privacy protections. Avoid presenting a single opaque popularity score as a complete measure of a creator's worth.",
+        "displayAndDistribution": {
+          "approvedDirection": "Present the connected creator rankings publicly in all three places: the LAMBO CITY Jumbotron, individual creator profiles, and a dedicated Billboard-style chart destination/area within the city.",
+          "jumbotron": "Use rotating and scheduled chart highlights, creator spotlights, milestones, and chart movement to create public excitement and discovery.",
+          "creatorProfiles": "Show each creator's verified achievements, relevant chart positions, milestones, and progress while respecting privacy and profile visibility controls.",
+          "billboardDestination": "Provide a dedicated in-world destination where visitors can browse category-specific charts, discover creators, and explore current and historical rankings.",
+          "chartCategories": [
+            "Top-selling producers",
+            "Top-selling beats",
+            "Breakout producers",
+            "Top artists",
+            "Most influential creators",
+            "Rising stars",
+            "Community recognition"
+          ],
+          "governance": "Keep multiple role- and metric-specific charts rather than relying on one overall leaderboard. Define transparent metric definitions, time windows, eligibility rules, verified signals, anti-manipulation controls, corrections/appeals, and privacy safeguards."
+        }
       },
       "marketplaceAndRevenue": {
         "vision": "A future marketplace where producers and other creators can offer approved creative products and services, including beats, to customers within the LAMBO CITY ecosystem.",
@@ -720,7 +736,43 @@
         "automatedWorkflow": "Explore a future workflow that researches, drafts, assembles, and schedules recurring podcast-style episodes and news/education segments for the Jumbotron.",
         "editorialSafeguards": "Automated content must be checked for accuracy, dates, source quality, rights to music/images/clips, fair presentation, sponsorship disclosure, and misleading financial or career claims. Require editorial approval before publication, especially for news, rankings, financial topics, and claims about real people or businesses."
       },
-      "ownerIntent": "The owner wants producer beat sales and other creator achievements to create incentives and recognition, with respect as an important factor. The owner envisions a Billboard-style ranking system for producers, artists, and other creators; a future marketplace in which LAMBO CITY Records receives a commission on sales; and an automated podcast/news/educational media workflow on the LAMBO CITY Jumbotron to help musicians and producers learn how to grow."
+      "ownerIntent": "The owner wants producer beat sales and other creator achievements to create incentives and recognition, with respect as an important factor. The owner envisions a Billboard-style ranking system for producers, artists, and other creators; a future marketplace in which LAMBO CITY Records receives a commission on sales; and an automated podcast/news/educational media workflow on the LAMBO CITY Jumbotron to help musicians and producers learn how to grow. The owner approves displaying the connected Billboard-style charts publicly on the LAMBO CITY Jumbotron, within creator profiles, and in a dedicated Billboard-style chart destination in the city. Creator incentives should be personalized to users' interests and roles, potentially including producer sound banks, plugins, instruments, recording tools, and other relevant unlocks. The system may learn from voluntary profile preferences and privacy-conscious use of platform features, while allowing users to update or disable personalization.",
+      "personalizedCreatorProgressionAndRewards": {
+        "vision": "Creator incentives should reflect each user's interests, creative role, goals, and chosen development path rather than awarding identical rewards solely based on rank.",
+        "interestDiscovery": "Let users voluntarily select and update interests, creator roles, and goals during onboarding and in profile settings. Over time, the system may use privacy-conscious signals from their LAMBO CITY activity, such as Studio tools they choose to use, projects they create, products they sell, events they attend, and opportunities they pursue, to recommend relevant rewards.",
+        "exampleRewardPaths": {
+          "producers": [
+            "Additional beat sounds and sound banks",
+            "Vintage MPC and digital instruments",
+            "Effects and plugins",
+            "Studio production features and learning opportunities"
+          ],
+          "recordingArtists": [
+            "Vocal effects and recording tools",
+            "Studio features",
+            "Promotional and performance opportunities"
+          ],
+          "songwriters": [
+            "Writing and collaboration tools",
+            "Creative development resources",
+            "Relevant educational opportunities"
+          ],
+          "entrepreneurs": [
+            "Marketplace and storefront capabilities",
+            "Business education",
+            "Approved commercial opportunities"
+          ],
+          "communityContributors": [
+            "Recognition",
+            "Event invitations",
+            "Approved opportunities to contribute or organize"
+          ]
+        },
+        "rewardDesign": "Rewards may include earned unlocks, access to tools, learning resources, visibility, promotional opportunities, invitations, and creator opportunities. Match rewards to user interests while preserving meaningful achievement milestones and fair access.",
+        "userControlAndPrivacy": "Users should be able to review, change, or disable personalization. Explain which activity signals are used, minimize data collection, avoid sensitive inferences, and do not make consequential access decisions solely through opaque profiling.",
+        "safeguards": "Do not allow purchased rank, popularity, or automated profiling alone to confer trust, administrative authority, private project access, or unrestricted event access. Keep reward eligibility, Yacht Club Boarding Pass authorization, and security permissions distinct.",
+        "status": "Long-term product direction; reward catalogs, unlock criteria, data model, consent controls, and implementation require separate design and owner approval."
+      }
     }
   },
   "openDecisions": [
