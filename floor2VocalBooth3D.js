@@ -146,6 +146,7 @@ export default {
   screenContext:null,
   screenTexture:null,
   recordingHandler:null,
+  frameElapsed:0,
   async init(scene){
     THREE = await import("https://unpkg.com/three@0.160.0/build/three.module.js");
     const studio=scene?.getObjectByName("recordsHQFloor2Studio");
@@ -198,7 +199,10 @@ export default {
     const headphones=new THREE.Mesh(new THREE.TorusGeometry(.20,.035,8,24,Math.PI),material(0x14151b,.8,.22));
     headphones.position.set(boothX+1.55,.72,boothZ+.18);booth.add(headphones);
   },
-  update(){
+  update(delta){
+    this.frameElapsed+=Math.max(0,Number(delta)||0);
+    if(this.frameElapsed<0.05)return;
+    this.frameElapsed=0;
     if(!this.screenContext||!this.screenCanvas)return;
     const ctx=this.screenContext;
     const input=StudioRecordingEngine.getInputWaveform?.();
