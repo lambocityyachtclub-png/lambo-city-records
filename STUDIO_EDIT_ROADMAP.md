@@ -104,7 +104,8 @@ The standalone entry reuses the existing production modules. It is not a second 
 The workflow research covers hip-hop beat production and vocal overdubs as well as conventional instrumental and full-band sessions. Keep the existing EDIT/MIX layout and visual identity intact while closing these capability gaps.
 
 - [x] Add the tempo-aware metronome engine and transport toggle without replacing the existing recording count-in.
-- [ ] Add a clean, uncompressed PCM recording path (preferably 24-bit WAV or 32-bit float capture) with a safe browser-compatible fallback; the current recorder uses browser MediaRecorder codecs.
+- [x] Add uncompressed 24-bit PCM WAV capture through AudioWorklet for both armed-track recording and the separate Beat Lab / vocal / master-stem recording path; retain MediaRecorder as the compatibility fallback.
+- [ ] Verify PCM capture and fallback behavior on iPad Safari and desktop, including microphone, Beat Lab/MPC inputs, vocal effects, long takes, and save/reopen.
 - [x] Extend the WAV export engine to 16-, 24-, and 32-bit PCM at 44.1, 48, or 96 kHz; default master export is now 24-bit / 44.1 kHz, while the existing MP3 path remains intact.
 - [ ] Add visible WAV bit-depth and sample-rate choices during the final interface design pass.
 - [ ] Add a dedicated master true-peak limiter and loudness/peak metering; current master processing includes compression but not a dedicated final limiter or loudness target workflow.
