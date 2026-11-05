@@ -2,6 +2,18 @@
 
 This roadmap is the source of truth for the EDIT workspace build. Keep the approved EDIT screen design unchanged: **Simple on the surface. Powerful underneath.** Build the professional capabilities behind the existing interface, using the shared song session, recording engine, audio engine, and arrangement playback. Do not create a second DAW or duplicate session/audio systems.
 
+## Shared Studio delivery
+
+- [x] Add a standalone Studio entry at `/studio.html`, reusing the same DAW shell, EDIT/MIX session, Beat Lab, MPC, and shared audio modules.
+- [x] Keep Three.js out of the standalone Studio's static import graph. Floor 2 loads its 3D picking dependency only when a real scene is initialized.
+- [x] Route Floor 2 MPC selection through the same Studio workspace rather than opening a second independent navigation path.
+- [x] Use the shared audio engine for standalone piano and drum performance panels; drum pads can route through the existing mixer channels.
+- [x] Use the versioned `.lcp` project package for EDIT export/import, including the DAW session and MPC sample/library assets; retain legacy `.lcsession` import.
+- [ ] Verify standalone launch, project round-trip, MPC/piano/drum performance, recording, and navigation in iPad Safari and desktop browsers.
+- [ ] Verify the in-game Floor 2 station click path and Beat Lab initialization after the lazy Three.js change.
+
+The standalone entry reuses the existing production modules. It is not a second DAW, audio engine, or song model. Visual components that have not been approved remain unchanged.
+
 ## Stage 1 — Editing foundation
 **Code status: implemented; device/browser verification still required.**
 
