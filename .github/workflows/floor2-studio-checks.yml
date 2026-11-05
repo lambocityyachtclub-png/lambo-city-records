@@ -26,6 +26,7 @@ on:
       - "studioDAWSessionStore.js"
       - "studioMultitrackWorkspace.js"
       - "studioAudioEngine.js"
+      - "scripts/test-studio-master-processing.mjs"
       - "studioSoundKit.js"
       - "studioAudioExport.js"
       - "studioRecordingEngine.js"
@@ -177,6 +178,9 @@ jobs:
 
       - name: Test DAW arrangement playback and mixer
         run: node --experimental-default-type=module scripts/test-daw-arrangement-playback.mjs
+
+      - name: Test master limiter and output meter
+        run: node --experimental-default-type=module scripts/test-studio-master-processing.mjs
 
       - name: Test Studio metronome timing and meter changes
         run: node --experimental-default-type=module scripts/test-studio-metronome.mjs
