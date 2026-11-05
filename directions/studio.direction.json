@@ -12,7 +12,8 @@
       "collaborationModel": "answered",
       "collaborationAccess": "answered",
       "collaborationExperience": "answered",
-      "artistIdentityAndAvatar": "answered"
+      "artistIdentityAndAvatar": "answered",
+      "avatarApprovalAndCustomization": "answered"
     }
   },
   "ownerDirection": {
@@ -133,7 +134,20 @@
         "thirdPhoto": "Not yet specified; ask the owner what the third photo should be used for before defining the upload requirements."
       },
       "futureCreatorCulture": "The owner envisions players and artists capturing and sharing videos of their LAMBO CITY experiences, including posting content to platforms such as YouTube, creating an incentive to participate and discover the wider world.",
-      "phaseStatus": "Approved long-term product vision. Do not add accounts, authentication, image uploads, avatar-generation services, persistent profiles, or multiplayer to the current single-player foundation until a separate architecture, privacy/security, moderation, storage, cost, and rollout plan is reviewed and approved."
+      "phaseStatus": "Approved long-term product vision. Do not add accounts, authentication, image uploads, avatar-generation services, persistent profiles, or multiplayer to the current single-player foundation until a separate architecture, privacy/security, moderation, storage, cost, and rollout plan is reviewed and approved.",
+      "generationWorkflow": {
+        "steps": [
+          "User submits up to three reference photos: front-facing headshot, full-body photo, and three-quarter or side-view photo.",
+          "Generate a personalized character likeness and internal multi-view reference.",
+          "Create and optimize a rigged, animation-ready 3D avatar suitable for the LAMBO CITY Three.js world.",
+          "Present a preview so the user can review the likeness.",
+          "Allow the user to customize clothing, accessories, and appearance before first entering the world.",
+          "Require user approval before the generated avatar becomes their active in-game character."
+        ],
+        "ownerApproved": true,
+        "qualityPrinciple": "Prioritize recognizable individual likeness and personal identity over generic preset avatars. Treat image-to-3D generation, rigging, optimization, and user approval as distinct quality-controlled steps.",
+        "status": "Approved long-term product direction; implementation belongs to the future accounts and avatar platform phase."
+      }
     }
   },
   "openDecisions": [
