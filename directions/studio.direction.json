@@ -7,7 +7,7 @@
     "status": "in-discovery",
     "questionnaireProgress": {
       "purposeAndMission": "answered",
-      "remainingCoreQuestions": 3,
+      "remainingCoreQuestions": 2,
       "centralWorkspaceAndNavigation": "answered",
       "collaborationModel": "answered",
       "collaborationAccess": "answered",
@@ -28,7 +28,9 @@
       "entertainmentAndEvents": "answered",
       "entertainmentEventOrganizerModel": "answered",
       "entertainmentAudienceExperience": "answered",
-      "entertainmentPerformerEligibility": "answered"
+      "entertainmentPerformerEligibility": "answered",
+      "exclusiveEventAccess": "answered",
+      "platformIdentityAndAccessSecurity": "answered"
     }
   },
   "ownerDirection": {
@@ -445,8 +447,57 @@
             "Keep performer permissions separate from event-organizer permissions, Studio project access, and publication rights."
           ],
           "ownerApproval": "The owner selected Option C on 2026-11-04: both official LAMBO CITY bookings and approved community performers, with appropriate authorization for the music performed."
+        },
+        "exclusiveEventAccess": {
+          "visibilityModel": [
+            "Public events are discoverable and open to everyone, subject to any separately defined capacity or event rules.",
+            "Exclusive events are limited to invited guests or people who have been explicitly granted access."
+          ],
+          "invitationAuthority": {
+            "selectedOption": "C",
+            "model": "The owner retains centralized control and may authorize approved event organizers to manage invitations only for their own assigned events, within owner-defined limits.",
+            "ownerControls": "The owner can review, override, and revoke organizer delegation and guest access.",
+            "boundaries": "Event invitation authority does not grant global platform, administrator, Studio, private project, or creative publication permissions."
+          },
+          "ownerApproval": "The owner approved public events as open and discoverable, exclusive events as invitation-restricted, and Option C for tightly scoped event invitation delegation on 2026-11-05."
         }
       }
+    },
+    "platformIdentityAndAccessSecurity": {
+      "selectedModel": "Centralized identity, authorization, and security with tightly scoped delegation",
+      "accountIdentity": "Each user has a unique account identity and profile. Having an account does not automatically grant access to restricted events, Studio projects, private collaborations, properties, or administrative functions.",
+      "authorizationPrinciple": "Default deny and least privilege. Every protected resource and action must be authorized by trusted server-side services; hiding a control in the client interface is never sufficient security.",
+      "ownerAuthority": "The LAMBO CITY owner retains ultimate authority over platform-wide security policy, global roles, administrator appointments, security controls, and emergency access. The owner can review, override, and revoke delegated permissions.",
+      "eventDelegation": {
+        "selectedOption": "C",
+        "model": "Approved event organizers may invite, review, and remove guests only for the specific events they are authorized to manage, and only within owner-defined limits.",
+        "boundaries": [
+          "Event-level delegation does not grant access to other events.",
+          "Event organizers cannot grant Studio access, access private projects or recordings, or authorize publication or performance of another person's creative work.",
+          "Event organizers cannot grant global roles, appoint administrators, alter platform-wide permissions, disable security protections, or override owner policy.",
+          "Delegated permissions must be reviewable, limited in scope, and revocable by the owner."
+        ],
+        "ownerApproval": "The owner approved centralized security with narrowly scoped event-level delegation on 2026-11-05."
+      },
+      "accessGrantRecords": [
+        "User or account identifier",
+        "Resource and event identifier",
+        "Permission scope and allowed actions",
+        "Granting authority and timestamp",
+        "Expiration, revocation status, and revocation authority"
+      ],
+      "authenticationAndAccountProtection": [
+        "Use strong authentication, with passkeys and/or multi-factor authentication where appropriate.",
+        "Protect account recovery, sessions, and device management against takeover.",
+        "Apply rate limits, abuse detection, and protections against automated credential attacks."
+      ],
+      "securityMonitoringAndAudit": [
+        "Record security-relevant events such as failed sign-ins, suspicious sessions, permission changes, invitation activity, and denied access attempts.",
+        "Provide owner-facing access reviews and alerts for suspicious activity.",
+        "Protect audit records against unauthorized alteration and apply privacy-conscious retention limits."
+      ],
+      "securityExpectation": "Use layered safeguards and incident-response processes to reduce unauthorized access risk. Do not promise that hacking or unauthorized access can be made impossible.",
+      "implementationGate": "This is approved product direction, not authorization to bolt accounts, authentication, backend services, or multiplayer onto the current single-player foundation. Design and approve the platform security architecture, privacy controls, operational plan, and rollout before implementation."
     }
   },
   "openDecisions": [
@@ -462,7 +513,8 @@
     "Define which features are essential for the first complete Studio release versus later expansion.",
     "Obtain qualified legal review and define the rights model, disclosures, and jurisdictional obligations before offering any digital real-estate ownership or making ownership claims.",
     "For the future entertainment and events system, define event hosting, scheduling, capacity, audience participation, artist access, and moderation requirements.",
-    "Define eligibility and approval/revocation rules for artist- and player-organized events, plus event-level visibility and publishing permissions."
+    "Define eligibility and approval/revocation rules for artist- and player-organized events, plus event-level visibility and publishing permissions.",
+    "Define detailed authentication, account recovery, session/device management, security alerting, audit-log retention, incident response, and access-review requirements for the future identity and security architecture."
   ],
   "protectionRules": [
     "Do not redesign the approved EDIT interface.",
@@ -473,11 +525,15 @@
     "Require owner approval before changing the Studio's approved visual direction or expanding into accounts, backend, or multiplayer.",
     "Treat platform-wide accounts, profiles, photo uploads, generated 3D avatars, browser-based sessions, and in-world multiplayer as a future coordinated platform phase; do not bolt them onto the current single-player architecture without an approved design.",
     "Use uploaded photos as consented avatar references with clear privacy, retention, deletion, and user-control rules; do not promise perfect likeness or automatic generation quality.",
-    "Event organizer permissions must remain separate from Studio project access and creative-work publication permissions; private Studio work stays private unless explicitly authorized for sharing or performance."
+    "Event organizer permissions must remain separate from Studio project access and creative-work publication permissions; private Studio work stays private unless explicitly authorized for sharing or performance.",
+    "Enforce authorization server-side for every protected resource and action; never rely on client-side visibility or UI hiding.",
+    "Keep event invitation delegation limited to explicitly assigned events; event organizers cannot grant global roles, Studio access, private project access, creative publication rights, or change platform security policy.",
+    "The owner retains platform-wide security authority and the ability to review, override, and revoke delegated permissions.",
+    "Use default-deny access, least privilege, revocable grants, security audit trails, and privacy-conscious monitoring; do not promise absolute protection from hacking."
   ],
   "approval": {
     "status": "draft",
     "approvedByOwner": false,
-    "note": "Captures the owner's direction answers to date. The living-city style is Option C, progressing toward the realism and functionality of Option A; player freedom and optional guided activities are both supported; the ultimate city activity ambition is Option B, delivered progressively using Option C; NPC and business functionality follow Option C as the development approach with Option B as the long-term ambition; vehicle development begins with luxury decorative/showcase presentation while the road network and future interactive driving scope are developed later. This is not yet a complete or approved Studio specification. Digital real estate follows Option C as the staged development approach, with any ownership claims gated on a legally reviewed and owner-approved rights structure. The owner also confirmed that LAMBO CITY should support concerts, live performances, parties, and special events. Future digital-real-estate and other in-game ownership may be architected as dormant capability, but must remain unavailable and unadvertised until legal review and explicit owner launch approval. The owner selected Option C for event organizers: official LAMBO CITY events plus approved artist- and player-organized events. Private Studio sessions and creative work remain private by default; organizer access does not grant project access or publication rights, and public sharing or performance requires explicit authorization. The owner selected Option C for audience experience: a complete spectator experience plus optional interactive participation. The owner also selected Option C for performers: official LAMBO CITY bookings plus approved community performers, subject to the necessary rights and permissions for music performed. The owner further confirmed that every user's character should be able to dance in time with music, with an expandable library of hip-hop and current trending dance styles, while keeping dancing optional and respecting applicable choreography and content rights."
+    "note": "Captures the owner's direction answers to date. The living-city style is Option C, progressing toward the realism and functionality of Option A; player freedom and optional guided activities are both supported; the ultimate city activity ambition is Option B, delivered progressively using Option C; NPC and business functionality follow Option C as the development approach with Option B as the long-term ambition; vehicle development begins with luxury decorative/showcase presentation while the road network and future interactive driving scope are developed later. This is not yet a complete or approved Studio specification. Digital real estate follows Option C as the staged development approach, with any ownership claims gated on a legally reviewed and owner-approved rights structure. The owner also confirmed that LAMBO CITY should support concerts, live performances, parties, and special events. Future digital-real-estate and other in-game ownership may be architected as dormant capability, but must remain unavailable and unadvertised until legal review and explicit owner launch approval. The owner selected Option C for event organizers: official LAMBO CITY events plus approved artist- and player-organized events. Private Studio sessions and creative work remain private by default; organizer access does not grant project access or publication rights, and public sharing or performance requires explicit authorization. The owner selected Option C for audience experience: a complete spectator experience plus optional interactive participation. The owner also selected Option C for performers: official LAMBO CITY bookings plus approved community performers, subject to the necessary rights and permissions for music performed. The owner further confirmed that every user's character should be able to dance in time with music, with an expandable library of hip-hop and current trending dance styles, while keeping dancing optional and respecting applicable choreography and content rights. The owner approved centralized identity and security with tightly scoped event-level delegation: the owner retains ultimate platform-wide security authority, while approved organizers may manage invitations only for their assigned events within owner-defined limits. Public events are discoverable and open; exclusive events require an invitation or explicit access grant. These are future platform directions and do not authorize implementation of accounts or backend services in the current single-player foundation."
   }
 }
