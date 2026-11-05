@@ -436,11 +436,12 @@ const StudioDAWApp = {
         event.stopPropagation();
         event.stopImmediatePropagation();
 
+        const standalone = this.standalone;
         this.close();
 
         if (endSession) {
           window.__lamboCityEndFloor2Session?.();
-        } else if (this.standalone) {
+        } else if (standalone) {
           window.location.href = "./";
         } else {
           window.__lamboCityReturnToFloor2Room?.();
