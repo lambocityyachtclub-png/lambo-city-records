@@ -405,7 +405,7 @@ const StudioDAWApp = {
   },
 
   syncTransportControls() {
-    const playing = Boolean(StudioMultitrackWorkspace.isPlaying());
+    const playing = Boolean(StudioMultitrackWorkspace.isPlaying() || Floor2StudioApp?.playing);
     const clickOn = Boolean(StudioMultitrackWorkspace.metronomeSettings?.enabled);
     this.root?.querySelectorAll('[data-global-transport="play"]').forEach(button => {
       button.textContent = playing ? "▶ SESSION PLAYING" : "▶ PLAY SESSION";
@@ -491,7 +491,12 @@ const StudioDAWApp = {
     document.body.appendChild(root);
 
     this.root = root;
-    StudioMultitrackWorkspace.onTransportChange = () => this.syncTransportControls();
+    StudioMultitrackWorkspace.onTransportChange = () => {
+      if (!StudioMultitrackWorkspace.isPlaying() && Floor2StudioApp?.playing && !this.transportActionPending) {
+        Floor2StudioApp.stop();
+      }
+      this.syncTransportControls();
+    };
     this.globalTransportHandlers = event => {
       const button = event.target.closest("[data-global-transport]");
       if (!button || !root.contains(button)) return;
