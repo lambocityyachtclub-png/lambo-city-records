@@ -103,7 +103,7 @@ const StudioMultitrackWorkspace = {
   dirty: false,
   saveState: "saved",
   savePromise: null,
-  masterSettings: { volume: 100, stereoWidth: 100, compressionRatio: 3 },
+  masterSettings: { volume: 100, stereoWidth: 100, compressionRatio: 3, limiterEnabled: true, limiterCeilingDb: -1 },
   metronomeSettings: { enabled: false, volume: 0.16, accent: true },
   recordingMetronomeSources: [],
   recordingMetronomeStartBar: 1,
@@ -161,11 +161,12 @@ const StudioMultitrackWorkspace = {
     this.timeSignatureChanges = (snapshot.timeSignatureChanges || []).map(point => ({ ...point }));
     this.markers = (snapshot.markers || []).map(marker => ({ ...marker }));
     this.loopRange = { ...(snapshot.loopRange || { enabled: false, startBar: 1, endBar: 9 }) };
-    this.masterSettings = { volume: Math.max(0, Math.min(100, Number(snapshot.masterSettings?.volume ?? 100))), stereoWidth: Math.max(0, Math.min(200, Number(snapshot.masterSettings?.stereoWidth ?? 100))), compressionRatio: Math.max(1, Math.min(8, Number(snapshot.masterSettings?.compressionRatio ?? 3))) };
+    this.masterSettings = { volume: Math.max(0, Math.min(100, Number(snapshot.masterSettings?.volume ?? 100))), stereoWidth: Math.max(0, Math.min(200, Number(snapshot.masterSettings?.stereoWidth ?? 100))), compressionRatio: Math.max(1, Math.min(8, Number(snapshot.masterSettings?.compressionRatio ?? 3))), limiterEnabled: snapshot.masterSettings?.limiterEnabled !== false, limiterCeilingDb: Math.max(-6, Math.min(0, Number(snapshot.masterSettings?.limiterCeilingDb ?? -1))) };
     this.metronomeSettings = { enabled: Boolean(snapshot.metronomeSettings?.enabled), volume: Math.max(0, Math.min(0.4, Number(snapshot.metronomeSettings?.volume ?? 0.16))), accent: snapshot.metronomeSettings?.accent !== false };
     StudioAudioEngine.setMasterVolume(this.masterSettings.volume / 100);
     StudioAudioEngine.setStereoWidth(this.masterSettings.stereoWidth);
     StudioAudioEngine.setMasterCompressionRatio(this.masterSettings.compressionRatio);
+    StudioAudioEngine.setMasterLimiter(this.masterSettings.limiterEnabled, this.masterSettings.limiterCeilingDb);
     this.deletedItems = (snapshot.deletedItems || []).map(entry => ({ ...entry }));
     this.render();
   },
@@ -451,6 +452,14 @@ const StudioMultitrackWorkspace = {
     return applyStudioDAWSessionLayout(this, layoutId);
   },
 
+  setMasterLimiter(enabled, ceilingDb = this.masterSettings?.limiterCeilingDb ?? -1) {
+    const settings = StudioAudioEngine.setMasterLimiter(enabled, ceilingDb);
+    this.masterSettings = { ...(this.masterSettings || {}), limiterEnabled: settings.enabled, limiterCeilingDb: settings.ceilingDb };
+    this.scheduleProjectAutosave();
+    this.onRender?.();
+    return settings;
+  },
+
   setTempo(value) {
     const bpm = Number(value);
 
@@ -563,7 +572,7 @@ const StudioMultitrackWorkspace = {
       inputDeviceId: this.inputDeviceId || "",
       inputLatencyMs: Math.max(0, Math.min(500, Number(this.inputLatencyMs) || 0)),
       inputLatencyByDevice: { ...(this.inputLatencyByDevice || {}) },
-      masterSettings: { ...(this.masterSettings || { volume: 100, stereoWidth: 100, compressionRatio: 3 }) },
+      masterSettings: { ...(this.masterSettings || { volume: 100, stereoWidth: 100, compressionRatio: 3, limiterEnabled: true, limiterCeilingDb: -1 }) },
       metronomeSettings: { ...(this.metronomeSettings || { enabled: false, volume: 0.16, accent: true }) },
       templateId: this.sessionTemplateId,
       templateName: this.sessionTemplateName,
@@ -647,7 +656,7 @@ const StudioMultitrackWorkspace = {
     this.inputDeviceId = session.inputDeviceId || "";
     this.inputLatencyMs = Math.max(0, Math.min(500, Number(session.inputLatencyMs) || 0));
     this.inputLatencyByDevice = session.inputLatencyByDevice && typeof session.inputLatencyByDevice === "object" ? { ...session.inputLatencyByDevice } : {};
-    this.masterSettings = { volume: Math.max(0, Math.min(100, Number(session.masterSettings?.volume ?? 100))), stereoWidth: Math.max(0, Math.min(200, Number(session.masterSettings?.stereoWidth ?? 100))), compressionRatio: Math.max(1, Math.min(8, Number(session.masterSettings?.compressionRatio ?? 3))) };
+    this.masterSettings = { volume: Math.max(0, Math.min(100, Number(session.masterSettings?.volume ?? 100))), stereoWidth: Math.max(0, Math.min(200, Number(session.masterSettings?.stereoWidth ?? 100))), compressionRatio: Math.max(1, Math.min(8, Number(session.masterSettings?.compressionRatio ?? 3))), limiterEnabled: session.masterSettings?.limiterEnabled !== false, limiterCeilingDb: Math.max(-6, Math.min(0, Number(session.masterSettings?.limiterCeilingDb ?? -1))) };
     this.metronomeSettings = { enabled: Boolean(session.metronomeSettings?.enabled), volume: Math.max(0, Math.min(0.4, Number(session.metronomeSettings?.volume ?? 0.16))), accent: session.metronomeSettings?.accent !== false };
     StudioAudioEngine.setMasterVolume(this.masterSettings.volume / 100);
     StudioAudioEngine.setStereoWidth(this.masterSettings.stereoWidth);
@@ -701,7 +710,7 @@ const StudioMultitrackWorkspace = {
       if (track.sends !== undefined && (!Array.isArray(track.sends) || track.sends.length > 32 || !track.sends.every(send => typeof send.busId === "string" && busIds.has(send.busId) && track.type !== "bus" && Number.isFinite(Number(send.level)) && Number(send.level) >= 0 && Number(send.level) <= 100))) return false;
     }
     if (session.metronomeSettings !== undefined && (typeof session.metronomeSettings.enabled !== "boolean" || !Number.isFinite(Number(session.metronomeSettings.volume)) || Number(session.metronomeSettings.volume) < 0 || Number(session.metronomeSettings.volume) > 0.4 || typeof session.metronomeSettings.accent !== "boolean")) return false;
-    if (session.masterSettings !== undefined && (!Number.isFinite(Number(session.masterSettings.volume)) || Number(session.masterSettings.volume) < 0 || Number(session.masterSettings.volume) > 100 || !Number.isFinite(Number(session.masterSettings.stereoWidth)) || Number(session.masterSettings.stereoWidth) < 0 || Number(session.masterSettings.stereoWidth) > 200 || !Number.isFinite(Number(session.masterSettings.compressionRatio)) || Number(session.masterSettings.compressionRatio) < 1 || Number(session.masterSettings.compressionRatio) > 8)) return false;
+    if (session.masterSettings !== undefined && (!Number.isFinite(Number(session.masterSettings.volume)) || Number(session.masterSettings.volume) < 0 || Number(session.masterSettings.volume) > 100 || !Number.isFinite(Number(session.masterSettings.stereoWidth)) || Number(session.masterSettings.stereoWidth) < 0 || Number(session.masterSettings.stereoWidth) > 200 || !Number.isFinite(Number(session.masterSettings.compressionRatio)) || Number(session.masterSettings.compressionRatio) < 1 || Number(session.masterSettings.compressionRatio) > 8 || (session.masterSettings.limiterEnabled !== undefined && typeof session.masterSettings.limiterEnabled !== "boolean") || (session.masterSettings.limiterCeilingDb !== undefined && (!Number.isFinite(Number(session.masterSettings.limiterCeilingDb)) || Number(session.masterSettings.limiterCeilingDb) < -6 || Number(session.masterSettings.limiterCeilingDb) > 0))) return false;
     return Number.isFinite(Number(session.tempo)) && Number(session.tempo) >= 20 && Number(session.tempo) <= 300;
   },
 
@@ -726,7 +735,7 @@ const StudioMultitrackWorkspace = {
     }
     this.stopAll();
     this.tempo = Math.max(60, Math.min(180, Number(tempo) || 100));
-    this.timeSignature = "4/4"; this.tempoChanges = []; this.timeSignatureChanges = []; this.markers = []; this.loopRange = { enabled: false, startBar: 1, endBar: 9 }; this.masterSettings = { volume: 100, stereoWidth: 100, compressionRatio: 3 }; StudioAudioEngine.setMasterVolume(1); StudioAudioEngine.setStereoWidth(100); StudioAudioEngine.setMasterCompressionRatio(3); this.followPlayhead = true; this.selectedRegionIds = []; this.multiSelectMode = false;
+    this.timeSignature = "4/4"; this.tempoChanges = []; this.timeSignatureChanges = []; this.markers = []; this.loopRange = { enabled: false, startBar: 1, endBar: 9 }; this.masterSettings = { volume: 100, stereoWidth: 100, compressionRatio: 3, limiterEnabled: true, limiterCeilingDb: -1 }; StudioAudioEngine.setMasterVolume(1); StudioAudioEngine.setStereoWidth(100); StudioAudioEngine.setMasterCompressionRatio(3); this.followPlayhead = true; this.selectedRegionIds = []; this.multiSelectMode = false;
     this.sessionTemplateId = null;
     this.sessionTemplateName = null;
     this.tracks = [];
@@ -857,7 +866,7 @@ const StudioMultitrackWorkspace = {
       inputDeviceId: this.inputDeviceId || "",
       inputLatencyMs: Math.max(0, Math.min(500, Number(this.inputLatencyMs) || 0)),
       inputLatencyByDevice: { ...(this.inputLatencyByDevice || {}) },
-      masterSettings: { ...(this.masterSettings || { volume: 100, stereoWidth: 100, compressionRatio: 3 }) },
+      masterSettings: { ...(this.masterSettings || { volume: 100, stereoWidth: 100, compressionRatio: 3, limiterEnabled: true, limiterCeilingDb: -1 }) },
       templateId: this.sessionTemplateId,
       templateName: this.sessionTemplateName,
       audioAssets,
