@@ -7,11 +7,11 @@ import StudioAudioExport from "./studioAudioExport.js";
 // The shared audio engine and all 3D systems remain unchanged.
 
 const StudioSoundKit = {
-  play(audio, profile, sound, time, noiseBuffer) {
+  play(audio, profile, sound, time, noiseBuffer, destinationOverride = null) {
     if (!audio || audio.state !== "running") return;
 
-    // Bypass per-track routing for this focused audio test.
-    const destination = StudioAudioExport.getOutput(audio);
+    // Use the supplied mixer channel when a performance surface provides one.
+    const destination = destinationOverride || StudioAudioExport.getOutput(audio);
 
     if (sound === "kick") {
       this.playKick(audio, destination, time, profile);
