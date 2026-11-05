@@ -17,9 +17,7 @@ export function createStudioDAWArrangementPlayback({
   getSecondsAtBar = bar => (Math.max(1, Number(bar) || 1) - 1) * 240 / Math.max(1, Number(getTempo()) || 100),
   getBarAtSeconds = seconds => 1 + Number(seconds || 0) * Math.max(1, Number(getTempo()) || 100) / 240,
   onPosition = () => {},
-  onStatus = () => {},
-  getTempoAtBar = () => getTempo(),
-  getTimeSignatureAtBar = () => ({ numerator: 4, denominator: 4 })
+  onStatus = () => {}
 } = {}) {
   if (typeof getAudioContext !== "function" || typeof getTempo !== "function") {
     throw new Error("Arrangement playback requires audio-context and tempo providers.");
@@ -35,99 +33,6 @@ export function createStudioDAWArrangementPlayback({
     playing: false,
     loopTimer: null,
     positionTimer: null,
-    metronomeTimer: null,
-    metronomeSources: [],
-    metronomeActive: false,
-
-    stopMetronome() {
-      this.metronomeActive = false;
-      if (this.metronomeTimer) clearInterval(this.metronomeTimer);
-      this.metronomeTimer = null;
-      this.metronomeSources.splice(0).forEach(source => {
-        source.onended = null;
-        try { source.stop(); } catch {}
-        try { source.disconnect(); } catch {}
-      });
-    },
-
-    startMetronome(context, startBar = 1, loopRange = null) {
-      this.stopMetronome();
-      if (!context || context.state !== "running") return false;
-      const output = getOutput ? getOutput(context) : context.destination;
-      if (!output) return false;
-      const loop = loopRange?.enabled && Number(loopRange.endBar) > Number(loopRange.startBar)
-        ? { startBar: Math.max(1, Number(loopRange.startBar)), endBar: Math.min(129, Number(loopRange.endBar)) }
-        : null;
-      const cursorBar = Math.max(1, Math.min(128, Number(startBar) || 1));
-      const actualStartBar = loop && (cursorBar < loop.startBar || cursorBar >= loop.endBar) ? loop.startBar : cursorBar;
-      const baseTime = context.currentTime + 0.12;
-      const baseSeconds = getSecondsAtBar(actualStartBar);
-      const meterAtStart = getTimeSignatureAtBar(actualStartBar);
-      let bar = Math.floor(actualStartBar);
-      let beat = Math.ceil((actualStartBar - bar) * meterAtStart.numerator - 0.000001);
-      if (beat >= meterAtStart.numerator) { bar += 1; beat = 0; }
-      let nextBeatBar = bar + beat / meterAtStart.numerator;
-      let nextBeatTime = baseTime + Math.max(0, getSecondsAtBar(nextBeatBar) - baseSeconds);
-      let lastPositionUpdate = 0;
-      this.metronomeActive = true;
-
-      this.metronomeTimer = setInterval(() => {
-        if (!this.metronomeActive || context.state !== "running") {
-          this.stopMetronome();
-          return;
-        }
-        const now = context.currentTime;
-        let scheduled = 0;
-        while (nextBeatTime <= now + 0.12 && scheduled++ < 64) {
-          if (loop && nextBeatBar >= loop.endBar) nextBeatBar = loop.startBar;
-          const beatBar = nextBeatBar;
-          const beatMeter = getTimeSignatureAtBar(beatBar);
-          const beatInBar = Math.round((beatBar - Math.floor(beatBar)) * beatMeter.numerator);
-          const oscillator = context.createOscillator();
-          const clickGain = context.createGain();
-          oscillator.type = "sine";
-          oscillator.frequency.value = beatInBar === 0 ? 1480 : 980;
-          clickGain.gain.setValueAtTime(0.0001, nextBeatTime);
-          clickGain.gain.exponentialRampToValueAtTime(0.14, nextBeatTime + 0.003);
-          clickGain.gain.exponentialRampToValueAtTime(0.0001, nextBeatTime + 0.055);
-          oscillator.connect(clickGain);
-          clickGain.connect(output);
-          oscillator.onended = () => {
-            try { oscillator.disconnect(); clickGain.disconnect(); } catch {}
-            this.metronomeSources = this.metronomeSources.filter(item => item !== oscillator);
-          };
-          this.metronomeSources.push(oscillator);
-          oscillator.start(nextBeatTime);
-          oscillator.stop(nextBeatTime + 0.06);
-
-          const previousBeatBar = nextBeatBar;
-          const nextBeat = beatInBar + 1;
-          if (nextBeat >= beatMeter.numerator) {
-            nextBeatBar = Math.floor(beatBar) + 1;
-          } else {
-            nextBeatBar = Math.floor(beatBar) + nextBeat / beatMeter.numerator;
-          }
-          nextBeatTime += Math.max(0, getSecondsAtBar(nextBeatBar) - getSecondsAtBar(previousBeatBar));
-          if (loop && nextBeatBar >= loop.endBar) nextBeatBar = loop.startBar;
-        }
-
-        if (Date.now() - lastPositionUpdate >= 75) {
-          lastPositionUpdate = Date.now();
-          let songSeconds = baseSeconds + Math.max(0, now - baseTime);
-          if (loop && songSeconds >= getSecondsAtBar(loop.endBar)) {
-            const cycleSeconds = Math.max(0.001, getSecondsAtBar(loop.endBar) - getSecondsAtBar(loop.startBar));
-            songSeconds = getSecondsAtBar(loop.startBar) + ((songSeconds - getSecondsAtBar(loop.endBar)) % cycleSeconds);
-          }
-          const currentBar = Math.max(1, Math.min(128, Number(getBarAtSeconds(songSeconds)) || actualStartBar));
-          onPosition(currentBar);
-          if (!loop && !this.sources.length && currentBar >= 128.95) {
-            this.stop();
-            onStatus("Metronome finished at the end of the session.");
-          }
-        }
-      }, 20);
-      return true;
-    },
 
     async decodeClip(context, blob) {
       if (decodedBuffers.has(blob)) return decodedBuffers.get(blob);
@@ -164,7 +69,6 @@ export function createStudioDAWArrangementPlayback({
     stop() {
       this.runId += 1;
       this.playing = false;
-      this.stopMetronome();
       if (this.loopTimer) clearTimeout(this.loopTimer);
       if (this.positionTimer) clearInterval(this.positionTimer);
       this.loopTimer = null;
@@ -346,7 +250,7 @@ export function createStudioDAWArrangementPlayback({
       });
     },
 
-    async play(tracks = [], startBar = 1, loopRange = null, metronomeEnabled = false) {
+    async play(tracks = [], startBar = 1, loopRange = null) {
       this.stop();
       const runId = this.runId;
       const clips = [];
@@ -358,7 +262,7 @@ export function createStudioDAWArrangementPlayback({
         });
       });
 
-      if (!clips.length && !midiTracks.length && !metronomeEnabled) {
+      if (!clips.length && !midiTracks.length) {
         onStatus("No audio regions or MIDI notes are available for arrangement playback.");
         return false;
       }
@@ -397,7 +301,6 @@ export function createStudioDAWArrangementPlayback({
         const actualStartBar = activeLoop && (cursorBar < activeLoop.startBar || cursorBar >= activeLoop.endBar) ? activeLoop.startBar : cursorBar;
         const cursorSeconds = getSecondsAtBar(actualStartBar);
         const startTime = context.currentTime + 0.12;
-        if (metronomeEnabled) this.startMetronome(context, actualStartBar, activeLoop ? { enabled: true, ...activeLoop } : null);
         tracks.forEach(track => this.scheduleVolumeAutomation(track, startTime, actualStartBar));
         decoded.forEach(({ track, clip, buffer }) => {
           const channel = this.trackChannels.get(track.id);
@@ -456,12 +359,9 @@ export function createStudioDAWArrangementPlayback({
             if (runId !== this.runId) return;
             this.sources = this.sources.filter(item => item.source !== source);
             if (!this.sources.length) {
-              this.playing = Boolean(this.loopTimer || this.metronomeActive);
+              this.playing = false;
               this.disposeChannels();
-              if (!this.loopTimer) {
-                this.stopMetronome();
-                if (this.positionTimer) { clearInterval(this.positionTimer); this.positionTimer = null; }
-              }
+              if (!this.loopTimer && this.positionTimer) { clearInterval(this.positionTimer); this.positionTimer = null; }
               onStatus(this.loopTimer ? "Cycle pass complete · next cycle scheduled." : "Arrangement playback finished.");
             }
           };
@@ -509,14 +409,14 @@ export function createStudioDAWArrangementPlayback({
           });
         });
 
-        this.playing = this.sources.length > 0 || Boolean(metronomeEnabled);
+        this.playing = this.sources.length > 0;
         if (this.sources.length || activeLoop) this.positionTimer = setInterval(() => {
           const elapsed = Math.max(0, context.currentTime - startTime);
           onPosition(Math.max(1, Math.min(128, Number(getBarAtSeconds(cursorSeconds + elapsed)) || actualStartBar)));
         }, 80);
         if (activeLoop) {
           const loopDuration = getSecondsAtBar(activeLoop.endBar) - getSecondsAtBar(actualStartBar);
-          if (loopDuration > 0.05) this.loopTimer = setTimeout(() => { void this.play(tracks, activeLoop.startBar, loopRange, metronomeEnabled); }, loopDuration * 1000);
+          if (loopDuration > 0.05) this.loopTimer = setTimeout(() => { void this.play(tracks, activeLoop.startBar, loopRange); }, loopDuration * 1000);
         }
         onStatus(`Arrangement playing from bar ${actualStartBar} · ${tempo} BPM · ${decoded.length} audio clip(s) · ${midiTracks.reduce((count, track) => count + track.midiNotes.length, 0)} MIDI note(s).`);
         return this.playing;
