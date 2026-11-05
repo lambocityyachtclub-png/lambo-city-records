@@ -27,6 +27,9 @@ on:
       - "studioSoundKit.js"
       - "studioAudioExport.js"
       - "studioRecordingEngine.js"
+      - "studioPCMRecorder.js"
+      - "studioPCMRecorderWorklet.js"
+      - "scripts/test-studio-pcm-recorder.mjs"
       - "studioVocalEffects.js"
       - "studioPitchCorrection.js"
       - "studioPitchCorrectionWorklet.js"
@@ -134,6 +137,8 @@ jobs:
             studioSoundKit.js \
             studioAudioExport.js \
             studioRecordingEngine.js \
+            studioPCMRecorder.js \
+            studioPCMRecorderWorklet.js \
             studioVocalEffects.js \
             studioPitchCorrection.js \
             studioPitchCorrectionWorklet.js \
@@ -175,6 +180,9 @@ jobs:
 
       - name: Test Studio WAV PCM export formats
         run: node --experimental-default-type=module scripts/test-daw-wav-export.mjs
+
+      - name: Test uncompressed PCM recording adapter
+        run: node --experimental-default-type=module scripts/test-studio-pcm-recorder.mjs
 
       - name: Test vocal pitch correction DSP
         run: node --experimental-default-type=module scripts/test-studio-pitch-correction.mjs
