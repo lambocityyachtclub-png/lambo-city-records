@@ -521,6 +521,8 @@ const StudioMultitrackWorkspace = {
       volume: 80,
       pan: 0,
       inputSource: "mic",
+      inputDeviceId: "",
+      inputLatencyMs: 0,
       instrumentWave: "triangle",
       eq: { low: 0, mid: 0, high: 0 },
       compression: { threshold: -18, ratio: 1 },
@@ -1440,8 +1442,15 @@ const StudioMultitrackWorkspace = {
         this.status("Automatically armed " + defaultInputTrack.name + " for microphone recording.");
       }
     }
-    if (armedTracks.length !== 1) {
-      this.status(armedTracks.length ? "Arm exactly one audio track to record." : "Add an audio track before recording.");
+    if (!armedTracks.length) {
+      this.status("Add an audio track before recording.");
+      return false;
+    }
+    const inputKeys = armedTracks.map(track => track.inputSource === "mic"
+      ? "mic:" + (track.inputDeviceId || this.inputDeviceId || "default")
+      : String(track.inputSource || "mic"));
+    if (new Set(inputKeys).size !== inputKeys.length) {
+      this.status("For simultaneous recording, assign a different input source or microphone device to each armed track.");
       return false;
     }
     const preRoll = Math.max(0, Math.min(4, Math.floor(Number(countInBars) || 0)));
@@ -1453,7 +1462,6 @@ const StudioMultitrackWorkspace = {
     }
     try {
       const audio = await StudioAudioEngine.resume();
-      const track = armedTracks[0];
       this.pendingRecording = true;
       this.recordingStartBar = startBar;
       const barsUntilRecord = Math.max(0, startBar - this.playheadBar);
@@ -1498,23 +1506,36 @@ const StudioMultitrackWorkspace = {
         if (!ready) return false;
       }
       if (!this.pendingRecording) return false;
-      const inputNode = track.inputSource === "beatlab"
-        ? StudioAudioExport.getOutput(audio)
-        : track.inputSource === "mpc"
-          ? StudioMPCSampler.ensureOutput(audio)
-          : null;
-      const pitchCorrectionNode = track.inputSource === "mic" && /vocal/i.test(track.name) && track.effects?.pitchCorrection?.enabled
-        ? await createStudioPitchCorrectionNode(audio, track.effects.pitchCorrection)
-        : null;
-      await StudioRecordingEngine.startTrackRecording({
-        audio,
-        trackId: track.id,
-        inputNode,
-        pitchCorrectionNode,
-        monitorInput: Boolean(monitorInput),
-        inputDeviceId: track.inputSource === "mic" ? this.inputDeviceId : "",
-        vocalEffects: track.inputSource === "mic" && /vocal/i.test(track.name) ? vocalEffects : null
-      });
+      const startedTracks = [];
+      try {
+        for (const track of armedTracks) {
+          const inputNode = track.inputSource === "beatlab"
+            ? StudioAudioExport.getOutput(audio)
+            : track.inputSource === "mpc"
+              ? StudioMPCSampler.ensureOutput(audio)
+              : null;
+          const pitchCorrectionNode = track.inputSource === "mic" && /vocal/i.test(track.name) && track.effects?.pitchCorrection?.enabled
+            ? await createStudioPitchCorrectionNode(audio, track.effects.pitchCorrection)
+            : null;
+          await StudioRecordingEngine.startTrackRecording({
+            audio,
+            trackId: track.id,
+            inputNode,
+            pitchCorrectionNode,
+            monitorInput: Boolean(monitorInput && track.inputSource === "mic"),
+            inputDeviceId: track.inputSource === "mic" ? (track.inputDeviceId || this.inputDeviceId) : "",
+            vocalEffects: track.inputSource === "mic" && /vocal/i.test(track.name) ? vocalEffects : null,
+            allowConcurrent: true
+          });
+          startedTracks.push(track);
+        }
+      } catch (recordingError) {
+        for (const started of startedTracks) {
+          try { await StudioRecordingEngine.stopTrackRecording(started.id); } catch {}
+        }
+        throw recordingError;
+      }
+      this.recordingTrackIds = armedTracks.map(track => track.id);
       this.recordingMetronomeStartBar = startBar;
       this.recordingMetronomeStartTime = audio.currentTime + 0.06;
       this.recordingMetronomeEndBar = endBar || 129;
@@ -1534,12 +1555,12 @@ const StudioMultitrackWorkspace = {
         const punchDuration = Math.max(0, this.getSecondsAtBar(endBar) - this.getSecondsAtBar(startBar)) * 1000;
         this.punchOutTimer = setTimeout(() => { this.punchOutTimer = null; void this.stopArmedRecording(); }, punchDuration);
       }
-      const sourceLabel = track.inputSource === "mpc"
-        ? "MPC output"
+      const sourceLabel = track => track.inputSource === "mpc"
+        ? "MPC"
         : track.inputSource === "beatlab"
-          ? "Digital Beat Lab output"
-          : "microphone";
-      this.status("Recording " + sourceLabel + " into " + track.name + " · bar " + startBar + (endBar !== null ? " → " + endBar : "") + ".");
+          ? "Beat Lab"
+          : "MIC";
+      this.status("Recording " + armedTracks.map(track => sourceLabel(track) + " → " + track.name).join(" · ") + " · bar " + startBar + (endBar !== null ? " → " + endBar : "") + ".");
       return true;
     } catch (error) {
       stopStudioMetronome(this.recordingMetronomeSources);
@@ -1569,35 +1590,46 @@ const StudioMultitrackWorkspace = {
     stopStudioMetronome(this.recordingMetronomeSources);
     if (this.punchOutTimer) clearTimeout(this.punchOutTimer);
     this.punchOutTimer = null;
-    if (!StudioRecordingEngine.activeTrackTake) return false;
+    const activeTakes = [...(StudioRecordingEngine.activeTrackTakes || [])];
+    if (!activeTakes.length && StudioRecordingEngine.activeTrackTake) activeTakes.push(StudioRecordingEngine.activeTrackTake);
+    if (!activeTakes.length) return false;
     try {
-      const take = await StudioRecordingEngine.stopTrackRecording();
-      let track = this.tracks.find(item => item.id === take.trackId);
-      if (!track) track = this.createTrack("audio", "Recovered Recording");
       const context = await StudioAudioEngine.resume();
-      const bytes = await take.blob.arrayBuffer();
-      const buffer = await context.decodeAudioData(bytes.slice(0));
-      const lengthBars = Math.max(.25, Math.min(128, this.getBarAtSeconds(this.getSecondsAtBar(this.recordingStartBar) + buffer.duration) - this.recordingStartBar));
-      const latencyMs = track.inputSource === "mic" ? Math.max(0, Math.min(500, Number(this.inputLatencyMs) || 0)) : 0;
-      const compensatedStartBar = Math.max(1, this.getBarAtSeconds(this.getSecondsAtBar(this.recordingStartBar) - latencyMs / 1000));
-      track.clips.push({
-        id: take.id,
-        name: track.name + " Recording",
-        blob: take.blob,
-        takeId: take.id,
-        startBar: compensatedStartBar,
-        lengthBars,
-        duration: buffer.duration,
-        takeGroupId: track.id + "-takes-" + this.recordingStartBar,
-        takeNumber: track.clips.filter(clip => clip.takeGroupId === track.id + "-takes-" + this.recordingStartBar).length + 1,
-        takeProtected: false,
-        latencyCompensationMs: latencyMs,
-        recordingFormat: take.recordingFormat || "Browser MediaRecorder",
-        createdAt: take.startedAt
-      });
+      const saved = [];
+      for (const activeTake of activeTakes) {
+        const take = await StudioRecordingEngine.stopTrackRecording(activeTake.trackId);
+        let track = this.tracks.find(item => item.id === take.trackId);
+        if (!track) track = this.createTrack("audio", "Recovered Recording");
+        const bytes = await take.blob.arrayBuffer();
+        const buffer = await context.decodeAudioData(bytes.slice(0));
+        const lengthBars = Math.max(.25, Math.min(128, this.getBarAtSeconds(this.getSecondsAtBar(this.recordingStartBar) + buffer.duration) - this.recordingStartBar));
+        const deviceId = track.inputDeviceId || this.inputDeviceId || "";
+        const latencyMs = track.inputSource === "mic"
+          ? Math.max(0, Math.min(500, Number(track.inputLatencyMs ?? this.inputLatencyByDevice[deviceId] ?? this.inputLatencyMs) || 0))
+          : 0;
+        const compensatedStartBar = Math.max(1, this.getBarAtSeconds(this.getSecondsAtBar(this.recordingStartBar) - latencyMs / 1000));
+        const takeGroupId = track.id + "-takes-" + this.recordingStartBar;
+        track.clips.push({
+          id: take.id,
+          name: track.name + " Recording",
+          blob: take.blob,
+          takeId: take.id,
+          startBar: compensatedStartBar,
+          lengthBars,
+          duration: buffer.duration,
+          takeGroupId,
+          takeNumber: track.clips.filter(clip => clip.takeGroupId === takeGroupId).length + 1,
+          takeProtected: false,
+          latencyCompensationMs: latencyMs,
+          recordingFormat: take.recordingFormat || "Browser MediaRecorder",
+          createdAt: take.startedAt
+        });
+        saved.push(track.name);
+      }
+      this.recordingTrackIds = [];
       this.scheduleProjectAutosave();
       this.render();
-      this.status("Take " + track.clips[track.clips.length - 1].takeNumber + " saved to " + track.name + " at bar " + this.recordingStartBar + " · " + (take.recordingFormat || "Browser MediaRecorder") + ".");
+      this.status(saved.length + " track(s) recorded and saved at bar " + this.recordingStartBar + " · " + saved.join(", ") + ".");
       return true;
     } catch (error) {
       this.status("RECORDING SAVE ERROR: " + (error?.message || error));
