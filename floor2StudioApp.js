@@ -1,6 +1,3 @@
-import * as THREE from
-  "https://unpkg.com/three@0.160.0/build/three.module.js";
-
 import StudioAudioEngine from "./studioAudioEngine.js";
 import StudioSoundKit from "./studioSoundKit.js";
 import StudioAudioExport from "./studioAudioExport.js";
@@ -77,7 +74,7 @@ function normalizePattern(data) {
 }
 
 export default {
-  init(scene, context) {
+  async init(scene, context) {
     this.scene = scene;
     this.camera = context?.camera;
     this.renderer = context?.renderer;
@@ -109,6 +106,14 @@ this.noiseBuffer = null;
       return;
     }
 
+    let THREE;
+    try {
+      THREE = await import("https://unpkg.com/three@0.160.0/build/three.module.js");
+    } catch (error) {
+      console.error("LAMBO CITY Beat Lab interaction could not load:", error);
+      return;
+    }
+    if (this.scene !== scene || !this.renderer?.domElement) return;
     this.raycaster = new THREE.Raycaster();
     this.pointer = new THREE.Vector2();
 
