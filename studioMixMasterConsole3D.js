@@ -81,6 +81,7 @@ export default {
   consoleGroup:null,
   strips:[],
   dragging:null,
+  frameElapsed:0,
   pointerDown:null,
   async init(scene,context){
     THREE = await import("https://unpkg.com/three@0.160.0/build/three.module.js");
@@ -243,7 +244,10 @@ export default {
       if(instrumentChannel)instrumentChannel.gain.value=isAudible?value/100:0;
     } else StudioMultitrackWorkspace.arrangementPlayback?.setTrackVolume(track.id,value);
   },
-  update(){
+  update(delta){
+    this.frameElapsed+=Math.max(0,Number(delta)||0);
+    if(this.frameElapsed<0.033)return;
+    this.frameElapsed=0;
     const tracks=StudioMultitrackWorkspace.tracks||[];
     this.strips.forEach(item=>{
       const track=tracks[item.index];if(!track)return;
