@@ -472,6 +472,21 @@ const StudioMultitrackWorkspace = {
     return source;
   },
 
+  setTrackInputChannel(trackId, channel = null) {
+    const track = this.tracks.find(item => item.id === trackId);
+    if (!track || track.type !== "audio") throw new Error("Choose an audio track before assigning its input channel.");
+    if (this.isTrackRecording() || this.pendingRecording) throw new Error("Stop recording before changing an input channel.");
+    if (channel === null || channel === "" || channel === "all") track.inputChannel = null;
+    else {
+      const value = Number(channel);
+      if (!Number.isInteger(value) || value < 0 || value > 31) throw new Error("Input channel must be between 1 and 32.");
+      track.inputChannel = value;
+    }
+    this.scheduleProjectAutosave();
+    this.status(track.name + " input channel updated.");
+    return track.inputChannel;
+  },
+
   setTrackInputDevice(trackId, deviceId = "") {
     const track = this.tracks.find(item => item.id === trackId);
     if (!track || track.type !== "audio") throw new Error("Choose an audio track before assigning its input.");
@@ -545,6 +560,7 @@ const StudioMultitrackWorkspace = {
       pan: 0,
       inputSource: "mic",
       inputDeviceId: "",
+      inputChannel: null,
       inputLatencyMs: 0,
       instrumentWave: "triangle",
       eq: { low: 0, mid: 0, high: 0 },
@@ -844,6 +860,7 @@ const StudioMultitrackWorkspace = {
         pan: Math.max(-1, Math.min(1, Number(track.pan) || 0)),
         inputSource: ["mic", "beatlab", "mpc"].includes(track.inputSource) ? track.inputSource : "mic",
         inputDeviceId: String(track.inputDeviceId || "").slice(0, 256),
+        inputChannel: Number.isInteger(track.inputChannel) && track.inputChannel >= 0 && track.inputChannel < 32 ? track.inputChannel : null,
         inputLatencyMs: Math.max(0, Math.min(500, Number(track.inputLatencyMs) || 0)),
         instrumentWave: ["sine", "triangle", "sawtooth", "square"].includes(track.instrumentWave) ? track.instrumentWave : "triangle",
         eq: {
@@ -951,6 +968,7 @@ const StudioMultitrackWorkspace = {
       pan: Math.max(-1, Math.min(1, Number(savedTrack.pan) || 0)),
       inputSource: ["mic", "beatlab", "mpc"].includes(savedTrack.inputSource) ? savedTrack.inputSource : "mic",
       inputDeviceId: String(savedTrack.inputDeviceId || "").slice(0, 256),
+      inputChannel: Number.isInteger(savedTrack.inputChannel) && savedTrack.inputChannel >= 0 && savedTrack.inputChannel < 32 ? savedTrack.inputChannel : null,
       inputLatencyMs: Math.max(0, Math.min(500, Number(savedTrack.inputLatencyMs) || 0)),
       instrumentWave: ["sine", "triangle", "sawtooth", "square"].includes(savedTrack.instrumentWave) ? savedTrack.instrumentWave : "triangle",
       eq: {
@@ -1478,7 +1496,7 @@ const StudioMultitrackWorkspace = {
       return false;
     }
     const inputKeys = armedTracks.map(track => track.inputSource === "mic"
-      ? "mic:" + (track.inputDeviceId || this.inputDeviceId || "default")
+      ? "mic:" + (track.inputDeviceId || this.inputDeviceId || "default") + ":channel:" + (Number.isInteger(track.inputChannel) ? track.inputChannel : "all")
       : String(track.inputSource || "mic"));
     if (new Set(inputKeys).size !== inputKeys.length) {
       this.status("For simultaneous recording, assign a different input source or microphone device to each armed track.");
@@ -1555,6 +1573,7 @@ const StudioMultitrackWorkspace = {
             pitchCorrectionNode,
             monitorInput: Boolean(monitorInput && track.inputSource === "mic"),
             inputDeviceId: track.inputSource === "mic" ? (track.inputDeviceId || this.inputDeviceId) : "",
+            inputChannel: track.inputSource === "mic" ? track.inputChannel : null,
             vocalEffects: track.inputSource === "mic" && /vocal/i.test(track.name) ? vocalEffects : null,
             allowConcurrent: true
           });
