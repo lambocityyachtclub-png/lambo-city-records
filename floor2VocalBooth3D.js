@@ -199,7 +199,6 @@ export default {
     headphones.position.set(boothX+1.55,.72,boothZ+.18);booth.add(headphones);
   },
   update(){
-    if(activePanel&&!activePanel.root.isConnected)activePanel=null;
     if(!this.screenContext||!this.screenCanvas)return;
     const ctx=this.screenContext;
     const input=StudioRecordingEngine.getInputWaveform?.();
@@ -221,7 +220,7 @@ export default {
     ctx.fillStyle="#a7f079";ctx.font="bold 13px monospace";
     ctx.fillText(recordingActive?"INPUT ACTIVE":"READY",384,294);
     this.screenTexture.needsUpdate=true;
-    if(activePanel){
+    if(activePanel?.root?.isConnected){
       if(recordingActive)activePanel.timer.textContent=formatTime(performance.now()-recordingStartedAt);
       const canvas=activePanel.canvas;
       const c=canvas?.getContext("2d");
