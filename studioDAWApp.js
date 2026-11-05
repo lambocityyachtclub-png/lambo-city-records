@@ -652,6 +652,7 @@ const StudioDAWApp = {
   },
 
   close() {
+    this.stopSessionPlayback();
     if (this.handleStudioKeydown) {
       document.removeEventListener("keydown", this.handleStudioKeydown);
       this.handleStudioKeydown = null;
