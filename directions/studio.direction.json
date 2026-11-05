@@ -22,7 +22,8 @@
       "cityPlayerFreedomAndActivities": "answered",
       "cityAmbientActivity": "answered",
       "npcBehavior": "answered",
-      "businessFunctionality": "answered"
+      "businessFunctionality": "answered",
+      "vehicleAndRoadDirection": "answered"
     }
   },
   "ownerDirection": {
@@ -308,6 +309,25 @@
         ],
         "designConstraint": "Build reusable business systems in modular stages, with performance budgets, clear interaction rules, and testing that protects existing world systems.",
         "ownerApproval": "The owner selected Option C with Option B as the long-term ambition on 2026-11-04, emphasizing that the staged approach is about building safely rather than reducing the intended experience."
+      },
+      "vehicleAndRoadDirection": {
+        "selectedDevelopmentApproach": "Progressive; initial vehicles are decorative/showcase elements because the current world does not yet have a defined vehicle road network.",
+        "immediateScope": {
+          "vehicles": "Prioritize the luxury look, quality, scale, and presentation of vehicle designs before introducing driving systems.",
+          "heroVehicle": "A light-blue Lamborghini displayed in the street in front of LAMBO CITY Records headquarters, facing toward the boardwalk stores.",
+          "privateBoardwalkStreet": "Treat this boardwalk street area as private. Make the street wide enough to support a vehicle U-turn.",
+          "oppositeBoardwalkStores": "Reserve space directly across the street from the existing boardwalk stores, including across from LAMBO CITY Records headquarters, for additional stores.",
+          "privateBeachParking": "Reserve a private beach parking lot across from LAMBO CITY Records headquarters, connected to the boardwalk, with space for approximately two additional cars."
+        },
+        "futureExpansionIdeas": [
+          "Establish the road path through the boardwalk area after the opposite-side stores and parking layout are in place.",
+          "Potentially extend the route into another main street.",
+          "Explore future beach apartments and villa areas.",
+          "Explore future golfing, jet skiing, and a skateboard park.",
+          "Develop and scale vehicle designs and experiences further, potentially with automated code workflows."
+        ],
+        "sequencingAndScopeControl": "Do not expand into detailed vehicle, road-network, apartment, villa, golf, jet-ski, or skatepark planning during the current direction questionnaire. Preserve these as future ideas and continue the current system-by-system discovery workflow.",
+        "ownerApproval": "The owner described this staged vehicle and boardwalk direction on 2026-11-04 and explicitly asked to keep the current workflow moving without getting distracted."
       }
     }
   },
@@ -336,6 +356,6 @@
   "approval": {
     "status": "draft",
     "approvedByOwner": false,
-    "note": "Captures the owner's direction answers to date. The living-city style is Option C, progressing toward the realism and functionality of Option A; player freedom and optional guided activities are both supported; the ultimate city activity ambition is Option B, delivered progressively using Option C; NPC behavior and business functionality follow Option C as the development approach with Option B as the long-term ambition. This is not yet a complete or approved Studio specification."
+    "note": "Captures the owner's direction answers to date. The living-city style is Option C, progressing toward the realism and functionality of Option A; player freedom and optional guided activities are both supported; the ultimate city activity ambition is Option B, delivered progressively using Option C; NPC and business functionality follow Option C as the development approach with Option B as the long-term ambition; vehicle development begins with luxury decorative/showcase presentation while the road network and future interactive driving scope are developed later. This is not yet a complete or approved Studio specification."
   }
 }
