@@ -167,7 +167,7 @@ export default {
   setFaderFromHit(point,index){
     const item=this.strips[index];const track=StudioMultitrackWorkspace.tracks[index];if(!item||!track)return;
     const local=item.strip.worldToLocal(point.clone());
-    const value=clamp(100-(local.z-.43)/.36*100,0,100);
+    const value=clamp(100-(local.z-.455)/.31*100,0,100);
     track.volume=value;
     StudioMultitrackWorkspace.arrangementPlayback?.setTrackVolume(track.id,value);
   },
