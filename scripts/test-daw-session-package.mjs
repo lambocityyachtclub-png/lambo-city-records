@@ -26,6 +26,7 @@ const session = {
   version: 1,
   tempo: 112,
   metronomeSettings: { enabled: true, volume: 0.12, accent: false },
+  masterSettings: { volume: 90, stereoWidth: 110, compressionRatio: 3.5, limiterEnabled: true, limiterCeilingDb: -1.2 },
   templateId: "hard-tuned-melodic",
   templateName: "Hard-Tuned Melodic",
   tracks: [{
@@ -61,6 +62,7 @@ const imported = importSongProjectPackage(exportSongProjectPackage(project));
 assert.deepEqual(imported.dawSession, session);
 assert.equal(imported.dawSession.tracks[0].clips[0].data, "AQIDBA==");
 assert.deepEqual(imported.dawSession.metronomeSettings, { enabled: true, volume: 0.12, accent: false });
+assert.deepEqual(imported.dawSession.masterSettings, { volume: 90, stereoWidth: 110, compressionRatio: 3.5, limiterEnabled: true, limiterCeilingDb: -1.2 });
 assert.equal(imported.dawSession.templateId, "hard-tuned-melodic");
 assert.equal(imported.dawSession.templateName, "Hard-Tuned Melodic");
 assert.equal(imported.dawSession.tracks[0].inputSource, "mic");
@@ -87,6 +89,10 @@ assert.throws(() => exportSongProjectPackage(invalidInput), /track settings are 
 const invalidMetronome = structuredClone(project);
 invalidMetronome.dawSession.metronomeSettings.volume = 0.8;
 assert.throws(() => exportSongProjectPackage(invalidMetronome), /metronome settings are invalid/);
+
+const invalidLimiter = structuredClone(project);
+invalidLimiter.dawSession.masterSettings.limiterCeilingDb = -9;
+assert.throws(() => exportSongProjectPackage(invalidLimiter), /master limiter settings are invalid/);
 
 const invalidPan = structuredClone(project);
 invalidPan.dawSession.tracks[0].pan = 2;
