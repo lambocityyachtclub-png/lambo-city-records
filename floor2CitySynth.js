@@ -1,4 +1,4 @@
-import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
+let THREE = null;
 import StudioAudioEngine from "./studioAudioEngine.js";
 import StudioMultitrackWorkspace from "./studioMultitrackWorkspace.js";
 
@@ -186,7 +186,8 @@ export default {
   screenCanvas:null,
   screenContext:null,
   noteHandler:null,
-  init(scene){
+  async init(scene){
+    THREE = await import("https://unpkg.com/three@0.160.0/build/three.module.js");
     const studio=scene?.getObjectByName("recordsHQFloor2Studio");
     const station=studio?.getObjectByName("floor2InstrumentStation");
     if(!station){console.warn("LAMBO CITY City Synth: piano station unavailable.");return;}
