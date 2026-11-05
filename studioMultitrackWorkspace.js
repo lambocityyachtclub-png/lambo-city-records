@@ -1480,6 +1480,16 @@ const StudioMultitrackWorkspace = {
     if (!StudioRecordingEngine.activeTrackTake) return false;
     try {
       const take = await StudioRecordingEngine.stopTrackRecording();
+      // If recording was running against the click alone, stop the click with the take.
+      // Leave it running when arrangement audio or a cycle is still playing.
+      if (!this.arrangementPlayback?.sources?.length && !this.arrangementPlayback?.loopTimer) {
+        this.arrangementPlayback?.stopMetronome();
+        if (this.arrangementPlayback) {
+          this.arrangementPlayback.playing = false;
+          if (this.arrangementPlayback.positionTimer) clearInterval(this.arrangementPlayback.positionTimer);
+          this.arrangementPlayback.positionTimer = null;
+        }
+      }
       let track = this.tracks.find(item => item.id === take.trackId);
       if (!track) track = this.createTrack("audio", "Recovered Recording");
       const context = await StudioAudioEngine.resume();
