@@ -21,6 +21,7 @@ import StudioMPCSampler from "./studioMPCSampler.js";
 import StudioDAWSessionStore from "./studioDAWSessionStore.js";
 import { createStudioPitchCorrectionNode } from "./studioPitchCorrection.js";
 import { scheduleStudioMetronome, stopStudioMetronome } from "./studioMetronome.js";
+import { listStudioDAWSessionLayouts, applyStudioDAWSessionLayout } from "./studioDAWSessionLayouts.js";
 
 import {
   createStudioDAWArrangementPlayback
@@ -440,6 +441,14 @@ const StudioMultitrackWorkspace = {
     this.arrangementPlayback?.refreshMetronome(this.playheadBar);
     this.scheduleProjectAutosave();
     return volume;
+  },
+
+  listSessionLayouts() {
+    return listStudioDAWSessionLayouts();
+  },
+
+  applySessionLayout(layoutId) {
+    return applyStudioDAWSessionLayout(this, layoutId);
   },
 
   setTempo(value) {
