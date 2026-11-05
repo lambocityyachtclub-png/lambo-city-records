@@ -17,6 +17,8 @@ export default {
   },
 
   _buildHUD() {
+    if (this._drummerScoreHandler) window.removeEventListener("lc-live-drummer-score", this._drummerScoreHandler);
+    if (this._drummerStateHandler) window.removeEventListener("lc-live-drummer-state", this._drummerStateHandler);
     const old = document.getElementById('hud');
     if (old) old.remove();
 
@@ -36,8 +38,26 @@ export default {
     this._buildBottomRight(hud);
     this._buildActionBar(hud);
     this._buildObjectives(hud);
+    this._buildDrummerScore(hud);
   },
 
+  _buildDrummerScore(hud) {
+    const badge = document.createElement("div");
+    badge.id = "lc-live-drummer-hud-score";
+    badge.style.cssText = "position:absolute;right:16px;top:48%;display:none;min-width:112px;padding:10px 13px;border:1px solid rgba(225,190,116,.55);border-radius:10px;background:rgba(8,20,40,.88);color:#f4ead4;text-align:center;backdrop-filter:blur(8px);box-shadow:0 8px 24px rgba(0,0,0,.28)";
+    badge.innerHTML = '<div style="font-size:9px;letter-spacing:1.5px;color:#c4d0df">LIVE DRUMMER</div><strong data-hud-drum-score style="display:block;margin:4px 0;font-size:25px">0</strong><div style="font-size:9px;color:#e7c47a">LEVEL 4 · FUNK FRENZY</div>';
+    hud.appendChild(badge);
+    this._drummerScoreHandler = event => {
+      const score = Number(event.detail?.score) || 0;
+      const output = badge.querySelector("[data-hud-drum-score]");
+      if (output) output.textContent = score.toLocaleString();
+    };
+    this._drummerStateHandler = event => {
+      badge.style.display = event.detail?.active ? "block" : "none";
+    };
+    window.addEventListener("lc-live-drummer-score", this._drummerScoreHandler);
+    window.addEventListener("lc-live-drummer-state", this._drummerStateHandler);
+  },
   // ── TOP LEFT — Player Card ──────────────────────────
   _buildTopLeft(hud) {
     const tl = document.createElement('div');
