@@ -44,6 +44,7 @@ on:
       - "scripts/test-daw-session-templates.mjs"
       - "scripts/test-daw-arrangement-playback.mjs"
       - "scripts/test-daw-mp3-export.mjs"
+      - "scripts/test-daw-wav-export.mjs"
       - "scripts/test-studio-standalone-boundary.mjs"
       - "scripts/test-studio-spacebar-transport.mjs"
       - "vendor/lamejs/lame.min.js"
@@ -171,6 +172,9 @@ jobs:
 
       - name: Test DAW MP3 encoder
         run: node --experimental-default-type=module scripts/test-daw-mp3-export.mjs
+
+      - name: Test Studio WAV PCM export formats
+        run: node --experimental-default-type=module scripts/test-daw-wav-export.mjs
 
       - name: Test vocal pitch correction DSP
         run: node --experimental-default-type=module scripts/test-studio-pitch-correction.mjs
