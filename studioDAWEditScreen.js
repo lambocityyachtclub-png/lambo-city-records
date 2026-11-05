@@ -199,6 +199,13 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext,
         '</section></div>'
       ].join("");
 
+      const previousViewButton = root.querySelector('[data-action="previous-view"]');
+      if (previousViewButton && typeof this.onPrevious !== "function") {
+        previousViewButton.disabled = true;
+        previousViewButton.setAttribute("aria-disabled", "true");
+        previousViewButton.title = "Editing is the first workflow step.";
+      }
+
       this.root = root;
       StudioMultitrackWorkspace.root = root;
       StudioMultitrackWorkspace.onRender = () => this.render();
