@@ -16,6 +16,7 @@ import Floor2StudioApp from "./floor2StudioApp.js";
 import MPCInterface from "./mpc-interface.js";
 import StudioAudioEngine from "./studioAudioEngine.js";
 import StudioSoundKit from "./studioSoundKit.js";
+import StudioRecordingEngine from "./studioRecordingEngine.js";
 import StudioMultitrackWorkspace from "./studioMultitrackWorkspace.js";
 import { createStudioDAWEditScreen } from "./studioDAWEditScreen.js";
 import {
@@ -210,7 +211,12 @@ function createVocalsPanel({ beatLab } = {}) {
     '<button type="button" data-vocal-action="start-beat" style="min-height:44px;padding:11px 14px;border:1px solid #80643a;border-radius:8px;background:#201c16;color:#f1d49c;font-weight:bold">PLAY BEAT</button>',
     '<button type="button" data-vocal-action="stop-beat" style="min-height:44px;padding:11px 14px;border:1px solid #454958;border-radius:8px;background:#222631;color:white;font-weight:bold">STOP BEAT</button>',
     '<button type="button" data-vocal-action="record" style="min-height:44px;padding:11px 14px;border:1px solid #80643a;border-radius:8px;background:#594321;color:white;font-weight:bold">● RECORD</button>',
-    '<button type="button" data-vocal-action="stop-recording" style="min-height:44px;padding:11px 14px;border:1px solid #454958;border-radius:8px;background:#222631;color:white;font-weight:bold">■ STOP RECORDING</button></div>',
+    '<button type="button" data-vocal-action="stop-recording" style="min-height:44px;padding:11px 14px;border:1px solid #454958;border-radius:8px;background:#222631;color:white;font-weight:bold">■ STOP RECORDING</button></div>
+    '<section style="display:grid;gap:10px;padding:16px;border:1px solid #80643a;border-radius:12px;background:linear-gradient(145deg,#1b1a18,#10131a)">' +
+    '<strong style="color:#e6bb69;font-size:11px;letter-spacing:2px">VOICE NOTES · QUICK IDEA CAPTURE</strong>' +
+    '<p style="margin:0;color:#a8a8b1;font-size:12px;line-height:1.5">Capture a melody, lyric, hook, or production idea without starting a beat. Your original recording is saved as a clip in this song session.</p>' +
+    '<div style="display:flex;gap:9px;flex-wrap:wrap"><button type="button" data-vocal-action="quick-note-start" style="min-height:44px;padding:11px 14px;border:2px solid #d9ad62;border-radius:8px;background:linear-gradient(#f1d49c,#a87531);color:#17130d;font-weight:900">● RECORD VOICE NOTE</button><button type="button" data-vocal-action="quick-note-stop" style="min-height:44px;padding:11px 14px;border:1px solid #454958;border-radius:8px;background:#222631;color:white;font-weight:bold" disabled>■ SAVE VOICE NOTE</button></div>' +
+    '<div data-voice-note-status role="status" aria-live="polite" style="color:#e6bb69;font-size:12px">Voice Notes are stored locally in the current session for this V1 workflow.</div></section>',
     '<section style="display:grid;gap:16px;padding:16px;border:1px solid #45404a;border-radius:12px;background:#151821">',
     '<strong style="color:#e6bb69;font-size:11px;letter-spacing:2px">VOCAL EFFECTS</strong>',
     '<label style="display:grid;gap:7px;color:#c9c7c1;font-size:12px">DELAY MIX <input data-vocal-effect="delay" type="range" min="0" max="1" step="0.01" value="' + (beatLab?.vocalEffectSettings?.delay ?? 0) + '" style="width:100%;accent-color:#e6bb69"></label>',
@@ -221,6 +227,12 @@ function createVocalsPanel({ beatLab } = {}) {
     '<div data-vocal-status role="status" aria-live="polite" style="min-height:22px;color:#e6bb69;font-size:12px">Microphone workspace ready. Your browser will ask for microphone permission when you record.</div>'
   ].join("");
 
+  let quickNoteTrack = null;
+  let quickNoteActive = false;
+  const voiceNoteStatus = message => {
+    const node = root.querySelector("[data-voice-note-status]");
+    if (node) node.textContent = message;
+  };
   const status = message => {
     const node = root.querySelector("[data-vocal-status]");
     if (node) node.textContent = message;
@@ -231,6 +243,52 @@ function createVocalsPanel({ beatLab } = {}) {
     if (!button || !beatLab) return;
     try {
       switch (button.dataset.vocalAction) {
+        case "quick-note-start": {
+          if (quickNoteActive || StudioRecordingEngine.activeTake) {
+            voiceNoteStatus("Finish the current recording before starting a quick Voice Note.");
+            return;
+          }
+          const audio = await StudioAudioEngine.resume();
+          if (!audio || audio.state !== "running") throw new Error("Studio audio could not start.");
+          quickNoteTrack = StudioMultitrackWorkspace.tracks.find(track => track.type === "audio" && track.name === "Voice Notes");
+          if (!quickNoteTrack) {
+            StudioMultitrackWorkspace.recordHistory("Create Voice Notes track");
+            quickNoteTrack = StudioMultitrackWorkspace.createTrack("audio", "Voice Notes");
+          } else {
+            StudioMultitrackWorkspace.recordHistory("Record Voice Note");
+          }
+          await StudioRecordingEngine.startTrackRecording({ audio, trackId: quickNoteTrack.id });
+          quickNoteActive = true;
+          root.querySelector('[data-vocal-action="quick-note-start"]').disabled = true;
+          root.querySelector('[data-vocal-action="quick-note-stop"]').disabled = false;
+          voiceNoteStatus("Recording your idea… Tap SAVE VOICE NOTE when finished.");
+          break;
+        }
+        case "quick-note-stop": {
+          if (!quickNoteActive || !quickNoteTrack) return;
+          const take = await StudioRecordingEngine.stopTrackRecording(quickNoteTrack.id);
+          const clip = {
+            id: take.id,
+            name: "Voice Note · " + new Date().toLocaleString(),
+            blob: take.blob,
+            recordingFormat: take.recordingFormat,
+            durationMs: take.durationMs,
+            createdAt: new Date().toISOString(),
+            startBar: Math.max(1, Number(StudioMultitrackWorkspace.playheadBar) || 1),
+            lengthBars: Math.max(0.25, (take.durationMs / 1000) / (240 / Math.max(20, Number(StudioMultitrackWorkspace.getTempoAtBar(StudioMultitrackWorkspace.playheadBar)) || 100))),
+            objectUrl: null
+          };
+          if (clip.blob?.size) clip.objectUrl = URL.createObjectURL(clip.blob);
+          quickNoteTrack.clips.push(clip);
+          StudioMultitrackWorkspace.render();
+          StudioMultitrackWorkspace.scheduleProjectAutosave();
+          quickNoteActive = false;
+          root.querySelector('[data-vocal-action="quick-note-start"]').disabled = false;
+          root.querySelector('[data-vocal-action="quick-note-stop"]').disabled = true;
+          voiceNoteStatus("Voice Note saved to the shared song timeline as an original audio clip.");
+          quickNoteTrack = null;
+          break;
+        }
         case "start-beat":
           await beatLab.start();
           status("Beat playback started.");
