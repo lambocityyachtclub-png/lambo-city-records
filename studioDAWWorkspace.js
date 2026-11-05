@@ -16,20 +16,19 @@
  * Does not replace existing Beat Lab functionality.
  */
 
-// The primary monitor workflow is intentionally fixed to the producer's
-// requested five-step sequence. Performance and mix tools remain available
-// as secondary panels without interrupting this navigation path.
+// The complete producer workflow. Mix & Master is a first-class destination,
+// not a footer-only secondary tool. Live Drummer remains an optional mode.
 const VIEWS = [
   { id: "edit", label: "EDITING" },
   { id: "mpc", label: "MPC" },
   { id: "piano", label: "PIANO / CITY SYNTH" },
   { id: "vocals", label: "VOCAL BOOTH" },
-  { id: "beatlab", label: "BEAT LAB" }
+  { id: "beatlab", label: "BEAT LAB" },
+  { id: "mix", label: "MIX & MASTER" }
 ];
 
 const SECONDARY_VIEWS = [
-  { id: "drums", label: "LIVE DRUMMER" },
-  { id: "mix", label: "MIX & MASTER" }
+  { id: "drums", label: "LIVE DRUMMER" }
 ];
 
 const ALL_VIEWS = [...VIEWS, ...SECONDARY_VIEWS];
@@ -105,8 +104,8 @@ const StudioDAWWorkspace = {
 
       <nav class="lc-daw-navigation" aria-label="Production workflow">
         <button type="button" class="lc-daw-step-arrow" data-daw-step="-1" aria-label="Previous workspace">←</button>
-        <div class="lc-daw-flow-track" aria-hidden="true">
-          ${VIEWS.map((view, index) => `<span data-flow-step="${index}"></span>`).join("")}
+        <div class="lc-daw-flow-track" role="group" aria-label="Choose a production workspace">
+          ${VIEWS.map((view, index) => `<button type="button" data-daw-view="${view.id}" data-flow-step="${index}" aria-label="Open ${view.label}">${index + 1} · ${view.label}</button>`).join("")}
         </div>
         <button type="button" class="lc-daw-step-arrow" data-daw-step="1" aria-label="Next workspace">→</button>
       </nav>
@@ -241,15 +240,19 @@ const StudioDAWWorkspace = {
       }
       #lambo-city-daw-workspace .lc-daw-step-arrow:disabled { opacity:.28;cursor:default; }
       #lambo-city-daw-workspace .lc-daw-flow-track {
-        display:grid;grid-template-columns:repeat(7,minmax(0,1fr));align-items:center;
-        gap:8px;width:min(100%,620px);
+        display:flex;align-items:center;gap:6px;width:min(100%,820px);
+        overflow-x:auto;overscroll-behavior-x:contain;padding:3px 2px 7px;
+        scrollbar-width:thin;scrollbar-color:#80643a #101117;
       }
-      #lambo-city-daw-workspace .lc-daw-flow-track span {
-        height:5px;border-radius:99px;background:#343640;
-        transition:background .18s ease,box-shadow .18s ease;
+      #lambo-city-daw-workspace .lc-daw-flow-track button {
+        flex:0 0 auto;min-height:38px;padding:8px 11px;border:1px solid #343640;
+        border-radius:7px;background:#171920;color:#aeb1ba;font-size:9px;
+        font-weight:800;letter-spacing:.65px;white-space:nowrap;
+        cursor:pointer;touch-action:manipulation;
       }
-      #lambo-city-daw-workspace .lc-daw-flow-track span[aria-current="step"] {
-        background:var(--lc-gold);box-shadow:0 0 12px rgba(217,173,98,.38);
+      #lambo-city-daw-workspace .lc-daw-flow-track button[aria-current="step"] {
+        border-color:#b48c4c;background:linear-gradient(180deg,#554329,#211a12);
+        color:#ffe1a7;box-shadow:0 0 12px rgba(217,173,98,.2);
       }
 
       #lambo-city-daw-workspace .lc-daw-main {
@@ -383,6 +386,12 @@ const StudioDAWWorkspace = {
     `;
 
     root.addEventListener("click", event => {
+      const directView = event.target.closest("[data-daw-view]");
+      if (directView && root.contains(directView)) {
+        this.setView(directView.dataset.dawView);
+        return;
+      }
+
       const secondary = event.target.closest("[data-daw-secondary]");
       if (secondary && root.contains(secondary)) {
         this.setView(secondary.dataset.dawSecondary);
