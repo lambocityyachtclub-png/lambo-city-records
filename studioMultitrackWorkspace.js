@@ -1390,7 +1390,9 @@ const StudioMultitrackWorkspace = {
             const meter = this.getTimeSignatureAtBar(bar);
             const firstBeat = Math.max(0, Math.ceil((this.playheadBar - bar) * meter.numerator));
             for (let beat = firstBeat; beat < meter.numerator; beat += 1) {
-              const at = countStart + Math.max(0, this.getSecondsAtBar(bar + beat / meter.numerator) - this.getSecondsAtBar(this.playheadBar));
+              const beatBar = bar + beat / meter.numerator;
+              if (beatBar >= startBar - 0.000001) break;
+              const at = countStart + Math.max(0, this.getSecondsAtBar(beatBar) - this.getSecondsAtBar(this.playheadBar));
               const oscillator = audio.createOscillator();
               const clickGain = audio.createGain();
               oscillator.frequency.value = beat === 0 ? 1450 : 980;
