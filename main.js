@@ -40,6 +40,12 @@ import DockLuxuryOverhaul from "./dockLuxuryOverhaul.js";
 import RecordsHQ from "./recordsHQ.js";
 import RecordsHQFoundation from "./recordsHQFoundation.js";
 import RecordsHQFloor1 from "./recordsHQFloor1.js";
+import RecordsHQFloor2Studio from "./recordsHQFloor2Studio.js";
+import Floor2StudioApp from "./floor2StudioApp.js";
+import Floor2InstrumentApp from "./floor2InstrumentApp.js";
+import Floor2DrumStation from "./floor2DrumStation.js";
+import Floor2StudioNavigation from "./floor2StudioNavigation.js";
+import Floor2StudioSession from "./floor2StudioSession.js";
 import RecordsHQEntranceThreshold from "./recordsHQEntranceThreshold.js";
 import RecordsHQMediaDetails from "./recordsHQMediaDetails.js";
 import RecordsHQMerchDetails from "./recordsHQMerchDetails.js";
@@ -86,6 +92,12 @@ engine.registerSystems({
   recordsHQ: RecordsHQ,
   recordsHQFoundation: RecordsHQFoundation,
   recordsHQFloor1: RecordsHQFloor1,
+  recordsHQFloor2Studio: RecordsHQFloor2Studio,
+  floor2StudioApp: Floor2StudioApp,
+  floor2InstrumentApp: Floor2InstrumentApp,
+  floor2DrumStation: Floor2DrumStation,
+  floor2StudioNavigation: Floor2StudioNavigation,
+  floor2StudioSession: Floor2StudioSession,
   recordsHQEntranceThreshold: RecordsHQEntranceThreshold,
   recordsHQMediaDetails: RecordsHQMediaDetails,
   recordsHQMerchDetails: RecordsHQMerchDetails,
@@ -102,30 +114,11 @@ engine.registerSystems({
 // Each destination is cached so returning to a floor never rebuilds it.
 const destinationLoads = new Map();
 window.__lamboCityPrepareFloor = floor => {
-  if (floor !== 2 && floor !== 3 && floor !== 4) return Promise.resolve();
+  if (floor !== 3 && floor !== 4) return Promise.resolve();
 
   if (!destinationLoads.has(floor)) {
     const load = (async () => {
-      if (floor === 2) {
-        window.__lamboCityFloor2Ready = false;
-        const [architecture, navigation, session] = await Promise.all([
-          import("./recordsHQFloor2Studio.js"),
-          import("./floor2StudioNavigation.js"),
-          import("./floor2StudioSession.js")
-        ]);
-        if (!engine.scene || !engine.camera || !engine.renderer) throw new Error("The LAMBO CITY world is not ready for Floor 2.");
-        const systems = { recordsHQFloor2Studio: architecture.default, floor2StudioNavigation: navigation.default, floor2StudioSession: session.default };
-        for (const [name, system] of Object.entries(systems)) {
-          if (!system || typeof system.init !== "function") throw new Error("Floor 2 module failed to load: " + name);
-        }
-        Object.assign(engine.systems, systems);
-        engine.context.systems = engine.systems;
-        if (!engine.scene.getObjectByName("recordsHQFloor2Studio")) engine.initializeSystem("recordsHQFloor2Studio", engine.scene);
-        if (!engine.scene.getObjectByName("recordsHQFloor2Studio")) throw new Error("Floor 2 studio architecture did not attach to the live scene.");
-        if (!engine.initializeSystem("floor2StudioNavigation", engine.scene, engine.context)) throw new Error("Floor 2 station navigation could not initialize.");
-        if (!engine.initializeSystem("floor2StudioSession", engine.scene, engine.context)) throw new Error("Floor 2 producer session could not initialize.");
-        window.__lamboCityFloor2Ready = true;
-      } else if (floor === 3) {
+      if (floor === 3) {
         window.__lamboCityFloor3Ready = false;
         const [executive, details, experience] = await Promise.all([
           import("./recordsHQFloor3Executive.js"),
@@ -178,7 +171,6 @@ window.__lamboCityPrepareFloor = floor => {
       }
     })().catch(error => {
       destinationLoads.delete(floor);
-      if (floor === 2) window.__lamboCityFloor2Ready = false;
       throw error;
     });
 
