@@ -60,6 +60,11 @@ export function createLiveDrummerPanel({ beatLab } = {}) {
         beatLab.soundProfile = "mpc";
         beatLab.noiseBuffer = noiseBuffer;
       }
+      if (!noiseBuffer && (sound === "cymbal" || sound === "hat")) {
+        noiseBuffer = audio.createBuffer(1, Math.floor(audio.sampleRate * 1.2), audio.sampleRate);
+        const noise = noiseBuffer.getChannelData(0);
+        for (let i = 0; i < noise.length; i += 1) noise[i] = Math.random() * 2 - 1;
+      }
       const at = audio.currentTime;
       if (sound === "tom") {
         const oscillator = audio.createOscillator();
@@ -71,7 +76,7 @@ export function createLiveDrummerPanel({ beatLab } = {}) {
         envelope.gain.exponentialRampToValueAtTime(0.22, at + 0.008);
         envelope.gain.exponentialRampToValueAtTime(0.0001, at + 0.28);
         oscillator.connect(envelope);
-        envelope.connect(StudioAudioEngine.master || audio.destination);
+        envelope.connect(StudioAudioEngine.getTrackGain("kick"));
         oscillator.start(at);
         oscillator.stop(at + 0.30);
       } else if (sound === "cymbal" && noiseBuffer) {
@@ -86,7 +91,7 @@ export function createLiveDrummerPanel({ beatLab } = {}) {
         envelope.gain.exponentialRampToValueAtTime(0.0001, at + 0.62);
         source.connect(filter);
         filter.connect(envelope);
-        envelope.connect(StudioAudioEngine.master || audio.destination);
+        envelope.connect(StudioAudioEngine.getTrackGain("hat"));
         source.start(at);
         source.stop(at + 0.65);
       } else {
