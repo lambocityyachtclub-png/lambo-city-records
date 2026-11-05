@@ -139,7 +139,10 @@ const StudioDAWWorkspace = {
 
       <footer class="lc-daw-footer">
         <span>LAMBO CITY DIGITAL STUDIO</span>
-        <span>EDIT PRODUCTION MOTHERBOARD · MIX & MASTER</span>
+        <div class="lc-daw-secondary-tools" aria-label="Additional studio tools">
+          <button type="button" data-daw-secondary="mix">MIX & MASTER</button>
+          <button type="button" data-daw-secondary="drums">LIVE DRUMMER</button>
+        </div>
       </footer>
     `;
 
@@ -325,6 +328,27 @@ const StudioDAWWorkspace = {
       #lambo-city-daw-workspace.lc-daw-edit-mode .lc-daw-footer { display:none; }
       #lambo-city-daw-workspace.lc-daw-edit-mode .lc-daw-main { flex:1;min-height:0;padding:0; }
       #lambo-city-daw-workspace.lc-daw-edit-mode .lc-daw-panel { height:100%;min-height:0;padding:0;overflow:hidden;border:0;border-radius:0;background:transparent; }
+      #lambo-city-daw-workspace .lc-daw-secondary-tools {
+        display:flex;
+        align-items:center;
+        gap:8px;
+        flex-wrap:wrap;
+      }
+      #lambo-city-daw-workspace .lc-daw-secondary-tools button {
+        min-height:34px;
+        padding:7px 11px;
+        border:1px solid rgba(217,173,98,.55);
+        border-radius:7px;
+        background:linear-gradient(145deg,#242630,#111319);
+        color:#e8c88e;
+        font:700 10px Arial,sans-serif;
+        letter-spacing:.8px;
+        cursor:pointer;
+      }
+      #lambo-city-daw-workspace .lc-daw-secondary-tools button:active {
+        transform:translateY(1px);
+      }
+
       #lambo-city-daw-workspace .lc-daw-footer {
         display: flex;
         justify-content: space-between;
@@ -358,6 +382,11 @@ const StudioDAWWorkspace = {
     `;
 
     root.addEventListener("click", event => {
+      const secondary = event.target.closest("[data-daw-secondary]");
+      if (secondary && root.contains(secondary)) {
+        this.setView(secondary.dataset.dawSecondary);
+        return;
+      }
       const button = event.target.closest("[data-daw-step]");
       if (!button || !root.contains(button) || button.disabled) return;
       const currentIndex = VIEWS.findIndex(view => view.id === this.activeView);
