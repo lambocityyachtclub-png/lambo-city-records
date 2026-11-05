@@ -661,6 +661,7 @@ const StudioMultitrackWorkspace = {
     StudioAudioEngine.setMasterVolume(this.masterSettings.volume / 100);
     StudioAudioEngine.setStereoWidth(this.masterSettings.stereoWidth);
     StudioAudioEngine.setMasterCompressionRatio(this.masterSettings.compressionRatio);
+    StudioAudioEngine.setMasterLimiter(this.masterSettings.limiterEnabled, this.masterSettings.limiterCeilingDb);
     this.sessionTemplateId = session.templateId || null;
     this.sessionTemplateName = session.templateName || null;
     this.activeProjectId = session.projectId || projectId;
@@ -900,6 +901,7 @@ const StudioMultitrackWorkspace = {
     StudioAudioEngine.setMasterVolume(this.masterSettings.volume / 100);
     StudioAudioEngine.setStereoWidth(this.masterSettings.stereoWidth);
     StudioAudioEngine.setMasterCompressionRatio(this.masterSettings.compressionRatio);
+    StudioAudioEngine.setMasterLimiter(this.masterSettings.limiterEnabled, this.masterSettings.limiterCeilingDb);
     this.sessionTemplateId = session.templateId || null;
     this.sessionTemplateName = session.templateName || null;
     this.deletedItems = [];
