@@ -20,6 +20,7 @@ import StudioAudioExport from "./studioAudioExport.js";
 import StudioMPCSampler from "./studioMPCSampler.js";
 import StudioDAWSessionStore from "./studioDAWSessionStore.js";
 import { createStudioPitchCorrectionNode } from "./studioPitchCorrection.js";
+import { scheduleStudioMetronome, stopStudioMetronome } from "./studioMetronome.js";
 
 import {
   createStudioDAWArrangementPlayback
@@ -102,6 +103,8 @@ const StudioMultitrackWorkspace = {
   saveState: "saved",
   savePromise: null,
   masterSettings: { volume: 100, stereoWidth: 100, compressionRatio: 3 },
+  metronomeSettings: { enabled: false, volume: 0.16, accent: true },
+  recordingMetronomeSources: [],
 
   captureSnapshot() {
     return {
@@ -123,6 +126,7 @@ const StudioMultitrackWorkspace = {
       markers: this.markers.map(marker => ({ ...marker })),
       loopRange: { ...this.loopRange },
       masterSettings: { ...(this.masterSettings || {}) },
+      metronomeSettings: { ...(this.metronomeSettings || {}) },
       deletedItems: this.deletedItems.map(entry => ({ ...entry }))
     };
   },
@@ -154,6 +158,7 @@ const StudioMultitrackWorkspace = {
     this.markers = (snapshot.markers || []).map(marker => ({ ...marker }));
     this.loopRange = { ...(snapshot.loopRange || { enabled: false, startBar: 1, endBar: 9 }) };
     this.masterSettings = { volume: Math.max(0, Math.min(100, Number(snapshot.masterSettings?.volume ?? 100))), stereoWidth: Math.max(0, Math.min(200, Number(snapshot.masterSettings?.stereoWidth ?? 100))), compressionRatio: Math.max(1, Math.min(8, Number(snapshot.masterSettings?.compressionRatio ?? 3))) };
+    this.metronomeSettings = { enabled: Boolean(snapshot.metronomeSettings?.enabled), volume: Math.max(0, Math.min(0.4, Number(snapshot.metronomeSettings?.volume ?? 0.16))), accent: snapshot.metronomeSettings?.accent !== false };
     StudioAudioEngine.setMasterVolume(this.masterSettings.volume / 100);
     StudioAudioEngine.setStereoWidth(this.masterSettings.stereoWidth);
     StudioAudioEngine.setMasterCompressionRatio(this.masterSettings.compressionRatio);
@@ -391,6 +396,23 @@ const StudioMultitrackWorkspace = {
     }, 850);
   },
 
+  toggleMetronome() {
+    this.metronomeSettings = { ...(this.metronomeSettings || {}), enabled: !this.metronomeSettings?.enabled };
+    this.arrangementPlayback?.refreshMetronome(this.playheadBar);
+    this.scheduleProjectAutosave();
+    this.status("Metronome " + (this.metronomeSettings.enabled ? "on." : "off."));
+    this.onRender?.();
+    return this.metronomeSettings.enabled;
+  },
+
+  setMetronomeVolume(value) {
+    const volume = Math.max(0, Math.min(0.4, Number(value) || 0));
+    this.metronomeSettings = { ...(this.metronomeSettings || {}), volume };
+    this.arrangementPlayback?.refreshMetronome(this.playheadBar);
+    this.scheduleProjectAutosave();
+    return volume;
+  },
+
   setTempo(value) {
     const bpm = Number(value);
 
@@ -414,6 +436,8 @@ const StudioMultitrackWorkspace = {
 
           getTempo: () => this.tempo,
           getSecondsAtBar: bar => this.getSecondsAtBar(bar),
+          getTimeSignatureAtBar: bar => this.getTimeSignatureAtBar(bar),
+          getMetronomeSettings: () => this.metronomeSettings,
           getBarAtSeconds: seconds => this.getBarAtSeconds(seconds),
           onPosition: bar => {
             this.playheadBar = bar;
@@ -502,6 +526,7 @@ const StudioMultitrackWorkspace = {
       inputLatencyMs: Math.max(0, Math.min(500, Number(this.inputLatencyMs) || 0)),
       inputLatencyByDevice: { ...(this.inputLatencyByDevice || {}) },
       masterSettings: { ...(this.masterSettings || { volume: 100, stereoWidth: 100, compressionRatio: 3 }) },
+      metronomeSettings: { ...(this.metronomeSettings || { enabled: false, volume: 0.16, accent: true }) },
       templateId: this.sessionTemplateId,
       templateName: this.sessionTemplateName,
       deletedItems: this.deletedItems,
@@ -585,6 +610,7 @@ const StudioMultitrackWorkspace = {
     this.inputLatencyMs = Math.max(0, Math.min(500, Number(session.inputLatencyMs) || 0));
     this.inputLatencyByDevice = session.inputLatencyByDevice && typeof session.inputLatencyByDevice === "object" ? { ...session.inputLatencyByDevice } : {};
     this.masterSettings = { volume: Math.max(0, Math.min(100, Number(session.masterSettings?.volume ?? 100))), stereoWidth: Math.max(0, Math.min(200, Number(session.masterSettings?.stereoWidth ?? 100))), compressionRatio: Math.max(1, Math.min(8, Number(session.masterSettings?.compressionRatio ?? 3))) };
+    this.metronomeSettings = { enabled: Boolean(session.metronomeSettings?.enabled), volume: Math.max(0, Math.min(0.4, Number(session.metronomeSettings?.volume ?? 0.16))), accent: session.metronomeSettings?.accent !== false };
     StudioAudioEngine.setMasterVolume(this.masterSettings.volume / 100);
     StudioAudioEngine.setStereoWidth(this.masterSettings.stereoWidth);
     StudioAudioEngine.setMasterCompressionRatio(this.masterSettings.compressionRatio);
@@ -636,6 +662,7 @@ const StudioMultitrackWorkspace = {
       if (track.outputBusId && (!busIds.has(track.outputBusId) || track.type === "bus")) return false;
       if (track.sends !== undefined && (!Array.isArray(track.sends) || track.sends.length > 32 || !track.sends.every(send => typeof send.busId === "string" && busIds.has(send.busId) && track.type !== "bus" && Number.isFinite(Number(send.level)) && Number(send.level) >= 0 && Number(send.level) <= 100))) return false;
     }
+    if (session.metronomeSettings !== undefined && (typeof session.metronomeSettings.enabled !== "boolean" || !Number.isFinite(Number(session.metronomeSettings.volume)) || Number(session.metronomeSettings.volume) < 0 || Number(session.metronomeSettings.volume) > 0.4 || typeof session.metronomeSettings.accent !== "boolean")) return false;
     if (session.masterSettings !== undefined && (!Number.isFinite(Number(session.masterSettings.volume)) || Number(session.masterSettings.volume) < 0 || Number(session.masterSettings.volume) > 100 || !Number.isFinite(Number(session.masterSettings.stereoWidth)) || Number(session.masterSettings.stereoWidth) < 0 || Number(session.masterSettings.stereoWidth) > 200 || !Number.isFinite(Number(session.masterSettings.compressionRatio)) || Number(session.masterSettings.compressionRatio) < 1 || Number(session.masterSettings.compressionRatio) > 8)) return false;
     return Number.isFinite(Number(session.tempo)) && Number(session.tempo) >= 20 && Number(session.tempo) <= 300;
   },
@@ -1427,6 +1454,17 @@ const StudioMultitrackWorkspace = {
         inputDeviceId: track.inputSource === "mic" ? this.inputDeviceId : "",
         vocalEffects: track.inputSource === "mic" && /vocal/i.test(track.name) ? vocalEffects : null
       });
+      if (this.metronomeSettings?.enabled) {
+        this.recordingMetronomeSources = scheduleStudioMetronome(audio, {
+          startBar,
+          endBar: endBar || 129,
+          startTime: audio.currentTime + 0.06,
+          getSecondsAtBar: bar => this.getSecondsAtBar(bar),
+          getTimeSignatureAtBar: bar => this.getTimeSignatureAtBar(bar),
+          volume: this.metronomeSettings.volume,
+          accent: this.metronomeSettings.accent
+        });
+      }
       this.pendingRecording = false;
       if (endBar !== null) {
         const punchDuration = Math.max(0, this.getSecondsAtBar(endBar) - this.getSecondsAtBar(startBar)) * 1000;
@@ -1440,6 +1478,7 @@ const StudioMultitrackWorkspace = {
       this.status("Recording " + sourceLabel + " into " + track.name + " · bar " + startBar + (endBar !== null ? " → " + endBar : "") + ".");
       return true;
     } catch (error) {
+      stopStudioMetronome(this.recordingMetronomeSources);
       this.pendingRecording = false;
       if (this.recordingScheduleTimer) clearTimeout(this.recordingScheduleTimer);
       this.recordingScheduleTimer = null;
@@ -1463,6 +1502,7 @@ const StudioMultitrackWorkspace = {
   },
 
   async stopArmedRecording() {
+    stopStudioMetronome(this.recordingMetronomeSources);
     if (this.punchOutTimer) clearTimeout(this.punchOutTimer);
     this.punchOutTimer = null;
     if (!StudioRecordingEngine.activeTrackTake) return false;
@@ -1631,9 +1671,8 @@ const StudioMultitrackWorkspace = {
     this.stopAll();
 
     if (!this.tracks.some(track =>
-      track.clips?.some(clip =>
-        clip.blob && clip.blob.size > 0
-      )
+      track.clips?.some(clip => clip.blob && clip.blob.size > 0) ||
+      ((track.type === "midi" || track.type === "instrument") && track.midiNotes?.length)
     )) {
       this.status("No recorded audio clips available.");
       return;
