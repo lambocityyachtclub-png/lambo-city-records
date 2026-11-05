@@ -595,6 +595,26 @@
         "Define eligibility, invitation limits, expiration, revocation, and abuse prevention for exclusive access before launch."
       ],
       "ownerApproval": "The owner selected Option C on 2026-11-05: grow an open public community while also developing an exclusive invitation-based community layer."
+    },
+    "membershipAndPrivileges": {
+      "selectedOption": "C",
+      "name": "Standard account with flexible earned and granted privileges",
+      "foundation": "Every user begins with a standard LAMBO CITY account. A standard account provides the baseline community identity and access defined by the platform.",
+      "privilegePathways": [
+        "Invitation-based access granted by authorized LAMBO CITY staff or the owner.",
+        "Achievements and participation that may unlock designated experiences.",
+        "Artist status and approved creative opportunities.",
+        "Event-specific invitations and permissions.",
+        "Other clearly defined privileges granted under owner-approved rules."
+      ],
+      "principles": [
+        "Do not require paid membership as the default path to belonging or participation in the public community.",
+        "Keep account membership, achievements, artist status, event invitations, Studio collaboration, and administrative permissions distinct.",
+        "Privileges must have explicit scope, eligibility rules, granting authority, and expiration or revocation rules where applicable.",
+        "Do not let earned achievements automatically grant sensitive permissions, private project access, or administrative authority.",
+        "Any future paid offerings or membership benefits require separate owner approval, transparent terms, and appropriate legal and operational review."
+      ],
+      "ownerApproval": "The owner selected Option C on 2026-11-05: a standard account with additional experiences and privileges earned or granted through invitations, achievements, artist status, and other defined pathways, without requiring paid membership as the default."
     }
   },
   "openDecisions": [
