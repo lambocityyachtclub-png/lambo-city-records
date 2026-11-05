@@ -226,11 +226,16 @@ const StudioRecordingEngine = {
     }
   },
 
-  getInputLevel() {
+  getInputWaveform() {
     const analyser = this.inputAnalyser;
-    if (!analyser) return 0;
-    const samples = this.inputMeterBuffer;
-    analyser.getFloatTimeDomainData(samples);
+    if (!analyser) return null;
+    analyser.getFloatTimeDomainData(this.inputMeterBuffer);
+    return this.inputMeterBuffer;
+  },
+
+  getInputLevel() {
+    const samples = this.getInputWaveform();
+    if (!samples) return 0;
     let sum = 0;
     for (let i = 0; i < samples.length; i += 1) sum += samples[i] * samples[i];
     return Math.min(1, Math.sqrt(sum / samples.length) * 3.2);
