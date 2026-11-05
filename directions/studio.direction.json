@@ -716,6 +716,27 @@
             "Community recognition"
           ],
           "governance": "Keep multiple role- and metric-specific charts rather than relying on one overall leaderboard. Define transparent metric definitions, time windows, eligibility rules, verified signals, anti-manipulation controls, corrections/appeals, and privacy safeguards."
+        },
+        "timePeriods": {
+          "approved": true,
+          "periods": [
+            {
+              "name": "Weekly charts",
+              "purpose": "Highlight creators making meaningful moves right now and give emerging talent frequent opportunities for recognition.",
+              "window": "Rolling or calendar-week period to be defined during implementation."
+            },
+            {
+              "name": "Monthly charts",
+              "purpose": "Recognize sustained performance and consistency across a broader period.",
+              "window": "Monthly period to be defined during implementation."
+            },
+            {
+              "name": "All-time charts",
+              "purpose": "Preserve the historical record of major achievements, sales milestones, and lasting contributions to LAMBO CITY.",
+              "window": "Lifetime verified totals or milestones, with clear metric definitions and correction procedures."
+            }
+          ],
+          "governance": "Display the applicable time window and metric definitions clearly. Use verified activity, anti-fraud controls, transparent eligibility rules, privacy safeguards, and correction/appeal processes. Weekly and monthly charts should create opportunities for emerging creators without erasing all-time history."
         }
       },
       "marketplaceAndRevenue": {
@@ -736,7 +757,7 @@
         "automatedWorkflow": "Explore a future workflow that researches, drafts, assembles, and schedules recurring podcast-style episodes and news/education segments for the Jumbotron.",
         "editorialSafeguards": "Automated content must be checked for accuracy, dates, source quality, rights to music/images/clips, fair presentation, sponsorship disclosure, and misleading financial or career claims. Require editorial approval before publication, especially for news, rankings, financial topics, and claims about real people or businesses."
       },
-      "ownerIntent": "The owner wants producer beat sales and other creator achievements to create incentives and recognition, with respect as an important factor. The owner envisions a Billboard-style ranking system for producers, artists, and other creators; a future marketplace in which LAMBO CITY Records receives a commission on sales; and an automated podcast/news/educational media workflow on the LAMBO CITY Jumbotron to help musicians and producers learn how to grow. The owner approves displaying the connected Billboard-style charts publicly on the LAMBO CITY Jumbotron, within creator profiles, and in a dedicated Billboard-style chart destination in the city. Creator incentives should be personalized to users' interests and roles, potentially including producer sound banks, plugins, instruments, recording tools, and other relevant unlocks. The system may learn from voluntary profile preferences and privacy-conscious use of platform features, while allowing users to update or disable personalization.",
+      "ownerIntent": "The owner wants producer beat sales and other creator achievements to create incentives and recognition, with respect as an important factor. The owner envisions a Billboard-style ranking system for producers, artists, and other creators; a future marketplace in which LAMBO CITY Records receives a commission on sales; and an automated podcast/news/educational media workflow on the LAMBO CITY Jumbotron to help musicians and producers learn how to grow. The owner approves displaying the connected Billboard-style charts publicly on the LAMBO CITY Jumbotron, within creator profiles, and in a dedicated Billboard-style chart destination in the city. Creator incentives should be personalized to users' interests and roles, potentially including producer sound banks, plugins, instruments, recording tools, and other relevant unlocks. The system may learn from voluntary profile preferences and privacy-conscious use of platform features, while allowing users to update or disable personalization. The owner approves three chart periods for the Billboard-style ranking system: weekly charts for current momentum, monthly charts for sustained performance, and all-time charts preserving historical achievements and contributions.",
       "personalizedCreatorProgressionAndRewards": {
         "vision": "Creator incentives should reflect each user's interests, creative role, goals, and chosen development path rather than awarding identical rewards solely based on rank.",
         "interestDiscovery": "Let users voluntarily select and update interests, creator roles, and goals during onboarding and in profile settings. Over time, the system may use privacy-conscious signals from their LAMBO CITY activity, such as Studio tools they choose to use, projects they create, products they sell, events they attend, and opportunities they pursue, to recommend relevant rewards.",
