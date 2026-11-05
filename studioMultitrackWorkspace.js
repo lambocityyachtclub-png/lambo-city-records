@@ -1406,6 +1406,7 @@ const StudioMultitrackWorkspace = {
       if (delayMs > 0) {
         this.status("Pre-roll · recording begins at bar " + startBar + ".");
         const countStart = audio.currentTime + 0.06;
+        if (!this.metronomeSettings?.enabled || !this.arrangementPlayback?.playing) {
         for (let bar = Math.floor(this.playheadBar); bar < startBar; bar += 1) {
           const meter = this.getTimeSignatureAtBar(bar);
           const bpm = this.getTempoAtBar(bar);
@@ -1425,6 +1426,7 @@ const StudioMultitrackWorkspace = {
           oscillator.stop(at + 0.07);
           oscillator.onended = () => { try { oscillator.disconnect(); clickGain.disconnect(); } catch {} };
           }
+        }
         }
         const ready = await new Promise(resolve => {
           this.recordingScheduleResolve = resolve;
@@ -1454,7 +1456,7 @@ const StudioMultitrackWorkspace = {
         inputDeviceId: track.inputSource === "mic" ? this.inputDeviceId : "",
         vocalEffects: track.inputSource === "mic" && /vocal/i.test(track.name) ? vocalEffects : null
       });
-      if (this.metronomeSettings?.enabled) {
+      if (this.metronomeSettings?.enabled && !this.arrangementPlayback?.playing) {
         this.recordingMetronomeSources = scheduleStudioMetronome(audio, {
           startBar,
           endBar: endBar || 129,
