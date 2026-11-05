@@ -416,7 +416,7 @@ export function createSongProjectPackage(project) {
 }
 
 // Convert a project into portable JSON text.
-// The .lcp extension will be used when download support is connected.
+// The .lcp extension is used for portable LAMBO CITY project downloads.
 export function exportSongProjectPackage(project) {
   const packageData = createSongProjectPackage(project);
 
