@@ -555,6 +555,26 @@
           "Keep emergency controls and incident-response procedures under the platform's security policy and owner oversight."
         ],
         "ownerApproval": "The owner selected Option C on 2026-11-05: adaptive emergency protection based on threat severity."
+      },
+      "phoneNumberPolicyDecision": {
+        "selectedOption": "B",
+        "name": "Verified phone number for account security; separate optional marketing consent",
+        "accountPhoneNumber": "Require users to provide and verify a phone number as part of the future account security and contact model. Explain the security purposes clearly and protect the number as sensitive personal information.",
+        "marketingConsent": "Promotional and community marketing communications are optional and require a separate, affirmative opt-in. Account creation, phone verification, and access to core account features must not be conditioned on agreeing to marketing messages.",
+        "communicationPurposes": {
+          "security": "Use the verified number for appropriate account-security and verification communications, subject to the future authentication and recovery design.",
+          "marketing": "Use the number for event announcements, promotions, exclusive experiences, and other marketing only when the user has separately opted in. Provide clear opt-out and preference controls.",
+          "businessAnalytics": "Use aggregated, privacy-protective audience size and engagement statistics for business planning and partnership negotiations. Do not expose or sell individual phone numbers as a community-leverage strategy."
+        },
+        "safeguards": [
+          "Provide clear notice explaining why a phone number is required and how it will be used.",
+          "Collect only the minimum data needed; protect phone numbers with encryption, strict access controls, and retention limits.",
+          "Provide a secure process to update or remove a phone number, with an alternative account-security and recovery path where feasible.",
+          "Do not use phone numbers for marketing without separate consent; honor opt-outs and applicable messaging laws.",
+          "Design non-SMS alternatives for users who cannot receive SMS, and do not make SMS the sole factor for high-risk account recovery.",
+          "Do not share identifiable contact lists with sponsors, advertisers, artists, or partners without a separate lawful basis and explicit user authorization."
+        ],
+        "ownerApproval": "The owner selected Option B on 2026-11-05: phone verification for account security, with marketing communications separately optional."
       }
     }
   },
@@ -575,7 +595,7 @@
     "Define detailed authentication, account recovery, session/device management, security-alert severity and delivery timing, audit-log retention, incident response, and access-review requirements for the future identity and security architecture.",
     "Define recovery-code enrollment, secure display and storage guidance, regeneration and invalidation, high-risk recovery verification, security notifications, and fallback procedures when users lose both passkeys and verified email.",
     "Define risk signals, notification channels, step-up verification methods, trusted-device lifecycle, and user controls for new-device and suspicious sign-ins.",
-    "Define whether phone numbers are collected for account verification, recovery, security alerts, community contact, or separate business communications; determine which purposes are required or optional, consent and opt-out rules, retention/deletion, access controls, and whether any aggregate community analytics may be used for business negotiations."
+    "Define the phone verification provider and supported non-SMS alternatives, phone-number change and recovery safeguards, data retention and deletion periods, consent records, messaging frequency controls, and applicable privacy and messaging-law requirements."
   ],
   "protectionRules": [
     "Do not redesign the approved EDIT interface.",
