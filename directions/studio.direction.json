@@ -7,7 +7,7 @@
     "status": "in-discovery",
     "questionnaireProgress": {
       "purposeAndMission": "answered",
-      "remainingCoreQuestions": 7,
+      "remainingCoreQuestions": 6,
       "centralWorkspaceAndNavigation": "answered",
       "collaborationModel": "answered",
       "collaborationAccess": "answered",
@@ -24,7 +24,8 @@
       "npcBehavior": "answered",
       "businessFunctionality": "answered",
       "vehicleAndRoadDirection": "answered",
-      "propertyOwnership": "answered"
+      "propertyOwnership": "answered",
+      "entertainmentAndEvents": "answered"
     }
   },
   "ownerDirection": {
@@ -341,7 +342,7 @@
         ],
         "legalProtection": {
           "ownerConcern": "The owner wants to understand and establish the legal structure before telling users they own anything, in order to protect the owner and the business.",
-          "rule": "Do not market or describe a virtual property as legally owned by a user, or imply title to land or real-world real estate, unless qualified legal counsel confirms that the specific structure and claim are legally supportable.",
+          "rule": "Do not market or describe a virtual property or other in-game asset as legally owned by a user, or imply title to land or real-world real estate, unless qualified legal counsel confirms that the specific structure and claim are legally supportable. Until then, ownership offerings must remain unavailable and unadvertised.",
           "distinguishRights": [
             "In-platform access or permission to use a location",
             "A revocable or limited digital content license",
@@ -356,9 +357,33 @@
             "Transferability, resale, inheritance, account termination, and dispute handling",
             "Tax, accounting, payment, privacy, and recordkeeping obligations"
           ],
-          "implementationGate": "No sale or ownership claim should be launched until the owner has obtained qualified legal advice and explicitly approved the documented rights model."
+          "implementationGate": "Future ownership may be architected as a dormant capability, but no ownership feature may be enabled, offered, sold, or advertised until the owner has obtained qualified legal advice and explicitly approved the documented rights model and launch."
         },
-        "ownerApproval": "The owner selected Option C on 2026-11-04 and emphasized that the legal structure must be established and reviewed before LAMBO CITY tells anyone they own a digital property."
+        "ownerApproval": "The owner selected Option C on 2026-11-04 and emphasized that the legal structure must be established and reviewed before LAMBO CITY tells anyone they own a digital property.",
+        "futureOwnershipCapability": {
+          "strategicIntent": "Architect the future digital real-estate and other in-game ownership systems so they can support legally defined ownership offerings later, once the owner has established and reviewed the required legal structure.",
+          "currentAvailability": "Not available to users at the current stage.",
+          "marketing": "Do not offer, advertise, promote, sell, or imply the availability of digital real-estate ownership or other ownership rights before the owner explicitly authorizes launch after legal review.",
+          "architecture": "The underlying design may reserve a modular path for future ownership, entitlements, records, permissions, and transfer rules, but dormant capability must remain inaccessible and must not be represented as a current product feature.",
+          "launchGate": "Require qualified legal review, documented rights and obligations, jurisdictional assessment, operational readiness, and explicit owner approval before enabling or advertising any ownership offering."
+        }
+      },
+      "entertainmentAndEvents": {
+        "selectedDirection": "Support the full range of LAMBO CITY entertainment and social events, including concerts, live performances, parties, and special events.",
+        "targetExperiences": [
+          "Concerts and music performances",
+          "Live artist performances and appearances",
+          "Parties and social gatherings",
+          "Special events and limited-time experiences"
+        ],
+        "developmentApproach": "Build the event experience progressively, beginning with reliable, well-produced event destinations and core interactions, then expanding event variety, scale, participation, and production capabilities.",
+        "designPrinciples": [
+          "Events should feel like meaningful destinations within the living luxury city.",
+          "Connect events to the wider world, artist community, businesses, and entertainment identity.",
+          "Preserve player freedom: players can discover and attend events without being forced into a linear progression.",
+          "Build event systems modularly so different event types can reuse scheduling, venue, presentation, attendance, and interaction capabilities where appropriate."
+        ],
+        "ownerApproval": "The owner confirmed on 2026-11-04 that LAMBO CITY should support all of the discussed event types: concerts, live performances, parties, and special events."
       }
     }
   },
@@ -373,7 +398,8 @@
     "Define the central Studio entrance and the artist journey from opening Studio through creating, recording, editing, mixing, mastering, and exporting a song.",
     "Define the professional acceptance standard for recording, mixing, mastering, latency, and exports.",
     "Define which features are essential for the first complete Studio release versus later expansion.",
-    "Obtain qualified legal review and define the rights model, disclosures, and jurisdictional obligations before offering any digital real-estate ownership or making ownership claims."
+    "Obtain qualified legal review and define the rights model, disclosures, and jurisdictional obligations before offering any digital real-estate ownership or making ownership claims.",
+    "For the future entertainment and events system, define event hosting, scheduling, capacity, audience participation, artist access, and moderation requirements."
   ],
   "protectionRules": [
     "Do not redesign the approved EDIT interface.",
@@ -388,6 +414,6 @@
   "approval": {
     "status": "draft",
     "approvedByOwner": false,
-    "note": "Captures the owner's direction answers to date. The living-city style is Option C, progressing toward the realism and functionality of Option A; player freedom and optional guided activities are both supported; the ultimate city activity ambition is Option B, delivered progressively using Option C; NPC and business functionality follow Option C as the development approach with Option B as the long-term ambition; vehicle development begins with luxury decorative/showcase presentation while the road network and future interactive driving scope are developed later. This is not yet a complete or approved Studio specification. Digital real estate follows Option C as the staged development approach, with any ownership claims gated on a legally reviewed and owner-approved rights structure."
+    "note": "Captures the owner's direction answers to date. The living-city style is Option C, progressing toward the realism and functionality of Option A; player freedom and optional guided activities are both supported; the ultimate city activity ambition is Option B, delivered progressively using Option C; NPC and business functionality follow Option C as the development approach with Option B as the long-term ambition; vehicle development begins with luxury decorative/showcase presentation while the road network and future interactive driving scope are developed later. This is not yet a complete or approved Studio specification. Digital real estate follows Option C as the staged development approach, with any ownership claims gated on a legally reviewed and owner-approved rights structure. The owner also confirmed that LAMBO CITY should support concerts, live performances, parties, and special events. Future digital-real-estate and other in-game ownership may be architected as dormant capability, but must remain unavailable and unadvertised until legal review and explicit owner launch approval."
   }
 }
