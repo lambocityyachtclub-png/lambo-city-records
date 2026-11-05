@@ -98,11 +98,12 @@ this.noiseBuffer = null;
     this.raycaster = null;
     this.pointer = null;
     this.handleCanvasClick = null;
+    if (typeof window !== "undefined") window.__lamboCityFloor2BeatLab = this;
 
     if (!this.camera || !this.renderer?.domElement) {
-      console.warn(
-        "LAMBO CITY Beat Lab: camera or renderer unavailable."
-      );
+      if (scene || context?.camera || context?.renderer) {
+        console.warn("LAMBO CITY Beat Lab: camera or renderer unavailable.");
+      }
       return;
     }
 
