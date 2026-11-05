@@ -20,11 +20,24 @@ assert.ok(navigationInit > drumInit, "Studio navigation must initialize after th
 assert.match(world, /group\.userData\.studioStations\s*=\s*\{/);
 assert.match(drums, /station\.name\s*=\s*"floor2DrumStation"/);
 assert.match(drums, /studio\.userData\.studioStations\.drumStation\s*=\s*station/);
-assert.match(navigation, /stations\.drumStation,\s*view:\s*"drums"/);
-assert.match(navigation, /stations\.instrumentStation,\s*view:\s*"piano"/);
-assert.match(navigation, /stations\.controlRoom,\s*view:\s*"mix"/);
-assert.match(workspace, /id:\s*"drums"/);
-assert.match(workspace, /id:\s*"piano"/);
-assert.match(workspace, /id:\s*"mix"/);
+assert.match(navigation, /floor2SongEditorDisplay/);
+assert.match(navigation, /view:\s*"edit"/);
+assert.doesNotMatch(navigation, /object:\s*stations\.(?:drumStation|instrumentStation|controlRoom)/);
+const workflowOrder = [
+  /id:\s*"edit",\s*label:\s*"EDITING"/,
+  /id:\s*"mpc",\s*label:\s*"MPC"/,
+  /id:\s*"piano",\s*label:\s*"PIANO \/ CITY SYNTH"/,
+  /id:\s*"vocals",\s*label:\s*"VOCAL BOOTH"/,
+  /id:\s*"beatlab",\s*label:\s*"BEAT LAB"/
+];
+let previousIndex = -1;
+for (const pattern of workflowOrder) {
+  const index = workspace.search(pattern);
+  assert.ok(index > previousIndex, "Primary workflow must remain EDIT → MPC → PIANO → VOCALS → BEAT LAB");
+  previousIndex = index;
+}
+assert.match(workspace, /data-daw-secondary="mix"/);
+assert.match(workspace, /data-daw-secondary="drums"/);
+assert.match(workspace, /ALL_VIEWS/);
 
 console.log("Floor 2 Studio station registration and navigation checks passed.");
