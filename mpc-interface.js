@@ -303,6 +303,7 @@ function buildMarkup() {
     <header class="mpc-nameplate">
       <span class="brand-script">Lambo City</span><span class="brand-records">RECORDS</span>
       <button type="button" class="mpc-tools-toggle" data-mpc-tools-toggle aria-expanded="false">TOOLS</button>
+      <button type="button" data-mpc-next style="min-height:32px;padding:6px 11px;border:1px solid #d8bd7c;border-radius:6px;background:linear-gradient(#e8d6a5,#a8874c);color:#17180f;font-size:10px;font-weight:900;letter-spacing:.7px">NEXT · PIANO →</button>
       <button type="button" class="mpc-close" data-mpc-close aria-label="Exit MPC">×</button>
     </header>
 
@@ -446,6 +447,7 @@ function buildMarkup() {
 const MPCInterface = {
   root: null,
   onClose: null,
+  onNext: null,
   previousFocus: null,
   keyHandler: null,
   beatLab: null,
@@ -472,6 +474,7 @@ const MPCInterface = {
     if (this.root?.isConnected) return this.root;
 
     this.onClose = typeof options.onClose === "function" ? options.onClose : null;
+    this.onNext = typeof options.onNext === "function" ? options.onNext : null;
     this.previousFocus = document.activeElement;
     this.beatLab = options.beatLab || window.__lamboCityFloor2BeatLab || null;
     this.bank = "A";
@@ -597,6 +600,15 @@ const MPCInterface = {
         const open = root.classList.toggle("tools-open");
         toolsToggle.setAttribute("aria-expanded", String(open));
         toolsToggle.textContent = open ? "HIDE TOOLS" : "TOOLS";
+        return;
+      }
+
+      const nextButton = event.target.closest("[data-mpc-next]");
+      if (nextButton) {
+        const onNext = this.onNext;
+        this.onNext = null;
+        this.close();
+        onNext?.();
         return;
       }
 
