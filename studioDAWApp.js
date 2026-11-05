@@ -29,7 +29,7 @@ import {
 import { createStudioMixMasterApp } from "./studioMixMasterApp.js";
 
 
-function createMPCPanel({ beatLab, workspace } = {}) {
+function createMPCPanel({ beatLab, workspace, onOpenBeatLab } = {}) {
   const root = document.createElement("section");
   root.style.cssText = "display:grid;gap:16px;width:100%;color:#f4f1eb";
   root.innerHTML = `
@@ -145,7 +145,8 @@ function createMPCPanel({ beatLab, workspace } = {}) {
     status("Current MPC beat saved.");
   });
   root.querySelector("[data-mpc-digital]").addEventListener("click", () => {
-    workspace?.setView("beatlab");
+    if (typeof onOpenBeatLab === "function") onOpenBeatLab();
+    else workspace?.setView("beatlab");
   });
 
   if (beatLab) beatLab.soundProfile = "mpc";
@@ -692,9 +693,15 @@ const StudioDAWApp = {
           if (viewId === "mpc" && !MPCInterface.isOpen()) {
             MPCInterface.open({
               beatLab: Floor2StudioApp,
-              // Closing the MPC returns to its place in the five-step
-              // workflow. The dedicated NEXT control advances to Piano.
-              onClose: () => {},
+              performancePanel: this.mpcPanel,
+              // Return the performance surface to the MPC workflow step when
+              // the hardware overlay closes, without triggering another open.
+              onClose: () => {
+                const host = this.workspace?.root?.querySelector("[data-daw-panel]");
+                if (host && this.mpcPanel && !this.mpcPanel.isConnected) {
+                  host.replaceChildren(this.mpcPanel);
+                }
+              },
               onNext: () => this.workspace?.setView("piano")
             });
           }
@@ -704,7 +711,11 @@ const StudioDAWApp = {
       // Dedicated MPC performance surface and a separate Digital Beat Lab.
       this.mpcPanel = createMPCPanel({
         beatLab: Floor2StudioApp,
-        workspace: this.workspace
+        workspace: this.workspace,
+        onOpenBeatLab: () => {
+          MPCInterface.close();
+          this.workspace?.setView("beatlab");
+        }
       });
       this.workspace.setPanel("mpc", this.mpcPanel);
 
