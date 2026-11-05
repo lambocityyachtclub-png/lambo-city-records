@@ -151,6 +151,10 @@ function makeStyles() {
 #${ROOT_ID} .mpc-screen-workspace{min-height:0;overflow:auto}
 #${ROOT_ID} .mpc-screen-panel{display:none;gap:7px;min-height:0;overflow:auto;color:#e7edda;font-size:clamp(8px,.72vw,10px)}
 #${ROOT_ID} .mpc-screen-panel.active{display:flex;flex-direction:column}
+#${ROOT_ID} [data-mpc-panel="PATTERN"]{min-height:0;overflow-y:auto}
+#${ROOT_ID} [data-mpc-pattern-host]{min-width:0;width:100%}
+#${ROOT_ID} [data-mpc-pattern-host]>section{min-width:0}
+
 #${ROOT_ID} .mpc-welcome{display:flex;flex-direction:column;gap:4px;padding:4px 2px}
 #${ROOT_ID} .mpc-welcome strong,#${ROOT_ID} .mpc-panel-heading{font-size:clamp(10px,1vw,14px);letter-spacing:.12em;color:#d6f58d}
 #${ROOT_ID} .mpc-panel-heading{display:flex;justify-content:space-between;align-items:center}
@@ -399,6 +403,10 @@ function buildMarkup() {
             </div>
             <p class="mpc-help">MPC pad audio routes through the shared studio master output. Your pad performance is saved with the active song project.</p>
           </section>
+          <section class="mpc-screen-panel" data-mpc-panel="PATTERN">
+            <div class="mpc-panel-heading">MPC PERFORMANCE · STEP SEQUENCER <small>SHARED SONG PATTERN</small></div>
+            <div data-mpc-pattern-host></div>
+          </section>
           <section class="mpc-screen-panel" data-mpc-panel="BROWSE">
             <div class="mpc-panel-heading">SOUND BROWSER <small>LIBRARY</small></div>
             <label class="mpc-field">SEARCH SOUNDS
@@ -426,7 +434,7 @@ function buildMarkup() {
           </section>
         </div>
         <nav class="screen-tabs">
-          ${["PLAY", "TIMING", "SAMPLE", "MIXER", "SOUNDS"].map((label, i) => `<button type="button" class="screen-tab ${i === 0 ? "active" : ""}" data-mpc-tab="${["MAIN","SEQ","SAMPLE","MIX","BROWSE"][i]}">${esc(label)}</button>`).join("")}
+          ${["PLAY", "TIMING", "SAMPLE", "MIXER", "SOUNDS", "PATTERN"].map((label, i) => `<button type="button" class="screen-tab ${i === 0 ? "active" : ""}" data-mpc-tab="${["MAIN","SEQ","SAMPLE","MIX","BROWSE","PATTERN"][i]}">${esc(label)}</button>`).join("")}
         </nav>
       </div></div>
     </section>
@@ -510,36 +518,26 @@ const MPCInterface = {
     root.innerHTML = buildMarkup();
 
     if (this.performancePanel) {
+      // Keep the step sequencer inside the original MPC screen. It shares
+      // the live Beat Lab pattern data; it is not a second instrument or overlay.
+      const patternHost = root.querySelector("[data-mpc-pattern-host]");
+      if (patternHost) {
+        this.performancePanel.style.width = "100%";
+        this.performancePanel.style.maxWidth = "none";
+        this.performancePanel.style.margin = "0";
+        patternHost.appendChild(this.performancePanel);
+      }
+
       const nameplate = root.querySelector(".mpc-nameplate");
       const performanceButton = document.createElement("button");
       performanceButton.type = "button";
       performanceButton.className = "hw-button mpc-performance-launch";
       performanceButton.dataset.mpcOpenPerformance = "";
       performanceButton.textContent = "MPC PERFORMANCE";
-      performanceButton.setAttribute("aria-label", "Open MPC performance mode");
+      performanceButton.setAttribute("aria-label", "Open MPC performance pattern inside the hardware interface");
       const nextButton = nameplate?.querySelector("[data-mpc-next]");
       if (nameplate) nameplate.insertBefore(performanceButton, nextButton || null);
 
-      const performanceView = document.createElement("section");
-      performanceView.dataset.mpcPerformanceView = "";
-      performanceView.setAttribute("aria-label", "MPC performance mode");
-      performanceView.style.cssText = "position:absolute;inset:0;z-index:5;display:none;overflow:auto;overscroll-behavior:contain;padding:clamp(14px,2vw,28px);background:radial-gradient(ellipse at top,#24252c 0%,#11131a 52%,#080a0e 100%);color:#f4f1eb";
-      const performanceHeader = document.createElement("header");
-      performanceHeader.style.cssText = "display:flex;justify-content:flex-end;max-width:1100px;margin:0 auto 14px";
-      const returnButton = document.createElement("button");
-      returnButton.type = "button";
-      returnButton.className = "hw-button mpc-performance-return";
-      returnButton.dataset.mpcReturnHardware = "";
-      returnButton.textContent = "← RETURN TO MPC HARDWARE";
-      returnButton.setAttribute("aria-label", "Return to MPC hardware interface");
-      performanceHeader.appendChild(returnButton);
-      performanceView.appendChild(performanceHeader);
-      this.performancePanel.style.width = "100%";
-      this.performancePanel.style.maxWidth = "1100px";
-      this.performancePanel.style.margin = "0 auto";
-      performanceView.appendChild(this.performancePanel);
-      root.appendChild(performanceView);
-      this.performanceView = performanceView;
       this.performanceToggleHandler = event => {
         if (event.target.closest("[data-mpc-open-performance]")) {
           this.showPerformance();
@@ -1400,19 +1398,21 @@ const MPCInterface = {
   },
 
   showPerformance() {
-    if (!this.root || !this.performanceView || !this.performancePanel) return false;
-    const hardware = this.root.querySelector(".mpc-unit");
-    if (hardware) hardware.style.display = "none";
-    this.performanceView.style.display = "block";
-    this.performanceView.querySelector("[data-mpc-return-hardware]")?.focus({ preventScroll: true });
+    if (!this.root || !this.performancePanel) return false;
+    const unit = this.root.querySelector(".mpc-unit");
+    unit?.classList.add("tools-open");
+    this.root.querySelector("[data-mpc-tools-toggle]")?.setAttribute("aria-expanded", "true");
+    this.showScreen("PATTERN");
+    this.root.querySelector('[data-mpc-tab="PATTERN"]')?.focus({ preventScroll: true });
     return true;
   },
 
   showHardware() {
-    if (!this.root || !this.performanceView) return false;
-    this.performanceView.style.display = "none";
-    const hardware = this.root.querySelector(".mpc-unit");
-    if (hardware) hardware.style.display = "";
+    if (!this.root) return false;
+    const unit = this.root.querySelector(".mpc-unit");
+    unit?.classList.add("tools-open");
+    this.root.querySelector("[data-mpc-tools-toggle]")?.setAttribute("aria-expanded", "true");
+    this.showScreen("MAIN");
     this.root.querySelector("[data-mpc-open-performance]")?.focus({ preventScroll: true });
     return true;
   },
