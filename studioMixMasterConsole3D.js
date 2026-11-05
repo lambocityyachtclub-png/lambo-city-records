@@ -57,6 +57,11 @@ export default {
     const blue=metal(0x2f5fa8,0x081b3b,.28);
     const green=metal(0x2e8b4d,0x123b1b,.25);
     const gold=metal(0xc6a15b,0x6d4a15,.22);
+    const muteIdle=metal(0x090c11);
+    const muteActive=metal(0xb43b42,0x5d0a12,.4);
+    const soloIdle=metal(0x090c11);
+    const soloActive=metal(0x36a66a,0x0c5328,.4);
+    this.controlMaterials={muteIdle,muteActive,soloIdle,soloActive};
     const red=metal(0x9e2937,0x4d0912,.3);
     const boxGeo=new THREE.BoxGeometry(1,1,1);
     const makeBox=(name,w,h,d,mat,x,y,z,parentGroup=group)=>{
@@ -177,8 +182,8 @@ export default {
       const track=tracks[item.index];if(!track)return;
       const volume=clamp(Number(track.volume??80),0,100);
       item.fader.position.z=.765-(volume/100)*.31;
-      item.mute.material=track.muted?metal(0xb43b42,0x5d0a12,.4):metal(0x090c11);
-      item.solo.material=track.solo?metal(0x36a66a,0x0c5328,.4):metal(0x090c11);
+      item.mute.material=track.muted?this.controlMaterials.muteActive:this.controlMaterials.muteIdle;
+      item.solo.material=track.solo?this.controlMaterials.soloActive:this.controlMaterials.soloIdle;
       const meter=StudioMultitrackWorkspace.arrangementPlayback?.getTrackMeter?.(track.id)||{peak:0};
       const active=Math.round(clamp(meter.peak*18,0,12));
       item.meter.forEach((segment,index)=>{segment.visible=index>=12-active;});
