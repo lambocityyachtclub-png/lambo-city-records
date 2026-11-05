@@ -76,7 +76,7 @@ export function createStudioDAWArrangementPlayback({
     },
 
     disposeChannels() {
-      this.trackChannels.forEach(({ gain, automationGain, low, mid, high, compressor, panner, effects, pitchCorrectionNode, sendNodes }) => {
+      this.trackChannels.forEach(({ gain, automationGain, low, mid, high, compressor, panner, effects, pitchCorrectionNode, meterAnalyser, sendNodes }) => {
         try { gain.disconnect(); } catch {}
         try { automationGain.disconnect(); } catch {}
         try { low.disconnect(); } catch {}
@@ -84,6 +84,7 @@ export function createStudioDAWArrangementPlayback({
         try { high.disconnect(); } catch {}
         try { compressor.disconnect(); } catch {}
         try { panner?.disconnect(); } catch {}
+        try { meterAnalyser?.disconnect(); } catch {}
         try { pitchCorrectionNode?.disconnect(); } catch {}
         (sendNodes || []).forEach(node => { try { node.disconnect(); } catch {} });
         try { effects?.destroy(); } catch {}
@@ -153,13 +154,21 @@ export function createStudioDAWArrangementPlayback({
       }
       const outputBus = track.type !== "bus" && track.outputBusId ? this.trackChannels.get(track.outputBusId) : null;
       const routeOutput = outputBus?.gain || output;
+      // A real per-track analyser sits in the live channel path. It passes
+      // audio through unchanged while providing accurate channel meters.
+      const meterAnalyser = context.createAnalyser();
+      meterAnalyser.fftSize = 256;
+      meterAnalyser.smoothingTimeConstant = 0.72;
       if (panner) {
-        trackEffects.output.connect(panner);
+        trackEffects.output.connect(meterAnalyser);
+        meterAnalyser.connect(panner);
         panner.connect(routeOutput);
       } else {
-        trackEffects.output.connect(routeOutput);
+        trackEffects.output.connect(meterAnalyser);
+        meterAnalyser.connect(routeOutput);
       }
-      const channel = { gain, automationGain, low, mid, high, compressor, panner, effects: trackEffects, pitchCorrectionNode, track, sendNodes: [] };
+      const meterBuffer = new Float32Array(meterAnalyser.fftSize);
+      const channel = { gain, automationGain, low, mid, high, compressor, panner, effects: trackEffects, pitchCorrectionNode, meterAnalyser, meterBuffer, track, sendNodes: [] };
       this.trackChannels.set(track.id, channel);
       this.applyTrackState(track);
       return channel;
@@ -215,6 +224,28 @@ export function createStudioDAWArrangementPlayback({
     syncTrackState(tracks = this.activeTracks) {
       this.activeTracks = tracks;
       tracks.forEach(track => this.applyTrackState(track));
+    },
+
+    getTrackMeter(trackId) {
+      const channel = this.trackChannels.get(trackId);
+      if (!channel?.meterAnalyser) return { peak: 0, rms: 0 };
+      const samples = channel.meterBuffer;
+      channel.meterAnalyser.getFloatTimeDomainData(samples);
+      let peak = 0;
+      let sum = 0;
+      for (let i = 0; i < samples.length; i += 1) {
+        const value = Math.abs(samples[i]);
+        if (value > peak) peak = value;
+        sum += samples[i] * samples[i];
+      }
+      return { peak: Math.min(1, peak), rms: Math.min(1, Math.sqrt(sum / samples.length)) };
+    },
+
+    getTrackWaveform(trackId) {
+      const channel = this.trackChannels.get(trackId);
+      if (!channel?.meterAnalyser) return null;
+      channel.meterAnalyser.getFloatTimeDomainData(channel.meterBuffer);
+      return channel.meterBuffer;
     },
 
     setTrackVolume(trackId, value) {
