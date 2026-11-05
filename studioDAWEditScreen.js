@@ -315,11 +315,28 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
       root.addEventListener("keydown", event => {
         const target = event.target;
         if (target && (target.matches("input,textarea,select") || target.isContentEditable)) return;
+        // Let focused buttons keep their native Enter/Space activation. The
+        // transport shortcuts apply while the EDIT workspace itself is focused.
+        if (target && target.closest("button")) return;
         const workspace = StudioMultitrackWorkspace;
         const key = String(event.key || "").toLowerCase();
         const modifier = event.metaKey || event.ctrlKey;
         let handled = false;
-        if (modifier && key === "z") {
+        if (!modifier && (key === " " || key === "spacebar")) {
+          event.preventDefault();
+          workspace.togglePlayback();
+          this.status(workspace.isPlaying() ? "Playback running." : "Playback stopped.");
+          handled = true;
+        } else if (!modifier && key === "enter") {
+          event.preventDefault();
+          workspace.stopAll();
+          workspace.playheadBar = 1;
+          this.renderHeader();
+          this.renderLanes();
+          void workspace.playAll();
+          this.status("Restarting song from the beginning.");
+          handled = true;
+        } else if (modifier && key === "z") {
           if (event.shiftKey) workspace.redo();
           else workspace.undo();
           handled = true;
@@ -336,10 +353,7 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
           workspace.splitSelectedClip();
           handled = true;
         }
-        if (handled) {
-          event.preventDefault();
-          this.render();
-        }
+        if (handled) this.render();
       });
       root.addEventListener("click", async event => {
         const trackControl = event.target.closest("[data-track-control]");
