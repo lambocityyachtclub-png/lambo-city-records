@@ -1,4 +1,4 @@
-import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
+let THREE = null;
 import StudioAudioEngine from "./studioAudioEngine.js";
 import StudioRecordingEngine from "./studioRecordingEngine.js";
 import StudioMultitrackWorkspace from "./studioMultitrackWorkspace.js";
@@ -146,7 +146,8 @@ export default {
   screenContext:null,
   screenTexture:null,
   recordingHandler:null,
-  init(scene){
+  async init(scene){
+    THREE = await import("https://unpkg.com/three@0.160.0/build/three.module.js");
     const studio=scene?.getObjectByName("recordsHQFloor2Studio");
     const booth=studio?.getObjectByName("floor2RecordingBooth");
     if(!booth){console.warn("LAMBO CITY Vocal Booth: existing booth not found.");return;}
