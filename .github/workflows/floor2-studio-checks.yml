@@ -143,6 +143,7 @@ jobs:
         run: |
           for file in \
             main.js \
+            hud.js \
             engine.js \
             studioMixMasterConsole3D.js \
             floor2LiveDrummer.js \
