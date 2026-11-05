@@ -235,15 +235,17 @@ export default {
     const local=item.strip.worldToLocal(point.clone());
     const value=clamp(100-(local.z-.455)/.31*100,0,100);
     track.volume=value;
-    if(track.type==="midi")StudioAudioEngine.getTrackGain("instrument").gain.value=value/100;
-    else StudioMultitrackWorkspace.arrangementPlayback?.setTrackVolume(track.id,value);
+    if(track.type==="midi"){
+      const anySolo=StudioMultitrackWorkspace.tracks.some(other=>other.solo);
+      const isAudible=!track.muted&&(!anySolo||track.solo);
+      StudioAudioEngine.getTrackGain("instrument").gain.value=isAudible?value/100:0;
+    } else StudioMultitrackWorkspace.arrangementPlayback?.setTrackVolume(track.id,value);
   },
   update(){
     const tracks=StudioMultitrackWorkspace.tracks||[];
     this.strips.forEach(item=>{
       const track=tracks[item.index];if(!track)return;
-      const instrumentChannel=track.type==="midi"?StudioAudioEngine.getTrackGain("instrument"):null;
-      const volume=track.type==="midi"?clamp(instrumentChannel.gain.value*100,0,100):clamp(Number(track.volume??80),0,100);
+      const volume=clamp(Number(track.volume??80),0,100);
       item.readout?.draw(dbText(volume));
       item.readButton.material=track.automation?.volume?.length?green:dark;
       item.sendKnobs.forEach((knob,index)=>{knob.material=track.sends?.[index]?green:dark;});
@@ -253,7 +255,7 @@ export default {
       if(track.type==="midi"){
         const anySolo=tracks.some(other=>other.solo);
         const isAudible=!track.muted&&(!anySolo||track.solo);
-        StudioAudioEngine.getTrackGain("instrument").gain.value=isAudible?Number(track.volume??volume)/100:0;
+        StudioAudioEngine.getTrackGain("instrument").gain.value=isAudible?volume/100:0;
       }
       const meter=track.type==="midi"?(StudioAudioEngine.getInstrumentMeter?.()||{peak:0}):(StudioMultitrackWorkspace.arrangementPlayback?.getTrackMeter?.(track.id)||{peak:0});
       const active=Math.round(clamp(meter.peak*18,0,12));
