@@ -284,31 +284,71 @@ function createVocalsPanel({ beatLab } = {}) {
   return root;
 }
 
-function createPianoPanel() {
+function createPianoPanel(session = StudioMultitrackWorkspace) {
   const root = document.createElement("section");
   root.style.cssText = "display:grid;gap:18px;width:100%;color:#f4f1eb";
   root.innerHTML = [
     '<div><div style="color:#e6bb69;font-size:11px;letter-spacing:2px">LAMBO CITY RECORDS · INSTRUMENT ROOM</div>',
     '<h2 style="margin:8px 0;font-size:24px">PIANO & KEYS</h2>',
-    '<p style="color:#a8a8b1;font-size:13px;line-height:1.6">Play notes with touch, mouse, or trackpad through the shared LAMBO CITY studio audio engine.</p></div>',
+    '<p style="color:#a8a8b1;font-size:13px;line-height:1.6">Play notes with touch, mouse, or trackpad. Arm MIDI capture to record an editable piano performance directly into this song session.</p></div>',
+    '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">',
+    '<button type="button" data-piano-midi-record style="min-height:44px;padding:11px 16px;border:2px solid #d8b36e;border-radius:8px;background:linear-gradient(#f1d49c,#a87531);color:#17130d;font-weight:900">● ARM MIDI RECORD</button>',
+    '<span data-piano-midi-status role="status" aria-live="polite" style="color:#e6bb69;font-size:12px">MIDI capture is off.</span></div>',
     '<div data-piano-keys style="display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:5px;min-height:180px;align-items:stretch"></div>',
-    '<div style="color:#8f95a4;font-size:11px">C major · One octave · Synthesized studio instrument</div>'
+    '<div style="color:#8f95a4;font-size:11px">C major · One octave · Recorded notes remain editable in MIX & MASTER piano roll and the shared session.</div>'
   ].join("");
-  const notes = [["C",261.63],["D",293.66],["E",329.63],["F",349.23],["G",392.00],["A",440.00],["B",493.88],["C",523.25]];
+  const notes = [["C",60,261.63],["D",62,293.66],["E",64,329.63],["F",65,349.23],["G",67,392.00],["A",69,440.00],["B",71,493.88],["C",72,523.25]];
   const keys = root.querySelector("[data-piano-keys]");
-  notes.forEach(([label,frequency]) => {
+  const recordButton = root.querySelector("[data-piano-midi-record]");
+  const status = root.querySelector("[data-piano-midi-status]");
+  let midiArmed = false;
+  let midiTrack = null;
+  let captureStartedAt = 0;
+  let captureStartBar = 1;
+  const findMidiTrack = () => session.tracks.find(track => track.id === midiTrack?.id) ||
+    session.tracks.find(track => track.type === "midi" && /piano performance/i.test(track.name));
+  recordButton.addEventListener("click", () => {
+    midiArmed = !midiArmed;
+    if (midiArmed) {
+      midiTrack = findMidiTrack();
+      if (!midiTrack) {
+        session.recordHistory("Create piano MIDI performance track");
+        midiTrack = session.createTrack("midi", "Piano Performance");
+        midiTrack.midiNotes = [];
+      } else {
+        session.recordHistory("Record piano MIDI performance");
+      }
+      captureStartedAt = 0;
+      captureStartBar = Math.max(1, Number(session.playheadBar) || 1);
+      recordButton.textContent = "■ STOP MIDI RECORD";
+      recordButton.style.background = "linear-gradient(#ff9a9a,#b91f2a)";
+      recordButton.style.color = "#fff";
+      status.textContent = "MIDI armed · play the keys to capture notes.";
+    } else {
+      recordButton.textContent = "● ARM MIDI RECORD";
+      recordButton.style.background = "linear-gradient(#f1d49c,#a87531)";
+      recordButton.style.color = "#17130d";
+      status.textContent = "MIDI capture stopped · notes saved in the shared session.";
+      session.scheduleProjectAutosave();
+      session.render?.();
+    }
+  });
+  notes.forEach(([label,pitch,frequency]) => {
     const button = document.createElement("button");
     button.type = "button";
     button.textContent = label;
     button.setAttribute("aria-label", label + " piano note");
     button.style.cssText = "min-width:0;min-height:150px;border:1px solid #aeb3bd;border-radius:0 0 9px 9px;background:linear-gradient(#fff,#dfe2e8);color:#151821;font-size:13px;font-weight:bold;box-shadow:inset 0 -8px 0 rgba(0,0,0,.08);touch-action:manipulation";
     let pointerHeld = false;
+    let note = null;
+    let noteAudio = null;
     button.addEventListener("pointerdown", async event => {
       event.preventDefault();
       pointerHeld = true;
       try {
         const audio = await StudioAudioEngine.resume();
         if (!pointerHeld || !audio || audio.state !== "running") return;
+        noteAudio = audio;
         const oscillator = audio.createOscillator();
         const envelope = audio.createGain();
         oscillator.type = "triangle";
@@ -320,19 +360,46 @@ function createPianoPanel() {
         oscillator.start(audio.currentTime);
         button._studioActiveNote = { oscillator, envelope, audio };
         button.style.transform = "translateY(2px)";
+        if (midiArmed && midiTrack) {
+          if (!captureStartedAt) {
+            captureStartedAt = audio.currentTime;
+            captureStartBar = Math.max(1, Number(session.playheadBar) || 1);
+          }
+          const elapsed = Math.max(0, audio.currentTime - captureStartedAt);
+          const bpm = Math.max(20, Number(session.getTempoAtBar(captureStartBar)) || 100);
+          const barSeconds = 240 / bpm;
+          const startBar = captureStartBar + elapsed / barSeconds;
+          note = {
+            id: "piano-midi-" + Date.now() + "-" + Math.floor(Math.random() * 100000),
+            pitch,
+            startBar,
+            lengthBars: 0.125,
+            velocity: 0.8
+          };
+          midiTrack.midiNotes = Array.isArray(midiTrack.midiNotes) ? midiTrack.midiNotes : [];
+          midiTrack.midiNotes.push(note);
+          status.textContent = "Capturing MIDI · " + label + " · " + midiTrack.midiNotes.length + " notes";
+        }
       } catch (error) {
-        console.error("LAMBO CITY piano audio error:", error);
+        status.textContent = "Piano audio error: " + (error?.message || error);
       }
     });
     const release = () => {
       pointerHeld = false;
-      const note = button._studioActiveNote;
-      if (note) {
-        const now = note.audio.currentTime;
-        note.envelope.gain.cancelScheduledValues(now);
-        note.envelope.gain.setTargetAtTime(0.0001, now, 0.035);
-        try { note.oscillator.stop(now + 0.16); } catch {}
+      const active = button._studioActiveNote;
+      if (active) {
+        const now = active.audio.currentTime;
+        active.envelope.gain.cancelScheduledValues(now);
+        active.envelope.gain.setTargetAtTime(0.0001, now, 0.035);
+        try { active.oscillator.stop(now + 0.16); } catch {}
         button._studioActiveNote = null;
+      }
+      if (note && noteAudio && midiTrack) {
+        const bpm = Math.max(20, Number(session.getTempoAtBar(note.startBar)) || 100);
+        const durationBars = Math.max(0.0625, (noteAudio.currentTime - (captureStartedAt + (note.startBar - captureStartBar) * (240 / bpm))) / (240 / bpm));
+        note.lengthBars = Math.min(4, durationBars);
+        session.scheduleProjectAutosave();
+        note = null;
       }
       button.style.transform = "";
     };
