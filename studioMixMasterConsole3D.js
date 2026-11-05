@@ -212,11 +212,11 @@ export default {
       const target=hit.object;
       const index=target.userData.channelIndex;
       const track=StudioMultitrackWorkspace.tracks[index];
-      if(target.userData.control==="faderSurface"&&track){this.dragging={index};this.setFaderFromHit(hit.point,index);event.preventDefault();}
-      else if(target.userData.control==="mute"&&track){track.muted=!track.muted;StudioMultitrackWorkspace.arrangementPlayback?.syncTrackState(StudioMultitrackWorkspace.tracks);}
-      else if(target.userData.control==="solo"&&track){track.solo=!track.solo;StudioMultitrackWorkspace.arrangementPlayback?.syncTrackState(StudioMultitrackWorkspace.tracks);}
-      else if(target.userData.control==="pan"&&track){const local=target.parent.worldToLocal(hit.point.clone());track.pan=clamp(local.x/.05,-1,1);StudioMultitrackWorkspace.arrangementPlayback?.setTrackPan(track.id,track.pan);StudioMultitrackWorkspace.scheduleProjectAutosave();}
-      else if(target.userData.control==="masterFader"){const local=master.worldToLocal(hit.point.clone());const value=clamp(100-(local.z-.455)/.31*100,0,100);StudioAudioEngine.setMasterVolume(value/100);}
+      if(target.userData.control==="faderSurface"&&track){StudioMultitrackWorkspace.recordHistory("Track volume");this.dragging={index};this.setFaderFromHit(hit.point,index);event.preventDefault();}
+      else if(target.userData.control==="mute"&&track){StudioMultitrackWorkspace.recordHistory("Toggle mute");track.muted=!track.muted;StudioMultitrackWorkspace.arrangementPlayback?.syncTrackState(StudioMultitrackWorkspace.tracks);StudioMultitrackWorkspace.scheduleProjectAutosave();}
+      else if(target.userData.control==="solo"&&track){StudioMultitrackWorkspace.recordHistory("Toggle solo");track.solo=!track.solo;StudioMultitrackWorkspace.arrangementPlayback?.syncTrackState(StudioMultitrackWorkspace.tracks);StudioMultitrackWorkspace.scheduleProjectAutosave();}
+      else if(target.userData.control==="pan"&&track){StudioMultitrackWorkspace.recordHistory("Track pan");const local=target.parent.worldToLocal(hit.point.clone());track.pan=clamp(local.x/.05,-1,1);StudioMultitrackWorkspace.arrangementPlayback?.setTrackPan(track.id,track.pan);StudioMultitrackWorkspace.scheduleProjectAutosave();}
+      else if(target.userData.control==="masterFader"){StudioMultitrackWorkspace.recordHistory("Master volume");const local=master.worldToLocal(hit.point.clone());const value=clamp(100-(local.z-.455)/.31*100,0,100);StudioAudioEngine.setMasterVolume(value/100);StudioMultitrackWorkspace.scheduleProjectAutosave();}
     };
     this.pointerMove=event=>{
       if(!this.dragging||!this.renderer?.domElement)return;
