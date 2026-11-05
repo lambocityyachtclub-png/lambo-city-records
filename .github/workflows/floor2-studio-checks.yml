@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - "main.js"
+      - "hud.js"
       - "engine.js"
       - "studioMixMasterConsole3D.js"
       - "floor2LiveDrummer.js"
@@ -73,6 +74,7 @@ on:
   pull_request:
     paths:
       - "main.js"
+      - "hud.js"
       - "engine.js"
       - "studioMixMasterConsole3D.js"
       - "floor2LiveDrummer.js"
