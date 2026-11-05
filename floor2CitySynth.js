@@ -197,6 +197,20 @@ export default {
     station.userData.citySynthReady=true;
     const gold=goldMaterial();
     const dark=new THREE.MeshStandardMaterial({color:0x10131a,metalness:.68,roughness:.24});
+    const blackKeyMaterial=new THREE.MeshStandardMaterial({color:0x080a0e,metalness:.55,roughness:.19});
+    const blackKeySpecs=[
+      [0,61,277.18],[1,63,311.13],[3,66,369.99],[4,68,415.30],[5,70,466.16],
+      [7,73,554.37],[8,75,622.25],[10,78,739.99],[11,80,830.61],[12,82,932.33],[14,85,1108.73]
+    ];
+    blackKeySpecs.forEach(([after,pitch,frequency])=>{
+      const key=new THREE.Mesh(new THREE.BoxGeometry(.12,.13,.32),blackKeyMaterial);
+      key.name="floor2CitySynthBlackKey"+pitch;
+      key.position.set(3.35+(after+.5)*.22,1.18,-3.32);
+      key.userData.pianoPitch=pitch;
+      key.userData.pianoFrequency=frequency;
+      key.userData.pianoKeyIndex=after*2+1;
+      station.add(key);
+    });
     const x=5.25,y=1.18,z=-3.62;
     const panel=new THREE.Mesh(new THREE.BoxGeometry(3.72,.10,.54),gold);
     panel.name="floor2CitySynthGoldControlSurface";
@@ -220,16 +234,17 @@ export default {
       const ring=new THREE.Mesh(new THREE.TorusGeometry(.09,.009,5,24),new THREE.MeshBasicMaterial({color:[0x4ce4db,0x4e9eff,0x9b6bff,0xf16be2][angle]}));
       ring.rotation.x=-Math.PI/2;ring.position.set(knob.position.x,y+.06,knob.position.z);station.add(ring);
     }
-    for(let i=0;i<16;i++){
-      const led=new THREE.Mesh(new THREE.BoxGeometry(.19,.018,.025),new THREE.MeshBasicMaterial({color:new THREE.Color().setHSL(.54-i*.025,.9,.55),transparent:true,opacity:.35}));
-      led.position.set(5.25-1.90+i*.22,1.145,-2.76);
+    for(let i=0;i<32;i++){
+      const led=new THREE.Mesh(new THREE.BoxGeometry(.085,.018,.025),new THREE.MeshBasicMaterial({color:new THREE.Color().setHSL(.54-i*.014,.9,.55),transparent:true,opacity:.35}));
+      led.position.set(3.35+i*.11,1.145,-2.76);
       station.add(led);this.leds.push(led);
     }
     const plaque=new THREE.Mesh(new THREE.BoxGeometry(1.10,.045,.13),dark);
     plaque.position.set(x+1.18,y+.09,z-.13);station.add(plaque);
     this.noteHandler=event=>{
       const pitch=Number(event.detail?.pitch);
-      const index=pitch-60;
+      const requestedIndex=Number(event.detail?.keyIndex);
+      const index=Number.isFinite(requestedIndex)?requestedIndex:Math.round((pitch-60)*2);
       if(index>=0&&index<this.leds.length){
         this.leds[index].material.opacity=event.detail.active?1:.35;
         this.leds[index].material.emissive=new THREE.Color(0x1d9db0);
