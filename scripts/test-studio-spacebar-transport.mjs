@@ -12,7 +12,11 @@ assert.match(app, /event\.code !== "Space"/);
 assert.match(app, /multitrack\.playAll\(\)/);
 assert.match(app, /multitrack\.stopAll\(\)/);
 assert.match(app, /startSessionPlayback\(\)/);
-assert.match(app, /beatLab\.stop\(\)/);\nassert.match(app, /data-global-transport="click"/);\nassert.match(app, /CLICK OFF/);\nassert.match(app, /toggleSessionMetronome/);\nassert.doesNotMatch(app, /const useArrangement =/);
+assert.match(app, /beatLab\.stop\(\)/);
+assert.match(app, /data-global-transport="click"/);
+assert.match(app, /CLICK OFF/);
+assert.match(app, /toggleSessionMetronome/);
+assert.doesNotMatch(app, /const useArrangement =/);
 assert.match(app, /document\.removeEventListener\("keydown", this\.handleStudioKeydown\)/);
 
 assert.doesNotMatch(beatLab, /if \(event\.code === "Space"\)/);
