@@ -79,7 +79,7 @@ export function createCitySynthPanel({ session = StudioMultitrackWorkspace } = {
       filter.connect(envelope);
       envelope.connect(StudioAudioEngine.master || audio.destination);
       oscillator.start(audio.currentTime);
-      const record = { oscillator, envelope, audio, startedAt:audio.currentTime, midi:null };
+      const record = { oscillator, filter, envelope, audio, startedAt:audio.currentTime, midi:null };
       activeNotes.set(note.pitch, record);
       button.classList.add("active");
       window.dispatchEvent(new CustomEvent("lc-city-synth-note", { detail:{ pitch:note.pitch, active:true } }));
@@ -157,7 +157,7 @@ export function createCitySynthPanel({ session = StudioMultitrackWorkspace } = {
   });
   root.querySelector("[data-synth-waveform]").addEventListener("change",event=>{settings.waveform=event.target.value;status.textContent="Oscillator waveform: "+settings.waveform.toUpperCase();});
   root.querySelector("[data-synth-volume]").addEventListener("input",event=>{settings.volume=Number(event.target.value)/100;activeNotes.forEach(note=>note.envelope.gain.setTargetAtTime(settings.volume,note.audio.currentTime,.015));});
-  root.querySelector("[data-synth-filter]").addEventListener("input",event=>{settings.filter=Number(event.target.value);activeNotes.forEach(note=>{});});
+  root.querySelector("[data-synth-filter]").addEventListener("input",event=>{settings.filter=Number(event.target.value);activeNotes.forEach(note=>note.filter.frequency.setTargetAtTime(settings.filter,note.audio.currentTime,.02));});
   root.querySelector("[data-synth-detune]").addEventListener("input",event=>{settings.detune=Number(event.target.value);activeNotes.forEach(note=>note.oscillator.detune.setTargetAtTime(settings.detune,note.audio.currentTime,.015));});
   root.querySelectorAll("[data-synth-knob]").forEach(label=>{
     const input=label.querySelector("input");
@@ -168,7 +168,7 @@ export function createCitySynthPanel({ session = StudioMultitrackWorkspace } = {
       if(key==="resonance")settings.resonance=Number(input.value);
       if(key==="octave")settings.octave=Number(input.value);
       activeNotes.forEach(note=>{
-        if(key==="resonance")note.oscillator.detune.setTargetAtTime(settings.detune,note.audio.currentTime,.015);
+        if(key==="resonance")note.filter.Q.setTargetAtTime(settings.resonance,note.audio.currentTime,.02);
       });
     });
   });
@@ -238,19 +238,26 @@ export default {
     window.addEventListener("lc-city-synth-note",this.noteHandler);
   },
   update(){
-    if(!this.screenContext||!this.screenCanvas)return;
-    const ctx=this.screenContext;
     const meter=StudioAudioEngine.getMasterMeter?.()||{peak:0,rms:0};
-    ctx.fillStyle="#070c16";ctx.fillRect(0,0,512,128);
-    ctx.fillStyle="#9efaff";ctx.font="bold 16px Arial";ctx.fillText("SOUND MONITOR",16,20);
-    const peak=Math.max(0,Math.min(1,meter.peak||0));
-    for(let i=0;i<42;i++){
-      const wave=(Math.sin(i*.72+performance.now()*.004)*.25+.25+peak*.5);
-      const h=6+wave*78;
-      ctx.fillStyle=i<14?"#43dce9":i<28?"#9a65f4":"#ef5bc4";
-      ctx.fillRect(16+i*11,104-h,6,h);
+    const draw=(ctx,width,height)=>{
+      ctx.fillStyle="#070c16";ctx.fillRect(0,0,width,height);
+      ctx.fillStyle="#9efaff";ctx.font="bold "+Math.max(10,Math.round(height*.12))+"px Arial";ctx.fillText("SOUND MONITOR",12,18);
+      const peak=Math.max(0,Math.min(1,meter.peak||0));
+      for(let i=0;i<42;i++){
+        const wave=(Math.sin(i*.72+performance.now()*.004)*.25+.25+peak*.5);
+        const h=5+wave*(height*.62);
+        ctx.fillStyle=i<14?"#43dce9":i<28?"#9a65f4":"#ef5bc4";
+        ctx.fillRect(12+i*(width-24)/42,height-12-h,Math.max(2,width/80),h);
+      }
+    };
+    if(this.screenContext&&this.screenCanvas){
+      draw(this.screenContext,this.screenCanvas.width,this.screenCanvas.height);
+      this.screenTexture.needsUpdate=true;
     }
-    this.screenTexture.needsUpdate=true;
+    if(activePanel?.waveform){
+      const ctx=activePanel.waveform.getContext("2d");
+      if(ctx)draw(ctx,activePanel.waveform.width,activePanel.waveform.height);
+    }
   },
   destroy(){
     if(this.noteHandler)window.removeEventListener("lc-city-synth-note",this.noteHandler);
