@@ -16,6 +16,8 @@ on:
       - "studioDAWBeatLabPanel.js"
       - "studioDAWEditPanel.js"
       - "studioDAWSessionTemplates.js"
+      - "studioDAWSessionLayouts.js"
+      - "scripts/test-daw-session-layouts.mjs"
       - "studioDAWTimeline.js"
       - "studioDAWArrangementPlayback.js"
       - "studioMetronome.js"
@@ -127,6 +129,7 @@ jobs:
             studioDAWBeatLabPanel.js \
             studioDAWEditPanel.js \
             studioDAWSessionTemplates.js \
+            studioDAWSessionLayouts.js \
             studioDAWTimeline.js \
             studioDAWArrangementPlayback.js \
             studioMetronome.js \
@@ -168,6 +171,9 @@ jobs:
 
       - name: Test DAW session starter templates
         run: node --experimental-default-type=module scripts/test-daw-session-templates.mjs
+
+      - name: Test multi-genre session layouts
+        run: node --experimental-default-type=module scripts/test-daw-session-layouts.mjs
 
       - name: Test DAW arrangement playback and mixer
         run: node --experimental-default-type=module scripts/test-daw-arrangement-playback.mjs
