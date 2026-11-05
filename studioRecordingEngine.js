@@ -92,13 +92,14 @@ const StudioRecordingEngine = {
 
   activeTake: null,
   activeTrackTake: null,
+  activeTrackTakes: [],
   inputAnalyser: null,
   inputMeterBuffer: new Float32Array(512),
   takes: [],
   playback: null,
 
-  async startTrackRecording({ audio, trackId, vocalEffects, inputNode, pitchCorrectionNode, monitorInput = false, inputDeviceId = "" } = {}) {
-    if (this.activeTake || this.activeTrackTake) {
+  async startTrackRecording({ audio, trackId, vocalEffects, inputNode, pitchCorrectionNode, monitorInput = false, inputDeviceId = "", allowConcurrent = false } = {}) {
+    if (this.activeTake || (this.activeTrackTake && !allowConcurrent)) {
       throw new Error("Another studio recording is already in progress.");
     }
     if (!audio || audio.state !== "running") throw new Error("Start the studio audio before recording.");
@@ -164,8 +165,8 @@ const StudioRecordingEngine = {
       }
       const recorder = pcmRecorder || createRecorder(destination.stream);
       if (recorder.recorder) recorder.recorder.start();
-      this.activeTrackTake = {
-        id: `track-take-${Date.now()}`,
+      const take = {
+        id: `track-take-${Date.now()}-${trackId}`,
         trackId,
         startedAt: new Date().toISOString(),
         startedAtMs: Date.now(),
@@ -181,7 +182,9 @@ const StudioRecordingEngine = {
         pitchCorrectionNode,
         recorder
       };
-      return { id: this.activeTrackTake.id, trackId, startedAt: this.activeTrackTake.startedAt, recordingFormat: this.activeTrackTake.recordingFormat };
+      this.activeTrackTakes.push(take);
+      if (!this.activeTrackTake) this.activeTrackTake = take;
+      return { id: take.id, trackId, startedAt: take.startedAt, recordingFormat: take.recordingFormat };
     } catch (error) {
       try {
         if (pitchCorrectionNode && !inputNode) microphoneSource?.disconnect(pitchCorrectionNode);
@@ -211,10 +214,13 @@ const StudioRecordingEngine = {
     return Math.min(1, Math.sqrt(sum / samples.length) * 3.2);
   },
 
-  async stopTrackRecording() {
-    const take = this.activeTrackTake;
+  async stopTrackRecording(trackId = null) {
+    const take = trackId
+      ? this.activeTrackTakes.find(item => item.trackId === trackId)
+      : this.activeTrackTake;
     if (!take) throw new Error("There is no armed-track recording in progress.");
-    this.activeTrackTake = null;
+    this.activeTrackTakes = this.activeTrackTakes.filter(item => item !== take);
+    this.activeTrackTake = this.activeTrackTakes[0] || null;
     try {
       // Disconnect the capture feed before flushing so no new worklet frames
       // can arrive after the final PCM chunk has been acknowledged.
