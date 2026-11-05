@@ -140,6 +140,7 @@ const StudioDAWWorkspace = {
       <footer class="lc-daw-footer">
         <span>LAMBO CITY DIGITAL STUDIO</span>
         <div class="lc-daw-secondary-tools" aria-label="Additional studio tools">
+          <button type="button" data-daw-secondary="edit">BACK TO WORKFLOW</button>
           <button type="button" data-daw-secondary="mix">MIX & MASTER</button>
           <button type="button" data-daw-secondary="drums">LIVE DRUMMER</button>
         </div>
