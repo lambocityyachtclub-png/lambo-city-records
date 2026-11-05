@@ -49,6 +49,9 @@ The standalone entry reuses the existing production modules. It is not a second 
 **Code status: core workflow implemented and committed; hands-on iPad Safari / desktop verification remains. Automatic loopback latency measurement is still deferred.**
 
 - [x] Count-in / pre-roll with audible beat clicks before the armed track begins recording.
+- [x] Shared tempo-aware metronome with a CLICK ON/OFF transport control; accented downbeats follow session tempo and time-signature changes during arrangement playback and armed-track recording.
+- [x] Persist metronome enable/volume/accent settings in autosaved sessions and portable `.lcp` project packages, with regression coverage.
+- [ ] Verify click level, count-in alignment, tempo/meter changes, cycle playback, and recording behavior on iPad Safari and desktop.
 - [x] Punch-in at a selected bar and automatic punch-out at a selected bar; manual record/stop remains available.
 - [x] Optional microphone input monitoring, off by default; use headphones to avoid acoustic feedback.
 - [x] Multiple takes are retained as separate, vertically stacked take lanes on the armed track.
@@ -95,6 +98,23 @@ The standalone entry reuses the existing production modules. It is not a second 
 - [x] Session-based final WAV/MP3 master export and individual WAV stem export, including MIDI, automation, track processing, buses, sends, and master settings.
 - [ ] Verify automation playback, bus routing/sends, MIDI note timing, master stereo image, final WAV/MP3 output, stem alignment, and save/reopen on iPad Safari and desktop.
 - [ ] Replace the V1 oscillator voice with the planned richer instrument library and verify latency/audio performance on supported devices.
+
+## Professional-session readiness — finish wiring before final interface design
+
+The workflow research covers hip-hop beat production and vocal overdubs as well as conventional instrumental and full-band sessions. Keep the existing EDIT/MIX layout and visual identity intact while closing these capability gaps.
+
+- [x] Add the tempo-aware metronome engine and transport toggle without replacing the existing recording count-in.
+- [ ] Add a clean, uncompressed PCM recording path (preferably 24-bit WAV or 32-bit float capture) with a safe browser-compatible fallback; the current recorder uses browser MediaRecorder codecs.
+- [ ] Add selectable professional WAV export depth and sample rate; the current offline master renderer is fixed at 44.1 kHz / 16-bit PCM.
+- [ ] Add a dedicated master true-peak limiter and loudness/peak metering; current master processing includes compression but not a dedicated final limiter or loudness target workflow.
+- [ ] Add independent headphone/cue mixes and a practical monitor workflow; current microphone monitoring is a fixed direct-to-output path.
+- [ ] Replace the V1 oscillator piano voice with a richer sample-based instrument library, preserving MIDI note editing, session state, and mixer routing.
+- [ ] Expand starter layouts beyond vocal-processing presets to cover hip-hop beat production, vocal overdubs, and full-band / live-instrument tracking.
+- [ ] Complete Ambassador station/workspace routing through the same full-screen Studio open/return flow; preserve its design for the user's final visual pass.
+- [ ] Complete the remaining piano, drum, MIX, Ambassador, and Beat Lab interface wiring; do not redesign unfinished visual surfaces during this pass.
+- [ ] Run the full iPad Safari and desktop acceptance checklist before calling the Studio finished.
+
+The final visual pass remains separate: do not invent or lock the user's unfinished interface designs. All new controls and capabilities should use the shared session/audio core and remain accessible to the final interface layer.
 
 ## Build rules
 1. Preserve the approved EDIT visual design unless HERO explicitly asks for a redesign.
