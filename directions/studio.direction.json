@@ -1,0 +1,88 @@
+{
+  "schema": "lambo-city-system-direction",
+  "version": 1,
+  "system": {
+    "id": "studio",
+    "name": "LAMBO CITY Records Studio",
+    "status": "in-discovery",
+    "questionnaireProgress": {
+      "purposeAndMission": "answered",
+      "remainingCoreQuestions": 13
+    }
+  },
+  "ownerDirection": {
+    "purposeAndMission": "Create a professional, industry-level music production studio accessible from LAMBOCITYRECORDS.com on an iPad or other supported device, allowing artists and producers anywhere to record, edit, mix, master, and complete release-quality songs. The Studio is the digital headquarters of LAMBO CITY Records and should give artists the tools, confidence, and experience of recording in an exclusive major-label studio. It should help artists hear their work with a polished, professional sound and feel valued, supported, and like stars.",
+    "qualityAmbition": [
+      "Aim for professional, release-ready recording, mixing, and mastering capability.",
+      "Provide a complete artist and producer workflow, not a generic beat-making toy.",
+      "Offer curated, high-quality sound collections and useful production starting points.",
+      "Provide professional vocal tools including pitch correction, reverb, delay, and additional effects.",
+      "Support the creative character, musicality, and soul associated with great records."
+    ],
+    "experienceVision": [
+      "Open LAMBOCITYRECORDS.com on an iPad or supported device.",
+      "Tap Studio and enter the LAMBO CITY Records production environment.",
+      "Record and produce music with professional tools in one accessible workspace.",
+      "Hear polished mixes and masters and have a path to complete songs.",
+      "Feel like a valued artist recording at the LAMBO CITY Records headquarters."
+    ],
+    "designProtection": {
+      "editInterface": "PROTECTED. The current EDIT interface design, layout, and visual identity are approved by the owner and must not be redesigned or replaced.",
+      "allowedImprovements": [
+        "Improve functionality, precision, controls, responsiveness, feedback, accessibility, and reliability.",
+        "Add restrained luxury details and realistic studio equipment detail without changing the approved EDIT design or disrupting its workflow.",
+        "Improve the underlying systems while preserving familiar placement and behavior."
+      ],
+      "otherInterfaces": "Piano, drums/MPC, and MIX & MASTER need their own dedicated interfaces and may be developed further because their designs are not yet considered final."
+    },
+    "systemDirection": {
+      "edit": "Preserve current design; improve the production and editing capabilities underneath it.",
+      "mixAndMaster": "Build a dedicated professional mixing and mastering interface.",
+      "piano": "Develop a dedicated, improved piano and instrument interface.",
+      "drumsAndMPC": "Develop dedicated drum and MPC interfaces with clear, complementary purposes.",
+      "recordingAndVocals": "Provide an end-to-end vocal and recording workflow with professional effects and monitoring.",
+      "soundLibrary": "Create curated, detailed, original sound banks with high-quality production character and accessible starting points."
+    },
+    "labelAndCommunityVision": {
+      "role": "The Studio is the digital headquarters and artist-development environment for LAMBO CITY Records.",
+      "longTermCommunity": [
+        "Artists and producers from different places can participate in the LAMBO CITY Records ecosystem.",
+        "Artists can have their own name, profile, in-world character, skins, and outfits.",
+        "The environment should help artists feel welcomed, supported, and presented like stars.",
+        "Future opportunities may include LAMBO CITY Radio and other label-related pathways."
+      ],
+      "royaltyAndRightsVision": "The owner envisions future pathways for eligible artists and works to participate in music-rights and royalty systems, potentially involving PROs such as ASCAP or BMI. This requires separate rights, ownership, metadata, registration, distribution, and legal workflows; Studio access or a recording alone must never be represented as a guarantee of royalties or chart success.",
+      "phaseStatus": "Long-term product vision. Online collaboration, accounts, persistent artist profiles, and community features require a separate phase decision because existing project direction keeps the initial world single-player and defers accounts/backend/multiplayer."
+    },
+    "creativeReferences": {
+      "inspirationOnly": [
+        "Pharrell Williams",
+        "Dr. Dre",
+        "DJ Mustard",
+        "Swizz Beatz",
+        "DJ Battlecat",
+        "Motown and major-label recording culture"
+      ],
+      "rule": "Use these as broad creative and production-quality references only. Do not imitate protected recordings, copy proprietary presets, or use unlicensed samples. Develop an original LAMBO CITY sound identity."
+    }
+  },
+  "openDecisions": [
+    "Define the complete artist workflow from entering Studio through finishing and exporting a song.",
+    "Decide how the long-term online co-op and artist-profile vision should be phased relative to the current single-player foundation.",
+    "Define the professional acceptance standard for recording, mixing, mastering, latency, and exports.",
+    "Define which features are essential for the first complete Studio release versus later expansion."
+  ],
+  "protectionRules": [
+    "Do not redesign the approved EDIT interface.",
+    "Do not replace working audio engines or create duplicate project/transport systems.",
+    "Inspect current modules before making changes.",
+    "Develop piano, drums/MPC, and MIX & MASTER as dedicated interfaces connected to shared production services.",
+    "Do not promise chart placement, commercial success, or royalty eligibility.",
+    "Require owner approval before changing the Studio's approved visual direction or expanding into accounts, backend, or multiplayer."
+  ],
+  "approval": {
+    "status": "draft",
+    "approvedByOwner": false,
+    "note": "Captures the owner's first direction answer. This is not yet a complete or approved Studio specification."
+  }
+}
