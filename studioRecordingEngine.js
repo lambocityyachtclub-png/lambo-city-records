@@ -216,7 +216,7 @@ const StudioRecordingEngine = {
 
   async stopTrackRecording(trackId = null) {
     const take = trackId
-      ? this.activeTrackTakes.find(item => item.trackId === trackId)
+      ? (this.activeTrackTakes.find(item => item.trackId === trackId) || (this.activeTrackTake?.trackId === trackId ? this.activeTrackTake : null))
       : this.activeTrackTake;
     if (!take) throw new Error("There is no armed-track recording in progress.");
     this.activeTrackTakes = this.activeTrackTakes.filter(item => item !== take);
