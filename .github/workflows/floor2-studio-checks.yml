@@ -77,6 +77,7 @@ on:
       - "studioDAWArrangementPlayback.js"
       - "studioMidiFile.js"
       - "scripts/test-studio-midi-file.mjs"
+      - "scripts/test-studio-multitrack-recording.mjs"
       - "studioDAWExport.js"
       - "studioDAWSessionStore.js"
       - "studioMultitrackWorkspace.js"
