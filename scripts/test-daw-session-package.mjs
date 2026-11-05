@@ -36,6 +36,9 @@ const session = {
     volume: 84,
     pan: -0.25,
     inputSource: "mic",
+    inputDeviceId: "studio-interface-input",
+    inputChannel: 1,
+    inputLatencyMs: 14,
     eq: { low: -1.5, mid: 2, high: 1 },
     compression: { threshold: -18, ratio: 2.5 },
     effects: { delayTime: 0.42, delayFeedback: 0.3, delayMix: 0.25, reverbMix: 0.4, reverbDecay: 3.2, pitchCorrection: { enabled: true, root: 9, scale: "minor", amount: 85, speedMs: 18 } },
@@ -66,6 +69,9 @@ assert.deepEqual(imported.dawSession.masterSettings, { volume: 90, stereoWidth: 
 assert.equal(imported.dawSession.templateId, "hard-tuned-melodic");
 assert.equal(imported.dawSession.templateName, "Hard-Tuned Melodic");
 assert.equal(imported.dawSession.tracks[0].inputSource, "mic");
+assert.equal(imported.dawSession.tracks[0].inputDeviceId, "studio-interface-input");
+assert.equal(imported.dawSession.tracks[0].inputChannel, 1);
+assert.equal(imported.dawSession.tracks[0].inputLatencyMs, 14);
 assert.equal(imported.dawSession.tracks[0].eq.mid, 2);
 assert.equal(imported.dawSession.tracks[0].compression.ratio, 2.5);
 assert.equal(imported.dawSession.tracks[0].effects.delayMix, 0.25);
@@ -93,6 +99,10 @@ assert.throws(() => exportSongProjectPackage(invalidMetronome), /metronome setti
 const invalidLimiter = structuredClone(project);
 invalidLimiter.dawSession.masterSettings.limiterCeilingDb = -9;
 assert.throws(() => exportSongProjectPackage(invalidLimiter), /master limiter settings are invalid/);
+
+const invalidChannel = structuredClone(project);
+invalidChannel.dawSession.tracks[0].inputChannel = 32;
+assert.throws(() => exportSongProjectPackage(invalidChannel), /track settings are invalid/);
 
 const invalidPan = structuredClone(project);
 invalidPan.dawSession.tracks[0].pan = 2;
