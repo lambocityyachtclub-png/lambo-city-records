@@ -7,7 +7,8 @@
     "status": "in-discovery",
     "questionnaireProgress": {
       "purposeAndMission": "answered",
-      "remainingCoreQuestions": 13
+      "remainingCoreQuestions": 12,
+      "centralWorkspaceAndNavigation": "answered"
     }
   },
   "ownerDirection": {
@@ -64,10 +65,29 @@
         "Motown and major-label recording culture"
       ],
       "rule": "Use these as broad creative and production-quality references only. Do not imitate protected recordings, copy proprietary presets, or use unlicensed samples. Develop an original LAMBO CITY sound identity."
+    },
+    "workspaceArchitecture": {
+      "selectedOption": 3,
+      "name": "Central Studio headquarters with dedicated connected workspaces",
+      "entryExperience": "Artists enter one central LAMBO CITY Records Studio headquarters, where they can see and continue their current projects.",
+      "dedicatedWorkspaces": [
+        "EDIT",
+        "MIX & MASTER",
+        "Piano",
+        "MPC / Drums",
+        "Recording"
+      ],
+      "sharedSessionRule": "All workspaces connect to the same song, project, recordings, transport, and shared production core. Switching workspaces must not create a separate song or lose session state.",
+      "designRules": [
+        "Preserve the approved EDIT interface design and layout.",
+        "Develop dedicated interfaces for workspaces whose designs are not final.",
+        "Make navigation between workspaces clear and keep the artist oriented within the same Studio project."
+      ],
+      "ownerApproval": "The owner explicitly selected Option 3 on 2026-11-04."
     }
   },
   "openDecisions": [
-    "Define the complete artist workflow from entering Studio through finishing and exporting a song.",
+    "Define the detailed artist journey from entering the central Studio headquarters through creating, recording, editing, mixing, mastering, and exporting a finished song.",
     "Decide how the long-term online co-op and artist-profile vision should be phased relative to the current single-player foundation.",
     "Define the professional acceptance standard for recording, mixing, mastering, latency, and exports.",
     "Define which features are essential for the first complete Studio release versus later expansion."
@@ -83,6 +103,6 @@
   "approval": {
     "status": "draft",
     "approvedByOwner": false,
-    "note": "Captures the owner's first direction answer. This is not yet a complete or approved Studio specification."
+    "note": "Captures the owner's first two direction answers. This is not yet a complete or approved Studio specification."
   }
 }
