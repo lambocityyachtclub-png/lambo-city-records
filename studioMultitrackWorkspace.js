@@ -1562,11 +1562,12 @@ const StudioMultitrackWorkspace = {
         takeNumber: track.clips.filter(clip => clip.takeGroupId === track.id + "-takes-" + this.recordingStartBar).length + 1,
         takeProtected: false,
         latencyCompensationMs: latencyMs,
+        recordingFormat: take.recordingFormat || "Browser MediaRecorder",
         createdAt: take.startedAt
       });
       this.scheduleProjectAutosave();
       this.render();
-      this.status("Take " + track.clips[track.clips.length - 1].takeNumber + " saved to " + track.name + " at bar " + this.recordingStartBar + ".");
+      this.status("Take " + track.clips[track.clips.length - 1].takeNumber + " saved to " + track.name + " at bar " + this.recordingStartBar + " · " + (take.recordingFormat || "Browser MediaRecorder") + ".");
       return true;
     } catch (error) {
       this.status("RECORDING SAVE ERROR: " + (error?.message || error));
