@@ -493,14 +493,6 @@ this.handleStudioKeydown = (event) => {
     return;
   }
 
- if (event.code === "Space") {
-  event.preventDefault();
-
-  StudioMultitrackWorkspace.togglePlayback();
-
-  return;
-}
-
   if (event.key.toLowerCase() === "r") {
     if (target instanceof HTMLElement && target.closest("button")) {
       return;
