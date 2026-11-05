@@ -7,8 +7,9 @@
     "status": "in-discovery",
     "questionnaireProgress": {
       "purposeAndMission": "answered",
-      "remainingCoreQuestions": 12,
-      "centralWorkspaceAndNavigation": "answered"
+      "remainingCoreQuestions": 11,
+      "centralWorkspaceAndNavigation": "answered",
+      "collaborationModel": "answered"
     }
   },
   "ownerDirection": {
@@ -84,10 +85,27 @@
         "Make navigation between workspaces clear and keep the artist oriented within the same Studio project."
       ],
       "ownerApproval": "The owner explicitly selected Option 3 on 2026-11-04."
+    },
+    "labelCollaborationModel": {
+      "selectedOption": "C",
+      "name": "Real-time collaboration plus asynchronous project sharing",
+      "realTimeCollaboration": "Artists can invite other authorized artists or producers into the same Studio project and work together in real time.",
+      "asynchronousCollaboration": "Artists can share projects with collaborators who can contribute at different times, with changes saved and tracked safely.",
+      "artistIdentity": "The long-term experience includes individual artist identities and profiles, with in-world characters and customizable appearance.",
+      "phaseStatus": "Approved product direction and long-term target. Do not silently introduce accounts, backend, persistent profiles, shared cloud projects, or multiplayer into the current single-player foundation. Plan and approve those as a distinct architecture and delivery phase.",
+      "requiredFutureCapabilities": [
+        "Artist accounts and profiles",
+        "Project ownership and collaborator permissions",
+        "Secure project sharing and persistent storage",
+        "Real-time session synchronization and presence",
+        "Conflict handling, version history, and recovery",
+        "Audio recording and playback synchronization for live collaboration"
+      ],
+      "ownerApproval": "The owner explicitly selected Option C: both real-time collaboration and asynchronous project sharing, on 2026-11-04."
     }
   },
   "openDecisions": [
-    "Define the detailed artist journey from entering the central Studio headquarters through creating, recording, editing, mixing, mastering, and exporting a finished song.",
+    "Define the central Studio entrance and the artist journey from opening Studio through creating, recording, editing, mixing, mastering, and exporting a song.",
     "Decide how the long-term online co-op and artist-profile vision should be phased relative to the current single-player foundation.",
     "Define the professional acceptance standard for recording, mixing, mastering, latency, and exports.",
     "Define which features are essential for the first complete Studio release versus later expansion."
@@ -103,6 +121,6 @@
   "approval": {
     "status": "draft",
     "approvedByOwner": false,
-    "note": "Captures the owner's first two direction answers. This is not yet a complete or approved Studio specification."
+    "note": "Captures the owner's first three Studio direction answers. This is not yet a complete or approved Studio specification."
   }
 }
