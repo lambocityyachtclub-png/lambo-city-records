@@ -55,11 +55,14 @@ export function scheduleStudioMetronome(context, {
       envelope.connect(context.destination);
       oscillator.start(at);
       oscillator.stop(at + 0.06);
+      const scheduledClick = { source: oscillator, envelope };
       oscillator.onended = () => {
         try { oscillator.disconnect(); } catch {}
         try { envelope.disconnect(); } catch {}
+        const index = sources.indexOf(scheduledClick);
+        if (index >= 0) sources.splice(index, 1);
       };
-      sources.push(oscillator);
+      sources.push(scheduledClick);
     }
   }
 
@@ -67,10 +70,12 @@ export function scheduleStudioMetronome(context, {
 }
 
 export function stopStudioMetronome(sources = []) {
-  for (const source of sources.splice(0)) {
+  for (const click of sources.splice(0)) {
+    const source = click?.source || click;
     source.onended = null;
     try { source.stop(); } catch {}
     try { source.disconnect(); } catch {}
+    try { click?.envelope?.disconnect(); } catch {}
   }
 }
 
