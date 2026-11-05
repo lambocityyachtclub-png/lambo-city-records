@@ -1,29 +1,11 @@
 export default class Engine {
   constructor() {
     this.systems = {};
-    this.initializedSystems = new Set();
     this.lastTime = 0;
     this.context = {};
   }
   registerSystems(systems) {
     this.systems = systems;
-  }
-
-  // Used only for modules loaded after initial world startup.
-  initializeSystem(name, ...args) {
-    const system = this.systems[name];
-    if (!system || typeof system.init !== "function") return false;
-    if (this.initializedSystems.has(name)) return true;
-    try {
-      system.init(...args);
-      this.initializedSystems.add(name);
-      return true;
-    } catch (error) {
-      console.error("LAMBO CITY lazy system initialization failed:", name, error);
-      window.__lamboCitySystemErrors ??= [];
-      window.__lamboCitySystemErrors.push({ system: name, message: error?.message || String(error) });
-      return false;
-    }
   }
   init() {
     this.scene    = this.systems.scene?.init?.();
@@ -33,7 +15,6 @@ export default class Engine {
     this.context.camera   = this.camera;
     this.context.renderer = this.renderer;
     this.context.systems  = this.systems;
-    this.context.initializeSystem = this.initializeSystem.bind(this);
     this.systems.performanceMonitor?.init?.(this.renderer, this.context);
     this.systems.world?.init?.(this.scene);
     this.systems.water?.init?.(this.scene);
@@ -72,7 +53,26 @@ this.systems.recordsHQ?.init?.(this.scene);
 this.systems.recordsHQFoundation?.init?.(this.scene);
 this.systems.elevator?.init?.(this.scene);
 this.systems.recordsHQFloor1?.init?.(this.scene);
-// Floor 2 architecture and studio applications are loaded on demand.
+this.systems.recordsHQFloor2Studio?.init?.(this.scene);
+
+this.systems.floor2StudioApp?.init?.(
+  this.scene,
+  this.context
+);
+
+this.systems.floor2InstrumentApp?.init?.(
+  this.scene,
+  this.context
+);
+
+this.systems.floor2DrumStation?.init?.(
+  this.scene,
+  this.context
+);
+this.systems.floor2StudioNavigation?.init?.(
+  this.scene,
+  this.context
+);
 this.systems.recordsHQFloor3Executive?.init?.(this.scene);
 this.systems.recordsHQFloor3Details?.init?.(this.scene);
 this.systems.recordsHQFloor3Experience?.init?.(this.scene, this.context);
@@ -82,7 +82,12 @@ this.systems.recordsHQMediaDetails?.init?.(this.scene);
 this.systems.recordsHQMerchDetails?.init?.(this.scene);
 this.systems.recordsHQElevator?.init?.(this.scene);
 
-// Floor 2 session controls are initialized when Floor 2 is selected.
+// Session controls need the initialized renderer and the elevator arrival hook.
+this.systems.floor2StudioSession?.init?.(
+  this.scene,
+  this.context
+);
+
 this.systems.boardwalkOverlooks?.init?.(this.scene);
     this.systems.input?.init?.();
     this.systems.player?.init?.(this.scene);
