@@ -7,7 +7,7 @@
     "status": "in-discovery",
     "questionnaireProgress": {
       "purposeAndMission": "answered",
-      "remainingCoreQuestions": 10,
+      "remainingCoreQuestions": 9,
       "centralWorkspaceAndNavigation": "answered",
       "collaborationModel": "answered",
       "collaborationAccess": "answered",
@@ -18,7 +18,8 @@
       "artistProfilesAndSocialFollowing": "answered",
       "artistFollowingAndMessaging": "answered",
       "livingCityVision": "answered",
-      "worldStyleAndEvolution": "answered"
+      "worldStyleAndEvolution": "answered",
+      "cityPlayerFreedomAndActivities": "answered"
     }
   },
   "ownerDirection": {
@@ -239,6 +240,13 @@
           "Preserve cinematic presentation and exclusive entertainment experiences as realism deepens."
         ],
         "ownerApproval": "The owner selected Option C and clarified on 2026-11-04 that the long-term development should increasingly scale toward Option A."
+      },
+      "playerExperience": {
+        "selectedOption": "C",
+        "exploration": "Players can freely explore the city and choose what to do without being forced through a mission or linear progression.",
+        "optionalStructure": "Offer optional missions, activities, events, invitations, and opportunities for players who want guidance or a reason to explore.",
+        "designPrinciple": "The city should feel alive and full of possibilities while preserving player freedom. Guided content should enrich exploration, never turn the city into a checklist.",
+        "ownerApproval": "The owner selected Option C on 2026-11-04."
       }
     }
   },
