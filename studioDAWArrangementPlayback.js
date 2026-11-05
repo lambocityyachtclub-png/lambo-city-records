@@ -39,6 +39,7 @@ export function createStudioDAWArrangementPlayback({
     transportTimer: null,
     metronomeSources: [],
     playbackContext: null,
+    playbackStartTime: null,
     playbackStartBar: 1,
     playbackEndBar: 1,
     lastPositionBar: 1,
@@ -102,6 +103,7 @@ export function createStudioDAWArrangementPlayback({
       this.transportTimer = null;
       stopStudioMetronome(this.metronomeSources);
       this.playbackContext = null;
+      this.playbackStartTime = null;
       this.playbackEndBar = 1;
       const active = this.sources.splice(0);
       active.forEach(({ source }) => {
@@ -326,6 +328,7 @@ export function createStudioDAWArrangementPlayback({
         const actualStartBar = activeLoop && (cursorBar < activeLoop.startBar || cursorBar >= activeLoop.endBar) ? activeLoop.startBar : cursorBar;
         const cursorSeconds = getSecondsAtBar(actualStartBar);
         const startTime = context.currentTime + 0.12;
+        this.playbackStartTime = startTime;
         let contentEndBar = actualStartBar;
         decoded.forEach(({ clip, buffer }) => {
           const clipStartBar = Math.max(1, Number(clip.startBar) || 1);
