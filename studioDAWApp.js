@@ -406,6 +406,8 @@ const StudioDAWApp = {
       button.textContent = playing ? "▶ SESSION PLAYING" : "▶ PLAY SESSION";
       button.setAttribute("aria-pressed", String(playing));
     });
+    const position = this.root?.querySelector("[data-global-position]");
+    if (position) position.textContent = "BAR " + String(Math.floor(StudioMultitrackWorkspace.playheadBar || 1)).padStart(2, "0");
     this.root?.querySelectorAll('[data-global-transport="click"]').forEach(button => {
       button.textContent = clickOn ? "CLICK ON" : "CLICK OFF";
       button.setAttribute("aria-pressed", String(clickOn));
@@ -462,6 +464,7 @@ const StudioDAWApp = {
         <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-right:auto;margin-left:16px">
           <button type="button" data-global-transport="play" style="min-height:42px;padding:10px 13px;border:1px solid #9be0b3;border-radius:7px;background:linear-gradient(#dff9e9,#71b98b);color:#082b17;font-weight:900">▶ PLAY SESSION</button>
           <button type="button" data-global-transport="stop" style="min-height:42px;padding:10px 13px;border:1px solid #f3b9b9;border-radius:7px;background:linear-gradient(#f5e1e1,#bd777b);color:#3c080c;font-weight:900">■ STOP</button>
+          <span data-global-position style="min-width:74px;padding:9px 10px;border:1px solid #52617a;border-radius:6px;background:#080e1b;color:#c5efff;font:900 12px monospace;text-align:center">BAR 01</span>
           <button type="button" data-global-transport="click" aria-pressed="false" style="min-height:42px;min-width:112px;padding:10px 13px;border:2px solid #e6bb69;border-radius:7px;background:linear-gradient(#e4e8ef,#929baa);color:#17213a;font-weight:900;letter-spacing:1px">CLICK OFF</button>
         </div>
         <button type="button" data-daw-return style="min-height:42px;padding:10px 13px;border:1px solid #665438;border-radius:7px;background:#171923;color:#f1d49c;font-weight:bold">${this.standalone ? "BACK TO LAMBO CITY" : "RETURN TO ROOM"}</button>
