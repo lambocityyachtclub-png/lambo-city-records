@@ -312,11 +312,14 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
         if (event.target.closest("input,textarea,select,button")) return;
         root.focus({ preventScroll: true });
       });
-      root.addEventListener("keydown", event => {
+      this.keydownHandler = event => {
+        // The EDIT screen can remain mounted while other studio stations are
+        // shown. Only handle shortcuts while EDIT is actually visible.
+        if (!root.isConnected || root.getClientRects().length === 0 || event.repeat) return;
         const target = event.target;
+        // Never steal keystrokes from text entry, selects, editable content,
+        // or focused buttons (which retain their native keyboard behavior).
         if (target && (target.matches("input,textarea,select") || target.isContentEditable)) return;
-        // Let focused buttons keep their native Enter/Space activation. The
-        // transport shortcuts apply while the EDIT workspace itself is focused.
         if (target && target.closest("button")) return;
         const workspace = StudioMultitrackWorkspace;
         const key = String(event.key || "").toLowerCase();
@@ -353,7 +356,8 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
           handled = true;
         }
         if (handled) this.render();
-      });
+      };
+      window.addEventListener("keydown", this.keydownHandler);
       root.addEventListener("click", async event => {
         const trackControl = event.target.closest("[data-track-control]");
         if (trackControl && root.contains(trackControl)) {
@@ -824,6 +828,8 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
 
     destroy() {
       this.stopInputMeter();
+      if (this.keydownHandler) window.removeEventListener("keydown", this.keydownHandler);
+      this.keydownHandler = null;
       if (this.beforeUnloadHandler) window.removeEventListener("beforeunload", this.beforeUnloadHandler);
       this.beforeUnloadHandler = null;
       if (StudioMultitrackWorkspace.root === this.root) { StudioMultitrackWorkspace.root = null; StudioMultitrackWorkspace.onRender = null; }
