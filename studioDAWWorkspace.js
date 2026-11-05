@@ -327,9 +327,17 @@ const StudioDAWWorkspace = {
         height:100dvh;min-height:0;display:flex;flex-direction:column;overflow:hidden;
       }
       #lambo-city-daw-workspace.lc-daw-edit-mode .lc-daw-header,
-      #lambo-city-daw-workspace.lc-daw-edit-mode .lc-daw-navigation,
       #lambo-city-daw-workspace.lc-daw-edit-mode .lc-daw-panel-heading,
       #lambo-city-daw-workspace.lc-daw-edit-mode .lc-daw-footer { display:none; }
+      #lambo-city-daw-workspace.lc-daw-edit-mode .lc-daw-navigation {
+        display:flex;
+        position:relative;
+        z-index:4;
+        flex:0 0 auto;
+        padding:8px 12px;
+        border-bottom:1px solid rgba(217,173,98,.28);
+        background:rgba(9,10,14,.96);
+      }
       #lambo-city-daw-workspace.lc-daw-edit-mode .lc-daw-main { flex:1;min-height:0;padding:0; }
       #lambo-city-daw-workspace.lc-daw-edit-mode .lc-daw-panel { height:100%;min-height:0;padding:0;overflow:hidden;border:0;border-radius:0;background:transparent; }
       #lambo-city-daw-workspace .lc-daw-secondary-tools {
