@@ -134,6 +134,7 @@ jobs:
             studioDAWTimeline.js \
             studioDAWArrangementPlayback.js \
             studioMetronome.js \
+            studioMidiFile.js \
             studioDAWExport.js \
             studioDAWSessionStore.js \
             studioMultitrackWorkspace.js \
@@ -184,6 +185,9 @@ jobs:
 
       - name: Test Studio metronome timing and meter changes
         run: node --experimental-default-type=module scripts/test-studio-metronome.mjs
+
+      - name: Test MIDI file import and export
+        run: node --experimental-default-type=module scripts/test-studio-midi-file.mjs
 
       - name: Test DAW MP3 encoder
         run: node --experimental-default-type=module scripts/test-daw-mp3-export.mjs
