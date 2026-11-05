@@ -3,6 +3,8 @@ import { readFile } from "node:fs/promises";
 
 const files = [
   "main.js",
+  "hud.js",
+  "floor2InstrumentApp.js",
   "engine.js",
   "studioDAWApp.js",
   "studioDAWWorkspace.js",
@@ -13,6 +15,7 @@ const files = [
   "floor2CitySynth.js",
   "studioDAWArrangementPlayback.js",
   "studioRecordingEngine.js",
+  "studioAudioEngine.js",
   "mpc-interface.js"
 ];
 const source = Object.fromEntries(await Promise.all(files.map(async file => [
@@ -60,6 +63,12 @@ assert.match(navigation,/view:\s*"edit"/);
 assert.doesNotMatch(navigation,/object:\s*stations\.(?:drumStation|instrumentStation|controlRoom)/);
 
 const app = source["studioDAWApp.js"];
+assert.match(source["hud.js"],/lc-live-drummer-score/);
+assert.match(source["hud.js"],/lc-live-drummer-state/);
+assert.match(app,/lc-live-drummer-state/);
+assert.match(source["floor2InstrumentApp.js"],/localHit\.x/);
+assert.match(source["floor2InstrumentApp.js"],/getTrackGain\("instrument"\)/);
+assert.match(source["floor2CitySynth.js"],/floor2CitySynthBlackKey/);
 assert.match(app,/createLiveDrummerPanel\(\{ beatLab: Floor2StudioApp \}\)/);
 assert.match(app,/createCitySynthPanel\(\{ session: StudioMultitrackWorkspace \}\)/);
 assert.match(app,/createVocalBoothPanel\(\{ beatLab: Floor2StudioApp \}\)/);
@@ -74,6 +83,10 @@ const playback = source["studioDAWArrangementPlayback.js"];
 assert.match(playback,/createAnalyser\(\)/);
 assert.match(playback,/getTrackMeter\(trackId\)/);
 const recording = source["studioRecordingEngine.js"];
+const audioEngine = source["studioAudioEngine.js"];
+assert.match(audioEngine,/instrument:\s*context\.createGain\(\)/);
+assert.match(audioEngine,/getInstrumentMeter\(\)/);
+assert.match(source["floor2CitySynth.js"],/getTrackGain\("instrument"\)/);
 assert.match(recording,/getInputWaveform\(\)/);
 
 assert.match(source["studioMixMasterConsole3D.js"],/getTrackMeter/);
