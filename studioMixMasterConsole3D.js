@@ -76,7 +76,7 @@ export default {
     for(let i=0;i<CHANNELS;i++){
       const x=startX+i*(stripWidth+gap);
       const strip=new THREE.Group();strip.name="mixChannelStrip"+(i+1);strip.position.set(x,.055,0);group.add(strip);
-      makeBox("channelPlate",stripWidth,.025,.90,channelMat,0,0,0,strip);
+      makeBox("channelPlate",stripWidth,.025,1.50,channelMat,0,0,0,strip);
       for(let slot=0;slot<4;slot++){
         makeBox("insertSlot",stripWidth*.78,.018,.055,blue,0,.023,-.37+slot*.07,strip);
       }
@@ -101,8 +101,8 @@ export default {
         const seg=new THREE.Mesh(new THREE.BoxGeometry(.025,.012,.018),meterMaterials[Math.min(4,Math.floor(s/3))]);
         seg.position.set(0,0,.135-s*.023);meterGroup.add(seg);segments.push(seg);
       }
-      const mute=makeBox("muteButton",.065,.025,.055,dark,-.04,.045,.82,strip);mute.userData.control="mute";mute.userData.channelIndex=i;
-      const solo=makeBox("soloButton",.065,.025,.055,dark,.04,.045,.82,strip);solo.userData.control="solo";solo.userData.channelIndex=i;
+      const mute=makeBox("muteButton",.065,.025,.055,dark,-.04,.045,.70,strip);mute.userData.control="mute";mute.userData.channelIndex=i;
+      const solo=makeBox("soloButton",.065,.025,.055,dark,.04,.045,.70,strip);solo.userData.control="solo";solo.userData.channelIndex=i;
       const label=makeBox("channelNameplate",stripWidth*.8,.015,.045,dark,0,.025,-.47,strip);
       label.userData.channelIndex=i;
       this.strips.push({strip,fader,meter:segments,mute,solo,pan,index:i});
@@ -148,7 +148,7 @@ export default {
       else if(target.userData.control==="mute"&&track){track.muted=!track.muted;StudioMultitrackWorkspace.arrangementPlayback?.syncTrackState(StudioMultitrackWorkspace.tracks);}
       else if(target.userData.control==="solo"&&track){track.solo=!track.solo;StudioMultitrackWorkspace.arrangementPlayback?.syncTrackState(StudioMultitrackWorkspace.tracks);}
       else if(target.userData.control==="pan"&&track){const local=target.parent.worldToLocal(hit.point.clone());track.pan=clamp(local.x/.05,-1,1);StudioMultitrackWorkspace.arrangementPlayback?.setTrackPan(track.id,track.pan);StudioMultitrackWorkspace.scheduleProjectAutosave();}
-      else if(target.userData.control==="masterFader"){const local=master.worldToLocal(hit.point.clone());const value=clamp(100-(local.z-.43)/.36*100,0,100);StudioAudioEngine.setMasterVolume(value/100);}
+      else if(target.userData.control==="masterFader"){const local=master.worldToLocal(hit.point.clone());const value=clamp(100-(local.z-.455)/.31*100,0,100);StudioAudioEngine.setMasterVolume(value/100);}
     };
     this.pointerMove=event=>{
       if(!this.dragging||!this.renderer?.domElement)return;
@@ -176,7 +176,7 @@ export default {
     this.strips.forEach(item=>{
       const track=tracks[item.index];if(!track)return;
       const volume=clamp(Number(track.volume??80),0,100);
-      item.fader.position.z=.43-(volume/100)*.36;
+      item.fader.position.z=.765-(volume/100)*.31;
       item.mute.material=track.muted?metal(0xb43b42,0x5d0a12,.4):metal(0x090c11);
       item.solo.material=track.solo?metal(0x36a66a,0x0c5328,.4):metal(0x090c11);
       const meter=StudioMultitrackWorkspace.arrangementPlayback?.getTrackMeter?.(track.id)||{peak:0};
@@ -186,7 +186,7 @@ export default {
     const master=StudioAudioEngine.getMasterMeter?.()||{peak:0};
     const active=Math.round(clamp(master.peak*24,0,16));
     this.masterSegments?.forEach((segment,index)=>{segment.visible=index%16>=16-active;});
-    if(this.masterFader)this.masterFader.position.z=.43-clamp(StudioAudioEngine.masterVolumeValue*100,0,100)/100*.36;
+    if(this.masterFader)this.masterFader.position.z=.765-clamp(StudioAudioEngine.masterVolumeValue*100,0,100)/100*.31;
   },
   destroy(){
     const canvas=this.renderer?.domElement;
