@@ -25,6 +25,8 @@ The standalone entry reuses the existing production modules. It is not a second 
 - [x] Delete a region to session trash and restore the last deleted item.
 - [x] Undo and redo region edits.
 - [x] Add keyboard shortcuts: Cmd/Ctrl+Z undo, Cmd/Ctrl+Shift+Z or Cmd/Ctrl+Y redo, Cmd/Ctrl+D duplicate, Delete/Backspace delete, and S split.
+- [x] Add one shared Spacebar Play/Stop transport across Beat Lab, MPC, piano, drums, EDIT, and MIX; stop active playback before starting another source.
+- [ ] Verify Spacebar Play/Stop with an iPad hardware keyboard and desktop keyboard in every Studio workspace.
 - [x] Record history only when a drag/trim actually changes a region, not when the user merely selects it.
 - [ ] Verify all operations on iPad Safari, desktop mouse/keyboard, and touch devices.
 - [ ] Verify undo/redo across split, trim, move, duplicate, delete, restore, and session save/reopen.
