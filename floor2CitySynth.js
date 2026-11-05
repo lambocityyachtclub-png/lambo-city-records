@@ -261,7 +261,10 @@ export default {
     };
     window.addEventListener("lc-city-synth-note",this.noteHandler);
   },
-  update(){
+  update(delta){
+    this.frameElapsed+=Math.max(0,Number(delta)||0);
+    if(this.frameElapsed<0.05)return;
+    this.frameElapsed=0;
     const meter=StudioAudioEngine.getMasterMeter?.()||{peak:0,rms:0};
     const draw=(ctx,width,height)=>{
       ctx.fillStyle="#070c16";ctx.fillRect(0,0,width,height);
