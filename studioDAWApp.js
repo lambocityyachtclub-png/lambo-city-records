@@ -13,11 +13,10 @@
 
 import StudioDAWWorkspace from "./studioDAWWorkspace.js";
 import Floor2StudioApp from "./floor2StudioApp.js";
-import Floor2InstrumentApp from "./floor2InstrumentApp.js";
-import Floor2DrumStation from "./floor2DrumStation.js";
 import MPCInterface from "./mpc-interface.js";
 import StudioAudioEngine from "./studioAudioEngine.js";
 import StudioSoundKit from "./studioSoundKit.js";
+import StudioRecordingEngine from "./studioRecordingEngine.js";
 import StudioMultitrackWorkspace from "./studioMultitrackWorkspace.js";
 import { createStudioDAWEditScreen } from "./studioDAWEditScreen.js";
 import {
@@ -150,18 +149,20 @@ function createMPCPanel({ beatLab, workspace } = {}) {
   return root;
 }
 
-function createDrumsPanel() {
+function createDrumsPanel({ beatLab } = {}) {
   const root = document.createElement("section");
   root.style.cssText = "display:grid;gap:18px;width:100%;color:#f4f1eb";
   root.innerHTML = `
     <div>
       <div style="color:#e6bb69;font-size:11px;letter-spacing:2px">LAMBO CITY RECORDS · DRUM ROOM</div>
       <h2 style="margin:8px 0;font-size:24px">DRUM PERFORMANCE</h2>
-      <p style="color:#a8a8b1;font-size:13px">Tap or click a drum pad to play through the shared studio mixer.</p>
+      <p style="color:#a8a8b1;font-size:13px">Tap or click a drum pad to play through the shared studio audio engine.</p>
     </div>
     <div data-drum-pads style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;max-width:620px"></div>
+    <div data-drum-status role="status" aria-live="polite" style="min-height:20px;color:#e6bb69;font-size:12px"></div>
   `;
   const pads = root.querySelector("[data-drum-pads]");
+  const status = message => { root.querySelector("[data-drum-status]").textContent = message; };
   [
     ["KICK","kick"],["SNARE","snare"],
     ["HI-HAT","hat"],["TOM","tom"],
@@ -171,10 +172,24 @@ function createDrumsPanel() {
     button.type = "button";
     button.textContent = label;
     button.style.cssText = "min-height:100px;border:1px solid #80643a;border-radius:12px;background:linear-gradient(145deg,#292b34,#11131a);color:#f1d49c;font-size:15px;font-weight:800;touch-action:manipulation";
-    button.addEventListener("pointerdown", event => {
+    button.addEventListener("pointerdown", async event => {
       event.preventDefault();
-      void Floor2DrumStation.playDrum(sound);
-      button.style.transform = "scale(.98)";
+      try {
+        const audio = await StudioAudioEngine.resume();
+        if (!audio || audio.state !== "running") return;
+        if (beatLab) {
+          if (!beatLab.noiseBuffer && typeof beatLab.createNoiseBuffer === "function") {
+            beatLab.noiseBuffer = beatLab.createNoiseBuffer();
+          }
+          beatLab.soundProfile = "mpc";
+        }
+        const channel = sound === "snare" ? "snare" : sound === "hat" || sound === "cymbal" ? "hat" : "kick";
+        StudioSoundKit.play(audio, "mpc", channel, audio.currentTime, beatLab?.noiseBuffer || null, StudioAudioEngine.getTrackGain(channel));
+        button.style.transform = "scale(.98)";
+        status(label + " triggered.");
+      } catch (error) {
+        status("DRUM AUDIO ERROR: " + (error?.message || error));
+      }
     });
     const release = () => { button.style.transform = ""; };
     button.addEventListener("pointerup", release);
@@ -197,6 +212,11 @@ function createVocalsPanel({ beatLab } = {}) {
     '<button type="button" data-vocal-action="stop-beat" style="min-height:44px;padding:11px 14px;border:1px solid #454958;border-radius:8px;background:#222631;color:white;font-weight:bold">STOP BEAT</button>',
     '<button type="button" data-vocal-action="record" style="min-height:44px;padding:11px 14px;border:1px solid #80643a;border-radius:8px;background:#594321;color:white;font-weight:bold">● RECORD</button>',
     '<button type="button" data-vocal-action="stop-recording" style="min-height:44px;padding:11px 14px;border:1px solid #454958;border-radius:8px;background:#222631;color:white;font-weight:bold">■ STOP RECORDING</button></div>',
+    '<section style="display:grid;gap:10px;padding:16px;border:1px solid #80643a;border-radius:12px;background:linear-gradient(145deg,#1b1a18,#10131a)">' +
+    '<strong style="color:#e6bb69;font-size:11px;letter-spacing:2px">VOICE NOTES · QUICK IDEA CAPTURE</strong>' +
+    '<p style="margin:0;color:#a8a8b1;font-size:12px;line-height:1.5">Capture a melody, lyric, hook, or production idea without starting a beat. Your original recording is saved as a clip in this song session.</p>' +
+    '<div style="display:flex;gap:9px;flex-wrap:wrap"><button type="button" data-vocal-action="quick-note-start" style="min-height:44px;padding:11px 14px;border:2px solid #d9ad62;border-radius:8px;background:linear-gradient(#f1d49c,#a87531);color:#17130d;font-weight:900">● RECORD VOICE NOTE</button><button type="button" data-vocal-action="quick-note-stop" style="min-height:44px;padding:11px 14px;border:1px solid #454958;border-radius:8px;background:#222631;color:white;font-weight:bold" disabled>■ SAVE VOICE NOTE</button></div>' +
+    '<div data-voice-note-status role="status" aria-live="polite" style="color:#e6bb69;font-size:12px">Voice Notes are stored locally in the current session for this V1 workflow.</div></section>',
     '<section style="display:grid;gap:16px;padding:16px;border:1px solid #45404a;border-radius:12px;background:#151821">',
     '<strong style="color:#e6bb69;font-size:11px;letter-spacing:2px">VOCAL EFFECTS</strong>',
     '<label style="display:grid;gap:7px;color:#c9c7c1;font-size:12px">DELAY MIX <input data-vocal-effect="delay" type="range" min="0" max="1" step="0.01" value="' + (beatLab?.vocalEffectSettings?.delay ?? 0) + '" style="width:100%;accent-color:#e6bb69"></label>',
@@ -207,6 +227,12 @@ function createVocalsPanel({ beatLab } = {}) {
     '<div data-vocal-status role="status" aria-live="polite" style="min-height:22px;color:#e6bb69;font-size:12px">Microphone workspace ready. Your browser will ask for microphone permission when you record.</div>'
   ].join("");
 
+  let quickNoteTrack = null;
+  let quickNoteActive = false;
+  const voiceNoteStatus = message => {
+    const node = root.querySelector("[data-voice-note-status]");
+    if (node) node.textContent = message;
+  };
   const status = message => {
     const node = root.querySelector("[data-vocal-status]");
     if (node) node.textContent = message;
@@ -217,6 +243,52 @@ function createVocalsPanel({ beatLab } = {}) {
     if (!button || !beatLab) return;
     try {
       switch (button.dataset.vocalAction) {
+        case "quick-note-start": {
+          if (quickNoteActive || StudioRecordingEngine.activeTake) {
+            voiceNoteStatus("Finish the current recording before starting a quick Voice Note.");
+            return;
+          }
+          const audio = await StudioAudioEngine.resume();
+          if (!audio || audio.state !== "running") throw new Error("Studio audio could not start.");
+          quickNoteTrack = StudioMultitrackWorkspace.tracks.find(track => track.type === "audio" && track.name === "Voice Notes");
+          if (!quickNoteTrack) {
+            StudioMultitrackWorkspace.recordHistory("Create Voice Notes track");
+            quickNoteTrack = StudioMultitrackWorkspace.createTrack("audio", "Voice Notes");
+          } else {
+            StudioMultitrackWorkspace.recordHistory("Record Voice Note");
+          }
+          await StudioRecordingEngine.startTrackRecording({ audio, trackId: quickNoteTrack.id });
+          quickNoteActive = true;
+          root.querySelector('[data-vocal-action="quick-note-start"]').disabled = true;
+          root.querySelector('[data-vocal-action="quick-note-stop"]').disabled = false;
+          voiceNoteStatus("Recording your idea… Tap SAVE VOICE NOTE when finished.");
+          break;
+        }
+        case "quick-note-stop": {
+          if (!quickNoteActive || !quickNoteTrack) return;
+          const take = await StudioRecordingEngine.stopTrackRecording(quickNoteTrack.id);
+          const clip = {
+            id: take.id,
+            name: "Voice Note · " + new Date().toLocaleString(),
+            blob: take.blob,
+            recordingFormat: take.recordingFormat,
+            durationMs: take.durationMs,
+            createdAt: new Date().toISOString(),
+            startBar: Math.max(1, Number(StudioMultitrackWorkspace.playheadBar) || 1),
+            lengthBars: Math.max(0.25, (take.durationMs / 1000) / (240 / Math.max(20, Number(StudioMultitrackWorkspace.getTempoAtBar(StudioMultitrackWorkspace.playheadBar)) || 100))),
+            objectUrl: null
+          };
+          if (clip.blob?.size) clip.objectUrl = URL.createObjectURL(clip.blob);
+          quickNoteTrack.clips.push(clip);
+          StudioMultitrackWorkspace.render();
+          StudioMultitrackWorkspace.scheduleProjectAutosave();
+          quickNoteActive = false;
+          root.querySelector('[data-vocal-action="quick-note-start"]').disabled = false;
+          root.querySelector('[data-vocal-action="quick-note-stop"]').disabled = true;
+          voiceNoteStatus("Voice Note saved to the shared song timeline as an original audio clip.");
+          quickNoteTrack = null;
+          break;
+        }
         case "start-beat":
           await beatLab.start();
           status("Beat playback started.");
@@ -270,30 +342,125 @@ function createVocalsPanel({ beatLab } = {}) {
   return root;
 }
 
-function createPianoPanel() {
+function createPianoPanel(session = StudioMultitrackWorkspace) {
   const root = document.createElement("section");
   root.style.cssText = "display:grid;gap:18px;width:100%;color:#f4f1eb";
   root.innerHTML = [
     '<div><div style="color:#e6bb69;font-size:11px;letter-spacing:2px">LAMBO CITY RECORDS · INSTRUMENT ROOM</div>',
     '<h2 style="margin:8px 0;font-size:24px">PIANO & KEYS</h2>',
-    '<p style="color:#a8a8b1;font-size:13px;line-height:1.6">Play notes with touch, mouse, or trackpad. This keyboard uses the same LAMBO CITY studio audio engine as the Beat Lab and drum station.</p></div>',
+    '<p style="color:#a8a8b1;font-size:13px;line-height:1.6">Play notes with touch, mouse, or trackpad. Arm MIDI capture to record an editable piano performance directly into this song session.</p></div>',
+    '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">',
+    '<button type="button" data-piano-midi-record style="min-height:44px;padding:11px 16px;border:2px solid #d8b36e;border-radius:8px;background:linear-gradient(#f1d49c,#a87531);color:#17130d;font-weight:900">● ARM MIDI RECORD</button>',
+    '<span data-piano-midi-status role="status" aria-live="polite" style="color:#e6bb69;font-size:12px">MIDI capture is off.</span></div>',
     '<div data-piano-keys style="display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:5px;min-height:180px;align-items:stretch"></div>',
-    '<div style="color:#8f95a4;font-size:11px">C major · One octave · Synthesized studio instrument</div>'
+    '<div style="color:#8f95a4;font-size:11px">C major · One octave · Recorded notes remain editable in MIX & MASTER piano roll and the shared session.</div>'
   ].join("");
-  const notes = [["C",261.63],["D",293.66],["E",329.63],["F",349.23],["G",392.00],["A",440.00],["B",493.88],["C",523.25]];
+  const notes = [["C",60,261.63],["D",62,293.66],["E",64,329.63],["F",65,349.23],["G",67,392.00],["A",69,440.00],["B",71,493.88],["C",72,523.25]];
   const keys = root.querySelector("[data-piano-keys]");
-  notes.forEach(([label,frequency]) => {
+  const recordButton = root.querySelector("[data-piano-midi-record]");
+  const status = root.querySelector("[data-piano-midi-status]");
+  let midiArmed = false;
+  let midiTrack = null;
+  let captureStartedAt = 0;
+  let captureStartBar = 1;
+  const findMidiTrack = () => session.tracks.find(track => track.id === midiTrack?.id) ||
+    session.tracks.find(track => track.type === "midi" && /piano performance/i.test(track.name));
+  recordButton.addEventListener("click", () => {
+    midiArmed = !midiArmed;
+    if (midiArmed) {
+      midiTrack = findMidiTrack();
+      if (!midiTrack) {
+        session.recordHistory("Create piano MIDI performance track");
+        midiTrack = session.createTrack("midi", "Piano Performance");
+        midiTrack.midiNotes = [];
+      } else {
+        session.recordHistory("Record piano MIDI performance");
+      }
+      captureStartedAt = 0;
+      captureStartBar = Math.max(1, Number(session.playheadBar) || 1);
+      recordButton.textContent = "■ STOP MIDI RECORD";
+      recordButton.style.background = "linear-gradient(#ff9a9a,#b91f2a)";
+      recordButton.style.color = "#fff";
+      status.textContent = "MIDI armed · play the keys to capture notes.";
+    } else {
+      recordButton.textContent = "● ARM MIDI RECORD";
+      recordButton.style.background = "linear-gradient(#f1d49c,#a87531)";
+      recordButton.style.color = "#17130d";
+      status.textContent = "MIDI capture stopped · notes saved in the shared session.";
+      session.scheduleProjectAutosave();
+      session.render?.();
+    }
+  });
+  notes.forEach(([label,pitch,frequency]) => {
     const button = document.createElement("button");
     button.type = "button";
     button.textContent = label;
     button.setAttribute("aria-label", label + " piano note");
     button.style.cssText = "min-width:0;min-height:150px;border:1px solid #aeb3bd;border-radius:0 0 9px 9px;background:linear-gradient(#fff,#dfe2e8);color:#151821;font-size:13px;font-weight:bold;box-shadow:inset 0 -8px 0 rgba(0,0,0,.08);touch-action:manipulation";
-    button.addEventListener("pointerdown", event => {
+    let pointerHeld = false;
+    let note = null;
+    let noteAudio = null;
+    button.addEventListener("pointerdown", async event => {
       event.preventDefault();
-      void Floor2InstrumentApp.playNote(frequency);
-      button.style.transform = "translateY(2px)";
+      pointerHeld = true;
+      try {
+        const audio = await StudioAudioEngine.resume();
+        if (!pointerHeld || !audio || audio.state !== "running") return;
+        noteAudio = audio;
+        const oscillator = audio.createOscillator();
+        const envelope = audio.createGain();
+        oscillator.type = "triangle";
+        oscillator.frequency.setValueAtTime(frequency, audio.currentTime);
+        envelope.gain.setValueAtTime(0.0001, audio.currentTime);
+        envelope.gain.exponentialRampToValueAtTime(0.16, audio.currentTime + 0.025);
+        oscillator.connect(envelope);
+        envelope.connect(StudioAudioEngine.master || audio.destination);
+        oscillator.start(audio.currentTime);
+        button._studioActiveNote = { oscillator, envelope, audio };
+        button.style.transform = "translateY(2px)";
+        if (midiArmed && midiTrack) {
+          if (!captureStartedAt) {
+            captureStartedAt = audio.currentTime;
+            captureStartBar = Math.max(1, Number(session.playheadBar) || 1);
+          }
+          const elapsed = Math.max(0, audio.currentTime - captureStartedAt);
+          const bpm = Math.max(20, Number(session.getTempoAtBar(captureStartBar)) || 100);
+          const barSeconds = 240 / bpm;
+          const startBar = captureStartBar + elapsed / barSeconds;
+          note = {
+            id: "piano-midi-" + Date.now() + "-" + Math.floor(Math.random() * 100000),
+            pitch,
+            startBar,
+            lengthBars: 0.125,
+            velocity: 0.8
+          };
+          midiTrack.midiNotes = Array.isArray(midiTrack.midiNotes) ? midiTrack.midiNotes : [];
+          midiTrack.midiNotes.push(note);
+          status.textContent = "Capturing MIDI · " + label + " · " + midiTrack.midiNotes.length + " notes";
+        }
+      } catch (error) {
+        status.textContent = "Piano audio error: " + (error?.message || error);
+      }
     });
-    const release = () => { button.style.transform = ""; };
+    const release = () => {
+      pointerHeld = false;
+      const active = button._studioActiveNote;
+      if (active) {
+        const now = active.audio.currentTime;
+        active.envelope.gain.cancelScheduledValues(now);
+        active.envelope.gain.setTargetAtTime(0.0001, now, 0.035);
+        try { active.oscillator.stop(now + 0.16); } catch {}
+        button._studioActiveNote = null;
+      }
+      if (note && noteAudio && midiTrack) {
+        const bpm = Math.max(20, Number(session.getTempoAtBar(note.startBar)) || 100);
+        const durationBars = Math.max(0.0625, (noteAudio.currentTime - (captureStartedAt + (note.startBar - captureStartBar) * (240 / bpm))) / (240 / bpm));
+        note.lengthBars = Math.min(4, durationBars);
+        session.scheduleProjectAutosave();
+        note = null;
+      }
+      button.style.transform = "";
+    };
     button.addEventListener("pointerup", release);
     button.addEventListener("pointercancel", release);
     button.addEventListener("pointerleave", release);
@@ -313,12 +480,80 @@ const StudioDAWApp = {
   pianoPanel: null,
   mpcPanel: null,
   drumsPanel: null,
+  vocalsPanel: null,
+  standalone: false,
+  handleStudioKeydown: null,
+  transportActionPending: false,
+  globalTransportHandlers: null,
 
-  open(initialView = "edit") {
+  async startSessionPlayback() {
+    if (this.transportActionPending) return false;
+    const beatLab = Floor2StudioApp;
+    const multitrack = StudioMultitrackWorkspace;
+    if (!beatLab || !multitrack) return false;
+    this.transportActionPending = true;
+    try {
+      if (beatLab.playing) beatLab.stop();
+      const started = await multitrack.playAll();
+      if (started) {
+        const sessionTempo = multitrack.getTempoAtBar(multitrack.playheadBar);
+        if (beatLab.pattern) beatLab.pattern.bpm = sessionTempo;
+        await beatLab.start({ startAtTime: multitrack.arrangementPlayback?.playbackStartTime });
+        if (!multitrack.isPlaying() && beatLab.playing) beatLab.stop();
+      }
+      this.syncTransportControls();
+      return Boolean(started);
+    } finally {
+      this.transportActionPending = false;
+      this.syncTransportControls();
+    }
+  },
+
+  stopSessionPlayback() {
+    StudioMultitrackWorkspace?.stopAll();
+    if (Floor2StudioApp?.playing) Floor2StudioApp.stop();
+    this.syncTransportControls();
+    return true;
+  },
+
+  async toggleSessionPlayback() {
+    if (this.transportActionPending || StudioMultitrackWorkspace.isPlaying() || Floor2StudioApp?.playing) {
+      this.stopSessionPlayback();
+      return false;
+    }
+    return this.startSessionPlayback();
+  },
+
+  async toggleSessionMetronome() {
+    const enabled = await StudioMultitrackWorkspace.toggleMetronome();
+    this.syncTransportControls();
+    this.editScreen?.renderHeader?.();
+    return enabled;
+  },
+
+  syncTransportControls() {
+    const playing = Boolean(StudioMultitrackWorkspace.isPlaying() || Floor2StudioApp?.playing);
+    const clickOn = Boolean(StudioMultitrackWorkspace.metronomeSettings?.enabled);
+    this.root?.querySelectorAll('[data-global-transport="play"]').forEach(button => {
+      button.textContent = playing ? "▶ SESSION PLAYING" : "▶ PLAY SESSION";
+      button.setAttribute("aria-pressed", String(playing));
+    });
+    const position = this.root?.querySelector("[data-global-position]");
+    if (position) position.textContent = "BAR " + String(Math.floor(StudioMultitrackWorkspace.playheadBar || 1)).padStart(2, "0");
+    this.root?.querySelectorAll('[data-global-transport="click"]').forEach(button => {
+      button.textContent = clickOn ? "CLICK ON" : "CLICK OFF";
+      button.setAttribute("aria-pressed", String(clickOn));
+      button.style.background = clickOn ? "linear-gradient(#f1d49c,#b8863b)" : "linear-gradient(#e4e8ef,#929baa)";
+    });
+  },
+
+  open(initialView = "edit", options = {}) {
     if (this.root?.isConnected) {
       this.workspace?.setView(initialView);
       return this.root;
     }
+
+    this.standalone = options.standalone === true;
 
     // Main application overlay.
     const root = document.createElement("div");
@@ -358,8 +593,15 @@ const StudioDAWApp = {
       </strong>
 
       <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button type="button" data-daw-return style="min-height:42px;padding:10px 13px;border:1px solid #665438;border-radius:7px;background:#171923;color:#f1d49c;font-weight:bold">RETURN TO ROOM</button>
-        <button type="button" data-daw-end style="min-height:42px;padding:10px 13px;border:1px solid #80643a;border-radius:7px;background:#201c16;color:#f1d49c;font-weight:bold">END SESSION</button>
+        <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-right:auto;margin-left:16px">
+          <button type="button" data-global-transport="play" style="min-height:42px;padding:10px 13px;border:1px solid #9be0b3;border-radius:7px;background:linear-gradient(#dff9e9,#71b98b);color:#082b17;font-weight:900">▶ PLAY SESSION</button>
+          <button type="button" data-global-transport="stop" style="min-height:42px;padding:10px 13px;border:1px solid #f3b9b9;border-radius:7px;background:linear-gradient(#f5e1e1,#bd777b);color:#3c080c;font-weight:900">■ STOP</button>
+          <button type="button" data-global-transport="record" style="min-height:42px;padding:10px 14px;border:2px solid #ff8585;border-radius:7px;background:linear-gradient(#ff7777,#b91f2a);color:#fff;font-weight:900">● RECORD</button>
+          <span data-global-position style="min-width:74px;padding:9px 10px;border:1px solid #52617a;border-radius:6px;background:#080e1b;color:#c5efff;font:900 12px monospace;text-align:center">BAR 01</span>
+          <button type="button" data-global-transport="click" aria-pressed="false" style="min-height:42px;min-width:112px;padding:10px 13px;border:2px solid #e6bb69;border-radius:7px;background:linear-gradient(#e4e8ef,#929baa);color:#17213a;font-weight:900;letter-spacing:1px">CLICK OFF</button>
+        </div>
+        <button type="button" data-daw-return style="min-height:42px;padding:10px 13px;border:1px solid #665438;border-radius:7px;background:#171923;color:#f1d49c;font-weight:bold">${this.standalone ? "BACK TO LAMBO CITY" : "RETURN TO ROOM"}</button>
+        ${this.standalone ? "" : '<button type="button" data-daw-end style="min-height:42px;padding:10px 13px;border:1px solid #80643a;border-radius:7px;background:#201c16;color:#f1d49c;font-weight:bold">END SESSION</button>'}
       </div>
     `;
 
@@ -377,6 +619,23 @@ const StudioDAWApp = {
     document.body.appendChild(root);
 
     this.root = root;
+    StudioMultitrackWorkspace.onTransportChange = () => {
+      if (!StudioMultitrackWorkspace.isPlaying() && Floor2StudioApp?.playing && !this.transportActionPending) {
+        Floor2StudioApp.stop();
+      }
+      this.syncTransportControls();
+    };
+    this.globalTransportHandlers = event => {
+      const button = event.target.closest("[data-global-transport]");
+      if (!button || !root.contains(button)) return;
+      event.preventDefault();
+      const action = button.dataset.globalTransport;
+      if (action === "play") void this.toggleSessionPlayback();
+      else if (action === "stop") this.editScreen?.root?.querySelector('[data-action="stop"]')?.click() || this.stopSessionPlayback();
+      else if (action === "record") this.editScreen?.root?.querySelector('[data-action="record"]')?.click();
+      else if (action === "click") void this.toggleSessionMetronome();
+    };
+    header.addEventListener("click", this.globalTransportHandlers);
 
     // Catch both the application exit button and
     // the original Beat Lab CLOSE button.
@@ -394,10 +653,13 @@ const StudioDAWApp = {
         event.stopPropagation();
         event.stopImmediatePropagation();
 
+        const standalone = this.standalone;
         this.close();
 
         if (endSession) {
           window.__lamboCityEndFloor2Session?.();
+        } else if (standalone) {
+          window.location.href = "./";
         } else {
           window.__lamboCityReturnToFloor2Room?.();
         }
@@ -424,6 +686,7 @@ const StudioDAWApp = {
           if (viewId === "mix") this.mixPanel?.refresh?.();
           if (viewId === "mpc" && !MPCInterface.isOpen()) {
             MPCInterface.open({
+              beatLab: Floor2StudioApp,
               onClose: () => {
                 if (this.workspace?.activeView === "mpc") {
                   this.workspace.setView("beatlab");
@@ -449,7 +712,7 @@ const StudioDAWApp = {
       this.beatLabPanel.mount(this.panelHost);
       this.workspace.setPanel("beatlab", this.panelHost);
 
-      this.drumsPanel = createDrumsPanel();
+      this.drumsPanel = createDrumsPanel({ beatLab: Floor2StudioApp });
       this.workspace.setPanel("drums", this.drumsPanel);
 
       // Connect the existing Multitrack Workspace
@@ -460,7 +723,9 @@ const StudioDAWApp = {
         beatLab: Floor2StudioApp,
         onExit: () => this.workspace?.setView("beatlab"),
         onPrevious: () => this.workspace?.setView("drums"),
-        onNext: () => this.workspace?.setView("mix")
+        onNext: () => this.workspace?.setView("mix"),
+        onTransportPlay: () => this.startSessionPlayback(),
+        onTransportStop: () => this.stopSessionPlayback()
       });
       const editWorkspace = this.editScreen.mount();
       this.workspace.setPanel("edit", editWorkspace);
@@ -468,9 +733,41 @@ const StudioDAWApp = {
         beatLab: Floor2StudioApp,
         workspace: this.workspace
       });
-      this.pianoPanel = createPianoPanel();
+      this.vocalsPanel = createVocalsPanel({ beatLab: Floor2StudioApp });
+      this.pianoPanel = createPianoPanel(StudioMultitrackWorkspace);
       this.workspace.setPanel("mix", this.mixPanel);
       this.workspace.setPanel("piano", this.pianoPanel);
+      this.workspace.setPanel("vocals", this.vocalsPanel);
+      this.syncTransportControls();
+
+      // One shared Spacebar transport for every Studio workspace.
+      // Text fields retain normal typing; buttons do not steal the DAW shortcut.
+      this.handleStudioKeydown = event => {
+        if (!this.root?.isConnected || event.code !== "Space" || event.repeat ||
+            event.ctrlKey || event.metaKey || event.altKey || event.shiftKey) return;
+
+        const target = event.target;
+        if (target instanceof HTMLElement &&
+            (target.isContentEditable || target.closest("input, textarea, select, [contenteditable='true']"))) {
+          return;
+        }
+
+        event.preventDefault();
+        if (this.transportActionPending) {
+          this.stopSessionPlayback();
+          return;
+        }
+
+        const beatLab = Floor2StudioApp;
+        const multitrack = StudioMultitrackWorkspace;
+        if (!beatLab || !multitrack) return;
+
+        void this.toggleSessionPlayback()
+          .then(playing => this.editScreen?.status(playing ? "Song session playing." : "Song session stopped."))
+          .catch(error => this.editScreen?.status("Session transport error: " + (error?.message || error)));
+      };
+
+      document.addEventListener("keydown", this.handleStudioKeydown);
 
       return root;
     } catch (error) {
@@ -486,6 +783,18 @@ const StudioDAWApp = {
   },
 
   close() {
+    this.stopSessionPlayback();
+    if (this.handleStudioKeydown) {
+      document.removeEventListener("keydown", this.handleStudioKeydown);
+      this.handleStudioKeydown = null;
+    }
+    this.transportActionPending = false;
+    if (StudioMultitrackWorkspace.onTransportChange) StudioMultitrackWorkspace.onTransportChange = null;
+    if (this.globalTransportHandlers) {
+      this.root?.querySelector("header")?.removeEventListener("click", this.globalTransportHandlers);
+      this.globalTransportHandlers = null;
+    }
+
     if (this.root && this.handleOverlayClick) {
       this.root.removeEventListener(
         "click",
@@ -518,8 +827,10 @@ const StudioDAWApp = {
     this.pianoPanel = null;
     this.mpcPanel = null;
     this.drumsPanel = null;
+    this.vocalsPanel = null;
     this.panelHost = null;
     this.handleOverlayClick = null;
+    this.standalone = false;
   }
 };
 

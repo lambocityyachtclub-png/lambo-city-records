@@ -18,6 +18,10 @@ import StudioMultitrackWorkspace from "./studioMultitrackWorkspace.js";
 import StudioRecordingEngine from "./studioRecordingEngine.js";
 import { renderStudioDAWTimeline } from "./studioDAWTimeline.js";
 import { renderStudioSessionToWav, downloadStudioWav, renderStudioSessionToMp3, downloadStudioMp3 } from "./studioDAWExport.js";
+import { createSongProject, saveSongProject } from "./studioSongProject.js";
+import { exportSongProjectPackage, importSongProjectPackage } from "./studioProjectPackage.js";
+import StudioMPCSampler from "./studioMPCSampler.js";
+import StudioMPCLibrary from "./studioMPCLibrary.js";
 
 const COLORS = {
   navy: "#0B1A4A",
@@ -41,7 +45,7 @@ function createButton(label, action, className) {
   return button;
 }
 
-export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext } = {}) {
+export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext, onTransportPlay, onTransportStop } = {}) {
   return {
     root: null,
     inputMeterFrame: null,
@@ -49,6 +53,8 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
     onExit,
     onPrevious,
     onNext,
+    onTransportPlay,
+    onTransportStop,
 
     mount() {
       if (this.root && this.root.isConnected) return this.root;
@@ -76,6 +82,7 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
         '#lc-premium-daw-edit-screen .lc-transport-control{width:auto;min-width:58px;height:43px;padding:0 9px;display:flex;align-items:center;justify-content:center;gap:5px;font-size:12px;font-weight:900;white-space:nowrap}',
         '#lc-premium-daw-edit-screen .lc-transport-control[data-action=play]{background:linear-gradient(180deg,#dff9e9,#71b98b);border-color:#e5fff0;color:#082b17}',
         '#lc-premium-daw-edit-screen .lc-transport-control[data-action=stop]{background:linear-gradient(180deg,#f5e1e1,#bd777b);border-color:#ffe5e5;color:#3c080c}',
+        '#lc-premium-daw-edit-screen .lc-transport-control[data-action=toggle-metronome]{min-width:112px;height:46px;padding:0 14px;border:2px solid #e6bb69;background:linear-gradient(180deg,#f1d49c,#b8863b);color:#241805;font-size:13px;font-weight:1000;letter-spacing:1.2px;box-shadow:0 0 0 2px #6c4c1d,0 0 12px #e6bb6955}#lc-premium-daw-edit-screen .lc-transport-control[data-action=toggle-metronome].active{background:linear-gradient(180deg,#ffe7a9,#d19a42);border-color:#fff5d8;color:#241805;box-shadow:0 0 0 2px #9b6d27,0 0 18px #f5c96f}',
         '#lc-premium-daw-edit-screen .lc-rec-wrap{display:grid;justify-items:center;gap:2px;flex:0 0 auto}',
         '#lc-premium-daw-edit-screen .lc-rec-label{font-size:8px;font-weight:900;letter-spacing:1px;color:#4b1018}',
         '#lc-premium-daw-edit-screen .lc-spacer{flex:1}',
@@ -151,6 +158,7 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
         '<div class="lc-rec-wrap"><div class="lc-rec-well"><button class="lc-rec" data-action="record" aria-label="Record to armed audio track" title="Record to the armed audio track">●</button></div><span class="lc-rec-label">RECORD</span></div>',
         '<button class="lc-metal-icon lc-transport-control" data-action="play" aria-label="Play arrangement" title="Play">▶ PLAY</button>',
         '<button class="lc-metal-icon lc-transport-control" data-action="stop" aria-label="Stop playback and recording" title="Stop playback and save the take">■ STOP</button>',
+        '<button class="lc-metal-icon lc-transport-control" data-action="toggle-metronome" aria-label="Toggle metronome click" title="Turn the tempo-synchronized metronome click on or off" aria-pressed="false">CLICK OFF</button>',
         '<div class="lc-lcd-wrap"><span>CLOCK</span><div class="lc-lcd" data-clock>100 BPM / 4/4</div><span data-save-state aria-live="polite">SAVED</span></div>',
         '<div class="lc-lcd-wrap"><span>GRID</span><div class="lc-gridset"><button type="button" title="Grid 1/4">¼</button><button type="button" title="Grid 1/8">⅛</button><button type="button" title="Grid 1/16">⅟₁₆</button></div></div>',
         '<button class="lc-metal-icon" data-action="previous-view" aria-label="Previous studio interface">←</button>',
@@ -173,7 +181,7 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
         '<button type="button" data-action="import-session">Import Session File</button>',
         '<button type="button" data-action="delete-session">Delete Saved Session</button>',
         '<button type="button" data-action="exit">Close EDIT</button>',
-        '<input data-session-file type="file" accept=".lcsession,.json,application/json" hidden>',
+        '<input data-session-file type="file" accept=".lcp,.lcsession,.json,application/json" hidden>',
         '</div>',
         '<div class="lc-main">',
         '<aside class="lc-inspector"><div class="lc-section-label">▸ TRACK / MIXER</div><div class="lc-strips" data-mixer-strips></div></aside>',
@@ -325,12 +333,7 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
         const key = String(event.key || "").toLowerCase();
         const modifier = event.metaKey || event.ctrlKey;
         let handled = false;
-        if (!modifier && (key === " " || key === "spacebar")) {
-          event.preventDefault();
-          workspace.togglePlayback();
-          this.status(workspace.isPlaying() ? "Playback running." : "Playback stopped.");
-          handled = true;
-        } else if (!modifier && key === "enter") {
+        if (!modifier && key === "enter") {
           event.preventDefault();
           workspace.stopAll();
           workspace.playheadBar = 1;
@@ -416,10 +419,15 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
             if (workspace.isTrackRecording()) this.startInputMeter();
             if (!workspace.pendingRecording && !workspace.isTrackRecording()) this.status("Recording did not start. Arm exactly one AUDIO track using its R button, then press RECORD again.");
           } else if (action === "play") {
-            await workspace.playAll();
-            this.status(workspace.isPlaying() ? "Playback running." : "Nothing to play yet. Record or import audio into a track first.");
+            if (this.onTransportPlay) await this.onTransportPlay();
+            else await workspace.playAll();
+            this.status(workspace.isPlaying() ? "Song session playing." : "The song session could not start.");
+          } else if (action === "toggle-metronome") {
+            workspace.toggleMetronome();
+            this.renderHeader();
           } else if (action === "stop") {
-            workspace.stopAll();
+            if (this.onTransportStop) this.onTransportStop();
+            else workspace.stopAll();
             if (workspace.pendingRecording) workspace.cancelScheduledRecording();
             if (workspace.isTrackRecording()) await workspace.stopArmedRecording();
             this.stopInputMeter();
@@ -525,15 +533,77 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
             await workspace.restoreSessionVersion(versions[choice - 1].versionId);
             this.render();
           } else if (action === "export-session") {
-            const data = await workspace.exportSession();
-            const blob = new Blob([JSON.stringify(data)], { type: "application/json" });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement("a");
-            link.href = url;
-            link.download = (workspace.activeProjectName || "lambo-city-song").replace(/[^a-z0-9-_]+/gi, "-") + ".lcsession";
-            link.click();
-            URL.revokeObjectURL(url);
-            this.status("Portable session file exported.");
+            button.disabled = true;
+            try {
+              const dawSession = await workspace.exportSession();
+              const activePattern = this.beatLab?.pattern;
+              let project = this.beatLab?.currentProject?.schemaVersion === 1
+                ? JSON.parse(JSON.stringify(this.beatLab.currentProject))
+                : createSongProject({
+                    title: workspace.activeProjectName || "Untitled Song",
+                    pattern: activePattern,
+                    soundProfile: this.beatLab?.soundProfile || "beatLab"
+                  });
+
+              project.metadata = {
+                ...(project.metadata || {}),
+                title: workspace.activeProjectName || project.metadata?.title || "Untitled Song",
+                updatedAt: new Date().toISOString()
+              };
+              project.settings = {
+                ...(project.settings || {}),
+                bpm: dawSession.tempo,
+                soundProfile: this.beatLab?.soundProfile === "mpc" ? "mpc" : "beatLab"
+              };
+              if (!Array.isArray(project.patterns)) project.patterns = [];
+              if (!project.arrangement || !Array.isArray(project.arrangement.sections)) {
+                project.arrangement = createSongProject({ title: project.metadata.title }).arrangement;
+              }
+
+              if (activePattern?.steps) {
+                // The portable project importer restores the first saved pattern
+                // as the active Beat Lab pattern. Put the current pattern first
+                // while preserving its ID so arrangement clips remain connected.
+                const activeSteps = JSON.stringify(activePattern.steps);
+                const existingIndex = project.patterns.findIndex(pattern =>
+                  JSON.stringify(pattern.steps) === activeSteps
+                );
+                const activeEntry = existingIndex >= 0
+                  ? project.patterns.splice(existingIndex, 1)[0]
+                  : {
+                      id: "pattern-" + Date.now(),
+                      name: "Current Beat",
+                      steps: JSON.parse(activeSteps)
+                    };
+                activeEntry.bpm = Math.max(60, Math.min(180, Number(dawSession.tempo) || Number(activePattern.bpm) || 100));
+                project.patterns.unshift(activeEntry);
+              }
+
+              project.dawSession = dawSession;
+              project.mpcSamplerState = StudioMPCSampler.exportState();
+              const sampleIds = [
+                ...(project.mpcPerformance?.events || []).map(event => event.sampleId),
+                ...Object.values(project.mpcSamplerState.assignments || {})
+              ].filter(Boolean);
+              project.mpcAssets = await StudioMPCSampler.exportAssets(sampleIds);
+              project.mpcLibraryAssignments = StudioMPCLibrary.exportAssignments();
+              project.mpcLibrarySounds = StudioMPCLibrary.exportAssignedSounds();
+
+              const packageText = exportSongProjectPackage(project);
+              const blob = new Blob([packageText], { type: "application/json" });
+              const url = URL.createObjectURL(blob);
+              const link = document.createElement("a");
+              const safeName = project.metadata.title.replace(/[^a-z0-9 _-]/gi, "").trim().replace(/\s+/g, "-") || "lambo-city-song";
+              link.href = url;
+              link.download = safeName + ".lcp";
+              document.body.appendChild(link);
+              link.click();
+              link.remove();
+              window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+              this.status("Complete LAMBO CITY project exported · .lcp");
+            } finally {
+              button.disabled = false;
+            }
           } else if (action === "import-session") {
             root.querySelector("[data-session-file]").click();
           } else if (action === "delete-session") {
@@ -623,17 +693,80 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
         const file = event.target.files && event.target.files[0];
         if (!file) return;
         try {
-          if (!await this.confirmReplaceUnsaved(workspace, "import a session file")) { event.target.value = ""; return; }
-          const session = JSON.parse(await file.text());
-          if (!workspace.validateSessionData(session)) throw new Error("The selected session file failed validation.");
-          workspace.importSession(session);
-          workspace.activeProjectName = session.projectName || "Imported Song";
+          if (!await this.confirmReplaceUnsaved(workspace, "import a project file")) { event.target.value = ""; return; }
+          if (file.size > 60000000) throw new Error("Project file exceeds the 60 MB import limit.");
+          const fileText = await file.text();
+          let project = null;
+
+          try {
+            project = importSongProjectPackage(fileText);
+          } catch (packageError) {
+            let legacySession;
+            try { legacySession = JSON.parse(fileText); }
+            catch { throw packageError; }
+            if (!workspace.validateSessionData(legacySession)) throw packageError;
+            workspace.importSession(legacySession);
+            workspace.activeProjectName = legacySession.projectName || "Imported Song";
+            workspace.activeProjectId = null;
+            workspace.dirty = true;
+            workspace.scheduleProjectAutosave();
+            this.render();
+            this.status("Imported legacy session · auto-save pending.");
+            event.target.value = "";
+            return;
+          }
+
+          if (project.dawSession && !workspace.validateSessionData(project.dawSession)) {
+            throw new Error("The DAW session inside this project file failed validation.");
+          }
+
+          project.id = "song-" + Date.now() + "-" + Math.random().toString(36).slice(2, 9);
+          project.metadata.updatedAt = new Date().toISOString();
+
+          if (Array.isArray(project.mpcAssets) && project.mpcAssets.length) {
+            await StudioMPCSampler.importAssets(project.mpcAssets);
+          }
+          if (project.mpcSamplerState) StudioMPCSampler.importState(project.mpcSamplerState);
+          if (project.mpcLibrarySounds) StudioMPCLibrary.importAssignedSounds(project.mpcLibrarySounds);
+          if (project.mpcLibraryAssignments) StudioMPCLibrary.importAssignments(project.mpcLibraryAssignments);
+
+          if (project.dawSession) {
+            workspace.importSession(project.dawSession);
+          } else {
+            workspace.resetSession({ tempo: project.settings?.bpm || 100 });
+          }
+
+          const title = project.metadata.title || "Imported Song";
+          workspace.activeProjectName = title;
           workspace.activeProjectId = null;
-          workspace.dirty = true;
-          workspace.scheduleProjectAutosave();
+
+          const storedProject = { ...project };
+          delete storedProject.dawSession;
+          delete storedProject.mpcAssets;
+          delete storedProject.mpcSamplerState;
+          delete storedProject.mpcLibraryAssignments;
+          delete storedProject.mpcLibrarySounds;
+          saveSongProject(storedProject);
+
+          if (this.beatLab) {
+            this.beatLab.currentProject = storedProject;
+            const firstPattern = project.patterns?.[0];
+            if (firstPattern) this.beatLab.pattern = JSON.parse(JSON.stringify(firstPattern));
+            this.beatLab.soundProfile = project.settings?.soundProfile === "mpc" ? "mpc" : "beatLab";
+            const bpmInput = this.beatLab.ui?.querySelector?.("[data-bpm]");
+            const bpmLabel = this.beatLab.ui?.querySelector?.("[data-bpm-label]");
+            const soundSelect = this.beatLab.ui?.querySelector?.("[data-sound-profile]");
+            if (bpmInput) bpmInput.value = String(workspace.tempo);
+            if (bpmLabel) bpmLabel.textContent = workspace.tempo + " BPM";
+            if (soundSelect) soundSelect.value = this.beatLab.soundProfile;
+          }
+
+          await workspace.saveSession(project.id, title, { createVersion: false });
           this.render();
-          this.status("Imported session: " + workspace.activeProjectName + " · auto-save pending.");
-        } catch (error) { this.status("SESSION IMPORT ERROR: " + (error && error.message ? error.message : error)); }
+          this.status("Imported complete LAMBO CITY project · " + title);
+        } catch (error) {
+          this.status("PROJECT IMPORT ERROR: " + (error && error.message ? error.message : error));
+        }
         event.target.value = "";
       });
 
@@ -672,6 +805,7 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
       if (snap) snap.value = workspace.snapMode || "bars";
       const meter = this.root.querySelector("[data-clock]");
       if (meter) meter.textContent = Math.round(workspace.getTempoAtBar(workspace.playheadBar)) + " BPM / " + (()=>{const m=workspace.getTimeSignatureAtBar(workspace.playheadBar);return m.numerator+"/"+m.denominator;})() + " · BAR " + Math.floor(workspace.playheadBar);
+      const click=this.root.querySelector('[data-action="toggle-metronome"]');if(click){click.textContent=workspace.metronomeSettings?.enabled?"CLICK ON":"CLICK OFF";click.classList.toggle("active",Boolean(workspace.metronomeSettings?.enabled));click.setAttribute("aria-pressed",String(Boolean(workspace.metronomeSettings?.enabled)));}
       const loopStart=this.root.querySelector("[data-loop-start]"),loopEnd=this.root.querySelector("[data-loop-end]"),cycle=this.root.querySelector('[data-action="toggle-cycle"]');
       if(loopStart)loopStart.value=String(workspace.loopRange.startBar);if(loopEnd)loopEnd.value=String(workspace.loopRange.endBar);
       if(cycle){cycle.textContent=workspace.loopRange.enabled?"CYCLE ON":"CYCLE OFF";cycle.classList.toggle("active",Boolean(workspace.loopRange.enabled));}

@@ -2,6 +2,18 @@
 
 This roadmap is the source of truth for the EDIT workspace build. Keep the approved EDIT screen design unchanged: **Simple on the surface. Powerful underneath.** Build the professional capabilities behind the existing interface, using the shared song session, recording engine, audio engine, and arrangement playback. Do not create a second DAW or duplicate session/audio systems.
 
+## Shared Studio delivery
+
+- [x] Add a standalone Studio entry at `/studio.html`, reusing the same DAW shell, EDIT/MIX session, Beat Lab, MPC, and shared audio modules.
+- [x] Keep Three.js out of the standalone Studio's static import graph. Floor 2 loads its 3D picking dependency only when a real scene is initialized.
+- [x] Route Floor 2 MPC selection through the same Studio workspace rather than opening a second independent navigation path.
+- [x] Use the shared audio engine for standalone piano and drum performance panels; drum pads can route through the existing mixer channels.
+- [x] Use the versioned `.lcp` project package for EDIT export/import, including the DAW session and MPC sample/library assets; retain legacy `.lcsession` import.
+- [ ] Verify standalone launch, project round-trip, MPC/piano/drum performance, recording, and navigation in iPad Safari and desktop browsers.
+- [ ] Verify the in-game Floor 2 station click path and Beat Lab initialization after the lazy Three.js change.
+
+The standalone entry reuses the existing production modules. It is not a second DAW, audio engine, or song model. Visual components that have not been approved remain unchanged.
+
 ## Stage 1 — Editing foundation
 **Code status: implemented; device/browser verification still required.**
 
@@ -13,6 +25,8 @@ This roadmap is the source of truth for the EDIT workspace build. Keep the appro
 - [x] Delete a region to session trash and restore the last deleted item.
 - [x] Undo and redo region edits.
 - [x] Add keyboard shortcuts: Cmd/Ctrl+Z undo, Cmd/Ctrl+Shift+Z or Cmd/Ctrl+Y redo, Cmd/Ctrl+D duplicate, Delete/Backspace delete, and S split.
+- [x] Add one shared Spacebar Play/Stop transport across Beat Lab, MPC, piano, drums, EDIT, and MIX; stop active playback before starting another source.
+- [ ] Verify Spacebar Play/Stop with an iPad hardware keyboard and desktop keyboard in every Studio workspace.
 - [x] Record history only when a drag/trim actually changes a region, not when the user merely selects it.
 - [ ] Verify all operations on iPad Safari, desktop mouse/keyboard, and touch devices.
 - [ ] Verify undo/redo across split, trim, move, duplicate, delete, restore, and session save/reopen.
@@ -35,6 +49,9 @@ This roadmap is the source of truth for the EDIT workspace build. Keep the appro
 **Code status: core workflow implemented and committed; hands-on iPad Safari / desktop verification remains. Automatic loopback latency measurement is still deferred.**
 
 - [x] Count-in / pre-roll with audible beat clicks before the armed track begins recording.
+- [x] Shared tempo-aware metronome with a CLICK ON/OFF transport control; accented downbeats follow session tempo and time-signature changes during arrangement playback and armed-track recording.
+- [x] Persist metronome enable/volume/accent settings in autosaved sessions and portable `.lcp` project packages, with regression coverage.
+- [ ] Verify click level, count-in alignment, tempo/meter changes, cycle playback, and recording behavior on iPad Safari and desktop.
 - [x] Punch-in at a selected bar and automatic punch-out at a selected bar; manual record/stop remains available.
 - [x] Optional microphone input monitoring, off by default; use headphones to avoid acoustic feedback.
 - [x] Multiple takes are retained as separate, vertically stacked take lanes on the armed track.
@@ -81,6 +98,34 @@ This roadmap is the source of truth for the EDIT workspace build. Keep the appro
 - [x] Session-based final WAV/MP3 master export and individual WAV stem export, including MIDI, automation, track processing, buses, sends, and master settings.
 - [ ] Verify automation playback, bus routing/sends, MIDI note timing, master stereo image, final WAV/MP3 output, stem alignment, and save/reopen on iPad Safari and desktop.
 - [ ] Replace the V1 oscillator voice with the planned richer instrument library and verify latency/audio performance on supported devices.
+
+## Professional-session readiness — finish wiring before final interface design
+
+The workflow research covers hip-hop beat production and vocal overdubs as well as conventional instrumental and full-band sessions. Keep the existing EDIT/MIX layout and visual identity intact while closing these capability gaps.
+
+- [x] Add the tempo-aware metronome engine and transport toggle without replacing the existing recording count-in.
+- [x] Add uncompressed 24-bit PCM WAV capture through AudioWorklet for both armed-track recording and the separate Beat Lab / vocal / master-stem recording path; retain MediaRecorder as the compatibility fallback.
+- [x] Add simultaneous armed-track recording across distinct Studio sources and per-track microphone device assignments; each armed input records to its own track, with independent PCM/MediaRecorder capture. Selectable per-track channels from multichannel microphone devices are also supported.
+- [ ] Verify PCM capture and fallback behavior on iPad Safari and desktop, including microphone, Beat Lab/MPC inputs, vocal effects, long takes, and save/reopen.
+- [x] Extend the WAV export engine to 16-, 24-, and 32-bit PCM at 44.1, 48, or 96 kHz; default master export is now 24-bit / 44.1 kHz, while the existing MP3 path remains intact.
+- [ ] Add visible WAV bit-depth and sample-rate choices during the final interface design pass.
+- [ ] Add a dedicated master true-peak limiter and loudness/peak metering; current master processing includes compression but not a dedicated final limiter or loudness target workflow.
+- [ ] Add independent headphone/cue mixes and a practical monitor workflow; current microphone monitoring is a fixed direct-to-output path.
+- [x] Add a bypassable sample-peak safety limiter, adjustable ceiling, and output peak/RMS meter; persist limiter settings and apply the same protection to live playback and offline master renders.
+- [ ] Add true-peak / LUFS measurement and final limiter controls during the mastering interface pass.
+- [ ] Extend automation beyond track volume to pan, effect parameters, and sends.
+- [x] Add Standard MIDI File Type 0/1 import/export, tempo/time-signature transfer, and non-destructive quantize, swing, and humanize operations on the shared instrument/MIDI tracks; retain note data in existing session and `.lcp` persistence.
+- [ ] Add MIDI import/export and groove-processing controls during the final interface design pass.
+- [ ] Replace the current 30 MB JSON/base64 portable-audio ceiling with a scalable binary or compressed `.lcp` package while retaining legacy import compatibility.
+- [ ] Replace the 15-minute offline-render ceiling with a memory-safe long-form export path.
+- [ ] Replace the V1 oscillator piano voice with a richer sample-based instrument library, preserving MIDI note editing, session state, and mixer routing.
+- [x] Add data-driven starter layouts for hip-hop beat production, hip-hop vocal overdubs, full-band tracking, and singer-songwriter sessions; keep vocal-processing chain presets as a separate capability.
+- [ ] Add the final layout-selection controls during the user's interface design pass.
+- [ ] Complete Ambassador station/workspace routing through the same full-screen Studio open/return flow; preserve its design for the user's final visual pass.
+- [ ] Complete the remaining piano, drum, MIX, Ambassador, and Beat Lab interface wiring; do not redesign unfinished visual surfaces during this pass.
+- [ ] Run the full iPad Safari and desktop acceptance checklist before calling the Studio finished.
+
+The final visual pass remains separate: do not invent or lock the user's unfinished interface designs. All new controls and capabilities should use the shared session/audio core and remain accessible to the final interface layer.
 
 ## Build rules
 1. Preserve the approved EDIT visual design unless HERO explicitly asks for a redesign.

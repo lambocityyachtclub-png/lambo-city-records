@@ -9,21 +9,35 @@ on:
       - "floor2DrumStation.js"
       - "recordsHQFloor2Studio.js"
       - "studioDAWApp.js"
+      - "studioStandalone.js"
       - "studioDAWEditScreen.js"
       - "studioMixMasterApp.js"
       - "studioDAWWorkspace.js"
+      - "studioDAWMidiEditor.js"
+      - "scripts/test-studio-vocal-piano-integration.mjs"
       - "studioDAWBeatLabPanel.js"
       - "studioDAWEditPanel.js"
       - "studioDAWSessionTemplates.js"
+      - "studioDAWSessionLayouts.js"
+      - "scripts/test-daw-session-layouts.mjs"
       - "studioDAWTimeline.js"
       - "studioDAWArrangementPlayback.js"
+      - "studioMidiFile.js"
+      - "studioMetronome.js"
+      - "scripts/test-studio-midi-file.mjs"
+      - "scripts/test-studio-multitrack-recording.mjs"
+      - "scripts/test-studio-metronome.mjs"
       - "studioDAWExport.js"
       - "studioDAWSessionStore.js"
       - "studioMultitrackWorkspace.js"
       - "studioAudioEngine.js"
+      - "scripts/test-studio-master-processing.mjs"
       - "studioSoundKit.js"
       - "studioAudioExport.js"
       - "studioRecordingEngine.js"
+      - "studioPCMRecorder.js"
+      - "studioPCMRecorderWorklet.js"
+      - "scripts/test-studio-pcm-recorder.mjs"
       - "studioVocalEffects.js"
       - "studioPitchCorrection.js"
       - "studioPitchCorrectionWorklet.js"
@@ -41,6 +55,10 @@ on:
       - "scripts/test-daw-session-templates.mjs"
       - "scripts/test-daw-arrangement-playback.mjs"
       - "scripts/test-daw-mp3-export.mjs"
+      - "scripts/test-daw-wav-export.mjs"
+      - "scripts/test-studio-standalone-boundary.mjs"
+      - "scripts/test-studio-spacebar-transport.mjs"
+      - "scripts/test-floor2-studio-navigation.mjs"
       - "vendor/lamejs/lame.min.js"
       - "THIRD_PARTY_NOTICES.md"
       - ".github/workflows/floor2-studio-checks.yml"
@@ -53,12 +71,16 @@ on:
       - "floor2DrumStation.js"
       - "recordsHQFloor2Studio.js"
       - "studioDAWApp.js"
+      - "studioStandalone.js"
       - "studioDAWWorkspace.js"
       - "studioDAWBeatLabPanel.js"
       - "studioDAWEditPanel.js"
       - "studioDAWSessionTemplates.js"
       - "studioDAWTimeline.js"
       - "studioDAWArrangementPlayback.js"
+      - "studioMidiFile.js"
+      - "scripts/test-studio-midi-file.mjs"
+      - "scripts/test-studio-multitrack-recording.mjs"
       - "studioDAWExport.js"
       - "studioDAWSessionStore.js"
       - "studioMultitrackWorkspace.js"
@@ -80,6 +102,7 @@ on:
       - "scripts/test-daw-session-templates.mjs"
       - "scripts/test-daw-arrangement-playback.mjs"
       - "scripts/test-daw-mp3-export.mjs"
+      - "scripts/test-studio-standalone-boundary.mjs"
       - "vendor/lamejs/lame.min.js"
       - "THIRD_PARTY_NOTICES.md"
       - ".github/workflows/floor2-studio-checks.yml"
@@ -109,14 +132,19 @@ jobs:
             floor2DrumStation.js \
             recordsHQFloor2Studio.js \
             studioDAWApp.js \
+            studioStandalone.js \
             studioDAWEditScreen.js \
             studioMixMasterApp.js \
             studioDAWWorkspace.js \
+            studioDAWMidiEditor.js \
             studioDAWBeatLabPanel.js \
             studioDAWEditPanel.js \
             studioDAWSessionTemplates.js \
+            studioDAWSessionLayouts.js \
             studioDAWTimeline.js \
             studioDAWArrangementPlayback.js \
+            studioMetronome.js \
+            studioMidiFile.js \
             studioDAWExport.js \
             studioDAWSessionStore.js \
             studioMultitrackWorkspace.js \
@@ -124,6 +152,8 @@ jobs:
             studioSoundKit.js \
             studioAudioExport.js \
             studioRecordingEngine.js \
+            studioPCMRecorder.js \
+            studioPCMRecorderWorklet.js \
             studioVocalEffects.js \
             studioPitchCorrection.js \
             studioPitchCorrectionWorklet.js \
@@ -154,11 +184,44 @@ jobs:
       - name: Test DAW session starter templates
         run: node --experimental-default-type=module scripts/test-daw-session-templates.mjs
 
+      - name: Test multi-genre session layouts
+        run: node --experimental-default-type=module scripts/test-daw-session-layouts.mjs
+
       - name: Test DAW arrangement playback and mixer
         run: node --experimental-default-type=module scripts/test-daw-arrangement-playback.mjs
+
+      - name: Test master limiter and output meter
+        run: node --experimental-default-type=module scripts/test-studio-master-processing.mjs
+
+      - name: Test Studio metronome timing and meter changes
+        run: node --experimental-default-type=module scripts/test-studio-metronome.mjs
+
+      - name: Test MIDI file import and export
+        run: node --experimental-default-type=module scripts/test-studio-midi-file.mjs
+
+      - name: Test simultaneous armed-track recording
+        run: node --experimental-default-type=module scripts/test-studio-multitrack-recording.mjs
 
       - name: Test DAW MP3 encoder
         run: node --experimental-default-type=module scripts/test-daw-mp3-export.mjs
 
+      - name: Test Studio WAV PCM export formats
+        run: node --experimental-default-type=module scripts/test-daw-wav-export.mjs
+
+      - name: Test uncompressed PCM recording adapter
+        run: node --experimental-default-type=module scripts/test-studio-pcm-recorder.mjs
+
       - name: Test vocal pitch correction DSP
         run: node --experimental-default-type=module scripts/test-studio-pitch-correction.mjs
+
+      - name: Test standalone Studio dependency boundary
+        run: node --experimental-default-type=module scripts/test-studio-standalone-boundary.mjs
+
+      - name: Test shared Studio Spacebar transport
+        run: node --experimental-default-type=module scripts/test-studio-spacebar-transport.mjs
+
+      - name: Test Floor 2 Studio station registration and navigation
+        run: node --experimental-default-type=module scripts/test-floor2-studio-navigation.mjs
+
+      - name: Test Vocal Booth, Voice Notes, and piano MIDI integration
+        run: node --experimental-default-type=module scripts/test-studio-vocal-piano-integration.mjs

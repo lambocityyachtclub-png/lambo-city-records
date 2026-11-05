@@ -25,6 +25,8 @@ const session = {
   format: "lambo-city-daw-session",
   version: 1,
   tempo: 112,
+  metronomeSettings: { enabled: true, volume: 0.12, accent: false },
+  masterSettings: { volume: 90, stereoWidth: 110, compressionRatio: 3.5, limiterEnabled: true, limiterCeilingDb: -1.2 },
   templateId: "hard-tuned-melodic",
   templateName: "Hard-Tuned Melodic",
   tracks: [{
@@ -34,6 +36,9 @@ const session = {
     volume: 84,
     pan: -0.25,
     inputSource: "mic",
+    inputDeviceId: "studio-interface-input",
+    inputChannel: 1,
+    inputLatencyMs: 14,
     eq: { low: -1.5, mid: 2, high: 1 },
     compression: { threshold: -18, ratio: 2.5 },
     effects: { delayTime: 0.42, delayFeedback: 0.3, delayMix: 0.25, reverbMix: 0.4, reverbDecay: 3.2, pitchCorrection: { enabled: true, root: 9, scale: "minor", amount: 85, speedMs: 18 } },
@@ -59,9 +64,14 @@ const project = { ...baseProject(), dawSession: session };
 const imported = importSongProjectPackage(exportSongProjectPackage(project));
 assert.deepEqual(imported.dawSession, session);
 assert.equal(imported.dawSession.tracks[0].clips[0].data, "AQIDBA==");
+assert.deepEqual(imported.dawSession.metronomeSettings, { enabled: true, volume: 0.12, accent: false });
+assert.deepEqual(imported.dawSession.masterSettings, { volume: 90, stereoWidth: 110, compressionRatio: 3.5, limiterEnabled: true, limiterCeilingDb: -1.2 });
 assert.equal(imported.dawSession.templateId, "hard-tuned-melodic");
 assert.equal(imported.dawSession.templateName, "Hard-Tuned Melodic");
 assert.equal(imported.dawSession.tracks[0].inputSource, "mic");
+assert.equal(imported.dawSession.tracks[0].inputDeviceId, "studio-interface-input");
+assert.equal(imported.dawSession.tracks[0].inputChannel, 1);
+assert.equal(imported.dawSession.tracks[0].inputLatencyMs, 14);
 assert.equal(imported.dawSession.tracks[0].eq.mid, 2);
 assert.equal(imported.dawSession.tracks[0].compression.ratio, 2.5);
 assert.equal(imported.dawSession.tracks[0].effects.delayMix, 0.25);
@@ -81,6 +91,18 @@ assert.equal(legacy.dawSession, undefined);
 const invalidInput = structuredClone(project);
 invalidInput.dawSession.tracks[0].inputSource = "unknown";
 assert.throws(() => exportSongProjectPackage(invalidInput), /track settings are invalid/);
+
+const invalidMetronome = structuredClone(project);
+invalidMetronome.dawSession.metronomeSettings.volume = 0.8;
+assert.throws(() => exportSongProjectPackage(invalidMetronome), /metronome settings are invalid/);
+
+const invalidLimiter = structuredClone(project);
+invalidLimiter.dawSession.masterSettings.limiterCeilingDb = -9;
+assert.throws(() => exportSongProjectPackage(invalidLimiter), /master limiter settings are invalid/);
+
+const invalidChannel = structuredClone(project);
+invalidChannel.dawSession.tracks[0].inputChannel = 32;
+assert.throws(() => exportSongProjectPackage(invalidChannel), /track settings are invalid/);
 
 const invalidPan = structuredClone(project);
 invalidPan.dawSession.tracks[0].pan = 2;

@@ -20,6 +20,9 @@ import StudioAudioExport from "./studioAudioExport.js";
 import StudioMPCSampler from "./studioMPCSampler.js";
 import StudioDAWSessionStore from "./studioDAWSessionStore.js";
 import { createStudioPitchCorrectionNode } from "./studioPitchCorrection.js";
+import { scheduleStudioMetronome, stopStudioMetronome } from "./studioMetronome.js";
+import { listStudioDAWSessionLayouts, applyStudioDAWSessionLayout } from "./studioDAWSessionLayouts.js";
+import { parseStudioMidi, createStudioMidiBlob, quantizeStudioMidiNotes, swingStudioMidiNotes, humanizeStudioMidiNotes } from "./studioMidiFile.js";
 
 import {
   createStudioDAWArrangementPlayback
@@ -78,6 +81,7 @@ const StudioMultitrackWorkspace = {
   sessionTemplateId: null,
   sessionTemplateName: null,
   arrangementPlayback: null,
+  onTransportChange: null,
   selectedClipId: null,
   selectedTrackId: null,
   zoomBarWidth: 72,
@@ -101,7 +105,12 @@ const StudioMultitrackWorkspace = {
   dirty: false,
   saveState: "saved",
   savePromise: null,
-  masterSettings: { volume: 100, stereoWidth: 100, compressionRatio: 3 },
+  masterSettings: { volume: 100, stereoWidth: 100, compressionRatio: 3, limiterEnabled: true, limiterCeilingDb: -1 },
+  metronomeSettings: { enabled: false, volume: 0.16, accent: true },
+  recordingMetronomeSources: [],
+  recordingMetronomeStartBar: 1,
+  recordingMetronomeStartTime: 0,
+  recordingMetronomeEndBar: 129,
 
   captureSnapshot() {
     return {
@@ -123,6 +132,7 @@ const StudioMultitrackWorkspace = {
       markers: this.markers.map(marker => ({ ...marker })),
       loopRange: { ...this.loopRange },
       masterSettings: { ...(this.masterSettings || {}) },
+      metronomeSettings: { ...(this.metronomeSettings || {}) },
       deletedItems: this.deletedItems.map(entry => ({ ...entry }))
     };
   },
@@ -153,10 +163,12 @@ const StudioMultitrackWorkspace = {
     this.timeSignatureChanges = (snapshot.timeSignatureChanges || []).map(point => ({ ...point }));
     this.markers = (snapshot.markers || []).map(marker => ({ ...marker }));
     this.loopRange = { ...(snapshot.loopRange || { enabled: false, startBar: 1, endBar: 9 }) };
-    this.masterSettings = { volume: Math.max(0, Math.min(100, Number(snapshot.masterSettings?.volume ?? 100))), stereoWidth: Math.max(0, Math.min(200, Number(snapshot.masterSettings?.stereoWidth ?? 100))), compressionRatio: Math.max(1, Math.min(8, Number(snapshot.masterSettings?.compressionRatio ?? 3))) };
+    this.masterSettings = { volume: Math.max(0, Math.min(100, Number(snapshot.masterSettings?.volume ?? 100))), stereoWidth: Math.max(0, Math.min(200, Number(snapshot.masterSettings?.stereoWidth ?? 100))), compressionRatio: Math.max(1, Math.min(8, Number(snapshot.masterSettings?.compressionRatio ?? 3))), limiterEnabled: snapshot.masterSettings?.limiterEnabled !== false, limiterCeilingDb: Math.max(-6, Math.min(0, Number(snapshot.masterSettings?.limiterCeilingDb ?? -1))) };
+    this.metronomeSettings = { enabled: Boolean(snapshot.metronomeSettings?.enabled), volume: Math.max(0, Math.min(0.4, Number(snapshot.metronomeSettings?.volume ?? 0.16))), accent: snapshot.metronomeSettings?.accent !== false };
     StudioAudioEngine.setMasterVolume(this.masterSettings.volume / 100);
     StudioAudioEngine.setStereoWidth(this.masterSettings.stereoWidth);
     StudioAudioEngine.setMasterCompressionRatio(this.masterSettings.compressionRatio);
+    StudioAudioEngine.setMasterLimiter(this.masterSettings.limiterEnabled, this.masterSettings.limiterCeilingDb);
     this.deletedItems = (snapshot.deletedItems || []).map(entry => ({ ...entry }));
     this.render();
   },
@@ -391,6 +403,103 @@ const StudioMultitrackWorkspace = {
     }, 850);
   },
 
+  async toggleMetronome() {
+    this.metronomeSettings = { ...(this.metronomeSettings || {}), enabled: !this.metronomeSettings?.enabled };
+    try {
+      this.arrangementPlayback?.refreshMetronome(this.playheadBar);
+      if (this.isTrackRecording() && !this.arrangementPlayback?.playing) {
+        stopStudioMetronome(this.recordingMetronomeSources);
+        if (this.metronomeSettings.enabled) {
+          const audio = await StudioAudioEngine.resume();
+          const elapsed = Math.max(0, audio.currentTime - this.recordingMetronomeStartTime);
+          const currentBar = this.getBarAtSeconds(this.getSecondsAtBar(this.recordingMetronomeStartBar) + elapsed);
+          this.recordingMetronomeSources = scheduleStudioMetronome(audio, {
+            startBar: currentBar,
+            endBar: this.recordingMetronomeEndBar,
+            startTime: audio.currentTime + 0.06,
+            getSecondsAtBar: bar => this.getSecondsAtBar(bar),
+            getTimeSignatureAtBar: bar => this.getTimeSignatureAtBar(bar),
+            volume: this.metronomeSettings.volume,
+            accent: this.metronomeSettings.accent
+          });
+        }
+      }
+    } catch (error) {
+      this.metronomeSettings.enabled = false;
+      stopStudioMetronome(this.recordingMetronomeSources);
+      this.arrangementPlayback?.refreshMetronome(this.playheadBar);
+      this.status("Metronome could not start: " + (error?.message || error));
+      this.onRender?.();
+      return false;
+    }
+    this.scheduleProjectAutosave();
+    this.status("Metronome " + (this.metronomeSettings.enabled ? "on." : "off."));
+    this.onRender?.();
+    return this.metronomeSettings.enabled;
+  },
+
+  setMetronomeVolume(value) {
+    const volume = Math.max(0, Math.min(0.4, Number(value) || 0));
+    this.metronomeSettings = { ...(this.metronomeSettings || {}), volume };
+    this.arrangementPlayback?.refreshMetronome(this.playheadBar);
+    this.scheduleProjectAutosave();
+    return volume;
+  },
+
+  listSessionLayouts() {
+    return listStudioDAWSessionLayouts();
+  },
+
+  applySessionLayout(layoutId) {
+    return applyStudioDAWSessionLayout(this, layoutId);
+  },
+
+  setMasterLimiter(enabled, ceilingDb = this.masterSettings?.limiterCeilingDb ?? -1) {
+    const settings = StudioAudioEngine.setMasterLimiter(enabled, ceilingDb);
+    this.masterSettings = { ...(this.masterSettings || {}), limiterEnabled: settings.enabled, limiterCeilingDb: settings.ceilingDb };
+    this.scheduleProjectAutosave();
+    this.onRender?.();
+    return settings;
+  },
+
+  setTrackInputSource(trackId, source = "mic") {
+    const track = this.tracks.find(item => item.id === trackId);
+    if (!track || track.type !== "audio") throw new Error("Choose an audio track before assigning its input source.");
+    if (!["mic", "beatlab", "mpc"].includes(source)) throw new Error("Unsupported recording input source.");
+    if (this.isTrackRecording() || this.pendingRecording) throw new Error("Stop recording before changing an input source.");
+    track.inputSource = source;
+    this.scheduleProjectAutosave();
+    this.status(track.name + " input source · " + source.toUpperCase() + ".");
+    return source;
+  },
+
+  setTrackInputChannel(trackId, channel = null) {
+    const track = this.tracks.find(item => item.id === trackId);
+    if (!track || track.type !== "audio") throw new Error("Choose an audio track before assigning its input channel.");
+    if (this.isTrackRecording() || this.pendingRecording) throw new Error("Stop recording before changing an input channel.");
+    if (channel === null || channel === "" || channel === "all") track.inputChannel = null;
+    else {
+      const value = Number(channel);
+      if (!Number.isInteger(value) || value < 1 || value > 32) throw new Error("Input channel must be between 1 and 32.");
+      track.inputChannel = value - 1;
+    }
+    this.scheduleProjectAutosave();
+    this.status(track.name + " input channel updated.");
+    return track.inputChannel;
+  },
+
+  setTrackInputDevice(trackId, deviceId = "") {
+    const track = this.tracks.find(item => item.id === trackId);
+    if (!track || track.type !== "audio") throw new Error("Choose an audio track before assigning its input.");
+    if (this.isTrackRecording() || this.pendingRecording) throw new Error("Stop recording before changing an input device.");
+    const selected = String(deviceId || "").slice(0, 256);
+    track.inputDeviceId = selected;
+    track.inputLatencyMs = Math.max(0, Math.min(500, Number(this.inputLatencyByDevice[selected] ?? this.inputLatencyMs) || 0));
+    this.scheduleProjectAutosave();
+    this.status(track.name + " input device updated.");
+    return selected;
+  },
+
   setTempo(value) {
     const bpm = Number(value);
 
@@ -414,9 +523,12 @@ const StudioMultitrackWorkspace = {
 
           getTempo: () => this.tempo,
           getSecondsAtBar: bar => this.getSecondsAtBar(bar),
+          getTimeSignatureAtBar: bar => this.getTimeSignatureAtBar(bar),
+          getMetronomeSettings: () => this.metronomeSettings,
           getBarAtSeconds: seconds => this.getBarAtSeconds(seconds),
           onPosition: bar => {
             this.playheadBar = bar;
+            this.onTransportChange?.();
             const x = (bar - 1) * this.zoomBarWidth;
             this.root?.querySelectorAll(".lc-arrangement-playhead").forEach(line => { line.style.left = x + "px"; });
             const label = this.root?.querySelector("[data-ruler-label]");
@@ -427,7 +539,7 @@ const StudioMultitrackWorkspace = {
               if (x < scroll.scrollLeft + 18 || x > scroll.scrollLeft + scroll.clientWidth - 40) scroll.scrollLeft = Math.max(0, x - scroll.clientWidth * .25);
             });
           },
-          onStatus: message => this.status(message)
+          onStatus: message => { this.status(message); this.onTransportChange?.(); }
         });
     }
 
@@ -449,6 +561,9 @@ const StudioMultitrackWorkspace = {
       volume: 80,
       pan: 0,
       inputSource: "mic",
+      inputDeviceId: "",
+      inputChannel: null,
+      inputLatencyMs: 0,
       instrumentWave: "triangle",
       eq: { low: 0, mid: 0, high: 0 },
       compression: { threshold: -18, ratio: 1 },
@@ -501,7 +616,8 @@ const StudioMultitrackWorkspace = {
       inputDeviceId: this.inputDeviceId || "",
       inputLatencyMs: Math.max(0, Math.min(500, Number(this.inputLatencyMs) || 0)),
       inputLatencyByDevice: { ...(this.inputLatencyByDevice || {}) },
-      masterSettings: { ...(this.masterSettings || { volume: 100, stereoWidth: 100, compressionRatio: 3 }) },
+      masterSettings: { ...(this.masterSettings || { volume: 100, stereoWidth: 100, compressionRatio: 3, limiterEnabled: true, limiterCeilingDb: -1 }) },
+      metronomeSettings: { ...(this.metronomeSettings || { enabled: false, volume: 0.16, accent: true }) },
       templateId: this.sessionTemplateId,
       templateName: this.sessionTemplateName,
       deletedItems: this.deletedItems,
@@ -584,10 +700,12 @@ const StudioMultitrackWorkspace = {
     this.inputDeviceId = session.inputDeviceId || "";
     this.inputLatencyMs = Math.max(0, Math.min(500, Number(session.inputLatencyMs) || 0));
     this.inputLatencyByDevice = session.inputLatencyByDevice && typeof session.inputLatencyByDevice === "object" ? { ...session.inputLatencyByDevice } : {};
-    this.masterSettings = { volume: Math.max(0, Math.min(100, Number(session.masterSettings?.volume ?? 100))), stereoWidth: Math.max(0, Math.min(200, Number(session.masterSettings?.stereoWidth ?? 100))), compressionRatio: Math.max(1, Math.min(8, Number(session.masterSettings?.compressionRatio ?? 3))) };
+    this.masterSettings = { volume: Math.max(0, Math.min(100, Number(session.masterSettings?.volume ?? 100))), stereoWidth: Math.max(0, Math.min(200, Number(session.masterSettings?.stereoWidth ?? 100))), compressionRatio: Math.max(1, Math.min(8, Number(session.masterSettings?.compressionRatio ?? 3))), limiterEnabled: session.masterSettings?.limiterEnabled !== false, limiterCeilingDb: Math.max(-6, Math.min(0, Number(session.masterSettings?.limiterCeilingDb ?? -1))) };
+    this.metronomeSettings = { enabled: Boolean(session.metronomeSettings?.enabled), volume: Math.max(0, Math.min(0.4, Number(session.metronomeSettings?.volume ?? 0.16))), accent: session.metronomeSettings?.accent !== false };
     StudioAudioEngine.setMasterVolume(this.masterSettings.volume / 100);
     StudioAudioEngine.setStereoWidth(this.masterSettings.stereoWidth);
     StudioAudioEngine.setMasterCompressionRatio(this.masterSettings.compressionRatio);
+    StudioAudioEngine.setMasterLimiter(this.masterSettings.limiterEnabled, this.masterSettings.limiterCeilingDb);
     this.sessionTemplateId = session.templateId || null;
     this.sessionTemplateName = session.templateName || null;
     this.activeProjectId = session.projectId || projectId;
@@ -617,6 +735,9 @@ const StudioMultitrackWorkspace = {
     const clipIds = new Set();
     for (const track of session.tracks) {
       if (!track || typeof track.id !== "string" || !track.id || trackIds.has(track.id) || !TRACK_TYPES.includes(track.type || "audio") || !Array.isArray(track.clips) || track.clips.length > 512) return false;
+      if (track.inputDeviceId !== undefined && (typeof track.inputDeviceId !== "string" || track.inputDeviceId.length > 256)) return false;
+      if (track.inputChannel !== undefined && track.inputChannel !== null && (!Number.isInteger(track.inputChannel) || track.inputChannel < 0 || track.inputChannel > 31)) return false;
+      if (track.inputLatencyMs !== undefined && (!Number.isFinite(Number(track.inputLatencyMs)) || Number(track.inputLatencyMs) < 0 || Number(track.inputLatencyMs) > 500)) return false;
       trackIds.add(track.id);
       for (const clip of track.clips) {
         if (!clip || typeof clip.id !== "string" || !clip.id || clipIds.has(clip.id) || !Number.isFinite(Number(clip.startBar)) || Number(clip.startBar) < 1 || Number(clip.startBar) > 128 || !Number.isFinite(Number(clip.lengthBars)) || Number(clip.lengthBars) <= 0) return false;
@@ -636,7 +757,17 @@ const StudioMultitrackWorkspace = {
       if (track.outputBusId && (!busIds.has(track.outputBusId) || track.type === "bus")) return false;
       if (track.sends !== undefined && (!Array.isArray(track.sends) || track.sends.length > 32 || !track.sends.every(send => typeof send.busId === "string" && busIds.has(send.busId) && track.type !== "bus" && Number.isFinite(Number(send.level)) && Number(send.level) >= 0 && Number(send.level) <= 100))) return false;
     }
-    if (session.masterSettings !== undefined && (!Number.isFinite(Number(session.masterSettings.volume)) || Number(session.masterSettings.volume) < 0 || Number(session.masterSettings.volume) > 100 || !Number.isFinite(Number(session.masterSettings.stereoWidth)) || Number(session.masterSettings.stereoWidth) < 0 || Number(session.masterSettings.stereoWidth) > 200 || !Number.isFinite(Number(session.masterSettings.compressionRatio)) || Number(session.masterSettings.compressionRatio) < 1 || Number(session.masterSettings.compressionRatio) > 8)) return false;
+    if (session.metronomeSettings !== undefined && (typeof session.metronomeSettings.enabled !== "boolean" || !Number.isFinite(Number(session.metronomeSettings.volume)) || Number(session.metronomeSettings.volume) < 0 || Number(session.metronomeSettings.volume) > 0.4 || typeof session.metronomeSettings.accent !== "boolean")) return false;
+    if (session.masterSettings !== undefined) {
+      const settings = session.masterSettings;
+      if (
+        !Number.isFinite(Number(settings.volume)) || Number(settings.volume) < 0 || Number(settings.volume) > 100 ||
+        !Number.isFinite(Number(settings.stereoWidth)) || Number(settings.stereoWidth) < 0 || Number(settings.stereoWidth) > 200 ||
+        !Number.isFinite(Number(settings.compressionRatio)) || Number(settings.compressionRatio) < 1 || Number(settings.compressionRatio) > 8 ||
+        (settings.limiterEnabled !== undefined && typeof settings.limiterEnabled !== "boolean") ||
+        (settings.limiterCeilingDb !== undefined && (!Number.isFinite(Number(settings.limiterCeilingDb)) || Number(settings.limiterCeilingDb) < -6 || Number(settings.limiterCeilingDb) > 0))
+      ) return false;
+    }
     return Number.isFinite(Number(session.tempo)) && Number(session.tempo) >= 20 && Number(session.tempo) <= 300;
   },
 
@@ -661,7 +792,7 @@ const StudioMultitrackWorkspace = {
     }
     this.stopAll();
     this.tempo = Math.max(60, Math.min(180, Number(tempo) || 100));
-    this.timeSignature = "4/4"; this.tempoChanges = []; this.timeSignatureChanges = []; this.markers = []; this.loopRange = { enabled: false, startBar: 1, endBar: 9 }; this.masterSettings = { volume: 100, stereoWidth: 100, compressionRatio: 3 }; StudioAudioEngine.setMasterVolume(1); StudioAudioEngine.setStereoWidth(100); StudioAudioEngine.setMasterCompressionRatio(3); this.followPlayhead = true; this.selectedRegionIds = []; this.multiSelectMode = false;
+    this.timeSignature = "4/4"; this.tempoChanges = []; this.timeSignatureChanges = []; this.markers = []; this.loopRange = { enabled: false, startBar: 1, endBar: 9 }; this.masterSettings = { volume: 100, stereoWidth: 100, compressionRatio: 3, limiterEnabled: true, limiterCeilingDb: -1 }; StudioAudioEngine.setMasterVolume(1); StudioAudioEngine.setStereoWidth(100); StudioAudioEngine.setMasterCompressionRatio(3); StudioAudioEngine.setMasterLimiter(true, -1); this.followPlayhead = true; this.selectedRegionIds = []; this.multiSelectMode = false;
     this.sessionTemplateId = null;
     this.sessionTemplateName = null;
     this.tracks = [];
@@ -733,6 +864,9 @@ const StudioMultitrackWorkspace = {
         volume: Math.max(0, Math.min(100, Number(track.volume) || 0)),
         pan: Math.max(-1, Math.min(1, Number(track.pan) || 0)),
         inputSource: ["mic", "beatlab", "mpc"].includes(track.inputSource) ? track.inputSource : "mic",
+        inputDeviceId: String(track.inputDeviceId || "").slice(0, 256),
+        inputChannel: Number.isInteger(track.inputChannel) && track.inputChannel >= 0 && track.inputChannel < 32 ? track.inputChannel : null,
+        inputLatencyMs: Math.max(0, Math.min(500, Number(track.inputLatencyMs) || 0)),
         instrumentWave: ["sine", "triangle", "sawtooth", "square"].includes(track.instrumentWave) ? track.instrumentWave : "triangle",
         eq: {
           low: Number(track.eq?.low) || 0,
@@ -792,7 +926,7 @@ const StudioMultitrackWorkspace = {
       inputDeviceId: this.inputDeviceId || "",
       inputLatencyMs: Math.max(0, Math.min(500, Number(this.inputLatencyMs) || 0)),
       inputLatencyByDevice: { ...(this.inputLatencyByDevice || {}) },
-      masterSettings: { ...(this.masterSettings || { volume: 100, stereoWidth: 100, compressionRatio: 3 }) },
+      masterSettings: { ...(this.masterSettings || { volume: 100, stereoWidth: 100, compressionRatio: 3, limiterEnabled: true, limiterCeilingDb: -1 }) },
       templateId: this.sessionTemplateId,
       templateName: this.sessionTemplateName,
       audioAssets,
@@ -822,10 +956,11 @@ const StudioMultitrackWorkspace = {
     this.inputDeviceId = session.inputDeviceId || "";
     this.inputLatencyMs = Math.max(0, Math.min(500, Number(session.inputLatencyMs) || 0));
     this.inputLatencyByDevice = session.inputLatencyByDevice && typeof session.inputLatencyByDevice === "object" ? { ...session.inputLatencyByDevice } : {};
-    this.masterSettings = { volume: Math.max(0, Math.min(100, Number(session.masterSettings?.volume ?? 100))), stereoWidth: Math.max(0, Math.min(200, Number(session.masterSettings?.stereoWidth ?? 100))), compressionRatio: Math.max(1, Math.min(8, Number(session.masterSettings?.compressionRatio ?? 3))) };
+    this.masterSettings = { volume: Math.max(0, Math.min(100, Number(session.masterSettings?.volume ?? 100))), stereoWidth: Math.max(0, Math.min(200, Number(session.masterSettings?.stereoWidth ?? 100))), compressionRatio: Math.max(1, Math.min(8, Number(session.masterSettings?.compressionRatio ?? 3))), limiterEnabled: session.masterSettings?.limiterEnabled !== false, limiterCeilingDb: Math.max(-6, Math.min(0, Number(session.masterSettings?.limiterCeilingDb ?? -1))) };
     StudioAudioEngine.setMasterVolume(this.masterSettings.volume / 100);
     StudioAudioEngine.setStereoWidth(this.masterSettings.stereoWidth);
     StudioAudioEngine.setMasterCompressionRatio(this.masterSettings.compressionRatio);
+    StudioAudioEngine.setMasterLimiter(this.masterSettings.limiterEnabled, this.masterSettings.limiterCeilingDb);
     this.sessionTemplateId = session.templateId || null;
     this.sessionTemplateName = session.templateName || null;
     this.deletedItems = [];
@@ -837,6 +972,9 @@ const StudioMultitrackWorkspace = {
       volume: Math.max(0, Math.min(100, Number(savedTrack.volume) || 0)),
       pan: Math.max(-1, Math.min(1, Number(savedTrack.pan) || 0)),
       inputSource: ["mic", "beatlab", "mpc"].includes(savedTrack.inputSource) ? savedTrack.inputSource : "mic",
+      inputDeviceId: String(savedTrack.inputDeviceId || "").slice(0, 256),
+      inputChannel: Number.isInteger(savedTrack.inputChannel) && savedTrack.inputChannel >= 0 && savedTrack.inputChannel < 32 ? savedTrack.inputChannel : null,
+      inputLatencyMs: Math.max(0, Math.min(500, Number(savedTrack.inputLatencyMs) || 0)),
       instrumentWave: ["sine", "triangle", "sawtooth", "square"].includes(savedTrack.instrumentWave) ? savedTrack.instrumentWave : "triangle",
       eq: {
         low: Number(savedTrack.eq?.low) || 0,
@@ -1354,8 +1492,19 @@ const StudioMultitrackWorkspace = {
         this.status("Automatically armed " + defaultInputTrack.name + " for microphone recording.");
       }
     }
-    if (armedTracks.length !== 1) {
-      this.status(armedTracks.length ? "Arm exactly one audio track to record." : "Add an audio track before recording.");
+    if (!armedTracks.length) {
+      this.status("Add an audio track before recording.");
+      return false;
+    }
+    if (vocalEffects && armedTracks.filter(track => track.inputSource === "mic" && /vocal/i.test(track.name)).length > 1) {
+      this.status("Use one shared vocal-effects chain per recording pass; arm only one processed vocal track at a time.");
+      return false;
+    }
+    const inputKeys = armedTracks.map(track => track.inputSource === "mic"
+      ? "mic:" + (track.inputDeviceId || this.inputDeviceId || "default") + ":channel:" + (Number.isInteger(track.inputChannel) ? track.inputChannel : "all")
+      : String(track.inputSource || "mic"));
+    if (new Set(inputKeys).size !== inputKeys.length) {
+      this.status("For simultaneous recording, assign a different input source or microphone device to each armed track.");
       return false;
     }
     const preRoll = Math.max(0, Math.min(4, Math.floor(Number(countInBars) || 0)));
@@ -1367,11 +1516,10 @@ const StudioMultitrackWorkspace = {
     }
     try {
       const audio = await StudioAudioEngine.resume();
-      const track = armedTracks[0];
       this.pendingRecording = true;
       this.recordingStartBar = startBar;
       const barsUntilRecord = Math.max(0, startBar - this.playheadBar);
-      if (barsUntilRecord > 0 && this.tracks.some(item => item.clips?.some(clip => clip.blob?.size))) {
+      if (barsUntilRecord > 0 && this.tracks.some(item => item.clips?.some(clip => clip.blob?.size) || ((item.type === "midi" || item.type === "instrument") && item.midiNotes?.length))) {
         await this.playAll();
       }
       const delaySeconds = Math.max(0, this.getSecondsAtBar(startBar) - this.getSecondsAtBar(this.playheadBar));
@@ -1379,6 +1527,7 @@ const StudioMultitrackWorkspace = {
       if (delayMs > 0) {
         this.status("Pre-roll · recording begins at bar " + startBar + ".");
         const countStart = audio.currentTime + 0.06;
+        if (!this.metronomeSettings?.enabled || !this.arrangementPlayback?.playing) {
         for (let bar = Math.floor(this.playheadBar); bar < startBar; bar += 1) {
           const meter = this.getTimeSignatureAtBar(bar);
           const bpm = this.getTempoAtBar(bar);
@@ -1399,6 +1548,7 @@ const StudioMultitrackWorkspace = {
           oscillator.onended = () => { try { oscillator.disconnect(); clickGain.disconnect(); } catch {} };
           }
         }
+        }
         const ready = await new Promise(resolve => {
           this.recordingScheduleResolve = resolve;
           this.recordingScheduleTimer = setTimeout(() => {
@@ -1410,36 +1560,65 @@ const StudioMultitrackWorkspace = {
         if (!ready) return false;
       }
       if (!this.pendingRecording) return false;
-      const inputNode = track.inputSource === "beatlab"
-        ? StudioAudioExport.getOutput(audio)
-        : track.inputSource === "mpc"
-          ? StudioMPCSampler.ensureOutput(audio)
-          : null;
-      const pitchCorrectionNode = track.inputSource === "mic" && /vocal/i.test(track.name) && track.effects?.pitchCorrection?.enabled
-        ? await createStudioPitchCorrectionNode(audio, track.effects.pitchCorrection)
-        : null;
-      await StudioRecordingEngine.startTrackRecording({
-        audio,
-        trackId: track.id,
-        inputNode,
-        pitchCorrectionNode,
-        monitorInput: Boolean(monitorInput),
-        inputDeviceId: track.inputSource === "mic" ? this.inputDeviceId : "",
-        vocalEffects: track.inputSource === "mic" && /vocal/i.test(track.name) ? vocalEffects : null
-      });
+      const startedTracks = [];
+      try {
+        for (const track of armedTracks) {
+          const inputNode = track.inputSource === "beatlab"
+            ? StudioAudioExport.getOutput(audio)
+            : track.inputSource === "mpc"
+              ? StudioMPCSampler.ensureOutput(audio)
+              : null;
+          const pitchCorrectionNode = track.inputSource === "mic" && /vocal/i.test(track.name) && track.effects?.pitchCorrection?.enabled
+            ? await createStudioPitchCorrectionNode(audio, track.effects.pitchCorrection)
+            : null;
+          await StudioRecordingEngine.startTrackRecording({
+            audio,
+            trackId: track.id,
+            inputNode,
+            pitchCorrectionNode,
+            monitorInput: Boolean(monitorInput && track.inputSource === "mic"),
+            inputDeviceId: track.inputSource === "mic" ? (track.inputDeviceId || this.inputDeviceId) : "",
+            inputChannel: track.inputSource === "mic" && Number.isInteger(track.inputChannel) ? track.inputChannel : null,
+            vocalEffects: track.inputSource === "mic" && /vocal/i.test(track.name) ? vocalEffects : null,
+            allowConcurrent: true
+          });
+          startedTracks.push(track);
+        }
+      } catch (recordingError) {
+        for (const started of startedTracks) {
+          try { await StudioRecordingEngine.stopTrackRecording(started.id); } catch {}
+        }
+        throw recordingError;
+      }
+      this.recordingTrackIds = armedTracks.map(track => track.id);
+      this.recordingMetronomeStartBar = startBar;
+      this.recordingMetronomeStartTime = audio.currentTime + 0.06;
+      this.recordingMetronomeEndBar = endBar || 129;
+      if (this.metronomeSettings?.enabled && !this.arrangementPlayback?.playing) {
+        this.recordingMetronomeSources = scheduleStudioMetronome(audio, {
+          startBar,
+          endBar: endBar || 129,
+          startTime: audio.currentTime + 0.06,
+          getSecondsAtBar: bar => this.getSecondsAtBar(bar),
+          getTimeSignatureAtBar: bar => this.getTimeSignatureAtBar(bar),
+          volume: this.metronomeSettings.volume,
+          accent: this.metronomeSettings.accent
+        });
+      }
       this.pendingRecording = false;
       if (endBar !== null) {
         const punchDuration = Math.max(0, this.getSecondsAtBar(endBar) - this.getSecondsAtBar(startBar)) * 1000;
         this.punchOutTimer = setTimeout(() => { this.punchOutTimer = null; void this.stopArmedRecording(); }, punchDuration);
       }
-      const sourceLabel = track.inputSource === "mpc"
-        ? "MPC output"
+      const sourceLabel = track => track.inputSource === "mpc"
+        ? "MPC"
         : track.inputSource === "beatlab"
-          ? "Digital Beat Lab output"
-          : "microphone";
-      this.status("Recording " + sourceLabel + " into " + track.name + " · bar " + startBar + (endBar !== null ? " → " + endBar : "") + ".");
+          ? "Beat Lab"
+          : "MIC";
+      this.status("Recording " + armedTracks.map(track => sourceLabel(track) + " → " + track.name).join(" · ") + " · bar " + startBar + (endBar !== null ? " → " + endBar : "") + ".");
       return true;
     } catch (error) {
+      stopStudioMetronome(this.recordingMetronomeSources);
       this.pendingRecording = false;
       if (this.recordingScheduleTimer) clearTimeout(this.recordingScheduleTimer);
       this.recordingScheduleTimer = null;
@@ -1463,36 +1642,49 @@ const StudioMultitrackWorkspace = {
   },
 
   async stopArmedRecording() {
+    stopStudioMetronome(this.recordingMetronomeSources);
     if (this.punchOutTimer) clearTimeout(this.punchOutTimer);
     this.punchOutTimer = null;
-    if (!StudioRecordingEngine.activeTrackTake) return false;
+    const activeTakes = [...(StudioRecordingEngine.activeTrackTakes || [])];
+    if (!activeTakes.length && StudioRecordingEngine.activeTrackTake) activeTakes.push(StudioRecordingEngine.activeTrackTake);
+    if (!activeTakes.length) return false;
     try {
-      const take = await StudioRecordingEngine.stopTrackRecording();
-      let track = this.tracks.find(item => item.id === take.trackId);
-      if (!track) track = this.createTrack("audio", "Recovered Recording");
       const context = await StudioAudioEngine.resume();
-      const bytes = await take.blob.arrayBuffer();
-      const buffer = await context.decodeAudioData(bytes.slice(0));
-      const lengthBars = Math.max(.25, Math.min(128, this.getBarAtSeconds(this.getSecondsAtBar(this.recordingStartBar) + buffer.duration) - this.recordingStartBar));
-      const latencyMs = track.inputSource === "mic" ? Math.max(0, Math.min(500, Number(this.inputLatencyMs) || 0)) : 0;
-      const compensatedStartBar = Math.max(1, this.getBarAtSeconds(this.getSecondsAtBar(this.recordingStartBar) - latencyMs / 1000));
-      track.clips.push({
-        id: take.id,
-        name: track.name + " Recording",
-        blob: take.blob,
-        takeId: take.id,
-        startBar: compensatedStartBar,
-        lengthBars,
-        duration: buffer.duration,
-        takeGroupId: track.id + "-takes-" + this.recordingStartBar,
-        takeNumber: track.clips.filter(clip => clip.takeGroupId === track.id + "-takes-" + this.recordingStartBar).length + 1,
-        takeProtected: false,
-        latencyCompensationMs: latencyMs,
-        createdAt: take.startedAt
-      });
+      const saved = [];
+      for (const activeTake of activeTakes) {
+        const take = await StudioRecordingEngine.stopTrackRecording(activeTake.trackId);
+        let track = this.tracks.find(item => item.id === take.trackId);
+        if (!track) track = this.createTrack("audio", "Recovered Recording");
+        const bytes = await take.blob.arrayBuffer();
+        const buffer = await context.decodeAudioData(bytes.slice(0));
+        const lengthBars = Math.max(.25, Math.min(128, this.getBarAtSeconds(this.getSecondsAtBar(this.recordingStartBar) + buffer.duration) - this.recordingStartBar));
+        const deviceId = track.inputDeviceId || this.inputDeviceId || "";
+        const latencyMs = track.inputSource === "mic"
+          ? Math.max(0, Math.min(500, Number(track.inputDeviceId ? track.inputLatencyMs : (this.inputLatencyByDevice[deviceId] ?? this.inputLatencyMs)) || 0))
+          : 0;
+        const compensatedStartBar = Math.max(1, this.getBarAtSeconds(this.getSecondsAtBar(this.recordingStartBar) - latencyMs / 1000));
+        const takeGroupId = track.id + "-takes-" + this.recordingStartBar;
+        track.clips.push({
+          id: take.id,
+          name: track.name + " Recording",
+          blob: take.blob,
+          takeId: take.id,
+          startBar: compensatedStartBar,
+          lengthBars,
+          duration: buffer.duration,
+          takeGroupId,
+          takeNumber: track.clips.filter(clip => clip.takeGroupId === takeGroupId).length + 1,
+          takeProtected: false,
+          latencyCompensationMs: latencyMs,
+          recordingFormat: take.recordingFormat || "Browser MediaRecorder",
+          createdAt: take.startedAt
+        });
+        saved.push(track.name);
+      }
+      this.recordingTrackIds = [];
       this.scheduleProjectAutosave();
       this.render();
-      this.status("Take " + track.clips[track.clips.length - 1].takeNumber + " saved to " + track.name + " at bar " + this.recordingStartBar + ".");
+      this.status(saved.length + " track(s) recorded and saved at bar " + this.recordingStartBar + " · " + saved.join(", ") + ".");
       return true;
     } catch (error) {
       this.status("RECORDING SAVE ERROR: " + (error?.message || error));
@@ -1502,6 +1694,63 @@ const StudioMultitrackWorkspace = {
 
   isTrackRecording() {
     return Boolean(StudioRecordingEngine.activeTrackTake);
+  },
+
+  async importMidiFile(file) {
+    if (!(file instanceof Blob) || !file.size) throw new Error("Choose a MIDI file to import.");
+    if (this.isTrackRecording() || this.pendingRecording) throw new Error("Stop recording before importing MIDI.");
+    const parsed = parseStudioMidi(await file.arrayBuffer());
+    const sourceTracks = parsed.tracks.filter(track => track.notes.length);
+    if (!sourceTracks.length) throw new Error("The MIDI file contains no playable note data.");
+    if (this.tracks.length + sourceTracks.length > 64) throw new Error("The session would exceed the 64-track limit.");
+    this.stopAll();
+    this.recordHistory("Import MIDI file");
+    this.tempo = Math.max(60, Math.min(180, Math.round(parsed.tempo)));
+    this.timeSignature = parsed.timeSignature.numerator + "/" + parsed.timeSignature.denominator;
+    for (const source of sourceTracks) {
+      const track = this.createTrack("instrument", source.name || "Imported MIDI");
+      track.midiNotes = source.notes.slice(0, 4096).map(note => ({ ...note }));
+    }
+    this.render();
+    this.scheduleProjectAutosave();
+    this.status(sourceTracks.length + " MIDI track(s) imported · " + Math.round(parsed.tempo) + " BPM.");
+    return { trackCount: sourceTracks.length, tempo: parsed.tempo, timeSignature: parsed.timeSignature };
+  },
+
+  exportMidiFile({ trackIds = null } = {}) {
+    const selected = trackIds ? new Set(trackIds) : null;
+    const tracks = this.tracks.filter(track => (!selected || selected.has(track.id)) && (track.type === "midi" || track.type === "instrument") && (track.midiNotes || []).length);
+    return createStudioMidiBlob({ tracks, tempo: this.tempo, timeSignature: this.timeSignature });
+  },
+
+  downloadMidiFile(options = {}) {
+    const blob = this.exportMidiFile(options);
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = (String(this.activeProjectName || "LAMBO-CITY").replace(/[^a-z0-9-_]+/gi, "-") || "LAMBO-CITY") + ".mid";
+    anchor.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    return blob;
+  },
+
+  processMidiTrack(trackId, operation, options = {}) {
+    const track = this.tracks.find(item => item.id === trackId);
+    if (!track || !["midi", "instrument"].includes(track.type) || !Array.isArray(track.midiNotes) || !track.midiNotes.length) {
+      throw new Error("Choose an instrument or MIDI track that contains notes.");
+    }
+    const operations = {
+      quantize: () => quantizeStudioMidiNotes(track.midiNotes, options.grid ?? 0.25, options.strength ?? 1),
+      swing: () => swingStudioMidiNotes(track.midiNotes, options.amount ?? 0.5, options.subdivision ?? 0.125),
+      humanize: () => humanizeStudioMidiNotes(track.midiNotes, options.timingBars ?? 0.008, options.velocityAmount ?? 0.08)
+    };
+    if (!operations[operation]) throw new Error("Unknown MIDI processing operation.");
+    this.recordHistory("MIDI " + operation);
+    track.midiNotes = operations[operation]();
+    this.render();
+    this.scheduleProjectAutosave();
+    this.status("MIDI " + operation + " applied to " + track.name + ".");
+    return track.midiNotes.length;
   },
 
   async importAudioFiles(files = []) {
@@ -1596,6 +1845,7 @@ const StudioMultitrackWorkspace = {
         id: `${take.id}-${recording.trackName.toLowerCase().replace(/\s+/g, "-")}`,
         name: recording.clipName,
         blob: recording.blob,
+        recordingFormat: take.recordingFormat || "Browser MediaRecorder",
         takeId: take.id,
         createdAt: new Date().toISOString(),
         objectUrl: null
@@ -1629,18 +1879,11 @@ const StudioMultitrackWorkspace = {
 
   async playAll() {
     this.stopAll();
-
-    if (!this.tracks.some(track =>
-      track.clips?.some(clip =>
-        clip.blob && clip.blob.size > 0
-      )
-    )) {
-      this.status("No recorded audio clips available.");
-      return;
-    }
-
     const loop = this.loopRange?.enabled ? this.loopRange : null;
-    await this.getArrangementPlayback().play(this.tracks, this.playheadBar, loop);
+    const started = await this.getArrangementPlayback().play(this.tracks, this.playheadBar, loop);
+    if (started) this.status("Song session playing · " + Math.round(this.getTempoAtBar(this.playheadBar)) + " BPM.");
+    this.onTransportChange?.();
+    return Boolean(started);
   },
 
   stopAll() {
@@ -1658,6 +1901,7 @@ const StudioMultitrackWorkspace = {
     });
 
     this.status("Multitrack playback stopped.");
+    this.onTransportChange?.();
   },
 
   togglePlayback() {

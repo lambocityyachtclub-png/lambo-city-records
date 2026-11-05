@@ -1,6 +1,3 @@
-import * as THREE from
-  "https://unpkg.com/three@0.160.0/build/three.module.js";
-
 import StudioAudioEngine from "./studioAudioEngine.js";
 import StudioSoundKit from "./studioSoundKit.js";
 import StudioAudioExport from "./studioAudioExport.js";
@@ -77,7 +74,7 @@ function normalizePattern(data) {
 }
 
 export default {
-  init(scene, context) {
+  async init(scene, context) {
     this.scene = scene;
     this.camera = context?.camera;
     this.renderer = context?.renderer;
@@ -101,14 +98,23 @@ this.noiseBuffer = null;
     this.raycaster = null;
     this.pointer = null;
     this.handleCanvasClick = null;
+    if (typeof window !== "undefined") window.__lamboCityFloor2BeatLab = this;
 
     if (!this.camera || !this.renderer?.domElement) {
-      console.warn(
-        "LAMBO CITY Beat Lab: camera or renderer unavailable."
-      );
+      if (scene || context?.camera || context?.renderer) {
+        console.warn("LAMBO CITY Beat Lab: camera or renderer unavailable.");
+      }
       return;
     }
 
+    let THREE;
+    try {
+      THREE = await import("https://unpkg.com/three@0.160.0/build/three.module.js");
+    } catch (error) {
+      console.error("LAMBO CITY Beat Lab interaction could not load:", error);
+      return;
+    }
+    if (this.scene !== scene || !this.renderer?.domElement) return;
     this.raycaster = new THREE.Raycaster();
     this.pointer = new THREE.Vector2();
 
@@ -486,14 +492,6 @@ this.handleStudioKeydown = (event) => {
   ) {
     return;
   }
-
- if (event.code === "Space") {
-  event.preventDefault();
-
-  StudioMultitrackWorkspace.togglePlayback();
-
-  return;
-}
 
   if (event.key.toLowerCase() === "r") {
     if (target instanceof HTMLElement && target.closest("button")) {
@@ -1010,7 +1008,7 @@ root.addEventListener("input", (event) => {
     }
   },
 
-  async start() {
+  async start({ startAtTime = null } = {}) {
     if (this.playing) {
       this.status("Beat already playing.");
       return;
@@ -1032,7 +1030,10 @@ if (!this.audio || this.audio.state !== "running") {
 
       this.playing = true;
       this.currentStep = 0;
-      this.nextStepTime = this.audio.currentTime + 0.05;
+      const earliestStart = this.audio.currentTime + 0.05;
+      this.nextStepTime = Number.isFinite(Number(startAtTime))
+        ? Math.max(earliestStart, Number(startAtTime))
+        : earliestStart;
       this.playbackStartedAt = this.nextStepTime;
 
       this.status(
@@ -1046,7 +1047,16 @@ if (!this.audio || this.audio.state !== "running") {
           while (this.nextStepTime < this.audio.currentTime + 0.1) {
             this.scheduleStep(this.currentStep, this.nextStepTime);
             this.currentStep = (this.currentStep + 1) % STEP_COUNT;
-            this.nextStepTime += 60 / this.pattern.bpm / 4;
+            const transport = StudioMultitrackWorkspace.arrangementPlayback;
+            let stepDuration = 60 / this.pattern.bpm / 4;
+            if (transport?.playing && Number.isFinite(transport.playbackStartTime)) {
+              const sessionSeconds = StudioMultitrackWorkspace.getSecondsAtBar(transport.playbackStartBar) + (this.nextStepTime - transport.playbackStartTime);
+              const sessionBar = StudioMultitrackWorkspace.getBarAtSeconds(sessionSeconds);
+              const sessionTempo = StudioMultitrackWorkspace.getTempoAtBar(sessionBar);
+              const meter = StudioMultitrackWorkspace.getTimeSignatureAtBar(sessionBar);
+              stepDuration = 60 / sessionTempo * (4 / meter.denominator) * meter.numerator / STEP_COUNT;
+            }
+            this.nextStepTime += stepDuration;
           }
         } catch (error) {
           console.error("LAMBO CITY sequencer error:", error);

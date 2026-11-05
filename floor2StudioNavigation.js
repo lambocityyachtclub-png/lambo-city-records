@@ -1,7 +1,6 @@
 
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 import StudioDAWApp from "./studioDAWApp.js";
-import MPCInterface from "./mpc-interface.js";
 /*
  * LAMBO CITY RECORDS
  * FLOOR 2 — STUDIO NAVIGATION V1
@@ -50,7 +49,7 @@ export default {
       { object: studio.getObjectByName("floor2SongEditorDisplay"), view: "edit", title: "SONG EDITOR DISPLAY" },
       { object: stations.instrumentStation, view: "piano", title: "PIANO" },
       { object: stations.drumStation, view: "drums", title: "DRUMS" },
-      { object: stations.vocalBooth, view: "edit", title: "VOCAL RECORDING" },
+      { object: stations.vocalBooth, view: "vocals", title: "VOCAL RECORDING" },
       { object: stations.controlRoom, view: "mix", title: "MIX • MASTER WORKSTATION" },
       { object: stations.songArchive, view: "edit", title: "SONG ARCHIVE" },
       { object: stations.mobileStudio, view: "edit", title: "CO-PILOT STUDIO" }
@@ -93,13 +92,6 @@ export default {
         // functional workspace inside the same Studio session.
         try {
           window.__lamboCityOpenFloor2Instrument?.();
-
-          if (station.view === "mpc") {
-            MPCInterface.open({
-              onClose: () => window.__lamboCityReturnToFloor2Room?.()
-            });
-            return;
-          }
 
           StudioDAWApp.open(station.view || "edit");
         } catch (error) {

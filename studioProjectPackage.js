@@ -255,6 +255,14 @@ function validateProject(project) {
   if (project.dawSession !== undefined) {
     requireObject(project.dawSession, "DAW session data is invalid.");
     const session = project.dawSession;
+    if (session.metronomeSettings !== undefined && (!session.metronomeSettings || typeof session.metronomeSettings.enabled !== "boolean" || !Number.isFinite(Number(session.metronomeSettings.volume)) || Number(session.metronomeSettings.volume) < 0 || Number(session.metronomeSettings.volume) > 0.4 || typeof session.metronomeSettings.accent !== "boolean")) throw new Error("DAW metronome settings are invalid.");
+    if (session.masterSettings !== undefined) {
+      const settings = session.masterSettings;
+      if (
+        (settings.limiterEnabled !== undefined && typeof settings.limiterEnabled !== "boolean") ||
+        (settings.limiterCeilingDb !== undefined && (!Number.isFinite(Number(settings.limiterCeilingDb)) || Number(settings.limiterCeilingDb) < -6 || Number(settings.limiterCeilingDb) > 0))
+      ) throw new Error("DAW master limiter settings are invalid.");
+    }
     if (session.masterSettings !== undefined && (!Number.isFinite(Number(session.masterSettings.volume)) || Number(session.masterSettings.volume) < 0 || Number(session.masterSettings.volume) > 100 || !Number.isFinite(Number(session.masterSettings.stereoWidth)) || Number(session.masterSettings.stereoWidth) < 0 || Number(session.masterSettings.stereoWidth) > 200 || !Number.isFinite(Number(session.masterSettings.compressionRatio)) || Number(session.masterSettings.compressionRatio) < 1 || Number(session.masterSettings.compressionRatio) > 8)) throw new Error("DAW master settings are invalid.");
     if (session.format !== "lambo-city-daw-session" || session.version !== 1 ||
         !Number.isFinite(Number(session.tempo)) || Number(session.tempo) < 60 ||
@@ -273,6 +281,9 @@ function validateProject(project) {
           !Number.isFinite(Number(track.volume)) || Number(track.volume) < 0 || Number(track.volume) > 100 ||
           !Number.isFinite(Number(track.pan)) || Number(track.pan) < -1 || Number(track.pan) > 1 ||
           (track.inputSource !== undefined && !["mic", "beatlab", "mpc"].includes(track.inputSource)) ||
+          (track.inputDeviceId !== undefined && (typeof track.inputDeviceId !== "string" || track.inputDeviceId.length > 256)) ||
+          (track.inputChannel !== undefined && track.inputChannel !== null && (!Number.isInteger(track.inputChannel) || track.inputChannel < 0 || track.inputChannel > 31)) ||
+          (track.inputLatencyMs !== undefined && (!Number.isFinite(Number(track.inputLatencyMs)) || Number(track.inputLatencyMs) < 0 || Number(track.inputLatencyMs) > 500)) ||
           !Array.isArray(track.clips) || track.clips.length > 256 ||
           (track.eq !== undefined && (!Number.isFinite(Number(track.eq.low)) || !Number.isFinite(Number(track.eq.mid)) || !Number.isFinite(Number(track.eq.high)))) ||
           (track.compression !== undefined && (!Number.isFinite(Number(track.compression.ratio)) || Number(track.compression.ratio) < 1 || Number(track.compression.ratio) > 8)) ||
@@ -416,7 +427,7 @@ export function createSongProjectPackage(project) {
 }
 
 // Convert a project into portable JSON text.
-// The .lcp extension will be used when download support is connected.
+// The .lcp extension is used for portable LAMBO CITY project downloads.
 export function exportSongProjectPackage(project) {
   const packageData = createSongProjectPackage(project);
 

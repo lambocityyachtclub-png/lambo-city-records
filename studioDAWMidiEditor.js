@@ -27,7 +27,7 @@ export function createStudioDAWMidiEditor({ track, onBeforeChange, onChange } = 
   grid.style.cssText = "display:grid;grid-template-columns:38px repeat(16,minmax(12px,1fr));gap:2px;overflow-x:auto";
   const notes = Array.isArray(track?.midiNotes) ? track.midiNotes : [];
   const active = new Set(notes.map(noteKey));
-  for (let pitch = 71; pitch >= 48; pitch -= 1) {
+  for (let pitch = 72; pitch >= 48; pitch -= 1) {
     const label = document.createElement("span");
     label.textContent = PITCH_NAMES[pitch % 12] + Math.floor(pitch / 12 - 1);
     label.style.cssText = "display:grid;place-items:center;min-height:20px;font-size:8px;color:" + ([0,2,4,5,7,9,11].includes(pitch % 12) ? "#d7dbe3" : "#8a96aa");

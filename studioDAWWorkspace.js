@@ -21,6 +21,7 @@ const VIEWS = [
   { id: "beatlab", label: "DIGITAL BEAT LAB" },
   { id: "piano", label: "PIANO" },
   { id: "drums", label: "DRUMS" },
+  { id: "vocals", label: "VOCAL BOOTH" },
   { id: "edit", label: "EDIT" },
   { id: "mix", label: "MIX & MASTER" }
 ];
@@ -228,7 +229,7 @@ const StudioDAWWorkspace = {
       }
       #lambo-city-daw-workspace .lc-daw-step-arrow:disabled { opacity:.28;cursor:default; }
       #lambo-city-daw-workspace .lc-daw-flow-track {
-        display:grid;grid-template-columns:repeat(6,minmax(0,1fr));align-items:center;
+        display:grid;grid-template-columns:repeat(7,minmax(0,1fr));align-items:center;
         gap:8px;width:min(100%,620px);
       }
       #lambo-city-daw-workspace .lc-daw-flow-track span {
@@ -369,8 +370,6 @@ const StudioDAWWorkspace = {
   },
 
   setView(viewId) {
-    // Legacy booth links now open the integrated vocal workflow inside EDIT.
-    if (viewId === "vocals") viewId = "edit";
     const view = VIEWS.find(item => item.id === viewId);
     if (!view || !this.root) return false;
 

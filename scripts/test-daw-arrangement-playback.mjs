@@ -85,4 +85,24 @@ playback.stop();
 assert.equal(playback.playing, false);
 assert.equal(playback.sources.length, 0);
 assert.equal(playback.trackChannels.size, 0);
-console.log("DAW arrangement playback, mixer, effects, and automation tests passed.");
+
+const emptyAudio = new AudioMock();
+const positions = [];
+const emptyPlayback = createStudioDAWArrangementPlayback({
+  getAudioContext: async () => emptyAudio,
+  getTempo: () => 120,
+  getSecondsAtBar: bar => (Math.max(1, Number(bar) || 1) - 1) * 2,
+  getBarAtSeconds: seconds => 1 + Number(seconds || 0) / 2,
+  onPosition: bar => positions.push(bar)
+});
+assert.equal(await emptyPlayback.play([], 1), true, "an empty song session still starts its transport");
+assert.equal(emptyPlayback.playing, true, "empty session transport remains active");
+emptyAudio.currentTime = 4;
+await new Promise(resolve => setTimeout(resolve, 80));
+assert.ok(positions.some(bar => bar > 1), "empty session playhead advances with the song clock");
+emptyPlayback.stop();
+assert.equal(emptyPlayback.playing, false, "stop freezes the empty-session transport");
+assert.equal(emptyPlayback.positionTimer, null);
+assert.equal(emptyPlayback.transportTimer, null);
+
+console.log("DAW arrangement playback, empty-session transport, mixer, effects, and automation tests passed.");
