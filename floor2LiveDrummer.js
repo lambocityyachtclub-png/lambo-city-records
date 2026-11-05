@@ -1,4 +1,4 @@
-import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
+let THREE = null;
 import StudioAudioEngine from "./studioAudioEngine.js";
 import StudioSoundKit from "./studioSoundKit.js";
 import StudioMultitrackWorkspace from "./studioMultitrackWorkspace.js";
