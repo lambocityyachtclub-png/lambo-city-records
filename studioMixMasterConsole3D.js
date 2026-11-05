@@ -238,7 +238,8 @@ export default {
     if(track.type==="midi"){
       const anySolo=StudioMultitrackWorkspace.tracks.some(other=>other.solo);
       const isAudible=!track.muted&&(!anySolo||track.solo);
-      StudioAudioEngine.getTrackGain("instrument").gain.value=isAudible?value/100:0;
+      const instrumentChannel=StudioAudioEngine.channels?.instrument;
+      if(instrumentChannel)instrumentChannel.gain.value=isAudible?value/100:0;
     } else StudioMultitrackWorkspace.arrangementPlayback?.setTrackVolume(track.id,value);
   },
   update(){
@@ -255,7 +256,8 @@ export default {
       if(track.type==="midi"){
         const anySolo=tracks.some(other=>other.solo);
         const isAudible=!track.muted&&(!anySolo||track.solo);
-        StudioAudioEngine.getTrackGain("instrument").gain.value=isAudible?volume/100:0;
+        const instrumentChannel=StudioAudioEngine.channels?.instrument;
+        if(instrumentChannel)instrumentChannel.gain.value=isAudible?volume/100:0;
       }
       const meter=track.type==="midi"?(StudioAudioEngine.getInstrumentMeter?.()||{peak:0}):(StudioMultitrackWorkspace.arrangementPlayback?.getTrackMeter?.(track.id)||{peak:0});
       const active=Math.round(clamp(meter.peak*18,0,12));
