@@ -113,7 +113,8 @@ The workflow research covers hip-hop beat production and vocal overdubs as well 
 - [x] Add a bypassable sample-peak safety limiter, adjustable ceiling, and output peak/RMS meter; persist limiter settings and apply the same protection to live playback and offline master renders.
 - [ ] Add true-peak / LUFS measurement and final limiter controls during the mastering interface pass.
 - [ ] Extend automation beyond track volume to pan, effect parameters, and sends.
-- [ ] Add MIDI file import/export plus quantize, swing, and humanize tools for beat programming and external instrument workflows.
+- [x] Add Standard MIDI File Type 0/1 import/export, tempo/time-signature transfer, and non-destructive quantize, swing, and humanize operations on the shared instrument/MIDI tracks; retain note data in existing session and `.lcp` persistence.
+- [ ] Add MIDI import/export and groove-processing controls during the final interface design pass.
 - [ ] Replace the current 30 MB JSON/base64 portable-audio ceiling with a scalable binary or compressed `.lcp` package while retaining legacy import compatibility.
 - [ ] Replace the 15-minute offline-render ceiling with a memory-safe long-form export path.
 - [ ] Replace the V1 oscillator piano voice with a richer sample-based instrument library, preserving MIDI note editing, session state, and mixer routing.
