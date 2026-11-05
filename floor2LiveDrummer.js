@@ -60,8 +60,39 @@ export function createLiveDrummerPanel({ beatLab } = {}) {
         beatLab.soundProfile = "mpc";
         beatLab.noiseBuffer = noiseBuffer;
       }
-      const channel = sound === "snare" ? "snare" : sound === "hat" || sound === "cymbal" ? "hat" : "kick";
-      StudioSoundKit.play(audio, "mpc", channel, audio.currentTime, noiseBuffer, StudioAudioEngine.getTrackGain(channel));
+      const at = audio.currentTime;
+      if (sound === "tom") {
+        const oscillator = audio.createOscillator();
+        const envelope = audio.createGain();
+        oscillator.type = "sine";
+        oscillator.frequency.setValueAtTime(145, at);
+        oscillator.frequency.exponentialRampToValueAtTime(58, at + 0.22);
+        envelope.gain.setValueAtTime(0.0001, at);
+        envelope.gain.exponentialRampToValueAtTime(0.22, at + 0.008);
+        envelope.gain.exponentialRampToValueAtTime(0.0001, at + 0.28);
+        oscillator.connect(envelope);
+        envelope.connect(StudioAudioEngine.master || audio.destination);
+        oscillator.start(at);
+        oscillator.stop(at + 0.30);
+      } else if (sound === "cymbal" && noiseBuffer) {
+        const source = audio.createBufferSource();
+        const filter = audio.createBiquadFilter();
+        const envelope = audio.createGain();
+        source.buffer = noiseBuffer;
+        filter.type = "highpass";
+        filter.frequency.value = 6200;
+        envelope.gain.setValueAtTime(0.0001, at);
+        envelope.gain.linearRampToValueAtTime(0.13, at + 0.012);
+        envelope.gain.exponentialRampToValueAtTime(0.0001, at + 0.62);
+        source.connect(filter);
+        filter.connect(envelope);
+        envelope.connect(StudioAudioEngine.master || audio.destination);
+        source.start(at);
+        source.stop(at + 0.65);
+      } else {
+        const channel = sound === "snare" ? "snare" : "hat";
+        StudioSoundKit.play(audio, "mpc", channel, at, noiseBuffer, StudioAudioEngine.getTrackGain(channel));
+      }
       score += 100;
       updateScore();
       status.textContent = label + " · +100";
