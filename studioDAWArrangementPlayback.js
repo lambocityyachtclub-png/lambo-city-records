@@ -156,18 +156,29 @@ export function createStudioDAWArrangementPlayback({
       const routeOutput = outputBus?.gain || output;
       // A real per-track analyser sits in the live channel path. It passes
       // audio through unchanged while providing accurate channel meters.
-      const meterAnalyser = context.createAnalyser();
-      meterAnalyser.fftSize = 256;
-      meterAnalyser.smoothingTimeConstant = 0.72;
-      if (panner) {
+      const meterAnalyser = typeof context.createAnalyser === "function"
+        ? context.createAnalyser()
+        : null;
+      let meterBuffer = null;
+      if (meterAnalyser) {
+        meterAnalyser.fftSize = 256;
+        meterAnalyser.smoothingTimeConstant = 0.72;
+        meterBuffer = new Float32Array(meterAnalyser.fftSize);
         trackEffects.output.connect(meterAnalyser);
-        meterAnalyser.connect(panner);
+        if (panner) {
+          meterAnalyser.connect(panner);
+          panner.connect(routeOutput);
+        } else {
+          meterAnalyser.connect(routeOutput);
+        }
+      } else if (panner) {
+        // Lightweight mock contexts and older test harnesses retain the
+        // original audio path; browsers with Web Audio analysers get meters.
+        trackEffects.output.connect(panner);
         panner.connect(routeOutput);
       } else {
-        trackEffects.output.connect(meterAnalyser);
-        meterAnalyser.connect(routeOutput);
+        trackEffects.output.connect(routeOutput);
       }
-      const meterBuffer = new Float32Array(meterAnalyser.fftSize);
       const channel = { gain, automationGain, low, mid, high, compressor, panner, effects: trackEffects, pitchCorrectionNode, meterAnalyser, meterBuffer, track, sendNodes: [] };
       this.trackChannels.set(track.id, channel);
       this.applyTrackState(track);
@@ -228,7 +239,7 @@ export function createStudioDAWArrangementPlayback({
 
     getTrackMeter(trackId) {
       const channel = this.trackChannels.get(trackId);
-      if (!channel?.meterAnalyser) return { peak: 0, rms: 0 };
+      if (!channel?.meterAnalyser || !channel.meterBuffer) return { peak: 0, rms: 0 };
       const samples = channel.meterBuffer;
       channel.meterAnalyser.getFloatTimeDomainData(samples);
       let peak = 0;
@@ -243,7 +254,7 @@ export function createStudioDAWArrangementPlayback({
 
     getTrackWaveform(trackId) {
       const channel = this.trackChannels.get(trackId);
-      if (!channel?.meterAnalyser) return null;
+      if (!channel?.meterAnalyser || !channel.meterBuffer) return null;
       channel.meterAnalyser.getFloatTimeDomainData(channel.meterBuffer);
       return channel.meterBuffer;
     },
