@@ -165,22 +165,24 @@ export default {
     const shell = makeMaterial(COLORS.navy, 0x081a36, 0.16);
     const shellAlt = makeMaterial(COLORS.navyLight, 0x0b1e3a, 0.12);
     const cymbal = new THREE.MeshStandardMaterial({ color: 0xb78b48, metalness: 0.92, roughness: 0.22 });
+    const brass = makeMaterial(0xd5b36c, 0x4d3210, 0.18);
     station.traverse(object => {
       if (!object.isMesh) return;
       if (object.userData?.drumSound === "kick" || object.userData?.drumSound === "tom") object.material = shell;
       if (object.userData?.drumSound === "snare") object.material = shellAlt;
       if (object.userData?.drumSound === "hat" || object.userData?.drumSound === "cymbal") object.material = cymbal;
+      if (/Stand|Base/.test(object.name || "")) object.material = brass;
     });
     const ringSpecs = [
       ["kick",0,0.78,0.48,0.28],["snare",-0.78,1.16,0.08,0.20],
-      ["tom",-0.05,1.42,-0.18,0.19],["tom",0.72,1.12,-0.08,0.22],
+      ["tom",-0.05,1.42,-0.18,0.19],["tom",0.48,1.52,-0.28,0.18],["tom",0.72,1.12,-0.08,0.22],
       ["hat",-1.12,1.48,-0.05,0.24],["cymbal",-0.95,1.72,-0.55,0.28],
-      ["cymbal",1.13,1.77,-0.48,0.30]
+      ["cymbal",1.13,1.77,-0.48,0.30],["cymbal",-1.55,1.92,-0.72,0.26],["cymbal",1.55,1.92,-0.72,0.26]
     ];
     ringSpecs.forEach(([sound,x,y,z,radius]) => {
       const ring = new THREE.Mesh(new THREE.TorusGeometry(radius,0.018,6,32),
         new THREE.MeshBasicMaterial({ color: COLORS.glow, transparent: true, opacity: 0.72 }));
-      ring.rotation.x = -Math.PI / 2;
+      ring.rotation.x = sound === "kick" ? 0 : -Math.PI / 2;
       ring.position.set(x,y,z);
       ring.userData.drumSound = sound;
       ring.userData.pulse = 0;
@@ -190,11 +192,36 @@ export default {
     const secondTom = new THREE.Mesh(new THREE.CylinderGeometry(0.25,0.25,0.20,28),shell);
     secondTom.name = "floor2LiveDrummerRackTomTwo";
     secondTom.position.set(0.48,1.38,-0.28);
+    secondTom.userData.drumSound = "tom";
     station.add(secondTom);
     const electronicPad = new THREE.Mesh(new THREE.BoxGeometry(0.38,0.07,0.30),makeMaterial(0x111722,0x162c4b,0.2));
     electronicPad.name = "floor2LiveDrummerElectronicPad";
+    electronicPad.userData.drumSound = "snare";
     electronicPad.position.set(1.55,1.12,-0.1);
     station.add(electronicPad);
+    const addExtraCymbal = (name,x,y,z,tilt=0) => {
+      const stand = new THREE.Mesh(new THREE.CylinderGeometry(.022,.03,1.62,10),brass);
+      stand.name = name + "Stand";
+      stand.position.set(x,y-.72,z);
+      station.add(stand);
+      const cym = new THREE.Mesh(new THREE.CylinderGeometry(.30,.30,.025,36),cymbal);
+      cym.name = name;
+      cym.userData.drumSound = "cymbal";
+      cym.position.set(x,y,z);
+      cym.rotation.z = tilt;
+      station.add(cym);
+    };
+    addExtraCymbal("floor2LiveDrummerLeftCrashTwo",-1.55,1.92,-.72,-.12);
+    addExtraCymbal("floor2LiveDrummerRightCrashTwo",1.55,1.92,-.72,.16);
+    const rimSpecs = [
+      [-.78,1.13,.08,.32],[-.05,1.37,-.18,.28],[.48,1.33,-.28,.25],[.72,1.08,-.08,.33]
+    ];
+    rimSpecs.forEach(([x,y,z,radius]) => {
+      const rim = new THREE.Mesh(new THREE.TorusGeometry(radius,.018,6,28),brass);
+      rim.rotation.x = Math.PI/2;
+      rim.position.set(x,y,z);
+      station.add(rim);
+    });
     this.hitHandler = event => {
       const sound = event.detail?.sound;
       this.rings.forEach(ring => {
