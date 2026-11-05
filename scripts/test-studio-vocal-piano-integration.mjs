@@ -9,8 +9,9 @@ const [app, workspace, navigation, midiEditor] = await Promise.all([
 ]);
 
 assert.match(workspace, /id:\s*"vocals",\s*label:\s*"VOCAL BOOTH"/);
-assert.match(navigation, /stations\.vocalBooth,\s*view:\s*"vocals"/);
-assert.match(app, /this\.vocalsPanel\s*=\s*createVocalsPanel/);
+assert.match(navigation, /floor2SongEditorDisplay/);
+assert.match(navigation, /view:\s*"edit"/);
+assert.match(app, /this\.vocalsPanel\s*=\s*createVocalBoothPanel/);
 assert.match(app, /setPanel\("vocals",\s*this\.vocalsPanel\)/);
 assert.match(app, /data-vocal-action="quick-note-start"/);
 assert.match(app, /data-vocal-action="quick-note-stop"/);

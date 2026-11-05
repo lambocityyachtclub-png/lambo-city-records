@@ -88,6 +88,13 @@ this.systems.floor2StudioSession?.init?.(
   this.context
 );
 
+// The dedicated music-interface modules enhance the already-built stations.
+// Their Three.js imports are lazy so standalone Studio remains independent.
+this.systems.studioMixMasterConsole3D?.init?.(this.scene, this.context);
+this.systems.floor2LiveDrummer?.init?.(this.scene, this.context);
+this.systems.floor2VocalBooth3D?.init?.(this.scene, this.context);
+this.systems.floor2CitySynth?.init?.(this.scene, this.context);
+
 this.systems.boardwalkOverlooks?.init?.(this.scene);
     this.systems.input?.init?.();
     this.systems.player?.init?.(this.scene);
