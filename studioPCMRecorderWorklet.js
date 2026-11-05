@@ -35,6 +35,7 @@ class LamboCityPCMRecorderProcessor extends AudioWorkletProcessor {
     if (!input.length || !input[0]?.length) return true;
 
     if (this.channelCount !== input.length) {
+      this.flush();
       this.channelCount = input.length;
       this.buffers = Array.from(
         { length: this.channelCount },
