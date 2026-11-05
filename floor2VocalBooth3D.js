@@ -199,6 +199,7 @@ export default {
     headphones.position.set(boothX+1.55,.72,boothZ+.18);booth.add(headphones);
   },
   update(){
+    if(activePanel&&!activePanel.root.isConnected)activePanel=null;
     if(!this.screenContext||!this.screenCanvas)return;
     const ctx=this.screenContext;
     const input=StudioRecordingEngine.getInputWaveform?.();
