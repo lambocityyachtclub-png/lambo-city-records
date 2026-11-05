@@ -685,6 +685,7 @@ const StudioDAWApp = {
         panels: {},
         initialView,
         onViewChange: viewId => {
+          window.dispatchEvent(new CustomEvent("lc-live-drummer-state", { detail: { active: viewId === "drums" } }));
           const appHeader = root.querySelector(":scope > header");
           if (appHeader) appHeader.style.display = viewId === "edit" ? "none" : "flex";
           if (viewId === "mix") this.mixPanel?.refresh?.();
@@ -725,7 +726,7 @@ const StudioDAWApp = {
       this.editScreen = createStudioDAWEditScreen({
         beatLab: Floor2StudioApp,
         onExit: () => this.workspace?.setView("beatlab"),
-        onPrevious: () => this.workspace?.setView("edit"),
+        onPrevious: null,
         onNext: () => this.workspace?.setView("mpc"),
         onTransportPlay: () => this.startSessionPlayback(),
         onTransportStop: () => this.stopSessionPlayback()
@@ -786,6 +787,7 @@ const StudioDAWApp = {
   },
 
   close() {
+    window.dispatchEvent(new CustomEvent("lc-live-drummer-state", { detail: { active: false } }));
     this.stopSessionPlayback();
     if (this.handleStudioKeydown) {
       document.removeEventListener("keydown", this.handleStudioKeydown);
