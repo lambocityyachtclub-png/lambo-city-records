@@ -5,10 +5,13 @@ import { createStudioPitchCorrectionNode } from "./studioPitchCorrection.js";
 const MAX_RENDER_SECONDS = 900;
 const SAMPLE_RATE = 44100;
 
-function encodeWav(audioBuffer) {
+export function encodeStudioWav(audioBuffer, { bitDepth = 24 } = {}) {
+  if (![16, 24, 32].includes(Number(bitDepth))) {
+    throw new Error("WAV bit depth must be 16, 24, or 32-bit PCM.");
+  }
   const channels = audioBuffer.numberOfChannels;
   const frames = audioBuffer.length;
-  const bytesPerSample = 2;
+  const bytesPerSample = Number(bitDepth) / 8;
   const blockAlign = channels * bytesPerSample;
   const dataBytes = frames * blockAlign;
   const output = new ArrayBuffer(44 + dataBytes);
@@ -27,7 +30,7 @@ function encodeWav(audioBuffer) {
   view.setUint32(24, audioBuffer.sampleRate, true);
   view.setUint32(28, audioBuffer.sampleRate * blockAlign, true);
   view.setUint16(32, blockAlign, true);
-  view.setUint16(34, 16, true);
+  view.setUint16(34, Number(bitDepth), true);
   writeText(36, "data");
   view.setUint32(40, dataBytes, true);
 
@@ -36,7 +39,18 @@ function encodeWav(audioBuffer) {
   for (let frame = 0; frame < frames; frame += 1) {
     for (let channel = 0; channel < channels; channel += 1) {
       const sample = Math.max(-1, Math.min(1, channelData[channel][frame]));
-      view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7fff, true);
+      const integer = Math.round(sample < 0
+        ? sample * (2 ** (Number(bitDepth) - 1))
+        : sample * ((2 ** (Number(bitDepth) - 1)) - 1));
+      if (bitDepth === 16) {
+        view.setInt16(offset, integer, true);
+      } else if (bitDepth === 24) {
+        view.setUint8(offset, integer & 0xff);
+        view.setUint8(offset + 1, (integer >> 8) & 0xff);
+        view.setUint8(offset + 2, (integer >> 16) & 0xff);
+      } else {
+        view.setInt32(offset, integer, true);
+      }
       offset += bytesPerSample;
     }
   }
@@ -50,7 +64,8 @@ async function renderStudioSessionToAudioBuffer({
   tempoChanges = [],
   timeSignatureChanges = [],
   masterVolume = StudioAudioEngine.master?.gain?.value ?? 1,
-  masterSettings = {}
+  masterSettings = {},
+  sampleRate = SAMPLE_RATE
 } = {}) {
   const bpm = Number(tempo);
   if (!Number.isFinite(bpm) || bpm < 60 || bpm > 180) {
@@ -107,8 +122,10 @@ async function renderStudioSessionToAudioBuffer({
 
   const OfflineContext = window.OfflineAudioContext || window.webkitOfflineAudioContext;
   if (!OfflineContext) throw new Error("Offline audio rendering is not supported in this browser.");
-  const frameCount = Math.ceil(renderDuration * SAMPLE_RATE);
-  const offline = new OfflineContext(2, frameCount, SAMPLE_RATE);
+  const outputSampleRate = Number(sampleRate);
+  if (![44100, 48000, 96000].includes(outputSampleRate)) throw new Error("Choose a supported WAV sample rate: 44.1, 48, or 96 kHz.");
+  const frameCount = Math.ceil(renderDuration * outputSampleRate);
+  const offline = new OfflineContext(2, frameCount, outputSampleRate);
   const master = offline.createGain();
   const masterCompressor = offline.createDynamicsCompressor();
   master.gain.value = Math.max(0, Math.min(1, Number(masterSettings.volume ?? masterVolume) || 0));
@@ -258,8 +275,9 @@ async function renderStudioSessionToAudioBuffer({
 }
 
 export async function renderStudioSessionToWav(options = {}) {
-  const audioBuffer = await renderStudioSessionToAudioBuffer(options);
-  return encodeWav(audioBuffer);
+  const { bitDepth = 24, sampleRate = SAMPLE_RATE, ...renderOptions } = options || {};
+  const audioBuffer = await renderStudioSessionToAudioBuffer({ ...renderOptions, sampleRate });
+  return encodeStudioWav(audioBuffer, { bitDepth });
 }
 
 let mp3EncoderLibraryPromise = null;
