@@ -592,6 +592,7 @@ const StudioDAWApp = {
       this.pianoPanel = createPianoPanel();
       this.workspace.setPanel("mix", this.mixPanel);
       this.workspace.setPanel("piano", this.pianoPanel);
+      this.syncTransportControls();
 
       // One shared Spacebar transport for every Studio workspace.
       // Text fields retain normal typing; buttons do not steal the DAW shortcut.
