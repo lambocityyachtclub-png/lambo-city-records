@@ -15,7 +15,8 @@
       "artistIdentityAndAvatar": "answered",
       "avatarApprovalAndCustomization": "answered",
       "unifiedIdentityAndInWorldNameDisplay": "answered",
-      "artistProfilesAndSocialFollowing": "answered"
+      "artistProfilesAndSocialFollowing": "answered",
+      "artistFollowingAndMessaging": "answered"
     }
   },
   "ownerDirection": {
@@ -186,10 +187,34 @@
           "safeguards": "Plan privacy controls, blocking/reporting, moderation, and age-appropriate safety before launching public social features."
         },
         "status": "Approved long-term platform direction. Do not implement accounts, public profiles, social graph, or backend services in the current single-player foundation without a separately approved architecture and rollout."
+      },
+      "socialExperience": {
+        "following": {
+          "approved": true,
+          "features": [
+            "See artists the player follows",
+            "Browse music those artists explicitly share publicly",
+            "See public achievements",
+            "Receive updates when followed artists share or release something",
+            "Keep private Studio sessions and projects private unless invited"
+          ]
+        },
+        "directMessaging": {
+          "approved": true,
+          "feature": "Artists can eventually send direct messages to one another inside LAMBO CITY.",
+          "intendedUses": [
+            "Networking",
+            "Finding collaborators",
+            "Discussing music and creative opportunities"
+          ],
+          "safeguards": "Design privacy and message controls, blocking/reporting, moderation, spam prevention, and age-appropriate protections before launch."
+        },
+        "rollout": "Build the social foundation in stages. Do not implement accounts, messaging, following, or backend services in the current single-player foundation until the separate platform architecture and rollout are approved."
       }
     }
   },
   "openDecisions": [
+    "Define direct-message permissions, message requests, notification controls, and whether messaging is limited to mutual follows or approved contacts.",
     "Define profile visibility defaults, public/private music sharing, and who can follow or message whom.",
     "Define safety, moderation, blocking/reporting, and age-appropriate controls for the future social layer.",
     "Define the third profile photo's purpose and the exact photo requirements for avatar generation.",
