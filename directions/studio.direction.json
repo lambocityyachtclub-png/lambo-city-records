@@ -13,7 +13,8 @@
       "collaborationAccess": "answered",
       "collaborationExperience": "answered",
       "artistIdentityAndAvatar": "answered",
-      "avatarApprovalAndCustomization": "answered"
+      "avatarApprovalAndCustomization": "answered",
+      "unifiedIdentityAndInWorldNameDisplay": "answered"
     }
   },
   "ownerDirection": {
@@ -147,6 +148,24 @@
         "ownerApproved": true,
         "qualityPrinciple": "Prioritize recognizable individual likeness and personal identity over generic preset avatars. Treat image-to-3D generation, rigging, optimization, and user approval as distinct quality-controlled steps.",
         "status": "Approved long-term product direction; implementation belongs to the future accounts and avatar platform phase."
+      },
+      "unifiedIdentity": {
+        "rule": "One consistent username and account identity follows the player throughout the LAMBO CITY ecosystem, including the 3D world, Studio sessions, project collaboration, artist profile, and future Radio and entertainment experiences.",
+        "approved": true
+      },
+      "inWorldNameDisplay": {
+        "recommendation": "Contextual nameplates rather than permanently displaying names above every character.",
+        "behavior": [
+          "Show a player's username above their character when another player is nearby and within a readable viewing distance.",
+          "Show the username when a player is selected, approached for interaction, or participating in the same Studio session.",
+          "Hide distant nameplates and avoid displaying names constantly when no social interaction is relevant.",
+          "Keep presence/status as a separate optional indicator, not a substitute for the username."
+        ],
+        "presenceStatus": "Future optional presence states may include Available, In Studio, Recording, and Do Not Disturb. Players should control their visibility and availability.",
+        "rationale": "Preserves immersion and a clean cinematic world while making it easy to recognize and interact with other people.",
+        "ownerDelegatedDesignChoice": true,
+        "revisable": true,
+        "status": "Recommended default accepted for initial direction; may be revised by owner after seeing it in the game."
       }
     }
   },
