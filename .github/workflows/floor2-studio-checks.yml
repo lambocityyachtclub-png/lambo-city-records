@@ -13,6 +13,8 @@ on:
       - "studioDAWEditScreen.js"
       - "studioMixMasterApp.js"
       - "studioDAWWorkspace.js"
+      - "studioDAWMidiEditor.js"
+      - "scripts/test-studio-vocal-piano-integration.mjs"
       - "studioDAWBeatLabPanel.js"
       - "studioDAWEditPanel.js"
       - "studioDAWSessionTemplates.js"
@@ -134,6 +136,7 @@ jobs:
             studioDAWEditScreen.js \
             studioMixMasterApp.js \
             studioDAWWorkspace.js \
+            studioDAWMidiEditor.js \
             studioDAWBeatLabPanel.js \
             studioDAWEditPanel.js \
             studioDAWSessionTemplates.js \
@@ -219,3 +222,6 @@ jobs:
 
       - name: Test Floor 2 Studio station registration and navigation
         run: node --experimental-default-type=module scripts/test-floor2-studio-navigation.mjs
+
+      - name: Test Vocal Booth, Voice Notes, and piano MIDI integration
+        run: node --experimental-default-type=module scripts/test-studio-vocal-piano-integration.mjs
