@@ -437,6 +437,7 @@ const StudioRecordingEngine = {
       number: index + 1,
       startedAt: take.startedAt,
       stoppedAt: take.stoppedAt,
+      recordingFormat: take.recordingFormat || "Browser MediaRecorder",
 
       beatBytes: take.beat.size,
       vocalBytes: take.vocal.size,
