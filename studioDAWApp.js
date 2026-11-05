@@ -589,7 +589,9 @@ const StudioDAWApp = {
         beatLab: Floor2StudioApp,
         onExit: () => this.workspace?.setView("beatlab"),
         onPrevious: () => this.workspace?.setView("drums"),
-        onNext: () => this.workspace?.setView("mix")
+        onNext: () => this.workspace?.setView("mix"),
+        onTransportPlay: () => this.startSessionPlayback(),
+        onTransportStop: () => this.stopSessionPlayback()
       });
       const editWorkspace = this.editScreen.mount();
       this.workspace.setPanel("edit", editWorkspace);
