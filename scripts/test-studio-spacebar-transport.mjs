@@ -11,8 +11,8 @@ assert.match(app, /One shared Spacebar transport for every Studio workspace/);
 assert.match(app, /event\.code !== "Space"/);
 assert.match(app, /multitrack\.playAll\(\)/);
 assert.match(app, /multitrack\.stopAll\(\)/);
-assert.match(app, /beatLab\.start\(\)/);
-assert.match(app, /beatLab\.stop\(\)/);
+assert.match(app, /startSessionPlayback\(\)/);
+assert.match(app, /beatLab\.stop\(\)/);\nassert.match(app, /data-global-transport="click"/);\nassert.match(app, /CLICK OFF/);\nassert.match(app, /toggleSessionMetronome/);\nassert.doesNotMatch(app, /const useArrangement =/);
 assert.match(app, /document\.removeEventListener\("keydown", this\.handleStudioKeydown\)/);
 
 assert.doesNotMatch(beatLab, /if \(event\.code === "Space"\)/);
