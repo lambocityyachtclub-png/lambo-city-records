@@ -42,17 +42,15 @@ export default {
       return;
     }
 
-    // Every physical production station now opens a real
-    // workspace in the shared Studio app. No placeholder panels.
+    // The main monitor is the single entry point to the complete
+    // five-stage production workflow. Physical stations remain in the
+    // approved room layout; they no longer open competing app instances.
     this.targets = [
-      { object: studio.getObjectByName("floor2MPCClickable"), view: "mpc", title: "MPC" },
-      { object: studio.getObjectByName("floor2SongEditorDisplay"), view: "edit", title: "SONG EDITOR DISPLAY" },
-      { object: stations.instrumentStation, view: "piano", title: "PIANO" },
-      { object: stations.drumStation, view: "drums", title: "DRUMS" },
-      { object: stations.vocalBooth, view: "vocals", title: "VOCAL RECORDING" },
-      { object: stations.controlRoom, view: "mix", title: "MIX • MASTER WORKSTATION" },
-      { object: stations.songArchive, view: "edit", title: "SONG ARCHIVE" },
-      { object: stations.mobileStudio, view: "edit", title: "CO-PILOT STUDIO" }
+      {
+        object: studio.getObjectByName("floor2SongEditorDisplay"),
+        view: "edit",
+        title: "LAMBO CITY STUDIO MONITOR"
+      }
     ].filter(item => item.object);
 
     this.handleClick = event => {
