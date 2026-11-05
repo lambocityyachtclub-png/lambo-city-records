@@ -3,6 +3,12 @@ name: Floor 2 Studio Checks
 on:
   push:
     paths:
+      - "main.js"
+      - "studioMixMasterConsole3D.js"
+      - "floor2LiveDrummer.js"
+      - "floor2VocalBooth3D.js"
+      - "floor2CitySynth.js"
+      - "scripts/test-studio-interface-workflow.mjs"
       - "floor2StudioApp.js"
       - "floor2StudioNavigation.js"
       - "floor2InstrumentApp.js"
@@ -65,6 +71,12 @@ on:
 
   pull_request:
     paths:
+      - "main.js"
+      - "studioMixMasterConsole3D.js"
+      - "floor2LiveDrummer.js"
+      - "floor2VocalBooth3D.js"
+      - "floor2CitySynth.js"
+      - "scripts/test-studio-interface-workflow.mjs"
       - "floor2StudioApp.js"
       - "floor2StudioNavigation.js"
       - "floor2InstrumentApp.js"
@@ -126,6 +138,11 @@ jobs:
       - name: Parse Floor 2 production modules
         run: |
           for file in \
+            main.js \
+            studioMixMasterConsole3D.js \
+            floor2LiveDrummer.js \
+            floor2VocalBooth3D.js \
+            floor2CitySynth.js \
             floor2StudioApp.js \
             floor2StudioNavigation.js \
             floor2InstrumentApp.js \
@@ -219,6 +236,9 @@ jobs:
 
       - name: Test shared Studio Spacebar transport
         run: node --experimental-default-type=module scripts/test-studio-spacebar-transport.mjs
+
+      - name: Test approved five-step music interface workflow
+        run: node --experimental-default-type=module scripts/test-studio-interface-workflow.mjs
 
       - name: Test Floor 2 Studio station registration and navigation
         run: node --experimental-default-type=module scripts/test-floor2-studio-navigation.mjs
