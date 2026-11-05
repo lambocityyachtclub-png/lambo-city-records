@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 
 const files = [
   "main.js",
+  "engine.js",
   "studioDAWApp.js",
   "studioDAWWorkspace.js",
   "floor2StudioNavigation.js",
@@ -20,6 +21,7 @@ const source = Object.fromEntries(await Promise.all(files.map(async file => [
 ])));
 
 const main = source["main.js"];
+const engine = source["engine.js"];
 for (const [name,path] of [
   ["StudioMixMasterConsole3D","./studioMixMasterConsole3D.js"],
   ["Floor2LiveDrummer","./floor2LiveDrummer.js"],
@@ -28,6 +30,7 @@ for (const [name,path] of [
 ]) {
   assert.ok(main.includes('from "' + path + '"'), name + " must be imported by the world");
   assert.ok(main.includes(name + ": " + name), name + " must be registered with the engine");
+  assert.ok(engine.includes("this.systems." + name + "?.init?.(this.scene, this.context)"), name + " must initialize after the Floor 2 scene is ready");
 }
 
 const workspace = source["studioDAWWorkspace.js"];
