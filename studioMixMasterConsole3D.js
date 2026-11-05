@@ -1,4 +1,4 @@
-import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
+let THREE = null;
 import StudioAudioEngine from "./studioAudioEngine.js";
 import StudioMultitrackWorkspace from "./studioMultitrackWorkspace.js";
 
@@ -37,7 +37,8 @@ export default {
   strips:[],
   dragging:null,
   pointerDown:null,
-  init(scene,context){
+  async init(scene,context){
+    THREE = await import("https://unpkg.com/three@0.160.0/build/three.module.js");
     this.scene=scene;
     this.renderer=context?.renderer||null;
     const studio=scene?.getObjectByName("recordsHQFloor2Studio");
