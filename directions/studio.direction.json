@@ -30,7 +30,8 @@
       "entertainmentAudienceExperience": "answered",
       "entertainmentPerformerEligibility": "answered",
       "exclusiveEventAccess": "answered",
-      "platformIdentityAndAccessSecurity": "answered"
+      "platformIdentityAndAccessSecurity": "answered",
+      "accountAuthenticationAndRecovery": "answered"
     }
   },
   "ownerDirection": {
@@ -489,7 +490,11 @@
       "authenticationAndAccountProtection": [
         "Use strong authentication, with passkeys and/or multi-factor authentication where appropriate.",
         "Protect account recovery, sessions, and device management against takeover.",
-        "Apply rate limits, abuse detection, and protections against automated credential attacks."
+        "Apply rate limits, abuse detection, and protections against automated credential attacks.",
+        "Use passkey-first, passwordless sign-in as the preferred account authentication method, supporting platform biometrics, device PIN, and other passkey-compatible authenticators.",
+        "Use verified email as a protected account recovery and security-notification channel; recovery must use time-limited, abuse-resistant verification and must not silently bypass account protections.",
+        "Require step-up verification for sensitive account changes, recovery changes, new-device trust decisions, and other high-risk actions.",
+        "Provide user-visible session and device management, including the ability to revoke sessions on devices the user no longer trusts."
       ],
       "securityMonitoringAndAudit": [
         "Record security-relevant events such as failed sign-ins, suspicious sessions, permission changes, invitation activity, and denied access attempts.",
@@ -497,7 +502,16 @@
         "Protect audit records against unauthorized alteration and apply privacy-conscious retention limits."
       ],
       "securityExpectation": "Use layered safeguards and incident-response processes to reduce unauthorized access risk. Do not promise that hacking or unauthorized access can be made impossible.",
-      "implementationGate": "This is approved product direction, not authorization to bolt accounts, authentication, backend services, or multiplayer onto the current single-player foundation. Design and approve the platform security architecture, privacy controls, operational plan, and rollout before implementation."
+      "implementationGate": "This is approved product direction, not authorization to bolt accounts, authentication, backend services, or multiplayer onto the current single-player foundation. Design and approve the platform security architecture, privacy controls, operational plan, and rollout before implementation.",
+      "authenticationDecision": {
+        "selectedOption": "A",
+        "name": "Passkeys first",
+        "primarySignIn": "Passkey-based passwordless authentication using supported biometrics, device PIN, or another compatible authenticator.",
+        "recovery": "Verified email with protected, time-limited recovery verification and additional safeguards for high-risk recovery.",
+        "sensitiveActions": "Require step-up verification for sensitive account changes and suspicious sign-in situations.",
+        "sessionManagement": "Allow users to review active sessions/devices and revoke sessions they no longer trust.",
+        "ownerApproval": "The owner selected Option A on 2026-11-05."
+      }
     }
   },
   "openDecisions": [
@@ -514,7 +528,8 @@
     "Obtain qualified legal review and define the rights model, disclosures, and jurisdictional obligations before offering any digital real-estate ownership or making ownership claims.",
     "For the future entertainment and events system, define event hosting, scheduling, capacity, audience participation, artist access, and moderation requirements.",
     "Define eligibility and approval/revocation rules for artist- and player-organized events, plus event-level visibility and publishing permissions.",
-    "Define detailed authentication, account recovery, session/device management, security alerting, audit-log retention, incident response, and access-review requirements for the future identity and security architecture."
+    "Define detailed authentication, account recovery, session/device management, security alerting, audit-log retention, incident response, and access-review requirements for the future identity and security architecture.",
+    "Define exact account recovery safeguards, trusted-device behavior, notification channels, and fallback procedures for users who lose access to all passkeys and their verified email."
   ],
   "protectionRules": [
     "Do not redesign the approved EDIT interface.",
@@ -534,6 +549,6 @@
   "approval": {
     "status": "draft",
     "approvedByOwner": false,
-    "note": "Captures the owner's direction answers to date. The living-city style is Option C, progressing toward the realism and functionality of Option A; player freedom and optional guided activities are both supported; the ultimate city activity ambition is Option B, delivered progressively using Option C; NPC and business functionality follow Option C as the development approach with Option B as the long-term ambition; vehicle development begins with luxury decorative/showcase presentation while the road network and future interactive driving scope are developed later. This is not yet a complete or approved Studio specification. Digital real estate follows Option C as the staged development approach, with any ownership claims gated on a legally reviewed and owner-approved rights structure. The owner also confirmed that LAMBO CITY should support concerts, live performances, parties, and special events. Future digital-real-estate and other in-game ownership may be architected as dormant capability, but must remain unavailable and unadvertised until legal review and explicit owner launch approval. The owner selected Option C for event organizers: official LAMBO CITY events plus approved artist- and player-organized events. Private Studio sessions and creative work remain private by default; organizer access does not grant project access or publication rights, and public sharing or performance requires explicit authorization. The owner selected Option C for audience experience: a complete spectator experience plus optional interactive participation. The owner also selected Option C for performers: official LAMBO CITY bookings plus approved community performers, subject to the necessary rights and permissions for music performed. The owner further confirmed that every user's character should be able to dance in time with music, with an expandable library of hip-hop and current trending dance styles, while keeping dancing optional and respecting applicable choreography and content rights. The owner approved centralized identity and security with tightly scoped event-level delegation: the owner retains ultimate platform-wide security authority, while approved organizers may manage invitations only for their assigned events within owner-defined limits. Public events are discoverable and open; exclusive events require an invitation or explicit access grant. These are future platform directions and do not authorize implementation of accounts or backend services in the current single-player foundation."
+    "note": "Captures the owner's direction answers to date. The living-city style is Option C, progressing toward the realism and functionality of Option A; player freedom and optional guided activities are both supported; the ultimate city activity ambition is Option B, delivered progressively using Option C; NPC and business functionality follow Option C as the development approach with Option B as the long-term ambition; vehicle development begins with luxury decorative/showcase presentation while the road network and future interactive driving scope are developed later. This is not yet a complete or approved Studio specification. Digital real estate follows Option C as the staged development approach, with any ownership claims gated on a legally reviewed and owner-approved rights structure. The owner also confirmed that LAMBO CITY should support concerts, live performances, parties, and special events. Future digital-real-estate and other in-game ownership may be architected as dormant capability, but must remain unavailable and unadvertised until legal review and explicit owner launch approval. The owner selected Option C for event organizers: official LAMBO CITY events plus approved artist- and player-organized events. Private Studio sessions and creative work remain private by default; organizer access does not grant project access or publication rights, and public sharing or performance requires explicit authorization. The owner selected Option C for audience experience: a complete spectator experience plus optional interactive participation. The owner also selected Option C for performers: official LAMBO CITY bookings plus approved community performers, subject to the necessary rights and permissions for music performed. The owner further confirmed that every user's character should be able to dance in time with music, with an expandable library of hip-hop and current trending dance styles, while keeping dancing optional and respecting applicable choreography and content rights. The owner approved centralized identity and security with tightly scoped event-level delegation: the owner retains ultimate platform-wide security authority, while approved organizers may manage invitations only for their assigned events within owner-defined limits. Public events are discoverable and open; exclusive events require an invitation or explicit access grant. These are future platform directions and do not authorize implementation of accounts or backend services in the current single-player foundation. The owner selected passkey-first passwordless sign-in (Option A) for the future account system, with verified email as a protected recovery channel, step-up verification for sensitive or suspicious actions, and user-controlled session/device revocation."
   }
 }
