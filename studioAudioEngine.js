@@ -18,6 +18,8 @@ const StudioAudioEngine = {
   limiterBypass: null,
   masterAnalyser: null,
   masterMeterBuffer: new Float32Array(2048),
+  instrumentAnalyser: null,
+  instrumentMeterBuffer: new Float32Array(512),
   stereoWidth: null,
   stereoWidthNode: null,
   masterVolumeValue: 1,
@@ -126,12 +128,21 @@ const StudioAudioEngine = {
     const channels = {
       kick: context.createGain(),
       snare: context.createGain(),
-      hat: context.createGain()
+      hat: context.createGain(),
+      instrument: context.createGain()
     };
 
-    Object.values(channels).forEach((channel) => {
+    const instrumentAnalyser = context.createAnalyser();
+    instrumentAnalyser.fftSize = this.instrumentMeterBuffer.length;
+    instrumentAnalyser.smoothingTimeConstant = 0.18;
+    Object.entries(channels).forEach(([name, channel]) => {
       channel.gain.value = 1;
-      channel.connect(master);
+      if (name === "instrument") {
+        channel.connect(instrumentAnalyser);
+        instrumentAnalyser.connect(master);
+      } else {
+        channel.connect(master);
+      }
     });
 
     const splitter = context.createChannelSplitter(2);
@@ -175,6 +186,7 @@ const StudioAudioEngine = {
     this.limiterOutput = limiterOutput;
     this.limiterBypass = limiterBypass;
     this.masterAnalyser = masterAnalyser;
+    this.instrumentAnalyser = instrumentAnalyser;
     this.stereoWidth = sideWidth;
     this.stereoWidthNode = { splitter, merger, mid, side, sideInvert, sideLeft, sideRight, leftOut, rightOut };
     this.channels = channels;
@@ -192,6 +204,20 @@ const StudioAudioEngine = {
 
   getContext() {
     return this.context;
+  },
+
+  getInstrumentMeter() {
+    if (!this.instrumentAnalyser) return { peak: 0, rms: 0 };
+    const samples = this.instrumentMeterBuffer;
+    this.instrumentAnalyser.getFloatTimeDomainData(samples);
+    let peak = 0;
+    let sum = 0;
+    for (let i = 0; i < samples.length; i += 1) {
+      const value = Math.abs(samples[i]);
+      if (value > peak) peak = value;
+      sum += samples[i] * samples[i];
+    }
+    return { peak: Math.min(1, peak), rms: Math.min(1, Math.sqrt(sum / samples.length)) };
   },
 
   getTrackGain(trackName) {
