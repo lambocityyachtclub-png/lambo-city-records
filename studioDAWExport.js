@@ -6,12 +6,13 @@ const MAX_RENDER_SECONDS = 900;
 const SAMPLE_RATE = 44100;
 
 export function encodeStudioWav(audioBuffer, { bitDepth = 24 } = {}) {
-  if (![16, 24, 32].includes(Number(bitDepth))) {
+  const depth = Number(bitDepth);
+  if (![16, 24, 32].includes(depth)) {
     throw new Error("WAV bit depth must be 16, 24, or 32-bit PCM.");
   }
   const channels = audioBuffer.numberOfChannels;
   const frames = audioBuffer.length;
-  const bytesPerSample = Number(bitDepth) / 8;
+  const bytesPerSample = depth / 8;
   const blockAlign = channels * bytesPerSample;
   const dataBytes = frames * blockAlign;
   const output = new ArrayBuffer(44 + dataBytes);
@@ -30,7 +31,7 @@ export function encodeStudioWav(audioBuffer, { bitDepth = 24 } = {}) {
   view.setUint32(24, audioBuffer.sampleRate, true);
   view.setUint32(28, audioBuffer.sampleRate * blockAlign, true);
   view.setUint16(32, blockAlign, true);
-  view.setUint16(34, Number(bitDepth), true);
+  view.setUint16(34, depth, true);
   writeText(36, "data");
   view.setUint32(40, dataBytes, true);
 
@@ -40,11 +41,11 @@ export function encodeStudioWav(audioBuffer, { bitDepth = 24 } = {}) {
     for (let channel = 0; channel < channels; channel += 1) {
       const sample = Math.max(-1, Math.min(1, channelData[channel][frame]));
       const integer = Math.round(sample < 0
-        ? sample * (2 ** (Number(bitDepth) - 1))
-        : sample * ((2 ** (Number(bitDepth) - 1)) - 1));
-      if (bitDepth === 16) {
+        ? sample * (2 ** (depth - 1))
+        : sample * ((2 ** (depth - 1)) - 1));
+      if (depth === 16) {
         view.setInt16(offset, integer, true);
-      } else if (bitDepth === 24) {
+      } else if (depth === 24) {
         view.setUint8(offset, integer & 0xff);
         view.setUint8(offset + 1, (integer >> 8) & 0xff);
         view.setUint8(offset + 2, (integer >> 16) & 0xff);
