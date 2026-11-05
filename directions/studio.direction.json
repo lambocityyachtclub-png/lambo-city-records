@@ -7,7 +7,7 @@
     "status": "in-discovery",
     "questionnaireProgress": {
       "purposeAndMission": "answered",
-      "remainingCoreQuestions": 9,
+      "remainingCoreQuestions": 8,
       "centralWorkspaceAndNavigation": "answered",
       "collaborationModel": "answered",
       "collaborationAccess": "answered",
@@ -21,7 +21,8 @@
       "worldStyleAndEvolution": "answered",
       "cityPlayerFreedomAndActivities": "answered",
       "cityAmbientActivity": "answered",
-      "npcBehavior": "answered"
+      "npcBehavior": "answered",
+      "businessFunctionality": "answered"
     }
   },
   "ownerDirection": {
@@ -288,6 +289,25 @@
         ],
         "designConstraint": "Use scalable, performance-conscious simulation, prioritizing detail for nearby or relevant NPCs while maintaining the impression of a living city.",
         "ownerApproval": "The owner selected Option C with Option B as the long-term ambition on 2026-11-04."
+      },
+      "businessFunctionality": {
+        "selectedDevelopmentApproach": "C",
+        "longTermAmbition": "B",
+        "principle": "Businesses should ultimately be fully interactive and functional places in the city. Option C is the safe, progressive implementation strategy; Option B is the intended long-term experience, not a reduction in ambition.",
+        "targetCapabilities": [
+          "Enter and explore business environments",
+          "Shop and use services",
+          "Work and participate in business activities",
+          "Socialize with other players and NPCs",
+          "Experience believable staff, customers, and day-to-day operations"
+        ],
+        "progression": [
+          "Start with carefully selected interactive destinations and reliable core interactions.",
+          "Expand each business with additional services, activities, roles, and social interactions.",
+          "Progressively develop businesses into fully functioning environments connected to the living city."
+        ],
+        "designConstraint": "Build reusable business systems in modular stages, with performance budgets, clear interaction rules, and testing that protects existing world systems.",
+        "ownerApproval": "The owner selected Option C with Option B as the long-term ambition on 2026-11-04, emphasizing that the staged approach is about building safely rather than reducing the intended experience."
       }
     }
   },
@@ -316,6 +336,6 @@
   "approval": {
     "status": "draft",
     "approvedByOwner": false,
-    "note": "Captures the owner's direction answers to date. The living-city style is Option C, progressing toward the realism and functionality of Option A; player freedom and optional guided activities are both supported; the ultimate city activity ambition is Option B, delivered progressively using Option C; NPC behavior follows Option C as the development approach with Option B as the long-term ambition. This is not yet a complete or approved Studio specification."
+    "note": "Captures the owner's direction answers to date. The living-city style is Option C, progressing toward the realism and functionality of Option A; player freedom and optional guided activities are both supported; the ultimate city activity ambition is Option B, delivered progressively using Option C; NPC behavior and business functionality follow Option C as the development approach with Option B as the long-term ambition. This is not yet a complete or approved Studio specification."
   }
 }
