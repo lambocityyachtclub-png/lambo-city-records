@@ -685,6 +685,7 @@ const StudioDAWApp = {
         panels: {},
         initialView,
         onViewChange: viewId => {
+          window.dispatchEvent(new CustomEvent("lc-live-drummer-state", { detail: { active: viewId === "drums" } }));
           const appHeader = root.querySelector(":scope > header");
           if (appHeader) appHeader.style.display = viewId === "edit" ? "none" : "flex";
           if (viewId === "mix") this.mixPanel?.refresh?.();
