@@ -598,23 +598,55 @@
     },
     "membershipAndPrivileges": {
       "selectedOption": "C",
-      "name": "Standard account with flexible earned and granted privileges",
-      "foundation": "Every user begins with a standard LAMBO CITY account. A standard account provides the baseline community identity and access defined by the platform.",
+      "name": "LAMBO CITY Yacht Club ID with earned or granted Boarding Pass privileges",
+      "foundation": "Every person receives a basic LAMBO CITY Yacht Club ID. The ID is universal identification, not elevated membership status.",
+      "aspirationalCredential": "The LAMBO CITY Yacht Club Boarding Pass is the status and access credential users aspire to earn or receive. It may unlock designated experiences and privileges under clearly defined rules.",
       "privilegePathways": [
-        "Invitation-based access granted by authorized LAMBO CITY staff or the owner.",
-        "Achievements and participation that may unlock designated experiences.",
+        "Invitation-based Boarding Pass grants from authorized LAMBO CITY authority.",
+        "Achievements and meaningful participation that may qualify a user for designated recognition or access.",
         "Artist status and approved creative opportunities.",
         "Event-specific invitations and permissions.",
-        "Other clearly defined privileges granted under owner-approved rules."
+        "Other explicitly defined, owner-approved pathways."
       ],
       "principles": [
         "Do not require paid membership as the default path to belonging or participation in the public community.",
-        "Keep account membership, achievements, artist status, event invitations, Studio collaboration, and administrative permissions distinct.",
+        "Do not treat possession of a basic Yacht Club ID as proof of Boarding Pass status or access to restricted experiences.",
+        "Keep ID, Boarding Pass status, achievements, artist status, event invitations, Studio collaboration, and administrative permissions distinct.",
         "Privileges must have explicit scope, eligibility rules, granting authority, and expiration or revocation rules where applicable.",
-        "Do not let earned achievements automatically grant sensitive permissions, private project access, or administrative authority.",
+        "Achievements or reputation must never automatically grant sensitive permissions, private project access, or administrative authority.",
         "Any future paid offerings or membership benefits require separate owner approval, transparent terms, and appropriate legal and operational review."
       ],
-      "ownerApproval": "The owner selected Option C on 2026-11-05: a standard account with additional experiences and privileges earned or granted through invitations, achievements, artist status, and other defined pathways, without requiring paid membership as the default."
+      "ownerApproval": "The owner selected Option C on 2026-11-05 and clarified that the universal identity is a LAMBO CITY Yacht Club ID, while the aspirational credential is the LAMBO CITY Yacht Club Boarding Pass."
+    },
+    "yachtClubIdentityAndBoardingPass": {
+      "baseIdentity": {
+        "name": "LAMBO CITY Yacht Club ID",
+        "meaning": "Every person receives a basic LAMBO CITY Yacht Club ID as their unique identity in the ecosystem. The ID identifies the person; it does not itself imply elevated status, membership privileges, or access to restricted experiences."
+      },
+      "aspirationalStatus": {
+        "name": "LAMBO CITY Yacht Club Boarding Pass",
+        "meaning": "The Boarding Pass is the meaningful status and access credential users aspire to earn or receive. It represents recognition, eligibility, or authorization for designated Yacht Club experiences and privileges beyond simply having an ID.",
+        "accessRule": "A Boarding Pass may carry specific, clearly defined entitlements. It must not automatically grant every restricted event, private Studio project, collaboration, property, or administrative permission.",
+        "governance": "Define Boarding Pass levels, eligibility, granting authority, benefits, expiration, suspension, and revocation in a later owner-approved design. Keep invitation-based grants, achievements, artist recognition, and event-specific access distinct where needed."
+      },
+      "terminologyRule": "Use LAMBO CITY Yacht Club ID for the universal basic identity and LAMBO CITY Yacht Club Boarding Pass for the aspirational status/access credential. Do not describe the basic ID as a LAMBO CITY account or imply that everyone automatically has a Boarding Pass.",
+      "ownerApproval": "The owner clarified on 2026-11-05 that everyone has a basic LAMBO CITY Yacht Club ID, while the goal is to earn or receive a LAMBO CITY Yacht Club Boarding Pass."
+    },
+    "communityReputationAndAchievements": {
+      "selectedOption": "C",
+      "name": "Achievements plus a carefully governed reputation system",
+      "achievements": "Recognize meaningful milestones, positive participation, creative contributions, event participation, and other appropriate accomplishments through visible profile achievements.",
+      "reputation": "Develop a reputation system that recognizes trustworthy, constructive, and meaningful community participation rather than raw popularity.",
+      "safeguards": [
+        "Do not allow users to buy reputation or influence.",
+        "Do not equate follower counts, wealth, paid status, or popularity with trustworthiness.",
+        "Use transparent criteria, abuse-resistant signals, and a way to review or appeal consequential reputation decisions.",
+        "Protect users from brigading, retaliation, harassment, fake accounts, and coordinated reputation manipulation.",
+        "Do not let reputation scores automatically grant administrative powers, private Studio access, or unrestricted event access.",
+        "Keep public-facing reputation indicators privacy-conscious and avoid exposing sensitive moderation or security details."
+      ],
+      "relationshipToBoardingPass": "Achievements and reputation may contribute to eligibility for certain recognition or Boarding Pass pathways, but they do not automatically issue a Boarding Pass or replace explicit authorization for restricted resources.",
+      "ownerApproval": "The owner selected Option C on 2026-11-05: visible achievements plus a carefully designed reputation system recognizing trustworthy, constructive, and meaningful community participation."
     }
   },
   "openDecisions": [
