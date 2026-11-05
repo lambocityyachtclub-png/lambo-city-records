@@ -29,8 +29,9 @@ for (const [name,path] of [
   ["Floor2CitySynth","./floor2CitySynth.js"]
 ]) {
   assert.ok(main.includes('from "' + path + '"'), name + " must be imported by the world");
-  assert.ok(main.includes(name + ": " + name), name + " must be registered with the engine");
-  assert.ok(engine.includes("this.systems." + name + "?.init?.(this.scene, this.context)"), name + " must initialize after the Floor 2 scene is ready");
+  const systemKey = name[0].toLowerCase() + name.slice(1);
+  assert.ok(main.includes(systemKey + ": " + name), name + " must be registered with the engine");
+  assert.ok(engine.includes("this.systems." + systemKey + "?.init?.(this.scene, this.context)"), name + " must initialize after the Floor 2 scene is ready");
 }
 
 const workspace = source["studioDAWWorkspace.js"];
