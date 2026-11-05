@@ -43,6 +43,7 @@ on:
       - "scripts/test-daw-arrangement-playback.mjs"
       - "scripts/test-daw-mp3-export.mjs"
       - "scripts/test-studio-standalone-boundary.mjs"
+      - "scripts/test-studio-spacebar-transport.mjs"
       - "vendor/lamejs/lame.min.js"
       - "THIRD_PARTY_NOTICES.md"
       - ".github/workflows/floor2-studio-checks.yml"
@@ -170,3 +171,6 @@ jobs:
 
       - name: Test standalone Studio dependency boundary
         run: node --experimental-default-type=module scripts/test-studio-standalone-boundary.mjs
+
+      - name: Test shared Studio Spacebar transport
+        run: node --experimental-default-type=module scripts/test-studio-spacebar-transport.mjs
