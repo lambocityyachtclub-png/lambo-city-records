@@ -78,6 +78,7 @@ const StudioMultitrackWorkspace = {
   sessionTemplateId: null,
   sessionTemplateName: null,
   arrangementPlayback: null,
+  metronomeEnabled: true,
   selectedClipId: null,
   selectedTrackId: null,
   zoomBarWidth: 72,
@@ -415,6 +416,8 @@ const StudioMultitrackWorkspace = {
           getTempo: () => this.tempo,
           getSecondsAtBar: bar => this.getSecondsAtBar(bar),
           getBarAtSeconds: seconds => this.getBarAtSeconds(seconds),
+          getTempoAtBar: bar => this.getTempoAtBar(bar),
+          getTimeSignatureAtBar: bar => this.getTimeSignatureAtBar(bar),
           onPosition: bar => {
             this.playheadBar = bar;
             const x = (bar - 1) * this.zoomBarWidth;
@@ -1437,6 +1440,10 @@ const StudioMultitrackWorkspace = {
         : track.inputSource === "beatlab"
           ? "Digital Beat Lab output"
           : "microphone";
+      if (this.metronomeEnabled && !this.arrangementPlayback?.metronomeActive) {
+        this.getArrangementPlayback().startMetronome(audio, startBar, this.loopRange?.enabled ? this.loopRange : null);
+        this.arrangementPlayback.playing = true;
+      }
       this.status("Recording " + sourceLabel + " into " + track.name + " · bar " + startBar + (endBar !== null ? " → " + endBar : "") + ".");
       return true;
     } catch (error) {
@@ -1630,17 +1637,17 @@ const StudioMultitrackWorkspace = {
   async playAll() {
     this.stopAll();
 
-    if (!this.tracks.some(track =>
-      track.clips?.some(clip =>
-        clip.blob && clip.blob.size > 0
-      )
-    )) {
-      this.status("No recorded audio clips available.");
+    const hasArrangementContent = this.tracks.some(track =>
+      track.clips?.some(clip => clip.blob && clip.blob.size > 0) ||
+      ((track.type === "midi" || track.type === "instrument") && track.midiNotes?.length)
+    );
+    if (!hasArrangementContent && !this.metronomeEnabled) {
+      this.status("Nothing to play yet. Turn on METRONOME to hear the session click.");
       return;
     }
 
     const loop = this.loopRange?.enabled ? this.loopRange : null;
-    await this.getArrangementPlayback().play(this.tracks, this.playheadBar, loop);
+    await this.getArrangementPlayback().play(this.tracks, this.playheadBar, loop, this.metronomeEnabled);
   },
 
   stopAll() {
