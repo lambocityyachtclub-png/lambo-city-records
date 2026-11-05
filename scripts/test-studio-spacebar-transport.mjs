@@ -16,6 +16,8 @@ assert.match(app, /startSessionPlayback\(\)/);
 assert.match(app, /await beatLab\.start\(\{ startAtTime:/);
 assert.match(beatLab, /async start\(\{ startAtTime = null \} = \{\}\)/);
 assert.match(playback, /playbackStartTime/);
+assert.match(edit, /this\.onTransportPlay/);
+assert.match(edit, /this\.onTransportStop/);
 assert.match(app, /beatLab\.stop\(\)/);
 assert.match(app, /data-global-transport="click"/);
 assert.match(app, /CLICK OFF/);
