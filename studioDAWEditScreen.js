@@ -556,15 +556,23 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
                 project.arrangement = createSongProject({ title: project.metadata.title }).arrangement;
               }
 
-              if (activePattern?.steps && !project.patterns.some(pattern =>
-                JSON.stringify(pattern.steps) === JSON.stringify(activePattern.steps)
-              )) {
-                project.patterns.push({
-                  id: "pattern-" + Date.now(),
-                  name: "Current Beat",
-                  bpm: Math.max(60, Math.min(180, Number(activePattern.bpm) || dawSession.tempo)),
-                  steps: JSON.parse(JSON.stringify(activePattern.steps))
-                });
+              if (activePattern?.steps) {
+                // The portable project importer restores the first saved pattern
+                // as the active Beat Lab pattern. Put the current pattern first
+                // while preserving its ID so arrangement clips remain connected.
+                const activeSteps = JSON.stringify(activePattern.steps);
+                const existingIndex = project.patterns.findIndex(pattern =>
+                  JSON.stringify(pattern.steps) === activeSteps
+                );
+                const activeEntry = existingIndex >= 0
+                  ? project.patterns.splice(existingIndex, 1)[0]
+                  : {
+                      id: "pattern-" + Date.now(),
+                      name: "Current Beat",
+                      steps: JSON.parse(activeSteps)
+                    };
+                activeEntry.bpm = Math.max(60, Math.min(180, Number(dawSession.tempo) || Number(activePattern.bpm) || 100));
+                project.patterns.unshift(activeEntry);
               }
 
               project.dawSession = dawSession;
