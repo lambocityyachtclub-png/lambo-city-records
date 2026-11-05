@@ -216,6 +216,15 @@ const StudioRecordingEngine = {
     if (!take) throw new Error("There is no armed-track recording in progress.");
     this.activeTrackTake = null;
     try {
+      // Disconnect the capture feed before flushing so no new worklet frames
+      // can arrive after the final PCM chunk has been acknowledged.
+      try {
+        if (take.pitchCorrectionNode && !take.inputNode) take.microphoneSource.disconnect(take.pitchCorrectionNode);
+        else if (take.vocalEffects && !take.inputNode) take.microphoneSource.disconnect(take.vocalEffects.input);
+        else take.microphoneSource.disconnect(take.destination);
+      } catch {}
+      try { if (take.vocalEffects) take.vocalEffects.output.disconnect(take.destination); } catch {}
+
       const blob = await take.recorder.finish();
       return {
         id: take.id,
