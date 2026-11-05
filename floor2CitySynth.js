@@ -14,7 +14,8 @@ const SEMITONES = [
   { name:"G#", pitch:68, hz:415.30, white:false },
   { name:"A", pitch:69, hz:440.00, white:true },
   { name:"A#", pitch:70, hz:466.16, white:false },
-  { name:"B", pitch:71, hz:493.88, white:true }
+  { name:"B", pitch:71, hz:493.88, white:true },
+  { name:"C5", pitch:72, hz:523.25, white:true }
 ];
 const WHITE_KEYS = SEMITONES.filter(note => note.white);
 let activePanel = null;
