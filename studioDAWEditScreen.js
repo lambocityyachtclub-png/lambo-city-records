@@ -72,7 +72,7 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
         '#lc-premium-daw-edit-screen .lc-lcd{padding:9px 10px;border-radius:5px;background:#07152b;color:#8deaff;border:1px solid #526b82;font-family:monospace;font-size:15px;letter-spacing:1px;white-space:nowrap;box-shadow:inset 0 0 10px #000}',
         '#lc-premium-daw-edit-screen .lc-gridset{display:flex;gap:4px}',
         '#lc-premium-daw-edit-screen .lc-gridset button{width:31px;height:34px;border:1px solid #596171;border-radius:5px;background:repeating-linear-gradient(135deg,#10151e 0 4px,#303844 4px 7px);color:#d9e2ef;font-size:10px}',
-        '#lc-premium-daw-edit-screen .lc-metal-icon{width:39px;height:39px;border:1px solid #6c7481;border-radius:9px;background:linear-gradient(145deg,#f9fafc,#9299a5);color:#15203b;font-size:18px;box-shadow:inset 0 1px #fff,0 2px 4px #0006}',
+        '#lc-premium-daw-edit-screen .lc-metal-icon{width:39px;height:39px;border:1px solid #6c7481;border-radius:9px;background:linear-gradient(145deg,#f9fafc,#9299a5);color:#15203b;font-size:18px;box-shadow:inset 0 1px #fff,0 2px 4px #0006}',\n        '#lc-premium-daw-edit-screen .lc-transport-control{width:auto;min-width:58px;height:43px;padding:0 9px;display:flex;align-items:center;justify-content:center;gap:5px;font-size:12px;font-weight:900;white-space:nowrap}',\n        '#lc-premium-daw-edit-screen .lc-transport-control[data-action=play]{background:linear-gradient(180deg,#dff9e9,#71b98b);border-color:#e5fff0;color:#082b17}',\n        '#lc-premium-daw-edit-screen .lc-transport-control[data-action=stop]{background:linear-gradient(180deg,#f5e1e1,#bd777b);border-color:#ffe5e5;color:#3c080c}',\n        '#lc-premium-daw-edit-screen .lc-rec-wrap{display:grid;justify-items:center;gap:2px;flex:0 0 auto}',\n        '#lc-premium-daw-edit-screen .lc-rec-label{font-size:8px;font-weight:900;letter-spacing:1px;color:#4b1018}'
         '#lc-premium-daw-edit-screen .lc-spacer{flex:1}',
         '#lc-premium-daw-edit-screen .lc-main{flex:1;min-height:0;display:grid;grid-template-columns:minmax(250px,24%) minmax(0,1fr);gap:8px}',
         '#lc-premium-daw-edit-screen .lc-inspector{min-height:0;overflow:auto;padding:8px;border:1px solid #5a78a8;border-radius:10px;background:repeating-linear-gradient(0deg,transparent 0 25px,#1b4b7b22 25px 26px),linear-gradient(145deg,#14275f,#091638);box-shadow:inset 0 0 18px #020a24}',
@@ -143,7 +143,7 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
         '</style>',
         '<div class="lc-transport">',
         '<div class="lc-logo"><span>LAMBO CITY</span><span>RECORDS</span></div>',
-        '<div class="lc-rec-well"><button class="lc-rec" data-action="record" aria-label="Record">●</button></div>',
+        '<div class="lc-rec-wrap"><div class="lc-rec-well"><button class="lc-rec" data-action="record" aria-label="Record to armed audio track" title="Record to the armed audio track">●</button></div><span class="lc-rec-label">RECORD</span></div>',\n        '<button class="lc-metal-icon lc-transport-control" data-action="play" aria-label="Play arrangement" title="Play">▶ PLAY</button>',\n        '<button class="lc-metal-icon lc-transport-control" data-action="stop" aria-label="Stop playback and recording" title="Stop playback and save the take">■ STOP</button>',
         '<div class="lc-lcd-wrap"><span>CLOCK</span><div class="lc-lcd" data-clock>100 BPM / 4/4</div><span data-save-state aria-live="polite">SAVED</span></div>',
         '<div class="lc-lcd-wrap"><span>GRID</span><div class="lc-gridset"><button type="button" title="Grid 1/4">¼</button><button type="button" title="Grid 1/8">⅛</button><button type="button" title="Grid 1/16">⅟₁₆</button></div></div>',
         '<button class="lc-metal-icon" data-action="previous-view" aria-label="Previous studio interface">←</button>',
@@ -175,7 +175,7 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
         '<button type="button" disabled>t</button><button type="button" data-action="edit-menu">Edit ▾</button><button type="button" data-action="functions-menu">Functions ▾</button><button type="button" data-action="view-menu">View ▾</button>',
         '<button type="button" data-action="undo" title="Undo">↶</button><button type="button" data-action="redo" title="Redo">↷</button><button type="button" data-action="split" title="Split at playhead">✂</button><button type="button" data-action="duplicate" title="Duplicate selected region">▣</button><button type="button" data-action="delete-clip" title="Delete selected region">⌫</button><button type="button" data-action="comp-take" title="Place selected take section into the non-destructive comp lane">COMP TAKE</button>',
         '<button type="button" data-action="zoom-out">−</button><input data-zoom type="range" min="24" max="288" step="6" value="72" aria-label="Timeline zoom" style="width:75px;accent-color:#c9a24a"><button type="button" data-action="zoom-in">＋</button><select data-snap aria-label="Timeline snap" style="max-width:105px;background:#101d3d;color:#e8edf8;border:1px solid #7184a8;border-radius:5px;padding:5px"><option value="bars">BAR</option><option value="beats">BEAT</option><option value="subdivisions">1/16</option><option value="seconds">SEC</option><option value="off">FREE</option></select><button type="button" data-action="slip-mode" title="Toggle slip editing">SLIP OFF</button>',
-        '<span class="lc-spacer"></span><button type="button" data-action="play">▶</button><button type="button" data-action="stop">■</button>',
+        '<span class="lc-spacer"></span>',
         '</div>',
         '<div class="lc-track-tools"><div><button type="button" data-action="add-track">＋ TRACK</button> <button type="button" data-action="add-midi-track">＋ MIDI</button> <button type="button" data-action="import-audio">⇧ IMPORT AUDIO</button><input data-audio-files type="file" accept="audio/*,.wav,.mp3,.m4a,.aac,.ogg,.webm" multiple hidden></div><strong data-song-title>LAMBO CITY · UNTITLED SESSION</strong></div>',
         '<div class="lc-ruler-head"><strong>TRACKS / REGIONS</strong><strong data-ruler-label>BAR 01 — 128</strong></div>',
@@ -390,10 +390,10 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
             await workspace.startArmedRecording({ vocalEffects: this.beatLab && this.beatLab.vocalEffects, countInBars: Number(root.querySelector("[data-count-in]")?.value || 0), punchInBar: root.querySelector("[data-punch-in]")?.value || null, punchOutBar: root.querySelector("[data-punch-out]")?.value || null, monitorInput: Boolean(root.querySelector("[data-input-monitor]")?.checked) });
             await this.refreshInputDevices();
             if (workspace.isTrackRecording()) this.startInputMeter();
-            if (!workspace.pendingRecording && !workspace.isTrackRecording()) this.status("Record command finished · check the armed track and recording settings.");
+            if (!workspace.pendingRecording && !workspace.isTrackRecording()) this.status("Recording did not start. Arm exactly one AUDIO track using its R button, then press RECORD again.");
           } else if (action === "play") {
             await workspace.playAll();
-            this.status("Arrangement playback requested.");
+            this.status(workspace.isPlaying() ? "Playback running." : "Nothing to play yet. Record or import audio into a track first.");
           } else if (action === "stop") {
             workspace.stopAll();
             if (workspace.pendingRecording) workspace.cancelScheduledRecording();
