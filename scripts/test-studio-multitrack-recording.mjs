@@ -82,6 +82,16 @@ try {
   assert.equal(await StudioMultitrackWorkspace.startArmedRecording.call(twoInputs), true);
   assert.equal(starts.length, 2);
   assert.equal(starts[0].inputChannel, null);
+
+  StudioRecordingEngine.activeTrackTakes = [];
+  StudioRecordingEngine.activeTrackTake = null;
+  starts.length = 0;
+  const channelTracks = workspace([
+    { id: "ch-1", name: "Input One", type: "audio", armed: true, inputSource: "mic", inputDeviceId: "interface", inputChannel: 0, clips: [] },
+    { id: "ch-2", name: "Input Two", type: "audio", armed: true, inputSource: "mic", inputDeviceId: "interface", inputChannel: 1, clips: [] }
+  ]);
+  assert.equal(await StudioMultitrackWorkspace.startArmedRecording.call(channelTracks), true);
+  assert.deepEqual(starts.map(item => item.inputChannel), [0, 1]);
 } finally {
   StudioAudioEngine.resume = originalResume;
   StudioAudioExport.getOutput = originalGetOutput;
