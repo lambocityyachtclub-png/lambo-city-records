@@ -401,23 +401,32 @@ const StudioMultitrackWorkspace = {
 
   async toggleMetronome() {
     this.metronomeSettings = { ...(this.metronomeSettings || {}), enabled: !this.metronomeSettings?.enabled };
-    this.arrangementPlayback?.refreshMetronome(this.playheadBar);
-    if (this.isTrackRecording() && !this.arrangementPlayback?.playing) {
-      stopStudioMetronome(this.recordingMetronomeSources);
-      if (this.metronomeSettings.enabled) {
-        const audio = await StudioAudioEngine.resume();
-        const elapsed = Math.max(0, audio.currentTime - this.recordingMetronomeStartTime);
-        const currentBar = this.getBarAtSeconds(this.getSecondsAtBar(this.recordingMetronomeStartBar) + elapsed);
-        this.recordingMetronomeSources = scheduleStudioMetronome(audio, {
-          startBar: currentBar,
-          endBar: this.recordingMetronomeEndBar,
-          startTime: this.recordingMetronomeStartTime,
-          getSecondsAtBar: bar => this.getSecondsAtBar(bar),
-          getTimeSignatureAtBar: bar => this.getTimeSignatureAtBar(bar),
-          volume: this.metronomeSettings.volume,
-          accent: this.metronomeSettings.accent
-        });
+    try {
+      this.arrangementPlayback?.refreshMetronome(this.playheadBar);
+      if (this.isTrackRecording() && !this.arrangementPlayback?.playing) {
+        stopStudioMetronome(this.recordingMetronomeSources);
+        if (this.metronomeSettings.enabled) {
+          const audio = await StudioAudioEngine.resume();
+          const elapsed = Math.max(0, audio.currentTime - this.recordingMetronomeStartTime);
+          const currentBar = this.getBarAtSeconds(this.getSecondsAtBar(this.recordingMetronomeStartBar) + elapsed);
+          this.recordingMetronomeSources = scheduleStudioMetronome(audio, {
+            startBar: currentBar,
+            endBar: this.recordingMetronomeEndBar,
+            startTime: audio.currentTime + 0.06,
+            getSecondsAtBar: bar => this.getSecondsAtBar(bar),
+            getTimeSignatureAtBar: bar => this.getTimeSignatureAtBar(bar),
+            volume: this.metronomeSettings.volume,
+            accent: this.metronomeSettings.accent
+          });
+        }
       }
+    } catch (error) {
+      this.metronomeSettings.enabled = false;
+      stopStudioMetronome(this.recordingMetronomeSources);
+      this.arrangementPlayback?.refreshMetronome(this.playheadBar);
+      this.status("Metronome could not start: " + (error?.message || error));
+      this.onRender?.();
+      return false;
     }
     this.scheduleProjectAutosave();
     this.status("Metronome " + (this.metronomeSettings.enabled ? "on." : "off."));
