@@ -60,6 +60,11 @@ export function createLiveDrummerPanel({ beatLab } = {}) {
         beatLab.soundProfile = "mpc";
         beatLab.noiseBuffer = noiseBuffer;
       }
+      if (!noiseBuffer && (sound === "cymbal" || sound === "hat")) {
+        noiseBuffer = audio.createBuffer(1, Math.floor(audio.sampleRate * 1.2), audio.sampleRate);
+        const noise = noiseBuffer.getChannelData(0);
+        for (let i = 0; i < noise.length; i += 1) noise[i] = Math.random() * 2 - 1;
+      }
       const at = audio.currentTime;
       if (sound === "tom") {
         const oscillator = audio.createOscillator();
