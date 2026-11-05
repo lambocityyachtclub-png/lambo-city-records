@@ -160,7 +160,7 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
         '<button class="lc-metal-icon" data-action="undo" aria-label="Undo">▱</button>',
         '<button class="lc-metal-icon" data-action="mixer-focus" aria-label="Mixer">☷</button>',
         '</div>',
-        '<div class="lc-record-options" aria-label="Recording setup"><label>COUNT-IN <select data-count-in><option value="1" selected>1 BAR · 4 BEATS</option><option value="0">OFF</option><option value="2">2 BARS</option><option value="4">4 BARS</option></select></label><label>PUNCH IN <input data-punch-in type="number" min="1" max="128" placeholder="LIVE"></label><label>PUNCH OUT <input data-punch-out type="number" min="1" max="128" placeholder="OFF"></label><label>INPUT <select data-input-device><option value="">Default microphone</option></select></label><label>LATENCY ms <input data-input-latency type="number" min="0" max="500" step="1" value="0" aria-label="Microphone latency compensation in milliseconds"></label><label class="lc-input-meter-wrap">INPUT <span class="lc-input-meter"><i data-input-meter></i></span></label><label title="Use headphones when monitoring a live microphone to prevent feedback"><input data-input-monitor type="checkbox"> MONITOR · HEADPHONES</label></div>',
+        '<div class="lc-record-options" aria-label="Recording setup"><label>COUNT-IN <select data-count-in><option value="1" selected>1 BAR · 4 BEATS</option><option value="0">OFF</option><option value="2">2 BARS</option><option value="4">4 BARS</option></select></label><label title="Audible tempo click during playback and recording"><input data-metronome type="checkbox" checked> METRONOME</label><label>PUNCH IN <input data-punch-in type="number" min="1" max="128" placeholder="LIVE"></label><label>PUNCH OUT <input data-punch-out type="number" min="1" max="128" placeholder="OFF"></label><label>INPUT <select data-input-device><option value="">Default microphone</option></select></label><label>LATENCY ms <input data-input-latency type="number" min="0" max="500" step="1" value="0" aria-label="Microphone latency compensation in milliseconds"></label><label class="lc-input-meter-wrap">INPUT <span class="lc-input-meter"><i data-input-meter></i></span></label><label title="Use headphones when monitoring a live microphone to prevent feedback"><input data-input-monitor type="checkbox"> MONITOR · HEADPHONES</label></div>',
         '<div class="lc-arrangement-controls" aria-label="Arrangement controls"><label>MARKER <input data-marker-name placeholder="Verse / Hook" maxlength="32"></label><label>BAR <input data-marker-bar type="number" min="1" max="128" value="1"></label><button type="button" data-action="add-marker">+ MARKER</button><label>CYCLE <input data-loop-start type="number" min="1" max="127" value="1"> → <input data-loop-end type="number" min="2" max="129" value="9"></label><button type="button" data-action="set-cycle">SET RANGE</button><button type="button" data-action="toggle-cycle">CYCLE OFF</button><label>TEMPO AT BAR <input data-tempo-bar type="number" min="1" max="128" value="1"></label><label>BPM <input data-tempo-value type="number" min="20" max="300" value="100"></label><button type="button" data-action="add-tempo-point">+ TEMPO</button><label>METER AT BAR <input data-meter-bar type="number" min="1" max="128" value="1"></label><select data-meter-value aria-label="Time signature"><option>4/4</option><option>3/4</option><option>2/4</option><option>5/4</option><option>6/4</option><option>7/4</option><option>6/8</option><option>9/8</option><option>12/8</option></select><button type="button" data-action="add-meter-point">+ METER</button><button type="button" data-action="toggle-follow">FOLLOW ON</button><button type="button" data-action="toggle-multi">MULTI OFF</button></div>',
         '<div class="lc-session-menu" data-session-menu>',
         '<button type="button" data-action="save-session">Save Session</button>',
@@ -584,6 +584,29 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
       });
 
       root.addEventListener("change", event => {
+        if (event.target.matches("[data-metronome]")) {
+          workspace.metronomeEnabled = Boolean(event.target.checked);
+          if (!workspace.metronomeEnabled) {
+            workspace.arrangementPlayback?.stopMetronome();
+            if (workspace.arrangementPlayback && !workspace.arrangementPlayback.sources.length) workspace.arrangementPlayback.playing = false;
+            this.status("Metronome off · playback and recording continue.");
+          } else if (workspace.isPlaying() || workspace.isTrackRecording() || workspace.pendingRecording) {
+            try {
+              const audio = await StudioAudioEngine.resume();
+              workspace.getArrangementPlayback().startMetronome(
+                audio,
+                workspace.playheadBar,
+                workspace.loopRange?.enabled ? workspace.loopRange : null
+              );
+              workspace.arrangementPlayback.playing = true;
+              this.status("Metronome on · following the session tempo.");
+            } catch (error) {
+              this.status("METRONOME ERROR: " + (error?.message || error));
+            }
+          } else {
+            this.status("Metronome on · ready for playback or recording.");
+          }
+        }
         if (event.target.matches("[data-input-device]")) {
           const selected = event.target.value || "";
           workspace.inputDeviceId = selected;
@@ -668,6 +691,8 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
       if (snap) snap.value = workspace.snapMode || "bars";
       const meter = this.root.querySelector("[data-clock]");
       if (meter) meter.textContent = Math.round(workspace.getTempoAtBar(workspace.playheadBar)) + " BPM / " + (()=>{const m=workspace.getTimeSignatureAtBar(workspace.playheadBar);return m.numerator+"/"+m.denominator;})() + " · BAR " + Math.floor(workspace.playheadBar);
+      const metronome = this.root.querySelector("[data-metronome]");
+      if (metronome) metronome.checked = workspace.metronomeEnabled !== false;
       const loopStart=this.root.querySelector("[data-loop-start]"),loopEnd=this.root.querySelector("[data-loop-end]"),cycle=this.root.querySelector('[data-action="toggle-cycle"]');
       if(loopStart)loopStart.value=String(workspace.loopRange.startBar);if(loopEnd)loopEnd.value=String(workspace.loopRange.endBar);
       if(cycle){cycle.textContent=workspace.loopRange.enabled?"CYCLE ON":"CYCLE OFF";cycle.classList.toggle("active",Boolean(workspace.loopRange.enabled));}
