@@ -122,8 +122,8 @@ window.__lamboCityPrepareFloor = floor => {
         engine.context.systems = engine.systems;
         if (!engine.scene.getObjectByName("recordsHQFloor2Studio")) engine.initializeSystem("recordsHQFloor2Studio", engine.scene);
         if (!engine.scene.getObjectByName("recordsHQFloor2Studio")) throw new Error("Floor 2 studio architecture did not attach to the live scene.");
-        engine.initializeSystem("floor2StudioNavigation", engine.scene, engine.context);
-        engine.initializeSystem("floor2StudioSession", engine.scene, engine.context);
+        if (!engine.initializeSystem("floor2StudioNavigation", engine.scene, engine.context)) throw new Error("Floor 2 station navigation could not initialize.");
+        if (!engine.initializeSystem("floor2StudioSession", engine.scene, engine.context)) throw new Error("Floor 2 producer session could not initialize.");
         window.__lamboCityFloor2Ready = true;
       } else if (floor === 3) {
         window.__lamboCityFloor3Ready = false;
