@@ -137,6 +137,7 @@ export function parseStudioMidi(arrayBuffer) {
         velocity: clamp(note.velocity, 0.01, 1)
       }))
     });
+    offset = end;
   }
   return { format, ppq, tempo: clamp(tempo, 20, 300), timeSignature, tracks };
 }
