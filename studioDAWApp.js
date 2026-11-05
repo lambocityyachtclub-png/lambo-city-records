@@ -13,8 +13,6 @@
 
 import StudioDAWWorkspace from "./studioDAWWorkspace.js";
 import Floor2StudioApp from "./floor2StudioApp.js";
-import Floor2InstrumentApp from "./floor2InstrumentApp.js";
-import Floor2DrumStation from "./floor2DrumStation.js";
 import MPCInterface from "./mpc-interface.js";
 import StudioAudioEngine from "./studioAudioEngine.js";
 import StudioSoundKit from "./studioSoundKit.js";
@@ -150,18 +148,20 @@ function createMPCPanel({ beatLab, workspace } = {}) {
   return root;
 }
 
-function createDrumsPanel() {
+function createDrumsPanel({ beatLab } = {}) {
   const root = document.createElement("section");
   root.style.cssText = "display:grid;gap:18px;width:100%;color:#f4f1eb";
   root.innerHTML = `
     <div>
       <div style="color:#e6bb69;font-size:11px;letter-spacing:2px">LAMBO CITY RECORDS · DRUM ROOM</div>
       <h2 style="margin:8px 0;font-size:24px">DRUM PERFORMANCE</h2>
-      <p style="color:#a8a8b1;font-size:13px">Tap or click a drum pad to play through the shared studio mixer.</p>
+      <p style="color:#a8a8b1;font-size:13px">Tap or click a drum pad to play through the shared studio audio engine.</p>
     </div>
     <div data-drum-pads style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;max-width:620px"></div>
+    <div data-drum-status role="status" aria-live="polite" style="min-height:20px;color:#e6bb69;font-size:12px"></div>
   `;
   const pads = root.querySelector("[data-drum-pads]");
+  const status = message => { root.querySelector("[data-drum-status]").textContent = message; };
   [
     ["KICK","kick"],["SNARE","snare"],
     ["HI-HAT","hat"],["TOM","tom"],
@@ -171,10 +171,24 @@ function createDrumsPanel() {
     button.type = "button";
     button.textContent = label;
     button.style.cssText = "min-height:100px;border:1px solid #80643a;border-radius:12px;background:linear-gradient(145deg,#292b34,#11131a);color:#f1d49c;font-size:15px;font-weight:800;touch-action:manipulation";
-    button.addEventListener("pointerdown", event => {
+    button.addEventListener("pointerdown", async event => {
       event.preventDefault();
-      void Floor2DrumStation.playDrum(sound);
-      button.style.transform = "scale(.98)";
+      try {
+        const audio = await StudioAudioEngine.resume();
+        if (!audio || audio.state !== "running") return;
+        if (beatLab) {
+          if (!beatLab.noiseBuffer && typeof beatLab.createNoiseBuffer === "function") {
+            beatLab.noiseBuffer = beatLab.createNoiseBuffer();
+          }
+          beatLab.soundProfile = "mpc";
+        }
+        const channel = sound === "snare" ? "snare" : sound === "hat" || sound === "cymbal" ? "hat" : "kick";
+        StudioSoundKit.play(audio, "mpc", channel, audio.currentTime, beatLab?.noiseBuffer || null);
+        button.style.transform = "scale(.98)";
+        status(label + " triggered.");
+      } catch (error) {
+        status("DRUM AUDIO ERROR: " + (error?.message || error));
+      }
     });
     const release = () => { button.style.transform = ""; };
     button.addEventListener("pointerup", release);
@@ -276,7 +290,7 @@ function createPianoPanel() {
   root.innerHTML = [
     '<div><div style="color:#e6bb69;font-size:11px;letter-spacing:2px">LAMBO CITY RECORDS · INSTRUMENT ROOM</div>',
     '<h2 style="margin:8px 0;font-size:24px">PIANO & KEYS</h2>',
-    '<p style="color:#a8a8b1;font-size:13px;line-height:1.6">Play notes with touch, mouse, or trackpad. This keyboard uses the same LAMBO CITY studio audio engine as the Beat Lab and drum station.</p></div>',
+    '<p style="color:#a8a8b1;font-size:13px;line-height:1.6">Play notes with touch, mouse, or trackpad through the shared LAMBO CITY studio audio engine.</p></div>',
     '<div data-piano-keys style="display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:5px;min-height:180px;align-items:stretch"></div>',
     '<div style="color:#8f95a4;font-size:11px">C major · One octave · Synthesized studio instrument</div>'
   ].join("");
@@ -288,12 +302,37 @@ function createPianoPanel() {
     button.textContent = label;
     button.setAttribute("aria-label", label + " piano note");
     button.style.cssText = "min-width:0;min-height:150px;border:1px solid #aeb3bd;border-radius:0 0 9px 9px;background:linear-gradient(#fff,#dfe2e8);color:#151821;font-size:13px;font-weight:bold;box-shadow:inset 0 -8px 0 rgba(0,0,0,.08);touch-action:manipulation";
-    button.addEventListener("pointerdown", event => {
+    button.addEventListener("pointerdown", async event => {
       event.preventDefault();
-      void Floor2InstrumentApp.playNote(frequency);
-      button.style.transform = "translateY(2px)";
+      try {
+        const audio = await StudioAudioEngine.resume();
+        if (!audio || audio.state !== "running") return;
+        const oscillator = audio.createOscillator();
+        const envelope = audio.createGain();
+        oscillator.type = "triangle";
+        oscillator.frequency.setValueAtTime(frequency, audio.currentTime);
+        envelope.gain.setValueAtTime(0.0001, audio.currentTime);
+        envelope.gain.exponentialRampToValueAtTime(0.16, audio.currentTime + 0.025);
+        oscillator.connect(envelope);
+        envelope.connect(StudioAudioEngine.master || audio.destination);
+        oscillator.start(audio.currentTime);
+        button._studioActiveNote = { oscillator, envelope, audio };
+        button.style.transform = "translateY(2px)";
+      } catch (error) {
+        console.error("LAMBO CITY piano audio error:", error);
+      }
     });
-    const release = () => { button.style.transform = ""; };
+    const release = () => {
+      const note = button._studioActiveNote;
+      if (note) {
+        const now = note.audio.currentTime;
+        note.envelope.gain.cancelScheduledValues(now);
+        note.envelope.gain.setTargetAtTime(0.0001, now, 0.035);
+        try { note.oscillator.stop(now + 0.16); } catch {}
+        button._studioActiveNote = null;
+      }
+      button.style.transform = "";
+    };
     button.addEventListener("pointerup", release);
     button.addEventListener("pointercancel", release);
     button.addEventListener("pointerleave", release);
@@ -313,12 +352,15 @@ const StudioDAWApp = {
   pianoPanel: null,
   mpcPanel: null,
   drumsPanel: null,
+  standalone: false,
 
-  open(initialView = "edit") {
+  open(initialView = "edit", options = {}) {
     if (this.root?.isConnected) {
       this.workspace?.setView(initialView);
       return this.root;
     }
+
+    this.standalone = options.standalone === true;
 
     // Main application overlay.
     const root = document.createElement("div");
@@ -358,8 +400,8 @@ const StudioDAWApp = {
       </strong>
 
       <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button type="button" data-daw-return style="min-height:42px;padding:10px 13px;border:1px solid #665438;border-radius:7px;background:#171923;color:#f1d49c;font-weight:bold">RETURN TO ROOM</button>
-        <button type="button" data-daw-end style="min-height:42px;padding:10px 13px;border:1px solid #80643a;border-radius:7px;background:#201c16;color:#f1d49c;font-weight:bold">END SESSION</button>
+        <button type="button" data-daw-return style="min-height:42px;padding:10px 13px;border:1px solid #665438;border-radius:7px;background:#171923;color:#f1d49c;font-weight:bold">${this.standalone ? "BACK TO LAMBO CITY" : "RETURN TO ROOM"}</button>
+        ${this.standalone ? "" : '<button type="button" data-daw-end style="min-height:42px;padding:10px 13px;border:1px solid #80643a;border-radius:7px;background:#201c16;color:#f1d49c;font-weight:bold">END SESSION</button>'}
       </div>
     `;
 
@@ -398,6 +440,8 @@ const StudioDAWApp = {
 
         if (endSession) {
           window.__lamboCityEndFloor2Session?.();
+        } else if (this.standalone) {
+          window.location.href = "./";
         } else {
           window.__lamboCityReturnToFloor2Room?.();
         }
@@ -424,6 +468,7 @@ const StudioDAWApp = {
           if (viewId === "mix") this.mixPanel?.refresh?.();
           if (viewId === "mpc" && !MPCInterface.isOpen()) {
             MPCInterface.open({
+              beatLab: Floor2StudioApp,
               onClose: () => {
                 if (this.workspace?.activeView === "mpc") {
                   this.workspace.setView("beatlab");
@@ -449,7 +494,7 @@ const StudioDAWApp = {
       this.beatLabPanel.mount(this.panelHost);
       this.workspace.setPanel("beatlab", this.panelHost);
 
-      this.drumsPanel = createDrumsPanel();
+      this.drumsPanel = createDrumsPanel({ beatLab: Floor2StudioApp });
       this.workspace.setPanel("drums", this.drumsPanel);
 
       // Connect the existing Multitrack Workspace
@@ -520,6 +565,7 @@ const StudioDAWApp = {
     this.drumsPanel = null;
     this.panelHost = null;
     this.handleOverlayClick = null;
+    this.standalone = false;
   }
 };
 
