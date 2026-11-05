@@ -80,6 +80,7 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
         '#lc-premium-daw-edit-screen .lc-transport-control{width:auto;min-width:58px;height:43px;padding:0 9px;display:flex;align-items:center;justify-content:center;gap:5px;font-size:12px;font-weight:900;white-space:nowrap}',
         '#lc-premium-daw-edit-screen .lc-transport-control[data-action=play]{background:linear-gradient(180deg,#dff9e9,#71b98b);border-color:#e5fff0;color:#082b17}',
         '#lc-premium-daw-edit-screen .lc-transport-control[data-action=stop]{background:linear-gradient(180deg,#f5e1e1,#bd777b);border-color:#ffe5e5;color:#3c080c}',
+        '#lc-premium-daw-edit-screen .lc-transport-control[data-action=toggle-metronome]{background:linear-gradient(180deg,#e4e8ef,#929baa);border-color:#f4f6fa;color:#17213a}#lc-premium-daw-edit-screen .lc-transport-control[data-action=toggle-metronome].active{background:linear-gradient(180deg,#f1d49c,#b8863b);border-color:#fff0c9;color:#241805}',
         '#lc-premium-daw-edit-screen .lc-rec-wrap{display:grid;justify-items:center;gap:2px;flex:0 0 auto}',
         '#lc-premium-daw-edit-screen .lc-rec-label{font-size:8px;font-weight:900;letter-spacing:1px;color:#4b1018}',
         '#lc-premium-daw-edit-screen .lc-spacer{flex:1}',
@@ -155,6 +156,7 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
         '<div class="lc-rec-wrap"><div class="lc-rec-well"><button class="lc-rec" data-action="record" aria-label="Record to armed audio track" title="Record to the armed audio track">●</button></div><span class="lc-rec-label">RECORD</span></div>',
         '<button class="lc-metal-icon lc-transport-control" data-action="play" aria-label="Play arrangement" title="Play">▶ PLAY</button>',
         '<button class="lc-metal-icon lc-transport-control" data-action="stop" aria-label="Stop playback and recording" title="Stop playback and save the take">■ STOP</button>',
+        '<button class="lc-metal-icon lc-transport-control" data-action="toggle-metronome" aria-label="Toggle metronome click" title="Toggle tempo-synchronized metronome" aria-pressed="false">CLICK OFF</button>',
         '<div class="lc-lcd-wrap"><span>CLOCK</span><div class="lc-lcd" data-clock>100 BPM / 4/4</div><span data-save-state aria-live="polite">SAVED</span></div>',
         '<div class="lc-lcd-wrap"><span>GRID</span><div class="lc-gridset"><button type="button" title="Grid 1/4">¼</button><button type="button" title="Grid 1/8">⅛</button><button type="button" title="Grid 1/16">⅟₁₆</button></div></div>',
         '<button class="lc-metal-icon" data-action="previous-view" aria-label="Previous studio interface">←</button>',
@@ -417,6 +419,9 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
           } else if (action === "play") {
             await workspace.playAll();
             this.status(workspace.isPlaying() ? "Playback running." : "Nothing to play yet. Record or import audio into a track first.");
+          } else if (action === "toggle-metronome") {
+            workspace.toggleMetronome();
+            this.renderHeader();
           } else if (action === "stop") {
             workspace.stopAll();
             if (workspace.pendingRecording) workspace.cancelScheduledRecording();
@@ -796,6 +801,7 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext 
       if (snap) snap.value = workspace.snapMode || "bars";
       const meter = this.root.querySelector("[data-clock]");
       if (meter) meter.textContent = Math.round(workspace.getTempoAtBar(workspace.playheadBar)) + " BPM / " + (()=>{const m=workspace.getTimeSignatureAtBar(workspace.playheadBar);return m.numerator+"/"+m.denominator;})() + " · BAR " + Math.floor(workspace.playheadBar);
+      const click=this.root.querySelector('[data-action="toggle-metronome"]');if(click){click.textContent=workspace.metronomeSettings?.enabled?"CLICK ON":"CLICK OFF";click.classList.toggle("active",Boolean(workspace.metronomeSettings?.enabled));click.setAttribute("aria-pressed",String(Boolean(workspace.metronomeSettings?.enabled)));}
       const loopStart=this.root.querySelector("[data-loop-start]"),loopEnd=this.root.querySelector("[data-loop-end]"),cycle=this.root.querySelector('[data-action="toggle-cycle"]');
       if(loopStart)loopStart.value=String(workspace.loopRange.startBar);if(loopEnd)loopEnd.value=String(workspace.loopRange.endBar);
       if(cycle){cycle.textContent=workspace.loopRange.enabled?"CYCLE ON":"CYCLE OFF";cycle.classList.toggle("active",Boolean(workspace.loopRange.enabled));}
