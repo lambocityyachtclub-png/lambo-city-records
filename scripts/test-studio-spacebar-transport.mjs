@@ -10,7 +10,7 @@ const [app, beatLab, edit] = await Promise.all([
 assert.match(app, /One shared Spacebar transport for every Studio workspace/);
 assert.match(app, /event\.code !== "Space"/);
 assert.match(app, /multitrack\.playAll\(\)/);
-assert.match(app, /multitrack\.stopAll\(\)/);
+assert.match(app, /StudioMultitrackWorkspace\?\.stopAll\(\)/);
 assert.match(app, /startSessionPlayback\(\)/);
 assert.match(app, /beatLab\.stop\(\)/);
 assert.match(app, /data-global-transport="click"/);
