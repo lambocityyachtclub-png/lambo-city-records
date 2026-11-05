@@ -576,6 +576,25 @@
         ],
         "ownerApproval": "The owner selected Option B on 2026-11-05: phone verification for account security, with marketing communications separately optional."
       }
+    },
+    "communityAudienceGrowth": {
+      "selectedOption": "C",
+      "name": "Open public community with an exclusive invitation-based tier",
+      "publicCommunity": "Anyone may discover LAMBO CITY and join the public community through the published onboarding and access rules. Public participation should support organic discovery, artist connections, events, and community growth.",
+      "exclusiveCommunity": "LAMBO CITY may also offer invitation-based access to designated exclusive experiences, events, artist opportunities, and other benefits. Invitations and special access must be explicitly granted and governed by scoped permissions.",
+      "growthStrategy": [
+        "Support organic growth through the quality of the world, Studio, events, artists, and experiences.",
+        "Allow users to invite friends through clear, abuse-resistant invitation flows.",
+        "Build exclusive experiences as an additional community layer, not as a replacement for public access.",
+        "Keep public membership, exclusive invitations, event access, Studio collaboration, and administrative permissions as distinct entitlements.",
+        "Use aggregated, privacy-protective audience and engagement metrics to understand growth and support business negotiations."
+      ],
+      "safeguards": [
+        "Do not imply that joining the public community grants access to restricted events, private Studio projects, or administrative capabilities.",
+        "Do not sell, share, or expose personal contact information as a growth or partnership tactic.",
+        "Define eligibility, invitation limits, expiration, revocation, and abuse prevention for exclusive access before launch."
+      ],
+      "ownerApproval": "The owner selected Option C on 2026-11-05: grow an open public community while also developing an exclusive invitation-based community layer."
     }
   },
   "openDecisions": [
