@@ -39,7 +39,10 @@ function createMPCPanel({ beatLab, workspace, onOpenBeatLab } = {}) {
         <h2 style="margin:7px 0;font-size:24px">MPC PERFORMANCE</h2>
         <p style="margin:0;color:#a8a8b1;font-size:13px">A focused 16-pad production surface connected to your current song.</p>
       </div>
-      <button type="button" data-mpc-digital style="min-height:44px;padding:10px 14px;border:1px solid #80643a;border-radius:8px;background:#201c16;color:#f1d49c;font-weight:bold">OPEN DIGITAL BEAT LAB</button>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button type="button" data-mpc-return-hardware style="min-height:44px;padding:10px 14px;border:1px solid #80643a;border-radius:8px;background:#201c16;color:#f1d49c;font-weight:bold">← RETURN TO MPC HARDWARE</button>
+        <button type="button" data-mpc-digital style="min-height:44px;padding:10px 14px;border:1px solid #80643a;border-radius:8px;background:#201c16;color:#f1d49c;font-weight:bold">OPEN DIGITAL BEAT LAB</button>
+      </div>
     </header>
     <div style="display:flex;gap:8px;flex-wrap:wrap" data-mpc-tracks>
       <button type="button" data-track="kick">KICK</button>
@@ -96,6 +99,7 @@ function createMPCPanel({ beatLab, workspace, onOpenBeatLab } = {}) {
         event.preventDefault();
         beatLab.pattern.steps[activeTrack][index] =
           !beatLab.pattern.steps[activeTrack][index];
+        beatLab.save?.();
         renderPads();
 
         try {
@@ -150,6 +154,7 @@ function createMPCPanel({ beatLab, workspace, onOpenBeatLab } = {}) {
   });
 
   if (beatLab) beatLab.soundProfile = "mpc";
+  root.refreshPattern = renderPads;
   renderPads();
   return root;
 }
