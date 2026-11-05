@@ -483,6 +483,7 @@ const StudioDAWApp = {
     document.body.appendChild(root);
 
     this.root = root;
+    StudioMultitrackWorkspace.onTransportChange = () => this.syncTransportControls();
     this.globalTransportHandlers = event => {
       const button = event.target.closest("[data-global-transport]");
       if (!button || !root.contains(button)) return;
@@ -637,6 +638,7 @@ const StudioDAWApp = {
       this.handleStudioKeydown = null;
     }
     this.transportActionPending = false;
+    if (StudioMultitrackWorkspace.onTransportChange) StudioMultitrackWorkspace.onTransportChange = null;
     if (this.globalTransportHandlers) {
       this.root?.querySelector("header")?.removeEventListener("click", this.globalTransportHandlers);
       this.globalTransportHandlers = null;
