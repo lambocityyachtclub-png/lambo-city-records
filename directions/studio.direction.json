@@ -10,7 +10,9 @@
       "remainingCoreQuestions": 11,
       "centralWorkspaceAndNavigation": "answered",
       "collaborationModel": "answered",
-      "collaborationAccess": "answered"
+      "collaborationAccess": "answered",
+      "collaborationExperience": "answered",
+      "artistIdentityAndAvatar": "answered"
     }
   },
   "ownerDirection": {
@@ -109,10 +111,35 @@
         "permissions": "The owner must be able to decide who is invited, which projects they can access, and whether they may view, contribute, record, edit, or manage project content. Define detailed roles and revocation controls in the future collaboration architecture.",
         "distinction": "This restriction applies to the collaborative co-production feature. It does not by itself mean the general Studio or every future artist profile must be invite-only.",
         "ownerApproval": "The owner clarified on 2026-11-04 that collaboration is an exclusive feature for people they personally choose to collaborate with."
+      },
+      "experienceModes": {
+        "browserBasedStudio": "Invited collaborators can join a private session through a direct link and use the online Studio interface without having to enter or play the full 3D game. This should support musicians such as guitarists and producers who want to contribute directly to a session.",
+        "inWorldStudio": "Collaborators who enjoy the game can enter the 3D LAMBO CITY Records environment, appear as their own character, and collaborate in the virtual studio.",
+        "bridge": "Both experiences connect to the same project and collaboration services. The browser-based session can act as an accessible entry point that may spark interest in exploring the wider 3D world.",
+        "ownerApproval": "The owner explicitly wants both browser-based non-3D collaboration and immersive in-world collaboration."
       }
+    },
+    "artistIdentityAndAvatar": {
+      "scope": "Long-term platform-wide identity system, not only a Studio feature. Everyone who plays LAMBO CITY should have their own account and profile.",
+      "onboarding": "Users create an account and choose a unique username that is checked for availability.",
+      "mobileFirst": "Profile information and account interactions should be convenient to manage from a mobile phone.",
+      "photos": {
+        "maximumUploads": 3,
+        "requestedInputs": [
+          "Headshot photo",
+          "Full-body photo"
+        ],
+        "avatarOutcome": "The system should use the user's submitted photos as references to create a corresponding in-game 3D avatar.",
+        "thirdPhoto": "Not yet specified; ask the owner what the third photo should be used for before defining the upload requirements."
+      },
+      "futureCreatorCulture": "The owner envisions players and artists capturing and sharing videos of their LAMBO CITY experiences, including posting content to platforms such as YouTube, creating an incentive to participate and discover the wider world.",
+      "phaseStatus": "Approved long-term product vision. Do not add accounts, authentication, image uploads, avatar-generation services, persistent profiles, or multiplayer to the current single-player foundation until a separate architecture, privacy/security, moderation, storage, cost, and rollout plan is reviewed and approved."
     }
   },
   "openDecisions": [
+    "Define the third profile photo's purpose and the exact photo requirements for avatar generation.",
+    "Define account onboarding, username rules, profile privacy, image consent and retention, and avatar review/editing controls.",
+    "Design a shared project/session architecture supporting both browser-only collaboration and immersive 3D collaboration.",
     "Define the owner-controlled invitation workflow, collaborator roles, project-level permissions, and access revocation for private collaboration.",
     "Define the central Studio entrance and the artist journey from opening Studio through creating, recording, editing, mixing, mastering, and exporting a song.",
     "Define the professional acceptance standard for recording, mixing, mastering, latency, and exports.",
@@ -124,7 +151,9 @@
     "Inspect current modules before making changes.",
     "Develop piano, drums/MPC, and MIX & MASTER as dedicated interfaces connected to shared production services.",
     "Do not promise chart placement, commercial success, or royalty eligibility.",
-    "Require owner approval before changing the Studio's approved visual direction or expanding into accounts, backend, or multiplayer."
+    "Require owner approval before changing the Studio's approved visual direction or expanding into accounts, backend, or multiplayer.",
+    "Treat platform-wide accounts, profiles, photo uploads, generated 3D avatars, browser-based sessions, and in-world multiplayer as a future coordinated platform phase; do not bolt them onto the current single-player architecture without an approved design.",
+    "Use uploaded photos as consented avatar references with clear privacy, retention, deletion, and user-control rules; do not promise perfect likeness or automatic generation quality."
   ],
   "approval": {
     "status": "draft",
