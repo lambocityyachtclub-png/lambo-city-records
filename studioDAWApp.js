@@ -99,6 +99,7 @@ function createMPCPanel({ beatLab, workspace, onOpenBeatLab } = {}) {
         event.preventDefault();
         beatLab.pattern.steps[activeTrack][index] =
           !beatLab.pattern.steps[activeTrack][index];
+        beatLab.save?.();
         renderPads();
 
         try {
@@ -153,6 +154,7 @@ function createMPCPanel({ beatLab, workspace, onOpenBeatLab } = {}) {
   });
 
   if (beatLab) beatLab.soundProfile = "mpc";
+  root.refreshPattern = renderPads;
   renderPads();
   return root;
 }
