@@ -1,5 +1,7 @@
 
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
+import StudioDAWApp from "./studioDAWApp.js";
+import MPCInterface from "./mpc-interface.js";
 /*
  * LAMBO CITY RECORDS
  * FLOOR 2 — STUDIO NAVIGATION V1
@@ -89,39 +91,21 @@ export default {
 
         // Route each physical station into its matching
         // functional workspace inside the same Studio session.
-        window.__lamboCityOpenFloor2Instrument?.();
-        const loadStation = async () => {
-          const beatLabModule = await import("./floor2StudioApp.js");
-          const systems = { floor2StudioApp: beatLabModule.default };
+        try {
+          window.__lamboCityOpenFloor2Instrument?.();
+
           if (station.view === "mpc") {
-            const mpcModule = await import("./mpc-interface.js");
-            systems.mpcInterface = mpcModule.default;
-          } else {
-            const [instrumentModule, drumModule, dawModule] = await Promise.all([
-              import("./floor2InstrumentApp.js"),
-              import("./floor2DrumStation.js"),
-              import("./studioDAWApp.js")
-            ]);
-            systems.floor2InstrumentApp = instrumentModule.default;
-            systems.floor2DrumStation = drumModule.default;
-            systems.studioDAWApp = dawModule.default;
-          }
-          Object.assign(context.systems, systems);
-          if (!context.initializeSystem?.("floor2StudioApp", scene, context)) throw new Error("The shared studio audio engine could not initialize.");
-          if (station.view === "mpc") {
-            systems.mpcInterface.open({
+            MPCInterface.open({
               onClose: () => window.__lamboCityReturnToFloor2Room?.()
             });
-          } else {
-            if (!context.initializeSystem?.("floor2InstrumentApp", scene, context)) throw new Error("The instrument station could not initialize.");
-            if (!context.initializeSystem?.("floor2DrumStation", scene, context)) throw new Error("The drum station could not initialize.");
-            systems.studioDAWApp.open(station.view || "edit");
+            return;
           }
-        };
-        loadStation().catch(error => {
+
+          StudioDAWApp.open(station.view || "edit");
+        } catch (error) {
           window.__lamboCityReturnToFloor2Room?.();
-          console.error("LAMBO CITY station workspace failed to load:", error);
-        });
+          console.error("LAMBO CITY station workspace failed to open:", error);
+        }
         return;
       }
     };
