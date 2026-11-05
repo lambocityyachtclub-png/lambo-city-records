@@ -1,6 +1,13 @@
 import assert from "node:assert/strict";
-import { createStudioMidiBlob, parseStudioMidi } from "../studioMidiFile.js";
+import { createStudioMidiBlob, parseStudioMidi, quantizeStudioMidiNotes, swingStudioMidiNotes, humanizeStudioMidiNotes } from "../studioMidiFile.js";
 const blob = createStudioMidiBlob({ tracks: [{ name: "Test", midiNotes: [{ pitch: 60, startBar: 1, lengthBars: 1, velocity: 0.8 }] }], tempo: 100 });
 const parsed = parseStudioMidi(await blob.arrayBuffer());
 assert.equal(parsed.tracks[0].notes.length, 1);
+assert.equal(parsed.tempo, 100);
+assert.deepEqual(parsed.timeSignature, { numerator: 4, denominator: 4 });
+assert.equal(parsed.tracks[0].notes[0].pitch, 60);
+assert.equal(quantizeStudioMidiNotes([{ startBar: 1.12, lengthBars: 0.22 }], 0.25)[0].startBar, 1);
+assert.ok(swingStudioMidiNotes([{ startBar: 1.125 }], 0.5, 0.125)[0].startBar > 1.125);
+assert.ok(humanizeStudioMidiNotes([{ startBar: 2, velocity: 0.8 }], 0.02, 0.1, () => 1)[0].startBar > 2);
+assert.throws(() => parseStudioMidi(new ArrayBuffer(8)));
 console.log("MIDI test passed.");
