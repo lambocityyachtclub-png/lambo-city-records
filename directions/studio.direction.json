@@ -7,7 +7,7 @@
     "status": "in-discovery",
     "questionnaireProgress": {
       "purposeAndMission": "answered",
-      "remainingCoreQuestions": 11,
+      "remainingCoreQuestions": 10,
       "centralWorkspaceAndNavigation": "answered",
       "collaborationModel": "answered",
       "collaborationAccess": "answered",
@@ -17,7 +17,8 @@
       "unifiedIdentityAndInWorldNameDisplay": "answered",
       "artistProfilesAndSocialFollowing": "answered",
       "artistFollowingAndMessaging": "answered",
-      "livingCityVision": "answered"
+      "livingCityVision": "answered",
+      "worldStyleAndEvolution": "answered"
     }
   },
   "ownerDirection": {
@@ -225,7 +226,20 @@
         "Enjoy the world even when not actively making music"
       ],
       "roleOfStudio": "LAMBO CITY Records Studio remains the musical headquarters and a central creative anchor, while the broader city is a complete destination and experience.",
-      "continuity": "Build on the existing world and its established architecture. Preserve working areas and systems; expand in deliberate, modular phases rather than replacing the world."
+      "continuity": "Build on the existing world and its established architecture. Preserve working areas and systems; expand in deliberate, modular phases rather than replacing the world.",
+      "styleAndEvolution": {
+        "selectedOption": "C",
+        "longTermEvolution": "Progressively move the city toward the realism and functional depth of Option A over time.",
+        "initialCharacter": "Begin with the cinematic luxury entertainment atmosphere, spectacular destinations, exclusive experiences, music, events, and visual excitement of Option B, while establishing realistic city foundations.",
+        "targetExperience": "A realistic, functional luxury city that retains the atmosphere, excitement, and exclusivity of a premium entertainment destination.",
+        "progression": [
+          "Build the city as an exciting luxury destination with memorable places and events.",
+          "Increase the realism and usefulness of everyday experiences over successive development phases.",
+          "Make buildings, businesses, vehicles, movement, social interactions, and city activities increasingly functional and believable.",
+          "Preserve cinematic presentation and exclusive entertainment experiences as realism deepens."
+        ],
+        "ownerApproval": "The owner selected Option C and clarified on 2026-11-04 that the long-term development should increasingly scale toward Option A."
+      }
     }
   },
   "openDecisions": [
@@ -253,6 +267,6 @@
   "approval": {
     "status": "draft",
     "approvedByOwner": false,
-    "note": "Captures the owner's first three Studio direction answers. This is not yet a complete or approved Studio specification."
+    "note": "Captures the owner's direction answers to date. The living-city style is Option C, with a deliberate long-term progression toward the realistic, functional city experience of Option A. This is not yet a complete or approved Studio specification."
   }
 }
