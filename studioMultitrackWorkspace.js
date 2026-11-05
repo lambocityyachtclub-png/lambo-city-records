@@ -1671,6 +1671,7 @@ const StudioMultitrackWorkspace = {
         id: `${take.id}-${recording.trackName.toLowerCase().replace(/\s+/g, "-")}`,
         name: recording.clipName,
         blob: recording.blob,
+        recordingFormat: take.recordingFormat || "Browser MediaRecorder",
         takeId: take.id,
         createdAt: new Date().toISOString(),
         objectUrl: null
