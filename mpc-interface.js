@@ -4,7 +4,6 @@
 import StudioAudioEngine from "./studioAudioEngine.js";
 import StudioMPCLibrary from "./studioMPCLibrary.js";
 import StudioMPCSampler from "./studioMPCSampler.js";
-import Floor2StudioApp from "./floor2StudioApp.js";
 // Standalone module: no Three.js dependency.
 // Integration:
 //   import MPCInterface from "./mpc-interface.js";
@@ -449,7 +448,7 @@ const MPCInterface = {
   onClose: null,
   previousFocus: null,
   keyHandler: null,
-  beatLab: Floor2StudioApp,
+  beatLab: null,
   bank: "A",
   selectedPad: 1,
   library: null,
@@ -474,7 +473,7 @@ const MPCInterface = {
 
     this.onClose = typeof options.onClose === "function" ? options.onClose : null;
     this.previousFocus = document.activeElement;
-    this.beatLab = options.beatLab || Floor2StudioApp;
+    this.beatLab = options.beatLab || window.__lamboCityFloor2BeatLab || null;
     this.bank = "A";
     this.selectedPad = 1;
     this.recording = false;
