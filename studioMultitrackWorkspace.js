@@ -461,6 +461,17 @@ const StudioMultitrackWorkspace = {
     return settings;
   },
 
+  setTrackInputSource(trackId, source = "mic") {
+    const track = this.tracks.find(item => item.id === trackId);
+    if (!track || track.type !== "audio") throw new Error("Choose an audio track before assigning its input source.");
+    if (!["mic", "beatlab", "mpc"].includes(source)) throw new Error("Unsupported recording input source.");
+    if (this.isTrackRecording() || this.pendingRecording) throw new Error("Stop recording before changing an input source.");
+    track.inputSource = source;
+    this.scheduleProjectAutosave();
+    this.status(track.name + " input source · " + source.toUpperCase() + ".");
+    return source;
+  },
+
   setTrackInputDevice(trackId, deviceId = "") {
     const track = this.tracks.find(item => item.id === trackId);
     if (!track || track.type !== "audio") throw new Error("Choose an audio track before assigning its input.");
@@ -939,6 +950,8 @@ const StudioMultitrackWorkspace = {
       volume: Math.max(0, Math.min(100, Number(savedTrack.volume) || 0)),
       pan: Math.max(-1, Math.min(1, Number(savedTrack.pan) || 0)),
       inputSource: ["mic", "beatlab", "mpc"].includes(savedTrack.inputSource) ? savedTrack.inputSource : "mic",
+      inputDeviceId: String(savedTrack.inputDeviceId || "").slice(0, 256),
+      inputLatencyMs: Math.max(0, Math.min(500, Number(savedTrack.inputLatencyMs) || 0)),
       instrumentWave: ["sine", "triangle", "sawtooth", "square"].includes(savedTrack.instrumentWave) ? savedTrack.instrumentWave : "triangle",
       eq: {
         low: Number(savedTrack.eq?.low) || 0,
@@ -1623,7 +1636,7 @@ const StudioMultitrackWorkspace = {
         const lengthBars = Math.max(.25, Math.min(128, this.getBarAtSeconds(this.getSecondsAtBar(this.recordingStartBar) + buffer.duration) - this.recordingStartBar));
         const deviceId = track.inputDeviceId || this.inputDeviceId || "";
         const latencyMs = track.inputSource === "mic"
-          ? Math.max(0, Math.min(500, Number(track.inputLatencyMs ?? this.inputLatencyByDevice[deviceId] ?? this.inputLatencyMs) || 0))
+          ? Math.max(0, Math.min(500, Number(track.inputDeviceId ? track.inputLatencyMs : (this.inputLatencyByDevice[deviceId] ?? this.inputLatencyMs)) || 0))
           : 0;
         const compensatedStartBar = Math.max(1, this.getBarAtSeconds(this.getSecondsAtBar(this.recordingStartBar) - latencyMs / 1000));
         const takeGroupId = track.id + "-takes-" + this.recordingStartBar;
