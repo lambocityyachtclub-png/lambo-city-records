@@ -211,7 +211,7 @@ function createVocalsPanel({ beatLab } = {}) {
     '<button type="button" data-vocal-action="start-beat" style="min-height:44px;padding:11px 14px;border:1px solid #80643a;border-radius:8px;background:#201c16;color:#f1d49c;font-weight:bold">PLAY BEAT</button>',
     '<button type="button" data-vocal-action="stop-beat" style="min-height:44px;padding:11px 14px;border:1px solid #454958;border-radius:8px;background:#222631;color:white;font-weight:bold">STOP BEAT</button>',
     '<button type="button" data-vocal-action="record" style="min-height:44px;padding:11px 14px;border:1px solid #80643a;border-radius:8px;background:#594321;color:white;font-weight:bold">● RECORD</button>',
-    '<button type="button" data-vocal-action="stop-recording" style="min-height:44px;padding:11px 14px;border:1px solid #454958;border-radius:8px;background:#222631;color:white;font-weight:bold">■ STOP RECORDING</button></div>
+    '<button type="button" data-vocal-action="stop-recording" style="min-height:44px;padding:11px 14px;border:1px solid #454958;border-radius:8px;background:#222631;color:white;font-weight:bold">■ STOP RECORDING</button></div>',
     '<section style="display:grid;gap:10px;padding:16px;border:1px solid #80643a;border-radius:12px;background:linear-gradient(145deg,#1b1a18,#10131a)">' +
     '<strong style="color:#e6bb69;font-size:11px;letter-spacing:2px">VOICE NOTES · QUICK IDEA CAPTURE</strong>' +
     '<p style="margin:0;color:#a8a8b1;font-size:12px;line-height:1.5">Capture a melody, lyric, hook, or production idea without starting a beat. Your original recording is saved as a clip in this song session.</p>' +
