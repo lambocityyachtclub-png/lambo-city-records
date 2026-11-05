@@ -733,6 +733,9 @@ const StudioMultitrackWorkspace = {
     const clipIds = new Set();
     for (const track of session.tracks) {
       if (!track || typeof track.id !== "string" || !track.id || trackIds.has(track.id) || !TRACK_TYPES.includes(track.type || "audio") || !Array.isArray(track.clips) || track.clips.length > 512) return false;
+      if (track.inputDeviceId !== undefined && (typeof track.inputDeviceId !== "string" || track.inputDeviceId.length > 256)) return false;
+      if (track.inputChannel !== undefined && track.inputChannel !== null && (!Number.isInteger(track.inputChannel) || track.inputChannel < 0 || track.inputChannel > 31)) return false;
+      if (track.inputLatencyMs !== undefined && (!Number.isFinite(Number(track.inputLatencyMs)) || Number(track.inputLatencyMs) < 0 || Number(track.inputLatencyMs) > 500)) return false;
       trackIds.add(track.id);
       for (const clip of track.clips) {
         if (!clip || typeof clip.id !== "string" || !clip.id || clipIds.has(clip.id) || !Number.isFinite(Number(clip.startBar)) || Number(clip.startBar) < 1 || Number(clip.startBar) > 128 || !Number.isFinite(Number(clip.lengthBars)) || Number(clip.lengthBars) <= 0) return false;
