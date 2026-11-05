@@ -82,10 +82,6 @@ const layouts = [
   }
 ];
 
-function clone(value) {
-  return JSON.parse(JSON.stringify(value));
-}
-
 export function listStudioDAWSessionLayouts() {
   return layouts.map(({ id, name, concept, tempo, tracks }) => ({
     id,
@@ -136,6 +132,12 @@ export function applyStudioDAWSessionLayout(workspace, layoutId) {
   }
 
   workspace.tempo = Math.max(60, Math.min(180, Number(layout.tempo) || 100));
+  workspace.timeSignature = "4/4";
+  workspace.tempoChanges = [];
+  workspace.timeSignatureChanges = [];
+  workspace.markers = [];
+  workspace.loopRange = { enabled: false, startBar: 1, endBar: 9 };
+  workspace.playheadBar = 1;
   workspace.sessionTemplateId = layout.id;
   workspace.sessionTemplateName = layout.name;
   workspace.selectedTrackId = null;
