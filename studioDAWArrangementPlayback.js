@@ -9,6 +9,7 @@
 
 import StudioVocalEffects from "./studioVocalEffects.js";
 import { createStudioPitchCorrectionNode, normalizePitchCorrectionSettings } from "./studioPitchCorrection.js";
+import { scheduleStudioMetronome, stopStudioMetronome } from "./studioMetronome.js";
 
 export function createStudioDAWArrangementPlayback({
   getAudioContext,
@@ -16,6 +17,8 @@ export function createStudioDAWArrangementPlayback({
   getTempo,
   getSecondsAtBar = bar => (Math.max(1, Number(bar) || 1) - 1) * 240 / Math.max(1, Number(getTempo()) || 100),
   getBarAtSeconds = seconds => 1 + Number(seconds || 0) * Math.max(1, Number(getTempo()) || 100) / 240,
+  getTimeSignatureAtBar = () => ({ numerator: 4, denominator: 4 }),
+  getMetronomeSettings = () => ({ enabled: false, volume: 0.16, accent: true }),
   onPosition = () => {},
   onStatus = () => {}
 } = {}) {
@@ -33,6 +36,27 @@ export function createStudioDAWArrangementPlayback({
     playing: false,
     loopTimer: null,
     positionTimer: null,
+    metronomeSources: [],
+    playbackContext: null,
+    playbackStartBar: 1,
+    playbackEndBar: 1,
+    lastPositionBar: 1,
+
+    refreshMetronome(startBar = this.lastPositionBar || this.playbackStartBar) {
+      stopStudioMetronome(this.metronomeSources);
+      const settings = getMetronomeSettings() || {};
+      if (!this.playing || !settings.enabled || !this.playbackContext || this.playbackContext.state !== "running") return false;
+      this.metronomeSources = scheduleStudioMetronome(this.playbackContext, {
+        startBar: Math.max(this.playbackStartBar, Number(startBar) || this.playbackStartBar),
+        endBar: this.playbackEndBar,
+        startTime: this.playbackContext.currentTime + 0.06,
+        getSecondsAtBar,
+        getTimeSignatureAtBar,
+        volume: settings.volume,
+        accent: settings.accent
+      });
+      return this.metronomeSources.length > 0;
+    },
 
     async decodeClip(context, blob) {
       if (decodedBuffers.has(blob)) return decodedBuffers.get(blob);
@@ -73,6 +97,9 @@ export function createStudioDAWArrangementPlayback({
       if (this.positionTimer) clearInterval(this.positionTimer);
       this.loopTimer = null;
       this.positionTimer = null;
+      stopStudioMetronome(this.metronomeSources);
+      this.playbackContext = null;
+      this.playbackEndBar = 1;
       const active = this.sources.splice(0);
       active.forEach(({ source }) => {
         source.onended = null;
@@ -301,6 +328,29 @@ export function createStudioDAWArrangementPlayback({
         const actualStartBar = activeLoop && (cursorBar < activeLoop.startBar || cursorBar >= activeLoop.endBar) ? activeLoop.startBar : cursorBar;
         const cursorSeconds = getSecondsAtBar(actualStartBar);
         const startTime = context.currentTime + 0.12;
+        let contentEndBar = actualStartBar;
+        decoded.forEach(({ clip, buffer }) => {
+          const clipStartBar = Math.max(1, Number(clip.startBar) || 1);
+          const clipEndBar = clipStartBar + Math.max(0.0625, Number(clip.lengthBars) || 4);
+          const clipStartSeconds = getSecondsAtBar(clipStartBar);
+          const clipTimelineDuration = Math.max(0, getSecondsAtBar(clipEndBar) - clipStartSeconds);
+          const sourceOffset = Math.max(0, Number(clip.sourceOffsetSeconds) || 0);
+          const sourceDuration = Math.min(
+            clipTimelineDuration,
+            Number(clip.playDurationSeconds) > 0 ? Number(clip.playDurationSeconds) : buffer.duration - sourceOffset,
+            Math.max(0, buffer.duration - sourceOffset)
+          );
+          contentEndBar = Math.max(contentEndBar, getBarAtSeconds(clipStartSeconds + sourceDuration));
+        });
+        midiTracks.forEach(track => (track.midiNotes || []).forEach(note => {
+          contentEndBar = Math.max(contentEndBar, Number(note.startBar || 1) + Math.max(0.0625, Number(note.lengthBars) || 0.25));
+        }));
+        this.playbackContext = context;
+        this.playbackStartBar = actualStartBar;
+        this.playbackEndBar = activeLoop
+          ? activeLoop.endBar
+          : Math.min(129, Math.max(actualStartBar, contentEndBar));
+        this.lastPositionBar = actualStartBar;
         tracks.forEach(track => this.scheduleVolumeAutomation(track, startTime, actualStartBar));
         decoded.forEach(({ track, clip, buffer }) => {
           const channel = this.trackChannels.get(track.id);
@@ -360,6 +410,7 @@ export function createStudioDAWArrangementPlayback({
             this.sources = this.sources.filter(item => item.source !== source);
             if (!this.sources.length) {
               this.playing = false;
+              if (!this.loopTimer) stopStudioMetronome(this.metronomeSources);
               this.disposeChannels();
               if (!this.loopTimer && this.positionTimer) { clearInterval(this.positionTimer); this.positionTimer = null; }
               onStatus(this.loopTimer ? "Cycle pass complete · next cycle scheduled." : "Arrangement playback finished.");
@@ -398,6 +449,7 @@ export function createStudioDAWArrangementPlayback({
               this.sources = this.sources.filter(item => item.source !== oscillator);
               if (!this.sources.length) {
                 this.playing = false;
+                if (!this.loopTimer) stopStudioMetronome(this.metronomeSources);
                 this.disposeChannels();
                 if (!this.loopTimer && this.positionTimer) { clearInterval(this.positionTimer); this.positionTimer = null; }
                 onStatus(this.loopTimer ? "Cycle pass complete · next cycle scheduled." : "Arrangement playback finished.");
@@ -410,9 +462,11 @@ export function createStudioDAWArrangementPlayback({
         });
 
         this.playing = this.sources.length > 0;
+        if (this.playing && getMetronomeSettings()?.enabled) this.refreshMetronome(actualStartBar);
         if (this.sources.length || activeLoop) this.positionTimer = setInterval(() => {
           const elapsed = Math.max(0, context.currentTime - startTime);
-          onPosition(Math.max(1, Math.min(128, Number(getBarAtSeconds(cursorSeconds + elapsed)) || actualStartBar)));
+          this.lastPositionBar = Math.max(1, Math.min(128, Number(getBarAtSeconds(cursorSeconds + elapsed)) || actualStartBar));
+          onPosition(this.lastPositionBar);
         }, 80);
         if (activeLoop) {
           const loopDuration = getSecondsAtBar(activeLoop.endBar) - getSecondsAtBar(actualStartBar);
