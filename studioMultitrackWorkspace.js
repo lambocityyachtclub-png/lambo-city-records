@@ -105,6 +105,9 @@ const StudioMultitrackWorkspace = {
   masterSettings: { volume: 100, stereoWidth: 100, compressionRatio: 3 },
   metronomeSettings: { enabled: false, volume: 0.16, accent: true },
   recordingMetronomeSources: [],
+  recordingMetronomeStartBar: 1,
+  recordingMetronomeStartTime: 0,
+  recordingMetronomeEndBar: 129,
 
   captureSnapshot() {
     return {
@@ -396,9 +399,26 @@ const StudioMultitrackWorkspace = {
     }, 850);
   },
 
-  toggleMetronome() {
+  async toggleMetronome() {
     this.metronomeSettings = { ...(this.metronomeSettings || {}), enabled: !this.metronomeSettings?.enabled };
     this.arrangementPlayback?.refreshMetronome(this.playheadBar);
+    if (this.isTrackRecording() && !this.arrangementPlayback?.playing) {
+      stopStudioMetronome(this.recordingMetronomeSources);
+      if (this.metronomeSettings.enabled) {
+        const audio = await StudioAudioEngine.resume();
+        const elapsed = Math.max(0, audio.currentTime - this.recordingMetronomeStartTime);
+        const currentBar = this.getBarAtSeconds(this.getSecondsAtBar(this.recordingMetronomeStartBar) + elapsed);
+        this.recordingMetronomeSources = scheduleStudioMetronome(audio, {
+          startBar: currentBar,
+          endBar: this.recordingMetronomeEndBar,
+          startTime: this.recordingMetronomeStartTime,
+          getSecondsAtBar: bar => this.getSecondsAtBar(bar),
+          getTimeSignatureAtBar: bar => this.getTimeSignatureAtBar(bar),
+          volume: this.metronomeSettings.volume,
+          accent: this.metronomeSettings.accent
+        });
+      }
+    }
     this.scheduleProjectAutosave();
     this.status("Metronome " + (this.metronomeSettings.enabled ? "on." : "off."));
     this.onRender?.();
@@ -1398,7 +1418,7 @@ const StudioMultitrackWorkspace = {
       this.pendingRecording = true;
       this.recordingStartBar = startBar;
       const barsUntilRecord = Math.max(0, startBar - this.playheadBar);
-      if (barsUntilRecord > 0 && this.tracks.some(item => item.clips?.some(clip => clip.blob?.size))) {
+      if (barsUntilRecord > 0 && this.tracks.some(item => item.clips?.some(clip => clip.blob?.size) || ((item.type === "midi" || item.type === "instrument") && item.midiNotes?.length))) {
         await this.playAll();
       }
       const delaySeconds = Math.max(0, this.getSecondsAtBar(startBar) - this.getSecondsAtBar(this.playheadBar));
@@ -1456,6 +1476,9 @@ const StudioMultitrackWorkspace = {
         inputDeviceId: track.inputSource === "mic" ? this.inputDeviceId : "",
         vocalEffects: track.inputSource === "mic" && /vocal/i.test(track.name) ? vocalEffects : null
       });
+      this.recordingMetronomeStartBar = startBar;
+      this.recordingMetronomeStartTime = audio.currentTime + 0.06;
+      this.recordingMetronomeEndBar = endBar || 129;
       if (this.metronomeSettings?.enabled && !this.arrangementPlayback?.playing) {
         this.recordingMetronomeSources = scheduleStudioMetronome(audio, {
           startBar,
