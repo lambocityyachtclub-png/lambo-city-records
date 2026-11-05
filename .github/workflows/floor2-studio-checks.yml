@@ -23,6 +23,7 @@ on:
       - "studioMidiFile.js"
       - "studioMetronome.js"
       - "scripts/test-studio-midi-file.mjs"
+      - "scripts/test-studio-multitrack-recording.mjs"
       - "scripts/test-studio-metronome.mjs"
       - "studioDAWExport.js"
       - "studioDAWSessionStore.js"
@@ -192,6 +193,9 @@ jobs:
 
       - name: Test MIDI file import and export
         run: node --experimental-default-type=module scripts/test-studio-midi-file.mjs
+
+      - name: Test simultaneous armed-track recording
+        run: node --experimental-default-type=module scripts/test-studio-multitrack-recording.mjs
 
       - name: Test DAW MP3 encoder
         run: node --experimental-default-type=module scripts/test-daw-mp3-export.mjs
