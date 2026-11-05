@@ -647,6 +647,39 @@
       ],
       "relationshipToBoardingPass": "Achievements and reputation may contribute to eligibility for certain recognition or Boarding Pass pathways, but they do not automatically issue a Boarding Pass or replace explicit authorization for restricted resources.",
       "ownerApproval": "The owner selected Option C on 2026-11-05: visible achievements plus a carefully designed reputation system recognizing trustworthy, constructive, and meaningful community participation."
+    },
+    "yachtClubBoardingPassVision": {
+      "ownerApprovalDate": "2026-11-05",
+      "coreVision": "The LAMBO CITY Yacht Club Boarding Pass is an aspirational credential associated with earning eligibility for the BIG LAMBO CITY Yacht Club parties and other specifically designated exclusive Yacht Club experiences. It should feel prestigious, meaningful, and earned rather than like an ordinary account badge.",
+      "eligibility": {
+        "inGameWealthMilestone": {
+          "minimum": 100000,
+          "currency": "LAMBO CITY in-game cash",
+          "rule": "A player must earn or make at least $100,000 in game cash to become eligible for consideration for a Boarding Pass.",
+          "qualificationOnly": "Reaching $100,000 is a required eligibility milestone, not an automatic award or guarantee of a Boarding Pass."
+        },
+        "additionalQualities": "Other qualities, achievements, conduct, meaningful participation, reputation, or owner-approved criteria also matter. The exact criteria, evaluation process, granting authority, and any Boarding Pass levels remain to be designed and approved by the owner.",
+        "antiPayToWinPrinciple": "The $100,000 milestone refers to cash made in the game. It must not be silently replaced by buying status with real money. Any future paid offering requires separate owner approval, transparent terms, and legal and operational review."
+      },
+      "exclusiveExperience": {
+        "events": "Major, high-profile LAMBO CITY Yacht Club parties and other invitation-only experiences, with music, entertainment, networking, and a glamorous luxury social atmosphere.",
+        "yachts": "A tiered collection of luxury yachts and yacht experiences across LAMBO CITY, with multiple levels of scale, exclusivity, and prestige to be designed.",
+        "community": "Aspirational networking and social spaces where players may encounter successful entrepreneurs, artists, wealthy in-world players, AI innovators, crypto and NFT participants, and holders or builders of digital-real-estate portfolios. These are community themes and fictional/in-world roles, not promises that real-world celebrities, investors, or wealthy individuals will participate.",
+        "atmosphere": "A sophisticated, glamorous, adult social environment with stylish characters, entertainment, and opportunities to meet people. Participation and social interaction remain optional and must respect consent, privacy, and community safety."
+      },
+      "futureMarketplace": {
+        "vision": "A future LAMBO CITY marketplace where players may create value, participate in commerce, and potentially earn money through clearly defined in-game systems.",
+        "status": "Long-term direction only; not a currently implemented or promised feature.",
+        "safeguards": "Design the economic model, permitted activities, anti-fraud protections, ownership and licensing rules, payment and withdrawal mechanics, tax and regulatory obligations, and user disclosures before offering real-money earning or making financial claims. Do not promise income, investment returns, or guaranteed monetization."
+      },
+      "accessAndGovernance": [
+        "A Boarding Pass grants only the specific experiences and privileges expressly assigned to it.",
+        "Possessing a Boarding Pass does not automatically grant access to every private event, Studio project, collaboration, property, marketplace function, or administrative permission.",
+        "Keep the universal LAMBO CITY Yacht Club ID separate from Boarding Pass status.",
+        "Keep Boarding Pass eligibility separate from the final award decision and from event-specific invitations or permissions.",
+        "Define levels, benefits, eligibility review, granting authority, duration, suspension, revocation, and appeal or review procedures in a later owner-approved design."
+      ],
+      "ownerIntent": "The owner described the Boarding Pass as the ticket toward the BIG LAMBO CITY Yacht Club parties and future exclusive experiences, with a minimum $100,000 earned in-game cash milestone plus additional qualities. The owner also described a future marketplace and a luxury social scene involving yachts, influential entrepreneurial and technology communities, crypto/NFT participants, and digital-real-estate portfolio holders."
     }
   },
   "openDecisions": [
