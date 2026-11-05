@@ -71,7 +71,7 @@ export function createLiveDrummerPanel({ beatLab } = {}) {
         envelope.gain.exponentialRampToValueAtTime(0.22, at + 0.008);
         envelope.gain.exponentialRampToValueAtTime(0.0001, at + 0.28);
         oscillator.connect(envelope);
-        envelope.connect(StudioAudioEngine.master || audio.destination);
+        envelope.connect(StudioAudioEngine.getTrackGain("kick"));
         oscillator.start(at);
         oscillator.stop(at + 0.30);
       } else if (sound === "cymbal" && noiseBuffer) {
@@ -86,7 +86,7 @@ export function createLiveDrummerPanel({ beatLab } = {}) {
         envelope.gain.exponentialRampToValueAtTime(0.0001, at + 0.62);
         source.connect(filter);
         filter.connect(envelope);
-        envelope.connect(StudioAudioEngine.master || audio.destination);
+        envelope.connect(StudioAudioEngine.getTrackGain("hat"));
         source.start(at);
         source.stop(at + 0.65);
       } else {
