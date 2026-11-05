@@ -1008,7 +1008,7 @@ root.addEventListener("input", (event) => {
     }
   },
 
-  async start() {
+  async start({ startAtTime = null } = {}) {
     if (this.playing) {
       this.status("Beat already playing.");
       return;
@@ -1030,7 +1030,10 @@ if (!this.audio || this.audio.state !== "running") {
 
       this.playing = true;
       this.currentStep = 0;
-      this.nextStepTime = this.audio.currentTime + 0.05;
+      const earliestStart = this.audio.currentTime + 0.05;
+      this.nextStepTime = Number.isFinite(Number(startAtTime))
+        ? Math.max(earliestStart, Number(startAtTime))
+        : earliestStart;
       this.playbackStartedAt = this.nextStepTime;
 
       this.status(
