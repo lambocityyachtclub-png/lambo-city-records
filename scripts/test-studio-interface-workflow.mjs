@@ -3,6 +3,8 @@ import { readFile } from "node:fs/promises";
 
 const files = [
   "main.js",
+  "hud.js",
+  "floor2InstrumentApp.js",
   "engine.js",
   "studioDAWApp.js",
   "studioDAWWorkspace.js",
@@ -61,6 +63,12 @@ assert.match(navigation,/view:\s*"edit"/);
 assert.doesNotMatch(navigation,/object:\s*stations\.(?:drumStation|instrumentStation|controlRoom)/);
 
 const app = source["studioDAWApp.js"];
+assert.match(source["hud.js"],/lc-live-drummer-score/);
+assert.match(source["hud.js"],/lc-live-drummer-state/);
+assert.match(app,/lc-live-drummer-state/);
+assert.match(source["floor2InstrumentApp.js"],/localHit\.x/);
+assert.match(source["floor2InstrumentApp.js"],/getTrackGain\("instrument"\)/);
+assert.match(source["floor2CitySynth.js"],/floor2CitySynthBlackKey/);
 assert.match(app,/createLiveDrummerPanel\(\{ beatLab: Floor2StudioApp \}\)/);
 assert.match(app,/createCitySynthPanel\(\{ session: StudioMultitrackWorkspace \}\)/);
 assert.match(app,/createVocalBoothPanel\(\{ beatLab: Floor2StudioApp \}\)/);
