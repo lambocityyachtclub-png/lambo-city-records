@@ -110,6 +110,11 @@ The workflow research covers hip-hop beat production and vocal overdubs as well 
 - [ ] Add visible WAV bit-depth and sample-rate choices during the final interface design pass.
 - [ ] Add a dedicated master true-peak limiter and loudness/peak metering; current master processing includes compression but not a dedicated final limiter or loudness target workflow.
 - [ ] Add independent headphone/cue mixes and a practical monitor workflow; current microphone monitoring is a fixed direct-to-output path.
+- [ ] Add a dedicated sample-peak safety limiter and output peak/RMS metering; current master chain has compression but no final limiter or master meter.
+- [ ] Extend automation beyond track volume to pan, effect parameters, and sends.
+- [ ] Add MIDI file import/export plus quantize, swing, and humanize tools for beat programming and external instrument workflows.
+- [ ] Replace the current 30 MB JSON/base64 portable-audio ceiling with a scalable binary or compressed `.lcp` package while retaining legacy import compatibility.
+- [ ] Replace the 15-minute offline-render ceiling with a memory-safe long-form export path.
 - [ ] Replace the V1 oscillator piano voice with a richer sample-based instrument library, preserving MIDI note editing, session state, and mixer routing.
 - [x] Add data-driven starter layouts for hip-hop beat production, hip-hop vocal overdubs, full-band tracking, and singer-songwriter sessions; keep vocal-processing chain presets as a separate capability.
 - [ ] Add the final layout-selection controls during the user's interface design pass.
