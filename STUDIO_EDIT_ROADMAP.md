@@ -105,7 +105,8 @@ The workflow research covers hip-hop beat production and vocal overdubs as well 
 
 - [x] Add the tempo-aware metronome engine and transport toggle without replacing the existing recording count-in.
 - [ ] Add a clean, uncompressed PCM recording path (preferably 24-bit WAV or 32-bit float capture) with a safe browser-compatible fallback; the current recorder uses browser MediaRecorder codecs.
-- [ ] Add selectable professional WAV export depth and sample rate; the current offline master renderer is fixed at 44.1 kHz / 16-bit PCM.
+- [x] Extend the WAV export engine to 16-, 24-, and 32-bit PCM at 44.1, 48, or 96 kHz; default master export is now 24-bit / 44.1 kHz, while the existing MP3 path remains intact.
+- [ ] Add visible WAV bit-depth and sample-rate choices during the final interface design pass.
 - [ ] Add a dedicated master true-peak limiter and loudness/peak metering; current master processing includes compression but not a dedicated final limiter or loudness target workflow.
 - [ ] Add independent headphone/cue mixes and a practical monitor workflow; current microphone monitoring is a fixed direct-to-output path.
 - [ ] Replace the V1 oscillator piano voice with a richer sample-based instrument library, preserving MIDI note editing, session state, and mixer routing.
