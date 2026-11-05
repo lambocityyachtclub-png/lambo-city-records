@@ -691,11 +691,10 @@ const StudioDAWApp = {
           if (viewId === "mpc" && !MPCInterface.isOpen()) {
             MPCInterface.open({
               beatLab: Floor2StudioApp,
-              onClose: () => {
-                if (this.workspace?.activeView === "mpc") {
-                  this.workspace.setView("beatlab");
-                }
-              }
+              // Closing the MPC returns to its place in the five-step
+              // workflow. The dedicated NEXT control advances to Piano.
+              onClose: () => {},
+              onNext: () => this.workspace?.setView("piano")
             });
           }
         }
