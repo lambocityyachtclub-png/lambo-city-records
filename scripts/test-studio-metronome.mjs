@@ -46,13 +46,13 @@ const scheduled = scheduleStudioMetronome(context, {
 });
 assert.equal(scheduled.length, 7, "4/4 followed by 3/4 should schedule seven quarter-note clicks.");
 assert.deepEqual(
-  scheduled.map(node => Number(node.startedAt.toFixed(3))),
+  scheduled.map(click => Number(click.source.startedAt.toFixed(3))),
   [10, 10.5, 11, 11.5, 12, 12.5, 13],
   "Click timing should follow the session bar clock and meter changes."
 );
-assert.equal(scheduled[0].frequency.value, 1480, "The first beat should be accented.");
-assert.equal(scheduled[1].frequency.value, 980, "Non-downbeats should use the regular click.");
-assert.equal(scheduled[4].frequency.value, 1480, "The next bar downbeat should be accented.");
+assert.equal(scheduled[0].source.frequency.value, 1480, "The first beat should be accented.");
+assert.equal(scheduled[1].source.frequency.value, 980, "Non-downbeats should use the regular click.");
+assert.equal(scheduled[4].source.frequency.value, 1480, "The next bar downbeat should be accented.");
 
 stopStudioMetronome(scheduled);
 assert.equal(scheduled.length, 0, "Stopping should clear the scheduled click list.");
