@@ -236,8 +236,8 @@ const StudioAudioEngine = {
   },
 
   setMasterLimiter(enabled, ceilingDb = this.limiterCeilingDb) {
-    const ceiling = Math.max(-6, Math.min(0, Number(ceilingDb)));
-    if (!Number.isFinite(ceiling)) throw new Error("Limiter ceiling must be between -6 and 0 dBFS.");
+    const ceiling = Number(ceilingDb);
+    if (!Number.isFinite(ceiling) || ceiling < -6 || ceiling > 0) throw new Error("Limiter ceiling must be between -6 and 0 dBFS.");
     this.limiterEnabledValue = Boolean(enabled);
     this.limiterCeilingDb = ceiling;
     if (this.limiter && this.context) {
