@@ -18,6 +18,8 @@ on:
       - "studioDAWSessionTemplates.js"
       - "studioDAWTimeline.js"
       - "studioDAWArrangementPlayback.js"
+      - "studioMetronome.js"
+      - "scripts/test-studio-metronome.mjs"
       - "studioDAWExport.js"
       - "studioDAWSessionStore.js"
       - "studioMultitrackWorkspace.js"
@@ -123,6 +125,7 @@ jobs:
             studioDAWSessionTemplates.js \
             studioDAWTimeline.js \
             studioDAWArrangementPlayback.js \
+            studioMetronome.js \
             studioDAWExport.js \
             studioDAWSessionStore.js \
             studioMultitrackWorkspace.js \
@@ -162,6 +165,9 @@ jobs:
 
       - name: Test DAW arrangement playback and mixer
         run: node --experimental-default-type=module scripts/test-daw-arrangement-playback.mjs
+
+      - name: Test Studio metronome timing and meter changes
+        run: node --experimental-default-type=module scripts/test-studio-metronome.mjs
 
       - name: Test DAW MP3 encoder
         run: node --experimental-default-type=module scripts/test-daw-mp3-export.mjs
