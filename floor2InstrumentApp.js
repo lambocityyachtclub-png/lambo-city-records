@@ -10,6 +10,8 @@ import StudioAudioEngine from
 // Uses the shared studio audio engine.
 // Preserves the existing 3D room and instruments.
 
+const NOTE_PITCHES = [60,62,64,65,67,69,71,72,74,76,77,79,81,83,84,86];
+
 const NOTES = [
   261.63, 293.66, 329.63, 349.23,
   392.00, 440.00, 493.88, 523.25,
@@ -73,16 +75,20 @@ export default {
         hits[0].point.clone()
       );
 
-      // Existing keys run along the station's local Z axis.
-      const index = Math.max(
-        0,
-        Math.min(
-          NOTES.length - 1,
-          Math.round((localHit.z + 1.9) / 0.22)
-        )
-      );
-
-      this.playNote(NOTES[index]);
+      // The approved Floor 2 keyboard is built along its local X axis.
+      // Black keys carry exact chromatic pitch metadata; white keys use
+      // the existing 16-note diatonic layout.
+      const index = Math.max(0, Math.min(
+        NOTES.length - 1,
+        Math.round((localHit.x - 3.35) / 0.22)
+      ));
+      const hitObject = hits[0].object;
+      const frequency = Number(hitObject.userData?.pianoFrequency) || NOTES[index];
+      const pitch = Number(hitObject.userData?.pianoPitch) || NOTE_PITCHES[index];
+      const keyIndex = Number.isFinite(Number(hitObject.userData?.pianoKeyIndex))
+        ? Number(hitObject.userData.pianoKeyIndex)
+        : index * 2;
+      this.playNote(frequency, pitch, keyIndex);
     };
 
     this.renderer.domElement.addEventListener(
@@ -91,7 +97,7 @@ export default {
     );
   },
 
-  async playNote(frequency) {
+  async playNote(frequency, pitch = 60, keyIndex = 0) {
     try {
       const audio = await StudioAudioEngine.resume();
 
@@ -99,8 +105,8 @@ export default {
         return;
       }
 
-      // Route the piano through the existing master chain.
-      const output = StudioAudioEngine.master;
+      // Route the piano through its dedicated shared instrument channel.
+      const output = StudioAudioEngine.getTrackGain("instrument");
 
       if (!output) return;
 
@@ -129,6 +135,8 @@ export default {
 
       oscillator.start(now);
       oscillator.stop(now + 0.8);
+      window.dispatchEvent(new CustomEvent("lc-city-synth-note", { detail: { pitch, keyIndex, active: true } }));
+      window.setTimeout(() => window.dispatchEvent(new CustomEvent("lc-city-synth-note", { detail: { pitch, keyIndex, active: false } })), 760);
     } catch (error) {
       console.error(
         "LAMBO CITY piano audio error:",
