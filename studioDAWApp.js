@@ -373,6 +373,7 @@ const StudioDAWApp = {
         const sessionTempo = multitrack.getTempoAtBar(multitrack.playheadBar);
         if (beatLab.pattern) beatLab.pattern.bpm = sessionTempo;
         await beatLab.start({ startAtTime: multitrack.arrangementPlayback?.playbackStartTime });
+        if (!multitrack.isPlaying() && beatLab.playing) beatLab.stop();
       }
       this.syncTransportControls();
       return Boolean(started);
