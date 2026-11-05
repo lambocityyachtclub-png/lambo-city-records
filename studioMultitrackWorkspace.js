@@ -1877,17 +1877,10 @@ const StudioMultitrackWorkspace = {
 
   async playAll() {
     this.stopAll();
-
-    if (!this.tracks.some(track =>
-      track.clips?.some(clip => clip.blob && clip.blob.size > 0) ||
-      ((track.type === "midi" || track.type === "instrument") && track.midiNotes?.length)
-    )) {
-      this.status("No recorded audio clips available.");
-      return;
-    }
-
     const loop = this.loopRange?.enabled ? this.loopRange : null;
-    await this.getArrangementPlayback().play(this.tracks, this.playheadBar, loop);
+    const started = await this.getArrangementPlayback().play(this.tracks, this.playheadBar, loop);
+    if (started) this.status("Song session playing · " + Math.round(this.getTempoAtBar(this.playheadBar)) + " BPM.");
+    return Boolean(started);
   },
 
   stopAll() {
