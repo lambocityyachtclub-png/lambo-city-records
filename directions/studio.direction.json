@@ -19,7 +19,8 @@
       "artistFollowingAndMessaging": "answered",
       "livingCityVision": "answered",
       "worldStyleAndEvolution": "answered",
-      "cityPlayerFreedomAndActivities": "answered"
+      "cityPlayerFreedomAndActivities": "answered",
+      "cityAmbientActivity": "answered"
     }
   },
   "ownerDirection": {
@@ -247,6 +248,25 @@
         "optionalStructure": "Offer optional missions, activities, events, invitations, and opportunities for players who want guidance or a reason to explore.",
         "designPrinciple": "The city should feel alive and full of possibilities while preserving player freedom. Guided content should enrich exploration, never turn the city into a checklist.",
         "ownerApproval": "The owner selected Option C on 2026-11-04."
+      },
+      "ambientCityActivity": {
+        "selectedDevelopmentApproach": "C",
+        "ultimateExperience": "B",
+        "principle": "The intended destination is a fully living environment in which the city operates independently of the player's immediate interaction. Option C describes the responsible staged development strategy, not a reduction in the ambition.",
+        "targetActivities": [
+          "Businesses operate with believable activity, staff, and customers.",
+          "NPCs move through the city with believable routines and purpose.",
+          "Vehicles travel naturally through streets and surrounding areas.",
+          "Public spaces maintain ambient activity and social energy.",
+          "The city continues to feel active even when the player is not nearby or interacting."
+        ],
+        "progression": [
+          "Establish convincing ambient activity using performance-conscious systems.",
+          "Expand activity patterns, schedules, and interactions across businesses and public spaces.",
+          "Progressively develop a fully functioning living city while protecting performance and existing systems."
+        ],
+        "designConstraint": "Build in modular, scalable phases with performance budgets and distance/visibility-aware simulation; preserve the ambition of a fully living city.",
+        "ownerApproval": "The owner stated on 2026-11-04 that Option B is the desired experience, while recognizing Option C as the right staged development approach."
       }
     }
   },
@@ -275,6 +295,6 @@
   "approval": {
     "status": "draft",
     "approvedByOwner": false,
-    "note": "Captures the owner's direction answers to date. The living-city style is Option C, with a deliberate long-term progression toward the realistic, functional city experience of Option A. This is not yet a complete or approved Studio specification."
+    "note": "Captures the owner's direction answers to date. The living-city style is Option C, progressing toward the realism and functionality of Option A; player freedom and optional guided activities are both supported; the ultimate city activity ambition is Option B, delivered progressively using Option C. This is not yet a complete or approved Studio specification."
   }
 }
