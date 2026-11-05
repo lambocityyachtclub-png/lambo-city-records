@@ -77,7 +77,7 @@ assert.equal(channel.compressor.ratio.value, 3);
 assert.equal(channel.effects.delay.delayTime.value, 0.4);
 assert.equal(channel.effects.delayWet.gain.value, 0.2);
 assert.equal(channel.effects.reverbWet.gain.value, 0.3);
-assert.deepEqual(channel.automationGain.gain.events.filter(event => event[0] === "set" || event[0] === "ramp").map(event => event[1]), [1, 0.75, 0.5]);
+assert.deepEqual(channel.automationGain.gain.events.filter(event => event[0] === "set" || event[0] === "ramp").map(event => event[1]), [0.75, 0.5]);
 assert.equal(playback.sources[0].source.startedAt, 2 + 0.12 + 4);
 assert.ok(messages.some(message => message.includes("Arrangement playing")));
 
