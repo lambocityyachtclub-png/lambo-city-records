@@ -7,7 +7,7 @@
     "status": "in-discovery",
     "questionnaireProgress": {
       "purposeAndMission": "answered",
-      "remainingCoreQuestions": 5,
+      "remainingCoreQuestions": 3,
       "centralWorkspaceAndNavigation": "answered",
       "collaborationModel": "answered",
       "collaborationAccess": "answered",
@@ -26,7 +26,9 @@
       "vehicleAndRoadDirection": "answered",
       "propertyOwnership": "answered",
       "entertainmentAndEvents": "answered",
-      "entertainmentEventOrganizerModel": "answered"
+      "entertainmentEventOrganizerModel": "answered",
+      "entertainmentAudienceExperience": "answered",
+      "entertainmentPerformerEligibility": "answered"
     }
   },
   "ownerDirection": {
@@ -409,6 +411,26 @@
             "Provide moderation, reporting, safety, and event cancellation controls."
           ],
           "ownerApproval": "The owner selected Option C on 2026-11-04: official LAMBO CITY events plus approved artist- and player-organized events. The owner explicitly clarified that private Studio sessions and creative work must not become public automatically. Public sharing or performance requires separate explicit authorization."
+        },
+        "audienceExperience": {
+          "selectedOption": "C",
+          "spectatorExperience": "Players can attend concerts and performances as spectators and enjoy a complete experience by watching and listening without participating.",
+          "interactiveExperience": "Players may optionally interact with performers, socialize, join audience activities, and participate in special event features.",
+          "participationRule": "Audience participation is optional. Spectators must always have a complete and satisfying event experience; interactive features enrich the event but are never required.",
+          "ownerApproval": "The owner selected Option C on 2026-11-04: both complete spectator experiences and optional interactive audience participation."
+        },
+        "performerEligibility": {
+          "selectedOption": "C",
+          "officialPerformers": "LAMBO CITY may select, book, and present official performers for its own concerts, live performances, parties, and special events.",
+          "communityPerformers": "Approved artists and players may perform at LAMBO CITY events using music and creative work they are authorized to perform.",
+          "rightsBoundary": "Approval to perform or organize an event does not itself grant rights to use another person's music, recordings, compositions, or private Studio work. Required permissions must be obtained from the appropriate rights-holders for each use.",
+          "futureRequirements": [
+            "Define performer eligibility, application or invitation, approval, and revocation.",
+            "Define booking, scheduling, venue, technical, and event-production permissions.",
+            "Verify performer authorization and required rights for music and other creative work before public performance.",
+            "Keep performer permissions separate from event-organizer permissions, Studio project access, and publication rights."
+          ],
+          "ownerApproval": "The owner selected Option C on 2026-11-04: both official LAMBO CITY bookings and approved community performers, with appropriate authorization for the music performed."
         }
       }
     }
@@ -442,6 +464,6 @@
   "approval": {
     "status": "draft",
     "approvedByOwner": false,
-    "note": "Captures the owner's direction answers to date. The living-city style is Option C, progressing toward the realism and functionality of Option A; player freedom and optional guided activities are both supported; the ultimate city activity ambition is Option B, delivered progressively using Option C; NPC and business functionality follow Option C as the development approach with Option B as the long-term ambition; vehicle development begins with luxury decorative/showcase presentation while the road network and future interactive driving scope are developed later. This is not yet a complete or approved Studio specification. Digital real estate follows Option C as the staged development approach, with any ownership claims gated on a legally reviewed and owner-approved rights structure. The owner also confirmed that LAMBO CITY should support concerts, live performances, parties, and special events. Future digital-real-estate and other in-game ownership may be architected as dormant capability, but must remain unavailable and unadvertised until legal review and explicit owner launch approval. The owner selected Option C for event organizers: official LAMBO CITY events plus approved artist- and player-organized events. Private Studio sessions and creative work remain private by default; organizer access does not grant project access or publication rights, and public sharing or performance requires explicit authorization."
+    "note": "Captures the owner's direction answers to date. The living-city style is Option C, progressing toward the realism and functionality of Option A; player freedom and optional guided activities are both supported; the ultimate city activity ambition is Option B, delivered progressively using Option C; NPC and business functionality follow Option C as the development approach with Option B as the long-term ambition; vehicle development begins with luxury decorative/showcase presentation while the road network and future interactive driving scope are developed later. This is not yet a complete or approved Studio specification. Digital real estate follows Option C as the staged development approach, with any ownership claims gated on a legally reviewed and owner-approved rights structure. The owner also confirmed that LAMBO CITY should support concerts, live performances, parties, and special events. Future digital-real-estate and other in-game ownership may be architected as dormant capability, but must remain unavailable and unadvertised until legal review and explicit owner launch approval. The owner selected Option C for event organizers: official LAMBO CITY events plus approved artist- and player-organized events. Private Studio sessions and creative work remain private by default; organizer access does not grant project access or publication rights, and public sharing or performance requires explicit authorization. The owner selected Option C for audience experience: a complete spectator experience plus optional interactive participation. The owner also selected Option C for performers: official LAMBO CITY bookings plus approved community performers, subject to the necessary rights and permissions for music performed."
   }
 }
