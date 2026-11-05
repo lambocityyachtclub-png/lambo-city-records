@@ -46,6 +46,10 @@ import Floor2InstrumentApp from "./floor2InstrumentApp.js";
 import Floor2DrumStation from "./floor2DrumStation.js";
 import Floor2StudioNavigation from "./floor2StudioNavigation.js";
 import Floor2StudioSession from "./floor2StudioSession.js";
+import StudioMixMasterConsole3D from "./studioMixMasterConsole3D.js";
+import Floor2LiveDrummer from "./floor2LiveDrummer.js";
+import Floor2VocalBooth3D from "./floor2VocalBooth3D.js";
+import Floor2CitySynth from "./floor2CitySynth.js";
 import RecordsHQEntranceThreshold from "./recordsHQEntranceThreshold.js";
 import RecordsHQMediaDetails from "./recordsHQMediaDetails.js";
 import RecordsHQMerchDetails from "./recordsHQMerchDetails.js";
@@ -98,6 +102,10 @@ engine.registerSystems({
   floor2DrumStation: Floor2DrumStation,
   floor2StudioNavigation: Floor2StudioNavigation,
   floor2StudioSession: Floor2StudioSession,
+  studioMixMasterConsole3D: StudioMixMasterConsole3D,
+  floor2LiveDrummer: Floor2LiveDrummer,
+  floor2VocalBooth3D: Floor2VocalBooth3D,
+  floor2CitySynth: Floor2CitySynth,
   recordsHQEntranceThreshold: RecordsHQEntranceThreshold,
   recordsHQMediaDetails: RecordsHQMediaDetails,
   recordsHQMerchDetails: RecordsHQMerchDetails,
