@@ -477,7 +477,7 @@ export function createStudioDAWArrangementPlayback({
             onStatus("Song session reached its end.");
           }, sessionDuration * 1000);
         }
-        onStatus(`Song session playing from bar ${actualStartBar} · ${tempo} BPM · ${decoded.length} audio clip(s) · ${midiTracks.reduce((count, track) => count + track.midiNotes.length, 0)} MIDI note(s).`);
+        onStatus(`Song session playing from bar ${actualStartBar} · ${tempo} BPM · Arrangement playing · ${decoded.length} audio clip(s) · ${midiTracks.reduce((count, track) => count + track.midiNotes.length, 0)} MIDI note(s).`);
         return this.playing;
       } catch (error) {
         if (runId === this.runId) {
