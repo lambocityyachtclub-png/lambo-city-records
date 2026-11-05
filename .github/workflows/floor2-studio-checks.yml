@@ -9,6 +9,7 @@ on:
       - "floor2DrumStation.js"
       - "recordsHQFloor2Studio.js"
       - "studioDAWApp.js"
+      - "studioStandalone.js"
       - "studioDAWEditScreen.js"
       - "studioMixMasterApp.js"
       - "studioDAWWorkspace.js"
@@ -41,6 +42,7 @@ on:
       - "scripts/test-daw-session-templates.mjs"
       - "scripts/test-daw-arrangement-playback.mjs"
       - "scripts/test-daw-mp3-export.mjs"
+      - "scripts/test-studio-standalone-boundary.mjs"
       - "vendor/lamejs/lame.min.js"
       - "THIRD_PARTY_NOTICES.md"
       - ".github/workflows/floor2-studio-checks.yml"
@@ -53,6 +55,7 @@ on:
       - "floor2DrumStation.js"
       - "recordsHQFloor2Studio.js"
       - "studioDAWApp.js"
+      - "studioStandalone.js"
       - "studioDAWWorkspace.js"
       - "studioDAWBeatLabPanel.js"
       - "studioDAWEditPanel.js"
@@ -80,6 +83,7 @@ on:
       - "scripts/test-daw-session-templates.mjs"
       - "scripts/test-daw-arrangement-playback.mjs"
       - "scripts/test-daw-mp3-export.mjs"
+      - "scripts/test-studio-standalone-boundary.mjs"
       - "vendor/lamejs/lame.min.js"
       - "THIRD_PARTY_NOTICES.md"
       - ".github/workflows/floor2-studio-checks.yml"
@@ -109,6 +113,7 @@ jobs:
             floor2DrumStation.js \
             recordsHQFloor2Studio.js \
             studioDAWApp.js \
+            studioStandalone.js \
             studioDAWEditScreen.js \
             studioMixMasterApp.js \
             studioDAWWorkspace.js \
@@ -162,3 +167,6 @@ jobs:
 
       - name: Test vocal pitch correction DSP
         run: node --experimental-default-type=module scripts/test-studio-pitch-correction.mjs
+
+      - name: Test standalone Studio dependency boundary
+        run: node --experimental-default-type=module scripts/test-studio-standalone-boundary.mjs
