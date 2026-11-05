@@ -98,7 +98,7 @@ const StudioRecordingEngine = {
   takes: [],
   playback: null,
 
-  async startTrackRecording({ audio, trackId, vocalEffects, inputNode, pitchCorrectionNode, monitorInput = false, inputDeviceId = "", allowConcurrent = false } = {}) {
+  async startTrackRecording({ audio, trackId, vocalEffects, inputNode, pitchCorrectionNode, monitorInput = false, inputDeviceId = "", inputChannel = null, allowConcurrent = false } = {}) {
     if (this.activeTake || (this.activeTrackTake && !allowConcurrent)) {
       throw new Error("Another studio recording is already in progress.");
     }
@@ -110,6 +110,9 @@ const StudioRecordingEngine = {
     }
     let microphoneStream;
     let microphoneSource;
+    let recordingSource;
+    let channelSplitter;
+    let channelGain;
     let destination;
     let pcmRecorder;
     let monitorGain;
@@ -120,13 +123,24 @@ const StudioRecordingEngine = {
           echoCancellation: false,
           noiseSuppression: false,
           autoGainControl: false,
-          ...(inputDeviceId ? { deviceId: { exact: inputDeviceId } } : {})
+          ...(inputDeviceId ? { deviceId: { exact: inputDeviceId } } : {}),
+          ...(Number.isInteger(inputChannel) && inputChannel >= 0 ? { channelCount: { ideal: inputChannel + 1 } } : {})
         }
       });
       microphoneSource = inputNode || audio.createMediaStreamSource(microphoneStream);
+      recordingSource = microphoneSource;
+      if (!inputNode && Number.isInteger(inputChannel) && inputChannel >= 0) {
+        const availableChannels = Math.max(1, Number(microphoneSource.channelCount) || 1);
+        if (inputChannel >= availableChannels) throw new Error("The selected microphone input channel is not available on this device.");
+        channelSplitter = audio.createChannelSplitter(Math.max(2, inputChannel + 1));
+        channelGain = audio.createGain();
+        microphoneSource.connect(channelSplitter);
+        channelSplitter.connect(channelGain, inputChannel);
+        recordingSource = channelGain;
+      }
       inputAnalyser = audio.createAnalyser();
       inputAnalyser.fftSize = 512;
-      microphoneSource.connect(inputAnalyser);
+      recordingSource.connect(inputAnalyser);
       this.inputAnalyser = inputAnalyser;
       try {
         pcmRecorder = await createStudioPCMRecorder(audio);
@@ -140,7 +154,7 @@ const StudioRecordingEngine = {
         monitorGain.connect(audio.destination);
       }
       if (!inputNode && pitchCorrectionNode) {
-        microphoneSource.connect(pitchCorrectionNode);
+        recordingSource.connect(pitchCorrectionNode);
         if (vocalEffects) {
           if (!vocalEffects.input || !vocalEffects.output) {
             throw new Error("The vocal effects audio connection is incomplete.");
@@ -156,12 +170,12 @@ const StudioRecordingEngine = {
         if (!vocalEffects.input || !vocalEffects.output) {
           throw new Error("The vocal effects audio connection is incomplete.");
         }
-        microphoneSource.connect(vocalEffects.input);
+        recordingSource.connect(vocalEffects.input);
         vocalEffects.output.connect(destination);
         if (monitorGain) vocalEffects.output.connect(monitorGain);
       } else {
-        microphoneSource.connect(destination);
-        if (monitorGain) microphoneSource.connect(monitorGain);
+        recordingSource.connect(destination);
+        if (monitorGain) recordingSource.connect(monitorGain);
       }
       const recorder = pcmRecorder || createRecorder(destination.stream);
       if (recorder.recorder) recorder.recorder.start();
@@ -172,6 +186,10 @@ const StudioRecordingEngine = {
         startedAtMs: Date.now(),
         microphoneStream,
         microphoneSource,
+        recordingSource,
+        channelSplitter,
+        channelGain,
+        inputChannel,
         inputNode: Boolean(inputNode),
         destination,
         pcmRecorder,
@@ -187,12 +205,15 @@ const StudioRecordingEngine = {
       return { id: take.id, trackId, startedAt: take.startedAt, recordingFormat: take.recordingFormat };
     } catch (error) {
       try {
-        if (pitchCorrectionNode && !inputNode) microphoneSource?.disconnect(pitchCorrectionNode);
-        else if (vocalEffects && !inputNode) microphoneSource?.disconnect(vocalEffects.input);
-        else microphoneSource?.disconnect(destination);
+        if (pitchCorrectionNode && !inputNode) recordingSource?.disconnect(pitchCorrectionNode);
+        else if (vocalEffects && !inputNode) recordingSource?.disconnect(vocalEffects.input);
+        else recordingSource?.disconnect(destination);
       } catch {}
       try { pitchCorrectionNode?.disconnect(); } catch {}
-      try { microphoneSource?.disconnect(inputAnalyser); } catch {}
+      try { recordingSource?.disconnect(inputAnalyser); } catch {}
+      try { microphoneSource?.disconnect(channelSplitter); } catch {}
+      try { channelSplitter?.disconnect(); } catch {}
+      try { channelGain?.disconnect(); } catch {}
       try { inputAnalyser?.disconnect(); } catch {}
       try { if (this.inputAnalyser === inputAnalyser) this.inputAnalyser = null; } catch {}
       try { if (vocalEffects) vocalEffects.output.disconnect(destination); } catch {}
@@ -225,9 +246,9 @@ const StudioRecordingEngine = {
       // Disconnect the capture feed before flushing so no new worklet frames
       // can arrive after the final PCM chunk has been acknowledged.
       try {
-        if (take.pitchCorrectionNode && !take.inputNode) take.microphoneSource.disconnect(take.pitchCorrectionNode);
-        else if (take.vocalEffects && !take.inputNode) take.microphoneSource.disconnect(take.vocalEffects.input);
-        else take.microphoneSource.disconnect(take.destination);
+        if (take.pitchCorrectionNode && !take.inputNode) take.recordingSource.disconnect(take.pitchCorrectionNode);
+        else if (take.vocalEffects && !take.inputNode) take.recordingSource.disconnect(take.vocalEffects.input);
+        else take.recordingSource.disconnect(take.destination);
       } catch {}
       try { if (take.vocalEffects) take.vocalEffects.output.disconnect(take.destination); } catch {}
 
@@ -243,15 +264,18 @@ const StudioRecordingEngine = {
       };
     } finally {
       try {
-        if (take.pitchCorrectionNode && !take.inputNode) take.microphoneSource.disconnect(take.pitchCorrectionNode);
-        else if (take.vocalEffects && !take.inputNode) take.microphoneSource.disconnect(take.vocalEffects.input);
-        else take.microphoneSource.disconnect(take.destination);
+        if (take.pitchCorrectionNode && !take.inputNode) take.recordingSource.disconnect(take.pitchCorrectionNode);
+        else if (take.vocalEffects && !take.inputNode) take.recordingSource.disconnect(take.vocalEffects.input);
+        else take.recordingSource.disconnect(take.destination);
       } catch {}
       try { take.pitchCorrectionNode?.disconnect(); } catch {}
       try { if (take.vocalEffects) take.vocalEffects.output.disconnect(take.destination); } catch {}
       try { take.destination.disconnect(); } catch {}
       try { take.pcmRecorder?.dispose(); } catch {}
-      try { take.microphoneSource.disconnect(take.inputAnalyser); } catch {}
+      try { take.recordingSource.disconnect(take.inputAnalyser); } catch {}
+      try { take.microphoneSource.disconnect(take.channelSplitter); } catch {}
+      try { take.channelSplitter?.disconnect(); } catch {}
+      try { take.channelGain?.disconnect(); } catch {}
       try { take.inputAnalyser?.disconnect(); } catch {}
       if (this.inputAnalyser === take.inputAnalyser) this.inputAnalyser = null;
       try { take.monitorGain?.disconnect(); } catch {}
