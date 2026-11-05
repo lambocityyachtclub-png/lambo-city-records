@@ -787,6 +787,7 @@ const StudioDAWApp = {
   },
 
   close() {
+    window.dispatchEvent(new CustomEvent("lc-live-drummer-state", { detail: { active: false } }));
     this.stopSessionPlayback();
     if (this.handleStudioKeydown) {
       document.removeEventListener("keydown", this.handleStudioKeydown);
