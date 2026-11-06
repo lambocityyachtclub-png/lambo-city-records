@@ -64,7 +64,14 @@ async function renderMPCBounce(events, duration, liveAudio) {
       const panner = context.createStereoPanner ? context.createStereoPanner() : null;
       const velocity = Math.max(0, Math.min(1.5, Number(event.velocity) || 1));
       const volume = Math.max(0, Math.min(1.5, Number(settings.volume ?? 1)));
-      gain.gain.setValueAtTime(Math.max(.0001, velocity * volume), when);
+      const peak = Math.max(0, velocity * volume);
+      gain.gain.setValueAtTime(Math.max(.0001, peak), when);
+      const playbackDuration = Math.max(.01, end - start) / source.playbackRate.value;
+      const requestedDecay = Number(settings.decay);
+      const audibleDuration = Number.isFinite(requestedDecay) && requestedDecay < 10
+        ? Math.min(playbackDuration, Math.max(.05, requestedDecay))
+        : playbackDuration;
+      if (peak > 0) gain.gain.setTargetAtTime(.0001, Math.max(when + .004, when + audibleDuration - .008), .008);
       source.connect(gain);
       if (panner) { panner.pan.value = Math.max(-1, Math.min(1, Number(settings.pan) || 0)); gain.connect(panner); panner.connect(context.destination); }
       else gain.connect(context.destination);
@@ -1416,8 +1423,12 @@ const MPCInterface = {
       const audio = await this.getAudioContext();
       const duration = Math.max(Number(take.duration) || 0, ...events.map(event => Number(event.at) || 0)) + 0.35;
       const rendered = [];
+      const separatePads = [...new Set(events.map(event => String(event.bank || "A") + "-" + String(event.pad || 1)))];
+      const bounceTrackCount = mode === "separate" ? separatePads.length : 1;
+      const estimatedBytes = Math.ceil((Math.min(60, duration) + 1.15) * Math.max(22050, Math.min(48000, Number(audio.sampleRate) || 44100)) * 4 * bounceTrackCount);
+      if (estimatedBytes > 25000000) throw new Error("This separate bounce would exceed the 25 MB session safety limit. Bounce a shorter section or fewer pads.");
       if (mode === "separate") {
-        const pads = [...new Set(events.map(event => String(event.bank || "A") + "-" + String(event.pad || 1)))];
+        const pads = separatePads;
         for (const padKey of pads) {
           const padEvents = events.filter(event => (String(event.bank || "A") + "-" + String(event.pad || 1)) === padKey);
           const blob = await renderMPCBounce(padEvents, duration, audio);
