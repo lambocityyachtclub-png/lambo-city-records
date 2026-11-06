@@ -2,6 +2,7 @@ let THREE = null;
 import StudioAudioEngine from "./studioAudioEngine.js";
 import StudioRecordingEngine from "./studioRecordingEngine.js";
 import StudioMultitrackWorkspace from "./studioMultitrackWorkspace.js";
+import StudioTalkback from "./studioTalkback.js";
 
 let activePanel = null;
 let recordingStartedAt = 0;
@@ -46,12 +47,28 @@ export function createVocalBoothPanel({ beatLab } = {}) {
       '<label style="display:grid;gap:6px;color:#d8c7a7;font-size:10px">RETUNE SPEED <input data-vocal-pitch="speedMs" type="range" min="0" max="120" step="1" value="' + (beatLab?.pitchCorrectionSettings?.speedMs ?? 25) + '" style="width:100%;accent-color:#e6bb69"></label>' +
       '<div data-pitch-status role="status" aria-live="polite" style="color:#c9b58d;font-size:11px">Set the song key and scale. Correction is printed into new vocal takes when enabled.</div>' +
     '</section>' +
+    '<section style="display:grid;gap:11px;padding:14px;border:1px solid rgba(223,156,245,.45);border-radius:12px;background:linear-gradient(145deg,#21192b,#100e18)">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap"><strong style="font-size:10px;letter-spacing:2px;color:#e5b7f2">PRODUCER TALKBACK · LIVE MONITOR</strong><button type="button" data-vocal-talkback>TALKBACK</button></div>' +
+      '<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px">' +
+        '<label style="display:grid;gap:6px;color:#e6c5f0;font-size:10px">TALKBACK LEVEL <input data-talkback-setting="volume" type="range" min="0" max="1" step=".01" value="' + StudioTalkback.volume + '" style="width:100%;accent-color:#d78df2"></label>' +
+        '<label style="display:grid;gap:6px;color:#e6c5f0;font-size:10px">HEADPHONE SIDETONE <input data-talkback-setting="sidetone" type="range" min="0" max="1" step=".01" value="' + StudioTalkback.sidetone + '" style="width:100%;accent-color:#d78df2"></label>' +
+        '<label style="display:grid;gap:6px;color:#e6c5f0;font-size:10px">BEAT DUCKING <input data-talkback-setting="duckAmount" type="range" min="0" max=".8" step=".01" value="' + StudioTalkback.duckAmount + '" style="width:100%;accent-color:#d78df2"></label>' +
+      '</div>' +
+      '<div data-talkback-status role="status" aria-live="polite" style="color:#cbb7d5;font-size:11px">Tap TALKBACK to toggle, or press and hold to talk. Use headphones to prevent speaker feedback. Talkback is isolated from recorded takes.</div>' +
+    '</section>' +
     '<div style="display:flex;gap:9px;flex-wrap:wrap"><button type="button" data-vocal-action="export-vocals">EXPORT VOCALS</button><button type="button" data-vocal-action="export-mix">EXPORT MASTER MIX</button></div>';
   const style=document.createElement("style");
   style.textContent=".lc-vocal-booth button{min-height:42px;padding:10px 13px;border:1px solid rgba(218,163,239,.55);border-radius:8px;background:linear-gradient(145deg,#39234a,#171320);color:#f5e8fb;font-size:11px;font-weight:800;letter-spacing:.5px;touch-action:manipulation}.lc-vocal-booth button:disabled{opacity:.45}.lc-vocal-booth [data-vocal-action=record]{background:linear-gradient(#ec777e,#8d263b);border-color:#ffb2b8}.lc-vocal-booth [data-vocal-action=quick-note-start]{background:linear-gradient(#a8ed70,#4d963e);color:#11200e;border-color:#c5ff9a}@media(max-width:640px){.lc-vocal-booth>div:nth-of-type(1){grid-template-columns:1fr!important}.lc-vocal-booth section[style*=grid-template-columns]{grid-template-columns:1fr!important}}";
   root.prepend(style);
   const status=message=>{const node=root.querySelector("[data-vocal-status]");if(node)node.textContent=message;};
   const voiceStatus=message=>{const node=root.querySelector("[data-voice-note-status]");if(node)node.textContent=message;};
+  const talkbackStatus=message=>{const node=root.querySelector("[data-talkback-status]");if(node)node.textContent=message;};
+  StudioTalkback.bindControl(root.querySelector("[data-vocal-talkback]"),{beatLab});
+  root.addEventListener("lc-talkback-state",event=>{
+    if(event.detail?.active)talkbackStatus("Talkback monitor active · beat ducking engaged · not being recorded.");
+    else talkbackStatus("Talkback off · recording path remains isolated.");
+  });
+  window.addEventListener("lc-talkback-error",event=>talkbackStatus("TALKBACK ERROR · "+(event.detail?.message||"Microphone unavailable.")));
   const showTake=(name,format)=>{root.querySelector("[data-vocal-take-name]").textContent=name;root.querySelector("[data-vocal-take-format]").textContent=format||"Original audio take";};
   root.addEventListener("click",async event=>{
     const button=event.target.closest("[data-vocal-action]");
@@ -146,6 +163,14 @@ export function createVocalBoothPanel({ beatLab } = {}) {
     if(control)syncPitchSettings(control);
   });
   root.addEventListener("input",event=>{
+    const talkback=event.target.closest("[data-talkback-setting]");
+    if(talkback){
+      const value=Number(talkback.value);
+      if(talkback.dataset.talkbackSetting==="volume")StudioTalkback.setVolume(value);
+      if(talkback.dataset.talkbackSetting==="sidetone")StudioTalkback.setSidetone(value);
+      if(talkback.dataset.talkbackSetting==="duckAmount")StudioTalkback.setDuckAmount(value);
+      return;
+    }
     const pitch=event.target.closest("[data-vocal-pitch]");
     if(pitch && pitch.type==="range")syncPitchSettings(pitch);
     const slider=event.target.closest("[data-vocal-effect]");
