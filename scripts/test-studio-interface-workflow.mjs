@@ -16,7 +16,8 @@ const files = [
   "studioDAWArrangementPlayback.js",
   "studioRecordingEngine.js",
   "studioAudioEngine.js",
-  "mpc-interface.js"
+  "mpc-interface.js",
+  "studioMultitrackWorkspace.js"
 ];
 const source = Object.fromEntries(await Promise.all(files.map(async file => [
   file,
