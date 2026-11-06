@@ -43,7 +43,9 @@ async function renderMPCBounce(events, duration, liveAudio) {
   const OfflineContext = window.OfflineAudioContext || window.webkitOfflineAudioContext;
   if (!OfflineContext) throw new Error("Offline audio rendering is not supported in this browser.");
   const sampleRate = Math.max(22050, Math.min(48000, Number(liveAudio?.sampleRate) || 44100));
-  const seconds = Math.max(1, Math.min(180, Number(duration) || 1)) + 0.8;
+  const requestedSeconds = Math.max(1, Number(duration) || 1);
+  if (requestedSeconds > 60) throw new Error("This V1 MPC bounce supports up to 60 seconds per pass. Split longer performances into sections.");
+  const seconds = requestedSeconds + 0.8;
   const context = new OfflineContext(2, Math.ceil(seconds * sampleRate), sampleRate);
   const sampleIds = events.map(event => event.sampleId).filter(Boolean);
   if (sampleIds.length) await StudioMPCSampler.preload(sampleIds, liveAudio);
@@ -1425,6 +1427,8 @@ const MPCInterface = {
         const blob = await renderMPCBounce(events, duration, audio);
         rendered.push({ name: "MPC Performance", blob, duration });
       }
+      const totalBytes = rendered.reduce((sum, item) => sum + item.blob.size, 0);
+      if (totalBytes > 25000000) throw new Error("The selected bounce exceeds the 25 MB session safety limit. Bounce fewer pads or shorter sections.");
       StudioMultitrackWorkspace.addMPCBounce({ tracks: rendered, mode });
       this.setStatus("MPC BOUNCE COMPLETE · " + rendered.length + " WAV TRACK(S) ADDED TO EDIT · ORIGINAL PAD PERFORMANCE PRESERVED");
     } catch (error) {
