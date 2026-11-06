@@ -1803,6 +1803,35 @@ const StudioMultitrackWorkspace = {
   },
 
 
+  addMPCBounce({ tracks = [], mode = "combined" } = {}) {
+    const recordings = (Array.isArray(tracks) ? tracks : []).filter(item => item?.blob instanceof Blob && item.blob.size);
+    if (!recordings.length) throw new Error("There are no rendered MPC audio tracks to add.");
+    this.recordHistory("Add MPC audio bounce");
+    const secondsPerBar = 60 / Math.max(60, Math.min(180, Number(this.tempo) || 100)) * 4;
+    recordings.forEach((recording, index) => {
+      const track = this.createTrack("audio", String(recording.name || (mode === "combined" ? "MPC Performance" : "MPC Pad " + (index + 1))));
+      const duration = Math.max(.1, Number(recording.duration) || 1);
+      const clip = {
+        id: "lc-mpc-bounce-" + Date.now() + "-" + index,
+        name: recording.name || "MPC WAV Bounce",
+        blob: recording.blob,
+        duration,
+        startBar: 1,
+        lengthBars: Math.max(1, duration / secondsPerBar),
+        recordingFormat: "LAMBO CITY MPC Offline WAV Bounce",
+        takeId: null,
+        createdAt: new Date().toISOString(),
+        objectUrl: URL.createObjectURL(recording.blob)
+      };
+      track.clips.push(clip);
+    });
+    this.selectedTrackId = this.tracks[this.tracks.length - 1]?.id || null;
+    this.render();
+    this.scheduleProjectAutosave();
+    this.status(recordings.length + " MPC WAV track(s) added to EDIT. Original pad performance remains editable.");
+    return recordings.length;
+  },
+
   addRecordingTake(take) {
     if (
       !take?.id ||
