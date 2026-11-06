@@ -8,9 +8,8 @@ import StudioDAWApp from "./studioDAWApp.js";
  * Coordinates navigation for existing Floor 2 stations.
  * Does not replace the piano, drum, or Beat Lab systems.
  *
- * * RECORDING & EDITING opens the modular LAMBO CITY DAW.
- * Other stations retain their information panels until
- * their dedicated workspaces are connected.
+ * The main monitor opens EDITING; the physical Vocal Booth opens
+ * the dedicated VOCAL BOOTH workspace in the same Studio session.
  */
 
 export default {
@@ -42,14 +41,19 @@ export default {
       return;
     }
 
-    // The main monitor is the single entry point to the complete
-    // five-stage production workflow. Physical stations remain in the
-    // approved room layout; they no longer open competing app instances.
+    // The main monitor and physical Vocal Booth are direct entry points
+    // into the same DAW session. The booth route opens the existing
+    // VOCAL BOOTH panel; it does not create a second recorder or session.
     this.targets = [
       {
         object: studio.getObjectByName("floor2SongEditorDisplay"),
         view: "edit",
         title: "LAMBO CITY STUDIO MONITOR"
+      },
+      {
+        object: studio.getObjectByName("floor2RecordingBooth"),
+        view: "vocals",
+        title: "LAMBO CITY VOCAL BOOTH"
       }
     ].filter(item => item.object);
 
