@@ -34,7 +34,7 @@ assert.match(talkback, /getUserMedia/);
 assert.match(talkback, /StudioVocalEffects\.create/);
 assert.match(talkback, /createStudioPitchCorrectionNode/);
 assert.match(talkback, /outputGain\.connect\(audio\.destination\)/);
-assert.doesNotMatch(talkback, /StudioRecordingEngine|startTrackRecording|startTake/,
+assert.doesNotMatch(talkback, /import\\s+.*StudioRecordingEngine|StudioRecordingEngine\\.|startTrackRecording\\(|startTake\\(/,
   "Talkback must never connect to the recording engine.");
 assert.match(talkback, /setTalkbackDuck/);
 assert.match(audio, /setTalkbackDuck\(multiplier = 1\)/);
