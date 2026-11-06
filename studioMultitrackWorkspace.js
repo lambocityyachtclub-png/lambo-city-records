@@ -799,7 +799,6 @@ const StudioMultitrackWorkspace = {
     this.autosaveTimer = null;
     this.activeProjectId = null;
     this.activeProjectName = "Untitled Song";
-    this.savePromise = null;
     this.tracks = [];
     this.deletedItems = [];
     this.dirty = true;
