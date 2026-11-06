@@ -228,7 +228,7 @@ const StudioDAWWorkspace = {
 
       #lambo-city-daw-workspace .lc-daw-navigation {
         display:flex;align-items:center;justify-content:space-between;gap:18px;
-        padding:12px 20px;border-bottom:1px solid var(--lc-border);background:#0e0f14;
+        padding:12px 20px;border-bottom:1px solid var(--lc-border);background:#0e0f14;touch-action:pan-y;
       }
       #lambo-city-daw-workspace .lc-daw-step-arrow {
         flex:0 0 48px;width:48px;min-height:44px;border:1px solid #80643a;
@@ -387,8 +387,10 @@ const StudioDAWWorkspace = {
       const button = event.target.closest("[data-daw-step]");
       if (!button || !root.contains(button) || button.disabled) return;
       const currentIndex = VIEWS.findIndex(view => view.id === this.activeView);
-      const nextView = VIEWS[currentIndex + Number(button.dataset.dawStep)];
-      if (nextView) this.setView(nextView.id);
+      if (currentIndex < 0) return;
+      const direction = Number(button.dataset.dawStep) < 0 ? -1 : 1;
+      const nextIndex = (currentIndex + direction + VIEWS.length) % VIEWS.length;
+      this.setView(VIEWS[nextIndex].id);
     });
 
     this.handleClick = null;
@@ -407,11 +409,10 @@ const StudioDAWWorkspace = {
       if (Math.abs(deltaX) < 42) return;
       const index = VIEWS.findIndex(view => view.id === this.activeView);
       if (index < 0) return;
-      const nextIndex = Math.max(0, Math.min(VIEWS.length - 1, index + (deltaX < 0 ? 1 : -1)));
-      if (nextIndex !== index) {
-        event.preventDefault();
-        this.setView(VIEWS[nextIndex].id);
-      }
+      const direction = deltaX < 0 ? 1 : -1;
+      const nextIndex = (index + direction + VIEWS.length) % VIEWS.length;
+      event.preventDefault();
+      this.setView(VIEWS[nextIndex].id);
     });
     workflowNav?.addEventListener("pointercancel", () => {
       workflowStartX = null;
@@ -436,8 +437,8 @@ const StudioDAWWorkspace = {
     const currentIndex = VIEWS.findIndex(item => item.id === viewId);
     const previous = this.root.querySelector('[data-daw-step="-1"]');
     const next = this.root.querySelector('[data-daw-step="1"]');
-    if (previous) previous.disabled = currentIndex < 0 || currentIndex <= 0;
-    if (next) next.disabled = currentIndex < 0 || currentIndex >= VIEWS.length - 1;
+    if (previous) previous.disabled = currentIndex < 0;
+    if (next) next.disabled = currentIndex < 0;
     const navigationLabel = this.root.querySelector("[data-daw-navigation-label]");
     if (navigationLabel) navigationLabel.textContent = view.label;
 
