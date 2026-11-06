@@ -27,6 +27,7 @@ const StudioTalkback = {
   sidetone: 0.58,
   duckAmount: 0.35,
   holdDelayMs: 220,
+  startToken: 0,
   controls: new Set(),
   cleanups: new Map(),
 
@@ -73,7 +74,9 @@ const StudioTalkback = {
 
   async start({ beatLab = this.beatLab || window.__lamboCityFloor2BeatLab } = {}) {
     if (this.active) return true;
+    const token = ++this.startToken;
     const audio = await StudioAudioEngine.resume();
+    if (token !== this.startToken) return false;
     if (!navigator.mediaDevices?.getUserMedia) {
       throw new Error("Talkback microphone access requires HTTPS and browser microphone permission.");
     }
@@ -86,6 +89,10 @@ const StudioTalkback = {
         autoGainControl: true
       }
     });
+    if (token !== this.startToken) {
+      stream.getTracks().forEach(track => track.stop());
+      return false;
+    }
 
     try {
       this.stream = stream;
@@ -114,6 +121,12 @@ const StudioTalkback = {
       const pitchSettings = this.beatLab?.pitchCorrectionSettings;
       if (pitchSettings?.enabled) {
         this.pitchNode = await createStudioPitchCorrectionNode(audio, pitchSettings);
+        if (token !== this.startToken) {
+          this.pitchNode.disconnect();
+          this.pitchNode = null;
+          this.cleanupGraph();
+          return false;
+        }
         vocalPath.connect(this.pitchNode);
         vocalPath = this.pitchNode;
       }
@@ -151,6 +164,7 @@ const StudioTalkback = {
   },
 
   stop() {
+    this.startToken += 1;
     this.active = false;
     this.cleanupGraph();
     try { StudioAudioEngine.setTalkbackDuck(1); } catch {}
@@ -163,8 +177,7 @@ const StudioTalkback = {
       this.stop();
       return false;
     }
-    await this.start(options);
-    return true;
+    return Boolean(await this.start(options));
   },
 
   bindControl(button, { beatLab = this.beatLab || window.__lamboCityFloor2BeatLab } = {}) {
@@ -198,6 +211,7 @@ const StudioTalkback = {
       if (event.button !== undefined && event.button !== 0) return;
       pointerDown = true;
       holdStarted = false;
+      try { button.setPointerCapture?.(event.pointerId); } catch {}
       clearHold();
       holdTimer = window.setTimeout(startHold, this.holdDelayMs);
     };
