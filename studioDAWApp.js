@@ -699,14 +699,9 @@ const StudioDAWApp = {
             MPCInterface.open({
               beatLab: Floor2StudioApp,
               performancePanel: this.mpcPanel,
-              // Return the performance surface to the MPC workflow step when
-              // the hardware overlay closes, without triggering another open.
-              onClose: () => {
-                const host = this.workspace?.root?.querySelector("[data-daw-panel]");
-                if (host && this.mpcPanel && !this.mpcPanel.isConnected) {
-                  host.replaceChildren(this.mpcPanel);
-                }
-              },
+              // MPC Performance is an internal MPC tool, never a workflow
+              // destination. Exiting the hardware returns to the Editing home.
+              onClose: () => this.workspace?.setView("edit"),
               onNext: () => this.workspace?.setView("piano")
             });
           }
