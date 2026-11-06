@@ -211,9 +211,13 @@ export function createStudioDAWArrangementPlayback({
       const excludedMaster = !anySolo && hasSeparateStems && track.name === "Master Mix";
       const muted = Boolean(track.muted || (track.type !== "bus" && anySolo && !track.solo) || excludedMaster);
       const volume = Math.max(0, Math.min(1, Number(track.volume ?? 80) / 100));
+      const trackName = String(track.name || "");
+      const isVocal = /vocal|voice|talkback|mic|master/i.test(trackName);
+      const isBackingAudio = track.type === "audio" && !isVocal;
+      const duck = isBackingAudio ? Math.max(0, Math.min(1, Number(this.talkbackDuck ?? 1))) : 1;
       const pan = Math.max(-1, Math.min(1, Number(track.pan ?? 0)));
       const now = channel.gain.context.currentTime;
-      channel.gain.gain.setTargetAtTime(muted ? 0 : volume, now, 0.015);
+      channel.gain.gain.setTargetAtTime(muted ? 0 : volume * duck, now, 0.045);
       if (channel.panner) channel.panner.pan.setTargetAtTime(pan, now, 0.015);
       const eq = track.eq || {};
       channel.low.gain.setTargetAtTime(Math.max(-12, Math.min(12, Number(eq.low) || 0)), now, 0.02);
@@ -257,6 +261,12 @@ export function createStudioDAWArrangementPlayback({
       if (!channel?.meterAnalyser || !channel.meterBuffer) return null;
       channel.meterAnalyser.getFloatTimeDomainData(channel.meterBuffer);
       return channel.meterBuffer;
+    },
+
+    setTalkbackDuck(multiplier = 1) {
+      this.talkbackDuck = Math.max(0, Math.min(1, Number(multiplier)));
+      this.activeTracks.forEach(track => this.applyTrackState(track));
+      return this.talkbackDuck;
     },
 
     setTrackVolume(trackId, value) {

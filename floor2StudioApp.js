@@ -5,6 +5,7 @@ import StudioMPCSampler from "./studioMPCSampler.js";
 import StudioMPCLibrary from "./studioMPCLibrary.js";
 import StudioRecordingEngine from "./studioRecordingEngine.js";
 import StudioVocalEffects from "./studioVocalEffects.js";
+import { createStudioPitchCorrectionNode } from "./studioPitchCorrection.js";
 import {
   createSongProject,
   saveSongProject,
@@ -86,6 +87,13 @@ this.vocalEffects = null;
 this.vocalEffectSettings = {
   delay: 0,
   reverb: 0
+};
+this.pitchCorrectionSettings = {
+  enabled: false,
+  root: 0,
+  scale: "major",
+  amount: 100,
+  speedMs: 25
 };
 this.lastRecordedTake = null;
 this.noiseBuffer = null;
@@ -1089,6 +1097,7 @@ if (!this.audio || this.audio.state !== "running") {
 
  
    async startRecording() {
+    let pitchCorrectionNode = null;
     try {
       if (StudioRecordingEngine.activeTake) {
         this.status("A recording is already in progress.");
@@ -1113,10 +1122,15 @@ if (!this.audio || this.audio.state !== "running") {
         this.vocalEffectSettings.reverb
       );
 
+      if (this.pitchCorrectionSettings?.enabled) {
+        pitchCorrectionNode = await createStudioPitchCorrectionNode(this.audio, this.pitchCorrectionSettings);
+      }
+
       await StudioRecordingEngine.startTake({
         audio: this.audio,
         beatOutput: StudioAudioExport.getOutput(this.audio),
-        vocalEffects: this.vocalEffects
+        vocalEffects: this.vocalEffects,
+        pitchCorrectionNode
       });
 
       this.status(

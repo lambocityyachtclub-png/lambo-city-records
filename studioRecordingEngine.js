@@ -289,7 +289,7 @@ const StudioRecordingEngine = {
     }
   },
 
- async startTake({ audio, beatOutput, vocalEffects } = {}) {
+ async startTake({ audio, beatOutput, vocalEffects, pitchCorrectionNode } = {}) {
     if (this.activeTake || this.activeTrackTake) {
       throw new Error("A recording is already in progress.");
     }
@@ -315,6 +315,7 @@ const StudioRecordingEngine = {
     });
 
     let microphoneSource;
+    let vocalSource;
     let beatDestination;
     let vocalDestination;
     let mixDestination;
@@ -343,13 +344,19 @@ const StudioRecordingEngine = {
       vocalDestination = vocalPCM?.node || audio.createMediaStreamDestination();
       mixDestination = mixPCM?.node || audio.createMediaStreamDestination();
 
+      vocalSource = microphoneSource;
+      if (pitchCorrectionNode) {
+        microphoneSource.connect(pitchCorrectionNode);
+        vocalSource = pitchCorrectionNode;
+      }
+
       if (vocalEffects) {
-        microphoneSource.connect(vocalEffects.input);
+        vocalSource.connect(vocalEffects.input);
         vocalEffects.output.connect(vocalDestination);
         vocalEffects.output.connect(mixDestination);
       } else {
-        microphoneSource.connect(vocalDestination);
-        microphoneSource.connect(mixDestination);
+        vocalSource.connect(vocalDestination);
+        vocalSource.connect(mixDestination);
       }
 
       beatOutput.connect(beatDestination);
@@ -369,6 +376,7 @@ const StudioRecordingEngine = {
         audio,
         microphoneStream,
         microphoneSource,
+        pitchCorrectionNode,
         beatOutput,
         vocalEffects,
         beatDestination,
@@ -388,6 +396,7 @@ const StudioRecordingEngine = {
       };
     } catch (error) {
       try { microphoneSource?.disconnect(); } catch {}
+      try { pitchCorrectionNode?.disconnect(); } catch {}
       try {
         if (vocalEffects) {
           vocalEffects.output.disconnect(vocalDestination);
@@ -417,6 +426,7 @@ const StudioRecordingEngine = {
     try {
       // Stop all feeds before asking the worklets to flush their final buffers.
       try { take.microphoneSource.disconnect(); } catch {}
+      try { take.pitchCorrectionNode?.disconnect(); } catch {}
       try {
         if (take.vocalEffects) {
           take.vocalEffects.output.disconnect(take.vocalDestination);
@@ -448,6 +458,7 @@ const StudioRecordingEngine = {
       return completedTake;
     } finally {
       try { take.microphoneSource.disconnect(); } catch {}
+      try { take.pitchCorrectionNode?.disconnect(); } catch {}
       try {
         if (take.vocalEffects) {
           take.vocalEffects.output.disconnect(take.vocalDestination);
