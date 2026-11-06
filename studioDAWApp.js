@@ -27,6 +27,7 @@ import {
   createStudioDAWBeatLabPanel
 } from "./studioDAWBeatLabPanel.js";
 import { createStudioMixMasterApp } from "./studioMixMasterApp.js";
+import StudioTalkback from "./studioTalkback.js";
 
 
 function createMPCPanel({ beatLab, workspace, onOpenBeatLab } = {}) {
@@ -609,6 +610,7 @@ const StudioDAWApp = {
           <button type="button" data-global-transport="record" style="min-height:42px;padding:10px 14px;border:2px solid #ff8585;border-radius:7px;background:linear-gradient(#ff7777,#b91f2a);color:#fff;font-weight:900">● RECORD</button>
           <span data-global-position style="min-width:74px;padding:9px 10px;border:1px solid #52617a;border-radius:6px;background:#080e1b;color:#c5efff;font:900 12px monospace;text-align:center">BAR 01</span>
           <button type="button" data-global-transport="click" aria-pressed="false" style="min-height:42px;min-width:112px;padding:10px 13px;border:2px solid #e6bb69;border-radius:7px;background:linear-gradient(#e4e8ef,#929baa);color:#17213a;font-weight:900;letter-spacing:1px">CLICK OFF</button>
+          <button type="button" data-global-talkback style="min-height:42px;padding:10px 13px;border:1px solid #b58b4e;border-radius:7px;background:linear-gradient(#3a3022,#19150f);color:#fff0d1;font-weight:900">TALKBACK</button>
         </div>
         <button type="button" data-daw-return style="min-height:42px;padding:10px 13px;border:1px solid #665438;border-radius:7px;background:#171923;color:#f1d49c;font-weight:bold">${this.standalone ? "BACK TO LAMBO CITY" : "RETURN TO ROOM"}</button>
         ${this.standalone ? "" : '<button type="button" data-daw-end style="min-height:42px;padding:10px 13px;border:1px solid #80643a;border-radius:7px;background:#201c16;color:#f1d49c;font-weight:bold">END SESSION</button>'}
@@ -629,6 +631,7 @@ const StudioDAWApp = {
     document.body.appendChild(root);
 
     this.root = root;
+    StudioTalkback.bindControl(header.querySelector("[data-global-talkback]"), { beatLab: Floor2StudioApp });
     StudioMultitrackWorkspace.onTransportChange = () => {
       if (!StudioMultitrackWorkspace.isPlaying() && Floor2StudioApp?.playing && !this.transportActionPending) {
         Floor2StudioApp.stop();
@@ -798,6 +801,8 @@ const StudioDAWApp = {
   },
 
   close() {
+    StudioTalkback.stop();
+    StudioTalkback.unbindAll();
     window.dispatchEvent(new CustomEvent("lc-live-drummer-state", { detail: { active: false } }));
     this.stopSessionPlayback();
     if (this.handleStudioKeydown) {
