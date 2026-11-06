@@ -242,7 +242,7 @@ function makeStyles() {
 /* Performance-first MPC: pads and transport stay visible; advanced tools are optional. */
 #${ROOT_ID}{padding:0;overflow:hidden}
 #${ROOT_ID} .mpc-unit{width:min(100%,920px);height:100dvh;min-height:0;max-height:100dvh;padding:clamp(7px,1.2vw,14px);overflow-y:auto;gap:clamp(7px,1vh,11px)}
-#${ROOT_ID} .mpc-nameplate{flex:0 0 auto;min-height:48px;padding:5px 92px 5px 14px;justify-content:flex-start}
+#${ROOT_ID} .mpc-nameplate{flex:0 0 auto;min-height:48px;padding:5px 220px 5px 14px;justify-content:flex-start}
 #${ROOT_ID} .brand-script{font-size:clamp(23px,3.4vw,38px)}
 #${ROOT_ID} .brand-records{font-size:clamp(10px,1.3vw,15px);margin-top:5px}
 #${ROOT_ID} .mpc-close{right:7px;width:36px;height:36px;font-size:23px}
@@ -285,7 +285,7 @@ function makeStyles() {
 @media(max-width:390px){
   #${ROOT_ID} .brand-script{font-size:22px}
   #${ROOT_ID} .brand-records{font-size:9px}
-  #${ROOT_ID} .mpc-tools-toggle{right:clamp(116px,35vw,142px);padding:4px 7px;font-size:8px}
+  #${ROOT_ID} .mpc-tools-toggle{right:clamp(154px,42vw,164px);padding:4px 7px;font-size:8px}
   #${ROOT_ID} .mpc-performance-open{right:46px;padding:4px 6px;font-size:7px}
 }
 @media(max-width:680px){
