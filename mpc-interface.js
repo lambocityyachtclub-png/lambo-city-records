@@ -595,7 +595,8 @@ const MPCInterface = {
     this.swing = 0;
     const savedVelocity = Number(localStorage.getItem("lambocity-mpc-velocity-v1"));
     this.velocitySensitivity = Number.isFinite(savedVelocity) && savedVelocity > 0 ? Math.max(50, Math.min(150, savedVelocity)) : 100;
-    this.take = this.beatLab?.currentProject?.mpcPerformance || StudioMPCLibrary.loadTake(this.beatLab?.currentProject?.id || "unsaved");
+    this.take = this.beatLab?.currentProject?.mpcPerformance ||
+      (this.beatLab?.currentProject?.id ? StudioMPCLibrary.loadTake(this.beatLab.currentProject.id) : { events: [], duration: 0 });
     this.library = StudioMPCLibrary.open();
 
     if (!document.getElementById(STYLE_ID)) {
@@ -1402,7 +1403,8 @@ const MPCInterface = {
         if (action === "play-start" && songWasPlaying) this.beatLab.stop();
         if (!this.beatLab.playing) {
           const projectId = this.beatLab?.currentProject?.id || "unsaved";
-          const take = this.beatLab?.currentProject?.mpcPerformance || StudioMPCLibrary.loadTake(projectId);
+          const take = this.beatLab?.currentProject?.mpcPerformance ||
+      (this.beatLab?.currentProject?.id ? StudioMPCLibrary.loadTake(projectId) : { events: [], duration: 0 });
           const audio = await this.getAudioContext();
           await StudioMPCSampler.preload((take.events || []).map(event => event.sampleId), audio);
           await this.beatLab.start();
