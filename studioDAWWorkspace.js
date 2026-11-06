@@ -102,10 +102,12 @@ const StudioDAWWorkspace = {
 
       </header>
 
-      <nav class="lc-daw-navigation" aria-label="Production workflow">
+      <nav class="lc-daw-navigation" aria-label="Studio workspace navigation">
         <button type="button" class="lc-daw-step-arrow" data-daw-step="-1" aria-label="Previous workspace">←</button>
-        <div class="lc-daw-flow-track" role="group" aria-label="Choose a production workspace">
-          ${VIEWS.map((view, index) => `<button type="button" data-daw-view="${view.id}" data-flow-step="${index}" aria-label="Open ${view.label}">${index + 1} · ${view.label}</button>`).join("")}
+        <div class="lc-daw-current-view" aria-live="polite">
+          <span>STUDIO</span>
+          <strong data-daw-navigation-label>EDITING</strong>
+          <span>SWIPE LEFT OR RIGHT</span>
         </div>
         <button type="button" class="lc-daw-step-arrow" data-daw-step="1" aria-label="Next workspace">→</button>
       </nav>
@@ -138,11 +140,6 @@ const StudioDAWWorkspace = {
 
       <footer class="lc-daw-footer">
         <span>LAMBO CITY DIGITAL STUDIO</span>
-        <div class="lc-daw-secondary-tools" aria-label="Additional studio tools">
-          <button type="button" data-daw-secondary="edit">BACK TO WORKFLOW</button>
-          <button type="button" data-daw-secondary="mix">MIX & MASTER</button>
-          <button type="button" data-daw-secondary="drums">LIVE DRUMMER</button>
-        </div>
       </footer>
     `;
 
@@ -239,20 +236,13 @@ const StudioDAWWorkspace = {
         font-size:25px;font-weight:700;cursor:pointer;touch-action:manipulation;
       }
       #lambo-city-daw-workspace .lc-daw-step-arrow:disabled { opacity:.28;cursor:default; }
-      #lambo-city-daw-workspace .lc-daw-flow-track {
-        display:flex;align-items:center;gap:6px;width:min(100%,820px);
-        overflow-x:auto;overscroll-behavior-x:contain;padding:3px 2px 7px;
-        scrollbar-width:thin;scrollbar-color:#80643a #101117;
+      #lambo-city-daw-workspace .lc-daw-current-view {
+        display:grid;justify-items:center;gap:3px;flex:1;min-width:0;
+        color:var(--lc-muted);font-size:8px;font-weight:800;letter-spacing:1.7px;
+        text-align:center;pointer-events:none;
       }
-      #lambo-city-daw-workspace .lc-daw-flow-track button {
-        flex:0 0 auto;min-height:38px;padding:8px 11px;border:1px solid #343640;
-        border-radius:7px;background:#171920;color:#aeb1ba;font-size:9px;
-        font-weight:800;letter-spacing:.65px;white-space:nowrap;
-        cursor:pointer;touch-action:manipulation;
-      }
-      #lambo-city-daw-workspace .lc-daw-flow-track button[aria-current="step"] {
-        border-color:#b48c4c;background:linear-gradient(180deg,#554329,#211a12);
-        color:#ffe1a7;box-shadow:0 0 12px rgba(217,173,98,.2);
+      #lambo-city-daw-workspace .lc-daw-current-view strong {
+        color:var(--lc-gold-light);font-size:11px;letter-spacing:1.2px;
       }
 
       #lambo-city-daw-workspace .lc-daw-main {
@@ -394,17 +384,6 @@ const StudioDAWWorkspace = {
     `;
 
     root.addEventListener("click", event => {
-      const directView = event.target.closest("[data-daw-view]");
-      if (directView && root.contains(directView)) {
-        this.setView(directView.dataset.dawView);
-        return;
-      }
-
-      const secondary = event.target.closest("[data-daw-secondary]");
-      if (secondary && root.contains(secondary)) {
-        this.setView(secondary.dataset.dawSecondary);
-        return;
-      }
       const button = event.target.closest("[data-daw-step]");
       if (!button || !root.contains(button) || button.disabled) return;
       const currentIndex = VIEWS.findIndex(view => view.id === this.activeView);
@@ -459,10 +438,8 @@ const StudioDAWWorkspace = {
     const next = this.root.querySelector('[data-daw-step="1"]');
     if (previous) previous.disabled = currentIndex < 0 || currentIndex <= 0;
     if (next) next.disabled = currentIndex < 0 || currentIndex >= VIEWS.length - 1;
-    this.root.querySelectorAll("[data-flow-step]").forEach((step, index) => {
-      if (currentIndex >= 0 && index === currentIndex) step.setAttribute("aria-current", "step");
-      else step.removeAttribute("aria-current");
-    });
+    const navigationLabel = this.root.querySelector("[data-daw-navigation-label]");
+    if (navigationLabel) navigationLabel.textContent = view.label;
 
     const panel = this.root.querySelector("[data-daw-panel]");
 
