@@ -2,13 +2,14 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
 const read = async path => readFile(new URL("../" + path, import.meta.url), "utf8");
-const [app, booth, recording, pitch, talkback, audio] = await Promise.all([
+const [app, booth, recording, pitch, talkback, audio, arrangement] = await Promise.all([
   read("floor2StudioApp.js"),
   read("floor2VocalBooth3D.js"),
   read("studioRecordingEngine.js"),
   read("studioPitchCorrection.js"),
   read("studioTalkback.js"),
-  read("studioAudioEngine.js")
+  read("studioAudioEngine.js"),
+  read("studioDAWArrangementPlayback.js")
 ]);
 
 assert.match(app, /createStudioPitchCorrectionNode/);
@@ -39,5 +40,8 @@ assert.doesNotMatch(talkback, /StudioRecordingEngine\.|startTrackRecording\(|sta
 assert.match(talkback, /setTalkbackDuck/);
 assert.match(audio, /setTalkbackDuck\(multiplier = 1\)/);
 assert.match(audio, /normalized \* duck/);
+assert.match(talkback, /arrangementPlayback\?\.setTalkbackDuck/);
+assert.match(arrangement, /setTalkbackDuck\(multiplier = 1\)/);
+assert.match(arrangement, /volume \* duck/);
 
 console.log("Live vocal pitch-correction routing and isolated Talkback controls passed.");
