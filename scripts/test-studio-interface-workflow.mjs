@@ -80,6 +80,8 @@ assert.match(source["floor2InstrumentApp.js"],/getTrackGain\("instrument"\)/);
 assert.match(source["floor2CitySynth.js"],/floor2CitySynthBlackKey/);
 assert.match(app,/createLiveDrummerPanel\(\{ beatLab: Floor2StudioApp \}\)/);
 assert.match(app,/StudioMultitrackWorkspace\.resetSession\(\)/,"A fresh Studio launch must begin with a clean working session.");
+assert.match(app,/Floor2StudioApp\.startNewSession\?\.\(\)/,"A fresh Studio launch must also reset the Beat Lab song state.");
+assert.match(source["floor2StudioApp.js"],/startNewSession\(\)[\s\S]*?this\.currentProject = null;[\s\S]*?this\.pattern = makeDefaultPattern\(\)/);
 assert.match(source["studioMultitrackWorkspace.js"],/this\.activeProjectId = null;/,"New Session must detach from the previously opened saved project.");
 assert.match(source["studioMultitrackWorkspace.js"],/this\.activeProjectName = "Untitled Song"/);
 const drummer = source["floor2LiveDrummer.js"];
