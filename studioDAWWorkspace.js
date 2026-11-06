@@ -379,7 +379,6 @@ const StudioDAWWorkspace = {
 
         #lambo-city-daw-workspace .lc-daw-navigation { gap:10px; padding:10px 12px; }
         #lambo-city-daw-workspace .lc-daw-step-arrow { flex-basis:44px; width:44px; }
-        #lambo-city-daw-workspace .lc-daw-flow-track { gap:5px; }
       }
     `;
 
