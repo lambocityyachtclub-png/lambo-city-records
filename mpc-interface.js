@@ -242,11 +242,12 @@ function makeStyles() {
 /* Performance-first MPC: pads and transport stay visible; advanced tools are optional. */
 #${ROOT_ID}{padding:0;overflow:hidden}
 #${ROOT_ID} .mpc-unit{width:min(100%,920px);height:100dvh;min-height:0;max-height:100dvh;padding:clamp(7px,1.2vw,14px);overflow-y:auto;gap:clamp(7px,1vh,11px)}
-#${ROOT_ID} .mpc-nameplate{flex:0 0 auto;min-height:48px;padding:5px 92px 5px 14px;justify-content:flex-start}
+#${ROOT_ID} .mpc-nameplate{flex:0 0 auto;min-height:48px;padding:5px 220px 5px 14px;justify-content:flex-start}
 #${ROOT_ID} .brand-script{font-size:clamp(23px,3.4vw,38px)}
 #${ROOT_ID} .brand-records{font-size:clamp(10px,1.3vw,15px);margin-top:5px}
 #${ROOT_ID} .mpc-close{right:7px;width:36px;height:36px;font-size:23px}
-#${ROOT_ID} .mpc-tools-toggle{position:absolute;right:52px;top:50%;transform:translateY(-50%);z-index:4;min-height:34px;padding:5px 10px;border:1px solid #75613a;border-radius:6px;background:linear-gradient(#3c4035,#111510);color:#ead7a5;font-size:9px;font-weight:900;letter-spacing:.08em}
+#${ROOT_ID} .mpc-tools-toggle{position:absolute;right:clamp(128px,19vw,176px);top:50%;transform:translateY(-50%);z-index:4;min-height:34px;padding:5px 10px;border:1px solid #75613a;border-radius:6px;background:linear-gradient(#3c4035,#111510);color:#ead7a5;font-size:9px;font-weight:900;letter-spacing:.08em}
+#${ROOT_ID} .mpc-performance-open{position:absolute;right:52px;top:50%;transform:translateY(-50%);z-index:4;min-height:34px;padding:5px 9px;border:1px solid #d8bd7c;border-radius:6px;background:linear-gradient(#e8d6a5,#a8874c);color:#17180f;font-size:9px;font-weight:900;letter-spacing:.045em;white-space:nowrap}
 #${ROOT_ID} .mpc-upper{display:none;flex:0 0 auto;min-height:260px;grid-template-columns:minmax(0,1fr)}
 #${ROOT_ID} .mpc-screen-frame{width:100%;min-height:260px}
 #${ROOT_ID} .mpc-screen{min-height:245px}
@@ -284,7 +285,8 @@ function makeStyles() {
 @media(max-width:390px){
   #${ROOT_ID} .brand-script{font-size:22px}
   #${ROOT_ID} .brand-records{font-size:9px}
-  #${ROOT_ID} .mpc-tools-toggle{right:48px;padding:4px 7px;font-size:8px}
+  #${ROOT_ID} .mpc-tools-toggle{right:clamp(154px,42vw,164px);padding:4px 7px;font-size:8px}
+  #${ROOT_ID} .mpc-performance-open{right:46px;padding:4px 6px;font-size:7px}
 }
 @media(max-width:680px){
   #${ROOT_ID} .mpc-upper,#${ROOT_ID} .mpc-screen-frame{min-height:280px}
@@ -317,6 +319,7 @@ function buildMarkup() {
     <header class="mpc-nameplate">
       <span class="brand-script">Lambo City</span><span class="brand-records">RECORDS</span>
       <button type="button" class="mpc-tools-toggle" data-mpc-tools-toggle aria-expanded="false">TOOLS</button>
+      <button type="button" class="mpc-performance-open" data-mpc-performance-open aria-label="Open MPC Performance">MPC PERFORMANCE</button>
       <button type="button" data-mpc-next style="min-height:32px;padding:6px 11px;border:1px solid #d8bd7c;border-radius:6px;background:linear-gradient(#e8d6a5,#a8874c);color:#17180f;font-size:10px;font-weight:900;letter-spacing:.7px">NEXT · PIANO →</button>
       <button type="button" class="mpc-close" data-mpc-close aria-label="Exit MPC">×</button>
     </header>
@@ -339,7 +342,6 @@ function buildMarkup() {
               <button type="button" data-mpc-screen-action="timing">TIMING</button>
               <button type="button" data-mpc-screen-action="mixer">MIXER</button>
             </div>
-            <button type="button" class="mpc-folder-launch" data-mpc-open-performance aria-label="Open MPC Performance folder"><span class="mpc-folder-icon" aria-hidden="true"></span><span class="mpc-folder-copy"><strong>MPC PERFORMANCE</strong><small>Open the shared song pattern and performance controls</small></span></button>
             <div class="mpc-screen-readout"><span>SELECTED PAD</span><b data-mpc-selected-readout>BANK A · PAD 01</b><span data-mpc-pad-readout>Choose a pad to see its sound and settings.</span></div>
             <p class="mpc-help">Computer pads: Q W E R · A S D F · Z X C V · T Y G H</p>
           </section>
@@ -539,7 +541,7 @@ const MPCInterface = {
       }
 
       this.performanceToggleHandler = event => {
-        if (event.target.closest("[data-mpc-open-performance]")) {
+        if (event.target.closest("[data-mpc-performance-open]")) {
           this.showPerformance();
         } else if (event.target.closest("[data-mpc-return-hardware]")) {
           this.showHardware();
@@ -1414,7 +1416,7 @@ const MPCInterface = {
     unit?.classList.add("tools-open");
     this.root.querySelector("[data-mpc-tools-toggle]")?.setAttribute("aria-expanded", "true");
     this.showScreen("MAIN");
-    this.root.querySelector("[data-mpc-open-performance]")?.focus({ preventScroll: true });
+    this.root.querySelector("[data-mpc-performance-open]")?.focus({ preventScroll: true });
     return true;
   },
 
