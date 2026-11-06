@@ -11,6 +11,7 @@
  */
 import StudioAudioEngine from "./studioAudioEngine.js";
 import StudioVocalEffects from "./studioVocalEffects.js";
+import StudioMultitrackWorkspace from "./studioMultitrackWorkspace.js";
 import { createStudioPitchCorrectionNode } from "./studioPitchCorrection.js";
 
 const StudioTalkback = {
@@ -67,7 +68,10 @@ const StudioTalkback = {
 
   setDuckAmount(value) {
     this.duckAmount = Math.max(0, Math.min(0.8, Number(value)));
-    if (this.active) StudioAudioEngine.setTalkbackDuck(1 - this.duckAmount);
+    if (this.active) {
+      StudioAudioEngine.setTalkbackDuck(1 - this.duckAmount);
+      StudioMultitrackWorkspace.arrangementPlayback?.setTalkbackDuck(1 - this.duckAmount);
+    }
     this.emitState();
     return this.duckAmount;
   },
@@ -137,6 +141,7 @@ const StudioTalkback = {
       this.outputGain.connect(audio.destination);
       this.applyOutputLevel();
       StudioAudioEngine.setTalkbackDuck(1 - this.duckAmount);
+      StudioMultitrackWorkspace.arrangementPlayback?.setTalkbackDuck(1 - this.duckAmount);
       this.active = true;
       this.emitState();
       return true;
@@ -168,6 +173,7 @@ const StudioTalkback = {
     this.active = false;
     this.cleanupGraph();
     try { StudioAudioEngine.setTalkbackDuck(1); } catch {}
+    try { StudioMultitrackWorkspace.arrangementPlayback?.setTalkbackDuck(1); } catch {}
     this.emitState();
     return true;
   },
