@@ -803,6 +803,7 @@ const StudioDAWApp = {
   close() {
     StudioTalkback.stop();
     StudioTalkback.unbindAll();
+    this.vocalsPanel?.dispatchEvent(new CustomEvent("lc-vocal-booth-dispose"));
     window.dispatchEvent(new CustomEvent("lc-live-drummer-state", { detail: { active: false } }));
     this.stopSessionPlayback();
     if (this.handleStudioKeydown) {
