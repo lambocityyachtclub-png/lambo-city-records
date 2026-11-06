@@ -1314,6 +1314,16 @@ StudioSoundKit.play(
     );
   }
 },
+  startNewSession() {
+    if (this.playing) this.stop();
+    this.currentProject = null;
+    this.pattern = makeDefaultPattern();
+    this.soundProfile = "beatLab";
+    this.lastRecordedTake = null;
+    this.audio = this.audio || null;
+    return true;
+  },
+
   saveMPCPerformance(take) {
     if (!this.currentProject || !take || !Array.isArray(take.events)) return false;
     this.currentProject.mpcPerformance = {

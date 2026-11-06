@@ -566,6 +566,13 @@ const StudioDAWApp = {
 
     this.standalone = options.standalone === true;
 
+    // Every fresh Studio launch opens a clean working session. Saved projects
+    // remain in the session library and can still be opened deliberately.
+    if (options.startNewSession !== false) {
+      StudioMultitrackWorkspace.resetSession();
+      Floor2StudioApp.startNewSession?.();
+    }
+
     // Main application overlay.
     const root = document.createElement("div");
 

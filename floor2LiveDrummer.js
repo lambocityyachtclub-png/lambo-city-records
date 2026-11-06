@@ -20,12 +20,12 @@ export function createLiveDrummerPanel({ beatLab } = {}) {
   const bpm = Math.max(60, Math.min(180, Number(StudioMultitrackWorkspace.tempo) || Number(beatLab?.pattern?.bpm) || 110));
   root.style.cssText = "min-height:calc(100vh - 150px);display:grid;grid-template-rows:auto 1fr auto auto;gap:14px;padding:clamp(12px,2vw,24px);border-radius:14px;color:#f4f6fb;background:radial-gradient(ellipse at 50% 30%,#284a79 0%,#1e3a6b 44%,#16294d 100%);font-family:Arial,sans-serif;box-sizing:border-box;overflow:hidden";
   root.innerHTML =
-    '<header style="display:grid;grid-template-columns:48px 1fr 72px;align-items:start;gap:12px">' +
+    '<header style="display:grid;grid-template-columns:48px 1fr auto;align-items:start;gap:12px">' +
       '<button type="button" data-drum-menu aria-label="Performance menu" style="width:46px;height:46px;border:1px solid #7188a7;border-radius:12px;background:#102343;color:#fff;font-size:22px">☰</button>' +
       '<div style="text-align:center"><div style="font-size:10px;letter-spacing:2.5px;color:#bdc8d8;font-weight:800">PERFORMANCE SCORE</div>' +
         '<div style="max-width:340px;margin:5px auto 6px;padding:5px 18px 8px;border-radius:10px;background:rgba(7,18,37,.78);border:1px solid rgba(210,177,112,.28)"><strong data-drum-score style="font-size:40px;line-height:1">0</strong><div data-score-progress style="height:3px;margin-top:7px;border-radius:5px;background:rgba(255,255,255,.12)"></div></div>' +
         '<div style="font-size:11px;letter-spacing:1.4px;color:#c6d0df"><span style="color:#9caac0">LEVEL 4:</span> <strong style="color:#f0c36c">FUNK FRENZY</strong></div></div>' +
-      '<div style="padding:8px 5px;border-radius:10px;background:rgba(7,18,37,.78);text-align:center;border:1px solid rgba(255,255,255,.1)"><strong data-drum-bpm style="font-size:25px">' + bpm + '</strong><div style="font-size:9px;letter-spacing:1px;color:#b7c3d5">BPM</div></div>' +
+      '<div style="display:grid;justify-items:end;gap:7px"><div style="padding:5px 9px;border-radius:8px;background:rgba(7,18,37,.78);text-align:center;border:1px solid rgba(255,255,255,.1)"><strong data-drum-bpm style="font-size:18px">' + bpm + '</strong><span style="font-size:9px;letter-spacing:1px;color:#b7c3d5"> BPM</span></div><button type="button" data-drum-mode-toggle aria-pressed="false" style="min-height:38px;padding:7px 10px;border:1px solid #c59a55;border-radius:9px;background:#182d4c;color:#f3d28f;font-size:9px;font-weight:800;letter-spacing:.5px">SAMPLE PADS</button></div>' +
     '</header>' +
     '<div style="display:grid;grid-template-columns:minmax(0,1fr) 66px;gap:12px;min-height:280px">' +
       '<div style="position:relative;display:grid;grid-template-rows:auto 1fr;gap:12px;padding:clamp(10px,2vw,24px);border-radius:16px;background:linear-gradient(180deg,rgba(12,30,57,.1),rgba(5,17,36,.42));border-bottom:7px solid #102342;box-shadow:inset 0 -20px 35px rgba(3,10,24,.22)">' +
@@ -43,6 +43,7 @@ export function createLiveDrummerPanel({ beatLab } = {}) {
   const status = root.querySelector("[data-drum-status]");
   let score = 0;
   let selectedCategory = "bass";
+  let drummerMode = "performance";
   let noiseBuffer = beatLab?.noiseBuffer || null;
   const updateScore = () => {
     root.querySelector("[data-drum-score]").textContent = score.toLocaleString();
@@ -117,7 +118,10 @@ export function createLiveDrummerPanel({ beatLab } = {}) {
   };
   const renderHits = () => {
     hitGrid.replaceChildren();
-    DRUM_HITS.filter(item => item.category === selectedCategory).forEach(item => {
+    const visibleHits = drummerMode === "sample-pads"
+      ? DRUM_HITS
+      : DRUM_HITS.filter(item => item.category === selectedCategory);
+    visibleHits.forEach(item => {
       const button = document.createElement("button");
       button.type = "button";
       button.dataset.drumHit = item.sound;
@@ -134,6 +138,24 @@ export function createLiveDrummerPanel({ beatLab } = {}) {
     selectedCategory = button.dataset.drumCategory;
     renderHits();
   }));
+  root.querySelector("[data-drum-mode-toggle]").addEventListener("click", event => {
+    drummerMode = drummerMode === "performance" ? "sample-pads" : "performance";
+    const button = event.currentTarget;
+    button.textContent = drummerMode === "performance" ? "SAMPLE PADS" : "LIVE PERFORMANCE";
+    button.setAttribute("aria-pressed", String(drummerMode === "sample-pads"));
+    root.querySelector("[data-drum-score]").closest("div[style*='max-width']").style.display =
+      drummerMode === "performance" ? "block" : "none";
+    root.querySelector("[data-score-progress]").parentElement.style.display =
+      drummerMode === "performance" ? "block" : "none";
+    root.querySelector("[data-drum-category]").parentElement.style.display =
+      drummerMode === "performance" ? "grid" : "none";
+    root.querySelector("[data-hit-grid]").parentElement.querySelector("div").textContent =
+      drummerMode === "performance" ? "LIVE PERFORMANCE · TOUCH TO PLAY" : "SAMPLE PADS · TRIGGER INDIVIDUAL SOUNDS";
+    status.textContent = drummerMode === "performance"
+      ? "Live Performance mode · Play the kit and build your score."
+      : "Sample Pads mode · Trigger individual drum sounds.";
+    renderHits();
+  });
   root.querySelector("[data-drum-tempo]").addEventListener("input", event => {
     const value = Number(event.target.value);
     StudioMultitrackWorkspace.setTempo(value);

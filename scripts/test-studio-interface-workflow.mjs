@@ -16,7 +16,9 @@ const files = [
   "studioDAWArrangementPlayback.js",
   "studioRecordingEngine.js",
   "studioAudioEngine.js",
-  "mpc-interface.js"
+  "mpc-interface.js",
+  "studioMultitrackWorkspace.js",
+  "floor2StudioApp.js"
 ];
 const source = Object.fromEntries(await Promise.all(files.map(async file => [
   file,
@@ -41,6 +43,7 @@ const workspace = source["studioDAWWorkspace.js"];
 const orderedSteps = [
   /id:\s*"edit",\s*label:\s*"EDITING"/,
   /id:\s*"mpc",\s*label:\s*"MPC"/,
+  /id:\s*"drums",\s*label:\s*"LIVE DRUMMER"/,
   /id:\s*"piano",\s*label:\s*"PIANO \/ CITY SYNTH"/,
   /id:\s*"vocals",\s*label:\s*"VOCAL BOOTH"/,
   /id:\s*"beatlab",\s*label:\s*"BEAT LAB"/,
@@ -53,6 +56,7 @@ for (const pattern of orderedSteps) {
   last = index;
 }
 assert.match(workspace,/const ALL_VIEWS = \[\.\.\.VIEWS, \.\.\.SECONDARY_VIEWS\]/);
+assert.match(workspace,/const SECONDARY_VIEWS = \[\];/,"Live Drummer must be a first-class navigable destination.");
 assert.match(workspace,/data-daw-navigation-label/);
 assert.match(workspace,/aria-label="Studio workspace navigation"/);
 assert.match(workspace,/data-daw-step="-1"/);
@@ -76,6 +80,15 @@ assert.match(source["floor2InstrumentApp.js"],/localHit\.x/);
 assert.match(source["floor2InstrumentApp.js"],/getTrackGain\("instrument"\)/);
 assert.match(source["floor2CitySynth.js"],/floor2CitySynthBlackKey/);
 assert.match(app,/createLiveDrummerPanel\(\{ beatLab: Floor2StudioApp \}\)/);
+assert.match(app,/StudioMultitrackWorkspace\.resetSession\(\)/,"A fresh Studio launch must begin with a clean working session.");
+assert.match(app,/Floor2StudioApp\.startNewSession\?\.\(\)/,"A fresh Studio launch must also reset the Beat Lab song state.");
+assert.match(source["floor2StudioApp.js"],/startNewSession\(\)[\s\S]*?this\.currentProject = null;[\s\S]*?this\.pattern = makeDefaultPattern\(\)/);
+assert.match(source["studioMultitrackWorkspace.js"],/this\.activeProjectId = null;/,"New Session must detach from the previously opened saved project.");
+assert.match(source["studioMultitrackWorkspace.js"],/this\.activeProjectName = "Untitled Song"/);
+const drummer = source["floor2LiveDrummer.js"];
+assert.match(drummer,/data-drum-mode-toggle/,"Live Drummer must switch modes inside the same interface.");
+assert.match(drummer,/SAMPLE PADS/);
+assert.match(drummer,/LIVE PERFORMANCE/);
 assert.match(app,/createCitySynthPanel\(\{ session: StudioMultitrackWorkspace \}\)/);
 assert.match(app,/createVocalBoothPanel\(\{ beatLab: Floor2StudioApp \}\)/);
 assert.match(app,/styleMixMasterPanel\(createStudioMixMasterApp/);
@@ -99,6 +112,11 @@ assert.match(mpc,/this\.showScreen\("PATTERN"\)/);
 assert.doesNotMatch(mpc,/performanceView\.style\.display\s*=\s*"block"/,"MPC performance must stay inside the original hardware interface.");
 assert.match(mpc,/showHardware\(\)/);
 assert.match(mpc,/data-mpc-next/);
+assert.match(mpc,/data-mpc-bounce="combined"/,"MPC must offer a combined stereo WAV bounce.");
+assert.match(mpc,/data-mpc-bounce="separate"/,"MPC must offer separate per-pad WAV bounces.");
+assert.match(mpc,/renderMPCBounce\(/);
+assert.match(mpc,/StudioMultitrackWorkspace\.addMPCBounce/);
+assert.match(source["studioMultitrackWorkspace.js"],/addMPCBounce\(/);
 assert.match(mpc,/onNext\?\.\(\)/);
 
 const playback = source["studioDAWArrangementPlayback.js"];
