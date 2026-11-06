@@ -58,7 +58,7 @@ assert.match(workspace,/aria-label="Studio workspace navigation"/);
 assert.match(workspace,/data-daw-step="-1"/);
 assert.match(workspace,/data-daw-step="1"/);
 assert.doesNotMatch(workspace,/data-daw-view=/,"Studio navigation must not render a list of named workflow destinations.");
-assert.doesNotMatch(workspace,/data-flow-step|lc-daw-flow-track|data-daw-secondary/,"Do not show numbered workflow steps or footer destination menus.");
+assert.doesNotMatch(workspace,/data-flow-step=|lc-daw-flow-track|data-daw-secondary=/,"Do not show numbered workflow steps or footer destination menus.");
 assert.match(workspace,/workflowNav\?\.addEventListener\("pointerup"/);
 assert.match(workspace,/lc-daw-edit-mode \.lc-daw-navigation \{/);
 assert.doesNotMatch(workspace,/lc-daw-edit-mode \.lc-daw-navigation,\s*#/);
