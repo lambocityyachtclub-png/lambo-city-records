@@ -43,8 +43,11 @@ for (const pattern of workflowOrder) {
   assert.ok(index > previousIndex, "Primary workflow must remain EDIT → MPC → PIANO → VOCALS → BEAT LAB");
   previousIndex = index;
 }
-assert.match(workspace, /data-daw-secondary="mix"/);
-assert.match(workspace, /data-daw-secondary="drums"/);
+assert.match(workspace, /data-daw-navigation-label/);
+assert.match(workspace, /data-daw-step="-1"/);
+assert.match(workspace, /data-daw-step="1"/);
 assert.match(workspace, /ALL_VIEWS/);
+assert.doesNotMatch(workspace, /data-daw-secondary|data-daw-view=|data-flow-step/,
+  "Studio navigation must not expose a numbered workflow or destination menu.");
 
 console.log("Floor 2 Studio station registration and navigation checks passed.");
