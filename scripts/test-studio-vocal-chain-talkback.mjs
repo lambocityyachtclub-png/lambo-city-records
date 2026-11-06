@@ -14,7 +14,7 @@ const [app, booth, recording, pitch, talkback, audio] = await Promise.all([
 assert.match(app, /createStudioPitchCorrectionNode/);
 assert.match(app, /pitchCorrectionSettings\s*=\s*\{/);
 assert.match(app, /if\s*\(this\.pitchCorrectionSettings\?\.enabled\)/);
-assert.match(app, /pitchCorrectionNode\s*,/);
+assert.match(app, /pitchCorrectionNode\s*\n\s*\}/);
 assert.match(booth, /data-vocal-pitch="enabled"/);
 assert.match(booth, /data-vocal-pitch="root"/);
 assert.match(booth, /data-vocal-pitch="scale"/);
