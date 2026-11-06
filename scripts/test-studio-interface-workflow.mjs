@@ -53,10 +53,12 @@ for (const pattern of orderedSteps) {
   last = index;
 }
 assert.match(workspace,/const ALL_VIEWS = \[\.\.\.VIEWS, \.\.\.SECONDARY_VIEWS\]/);
-assert.match(workspace,/data-daw-view="\$\{view\.id\}"/);
-assert.match(workspace,/data-daw-secondary="edit"/);
-assert.match(workspace,/data-daw-secondary="mix"/);
-assert.match(workspace,/data-daw-secondary="drums"/);
+assert.match(workspace,/data-daw-navigation-label/);
+assert.match(workspace,/aria-label="Studio workspace navigation"/);
+assert.match(workspace,/data-daw-step="-1"/);
+assert.match(workspace,/data-daw-step="1"/);
+assert.doesNotMatch(workspace,/data-daw-view=/,"Studio navigation must not render a list of named workflow destinations.");
+assert.doesNotMatch(workspace,/data-flow-step|lc-daw-flow-track|data-daw-secondary/,"Do not show numbered workflow steps or footer destination menus.");
 assert.match(workspace,/workflowNav\?\.addEventListener\("pointerup"/);
 assert.match(workspace,/lc-daw-edit-mode \.lc-daw-navigation \{/);
 assert.doesNotMatch(workspace,/lc-daw-edit-mode \.lc-daw-navigation,\s*#/);
@@ -120,4 +122,4 @@ for (const file of ["studioMixMasterConsole3D.js","floor2LiveDrummer.js","floor2
   assert.match(source[file],/update\(/,"Each world feature must expose an update lifecycle.");
 }
 
-console.log("Six-step workflow and linked MPC performance interface checks passed.");
+console.log("Continuous studio navigation and linked MPC performance interface checks passed.");
