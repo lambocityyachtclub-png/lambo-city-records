@@ -28,6 +28,7 @@ const StudioTalkback = {
   duckAmount: 0.35,
   holdDelayMs: 220,
   controls: new Set(),
+  cleanups: new Map(),
 
   emitState() {
     if (typeof window === "undefined") return;
@@ -242,9 +243,15 @@ const StudioTalkback = {
       button.removeEventListener("click", onKeyboardClick);
       window.removeEventListener("lc-talkback-state", onState);
       this.controls.delete(button);
+      this.cleanups.delete(button);
     };
-    button.addEventListener("remove", cleanup, { once: true });
+    this.cleanups.set(button, cleanup);
     return cleanup;
+  },
+
+  unbindAll() {
+    for (const cleanup of [...this.cleanups.values()]) cleanup();
+    this.cleanups.clear();
   },
 
   statusError(error) {
