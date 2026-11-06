@@ -795,6 +795,11 @@ const StudioMultitrackWorkspace = {
     this.timeSignature = "4/4"; this.tempoChanges = []; this.timeSignatureChanges = []; this.markers = []; this.loopRange = { enabled: false, startBar: 1, endBar: 9 }; this.masterSettings = { volume: 100, stereoWidth: 100, compressionRatio: 3, limiterEnabled: true, limiterCeilingDb: -1 }; StudioAudioEngine.setMasterVolume(1); StudioAudioEngine.setStereoWidth(100); StudioAudioEngine.setMasterCompressionRatio(3); StudioAudioEngine.setMasterLimiter(true, -1); this.followPlayhead = true; this.selectedRegionIds = []; this.multiSelectMode = false;
     this.sessionTemplateId = null;
     this.sessionTemplateName = null;
+    clearTimeout(this.autosaveTimer);
+    this.autosaveTimer = null;
+    this.activeProjectId = null;
+    this.activeProjectName = "Untitled Song";
+    this.savePromise = null;
     this.tracks = [];
     this.deletedItems = [];
     this.dirty = true;
