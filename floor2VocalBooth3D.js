@@ -64,11 +64,13 @@ export function createVocalBoothPanel({ beatLab } = {}) {
   const voiceStatus=message=>{const node=root.querySelector("[data-voice-note-status]");if(node)node.textContent=message;};
   const talkbackStatus=message=>{const node=root.querySelector("[data-talkback-status]");if(node)node.textContent=message;};
   StudioTalkback.bindControl(root.querySelector("[data-vocal-talkback]"),{beatLab});
-  root.addEventListener("lc-talkback-state",event=>{
+  window.addEventListener("lc-talkback-state",event=>{
     if(event.detail?.active)talkbackStatus("Talkback monitor active · beat ducking engaged · not being recorded.");
     else talkbackStatus("Talkback off · recording path remains isolated.");
   });
-  window.addEventListener("lc-talkback-error",event=>talkbackStatus("TALKBACK ERROR · "+(event.detail?.message||"Microphone unavailable.")));
+  const onTalkbackError=event=>talkbackStatus("TALKBACK ERROR · "+(event.detail?.message||"Microphone unavailable."));
+  window.addEventListener("lc-talkback-error",onTalkbackError);
+  root.addEventListener("lc-vocal-booth-dispose",()=>window.removeEventListener("lc-talkback-error",onTalkbackError),{once:true});
   const showTake=(name,format)=>{root.querySelector("[data-vocal-take-name]").textContent=name;root.querySelector("[data-vocal-take-format]").textContent=format||"Original audio take";};
   root.addEventListener("click",async event=>{
     const button=event.target.closest("[data-vocal-action]");
