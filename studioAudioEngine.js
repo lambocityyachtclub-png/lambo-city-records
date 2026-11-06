@@ -28,6 +28,8 @@ const StudioAudioEngine = {
   limiterEnabledValue: true,
   limiterCeilingDb: -1,
   channels: null,
+  trackVolumes: { kick: 1, snare: 1, hat: 1, instrument: 1 },
+  talkbackDuck: 1,
   initializing: null,
 
   async resume() {
@@ -131,6 +133,8 @@ const StudioAudioEngine = {
       hat: context.createGain(),
       instrument: context.createGain()
     };
+    this.trackVolumes = { kick: 1, snare: 1, hat: 1, instrument: 1 };
+    this.talkbackDuck = 1;
 
     const instrumentAnalyser = context.createAnalyser();
     instrumentAnalyser.fftSize = this.instrumentMeterBuffer.length;
@@ -242,11 +246,29 @@ const StudioAudioEngine = {
       );
     }
 
+    const normalized = Math.max(0, Math.min(1, value));
+    this.trackVolumes[trackName] = normalized;
+    const duck = ["kick", "snare", "hat"].includes(trackName) ? this.talkbackDuck : 1;
     channel.gain.setTargetAtTime(
-      Math.max(0, Math.min(1, value)),
+      normalized * duck,
       this.context.currentTime,
       0.015
     );
+  },
+
+  setTalkbackDuck(multiplier = 1) {
+    const value = Math.max(0, Math.min(1, Number(multiplier)));
+    if (!Number.isFinite(value)) return this.talkbackDuck;
+    this.talkbackDuck = value;
+    if (this.context && this.channels) {
+      ["kick", "snare", "hat"].forEach(name => {
+        const channel = this.channels[name];
+        if (!channel) return;
+        const base = Math.max(0, Math.min(1, Number(this.trackVolumes[name] ?? channel.gain.value)));
+        channel.gain.setTargetAtTime(base * value, this.context.currentTime, 0.045);
+      });
+    }
+    return this.talkbackDuck;
   },
 
   setStereoWidth(percent) {
