@@ -70,6 +70,9 @@ assert.doesNotMatch(workspace,/lc-daw-edit-mode \.lc-daw-navigation,\s*#/);
 const navigation = source["floor2StudioNavigation.js"];
 assert.match(navigation,/floor2SongEditorDisplay/);
 assert.match(navigation,/view:\s*"edit"/);
+assert.match(navigation,/floor2RecordingBooth/,"The physical Floor 2 Vocal Booth must be a direct station target.");
+assert.match(navigation,/view:\s*"vocals"/,"Selecting the physical Vocal Booth must open the VOCAL BOOTH workspace.");
+assert.match(navigation,/StudioDAWApp\.open\(station\.view\s*\|\|\s*"edit"\)/,"Physical station entry points must reuse the shared DAW app.");
 assert.doesNotMatch(navigation,/object:\s*stations\.(?:drumStation|instrumentStation|controlRoom)/);
 
 const app = source["studioDAWApp.js"];
