@@ -36,6 +36,16 @@ export function createVocalBoothPanel({ beatLab } = {}) {
       '<label style="display:grid;gap:7px;color:#e6c5f0;font-size:10px;letter-spacing:1px">DELAY MIX <input data-vocal-effect="delay" type="range" min="0" max="1" step=".01" value="' + (beatLab?.vocalEffectSettings?.delay ?? 0) + '" style="width:100%;accent-color:#d78df2"></label>' +
       '<label style="display:grid;gap:7px;color:#e6c5f0;font-size:10px;letter-spacing:1px">REVERB MIX <input data-vocal-effect="reverb" type="range" min="0" max="1" step=".01" value="' + (beatLab?.vocalEffectSettings?.reverb ?? 0) + '" style="width:100%;accent-color:#d78df2"></label>' +
     '</section>' +
+    '<section style="display:grid;gap:12px;padding:14px;border:1px solid rgba(224,190,111,.45);border-radius:12px;background:linear-gradient(145deg,#211b19,#11131b)">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap"><strong style="font-size:10px;letter-spacing:2px;color:#e6c58b">PITCH CORRECTION · LIVE VOCAL TUNING</strong><label style="display:flex;align-items:center;gap:8px;color:#f3dfb5;font-size:11px;font-weight:800"><input type="checkbox" data-vocal-pitch="enabled" ' + (beatLab?.pitchCorrectionSettings?.enabled ? 'checked' : '') + '> ENABLE</label></div>' +
+      '<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px">' +
+        '<label style="display:grid;gap:6px;color:#d8c7a7;font-size:10px">KEY <select data-vocal-pitch="root" style="min-height:38px;background:#171923;color:#fff;border:1px solid #67563c;border-radius:7px;padding:7px">' + ['C','C♯ / D♭','D','D♯ / E♭','E','F','F♯ / G♭','G','G♯ / A♭','A','A♯ / B♭','B'].map((note,index)=>'<option value="' + index + '"' + (Number(beatLab?.pitchCorrectionSettings?.root ?? 0)===index?' selected':'') + '>' + note + '</option>').join('') + '</select></label>' +
+        '<label style="display:grid;gap:6px;color:#d8c7a7;font-size:10px">SCALE <select data-vocal-pitch="scale" style="min-height:38px;background:#171923;color:#fff;border:1px solid #67563c;border-radius:7px;padding:7px"><option value="major"' + ((beatLab?.pitchCorrectionSettings?.scale||'major')==='major'?' selected':'') + '>MAJOR</option><option value="minor"' + ((beatLab?.pitchCorrectionSettings?.scale||'major')==='minor'?' selected':'') + '>MINOR</option><option value="chromatic"' + ((beatLab?.pitchCorrectionSettings?.scale||'major')==='chromatic'?' selected':'') + '>CHROMATIC</option></select></label>' +
+      '</div>' +
+      '<label style="display:grid;gap:6px;color:#d8c7a7;font-size:10px">CORRECTION AMOUNT <input data-vocal-pitch="amount" type="range" min="0" max="100" step="1" value="' + (beatLab?.pitchCorrectionSettings?.amount ?? 100) + '" style="width:100%;accent-color:#e6bb69"></label>' +
+      '<label style="display:grid;gap:6px;color:#d8c7a7;font-size:10px">RETUNE SPEED <input data-vocal-pitch="speedMs" type="range" min="0" max="120" step="1" value="' + (beatLab?.pitchCorrectionSettings?.speedMs ?? 25) + '" style="width:100%;accent-color:#e6bb69"></label>' +
+      '<div data-pitch-status role="status" aria-live="polite" style="color:#c9b58d;font-size:11px">Set the song key and scale. Correction is printed into new vocal takes when enabled.</div>' +
+    '</section>' +
     '<div style="display:flex;gap:9px;flex-wrap:wrap"><button type="button" data-vocal-action="export-vocals">EXPORT VOCALS</button><button type="button" data-vocal-action="export-mix">EXPORT MASTER MIX</button></div>';
   const style=document.createElement("style");
   style.textContent=".lc-vocal-booth button{min-height:42px;padding:10px 13px;border:1px solid rgba(218,163,239,.55);border-radius:8px;background:linear-gradient(145deg,#39234a,#171320);color:#f5e8fb;font-size:11px;font-weight:800;letter-spacing:.5px;touch-action:manipulation}.lc-vocal-booth button:disabled{opacity:.45}.lc-vocal-booth [data-vocal-action=record]{background:linear-gradient(#ec777e,#8d263b);border-color:#ffb2b8}.lc-vocal-booth [data-vocal-action=quick-note-start]{background:linear-gradient(#a8ed70,#4d963e);color:#11200e;border-color:#c5ff9a}@media(max-width:640px){.lc-vocal-booth>div:nth-of-type(1){grid-template-columns:1fr!important}.lc-vocal-booth section[style*=grid-template-columns]{grid-template-columns:1fr!important}}";
@@ -120,7 +130,24 @@ export function createVocalBoothPanel({ beatLab } = {}) {
       }
     }catch(error){status("STUDIO ERROR · "+(error?.message||error));}
   });
+  const pitchStatus=message=>{const node=root.querySelector("[data-pitch-status]");if(node)node.textContent=message;};
+  const syncPitchSettings=control=>{
+    if(!beatLab)return;
+    beatLab.pitchCorrectionSettings=beatLab.pitchCorrectionSettings||{enabled:false,root:0,scale:"major",amount:100,speedMs:25};
+    const key=control.dataset.vocalPitch;
+    beatLab.pitchCorrectionSettings[key]=key==="enabled"?Boolean(control.checked):(key==="scale"?control.value:Number(control.value));
+    const enabled=beatLab.pitchCorrectionSettings.enabled;
+    pitchStatus(enabled
+      ? "Pitch correction ON · " + ["C","C♯","D","D♯","E","F","F♯","G","G♯","A","A♯","B"][beatLab.pitchCorrectionSettings.root] + " " + beatLab.pitchCorrectionSettings.scale.toUpperCase() + " · Applies to new vocal takes."
+      : "Pitch correction bypassed · Original vocal tone is preserved.");
+  };
+  root.addEventListener("change",event=>{
+    const control=event.target.closest("[data-vocal-pitch]");
+    if(control)syncPitchSettings(control);
+  });
   root.addEventListener("input",event=>{
+    const pitch=event.target.closest("[data-vocal-pitch]");
+    if(pitch && pitch.type==="range")syncPitchSettings(pitch);
     const slider=event.target.closest("[data-vocal-effect]");
     if(!slider||!beatLab)return;
     const effect=slider.dataset.vocalEffect;
