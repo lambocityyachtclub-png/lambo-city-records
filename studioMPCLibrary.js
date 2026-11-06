@@ -132,7 +132,8 @@ function envelope(audio, destination, time, duration, peak = 0.65) {
 }
 
 function playSound(audio, sound, time, bus, velocity = 1, padSettings = {}) {
-  if (!audio || audio.state !== "running" || !sound) return false;
+  const offline = typeof OfflineAudioContext !== "undefined" && audio instanceof OfflineAudioContext;
+  if (!audio || (audio.state !== "running" && !offline) || !sound) return false;
   const family = sound.family;
   const padDecay = clamp(Number(padSettings.decay ?? 10), 0.05, 10) / 10;
   const duration = clamp(sound.decay * padDecay, 0.06, 1.2);
