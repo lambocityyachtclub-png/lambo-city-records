@@ -1473,7 +1473,8 @@ const MPCInterface = {
   async playSavedPerformance(fromStart = false) {
     this.stopPerformancePlayback();
     const projectId = this.beatLab?.currentProject?.id || "unsaved";
-    this.take = this.beatLab?.currentProject?.mpcPerformance || StudioMPCLibrary.loadTake(projectId);
+    this.take = this.beatLab?.currentProject?.mpcPerformance ||
+      (this.beatLab?.currentProject?.id ? StudioMPCLibrary.loadTake(projectId) : { events: [], duration: 0 });
     if (!this.take.events.length) { this.setStatus("SONG PLAYING · NO SAVED MPC PAD TAKE YET"); return; }
     const audio = this.beatLab.audio;
     if (!audio) return;
