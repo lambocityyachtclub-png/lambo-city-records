@@ -160,6 +160,14 @@ function makeStyles() {
 #${ROOT_ID} .mpc-panel-heading{display:flex;justify-content:space-between;align-items:center}
 #${ROOT_ID} .mpc-panel-heading small{font-size:7px;color:#9cba68;border:1px solid #647b3d;padding:2px 5px;border-radius:3px}
 #${ROOT_ID} .mpc-screen-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}
+#${ROOT_ID} .mpc-folder-launch{display:flex;align-items:center;gap:10px;width:100%;min-height:48px;padding:8px 10px;border:1px solid #9b8351;border-radius:6px;background:linear-gradient(110deg,#353a28,#171d12 62%,#0d100c);color:#f0e2b7;text-align:left;box-shadow:inset 0 1px 0 rgba(255,255,255,.1),0 3px 8px #000}
+#${ROOT_ID} .mpc-folder-icon{position:relative;flex:0 0 34px;height:25px;border:1px solid #d4b875;border-radius:3px;background:linear-gradient(#d9bd7c,#8b6d38);box-shadow:inset 0 1px 2px rgba(255,255,255,.45)}
+#${ROOT_ID} .mpc-folder-icon:before{content:"";position:absolute;left:2px;top:-6px;width:14px;height:6px;border:1px solid #c9ad70;border-bottom:0;border-radius:3px 3px 0 0;background:#b39456}
+#${ROOT_ID} .mpc-folder-copy{display:flex;flex-direction:column;gap:3px;min-width:0}
+#${ROOT_ID} .mpc-folder-copy strong{font-size:9px;letter-spacing:.1em;color:#f1dda8}
+#${ROOT_ID} .mpc-folder-copy small{font-size:7px;line-height:1.3;color:#c0cba9;font-weight:600;letter-spacing:.025em}
+#${ROOT_ID} .mpc-folder-launch:focus-visible,#${ROOT_ID} .mpc-folder-back:focus-visible{outline:2px solid #d3ff81;outline-offset:3px}
+#${ROOT_ID} .mpc-folder-back{min-height:28px;padding:5px 8px;border:1px solid #92794a;border-radius:4px;background:linear-gradient(#3c4035,#111510);color:#ead7a5;font-size:8px;font-weight:900;white-space:nowrap}
 #${ROOT_ID} .mpc-screen-actions button,#${ROOT_ID} .mpc-primary-action{min-height:28px;border:1px solid #637b3e;border-radius:4px;background:linear-gradient(#3a4828,#182111);color:#e6f4d0;font-size:8px;font-weight:900;letter-spacing:.06em;padding:5px 7px}
 #${ROOT_ID} .mpc-primary-action{width:100%;background:linear-gradient(110deg,#c4a86d,#ead7a0 45%,#8d7546);color:#1b2113;border-color:#e9d8a5}
 #${ROOT_ID} .mpc-screen-readout{display:grid;grid-template-columns:auto 1fr;gap:3px 8px;padding:6px;border:1px solid #455436;background:rgba(0,0,0,.24)}
@@ -331,6 +339,7 @@ function buildMarkup() {
               <button type="button" data-mpc-screen-action="timing">TIMING</button>
               <button type="button" data-mpc-screen-action="mixer">MIXER</button>
             </div>
+            <button type="button" class="mpc-folder-launch" data-mpc-open-performance aria-label="Open MPC Performance folder"><span class="mpc-folder-icon" aria-hidden="true"></span><span class="mpc-folder-copy"><strong>MPC PERFORMANCE</strong><small>Open the shared song pattern and performance controls</small></span></button>
             <div class="mpc-screen-readout"><span>SELECTED PAD</span><b data-mpc-selected-readout>BANK A · PAD 01</b><span data-mpc-pad-readout>Choose a pad to see its sound and settings.</span></div>
             <p class="mpc-help">Computer pads: Q W E R · A S D F · Z X C V · T Y G H</p>
           </section>
@@ -404,7 +413,8 @@ function buildMarkup() {
             <p class="mpc-help">MPC pad audio routes through the shared studio master output. Your pad performance is saved with the active song project.</p>
           </section>
           <section class="mpc-screen-panel" data-mpc-panel="PATTERN">
-            <div class="mpc-panel-heading">MPC PERFORMANCE · STEP SEQUENCER <small>SHARED SONG PATTERN</small></div>
+            <div class="mpc-panel-heading"><span>MPC PERFORMANCE</span><small>SHARED SONG PATTERN</small><button type="button" class="mpc-folder-back" data-mpc-return-hardware>← MPC HOME</button></div>
+            <p class="mpc-help">You are inside the MPC Performance folder. Changes here use the same song pattern as Beat Lab.</p>
             <div data-mpc-pattern-host></div>
           </section>
           <section class="mpc-screen-panel" data-mpc-panel="BROWSE">
@@ -434,7 +444,7 @@ function buildMarkup() {
           </section>
         </div>
         <nav class="screen-tabs">
-          ${["PLAY", "TIMING", "SAMPLE", "MIXER", "SOUNDS", "PATTERN"].map((label, i) => `<button type="button" class="screen-tab ${i === 0 ? "active" : ""}" data-mpc-tab="${["MAIN","SEQ","SAMPLE","MIX","BROWSE","PATTERN"][i]}">${esc(label)}</button>`).join("")}
+          ${["PLAY", "TIMING", "SAMPLE", "MIXER", "SOUNDS"].map((label, i) => `<button type="button" class="screen-tab ${i === 0 ? "active" : ""}" data-mpc-tab="${["MAIN","SEQ","SAMPLE","MIX","BROWSE"][i]}">${esc(label)}</button>`).join("")}
         </nav>
       </div></div>
     </section>
@@ -527,16 +537,6 @@ const MPCInterface = {
         this.performancePanel.style.margin = "0";
         patternHost.appendChild(this.performancePanel);
       }
-
-      const nameplate = root.querySelector(".mpc-nameplate");
-      const performanceButton = document.createElement("button");
-      performanceButton.type = "button";
-      performanceButton.className = "hw-button mpc-performance-launch";
-      performanceButton.dataset.mpcOpenPerformance = "";
-      performanceButton.textContent = "MPC PERFORMANCE";
-      performanceButton.setAttribute("aria-label", "Open MPC performance pattern inside the hardware interface");
-      const nextButton = nameplate?.querySelector("[data-mpc-next]");
-      if (nameplate) nameplate.insertBefore(performanceButton, nextButton || null);
 
       this.performanceToggleHandler = event => {
         if (event.target.closest("[data-mpc-open-performance]")) {
@@ -1404,7 +1404,7 @@ const MPCInterface = {
     this.root.querySelector("[data-mpc-tools-toggle]")?.setAttribute("aria-expanded", "true");
     this.performancePanel.refreshPattern?.();
     this.showScreen("PATTERN");
-    this.root.querySelector('[data-mpc-tab="PATTERN"]')?.focus({ preventScroll: true });
+    this.root.querySelector("[data-mpc-return-hardware]")?.focus({ preventScroll: true });
     return true;
   },
 
