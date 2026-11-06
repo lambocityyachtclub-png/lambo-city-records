@@ -4,10 +4,77 @@
 import StudioAudioEngine from "./studioAudioEngine.js";
 import StudioMPCLibrary from "./studioMPCLibrary.js";
 import StudioMPCSampler from "./studioMPCSampler.js";
+import StudioMultitrackWorkspace from "./studioMultitrackWorkspace.js";
 // Standalone module: no Three.js dependency.
 // Integration:
 //   import MPCInterface from "./mpc-interface.js";
 //   MPCInterface.open({ onClose: () => window.__lamboCityReturnToFloor2Room?.() });
+
+function encodeMPCBounceWav(buffer) {
+  const channels = 2;
+  const frames = buffer.length;
+  const bytesPerSample = 2;
+  const dataSize = frames * channels * bytesPerSample;
+  const output = new ArrayBuffer(44 + dataSize);
+  const view = new DataView(output);
+  const write = (offset, value) => {
+    for (let i = 0; i < value.length; i++) view.setUint8(offset + i, value.charCodeAt(i));
+  };
+  write(0, "RIFF"); view.setUint32(4, 36 + dataSize, true); write(8, "WAVE");
+  write(12, "fmt "); view.setUint32(16, 16, true); view.setUint16(20, 1, true);
+  view.setUint16(22, channels, true); view.setUint32(24, buffer.sampleRate, true);
+  view.setUint32(28, buffer.sampleRate * channels * bytesPerSample, true);
+  view.setUint16(32, channels * bytesPerSample, true); view.setUint16(34, 16, true);
+  write(36, "data"); view.setUint32(40, dataSize, true);
+  const left = buffer.getChannelData(0);
+  const right = buffer.numberOfChannels > 1 ? buffer.getChannelData(1) : left;
+  let offset = 44;
+  for (let i = 0; i < frames; i++) {
+    for (const sample of [left[i], right[i]]) {
+      const clipped = Math.max(-1, Math.min(1, sample));
+      view.setInt16(offset, clipped < 0 ? clipped * 32768 : clipped * 32767, true);
+      offset += 2;
+    }
+  }
+  return new Blob([output], { type: "audio/wav" });
+}
+
+async function renderMPCBounce(events, duration, liveAudio) {
+  const OfflineContext = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+  if (!OfflineContext) throw new Error("Offline audio rendering is not supported in this browser.");
+  const sampleRate = Math.max(22050, Math.min(48000, Number(liveAudio?.sampleRate) || 44100));
+  const seconds = Math.max(1, Math.min(180, Number(duration) || 1)) + 0.8;
+  const context = new OfflineContext(2, Math.ceil(seconds * sampleRate), sampleRate);
+  const sampleIds = events.map(event => event.sampleId).filter(Boolean);
+  if (sampleIds.length) await StudioMPCSampler.preload(sampleIds, liveAudio);
+  for (const event of events) {
+    const when = Math.max(0, Number(event.at) || 0);
+    if (event.sampleId) {
+      const buffer = StudioMPCSampler.buffers.get(event.sampleId);
+      if (!buffer) throw new Error("An MPC sample is unavailable for bounce. Re-import the sample and try again.");
+      const settings = event.sampleSettings || {};
+      const startRatio = Math.max(0, Math.min(.99, Number(settings.start) || 0));
+      const endRatio = Math.max(startRatio + .01, Math.min(1, Number(settings.end) || 1));
+      const source = context.createBufferSource();
+      const gain = context.createGain();
+      source.buffer = buffer;
+      source.playbackRate.value = Math.max(.5, Math.min(2, Number(settings.pitch) || 1));
+      const panner = context.createStereoPanner ? context.createStereoPanner() : null;
+      const velocity = Math.max(0, Math.min(1.5, Number(event.velocity) || 1));
+      const volume = Math.max(0, Math.min(1.5, Number(settings.volume ?? 1)));
+      gain.gain.setValueAtTime(Math.max(.0001, velocity * volume), when);
+      source.connect(gain);
+      if (panner) { panner.pan.value = Math.max(-1, Math.min(1, Number(settings.pan) || 0)); gain.connect(panner); panner.connect(context.destination); }
+      else gain.connect(context.destination);
+      const start = startRatio * buffer.duration;
+      const end = Math.max(start + .01, endRatio * buffer.duration);
+      source.start(when, start, Math.min(end - start, seconds - when));
+    } else if (event.sound) {
+      StudioMPCLibrary.play(context, event.sound, when, event.velocity, event.sampleSettings || {});
+    }
+  }
+  return encodeMPCBounceWav(await context.startRendering());
+}
 
 const ROOT_ID = "lambo-city-mpc-interface";
 const STYLE_ID = "lambo-city-mpc-interface-style";
@@ -412,7 +479,11 @@ function buildMarkup() {
               <button type="button" data-mpc-screen-action="play">PLAY TAKE</button>
               <button type="button" data-mpc-screen-action="stop">STOP</button>
             </div>
-            <p class="mpc-help">MPC pad audio routes through the shared studio master output. Your pad performance is saved with the active song project.</p>
+            <div class="mpc-screen-actions">
+              <button type="button" data-mpc-bounce="combined">BOUNCE ALL PADS · ONE TRACK</button>
+              <button type="button" data-mpc-bounce="separate">BOUNCE EACH PAD · SEPARATE TRACKS</button>
+            </div>
+            <p class="mpc-help">MPC pad audio routes through the shared studio master output. Your editable performance stays saved with the song. Bounce creates WAV audio clips in EDIT.</p>
           </section>
           <section class="mpc-screen-panel" data-mpc-panel="PATTERN">
             <div class="mpc-panel-heading"><span>MPC PERFORMANCE</span><small>SHARED SONG PATTERN</small><button type="button" class="mpc-folder-back" data-mpc-return-hardware>← MPC HOME</button></div>
@@ -688,6 +759,8 @@ const MPCInterface = {
         this.showScreen(action === "timing" ? "SEQ" : action.toUpperCase());
         return;
       }
+      const bounceButton = event.target.closest("[data-mpc-bounce]");
+      if (bounceButton) { void this.bouncePerformance(bounceButton.dataset.mpcBounce); return; }
       if (event.target.closest("[data-mpc-preview]")) { void this.previewImportedSample(); return; }
       if (event.target.closest("[data-mpc-apply-sample]")) { this.assignImportedSample(true); return; }
       if (event.target.closest("[data-mpc-browser-preview]")) { void this.previewBrowserSound(); return; }
@@ -1329,6 +1402,34 @@ const MPCInterface = {
         this.setStatus("SONG PLAYING · MPC PERFORMANCE PLAYING");
       }
     } catch (error) { this.setStatus("MPC CONTROL ERROR: " + (error?.message || error)); }
+  },
+
+  async bouncePerformance(mode = "combined") {
+    try {
+      if (this.recording) throw new Error("Stop recording before bouncing the MPC performance.");
+      const projectId = this.beatLab?.currentProject?.id || "unsaved";
+      const take = this.beatLab?.currentProject?.mpcPerformance || StudioMPCLibrary.loadTake(projectId);
+      const events = Array.isArray(take?.events) ? take.events.slice() : [];
+      if (!events.length) throw new Error("Record an MPC pad performance before bouncing it to EDIT.");
+      const audio = await this.getAudioContext();
+      const duration = Math.max(Number(take.duration) || 0, ...events.map(event => Number(event.at) || 0)) + 0.35;
+      const rendered = [];
+      if (mode === "separate") {
+        const pads = [...new Set(events.map(event => String(event.bank || "A") + "-" + String(event.pad || 1)))];
+        for (const padKey of pads) {
+          const padEvents = events.filter(event => (String(event.bank || "A") + "-" + String(event.pad || 1)) === padKey);
+          const blob = await renderMPCBounce(padEvents, duration, audio);
+          rendered.push({ name: "MPC " + padKey.replace("-", " · PAD "), blob, duration });
+        }
+      } else {
+        const blob = await renderMPCBounce(events, duration, audio);
+        rendered.push({ name: "MPC Performance", blob, duration });
+      }
+      StudioMultitrackWorkspace.addMPCBounce({ tracks: rendered, mode });
+      this.setStatus("MPC BOUNCE COMPLETE · " + rendered.length + " WAV TRACK(S) ADDED TO EDIT · ORIGINAL PAD PERFORMANCE PRESERVED");
+    } catch (error) {
+      this.setStatus("MPC BOUNCE ERROR · " + (error?.message || error));
+    }
   },
 
   finishRecording() {
