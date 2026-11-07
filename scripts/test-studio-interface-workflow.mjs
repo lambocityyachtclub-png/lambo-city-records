@@ -94,6 +94,17 @@ assert.match(drummer,/SAMPLE PADS/);
 assert.match(drummer,/LIVE PERFORMANCE/);
 assert.match(app,/createCitySynthPanel\(\{ session: StudioMultitrackWorkspace \}\)/);
 assert.match(app,/createVocalBoothPanel\(\{ beatLab: Floor2StudioApp \}\)/);
+const vocalBooth = source["floor2VocalBooth3D.js"];
+assert.match(vocalBooth,/data-booth-mode-switch="vocal"/,"Vocal Booth must have a one-tap return to full recording mode.");
+assert.match(vocalBooth,/data-booth-mode-switch="notes"/,"Vocal Booth must have a one-tap Voice Notes mode.");
+assert.match(vocalBooth,/data-booth-mode="notes" hidden/,"Voice Notes must be a separate mode, not a second panel stacked beside vocal recording.");
+assert.match(vocalBooth,/data-booth-mode="vocal"/,"Full vocal recording controls must be scoped to Vocal Booth mode.");
+assert.match(vocalBooth,/data-vocal-talkback/,"The dedicated Talkback control must remain available in the booth.");
+assert.match(vocalBooth,/StudioTalkback\.bindControl/,"Talkback must use the shared Talkback service.");
+assert.match(vocalBooth,/startTrackRecording\(\{audio,trackId:track\.id\}\)/,"Voice Notes must record into the shared multitrack session.");
+assert.match(vocalBooth,/stopTrackRecording\(trackId\)/,"Voice Notes must save a take into the shared session.");
+assert.match(vocalBooth,/scheduleProjectAutosave\(\)/,"Voice Notes must autosave after saving a clip.");
+assert.match(vocalBooth,/Finish and save the active recording before switching modes/,"Mode switching must not strand an active recording.");
 assert.match(app,/styleMixMasterPanel\(createStudioMixMasterApp/);
 assert.match(app,/onNext:\s*\(\)\s*=>\s*this\.workspace\?\.setView\("piano"\)/);
 
