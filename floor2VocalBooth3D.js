@@ -73,7 +73,7 @@ export function createVocalBoothPanel({ beatLab } = {}) {
   let boothMode="vocal";
   const setBoothMode=mode=>{
     if(mode!=="vocal"&&mode!=="notes")return;
-    if(recordingActive){status("Finish and save the active recording before switching modes.");return;}
+    if(recordingActive){const message="Finish and save the active recording before switching modes.";status(message);const noteStatus=root.querySelector("[data-voice-note-status]");if(noteStatus)noteStatus.textContent=message;return;}
     boothMode=mode;
     root.querySelectorAll("[data-booth-mode]").forEach(view=>{view.hidden=view.dataset.boothMode!==mode;});
     root.querySelectorAll("[data-booth-mode-switch]").forEach(button=>button.setAttribute("aria-pressed",String(button.dataset.boothModeSwitch===mode)));
