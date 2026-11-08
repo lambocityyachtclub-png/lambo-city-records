@@ -199,10 +199,10 @@ export default {
 
     // Five low-rise coastal villa residences sit beyond the boulevard.
     // South approach remains open; the arena remains the dominant landmark.
-    addVilla(root, materials, "WestOne", -99, 80, Math.PI / 2);
-    addVilla(root, materials, "WestTwo", -99, 112, Math.PI / 2);
-    addVilla(root, materials, "EastOne", 13, 80, -Math.PI / 2);
-    addVilla(root, materials, "EastTwo", 13, 112, -Math.PI / 2);
+    addVilla(root, materials, "WestOne", -98.5, 80, Math.PI / 2);
+    addVilla(root, materials, "WestTwo", -98.5, 112, Math.PI / 2);
+    addVilla(root, materials, "EastOne", 12.5, 80, -Math.PI / 2);
+    addVilla(root, materials, "EastTwo", 12.5, 112, -Math.PI / 2);
     addVilla(root, materials, "NorthOne", -58, 148, 0);
     addVilla(root, materials, "NorthTwo", -28, 148, 0);
 
