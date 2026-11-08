@@ -66,7 +66,7 @@ const CITY_MAP = Object.freeze({
         centerX: -43,
         centerZ: 97,
         outerWidth: 84,
-        outerDepth: 74,
+        outerDepth: 84,
         roadWidth: 9,
         sidewalkWidth: 3,
         corners: "all four corners must use connected curb-return geometry",
