@@ -17,7 +17,7 @@ let arrived = false;
 let encounterShown = false;
 let time = 0;
 let target = null;
-let encounterRoot = null;
+let playerFocus = null;
 
 function facePoint(point) {
   if (!hero) return;
@@ -107,6 +107,7 @@ function buildEntourage() {
 
 function updateEntourage(delta) {
   if (!hero || !entourage.length) return;
+  time += delta;
   const c = Math.cos(hero.rotation.y);
   const s = Math.sin(hero.rotation.y);
   entourage.forEach((person, index) => {
@@ -183,6 +184,7 @@ function begin(player) {
   const dx = player.position.x - hero.position.x;
   const dz = player.position.z - hero.position.z;
   const length = Math.max(0.001, Math.hypot(dx, dz));
+  playerFocus = new THREE.Vector3(player.position.x, 1.3, player.position.z);
   target = new THREE.Vector3(
     player.position.x - (dx / length) * PLAYER_APPROACH_DISTANCE,
     1.3,
@@ -200,7 +202,6 @@ function begin(player) {
 
 function updateWalking(delta) {
   if (!hero || !target) return;
-  time += delta;
   const dx = target.x - hero.position.x;
   const dz = target.z - hero.position.z;
   const distance = Math.hypot(dx, dz);
@@ -209,11 +210,7 @@ function updateWalking(delta) {
     hero.position.x = target.x;
     hero.position.z = target.z;
     hero.position.y = 1.3;
-    facePoint(target.clone().set(
-      target.x + (target.x - (target.x - dx)),
-      target.y,
-      target.z + (target.z - (target.z - dz))
-    ));
+    if (playerFocus) facePoint(playerFocus);
     active = false;
     arrived = true;
     showEncounter();
@@ -257,9 +254,12 @@ export default {
     encounterShown = false;
     time = 0;
     target = null;
+    playerFocus = null;
     hero = null;
     entourage.forEach(person => scene?.remove(person));
     entourage = [];
-    document.querySelector('[aria-label="HERO rooftop party invitation"]')?.remove();
+    if (typeof document !== "undefined") {
+      document.querySelector('[aria-label="HERO rooftop party invitation"]')?.remove();
+    }
   }
 };
