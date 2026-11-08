@@ -64,6 +64,32 @@ function buildArenaProxy(scene) {
     [boulevard.roadWidth, 0.12, boulevard.outerDepth],
     [eastX, roadY, cz], road);
 
+  const sidewalk = new THREE.MeshBasicMaterial({ color: 0xb9ad98 });
+  const sw = boulevard.sidewalkWidth;
+  const sideOffset = boulevard.roadWidth / 2 + sw / 2;
+  addProxyBox(root, "arenaLODSouthSidewalk",
+    [boulevard.outerWidth + boulevard.roadWidth + sw * 2, 0.12, sw],
+    [cx, roadY, southZ - sideOffset], sidewalk);
+  addProxyBox(root, "arenaLODNorthSidewalk",
+    [boulevard.outerWidth + boulevard.roadWidth + sw * 2, 0.12, sw],
+    [cx, roadY, northZ + sideOffset], sidewalk);
+  addProxyBox(root, "arenaLODWestSidewalk",
+    [sw, 0.12, boulevard.outerDepth + boulevard.roadWidth + sw * 2],
+    [westX - sideOffset, roadY, cz], sidewalk);
+  addProxyBox(root, "arenaLODEastSidewalk",
+    [sw, 0.12, boulevard.outerDepth + boulevard.roadWidth + sw * 2],
+    [eastX + sideOffset, roadY, cz], sidewalk);
+
+  const access = CITY_MAP.districts.conferenceCenter;
+  const approachEnd = cz - arena.footprintDepth / 2 - 1;
+  addProxyBox(root, "arenaLODAccessRoad",
+    [8, 0.12, approachEnd - access.accessRoadStartZ],
+    [access.accessRoadX, roadY, (access.accessRoadStartZ + approachEnd) / 2], road);
+  const plaza = new THREE.MeshBasicMaterial({ color: 0xaaa18e });
+  addProxyBox(root, "arenaLODArrivalPlaza",
+    [30, 0.16, 13],
+    [cx, roadY + 0.02, cz - arena.footprintDepth / 2 - 5.5], plaza);
+
   addProxyBox(root, "arenaLODBuildingMass",
     [arena.footprintWidth, 21, arena.footprintDepth],
     [cx, 11.5, cz], arenaBody);
