@@ -28,6 +28,7 @@ import {
 } from "./studioDAWBeatLabPanel.js";
 import { createStudioMixMasterApp } from "./studioMixMasterApp.js";
 import StudioTalkback from "./studioTalkback.js";
+import { applyVocalBoothVisual, applyCitySynthVisual } from "./studioInterfaceVisuals.js";
 
 
 function createMPCPanel({ beatLab, workspace, onOpenBeatLab } = {}) {
@@ -759,7 +760,9 @@ const StudioDAWApp = {
         workspace: this.workspace
       }));
       this.vocalsPanel = createVocalBoothPanel({ beatLab: Floor2StudioApp });
+      applyVocalBoothVisual(this.vocalsPanel);
       this.pianoPanel = createCitySynthPanel({ session: StudioMultitrackWorkspace });
+      applyCitySynthVisual(this.pianoPanel);
       this.workspace.setPanel("mix", this.mixPanel);
       this.workspace.setPanel("piano", this.pianoPanel);
       this.workspace.setPanel("vocals", this.vocalsPanel);
