@@ -1,17 +1,19 @@
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
+import CITY_MAP from "./cityMap.js";
 
 // LAMBO CITY — Conference Center District
 // Modular expansion north of the store-side boardwalk.
 // Keeps the existing marina, dock approach, and boardwalk geometry intact.
 
+const MAP = CITY_MAP.districts.conferenceCenter;
 const DISTRICT = {
-  roadX: -37,
-  roadStartZ: 46,
-  roadEndZ: 80,
-  groundX: -43,
-  groundZ: 95,
-  buildingX: -43,
-  buildingZ: 97
+  roadX: MAP.accessRoadX,
+  roadStartZ: MAP.accessRoadStartZ,
+  roadEndZ: MAP.accessRoadEndZ,
+  groundX: MAP.districtGround.centerX,
+  groundZ: MAP.districtGround.centerZ,
+  buildingX: MAP.centerX,
+  buildingZ: MAP.centerZ
 };
 
 function makeSignTexture() {
@@ -105,8 +107,20 @@ export default {
       groundMat
     );
 
-    // Store-side access road: the X=-37 corridor passes between the
-    // existing western palms at X=-45 and X=-29.
+    // Continuous land connector: the old boardwalk land ends at Z=45
+    // and the Conference Center district begins at Z=64. This apron joins
+    // both land plates beneath the road so the approach is not suspended
+    // over the ocean. Its 0.5-unit overlaps eliminate visible ground seams.
+    addBox(
+      root,
+      "conferenceDistrictLandConnector",
+      [54, 0.5, 19],
+      [DISTRICT.groundX, 0.4, 54.5],
+      groundMat
+    );
+
+    // Store-side access road: this joins the existing east-west boardwalk
+    // street at Z=46 and continues onto the connected district land.
     addBox(
       root,
       "conferenceDistrictAccessRoad",
@@ -123,6 +137,11 @@ export default {
     for (let z = 50; z <= 74; z += 8) {
       addBox(root, "conferenceRoadDash_" + z, [0.22, 0.035, 3.2], [DISTRICT.roadX, 0.79, z], laneMat);
     }
+
+    // Continuous pedestrian sidewalks flank the new vehicle street.
+    // They stay on the district land and lead toward the arrival plaza.
+    addBox(root, "conferenceRoadSidewalkWest", [2.8, 0.14, 30], [DISTRICT.roadX - 7.5, 0.72, 65], stoneMat);
+    addBox(root, "conferenceRoadSidewalkEast", [2.8, 0.14, 30], [DISTRICT.roadX + 7.5, 0.72, 65], stoneMat);
 
     // Curbs and a small arrival forecourt.
     addBox(root, "conferenceRoadCurbWest", [0.35, 0.24, 34], [DISTRICT.roadX - 4.15, 0.65, 63], stoneMat);
