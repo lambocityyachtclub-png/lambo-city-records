@@ -58,10 +58,9 @@ export function createVocalBoothPanel({ beatLab } = {}) {
     '</section>' +
     '<section style="display:grid;gap:11px;padding:14px;border:1px solid rgba(223,156,245,.45);border-radius:12px;background:linear-gradient(145deg,#21192b,#100e18)">' +
       '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap"><strong style="font-size:10px;letter-spacing:2px;color:#e5b7f2">PRODUCER TALKBACK · LIVE MONITOR</strong><button type="button" data-vocal-talkback>TALKBACK</button></div>' +
-      '<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px">' +
-        '<label style="display:grid;gap:6px;color:#e6c5f0;font-size:10px">TALKBACK LEVEL <input data-talkback-setting="volume" type="range" min="0" max="1" step=".01" value="' + StudioTalkback.volume + '" style="width:100%;accent-color:#d78df2"></label>' +
-        '<label style="display:grid;gap:6px;color:#e6c5f0;font-size:10px">HEADPHONE SIDETONE <input data-talkback-setting="sidetone" type="range" min="0" max="1" step=".01" value="' + StudioTalkback.sidetone + '" style="width:100%;accent-color:#d78df2"></label>' +
-        '<label style="display:grid;gap:6px;color:#e6c5f0;font-size:10px">BEAT DUCKING <input data-talkback-setting="duckAmount" type="range" min="0" max=".8" step=".01" value="' + StudioTalkback.duckAmount + '" style="width:100%;accent-color:#d78df2"></label>' +
+      '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">' +
+        '<label style="display:flex;align-items:center;gap:8px;color:#e6c5f0;font-size:11px">HEADPHONE SIDETONE <input data-talkback-setting="sidetone" type="range" min="0" max="1" step=".01" value="' + StudioTalkback.sidetone + '" style="width:120px;accent-color:#d78df2"></label>' +
+        '<span style="color:#cbb7d5;font-size:11px">Use headphones to prevent feedback. Talkback is not recorded.</span>' +
       '</div>' +
       '<div data-talkback-status role="status" aria-live="polite" style="color:#cbb7d5;font-size:11px">Tap TALKBACK to toggle, or press and hold to talk. Use headphones to prevent speaker feedback. Talkback is isolated from recorded takes.</div>' +
     '</section>' +
@@ -84,7 +83,7 @@ export function createVocalBoothPanel({ beatLab } = {}) {
   const talkbackStatus=message=>{const node=root.querySelector("[data-talkback-status]");if(node)node.textContent=message;};
   StudioTalkback.bindControl(root.querySelector("[data-vocal-talkback]"),{beatLab});
   const onTalkbackState=event=>{
-    if(event.detail?.active)talkbackStatus("Talkback monitor active · beat ducking engaged · not being recorded.");
+    if(event.detail?.active)talkbackStatus("Talkback active · not being recorded.");
     else talkbackStatus("Talkback off · recording path remains isolated.");
   };
   const onTalkbackError=event=>talkbackStatus("TALKBACK ERROR · "+(event.detail?.message||"Microphone unavailable."));
@@ -109,13 +108,11 @@ export function createVocalBoothPanel({ beatLab } = {}) {
           status("Beat session stopped.");
           break;
         case "record":
-          await beatLab.startRecording();
-          recordingStartedAt=performance.now();
-          recordingActive=true;
-          status("Recording vocals and session stems.");
-          window.dispatchEvent(new CustomEvent("lc-vocal-recording-state",{detail:{recording:true,mode:"vocal"}}));
+          if(recordingActive){await beatLab.stopRecording();recordingActive=false;takeCount+=1;showTake("Vocal Take "+String(takeCount).padStart(2,"0"),beatLab.lastRecordedTake?.recordingFormat||"Session recording");status("Vocal take saved to the shared session.");window.dispatchEvent(new CustomEvent("lc-vocal-recording-state",{detail:{recording:false}}));}
+          else {await beatLab.startRecording();if(!StudioRecordingEngine.activeTake)return;recordingStartedAt=performance.now();recordingActive=true;status("Recording vocals and session stems.");window.dispatchEvent(new CustomEvent("lc-vocal-recording-state",{detail:{recording:true,mode:"vocal"}}));}
           break;
         case "stop-recording":
+          if(!recordingActive)return;
           await beatLab.stopRecording();
           recordingActive=false;
           takeCount+=1;
@@ -190,10 +187,7 @@ export function createVocalBoothPanel({ beatLab } = {}) {
   root.addEventListener("input",event=>{
     const talkback=event.target.closest("[data-talkback-setting]");
     if(talkback){
-      const value=Number(talkback.value);
-      if(talkback.dataset.talkbackSetting==="volume")StudioTalkback.setVolume(value);
-      if(talkback.dataset.talkbackSetting==="sidetone")StudioTalkback.setSidetone(value);
-      if(talkback.dataset.talkbackSetting==="duckAmount")StudioTalkback.setDuckAmount(value);
+      if(talkback.dataset.talkbackSetting==="sidetone")StudioTalkback.setSidetone(Number(talkback.value));
       return;
     }
     const pitch=event.target.closest("[data-vocal-pitch]");
