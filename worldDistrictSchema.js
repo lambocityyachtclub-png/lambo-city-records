@@ -1,6 +1,5 @@
 // LAMBO CITY — World District Contract Validator
-// Data-only foundation. This module does not create scene objects or change gameplay.
-// A district must pass validation before a builder is allowed to construct it.
+// Data-only validation. This module never creates scene objects or changes gameplay.
 
 const REQUIRED_TEXT = ["id", "name", "type"];
 const REQUIRED_BOUNDS = ["minX", "maxX", "minZ", "maxZ"];
@@ -22,6 +21,10 @@ export function validateDistrict(district, options = {}) {
   }
 
   const bounds = district.bounds;
+  const boundsValid = !!bounds && typeof bounds === "object" &&
+    REQUIRED_BOUNDS.every(key => Number.isFinite(bounds[key])) &&
+    bounds.minX < bounds.maxX && bounds.minZ < bounds.maxZ;
+
   if (!bounds || typeof bounds !== "object") {
     issues.push(issue("MISSING_BOUNDS", "District must define its map boundaries."));
   } else {
@@ -30,10 +33,9 @@ export function validateDistrict(district, options = {}) {
         issues.push(issue("INVALID_BOUND_" + key.toUpperCase(), "Boundary " + key + " must be a finite number."));
       }
     }
-    if (REQUIRED_BOUNDS.every(key => Number.isFinite(bounds[key]))) {
-      if (bounds.minX >= bounds.maxX || bounds.minZ >= bounds.maxZ) {
-        issues.push(issue("INVERTED_BOUNDS", "Minimum boundaries must be smaller than maximum boundaries."));
-      }
+    if (REQUIRED_BOUNDS.every(key => Number.isFinite(bounds[key])) &&
+        (bounds.minX >= bounds.maxX || bounds.minZ >= bounds.maxZ)) {
+      issues.push(issue("INVERTED_BOUNDS", "Minimum boundaries must be smaller than maximum boundaries."));
     }
   }
 
@@ -42,6 +44,7 @@ export function validateDistrict(district, options = {}) {
     issues.push(issue("MISSING_ROAD_NETWORK", "District must define road nodes and connecting segments."));
   } else {
     const nodeIds = new Set();
+    const nodeById = new Map();
     for (const node of network.nodes) {
       if (!node || typeof node.id !== "string" || !node.id.trim()) {
         issues.push(issue("INVALID_ROAD_NODE", "Every road node needs a unique id."));
@@ -49,12 +52,16 @@ export function validateDistrict(district, options = {}) {
       }
       if (nodeIds.has(node.id)) issues.push(issue("DUPLICATE_ROAD_NODE", "Road node id is repeated: " + node.id));
       nodeIds.add(node.id);
+      nodeById.set(node.id, node);
       if (!Number.isFinite(node.x) || !Number.isFinite(node.z)) {
         issues.push(issue("INVALID_ROAD_NODE_POSITION", "Road node " + node.id + " needs finite x and z coordinates."));
+      } else if (boundsValid && (node.x < bounds.minX || node.x > bounds.maxX || node.z < bounds.minZ || node.z > bounds.maxZ)) {
+        issues.push(issue("ROAD_NODE_OUT_OF_BOUNDS", "Road node " + node.id + " falls outside the district boundaries."));
       }
     }
 
     const segmentIds = new Set();
+    const adjacency = new Map(Array.from(nodeIds, id => [id, []]));
     for (const segment of network.segments) {
       if (!segment || typeof segment.id !== "string" || !segment.id.trim()) {
         issues.push(issue("INVALID_ROAD_SEGMENT", "Every road segment needs an id."));
@@ -64,13 +71,52 @@ export function validateDistrict(district, options = {}) {
       segmentIds.add(segment.id);
       if (!nodeIds.has(segment.from) || !nodeIds.has(segment.to)) {
         issues.push(issue("BROKEN_ROAD_CONNECTION", "Road segment " + segment.id + " references a missing endpoint."));
+        continue;
       }
       if (segment.from === segment.to) {
         issues.push(issue("ZERO_LENGTH_ROAD", "Road segment " + segment.id + " connects a node to itself."));
+        continue;
       }
-      if (!["vehicle", "pedestrian", "shared", "service"].includes(segment.mode)) {
+      if (![ "vehicle", "pedestrian", "shared", "service" ].includes(segment.mode)) {
         issues.push(issue("INVALID_ROAD_MODE", "Road segment " + segment.id + " has an unsupported travel mode."));
       }
+      if (segment.width !== undefined && (!Number.isFinite(segment.width) || segment.width <= 0)) {
+        issues.push(issue("INVALID_ROAD_WIDTH", "Road segment " + segment.id + " must have a positive width."));
+      }
+      if (segment.lanes !== undefined && (!Number.isInteger(segment.lanes) || segment.lanes < 1)) {
+        issues.push(issue("INVALID_LANE_COUNT", "Road segment " + segment.id + " must have a positive whole-number lane count."));
+      }
+
+      const from = nodeById.get(segment.from);
+      const to = nodeById.get(segment.to);
+      if (from && to && Number.isFinite(from.x) && Number.isFinite(from.z) &&
+          Number.isFinite(to.x) && Number.isFinite(to.z) &&
+          Math.hypot(to.x - from.x, to.z - from.z) < 0.01) {
+        issues.push(issue("ZERO_LENGTH_ROAD", "Road segment " + segment.id + " is too short to build."));
+      }
+      adjacency.get(segment.from)?.push(segment.to);
+      adjacency.get(segment.to)?.push(segment.from);
+    }
+
+    // A district road graph must be one connected network, not isolated road islands.
+    if (nodeIds.size > 1 && network.segments.length > 0) {
+      const first = nodeIds.values().next().value;
+      const visited = new Set([first]);
+      const queue = [first];
+      while (queue.length) {
+        const current = queue.shift();
+        for (const next of adjacency.get(current) || []) {
+          if (!visited.has(next)) {
+            visited.add(next);
+            queue.push(next);
+          }
+        }
+      }
+      if (visited.size !== nodeIds.size) {
+        issues.push(issue("DISCONNECTED_ROAD_NETWORK", "Every road node must connect to the same district road network."));
+      }
+    } else if (nodeIds.size > 0 && network.segments.length === 0) {
+      issues.push(issue("ROAD_NETWORK_HAS_NO_SEGMENTS", "Road nodes exist, but no road segments connect them."));
     }
   }
 
