@@ -50,7 +50,7 @@ export default {
         }
 
       }
-    );
+    , true);
 
 
     window.addEventListener(
@@ -63,7 +63,7 @@ export default {
         this.keys[key] = false;
 
       }
-    );
+    , true);
 
 
     /*
