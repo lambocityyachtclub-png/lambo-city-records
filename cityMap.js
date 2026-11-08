@@ -48,8 +48,8 @@ const CITY_MAP = Object.freeze({
       id: "lambo-city-arena-district",
       status: "approved-master-plan-provisional-coordinates",
       origin: Object.freeze({ x: -43, z: 97 }),
-      bounds: Object.freeze({ minX: -105, maxX: 19, minZ: 48, maxZ: 158 }),
-      ground: Object.freeze({ centerX: -43, centerZ: 103, width: 124, depth: 110, topY: 0.65 }),
+      bounds: Object.freeze({ minX: -105, maxX: 19, minZ: 45, maxZ: 158 }),
+      ground: Object.freeze({ centerX: -43, centerZ: 101.5, width: 124, depth: 113, topY: 0.65 }),
       arena: Object.freeze({
         id: "lambo-city-conference-center-arena",
         centerX: -43,
