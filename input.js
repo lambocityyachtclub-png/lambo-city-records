@@ -35,9 +35,23 @@ export default {
       "keydown",
       e => {
 
+        // Prefer physical key codes for movement keys. Some browser/device
+        // combinations report an inconsistent e.key value, while e.code
+        // still identifies the physical WASD key reliably.
+        const codeKeys = {
+          KeyW: "w",
+          KeyA: "a",
+          KeyS: "s",
+          KeyD: "d",
+          KeyE: "e",
+          KeyF: "f",
+          ShiftLeft: "shift",
+          ShiftRight: "shift"
+        };
         const key =
-          e.key.toLowerCase();
+          codeKeys[e.code] || (e.key || "").toLowerCase();
 
+        if (!key) return;
         this.keys[key] = true;
 
         if (
@@ -57,9 +71,20 @@ export default {
       "keyup",
       e => {
 
+        const codeKeys = {
+          KeyW: "w",
+          KeyA: "a",
+          KeyS: "s",
+          KeyD: "d",
+          KeyE: "e",
+          KeyF: "f",
+          ShiftLeft: "shift",
+          ShiftRight: "shift"
+        };
         const key =
-          e.key.toLowerCase();
+          codeKeys[e.code] || (e.key || "").toLowerCase();
 
+        if (!key) return;
         this.keys[key] = false;
 
       }
