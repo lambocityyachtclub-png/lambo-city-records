@@ -15,8 +15,9 @@ function readRequestedQuality() {
 
 function readDeviceFacts() {
   const nav = typeof navigator !== "undefined" ? navigator : {};
-  const width = typeof window !== "undefined" ? window.innerWidth : 1024;
-  const dpr = Math.max(1, Number(window?.devicePixelRatio) || 1);
+  const hasWindow = typeof window !== "undefined";
+  const width = hasWindow ? window.innerWidth : 1024;
+  const dpr = Math.max(1, Number(hasWindow ? window.devicePixelRatio : 1) || 1);
   const memory = Number(nav.deviceMemory) || null;
   const cores = Number(nav.hardwareConcurrency) || null;
   const ua = String(nav.userAgent || "");
@@ -26,9 +27,7 @@ function readDeviceFacts() {
 }
 
 function chooseTier(facts) {
-  if (facts.mobile && ((facts.memory && facts.memory <= 4) || (facts.cores && facts.cores <= 4))) {
-    return "low";
-  }
+  if (facts.mobile && ((facts.memory && facts.memory <= 4) || (facts.cores && facts.cores <= 4))) return "low";
   if (facts.mobile) return "balanced";
   if ((facts.memory && facts.memory >= 12) && (facts.cores && facts.cores >= 8)) return "ultra";
   if ((facts.memory && facts.memory >= 8) && (facts.cores && facts.cores >= 6)) return "high";
@@ -44,20 +43,19 @@ const PROFILES = Object.freeze({
 });
 
 let activeProfile = null;
-let activeFacts = null;
 
 function getProfile() {
   if (activeProfile) return activeProfile;
-  activeFacts = readDeviceFacts();
+  const facts = readDeviceFacts();
   const requested = readRequestedQuality();
-  const tier = requested === "auto" ? chooseTier(activeFacts) : requested;
+  const tier = requested === "auto" ? chooseTier(facts) : requested;
   activeProfile = Object.freeze({
     tier,
     requested,
     ...PROFILES[tier],
-    mobile: activeFacts.mobile,
-    deviceMemoryGB: activeFacts.memory,
-    hardwareThreads: activeFacts.cores
+    mobile: facts.mobile,
+    deviceMemoryGB: facts.memory,
+    hardwareThreads: facts.cores
   });
   if (typeof window !== "undefined") window.__lamboCityGraphics = activeProfile;
   return activeProfile;
