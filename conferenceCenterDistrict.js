@@ -51,16 +51,16 @@ function addVilla(root, materials, id, x, z, rotation = 0) {
   root.add(villa);
 
   const { villaWall, villaGlass, villaGold, villaRoof, landscape } = materials;
-  box(villa, "villa_" + id + "_podium", [15, 0.8, 12], [0, 0.8, 0], villaRoof);
-  box(villa, "villa_" + id + "_lower", [13.8, 4.2, 10.8], [0, 3.1, 0], villaWall);
-  box(villa, "villa_" + id + "_upper", [13.2, 4.0, 10.2], [0, 7.2, 0], villaWall);
-  box(villa, "villa_" + id + "_roof", [14.4, 0.65, 11.4], [0, 9.55, 0], villaRoof);
+  box(villa, "villa_" + id + "_podium", [13, 0.8, 11], [0, 0.8, 0], villaRoof);
+  box(villa, "villa_" + id + "_lower", [12, 4.2, 9.8], [0, 3.1, 0], villaWall);
+  box(villa, "villa_" + id + "_upper", [11.6, 4.0, 9.4], [0, 7.2, 0], villaWall);
+  box(villa, "villa_" + id + "_roof", [12.6, 0.65, 10.4], [0, 9.55, 0], villaRoof);
   // Ocean-facing glass and continuous balconies.
-  box(villa, "villa_" + id + "_glass_front_lower", [10.8, 2.5, 0.12], [0, 3.1, -5.43], villaGlass);
-  box(villa, "villa_" + id + "_glass_front_upper", [10.8, 2.4, 0.12], [0, 7.15, -5.13], villaGlass);
-  box(villa, "villa_" + id + "_balcony_lower", [15.2, 0.22, 2.0], [0, 4.9, -6.1], villaGold);
-  box(villa, "villa_" + id + "_balcony_upper", [14.6, 0.22, 1.8], [0, 8.9, -5.8], villaGold);
-  box(villa, "villa_" + id + "_planter", [2.2, 0.7, 1.5], [-5.0, 1.55, -6.0], landscape);
+  box(villa, "villa_" + id + "_glass_front_lower", [9.4, 2.5, 0.12], [0, 3.1, -5.43], villaGlass);
+  box(villa, "villa_" + id + "_glass_front_upper", [9.4, 2.4, 0.12], [0, 7.15, -5.13], villaGlass);
+  box(villa, "villa_" + id + "_balcony_lower", [13.2, 0.22, 2.0], [0, 4.9, -6.1], villaGold);
+  box(villa, "villa_" + id + "_balcony_upper", [12.8, 0.22, 1.8], [0, 8.9, -5.8], villaGold);
+  box(villa, "villa_" + id + "_planter", [2.0, 0.7, 1.5], [-4.4, 1.55, -5.6], landscape);
   box(villa, "villa_" + id + "_entry", [3.2, 2.7, 0.18], [0, 2.35, 5.48], villaGold);
   return villa;
 }
@@ -124,18 +124,15 @@ export default {
     // Sidewalk bands sit outside the road loop and remain connected at all
     // four corners. Their overlap closes the pedestrian circuit.
     const sw = boulevard.sidewalkWidth;
-    const outerRoadX = halfRoadX + boulevard.roadWidth / 2;
-    const outerRoadZ = halfRoadZ + boulevard.roadWidth / 2;
-    const sideWalkX = outerRoadX + sw / 2;
-    const sideWalkZ = outerRoadZ + sw / 2;
+    const sideOffset = boulevard.roadWidth / 2 + sw / 2;
     box(root, "arenaSidewalkSouth", [boulevard.outerWidth + boulevard.roadWidth + sw * 2, 0.14, sw],
-      [cx, 0.82, southZ - sideWalkZ + sw / 2], materials.sidewalk);
+      [cx, 0.82, southZ - sideOffset], materials.sidewalk);
     box(root, "arenaSidewalkNorth", [boulevard.outerWidth + boulevard.roadWidth + sw * 2, 0.14, sw],
-      [cx, 0.82, northZ + sideWalkZ - sw / 2], materials.sidewalk);
+      [cx, 0.82, northZ + sideOffset], materials.sidewalk);
     box(root, "arenaSidewalkWest", [sw, 0.14, boulevard.outerDepth + boulevard.roadWidth + sw * 2],
-      [westX - sideWalkX + sw / 2, 0.82, cz], materials.sidewalk);
+      [westX - sideOffset, 0.82, cz], materials.sidewalk);
     box(root, "arenaSidewalkEast", [sw, 0.14, boulevard.outerDepth + boulevard.roadWidth + sw * 2],
-      [eastX + sideWalkX - sw / 2, 0.82, cz], materials.sidewalk);
+      [eastX + sideOffset, 0.82, cz], materials.sidewalk);
 
     // Gold centerline dashes, repeated at measured intervals.
     for (let x = westX + 7; x < eastX - 4; x += 14) {
