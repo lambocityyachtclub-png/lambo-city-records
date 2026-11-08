@@ -1,66 +1,56 @@
 # LAMBO CITY — Master City Blueprint
 
-**Status:** Phase 1 street-network correction and planning baseline  
+**Status:** Arena District master-plan revision; geometry implementation pending visual validation.
 **Coordinate system:** Three.js world units; +X east/right, -X west/left, +Z inland/north, -Z ocean/stage.
 
 ## Design intent
+LAMBO CITY is a modular luxury coastal entertainment city. Districts must be planned as connected infrastructure before buildings are added. Every district module consumes the shared `cityMap.js` registry and declares land, roads, sidewalks, buildings, entrances, water edges, and collision together.
 
-LAMBO CITY is a modular luxury coastal entertainment city, not a collection of disconnected scene objects. Every district must be planned as a continuous piece of urban infrastructure before its buildings are added. New districts are independent modules and must consume the shared `cityMap.js` coordinate registry.
-
-## Existing surveyed anchors
-
+## Protected existing anchors
 | Feature | Position / extent | Planning treatment |
 |---|---|---|
-| Marina / boardwalk street | X -45 to +45; Z 42–50; center Z 46; 8 units wide | Pedestrian-priority waterfront; ordinary cars restricted |
+| Marina / boardwalk street | X -45 to +45; Z 42–50; center Z 46; 8 units wide | Preserve; pedestrian-priority; ordinary cars restricted |
 | Boardwalk sidewalks | Centerlines Z 39.5 and 52.5 | Preserve and connect pedestrian circulation |
-| Existing north land plates | Z 10–45 | Preserve |
-| Conference district ground | X -70 to -16; Z 64–126 | Preserve and connect to the boardwalk-side land |
-| Conference access road | X -37; Z 46–80; 8 units wide | Store-side two-way district entrance |
-| Conference Center | Center (-43, 97); footprint 28 x 24 | Primary landmark and visual anchor |
+| Existing north land | Z 10–45 | Preserve |
 | Records HQ | Center (28, 22) | Protected private label / executive destination |
 | Grand Stage | Center (0, -74) | Protected live-performance destination |
+| Existing Conference Center | Center (-43, 97); footprint 28 x 24 | Interim structure; replace as one coordinated design, not by stacking duplicate geometry |
 
-## Phase 1 — connect the city before adding more buildings
+## Approved Arena District concept
+The Conference Center becomes the dominant arena-scale landmark, inspired by the urban presence of Crypto.com Arena without copying its protected design. The building sits at the center of a complete square-block street loop. LAMBO CITY Villa Apartments occupy outward-facing parcels around the outside of that boulevard. The arena is the visual and social heart of the neighborhood.
 
-1. Maintain the store-side entrance at the negative-X end of the boardwalk street.
-2. Join the access road to the existing east–west boardwalk street as a real junction.
-3. Provide continuous underlying land beneath the new road from the existing land edge at Z 45 to the conference district land beginning at Z 64. The road must never appear to float over ocean.
-4. Keep ordinary vehicle circulation on the new two-way street; keep the boardwalk pedestrian-priority.
-5. Keep the conference road, curbs, sidewalks, arrival plaza, entry walk, and building entrance aligned and connected.
-6. Preserve the central dock approach, marina, Records HQ, Grand Stage, and existing boardwalk geometry.
-7. Make road/land/water boundaries and collision agree. Visual pavement without matching walkable ground and collision is not considered complete.
+### Provisional spatial planning envelope
+- District planning origin: (-43, 97).
+- Reserve continuous land approximately X -105 to +19 and Z 48 to 158.
+- Arena planning footprint: approximately 54 x 44 units, centered at (-43, 97), with its grand public entrance facing south toward the boardwalk approach.
+- Square boulevard: continuous four-sided, two-way loop around the arena, approximately 84 x 74 units overall. All four corners, curb returns, sidewalks, crossings, and vehicle circulation must connect.
+- Villa parcels: low-rise parcels outside the boulevard on the west, north, and east edges. Keep the south approach and primary arena sightline open; do not put homes between the boardwalk approach and arena entrance.
+- Villa architecture: premium Santa Monica / Dana Point coastal apartments, outward-facing balconies and ocean-view orientation, customizable resident interiors. Villa heights remain subordinate to the arena.
+- Public realm: landscaped pedestrian promenades, safe crossings, grand arrival plaza, and active gathering spaces facing the arena.
+- Expansion: reserve outer-street attachment points for future neighborhoods and named towns.
 
-## District structure
+These dimensions are a planning envelope, not a claim that the land is already built or collision-free. Final coordinates must be checked against active geometry, terrain, water, roads, and player boundaries before construction.
 
-- **Marina Boardwalk:** pedestrian waterfront, stores, dock and promenade.
-- **Entertainment District:** Grand Stage and large live-performance activity.
-- **Records HQ:** private label operations and studio.
-- **Conference Center District:** public-facing education, conferences, networking, and the first major inland landmark.
-- **LAMBO CITY Villas:** future low-rise coastal apartment community on outer streets around the Conference Center, with ocean-view orientation and customizable resident interiors.
-- **Future districts:** independently named modules that attach to surveyed arterial roads and declared district boundaries.
-
-## Road and shoreline standards
-
-- **Class A — city streets:** continuous two-way vehicle pavement, lane/curb geometry, connected junctions, sidewalks, and matching collision boundaries.
+## Street and shoreline standards
+- **Class A — city streets:** continuous two-way pavement, lane geometry, curb returns, connected intersections, sidewalks, crossings, and matching collision boundaries.
 - **Class B — pedestrian routes:** boardwalks, promenades, plazas, and building walkways; ordinary vehicles are excluded.
-- **Class C — waterfront access:** piers, ramps, overlooks, and shoreline paths; each must explicitly meet land, dock, or building thresholds.
+- **Class C — waterfront access:** piers, ramps, overlooks, and shoreline paths; each explicitly meets land, dock, or building thresholds.
 - **Water rule:** water is not usable ground. Roads and buildings require continuous land foundations; a crossing over water must be intentionally modeled as a bridge or pier.
-- **Junction rule:** roads must terminate at a connected road, plaza, or deliberate turnaround—not in open water, a building wall, or an arbitrary patch of pavement.
-- **Sightline rule:** the Conference Center remains the dominant landmark; villa massing stays lower and frames rather than hides it.
-- **Expansion rule:** no district may silently move or overwrite a protected landmark or another district's parcel.
+- **Loop rule:** a boulevard described as a loop must connect all four sides and corners; no floating slabs, visual-only junctions, or unexplained road endings.
+- **Entrance rule:** every building entrance meets a walkable plaza or sidewalk, with matching open collision.
+- **Sightline rule:** the arena remains the dominant landmark; villas frame rather than hide it.
+- **Expansion rule:** no district may silently move or overwrite a protected landmark or another district parcel.
 
-## Required module contract for future districts
+## Required district module contract
+Each module declares district ID/name/bounds/origin; ground footprints/elevation; road centerlines/widths/endpoints/junctions/class; pedestrian links/entrances; shoreline/water crossings; building footprints/sightlines; collision boundaries/openings; and a cleanup/ownership root.
 
-Each district module must declare:
-1. District ID, name, bounds, and coordinate origin.
-2. Ground footprint(s) and surface elevation.
-3. Road centerlines, widths, endpoints, junctions, and road class.
-4. Pedestrian connections and entrance thresholds.
-5. Water/shoreline boundary and any explicit bridge or pier.
-6. Building footprints and protected sightlines.
-7. Collision boundaries matching physical architecture and access openings.
-8. A cleanup/ownership root so the district can be maintained independently.
+## Implementation sequence
+1. Survey current district geometry and adjacent land/water/collision boundaries.
+2. Reconcile the narrow conference approach with a continuous square boulevard and complete land foundation.
+3. Replace the interim conference building with one arena-scale landmark, not overlapping duplicate buildings.
+4. Add outer villa parcels and low-rise apartment modules only after the loop road and pedestrian network are verified.
+5. Run syntax/build checks and inspect the production scene before deployment.
+6. Preserve the marina, central dock approach, boardwalk, Records HQ, and Grand Stage throughout.
 
-## Next planned phase
-
-After the corrected road/land connection is visually checked in the live game, survey and lay out the villa parcels and outer residential street loop. Do not populate those parcels with arbitrary apartment blocks before the street and shoreline geometry are settled.
+## Validation gate
+Production is not complete until the road loop is visually continuous, all four corners connect, the arena entrance is reachable, villa parcels do not block the approach or ocean sightlines, collision matches visible architecture, and protected landmarks remain unchanged.
