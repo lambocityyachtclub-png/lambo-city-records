@@ -87,9 +87,12 @@ export function createVocalBoothPanel({ beatLab } = {}) {
     else talkbackStatus("Talkback off · recording path remains isolated.");
   };
   const onTalkbackError=event=>talkbackStatus("TALKBACK ERROR · "+(event.detail?.message||"Microphone unavailable."));
+  const onCountIn=event=>{const detail=event.detail||{};status(detail.complete?"Count-in complete · recording.":"GET READY · "+detail.beat+" / 4");};
+  window.addEventListener("lc-vocal-count-in",onCountIn);
   window.addEventListener("lc-talkback-state",onTalkbackState);
   window.addEventListener("lc-talkback-error",onTalkbackError);
   root.addEventListener("lc-vocal-booth-dispose",()=>{
+    window.removeEventListener("lc-vocal-count-in",onCountIn);
     window.removeEventListener("lc-talkback-state",onTalkbackState);
     window.removeEventListener("lc-talkback-error",onTalkbackError);
   },{once:true});
@@ -108,8 +111,8 @@ export function createVocalBoothPanel({ beatLab } = {}) {
           status("Beat session stopped.");
           break;
         case "record":
-          if(recordingActive){await beatLab.stopRecording();recordingActive=false;takeCount+=1;showTake("Vocal Take "+String(takeCount).padStart(2,"0"),beatLab.lastRecordedTake?.recordingFormat||"Session recording");status("Vocal take saved to the shared session.");window.dispatchEvent(new CustomEvent("lc-vocal-recording-state",{detail:{recording:false}}));}
-          else {await beatLab.startRecording();if(!StudioRecordingEngine.activeTake)return;recordingStartedAt=performance.now();recordingActive=true;status("Recording vocals and session stems.");window.dispatchEvent(new CustomEvent("lc-vocal-recording-state",{detail:{recording:true,mode:"vocal"}}));}
+          if(recordingActive){await beatLab.stopRecording();recordingActive=false;button.textContent="● TAP MICROPHONE TO RECORD";takeCount+=1;showTake("Vocal Take "+String(takeCount).padStart(2,"0"),beatLab.lastRecordedTake?.recordingFormat||"Session recording");status("Vocal take saved to the shared session.");window.dispatchEvent(new CustomEvent("lc-vocal-recording-state",{detail:{recording:false}}));}
+          else {status("Four-count starting…");await beatLab.startRecording();if(!StudioRecordingEngine.activeTake)return;recordingStartedAt=performance.now();recordingActive=true;button.textContent="■ TAP MICROPHONE TO STOP";status("Recording vocals and session stems.");window.dispatchEvent(new CustomEvent("lc-vocal-recording-state",{detail:{recording:true,mode:"vocal"}}));}
           break;
         case "stop-recording":
           if(!recordingActive)return;
