@@ -1126,6 +1126,18 @@ if (!this.audio || this.audio.state !== "running") {
         pitchCorrectionNode = await createStudioPitchCorrectionNode(this.audio, this.pitchCorrectionSettings);
       }
 
+      // Four-beat pre-roll is intentionally completed before the recorder starts,
+      // so the count-in is heard but never written into the vocal take.
+      if (!this.playing) await this.start();
+      const bpm = Math.max(20, Math.min(300, Number(this.pattern?.bpm) || 100));
+      const beatMs = 60000 / bpm;
+      for (let beat = 1; beat <= 4; beat += 1) {
+        this.status("GET READY · " + beat + " / 4");
+        window.dispatchEvent(new CustomEvent("lc-vocal-count-in", { detail: { beat, total: 4, bpm } }));
+        await new Promise(resolve => window.setTimeout(resolve, beatMs));
+      }
+      window.dispatchEvent(new CustomEvent("lc-vocal-count-in", { detail: { beat: 0, total: 4, bpm, complete: true } }));
+
       await StudioRecordingEngine.startTake({
         audio: this.audio,
         beatOutput: StudioAudioExport.getOutput(this.audio),
