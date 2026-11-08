@@ -27,6 +27,10 @@ const WATERFRONT_BACK_Z = 45;
 export default {
 
   init(scene) {
+    if (scene.getObjectByName("lamboCityMarinaDistrict")) return;
+    const root = new THREE.Group();
+    root.name = "lamboCityMarinaDistrict";
+    scene.add(root);
     this._buildDockRamp(scene);
     this._buildStreet(scene);
     this._buildStores(scene);
@@ -56,7 +60,7 @@ export default {
         31 + i * 1.5
       );
 
-      scene.add(step);
+      root.add(step);
     }
   },
 
@@ -79,7 +83,7 @@ export default {
   STREET_Z
 );
 
-    scene.add(road);
+    root.add(road);
 
 
     var markMat = new THREE.MeshStandardMaterial({
@@ -105,7 +109,7 @@ export default {
         STREET_Z
       );
 
-      scene.add(mark);
+      root.add(mark);
     }
 
 
@@ -127,7 +131,7 @@ export default {
         STREET_Z + side * 6.5
       );
 
-      scene.add(sidewalk);
+      root.add(sidewalk);
     });
 
 
@@ -174,7 +178,7 @@ export default {
         STREET_Z - 15
       );
 
-      scene.add(building);
+      root.add(building);
 
 
       var awning = new THREE.Mesh(
@@ -192,7 +196,7 @@ export default {
         STREET_Z - 10.5
       );
 
-      scene.add(awning);
+      root.add(awning);
 
 
       var signPlane = new THREE.Mesh(
@@ -210,7 +214,7 @@ export default {
         STREET_Z - 9
       );
 
-      scene.add(signPlane);
+      root.add(signPlane);
     });
   },
 
@@ -278,7 +282,7 @@ export default {
         STREET_Z + 12
       );
 
-      scene.add(palm);
+      root.add(palm);
     }
   },
 
@@ -300,7 +304,7 @@ export default {
       STREET_Z
     );
 
-    scene.add(mainSign);
+    root.add(mainSign);
 
     this._buildZoneLabel();
   },
@@ -383,7 +387,7 @@ export default {
         centerZ
       );
 
-      scene.add(base);
+      root.add(base);
 
 
       // Glass
@@ -400,7 +404,7 @@ export default {
         centerZ
       );
 
-      scene.add(glass);
+      root.add(glass);
 
 
       // Top rail
@@ -417,7 +421,7 @@ export default {
         centerZ
       );
 
-      scene.add(topRail);
+      root.add(topRail);
 
 
       // Bottom rail
@@ -434,7 +438,7 @@ export default {
         centerZ
       );
 
-      scene.add(bottomRail);
+      root.add(bottomRail);
 
 
       // Posts
@@ -456,7 +460,7 @@ export default {
           pz
         );
 
-        scene.add(post);
+        root.add(post);
       });
     }
 
