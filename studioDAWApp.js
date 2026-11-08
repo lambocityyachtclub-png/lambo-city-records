@@ -759,8 +759,10 @@ const StudioDAWApp = {
         beatLab: Floor2StudioApp,
         workspace: this.workspace
       }));
-      this.vocalsPanel = applyVocalBoothVisual(createVocalBoothPanel({ beatLab: Floor2StudioApp }));
-      this.pianoPanel = applyCitySynthVisual(createCitySynthPanel({ session: StudioMultitrackWorkspace }));
+      this.vocalsPanel = createVocalBoothPanel({ beatLab: Floor2StudioApp });
+      applyVocalBoothVisual(this.vocalsPanel);
+      this.pianoPanel = createCitySynthPanel({ session: StudioMultitrackWorkspace });
+      applyCitySynthVisual(this.pianoPanel);
       this.workspace.setPanel("mix", this.mixPanel);
       this.workspace.setPanel("piano", this.pianoPanel);
       this.workspace.setPanel("vocals", this.vocalsPanel);
