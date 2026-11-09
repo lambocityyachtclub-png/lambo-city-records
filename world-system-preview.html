@@ -96,6 +96,32 @@
       if (!registration.registered) {
         throw new Error(registration.validation.issues.map(item => item.message).join("\n"));
       }
+
+      // Register a second data-only district to exercise city-wide routing.
+      const futureDistrict = JSON.parse(JSON.stringify(district));
+      futureDistrict.id = "future-district-routing-test";
+      futureDistrict.name = "Future District Routing Test";
+      futureDistrict.bounds.minX += 300;
+      futureDistrict.bounds.maxX += 300;
+      futureDistrict.roadNetwork.nodes.forEach(node => { node.x += 300; });
+      futureDistrict.parcels.forEach(parcel => { parcel.center.x += 300; });
+      futureDistrict.landmarks.forEach(landmark => { landmark.center.x += 300; });
+      futureDistrict.landscapeZones.forEach(zone => { zone.center.x += 300; });
+      const futureRegistration = world.registerDistrict(futureDistrict);
+      if (!futureRegistration.registered) {
+        throw new Error("Future district registration failed: " + futureRegistration.validation.issues.map(item => item.message).join("\\n"));
+      }
+      const connectionRegistration = world.registerConnection({
+        id: "arena-to-future-district-test-link",
+        from: { districtId: district.id, nodeId: "boulevard-north-east" },
+        to: { districtId: futureDistrict.id, nodeId: "boulevard-south-west" },
+        mode: "vehicle",
+        access: "public"
+      });
+      if (!connectionRegistration.registered) {
+        throw new Error("Inter-district connector registration failed: " + connectionRegistration.reason);
+      }
+
       const root = world.buildDistrict(district.id, { roadTopY: 0.77, sidewalkTopY: 0.82, roadWidth: 9, sidewalkWidth: 3 });
       const noPermissionServiceRoute = world.findRoute(
         district.id,
@@ -117,6 +143,16 @@
         "arena-arrival-approach",
         { mode: "vehicle" }
       );
+      const deniedCityRoute = world.findWorldRoute(
+        district.id, "boardwalk-service-entry",
+        futureDistrict.id, "boulevard-south-west",
+        { mode: "service" }
+      );
+      const authorizedCityRoute = world.findWorldRoute(
+        district.id, "boardwalk-service-entry",
+        futureDistrict.id, "boulevard-south-west",
+        { mode: "service", permissions: ["service"] }
+      );
       if (!gateBeforeAuthorization || gateBeforeAuthorization.open !== false) {
         throw new Error("The restricted boardwalk gate did not start closed.");
       }
@@ -131,6 +167,9 @@
       }
       if (ordinaryTrafficRoute.found) {
         throw new Error("Ordinary vehicle traffic incorrectly received restricted access.");
+      }
+      if (deniedCityRoute.found || !authorizedCityRoute.found) {
+        throw new Error("City-wide routing did not preserve restricted access across district connections.");
       }
       if (previewCollision.boxes.length !== district.parcels.length) {
         throw new Error("Opening the service gate did not remove its collision blocker.");
@@ -149,6 +188,10 @@
         ["Service route without permission", noPermissionServiceRoute.found ? "unexpected" : "blocked"],
         ["Authorized service route", authorizedServiceRoute.found ? "available" : "blocked"],
         ["Ordinary vehicle route", ordinaryTrafficRoute.found ? "unexpected" : "restricted"],
+        ["Registered districts", world.getDistrictIds().length],
+        ["Inter-district links", world.getStatus().registeredConnections.length],
+        ["Cross-district route", authorizedCityRoute.found ? "available" : "blocked"],
+        ["Cross-district without permission", deniedCityRoute.found ? "unexpected" : "blocked"],
         ["Active villa colliders", previewCollision.boxes.length]
       ].map(([label, value]) => '<span class="metric">' + label + ': ' + value + '</span>').join("");
     } catch (err) {
