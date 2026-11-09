@@ -9,10 +9,10 @@ The World System is the reusable foundation for adding named districts without h
 - `worldSystem.js` stores districts, builds/removes their generated scene roots, manages access gates, and routes between districts.
 - `worldBuilder.js` creates road surfaces, junctions, sidewalks, parcel geometry, and optional collision blockers.
 - `worldTerrainBuilder.js` creates the district ground, colored grade surfaces, raised/lowered transitions, and low-cost planting; `worldTerrainMath.js` supplies cached terrain, road, and sidewalk height queries.
-- `worldParcelBuilder.js` builds parcel archetypes.
+- `worldParcelBuilder.js` builds parcel archetypes and batches distant parcel silhouettes within a large district.\n- `worldDistrictProxyBuilder.js` creates very low-cost far-distance district proxies with instanced roads, landmark silhouettes, buildings, and park patches.
 - `worldAccessGate.js` creates physical gates and updates their collision state when an access tier is granted.
 - `worldNavigation.js` provides A* routing inside one district and across registered district connectors.
-- `worldDistrictStreaming.js` builds nearby registered districts on demand and removes their geometry after the player leaves, using separate in/out distances to prevent flicker.
+- `worldDistrictStreaming.js` keeps distant districts visible as far proxies, swaps to full district detail near the player, and returns to the proxy before removing full detail. Separate distance bands prevent flicker and blank gaps.\n- Nearby parcel detail follows the player inside large districts; the detailed parcel budget is capped independently from the instanced distant parcel batches.
 - `worldSystemRuntime.js` is the lazy bridge the engine can call later; it loads the system only when explicitly initialized, registers blueprints/recipes, and delegates per-frame streaming updates.
 - `worldDistricts/conferenceCenter.js` is the first district blueprint.
 - `world-system-preview.html` is the isolated preview and browser-side check harness.
@@ -71,7 +71,7 @@ Use `findRoute` for one district and `findWorldRoute` for a route across registe
 5. Review the complete generated area on the primary iPad target.
 6. Only after the combined review, plan any live-game integration.
 
-Do not wire new districts into engine startup by default. Keep generation on demand, preserve existing approved structures, and avoid loading distant district detail at initial startup. The runtime bridge must be explicitly initialized by the host engine; until then it adds no startup work. The streaming controller limits how many districts it builds or removes in one update to reduce sudden work spikes.
+Do not wire new districts into engine startup by default. Keep generation on demand, preserve existing approved structures, and avoid loading distant district detail at initial startup. The runtime bridge must be explicitly initialized by the host engine; until then it adds no startup work. The streaming controller limits how many full districts and far proxies it builds or removes in one update to reduce sudden work spikes. The parcel-detail selector refreshes only after meaningful player movement and preserves the configured per-district detail budget.
 
 ## Current boundary
 
