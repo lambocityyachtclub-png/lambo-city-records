@@ -53,8 +53,10 @@ export function buildTerrainAndLandscape(parent, district, options = {}) {
   const groundMaterial = options.terrainMaterial || makeMaterial(0x39352e);
   if (!options.terrainMaterial) ownedMaterials.push(groundMaterial);
   const terrainZones = Array.isArray(district.terrainZones) ? district.terrainZones : [];
-  const segmentsX = Math.max(16, Math.ceil(width));
-  const segmentsZ = Math.max(16, Math.ceil(depth));
+  // Keep large neighborhoods bounded in vertex count; local grade patches
+  // retain extra resolution around explicit terrain transitions.
+  const segmentsX = Math.max(16, Math.min(192, Math.ceil(width)));
+  const segmentsZ = Math.max(16, Math.min(192, Math.ceil(depth)));
   const positions = [], indices = [];
   for (let row = 0; row <= segmentsZ; row++) {
     const z = bounds.minZ + depth * row / segmentsZ;
