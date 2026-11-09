@@ -106,6 +106,7 @@ export function buildDistrictGeometry(scene, district, options = {}) {
   root.userData.sidewalkCount = root.children.filter(child => child.name.startsWith("worldSidewalk_")).length;
 
   const terrainResult = buildTerrainAndLandscape(root, district, options);
+  root.userData.groundTopY = terrainResult.root.userData.groundTopY;
   root.userData.terrainZoneCount = terrainResult.terrainZones;
   root.userData.landscapeZoneCount = terrainResult.zones;
   root.userData.landscapeFeatureCount = terrainResult.features;
