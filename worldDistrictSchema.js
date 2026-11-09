@@ -77,6 +77,13 @@ export function validateDistrict(district, options = {}) {
         issues.push(issue("ZERO_LENGTH_ROAD", "Road segment " + segment.id + " connects a node to itself."));
         continue;
       }
+      if (segment.access !== undefined && !["public", "permission-controlled"].includes(segment.access)) {
+        issues.push(issue("INVALID_ROAD_ACCESS", "Road segment " + segment.id + " has an unsupported access policy."));
+      }
+      if (segment.access === "permission-controlled" &&
+          (typeof segment.requiredAccess !== "string" || !segment.requiredAccess.trim())) {
+        issues.push(issue("MISSING_REQUIRED_ACCESS", "Restricted road segment " + segment.id + " must declare its required access tier."));
+      }
       if (![ "vehicle", "pedestrian", "shared", "service" ].includes(segment.mode)) {
         issues.push(issue("INVALID_ROAD_MODE", "Road segment " + segment.id + " has an unsupported travel mode."));
       }
