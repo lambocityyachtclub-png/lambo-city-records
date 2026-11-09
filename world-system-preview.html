@@ -620,11 +620,11 @@
       const fullUTurn = buildVehicleUTurnPath(district, "boulevard-north-west", {
         length: 4.8, width: 2.1, turningRadius: 6.5
       });
-      const undersizedUTurn = buildVehicleUTurnPath(district, "boulevard-south-west", {
+      const southWestUTurn = buildVehicleUTurnPath(district, "boulevard-south-west", {
         length: 4.8, width: 2.1, turningRadius: 6.5
       });
       if (!fullUTurn.valid || fullUTurn.points.length < 24 ||
-          undersizedUTurn.valid ||
+          !southWestUTurn.valid ||
           getVehicleRoadSurface(district, roadTestPoint)?.type !== "road" ||
           getVehicleRoadSurface(district, sidewalkTestPoint) !== null ||
           getVehicleRoadSurface(district, { x: northWestTurn.x + 8, z: northWestTurn.z })?.type !== "turning-area" ||
