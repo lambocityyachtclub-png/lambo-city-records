@@ -83,13 +83,13 @@
     // Preview-only reference for the existing mapped Boardwalk sidewalk.
     // Its end overlaps the generated spur; the live Boardwalk is not modified.
     const boardwalkSidewalkGuide = new THREE.Mesh(
-      new THREE.BoxGeometry(CITY_MAP.districts.marinaBoardwalk.road.length, 0.14, 3),
+      new THREE.BoxGeometry(CITY_MAP.districts.marinaBoardwalk.road.length, 0.3, 5),
       new THREE.MeshStandardMaterial({ color: 0xb9ad98, roughness: 0.86 })
     );
     boardwalkSidewalkGuide.name = "previewOnlyExistingBoardwalkSidewalk";
     boardwalkSidewalkGuide.position.set(
       CITY_MAP.districts.marinaBoardwalk.road.centerX,
-      0.75,
+      0.55,
       CITY_MAP.districts.marinaBoardwalk.sidewalks[1].centerZ
     );
     scene.add(boardwalkSidewalkGuide);
@@ -737,9 +737,18 @@
       const spurFrom = district.roadNetwork.nodes.find(node => node.id === sidewalkSpur?.from);
       const spurTo = district.roadNetwork.nodes.find(node => node.id === sidewalkSpur?.to);
       const spurMidpoint = { x: (spurFrom.x + spurTo.x) / 2, z: (spurFrom.z + spurTo.z) / 2 };
+      const serviceRoadSegment = district.roadNetwork.segments.find(segment => segment.id === "boardwalk-gated-service-approach");
+      const serviceRoadFrom = district.roadNetwork.nodes.find(node => node.id === serviceRoadSegment?.from);
+      const serviceRoadTo = district.roadNetwork.nodes.find(node => node.id === serviceRoadSegment?.to);
+      const serviceRoadMidpoint = { x: (serviceRoadFrom.x + serviceRoadTo.x) / 2, z: (serviceRoadFrom.z + serviceRoadTo.z) / 2 };
       if (sidewalkSpur?.physicalSurface !== "sidewalk" ||
-          Math.abs(world.getGroundHeight(district.id, spurMidpoint.x, spurMidpoint.z) - 0.82) > 0.001) {
-        throw new Error("The Boardwalk sidewalk spur must be a generated, walkable surface at the same elevation as the district sidewalks.");
+          Math.abs(world.getGroundHeight(district.id, spurFrom.x, spurFrom.z) - 0.70) > 0.001 ||
+          Math.abs(world.getGroundHeight(district.id, spurMidpoint.x, spurMidpoint.z) - 0.76) > 0.001 ||
+          Math.abs(world.getGroundHeight(district.id, spurTo.x, spurTo.z) - 0.82) > 0.001 ||
+          Math.abs(world.getGroundHeight(district.id, serviceRoadMidpoint.x, serviceRoadMidpoint.z) - 0.715) > 0.001 ||
+          serviceRoadSegment?.sidewalkSides?.length !== 1 ||
+          serviceRoadSegment.sidewalkSides[0] !== 1) {
+        throw new Error("The Boardwalk sidewalk must grade continuously into the Convention sidewalk without crossing the gated vehicle lane, and the connecting road must be graded into the city street.");
       }
       if (archetypeCollision.boxes.length !== 0) {
         throw new Error("Temporary archetype collision data leaked after cleanup.");
@@ -816,7 +825,8 @@
         ["Service gate after grant", gateGrant.gate?.open ? "open" : "closed"],
         ["Service route without permission", noPermissionServiceRoute.found ? "unexpected" : "blocked"],
         ["Authorized service route", authorizedServiceRoute.found ? "available" : "blocked"],
-        ["Boardwalk-to-Convention sidewalk", pedestrianRoute.found ? "continuous / walkable" : "blocked"],
+        ["Boardwalk-to-Convention sidewalk", pedestrianRoute.found ? "continuous / graded" : "blocked"],
+        ["Boardwalk-to-Convention street", "continuous / graded"],
         ["Ordinary vehicle route", ordinaryTrafficRoute.found ? "unexpected" : "restricted"],
         ["Registered districts before cleanup", registeredDistrictCount],
         ["Inter-district links before cleanup", registeredConnectionCount],
