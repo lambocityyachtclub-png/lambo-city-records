@@ -167,9 +167,13 @@
       const plazaGroundY = world.getGroundHeight(district.id, -43, 64.5);
       const courtyardGroundY = world.getGroundHeight(district.id, -43, 148);
       const baseGroundY = world.getGroundHeight(district.id, -100, 70);
+      const roadGroundY = world.getGroundHeight(district.id, -60, 55);
+      const sidewalkGroundY = world.getGroundHeight(district.id, -60, 49);
       if (Math.abs(plazaGroundY - 0.68) > 0.001 ||
           Math.abs(courtyardGroundY - 0.70) > 0.001 ||
-          Math.abs(baseGroundY - 0.64) > 0.001) {
+          Math.abs(baseGroundY - 0.64) > 0.001 ||
+          Math.abs(roadGroundY - 0.77) > 0.001 ||
+          Math.abs(sidewalkGroundY - 0.82) > 0.001) {
         throw new Error("Terrain height sampling does not match the generated grade data.");
       }
       const noPermissionServiceRoute = world.findRoute(
@@ -256,6 +260,7 @@
         ["Access tiers", district.accessTiers.length],
         ["Terrain grades", root.userData.terrainZoneCount],
         ["Terrain height samples", "verified"],
+        ["Road / sidewalk grounding", "verified"],
         ["Landscape zones", root.userData.landscapeZoneCount],
         ["Landscape features", root.userData.landscapeFeatureCount],
         ["Service gate before grant", gateBeforeAuthorization?.open ? "open" : "closed"],
