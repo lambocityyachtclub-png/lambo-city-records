@@ -276,7 +276,8 @@
       }
 
       const root = world.buildDistrict(district.id, { roadTopY: 0.77, sidewalkTopY: 0.82, roadWidth: 9, sidewalkWidth: 3 });
-      if (root.userData.terrainZoneCount !== district.terrainZones.length) {
+      if (root.userData.terrainZoneCount !== district.terrainZones.length ||
+          root.userData.terrainSurfaceCount !== district.terrainZones.length) {
         throw new Error("Not all declared terrain grades were generated.");
       }
       const terrainRoot = root.children.find(child => child.name === "worldTerrain_" + district.id);
@@ -397,7 +398,7 @@
         ["Sidewalk sections", root.userData.sidewalkCount],
         ["Villa parcels", root.userData.parcelCount],
         ["Access tiers", district.accessTiers.length],
-        ["Terrain grades", root.userData.terrainZoneCount],
+        ["Terrain grades / surfaces", root.userData.terrainZoneCount + " / " + root.userData.terrainSurfaceCount],
         ["Terrain height samples", "verified"],
         ["Terrain finishes / planting grade", "verified"],
         ["Landscape limits", "verified"],
