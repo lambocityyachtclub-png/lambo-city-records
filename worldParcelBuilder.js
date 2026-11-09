@@ -121,25 +121,54 @@ export function buildParcelGeometry(parent, district, options = {}) {
   root.name = "worldSystemParcels_" + district.id;
   root.userData.generatedBy = "LAMBO_CITY_ParcelBuilder";
 
-  let built = 0, buildings = 0;
-  const styles = {};
-  for (const parcel of district.parcels) {
-    if (!parcel?.center || !Number.isFinite(parcel.center.x) || !Number.isFinite(parcel.center.z)) continue;
+  const validParcels = district.parcels.filter(parcel =>
+    parcel?.center && Number.isFinite(parcel.center.x) && Number.isFinite(parcel.center.z) &&
+    Number.isFinite(parcel.footprint?.width ?? 13) && Number.isFinite(parcel.footprint?.depth ?? 11) &&
+    (parcel.footprint?.width ?? 13) > 0 && (parcel.footprint?.depth ?? 11) > 0 &&
+    PARCEL_STYLES.includes(parcel.style || "coastal-villa")
+  );
+  const maxDetailedParcels = Number.isInteger(options.maxDetailedParcels)
+    ? Math.max(0, Math.min(validParcels.length, options.maxDetailedParcels))
+    : Math.min(validParcels.length, 24);
+  const focus = options.focusPosition &&
+    Number.isFinite(options.focusPosition.x) && Number.isFinite(options.focusPosition.z)
+    ? options.focusPosition
+    : {
+        x: (district.bounds?.minX + district.bounds?.maxX) / 2,
+        z: (district.bounds?.minZ + district.bounds?.maxZ) / 2
+      };
+  const detailOrder = [...validParcels].sort((a, b) =>
+    Math.hypot(a.center.x - focus.x, a.center.z - focus.z) -
+    Math.hypot(b.center.x - focus.x, b.center.z - focus.z)
+  );
+  const detailedIds = new Set(detailOrder.slice(0, maxDetailedParcels).map(parcel => parcel.id));
+
+  let built = 0, buildings = 0, detailCount = 0;
+  const styles = {}, proxyParcels = new Map();
+  for (const parcel of validParcels) {
     const footprint = parcel.footprint || { width: 13, depth: 11 };
     const width = Number.isFinite(footprint.width) ? footprint.width : 13;
     const depth = Number.isFinite(footprint.depth) ? footprint.depth : 11;
-    if (width <= 0 || depth <= 0) continue;
-
     const style = parcel.style || "coastal-villa";
-    if (!PARCEL_STYLES.includes(style)) continue;
+    styles[style] = (styles[style] || 0) + 1;
+    built += 1;
+
+    if (!detailedIds.has(parcel.id)) {
+      if (!proxyParcels.has(style)) proxyParcels.set(style, []);
+      proxyParcels.get(style).push({ parcel, width, depth });
+      continue;
+    }
+
     const building = new THREE.Group();
     building.name = "worldParcel_" + parcel.id;
     building.position.set(parcel.center.x, 0, parcel.center.z);
     building.rotation.y = Number.isFinite(parcel.rotationY) ? parcel.rotationY : 0;
     root.add(building);
 
-    if (style === "coastal-villa") buildVilla(building, parcel, width, depth, materials);
-    else if (style === "luxury-apartment") {
+    if (style === "coastal-villa") {
+      buildVilla(building, parcel, width, depth, materials);
+      buildings += 1;
+    } else if (style === "luxury-apartment") {
       buildApartment(building, parcel, width, depth, materials);
       buildings += 1;
     } else if (style === "retail-promenade") {
@@ -148,20 +177,56 @@ export function buildParcelGeometry(parent, district, options = {}) {
     } else if (style === "urban-park") {
       buildPark(building, parcel, width, depth, materials);
     }
-    if (style === "coastal-villa") buildings += 1;
-    styles[style] = (styles[style] || 0) + 1;
 
     building.userData.parcelId = parcel.id;
     building.userData.use = parcel.use || "unassigned";
     building.userData.style = style;
     building.userData.footprint = { width, depth };
-    built += 1;
+    detailCount += 1;
+  }
+
+  // Distant parcels collapse into one instanced mass per archetype. This keeps
+  // large generated districts visually populated without thousands of meshes.
+  let proxyCount = 0;
+  for (const [style, entries] of proxyParcels) {
+    const proxyMaterial = style === "urban-park" ? materials.planting
+      : (style === "retail-promenade" ? materials.roof : materials.wall);
+    const batch = new THREE.InstancedMesh(
+      new THREE.BoxGeometry(1, 1, 1),
+      proxyMaterial,
+      entries.length
+    );
+    const matrix = new THREE.Object3D();
+    for (let index = 0; index < entries.length; index++) {
+      const { parcel, width, depth } = entries[index];
+      const floors = Math.max(3, Math.min(9, Math.floor(parcel.floors || 5)));
+      const height = style === "coastal-villa" ? 9.2
+        : style === "luxury-apartment" ? floors * 3 + 1.1
+        : style === "retail-promenade" ? 4.55
+        : 0.16;
+      matrix.position.set(parcel.center.x, 0.65 + height / 2, parcel.center.z);
+      matrix.rotation.set(0, Number.isFinite(parcel.rotationY) ? parcel.rotationY : 0, 0);
+      matrix.scale.set(width, height, depth);
+      matrix.updateMatrix();
+      batch.setMatrixAt(index, matrix.matrix);
+    }
+    batch.instanceMatrix.needsUpdate = true;
+    batch.name = "worldParcelProxyBatch_" + style;
+    batch.castShadow = false;
+    batch.receiveShadow = true;
+    batch.userData.style = style;
+    batch.userData.parcelCount = entries.length;
+    root.add(batch);
+    proxyCount += entries.length;
   }
 
   parent.add(root);
   parent.userData.parcelCount = built;
   parent.userData.parcelStyles = styles;
-  return { parcels: built, buildings, styles, root, ownedMaterials: Object.values(materials) };
+  parent.userData.detailParcelCount = detailCount;
+  parent.userData.proxyParcelCount = proxyCount;
+  parent.userData.proxyBatchCount = proxyParcels.size;
+  return { parcels: built, buildings, styles, root, detailCount, proxyCount, proxyBatchCount: proxyParcels.size, ownedMaterials: Object.values(materials) };
 }
 
 export default { buildParcelGeometry, PARCEL_STYLES };
