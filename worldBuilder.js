@@ -47,6 +47,8 @@ export function buildDistrictGeometry(scene, district, options = {}) {
   root.userData.externalMaterials = [options.roadMaterial, options.sidewalkMaterial, options.terrainMaterial].filter(Boolean);
   root.userData.ownedMaterials = [];
 
+  try {
+
   const nodes = new Map(district.roadNetwork.nodes.map(node => [node.id, node]));
   const roadMaterial = options.roadMaterial || makeRoadMaterial();
   const sidewalkMaterial = options.sidewalkMaterial || makeSidewalkMaterial();
@@ -137,6 +139,8 @@ export function buildDistrictGeometry(scene, district, options = {}) {
   // Roads and sidewalks remain walkable; building footprints block movement.
   const collision = options.collision;
   const collisionIds = [];
+  root.userData.collisionIds = collisionIds;
+  root.userData.collisionSystem = collision || null;
   if (collision && typeof collision.registerBox === "function") {
     for (const parcel of district.parcels || []) {
       if (parcel?.style === "urban-park") continue;
@@ -160,8 +164,6 @@ export function buildDistrictGeometry(scene, district, options = {}) {
       collisionIds.push(name);
     }
   }
-  root.userData.collisionIds = collisionIds;
-  root.userData.collisionSystem = collision || null;
   const accessGates = buildAccessGates(root, district, collision);
   root.userData.accessGates = accessGates;
   root.userData.accessGateIds = accessGates.map(gate => gate.id);
@@ -170,6 +172,34 @@ export function buildDistrictGeometry(scene, district, options = {}) {
 
   scene.add(root);
   return root;
+  } catch (error) {
+    for (const gate of root.userData.accessGates || []) {
+      try { gate.destroy?.(); } catch (_) { /* continue cleanup */ }
+    }
+    const cleanupCollision = root.userData.collisionSystem || collision;
+    if (cleanupCollision && typeof cleanupCollision.unregister === "function") {
+      for (const name of root.userData.collisionIds || []) {
+        try { cleanupCollision.unregister(name); } catch (_) { /* continue cleanup */ }
+      }
+    }
+    const externalMaterials = new Set(root.userData.externalMaterials || []);
+    const disposedMaterials = new Set();
+    root.traverse(object => {
+      object.geometry?.dispose?.();
+      const materials = Array.isArray(object.material) ? object.material : [object.material];
+      for (const material of materials) {
+        if (!material || externalMaterials.has(material) || disposedMaterials.has(material)) continue;
+        material.dispose?.();
+        disposedMaterials.add(material);
+      }
+    });
+    for (const material of root.userData.ownedMaterials || []) {
+      if (!material || externalMaterials.has(material) || disposedMaterials.has(material)) continue;
+      material.dispose?.();
+      disposedMaterials.add(material);
+    }
+    throw error;
+  }
 }
 
 export default { buildDistrictGeometry };
