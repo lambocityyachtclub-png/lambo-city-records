@@ -152,6 +152,7 @@ export function buildParcelGeometry(parent, district, options = {}) {
     const style = parcel.style || "coastal-villa";
     styles[style] = (styles[style] || 0) + 1;
     built += 1;
+    if (style !== "urban-park") buildings += 1;
 
     if (!detailedIds.has(parcel.id)) {
       if (!proxyParcels.has(style)) proxyParcels.set(style, []);
@@ -170,10 +171,8 @@ export function buildParcelGeometry(parent, district, options = {}) {
       buildings += 1;
     } else if (style === "luxury-apartment") {
       buildApartment(building, parcel, width, depth, materials);
-      buildings += 1;
     } else if (style === "retail-promenade") {
       buildRetail(building, parcel, width, depth, materials);
-      buildings += 1;
     } else if (style === "urban-park") {
       buildPark(building, parcel, width, depth, materials);
     }
