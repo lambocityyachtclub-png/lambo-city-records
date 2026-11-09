@@ -7,14 +7,14 @@ The World System is the reusable foundation for adding named districts without h
 - `worldDistrictSchema.js` checks district data before it can be registered.
 - `worldDistrictFactory.js` compiles compact road-loop and parcel-band recipes into connected district blueprints.
 - `worldSystem.js` stores districts, builds/removes their generated scene roots, manages access gates, and routes between districts.
-- `worldBuilder.js` creates road surfaces, junctions, sidewalks, parcel geometry, and optional collision blockers.
-- `worldTerrainBuilder.js` creates the district ground, colored grade surfaces, raised/lowered transitions, and low-cost planting; `worldTerrainMath.js` supplies cached terrain, road, and sidewalk height queries.
+- `worldBuilder.js` creates road surfaces, junctions, and sidewalks as instanced batches, plus parcel geometry and optional collision blockers.
+- `worldTerrainBuilder.js` creates the district ground, colored grade surfaces, raised/lowered transitions, and low-cost planting. Terrain mesh resolution is capped at 192×192 segments per district; `worldTerrainMath.js` supplies cached terrain, road, and sidewalk height queries.
 - `worldParcelBuilder.js` builds the nearest parcel archetypes in detail and batches distant parcel silhouettes into instanced meshes. Generated parcel details do not cast individual dynamic shadows by default, reducing iPad rendering cost.
 - `worldDistrictProxyBuilder.js` creates very low-cost far-distance district proxies with instanced roads, landmark silhouettes, buildings, and park patches.
 - `worldAccessGate.js` creates physical gates and updates their collision state when an access tier is granted.
 - `worldNavigation.js` provides A* routing inside one district and across registered district connectors.
 - `worldDistrictStreaming.js` keeps distant districts visible as far proxies, swaps to full district detail near the player, and returns to the proxy before removing full detail. Separate distance bands prevent flicker and blank gaps.
-- Nearby parcel detail follows the player inside large districts; the detailed parcel budget is capped independently from the instanced distant parcel batches.
+- Nearby parcel detail follows the player inside large districts; detailed parcel meshes are grouped by material and geometry into a small number of instanced draws. The detailed parcel budget is capped independently from the instanced distant parcel batches.
 - `worldSystemRuntime.js` is the lazy bridge the engine can call later; it loads the system only when explicitly initialized, registers blueprints/recipes, and delegates per-frame streaming updates.
 - `worldDistricts/conferenceCenter.js` is the first district blueprint.
 - `world-system-preview.html` is the isolated preview and browser-side check harness.
