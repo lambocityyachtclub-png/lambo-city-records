@@ -42,6 +42,7 @@ jobs:
             worldConnectionBuilder.js \
             worldNavigation.js \
             worldDistrictStreaming.js \
+            worldVehicleRoadRules.js \
             worldSystemRuntime.js \
             worldSystemHost.js \
             worldSystem.js \
