@@ -8,7 +8,7 @@ The World System is the reusable foundation for adding named districts without h
 - `worldDistrictFactory.js` compiles compact road-loop and parcel-band recipes into connected district blueprints.
 - `worldSystem.js` stores districts, builds/removes their generated scene roots, manages access gates, and routes between districts.
 - `worldBuilder.js` creates road surfaces, junctions, sidewalks, parcel geometry, and optional collision blockers.
-- `worldTerrainBuilder.js` creates the district ground, raised/lowered grade transitions, and low-cost planting; `worldTerrainMath.js` supplies cached terrain, road, and sidewalk height queries.
+- `worldTerrainBuilder.js` creates the district ground, colored grade surfaces, raised/lowered transitions, and low-cost planting; `worldTerrainMath.js` supplies cached terrain, road, and sidewalk height queries.
 - `worldParcelBuilder.js` builds parcel archetypes.
 - `worldAccessGate.js` creates physical gates and updates their collision state when an access tier is granted.
 - `worldNavigation.js` provides A* routing inside one district and across registered district connectors.
@@ -30,19 +30,19 @@ An urban park is walkable and does not receive a building collision blocker. The
 
 ## District data
 
-For repeatable neighborhoods, start with `createDistrictFromRecipe(recipe)`. The factory supports either a rectangular perimeter loop with optional junctions and parcel bands, or a rectangular street grid with automatically generated blocks and parcel centers. Both can include pedestrian routes and a restricted service entry. The factory generates road nodes/segments and parcel positions; the schema then checks the result before registration. Use a hand-authored blueprint only when a district needs a custom landmark or unusual road layout.
+For repeatable neighborhoods, start with `createDistrictFromRecipe(recipe)`. The factory supports either a rectangular perimeter loop with optional junctions and parcel bands, or a rectangular street grid with automatically generated blocks and parcel centers. Both can include pedestrian routes and a restricted service entry. To protect iPad memory and frame time, a single grid is limited to 16 rows by 16 columns, loop recipes to 64 extra junctions, and parcel-band recipes to 256 parcels. The factory generates road nodes/segments and parcel positions; the schema then checks the result before registration. Use a hand-authored blueprint only when a district needs a custom landmark or unusual road layout.
 
 A district blueprint contains:
 
 - A unique `id`, a readable `name`, and rectangular `bounds`.
 - A `roadNetwork` with unique nodes and connected segments.
 - Optional `navigationOnly: true` segments for pedestrian or other route links that must not generate another road surface.
-- Optional `terrainZones` with center, width, depth, edge elevation, top elevation, and transition width.
+- Optional `terrainZones` with center, width, depth, edge elevation, top elevation, transition width, and a surface color.
 - Optional `landscapeZones` for small planted courtyards.
 - `parcels` with center, footprint, style, and optional rotation/floor count.
 - `accessTiers` and restricted-road metadata.
 
-Terrain zones must stay within the district, avoid parcel footprints, and not overlap one another. The validator also checks rotated parcel footprints against road and sidewalk corridors. The height sampler uses the same transition formula as the generated terrain mesh. `getDistrictAtPosition(x, z)` identifies the registered district under a world coordinate, and `getGroundHeightAt(x, z)` returns its sampled terrain height or the road/sidewalk top where appropriate. The runtime bridge exposes the same coordinate-based queries for a future player/vehicle grounding adapter.
+Terrain zones must stay within the district, avoid parcel footprints, and not overlap one another. The validator also checks rotated parcel footprints against road and sidewalk corridors, landscape planting density, and color values. Terrain zones receive their own low-poly finish meshes and use the same height formula as the underlying terrain. Landscape courtyards follow their local terrain elevation and use instanced low-poly planting to keep draw calls controlled. `getDistrictAtPosition(x, z)` identifies the registered district under a world coordinate, and `getGroundHeightAt(x, z)` returns its sampled terrain height or the road/sidewalk top where appropriate. The runtime bridge exposes the same coordinate-based queries for a future player/vehicle grounding adapter.
 
 ## Access tiers and gates
 
@@ -75,4 +75,4 @@ Do not wire new districts into engine startup by default. Keep generation on dem
 
 ## Current boundary
 
-The World System and its generated preview are separate from live gameplay. The current district preview includes a guide for the existing arena footprint, but generated roads, gates, parcel geometry, and collision are not yet active in the live city. Terrain grades are local controlled transitions; surveyed shoreline contours, bridges, piers, final building architecture, live grounding, and full city integration remain later phases.
+The World System and its generated preview are separate from live gameplay. The current district preview includes a guide for the existing arena footprint, but generated roads, gates, parcel geometry, and collision are not yet active in the live city. Terrain grades and colored finish surfaces are generated from explicit zones, and the runtime exposes coordinate-based terrain/road/sidewalk height queries. Those queries are not yet connected to the live player or vehicle movement controller. Surveyed shoreline contours, bridges, piers, final building architecture, and full city integration remain later phases.
