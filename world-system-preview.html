@@ -247,7 +247,7 @@
         maxDetailedParcels: 12
       });
       if (largeParcelResult.detailCount !== 12 || largeParcelResult.proxyCount !== 37 ||
-          largeParcelResult.proxyBatchCount !== 4) {
+          largeParcelResult.proxyBatchCount !== 4 || largeParcelResult.buildings !== 37) {
         throw new Error("Large districts did not cap detailed buildings and batch distant parcel proxies.");
       }
       largeParcelRoot.traverse(object => object.geometry?.dispose?.());
