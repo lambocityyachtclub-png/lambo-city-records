@@ -81,8 +81,8 @@ export function sampleRoadSurfaceHeight(district, x, z, surfaceOptions = {}) {
     if (Math.abs(x - junction.x) <= junction.width / 2 &&
         Math.abs(z - junction.z) <= junction.width / 2) onRoad = true;
   }
-  if (onSidewalk) return sidewalkTopY;
   if (onRoad) return roadTopY;
+  if (onSidewalk) return sidewalkTopY;
   return null;
 }
 
