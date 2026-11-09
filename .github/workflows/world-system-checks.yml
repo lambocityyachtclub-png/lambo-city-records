@@ -9,6 +9,7 @@ on:
       - "world*.js"
       - "worldDistricts/**"
       - "world-system-preview.html"
+      - "world-district-composer.html"
       - "tests/world-system-node-tests.mjs"
       - ".github/workflows/world-system-checks.yml"
 
@@ -161,7 +162,13 @@ jobs:
               throw new Error("District composer desktop errors: " + composerErrors.join("\\n") +
                 " / " + await composer.locator("#error").textContent());
             }
-            console.log("District composer desktop generation: passed");
+            const exportedBrief = JSON.parse(await composer.locator("#recipe-output").inputValue());
+            if (exportedBrief.character !== "coastal" || exportedBrief.density !== "high" ||
+                exportedBrief.name !== "Coastal Composer Test" ||
+                await composer.locator("#copy-recipe").isDisabled()) {
+              throw new Error("District composer did not expose a reusable brief matching the generated neighborhood.");
+            }
+            console.log("District composer desktop generation and recipe export: passed");
 
             const composerTablet = await browser.newPage({
               viewport: { width: 834, height: 1194 },
