@@ -15,6 +15,10 @@ function makeSidewalkMaterial() {
   return new THREE.MeshStandardMaterial({ color: 0xb9ad98, roughness: 0.86 });
 }
 
+function makeCurbMaterial() {
+  return new THREE.MeshStandardMaterial({ color: 0x777a79, roughness: 0.92 });
+}
+
 export function buildDistrictGeometry(scene, district, options = {}) {
   if (!scene || !district?.roadNetwork ||
       !Array.isArray(district.roadNetwork.nodes) ||
@@ -45,8 +49,10 @@ export function buildDistrictGeometry(scene, district, options = {}) {
   const nodes = new Map(district.roadNetwork.nodes.map(node => [node.id, node]));
   const roadMaterial = options.roadMaterial || makeRoadMaterial();
   const sidewalkMaterial = options.sidewalkMaterial || makeSidewalkMaterial();
+  const curbMaterial = options.curbMaterial || makeCurbMaterial();
   if (!options.roadMaterial) root.userData.ownedMaterials.push(roadMaterial);
   if (!options.sidewalkMaterial) root.userData.ownedMaterials.push(sidewalkMaterial);
+  if (!options.curbMaterial) root.userData.ownedMaterials.push(curbMaterial);
   const defaultWidth = Number.isFinite(options.roadWidth) ? options.roadWidth : 9;
   const sidewalkWidth = Number.isFinite(options.sidewalkWidth)
     ? options.sidewalkWidth
@@ -57,6 +63,7 @@ export function buildDistrictGeometry(scene, district, options = {}) {
   const validSegments = [];
   const roadInstances = [];
   const sidewalkInstances = [];
+  const curbInstances = [];
 
   for (const segment of district.roadNetwork.segments) {
     if (segment.navigationOnly === true) continue;
@@ -80,6 +87,31 @@ export function buildDistrictGeometry(scene, district, options = {}) {
         x: centerX, z: centerZ, width, length: length + width * 0.02,
         angle, slopeAngle, y: (roadFromY + roadToY) / 2 - thickness / 2, height: thickness
       });
+
+      // Raised curb strips stop before widened turning aprons and junctions.
+      const startTrim = Number.isFinite(from.turningArea?.width) ? from.turningArea.width / 2 : 0;
+      const endTrim = Number.isFinite(to.turningArea?.width) ? to.turningArea.width / 2 : 0;
+      const curbLength = length - startTrim - endTrim;
+      if (curbLength > 1) {
+        const along = (startTrim + length - endTrim) / 2 / length;
+        const curbCenterX = from.x + dx * along;
+        const curbCenterZ = from.z + dz * along;
+        const curbOffset = width / 2 + 0.12;
+        const curbSideX = Math.cos(angle) * curbOffset;
+        const curbSideZ = -Math.sin(angle) * curbOffset;
+        for (const sign of [-1, 1]) {
+          curbInstances.push({
+            x: curbCenterX + curbSideX * sign,
+            z: curbCenterZ + curbSideZ * sign,
+            width: 0.24,
+            length: curbLength,
+            angle,
+            slopeAngle,
+            y: (roadFromY + roadToY) / 2 + 0.08,
+            height: 0.16
+          });
+        }
+      }
     }
 
     if (segment.mode === "pedestrian" && segment.physicalSurface === "sidewalk") {
@@ -168,6 +200,8 @@ export function buildDistrictGeometry(scene, district, options = {}) {
 
   makeInstanceBatch("worldRoadSurfaceBatch", roadInstances, roadMaterial);
   makeInstanceBatch("worldSidewalkSurfaceBatch", sidewalkInstances, sidewalkMaterial);
+  makeInstanceBatch("worldCurbSurfaceBatch", curbInstances, curbMaterial);
+  root.userData.curbCount = curbInstances.length;
   root.userData.roadCount = validSegments.filter(item => item.segment.mode !== "pedestrian").length;
   root.userData.roadInstanceCount = roadInstances.length;
   root.userData.junctionCount = junctionCount;
