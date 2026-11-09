@@ -38,6 +38,7 @@
     import { OrbitControls } from "https://unpkg.com/three@0.160.0/examples/jsm/controls/OrbitControls.js";
     import WorldSystem from "./worldSystem.js";
     import WorldDistrictStreaming from "./worldDistrictStreaming.js";
+    import WorldSystemRuntime from "./worldSystemRuntime.js";
     import { createDistrictFromRecipe } from "./worldDistrictFactory.js";
     import district from "./worldDistricts/conferenceCenter.js";
     import { validateDistrict } from "./worldDistrictSchema.js";
@@ -218,6 +219,29 @@
       districtStreamer.update(0, { playerPosition: { x: 409, z: 100 } });
       if (archetypeWorld.isDistrictBuilt(archetypeDistrict.id) || archetypeCollision.boxes.length !== 0) {
         throw new Error("A distant district did not stream out and clean up its colliders.");
+      }
+      const runtimeScene = new THREE.Scene();
+      const runtimeCollision = {
+        boxes: [],
+        registerBox(name, bounds) { this.boxes.push({ name, ...bounds }); },
+        unregister(name) { this.boxes = this.boxes.filter(box => box.name !== name); }
+      };
+      const runtime = new WorldSystemRuntime();
+      await runtime.init(runtimeScene, { systems: { collision: runtimeCollision } }, {
+        districts: [recipeDistrict],
+        streamingOptions: { streamInRadius: 50, streamOutRadius: 75 }
+      });
+      runtime.update(0, { playerPosition: { x: -43, z: 100 } });
+      if (!runtime.getWorldSystem().isDistrictBuilt(recipeDistrict.id)) {
+        throw new Error("The lazy runtime bridge did not build a nearby district.");
+      }
+      runtime.update(0, { playerPosition: { x: 1000, z: 1000 } });
+      if (runtime.getWorldSystem().isDistrictBuilt(recipeDistrict.id) || runtimeCollision.boxes.length !== 0) {
+        throw new Error("The runtime bridge did not stream out and clean up the district.");
+      }
+      runtime.dispose();
+      if (runtime.getWorldSystem() !== null || runtime.ready) {
+        throw new Error("The runtime bridge did not dispose cleanly.");
       }
 
       const root = world.buildDistrict(district.id, { roadTopY: 0.77, sidewalkTopY: 0.82, roadWidth: 9, sidewalkWidth: 3 });
