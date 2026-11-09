@@ -37,7 +37,7 @@ class MinHeap {
   get size() { return this.items.length; }
 }
 
-function segmentAllowed(segment, mode, permissions) {
+function segmentAllowed(segment, mode, permissions, openGates = new Set(), districtId = "") {
   const segmentMode = segment.mode || "vehicle";
   if (mode === "pedestrian") {
     if (segmentMode !== "pedestrian" && segmentMode !== "shared") return false;
@@ -48,6 +48,7 @@ function segmentAllowed(segment, mode, permissions) {
   } else {
     return false;
   }
+  if (segment.gate && !openGates.has(JSON.stringify([districtId, segment.gate.id]))) return false;
   if (segment.access === "permission-controlled") {
     return !!segment.requiredAccess && permissions.has(segment.requiredAccess);
   }
@@ -70,9 +71,10 @@ export function findRoute(district, fromId, toId, options = {}) {
 
   const mode = options.mode || "vehicle";
   const permissions = new Set(Array.isArray(options.permissions) ? options.permissions : []);
+  const openGates = options.openGates instanceof Set ? options.openGates : new Set();
   const adjacency = new Map(nodes.map(node => [node.id, []]));
   for (const segment of segments) {
-    if (!segmentAllowed(segment, mode, permissions)) continue;
+    if (!segmentAllowed(segment, mode, permissions, openGates, districtId)) continue;
     const from = nodeById.get(segment.from), to = nodeById.get(segment.to);
     if (!from || !to) continue;
     const distance = Math.hypot(to.x - from.x, to.z - from.z);
@@ -141,6 +143,7 @@ export function findWorldRoute(districtEntries, connections, fromDistrictId, fro
 
   const mode = options.mode || "vehicle";
   const permissions = new Set(Array.isArray(options.permissions) ? options.permissions : []);
+  const openGates = options.openGates instanceof Set ? options.openGates : new Set();
   const addEdge = (fromKey, toKey, edge, distance) => {
     if (!nodes.has(fromKey) || !nodes.has(toKey) || !Number.isFinite(distance) || distance <= 0) return;
     adjacency.get(fromKey).push({ toKey, edge, distance });
@@ -149,7 +152,7 @@ export function findWorldRoute(districtEntries, connections, fromDistrictId, fro
 
   for (const [districtId, district] of districtEntries || []) {
     for (const segment of district?.roadNetwork?.segments || []) {
-      if (!segmentAllowed(segment, mode, permissions)) continue;
+      if (!segmentAllowed(segment, mode, permissions, openGates, districtId)) continue;
       const fromKey = keyFor(districtId, segment.from);
       const toKey = keyFor(districtId, segment.to);
       const from = nodes.get(fromKey), to = nodes.get(toKey);
@@ -166,7 +169,7 @@ export function findWorldRoute(districtEntries, connections, fromDistrictId, fro
       access: connection.access,
       requiredAccess: connection.requiredAccess
     };
-    if (!segmentAllowed(synthetic, mode, permissions)) continue;
+    if (!segmentAllowed(synthetic, mode, permissions, openGates, "")) continue;
     const fromKey = keyFor(connection.from?.districtId, connection.from?.nodeId);
     const toKey = keyFor(connection.to?.districtId, connection.to?.nodeId);
     const from = nodes.get(fromKey), to = nodes.get(toKey);
