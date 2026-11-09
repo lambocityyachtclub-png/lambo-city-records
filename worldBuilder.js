@@ -122,6 +122,7 @@ export function buildDistrictGeometry(scene, district, options = {}) {
   root.userData.groundTopY = terrainResult.root.userData.groundTopY;
   root.userData.ownedMaterials.push(...terrainResult.ownedMaterials);
   root.userData.terrainZoneCount = terrainResult.terrainZones;
+  root.userData.terrainSurfaceCount = terrainResult.terrainSurfaces;
   root.userData.landscapeZoneCount = terrainResult.zones;
   root.userData.landscapeFeatureCount = terrainResult.features;
 
