@@ -40,6 +40,7 @@
     import WorldDistrictStreaming from "./worldDistrictStreaming.js";
     import WorldSystemRuntime from "./worldSystemRuntime.js";
     import WorldSystemHost from "./worldSystemHost.js";
+    import Player from "./player.js";
     import { createDistrictFromRecipe } from "./worldDistrictFactory.js";
     import { buildParcelGeometry } from "./worldParcelBuilder.js";
     import { updateDistrictParcelFocus } from "./worldBuilder.js";
@@ -427,6 +428,21 @@
       if (!WorldSystemHost.isReady() ||
           Math.abs(WorldSystemHost.getGroundHeightAt(-60, 62.5) - 0.77) > 0.001) {
         throw new Error("The engine host did not expose explicit initialization and generated ground sampling.");
+      }
+      const hostPlayer = Player.init(hostScene);
+      hostPlayer.position.set(-60, 1.3, 62.5);
+      const stationaryInput = {
+        keys: { w: false, a: false, s: false, d: false },
+        joystick: { active: false, x: 0, y: 0 }
+      };
+      Player.update(0.016, { systems: { input: stationaryInput, worldSystemHost: WorldSystemHost } });
+      if (Math.abs(hostPlayer.position.y - 1.42) > 0.01) {
+        throw new Error("The live player did not follow a generated road elevation.");
+      }
+      hostPlayer.position.set(-60, 1.3, 56.5);
+      Player.update(0.016, { systems: { input: stationaryInput, worldSystemHost: WorldSystemHost } });
+      if (Math.abs(hostPlayer.position.y - 1.47) > 0.01) {
+        throw new Error("The live player did not follow a generated sidewalk elevation.");
       }
       WorldSystemHost.buildDistrict(recipeDistrict.id);
       if (hostCollision.boxes.length !== recipeDistrict.parcels.length + 1) {
