@@ -8,7 +8,7 @@ import { buildDistrictProxy, disposeDistrictProxy } from "./worldDistrictProxyBu
 import { findRoute as findDistrictRoute, findWorldRoute as findCityRoute } from "./worldNavigation.js";
 import { sampleTerrainHeight, sampleRoadSurfaceHeight } from "./worldTerrainMath.js";
 import { buildPhysicalConnection, disposePhysicalConnection } from "./worldConnectionBuilder.js";
-import { getVehicleRoadSurface, isVehicleFootprintOnRoad, isVehicleMoveOnRoad, getMinimumUTurnSpace } from "./worldVehicleRoadRules.js";
+import { getVehicleRoadSurface, isVehicleFootprintOnRoad, isVehicleMoveOnRoad, buildVehicleUTurnPath, getMinimumUTurnSpace } from "./worldVehicleRoadRules.js";
 
 export default class WorldSystem {
   constructor(options = {}) {
@@ -263,6 +263,11 @@ export default class WorldSystem {
     return !!district && isVehicleMoveOnRoad(district, current, next, {
       ...options, openGates: this.getOpenGateIds(districtId)
     });
+  }
+
+  buildVehicleUTurnPath(districtId, nodeId, vehicle = {}, options = {}) {
+    const district = this.districts.get(districtId);
+    return district ? buildVehicleUTurnPath(district, nodeId, vehicle, options) : { valid: false, reason: "UNKNOWN_DISTRICT", points: [] };
   }
 
   getVehicleTurnSpace(vehicle = {}) {
