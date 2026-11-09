@@ -61,8 +61,9 @@ export default class WorldSystem {
     if (!root) return false;
     this.scene?.remove(root);
     for (const gate of root.userData.accessGates || []) gate.destroy?.();
-    if (this.collision && typeof this.collision.unregister === "function") {
-      for (const name of root.userData.collisionIds || []) this.collision.unregister(name);
+    const collision = root.userData.collisionSystem || this.collision;
+    if (collision && typeof collision.unregister === "function") {
+      for (const name of root.userData.collisionIds || []) collision.unregister(name);
     }
     root.traverse?.(object => {
       if (object.geometry && object.geometry.dispose) object.geometry.dispose();
