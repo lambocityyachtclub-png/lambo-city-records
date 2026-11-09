@@ -19,6 +19,10 @@ function makeCurbMaterial() {
   return new THREE.MeshStandardMaterial({ color: 0x777a79, roughness: 0.92 });
 }
 
+function makeVergeMaterial() {
+  return new THREE.MeshStandardMaterial({ color: 0x3e513e, roughness: 1 });
+}
+
 export function buildDistrictGeometry(scene, district, options = {}) {
   if (!scene || !district?.roadNetwork ||
       !Array.isArray(district.roadNetwork.nodes) ||
@@ -50,9 +54,11 @@ export function buildDistrictGeometry(scene, district, options = {}) {
   const roadMaterial = options.roadMaterial || makeRoadMaterial();
   const sidewalkMaterial = options.sidewalkMaterial || makeSidewalkMaterial();
   const curbMaterial = options.curbMaterial || makeCurbMaterial();
+  const vergeMaterial = options.vergeMaterial || makeVergeMaterial();
   if (!options.roadMaterial) root.userData.ownedMaterials.push(roadMaterial);
   if (!options.sidewalkMaterial) root.userData.ownedMaterials.push(sidewalkMaterial);
   if (!options.curbMaterial) root.userData.ownedMaterials.push(curbMaterial);
+  if (!options.vergeMaterial) root.userData.ownedMaterials.push(vergeMaterial);
   const defaultWidth = Number.isFinite(options.roadWidth) ? options.roadWidth : 9;
   const sidewalkWidth = Number.isFinite(options.sidewalkWidth)
     ? options.sidewalkWidth
@@ -64,6 +70,7 @@ export function buildDistrictGeometry(scene, district, options = {}) {
   const roadInstances = [];
   const sidewalkInstances = [];
   const curbInstances = [];
+  const vergeInstances = [];
 
   for (const segment of district.roadNetwork.segments) {
     if (segment.navigationOnly === true) continue;
@@ -134,6 +141,23 @@ export function buildDistrictGeometry(scene, district, options = {}) {
       const sidewalkSides = Array.isArray(segment.sidewalkSides)
         ? segment.sidewalkSides.filter(sign => sign === -1 || sign === 1)
         : [-1, 1];
+      const standardSidewalkOffset = width / 2 + sidewalkWidth / 2;
+      const vergeWidth = Math.max(0, offset - standardSidewalkOffset);
+      if (vergeWidth > 0.25) {
+        const vergeOffset = width / 2 + vergeWidth / 2;
+        for (const sign of sidewalkSides) {
+          vergeInstances.push({
+            x: centerX + Math.cos(angle) * vergeOffset * sign,
+            z: centerZ - Math.sin(angle) * vergeOffset * sign,
+            width: vergeWidth,
+            length: length + sidewalkWidth + (segment.loop ? 21 : 0),
+            angle,
+            slopeAngle,
+            y: (roadFromY + roadToY) / 2 - 0.09,
+            height: 0.06
+          });
+        }
+      }
       for (const sign of sidewalkSides) {
         const sideFromY = Number.isFinite(segment.sidewalkFromTopY)
           ? segment.sidewalkFromTopY : roadFromY + (sidewalkY - roadY);
@@ -201,7 +225,9 @@ export function buildDistrictGeometry(scene, district, options = {}) {
   makeInstanceBatch("worldRoadSurfaceBatch", roadInstances, roadMaterial);
   makeInstanceBatch("worldSidewalkSurfaceBatch", sidewalkInstances, sidewalkMaterial);
   makeInstanceBatch("worldCurbSurfaceBatch", curbInstances, curbMaterial);
+  makeInstanceBatch("worldRoadVergeBatch", vergeInstances, vergeMaterial);
   root.userData.curbCount = curbInstances.length;
+  root.userData.vergeCount = vergeInstances.length;
   root.userData.roadCount = validSegments.filter(item => item.segment.mode !== "pedestrian").length;
   root.userData.roadInstanceCount = roadInstances.length;
   root.userData.junctionCount = junctionCount;
