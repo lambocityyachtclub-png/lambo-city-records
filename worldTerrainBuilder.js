@@ -79,6 +79,7 @@ export function buildTerrainAndLandscape(parent, district, options = {}) {
   const root = new THREE.Group();
   root.name = "worldTerrain_" + district.id;
   root.userData.generatedBy = "LAMBO_CITY_TerrainBuilder";
+  root.userData.groundTopY = groundTopY;
 
   const ground = new THREE.Mesh(
     new THREE.PlaneGeometry(width, depth),
