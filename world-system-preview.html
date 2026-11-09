@@ -128,14 +128,14 @@
       const serviceEntryNode = district.roadNetwork.nodes.find(node => node.id === "boardwalk-service-entry");
       const boardwalkServiceSegment = district.roadNetwork.segments.find(segment => segment.id === "boardwalk-gated-service-approach");
       if (district.groundTopY !== CITY_MAP.surfaces.groundTopY ||
-          Math.abs(district.bounds.minZ - (CITY_MAP.districts.marinaBoardwalk.road.maxZ + 0.5)) > 0.001 ||
+          Math.abs(district.bounds.minZ - CITY_MAP.districts.marinaBoardwalk.road.maxZ) > 0.001 ||
           Math.abs(serviceEntryNode?.z - district.bounds.minZ) > 0.001 ||
           Math.abs(district.roadNetwork.nodes.find(node => node.id === "boulevard-south-west")?.x -
             (masterBoulevard.centerX - (masterBoulevard.outerWidth / 2 - (masterBoulevard.roadWidth / 2 + masterBoulevard.sidewalkWidth)))) > 0.001 ||
           Math.abs(district.roadNetwork.nodes.find(node => node.id === "boulevard-north-east")?.z -
             (masterBoulevard.centerZ + (masterBoulevard.outerDepth / 2 - (masterBoulevard.roadWidth / 2 + masterBoulevard.sidewalkWidth)))) > 0.001 ||
           boardwalkServiceSegment?.gate?.offset !== 1.4) {
-        throw new Error("The generated district no longer follows the master city map or starts beyond the boardwalk deck.");
+        throw new Error("The generated district street no longer meets the mapped Boardwalk road edge.");
       }
       const previewCollision = {
         boxes: [],
