@@ -140,6 +140,14 @@ export function buildDistrictGeometry(scene, district, options = {}) {
   root.userData.detailParcelCount = parcelResult.detailCount;
   root.userData.proxyParcelCount = parcelResult.proxyCount;
   root.userData.proxyBatchCount = parcelResult.proxyBatchCount;
+  root.userData.parcelRoot = parcelResult.root;
+  root.userData.parcelOwnedMaterials = parcelResult.ownedMaterials;
+  root.userData.detailParcelIds = parcelResult.detailParcelIds || [];
+  root.userData.parcelFocusPosition = parcelResult.focusPosition || null;
+  root.userData.parcelDetailSignature = [...root.userData.detailParcelIds].sort().join("|");
+  root.userData.parcelBuildOptions = {
+    maxDetailedParcels: Number.isInteger(options.maxDetailedParcels) ? options.maxDetailedParcels : 24
+  };
   root.userData.ownedMaterials.push(...parcelResult.ownedMaterials);
   // Optional collision registration uses the existing player's AABB API.
   // Roads and sidewalks remain walkable; building footprints block movement.
@@ -205,4 +213,82 @@ export function buildDistrictGeometry(scene, district, options = {}) {
   }
 }
 
-export default { buildDistrictGeometry };
+export function updateDistrictParcelFocus(root, district, position, options = {}) {
+  if (!root || !district || !Number.isFinite(position?.x) || !Number.isFinite(position?.z) ||
+      !root.userData.parcelRoot) return false;
+
+  const previousFocus = root.userData.parcelFocusPosition;
+  const refreshDistance = Number.isFinite(options.focusRefreshDistance)
+    ? Math.max(0, options.focusRefreshDistance) : 20;
+  if (previousFocus && Math.hypot(position.x - previousFocus.x, position.z - previousFocus.z) < refreshDistance) {
+    return false;
+  }
+
+  const validParcels = (district.parcels || []).filter(parcel =>
+    parcel?.center && Number.isFinite(parcel.center.x) && Number.isFinite(parcel.center.z) &&
+    Number.isFinite(parcel.footprint?.width ?? 13) && Number.isFinite(parcel.footprint?.depth ?? 11) &&
+    (parcel.footprint?.width ?? 13) > 0 && (parcel.footprint?.depth ?? 11) > 0 &&
+    ["coastal-villa", "luxury-apartment", "retail-promenade", "urban-park"].includes(parcel.style || "coastal-villa")
+  );
+  const maxDetailed = Number.isInteger(root.userData.parcelBuildOptions?.maxDetailedParcels)
+    ? Math.max(0, Math.min(validParcels.length, root.userData.parcelBuildOptions.maxDetailedParcels))
+    : Math.min(validParcels.length, 24);
+  const desiredIds = validParcels
+    .map(parcel => ({
+      id: parcel.id,
+      distance: Math.hypot(parcel.center.x - position.x, parcel.center.z - position.z)
+    }))
+    .sort((a, b) => a.distance - b.distance)
+    .slice(0, maxDetailed)
+    .map(item => item.id)
+    .sort();
+  const signature = desiredIds.join("|");
+  if (signature === (root.userData.parcelDetailSignature || "")) {
+    root.userData.parcelFocusPosition = { x: position.x, z: position.z };
+    return false;
+  }
+
+  const staging = new THREE.Group();
+  let result;
+  try {
+    result = buildParcelGeometry(staging, district, {
+      ...root.userData.parcelBuildOptions,
+      focusPosition: position
+    });
+  } catch (error) {
+    staging.traverse(object => {
+      object.geometry?.dispose?.();
+      const list = Array.isArray(object.material) ? object.material : [object.material];
+      for (const material of list) material?.dispose?.();
+    });
+    throw error;
+  }
+  const nextRoot = result.root;
+  if (!nextRoot) return false;
+  staging.remove(nextRoot);
+
+  const previousRoot = root.userData.parcelRoot;
+  const previousMaterials = new Set(root.userData.parcelOwnedMaterials || []);
+  root.remove(previousRoot);
+  previousRoot.traverse(object => object.geometry?.dispose?.());
+  for (const material of previousMaterials) material.dispose?.();
+  root.userData.ownedMaterials = (root.userData.ownedMaterials || [])
+    .filter(material => !previousMaterials.has(material));
+
+  root.add(nextRoot);
+  root.userData.parcelRoot = nextRoot;
+  root.userData.parcelOwnedMaterials = result.ownedMaterials;
+  root.userData.ownedMaterials.push(...result.ownedMaterials);
+  root.userData.parcelCount = result.parcels;
+  root.userData.buildingCount = result.buildings;
+  root.userData.parcelStyles = result.styles;
+  root.userData.detailParcelCount = result.detailCount;
+  root.userData.proxyParcelCount = result.proxyCount;
+  root.userData.proxyBatchCount = result.proxyBatchCount;
+  root.userData.detailParcelIds = result.detailParcelIds || desiredIds;
+  root.userData.parcelDetailSignature = signature;
+  root.userData.parcelFocusPosition = { x: position.x, z: position.z };
+  return true;
+}
+
+export default { buildDistrictGeometry, updateDistrictParcelFocus };
