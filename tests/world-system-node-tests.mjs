@@ -71,7 +71,7 @@ const masterMapValidation = validateDistrict(CONFERENCE_CENTER_DISTRICT);
 assert.equal(masterMapValidation.valid, true,
   masterMapValidation.issues.map(item => item.code + ": " + item.message).join("\n"));
 assert.equal(CONFERENCE_CENTER_DISTRICT.groundTopY, CITY_MAP.surfaces.groundTopY);
-assert.equal(CONFERENCE_CENTER_DISTRICT.bounds.minZ, CITY_MAP.districts.marinaBoardwalk.road.maxZ + 0.5);
+assert.equal(CONFERENCE_CENTER_DISTRICT.bounds.minZ, CITY_MAP.districts.marinaBoardwalk.road.maxZ);
 assert.equal(
   CONFERENCE_CENTER_DISTRICT.roadNetwork.nodes.find(node => node.id === "boardwalk-service-entry").z,
   CONFERENCE_CENTER_DISTRICT.bounds.minZ
@@ -80,6 +80,35 @@ assert.equal(
   CONFERENCE_CENTER_DISTRICT.roadNetwork.segments.find(segment => segment.id === "boardwalk-gated-service-approach").gate.offset,
   1.4
 );
+const boardwalkRoad = CITY_MAP.districts.marinaBoardwalk.road;
+const boardwalkSidewalkNode = CONFERENCE_CENTER_DISTRICT.roadNetwork.nodes.find(node => node.id === "walk-boardwalk-approach");
+const conventionSidewalkNode = CONFERENCE_CENTER_DISTRICT.roadNetwork.nodes.find(node => node.id === "walk-south-entry");
+const sidewalkRamp = CONFERENCE_CENTER_DISTRICT.roadNetwork.segments.find(segment => segment.id === "walk-boardwalk-connection");
+const serviceRoad = CONFERENCE_CENTER_DISTRICT.roadNetwork.segments.find(segment => segment.id === "boardwalk-gated-service-approach");
+assert.equal(serviceRoad.fromTopY, 0.66);
+assert.equal(serviceRoad.toTopY, CITY_MAP.surfaces.roadTopY);
+assert.deepEqual(serviceRoad.sidewalkSides, [1]);
+assert.equal(serviceRoad.from, "boardwalk-service-entry");
+assert.equal(CONFERENCE_CENTER_DISTRICT.roadNetwork.nodes.find(node => node.id === serviceRoad.from).z, boardwalkRoad.maxZ);
+assert.equal(sidewalkRamp.physicalSurface, "sidewalk");
+assert.equal(sidewalkRamp.fromTopY, 0.70);
+assert.equal(sidewalkRamp.toTopY, 0.82);
+assert.equal(Math.abs(boardwalkSidewalkNode.x - CONFERENCE_CENTER_DISTRICT.roadNetwork.nodes.find(node => node.id === serviceRoad.from).x),
+  serviceRoad.width / 2 + sidewalkRamp.width / 2);
+assert.equal(boardwalkSidewalkNode.z, CITY_MAP.districts.marinaBoardwalk.sidewalks[1].centerZ);
+assert.equal(conventionSidewalkNode.z, 49);
+assert.ok(Math.abs(terrain.sampleRoadSurfaceHeight(CONFERENCE_CENTER_DISTRICT, boardwalkSidewalkNode.x, boardwalkSidewalkNode.z, {
+  roadTopY: 0.77, sidewalkTopY: 0.82, sidewalkWidth: 3
+}) - 0.70) < 0.001);
+assert.ok(Math.abs(terrain.sampleRoadSurfaceHeight(CONFERENCE_CENTER_DISTRICT, boardwalkSidewalkNode.x, (boardwalkSidewalkNode.z + conventionSidewalkNode.z) / 2, {
+  roadTopY: 0.77, sidewalkTopY: 0.82, sidewalkWidth: 3
+}) - 0.76) < 0.001);
+assert.ok(Math.abs(terrain.sampleRoadSurfaceHeight(CONFERENCE_CENTER_DISTRICT, conventionSidewalkNode.x, conventionSidewalkNode.z, {
+  roadTopY: 0.77, sidewalkTopY: 0.82, sidewalkWidth: 3
+}) - 0.82) < 0.001);
+assert.ok(Math.abs(terrain.sampleRoadSurfaceHeight(CONFERENCE_CENTER_DISTRICT, -37, 52.5, {
+  roadTopY: 0.77, sidewalkTopY: 0.82, sidewalkWidth: 3
+}) - 0.715) < 0.001);
 const validation = validateDistrict(district);
 assert.equal(validation.valid, true, validation.issues.map(issue => issue.code + ": " + issue.message).join("\n"));
 assert.equal(district.roadNetwork.nodes.length, 11);
