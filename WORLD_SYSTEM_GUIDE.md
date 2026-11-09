@@ -12,6 +12,7 @@ The World System is the reusable foundation for adding named districts without h
 - `worldParcelBuilder.js` builds the nearest parcel archetypes in detail and batches distant parcel silhouettes into instanced meshes. Generated parcel details do not cast individual dynamic shadows by default, reducing iPad rendering cost.
 - `worldDistrictProxyBuilder.js` creates very low-cost far-distance district proxies with instanced roads, landmark silhouettes, buildings, and park patches.
 - `worldAccessGate.js` creates physical gates and updates their collision state when an access tier is granted.
+- `worldConnectionBuilder.js` creates optional instanced road/sidewalk geometry for explicitly verified land connectors between districts; it refuses water crossings.
 - `worldNavigation.js` provides A* routing inside one district and across registered district connectors.
 - `worldDistrictStreaming.js` keeps distant districts visible as far proxies, swaps to full district detail near the player, and returns to the proxy before removing full detail. Separate distance bands prevent flicker and blank gaps.
 - Nearby parcel detail follows the player inside large districts; detailed parcel meshes are grouped by material and geometry into a small number of instanced draws. The detailed parcel budget is capped independently from the instanced distant parcel batches.
