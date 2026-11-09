@@ -48,7 +48,8 @@ function getRoadSurfaceCache(district, defaultRoadWidth) {
       toTopY: Number.isFinite(segment.toTopY) ? segment.toTopY : null,
       sidewalkFromTopY: Number.isFinite(segment.sidewalkFromTopY) ? segment.sidewalkFromTopY : null,
       sidewalkToTopY: Number.isFinite(segment.sidewalkToTopY) ? segment.sidewalkToTopY : null,
-      sidewalkSides: Array.isArray(segment.sidewalkSides) ? segment.sidewalkSides : [-1, 1]
+      sidewalkSides: Array.isArray(segment.sidewalkSides) ? segment.sidewalkSides : [-1, 1],
+      sidewalkOffset: Number.isFinite(segment.sidewalkOffset) ? segment.sidewalkOffset : null
     });
     if (!pedestrianSurface) {
       for (const nodeId of [segment.from, segment.to]) {
@@ -60,7 +61,7 @@ function getRoadSurfaceCache(district, defaultRoadWidth) {
   const junctions = [];
   for (const [nodeId, width] of junctionWidths) {
     const node = nodes.get(nodeId);
-    if (node && junctionDegrees.get(nodeId) >= 2) junctions.push({ x: node.x, z: node.z, width });
+    if (node && junctionDegrees.get(nodeId) >= 2) junctions.push({ x: node.x, z: node.z, width: Number.isFinite(node.turningArea?.width) ? node.turningArea.width : width });
   }
   const cache = { segments, junctions };
   byWidth.set(defaultRoadWidth, cache);
@@ -101,12 +102,12 @@ export function sampleRoadSurfaceHeight(district, x, z, surfaceOptions = {}) {
       onRoad = true;
       if (interpolatedTopY !== null) roadHeight = interpolatedTopY;
     } else if (surfaceOptions.buildSidewalks !== false && !segment.pedestrianOnly &&
-               distance <= segment.width / 2 + sidewalkWidth) {
+               distance <= (segment.sidewalkOffset ?? (segment.width / 2 + sidewalkWidth / 2)) + sidewalkWidth / 2) {
       const sideX = segment.dz / segmentLength;
       const sideZ = -segment.dx / segmentLength;
       const signedSideDistance = (x - nearestX) * sideX + (z - nearestZ) * sideZ;
       const sideSign = signedSideDistance < 0 ? -1 : 1;
-      if (Math.abs(signedSideDistance) >= segment.width / 2 - 0.001 &&
+      if (Math.abs(signedSideDistance) >= (segment.sidewalkOffset ?? (segment.width / 2 + sidewalkWidth / 2)) - sidewalkWidth / 2 - 0.001 &&
           segment.sidewalkSides.includes(sideSign)) {
         onSidewalk = true;
         if (interpolatedSidewalkY !== null) sidewalkHeight = interpolatedSidewalkY;
