@@ -730,7 +730,7 @@
         throw new Error("Ordinary vehicle traffic incorrectly received restricted access.");
       }
       if (!pedestrianRoute.found ||
-          !pedestrianRoute.path?.some(step => step.segmentId === "walk-boardwalk-connection")) {
+          !pedestrianRoute.segmentIds?.includes("walk-boardwalk-connection")) {
         throw new Error("The pedestrian route must start at the Boardwalk sidewalk and use the physical sidewalk spur into the Convention Center network.");
       }
       const sidewalkSpur = district.roadNetwork.segments.find(segment => segment.id === "walk-boardwalk-connection");
