@@ -5,6 +5,7 @@ The World System is the reusable foundation for adding named districts without h
 ## Main pieces
 
 - `worldDistrictSchema.js` checks district data before it can be registered.
+- `worldDistrictFactory.js` compiles compact road-loop and parcel-band recipes into connected district blueprints.
 - `worldSystem.js` stores districts, builds/removes their generated scene roots, manages access gates, and routes between districts.
 - `worldBuilder.js` creates road surfaces, junctions, sidewalks, parcel geometry, and optional collision blockers.
 - `worldTerrainBuilder.js` creates the district ground, raised/lowered grade transitions, low-cost planting, and ground-height samples.
@@ -28,7 +29,7 @@ An urban park is walkable and does not receive a building collision blocker. The
 
 ## District data
 
-A district blueprint contains:
+For repeatable neighborhoods, start with `createDistrictFromRecipe(recipe)`. A recipe can describe the district bounds, one rectangular road loop, optional junctions, pedestrian loop, service entry, and parcel bands. The factory generates the road nodes/segments and parcel centers; the schema then checks the result before registration. Use a hand-authored blueprint only when a district needs a custom landmark or unusual road layout.\n\nA district blueprint contains:
 
 - A unique `id`, a readable `name`, and rectangular `bounds`.
 - A `roadNetwork` with unique nodes and connected segments.
