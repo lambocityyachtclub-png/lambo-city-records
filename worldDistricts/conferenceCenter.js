@@ -23,11 +23,11 @@ const CONFERENCE_CENTER_DISTRICT = Object.freeze({
 
   roadNetwork: Object.freeze({
     nodes: Object.freeze([
-      Object.freeze({ id: "boulevard-south-west", x: -85, z: 55 }),
+      Object.freeze({ id: "boulevard-south-west", x: -80, z: 55 }),
       Object.freeze({ id: "boulevard-south-access-junction", x: -37, z: 55 }),
-      Object.freeze({ id: "boulevard-south-east", x: -1, z: 55 }),
-      Object.freeze({ id: "boulevard-north-east", x: -1, z: 139 }),
-      Object.freeze({ id: "boulevard-north-west", x: -85, z: 139 }),
+      Object.freeze({ id: "boulevard-south-east", x: -6, z: 55 }),
+      Object.freeze({ id: "boulevard-north-east", x: -6, z: 131 }),
+      Object.freeze({ id: "boulevard-north-west", x: -80, z: 131 }),
       // The existing south approach is explicitly marked as restricted
       // service access; it does not authorize ordinary traffic on the boardwalk.
       Object.freeze({ id: "boardwalk-service-entry", x: -37, z: 46 }),
@@ -51,6 +51,10 @@ const CONFERENCE_CENTER_DISTRICT = Object.freeze({
     Object.freeze({ id: "villa-east-two", use: "residential", center: Object.freeze({ x: 12.5, z: 112 }), footprint: Object.freeze({ width: 13, depth: 11 }), rotationY: -Math.PI / 2, style: "coastal-villa" }),
     Object.freeze({ id: "villa-north-one", use: "residential", center: Object.freeze({ x: -58, z: 148 }), footprint: Object.freeze({ width: 13, depth: 11 }), rotationY: 0, style: "coastal-villa" }),
     Object.freeze({ id: "villa-north-two", use: "residential", center: Object.freeze({ x: -28, z: 148 }), footprint: Object.freeze({ width: 13, depth: 11 }), rotationY: 0, style: "coastal-villa" })
+  ]),
+
+  landscapeZones: Object.freeze([
+    Object.freeze({ id: "north-villa-courtyard", center: Object.freeze({ x: -43, z: 148 }), width: 12, depth: 7, treeCount: 3, shrubCount: 6, pavingColor: 0x77766d, plantingColor: 0x344b3c })
   ]),
 
   access: Object.freeze({
