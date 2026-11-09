@@ -22,7 +22,7 @@ const walkNorthZ = loopNorthZ + sidewalkOffset;
 const serviceX = CITY_MAP.districts.conferenceCenter.accessRoadX;
 const serviceSidewalkX = serviceX - (8 / 2 + MASTER_BOULEVARD.sidewalkWidth / 2);
 const boardwalkEdgeZ = CITY_MAP.districts.marinaBoardwalk.road.maxZ;
-const serviceEntryZ = boardwalkEdgeZ + 0.5;
+const serviceEntryZ = boardwalkEdgeZ;
 const boardwalkSidewalkZ = CITY_MAP.districts.marinaBoardwalk.sidewalks[1].centerZ;
 const arrivalZ = centerZ - MASTER_ARENA.arena.footprintDepth / 2 - 1;
 const walkArenaZ = walkSouthZ + (arrivalZ - walkSouthZ) * 0.7;
@@ -65,7 +65,7 @@ const CONFERENCE_CENTER_DISTRICT = Object.freeze({
       Object.freeze({ id: "boulevard-south-east", x: loopEastX, z: loopSouthZ }),
       Object.freeze({ id: "boulevard-north-east", x: loopEastX, z: loopNorthZ }),
       Object.freeze({ id: "boulevard-north-west", x: loopWestX, z: loopNorthZ }),
-      // The generated land begins just beyond the mapped boardwalk deck.
+      // The generated street begins at the mapped Boardwalk road edge.
       // Only the explicitly permission-controlled service approach reaches it.
       Object.freeze({ id: "boardwalk-service-entry", x: serviceX, z: serviceEntryZ }),
       Object.freeze({ id: "arena-arrival-approach", x: serviceX, z: arrivalZ }),
