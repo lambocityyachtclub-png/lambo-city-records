@@ -223,6 +223,16 @@ tooManyLandscapeZones.landscapeZones = Array.from({ length: 17 }, (_, index) => 
   width: 2, depth: 2, treeCount: 0, shrubCount: 0
 }));
 assert.equal(validateDistrict(tooManyLandscapeZones).issues.some(item => item.code === "LANDSCAPE_ZONE_LIMIT"), true);
+const tooManyGates = JSON.parse(JSON.stringify(district));
+const gatedSegment = tooManyGates.roadNetwork.segments.find(segment => segment.gate);
+for (let index = 0; index < 8; index++) {
+  tooManyGates.roadNetwork.segments.push({
+    ...gatedSegment,
+    id: "extra-gated-segment-" + index,
+    gate: { id: "extra-gate-" + index, offset: 6.5 }
+  });
+}
+assert.equal(validateDistrict(tooManyGates).issues.some(item => item.code === "PHYSICAL_GATE_LIMIT"), true);
 assert.ok(Math.abs(terrain.sampleRoadSurfaceHeight(district, -37, 55, {
   roadTopY: 0.77, sidewalkTopY: 0.82, sidewalkWidth: 3
 }) - 0.77) < 0.001);
