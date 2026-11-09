@@ -38,6 +38,7 @@
     import { OrbitControls } from "https://unpkg.com/three@0.160.0/examples/jsm/controls/OrbitControls.js";
     import WorldSystem from "./worldSystem.js";
     import WorldDistrictStreaming from "./worldDistrictStreaming.js";
+    import { createDistrictFromRecipe } from "./worldDistrictFactory.js";
     import district from "./worldDistricts/conferenceCenter.js";
     import { validateDistrict } from "./worldDistrictSchema.js";
 
@@ -96,6 +97,42 @@
       };
       const world = new WorldSystem();
       world.init(scene, { systems: { collision: previewCollision } });
+      const recipeDistrict = createDistrictFromRecipe({
+        id: "recipe-compiler-test",
+        name: "Recipe Compiler Test",
+        type: "coastal-neighborhood",
+        bounds: district.bounds,
+        roadLoop: {
+          bounds: { minX: -80, maxX: -6, minZ: 55, maxZ: 131 },
+          width: 9,
+          sidewalkWidth: 3,
+          pedestrianLoop: true,
+          junctions: [{ id: "boulevard-south-access-junction", side: "south", position: -37 }]
+        },
+        parcelBands: [
+          { side: "west", idPrefix: "west-villa", count: 2, fixed: -98.5, start: 80, spacing: 32, style: "coastal-villa", footprint: { width: 13, depth: 11 }, rotationY: Math.PI / 2 },
+          { side: "east", idPrefix: "east-villa", count: 2, fixed: 12.5, start: 80, spacing: 32, style: "coastal-villa", footprint: { width: 13, depth: 11 }, rotationY: -Math.PI / 2 },
+          { side: "north", idPrefix: "north-villa", count: 2, fixed: 148, start: -58, spacing: 30, style: "coastal-villa", footprint: { width: 13, depth: 11 } }
+        ],
+        serviceAccess: {
+          entry: { id: "boardwalk-service-entry", x: -37, z: 46 },
+          connectTo: "boulevard-south-access-junction",
+          arrival: { id: "arena-arrival-approach", x: -37, z: 74 },
+          requiredAccess: "service",
+          gate: { id: "recipe-test-service-gate", offset: 6.5 }
+        },
+        accessTiers: district.accessTiers,
+        terrainZones: district.terrainZones,
+        landscapeZones: district.landscapeZones,
+        landmarks: district.landmarks
+      });
+      const recipeValidation = validateDistrict(recipeDistrict);
+      if (!recipeValidation.valid || recipeDistrict.parcels.length !== 6 ||
+          recipeDistrict.roadNetwork.nodes.length !== 11 ||
+          recipeDistrict.roadNetwork.segments.length !== 12) {
+        throw new Error("Compact district recipe did not compile into a valid connected blueprint.");
+      }
+
       const registration = world.registerDistrict(district);
       if (!registration.registered) {
         throw new Error(registration.validation.issues.map(item => item.message).join("\n"));
@@ -302,7 +339,8 @@
         ["Colliders after cleanup", previewCollision.boxes.length],
         ["Parcel archetypes", "4 supported"],
         ["Archetype cleanup", "verified"],
-        ["District streaming", "hysteresis verified"]
+        ["District streaming", "hysteresis verified"],
+        ["Compact recipe compiler", "verified"]
       ].map(([label, value]) => '<span class="metric">' + label + ': ' + value + '</span>').join("");
     } catch (err) {
       status.textContent = "The district could not be generated.";
