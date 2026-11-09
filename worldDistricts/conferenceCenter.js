@@ -22,6 +22,7 @@ const CONFERENCE_CENTER_DISTRICT = Object.freeze({
   ]),
 
   roadNetwork: Object.freeze({
+    sidewalkWidth: 3,
     nodes: Object.freeze([
       Object.freeze({ id: "boulevard-south-west", x: -80, z: 55 }),
       Object.freeze({ id: "boulevard-south-access-junction", x: -37, z: 55 }),
