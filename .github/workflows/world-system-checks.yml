@@ -34,6 +34,7 @@ jobs:
             worldDistrictFactory.js \
             worldBuilder.js \
             worldParcelBuilder.js \
+            worldDistrictProxyBuilder.js \
             worldTerrainMath.js \
             worldTerrainBuilder.js \
             worldAccessGate.js \
