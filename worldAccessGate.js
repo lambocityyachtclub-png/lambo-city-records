@@ -3,7 +3,7 @@
 // tier raises the arm and removes that blocker. No autonomous access grants.
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 
-function createGate(parent, segment, from, to, collision) {
+function createGate(parent, districtId, segment, from, to, collision) {
   const width = Number.isFinite(segment.width) ? segment.width : 8;
   const dx = to.x - from.x, dz = to.z - from.z;
   const length = Math.hypot(dx, dz) || 1;
@@ -12,7 +12,7 @@ function createGate(parent, segment, from, to, collision) {
   const z = from.z + dz / length * offset;
   const angle = Math.atan2(dx, dz);
   const id = segment.gate?.id || "gate-" + segment.id;
-  const collisionName = "worldAccessGate_" + id;
+  const collisionName = "worldAccessGate_" + districtId + "_" + id;
 
   const root = new THREE.Group();
   root.name = "worldAccessGate_" + id;
@@ -99,7 +99,7 @@ export function buildAccessGates(parent, district, collision = null) {
     if (segment.access !== "permission-controlled" || !segment.gate) continue;
     const from = nodes.get(segment.from), to = nodes.get(segment.to);
     if (!from || !to) continue;
-    controllers.push(createGate(parent, segment, from, to, collision));
+    controllers.push(createGate(parent, district.id, segment, from, to, collision));
   }
   return controllers;
 }
