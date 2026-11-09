@@ -154,4 +154,28 @@ const gridPedestrian = navigation.findRoute(
 );
 assert.equal(gridPedestrian.found, true);
 
-console.log("World System pure checks passed: loop and grid recipes, schema, parcel-road clearance, permissions, pedestrian routing, cross-district routing, and terrain/road-surface sampling.");
+const oversizedGridRecipe = {
+  id: "oversized-grid-test", name: "Oversized Grid Test",
+  roadLayout: "grid",
+  bounds: { minX: 0, maxX: 100, minZ: 0, maxZ: 100 },
+  roadGrid: { bounds: { minX: 20, maxX: 80, minZ: 20, maxZ: 80 }, rows: 17, columns: 2 }
+};
+assert.throws(() => createDistrictFromRecipe(oversizedGridRecipe), /between 2 and 16 rows and columns/);
+assert.throws(() => createDistrictFromRecipe({
+  id: "oversized-parcel-test", name: "Oversized Parcel Test",
+  bounds: recipe.bounds,
+  roadLoop: { bounds: { minX: -80, maxX: -6, minZ: 55, maxZ: 131 } },
+  parcelBands: [{ side: "north", count: 257, fixed: 148, start: -60, spacing: 0.5 }]
+}), /at most 256 parcels/);
+
+const invalidDensity = JSON.parse(JSON.stringify(district));
+invalidDensity.landscapeZones[0].treeCount = 99;
+assert.equal(validateDistrict(invalidDensity).issues.some(item => item.code === "INVALID_LANDSCAPE_DENSITY"), true);
+const invalidColor = JSON.parse(JSON.stringify(district));
+invalidColor.terrainZones[0].materialColor = -1;
+assert.equal(validateDistrict(invalidColor).issues.some(item => item.code === "INVALID_TERRAIN_COLOR"), true);
+assert.ok(Math.abs(terrain.sampleRoadSurfaceHeight(district, -37, 55, {
+  roadTopY: 0.77, sidewalkTopY: 0.82, sidewalkWidth: 3
+}) - 0.77) < 0.001);
+
+console.log("World System pure checks passed: bounded loop/grid recipes, schema, parcel-road clearance, permission + physical gate routing, pedestrian routing, cross-district routing, terrain/road/sidewalk sampling, and iPad-safe recipe limits.");
