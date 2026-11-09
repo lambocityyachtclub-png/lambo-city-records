@@ -62,9 +62,6 @@ export default class WorldSystem {
     if (!root) return false;
     this.scene?.remove(root);
     for (const gate of root.userData.accessGates || []) gate.destroy?.();
-    for (const [connectionId, connection] of this.connections) {
-      if (connection.from?.districtId === id || connection.to?.districtId === id) this.connections.delete(connectionId);
-    }
     const collision = root.userData.collisionSystem || this.collision;
     if (collision && typeof collision.unregister === "function") {
       for (const name of root.userData.collisionIds || []) collision.unregister(name);
@@ -74,6 +71,14 @@ export default class WorldSystem {
     });
     this.roots.delete(id);
     return true;
+  }
+
+  unregisterDistrict(id) {
+    this.removeDistrict(id);
+    for (const [connectionId, connection] of this.connections) {
+      if (connection.from?.districtId === id || connection.to?.districtId === id) this.connections.delete(connectionId);
+    }
+    return this.districts.delete(id);
   }
 
   setGateAccess(id, gateId, permissions = []) {
