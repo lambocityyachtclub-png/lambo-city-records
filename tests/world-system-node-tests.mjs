@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
+import CITY_MAP from "../cityMap.js";
+import CONFERENCE_CENTER_DISTRICT from "../worldDistricts/conferenceCenter.js";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 async function loadPureModule(filename) {
@@ -58,6 +60,19 @@ const recipe = {
 };
 
 const district = createDistrictFromRecipe(recipe);
+const masterMapValidation = validateDistrict(CONFERENCE_CENTER_DISTRICT);
+assert.equal(masterMapValidation.valid, true,
+  masterMapValidation.issues.map(item => item.code + ": " + item.message).join("\n"));
+assert.equal(CONFERENCE_CENTER_DISTRICT.groundTopY, CITY_MAP.surfaces.groundTopY);
+assert.equal(CONFERENCE_CENTER_DISTRICT.bounds.minZ, CITY_MAP.districts.marinaBoardwalk.road.maxZ + 0.5);
+assert.equal(
+  CONFERENCE_CENTER_DISTRICT.roadNetwork.nodes.find(node => node.id === "boardwalk-service-entry").z,
+  CONFERENCE_CENTER_DISTRICT.bounds.minZ
+);
+assert.equal(
+  CONFERENCE_CENTER_DISTRICT.roadNetwork.segments.find(segment => segment.id === "boardwalk-gated-service-approach").gate.offset,
+  1.4
+);
 const validation = validateDistrict(district);
 assert.equal(validation.valid, true, validation.issues.map(issue => issue.code + ": " + issue.message).join("\n"));
 assert.equal(district.roadNetwork.nodes.length, 11);
@@ -247,4 +262,4 @@ assert.ok(Math.abs(terrain.sampleRoadSurfaceHeight(district, -37, 55, {
   roadTopY: 0.77, sidewalkTopY: 0.82, sidewalkWidth: 3
 }) - 0.77) < 0.001);
 
-console.log("World System pure checks passed: bounded loop/grid recipes, schema, parcel-road clearance, permission + physical gate routing, pedestrian routing, cross-district routing, terrain/road/sidewalk sampling, iPad-safe recipe limits, and detail/proxy streaming handoffs.");
+console.log("World System pure checks passed: bounded loop/grid recipes, schema, parcel-road clearance, permission + physical gate routing, pedestrian routing, cross-district routing, terrain/road/sidewalk sampling, iPad-safe recipe limits, master-map alignment, and detail/proxy streaming handoffs.");
