@@ -534,6 +534,28 @@
         "arena-arrival-approach",
         { mode: "vehicle" }
       );
+      if (servicePermissionWithClosedGate.found) {
+        throw new Error("A route was exposed through a physical gate before it opened.");
+      }
+      if (!gateBeforeAuthorization || gateBeforeAuthorization.open !== false) {
+        throw new Error("The restricted boardwalk gate did not start closed.");
+      }
+      if (previewCollision.boxes.length !== district.parcels.length + 1) {
+        throw new Error("Expected one collider per villa plus the closed service gate.");
+      }
+      if (noPermissionServiceRoute.found) {
+        throw new Error("Service route was incorrectly allowed without permission.");
+      }
+      const gateGrant = world.setGateAccess(district.id, "arena-boardwalk-service-gate", ["service"]);
+      const authorizedServiceRoute = world.findRoute(
+        district.id,
+        "boardwalk-service-entry",
+        "arena-arrival-approach",
+        { mode: "service", permissions: ["service"] }
+      );
+      if (!gateGrant.updated || !gateGrant.gate?.open || !authorizedServiceRoute.found) {
+        throw new Error("Authorized service access did not open the gate and enable the route.");
+      }
       const serviceToNorthRoute = world.findRoute(
         district.id, "boardwalk-service-entry", "boulevard-north-east",
         { mode: "service", permissions: ["service"] }
@@ -560,28 +582,6 @@
         futureDistrict.id, "boulevard-south-west",
         { mode: "service", permissions: ["service"] }
       );
-      if (servicePermissionWithClosedGate.found) {
-        throw new Error("A route was exposed through a physical gate before it opened.");
-      }
-      if (!gateBeforeAuthorization || gateBeforeAuthorization.open !== false) {
-        throw new Error("The restricted boardwalk gate did not start closed.");
-      }
-      if (previewCollision.boxes.length !== district.parcels.length + 1) {
-        throw new Error("Expected one collider per villa plus the closed service gate.");
-      }
-      if (noPermissionServiceRoute.found) {
-        throw new Error("Service route was incorrectly allowed without permission.");
-      }
-      const gateGrant = world.setGateAccess(district.id, "arena-boardwalk-service-gate", ["service"]);
-      const authorizedServiceRoute = world.findRoute(
-        district.id,
-        "boardwalk-service-entry",
-        "arena-arrival-approach",
-        { mode: "service", permissions: ["service"] }
-      );
-      if (!gateGrant.updated || !gateGrant.gate?.open || !authorizedServiceRoute.found) {
-        throw new Error("Authorized service access did not open the gate and enable the route.");
-      }
       if (ordinaryTrafficRoute.found) {
         throw new Error("Ordinary vehicle traffic incorrectly received restricted access.");
       }
