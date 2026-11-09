@@ -7,6 +7,49 @@ function makeMaterial(color, roughness = 1) {
   return new THREE.MeshStandardMaterial({ color, roughness });
 }
 
+function buildTerrainPatch(zone, fallbackY) {
+  const width = zone.width, depth = zone.depth;
+  const edgeY = Number.isFinite(zone.edgeY) ? zone.edgeY : fallbackY + 0.005;
+  const topY = Number.isFinite(zone.topY) ? zone.topY : edgeY;
+  const transition = Math.max(0, Number.isFinite(zone.transitionWidth) ? zone.transitionWidth : 1);
+  const columns = Math.max(4, Math.ceil(width / 2));
+  const rows = Math.max(4, Math.ceil(depth / 2));
+  const positions = [], indices = [];
+  const smooth = value => value * value * (3 - 2 * value);
+
+  for (let row = 0; row <= rows; row++) {
+    const z = -depth / 2 + depth * row / rows;
+    for (let column = 0; column <= columns; column++) {
+      const x = -width / 2 + width * column / columns;
+      const edgeDistance = Math.min(width / 2 - Math.abs(x), depth / 2 - Math.abs(z));
+      const blend = transition > 0 ? smooth(Math.max(0, Math.min(1, edgeDistance / transition))) : 1;
+      const y = edgeY + (topY - edgeY) * blend;
+      positions.push(zone.center.x + x, y, zone.center.z + z);
+    }
+  }
+
+  for (let row = 0; row < rows; row++) {
+    for (let column = 0; column < columns; column++) {
+      const a = row * (columns + 1) + column;
+      const b = a + 1;
+      const c = a + columns + 1;
+      const d = c + 1;
+      indices.push(a, c, b, b, c, d);
+    }
+  }
+
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+  geometry.setIndex(indices);
+  geometry.computeVertexNormals();
+  const mesh = new THREE.Mesh(geometry, makeMaterial(zone.materialColor || 0x817c70, 0.96));
+  mesh.name = "worldTerrainGrade_" + zone.id;
+  mesh.receiveShadow = true;
+  mesh.castShadow = false;
+  mesh.userData.terrainZoneId = zone.id;
+  return mesh;
+}
+
 export function buildTerrainAndLandscape(parent, district, options = {}) {
   if (!parent || !district?.bounds) throw new Error("A district root and valid bounds are required.");
   const bounds = district.bounds;
@@ -29,6 +72,14 @@ export function buildTerrainAndLandscape(parent, district, options = {}) {
   ground.position.set(centerX, groundTopY, centerZ);
   ground.receiveShadow = true;
   root.add(ground);
+
+  const terrainZones = Array.isArray(district.terrainZones) ? district.terrainZones : [];
+  for (const zone of terrainZones) {
+    if (!zone?.center || !Number.isFinite(zone.center.x) || !Number.isFinite(zone.center.z) ||
+        !Number.isFinite(zone.width) || !Number.isFinite(zone.depth) ||
+        zone.width <= 0 || zone.depth <= 0) continue;
+    root.add(buildTerrainPatch(zone, groundTopY));
+  }
 
   const zones = Array.isArray(district.landscapeZones) ? district.landscapeZones : [];
   let featureCount = 0;
@@ -115,10 +166,11 @@ export function buildTerrainAndLandscape(parent, district, options = {}) {
     }
   }
 
+  root.userData.terrainZoneCount = terrainZones.length;
   root.userData.landscapeZoneCount = zones.length;
   root.userData.landscapeFeatureCount = featureCount;
   parent.add(root);
-  return { root, zones: zones.length, features: featureCount };
+  return { root, terrainZones: terrainZones.length, zones: zones.length, features: featureCount };
 }
 
 export default { buildTerrainAndLandscape };
