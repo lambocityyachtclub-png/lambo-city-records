@@ -164,8 +164,8 @@ export function validateDistrict(district, options = {}) {
       const width = parcel.footprint?.width ?? 13;
       const depth = parcel.footprint?.depth ?? 11;
       const rotation = Number.isFinite(parcel.rotationY) ? parcel.rotationY : 0;
-      if (!Number.isFinite(width) || !Number.isFinite(depth) || width <= 0 || depth <= 0) {
-        issues.push(issue("INVALID_PARCEL_FOOTPRINT", "Parcel " + parcel.id + " needs positive footprint dimensions."));
+      if (!Number.isFinite(width) || !Number.isFinite(depth) || width < 4 || depth < 4) {
+        issues.push(issue("INVALID_PARCEL_FOOTPRINT", "Parcel " + parcel.id + " needs footprint dimensions of at least four world units."));
         continue;
       }
       if (boundsValid) {
