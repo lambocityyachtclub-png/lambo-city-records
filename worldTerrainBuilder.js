@@ -87,7 +87,7 @@ export function buildTerrainAndLandscape(parent, district, options = {}) {
     if (!zone?.center || !Number.isFinite(zone.center.x) || !Number.isFinite(zone.center.z) ||
         !Number.isFinite(zone.width) || !Number.isFinite(zone.depth) ||
         zone.width <= 0 || zone.depth <= 0) continue;
-    const zoneMaterial = makeMaterial(zone.materialColor || 0x8f897d, 0.94);
+    const zoneMaterial = makeMaterial(zone.materialColor ?? 0x8f897d, 0.94);
     ownedMaterials.push(zoneMaterial);
     const zoneSurface = new THREE.Mesh(buildTerrainZoneSurface(district, zone, groundTopY), zoneMaterial);
     zoneSurface.name = "worldTerrainZone_" + zone.id;
@@ -107,7 +107,7 @@ export function buildTerrainAndLandscape(parent, district, options = {}) {
 
     const zoneWidth = Number.isFinite(zone.width) ? zone.width : 8;
     const zoneDepth = Number.isFinite(zone.depth) ? zone.depth : 6;
-    const pavingMaterial = makeMaterial(zone.pavingColor || 0x77766d, 0.9);
+    const pavingMaterial = makeMaterial(zone.pavingColor ?? 0x77766d, 0.9);
     ownedMaterials.push(pavingMaterial);
     const paving = new THREE.Mesh(new THREE.BoxGeometry(zoneWidth, 0.08, zoneDepth), pavingMaterial);
     paving.name = zone.id + "_courtyard";
@@ -117,7 +117,7 @@ export function buildTerrainAndLandscape(parent, district, options = {}) {
 
     const bedWidth = Math.max(1, zoneWidth - 2);
     const bedDepth = Math.max(1, zoneDepth - 2);
-    const bedMaterial = makeMaterial(zone.plantingColor || 0x344b3c);
+    const bedMaterial = makeMaterial(zone.plantingColor ?? 0x344b3c);
     ownedMaterials.push(bedMaterial);
     const bed = new THREE.Mesh(new THREE.BoxGeometry(bedWidth, 0.07, bedDepth), bedMaterial);
     bed.name = zone.id + "_plantingBed";
