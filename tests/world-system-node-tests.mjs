@@ -102,7 +102,8 @@ assert.equal(vehicleRules.buildVehicleUTurnPath(
   CONFERENCE_CENTER_DISTRICT, "boulevard-south-west",
   { length: 4.8, width: 2.1, turningRadius: 6.5 }
 ).valid, false, "a junction without a declared U-turn apron must not accept a U-turn");
-assert.equal(CONFERENCE_CENTER_DISTRICT.roadNetwork.segments.filter(segment => segment.id.startsWith("boulevard-") && segment.sidewalkOffset).length, 3);
+assert.equal(CONFERENCE_CENTER_DISTRICT.roadNetwork.segments.filter(segment => segment.id.startsWith("boulevard-") && segment.sidewalkOffset).length, 5);
+assert.equal(CONFERENCE_CENTER_DISTRICT.roadNetwork.nodes.filter(node => node.turningArea?.width === 14 && node.turningArea?.depth === 14).length, 2);
 assert.equal(
   CONFERENCE_CENTER_DISTRICT.roadNetwork.nodes.find(node => node.id === "boardwalk-service-entry").z,
   CONFERENCE_CENTER_DISTRICT.bounds.minZ
