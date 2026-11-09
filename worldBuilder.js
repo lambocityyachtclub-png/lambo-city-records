@@ -46,7 +46,9 @@ export function buildDistrictGeometry(scene, district, options = {}) {
   if (!options.roadMaterial) root.userData.ownedMaterials.push(roadMaterial);
   if (!options.sidewalkMaterial) root.userData.ownedMaterials.push(sidewalkMaterial);
   const defaultWidth = Number.isFinite(options.roadWidth) ? options.roadWidth : 9;
-  const sidewalkWidth = Number.isFinite(options.sidewalkWidth) ? options.sidewalkWidth : 3;
+  const sidewalkWidth = Number.isFinite(options.sidewalkWidth)
+    ? options.sidewalkWidth
+    : (Number.isFinite(district.roadNetwork.sidewalkWidth) ? district.roadNetwork.sidewalkWidth : 3);
   const thickness = Number.isFinite(options.roadThickness) ? options.roadThickness : 0.16;
   const roadY = Number.isFinite(options.roadTopY) ? options.roadTopY : 0.77;
   const sidewalkY = Number.isFinite(options.sidewalkTopY) ? options.sidewalkTopY : roadY + 0.03;
