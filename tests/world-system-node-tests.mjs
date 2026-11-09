@@ -165,7 +165,7 @@ for (const nodeId of ["boulevard-south-west", "boulevard-south-east", "boulevard
   ).valid, true, "every widened boulevard corner must support a full passenger-car U-turn");
 }
 assert.equal(CONFERENCE_CENTER_DISTRICT.roadNetwork.segments.filter(segment => segment.id.startsWith("boulevard-") && segment.sidewalkOffset).length, 5);
-assert.equal(CONFERENCE_CENTER_DISTRICT.roadNetwork.nodes.filter(node => node.turningArea?.width === 14 && node.turningArea?.depth === 14).length, 2);
+assert.equal(CONFERENCE_CENTER_DISTRICT.roadNetwork.nodes.filter(node => node.turningArea?.width === 18 && node.turningArea?.depth === 18).length, 4);
 assert.equal(
   CONFERENCE_CENTER_DISTRICT.roadNetwork.nodes.find(node => node.id === "boardwalk-service-entry").z,
   CONFERENCE_CENTER_DISTRICT.bounds.minZ
