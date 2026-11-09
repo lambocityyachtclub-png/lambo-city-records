@@ -171,9 +171,7 @@ export function findWorldRoute(districtEntries, connections, fromDistrictId, fro
     const toKey = keyFor(connection.to?.districtId, connection.to?.nodeId);
     const from = nodes.get(fromKey), to = nodes.get(toKey);
     if (!from || !to) continue;
-    const distance = Number.isFinite(connection.distance) && connection.distance > 0
-      ? connection.distance
-      : Math.hypot(to.x - from.x, to.z - from.z);
+    const distance = Math.hypot(to.x - from.x, to.z - from.z);
     addEdge(fromKey, toKey, { type: "connection", connectionId: connection.id }, distance);
   }
 
