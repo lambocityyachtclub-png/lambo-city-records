@@ -11,11 +11,13 @@ export default class WorldSystem {
     this.districts = new Map();
     this.roots = new Map();
     this.scene = null;
+    this.collision = null;
     this.protectedLandmarks = options.protectedLandmarks || [];
   }
 
-  init(scene) {
+  init(scene, context = {}) {
     this.scene = scene || null;
+    this.collision = context.systems?.collision || this.options.collision || null;
     return this;
   }
 
@@ -45,7 +47,10 @@ export default class WorldSystem {
     if (!district) throw new Error("Unknown district: " + id);
     if (this.roots.has(id)) return this.roots.get(id);
 
-    const root = buildDistrictGeometry(this.scene, district, buildOptions);
+    const root = buildDistrictGeometry(this.scene, district, {
+      ...buildOptions,
+      collision: buildOptions.collision || this.collision
+    });
     this.roots.set(id, root);
     return root;
   }
@@ -54,6 +59,9 @@ export default class WorldSystem {
     const root = this.roots.get(id);
     if (!root) return false;
     this.scene?.remove(root);
+    if (this.collision && typeof this.collision.unregister === "function") {
+      for (const name of root.userData.collisionIds || []) this.collision.unregister(name);
+    }
     root.traverse?.(object => {
       if (object.geometry && object.geometry.dispose) object.geometry.dispose();
     });
