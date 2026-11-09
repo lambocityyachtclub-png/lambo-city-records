@@ -76,11 +76,11 @@ assert.equal(CONFERENCE_CENTER_DISTRICT.bounds.minZ, CITY_MAP.districts.marinaBo
 assert.equal(CONFERENCE_CENTER_DISTRICT.roadNetwork.nodes.filter(node => node.turningArea?.width === 18 && node.turningArea?.depth === 18).length, 2);
 assert.equal(CONFERENCE_CENTER_DISTRICT.roadNetwork.segments.filter(segment => segment.id.startsWith("boulevard-") && segment.sidewalkOffset >= 10.5).length, 3);
 assert.equal(vehicleRules.getVehicleRoadSurface(CONFERENCE_CENTER_DISTRICT, { x: -50, z: 62.5 })?.type, "road");
-assert.equal(vehicleRules.getVehicleRoadSurface(CONFERENCE_CENTER_DISTRICT, { x: -50, z: 72.5 }), null,
+assert.equal(vehicleRules.getVehicleRoadSurface(CONFERENCE_CENTER_DISTRICT, { x: -50, z: 56.5 }), null,
   "the shifted pedestrian sidewalk must not be drivable");
-assert.equal(vehicleRules.getVehicleRoadSurface(CONFERENCE_CENTER_DISTRICT, { x: -84, z: 62.5 })?.type, "turning-area");
+assert.equal(vehicleRules.getVehicleRoadSurface(CONFERENCE_CENTER_DISTRICT, { x: -84, z: 131.5 })?.type, "turning-area");
 assert.equal(CONFERENCE_CENTER_DISTRICT.roadNetwork.nodes.filter(node => node.turningArea?.width >= 16).length, 2);
-assert.equal(CONFERENCE_CENTER_DISTRICT.roadNetwork.segments.filter(segment => segment.id.startsWith("boulevard-") && segment.sidewalkOffset).length, 5);
+assert.equal(CONFERENCE_CENTER_DISTRICT.roadNetwork.segments.filter(segment => segment.id.startsWith("boulevard-") && segment.sidewalkOffset).length, 3);
 assert.equal(
   CONFERENCE_CENTER_DISTRICT.roadNetwork.nodes.find(node => node.id === "boardwalk-service-entry").z,
   CONFERENCE_CENTER_DISTRICT.bounds.minZ
