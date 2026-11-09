@@ -69,8 +69,8 @@ const CONFERENCE_CENTER_DISTRICT = Object.freeze({
       // Only the explicitly permission-controlled service approach reaches it.
       Object.freeze({ id: "boardwalk-service-entry", x: serviceX, z: serviceEntryZ }),
       Object.freeze({ id: "arena-arrival-approach", x: serviceX, z: arrivalZ }),
-      // Pedestrian navigation follows the mapped boardwalk sidewalk and the
-      // outer sidewalk bands; navigation-only links create no duplicate pavement.
+      // Pedestrian navigation follows the mapped Boardwalk sidewalk and outer
+      // sidewalk bands; only the explicit spur below generates new pavement.
       Object.freeze({ id: "walk-boardwalk-approach", x: serviceSidewalkX, z: boardwalkSidewalkZ, surface: "sidewalk" }),
       Object.freeze({ id: "walk-south-west", x: walkWestX, z: walkSouthZ, surface: "sidewalk" }),
       Object.freeze({ id: "walk-south-entry", x: serviceSidewalkX, z: walkSouthZ, surface: "sidewalk" }),
