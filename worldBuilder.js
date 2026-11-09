@@ -46,6 +46,9 @@ export function buildDistrictGeometry(scene, district, options = {}) {
   };
   root.userData.externalMaterials = [options.roadMaterial, options.sidewalkMaterial, options.terrainMaterial].filter(Boolean);
   root.userData.ownedMaterials = [];
+  root.userData.collisionIds = [];
+  root.userData.collisionSystem = options.collision || null;
+  const collision = options.collision || null;
 
   try {
 
@@ -137,10 +140,7 @@ export function buildDistrictGeometry(scene, district, options = {}) {
   root.userData.ownedMaterials.push(...parcelResult.ownedMaterials);
   // Optional collision registration uses the existing player's AABB API.
   // Roads and sidewalks remain walkable; building footprints block movement.
-  const collision = options.collision;
-  const collisionIds = [];
-  root.userData.collisionIds = collisionIds;
-  root.userData.collisionSystem = collision || null;
+  const collisionIds = root.userData.collisionIds;
   if (collision && typeof collision.registerBox === "function") {
     for (const parcel of district.parcels || []) {
       if (parcel?.style === "urban-park") continue;
