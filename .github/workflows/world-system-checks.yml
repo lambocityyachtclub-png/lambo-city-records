@@ -54,13 +54,16 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
           import re
-          html = Path("world-system-preview.html").read_text()
-          match = re.search(r'<script type="module">(.*?)</script>', html, re.S)
-          if not match:
-              raise SystemExit("Preview module script was not found.")
-          Path("/tmp/world-system-preview.mjs").write_text(match.group(1))
+          for filename in ("world-system-preview.html", "world-district-composer.html"):
+              html = Path(filename).read_text()
+              match = re.search(r'<script type="module">(.*?)</script>', html, re.S)
+              if not match:
+                  raise SystemExit(f"Module script was not found in {filename}.")
+              output = "/tmp/" + filename.replace(".html", ".mjs")
+              Path(output).write_text(match.group(1))
           PY
           node --check /tmp/world-system-preview.mjs
+          node --check /tmp/world-district-composer.mjs
 
       - name: Run pure World System tests
         run: node tests/world-system-node-tests.mjs
@@ -129,6 +132,70 @@ jobs:
               }));
             }
             console.log("iPad-sized touch preview: " + JSON.stringify(tabletCanvas));
+
+            // Exercise the high-level district composer on desktop and tablet.
+            const composer = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+            const composerErrors = [];
+            composer.on("pageerror", error => composerErrors.push(error.message));
+            await composer.goto("http://127.0.0.1:8000/world-district-composer.html", {
+              waitUntil: "domcontentloaded"
+            });
+            await composer.waitForFunction(() =>
+              (document.querySelector("#status")?.textContent || "").includes("generated and validated"),
+              null,
+              { timeout: 30000 }
+            );
+            if (await composer.locator("#metrics .metric").count() < 8) {
+              throw new Error("District composer did not report its generated district metrics.");
+            }
+            await composer.locator("#district-name").fill("Coastal Composer Test");
+            await composer.locator("#character").selectOption("coastal");
+            await composer.locator("#density").selectOption("high");
+            await composer.locator("#generate").click();
+            await composer.waitForFunction(() =>
+              (document.querySelector("#status")?.textContent || "").includes("Coastal Composer Test generated"),
+              null,
+              { timeout: 30000 }
+            );
+            if (composerErrors.length || await composer.locator("#error").isVisible()) {
+              throw new Error("District composer desktop errors: " + composerErrors.join("\\n") +
+                " / " + await composer.locator("#error").textContent());
+            }
+            console.log("District composer desktop generation: passed");
+
+            const composerTablet = await browser.newPage({
+              viewport: { width: 834, height: 1194 },
+              deviceScaleFactor: 2,
+              isMobile: true,
+              hasTouch: true
+            });
+            const composerTabletErrors = [];
+            composerTablet.on("pageerror", error => composerTabletErrors.push(error.message));
+            await composerTablet.goto("http://127.0.0.1:8000/world-district-composer.html", {
+              waitUntil: "domcontentloaded"
+            });
+            await composerTablet.waitForFunction(() =>
+              (document.querySelector("#status")?.textContent || "").includes("generated and validated"),
+              null,
+              { timeout: 30000 }
+            );
+            const composerTabletCanvas = await composerTablet.locator("canvas").evaluate(canvas => ({
+              width: canvas.clientWidth,
+              height: canvas.clientHeight,
+              touchAction: getComputedStyle(canvas).touchAction
+            }));
+            const composerPanel = await composerTablet.locator(".panel").boundingBox();
+            if (!composerTabletCanvas.width || !composerTabletCanvas.height ||
+                composerTabletCanvas.touchAction !== "none" ||
+                !composerPanel || composerPanel.width > 834 ||
+                composerTabletErrors.length) {
+              throw new Error("District composer iPad-sized check failed: " + JSON.stringify({
+                canvas: composerTabletCanvas,
+                panel: composerPanel,
+                errors: composerTabletErrors
+              }));
+            }
+            console.log("District composer iPad-sized touch preview: " + JSON.stringify(composerTabletCanvas));
           } finally {
             await browser.close();
           }
