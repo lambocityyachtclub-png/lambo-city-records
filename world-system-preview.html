@@ -248,6 +248,29 @@
         throw new Error("The runtime bridge did not dispose cleanly.");
       }
 
+      const rollbackCollision = {
+        boxes: [],
+        registerBox(name, bounds) { this.boxes.push({ name, ...bounds }); },
+        unregister(name) { this.boxes = this.boxes.filter(box => box.name !== name); }
+      };
+      const rollbackRuntime = new WorldSystemRuntime();
+      let rollbackRejected = false;
+      try {
+        await rollbackRuntime.init(new THREE.Scene(), { systems: { collision: rollbackCollision } }, {
+          districts: [recipeDistrict, {
+            ...recipeDistrict,
+            id: "invalid-runtime-district",
+            roadNetwork: { nodes: [], segments: [] }
+          }]
+        });
+      } catch (runtimeError) {
+        rollbackRejected = String(runtimeError?.message || runtimeError).includes("invalid-runtime-district");
+      }
+      if (!rollbackRejected || rollbackRuntime.ready || rollbackRuntime.getWorldSystem() !== null ||
+          rollbackCollision.boxes.length !== 0) {
+        throw new Error("A failed runtime initialization did not roll back its earlier district registrations.");
+      }
+
       const root = world.buildDistrict(district.id, { roadTopY: 0.77, sidewalkTopY: 0.82, roadWidth: 9, sidewalkWidth: 3 });
       if (root.userData.terrainZoneCount !== district.terrainZones.length) {
         throw new Error("Not all declared terrain grades were generated.");
@@ -368,7 +391,8 @@
         ["Parcel archetypes", "4 supported"],
         ["Archetype cleanup", "verified"],
         ["District streaming", "hysteresis verified"],
-        ["Compact recipe compiler", "verified"]
+        ["Compact recipe compiler", "verified"],
+        ["Runtime rollback", "verified"]
       ].map(([label, value]) => '<span class="metric">' + label + ': ' + value + '</span>').join("");
     } catch (err) {
       status.textContent = "The district could not be generated.";
