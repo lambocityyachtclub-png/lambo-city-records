@@ -10,7 +10,7 @@ async function loadPureModule(filename) {
   return import(url);
 }
 
-const [{ createDistrictFromRecipe }, { validateDistrict }, navigation, terrain, streamingModule] = await Promise.all([
+const [{ createDistrictFromRecipe, createDistrictFromBrief }, { validateDistrict }, navigation, terrain, streamingModule] = await Promise.all([
   loadPureModule("worldDistrictFactory.js"),
   loadPureModule("worldDistrictSchema.js"),
   loadPureModule("worldNavigation.js"),
@@ -200,6 +200,48 @@ const gridDistrict = createDistrictFromRecipe({
     parcelStyles: ["luxury-apartment", "retail-promenade", "urban-park", "coastal-villa"]
   }
 });
+const briefDistrict = createDistrictFromRecipe({
+  id: "world-system-brief-test",
+  name: "Beverly Shores",
+  brief: {
+    character: "mixed-use",
+    density: "medium",
+    center: { x: 420, z: 260 },
+    size: { width: 180, depth: 180 }
+  }
+});
+const briefValidation = validateDistrict(briefDistrict);
+assert.equal(briefValidation.valid, true,
+  briefValidation.issues.map(issue => issue.code + ": " + issue.message).join("\\n"));
+assert.equal(briefDistrict.generationBrief.character, "mixed-use");
+assert.equal(briefDistrict.generationBrief.density, "medium");
+assert.equal(briefDistrict.roadNetwork.nodes.length, 16);
+assert.equal(briefDistrict.parcels.length, 9);
+assert.equal(briefDistrict.accessTiers.length, 3);
+assert.equal(briefDistrict.parcels.some(parcel => parcel.style === "luxury-apartment"), true);
+assert.equal(briefDistrict.parcels.some(parcel => parcel.style === "retail-promenade"), true);
+assert.equal(briefDistrict.parcels.some(parcel => parcel.style === "urban-park"), true);
+const highDensityBrief = createDistrictFromBrief({
+  id: "world-system-high-density-brief",
+  name: "Central District",
+  character: "retail",
+  density: "high",
+  center: { x: 0, z: 0 },
+  size: { width: 120, depth: 120 }
+});
+assert.equal(validateDistrict(highDensityBrief).valid, true);
+assert.equal(highDensityBrief.roadNetwork.nodes.length, 25);
+assert.throws(() => createDistrictFromBrief({
+  id: "undersized-brief", name: "Undersized Brief",
+  character: "coastal", density: "high",
+  center: { x: 0, z: 0 }, size: { width: 100, depth: 100 }
+}), /too small for high density/);
+assert.throws(() => createDistrictFromBrief({
+  id: "unsupported-brief", name: "Unsupported Brief",
+  character: "industrial", center: { x: 0, z: 0 },
+  size: { width: 160, depth: 160 }
+}), /Unsupported district character/);
+
 const gridValidation = validateDistrict(gridDistrict);
 assert.equal(gridValidation.valid, true, gridValidation.issues.map(issue => issue.code + ": " + issue.message).join("\\n"));
 assert.equal(gridDistrict.roadNetwork.nodes.length, 9);
