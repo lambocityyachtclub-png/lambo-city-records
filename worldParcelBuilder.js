@@ -147,7 +147,7 @@ function batchParcelMeshes(root) {
   }
 
   for (const child of [...root.children]) {
-    if (child.isGroup && child.name.startsWith("worldParcel_") && child.children.length === 0) {
+    if (child.isGroup && child.children.length === 0) {
       root.remove(child);
     }
   }
