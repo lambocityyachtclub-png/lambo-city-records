@@ -125,6 +125,13 @@ export default class WorldSystem {
         (typeof connection.requiredAccess !== "string" || !connection.requiredAccess.trim())) {
       return { registered: false, reason: "MISSING_REQUIRED_ACCESS" };
     }
+    if (connection.access === "permission-controlled") {
+      const fromHasTier = (fromDistrict.accessTiers || []).some(tier => tier.id === connection.requiredAccess);
+      const toHasTier = (toDistrict.accessTiers || []).some(tier => tier.id === connection.requiredAccess);
+      if (!fromHasTier || !toHasTier) {
+        return { registered: false, reason: "UNKNOWN_REQUIRED_ACCESS_TIER" };
+      }
+    }
     if (connection.access !== undefined && !["public", "permission-controlled", "closed"].includes(connection.access)) {
       return { registered: false, reason: "INVALID_CONNECTION_ACCESS" };
     }
