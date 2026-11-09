@@ -223,7 +223,16 @@ export default class WorldSystem {
     const groundY = Number.isFinite(root?.userData?.groundTopY)
       ? root.userData.groundTopY
       : (Number.isFinite(this.options.groundTopY) ? this.options.groundTopY : 0.64);
-    const surfaceOptions = root?.userData?.surfaceHeights || {};
+    const surfaceOptions = root?.userData?.surfaceHeights || {
+      roadTopY: Number.isFinite(this.options.roadTopY) ? this.options.roadTopY : 0.77,
+      sidewalkTopY: Number.isFinite(this.options.sidewalkTopY)
+        ? this.options.sidewalkTopY
+        : (Number.isFinite(this.options.roadTopY) ? this.options.roadTopY : 0.77) + 0.03,
+      roadWidth: Number.isFinite(this.options.roadWidth) ? this.options.roadWidth : 9,
+      sidewalkWidth: Number.isFinite(district.roadNetwork?.sidewalkWidth)
+        ? district.roadNetwork.sidewalkWidth : 3,
+      buildSidewalks: true
+    };
     const roadHeight = sampleRoadSurfaceHeight(district, x, z, surfaceOptions);
     return roadHeight === null
       ? sampleTerrainHeight(district, x, z, groundY)
