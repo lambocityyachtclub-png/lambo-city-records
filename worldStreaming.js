@@ -6,6 +6,7 @@
 
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 import CITY_MAP from "./cityMap.js";
+import ConferenceCenterBlueprint from "./worldDistricts/conferenceCenter.js";
 
 const ARENA_ROOT_NAME = "lamboCityConferenceCenterLandmark";
 const STREAM_IN_RADIUS = 900;
@@ -52,7 +53,7 @@ export default {
     this._arenaActive = false;
     this._detailed = false;
 
-    this._arenaBounds = CITY_MAP.districts.arenaDistrict.bounds;
+    this._arenaBounds = ConferenceCenterBlueprint.bounds;
 
     if (this._arenaRoot) this._arenaRoot.visible = false;
     if (this._proxyRoot) this._proxyRoot.visible = false;
