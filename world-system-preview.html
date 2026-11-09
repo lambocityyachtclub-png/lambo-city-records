@@ -287,12 +287,17 @@
         throw new Error("A distant district did not remain visible as a low-cost proxy.");
       }
       districtStreamer.update(0, { playerPosition: { x: 257, z: 100 } });
-      if (!archetypeWorld.isDistrictBuilt(archetypeDistrict.id) || archetypeWorld.isDistrictProxied(archetypeDistrict.id)) {
-        throw new Error("A nearby district did not replace its far proxy with full detail.");
+      const firstDetailStats = archetypeWorld.getDistrictBuildStats(archetypeDistrict.id);
+      if (!archetypeWorld.isDistrictBuilt(archetypeDistrict.id) || archetypeWorld.isDistrictProxied(archetypeDistrict.id) ||
+          firstDetailStats?.detailParcelCount !== 2 || firstDetailStats?.proxyParcelCount !== 4) {
+        throw new Error("A nearby district did not replace its far proxy with bounded full detail.");
       }
-      districtStreamer.update(0, { playerPosition: { x: 379, z: 100 } });
-      if (!archetypeWorld.isDistrictBuilt(archetypeDistrict.id)) {
-        throw new Error("District hysteresis removed detail too early.");
+      const detailRefresh = districtStreamer.update(0, { playerPosition: { x: 379, z: 100 } });
+      const refreshedDetailStats = archetypeWorld.getDistrictBuildStats(archetypeDistrict.id);
+      if (!archetypeWorld.isDistrictBuilt(archetypeDistrict.id) ||
+          !detailRefresh.refreshed.includes(archetypeDistrict.id) ||
+          refreshedDetailStats?.detailParcelIds.join("|") === firstDetailStats.detailParcelIds.join("|")) {
+        throw new Error("District hysteresis or player-focused parcel detail refresh failed.");
       }
       districtStreamer.update(0, { playerPosition: { x: 409, z: 100 } });
       if (archetypeWorld.isDistrictBuilt(archetypeDistrict.id) ||
