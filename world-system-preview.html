@@ -97,6 +97,14 @@
         throw new Error(registration.validation.issues.map(item => item.message).join("\n"));
       }
       const root = world.buildDistrict(district.id, { roadTopY: 0.77, sidewalkTopY: 0.82, roadWidth: 9, sidewalkWidth: 3 });
+      const noPermissionServiceRoute = world.findRoute(
+        district.id,
+        "boardwalk-service-entry",
+        "arena-arrival-approach",
+        { mode: "service" }
+      );
+      const gateBeforeAuthorization = world.getGateStatuses(district.id)[0];
+      const gateGrant = world.setGateAccess(district.id, "arena-boardwalk-service-gate", ["service"]);
       const authorizedServiceRoute = world.findRoute(
         district.id,
         "boardwalk-service-entry",
@@ -117,9 +125,12 @@
         ["Villa parcels", root.userData.parcelCount],
         ["Landscape zones", root.userData.landscapeZoneCount],
         ["Landscape features", root.userData.landscapeFeatureCount],
-        ["Service access", authorizedServiceRoute.found ? "authorized" : "blocked"],
-        ["Public vehicle access", ordinaryTrafficRoute.found ? "unexpected" : "restricted"],
-        ["Villa collision volumes", previewCollision.boxes.length]
+        ["Service gate before grant", gateBeforeAuthorization?.open ? "open" : "closed"],
+        ["Service gate after grant", gateGrant.gate?.open ? "open" : "closed"],
+        ["Service route without permission", noPermissionServiceRoute.found ? "unexpected" : "blocked"],
+        ["Authorized service route", authorizedServiceRoute.found ? "available" : "blocked"],
+        ["Ordinary vehicle route", ordinaryTrafficRoute.found ? "unexpected" : "restricted"],
+        ["Active villa colliders", previewCollision.boxes.length]
       ].map(([label, value]) => '<span class="metric">' + label + ': ' + value + '</span>').join("");
     } catch (err) {
       status.textContent = "The district could not be generated.";
