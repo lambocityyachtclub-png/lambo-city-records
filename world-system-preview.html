@@ -601,8 +601,10 @@
       const roadBatch = root.children.find(child => child.name === "worldRoadSurfaceBatch");
       const sidewalkBatch = root.children.find(child => child.name === "worldSidewalkSurfaceBatch");
       const curbBatch = root.children.find(child => child.name === "worldCurbSurfaceBatch");
+      const vergeBatch = root.children.find(child => child.name === "worldRoadVergeBatch");
       if (!roadBatch?.isInstancedMesh || !sidewalkBatch?.isInstancedMesh ||
           !curbBatch?.isInstancedMesh || curbBatch.count !== root.userData.curbCount || root.userData.curbCount < 1 ||
+          !vergeBatch?.isInstancedMesh || vergeBatch.count !== root.userData.vergeCount || root.userData.vergeCount < 1 ||
           roadBatch.count !== root.userData.roadCount + root.userData.junctionCount ||
           sidewalkBatch.count !== root.userData.sidewalkCount ||
           !root.userData.sidewalkCount ||
@@ -843,6 +845,7 @@
         ["Junctions", root.userData.junctionCount],
         ["Sidewalk sections", root.userData.sidewalkCount],
         ["Raised curb sections", root.userData.curbCount],
+        ["Landscaped street verges", root.userData.vergeCount],
         ["Vehicle stays off sidewalks", "verified"],
         ["Passenger-car U-turn aprons", "verified"],
         ["Detailed parcel draw batches", root.userData.detailBatchCount],
