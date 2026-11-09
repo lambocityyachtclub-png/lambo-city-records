@@ -208,6 +208,60 @@
       if (!connectionRegistration.registered) {
         throw new Error("Inter-district connector registration failed: " + connectionRegistration.reason);
       }
+      const connectorFrom = district.roadNetwork.nodes.find(node => node.id === "boulevard-north-east");
+      const connectorTo = futureDistrict.roadNetwork.nodes.find(node => node.id === "boulevard-south-west");
+      const physicalConnector = world.registerConnection({
+        id: "verified-land-connector-geometry-test",
+        from: { districtId: district.id, nodeId: connectorFrom.id },
+        to: { districtId: futureDistrict.id, nodeId: connectorTo.id },
+        mode: "vehicle",
+        access: "public",
+        physical: {
+          enabled: true,
+          surface: "land",
+          surfaceVerified: true,
+          path: [
+            { x: connectorFrom.x, z: connectorFrom.z },
+            { x: 149, z: connectorFrom.z },
+            { x: 149, z: connectorTo.z },
+            { x: connectorTo.x, z: connectorTo.z }
+          ],
+          width: 9,
+          sidewalkWidth: 3
+        }
+      });
+      const physicalConnectorRoot = scene.children.find(child =>
+        child.name === "worldConnection_verified-land-connector-geometry-test"
+      );
+      if (!physicalConnector.registered || !physicalConnector.physical ||
+          !physicalConnectorRoot?.children.some(child => child.name === "worldConnectionRoadBatch" && child.isInstancedMesh) ||
+          !physicalConnectorRoot?.children.some(child => child.name === "worldConnectionSidewalkBatch" && child.isInstancedMesh)) {
+        throw new Error("A verified land connector did not generate batched road and sidewalk geometry.");
+      }
+      const rejectedWaterConnector = world.registerConnection({
+        id: "unverified-water-connector-test",
+        from: { districtId: district.id, nodeId: connectorFrom.id },
+        to: { districtId: futureDistrict.id, nodeId: connectorTo.id },
+        mode: "vehicle",
+        access: "public",
+        physical: {
+          enabled: true,
+          surface: "water",
+          surfaceVerified: true,
+          path: [
+            { x: connectorFrom.x, z: connectorFrom.z },
+            { x: connectorTo.x, z: connectorTo.z }
+          ]
+        }
+      });
+      if (rejectedWaterConnector.registered ||
+          rejectedWaterConnector.reason !== "UNSUPPORTED_PHYSICAL_SURFACE") {
+        throw new Error("The physical connector builder must reject water crossings instead of guessing bridge geometry.");
+      }
+      if (!world.unregisterConnection("verified-land-connector-geometry-test") ||
+          scene.children.some(child => child.name === "worldConnection_verified-land-connector-geometry-test")) {
+        throw new Error("Removing a physical district connector did not dispose its geometry.");
+      }
 
       // Build a separate fixture to exercise every parcel archetype without
       // adding extra geometry to the main district preview.
