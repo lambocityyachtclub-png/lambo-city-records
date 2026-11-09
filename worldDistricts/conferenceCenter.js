@@ -86,7 +86,7 @@ const CONFERENCE_CENTER_DISTRICT = Object.freeze({
     ]),
     segments: Object.freeze([
       Object.freeze({ id: "boulevard-south-west", from: "boulevard-south-west", to: "boulevard-south-access-junction", mode: "vehicle", lanes: 2, width: MASTER_BOULEVARD.roadWidth, sidewalkOffset: turningSidewalkOffset, loop: true }),
-      Object.freeze({ id: "boulevard-south-east", from: "boulevard-south-access-junction", to: "boulevard-south-east", mode: "vehicle", lanes: 2, width: MASTER_BOULEVARD.roadWidth, sidewalkOffset: southSidewalkOffset, loop: true }),
+      Object.freeze({ id: "boulevard-south-east", from: "boulevard-south-access-junction", to: "boulevard-south-east", mode: "vehicle", lanes: 2, width: MASTER_BOULEVARD.roadWidth, sidewalkOffset: turningSidewalkOffset, loop: true }),
       Object.freeze({ id: "boulevard-east", from: "boulevard-south-east", to: "boulevard-north-east", mode: "vehicle", lanes: 2, width: MASTER_BOULEVARD.roadWidth, sidewalkOffset: turningSidewalkOffset, loop: true }),
       Object.freeze({ id: "boulevard-north", from: "boulevard-north-east", to: "boulevard-north-west", mode: "vehicle", lanes: 2, width: MASTER_BOULEVARD.roadWidth, sidewalkOffset: turningSidewalkOffset, loop: true }),
       Object.freeze({ id: "boulevard-west", from: "boulevard-north-west", to: "boulevard-south-west", mode: "vehicle", lanes: 2, width: MASTER_BOULEVARD.roadWidth, sidewalkOffset: turningSidewalkOffset, loop: true }),
