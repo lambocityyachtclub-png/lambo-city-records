@@ -32,6 +32,7 @@
     <div class="hint">Drag to orbit · Pinch to zoom · Two-finger drag to pan. This is an isolated generated preview, not the live game.</div>
     <div id="error"></div>
   </section>
+  <script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js"}}</script>
   <script type="module">
     import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
     import { OrbitControls } from "https://unpkg.com/three@0.160.0/examples/jsm/controls/OrbitControls.js";
@@ -78,6 +79,11 @@
     ground.position.set(-43, 0.64, 101.5);
     ground.receiveShadow = true;
     scene.add(ground);
+
+    const arenaGuide = new THREE.Mesh(new THREE.BoxGeometry(54, 8, 44), new THREE.MeshStandardMaterial({ color: 0x101720, transparent: true, opacity: 0.22, wireframe: true }));
+    arenaGuide.name = "previewOnlyExistingArenaFootprint";
+    arenaGuide.position.set(-43, 4.8, 97);
+    scene.add(arenaGuide);
 
     const grid = new THREE.GridHelper(124, 31, 0x786a4c, 0x393a3b);
     grid.position.set(-43, 0.67, 101.5);
