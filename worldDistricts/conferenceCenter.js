@@ -60,11 +60,11 @@ const CONFERENCE_CENTER_DISTRICT = Object.freeze({
   roadNetwork: Object.freeze({
     sidewalkWidth: MASTER_BOULEVARD.sidewalkWidth,
     nodes: Object.freeze([
-      Object.freeze({ id: "boulevard-south-west", x: loopWestX, z: loopSouthZ, turningArea: Object.freeze({ width: 16, depth: 16 }) }),
-      Object.freeze({ id: "boulevard-south-access-junction", x: serviceX, z: loopSouthZ, turningArea: Object.freeze({ width: 16, depth: 16 }) }),
-      Object.freeze({ id: "boulevard-south-east", x: loopEastX, z: loopSouthZ, turningArea: Object.freeze({ width: 16, depth: 16 }) }),
-      Object.freeze({ id: "boulevard-north-east", x: loopEastX, z: loopNorthZ, turningArea: Object.freeze({ width: 16, depth: 16 }) }),
-      Object.freeze({ id: "boulevard-north-west", x: loopWestX, z: loopNorthZ, turningArea: Object.freeze({ width: 16, depth: 16 }) }),
+      Object.freeze({ id: "boulevard-south-west", x: loopWestX, z: loopSouthZ, turningArea: Object.freeze({ width: 18, depth: 18 }) }),
+      Object.freeze({ id: "boulevard-south-access-junction", x: serviceX, z: loopSouthZ, turningArea: Object.freeze({ width: 18, depth: 18 }) }),
+      Object.freeze({ id: "boulevard-south-east", x: loopEastX, z: loopSouthZ, turningArea: Object.freeze({ width: 18, depth: 18 }) }),
+      Object.freeze({ id: "boulevard-north-east", x: loopEastX, z: loopNorthZ, turningArea: Object.freeze({ width: 18, depth: 18 }) }),
+      Object.freeze({ id: "boulevard-north-west", x: loopWestX, z: loopNorthZ, turningArea: Object.freeze({ width: 18, depth: 18 }) }),
       // The generated street begins at the mapped Boardwalk road edge.
       // Only the explicitly permission-controlled service approach reaches it.
       Object.freeze({ id: "boardwalk-service-entry", x: serviceX, z: serviceEntryZ }),
