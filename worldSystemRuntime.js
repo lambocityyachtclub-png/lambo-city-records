@@ -32,7 +32,7 @@ export default class WorldSystemRuntime {
     try {
       this.worldSystem.init(scene, context);
       for (const item of configuration.districts || []) {
-        const isRecipe = item && (item.roadLayout === "grid" || item.roadGrid || item.roadLoop);
+        const isRecipe = item && (item.brief || item.roadLayout === "grid" || item.roadGrid || item.roadLoop);
         const district = isRecipe ? createDistrictFromRecipe(item) : item;
         const result = this.worldSystem.registerDistrict(district);
         if (!result.registered) {
@@ -91,7 +91,7 @@ export default class WorldSystemRuntime {
     let district;
     try {
       const isRecipe = districtOrRecipe &&
-        (districtOrRecipe.roadLayout === "grid" || districtOrRecipe.roadGrid || districtOrRecipe.roadLoop);
+        (districtOrRecipe.brief || districtOrRecipe.roadLayout === "grid" || districtOrRecipe.roadGrid || districtOrRecipe.roadLoop);
       district = isRecipe
         ? this.createDistrictFromRecipe(districtOrRecipe)
         : districtOrRecipe;
