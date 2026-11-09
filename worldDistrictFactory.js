@@ -136,7 +136,119 @@ export function createGridDistrictFromRecipe(recipe) {
   };
 }
 
+const BRIEF_PRESETS = Object.freeze({
+  coastal: ["coastal-villa", "coastal-villa", "urban-park"],
+  "mixed-use": ["luxury-apartment", "retail-promenade", "urban-park", "coastal-villa"],
+  retail: ["retail-promenade", "retail-promenade", "urban-park"],
+  park: ["urban-park", "urban-park", "coastal-villa"]
+});
+
+const BRIEF_DENSITY = Object.freeze({
+  low: { rows: 3, columns: 3, roadWidth: 9, minSize: 80 },
+  medium: { rows: 4, columns: 4, roadWidth: 8, minSize: 96 },
+  high: { rows: 5, columns: 5, roadWidth: 7, minSize: 120 }
+});
+
+// High-level district composer: a small brief becomes a validated-ready grid
+// recipe. The result remains data-only until WorldSystem explicitly builds it.
+export function createDistrictFromBrief(brief = {}) {
+  if (!brief || typeof brief !== "object" || Array.isArray(brief)) {
+    throw new Error("District brief must be an object.");
+  }
+  if (typeof brief.id !== "string" || !brief.id.trim() ||
+      typeof brief.name !== "string" || !brief.name.trim()) {
+    throw new Error("District brief requires an id and a readable name.");
+  }
+  const character = brief.character || "mixed-use";
+  const density = brief.density || "medium";
+  const preset = BRIEF_PRESETS[character];
+  const densityConfig = BRIEF_DENSITY[density];
+  if (!preset) throw new Error("Unsupported district character: " + character);
+  if (!densityConfig) throw new Error("Unsupported district density: " + density);
+  if (brief.layout !== undefined && brief.layout !== "grid") {
+    throw new Error("District briefs currently support the grid layout.");
+  }
+
+  const center = brief.center || { x: 0, z: 0 };
+  const size = brief.size || { width: 160, depth: 160 };
+  if (!Number.isFinite(center.x) || !Number.isFinite(center.z) ||
+      !Number.isFinite(size.width) || !Number.isFinite(size.depth) ||
+      size.width <= 0 || size.depth <= 0) {
+    throw new Error("District brief needs a finite center and positive width/depth.");
+  }
+  if (size.width < densityConfig.minSize || size.depth < densityConfig.minSize) {
+    throw new Error(
+      "District is too small for " + density + " density; minimum dimensions are " +
+      densityConfig.minSize + " world units."
+    );
+  }
+
+  const roadWidth = Number.isFinite(brief.roadWidth) ? brief.roadWidth : densityConfig.roadWidth;
+  const sidewalkWidth = Number.isFinite(brief.sidewalkWidth) ? brief.sidewalkWidth : 3;
+  if (roadWidth <= 0 || sidewalkWidth < 0) {
+    throw new Error("District brief road and sidewalk widths are invalid.");
+  }
+
+  const bounds = {
+    minX: center.x - size.width / 2,
+    maxX: center.x + size.width / 2,
+    minZ: center.z - size.depth / 2,
+    maxZ: center.z + size.depth / 2
+  };
+  const inset = roadWidth / 2 + sidewalkWidth + 7;
+  const roadBounds = {
+    minX: bounds.minX + inset,
+    maxX: bounds.maxX - inset,
+    minZ: bounds.minZ + inset,
+    maxZ: bounds.maxZ - inset
+  };
+  const district = createGridDistrictFromRecipe({
+    id: brief.id,
+    name: brief.name,
+    type: brief.type || character + "-district",
+    bounds,
+    roadLayout: "grid",
+    roadGrid: {
+      bounds: roadBounds,
+      rows: brief.rows ?? densityConfig.rows,
+      columns: brief.columns ?? densityConfig.columns,
+      width: roadWidth,
+      sidewalkWidth,
+      pedestrianRoutes: brief.pedestrianRoutes !== false,
+      parcelMargin: Number.isFinite(brief.parcelMargin) ? brief.parcelMargin : 1,
+      parcelStyles: Array.isArray(brief.parcelStyles) && brief.parcelStyles.length
+        ? brief.parcelStyles : preset,
+      ...(Number.isFinite(brief.rotationY) ? { rotationY: brief.rotationY } : {}),
+      ...(Number.isFinite(brief.floors) ? { floors: brief.floors } : {})
+    },
+    accessTiers: Array.isArray(brief.accessTiers) ? brief.accessTiers : [
+      { id: "public", rank: 0, description: "Public access" },
+      { id: "resident", rank: 1, description: "Resident access" },
+      { id: "service", rank: 2, description: "Service access" }
+    ],
+    terrainZones: Array.isArray(brief.terrainZones) ? brief.terrainZones : [],
+    landscapeZones: Array.isArray(brief.landscapeZones) ? brief.landscapeZones : [],
+    landmarks: Array.isArray(brief.landmarks) ? brief.landmarks : []
+  });
+  district.generationBrief = {
+    character,
+    density,
+    layout: "grid",
+    center: { ...center },
+    size: { ...size }
+  };
+  return district;
+}
+
 export function createDistrictFromRecipe(recipe) {
+  if (recipe?.brief) {
+    return createDistrictFromBrief({
+      ...recipe.brief,
+      id: recipe.id || recipe.brief.id,
+      name: recipe.name || recipe.brief.name,
+      type: recipe.type || recipe.brief.type
+    });
+  }
   if (recipe?.roadLayout === "grid" || recipe?.roadGrid) return createGridDistrictFromRecipe(recipe);
   if (!recipe || typeof recipe.id !== "string" || !recipe.id.trim()) {
     throw new Error("District recipe requires a unique id.");
