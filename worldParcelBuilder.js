@@ -77,8 +77,8 @@ function buildPark(building, parcel, width, depth, materials) {
   box(building, parcel.id + "_park_lawn", [width, 0.16, depth], [0, 0.73, 0], materials.planting);
   const trunkGeometry = new THREE.CylinderGeometry(0.12, 0.18, 1.45, 5);
   const canopyGeometry = new THREE.IcosahedronGeometry(0.9, 0);
-  const trunkMaterial = new THREE.MeshStandardMaterial({ color: 0x66503a, roughness: 1 });
-  const canopyMaterial = new THREE.MeshStandardMaterial({ color: 0x35533d, roughness: 1 });
+  const trunkMaterial = materials.treeTrunk;
+  const canopyMaterial = materials.treeCanopy;
   const spots = [[-width * 0.28, -depth * 0.22], [width * 0.28, -depth * 0.22], [0, depth * 0.22]];
   for (let i = 0; i < spots.length; i++) {
     const [x, z] = spots[i];
@@ -112,7 +112,9 @@ export function buildParcelGeometry(parent, district, options = {}) {
     metal: new THREE.MeshStandardMaterial({ color: 0x9d875d, roughness: 0.34, metalness: 0.68 }),
     roof: new THREE.MeshStandardMaterial({ color: 0x343a3d, roughness: 0.68, metalness: 0.24 }),
     planting: new THREE.MeshStandardMaterial({ color: 0x344c3d, roughness: 0.95 }),
-    soil: new THREE.MeshStandardMaterial({ color: 0x514638, roughness: 1 })
+    soil: new THREE.MeshStandardMaterial({ color: 0x514638, roughness: 1 }),
+    treeTrunk: new THREE.MeshStandardMaterial({ color: 0x66503a, roughness: 1 }),
+    treeCanopy: new THREE.MeshStandardMaterial({ color: 0x35533d, roughness: 1 })
   };
 
   const root = new THREE.Group();
@@ -159,7 +161,7 @@ export function buildParcelGeometry(parent, district, options = {}) {
   parent.add(root);
   parent.userData.parcelCount = built;
   parent.userData.parcelStyles = styles;
-  return { parcels: built, buildings, styles, root };
+  return { parcels: built, buildings, styles, root, ownedMaterials: Object.values(materials) };
 }
 
 export default { buildParcelGeometry, PARCEL_STYLES };
