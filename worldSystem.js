@@ -178,6 +178,14 @@ export default class WorldSystem {
     return findDistrictRoute(district, fromNodeId, toNodeId, routeOptions);
   }
 
+  getDistrict(id) {
+    return this.districts.get(id) || null;
+  }
+
+  isDistrictBuilt(id) {
+    return this.roots.has(id);
+  }
+
   getDistrictIds() {
     return Array.from(this.districts.keys());
   }
