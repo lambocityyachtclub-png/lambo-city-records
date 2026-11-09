@@ -2,8 +2,6 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
-import CITY_MAP from "../cityMap.js";
-import CONFERENCE_CENTER_DISTRICT from "../worldDistricts/conferenceCenter.js";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 async function loadPureModule(filename) {
@@ -19,6 +17,15 @@ const [{ createDistrictFromRecipe }, { validateDistrict }, navigation, terrain, 
   loadPureModule("worldTerrainMath.js"),
   loadPureModule("worldDistrictStreaming.js")
 ]);
+const cityMapModule = await loadPureModule("cityMap.js");
+const CITY_MAP = cityMapModule.default;
+const blueprintSource = await readFile(resolve(root, "worldDistricts/conferenceCenter.js"), "utf8");
+const blueprintInline = blueprintSource.replace(
+  'import CITY_MAP from "../cityMap.js";',
+  "const CITY_MAP = " + JSON.stringify(CITY_MAP) + ";"
+);
+const blueprintUrl = "data:text/javascript;base64," + Buffer.from(blueprintInline).toString("base64");
+const CONFERENCE_CENTER_DISTRICT = (await import(blueprintUrl)).default;
 
 const recipe = {
   id: "world-system-node-test",
