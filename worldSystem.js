@@ -4,13 +4,14 @@
 
 import { validateDistrict } from "./worldDistrictSchema.js";
 import { buildDistrictGeometry } from "./worldBuilder.js";
-import { findRoute as findDistrictRoute } from "./worldNavigation.js";
+import { findRoute as findDistrictRoute, findWorldRoute as findCityRoute } from "./worldNavigation.js";
 
 export default class WorldSystem {
   constructor(options = {}) {
     this.options = options;
     this.districts = new Map();
     this.roots = new Map();
+    this.connections = new Map();
     this.scene = null;
     this.collision = null;
     this.protectedLandmarks = options.protectedLandmarks || [];
@@ -61,6 +62,9 @@ export default class WorldSystem {
     if (!root) return false;
     this.scene?.remove(root);
     for (const gate of root.userData.accessGates || []) gate.destroy?.();
+    for (const [connectionId, connection] of this.connections) {
+      if (connection.from?.districtId === id || connection.to?.districtId === id) this.connections.delete(connectionId);
+    }
     const collision = root.userData.collisionSystem || this.collision;
     if (collision && typeof collision.unregister === "function") {
       for (const name of root.userData.collisionIds || []) collision.unregister(name);
@@ -86,6 +90,50 @@ export default class WorldSystem {
     return (root.userData.accessGates || []).map(gate => gate.getStatus());
   }
 
+  registerConnection(connection) {
+    if (!connection || typeof connection.id !== "string" || !connection.id.trim()) {
+      return { registered: false, reason: "INVALID_CONNECTION_ID" };
+    }
+    if (this.connections.has(connection.id)) {
+      return { registered: false, reason: "DUPLICATE_CONNECTION_ID" };
+    }
+    const fromDistrict = this.districts.get(connection.from?.districtId);
+    const toDistrict = this.districts.get(connection.to?.districtId);
+    const hasNode = (district, nodeId) =>
+      !!district?.roadNetwork?.nodes?.some(node => node.id === nodeId);
+    if (!hasNode(fromDistrict, connection.from?.nodeId) || !hasNode(toDistrict, connection.to?.nodeId)) {
+      return { registered: false, reason: "UNKNOWN_CONNECTION_ENDPOINT" };
+    }
+    if (!["vehicle", "pedestrian", "shared", "service"].includes(connection.mode || "vehicle")) {
+      return { registered: false, reason: "INVALID_CONNECTION_MODE" };
+    }
+    if (connection.access === "permission-controlled" &&
+        (typeof connection.requiredAccess !== "string" || !connection.requiredAccess.trim())) {
+      return { registered: false, reason: "MISSING_REQUIRED_ACCESS" };
+    }
+    if (connection.access !== undefined && !["public", "permission-controlled", "closed"].includes(connection.access)) {
+      return { registered: false, reason: "INVALID_CONNECTION_ACCESS" };
+    }
+    this.connections.set(connection.id, connection);
+    return { registered: true, id: connection.id };
+  }
+
+  unregisterConnection(id) {
+    return this.connections.delete(id);
+  }
+
+  findWorldRoute(fromDistrictId, fromNodeId, toDistrictId, toNodeId, routeOptions = {}) {
+    return findCityRoute(
+      Array.from(this.districts.entries()),
+      Array.from(this.connections.values()),
+      fromDistrictId,
+      fromNodeId,
+      toDistrictId,
+      toNodeId,
+      routeOptions
+    );
+  }
+
   findRoute(id, fromNodeId, toNodeId, routeOptions = {}) {
     const district = this.districts.get(id);
     if (!district) {
@@ -101,7 +149,8 @@ export default class WorldSystem {
   getStatus() {
     return {
       registeredDistricts: this.getDistrictIds(),
-      builtDistricts: Array.from(this.roots.keys())
+      builtDistricts: Array.from(this.roots.keys()),
+      registeredConnections: Array.from(this.connections.keys())
     };
   }
 }
