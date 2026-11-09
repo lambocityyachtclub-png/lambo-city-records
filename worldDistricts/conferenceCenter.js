@@ -31,7 +31,16 @@ const CONFERENCE_CENTER_DISTRICT = Object.freeze({
       // The existing south approach is explicitly marked as restricted
       // service access; it does not authorize ordinary traffic on the boardwalk.
       Object.freeze({ id: "boardwalk-service-entry", x: -37, z: 46 }),
-      Object.freeze({ id: "arena-arrival-approach", x: -37, z: 74 })
+      Object.freeze({ id: "arena-arrival-approach", x: -37, z: 74 }),
+      // Pedestrian loop follows the outer sidewalk bands; these are
+      // navigation nodes only and do not create duplicate pavement.
+      Object.freeze({ id: "walk-south-west", x: -87.5, z: 47.5, surface: "sidewalk" }),
+      Object.freeze({ id: "walk-south-entry", x: -37, z: 47.5, surface: "sidewalk" }),
+      Object.freeze({ id: "walk-south-east", x: 1.5, z: 47.5, surface: "sidewalk" }),
+      Object.freeze({ id: "walk-east-north", x: 1.5, z: 138.5, surface: "sidewalk" }),
+      Object.freeze({ id: "walk-north-east", x: -6, z: 138.5, surface: "sidewalk" }),
+      Object.freeze({ id: "walk-north-west", x: -87.5, z: 138.5, surface: "sidewalk" }),
+      Object.freeze({ id: "walk-arena-approach", x: -37, z: 62.5, surface: "sidewalk" })
     ]),
     segments: Object.freeze([
       Object.freeze({ id: "boulevard-south-west", from: "boulevard-south-west", to: "boulevard-south-access-junction", mode: "vehicle", lanes: 2, width: 9, loop: true }),
@@ -39,8 +48,16 @@ const CONFERENCE_CENTER_DISTRICT = Object.freeze({
       Object.freeze({ id: "boulevard-east", from: "boulevard-south-east", to: "boulevard-north-east", mode: "vehicle", lanes: 2, width: 9, loop: true }),
       Object.freeze({ id: "boulevard-north", from: "boulevard-north-east", to: "boulevard-north-west", mode: "vehicle", lanes: 2, width: 9, loop: true }),
       Object.freeze({ id: "boulevard-west", from: "boulevard-north-west", to: "boulevard-south-west", mode: "vehicle", lanes: 2, width: 9, loop: true }),
-      Object.freeze({ id: "boardwalk-gated-service-approach", from: "boardwalk-service-entry", to: "boulevard-south-access-junction", mode: "service", width: 8, access: "permission-controlled", requiredAccess: "service", gate: Object.freeze({ id: "arena-boardwalk-service-gate", offset: 1.4 }) }),
-      Object.freeze({ id: "arena-service-arrival-approach", from: "boulevard-south-access-junction", to: "arena-arrival-approach", mode: "service", width: 8, access: "permission-controlled", requiredAccess: "service" })
+      Object.freeze({ id: "boardwalk-gated-service-approach", from: "boardwalk-service-entry", to: "boulevard-south-access-junction", mode: "service", width: 8, access: "permission-controlled", requiredAccess: "service", gate: Object.freeze({ id: "arena-boardwalk-service-gate", offset: 6.5 }) }),
+      Object.freeze({ id: "arena-service-arrival-approach", from: "boulevard-south-access-junction", to: "arena-arrival-approach", mode: "service", width: 8, access: "permission-controlled", requiredAccess: "service" }),
+      Object.freeze({ id: "walk-south-west", from: "walk-south-west", to: "walk-south-entry", mode: "pedestrian", navigationOnly: true }),
+      Object.freeze({ id: "walk-south-east", from: "walk-south-entry", to: "walk-south-east", mode: "pedestrian", navigationOnly: true }),
+      Object.freeze({ id: "walk-east", from: "walk-south-east", to: "walk-east-north", mode: "pedestrian", navigationOnly: true }),
+      Object.freeze({ id: "walk-north-east", from: "walk-east-north", to: "walk-north-east", mode: "pedestrian", navigationOnly: true }),
+      Object.freeze({ id: "walk-north-west", from: "walk-north-east", to: "walk-north-west", mode: "pedestrian", navigationOnly: true }),
+      Object.freeze({ id: "walk-west", from: "walk-north-west", to: "walk-south-west", mode: "pedestrian", navigationOnly: true }),
+      Object.freeze({ id: "walk-to-arena-crossing", from: "walk-south-entry", to: "walk-arena-approach", mode: "pedestrian", navigationOnly: true }),
+      Object.freeze({ id: "walk-arena-arrival", from: "walk-arena-approach", to: "arena-arrival-approach", mode: "pedestrian", navigationOnly: true })
     ])
   }),
 
