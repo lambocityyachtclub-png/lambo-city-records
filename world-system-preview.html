@@ -85,8 +85,13 @@
       if (!validation.valid) {
         throw new Error(validation.issues.map(item => item.code + ": " + item.message).join("\n"));
       }
+      const previewCollision = {
+        boxes: [],
+        registerBox(name, bounds) { this.boxes.push({ name, ...bounds }); },
+        unregister(name) { this.boxes = this.boxes.filter(box => box.name !== name); }
+      };
       const world = new WorldSystem();
-      world.init(scene);
+      world.init(scene, { systems: { collision: previewCollision } });
       const registration = world.registerDistrict(district);
       if (!registration.registered) {
         throw new Error(registration.validation.issues.map(item => item.message).join("\n"));
@@ -113,7 +118,8 @@
         ["Landscape zones", root.userData.landscapeZoneCount],
         ["Landscape features", root.userData.landscapeFeatureCount],
         ["Service access", authorizedServiceRoute.found ? "authorized" : "blocked"],
-        ["Public vehicle access", ordinaryTrafficRoute.found ? "unexpected" : "restricted"]
+        ["Public vehicle access", ordinaryTrafficRoute.found ? "unexpected" : "restricted"],
+        ["Villa collision volumes", previewCollision.boxes.length]
       ].map(([label, value]) => '<span class="metric">' + label + ': ' + value + '</span>').join("");
     } catch (err) {
       status.textContent = "The district could not be generated.";
