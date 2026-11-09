@@ -77,6 +77,14 @@ Terrain zones must stay within the district, avoid parcel footprints, and not ov
 
 The first district uses the mapped Boardwalk street and sidewalk endpoints rather than creating a visually adjacent but disconnected path. The service road starts exactly at the mapped Boardwalk road edge, with a small geometry overlap to avoid a seam, and grades from the mapped street surface (0.66) to the Convention boulevard road surface (0.77). The sidewalk connection uses a dedicated pedestrian strip on the west side of the gated service road, so pedestrians do not have to walk in or cross the vehicle lane. It joins the existing north Boardwalk sidewalk (top 0.70) to the south boulevard sidewalk (top 0.82) with a gradual ramp. The opposite service-road sidewalk remains on the east side. Ground-height sampling follows both road and sidewalk grades, including their endpoints.
 
+## Vehicle-only road rules and turning space
+
+Vehicle road checks are separate from pedestrian ground-height checks. Only permitted vehicle, shared, or authorized service segments count as drivable. Pedestrian-only routes and sidewalks are excluded. Vehicle footprint checks sample the center, four corners, and side midpoints; the driving controller must reject or constrain a move if any sample leaves the drivable road or declared turning apron. Permission-controlled and gated service roads require the matching permission and an open physical gate.
+
+The Conference Center boulevard declares 16×16 map-unit turning aprons at its five major junctions. The sidewalks are set farther back along those approaches so the widened turning pavement remains distinct from pedestrian space. The default passenger-car planning envelope is at least 14 map units wide and deep, increasing for larger vehicles or a larger turning radius.
+
+Important current limitation: `cars.js` currently creates parked decorative cars only; there is no player-controlled vehicle-driving controller in the existing game. These road-boundary and turn-space APIs are now exposed through the World System host for the driving controller to use. They do not falsely imply that vehicle driving is already implemented.
+
 ## Access tiers and gates
 
 The first blueprint declares three tiers:
