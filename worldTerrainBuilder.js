@@ -7,7 +7,8 @@ function makeMaterial(color, roughness = 1) {
   return new THREE.MeshStandardMaterial({ color, roughness });
 }
 
-export function sampleTerrainHeight(district, x, z, fallbackY = 0.64) {
+export function sampleTerrainHeight(district, x, z, fallbackY = 0.64, surfaceOptions = {}) {
+  if (!Number.isFinite(x) || !Number.isFinite(z)) return fallbackY;
   let height = fallbackY;
   for (const zone of district?.terrainZones || []) {
     if (!zone?.center || !Number.isFinite(zone.center.x) || !Number.isFinite(zone.center.z)) continue;
@@ -21,6 +22,32 @@ export function sampleTerrainHeight(district, x, z, fallbackY = 0.64) {
     const topY = Number.isFinite(zone.topY) ? zone.topY : edgeY;
     height = edgeY + (topY - edgeY) * blend;
   }
+
+  // Road and sidewalk tops take precedence over the underlying terrain grade.
+  // This keeps future player/vehicle grounding aligned with the actual meshes.
+  const roadTopY = Number.isFinite(surfaceOptions.roadTopY) ? surfaceOptions.roadTopY : 0.77;
+  const sidewalkTopY = Number.isFinite(surfaceOptions.sidewalkTopY) ? surfaceOptions.sidewalkTopY : roadTopY + 0.03;
+  const defaultRoadWidth = Number.isFinite(surfaceOptions.roadWidth) ? surfaceOptions.roadWidth : 9;
+  const sidewalkWidth = Number.isFinite(surfaceOptions.sidewalkWidth) ? surfaceOptions.sidewalkWidth : 3;
+  let onRoad = false, onSidewalk = false;
+  const nodes = new Map((district?.roadNetwork?.nodes || []).map(node => [node.id, node]));
+  for (const segment of district?.roadNetwork?.segments || []) {
+    if (segment.navigationOnly === true) continue;
+    const from = nodes.get(segment.from), to = nodes.get(segment.to);
+    if (!from || !to) continue;
+    const dx = to.x - from.x, dz = to.z - from.z;
+    const lengthSquared = dx * dx + dz * dz;
+    if (lengthSquared <= 0) continue;
+    const t = ((x - from.x) * dx + (z - from.z) * dz) / lengthSquared;
+    if (t < 0 || t > 1) continue;
+    const nearestX = from.x + t * dx, nearestZ = from.z + t * dz;
+    const distance = Math.hypot(x - nearestX, z - nearestZ);
+    const width = Number.isFinite(segment.width) ? segment.width : defaultRoadWidth;
+    if (distance <= width / 2) onRoad = true;
+    else if (segment.mode !== "pedestrian" && distance <= width / 2 + sidewalkWidth) onSidewalk = true;
+  }
+  if (onSidewalk) return sidewalkTopY;
+  if (onRoad) return roadTopY;
   return height;
 }
 
