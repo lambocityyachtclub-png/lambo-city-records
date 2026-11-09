@@ -65,15 +65,15 @@ export function buildDistrictGeometry(scene, district, options = {}) {
   const roadY = Number.isFinite(options.roadTopY) ? options.roadTopY : 0.77;
   const sidewalkY = Number.isFinite(options.sidewalkTopY) ? options.sidewalkTopY : roadY + 0.03;
   const validSegments = [];
+  const roadInstances = [];
+  const sidewalkInstances = [];
 
   for (const segment of district.roadNetwork.segments) {
     if (segment.navigationOnly === true) continue;
     const from = nodes.get(segment.from);
     const to = nodes.get(segment.to);
     if (!from || !to) continue;
-
-    const dx = to.x - from.x;
-    const dz = to.z - from.z;
+    const dx = to.x - from.x, dz = to.z - from.z;
     const length = Math.hypot(dx, dz);
     if (length <= 0.01) continue;
 
@@ -82,46 +82,77 @@ export function buildDistrictGeometry(scene, district, options = {}) {
     const centerX = (from.x + to.x) / 2;
     const centerZ = (from.z + to.z) / 2;
     validSegments.push({ segment, from, to, width, angle, centerX, centerZ, length });
-
-    addRoadBox(root, "worldRoad_" + segment.id, width, length + width * 0.02,
-      centerX, centerZ, angle, roadY - thickness / 2, thickness, roadMaterial);
+    roadInstances.push({
+      x: centerX, z: centerZ, width, length: length + width * 0.02,
+      angle, y: roadY - thickness / 2, height: thickness
+    });
 
     if (segment.mode !== "pedestrian" && options.buildSidewalks !== false && sidewalkWidth > 0) {
       const offset = width / 2 + sidewalkWidth / 2;
       const sideX = Math.cos(angle) * offset;
       const sideZ = -Math.sin(angle) * offset;
       for (const sign of [-1, 1]) {
-        addRoadBox(root, "worldSidewalk_" + segment.id + "_" + sign,
-          sidewalkWidth, length + sidewalkWidth + (segment.loop ? 15 : 0), centerX + sideX * sign,
-          centerZ + sideZ * sign, angle, sidewalkY - 0.07, 0.14, sidewalkMaterial);
+        sidewalkInstances.push({
+          x: centerX + sideX * sign,
+          z: centerZ + sideZ * sign,
+          width: sidewalkWidth,
+          length: length + sidewalkWidth + (segment.loop ? 15 : 0),
+          angle,
+          y: sidewalkY - 0.07,
+          height: 0.14
+        });
       }
     }
   }
 
-  // Junction pads close small corner gaps where multiple road segments meet.
+  // Batch all road segments and junction pads into one draw call.
   const junctionWidths = new Map();
+  const junctionDegrees = new Map();
   for (const item of validSegments) {
     for (const nodeId of [item.segment.from, item.segment.to]) {
       junctionWidths.set(nodeId, Math.max(junctionWidths.get(nodeId) || 0, item.width));
+      junctionDegrees.set(nodeId, (junctionDegrees.get(nodeId) || 0) + 1);
     }
   }
+  let junctionCount = 0;
   for (const [nodeId, width] of junctionWidths) {
+    if (junctionDegrees.get(nodeId) < 2) continue;
     const node = nodes.get(nodeId);
-    const degree = validSegments.reduce((count, item) =>
-      count + (item.segment.from === nodeId || item.segment.to === nodeId ? 1 : 0), 0);
-    if (degree < 2) continue;
-    const pad = new THREE.Mesh(new THREE.BoxGeometry(width, thickness, width), roadMaterial);
-    pad.name = "worldRoadJunction_" + nodeId;
-    pad.position.set(node.x, roadY - thickness / 2, node.z);
-    pad.receiveShadow = true;
-    root.add(pad);
+    roadInstances.push({
+      x: node.x, z: node.z, width, length: width,
+      angle: 0, y: roadY - thickness / 2, height: thickness
+    });
+    junctionCount += 1;
   }
 
+  const makeInstanceBatch = (name, items, material) => {
+    if (!items.length) return null;
+    const mesh = new THREE.InstancedMesh(
+      new THREE.BoxGeometry(1, 1, 1), material, items.length
+    );
+    mesh.name = name;
+    mesh.castShadow = false;
+    mesh.receiveShadow = true;
+    const transform = new THREE.Object3D();
+    items.forEach((item, index) => {
+      transform.position.set(item.x, item.y, item.z);
+      transform.rotation.set(0, item.angle, 0);
+      transform.scale.set(item.width, item.height, item.length);
+      transform.updateMatrix();
+      mesh.setMatrixAt(index, transform.matrix);
+    });
+    mesh.instanceMatrix.needsUpdate = true;
+    mesh.computeBoundingSphere();
+    root.add(mesh);
+    return mesh;
+  };
+
+  makeInstanceBatch("worldRoadSurfaceBatch", roadInstances, roadMaterial);
+  makeInstanceBatch("worldSidewalkSurfaceBatch", sidewalkInstances, sidewalkMaterial);
   root.userData.roadCount = validSegments.length;
-  root.userData.junctionCount = Array.from(junctionWidths.keys()).filter(id =>
-    validSegments.filter(item => item.segment.from === id || item.segment.to === id).length >= 2
-  ).length;
-  root.userData.sidewalkCount = root.children.filter(child => child.name.startsWith("worldSidewalk_")).length;
+  root.userData.roadInstanceCount = roadInstances.length;
+  root.userData.junctionCount = junctionCount;
+  root.userData.sidewalkCount = sidewalkInstances.length;
 
   const terrainResult = buildTerrainAndLandscape(root, district, options);
   root.userData.groundTopY = terrainResult.root.userData.groundTopY;
