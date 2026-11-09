@@ -10,13 +10,14 @@ async function loadPureModule(filename) {
   return import(url);
 }
 
-const [{ createDistrictFromRecipe, createDistrictFromBrief }, { validateDistrict }, navigation, terrain, streamingModule, vehicleRules] = await Promise.all([
+const [{ createDistrictFromRecipe, createDistrictFromBrief }, { validateDistrict }, navigation, terrain, streamingModule, vehicleRules, vehicleControllerModule] = await Promise.all([
   loadPureModule("worldDistrictFactory.js"),
   loadPureModule("worldDistrictSchema.js"),
   loadPureModule("worldNavigation.js"),
   loadPureModule("worldTerrainMath.js"),
   loadPureModule("worldDistrictStreaming.js"),
-  loadPureModule("worldVehicleRoadRules.js")
+  loadPureModule("worldVehicleRoadRules.js"),
+  loadPureModule("vehicleRoadController.js")
 ]);
 const cityMapModule = await loadPureModule("cityMap.js");
 const CITY_MAP = cityMapModule.default;
@@ -38,6 +39,53 @@ const blueprintInline = blueprintSource.replace(
 );
 const blueprintUrl = "data:text/javascript;base64," + Buffer.from(blueprintInline).toString("base64");
 const CONFERENCE_CENTER_DISTRICT = (await import(blueprintUrl)).default;
+
+const VehicleRoadController = vehicleControllerModule.default;
+const blockedVehicle = new VehicleRoadController(
+  CONFERENCE_CENTER_DISTRICT,
+  { x: -60, z: 62.5, heading: Math.PI / 2 }
+);
+assert.equal(blockedVehicle.state.valid, true);
+let curbBoundaryBlocked = false;
+for (let index = 0; index < 1200; index++) {
+  const result = blockedVehicle.update(0.05, { throttle: 1, steering: 0 });
+  assert.equal(vehicleRules.isVehicleFootprintOnRoad(CONFERENCE_CENTER_DISTRICT, blockedVehicle.getState()), true,
+    "a vehicle controller must never commit a position whose footprint leaves the drivable surface");
+  if (result.blocked) {
+    curbBoundaryBlocked = true;
+    break;
+  }
+}
+assert.equal(curbBoundaryBlocked, true, "the vehicle controller must brake before crossing the road boundary");
+
+const uTurnStart = CONFERENCE_CENTER_DISTRICT.roadNetwork.nodes.find(node => node.id === "boulevard-north-west");
+const uTurnController = new VehicleRoadController(
+  CONFERENCE_CENTER_DISTRICT,
+  { x: uTurnStart.x + 6.5, z: uTurnStart.z, heading: 0 },
+  { turningRadius: 6.5 }
+);
+const uTurnRequest = uTurnController.requestUTurn("boulevard-north-west");
+assert.equal(uTurnRequest.accepted, true, uTurnRequest.reason || "the declared north apron should accept a full U-turn");
+let uTurnCompleted = false;
+for (let index = 0; index < 1200; index++) {
+  const result = uTurnController.update(0.05);
+  if (result.uturnCompleted) {
+    uTurnCompleted = true;
+    break;
+  }
+}
+assert.equal(uTurnCompleted, true, "the vehicle controller must complete the swept 180-degree turn");
+assert.ok(Math.abs(Math.abs(uTurnController.state.heading) - Math.PI) < 0.001);
+
+const serviceVehiclePosition = { x: -37, z: 54, heading: 0 };
+assert.equal(new VehicleRoadController(CONFERENCE_CENTER_DISTRICT, serviceVehiclePosition).state.valid, false);
+assert.equal(new VehicleRoadController(
+  CONFERENCE_CENTER_DISTRICT, serviceVehiclePosition, { permissions: ["service"] }
+).state.valid, false, "service tier alone must not bypass a closed physical gate");
+assert.equal(new VehicleRoadController(
+  CONFERENCE_CENTER_DISTRICT, serviceVehiclePosition,
+  { permissions: ["service"], openGates: ["arena-boardwalk-service-gate"] }
+).state.valid, true, "authorized vehicles may use the service road only after the gate is open");
 
 const recipe = {
   id: "world-system-node-test",
