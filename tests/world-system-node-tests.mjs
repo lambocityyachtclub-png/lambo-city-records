@@ -355,6 +355,14 @@ assert.equal(vehicleRules.isVehicleFootprintOnRoad(district, {
 assert.equal(vehicleRules.isVehicleFootprintOnRoad(district, {
   x: -50, z: 61, length: 4.8, width: 2.1, heading: Math.PI / 2
 }), false);
+assert.equal(vehicleRules.isVehicleMoveOnRoad(district,
+  { x: -50, z: 55, length: 4.8, width: 2.1, heading: Math.PI / 2 },
+  { x: -45, z: 55, length: 4.8, width: 2.1, heading: Math.PI / 2 }
+), true);
+assert.equal(vehicleRules.isVehicleMoveOnRoad(district,
+  { x: -50, z: 55, length: 4.8, width: 2.1, heading: Math.PI / 2 },
+  { x: -50, z: 61, length: 4.8, width: 2.1, heading: Math.PI / 2 }
+), false, "swept movement must reject crossing onto the sidewalk");
 assert.deepEqual(vehicleRules.getMinimumUTurnSpace({ length: 4.8, width: 2.1 }), {
   minimumWidth: 16.1, minimumDepth: 14.68, turningRadius: 6.5, clearance: 0.35
 });
