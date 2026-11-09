@@ -7,11 +7,11 @@
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 import CITY_MAP from "./cityMap.js";
 
-const ARENA_ROOT_NAME = "lamboCityConferenceCenterDistrict";
-const STREAM_IN_RADIUS = 250;
-const STREAM_OUT_RADIUS = 285;
-const DETAIL_IN_RADIUS = 125;
-const DETAIL_OUT_RADIUS = 145;
+const ARENA_ROOT_NAME = "lamboCityConferenceCenterLandmark";
+const STREAM_IN_RADIUS = 900;
+const STREAM_OUT_RADIUS = 1000;
+const DETAIL_IN_RADIUS = 250;
+const DETAIL_OUT_RADIUS = 285;
 
 function addProxyBox(root, name, size, position, material) {
   const mesh = new THREE.Mesh(new THREE.BoxGeometry(...size), material);
@@ -25,91 +25,25 @@ function addProxyBox(root, name, size, position, material) {
 function buildArenaProxy(scene) {
   const plan = CITY_MAP.districts.arenaDistrict;
   const arena = plan.arena;
-  const boulevard = plan.boulevard;
   const cx = arena.centerX;
   const cz = arena.centerZ;
-  const halfW = boulevard.outerWidth / 2;
-  const halfD = boulevard.outerDepth / 2;
-  const westX = cx - halfW;
-  const eastX = cx + halfW;
-  const southZ = cz - halfD;
-  const northZ = cz + halfD;
-
   const root = new THREE.Group();
   root.name = "lamboCityArenaFarLOD";
   root.visible = false;
   scene.add(root);
 
-  const land = new THREE.MeshBasicMaterial({ color: 0x39332b });
-  const road = new THREE.MeshBasicMaterial({ color: 0x15191f });
+  // The World System supplies the distant road, terrain, and villa proxy.
+  // This small companion proxy represents only the protected arena landmark.
   const arenaBody = new THREE.MeshBasicMaterial({ color: 0x202a34 });
   const roof = new THREE.MeshBasicMaterial({ color: 0xc7a45b });
-  const villas = new THREE.MeshBasicMaterial({ color: 0xb9ad98 });
-
-  addProxyBox(root, "arenaLODGround",
-    [plan.ground.width, 0.35, plan.ground.depth],
-    [plan.ground.centerX, 0.67, plan.ground.centerZ], land);
-
-  const roadY = 0.83;
-  addProxyBox(root, "arenaLODSouthRoad",
-    [boulevard.outerWidth + boulevard.roadWidth, 0.12, boulevard.roadWidth],
-    [cx, roadY, southZ], road);
-  addProxyBox(root, "arenaLODNorthRoad",
-    [boulevard.outerWidth + boulevard.roadWidth, 0.12, boulevard.roadWidth],
-    [cx, roadY, northZ], road);
-  addProxyBox(root, "arenaLODWestRoad",
-    [boulevard.roadWidth, 0.12, boulevard.outerDepth],
-    [westX, roadY, cz], road);
-  addProxyBox(root, "arenaLODEastRoad",
-    [boulevard.roadWidth, 0.12, boulevard.outerDepth],
-    [eastX, roadY, cz], road);
-
-  const sidewalk = new THREE.MeshBasicMaterial({ color: 0xb9ad98 });
-  const sw = boulevard.sidewalkWidth;
-  const sideOffset = boulevard.roadWidth / 2 + sw / 2;
-  addProxyBox(root, "arenaLODSouthSidewalk",
-    [boulevard.outerWidth + boulevard.roadWidth + sw * 2, 0.12, sw],
-    [cx, roadY, southZ - sideOffset], sidewalk);
-  addProxyBox(root, "arenaLODNorthSidewalk",
-    [boulevard.outerWidth + boulevard.roadWidth + sw * 2, 0.12, sw],
-    [cx, roadY, northZ + sideOffset], sidewalk);
-  addProxyBox(root, "arenaLODWestSidewalk",
-    [sw, 0.12, boulevard.outerDepth + boulevard.roadWidth + sw * 2],
-    [westX - sideOffset, roadY, cz], sidewalk);
-  addProxyBox(root, "arenaLODEastSidewalk",
-    [sw, 0.12, boulevard.outerDepth + boulevard.roadWidth + sw * 2],
-    [eastX + sideOffset, roadY, cz], sidewalk);
-
-  const access = CITY_MAP.districts.conferenceCenter;
-  const approachEnd = cz - arena.footprintDepth / 2 - 1;
-  addProxyBox(root, "arenaLODAccessRoad",
-    [8, 0.12, approachEnd - access.accessRoadStartZ],
-    [access.accessRoadX, roadY, (access.accessRoadStartZ + approachEnd) / 2], road);
-  const plaza = new THREE.MeshBasicMaterial({ color: 0xaaa18e });
-  addProxyBox(root, "arenaLODArrivalPlaza",
-    [30, 0.16, 13],
-    [cx, roadY + 0.02, cz - arena.footprintDepth / 2 - 5.5], plaza);
-
   addProxyBox(root, "arenaLODBuildingMass",
     [arena.footprintWidth, 21, arena.footprintDepth],
     [cx, 11.5, cz], arenaBody);
   addProxyBox(root, "arenaLODRoof",
     [arena.footprintWidth + 5, 1.4, arena.footprintDepth + 5],
     [cx, 22.8, cz], roof);
-
-  // Six simplified parcel masses preserve the district silhouette.
-  [
-    [-98.5, 80], [-98.5, 112],
-    [12.5, 80], [12.5, 112],
-    [-58, 148], [-28, 148]
-  ].forEach(([x, z], index) => {
-    addProxyBox(root, "arenaLODVilla_" + index,
-      [12.5, 9, 10.5], [x, 5.2, z], villas);
-  });
-
   return root;
 }
-
 export default {
   init(scene) {
     this._scene = scene;
