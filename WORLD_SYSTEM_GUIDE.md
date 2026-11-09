@@ -30,7 +30,9 @@ An urban park is walkable and does not receive a building collision blocker. The
 
 ## District data
 
-For repeatable neighborhoods, start with `createDistrictFromRecipe(recipe)`. The factory supports either a rectangular perimeter loop with optional junctions and parcel bands, or a rectangular street grid with automatically generated blocks and parcel centers. Both can include pedestrian routes and a restricted service entry. The factory generates road nodes/segments and parcel positions; the schema then checks the result before registration. Use a hand-authored blueprint only when a district needs a custom landmark or unusual road layout.\n\nA district blueprint contains:
+For repeatable neighborhoods, start with `createDistrictFromRecipe(recipe)`. The factory supports either a rectangular perimeter loop with optional junctions and parcel bands, or a rectangular street grid with automatically generated blocks and parcel centers. Both can include pedestrian routes and a restricted service entry. The factory generates road nodes/segments and parcel positions; the schema then checks the result before registration. Use a hand-authored blueprint only when a district needs a custom landmark or unusual road layout.
+
+A district blueprint contains:
 
 - A unique `id`, a readable `name`, and rectangular `bounds`.
 - A `roadNetwork` with unique nodes and connected segments.
@@ -40,7 +42,7 @@ For repeatable neighborhoods, start with `createDistrictFromRecipe(recipe)`. The
 - `parcels` with center, footprint, style, and optional rotation/floor count.
 - `accessTiers` and restricted-road metadata.
 
-Terrain zones must stay within the district, avoid parcel footprints, and not overlap one another. The validator also checks rotated parcel footprints against road and sidewalk corridors. The height sampler uses the same transition formula as the generated terrain mesh.
+Terrain zones must stay within the district, avoid parcel footprints, and not overlap one another. The validator also checks rotated parcel footprints against road and sidewalk corridors. The height sampler uses the same transition formula as the generated terrain mesh. `getDistrictAtPosition(x, z)` identifies the registered district under a world coordinate, and `getGroundHeightAt(x, z)` returns its sampled terrain height or the road/sidewalk top where appropriate. The runtime bridge exposes the same coordinate-based queries for a future player/vehicle grounding adapter.
 
 ## Access tiers and gates
 
