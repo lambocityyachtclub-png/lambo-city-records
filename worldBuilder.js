@@ -5,6 +5,7 @@
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 import { buildParcelGeometry } from "./worldParcelBuilder.js";
 import { buildTerrainAndLandscape } from "./worldTerrainBuilder.js";
+import { buildAccessGates } from "./worldAccessGate.js";
 
 function makeRoadMaterial() {
   return new THREE.MeshStandardMaterial({ color: 0x15191f, roughness: 0.94 });
@@ -134,6 +135,10 @@ export function buildDistrictGeometry(scene, district, options = {}) {
     }
   }
   root.userData.collisionIds = collisionIds;
+  const accessGates = buildAccessGates(root, district, collision);
+  root.userData.accessGates = accessGates;
+  root.userData.accessGateIds = accessGates.map(gate => gate.id);
+
 
 
   scene.add(root);
