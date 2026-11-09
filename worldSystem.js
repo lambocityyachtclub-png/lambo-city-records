@@ -77,7 +77,8 @@ export default class WorldSystem {
     if (!district) throw new Error("Unknown district: " + id);
     if (this.proxyRoots.has(id)) return this.proxyRoots.get(id);
     const root = buildDistrictProxy(this.scene, district, {
-      groundTopY: Number.isFinite(this.options.groundTopY) ? this.options.groundTopY : 0.64,
+      groundTopY: Number.isFinite(this.options.groundTopY) ? this.options.groundTopY :
+        (Number.isFinite(district.groundTopY) ? district.groundTopY : 0.64),
       ...proxyOptions
     });
     if (root) this.proxyRoots.set(id, root);
@@ -222,7 +223,8 @@ export default class WorldSystem {
     const root = this.roots.get(id);
     const groundY = Number.isFinite(root?.userData?.groundTopY)
       ? root.userData.groundTopY
-      : (Number.isFinite(this.options.groundTopY) ? this.options.groundTopY : 0.64);
+      : (Number.isFinite(this.options.groundTopY) ? this.options.groundTopY :
+        (Number.isFinite(district.groundTopY) ? district.groundTopY : 0.64));
     const surfaceOptions = root?.userData?.surfaceHeights || {
       roadTopY: Number.isFinite(this.options.roadTopY) ? this.options.roadTopY : 0.77,
       sidewalkTopY: Number.isFinite(this.options.sidewalkTopY)
