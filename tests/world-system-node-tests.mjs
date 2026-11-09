@@ -51,7 +51,7 @@ const recipe = {
     { id: "courtyard-grade", center: { x: -43, z: 148 }, width: 12, depth: 7, edgeY: 0.645, topY: 0.70, transitionWidth: 1.2 }
   ],
   landscapeZones: [
-    { id: "courtyard", center: { x: -43, z: 148 }, width: 12, depth: 7, treeCount: 4, shrubCount: 10 }
+    { id: "courtyard", center: { x: -43, z: 148 }, width: 12, depth: 7, treeCount: 4, shrubCount: 8 }
   ],
   landmarks: []
 };
