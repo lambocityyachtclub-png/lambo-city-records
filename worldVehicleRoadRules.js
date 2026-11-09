@@ -112,10 +112,12 @@ export function isVehicleMoveOnRoad(district, current, next, options = {}) {
       ![current.x, current.z, next.x, next.z].every(Number.isFinite)) return false;
   const distance = Math.hypot(next.x - current.x, next.z - current.z);
   const maxStep = Number.isFinite(options.maxStep) ? Math.max(0.2, options.maxStep) : 0.75;
-  const steps = Math.max(1, Math.min(96, Math.ceil(distance / maxStep)));
   let angleDelta = (next.heading ?? current.heading ?? 0) - (current.heading ?? 0);
   while (angleDelta > Math.PI) angleDelta -= Math.PI * 2;
   while (angleDelta < -Math.PI) angleDelta += Math.PI * 2;
+  const vehicleLength = Number.isFinite(next.length) ? next.length : (current.length || 4.8);
+  const rotationTravel = Math.abs(angleDelta) * vehicleLength / 2;
+  const steps = Math.max(1, Math.min(96, Math.ceil(Math.max(distance, rotationTravel) / maxStep)));
   for (let index = 0; index <= steps; index++) {
     const t = index / steps;
     const vehicle = {
