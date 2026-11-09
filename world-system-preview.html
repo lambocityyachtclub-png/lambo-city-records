@@ -92,6 +92,18 @@
         throw new Error(registration.validation.issues.map(item => item.message).join("\n"));
       }
       const root = world.buildDistrict(district.id, { roadTopY: 0.77, sidewalkTopY: 0.82, roadWidth: 9, sidewalkWidth: 3 });
+      const authorizedServiceRoute = world.findRoute(
+        district.id,
+        "boardwalk-service-entry",
+        "arena-arrival-approach",
+        { mode: "service", permissions: ["service"] }
+      );
+      const ordinaryTrafficRoute = world.findRoute(
+        district.id,
+        "boardwalk-service-entry",
+        "arena-arrival-approach",
+        { mode: "vehicle" }
+      );
       status.textContent = "Blueprint validated. Generated district is isolated from live gameplay.";
       metrics.innerHTML = [
         ["Roads", root.userData.roadCount],
@@ -99,7 +111,9 @@
         ["Sidewalk sections", root.userData.sidewalkCount],
         ["Villa parcels", root.userData.parcelCount],
         ["Landscape zones", root.userData.landscapeZoneCount],
-        ["Landscape features", root.userData.landscapeFeatureCount]
+        ["Landscape features", root.userData.landscapeFeatureCount],
+        ["Service access", authorizedServiceRoute.found ? "authorized" : "blocked"],
+        ["Public vehicle access", ordinaryTrafficRoute.found ? "unexpected" : "restricted"]
       ].map(([label, value]) => '<span class="metric">' + label + ': ' + value + '</span>').join("");
     } catch (err) {
       status.textContent = "The district could not be generated.";
