@@ -230,7 +230,6 @@ export function buildParcelGeometry(parent, district, options = {}) {
 
     if (style === "coastal-villa") {
       buildVilla(building, parcel, width, depth, materials);
-      buildings += 1;
     } else if (style === "luxury-apartment") {
       buildApartment(building, parcel, width, depth, materials);
     } else if (style === "retail-promenade") {
