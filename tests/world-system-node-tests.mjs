@@ -20,6 +20,17 @@ const [{ createDistrictFromRecipe, createDistrictFromBrief }, { validateDistrict
 ]);
 const cityMapModule = await loadPureModule("cityMap.js");
 const CITY_MAP = cityMapModule.default;
+const liveMainSource = await readFile(resolve(root, "main.js"), "utf8");
+const liveArenaSource = await readFile(resolve(root, "conferenceCenterDistrict.js"), "utf8");
+assert.match(liveMainSource, /WorldSystemHost\.initialize\(\{/,
+  "the approved district blueprint must initialize in the live scene");
+assert.match(liveMainSource, /districts:\s*\[ConferenceCenterBlueprint\]/);
+assert.doesNotMatch(liveMainSource, /worldStreaming:\s*WorldStreaming/,
+  "the old duplicate arena streamer must not compete with World System streaming");
+assert.doesNotMatch(liveArenaSource, /arenaBoulevardSouth|arenaBoulevardNorth|arenaBoulevardWest|arenaBoulevardEast/,
+  "legacy arena roads must not duplicate the generated road network");
+assert.match(liveArenaSource, /arenaArrivalPlaza/,
+  "the existing arena arrival plaza remains preserved");
 const blueprintSource = await readFile(resolve(root, "worldDistricts/conferenceCenter.js"), "utf8");
 const blueprintInline = blueprintSource.replace(
   'import CITY_MAP from "../cityMap.js";',
