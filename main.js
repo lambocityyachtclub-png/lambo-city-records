@@ -204,8 +204,8 @@ engine.init();
 window.__lamboCityWorldSystemReady = WorldSystemHost.initialize({
   districts: [ConferenceCenterBlueprint],
   streamingOptions: {
-    streamInRadius: 250,
-    streamOutRadius: 285,
+    streamInRadius: 30,
+    streamOutRadius: 45,
     proxyInRadius: 900,
     proxyOutRadius: 1000,
     maxBuildsPerUpdate: 1,
