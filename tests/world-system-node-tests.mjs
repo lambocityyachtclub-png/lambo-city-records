@@ -223,6 +223,16 @@ tooManyLandscapeZones.landscapeZones = Array.from({ length: 17 }, (_, index) => 
   width: 2, depth: 2, treeCount: 0, shrubCount: 0
 }));
 assert.equal(validateDistrict(tooManyLandscapeZones).issues.some(item => item.code === "LANDSCAPE_ZONE_LIMIT"), true);
+const overlappingLandscape = JSON.parse(JSON.stringify(district));
+overlappingLandscape.landscapeZones.push({
+  id: "overlapping-landscape-zone",
+  center: { ...overlappingLandscape.landscapeZones[0].center },
+  width: 2, depth: 2, treeCount: 0, shrubCount: 0
+});
+assert.equal(validateDistrict(overlappingLandscape).issues.some(item => item.code === "LANDSCAPE_ZONE_OVERLAP"), true);
+const invalidGroundElevation = JSON.parse(JSON.stringify(district));
+invalidGroundElevation.groundTopY = Number.NaN;
+assert.equal(validateDistrict(invalidGroundElevation).issues.some(item => item.code === "INVALID_GROUND_ELEVATION"), true);
 const tooManyGates = JSON.parse(JSON.stringify(district));
 const gatedSegment = tooManyGates.roadNetwork.segments.find(segment => segment.gate);
 for (let index = 0; index < 8; index++) {
