@@ -81,10 +81,10 @@ export function buildTerrainAndLandscape(parent, district, options = {}) {
   root.userData.generatedBy = "LAMBO_CITY_TerrainBuilder";
   root.userData.groundTopY = groundTopY;
 
-  const ground = new THREE.Mesh(
-    new THREE.PlaneGeometry(width, depth),
-    options.terrainMaterial || makeMaterial(0x39352e)
-  );
+  const ownedMaterials = [];
+  const groundMaterial = options.terrainMaterial || makeMaterial(0x39352e);
+  if (!options.terrainMaterial) ownedMaterials.push(groundMaterial);
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(width, depth), groundMaterial);
   ground.name = "worldTerrainBase";
   ground.rotation.x = -Math.PI / 2;
   ground.position.set(centerX, groundTopY, centerZ);
@@ -96,7 +96,9 @@ export function buildTerrainAndLandscape(parent, district, options = {}) {
     if (!zone?.center || !Number.isFinite(zone.center.x) || !Number.isFinite(zone.center.z) ||
         !Number.isFinite(zone.width) || !Number.isFinite(zone.depth) ||
         zone.width <= 0 || zone.depth <= 0) continue;
-    root.add(buildTerrainPatch(zone, groundTopY));
+    const terrainMesh = buildTerrainPatch(zone, groundTopY);
+    root.add(terrainMesh);
+    ownedMaterials.push(terrainMesh.material);
   }
 
   const zones = Array.isArray(district.landscapeZones) ? district.landscapeZones : [];
@@ -110,10 +112,9 @@ export function buildTerrainAndLandscape(parent, district, options = {}) {
 
     const zoneWidth = Number.isFinite(zone.width) ? zone.width : 8;
     const zoneDepth = Number.isFinite(zone.depth) ? zone.depth : 6;
-    const paving = new THREE.Mesh(
-      new THREE.BoxGeometry(zoneWidth, 0.08, zoneDepth),
-      makeMaterial(zone.pavingColor || 0x77766d, 0.9)
-    );
+    const pavingMaterial = makeMaterial(zone.pavingColor || 0x77766d, 0.9);
+    ownedMaterials.push(pavingMaterial);
+    const paving = new THREE.Mesh(new THREE.BoxGeometry(zoneWidth, 0.08, zoneDepth), pavingMaterial);
     paving.name = zone.id + "_courtyard";
     paving.position.y = 0.04;
     paving.receiveShadow = true;
@@ -121,10 +122,9 @@ export function buildTerrainAndLandscape(parent, district, options = {}) {
 
     const bedWidth = Math.max(1, zoneWidth - 2);
     const bedDepth = Math.max(1, zoneDepth - 2);
-    const bed = new THREE.Mesh(
-      new THREE.BoxGeometry(bedWidth, 0.07, bedDepth),
-      makeMaterial(zone.plantingColor || 0x344b3c)
-    );
+    const bedMaterial = makeMaterial(zone.plantingColor || 0x344b3c);
+    ownedMaterials.push(bedMaterial);
+    const bed = new THREE.Mesh(new THREE.BoxGeometry(bedWidth, 0.07, bedDepth), bedMaterial);
     bed.name = zone.id + "_plantingBed";
     bed.position.y = 0.115;
     bed.receiveShadow = true;
@@ -135,8 +135,11 @@ export function buildTerrainAndLandscape(parent, district, options = {}) {
     if (treeCount) {
       const trunkGeometry = new THREE.CylinderGeometry(0.13, 0.18, 1.25, 5);
       const canopyGeometry = new THREE.IcosahedronGeometry(0.92, 0);
-      const trunks = new THREE.InstancedMesh(trunkGeometry, makeMaterial(0x66503a), treeCount);
-      const canopies = new THREE.InstancedMesh(canopyGeometry, makeMaterial(0x35533d), treeCount);
+      const trunkMaterial = makeMaterial(0x66503a);
+      const canopyMaterial = makeMaterial(0x35533d);
+      ownedMaterials.push(trunkMaterial, canopyMaterial);
+      const trunks = new THREE.InstancedMesh(trunkGeometry, trunkMaterial, treeCount);
+      const canopies = new THREE.InstancedMesh(canopyGeometry, canopyMaterial, treeCount);
       const positions = [
         [-0.32, -0.28], [0.32, 0.28], [0, 0]
       ];
@@ -162,9 +165,11 @@ export function buildTerrainAndLandscape(parent, district, options = {}) {
 
     const shrubCount = Math.max(0, Math.min(8, Math.floor(zone.shrubCount || 0)));
     if (shrubCount) {
+      const shrubMaterial = makeMaterial(0x476449);
+      ownedMaterials.push(shrubMaterial);
       const shrubs = new THREE.InstancedMesh(
         new THREE.IcosahedronGeometry(0.34, 0),
-        makeMaterial(0x476449),
+        shrubMaterial,
         shrubCount
       );
       const matrix = new THREE.Object3D();
@@ -184,11 +189,12 @@ export function buildTerrainAndLandscape(parent, district, options = {}) {
     }
   }
 
+  root.userData.ownedMaterials = ownedMaterials;
   root.userData.terrainZoneCount = terrainZones.length;
   root.userData.landscapeZoneCount = zones.length;
   root.userData.landscapeFeatureCount = featureCount;
   parent.add(root);
-  return { root, terrainZones: terrainZones.length, zones: zones.length, features: featureCount };
+  return { root, terrainZones: terrainZones.length, zones: zones.length, features: featureCount, ownedMaterials };
 }
 
 export default { buildTerrainAndLandscape, sampleTerrainHeight };
