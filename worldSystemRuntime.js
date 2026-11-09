@@ -146,6 +146,10 @@ export default class WorldSystemRuntime {
     return this.ready && this.worldSystem.isVehicleMoveOnRoad(districtId, current, next, options);
   }
 
+  buildVehicleUTurnPath(districtId, nodeId, vehicle = {}, options = {}) {
+    return this.ready ? this.worldSystem.buildVehicleUTurnPath(districtId, nodeId, vehicle, options) : { valid: false, reason: "NOT_READY", points: [] };
+  }
+
   getVehicleTurnSpace(vehicle = {}) {
     return this.ready ? this.worldSystem.getVehicleTurnSpace(vehicle) : null;
   }
