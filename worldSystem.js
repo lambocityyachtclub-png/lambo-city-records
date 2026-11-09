@@ -4,6 +4,7 @@
 
 import { validateDistrict } from "./worldDistrictSchema.js";
 import { buildDistrictGeometry } from "./worldBuilder.js";
+import { findRoute as findDistrictRoute } from "./worldNavigation.js";
 
 export default class WorldSystem {
   constructor(options = {}) {
@@ -67,6 +68,14 @@ export default class WorldSystem {
     });
     this.roots.delete(id);
     return true;
+  }
+
+  findRoute(id, fromNodeId, toNodeId, routeOptions = {}) {
+    const district = this.districts.get(id);
+    if (!district) {
+      return { found: false, reason: "UNKNOWN_DISTRICT", nodeIds: [], segmentIds: [], distance: 0 };
+    }
+    return findDistrictRoute(district, fromNodeId, toNodeId, routeOptions);
   }
 
   getDistrictIds() {
