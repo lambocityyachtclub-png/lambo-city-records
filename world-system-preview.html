@@ -192,11 +192,13 @@
       const baseGroundY = world.getGroundHeight(district.id, -100, 70);
       const roadGroundY = world.getGroundHeight(district.id, -60, 55);
       const sidewalkGroundY = world.getGroundHeight(district.id, -60, 49);
+      const approachSidewalkGroundY = world.getGroundHeight(district.id, -43, 64.5);
       if (Math.abs(plazaGroundY - 0.68) > 0.001 ||
           Math.abs(courtyardGroundY - 0.70) > 0.001 ||
           Math.abs(baseGroundY - 0.64) > 0.001 ||
           Math.abs(roadGroundY - 0.77) > 0.001 ||
-          Math.abs(sidewalkGroundY - 0.82) > 0.001) {
+          Math.abs(sidewalkGroundY - 0.82) > 0.001 ||
+          Math.abs(approachSidewalkGroundY - 0.82) > 0.001) {
         throw new Error("Terrain height sampling does not match the generated grade data.");
       }
       const noPermissionServiceRoute = world.findRoute(
