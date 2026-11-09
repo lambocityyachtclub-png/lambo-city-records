@@ -39,6 +39,7 @@
     import WorldSystem from "./worldSystem.js";
     import WorldDistrictStreaming from "./worldDistrictStreaming.js";
     import WorldSystemRuntime from "./worldSystemRuntime.js";
+    import WorldSystemHost from "./worldSystemHost.js";
     import { createDistrictFromRecipe } from "./worldDistrictFactory.js";
     import { buildParcelGeometry } from "./worldParcelBuilder.js";
     import { updateDistrictParcelFocus } from "./worldBuilder.js";
@@ -407,6 +408,39 @@
       runtime.dispose();
       if (runtime.getWorldSystem() !== null || runtime.ready || runtime.getStatus().registeredDistrictIds.length !== 0) {
         throw new Error("The runtime bridge did not dispose cleanly.");
+      }
+
+      const hostScene = new THREE.Scene();
+      const hostCollision = {
+        boxes: [],
+        registerBox(name, bounds) { this.boxes.push({ name, ...bounds }); },
+        unregister(name) { this.boxes = this.boxes.filter(box => box.name !== name); }
+      };
+      WorldSystemHost.init(hostScene, { systems: { collision: hostCollision } });
+      if (WorldSystemHost.isReady() || typeof window.__lamboCityWorldSystem?.initialize !== "function") {
+        throw new Error("The engine host initialized district runtime work before an explicit request.");
+      }
+      await WorldSystemHost.initialize({
+        districts: [recipeDistrict],
+        streamingOptions: { streamInRadius: 50, streamOutRadius: 75 }
+      });
+      if (!WorldSystemHost.isReady() ||
+          Math.abs(WorldSystemHost.getGroundHeightAt(-60, 62.5) - 0.77) > 0.001) {
+        throw new Error("The engine host did not expose explicit initialization and generated ground sampling.");
+      }
+      WorldSystemHost.buildDistrict(recipeDistrict.id);
+      if (hostCollision.boxes.length !== recipeDistrict.parcels.length + 1) {
+        throw new Error("The engine host did not register generated parcel and gate collision.");
+      }
+      const hostGate = WorldSystemHost.setGateAccess(
+        recipeDistrict.id, "arena-boardwalk-service-gate", ["service"]
+      );
+      if (!hostGate.updated || !hostGate.gate?.open) {
+        throw new Error("The engine host did not expose permission-controlled gate access.");
+      }
+      WorldSystemHost.dispose();
+      if (WorldSystemHost.isReady() || hostCollision.boxes.length !== 0) {
+        throw new Error("The engine host did not release its runtime and collision data.");
       }
 
       const rollbackCollision = {
