@@ -231,8 +231,12 @@
         districts: [recipeDistrict],
         streamingOptions: { streamInRadius: 50, streamOutRadius: 75 }
       });
+      if (!runtime.getStatus().ready || !runtime.getStatus().registeredDistrictIds.includes(recipeDistrict.id)) {
+        throw new Error("The runtime bridge did not report its registered district state.");
+      }
       runtime.update(0, { playerPosition: { x: -43, z: 100 } });
-      if (!runtime.getWorldSystem().isDistrictBuilt(recipeDistrict.id)) {
+      if (!runtime.getWorldSystem().isDistrictBuilt(recipeDistrict.id) ||
+          !runtime.getStatus().builtDistricts.includes(recipeDistrict.id)) {
         throw new Error("The lazy runtime bridge did not build a nearby district.");
       }
       runtime.update(0, { playerPosition: { x: 1000, z: 1000 } });
@@ -240,7 +244,7 @@
         throw new Error("The runtime bridge did not stream out and clean up the district.");
       }
       runtime.dispose();
-      if (runtime.getWorldSystem() !== null || runtime.ready) {
+      if (runtime.getWorldSystem() !== null || runtime.ready || runtime.getStatus().registeredDistrictIds.length !== 0) {
         throw new Error("The runtime bridge did not dispose cleanly.");
       }
 
