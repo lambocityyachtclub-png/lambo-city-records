@@ -49,12 +49,12 @@ export default {
     this._scene = scene;
     this._arenaRoot = scene?.getObjectByName(ARENA_ROOT_NAME) || null;
     this._proxyRoot = scene ? buildArenaProxy(scene) : null;
-    this._arenaActive = true;
-    this._detailed = true;
+    this._arenaActive = false;
+    this._detailed = false;
 
     this._arenaBounds = CITY_MAP.districts.arenaDistrict.bounds;
 
-    if (this._arenaRoot) this._arenaRoot.visible = true;
+    if (this._arenaRoot) this._arenaRoot.visible = false;
     if (this._proxyRoot) this._proxyRoot.visible = false;
   },
 
