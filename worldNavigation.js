@@ -125,4 +125,108 @@ export function findRoute(district, fromId, toId, options = {}) {
   return { found: true, reason: null, nodeIds, segmentIds, distance: gScore.get(toId) };
 }
 
-export default { findRoute };
+
+export function findWorldRoute(districtEntries, connections, fromDistrictId, fromNodeId, toDistrictId, toNodeId, options = {}) {
+  const nodes = new Map();
+  const adjacency = new Map();
+  const keyFor = (districtId, nodeId) => districtId + "::" + nodeId;
+
+  for (const [districtId, district] of districtEntries || []) {
+    for (const node of district?.roadNetwork?.nodes || []) {
+      const key = keyFor(districtId, node.id);
+      nodes.set(key, { key, districtId, nodeId: node.id, x: node.x, z: node.z });
+      adjacency.set(key, []);
+    }
+  }
+
+  const mode = options.mode || "vehicle";
+  const permissions = new Set(Array.isArray(options.permissions) ? options.permissions : []);
+  const addEdge = (fromKey, toKey, edge, distance) => {
+    if (!nodes.has(fromKey) || !nodes.has(toKey) || !Number.isFinite(distance) || distance <= 0) return;
+    adjacency.get(fromKey).push({ toKey, edge, distance });
+    adjacency.get(toKey).push({ toKey: fromKey, edge, distance });
+  };
+
+  for (const [districtId, district] of districtEntries || []) {
+    for (const segment of district?.roadNetwork?.segments || []) {
+      if (!segmentAllowed(segment, mode, permissions)) continue;
+      const fromKey = keyFor(districtId, segment.from);
+      const toKey = keyFor(districtId, segment.to);
+      const from = nodes.get(fromKey), to = nodes.get(toKey);
+      if (!from || !to) continue;
+      addEdge(fromKey, toKey, {
+        type: "district", districtId, segmentId: segment.id
+      }, Math.hypot(to.x - from.x, to.z - from.z));
+    }
+  }
+
+  for (const connection of connections || []) {
+    const synthetic = {
+      mode: connection.mode || "vehicle",
+      access: connection.access,
+      requiredAccess: connection.requiredAccess
+    };
+    if (!segmentAllowed(synthetic, mode, permissions)) continue;
+    const fromKey = keyFor(connection.from?.districtId, connection.from?.nodeId);
+    const toKey = keyFor(connection.to?.districtId, connection.to?.nodeId);
+    const from = nodes.get(fromKey), to = nodes.get(toKey);
+    if (!from || !to) continue;
+    const distance = Number.isFinite(connection.distance) && connection.distance > 0
+      ? connection.distance
+      : Math.hypot(to.x - from.x, to.z - from.z);
+    addEdge(fromKey, toKey, { type: "connection", connectionId: connection.id }, distance);
+  }
+
+  const startKey = keyFor(fromDistrictId, fromNodeId);
+  const endKey = keyFor(toDistrictId, toNodeId);
+  if (!nodes.has(startKey) || !nodes.has(endKey)) {
+    return { found: false, reason: "UNKNOWN_ENDPOINT", nodes: [], steps: [], distance: 0 };
+  }
+  if (startKey === endKey) {
+    return { found: true, reason: null, nodes: [nodes.get(startKey)], steps: [], distance: 0 };
+  }
+
+  const heuristic = key => {
+    const a = nodes.get(key), b = nodes.get(endKey);
+    return Math.hypot(b.x - a.x, b.z - a.z);
+  };
+  const open = new MinHeap();
+  const gScore = new Map(Array.from(nodes.keys(), key => [key, Infinity]));
+  const previous = new Map();
+  const closed = new Set();
+  gScore.set(startKey, 0);
+  open.push({ id: startKey, score: heuristic(startKey) });
+
+  while (open.size) {
+    const current = open.pop().id;
+    if (closed.has(current)) continue;
+    if (current === endKey) break;
+    closed.add(current);
+    for (const edge of adjacency.get(current) || []) {
+      if (closed.has(edge.toKey)) continue;
+      const candidate = gScore.get(current) + edge.distance;
+      if (candidate < gScore.get(edge.toKey)) {
+        gScore.set(edge.toKey, candidate);
+        previous.set(edge.toKey, { from: current, edge: edge.edge });
+        open.push({ id: edge.toKey, score: candidate + heuristic(edge.toKey) });
+      }
+    }
+  }
+
+  if (!Number.isFinite(gScore.get(endKey))) {
+    return { found: false, reason: "NO_ALLOWED_ROUTE", nodes: [], steps: [], distance: 0 };
+  }
+
+  const pathNodes = [nodes.get(endKey)], steps = [];
+  let cursor = endKey;
+  while (cursor !== startKey) {
+    const step = previous.get(cursor);
+    if (!step) return { found: false, reason: "BROKEN_ROUTE_CHAIN", nodes: [], steps: [], distance: 0 };
+    steps.unshift(step.edge);
+    pathNodes.unshift(nodes.get(step.from));
+    cursor = step.from;
+  }
+  return { found: true, reason: null, nodes: pathNodes, steps, distance: gScore.get(endKey) };
+}
+
+export default { findRoute, findWorldRoute };
