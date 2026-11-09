@@ -40,6 +40,10 @@ export function validateDistrict(district, options = {}) {
     REQUIRED_BOUNDS.every(key => Number.isFinite(bounds[key])) &&
     bounds.minX < bounds.maxX && bounds.minZ < bounds.maxZ;
 
+  if (district.groundTopY !== undefined && !Number.isFinite(district.groundTopY)) {
+    issues.push(issue("INVALID_GROUND_ELEVATION", "District groundTopY must be a finite elevation."));
+  }
+
   if (!bounds || typeof bounds !== "object") {
     issues.push(issue("MISSING_BOUNDS", "District must define its map boundaries."));
   } else {
