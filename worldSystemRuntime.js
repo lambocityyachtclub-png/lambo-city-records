@@ -6,6 +6,7 @@ export default class WorldSystemRuntime {
     this.worldSystem = null;
     this.streaming = null;
     this.registeredDistrictIds = [];
+    this.createDistrictFromRecipe = null;
     this.ready = false;
   }
 
@@ -25,6 +26,7 @@ export default class WorldSystemRuntime {
       import("./worldDistrictFactory.js")
     ]);
 
+    this.createDistrictFromRecipe = createDistrictFromRecipe;
     this.worldSystem = new WorldSystem(configuration.worldOptions || this.options.worldOptions || {});
 
     try {
@@ -84,6 +86,46 @@ export default class WorldSystemRuntime {
   }
 
 
+  registerDistrict(districtOrRecipe, options = {}) {
+    if (!this.ready || !this.worldSystem) return { registered: false, reason: "NOT_READY" };
+    let district;
+    try {
+      const isRecipe = districtOrRecipe &&
+        (districtOrRecipe.roadLayout === "grid" || districtOrRecipe.roadGrid || districtOrRecipe.roadLoop);
+      district = isRecipe
+        ? this.createDistrictFromRecipe(districtOrRecipe)
+        : districtOrRecipe;
+    } catch (error) {
+      return { registered: false, reason: "INVALID_RECIPE", message: String(error?.message || error) };
+    }
+    const result = this.worldSystem.registerDistrict(district, options);
+    if (result.registered && !this.registeredDistrictIds.includes(district.id)) {
+      this.registeredDistrictIds.push(district.id);
+    }
+    return { ...result, district: result.registered ? district : undefined };
+  }
+
+  unregisterDistrict(id) {
+    if (!this.ready || !this.worldSystem) return false;
+    const removed = this.worldSystem.unregisterDistrict(id);
+    if (removed) this.registeredDistrictIds = this.registeredDistrictIds.filter(value => value !== id);
+    return removed;
+  }
+
+  registerConnection(connection) {
+    if (!this.ready || !this.worldSystem) return { registered: false, reason: "NOT_READY" };
+    return this.worldSystem.registerConnection(connection);
+  }
+
+  unregisterConnection(id) {
+    if (!this.ready || !this.worldSystem) return false;
+    return this.worldSystem.unregisterConnection(id);
+  }
+
+  getDistrictBuildStats(id) {
+    return this.ready ? this.worldSystem.getDistrictBuildStats(id) : null;
+  }
+
   getDistrictAtPosition(x, z) {
     return this.ready ? this.worldSystem.getDistrictAtPosition(x, z) : null;
   }
@@ -113,6 +155,7 @@ export default class WorldSystemRuntime {
     this.registeredDistrictIds = [];
     this.streaming = null;
     this.worldSystem = null;
+    this.createDistrictFromRecipe = null;
     this.ready = false;
   }
 }
