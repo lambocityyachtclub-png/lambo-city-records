@@ -215,6 +215,7 @@ export function validateDistrict(district, options = {}) {
       issues.push(issue("INVALID_TERRAIN_ZONES", "Terrain zones must be an array."));
     } else {
       const terrainIds = new Set();
+      const terrainFootprints = [];
       for (const zone of district.terrainZones) {
         if (!zone || typeof zone.id !== "string" || !zone.id.trim()) {
           issues.push(issue("INVALID_TERRAIN_ZONE", "Every terrain zone needs a valid id."));
@@ -237,6 +238,7 @@ export function validateDistrict(district, options = {}) {
         }
         const minX = zone.center.x - zone.width / 2, maxX = zone.center.x + zone.width / 2;
         const minZ = zone.center.z - zone.depth / 2, maxZ = zone.center.z + zone.depth / 2;
+        terrainFootprints.push({ id: zone.id, minX, maxX, minZ, maxZ });
         if (boundsValid && (minX < bounds.minX || maxX > bounds.maxX || minZ < bounds.minZ || maxZ > bounds.maxZ)) {
           issues.push(issue("TERRAIN_ZONE_OUT_OF_BOUNDS", "Terrain zone " + zone.id + " extends beyond district boundaries."));
         }
@@ -250,6 +252,14 @@ export function validateDistrict(district, options = {}) {
           if (minX < parcel.center.x + halfX && maxX > parcel.center.x - halfX &&
               minZ < parcel.center.z + halfZ && maxZ > parcel.center.z - halfZ) {
             issues.push(issue("TERRAIN_PARCEL_OVERLAP", "Terrain zone " + zone.id + " overlaps parcel " + parcel.id + "."));
+          }
+        }
+      }
+      for (let i = 0; i < terrainFootprints.length; i++) {
+        for (let j = i + 1; j < terrainFootprints.length; j++) {
+          const a = terrainFootprints[i], b = terrainFootprints[j];
+          if (a.minX < b.maxX && a.maxX > b.minX && a.minZ < b.maxZ && a.maxZ > b.minZ) {
+            issues.push(issue("OVERLAPPING_TERRAIN_ZONES", "Terrain zones " + a.id + " and " + b.id + " overlap."));
           }
         }
       }
