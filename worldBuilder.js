@@ -38,10 +38,13 @@ export function buildDistrictGeometry(scene, district, options = {}) {
   root.userData.districtId = district.id;
   root.userData.generatedBy = "LAMBO_CITY_WorldBuilder";
   root.userData.externalMaterials = [options.roadMaterial, options.sidewalkMaterial, options.terrainMaterial].filter(Boolean);
+  root.userData.ownedMaterials = [];
 
   const nodes = new Map(district.roadNetwork.nodes.map(node => [node.id, node]));
   const roadMaterial = options.roadMaterial || makeRoadMaterial();
   const sidewalkMaterial = options.sidewalkMaterial || makeSidewalkMaterial();
+  if (!options.roadMaterial) root.userData.ownedMaterials.push(roadMaterial);
+  if (!options.sidewalkMaterial) root.userData.ownedMaterials.push(sidewalkMaterial);
   const defaultWidth = Number.isFinite(options.roadWidth) ? options.roadWidth : 9;
   const sidewalkWidth = Number.isFinite(options.sidewalkWidth) ? options.sidewalkWidth : 3;
   const thickness = Number.isFinite(options.roadThickness) ? options.roadThickness : 0.16;
@@ -108,6 +111,7 @@ export function buildDistrictGeometry(scene, district, options = {}) {
 
   const terrainResult = buildTerrainAndLandscape(root, district, options);
   root.userData.groundTopY = terrainResult.root.userData.groundTopY;
+  root.userData.ownedMaterials.push(...terrainResult.ownedMaterials);
   root.userData.terrainZoneCount = terrainResult.terrainZones;
   root.userData.landscapeZoneCount = terrainResult.zones;
   root.userData.landscapeFeatureCount = terrainResult.features;
@@ -118,8 +122,9 @@ export function buildDistrictGeometry(scene, district, options = {}) {
   root.userData.parcelCount = parcelResult.parcels;
   root.userData.buildingCount = parcelResult.buildings;
   root.userData.parcelStyles = parcelResult.styles;
+  root.userData.ownedMaterials.push(...parcelResult.ownedMaterials);
   // Optional collision registration uses the existing player's AABB API.
-  // Roads and sidewalks remain walkable; only villa footprints block movement.
+  // Roads and sidewalks remain walkable; building footprints block movement.
   const collision = options.collision;
   const collisionIds = [];
   if (collision && typeof collision.registerBox === "function") {
