@@ -35,11 +35,60 @@ export function buildDistrictProxy(scene, district, options = {}) {
   ground.position.set(centerX, groundY - 0.3, centerZ);
   root.add(ground);
 
+  // Keep the distant street plan readable with one instanced road batch.
+  const nodeById = new Map((district.roadNetwork?.nodes || []).map(node => [node.id, node]));
+  const roadItems = [], junctionWidths = new Map(), junctionDegrees = new Map();
+  for (const segment of district.roadNetwork?.segments || []) {
+    if (segment.navigationOnly === true) continue;
+    const from = nodeById.get(segment.from), to = nodeById.get(segment.to);
+    if (!from || !to) continue;
+    const dx = to.x - from.x, dz = to.z - from.z;
+    const length = Math.hypot(dx, dz);
+    if (length <= 0.01) continue;
+    const roadWidth = Number.isFinite(segment.width) ? segment.width : 9;
+    roadItems.push({
+      x: (from.x + to.x) / 2, z: (from.z + to.z) / 2,
+      width: roadWidth, length, angle: Math.atan2(dx, dz)
+    });
+    for (const nodeId of [segment.from, segment.to]) {
+      junctionWidths.set(nodeId, Math.max(junctionWidths.get(nodeId) || 0, roadWidth));
+      junctionDegrees.set(nodeId, (junctionDegrees.get(nodeId) || 0) + 1);
+    }
+  }
+  for (const [nodeId, roadWidth] of junctionWidths) {
+    if (junctionDegrees.get(nodeId) < 2) continue;
+    const node = nodeById.get(nodeId);
+    roadItems.push({ x: node.x, z: node.z, width: roadWidth, length: roadWidth, angle: 0 });
+  }
+  if (roadItems.length) {
+    const roadMaterial = new THREE.MeshBasicMaterial({ color: options.roadColor || 0x20252a, fog: true });
+    const roads = new THREE.InstancedMesh(
+      new THREE.BoxGeometry(1, 0.12, 1), roadMaterial, roadItems.length
+    );
+    const transform = new THREE.Object3D();
+    roadItems.forEach((item, index) => {
+      transform.position.set(item.x, (Number.isFinite(options.roadTopY) ? options.roadTopY : 0.77) - 0.06, item.z);
+      transform.rotation.set(0, item.angle, 0);
+      transform.scale.set(item.width, 1, item.length);
+      transform.updateMatrix();
+      roads.setMatrixAt(index, transform.matrix);
+    });
+    roads.instanceMatrix.needsUpdate = true;
+    roads.name = "districtProxyRoads";
+    root.add(roads);
+  }
+
   const groups = new Map();
+  const parkItems = [];
   for (const parcel of district.parcels || []) {
     if (!parcel?.center || !Number.isFinite(parcel.center.x) || !Number.isFinite(parcel.center.z)) continue;
     const style = parcel.style || "coastal-villa";
     const config = STYLE_PROXY[style] || STYLE_PROXY["coastal-villa"];
+    if (style === "urban-park") {
+      const parkFootprint = parcel.footprint || { width: 13, depth: 11 };
+      parkItems.push({ x: parcel.center.x, z: parcel.center.z, width: parkFootprint.width, depth: parkFootprint.depth });
+      continue;
+    }
     if (!groups.has(style)) groups.set(style, []);
     const footprint = parcel.footprint || { width: 13, depth: 11 };
     const height = style === "luxury-apartment"
@@ -51,7 +100,8 @@ export function buildDistrictProxy(scene, district, options = {}) {
       width: footprint.width * 0.88,
       depth: footprint.depth * 0.88,
       height,
-      color: config.color
+      color: config.color,
+      rotation: Number.isFinite(parcel.rotationY) ? parcel.rotationY : 0
     });
   }
 
@@ -65,7 +115,7 @@ export function buildDistrictProxy(scene, district, options = {}) {
     for (let index = 0; index < items.length; index++) {
       const item = items[index];
       transform.position.set(item.x, groundY + item.height / 2, item.z);
-      transform.rotation.set(0, 0, 0);
+      transform.rotation.set(0, item.rotation || 0, 0);
       transform.scale.set(item.width, item.height, item.depth);
       transform.updateMatrix();
       instances.setMatrixAt(index, transform.matrix);
@@ -74,6 +124,22 @@ export function buildDistrictProxy(scene, district, options = {}) {
     instances.castShadow = false;
     instances.receiveShadow = false;
     root.add(instances);
+  }
+
+  if (parkItems.length) {
+    const parkMaterial = new THREE.MeshBasicMaterial({ color: STYLE_PROXY["urban-park"].color, fog: true });
+    const parks = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 0.08, 1), parkMaterial, parkItems.length);
+    const transform = new THREE.Object3D();
+    parkItems.forEach((item, index) => {
+      transform.position.set(item.x, groundY + 0.04, item.z);
+      transform.rotation.set(0, 0, 0);
+      transform.scale.set(item.width, 1, item.depth);
+      transform.updateMatrix();
+      parks.setMatrixAt(index, transform.matrix);
+    });
+    parks.instanceMatrix.needsUpdate = true;
+    parks.name = "districtProxyParks";
+    root.add(parks);
   }
 
   const landmarkMaterial = new THREE.MeshBasicMaterial({ color: 0x8a806d, fog: true });
