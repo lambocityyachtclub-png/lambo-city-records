@@ -89,22 +89,13 @@ export default {
     const northZ = cz + halfRoadZ;
 
     const materials = {
-      land: new THREE.MeshStandardMaterial({ color: 0x39332b, roughness: 1 }),
-      road: new THREE.MeshStandardMaterial({ color: 0x15191f, roughness: 0.94 }),
-      roadMark: new THREE.MeshStandardMaterial({ color: 0xd8b96e, emissive: 0x594016, emissiveIntensity: 0.18, roughness: 0.7 }),
       sidewalk: new THREE.MeshStandardMaterial({ color: 0xb9ad98, roughness: 0.82 }),
-      curb: new THREE.MeshStandardMaterial({ color: 0x77736c, roughness: 0.9 }),
       arenaDark: new THREE.MeshStandardMaterial({ color: 0x101720, roughness: 0.34, metalness: 0.56 }),
       arenaStone: new THREE.MeshStandardMaterial({ color: 0x777b7c, roughness: 0.68, metalness: 0.18 }),
       glass: new THREE.MeshStandardMaterial({ color: 0x79b8c9, roughness: 0.12, metalness: 0.34, transparent: true, opacity: 0.48 }),
       gold: new THREE.MeshStandardMaterial({ color: 0xc7a45b, roughness: 0.28, metalness: 0.8, emissive: 0x33230a, emissiveIntensity: 0.32 }),
       display: new THREE.MeshStandardMaterial({ color: 0x3c173d, emissive: 0x6f1c79, emissiveIntensity: 0.72, roughness: 0.3 }),
       plaza: new THREE.MeshStandardMaterial({ color: 0xaaa18e, roughness: 0.88 }),
-      villaWall: new THREE.MeshStandardMaterial({ color: 0xd4cbb9, roughness: 0.76 }),
-      villaGlass: new THREE.MeshStandardMaterial({ color: 0x6fa9bb, roughness: 0.1, metalness: 0.24, transparent: true, opacity: 0.56 }),
-      villaGold: new THREE.MeshStandardMaterial({ color: 0x9d875d, roughness: 0.34, metalness: 0.68 }),
-      villaRoof: new THREE.MeshStandardMaterial({ color: 0x343a3d, roughness: 0.68, metalness: 0.24 }),
-      landscape: new THREE.MeshStandardMaterial({ color: 0x344c3d, roughness: 0.95 })
     };
 
     // The World System owns the district ground, boulevard, raised curbs,
