@@ -73,6 +73,10 @@ A district blueprint contains:
 
 Terrain zones must stay within the district, avoid parcel footprints, and not overlap one another. The validator also checks rotated parcel footprints against road and sidewalk corridors, landscape planting density, and color values. Terrain zones receive their own low-poly finish meshes and use the same height formula as the underlying terrain. Landscape courtyards follow their local terrain elevation and use instanced low-poly planting to keep draw calls controlled. `getDistrictAtPosition(x, z)` identifies the registered district under a world coordinate, and `getGroundHeightAt(x, z)` returns its sampled terrain height or the road/sidewalk top where appropriate. The runtime host exposes the same coordinate-based queries. `player.js` uses them only while the host is explicitly active, adjusting player height over generated ground, roads, and sidewalks; when the host is inactive, the existing player floor behavior is unchanged.
 
+## Boardwalk-to-Convention street and sidewalk tie-in
+
+The first district uses the mapped Boardwalk street and sidewalk endpoints rather than creating a visually adjacent but disconnected path. The service road overlaps the existing Boardwalk road at its edge and grades from the mapped street surface (0.66) to the Convention boulevard road surface (0.77). The sidewalk connection uses a dedicated pedestrian strip on the west side of the gated service road, so pedestrians do not have to walk in or cross the vehicle lane. It joins the existing north Boardwalk sidewalk (top 0.70) to the south boulevard sidewalk (top 0.82) with a gradual ramp. The opposite service-road sidewalk remains on the east side. Ground-height sampling follows both road and sidewalk grades, including their endpoints.
+
 ## Access tiers and gates
 
 The first blueprint declares three tiers:
