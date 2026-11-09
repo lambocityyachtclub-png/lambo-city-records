@@ -623,6 +623,15 @@
       const southWestUTurn = buildVehicleUTurnPath(district, "boulevard-south-west", {
         length: 4.8, width: 2.1, turningRadius: 6.5
       });
+      const runtimeVehicle = world.createVehicleController(district.id, {
+        x: roadTestPoint.x, z: roadTestPoint.z, heading: Math.PI / 2
+      });
+      const runtimeVehicleStartX = runtimeVehicle?.state.x;
+      const runtimeVehicleMove = runtimeVehicle?.update(0.05, { throttle: 1, steering: 0 });
+      if (!runtimeVehicle?.state.valid || runtimeVehicleMove?.blocked ||
+          !(runtimeVehicle.state.x > runtimeVehicleStartX)) {
+        throw new Error("The live World System host did not create a road-constrained vehicle controller.");
+      }
       if (!fullUTurn.valid || fullUTurn.points.length < 24 ||
           !southWestUTurn.valid ||
           getVehicleRoadSurface(district, roadTestPoint)?.type !== "road" ||
