@@ -80,6 +80,19 @@
     key.position.set(-70, 130, -40);
     scene.add(key);
 
+    // Preview-only reference for the existing Boardwalk street surface.
+    const boardwalkRoadGuide = new THREE.Mesh(
+      new THREE.BoxGeometry(CITY_MAP.districts.marinaBoardwalk.road.length, 0.3, CITY_MAP.districts.marinaBoardwalk.road.width),
+      new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.9 })
+    );
+    boardwalkRoadGuide.name = "previewOnlyExistingBoardwalkRoad";
+    boardwalkRoadGuide.position.set(
+      CITY_MAP.districts.marinaBoardwalk.road.centerX,
+      0.51,
+      CITY_MAP.districts.marinaBoardwalk.road.centerZ
+    );
+    scene.add(boardwalkRoadGuide);
+
     // Preview-only reference for the existing mapped Boardwalk sidewalk.
     // Its end overlaps the generated spur; the live Boardwalk is not modified.
     const boardwalkSidewalkGuide = new THREE.Mesh(
