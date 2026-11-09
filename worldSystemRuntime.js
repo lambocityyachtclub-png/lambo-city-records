@@ -26,9 +26,9 @@ export default class WorldSystemRuntime {
     ]);
 
     this.worldSystem = new WorldSystem(configuration.worldOptions || this.options.worldOptions || {});
-    this.worldSystem.init(scene, context);
 
     try {
+      this.worldSystem.init(scene, context);
       for (const item of configuration.districts || []) {
         const isRecipe = item && (item.roadLayout === "grid" || item.roadGrid || item.roadLoop);
         const district = isRecipe ? createDistrictFromRecipe(item) : item;
@@ -76,7 +76,7 @@ export default class WorldSystemRuntime {
   dispose() {
     if (this.worldSystem) {
       for (const id of [...this.registeredDistrictIds].reverse()) {
-        this.worldSystem.unregisterDistrict(id);
+        try { this.worldSystem.unregisterDistrict(id); } catch (_) { /* continue cleaning other districts */ }
       }
     }
     this.registeredDistrictIds = [];
