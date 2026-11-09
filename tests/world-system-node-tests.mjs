@@ -118,7 +118,7 @@ const sidewalkRamp = CONFERENCE_CENTER_DISTRICT.roadNetwork.segments.find(segmen
 const serviceRoad = CONFERENCE_CENTER_DISTRICT.roadNetwork.segments.find(segment => segment.id === "boardwalk-gated-service-approach");
 assert.equal(serviceRoad.fromTopY, 0.66);
 assert.equal(serviceRoad.toTopY, CITY_MAP.surfaces.roadTopY);
-assert.deepEqual(serviceRoad.sidewalkSides, [-1]);
+assert.deepEqual(serviceRoad.sidewalkSides, []);
 assert.equal(serviceRoad.from, "boardwalk-service-entry");
 assert.equal(CONFERENCE_CENTER_DISTRICT.roadNetwork.nodes.find(node => node.id === serviceRoad.from).z, boardwalkRoad.maxZ);
 assert.equal(sidewalkRamp.physicalSurface, "sidewalk");
