@@ -231,6 +231,10 @@
         districts: [recipeDistrict],
         streamingOptions: { streamInRadius: 50, streamOutRadius: 75 }
       });
+      if (runtime.getDistrictAtPosition(-43, 97)?.id !== recipeDistrict.id ||
+          Math.abs(runtime.getGroundHeightAt(-60, 55) - 0.77) > 0.001) {
+        throw new Error("The runtime bridge did not expose coordinate-based district and ground lookup.");
+      }
       if (!runtime.getStatus().ready || !runtime.getStatus().registeredDistrictIds.includes(recipeDistrict.id)) {
         throw new Error("The runtime bridge did not report its registered district state.");
       }
@@ -274,6 +278,11 @@
       const root = world.buildDistrict(district.id, { roadTopY: 0.77, sidewalkTopY: 0.82, roadWidth: 9, sidewalkWidth: 3 });
       if (root.userData.terrainZoneCount !== district.terrainZones.length) {
         throw new Error("Not all declared terrain grades were generated.");
+      }
+      if (world.getDistrictAtPosition(-43, 97)?.id !== district.id ||
+          Math.abs(world.getGroundHeightAt(-60, 55) - 0.77) > 0.001 ||
+          world.getDistrictAtPosition(1000, 1000) !== null) {
+        throw new Error("World-coordinate district lookup or automatic ground sampling failed.");
       }
       const plazaGroundY = world.getGroundHeight(district.id, -50, 64.5);
       const courtyardGroundY = world.getGroundHeight(district.id, -43, 148);
@@ -374,6 +383,7 @@
         ["Terrain grades", root.userData.terrainZoneCount],
         ["Terrain height samples", "verified"],
         ["Road / sidewalk grounding", "verified"],
+        ["Coordinate-based world lookup", "verified"],
         ["Landscape zones", root.userData.landscapeZoneCount],
         ["Landscape features", root.userData.landscapeFeatureCount],
         ["Service gate before grant", gateBeforeAuthorization?.open ? "open" : "closed"],
