@@ -142,6 +142,10 @@ export default class WorldSystemRuntime {
     return this.ready && this.worldSystem.isVehicleFootprintOnRoad(districtId, vehicle, options);
   }
 
+  isVehicleMoveOnRoad(districtId, current, next, options = {}) {
+    return this.ready && this.worldSystem.isVehicleMoveOnRoad(districtId, current, next, options);
+  }
+
   getVehicleTurnSpace(vehicle = {}) {
     return this.ready ? this.worldSystem.getVehicleTurnSpace(vehicle) : null;
   }
