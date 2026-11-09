@@ -10,12 +10,13 @@ async function loadPureModule(filename) {
   return import(url);
 }
 
-const [{ createDistrictFromRecipe, createDistrictFromBrief }, { validateDistrict }, navigation, terrain, streamingModule] = await Promise.all([
+const [{ createDistrictFromRecipe, createDistrictFromBrief }, { validateDistrict }, navigation, terrain, streamingModule, vehicleRules] = await Promise.all([
   loadPureModule("worldDistrictFactory.js"),
   loadPureModule("worldDistrictSchema.js"),
   loadPureModule("worldNavigation.js"),
   loadPureModule("worldTerrainMath.js"),
-  loadPureModule("worldDistrictStreaming.js")
+  loadPureModule("worldDistrictStreaming.js"),
+  loadPureModule("worldVehicleRoadRules.js")
 ]);
 const cityMapModule = await loadPureModule("cityMap.js");
 const CITY_MAP = cityMapModule.default;
@@ -72,6 +73,8 @@ assert.equal(masterMapValidation.valid, true,
   masterMapValidation.issues.map(item => item.code + ": " + item.message).join("\n"));
 assert.equal(CONFERENCE_CENTER_DISTRICT.groundTopY, CITY_MAP.surfaces.groundTopY);
 assert.equal(CONFERENCE_CENTER_DISTRICT.bounds.minZ, CITY_MAP.districts.marinaBoardwalk.road.maxZ);
+assert.equal(CONFERENCE_CENTER_DISTRICT.roadNetwork.nodes.filter(node => node.turningArea?.width >= 16).length, 5);
+assert.equal(CONFERENCE_CENTER_DISTRICT.roadNetwork.segments.filter(segment => segment.id.startsWith("boulevard-") && segment.sidewalkOffset).length, 5);
 assert.equal(
   CONFERENCE_CENTER_DISTRICT.roadNetwork.nodes.find(node => node.id === "boardwalk-service-entry").z,
   CONFERENCE_CENTER_DISTRICT.bounds.minZ
@@ -336,6 +339,19 @@ for (let index = 0; index < 8; index++) {
   });
 }
 assert.equal(validateDistrict(tooManyGates).issues.some(item => item.code === "PHYSICAL_GATE_LIMIT"), true);
+const vehicleRoad = vehicleRules.getVehicleRoadSurface(district, { x: -50, z: 55 });
+assert.equal(vehicleRoad?.type, "road");
+assert.equal(vehicleRules.getVehicleRoadSurface(district, { x: -50, z: 61 }), null,
+  "vehicles must not use the sidewalk band");
+assert.equal(vehicleRules.isVehicleFootprintOnRoad(district, {
+  x: -50, z: 55, length: 4.8, width: 2.1, heading: Math.PI / 2
+}), true);
+assert.equal(vehicleRules.isVehicleFootprintOnRoad(district, {
+  x: -50, z: 61, length: 4.8, width: 2.1, heading: Math.PI / 2
+}), false);
+assert.deepEqual(vehicleRules.getMinimumUTurnSpace({ length: 4.8, width: 2.1 }), {
+  minimumWidth: 14, minimumDepth: 14, turningRadius: 6.5, clearance: 0.35
+});
 assert.ok(Math.abs(terrain.sampleRoadSurfaceHeight(district, -37, 55, {
   roadTopY: 0.77, sidewalkTopY: 0.82, sidewalkWidth: 3
 }) - 0.77) < 0.001);
