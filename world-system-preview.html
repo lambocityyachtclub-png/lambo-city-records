@@ -451,7 +451,7 @@
         throw new Error("The engine host did not register generated parcel and gate collision.");
       }
       const hostGate = WorldSystemHost.setGateAccess(
-        recipeDistrict.id, "arena-boardwalk-service-gate", ["service"]
+        recipeDistrict.id, "recipe-test-service-gate", ["service"]
       );
       if (!hostGate.updated || !hostGate.gate?.open) {
         throw new Error("The engine host did not expose permission-controlled gate access.");
