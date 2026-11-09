@@ -40,6 +40,7 @@
     import WorldDistrictStreaming from "./worldDistrictStreaming.js";
     import WorldSystemRuntime from "./worldSystemRuntime.js";
     import { createDistrictFromRecipe } from "./worldDistrictFactory.js";
+    import { buildParcelGeometry } from "./worldParcelBuilder.js";
     import district from "./worldDistricts/conferenceCenter.js";
     import { validateDistrict } from "./worldDistrictSchema.js";
 
@@ -222,6 +223,36 @@
       if (!archetypeWorld.removeDistrict(archetypeDistrict.id) || archetypeCollision.boxes.length !== 0) {
         throw new Error("Removing a generated district did not clean up its collision volumes.");
       }
+      const largeGridDistrict = createDistrictFromRecipe({
+        id: "large-grid-detail-budget-test",
+        name: "Large Grid Detail Budget Test",
+        roadLayout: "grid",
+        bounds: { minX: 0, maxX: 500, minZ: 0, maxZ: 500 },
+        roadGrid: {
+          bounds: { minX: 40, maxX: 460, minZ: 40, maxZ: 460 },
+          rows: 8,
+          columns: 8,
+          width: 8,
+          sidewalkWidth: 3,
+          parcelStyles: ["coastal-villa", "luxury-apartment", "retail-promenade", "urban-park"]
+        }
+      });
+      const largeGridValidation = validateDistrict(largeGridDistrict);
+      if (!largeGridValidation.valid || largeGridDistrict.parcels.length !== 49) {
+        throw new Error("The large grid performance fixture did not produce 49 valid parcels.");
+      }
+      const largeParcelRoot = new THREE.Group();
+      const largeParcelResult = buildParcelGeometry(largeParcelRoot, largeGridDistrict, {
+        focusPosition: { x: 250, z: 250 },
+        maxDetailedParcels: 12
+      });
+      if (largeParcelResult.detailCount !== 12 || largeParcelResult.proxyCount !== 37 ||
+          largeParcelResult.proxyBatchCount !== 4) {
+        throw new Error("Large districts did not cap detailed buildings and batch distant parcel proxies.");
+      }
+      largeParcelRoot.traverse(object => object.geometry?.dispose?.());
+      largeParcelResult.ownedMaterials.forEach(material => material.dispose?.());
+
       const districtStreamer = new WorldDistrictStreaming({
         streamInRadius: 50,
         streamOutRadius: 75,
@@ -477,6 +508,7 @@
         ["Parcel archetypes", "4 supported"],
         ["Archetype cleanup", "verified"],
         ["District streaming", "hysteresis verified"],
+        ["Large-district parcel detail", "12 detailed + 37 instanced proxies"],
         ["Loop / grid recipe compiler", "verified"],
         ["iPad recipe size limits", "verified"],
         ["Runtime rollback", "verified"],
