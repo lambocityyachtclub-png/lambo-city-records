@@ -160,6 +160,27 @@ export default class WorldSystem {
     );
   }
 
+  getDistrictAtPosition(x, z) {
+    if (!Number.isFinite(x) || !Number.isFinite(z)) return null;
+    let match = null;
+    let matchArea = Infinity;
+    for (const district of this.districts.values()) {
+      const bounds = district?.bounds;
+      if (!bounds || x < bounds.minX || x > bounds.maxX || z < bounds.minZ || z > bounds.maxZ) continue;
+      const area = (bounds.maxX - bounds.minX) * (bounds.maxZ - bounds.minZ);
+      if (area < matchArea) {
+        match = district;
+        matchArea = area;
+      }
+    }
+    return match;
+  }
+
+  getGroundHeightAt(x, z) {
+    const district = this.getDistrictAtPosition(x, z);
+    return district ? this.getGroundHeight(district.id, x, z) : null;
+  }
+
   getGroundHeight(id, x, z) {
     const district = this.districts.get(id);
     if (!district || !Number.isFinite(x) || !Number.isFinite(z)) return null;
