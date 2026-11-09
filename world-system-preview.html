@@ -783,8 +783,8 @@
           Math.abs(serviceRoadSegment.fromTopY - CITY_MAP.surfaces.roadTopY + 0.11) > 0.001 ||
           Math.abs(Math.abs(spurFrom.x - serviceRoadFrom.x) -
             (serviceRoadSegment.width / 2 + sidewalkSpur.width / 2)) > 0.001 ||
-          serviceRoadSegment?.sidewalkSides?.length !== 1 ||
-          serviceRoadSegment.sidewalkSides[0] !== -1) {
+          serviceRoadSegment?.sidewalkSides?.length !== 0 ||
+          Math.abs(spurFrom.x - serviceRoadFrom.x) <= serviceRoadSegment.width / 2 + 0.5) {
         throw new Error("The Boardwalk sidewalk must grade continuously into the Convention sidewalk without crossing the gated vehicle lane, and the connecting road must be graded into the city street.");
       }
       if (archetypeCollision.boxes.length !== 0) {
