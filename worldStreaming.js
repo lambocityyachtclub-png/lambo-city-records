@@ -10,8 +10,8 @@ import CITY_MAP from "./cityMap.js";
 const ARENA_ROOT_NAME = "lamboCityConferenceCenterLandmark";
 const STREAM_IN_RADIUS = 900;
 const STREAM_OUT_RADIUS = 1000;
-const DETAIL_IN_RADIUS = 250;
-const DETAIL_OUT_RADIUS = 285;
+const DETAIL_IN_RADIUS = 30;
+const DETAIL_OUT_RADIUS = 45;
 
 function addProxyBox(root, name, size, position, material) {
   const mesh = new THREE.Mesh(new THREE.BoxGeometry(...size), material);
@@ -52,8 +52,7 @@ export default {
     this._arenaActive = true;
     this._detailed = true;
 
-    const arena = CITY_MAP.districts.arenaDistrict.arena;
-    this._arenaCenter = { x: arena.centerX, z: arena.centerZ };
+    this._arenaBounds = CITY_MAP.districts.arenaDistrict.bounds;
 
     if (this._arenaRoot) this._arenaRoot.visible = true;
     if (this._proxyRoot) this._proxyRoot.visible = false;
@@ -68,8 +67,9 @@ export default {
     const player = context?.player;
     if (!player?.position) return;
 
-    const dx = player.position.x - this._arenaCenter.x;
-    const dz = player.position.z - this._arenaCenter.z;
+    const bounds = this._arenaBounds;
+    const dx = Math.max(bounds.minX - player.position.x, 0, player.position.x - bounds.maxX);
+    const dz = Math.max(bounds.minZ - player.position.z, 0, player.position.z - bounds.maxZ);
     const distanceSq = dx * dx + dz * dz;
 
     // Separate enter/exit radii prevent flicker at both transitions.
