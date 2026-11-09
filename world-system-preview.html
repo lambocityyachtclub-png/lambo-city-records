@@ -126,6 +126,40 @@
         throw new Error("Inter-district connector registration failed: " + connectionRegistration.reason);
       }
 
+      // Build a separate fixture to exercise every parcel archetype without
+      // adding extra geometry to the main district preview.
+      const archetypeDistrict = JSON.parse(JSON.stringify(futureDistrict));
+      archetypeDistrict.id = "parcel-archetype-test";
+      archetypeDistrict.name = "Parcel Archetype Test";
+      archetypeDistrict.parcels[0].style = "luxury-apartment";
+      archetypeDistrict.parcels[1].style = "retail-promenade";
+      archetypeDistrict.parcels[2].style = "urban-park";
+      const archetypeScene = new THREE.Scene();
+      const archetypeCollision = {
+        boxes: [],
+        registerBox(name, bounds) { this.boxes.push({ name, ...bounds }); },
+        unregister(name) { this.boxes = this.boxes.filter(box => box.name !== name); }
+      };
+      const archetypeWorld = new WorldSystem();
+      archetypeWorld.init(archetypeScene, { systems: { collision: archetypeCollision } });
+      const archetypeRegistration = archetypeWorld.registerDistrict(archetypeDistrict);
+      if (!archetypeRegistration.registered) {
+        throw new Error("Parcel archetype fixture failed validation.");
+      }
+      const archetypeRoot = archetypeWorld.buildDistrict(archetypeDistrict.id);
+      if (archetypeRoot.userData.buildingCount !== 5 ||
+          archetypeRoot.userData.parcelStyles["luxury-apartment"] !== 1 ||
+          archetypeRoot.userData.parcelStyles["retail-promenade"] !== 1 ||
+          archetypeRoot.userData.parcelStyles["urban-park"] !== 1) {
+        throw new Error("Not all parcel archetypes generated correctly.");
+      }
+      if (archetypeCollision.boxes.length !== 6) {
+        throw new Error("The park parcel should remain walkable while buildings and the gate block movement.");
+      }
+      if (!archetypeWorld.removeDistrict(archetypeDistrict.id) || archetypeCollision.boxes.length !== 0) {
+        throw new Error("Removing a generated district did not clean up its collision volumes.");
+      }
+
       const root = world.buildDistrict(district.id, { roadTopY: 0.77, sidewalkTopY: 0.82, roadWidth: 9, sidewalkWidth: 3 });
       if (root.userData.terrainZoneCount !== district.terrainZones.length) {
         throw new Error("Not all declared terrain grades were generated.");
@@ -192,6 +226,9 @@
       if (!pedestrianRoute.found) {
         throw new Error("The continuous pedestrian sidewalk route did not reach the arena arrival point.");
       }
+      if (archetypeCollision.boxes.length !== 0) {
+        throw new Error("Temporary archetype collision data leaked after cleanup.");
+      }
       if (deniedCityRoute.found || !authorizedCityRoute.found) {
         throw new Error("City-wide routing did not preserve restricted access across district connections.");
       }
@@ -220,7 +257,9 @@
         ["Inter-district links", world.getStatus().registeredConnections.length],
         ["Cross-district route", authorizedCityRoute.found ? "available" : "blocked"],
         ["Cross-district without permission", deniedCityRoute.found ? "unexpected" : "blocked"],
-        ["Active villa colliders", previewCollision.boxes.length]
+        ["Active villa colliders", previewCollision.boxes.length],
+        ["Parcel archetypes", "4 supported"],
+        ["Archetype cleanup", "verified"]
       ].map(([label, value]) => '<span class="metric">' + label + ': ' + value + '</span>').join("");
     } catch (err) {
       status.textContent = "The district could not be generated.";
