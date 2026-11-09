@@ -19,6 +19,27 @@ The World System is the reusable foundation for adding named districts without h
 - `worldDistricts/conferenceCenter.js` is the first district blueprint.
 - `world-system-preview.html` is the isolated preview and browser-side check harness.
 
+## High-level district briefs
+
+For a faster starting point, use `createDistrictFromBrief` or pass a `brief` to `createDistrictFromRecipe`. A brief describes the neighborhood rather than listing every road and parcel:
+
+```js
+const district = createDistrictFromRecipe({
+  id: "beverly-shores",
+  name: "Beverly Shores",
+  brief: {
+    character: "mixed-use",
+    density: "medium",
+    center: { x: 420, z: 260 },
+    size: { width: 180, depth: 180 }
+  }
+});
+```
+
+Supported characters are `coastal`, `mixed-use`, `retail`, and `park`. Density presets create a 3×3, 4×4, or 5×5 street grid for low, medium, or high density. The composer chooses a matching parcel mix, road width, sidewalk width, and public/resident/service tier definitions. Center, dimensions, road widths, parcel styles, terrain zones, and landscape zones can be overridden. The result is still data-only and must pass `validateDistrict` before it can be registered or built.
+
+The runtime host accepts the same brief through its explicit `registerDistrict` API after initialization. This creates a practical foundation for a future visual city-builder: a user can specify the neighborhood's identity, scale, and density without hand-authoring every intersection or parcel. It is a structured brief compiler, not a free-form natural-language AI prompt parser.
+
 ## Supported parcel styles
 
 Set `style` on each parcel:
