@@ -90,6 +90,12 @@ Use `registerConnection` to connect a node in one registered district to a node 
 
 Use `findRoute` for one district and `findWorldRoute` for a route across registered districts. Route modes are vehicle, pedestrian, and service. Restricted edges are only included when the caller supplies the required permission. If a segment also has a physical gate, the route planner additionally requires that gate to be physically open; having a permission tier alone never routes a player through a closed barrier.
 
+## Physical inter-district connectors
+
+Connections remain route-only by default. To generate a visible connector, provide an explicit `physical` definition with `enabled: true`, `surface: "land"`, `surfaceVerified: true`, and a world-space `path` whose first and last points exactly match the registered endpoint nodes. The path may include intermediate waypoints to follow a surveyed road alignment. Width and sidewalk width can be specified; road and sidewalk sections are built as instanced batches.
+
+The `surfaceVerified` flag is the map author's confirmation, not an automatic terrain or water survey. The builder rejects water surfaces and will not invent bridges, piers, or causeways. A future bridge must have its own explicitly designed geometry and clearance checks. Removing either endpoint district or unregistering the connection disposes its connector geometry. The current second-district preview fixture remains route-only; it is not presented as a real physical city street.
+
 ## Safe build workflow
 
 1. Add or revise a district blueprint.
