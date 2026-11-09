@@ -27,7 +27,7 @@ const arrivalZ = centerZ - MASTER_ARENA.arena.footprintDepth / 2 - 1;
 const walkArenaZ = walkSouthZ + (arrivalZ - walkSouthZ) * 0.7;
 const westVillaX = MASTER_BOULEVARD.centerX - MASTER_BOULEVARD.outerWidth / 2 - 13.5;
 const eastVillaX = MASTER_BOULEVARD.centerX + MASTER_BOULEVARD.outerWidth / 2 + 13.5;
-const northVillaZ = MASTER_BOULEVARD.centerZ + MASTER_BOULEVARD.outerDepth / 2 + 10;
+const northVillaZ = MASTER_BOULEVARD.centerZ + MASTER_BOULEVARD.outerDepth / 2 + 9.5;
 
 const CONFERENCE_CENTER_DISTRICT = Object.freeze({
   schemaVersion: 1,
