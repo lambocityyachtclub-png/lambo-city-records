@@ -79,11 +79,15 @@ jobs:
             const pageErrors = [];
             page.on("pageerror", error => pageErrors.push(error.message));
             await page.goto("http://127.0.0.1:8000/world-system-preview.html", { waitUntil: "domcontentloaded" });
-            await page.waitForTimeout(15000);
+            await page.waitForFunction(() => {
+              const value = document.querySelector("#status")?.textContent || "";
+              return value.startsWith("All district, terrain, parcel") ||
+                value === "The district could not be generated.";
+            }, null, { timeout: 90000 });
             const status = await page.locator("#status").textContent();
             const details = await page.locator("#error").textContent().catch(() => "");
-            if (!status || status.startsWith("Preparing") || !status.startsWith("All district, terrain, parcel")) {
-              throw new Error("Preview did not complete. Status: " + status + "\\nDetails: " + details + "\\nPage errors: " + pageErrors.join("\\n"));
+            if (!status.startsWith("All district, terrain, parcel")) {
+              throw new Error("Preview failed. Status: " + status + "\\nDetails: " + details);
             }
             if (pageErrors.length) throw new Error(pageErrors.join("\\n"));
             console.log(status);
