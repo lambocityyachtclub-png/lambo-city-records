@@ -3,6 +3,7 @@
 // from district road-network data. Kept separate from engine startup.
 
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
+import { buildParcelGeometry } from "./worldParcelBuilder.js";
 
 function makeRoadMaterial() {
   return new THREE.MeshStandardMaterial({ color: 0x15191f, roughness: 0.94 });
@@ -100,6 +101,11 @@ export function buildDistrictGeometry(scene, district, options = {}) {
     validSegments.filter(item => item.segment.from === id || item.segment.to === id).length >= 2
   ).length;
   root.userData.sidewalkCount = root.children.filter(child => child.name.startsWith("worldSidewalk_")).length;
+
+  // Parcels are generated into the same removable district root. Existing
+  // landmark structures remain owned by their current district module.
+  const parcelResult = buildParcelGeometry(root, district, options);
+  root.userData.parcelCount = parcelResult.parcels;
 
   scene.add(root);
   return root;
