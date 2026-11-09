@@ -129,7 +129,7 @@ export function findRoute(district, fromId, toId, options = {}) {
 export function findWorldRoute(districtEntries, connections, fromDistrictId, fromNodeId, toDistrictId, toNodeId, options = {}) {
   const nodes = new Map();
   const adjacency = new Map();
-  const keyFor = (districtId, nodeId) => districtId + "::" + nodeId;
+  const keyFor = (districtId, nodeId) => JSON.stringify([districtId, nodeId]);
 
   for (const [districtId, district] of districtEntries || []) {
     for (const node of district?.roadNetwork?.nodes || []) {
