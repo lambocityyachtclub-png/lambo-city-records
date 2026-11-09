@@ -6,7 +6,133 @@ function finite(value, label) {
   return value;
 }
 
+export function createGridDistrictFromRecipe(recipe) {
+  if (!recipe || typeof recipe.id !== "string" || !recipe.id.trim() ||
+      typeof recipe.name !== "string" || !recipe.name.trim()) {
+    throw new Error("Grid district recipe requires an id and name.");
+  }
+  const bounds = recipe.bounds, grid = recipe.roadGrid;
+  if (!bounds || !grid?.bounds) throw new Error("Grid recipe requires district and roadGrid bounds.");
+  for (const box of [bounds, grid.bounds]) {
+    if (!["minX", "maxX", "minZ", "maxZ"].every(key => Number.isFinite(box[key])) ||
+        box.minX >= box.maxX || box.minZ >= box.maxZ) {
+      throw new Error("Grid recipe contains invalid bounds.");
+    }
+  }
+  const roadWidth = grid.width === undefined ? 8 : finite(grid.width, "grid road width");
+  const sidewalkWidth = grid.sidewalkWidth === undefined ? 3 : finite(grid.sidewalkWidth, "grid sidewalk width");
+  const rows = grid.rows, columns = grid.columns;
+  if (roadWidth <= 0 || sidewalkWidth < 0 || !Number.isInteger(rows) || rows < 2 ||
+      !Number.isInteger(columns) || columns < 2) {
+    throw new Error("Grid recipe needs positive road dimensions and at least two rows and columns.");
+  }
+  const margin = roadWidth / 2 + sidewalkWidth + 1;
+  if (grid.bounds.minX - margin < bounds.minX || grid.bounds.maxX + margin > bounds.maxX ||
+      grid.bounds.minZ - margin < bounds.minZ || grid.bounds.maxZ + margin > bounds.maxZ) {
+    throw new Error("Grid roads and sidewalks need clearance inside district bounds.");
+  }
+
+  const xPositions = Array.from({ length: columns }, (_, index) =>
+    grid.bounds.minX + (grid.bounds.maxX - grid.bounds.minX) * index / (columns - 1));
+  const zPositions = Array.from({ length: rows }, (_, index) =>
+    grid.bounds.minZ + (grid.bounds.maxZ - grid.bounds.minZ) * index / (rows - 1));
+  const nodes = [], segments = [], nodeId = (row, column) => "grid-r" + row + "-c" + column;
+  for (let row = 0; row < rows; row++) {
+    for (let column = 0; column < columns; column++) {
+      nodes.push({ id: nodeId(row, column), x: xPositions[column], z: zPositions[row] });
+    }
+  }
+
+  const addRoad = (id, from, to) => {
+    segments.push({ id, from, to, mode: grid.mode || "vehicle", width: roadWidth, lanes: Number.isInteger(grid.lanes) ? grid.lanes : 2 });
+    if (grid.pedestrianRoutes !== false) {
+      segments.push({ id: id + "-walk", from, to, mode: "pedestrian", width: roadWidth, navigationOnly: true });
+    }
+  };
+  for (let row = 0; row < rows; row++) {
+    for (let column = 0; column < columns - 1; column++) {
+      addRoad("grid-horizontal-" + row + "-" + column, nodeId(row, column), nodeId(row, column + 1));
+    }
+  }
+  for (let column = 0; column < columns; column++) {
+    for (let row = 0; row < rows - 1; row++) {
+      addRoad("grid-vertical-" + row + "-" + column, nodeId(row, column), nodeId(row + 1, column));
+    }
+  }
+
+  const spacingX = (grid.bounds.maxX - grid.bounds.minX) / (columns - 1);
+  const spacingZ = (grid.bounds.maxZ - grid.bounds.minZ) / (rows - 1);
+  const parcelMargin = Number.isFinite(grid.parcelMargin) ? Math.max(0, grid.parcelMargin) : 2;
+  const footprint = grid.parcelFootprint || {
+    width: spacingX - roadWidth - sidewalkWidth * 2 - parcelMargin * 2,
+    depth: spacingZ - roadWidth - sidewalkWidth * 2 - parcelMargin * 2
+  };
+  if (!Number.isFinite(footprint.width) || !Number.isFinite(footprint.depth) ||
+      footprint.width < 4 || footprint.depth < 4) {
+    throw new Error("Grid blocks are too small for the requested parcel footprints.");
+  }
+  const styles = Array.isArray(grid.parcelStyles) && grid.parcelStyles.length
+    ? grid.parcelStyles : ["luxury-apartment", "retail-promenade", "urban-park"];
+  const parcels = [];
+  for (let row = 0; row < rows - 1; row++) {
+    for (let column = 0; column < columns - 1; column++) {
+      const index = row * (columns - 1) + column;
+      parcels.push({
+        id: "grid-parcel-" + row + "-" + column,
+        center: {
+          x: (xPositions[column] + xPositions[column + 1]) / 2,
+          z: (zPositions[row] + zPositions[row + 1]) / 2
+        },
+        footprint: { width: footprint.width, depth: footprint.depth },
+        style: styles[index % styles.length],
+        rotationY: Number.isFinite(grid.rotationY) ? grid.rotationY : 0,
+        ...(Number.isFinite(grid.floors) ? { floors: grid.floors } : {}),
+        ...(grid.use ? { use: grid.use } : {})
+      });
+    }
+  }
+
+  if (recipe.serviceAccess) {
+    const access = recipe.serviceAccess;
+    if (!access.entry || !access.arrival || typeof access.connectTo !== "string") {
+      throw new Error("Grid service access requires entry, arrival, and connectTo.");
+    }
+    const knownNodes = new Set(nodes.map(node => node.id));
+    if (!knownNodes.has(access.connectTo)) throw new Error("Grid service access references an unknown intersection.");
+    nodes.push(
+      { id: access.entry.id, x: finite(access.entry.x, "service entry x"), z: finite(access.entry.z, "service entry z") },
+      { id: access.arrival.id, x: finite(access.arrival.x, "service arrival x"), z: finite(access.arrival.z, "service arrival z") }
+    );
+    const requiredAccess = access.requiredAccess || "service";
+    segments.push({
+      id: "grid-restricted-service-entry", from: access.entry.id, to: access.connectTo,
+      mode: "service", width: Number.isFinite(access.width) ? access.width : 8,
+      access: "permission-controlled", requiredAccess,
+      ...(access.gate ? { gate: { id: access.gate.id, offset: Number.isFinite(access.gate.offset) ? access.gate.offset : 1.4 } } : {})
+    });
+    segments.push({
+      id: "grid-restricted-service-arrival", from: access.connectTo, to: access.arrival.id,
+      mode: "service", width: Number.isFinite(access.width) ? access.width : 8,
+      access: "permission-controlled", requiredAccess
+    });
+  }
+
+  return {
+    id: recipe.id,
+    name: recipe.name,
+    type: recipe.type || "grid-district",
+    bounds: { ...bounds },
+    roadNetwork: { sidewalkWidth, nodes, segments },
+    parcels,
+    landmarks: Array.isArray(recipe.landmarks) ? recipe.landmarks : [],
+    terrainZones: Array.isArray(recipe.terrainZones) ? recipe.terrainZones : [],
+    landscapeZones: Array.isArray(recipe.landscapeZones) ? recipe.landscapeZones : [],
+    accessTiers: Array.isArray(recipe.accessTiers) ? recipe.accessTiers : []
+  };
+}
+
 export function createDistrictFromRecipe(recipe) {
+  if (recipe?.roadLayout === "grid" || recipe?.roadGrid) return createGridDistrictFromRecipe(recipe);
   if (!recipe || typeof recipe.id !== "string" || !recipe.id.trim()) {
     throw new Error("District recipe requires a unique id.");
   }
@@ -199,4 +325,4 @@ export function createDistrictFromRecipe(recipe) {
   };
 }
 
-export default { createDistrictFromRecipe };
+export default { createDistrictFromRecipe, createGridDistrictFromRecipe };
