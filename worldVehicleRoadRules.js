@@ -133,6 +133,63 @@ export function isVehicleMoveOnRoad(district, current, next, options = {}) {
   return true;
 }
 
+export function buildVehicleUTurnPath(district, nodeId, vehicle = {}, options = {}) {
+  const node = district?.roadNetwork?.nodes?.find(item => item.id === nodeId);
+  if (!node?.turningArea) return { valid: false, reason: "NO_TURNING_APRON", points: [] };
+
+  const required = getMinimumUTurnSpace(vehicle);
+  if (node.turningArea.width < required.minimumWidth ||
+      node.turningArea.depth < required.minimumDepth) {
+    return { valid: false, reason: "TURNING_APRON_TOO_SMALL", points: [], required };
+  }
+
+  const radius = Number.isFinite(options.radius)
+    ? Math.max(required.turningRadius, options.radius)
+    : required.turningRadius;
+  const direction = options.direction === -1 ? -1 : 1;
+  const steps = Math.max(24, Math.ceil(Math.PI * radius / 0.35));
+  const points = [];
+
+  for (let index = 0; index <= steps; index++) {
+    const angle = Math.PI * index / steps;
+    points.push({
+      x: node.x + direction * radius * Math.cos(angle),
+      z: node.z + radius * Math.sin(angle),
+      heading: -direction * angle,
+      length: Number.isFinite(vehicle.length) ? vehicle.length : 4.8,
+      width: Number.isFinite(vehicle.width) ? vehicle.width : 2.1,
+      turningRadius: radius
+    });
+  }
+
+  const roadOptions = {
+    ...options,
+    permissions: Array.isArray(options.permissions) ? options.permissions : [],
+    openGates: options.openGates || []
+  };
+  for (let index = 0; index < points.length; index++) {
+    if (!isVehicleFootprintOnRoad(district, points[index], roadOptions)) {
+      return { valid: false, reason: "TURN_PATH_LEAVES_DRIVABLE_SURFACE", points: [] };
+    }
+    if (index > 0 && !isVehicleMoveOnRoad(district, points[index - 1], points[index], {
+      ...roadOptions,
+      maxStep: 0.25
+    })) {
+      return { valid: false, reason: "TURN_SWEEP_LEAVES_DRIVABLE_SURFACE", points: [] };
+    }
+  }
+
+  return {
+    valid: true,
+    reason: null,
+    nodeId,
+    direction,
+    radius,
+    required,
+    points
+  };
+}
+
 export function getMinimumUTurnSpace(vehicle = {}) {
   const length = Number.isFinite(vehicle.length) ? vehicle.length : 4.8;
   const width = Number.isFinite(vehicle.width) ? vehicle.width : 2.1;
@@ -149,5 +206,6 @@ export default {
   getVehicleRoadSurface,
   isVehicleFootprintOnRoad,
   isVehicleMoveOnRoad,
+  buildVehicleUTurnPath,
   getMinimumUTurnSpace
 };
