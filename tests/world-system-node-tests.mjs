@@ -96,7 +96,7 @@ assert.equal(sidewalkRamp.toTopY, 0.82);
 assert.equal(Math.abs(boardwalkSidewalkNode.x - CONFERENCE_CENTER_DISTRICT.roadNetwork.nodes.find(node => node.id === serviceRoad.from).x),
   serviceRoad.width / 2 + sidewalkRamp.width / 2);
 assert.equal(boardwalkSidewalkNode.z, CITY_MAP.districts.marinaBoardwalk.sidewalks[1].centerZ);
-assert.equal(conventionSidewalkNode.z, 49);
+assert.equal(conventionSidewalkNode.z, CONFERENCE_CENTER_DISTRICT.roadNetwork.nodes.find(node => node.id === "walk-south-west").z);
 assert.ok(Math.abs(terrain.sampleRoadSurfaceHeight(CONFERENCE_CENTER_DISTRICT, boardwalkSidewalkNode.x, boardwalkSidewalkNode.z, {
   roadTopY: 0.77, sidewalkTopY: 0.82, sidewalkWidth: 3
 }) - 0.70) < 0.001);
@@ -106,7 +106,7 @@ assert.ok(Math.abs(terrain.sampleRoadSurfaceHeight(CONFERENCE_CENTER_DISTRICT, b
 assert.ok(Math.abs(terrain.sampleRoadSurfaceHeight(CONFERENCE_CENTER_DISTRICT, conventionSidewalkNode.x, conventionSidewalkNode.z, {
   roadTopY: 0.77, sidewalkTopY: 0.82, sidewalkWidth: 3
 }) - 0.82) < 0.001);
-assert.ok(Math.abs(terrain.sampleRoadSurfaceHeight(CONFERENCE_CENTER_DISTRICT, -37, 52.5, {
+assert.ok(Math.abs(terrain.sampleRoadSurfaceHeight(CONFERENCE_CENTER_DISTRICT, -37, (CONFERENCE_CENTER_DISTRICT.roadNetwork.nodes.find(node => node.id === serviceRoad.from).z + CONFERENCE_CENTER_DISTRICT.roadNetwork.nodes.find(node => node.id === serviceRoad.to).z) / 2, {
   roadTopY: 0.77, sidewalkTopY: 0.82, sidewalkWidth: 3
 }) - 0.715) < 0.001);
 const validation = validateDistrict(district);
