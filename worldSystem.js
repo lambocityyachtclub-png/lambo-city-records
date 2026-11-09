@@ -8,6 +8,7 @@ import { buildDistrictProxy, disposeDistrictProxy } from "./worldDistrictProxyBu
 import { findRoute as findDistrictRoute, findWorldRoute as findCityRoute } from "./worldNavigation.js";
 import { sampleTerrainHeight, sampleRoadSurfaceHeight } from "./worldTerrainMath.js";
 import { buildPhysicalConnection, disposePhysicalConnection } from "./worldConnectionBuilder.js";
+import { getVehicleRoadSurface, isVehicleFootprintOnRoad, getMinimumUTurnSpace } from "./worldVehicleRoadRules.js";
 
 export default class WorldSystem {
   constructor(options = {}) {
@@ -241,6 +242,31 @@ export default class WorldSystem {
     const district = this.getDistrictAtPosition(x, z);
     if (district) return this.getGroundHeight(district.id, x, z);
     return this.getPhysicalConnectionHeightAt(x, z);
+  }
+
+  getVehicleRoadSurfaceAt(districtId, point, options = {}) {
+    const district = this.districts.get(districtId);
+    return district ? getVehicleRoadSurface(district, point, {
+      ...options, openGates: this.getOpenGateIds(districtId)
+    }) : null;
+  }
+
+  isVehicleFootprintOnRoad(districtId, vehicle, options = {}) {
+    const district = this.districts.get(districtId);
+    return !!district && isVehicleFootprintOnRoad(district, vehicle, {
+      ...options, openGates: this.getOpenGateIds(districtId)
+    });
+  }
+
+  getVehicleTurnSpace(vehicle = {}) {
+    return getMinimumUTurnSpace(vehicle);
+  }
+
+  getOpenGateIds(districtId) {
+    const root = this.roots.get(districtId);
+    return new Set((root?.userData.accessGates || [])
+      .filter(gate => gate.getStatus().open === true)
+      .map(gate => gate.id));
   }
 
   getPhysicalConnectionHeightAt(x, z) {
