@@ -58,8 +58,8 @@ import RecordsHQElevator from "./recordsHQElevator.js";
 import Elevator from "./elevator.js";
 import BoardwalkOverlooks from "./boardwalkOverlooks.js";
 import PerformanceMonitor from "./performanceMonitor.js";
-import WorldStreaming from "./worldStreaming.js";
 import WorldSystemHost from "./worldSystemHost.js";
+import ConferenceCenterBlueprint from "./worldDistricts/conferenceCenter.js";
 const engine = new Engine();
 engine.registerSystems({
   scene: Scene,
@@ -120,7 +120,6 @@ engine.registerSystems({
   elevator: Elevator,
   hud: HUD,
   performanceMonitor: PerformanceMonitor,
-  worldStreaming: WorldStreaming,
   worldSystemHost: WorldSystemHost,
 });
 
@@ -195,3 +194,26 @@ window.__lamboCityPrepareFloor = floor => {
 };
 
 engine.init();
+
+// Register the approved Conference Center blueprint with the shared World
+// System after the live scene and collision system are ready. The runtime
+// streams full detail/proxies by player distance and owns the generated
+// roads, curbs, sidewalks, terrain, gates, and residential parcels.
+window.__lamboCityWorldSystemReady = WorldSystemHost.initialize({
+  districts: [ConferenceCenterBlueprint],
+  streamingOptions: {
+    streamInRadius: 250,
+    streamOutRadius: 285,
+    proxyInRadius: 900,
+    proxyOutRadius: 1000,
+    maxBuildsPerUpdate: 1,
+    maxDetailedParcels: 6
+  }
+}).then(runtime => {
+  window.__lamboCityWorldSystemError = null;
+  return runtime.getStatus();
+}).catch(error => {
+  window.__lamboCityWorldSystemError = String(error?.message || error);
+  console.error("LAMBO CITY World System initialization failed:", error);
+  return null;
+});
