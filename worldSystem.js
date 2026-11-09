@@ -271,6 +271,8 @@ export default class WorldSystem {
       parcelCount: root.userData.parcelCount || 0,
       buildingCount: root.userData.buildingCount || 0,
       detailParcelCount: root.userData.detailParcelCount || 0,
+      detailBatchCount: root.userData.detailBatchCount || 0,
+      detailSourceMeshCount: root.userData.detailSourceMeshCount || 0,
       proxyParcelCount: root.userData.proxyParcelCount || 0,
       proxyBatchCount: root.userData.proxyBatchCount || 0,
       detailParcelIds: [...(root.userData.detailParcelIds || [])],
