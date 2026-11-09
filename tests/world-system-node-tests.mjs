@@ -209,6 +209,20 @@ assert.equal(validateDistrict(invalidDensity).issues.some(item => item.code === 
 const invalidColor = JSON.parse(JSON.stringify(district));
 invalidColor.terrainZones[0].materialColor = -1;
 assert.equal(validateDistrict(invalidColor).issues.some(item => item.code === "INVALID_TERRAIN_COLOR"), true);
+const tooManyTerrainZones = JSON.parse(JSON.stringify(district));
+tooManyTerrainZones.terrainZones = Array.from({ length: 25 }, (_, index) => ({
+  id: "terrain-limit-" + index,
+  center: { x: -100 + index * 4, z: 70 },
+  width: 2, depth: 2, edgeY: 0.645, topY: 0.68
+}));
+assert.equal(validateDistrict(tooManyTerrainZones).issues.some(item => item.code === "TERRAIN_ZONE_LIMIT"), true);
+const tooManyLandscapeZones = JSON.parse(JSON.stringify(district));
+tooManyLandscapeZones.landscapeZones = Array.from({ length: 17 }, (_, index) => ({
+  id: "landscape-limit-" + index,
+  center: { x: -100 + index * 6, z: 65 },
+  width: 2, depth: 2, treeCount: 0, shrubCount: 0
+}));
+assert.equal(validateDistrict(tooManyLandscapeZones).issues.some(item => item.code === "LANDSCAPE_ZONE_LIMIT"), true);
 assert.ok(Math.abs(terrain.sampleRoadSurfaceHeight(district, -37, 55, {
   roadTopY: 0.77, sidewalkTopY: 0.82, sidewalkWidth: 3
 }) - 0.77) < 0.001);
