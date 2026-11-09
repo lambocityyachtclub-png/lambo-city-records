@@ -15,8 +15,8 @@ export default class WorldDistrictStreaming {
     this.options = {
       streamInRadius,
       streamOutRadius: requestedOutRadius > streamInRadius ? requestedOutRadius : streamInRadius + 35,
-      maxBuildsPerUpdate: Math.max(1, Math.floor(options.maxBuildsPerUpdate || 1)),
-      maxRemovalsPerUpdate: Math.max(1, Math.floor(options.maxRemovalsPerUpdate || 1))
+      maxBuildsPerUpdate: Math.min(2, Math.max(1, Math.floor(options.maxBuildsPerUpdate || 1))),
+      maxRemovalsPerUpdate: Math.min(2, Math.max(1, Math.floor(options.maxRemovalsPerUpdate || 1)))
     };
     this.worldSystem = null;
   }
