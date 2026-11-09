@@ -29,7 +29,7 @@ An urban park is walkable and does not receive a building collision blocker. The
 
 ## District data
 
-For repeatable neighborhoods, start with `createDistrictFromRecipe(recipe)`. A recipe can describe the district bounds, one rectangular road loop, optional junctions, pedestrian loop, service entry, and parcel bands. The factory generates the road nodes/segments and parcel centers; the schema then checks the result before registration. Use a hand-authored blueprint only when a district needs a custom landmark or unusual road layout.\n\nA district blueprint contains:
+For repeatable neighborhoods, start with `createDistrictFromRecipe(recipe)`. The factory supports either a rectangular perimeter loop with optional junctions and parcel bands, or a rectangular street grid with automatically generated blocks and parcel centers. Both can include pedestrian routes and a restricted service entry. The factory generates road nodes/segments and parcel positions; the schema then checks the result before registration. Use a hand-authored blueprint only when a district needs a custom landmark or unusual road layout.\n\nA district blueprint contains:
 
 - A unique `id`, a readable `name`, and rectangular `bounds`.
 - A `roadNetwork` with unique nodes and connected segments.
