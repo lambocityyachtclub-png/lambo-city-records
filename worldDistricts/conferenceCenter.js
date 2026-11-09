@@ -74,6 +74,12 @@ const CONFERENCE_CENTER_DISTRICT = Object.freeze({
     Object.freeze({ id: "north-villa-courtyard", center: Object.freeze({ x: -43, z: 148 }), width: 12, depth: 7, treeCount: 3, shrubCount: 6, pavingColor: 0x77766d, plantingColor: 0x344b3c })
   ]),
 
+  accessTiers: Object.freeze([
+    Object.freeze({ id: "public", rank: 0, description: "Open public streets and promenades" }),
+    Object.freeze({ id: "resident", rank: 1, description: "Residents and invited guests" }),
+    Object.freeze({ id: "service", rank: 2, description: "Authorized maintenance and emergency access" })
+  ]),
+
   access: Object.freeze({
     ordinaryTraffic: "boulevard-and-approved-city-roads-only",
     pedestrianPriorityAreas: Object.freeze(["arena-arrival-plaza", "continuous-sidewalk-network"]),
