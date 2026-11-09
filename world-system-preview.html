@@ -238,6 +238,10 @@
           !physicalConnectorRoot?.children.some(child => child.name === "worldConnectionSidewalkBatch" && child.isInstancedMesh)) {
         throw new Error("A verified land connector did not generate batched road and sidewalk geometry.");
       }
+      if (Math.abs(world.getGroundHeightAt(74, 139) - 0.77) > 0.001 ||
+          Math.abs(world.getGroundHeightAt(74, 132.5) - 0.82) > 0.001) {
+        throw new Error("World-coordinate ground sampling did not follow the physical connector road and sidewalk elevations.");
+      }
       const rejectedWaterConnector = world.registerConnection({
         id: "unverified-water-connector-test",
         from: { districtId: district.id, nodeId: connectorFrom.id },
@@ -259,8 +263,9 @@
         throw new Error("The physical connector builder must reject water crossings instead of guessing bridge geometry.");
       }
       if (!world.unregisterConnection("verified-land-connector-geometry-test") ||
-          scene.children.some(child => child.name === "worldConnection_verified-land-connector-geometry-test")) {
-        throw new Error("Removing a physical district connector did not dispose its geometry.");
+          scene.children.some(child => child.name === "worldConnection_verified-land-connector-geometry-test") ||
+          world.getGroundHeightAt(74, 139) !== null) {
+        throw new Error("Removing a physical district connector did not dispose its geometry and ground-height registration.");
       }
 
       // Build a separate fixture to exercise every parcel archetype without
