@@ -4,6 +4,7 @@
 
 import { validateDistrict } from "./worldDistrictSchema.js";
 import { buildDistrictGeometry } from "./worldBuilder.js";
+import { buildDistrictProxy, disposeDistrictProxy } from "./worldDistrictProxyBuilder.js";
 import { findRoute as findDistrictRoute, findWorldRoute as findCityRoute } from "./worldNavigation.js";
 import { sampleTerrainHeight, sampleRoadSurfaceHeight } from "./worldTerrainMath.js";
 
@@ -12,6 +13,7 @@ export default class WorldSystem {
     this.options = options;
     this.districts = new Map();
     this.roots = new Map();
+    this.proxyRoots = new Map();
     this.connections = new Map();
     this.scene = null;
     this.collision = null;
@@ -55,7 +57,29 @@ export default class WorldSystem {
       collision: buildOptions.collision || this.collision
     });
     this.roots.set(id, root);
+    this.removeDistrictProxy(id);
     return root;
+  }
+
+  buildDistrictProxy(id, proxyOptions = {}) {
+    if (!this.scene) throw new Error("WorldSystem must be initialized with a scene before building proxies.");
+    const district = this.districts.get(id);
+    if (!district) throw new Error("Unknown district: " + id);
+    if (this.proxyRoots.has(id)) return this.proxyRoots.get(id);
+    const root = buildDistrictProxy(this.scene, district, {
+      groundTopY: Number.isFinite(this.options.groundTopY) ? this.options.groundTopY : 0.64,
+      ...proxyOptions
+    });
+    if (root) this.proxyRoots.set(id, root);
+    return root;
+  }
+
+  removeDistrictProxy(id) {
+    const root = this.proxyRoots.get(id);
+    if (!root) return false;
+    disposeDistrictProxy(this.scene, root);
+    this.proxyRoots.delete(id);
+    return true;
   }
 
   removeDistrict(id) {
@@ -89,6 +113,7 @@ export default class WorldSystem {
 
   unregisterDistrict(id) {
     this.removeDistrict(id);
+    this.removeDistrictProxy(id);
     for (const [connectionId, connection] of this.connections) {
       if (connection.from?.districtId === id || connection.to?.districtId === id) this.connections.delete(connectionId);
     }
@@ -238,6 +263,7 @@ export default class WorldSystem {
     return {
       registeredDistricts: this.getDistrictIds(),
       builtDistricts: Array.from(this.roots.keys()),
+      proxiedDistricts: Array.from(this.proxyRoots.keys()),
       registeredConnections: Array.from(this.connections.keys())
     };
   }
