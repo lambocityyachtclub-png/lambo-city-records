@@ -24,6 +24,8 @@ export default class WorldDistrictStreaming {
       maxRemovalsPerUpdate: Math.min(2, Math.max(1, Math.floor(options.maxRemovalsPerUpdate || 1))),
       maxProxyBuildsPerUpdate: Math.min(2, Math.max(1, Math.floor(options.maxProxyBuildsPerUpdate || 1))),
       maxProxyRemovalsPerUpdate: Math.min(2, Math.max(1, Math.floor(options.maxProxyRemovalsPerUpdate || 1))),
+      maxDetailedParcels: Number.isInteger(options.maxDetailedParcels) ? Math.max(0, Math.min(64, options.maxDetailedParcels)) : 24,
+      focusRefreshDistance: Number.isFinite(options.focusRefreshDistance) ? Math.max(0, options.focusRefreshDistance) : 20,
       maxDetailedParcels: Number.isInteger(options.maxDetailedParcels)
         ? Math.max(0, Math.min(64, options.maxDetailedParcels)) : 24,
       maxFocusUpdatesPerUpdate: Math.min(2, Math.max(1, Math.floor(options.maxFocusUpdatesPerUpdate || 1)))
@@ -112,7 +114,9 @@ export default class WorldDistrictStreaming {
     }
     for (const candidate of focusUpdates.slice(0, this.options.maxFocusUpdatesPerUpdate)) {
       try {
-        if (this.worldSystem.updateDistrictDetailFocus(candidate.id, position)) refreshed.push(candidate.id);
+        if (this.worldSystem.updateDistrictDetailFocus(candidate.id, position, {
+          focusRefreshDistance: this.options.focusRefreshDistance
+        })) refreshed.push(candidate.id);
       } catch (error) {
         errors.push({ id: candidate.id, stage: "detail-refresh", message: String(error?.message || error) });
       }
