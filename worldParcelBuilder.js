@@ -95,6 +95,67 @@ function buildPark(building, parcel, width, depth, materials) {
   building.userData.walkable = true;
 }
 
+function batchParcelMeshes(root) {
+  root.updateMatrixWorld(true);
+  const batches = new Map();
+  let sourceMeshCount = 0;
+
+  root.traverse(object => {
+    if (!object.isMesh || object.isInstancedMesh || !object.geometry || !object.material ||
+        Array.isArray(object.material)) return;
+    const isBox = object.geometry.type === "BoxGeometry";
+    const geometryKey = isBox
+      ? "unit-box"
+      : object.geometry.type + ":" + JSON.stringify(object.geometry.parameters || {});
+    const key = object.material.uuid + ":" + geometryKey;
+    if (!batches.has(key)) {
+      batches.set(key, {
+        material: object.material,
+        geometry: isBox ? new THREE.BoxGeometry(1, 1, 1) : object.geometry.clone(),
+        isBox,
+        items: []
+      });
+    }
+    const scale = isBox
+      ? new THREE.Matrix4().makeScale(
+          object.geometry.parameters.width,
+          object.geometry.parameters.height,
+          object.geometry.parameters.depth
+        )
+      : null;
+    const matrix = object.matrixWorld.clone();
+    if (scale) matrix.multiply(scale);
+    batches.get(key).items.push({ mesh: object, matrix });
+    sourceMeshCount += 1;
+  });
+
+  let batchCount = 0;
+  for (const [key, batch] of batches) {
+    const instances = new THREE.InstancedMesh(batch.geometry, batch.material, batch.items.length);
+    instances.name = "worldParcelDetailBatch_" + batchCount;
+    instances.castShadow = false;
+    instances.receiveShadow = true;
+    batch.items.forEach((item, index) => instances.setMatrixAt(index, item.matrix));
+    instances.instanceMatrix.needsUpdate = true;
+    instances.computeBoundingSphere();
+    root.add(instances);
+    for (const item of batch.items) {
+      item.mesh.parent?.remove(item.mesh);
+      item.mesh.geometry.dispose?.();
+    }
+    batchCount += 1;
+  }
+
+  for (const child of [...root.children]) {
+    if (child.isGroup && child.name.startsWith("worldParcel_") && child.children.length === 0) {
+      root.remove(child);
+    }
+  }
+  root.userData.detailSourceMeshCount = sourceMeshCount;
+  root.userData.detailBatchCount = batchCount;
+  return { sourceMeshCount, batchCount };
+}
+
 export const PARCEL_STYLES = Object.freeze([
   "coastal-villa",
   "luxury-apartment",
@@ -220,13 +281,14 @@ export function buildParcelGeometry(parent, district, options = {}) {
     proxyCount += entries.length;
   }
 
+  const detailBatchStats = batchParcelMeshes(root);
   parent.add(root);
   parent.userData.parcelCount = built;
   parent.userData.parcelStyles = styles;
   parent.userData.detailParcelCount = detailCount;
   parent.userData.proxyParcelCount = proxyCount;
   parent.userData.proxyBatchCount = proxyParcels.size;
-  return { parcels: built, buildings, styles, root, detailCount, proxyCount, proxyBatchCount: proxyParcels.size, detailParcelIds: Array.from(detailedIds), focusPosition: { x: focus.x, z: focus.z }, ownedMaterials: Object.values(materials) };
+  return { parcels: built, buildings, styles, root, detailCount, proxyCount, proxyBatchCount: proxyParcels.size, detailSourceMeshCount: detailBatchStats.sourceMeshCount, detailBatchCount: detailBatchStats.batchCount, detailParcelIds: Array.from(detailedIds), focusPosition: { x: focus.x, z: focus.z }, ownedMaterials: Object.values(materials) };
 }
 
 export default { buildParcelGeometry, PARCEL_STYLES };
