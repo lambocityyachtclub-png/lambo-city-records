@@ -340,6 +340,28 @@
           Math.abs(approachSidewalkGroundY - 0.82) > 0.001) {
         throw new Error("Terrain height sampling does not match the generated grade data.");
       }
+      const failedBuildCollision = {
+        boxes: [],
+        calls: 0,
+        registerBox(name, bounds) {
+          this.calls++;
+          if (this.calls === 2) throw new Error("intentional collision registration failure");
+          this.boxes.push({ name, ...bounds });
+        },
+        unregister(name) { this.boxes = this.boxes.filter(box => box.name !== name); }
+      };
+      let buildRollbackObserved = false;
+      try {
+        world.buildDistrict(futureDistrict.id, { collision: failedBuildCollision });
+      } catch (buildError) {
+        buildRollbackObserved = String(buildError?.message || buildError).includes("intentional collision registration failure");
+      }
+      if (!buildRollbackObserved || failedBuildCollision.boxes.length !== 0 ||
+          world.isDistrictBuilt(futureDistrict.id) ||
+          scene.children.some(child => child.name === "worldSystemDistrict_" + futureDistrict.id)) {
+        throw new Error("A failed district build did not roll back its geometry and collision registrations.");
+      }
+
       const noPermissionServiceRoute = world.findRoute(
         district.id,
         "boardwalk-service-entry",
@@ -447,7 +469,8 @@
         ["District streaming", "hysteresis verified"],
         ["Loop / grid recipe compiler", "verified"],
         ["iPad recipe size limits", "verified"],
-        ["Runtime rollback", "verified"]
+        ["Runtime rollback", "verified"],
+        ["District build rollback", "verified"]
       ].map(([label, value]) => '<span class="metric">' + label + ': ' + value + '</span>').join("");
     } catch (err) {
       status.textContent = "The district could not be generated.";
