@@ -421,7 +421,7 @@
           districts: [recipeDistrict, {
             ...recipeDistrict,
             id: "invalid-runtime-district",
-            roadNetwork: { nodes: [], segments: [] }
+            bounds: { ...recipeDistrict.bounds, maxX: recipeDistrict.bounds.minX }
           }]
         });
       } catch (runtimeError) {
