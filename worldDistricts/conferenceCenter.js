@@ -39,7 +39,7 @@ const CONFERENCE_CENTER_DISTRICT = Object.freeze({
       Object.freeze({ id: "boulevard-east", from: "boulevard-south-east", to: "boulevard-north-east", mode: "vehicle", lanes: 2, width: 9, loop: true }),
       Object.freeze({ id: "boulevard-north", from: "boulevard-north-east", to: "boulevard-north-west", mode: "vehicle", lanes: 2, width: 9, loop: true }),
       Object.freeze({ id: "boulevard-west", from: "boulevard-north-west", to: "boulevard-south-west", mode: "vehicle", lanes: 2, width: 9, loop: true }),
-      Object.freeze({ id: "boardwalk-gated-service-approach", from: "boardwalk-service-entry", to: "boulevard-south-access-junction", mode: "service", width: 8, access: "permission-controlled", requiredAccess: "service" }),
+      Object.freeze({ id: "boardwalk-gated-service-approach", from: "boardwalk-service-entry", to: "boulevard-south-access-junction", mode: "service", width: 8, access: "permission-controlled", requiredAccess: "service", gate: Object.freeze({ id: "arena-boardwalk-service-gate", offset: 1.4 }) }),
       Object.freeze({ id: "arena-service-arrival-approach", from: "boulevard-south-access-junction", to: "arena-arrival-approach", mode: "service", width: 8, access: "permission-controlled", requiredAccess: "service" })
     ])
   }),
