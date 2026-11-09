@@ -45,12 +45,12 @@ const CONFERENCE_CENTER_DISTRICT = Object.freeze({
   }),
 
   parcels: Object.freeze([
-    Object.freeze({ id: "villa-west-one", use: "residential", center: Object.freeze({ x: -98.5, z: 80 }) }),
-    Object.freeze({ id: "villa-west-two", use: "residential", center: Object.freeze({ x: -98.5, z: 112 }) }),
-    Object.freeze({ id: "villa-east-one", use: "residential", center: Object.freeze({ x: 12.5, z: 80 }) }),
-    Object.freeze({ id: "villa-east-two", use: "residential", center: Object.freeze({ x: 12.5, z: 112 }) }),
-    Object.freeze({ id: "villa-north-one", use: "residential", center: Object.freeze({ x: -58, z: 148 }) }),
-    Object.freeze({ id: "villa-north-two", use: "residential", center: Object.freeze({ x: -28, z: 148 }) })
+    Object.freeze({ id: "villa-west-one", use: "residential", center: Object.freeze({ x: -98.5, z: 80 }), footprint: Object.freeze({ width: 13, depth: 11 }), rotationY: Math.PI / 2, style: "coastal-villa" }),
+    Object.freeze({ id: "villa-west-two", use: "residential", center: Object.freeze({ x: -98.5, z: 112 }), footprint: Object.freeze({ width: 13, depth: 11 }), rotationY: Math.PI / 2, style: "coastal-villa" }),
+    Object.freeze({ id: "villa-east-one", use: "residential", center: Object.freeze({ x: 12.5, z: 80 }), footprint: Object.freeze({ width: 13, depth: 11 }), rotationY: -Math.PI / 2, style: "coastal-villa" }),
+    Object.freeze({ id: "villa-east-two", use: "residential", center: Object.freeze({ x: 12.5, z: 112 }), footprint: Object.freeze({ width: 13, depth: 11 }), rotationY: -Math.PI / 2, style: "coastal-villa" }),
+    Object.freeze({ id: "villa-north-one", use: "residential", center: Object.freeze({ x: -58, z: 148 }), footprint: Object.freeze({ width: 13, depth: 11 }), rotationY: 0, style: "coastal-villa" }),
+    Object.freeze({ id: "villa-north-two", use: "residential", center: Object.freeze({ x: -28, z: 148 }), footprint: Object.freeze({ width: 13, depth: 11 }), rotationY: 0, style: "coastal-villa" })
   ]),
 
   access: Object.freeze({
