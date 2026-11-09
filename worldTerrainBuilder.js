@@ -2,70 +2,11 @@
 // Builds a flat district base plus explicit local elevation transitions.
 // Shoreline meshes and water crossings are never guessed from district bounds.
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
+import { sampleTerrainHeight } from "./worldTerrainMath.js";
+export { sampleTerrainHeight } from "./worldTerrainMath.js";
 
 function makeMaterial(color, roughness = 1) {
   return new THREE.MeshStandardMaterial({ color, roughness });
-}
-
-export function sampleTerrainHeight(district, x, z, fallbackY = 0.64, surfaceOptions = {}) {
-  if (!Number.isFinite(x) || !Number.isFinite(z)) return fallbackY;
-  let height = fallbackY;
-  for (const zone of district?.terrainZones || []) {
-    if (!zone?.center || !Number.isFinite(zone.center.x) || !Number.isFinite(zone.center.z)) continue;
-    const dx = Math.abs(x - zone.center.x), dz = Math.abs(z - zone.center.z);
-    if (dx > zone.width / 2 || dz > zone.depth / 2) continue;
-    const edgeDistance = Math.min(zone.width / 2 - dx, zone.depth / 2 - dz);
-    const transition = Math.max(0, Number.isFinite(zone.transitionWidth) ? zone.transitionWidth : 1);
-    const t = transition > 0 ? Math.max(0, Math.min(1, edgeDistance / transition)) : 1;
-    const blend = t * t * (3 - 2 * t);
-    const edgeY = Number.isFinite(zone.edgeY) ? zone.edgeY : fallbackY + 0.005;
-    const topY = Number.isFinite(zone.topY) ? zone.topY : edgeY;
-    height = edgeY + (topY - edgeY) * blend;
-  }
-
-  // Road and sidewalk tops take precedence over the underlying terrain grade.
-  // This keeps future player/vehicle grounding aligned with the actual meshes.
-  const roadTopY = Number.isFinite(surfaceOptions.roadTopY) ? surfaceOptions.roadTopY : 0.77;
-  const sidewalkTopY = Number.isFinite(surfaceOptions.sidewalkTopY) ? surfaceOptions.sidewalkTopY : roadTopY + 0.03;
-  const defaultRoadWidth = Number.isFinite(surfaceOptions.roadWidth) ? surfaceOptions.roadWidth : 9;
-  const sidewalkWidth = Number.isFinite(surfaceOptions.sidewalkWidth) ? surfaceOptions.sidewalkWidth : 3;
-  let onRoad = false, onSidewalk = false;
-  const nodes = new Map((district?.roadNetwork?.nodes || []).map(node => [node.id, node]));
-  for (const segment of district?.roadNetwork?.segments || []) {
-    if (segment.navigationOnly === true) continue;
-    const from = nodes.get(segment.from), to = nodes.get(segment.to);
-    if (!from || !to) continue;
-    const dx = to.x - from.x, dz = to.z - from.z;
-    const lengthSquared = dx * dx + dz * dz;
-    if (lengthSquared <= 0) continue;
-    const t = ((x - from.x) * dx + (z - from.z) * dz) / lengthSquared;
-    if (t < 0 || t > 1) continue;
-    const nearestX = from.x + t * dx, nearestZ = from.z + t * dz;
-    const distance = Math.hypot(x - nearestX, z - nearestZ);
-    const width = Number.isFinite(segment.width) ? segment.width : defaultRoadWidth;
-    if (distance <= width / 2) onRoad = true;
-    else if (surfaceOptions.buildSidewalks !== false && segment.mode !== "pedestrian" && distance <= width / 2 + sidewalkWidth) onSidewalk = true;
-  }
-  const junctionWidths = new Map();
-  for (const segment of district?.roadNetwork?.segments || []) {
-    if (segment.navigationOnly === true) continue;
-    const width = Number.isFinite(segment.width) ? segment.width : defaultRoadWidth;
-    for (const nodeId of [segment.from, segment.to]) {
-      junctionWidths.set(nodeId, Math.max(junctionWidths.get(nodeId) || 0, width));
-    }
-  }
-  for (const [nodeId, width] of junctionWidths) {
-    const node = nodes.get(nodeId);
-    const degree = (district?.roadNetwork?.segments || []).filter(segment =>
-      segment.navigationOnly !== true && (segment.from === nodeId || segment.to === nodeId)
-    ).length;
-    if (degree >= 2 && Math.abs(x - node.x) <= width / 2 && Math.abs(z - node.z) <= width / 2) {
-      onRoad = true;
-    }
-  }
-  if (onSidewalk) return sidewalkTopY;
-  if (onRoad) return roadTopY;
-  return height;
 }
 
 export function buildTerrainAndLandscape(parent, district, options = {}) {
