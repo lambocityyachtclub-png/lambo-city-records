@@ -429,6 +429,21 @@
           Math.abs(WorldSystemHost.getGroundHeightAt(-60, 62.5) - 0.77) > 0.001) {
         throw new Error("The engine host did not expose explicit initialization and generated ground sampling.");
       }
+      const briefRegistration = WorldSystemHost.registerDistrict({
+        id: "host-brief-registration-test",
+        name: "Host Brief Registration Test",
+        brief: {
+          character: "mixed-use",
+          density: "medium",
+          center: { x: 500, z: 500 },
+          size: { width: 120, depth: 120 }
+        }
+      });
+      if (!briefRegistration.registered ||
+          briefRegistration.district?.parcels.length !== 9 ||
+          !WorldSystemHost.unregisterDistrict("host-brief-registration-test")) {
+        throw new Error("The initialized engine host did not compile, register, and remove a high-level district brief.");
+      }
       WorldSystemHost.buildDistrict(recipeDistrict.id, {
         roadTopY: 0.77, sidewalkTopY: 0.82, roadWidth: 9, sidewalkWidth: 3
       });
