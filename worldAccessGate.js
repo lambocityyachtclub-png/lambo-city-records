@@ -49,7 +49,7 @@ function createGate(parent, segment, from, to, collision) {
   const halfX = (Math.abs(Math.cos(angle)) * width + Math.abs(Math.sin(angle)) * 0.5) / 2;
   const halfZ = (Math.abs(Math.sin(angle)) * width + Math.abs(Math.cos(angle)) * 0.5) / 2;
   const requiredAccess = segment.requiredAccess;
-  let isOpen = false;
+  let isOpen = null;
 
   function setOpen(open) {
     const next = !!open;
