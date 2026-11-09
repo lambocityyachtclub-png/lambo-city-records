@@ -103,55 +103,13 @@ export default {
       landscape: new THREE.MeshStandardMaterial({ color: 0x344c3d, roughness: 0.95 })
     };
 
-    // Continuous district foundation overlaps the existing north land by
-    // one unit. The foundation is on surveyed land, not over open water.
-    box(root, "arenaDistrictGround", [PLAN.ground.width, 0.5, PLAN.ground.depth],
-      [PLAN.ground.centerX, PLAN.ground.topY - 0.25, PLAN.ground.centerZ],
-      materials.land);
-
-    // Four road legs meet with overlapping corners, forming a true closed
-    // two-way loop rather than four disconnected visual road segments.
-    const roadY = 0.79;
-    box(root, "arenaBoulevardSouth", [boulevard.outerWidth + boulevard.roadWidth, 0.18, boulevard.roadWidth],
-      [cx, roadY, southZ], materials.road);
-    box(root, "arenaBoulevardNorth", [boulevard.outerWidth + boulevard.roadWidth, 0.18, boulevard.roadWidth],
-      [cx, roadY, northZ], materials.road);
-    box(root, "arenaBoulevardWest", [boulevard.roadWidth, 0.18, boulevard.outerDepth],
-      [westX, roadY, cz], materials.road);
-    box(root, "arenaBoulevardEast", [boulevard.roadWidth, 0.18, boulevard.outerDepth],
-      [eastX, roadY, cz], materials.road);
-
-    // Sidewalk bands sit outside the road loop and remain connected at all
-    // four corners. Their overlap closes the pedestrian circuit.
-    const sw = boulevard.sidewalkWidth;
-    const sideOffset = boulevard.roadWidth / 2 + sw / 2;
-    box(root, "arenaSidewalkSouth", [boulevard.outerWidth + boulevard.roadWidth + sw * 2, 0.14, sw],
-      [cx, 0.82, southZ - sideOffset], materials.sidewalk);
-    box(root, "arenaSidewalkNorth", [boulevard.outerWidth + boulevard.roadWidth + sw * 2, 0.14, sw],
-      [cx, 0.82, northZ + sideOffset], materials.sidewalk);
-    box(root, "arenaSidewalkWest", [sw, 0.14, boulevard.outerDepth + boulevard.roadWidth + sw * 2],
-      [westX - sideOffset, 0.82, cz], materials.sidewalk);
-    box(root, "arenaSidewalkEast", [sw, 0.14, boulevard.outerDepth + boulevard.roadWidth + sw * 2],
-      [eastX + sideOffset, 0.82, cz], materials.sidewalk);
-
-    // Gold centerline dashes, repeated at measured intervals.
-    for (let x = westX + 7; x < eastX - 4; x += 14) {
-      box(root, "arenaBoulevardSouthMark_" + Math.round(x), [4.2, 0.035, 0.16], [x, 0.9, southZ], materials.roadMark);
-      box(root, "arenaBoulevardNorthMark_" + Math.round(x), [4.2, 0.035, 0.16], [x, 0.9, northZ], materials.roadMark);
-    }
-    for (let z = southZ + 7; z < northZ - 4; z += 14) {
-      box(root, "arenaBoulevardWestMark_" + Math.round(z), [0.16, 0.035, 4.2], [westX, 0.9, z], materials.roadMark);
-      box(root, "arenaBoulevardEastMark_" + Math.round(z), [0.16, 0.035, 4.2], [eastX, 0.9, z], materials.roadMark);
-    }
-
-    // Existing approach road joins the south loop and continues to a
-    // pedestrian/vehicle drop-off plaza at the arena's south entrance.
-    const access = CITY_MAP.districts.conferenceCenter;
-    const approachEnd = cz - arena.footprintDepth / 2 - 1;
-    box(root, "conferenceDistrictAccessRoad", [8, 0.18, approachEnd - access.accessRoadStartZ],
-      [access.accessRoadX, roadY, (access.accessRoadStartZ + approachEnd) / 2], materials.road);
-    box(root, "arenaArrivalPlaza", [30, 0.22, 13], [cx, 0.78, cz - arena.footprintDepth / 2 - 5.5], materials.plaza);
-    box(root, "arenaEntryPromenade", [20, 0.12, 7], [cx, 0.91, cz - arena.footprintDepth / 2 - 1.5], materials.sidewalk);
+    // The World System owns the district ground, boulevard, raised curbs,
+    // sidewalks, landscaped verges, gated service road, and villa parcels.
+    // This visual module retains the arena arrival plaza and landmark shell.
+    box(root, "arenaArrivalPlaza", [30, 0.22, 13],
+      [cx, 0.78, cz - arena.footprintDepth / 2 - 5.5], materials.plaza);
+    box(root, "arenaEntryPromenade", [20, 0.12, 7],
+      [cx, 0.91, cz - arena.footprintDepth / 2 - 1.5], materials.sidewalk);
 
     // Landmark foundation and monumental architecture.
     const aw = arena.footprintWidth;
@@ -197,14 +155,7 @@ export default {
       box(root, "arenaEntryGoldPier_" + i, [0.8, 15, 1.1], [cx + offset, 8.5, front - 0.65], materials.gold);
     });
 
-    // Five low-rise coastal villa residences sit beyond the boulevard.
-    // South approach remains open; the arena remains the dominant landmark.
-    addVilla(root, materials, "WestOne", -98.5, 80, Math.PI / 2);
-    addVilla(root, materials, "WestTwo", -98.5, 112, Math.PI / 2);
-    addVilla(root, materials, "EastOne", 12.5, 80, -Math.PI / 2);
-    addVilla(root, materials, "EastTwo", 12.5, 112, -Math.PI / 2);
-    addVilla(root, materials, "NorthOne", -58, 148, 0);
-    addVilla(root, materials, "NorthTwo", -28, 148, 0);
+    // Villas are generated from the shared district parcel blueprint.
 
     // Collision matches the arena shell. The south entrance stays open.
     const collision = context.systems && context.systems.collision;
