@@ -1,5 +1,42 @@
-// LAMBO CITY — data-driven district route planner
-// Pure graph logic: no scene access, timers, or gameplay side effects.
+// LAMBO CITY — scalable, permission-aware district route planner
+// A* search uses a binary min-heap; no scene access or gameplay side effects.
+class MinHeap {
+  constructor() { this.items = []; }
+  push(item) {
+    const items = this.items;
+    items.push(item);
+    let index = items.length - 1;
+    while (index > 0) {
+      const parent = Math.floor((index - 1) / 2);
+      if (items[parent].score <= item.score) break;
+      items[index] = items[parent];
+      index = parent;
+    }
+    items[index] = item;
+  }
+  pop() {
+    const items = this.items;
+    if (!items.length) return null;
+    const first = items[0];
+    const last = items.pop();
+    if (items.length) {
+      let index = 0;
+      while (true) {
+        const left = index * 2 + 1, right = left + 1;
+        if (left >= items.length) break;
+        let child = left;
+        if (right < items.length && items[right].score < items[left].score) child = right;
+        if (items[child].score >= last.score) break;
+        items[index] = items[child];
+        index = child;
+      }
+      items[index] = last;
+    }
+    return first;
+  }
+  get size() { return this.items.length; }
+}
+
 function segmentAllowed(segment, mode, permissions) {
   const segmentMode = segment.mode || "vehicle";
   if (mode === "pedestrian") {
@@ -11,10 +48,8 @@ function segmentAllowed(segment, mode, permissions) {
   } else {
     return false;
   }
-
   if (segment.access === "permission-controlled") {
-    const required = segment.requiredAccess;
-    return !!required && permissions.has(required);
+    return !!segment.requiredAccess && permissions.has(segment.requiredAccess);
   }
   return segment.access !== "closed";
 }
@@ -42,36 +77,39 @@ export function findRoute(district, fromId, toId, options = {}) {
     if (!from || !to) continue;
     const distance = Math.hypot(to.x - from.x, to.z - from.z);
     if (!Number.isFinite(distance) || distance <= 0) continue;
-    adjacency.get(segment.from).push({ nodeId: segment.to, segment, distance });
-    adjacency.get(segment.to).push({ nodeId: segment.from, segment, distance });
+    adjacency.get(segment.from).push({ nodeId: segment.to, segmentId: segment.id, distance });
+    adjacency.get(segment.to).push({ nodeId: segment.from, segmentId: segment.id, distance });
   }
 
-  const distances = new Map(nodes.map(node => [node.id, Infinity]));
+  const heuristic = id => {
+    const a = nodeById.get(id), b = nodeById.get(toId);
+    return Math.hypot(b.x - a.x, b.z - a.z);
+  };
+  const open = new MinHeap();
+  const gScore = new Map(nodes.map(node => [node.id, Infinity]));
   const previous = new Map();
-  const visited = new Set();
-  distances.set(fromId, 0);
+  const closed = new Set();
+  gScore.set(fromId, 0);
+  open.push({ id: fromId, score: heuristic(fromId) });
 
-  while (visited.size < nodes.length) {
-    let current = null, best = Infinity;
-    for (const [id, distance] of distances) {
-      if (!visited.has(id) && distance < best) {
-        current = id;
-        best = distance;
-      }
-    }
-    if (current === null || current === toId) break;
-    visited.add(current);
+  while (open.size) {
+    const current = open.pop().id;
+    if (closed.has(current)) continue;
+    if (current === toId) break;
+    closed.add(current);
+
     for (const edge of adjacency.get(current) || []) {
-      if (visited.has(edge.nodeId)) continue;
-      const candidate = best + edge.distance;
-      if (candidate < distances.get(edge.nodeId)) {
-        distances.set(edge.nodeId, candidate);
-        previous.set(edge.nodeId, { from: current, segmentId: edge.segment.id });
+      if (closed.has(edge.nodeId)) continue;
+      const candidate = gScore.get(current) + edge.distance;
+      if (candidate < gScore.get(edge.nodeId)) {
+        gScore.set(edge.nodeId, candidate);
+        previous.set(edge.nodeId, { from: current, segmentId: edge.segmentId });
+        open.push({ id: edge.nodeId, score: candidate + heuristic(edge.nodeId) });
       }
     }
   }
 
-  if (!Number.isFinite(distances.get(toId))) {
+  if (!Number.isFinite(gScore.get(toId))) {
     return { found: false, reason: "NO_ALLOWED_ROUTE", nodeIds: [], segmentIds: [], distance: 0 };
   }
 
@@ -84,7 +122,7 @@ export function findRoute(district, fromId, toId, options = {}) {
     nodeIds.unshift(step.from);
     cursor = step.from;
   }
-  return { found: true, reason: null, nodeIds, segmentIds, distance: distances.get(toId) };
+  return { found: true, reason: null, nodeIds, segmentIds, distance: gScore.get(toId) };
 }
 
 export default { findRoute };
