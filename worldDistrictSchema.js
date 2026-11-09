@@ -210,6 +210,28 @@ export function validateDistrict(district, options = {}) {
     }
   }
 
+  if (district.accessTiers !== undefined) {
+    if (!Array.isArray(district.accessTiers)) {
+      issues.push(issue("INVALID_ACCESS_TIERS", "District access tiers must be an array."));
+    } else {
+      const tierIds = new Set();
+      for (const tier of district.accessTiers) {
+        if (!tier || typeof tier.id !== "string" || !tier.id.trim() ||
+            !Number.isInteger(tier.rank) || tier.rank < 0) {
+          issues.push(issue("INVALID_ACCESS_TIER", "Each access tier needs a unique id and a non-negative whole-number rank."));
+          continue;
+        }
+        if (tierIds.has(tier.id)) issues.push(issue("DUPLICATE_ACCESS_TIER", "Access tier id is repeated: " + tier.id));
+        tierIds.add(tier.id);
+      }
+      for (const segment of district.roadNetwork?.segments || []) {
+        if (segment.access === "permission-controlled" && !tierIds.has(segment.requiredAccess)) {
+          issues.push(issue("UNKNOWN_REQUIRED_ACCESS_TIER", "Road segment " + segment.id + " references an access tier not declared by the district."));
+        }
+      }
+    }
+  }
+
   const protectedIds = new Set(options.protectedLandmarks || []);
   for (const landmarkId of district.overlapsProtectedLandmarks || []) {
     if (protectedIds.has(landmarkId)) {
