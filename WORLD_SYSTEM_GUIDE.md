@@ -8,7 +8,7 @@ The World System is the reusable foundation for adding named districts without h
 - `worldDistrictFactory.js` compiles compact road-loop and parcel-band recipes into connected district blueprints.
 - `worldSystem.js` stores districts, builds/removes their generated scene roots, manages access gates, and routes between districts.
 - `worldBuilder.js` creates road surfaces, junctions, sidewalks, parcel geometry, and optional collision blockers.
-- `worldTerrainBuilder.js` creates the district ground, raised/lowered grade transitions, low-cost planting, and ground-height samples.
+- `worldTerrainBuilder.js` creates the district ground, raised/lowered grade transitions, and low-cost planting; `worldTerrainMath.js` supplies cached terrain, road, and sidewalk height queries.
 - `worldParcelBuilder.js` builds parcel archetypes.
 - `worldAccessGate.js` creates physical gates and updates their collision state when an access tier is granted.
 - `worldNavigation.js` provides A* routing inside one district and across registered district connectors.
