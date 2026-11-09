@@ -111,6 +111,30 @@ export function buildDistrictGeometry(scene, district, options = {}) {
   // landmark structures remain owned by their current district module.
   const parcelResult = buildParcelGeometry(root, district, options);
   root.userData.parcelCount = parcelResult.parcels;
+  // Optional collision registration uses the existing player's AABB API.
+  // Roads and sidewalks remain walkable; only villa footprints block movement.
+  const collision = options.collision;
+  const collisionIds = [];
+  if (collision && typeof collision.registerBox === "function") {
+    for (const parcel of district.parcels || []) {
+      if (!parcel?.center || !Number.isFinite(parcel.center.x) || !Number.isFinite(parcel.center.z)) continue;
+      const footprint = parcel.footprint || { width: 13, depth: 11 };
+      const width = Number.isFinite(footprint.width) ? footprint.width : 13;
+      const depth = Number.isFinite(footprint.depth) ? footprint.depth : 11;
+      const rotation = Number.isFinite(parcel.rotationY) ? parcel.rotationY : 0;
+      const halfX = (Math.abs(Math.cos(rotation)) * width + Math.abs(Math.sin(rotation)) * depth) / 2;
+      const halfZ = (Math.abs(Math.sin(rotation)) * width + Math.abs(Math.cos(rotation)) * depth) / 2;
+      const name = "worldDistrict_" + district.id + "_parcel_" + parcel.id;
+      collision.registerBox(name, {
+        x: parcel.center.x, z: parcel.center.z,
+        width: halfX * 2, depth: halfZ * 2,
+        minY: 0, maxY: 11, level: options.collisionLevel || "world"
+      });
+      collisionIds.push(name);
+    }
+  }
+  root.userData.collisionIds = collisionIds;
+
 
   scene.add(root);
   return root;
