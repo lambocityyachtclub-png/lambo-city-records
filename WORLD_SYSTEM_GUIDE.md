@@ -55,7 +55,7 @@ Set `style` on each parcel:
 - `retail-promenade`
 - `urban-park`
 
-An urban park is walkable and does not receive a building collision blocker. These are first-pass massing archetypes; final architecture and detail passes remain separate.
+An urban park is walkable and does not receive a building collision blocker. The coastal-villa archetype now includes a detailed architectural pass: recessed upper massing, divided ocean glazing, metal facade fins, usable terraces with railings, private garage and entry, roof parapets, pergola, and planting beds. Apartment and retail archetypes remain procedural massing/detail templates and can receive their own later architecture passes.
 
 ## District data
 
