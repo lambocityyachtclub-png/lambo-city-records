@@ -81,6 +81,14 @@ export function validateDistrict(district, options = {}) {
       } else if (boundsValid && (node.x < bounds.minX || node.x > bounds.maxX || node.z < bounds.minZ || node.z > bounds.maxZ)) {
         issues.push(issue("ROAD_NODE_OUT_OF_BOUNDS", "Road node " + node.id + " falls outside the district boundaries."));
       }
+      if (node.turningArea !== undefined) {
+        const area = node.turningArea;
+        if (!area || !Number.isFinite(area.width) || !Number.isFinite(area.depth) || area.width < 14 || area.depth < 14 || area.width > 40 || area.depth > 40) {
+          issues.push(issue("INVALID_VEHICLE_TURNING_AREA", "Turning area at node " + node.id + " must be 14–40 map units in both directions."));
+        } else if (boundsValid && (node.x - area.width / 2 < bounds.minX || node.x + area.width / 2 > bounds.maxX || node.z - area.depth / 2 < bounds.minZ || node.z + area.depth / 2 > bounds.maxZ)) {
+          issues.push(issue("VEHICLE_TURNING_AREA_OUT_OF_BOUNDS", "Turning area at node " + node.id + " extends beyond district bounds."));
+        }
+      }
     }
 
     const segmentIds = new Set();
@@ -141,6 +149,9 @@ export function validateDistrict(district, options = {}) {
       }
       if (segment.width !== undefined && (!Number.isFinite(segment.width) || segment.width <= 0)) {
         issues.push(issue("INVALID_ROAD_WIDTH", "Road segment " + segment.id + " must have a positive width."));
+      }
+      if (segment.sidewalkOffset !== undefined && (!Number.isFinite(segment.sidewalkOffset) || segment.sidewalkOffset <= 0 || (Number.isFinite(segment.width) && segment.sidewalkOffset < segment.width / 2))) {
+        issues.push(issue("INVALID_SIDEWALK_OFFSET", "Road segment " + segment.id + " must place sidewalks outside the vehicle lane."));
       }
       if (segment.lanes !== undefined && (!Number.isInteger(segment.lanes) || segment.lanes < 1)) {
         issues.push(issue("INVALID_LANE_COUNT", "Road segment " + segment.id + " must have a positive whole-number lane count."));
