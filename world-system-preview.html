@@ -137,6 +137,12 @@
         "arena-arrival-approach",
         { mode: "service", permissions: ["service"] }
       );
+      const pedestrianRoute = world.findRoute(
+        district.id,
+        "walk-south-west",
+        "arena-arrival-approach",
+        { mode: "pedestrian" }
+      );
       const ordinaryTrafficRoute = world.findRoute(
         district.id,
         "boardwalk-service-entry",
@@ -168,6 +174,9 @@
       if (ordinaryTrafficRoute.found) {
         throw new Error("Ordinary vehicle traffic incorrectly received restricted access.");
       }
+      if (!pedestrianRoute.found) {
+        throw new Error("The continuous pedestrian sidewalk route did not reach the arena arrival point.");
+      }
       if (deniedCityRoute.found || !authorizedCityRoute.found) {
         throw new Error("City-wide routing did not preserve restricted access across district connections.");
       }
@@ -186,7 +195,8 @@
         ["Service gate before grant", gateBeforeAuthorization?.open ? "open" : "closed"],
         ["Service gate after grant", gateGrant.gate?.open ? "open" : "closed"],
         ["Service route without permission", noPermissionServiceRoute.found ? "unexpected" : "blocked"],
-        ["Authorized service route", authorizedServiceRoute.found ? "available" : "blocked"],
+        ["Authorized service route", authorizedServiceRoute.found ? "available" : "blocked"],,
+        ["Pedestrian sidewalk route", pedestrianRoute.found ? "available" : "blocked"]
         ["Ordinary vehicle route", ordinaryTrafficRoute.found ? "unexpected" : "restricted"],
         ["Registered districts", world.getDistrictIds().length],
         ["Inter-district links", world.getStatus().registeredConnections.length],
