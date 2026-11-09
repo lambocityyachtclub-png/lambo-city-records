@@ -36,7 +36,7 @@ export function buildDistrictGeometry(scene, district, options = {}) {
   root.userData.generatedBy = "LAMBO_CITY_WorldBuilder";
   root.userData.surfaceHeights = {
     roadTopY: Number.isFinite(options.roadTopY) ? options.roadTopY : 0.77,
-    sidewalkTopY: Number.isFinite(options.sidewalkTopY) ? options.sidewalkTopY : (Number.isFinite(options.roadTopY) ? options.roadTopY : 0.77) + 0.03,
+    sidewalkTopY: Number.isFinite(options.sidewalkTopY) ? options.sidewalkTopY : (Number.isFinite(district.roadNetwork.sidewalkTopY) ? district.roadNetwork.sidewalkTopY : (Number.isFinite(options.roadTopY) ? options.roadTopY : 0.77) + 0.03),
     roadWidth: Number.isFinite(options.roadWidth) ? options.roadWidth : 9,
     sidewalkWidth: Number.isFinite(options.sidewalkWidth) ? options.sidewalkWidth :
       (Number.isFinite(district.roadNetwork.sidewalkWidth) ? district.roadNetwork.sidewalkWidth : 3),
@@ -65,7 +65,7 @@ export function buildDistrictGeometry(scene, district, options = {}) {
     : (Number.isFinite(district.roadNetwork.sidewalkWidth) ? district.roadNetwork.sidewalkWidth : 3);
   const thickness = Number.isFinite(options.roadThickness) ? options.roadThickness : 0.16;
   const roadY = Number.isFinite(options.roadTopY) ? options.roadTopY : 0.77;
-  const sidewalkY = Number.isFinite(options.sidewalkTopY) ? options.sidewalkTopY : roadY + 0.03;
+  const sidewalkY = Number.isFinite(options.sidewalkTopY) ? options.sidewalkTopY : (Number.isFinite(district.roadNetwork.sidewalkTopY) ? district.roadNetwork.sidewalkTopY : roadY + 0.03);
   const validSegments = [];
   const roadInstances = [];
   const sidewalkInstances = [];
