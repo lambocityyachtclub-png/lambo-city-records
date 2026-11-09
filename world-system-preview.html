@@ -148,7 +148,7 @@
       if (!recipeValidation.valid || recipeDistrict.parcels.length !== 6 ||
           recipeDistrict.roadNetwork.nodes.length !== 11 ||
           recipeDistrict.roadNetwork.segments.length !== 12) {
-        throw new Error("Compact district recipe did not compile into a valid connected blueprint.");
+        throw new Error("Compact district recipe did not compile into a valid connected blueprint: " + JSON.stringify({ issues: recipeValidation.issues, nodes: recipeDistrict.roadNetwork.nodes, bounds: recipeDistrict.bounds, parcels: recipeDistrict.parcels }));
       }
       const gridRecipe = createDistrictFromRecipe({
         id: "grid-recipe-compiler-test",
