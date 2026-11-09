@@ -60,6 +60,7 @@ export default class WorldSystem {
     const root = this.roots.get(id);
     if (!root) return false;
     this.scene?.remove(root);
+    for (const gate of root.userData.accessGates || []) gate.destroy?.();
     if (this.collision && typeof this.collision.unregister === "function") {
       for (const name of root.userData.collisionIds || []) this.collision.unregister(name);
     }
@@ -68,6 +69,20 @@ export default class WorldSystem {
     });
     this.roots.delete(id);
     return true;
+  }
+
+  setGateAccess(id, gateId, permissions = []) {
+    const root = this.roots.get(id);
+    if (!root) return { updated: false, reason: "DISTRICT_NOT_BUILT" };
+    const gate = (root.userData.accessGates || []).find(item => item.id === gateId);
+    if (!gate) return { updated: false, reason: "UNKNOWN_GATE" };
+    return { updated: true, gate: gate.setPermissions(permissions) };
+  }
+
+  getGateStatuses(id) {
+    const root = this.roots.get(id);
+    if (!root) return [];
+    return (root.userData.accessGates || []).map(gate => gate.getStatus());
   }
 
   findRoute(id, fromNodeId, toNodeId, routeOptions = {}) {
