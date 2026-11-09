@@ -13,27 +13,105 @@ function box(parent, name, size, position, material) {
 }
 
 function buildVilla(building, parcel, width, depth, materials) {
-  box(building, parcel.id + "_foundation", [width + 1, 0.55, depth + 1], [0, 0.92, 0], materials.foundation);
+  // Coastal contemporary villa: recessed upper floor, ocean-facing glass,
+  // sheltered terraces, private garage, entry canopy, and roof pergola.
+  box(building, parcel.id + "_foundation", [width, 0.55, depth], [0, 0.92, 0], materials.foundation);
   box(building, parcel.id + "_lower_volume", [width - 1, 4.2, depth - 1], [0, 3.3, 0], materials.wall);
   box(building, parcel.id + "_upper_volume", [width - 1.4, 3.8, depth - 1.4], [0, 7.3, 0], materials.wall);
-  box(building, parcel.id + "_roof", [width + 0.2, 0.55, depth + 0.2], [0, 9.48, 0], materials.roof);
-  box(building, parcel.id + "_lower_glass", [width - 3.2, 2.5, 0.12], [0, 3.25, -depth / 2 + 0.52], materials.glass);
-  box(building, parcel.id + "_upper_glass", [width - 3.4, 2.3, 0.12], [0, 7.25, -depth / 2 + 0.72], materials.glass);
-  box(building, parcel.id + "_lower_balcony", [width + 0.2, 0.2, 1.6], [0, 4.82, -depth / 2 - 0.65], materials.metal);
-  box(building, parcel.id + "_upper_balcony", [width - 0.2, 0.2, 1.5], [0, 8.78, -depth / 2 - 0.58], materials.metal);
-  box(building, parcel.id + "_entry_feature", [2.8, 2.7, 0.18], [0, 2.35, depth / 2 - 0.42], materials.metal);
+  box(building, parcel.id + "_roof", [width + 0.1, 0.55, depth + 0.1], [0, 9.48, 0], materials.roof);
+
+  // Full-height ocean glazing is broken into readable bays by slim mullions.
+  const oceanWallZ = -depth / 2 + 0.56;
+  box(building, parcel.id + "_lower_glass", [width - 3.2, 2.5, 0.12], [0, 3.25, oceanWallZ], materials.glass);
+  box(building, parcel.id + "_upper_glass", [width - 3.4, 2.3, 0.12], [0, 7.25, oceanWallZ + 0.2], materials.glass);
+  for (let index = -2; index <= 2; index++) {
+    const x = index * 1.75;
+    box(building, parcel.id + "_lower_mullion_" + index, [0.075, 2.55, 0.18],
+      [x, 3.25, oceanWallZ], materials.metal);
+    box(building, parcel.id + "_upper_mullion_" + index, [0.075, 2.35, 0.18],
+      [x, 7.25, oceanWallZ + 0.2], materials.metal);
+  }
+
+  // Deep terraces remain inside the surveyed parcel footprint.
+  const balconyWidth = width - 1.8;
+  const balconyZ = -depth / 2 + 1.1;
+  box(building, parcel.id + "_lower_balcony", [balconyWidth, 0.18, 1.25],
+    [0, 4.82, balconyZ], materials.metal);
+  box(building, parcel.id + "_upper_balcony", [balconyWidth - 0.2, 0.18, 1.2],
+    [0, 8.78, balconyZ + 0.12], materials.metal);
   for (const side of [-1, 1]) {
-    const x = side * (width / 2 - 1.15);
-    box(building, parcel.id + "_landscape_bed_" + side, [1.5, 0.36, 2.2],
-      [x, 1.22, depth / 2 - 0.1], materials.soil);
-    const shrub = new THREE.Mesh(new THREE.IcosahedronGeometry(0.62, 0), materials.planting);
+    const x = side * (balconyWidth / 2 - 0.12);
+    box(building, parcel.id + "_lower_balcony_side_rail_" + side, [0.12, 0.9, 1.15],
+      [x, 5.28, balconyZ], materials.glass);
+    box(building, parcel.id + "_upper_balcony_side_rail_" + side, [0.12, 0.82, 1.1],
+      [x, 9.22, balconyZ + 0.12], materials.glass);
+  }
+  box(building, parcel.id + "_lower_balcony_front_rail", [balconyWidth, 0.9, 0.10],
+    [0, 5.28, balconyZ - 0.58], materials.glass);
+  box(building, parcel.id + "_upper_balcony_front_rail", [balconyWidth - 0.2, 0.82, 0.10],
+    [0, 9.22, balconyZ - 0.43], materials.glass);
+
+  // Vertical champagne-metal fins and side glazing add depth to the facades.
+  for (const side of [-1, 1]) {
+    const x = side * (width / 2 - 0.62);
+    box(building, parcel.id + "_architectural_fin_" + side, [0.24, 8.2, 0.34],
+      [x, 5.35, -depth / 2 + 0.55], materials.metal);
+    box(building, parcel.id + "_side_glass_" + side, [0.12, 1.8, 3.2],
+      [side * (width / 2 - 0.55), 3.2, 0], materials.glass);
+    box(building, parcel.id + "_upper_side_glass_" + side, [0.12, 1.7, 2.8],
+      [side * (width / 2 - 0.75), 7.25, 0], materials.glass);
+  }
+
+  // Street-facing private garage and a separate, sheltered pedestrian entry.
+  const streetWallZ = depth / 2 - 0.56;
+  box(building, parcel.id + "_garage_door", [3.3, 2.25, 0.14],
+    [3.0, 2.35, streetWallZ], materials.metal);
+  for (let index = 0; index < 5; index++) {
+    box(building, parcel.id + "_garage_panel_" + index, [0.035, 2.15, 0.025],
+      [1.72 + index * 0.64, 2.35, streetWallZ - 0.09], materials.roof);
+  }
+  box(building, parcel.id + "_entry_door", [1.35, 2.55, 0.14],
+    [-3.1, 2.5, streetWallZ], materials.metal);
+  box(building, parcel.id + "_entry_canopy", [4.0, 0.18, 1.05],
+    [-3.1, 3.95, depth / 2 - 1.0], materials.roof);
+  for (const x of [-5.0, -1.2]) {
+    box(building, parcel.id + "_entry_column_" + x, [0.22, 2.75, 0.22],
+      [x, 2.55, depth / 2 - 0.65], materials.metal);
+  }
+
+  // Clean roof parapet and a light pergola over the private upper terrace.
+  const roofY = 9.78;
+  box(building, parcel.id + "_roof_parapet_front", [width, 0.32, 0.18],
+    [0, roofY, depth / 2 - 0.12], materials.metal);
+  box(building, parcel.id + "_roof_parapet_back", [width, 0.32, 0.18],
+    [0, roofY, -depth / 2 + 0.12], materials.metal);
+  for (const side of [-1, 1]) {
+    box(building, parcel.id + "_roof_parapet_side_" + side, [0.18, 0.32, depth],
+      [side * (width / 2 - 0.12), roofY, 0], materials.metal);
+  }
+  for (const x of [-2.2, 2.2]) {
+    for (const z of [-1.6, 1.6]) {
+      box(building, parcel.id + "_pergola_post_" + x + "_" + z, [0.16, 1.8, 0.16],
+        [x, 10.78, z], materials.metal);
+    }
+  }
+  for (let index = -2; index <= 2; index++) {
+    box(building, parcel.id + "_pergola_slat_" + index, [5.0, 0.12, 0.16],
+      [0, 11.62, index * 0.72], materials.metal);
+  }
+
+  // Low planting beds frame the driveway without obstructing the entry.
+  for (const side of [-1, 1]) {
+    const x = side * (width / 2 - 1.2);
+    box(building, parcel.id + "_landscape_bed_" + side, [1.5, 0.28, 1.8],
+      [x, 1.16, depth / 2 - 1.2], materials.soil);
+    const shrub = new THREE.Mesh(new THREE.IcosahedronGeometry(0.52, 0), materials.planting);
     shrub.name = parcel.id + "_shrub_" + side;
-    shrub.position.set(x, 1.82, depth / 2 - 0.1);
-    shrub.castShadow = true;
+    shrub.position.set(x, 1.58, depth / 2 - 1.2);
+    shrub.castShadow = false;
     building.add(shrub);
   }
 }
-
 function buildApartment(building, parcel, width, depth, materials) {
   const floors = Math.max(3, Math.min(9, Math.floor(parcel.floors || 5)));
   const floorHeight = 3.0;
