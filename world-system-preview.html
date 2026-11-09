@@ -117,7 +117,26 @@
         "arena-arrival-approach",
         { mode: "vehicle" }
       );
-      status.textContent = "Blueprint validated. Generated district is isolated from live gameplay.";
+      if (!gateBeforeAuthorization || gateBeforeAuthorization.open !== false) {
+        throw new Error("The restricted boardwalk gate did not start closed.");
+      }
+      if (previewCollision.boxes.length !== district.parcels.length + 1) {
+        throw new Error("Expected one collider per villa plus the closed service gate.");
+      }
+      if (noPermissionServiceRoute.found) {
+        throw new Error("Service route was incorrectly allowed without permission.");
+      }
+      if (!gateGrant.updated || !gateGrant.gate?.open || !authorizedServiceRoute.found) {
+        throw new Error("Authorized service access did not open the gate and enable the route.");
+      }
+      if (ordinaryTrafficRoute.found) {
+        throw new Error("Ordinary vehicle traffic incorrectly received restricted access.");
+      }
+      if (previewCollision.boxes.length !== district.parcels.length) {
+        throw new Error("Opening the service gate did not remove its collision blocker.");
+      }
+
+      status.textContent = "District, collision, route, and access-gate checks passed. Isolated from live gameplay.";
       metrics.innerHTML = [
         ["Roads", root.userData.roadCount],
         ["Junctions", root.userData.junctionCount],
