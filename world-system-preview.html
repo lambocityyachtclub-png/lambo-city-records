@@ -37,6 +37,7 @@
     import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
     import { OrbitControls } from "https://unpkg.com/three@0.160.0/examples/jsm/controls/OrbitControls.js";
     import WorldSystem from "./worldSystem.js";
+    import WorldDistrictStreaming from "./worldDistrictStreaming.js";
     import district from "./worldDistricts/conferenceCenter.js";
     import { validateDistrict } from "./worldDistrictSchema.js";
 
@@ -159,6 +160,28 @@
       if (!archetypeWorld.removeDistrict(archetypeDistrict.id) || archetypeCollision.boxes.length !== 0) {
         throw new Error("Removing a generated district did not clean up its collision volumes.");
       }
+      const districtStreamer = new WorldDistrictStreaming({
+        streamInRadius: 50,
+        streamOutRadius: 75,
+        maxBuildsPerUpdate: 1,
+        maxRemovalsPerUpdate: 1
+      }).init(archetypeWorld);
+      districtStreamer.update(0, { playerPosition: { x: 1000, z: 1000 } });
+      if (archetypeWorld.isDistrictBuilt(archetypeDistrict.id)) {
+        throw new Error("A distant district was built before entering its stream range.");
+      }
+      districtStreamer.update(0, { playerPosition: { x: 257, z: 100 } });
+      if (!archetypeWorld.isDistrictBuilt(archetypeDistrict.id)) {
+        throw new Error("A nearby district did not stream in.");
+      }
+      districtStreamer.update(0, { playerPosition: { x: 379, z: 100 } });
+      if (!archetypeWorld.isDistrictBuilt(archetypeDistrict.id)) {
+        throw new Error("District hysteresis removed detail too early.");
+      }
+      districtStreamer.update(0, { playerPosition: { x: 409, z: 100 } });
+      if (archetypeWorld.isDistrictBuilt(archetypeDistrict.id) || archetypeCollision.boxes.length !== 0) {
+        throw new Error("A distant district did not stream out and clean up its colliders.");
+      }
 
       const root = world.buildDistrict(district.id, { roadTopY: 0.77, sidewalkTopY: 0.82, roadWidth: 9, sidewalkWidth: 3 });
       if (root.userData.terrainZoneCount !== district.terrainZones.length) {
@@ -276,7 +299,8 @@
         ["District cleanup", "verified"],
         ["Colliders after cleanup", previewCollision.boxes.length],
         ["Parcel archetypes", "4 supported"],
-        ["Archetype cleanup", "verified"]
+        ["Archetype cleanup", "verified"],
+        ["District streaming", "hysteresis verified"]
       ].map(([label, value]) => '<span class="metric">' + label + ': ' + value + '</span>').join("");
     } catch (err) {
       status.textContent = "The district could not be generated.";
