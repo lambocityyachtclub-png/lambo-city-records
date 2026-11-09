@@ -41,6 +41,7 @@ jobs:
             worldNavigation.js \
             worldDistrictStreaming.js \
             worldSystemRuntime.js \
+            worldSystemHost.js \
             worldSystem.js \
             worldDistricts/conferenceCenter.js
           do
