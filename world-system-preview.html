@@ -71,15 +71,6 @@
     key.position.set(-70, 130, -40);
     scene.add(key);
 
-    const ground = new THREE.Mesh(
-      new THREE.PlaneGeometry(124, 113),
-      new THREE.MeshStandardMaterial({ color: 0x39332b, roughness: 1 })
-    );
-    ground.rotation.x = -Math.PI / 2;
-    ground.position.set(-43, 0.64, 101.5);
-    ground.receiveShadow = true;
-    scene.add(ground);
-
     const arenaGuide = new THREE.Mesh(new THREE.BoxGeometry(54, 8, 44), new THREE.MeshStandardMaterial({ color: 0x101720, transparent: true, opacity: 0.22, wireframe: true }));
     arenaGuide.name = "previewOnlyExistingArenaFootprint";
     arenaGuide.position.set(-43, 4.8, 97);
@@ -106,7 +97,9 @@
         ["Roads", root.userData.roadCount],
         ["Junctions", root.userData.junctionCount],
         ["Sidewalk sections", root.userData.sidewalkCount],
-        ["Villa parcels", root.userData.parcelCount]
+        ["Villa parcels", root.userData.parcelCount],
+        ["Landscape zones", root.userData.landscapeZoneCount],
+        ["Landscape features", root.userData.landscapeFeatureCount]
       ].map(([label, value]) => '<span class="metric">' + label + ': ' + value + '</span>').join("");
     } catch (err) {
       status.textContent = "The district could not be generated.";
