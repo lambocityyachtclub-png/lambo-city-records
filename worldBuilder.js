@@ -41,7 +41,8 @@ export function buildDistrictGeometry(scene, district, options = {}) {
     roadTopY: Number.isFinite(options.roadTopY) ? options.roadTopY : 0.77,
     sidewalkTopY: Number.isFinite(options.sidewalkTopY) ? options.sidewalkTopY : (Number.isFinite(options.roadTopY) ? options.roadTopY : 0.77) + 0.03,
     roadWidth: Number.isFinite(options.roadWidth) ? options.roadWidth : 9,
-    sidewalkWidth: Number.isFinite(options.sidewalkWidth) ? options.sidewalkWidth : 3
+    sidewalkWidth: Number.isFinite(options.sidewalkWidth) ? options.sidewalkWidth : 3,
+    buildSidewalks: options.buildSidewalks !== false
   };
   root.userData.externalMaterials = [options.roadMaterial, options.sidewalkMaterial, options.terrainMaterial].filter(Boolean);
   root.userData.ownedMaterials = [];
