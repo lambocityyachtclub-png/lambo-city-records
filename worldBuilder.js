@@ -49,6 +49,7 @@ export function buildDistrictGeometry(scene, district, options = {}) {
   const validSegments = [];
 
   for (const segment of district.roadNetwork.segments) {
+    if (segment.navigationOnly === true) continue;
     const from = nodes.get(segment.from);
     const to = nodes.get(segment.to);
     if (!from || !to) continue;
@@ -73,7 +74,7 @@ export function buildDistrictGeometry(scene, district, options = {}) {
       const sideZ = -Math.sin(angle) * offset;
       for (const sign of [-1, 1]) {
         addRoadBox(root, "worldSidewalk_" + segment.id + "_" + sign,
-          sidewalkWidth, length + sidewalkWidth, centerX + sideX * sign,
+          sidewalkWidth, length + sidewalkWidth + (segment.loop ? 15 : 0), centerX + sideX * sign,
           centerZ + sideZ * sign, angle, sidewalkY - 0.07, 0.14, sidewalkMaterial);
       }
     }
