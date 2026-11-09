@@ -133,6 +133,30 @@
           recipeDistrict.roadNetwork.segments.length !== 12) {
         throw new Error("Compact district recipe did not compile into a valid connected blueprint.");
       }
+      const gridRecipe = createDistrictFromRecipe({
+        id: "grid-recipe-compiler-test",
+        name: "Grid Recipe Compiler Test",
+        bounds: { minX: 0, maxX: 100, minZ: 0, maxZ: 100 },
+        roadLayout: "grid",
+        roadGrid: {
+          bounds: { minX: 20, maxX: 80, minZ: 20, maxZ: 80 },
+          rows: 2, columns: 2, width: 8, sidewalkWidth: 3
+        }
+      });
+      if (gridRecipe.roadNetwork.nodes.length !== 4 || gridRecipe.parcels.length !== 1 ||
+          !validateDistrict(gridRecipe).valid) {
+        throw new Error("Compact grid recipe did not produce a valid, bounded neighborhood.");
+      }
+      let oversizedGridRejected = false;
+      try {
+        createDistrictFromRecipe({
+          id: "oversized-grid-test", name: "Oversized Grid Test",
+          bounds: { minX: 0, maxX: 100, minZ: 0, maxZ: 100 },
+          roadLayout: "grid",
+          roadGrid: { bounds: { minX: 20, maxX: 80, minZ: 20, maxZ: 80 }, rows: 17, columns: 2 }
+        });
+      } catch (_) { oversizedGridRejected = true; }
+      if (!oversizedGridRejected) throw new Error("The grid recipe compiler accepted an oversized layout.");
 
       const registration = world.registerDistrict(district);
       if (!registration.registered) {
@@ -421,7 +445,8 @@
         ["Parcel archetypes", "4 supported"],
         ["Archetype cleanup", "verified"],
         ["District streaming", "hysteresis verified"],
-        ["Compact recipe compiler", "verified"],
+        ["Loop / grid recipe compiler", "verified"],
+        ["iPad recipe size limits", "verified"],
         ["Runtime rollback", "verified"]
       ].map(([label, value]) => '<span class="metric">' + label + ': ' + value + '</span>').join("");
     } catch (err) {
