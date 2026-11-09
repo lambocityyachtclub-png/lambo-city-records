@@ -261,6 +261,25 @@ export default class WorldSystem {
     return this.districts.get(id) || null;
   }
 
+  getDistrictBuildStats(id) {
+    const root = this.roots.get(id);
+    if (!root) return null;
+    return {
+      roadCount: root.userData.roadCount || 0,
+      junctionCount: root.userData.junctionCount || 0,
+      sidewalkCount: root.userData.sidewalkCount || 0,
+      parcelCount: root.userData.parcelCount || 0,
+      buildingCount: root.userData.buildingCount || 0,
+      detailParcelCount: root.userData.detailParcelCount || 0,
+      proxyParcelCount: root.userData.proxyParcelCount || 0,
+      proxyBatchCount: root.userData.proxyBatchCount || 0,
+      detailParcelIds: [...(root.userData.detailParcelIds || [])],
+      parcelFocusPosition: root.userData.parcelFocusPosition
+        ? { ...root.userData.parcelFocusPosition } : null
+    };
+  }
+
+
   isDistrictBuilt(id) {
     return this.roots.has(id);
   }
