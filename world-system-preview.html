@@ -173,6 +173,7 @@
       futureDistrict.bounds.minX += 300;
       futureDistrict.bounds.maxX += 300;
       futureDistrict.roadNetwork.nodes.forEach(node => { node.x += 300; });
+      futureDistrict.roadNetwork.sidewalkWidth = 5;
       futureDistrict.parcels.forEach(parcel => { parcel.center.x += 300; });
       futureDistrict.landmarks.forEach(landmark => { landmark.center.x += 300; });
       futureDistrict.landscapeZones.forEach(zone => { zone.center.x += 300; });
@@ -427,7 +428,9 @@
       const roadGroundY = world.getGroundHeight(district.id, -60, 55);
       const sidewalkGroundY = world.getGroundHeight(district.id, -60, 49);
       const approachSidewalkGroundY = world.getGroundHeight(district.id, -43, 64.5);
-      if (Math.abs(plazaGroundY - 0.68) > 0.001 ||
+      const unbuiltCustomSidewalkGroundY = world.getGroundHeight(futureDistrict.id, 250, 63);
+      if (Math.abs(unbuiltCustomSidewalkGroundY - 0.80) > 0.001 ||
+          Math.abs(plazaGroundY - 0.68) > 0.001 ||
           Math.abs(courtyardGroundY - 0.70) > 0.001 ||
           Math.abs(baseGroundY - 0.64) > 0.001 ||
           Math.abs(roadGroundY - 0.77) > 0.001 ||
