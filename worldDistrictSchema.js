@@ -52,6 +52,7 @@ export function validateDistrict(district, options = {}) {
   }
 
   const network = district.roadNetwork;
+  const nodeById = new Map();
   if (!network || !Array.isArray(network.nodes) || !Array.isArray(network.segments)) {
     issues.push(issue("MISSING_ROAD_NETWORK", "District must define road nodes and connecting segments."));
   } else {
@@ -60,7 +61,6 @@ export function validateDistrict(district, options = {}) {
       issues.push(issue("INVALID_SIDEWALK_WIDTH", "Road network sidewalk width must be a non-negative number."));
     }
     const nodeIds = new Set();
-    const nodeById = new Map();
     for (const node of network.nodes) {
       if (!node || typeof node.id !== "string" || !node.id.trim()) {
         issues.push(issue("INVALID_ROAD_NODE", "Every road node needs a unique id."));
