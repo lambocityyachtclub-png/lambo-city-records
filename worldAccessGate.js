@@ -95,13 +95,20 @@ function createGate(parent, districtId, segment, from, to, collision) {
 export function buildAccessGates(parent, district, collision = null) {
   const nodes = new Map((district?.roadNetwork?.nodes || []).map(node => [node.id, node]));
   const controllers = [];
-  for (const segment of district?.roadNetwork?.segments || []) {
-    if (segment.access !== "permission-controlled" || !segment.gate) continue;
-    const from = nodes.get(segment.from), to = nodes.get(segment.to);
-    if (!from || !to) continue;
-    controllers.push(createGate(parent, district.id, segment, from, to, collision));
+  try {
+    for (const segment of district?.roadNetwork?.segments || []) {
+      if (segment.access !== "permission-controlled" || !segment.gate) continue;
+      const from = nodes.get(segment.from), to = nodes.get(segment.to);
+      if (!from || !to) continue;
+      controllers.push(createGate(parent, district.id, segment, from, to, collision));
+    }
+    return controllers;
+  } catch (error) {
+    for (const controller of controllers.reverse()) {
+      try { controller.destroy(); } catch (_) { /* continue cleaning remaining gates */ }
+    }
+    throw error;
   }
-  return controllers;
 }
 
 export default { buildAccessGates };
