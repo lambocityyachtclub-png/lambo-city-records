@@ -98,8 +98,10 @@ export function buildDistrictGeometry(scene, district, options = {}) {
       const sideX = Math.cos(angle) * offset;
       const sideZ = -Math.sin(angle) * offset;
       for (const sign of [-1, 1]) {
-        const sideFromY = roadFromY + (sidewalkY - roadY);
-        const sideToY = roadToY + (sidewalkY - roadY);
+        const sideFromY = Number.isFinite(segment.sidewalkFromTopY)
+          ? segment.sidewalkFromTopY : roadFromY + (sidewalkY - roadY);
+        const sideToY = Number.isFinite(segment.sidewalkToTopY)
+          ? segment.sidewalkToTopY : roadToY + (sidewalkY - roadY);
         sidewalkInstances.push({
           x: centerX + sideX * sign,
           z: centerZ + sideZ * sign,
