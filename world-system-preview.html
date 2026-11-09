@@ -210,6 +210,8 @@
       }
       const connectorFrom = district.roadNetwork.nodes.find(node => node.id === "boulevard-north-east");
       const connectorTo = futureDistrict.roadNetwork.nodes.find(node => node.id === "boulevard-south-west");
+      const connectorMidX = (connectorFrom.x + 149) / 2;
+      const connectorSidewalkZ = connectorFrom.z - 6;
       const physicalConnector = world.registerConnection({
         id: "verified-land-connector-geometry-test",
         from: { districtId: district.id, nodeId: connectorFrom.id },
@@ -238,8 +240,8 @@
           !physicalConnectorRoot?.children.some(child => child.name === "worldConnectionSidewalkBatch" && child.isInstancedMesh)) {
         throw new Error("A verified land connector did not generate batched road and sidewalk geometry.");
       }
-      if (Math.abs(world.getGroundHeightAt(74, 139) - 0.77) > 0.001 ||
-          Math.abs(world.getGroundHeightAt(74, 132.5) - 0.82) > 0.001) {
+      if (Math.abs(world.getGroundHeightAt(connectorMidX, connectorFrom.z) - 0.77) > 0.001 ||
+          Math.abs(world.getGroundHeightAt(connectorMidX, connectorSidewalkZ) - 0.82) > 0.001) {
         throw new Error("World-coordinate ground sampling did not follow the physical connector road and sidewalk elevations.");
       }
       const rejectedWaterConnector = world.registerConnection({
@@ -264,7 +266,7 @@
       }
       if (!world.unregisterConnection("verified-land-connector-geometry-test") ||
           scene.children.some(child => child.name === "worldConnection_verified-land-connector-geometry-test") ||
-          world.getGroundHeightAt(74, 139) !== null) {
+          world.getGroundHeightAt(connectorMidX, connectorFrom.z) !== null) {
         throw new Error("Removing a physical district connector did not dispose its geometry and ground-height registration.");
       }
 
