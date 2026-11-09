@@ -25,7 +25,8 @@ export default class WorldDistrictStreaming {
       maxProxyBuildsPerUpdate: Math.min(2, Math.max(1, Math.floor(options.maxProxyBuildsPerUpdate || 1))),
       maxProxyRemovalsPerUpdate: Math.min(2, Math.max(1, Math.floor(options.maxProxyRemovalsPerUpdate || 1))),
       maxDetailedParcels: Number.isInteger(options.maxDetailedParcels)
-        ? Math.max(0, Math.min(64, options.maxDetailedParcels)) : 24
+        ? Math.max(0, Math.min(64, options.maxDetailedParcels)) : 24,
+      maxFocusUpdatesPerUpdate: Math.min(2, Math.max(1, Math.floor(options.maxFocusUpdatesPerUpdate || 1)))
     };
     this.worldSystem = null;
   }
@@ -84,6 +85,7 @@ export default class WorldDistrictStreaming {
     detailRemovals.sort((a, b) => b.distance - a.distance);
     proxyBuilds.sort((a, b) => a.distance - b.distance);
     proxyRemovals.sort((a, b) => b.distance - a.distance);
+    focusUpdates.sort((a, b) => a.distance - b.distance);
     const built = [], removed = [], proxied = [], unproxied = [], refreshed = [], errors = [];
 
     // Build the far proxy before removing nearby full detail so the district
@@ -108,7 +110,7 @@ export default class WorldDistrictStreaming {
         errors.push({ id: candidate.id, stage: "detail-build", message: String(error?.message || error) });
       }
     }
-    for (const candidate of focusUpdates) {
+    for (const candidate of focusUpdates.slice(0, this.options.maxFocusUpdatesPerUpdate)) {
       try {
         if (this.worldSystem.updateDistrictDetailFocus(candidate.id, position)) refreshed.push(candidate.id);
       } catch (error) {
