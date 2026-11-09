@@ -251,6 +251,13 @@
           largeParcelResult.proxyBatchCount !== 4 || largeParcelResult.buildings !== 37) {
         throw new Error("Large districts did not cap detailed buildings and batch distant parcel proxies.");
       }
+      const dynamicParcelShadowCasters = [];
+      largeParcelResult.root.traverse(object => {
+        if (object.isMesh && object.castShadow) dynamicParcelShadowCasters.push(object.name || object.type);
+      });
+      if (dynamicParcelShadowCasters.length !== 0) {
+        throw new Error("Generated parcel details should not add per-object dynamic shadow casters to the iPad rendering budget.");
+      }
       const focusRoot = new THREE.Group();
       const focusInitial = buildParcelGeometry(focusRoot, largeGridDistrict, {
         focusPosition: { x: 60, z: 60 }, maxDetailedParcels: 12
@@ -543,6 +550,7 @@
         ["Archetype cleanup", "verified"],
         ["District streaming", "detail / proxy / unload verified"],
         ["Large-district parcel detail", "12 detailed + 37 instanced proxies"],
+        ["Generated parcel shadow cost", "no dynamic casters"],
         ["Loop / grid recipe compiler", "verified"],
         ["iPad recipe size limits", "verified"],
         ["Runtime rollback", "verified"],
