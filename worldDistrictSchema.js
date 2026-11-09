@@ -153,6 +153,10 @@ export function validateDistrict(district, options = {}) {
       }
       if (parcelIds.has(parcel.id)) issues.push(issue("DUPLICATE_PARCEL_ID", "Parcel id is repeated: " + parcel.id));
       parcelIds.add(parcel.id);
+      if (parcel.style !== undefined &&
+          !["coastal-villa", "luxury-apartment", "retail-promenade", "urban-park"].includes(parcel.style)) {
+        issues.push(issue("UNSUPPORTED_PARCEL_STYLE", "Parcel " + parcel.id + " uses an unsupported building style."));
+      }
       if (!parcel.center || !Number.isFinite(parcel.center.x) || !Number.isFinite(parcel.center.z)) {
         issues.push(issue("INVALID_PARCEL_CENTER", "Parcel " + parcel.id + " needs a finite map position."));
         continue;
