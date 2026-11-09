@@ -77,7 +77,17 @@ export function buildDistrictGeometry(scene, district, options = {}) {
       angle, y: roadY - thickness / 2, height: thickness
     });
 
-    if (segment.mode !== "pedestrian" && options.buildSidewalks !== false && sidewalkWidth > 0) {
+    if (segment.mode === "pedestrian" && segment.physicalSurface === "sidewalk") {
+      const pathWidth = Number.isFinite(segment.width) ? segment.width : sidewalkWidth;
+      sidewalkInstances.push({
+        x: centerX, z: centerZ,
+        width: pathWidth,
+        length: length + pathWidth,
+        angle,
+        y: sidewalkY - 0.07,
+        height: 0.14
+      });
+    } else if (segment.mode !== "pedestrian" && options.buildSidewalks !== false && sidewalkWidth > 0) {
       const offset = width / 2 + sidewalkWidth / 2;
       const sideX = Math.cos(angle) * offset;
       const sideZ = -Math.sin(angle) * offset;
@@ -99,6 +109,7 @@ export function buildDistrictGeometry(scene, district, options = {}) {
   const junctionWidths = new Map();
   const junctionDegrees = new Map();
   for (const item of validSegments) {
+    if (item.segment.mode === "pedestrian") continue;
     for (const nodeId of [item.segment.from, item.segment.to]) {
       junctionWidths.set(nodeId, Math.max(junctionWidths.get(nodeId) || 0, item.width));
       junctionDegrees.set(nodeId, (junctionDegrees.get(nodeId) || 0) + 1);
@@ -139,7 +150,7 @@ export function buildDistrictGeometry(scene, district, options = {}) {
 
   makeInstanceBatch("worldRoadSurfaceBatch", roadInstances, roadMaterial);
   makeInstanceBatch("worldSidewalkSurfaceBatch", sidewalkInstances, sidewalkMaterial);
-  root.userData.roadCount = validSegments.length;
+  root.userData.roadCount = validSegments.filter(item => item.segment.mode !== "pedestrian").length;
   root.userData.roadInstanceCount = roadInstances.length;
   root.userData.junctionCount = junctionCount;
   root.userData.sidewalkCount = sidewalkInstances.length;
