@@ -111,7 +111,7 @@ export function buildDistrictGeometry(scene, district, options = {}) {
           x: centerX + sideX * sign,
           z: centerZ + sideZ * sign,
           width: sidewalkWidth,
-          length: length + sidewalkWidth + (segment.loop ? 15 : 0),
+          length: length + sidewalkWidth + (segment.loop ? 21 : 0),
           angle,
           slopeAngle: -Math.atan2(sideToY - sideFromY, length),
           y: (sideFromY + sideToY) / 2 - 0.07,
