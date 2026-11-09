@@ -75,10 +75,12 @@ export function buildDistrictGeometry(scene, district, options = {}) {
     const roadFromY = Number.isFinite(segment.fromTopY) ? segment.fromTopY : roadY;
     const roadToY = Number.isFinite(segment.toTopY) ? segment.toTopY : roadY;
     const slopeAngle = -Math.atan2(roadToY - roadFromY, length);
-    roadInstances.push({
-      x: centerX, z: centerZ, width, length: length + width * 0.02,
-      angle, slopeAngle, y: (roadFromY + roadToY) / 2 - thickness / 2, height: thickness
-    });
+    if (segment.mode !== "pedestrian") {
+      roadInstances.push({
+        x: centerX, z: centerZ, width, length: length + width * 0.02,
+        angle, slopeAngle, y: (roadFromY + roadToY) / 2 - thickness / 2, height: thickness
+      });
+    }
 
     if (segment.mode === "pedestrian" && segment.physicalSurface === "sidewalk") {
       const pathWidth = Number.isFinite(segment.width) ? segment.width : sidewalkWidth;
