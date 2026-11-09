@@ -8,6 +8,18 @@ function issue(code, message, severity = "error") {
   return { code, message, severity };
 }
 
+function orientedRectanglesOverlap(a, b) {
+  const delta = { x: b.center.x - a.center.x, z: b.center.z - a.center.z };
+  const dot = (left, right) => left.x * right.x + left.z * right.z;
+  const radius = (rect, axis) =>
+    rect.halfLength * Math.abs(dot(rect.longAxis, axis)) +
+    rect.halfWidth * Math.abs(dot(rect.sideAxis, axis));
+  const axes = [a.longAxis, a.sideAxis, b.longAxis, b.sideAxis];
+  return axes.every(axis =>
+    Math.abs(dot(delta, axis)) <= radius(a, axis) + radius(b, axis)
+  );
+}
+
 export function validateDistrict(district, options = {}) {
   const issues = [];
   if (!district || typeof district !== "object" || Array.isArray(district)) {
@@ -43,6 +55,10 @@ export function validateDistrict(district, options = {}) {
   if (!network || !Array.isArray(network.nodes) || !Array.isArray(network.segments)) {
     issues.push(issue("MISSING_ROAD_NETWORK", "District must define road nodes and connecting segments."));
   } else {
+    if (network.sidewalkWidth !== undefined &&
+        (!Number.isFinite(network.sidewalkWidth) || network.sidewalkWidth < 0)) {
+      issues.push(issue("INVALID_SIDEWALK_WIDTH", "Road network sidewalk width must be a non-negative number."));
+    }
     const nodeIds = new Set();
     const nodeById = new Map();
     for (const node of network.nodes) {
@@ -174,6 +190,38 @@ export function validateDistrict(district, options = {}) {
         if (parcel.center.x - halfX < bounds.minX || parcel.center.x + halfX > bounds.maxX ||
             parcel.center.z - halfZ < bounds.minZ || parcel.center.z + halfZ > bounds.maxZ) {
           issues.push(issue("PARCEL_OUT_OF_BOUNDS", "Parcel " + parcel.id + " extends beyond the district boundary."));
+        }
+      }
+      if (network && Array.isArray(network.segments)) {
+        const parcelRect = {
+          center: parcel.center,
+          longAxis: { x: Math.cos(rotation), z: -Math.sin(rotation) },
+          sideAxis: { x: Math.sin(rotation), z: Math.cos(rotation) },
+          halfLength: width / 2,
+          halfWidth: depth / 2
+        };
+        const sidewalkWidth = Number.isFinite(network.sidewalkWidth) ? network.sidewalkWidth : 3;
+        for (const segment of network.segments) {
+          if (segment.navigationOnly === true) continue;
+          const from = nodeById.get(segment.from), to = nodeById.get(segment.to);
+          if (!from || !to) continue;
+          const dx = to.x - from.x, dz = to.z - from.z;
+          const length = Math.hypot(dx, dz);
+          if (length <= 0.01) continue;
+          const roadWidth = Number.isFinite(segment.width) ? segment.width : 9;
+          const extension = sidewalkWidth / 2 + (segment.loop ? 7.5 : 0);
+          const direction = { x: dx / length, z: dz / length };
+          const roadRect = {
+            center: { x: (from.x + to.x) / 2, z: (from.z + to.z) / 2 },
+            longAxis: direction,
+            sideAxis: { x: -direction.z, z: direction.x },
+            halfLength: length / 2 + extension,
+            halfWidth: roadWidth / 2 + sidewalkWidth
+          };
+          if (orientedRectanglesOverlap(parcelRect, roadRect)) {
+            issues.push(issue("PARCEL_ROAD_CLEARANCE", "Parcel " + parcel.id + " overlaps a road or sidewalk corridor."));
+            break;
+          }
         }
       }
     }
