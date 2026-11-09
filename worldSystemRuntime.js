@@ -62,7 +62,7 @@ export default class WorldSystemRuntime {
 
   update(delta, context = {}) {
     if (!this.ready || !this.streaming) {
-      return { built: [], removed: [], errors: [], skipped: "NOT_READY" };
+      return { built: [], removed: [], proxied: [], unproxied: [], refreshed: [], errors: [], skipped: "NOT_READY" };
     }
     return this.streaming.update(delta, context);
   }
