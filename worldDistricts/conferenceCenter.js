@@ -1,56 +1,92 @@
 // LAMBO CITY — Conference Center District Blueprint
 // Data-only district definition for the World System.
-// Coordinates align with the provisional master-map Arena District.
-// This file does not build or alter the live scene.
+// Geometry is derived from the shared city map so the generated streets
+// stay aligned with the existing waterfront and protected landmarks.
+
+import CITY_MAP from "../cityMap.js";
+
+const MASTER_ARENA = CITY_MAP.districts.arenaDistrict;
+const MASTER_BOULEVARD = MASTER_ARENA.boulevard;
+const centerX = MASTER_ARENA.arena.centerX;
+const centerZ = MASTER_ARENA.arena.centerZ;
+const loopWestX = MASTER_BOULEVARD.centerX - MASTER_BOULEVARD.outerWidth / 2;
+const loopEastX = MASTER_BOULEVARD.centerX + MASTER_BOULEVARD.outerWidth / 2;
+const loopSouthZ = MASTER_BOULEVARD.centerZ - MASTER_BOULEVARD.outerDepth / 2;
+const loopNorthZ = MASTER_BOULEVARD.centerZ + MASTER_BOULEVARD.outerDepth / 2;
+const sidewalkOffset = MASTER_BOULEVARD.roadWidth / 2 + MASTER_BOULEVARD.sidewalkWidth / 2;
+const walkWestX = loopWestX - sidewalkOffset;
+const walkEastX = loopEastX + sidewalkOffset;
+const walkSouthZ = loopSouthZ - sidewalkOffset;
+const walkNorthZ = loopNorthZ + sidewalkOffset;
+const serviceX = CITY_MAP.districts.conferenceCenter.accessRoadX;
+const boardwalkEdgeZ = CITY_MAP.districts.marinaBoardwalk.road.maxZ;
+const serviceEntryZ = boardwalkEdgeZ + 0.5;
+const boardwalkSidewalkZ = CITY_MAP.districts.marinaBoardwalk.sidewalks[1].centerZ;
+const arrivalZ = centerZ - MASTER_ARENA.arena.footprintDepth / 2 - 1;
+const walkArenaZ = walkSouthZ + (arrivalZ - walkSouthZ) * 0.7;
+const westVillaX = loopWestX - 13.5;
+const eastVillaX = loopEastX + 14.5;
+const northVillaZ = loopNorthZ + 15;
 
 const CONFERENCE_CENTER_DISTRICT = Object.freeze({
   schemaVersion: 1,
-  id: "lambo-city-arena-district",
+  id: MASTER_ARENA.id,
   name: "LAMBO CITY Conference Center and Villas",
   type: "landmark-and-residential",
   status: "blueprint-validation",
-  bounds: Object.freeze({ minX: -105, maxX: 19, minZ: 45, maxZ: 158 }),
+  groundTopY: CITY_MAP.surfaces.groundTopY,
+  bounds: Object.freeze({
+    minX: MASTER_ARENA.bounds.minX,
+    maxX: MASTER_ARENA.bounds.maxX,
+    minZ: serviceEntryZ,
+    maxZ: MASTER_ARENA.bounds.maxZ
+  }),
 
   landmarks: Object.freeze([
     Object.freeze({
-      id: "lambo-city-conference-center-arena",
+      id: MASTER_ARENA.arena.id,
       role: "primary-landmark",
-      center: Object.freeze({ x: -43, z: 97 }),
-      footprint: Object.freeze({ width: 54, depth: 44 }),
-      entranceSide: "south"
+      center: Object.freeze({ x: centerX, z: centerZ }),
+      footprint: Object.freeze({
+        width: MASTER_ARENA.arena.footprintWidth,
+        depth: MASTER_ARENA.arena.footprintDepth
+      }),
+      entranceSide: MASTER_ARENA.arena.entranceSide
     })
   ]),
 
   roadNetwork: Object.freeze({
-    sidewalkWidth: 3,
+    sidewalkWidth: MASTER_BOULEVARD.sidewalkWidth,
     nodes: Object.freeze([
-      Object.freeze({ id: "boulevard-south-west", x: -80, z: 55 }),
-      Object.freeze({ id: "boulevard-south-access-junction", x: -37, z: 55 }),
-      Object.freeze({ id: "boulevard-south-east", x: -6, z: 55 }),
-      Object.freeze({ id: "boulevard-north-east", x: -6, z: 131 }),
-      Object.freeze({ id: "boulevard-north-west", x: -80, z: 131 }),
-      // The existing south approach is explicitly marked as restricted
-      // service access; it does not authorize ordinary traffic on the boardwalk.
-      Object.freeze({ id: "boardwalk-service-entry", x: -37, z: 46 }),
-      Object.freeze({ id: "arena-arrival-approach", x: -37, z: 74 }),
-      // Pedestrian loop follows the outer sidewalk bands; these are
-      // navigation nodes only and do not create duplicate pavement.
-      Object.freeze({ id: "walk-south-west", x: -87.5, z: 47.5, surface: "sidewalk" }),
-      Object.freeze({ id: "walk-south-entry", x: -37, z: 47.5, surface: "sidewalk" }),
-      Object.freeze({ id: "walk-south-east", x: 1.5, z: 47.5, surface: "sidewalk" }),
-      Object.freeze({ id: "walk-east-north", x: 1.5, z: 138.5, surface: "sidewalk" }),
-      Object.freeze({ id: "walk-north-east", x: -6, z: 138.5, surface: "sidewalk" }),
-      Object.freeze({ id: "walk-north-west", x: -87.5, z: 138.5, surface: "sidewalk" }),
-      Object.freeze({ id: "walk-arena-approach", x: -37, z: 62.5, surface: "sidewalk" })
+      Object.freeze({ id: "boulevard-south-west", x: loopWestX, z: loopSouthZ }),
+      Object.freeze({ id: "boulevard-south-access-junction", x: serviceX, z: loopSouthZ }),
+      Object.freeze({ id: "boulevard-south-east", x: loopEastX, z: loopSouthZ }),
+      Object.freeze({ id: "boulevard-north-east", x: loopEastX, z: loopNorthZ }),
+      Object.freeze({ id: "boulevard-north-west", x: loopWestX, z: loopNorthZ }),
+      // The generated land begins just beyond the mapped boardwalk deck.
+      // Only the explicitly permission-controlled service approach reaches it.
+      Object.freeze({ id: "boardwalk-service-entry", x: serviceX, z: serviceEntryZ }),
+      Object.freeze({ id: "arena-arrival-approach", x: serviceX, z: arrivalZ }),
+      // Pedestrian navigation follows the mapped boardwalk sidewalk and the
+      // outer sidewalk bands; navigation-only links create no duplicate pavement.
+      Object.freeze({ id: "walk-boardwalk-approach", x: serviceX, z: boardwalkSidewalkZ, surface: "sidewalk" }),
+      Object.freeze({ id: "walk-south-west", x: walkWestX, z: walkSouthZ, surface: "sidewalk" }),
+      Object.freeze({ id: "walk-south-entry", x: serviceX, z: walkSouthZ, surface: "sidewalk" }),
+      Object.freeze({ id: "walk-south-east", x: walkEastX, z: walkSouthZ, surface: "sidewalk" }),
+      Object.freeze({ id: "walk-east-north", x: walkEastX, z: walkNorthZ, surface: "sidewalk" }),
+      Object.freeze({ id: "walk-north-east", x: loopEastX, z: walkNorthZ, surface: "sidewalk" }),
+      Object.freeze({ id: "walk-north-west", x: walkWestX, z: walkNorthZ, surface: "sidewalk" }),
+      Object.freeze({ id: "walk-arena-approach", x: serviceX, z: walkArenaZ, surface: "sidewalk" })
     ]),
     segments: Object.freeze([
-      Object.freeze({ id: "boulevard-south-west", from: "boulevard-south-west", to: "boulevard-south-access-junction", mode: "vehicle", lanes: 2, width: 9, loop: true }),
-      Object.freeze({ id: "boulevard-south-east", from: "boulevard-south-access-junction", to: "boulevard-south-east", mode: "vehicle", lanes: 2, width: 9, loop: true }),
-      Object.freeze({ id: "boulevard-east", from: "boulevard-south-east", to: "boulevard-north-east", mode: "vehicle", lanes: 2, width: 9, loop: true }),
-      Object.freeze({ id: "boulevard-north", from: "boulevard-north-east", to: "boulevard-north-west", mode: "vehicle", lanes: 2, width: 9, loop: true }),
-      Object.freeze({ id: "boulevard-west", from: "boulevard-north-west", to: "boulevard-south-west", mode: "vehicle", lanes: 2, width: 9, loop: true }),
-      Object.freeze({ id: "boardwalk-gated-service-approach", from: "boardwalk-service-entry", to: "boulevard-south-access-junction", mode: "service", width: 8, access: "permission-controlled", requiredAccess: "service", gate: Object.freeze({ id: "arena-boardwalk-service-gate", offset: 6.5 }) }),
+      Object.freeze({ id: "boulevard-south-west", from: "boulevard-south-west", to: "boulevard-south-access-junction", mode: "vehicle", lanes: 2, width: MASTER_BOULEVARD.roadWidth, loop: true }),
+      Object.freeze({ id: "boulevard-south-east", from: "boulevard-south-access-junction", to: "boulevard-south-east", mode: "vehicle", lanes: 2, width: MASTER_BOULEVARD.roadWidth, loop: true }),
+      Object.freeze({ id: "boulevard-east", from: "boulevard-south-east", to: "boulevard-north-east", mode: "vehicle", lanes: 2, width: MASTER_BOULEVARD.roadWidth, loop: true }),
+      Object.freeze({ id: "boulevard-north", from: "boulevard-north-east", to: "boulevard-north-west", mode: "vehicle", lanes: 2, width: MASTER_BOULEVARD.roadWidth, loop: true }),
+      Object.freeze({ id: "boulevard-west", from: "boulevard-north-west", to: "boulevard-south-west", mode: "vehicle", lanes: 2, width: MASTER_BOULEVARD.roadWidth, loop: true }),
+      Object.freeze({ id: "boardwalk-gated-service-approach", from: "boardwalk-service-entry", to: "boulevard-south-access-junction", mode: "service", width: 8, access: "permission-controlled", requiredAccess: "service", gate: Object.freeze({ id: "arena-boardwalk-service-gate", offset: 1.4 }) }),
       Object.freeze({ id: "arena-service-arrival-approach", from: "boulevard-south-access-junction", to: "arena-arrival-approach", mode: "service", width: 8, access: "permission-controlled", requiredAccess: "service" }),
+      Object.freeze({ id: "walk-boardwalk-connection", from: "walk-boardwalk-approach", to: "walk-south-entry", mode: "pedestrian", navigationOnly: true }),
       Object.freeze({ id: "walk-south-west", from: "walk-south-west", to: "walk-south-entry", mode: "pedestrian", navigationOnly: true }),
       Object.freeze({ id: "walk-south-east", from: "walk-south-entry", to: "walk-south-east", mode: "pedestrian", navigationOnly: true }),
       Object.freeze({ id: "walk-east", from: "walk-south-east", to: "walk-east-north", mode: "pedestrian", navigationOnly: true }),
@@ -63,21 +99,21 @@ const CONFERENCE_CENTER_DISTRICT = Object.freeze({
   }),
 
   parcels: Object.freeze([
-    Object.freeze({ id: "villa-west-one", use: "residential", center: Object.freeze({ x: -98.5, z: 80 }), footprint: Object.freeze({ width: 13, depth: 11 }), rotationY: Math.PI / 2, style: "coastal-villa" }),
-    Object.freeze({ id: "villa-west-two", use: "residential", center: Object.freeze({ x: -98.5, z: 112 }), footprint: Object.freeze({ width: 13, depth: 11 }), rotationY: Math.PI / 2, style: "coastal-villa" }),
-    Object.freeze({ id: "villa-east-one", use: "residential", center: Object.freeze({ x: 12.5, z: 80 }), footprint: Object.freeze({ width: 13, depth: 11 }), rotationY: -Math.PI / 2, style: "coastal-villa" }),
-    Object.freeze({ id: "villa-east-two", use: "residential", center: Object.freeze({ x: 12.5, z: 112 }), footprint: Object.freeze({ width: 13, depth: 11 }), rotationY: -Math.PI / 2, style: "coastal-villa" }),
-    Object.freeze({ id: "villa-north-one", use: "residential", center: Object.freeze({ x: -58, z: 148 }), footprint: Object.freeze({ width: 13, depth: 11 }), rotationY: 0, style: "coastal-villa" }),
-    Object.freeze({ id: "villa-north-two", use: "residential", center: Object.freeze({ x: -28, z: 148 }), footprint: Object.freeze({ width: 13, depth: 11 }), rotationY: 0, style: "coastal-villa" })
+    Object.freeze({ id: "villa-west-one", use: "residential", center: Object.freeze({ x: westVillaX, z: 80 }), footprint: Object.freeze({ width: 13, depth: 11 }), rotationY: Math.PI / 2, style: "coastal-villa" }),
+    Object.freeze({ id: "villa-west-two", use: "residential", center: Object.freeze({ x: westVillaX, z: 112 }), footprint: Object.freeze({ width: 13, depth: 11 }), rotationY: Math.PI / 2, style: "coastal-villa" }),
+    Object.freeze({ id: "villa-east-one", use: "residential", center: Object.freeze({ x: eastVillaX, z: 80 }), footprint: Object.freeze({ width: 13, depth: 11 }), rotationY: -Math.PI / 2, style: "coastal-villa" }),
+    Object.freeze({ id: "villa-east-two", use: "residential", center: Object.freeze({ x: eastVillaX, z: 112 }), footprint: Object.freeze({ width: 13, depth: 11 }), rotationY: -Math.PI / 2, style: "coastal-villa" }),
+    Object.freeze({ id: "villa-north-one", use: "residential", center: Object.freeze({ x: centerX - 15, z: northVillaZ }), footprint: Object.freeze({ width: 13, depth: 11 }), rotationY: 0, style: "coastal-villa" }),
+    Object.freeze({ id: "villa-north-two", use: "residential", center: Object.freeze({ x: centerX + 15, z: northVillaZ }), footprint: Object.freeze({ width: 13, depth: 11 }), rotationY: 0, style: "coastal-villa" })
   ]),
 
   terrainZones: Object.freeze([
-    Object.freeze({ id: "arena-arrival-grade", center: Object.freeze({ x: -43, z: 64.5 }), width: 30, depth: 13, edgeY: 0.645, topY: 0.68, transitionWidth: 2.5, materialColor: 0x8f897d }),
-    Object.freeze({ id: "north-courtyard-grade", center: Object.freeze({ x: -43, z: 148 }), width: 12, depth: 7, edgeY: 0.645, topY: 0.70, transitionWidth: 1.2, materialColor: 0x746f63 })
+    Object.freeze({ id: "arena-arrival-grade", center: Object.freeze({ x: centerX, z: arrivalZ - 7 }), width: 30, depth: 13, edgeY: CITY_MAP.surfaces.groundTopY - 0.005, topY: 0.68, transitionWidth: 2.5, materialColor: 0x8f897d }),
+    Object.freeze({ id: "north-courtyard-grade", center: Object.freeze({ x: centerX, z: northVillaZ - 1 }), width: 12, depth: 7, edgeY: CITY_MAP.surfaces.groundTopY - 0.005, topY: 0.70, transitionWidth: 1.2, materialColor: 0x746f63 })
   ]),
 
   landscapeZones: Object.freeze([
-    Object.freeze({ id: "north-villa-courtyard", center: Object.freeze({ x: -43, z: 148 }), width: 12, depth: 7, treeCount: 3, shrubCount: 6, pavingColor: 0x77766d, plantingColor: 0x344b3c })
+    Object.freeze({ id: "north-villa-courtyard", center: Object.freeze({ x: centerX, z: northVillaZ - 1 }), width: 12, depth: 7, treeCount: 3, shrubCount: 6, pavingColor: 0x77766d, plantingColor: 0x344b3c })
   ]),
 
   accessTiers: Object.freeze([
@@ -98,7 +134,8 @@ const CONFERENCE_CENTER_DISTRICT = Object.freeze({
     "Do not route ordinary vehicle traffic through the pedestrian boardwalk.",
     "Keep the south-facing arena arrival approach clear.",
     "Do not place roads or foundations over open water without an approved structure.",
-    "Preserve the complete four-sided boulevard loop and its connected south access junction."
+    "Preserve the complete four-sided boulevard loop and its connected south access junction.",
+    "Use the shared city map as the coordinate source; begin generated land beyond the mapped boardwalk deck."
   ])
 });
 
