@@ -42,7 +42,8 @@ export function buildTerrainAndLandscape(parent, district, options = {}) {
   const bounds = district.bounds;
   const width = bounds.maxX - bounds.minX;
   const depth = bounds.maxZ - bounds.minZ;
-  const groundTopY = Number.isFinite(options.groundTopY) ? options.groundTopY : 0.64;
+  const groundTopY = Number.isFinite(options.groundTopY) ? options.groundTopY :
+    (Number.isFinite(district.groundTopY) ? district.groundTopY : 0.64);
 
   const root = new THREE.Group();
   root.name = "worldTerrain_" + district.id;
