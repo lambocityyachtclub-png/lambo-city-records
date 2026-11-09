@@ -378,6 +378,13 @@
           root.userData.terrainSurfaceCount !== district.terrainZones.length) {
         throw new Error("Not all declared terrain grades were generated.");
       }
+      const roadBatch = root.children.find(child => child.name === "worldRoadSurfaceBatch");
+      const sidewalkBatch = root.children.find(child => child.name === "worldSidewalkSurfaceBatch");
+      if (!roadBatch?.isInstancedMesh || !sidewalkBatch?.isInstancedMesh ||
+          roadBatch.count !== root.userData.roadCount + root.userData.junctionCount ||
+          sidewalkBatch.count !== root.userData.sidewalkCount) {
+        throw new Error("District roads, junctions, and sidewalks were not combined into their expected instance batches.");
+      }
       const terrainRoot = root.children.find(child => child.name === "worldTerrain_" + district.id);
       const terrainFinishCount = terrainRoot?.children.filter(child => child.name.startsWith("worldTerrainZone_")).length || 0;
       const courtyardMesh = terrainRoot?.children.find(child => child.name === "worldLandscapeZone_north-villa-courtyard");
@@ -523,6 +530,8 @@
 
       metrics.innerHTML = [
         ["Roads", root.userData.roadCount],
+        ["Road / junction draw batches", 1],
+        ["Sidewalk draw batches", sidewalkBatch ? 1 : 0],
         ["Junctions", root.userData.junctionCount],
         ["Sidewalk sections", root.userData.sidewalkCount],
         ["Villa parcels", root.userData.parcelCount],
