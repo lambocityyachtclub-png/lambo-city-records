@@ -257,7 +257,8 @@
         streamInRadius: 50,
         streamOutRadius: 75,
         maxBuildsPerUpdate: 1,
-        maxRemovalsPerUpdate: 1
+        maxRemovalsPerUpdate: 1,
+        maxDetailedParcels: 2
       }).init(archetypeWorld);
       districtStreamer.update(0, { playerPosition: { x: 1000, z: 1000 } });
       if (archetypeWorld.isDistrictBuilt(archetypeDistrict.id)) {
@@ -272,8 +273,14 @@
         throw new Error("District hysteresis removed detail too early.");
       }
       districtStreamer.update(0, { playerPosition: { x: 409, z: 100 } });
-      if (archetypeWorld.isDistrictBuilt(archetypeDistrict.id) || archetypeCollision.boxes.length !== 0) {
-        throw new Error("A distant district did not stream out and clean up its colliders.");
+      if (archetypeWorld.isDistrictBuilt(archetypeDistrict.id) ||
+          !archetypeWorld.isDistrictProxied(archetypeDistrict.id) ||
+          archetypeCollision.boxes.length !== 0) {
+        throw new Error("A distant district did not switch to a far proxy and clean up its colliders.");
+      }
+      districtStreamer.update(0, { playerPosition: { x: 1500, z: 1500 } });
+      if (archetypeWorld.isDistrictProxied(archetypeDistrict.id)) {
+        throw new Error("A far proxy was not removed after leaving its proxy range.");
       }
       const runtimeScene = new THREE.Scene();
       const runtimeCollision = {
@@ -507,7 +514,7 @@
         ["Colliders after cleanup", previewCollision.boxes.length],
         ["Parcel archetypes", "4 supported"],
         ["Archetype cleanup", "verified"],
-        ["District streaming", "hysteresis verified"],
+        ["District streaming", "detail / proxy / unload verified"],
         ["Large-district parcel detail", "12 detailed + 37 instanced proxies"],
         ["Loop / grid recipe compiler", "verified"],
         ["iPad recipe size limits", "verified"],
