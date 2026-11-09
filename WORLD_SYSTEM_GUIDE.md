@@ -75,7 +75,7 @@ Terrain zones must stay within the district, avoid parcel footprints, and not ov
 
 ## Boardwalk-to-Convention street and sidewalk tie-in
 
-The first district uses the mapped Boardwalk street and sidewalk endpoints rather than creating a visually adjacent but disconnected path. The service road overlaps the existing Boardwalk road at its edge and grades from the mapped street surface (0.66) to the Convention boulevard road surface (0.77). The sidewalk connection uses a dedicated pedestrian strip on the west side of the gated service road, so pedestrians do not have to walk in or cross the vehicle lane. It joins the existing north Boardwalk sidewalk (top 0.70) to the south boulevard sidewalk (top 0.82) with a gradual ramp. The opposite service-road sidewalk remains on the east side. Ground-height sampling follows both road and sidewalk grades, including their endpoints.
+The first district uses the mapped Boardwalk street and sidewalk endpoints rather than creating a visually adjacent but disconnected path. The service road starts exactly at the mapped Boardwalk road edge, with a small geometry overlap to avoid a seam, and grades from the mapped street surface (0.66) to the Convention boulevard road surface (0.77). The sidewalk connection uses a dedicated pedestrian strip on the west side of the gated service road, so pedestrians do not have to walk in or cross the vehicle lane. It joins the existing north Boardwalk sidewalk (top 0.70) to the south boulevard sidewalk (top 0.82) with a gradual ramp. The opposite service-road sidewalk remains on the east side. Ground-height sampling follows both road and sidewalk grades, including their endpoints.
 
 ## Access tiers and gates
 
