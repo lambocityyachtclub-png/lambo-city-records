@@ -186,10 +186,11 @@ export function buildTerrainAndLandscape(parent, district, options = {}) {
 
   root.userData.ownedMaterials = ownedMaterials;
   root.userData.terrainZoneCount = terrainZones.length;
+  root.userData.terrainSurfaceCount = terrainZones.length;
   root.userData.landscapeZoneCount = zones.length;
   root.userData.landscapeFeatureCount = featureCount;
   parent.add(root);
-  return { root, terrainZones: terrainZones.length, zones: zones.length, features: featureCount, ownedMaterials };
+  return { root, terrainZones: terrainZones.length, terrainSurfaces: terrainZones.length, zones: zones.length, features: featureCount, ownedMaterials };
 }
 
 export default { buildTerrainAndLandscape, sampleTerrainHeight };
