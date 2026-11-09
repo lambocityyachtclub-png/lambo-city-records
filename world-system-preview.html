@@ -260,13 +260,13 @@
         maxRemovalsPerUpdate: 1,
         maxDetailedParcels: 2
       }).init(archetypeWorld);
-      districtStreamer.update(0, { playerPosition: { x: 1000, z: 1000 } });
-      if (archetypeWorld.isDistrictBuilt(archetypeDistrict.id)) {
-        throw new Error("A distant district was built before entering its stream range.");
+      districtStreamer.update(0, { playerPosition: { x: 1000, z: 100 } });
+      if (archetypeWorld.isDistrictBuilt(archetypeDistrict.id) || !archetypeWorld.isDistrictProxied(archetypeDistrict.id)) {
+        throw new Error("A distant district did not remain visible as a low-cost proxy.");
       }
       districtStreamer.update(0, { playerPosition: { x: 257, z: 100 } });
-      if (!archetypeWorld.isDistrictBuilt(archetypeDistrict.id)) {
-        throw new Error("A nearby district did not stream in.");
+      if (!archetypeWorld.isDistrictBuilt(archetypeDistrict.id) || archetypeWorld.isDistrictProxied(archetypeDistrict.id)) {
+        throw new Error("A nearby district did not replace its far proxy with full detail.");
       }
       districtStreamer.update(0, { playerPosition: { x: 379, z: 100 } });
       if (!archetypeWorld.isDistrictBuilt(archetypeDistrict.id)) {
