@@ -86,7 +86,20 @@ function createGate(parent, districtId, segment, from, to, collision) {
     });
   }
 
-  setOpen(false);
+  try {
+    setOpen(false);
+  } catch (error) {
+    if (collision && typeof collision.unregister === "function") {
+      try { collision.unregister(collisionName); } catch (_) { /* continue cleanup */ }
+    }
+    parent.remove(root);
+    root.traverse(object => {
+      object.geometry?.dispose?.();
+      if (Array.isArray(object.material)) object.material.forEach(material => material?.dispose?.());
+      else object.material?.dispose?.();
+    });
+    throw error;
+  }
   root.userData.requiredAccess = requiredAccess;
   root.userData.isOpen = false;
   return { id, setPermissions, getStatus, destroy };
