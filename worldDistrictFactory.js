@@ -31,8 +31,8 @@ export function createDistrictFromRecipe(recipe) {
     throw new Error("Road loop must remain inside the district bounds.");
   }
 
-  const roadWidth = Number.isFinite(loop.width) ? loop.width : 9;
-  const sidewalkWidth = Number.isFinite(loop.sidewalkWidth) ? loop.sidewalkWidth : 3;
+  const roadWidth = loop.width === undefined ? 9 : finite(loop.width, "road width");
+  const sidewalkWidth = loop.sidewalkWidth === undefined ? 3 : finite(loop.sidewalkWidth, "sidewalk width");
   if (roadWidth <= 0 || sidewalkWidth < 0) throw new Error("Road and sidewalk widths must be valid.");
   const nodes = [], segments = [], nodeIds = new Set();
   const addNode = node => {
@@ -157,12 +157,17 @@ export function createDistrictFromRecipe(recipe) {
     if (!band || !["north", "south", "east", "west"].includes(band.side)) {
       throw new Error("Parcel bands must use north, south, east, or west.");
     }
-    const count = Math.max(0, Math.floor(band.count || 0));
+    const count = band.count === undefined ? 0 : band.count;
+    if (!Number.isInteger(count) || count < 0) throw new Error("Parcel-band count must be a non-negative whole number.");
     const start = finite(band.start, "parcel-band start");
     const spacing = finite(band.spacing, "parcel-band spacing");
+    if (count > 1 && spacing === 0) throw new Error("Parcel-band spacing cannot be zero when generating multiple parcels.");
     const fixed = finite(band.fixed, "parcel-band fixed coordinate");
     const styles = Array.isArray(band.styles) && band.styles.length ? band.styles : [band.style || "coastal-villa"];
     const footprint = band.footprint || { width: 13, depth: 11 };
+    if (!Number.isFinite(footprint.width) || !Number.isFinite(footprint.depth) || footprint.width <= 0 || footprint.depth <= 0) {
+      throw new Error("Parcel-band footprints need positive width and depth.");
+    }
     for (let index = 0; index < count; index++) {
       const along = start + spacing * index;
       const center = band.side === "west" || band.side === "east"
