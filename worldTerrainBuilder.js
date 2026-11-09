@@ -154,8 +154,8 @@ export function buildTerrainAndLandscape(parent, district, options = {}) {
       }
       trunks.name = zone.id + "_treeTrunks";
       canopies.name = zone.id + "_treeCanopies";
-      trunks.castShadow = true;
-      canopies.castShadow = true;
+      trunks.castShadow = false;
+      canopies.castShadow = false;
       zoneRoot.add(trunks, canopies);
       featureCount += treeCount;
     }
@@ -180,7 +180,7 @@ export function buildTerrainAndLandscape(parent, district, options = {}) {
         shrubs.setMatrixAt(i, matrix.matrix);
       }
       shrubs.name = zone.id + "_shrubs";
-      shrubs.castShadow = true;
+      shrubs.castShadow = false;
       zoneRoot.add(shrubs);
       featureCount += shrubCount;
     }
