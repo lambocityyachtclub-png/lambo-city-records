@@ -87,7 +87,7 @@ export function buildDistrictGeometry(scene, district, options = {}) {
       sidewalkInstances.push({
         x: centerX, z: centerZ,
         width: pathWidth,
-        length: length + pathWidth,
+        length: length + 0.2,
         angle,
         slopeAngle: -Math.atan2(pathToY - pathFromY, length),
         y: (pathFromY + pathToY) / 2 - 0.07,
@@ -97,7 +97,10 @@ export function buildDistrictGeometry(scene, district, options = {}) {
       const offset = width / 2 + sidewalkWidth / 2;
       const sideX = Math.cos(angle) * offset;
       const sideZ = -Math.sin(angle) * offset;
-      for (const sign of [-1, 1]) {
+      const sidewalkSides = Array.isArray(segment.sidewalkSides)
+        ? segment.sidewalkSides.filter(sign => sign === -1 || sign === 1)
+        : [-1, 1];
+      for (const sign of sidewalkSides) {
         const sideFromY = Number.isFinite(segment.sidewalkFromTopY)
           ? segment.sidewalkFromTopY : roadFromY + (sidewalkY - roadY);
         const sideToY = Number.isFinite(segment.sidewalkToTopY)
