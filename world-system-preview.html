@@ -719,14 +719,43 @@
         throw new Error("Opening the service gate did not remove its collision blocker.");
       }
 
+      const districtRemovalConnector = world.registerConnection({
+        id: "district-removal-physical-connector-test",
+        from: { districtId: district.id, nodeId: connectorFrom.id },
+        to: { districtId: futureDistrict.id, nodeId: connectorTo.id },
+        mode: "vehicle",
+        access: "public",
+        physical: {
+          enabled: true,
+          surface: "land",
+          surfaceVerified: true,
+          path: [
+            { x: connectorFrom.x, z: connectorFrom.z },
+            { x: 149, z: connectorFrom.z },
+            { x: 149, z: connectorTo.z },
+            { x: connectorTo.x, z: connectorTo.z }
+          ],
+          width: 9,
+          sidewalkWidth: 3
+        }
+      });
+      if (!districtRemovalConnector.registered) {
+        throw new Error("Could not register the district-removal connector cleanup fixture.");
+      }
+      const districtRemovalConnectorName = "worldConnection_district-removal-physical-connector-test";
+      if (!scene.children.some(child => child.name === districtRemovalConnectorName)) {
+        throw new Error("The district-removal connector fixture did not create geometry.");
+      }
+
       const registeredDistrictCount = world.getDistrictIds().length;
       const registeredConnectionCount = world.getStatus().registeredConnections.length;
 
-      // Removing a district must release its blockers and any inter-district links.
+      // Removing a district must release its blockers, links, and physical connector geometry.
       const districtRemoved = world.unregisterDistrict(district.id);
       if (!districtRemoved || previewCollision.boxes.length !== 0 ||
           world.getStatus().registeredConnections.length !== 0 ||
-          world.getDistrictIds().includes(district.id)) {
+          world.getDistrictIds().includes(district.id) ||
+          scene.children.some(child => child.name === districtRemovalConnectorName)) {
         throw new Error("District removal did not clean up collision blockers and city connections.");
       }
       status.textContent = "All district, terrain, parcel, pedestrian, city-route, collision, gate, and cleanup checks passed. Isolated from live gameplay.";
