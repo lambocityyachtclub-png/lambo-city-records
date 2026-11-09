@@ -97,6 +97,10 @@ const host = {
     return runtime?.ready && runtime.isVehicleFootprintOnRoad(districtId, vehicle, options);
   },
 
+  isVehicleMoveOnRoad(districtId, current, next, options = {}) {
+    return runtime?.ready && runtime.isVehicleMoveOnRoad(districtId, current, next, options);
+  },
+
   getVehicleTurnSpace(vehicle = {}) {
     return runtime?.ready ? runtime.getVehicleTurnSpace(vehicle) : null;
   },
@@ -140,6 +144,7 @@ host.api = Object.freeze({
   getGroundHeightAt: (x, z) => host.getGroundHeightAt(x, z),
   getVehicleRoadSurfaceAt: (districtId, point, options) => host.getVehicleRoadSurfaceAt(districtId, point, options),
   isVehicleFootprintOnRoad: (districtId, vehicle, options) => host.isVehicleFootprintOnRoad(districtId, vehicle, options),
+  isVehicleMoveOnRoad: (districtId, current, next, options) => host.isVehicleMoveOnRoad(districtId, current, next, options),
   getVehicleTurnSpace: vehicle => host.getVehicleTurnSpace(vehicle),
   getStatus: () => host.getStatus(),
   unregisterDistrict: id => host.unregisterDistrict(id),
