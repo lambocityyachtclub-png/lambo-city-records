@@ -538,6 +538,14 @@
         district.id, "boardwalk-service-entry", "boulevard-north-east",
         { mode: "service", permissions: ["service"] }
       );
+      const serviceToJunctionRoute = world.findRoute(
+        district.id, "boardwalk-service-entry", "boulevard-south-access-junction",
+        { mode: "service", permissions: ["service"] }
+      );
+      const junctionToNorthRoute = world.findRoute(
+        district.id, "boulevard-south-access-junction", "boulevard-north-east",
+        { mode: "service", permissions: ["service"] }
+      );
       const futureDistrictEndpointRoute = world.findRoute(
         futureDistrict.id, "boulevard-south-west", "boulevard-south-west",
         { mode: "service", permissions: ["service"] }
@@ -584,7 +592,7 @@
         throw new Error("Temporary archetype collision data leaked after cleanup.");
       }
       if (deniedCityRoute.found || !authorizedCityRoute.found) {
-        throw new Error("City-wide routing did not preserve restricted access across district connections: " + JSON.stringify({ deniedCityRoute, authorizedCityRoute, serviceToNorthRoute, futureDistrictEndpointRoute, connectionRegistration, gateGrant }));
+        throw new Error("City-wide routing did not preserve restricted access across district connections: " + JSON.stringify({ deniedCityRoute, authorizedCityRoute, serviceToNorthRoute, serviceToJunctionRoute, junctionToNorthRoute, openGateKeys: [...world.getOpenGateKeys()], futureDistrictEndpointRoute, connectionRegistration, gateGrant }));
       }
       if (previewCollision.boxes.length !== district.parcels.length) {
         throw new Error("Opening the service gate did not remove its collision blocker.");
