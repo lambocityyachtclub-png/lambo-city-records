@@ -266,6 +266,7 @@ export default class WorldSystem {
     if (!root) return null;
     return {
       roadCount: root.userData.roadCount || 0,
+      roadInstanceCount: root.userData.roadInstanceCount || 0,
       junctionCount: root.userData.junctionCount || 0,
       sidewalkCount: root.userData.sidewalkCount || 0,
       parcelCount: root.userData.parcelCount || 0,
