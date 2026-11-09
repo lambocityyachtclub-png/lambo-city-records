@@ -10,14 +10,13 @@ async function loadPureModule(filename) {
   return import(url);
 }
 
-const [{ createDistrictFromRecipe, createDistrictFromBrief }, { validateDistrict }, navigation, terrain, streamingModule, vehicleRules, vehicleControllerModule] = await Promise.all([
+const [{ createDistrictFromRecipe, createDistrictFromBrief }, { validateDistrict }, navigation, terrain, streamingModule, vehicleRules] = await Promise.all([
   loadPureModule("worldDistrictFactory.js"),
   loadPureModule("worldDistrictSchema.js"),
   loadPureModule("worldNavigation.js"),
   loadPureModule("worldTerrainMath.js"),
   loadPureModule("worldDistrictStreaming.js"),
-  loadPureModule("worldVehicleRoadRules.js"),
-  loadPureModule("vehicleRoadController.js")
+  loadPureModule("worldVehicleRoadRules.js")
 ]);
 const cityMapModule = await loadPureModule("cityMap.js");
 const CITY_MAP = cityMapModule.default;
@@ -39,6 +38,17 @@ const blueprintInline = blueprintSource.replace(
 );
 const blueprintUrl = "data:text/javascript;base64," + Buffer.from(blueprintInline).toString("base64");
 const CONFERENCE_CENTER_DISTRICT = (await import(blueprintUrl)).default;
+const vehicleRulesSource = await readFile(resolve(root, "worldVehicleRoadRules.js"), "utf8");
+const vehicleControllerSource = await readFile(resolve(root, "vehicleRoadController.js"), "utf8");
+const combinedVehicleSource = vehicleRulesSource.replace(
+  /export default \{[\s\S]*?\};\s*$/,
+  ""
+) + "\n" + vehicleControllerSource.replace(
+  /import \{[\s\S]*?\} from "\.\/worldVehicleRoadRules\.js";\s*/,
+  ""
+);
+const vehicleControllerUrl = "data:text/javascript;base64," + Buffer.from(combinedVehicleSource).toString("base64");
+const vehicleControllerModule = await import(vehicleControllerUrl);
 
 const VehicleRoadController = vehicleControllerModule.default;
 const blockedVehicle = new VehicleRoadController(
