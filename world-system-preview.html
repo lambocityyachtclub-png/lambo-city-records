@@ -80,6 +80,20 @@
     key.position.set(-70, 130, -40);
     scene.add(key);
 
+    // Preview-only reference for the existing mapped Boardwalk sidewalk.
+    // Its end overlaps the generated spur; the live Boardwalk is not modified.
+    const boardwalkSidewalkGuide = new THREE.Mesh(
+      new THREE.BoxGeometry(CITY_MAP.districts.marinaBoardwalk.road.length, 0.14, 3),
+      new THREE.MeshStandardMaterial({ color: 0xb9ad98, roughness: 0.86 })
+    );
+    boardwalkSidewalkGuide.name = "previewOnlyExistingBoardwalkSidewalk";
+    boardwalkSidewalkGuide.position.set(
+      CITY_MAP.districts.marinaBoardwalk.road.centerX,
+      0.75,
+      CITY_MAP.districts.marinaBoardwalk.sidewalks[1].centerZ
+    );
+    scene.add(boardwalkSidewalkGuide);
+
     const arenaGuide = new THREE.Mesh(new THREE.BoxGeometry(54, 8, 44), new THREE.MeshStandardMaterial({ color: 0x101720, transparent: true, opacity: 0.22, wireframe: true }));
     arenaGuide.name = "previewOnlyExistingArenaFootprint";
     arenaGuide.position.set(-43, 4.8, 97);
@@ -574,8 +588,10 @@
       const sidewalkBatch = root.children.find(child => child.name === "worldSidewalkSurfaceBatch");
       if (!roadBatch?.isInstancedMesh || !sidewalkBatch?.isInstancedMesh ||
           roadBatch.count !== root.userData.roadCount + root.userData.junctionCount ||
-          sidewalkBatch.count !== root.userData.sidewalkCount) {
-        throw new Error("District roads, junctions, and sidewalks were not combined into their expected instance batches.");
+          sidewalkBatch.count !== root.userData.sidewalkCount ||
+          !root.userData.sidewalkCount ||
+          !district.roadNetwork.segments.some(segment => segment.id === "walk-boardwalk-connection" && segment.physicalSurface === "sidewalk")) {
+        throw new Error("District roads, junctions, and the physical Boardwalk sidewalk connector were not generated into their expected batches.");
       }
       const terrainRoot = root.children.find(child => child.name === "worldTerrain_" + district.id);
       const terrainFinishCount = terrainRoot?.children.filter(child => child.name.startsWith("worldTerrainZone_")).length || 0;
@@ -652,7 +668,7 @@
       );
       const pedestrianRoute = world.findRoute(
         district.id,
-        "walk-south-west",
+        "walk-boardwalk-approach",
         "arena-arrival-approach",
         { mode: "pedestrian" }
       );
@@ -713,8 +729,17 @@
       if (ordinaryTrafficRoute.found) {
         throw new Error("Ordinary vehicle traffic incorrectly received restricted access.");
       }
-      if (!pedestrianRoute.found) {
-        throw new Error("The continuous pedestrian sidewalk route did not reach the arena arrival point.");
+      if (!pedestrianRoute.found ||
+          !pedestrianRoute.path?.some(step => step.segmentId === "walk-boardwalk-connection")) {
+        throw new Error("The pedestrian route must start at the Boardwalk sidewalk and use the physical sidewalk spur into the Convention Center network.");
+      }
+      const sidewalkSpur = district.roadNetwork.segments.find(segment => segment.id === "walk-boardwalk-connection");
+      const spurFrom = district.roadNetwork.nodes.find(node => node.id === sidewalkSpur?.from);
+      const spurTo = district.roadNetwork.nodes.find(node => node.id === sidewalkSpur?.to);
+      const spurMidpoint = { x: (spurFrom.x + spurTo.x) / 2, z: (spurFrom.z + spurTo.z) / 2 };
+      if (sidewalkSpur?.physicalSurface !== "sidewalk" ||
+          Math.abs(world.getGroundHeight(district.id, spurMidpoint.x, spurMidpoint.z) - 0.82) > 0.001) {
+        throw new Error("The Boardwalk sidewalk spur must be a generated, walkable surface at the same elevation as the district sidewalks.");
       }
       if (archetypeCollision.boxes.length !== 0) {
         throw new Error("Temporary archetype collision data leaked after cleanup.");
@@ -791,7 +816,7 @@
         ["Service gate after grant", gateGrant.gate?.open ? "open" : "closed"],
         ["Service route without permission", noPermissionServiceRoute.found ? "unexpected" : "blocked"],
         ["Authorized service route", authorizedServiceRoute.found ? "available" : "blocked"],
-        ["Pedestrian sidewalk route", pedestrianRoute.found ? "available" : "blocked"],
+        ["Boardwalk-to-Convention sidewalk", pedestrianRoute.found ? "continuous / walkable" : "blocked"],
         ["Ordinary vehicle route", ordinaryTrafficRoute.found ? "unexpected" : "restricted"],
         ["Registered districts before cleanup", registeredDistrictCount],
         ["Inter-district links before cleanup", registeredConnectionCount],
