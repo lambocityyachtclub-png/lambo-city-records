@@ -67,8 +67,16 @@ export default class WorldSystem {
     if (collision && typeof collision.unregister === "function") {
       for (const name of root.userData.collisionIds || []) collision.unregister(name);
     }
+    const externalMaterials = new Set(root.userData.externalMaterials || []);
+    const disposedMaterials = new Set();
     root.traverse?.(object => {
-      if (object.geometry && object.geometry.dispose) object.geometry.dispose();
+      object.geometry?.dispose?.();
+      const materials = Array.isArray(object.material) ? object.material : [object.material];
+      for (const material of materials) {
+        if (!material || externalMaterials.has(material) || disposedMaterials.has(material)) continue;
+        material.dispose?.();
+        disposedMaterials.add(material);
+      }
     });
     this.roots.delete(id);
     return true;
