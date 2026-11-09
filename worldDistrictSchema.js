@@ -210,6 +210,52 @@ export function validateDistrict(district, options = {}) {
     }
   }
 
+  if (district.terrainZones !== undefined) {
+    if (!Array.isArray(district.terrainZones)) {
+      issues.push(issue("INVALID_TERRAIN_ZONES", "Terrain zones must be an array."));
+    } else {
+      const terrainIds = new Set();
+      for (const zone of district.terrainZones) {
+        if (!zone || typeof zone.id !== "string" || !zone.id.trim()) {
+          issues.push(issue("INVALID_TERRAIN_ZONE", "Every terrain zone needs a valid id."));
+          continue;
+        }
+        if (terrainIds.has(zone.id)) issues.push(issue("DUPLICATE_TERRAIN_ZONE", "Terrain zone id is repeated: " + zone.id));
+        terrainIds.add(zone.id);
+        if (!zone.center || !Number.isFinite(zone.center.x) || !Number.isFinite(zone.center.z) ||
+            !Number.isFinite(zone.width) || !Number.isFinite(zone.depth) ||
+            zone.width <= 0 || zone.depth <= 0 || !Number.isFinite(zone.topY)) {
+          issues.push(issue("INVALID_TERRAIN_ZONE_SIZE", "Terrain zone " + zone.id + " needs a finite center, positive size, and elevation."));
+          continue;
+        }
+        if (zone.edgeY !== undefined && !Number.isFinite(zone.edgeY)) {
+          issues.push(issue("INVALID_TERRAIN_EDGE", "Terrain zone " + zone.id + " has an invalid edge elevation."));
+        }
+        if (zone.transitionWidth !== undefined &&
+            (!Number.isFinite(zone.transitionWidth) || zone.transitionWidth < 0)) {
+          issues.push(issue("INVALID_TERRAIN_TRANSITION", "Terrain zone " + zone.id + " needs a non-negative transition width."));
+        }
+        const minX = zone.center.x - zone.width / 2, maxX = zone.center.x + zone.width / 2;
+        const minZ = zone.center.z - zone.depth / 2, maxZ = zone.center.z + zone.depth / 2;
+        if (boundsValid && (minX < bounds.minX || maxX > bounds.maxX || minZ < bounds.minZ || maxZ > bounds.maxZ)) {
+          issues.push(issue("TERRAIN_ZONE_OUT_OF_BOUNDS", "Terrain zone " + zone.id + " extends beyond district boundaries."));
+        }
+        for (const parcel of district.parcels || []) {
+          if (!parcel?.center || !Number.isFinite(parcel.center.x) || !Number.isFinite(parcel.center.z)) continue;
+          const parcelWidth = parcel.footprint?.width ?? 13;
+          const parcelDepth = parcel.footprint?.depth ?? 11;
+          const angle = Number.isFinite(parcel.rotationY) ? parcel.rotationY : 0;
+          const halfX = (Math.abs(Math.cos(angle)) * parcelWidth + Math.abs(Math.sin(angle)) * parcelDepth) / 2;
+          const halfZ = (Math.abs(Math.sin(angle)) * parcelWidth + Math.abs(Math.cos(angle)) * parcelDepth) / 2;
+          if (minX < parcel.center.x + halfX && maxX > parcel.center.x - halfX &&
+              minZ < parcel.center.z + halfZ && maxZ > parcel.center.z - halfZ) {
+            issues.push(issue("TERRAIN_PARCEL_OVERLAP", "Terrain zone " + zone.id + " overlaps parcel " + parcel.id + "."));
+          }
+        }
+      }
+    }
+  }
+
   if (district.accessTiers !== undefined) {
     if (!Array.isArray(district.accessTiers)) {
       issues.push(issue("INVALID_ACCESS_TIERS", "District access tiers must be an array."));
