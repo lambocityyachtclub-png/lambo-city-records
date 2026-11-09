@@ -5,6 +5,7 @@ const REQUIRED_TEXT = ["id", "name", "type"];
 const REQUIRED_BOUNDS = ["minX", "maxX", "minZ", "maxZ"];
 const MAX_LANDSCAPE_ZONES = 16;
 const MAX_TERRAIN_ZONES = 24;
+const MAX_PHYSICAL_GATES = 8;
 
 function issue(code, message, severity = "error") {
   return { code, message, severity };
@@ -81,6 +82,7 @@ export function validateDistrict(district, options = {}) {
     const segmentIds = new Set();
     const gateIds = new Set();
     const adjacency = new Map(Array.from(nodeIds, id => [id, []]));
+    let physicalGateCount = 0;
     for (const segment of network.segments) {
       if (!segment || typeof segment.id !== "string" || !segment.id.trim()) {
         issues.push(issue("INVALID_ROAD_SEGMENT", "Every road segment needs an id."));
@@ -104,6 +106,10 @@ export function validateDistrict(district, options = {}) {
         issues.push(issue("MISSING_REQUIRED_ACCESS", "Restricted road segment " + segment.id + " must declare its required access tier."));
       }
       if (segment.gate !== undefined) {
+        physicalGateCount += 1;
+        if (physicalGateCount > MAX_PHYSICAL_GATES) {
+          issues.push(issue("PHYSICAL_GATE_LIMIT", "A district may contain at most " + MAX_PHYSICAL_GATES + " physical gates."));
+        }
         if (segment.access !== "permission-controlled" ||
             !segment.gate || typeof segment.gate.id !== "string" || !segment.gate.id.trim()) {
           issues.push(issue("INVALID_ACCESS_GATE", "A physical gate must have an id and belong to a permission-controlled road."));
