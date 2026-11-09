@@ -60,11 +60,11 @@ const CONFERENCE_CENTER_DISTRICT = Object.freeze({
   roadNetwork: Object.freeze({
     sidewalkWidth: MASTER_BOULEVARD.sidewalkWidth,
     nodes: Object.freeze([
-      Object.freeze({ id: "boulevard-south-west", x: loopWestX, z: loopSouthZ }),
-      Object.freeze({ id: "boulevard-south-access-junction", x: serviceX, z: loopSouthZ }),
-      Object.freeze({ id: "boulevard-south-east", x: loopEastX, z: loopSouthZ }),
-      Object.freeze({ id: "boulevard-north-east", x: loopEastX, z: loopNorthZ }),
-      Object.freeze({ id: "boulevard-north-west", x: loopWestX, z: loopNorthZ }),
+      Object.freeze({ id: "boulevard-south-west", x: loopWestX, z: loopSouthZ, turningArea: Object.freeze({ width: 16, depth: 16 }) }),
+      Object.freeze({ id: "boulevard-south-access-junction", x: serviceX, z: loopSouthZ, turningArea: Object.freeze({ width: 16, depth: 16 }) }),
+      Object.freeze({ id: "boulevard-south-east", x: loopEastX, z: loopSouthZ, turningArea: Object.freeze({ width: 16, depth: 16 }) }),
+      Object.freeze({ id: "boulevard-north-east", x: loopEastX, z: loopNorthZ, turningArea: Object.freeze({ width: 16, depth: 16 }) }),
+      Object.freeze({ id: "boulevard-north-west", x: loopWestX, z: loopNorthZ, turningArea: Object.freeze({ width: 16, depth: 16 }) }),
       // The generated street begins at the mapped Boardwalk road edge.
       // Only the explicitly permission-controlled service approach reaches it.
       Object.freeze({ id: "boardwalk-service-entry", x: serviceX, z: serviceEntryZ }),
@@ -81,7 +81,7 @@ const CONFERENCE_CENTER_DISTRICT = Object.freeze({
       Object.freeze({ id: "walk-arena-approach", x: serviceX, z: walkArenaZ, surface: "sidewalk" })
     ]),
     segments: Object.freeze([
-      Object.freeze({ id: "boulevard-south-west", from: "boulevard-south-west", to: "boulevard-south-access-junction", mode: "vehicle", lanes: 2, width: MASTER_BOULEVARD.roadWidth, loop: true }),
+      Object.freeze({ id: "boulevard-south-west", from: "boulevard-south-west", to: "boulevard-south-access-junction", mode: "vehicle", lanes: 2, width: MASTER_BOULEVARD.roadWidth, sidewalkOffset: MASTER_BOULEVARD.roadWidth / 2 + MASTER_BOULEVARD.sidewalkWidth / 2 + 4, loop: true }),
       Object.freeze({ id: "boulevard-south-east", from: "boulevard-south-access-junction", to: "boulevard-south-east", mode: "vehicle", lanes: 2, width: MASTER_BOULEVARD.roadWidth, loop: true }),
       Object.freeze({ id: "boulevard-east", from: "boulevard-south-east", to: "boulevard-north-east", mode: "vehicle", lanes: 2, width: MASTER_BOULEVARD.roadWidth, loop: true }),
       Object.freeze({ id: "boulevard-north", from: "boulevard-north-east", to: "boulevard-north-west", mode: "vehicle", lanes: 2, width: MASTER_BOULEVARD.roadWidth, loop: true }),
