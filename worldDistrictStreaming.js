@@ -23,7 +23,9 @@ export default class WorldDistrictStreaming {
       maxBuildsPerUpdate: Math.min(2, Math.max(1, Math.floor(options.maxBuildsPerUpdate || 1))),
       maxRemovalsPerUpdate: Math.min(2, Math.max(1, Math.floor(options.maxRemovalsPerUpdate || 1))),
       maxProxyBuildsPerUpdate: Math.min(2, Math.max(1, Math.floor(options.maxProxyBuildsPerUpdate || 1))),
-      maxProxyRemovalsPerUpdate: Math.min(2, Math.max(1, Math.floor(options.maxProxyRemovalsPerUpdate || 1)))
+      maxProxyRemovalsPerUpdate: Math.min(2, Math.max(1, Math.floor(options.maxProxyRemovalsPerUpdate || 1))),
+      maxDetailedParcels: Number.isInteger(options.maxDetailedParcels)
+        ? Math.max(0, Math.min(64, options.maxDetailedParcels)) : 24
     };
     this.worldSystem = null;
   }
@@ -94,7 +96,10 @@ export default class WorldDistrictStreaming {
     }
     for (const candidate of detailBuilds.slice(0, this.options.maxBuildsPerUpdate)) {
       try {
-        this.worldSystem.buildDistrict(candidate.id);
+        this.worldSystem.buildDistrict(candidate.id, {
+          focusPosition: { x: position.x, z: position.z },
+          maxDetailedParcels: this.options.maxDetailedParcels
+        });
         built.push(candidate.id);
         if (this.worldSystem.removeDistrictProxy(candidate.id)) unproxied.push(candidate.id);
       } catch (error) {
