@@ -73,6 +73,7 @@ export default class WorldSystemRuntime {
     const worldStatus = this.worldSystem?.getStatus?.() || {
       registeredDistricts: [],
       builtDistricts: [],
+      proxiedDistricts: [],
       registeredConnections: []
     };
     return {
