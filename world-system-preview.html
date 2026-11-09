@@ -110,6 +110,7 @@
       futureDistrict.parcels.forEach(parcel => { parcel.center.x += 300; });
       futureDistrict.landmarks.forEach(landmark => { landmark.center.x += 300; });
       futureDistrict.landscapeZones.forEach(zone => { zone.center.x += 300; });
+      futureDistrict.terrainZones.forEach(zone => { zone.center.x += 300; });
       const futureRegistration = world.registerDistrict(futureDistrict);
       if (!futureRegistration.registered) {
         throw new Error("Future district registration failed: " + futureRegistration.validation.issues.map(item => item.message).join("\\n"));
@@ -126,6 +127,9 @@
       }
 
       const root = world.buildDistrict(district.id, { roadTopY: 0.77, sidewalkTopY: 0.82, roadWidth: 9, sidewalkWidth: 3 });
+      if (root.userData.terrainZoneCount !== district.terrainZones.length) {
+        throw new Error("Not all declared terrain grades were generated.");
+      }
       const noPermissionServiceRoute = world.findRoute(
         district.id,
         "boardwalk-service-entry",
@@ -194,6 +198,7 @@
         ["Sidewalk sections", root.userData.sidewalkCount],
         ["Villa parcels", root.userData.parcelCount],
         ["Access tiers", district.accessTiers.length],
+        ["Terrain grades", root.userData.terrainZoneCount],
         ["Landscape zones", root.userData.landscapeZoneCount],
         ["Landscape features", root.userData.landscapeFeatureCount],
         ["Service gate before grant", gateBeforeAuthorization?.open ? "open" : "closed"],
