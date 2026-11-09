@@ -9,9 +9,12 @@ function distanceToBounds(bounds, x, z) {
 
 export default class WorldDistrictStreaming {
   constructor(options = {}) {
+    const streamInRadius = Number.isFinite(options.streamInRadius) && options.streamInRadius >= 0
+      ? options.streamInRadius : 250;
+    const requestedOutRadius = Number.isFinite(options.streamOutRadius) ? options.streamOutRadius : 285;
     this.options = {
-      streamInRadius: Number.isFinite(options.streamInRadius) ? options.streamInRadius : 250,
-      streamOutRadius: Number.isFinite(options.streamOutRadius) ? options.streamOutRadius : 285,
+      streamInRadius,
+      streamOutRadius: requestedOutRadius > streamInRadius ? requestedOutRadius : streamInRadius + 35,
       maxBuildsPerUpdate: Math.max(1, Math.floor(options.maxBuildsPerUpdate || 1)),
       maxRemovalsPerUpdate: Math.max(1, Math.floor(options.maxRemovalsPerUpdate || 1))
     };
