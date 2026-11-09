@@ -16,7 +16,9 @@ export default class WorldDistrictStreaming {
       streamInRadius,
       streamOutRadius: requestedOutRadius > streamInRadius ? requestedOutRadius : streamInRadius + 35,
       maxBuildsPerUpdate: Math.min(2, Math.max(1, Math.floor(options.maxBuildsPerUpdate || 1))),
-      maxRemovalsPerUpdate: Math.min(2, Math.max(1, Math.floor(options.maxRemovalsPerUpdate || 1)))
+      maxRemovalsPerUpdate: Math.min(2, Math.max(1, Math.floor(options.maxRemovalsPerUpdate || 1))),
+      maxDetailedParcels: Number.isInteger(options.maxDetailedParcels)
+        ? Math.max(0, Math.min(64, options.maxDetailedParcels)) : 24
     };
     this.worldSystem = null;
   }
@@ -55,7 +57,10 @@ export default class WorldDistrictStreaming {
 
     for (const candidate of buildCandidates.slice(0, this.options.maxBuildsPerUpdate)) {
       try {
-        this.worldSystem.buildDistrict(candidate.id);
+        this.worldSystem.buildDistrict(candidate.id, {
+          focusPosition: { x: position.x, z: position.z },
+          maxDetailedParcels: this.options.maxDetailedParcels
+        });
         built.push(candidate.id);
       } catch (error) {
         errors.push({ id: candidate.id, message: String(error?.message || error) });
