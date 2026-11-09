@@ -43,7 +43,7 @@ The runtime host accepts the same brief through its explicit `registerDistrict` 
 
 ## Visual district composer
 
-Open `world-district-composer.html` to use the visual authoring tool. It exposes the high-level brief fields—name, neighborhood character, density, width, and depth—then compiles and validates a new district and renders it with the same World System geometry builder. The controls also support touch-sized layouts and orbit/pinch/pan navigation. This is a development tool, not a live-game editor; it does not publish, save, or activate districts in the production city.
+Open `world-district-composer.html` to use the visual authoring tool. It exposes the high-level brief fields—name, neighborhood character, density, width, and depth—then compiles and validates a new district and renders it with the same World System geometry builder. The controls also support touch-sized layouts and orbit/pinch/pan navigation. Each generated district brief can be copied or selected for reuse as a compact recipe. This is a development tool, not a live-game editor; it does not publish, save, or activate districts in the production city.
 
 ## Supported parcel styles
 
