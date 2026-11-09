@@ -42,6 +42,7 @@
     import { createDistrictFromRecipe } from "./worldDistrictFactory.js";
     import { buildParcelGeometry } from "./worldParcelBuilder.js";
     import { updateDistrictParcelFocus } from "./worldBuilder.js";
+    import { buildTerrainAndLandscape } from "./worldTerrainBuilder.js";
     import district from "./worldDistricts/conferenceCenter.js";
     import { validateDistrict } from "./worldDistrictSchema.js";
 
@@ -238,6 +239,19 @@
           parcelStyles: ["coastal-villa", "luxury-apartment", "retail-promenade", "urban-park"]
         }
       });
+      const terrainStressRoot = new THREE.Group();
+      const terrainStress = buildTerrainAndLandscape(terrainStressRoot, {
+        id: "terrain-resolution-budget-test",
+        bounds: { minX: 0, maxX: 2000, minZ: 0, maxZ: 2000 },
+        terrainZones: [], landscapeZones: []
+      });
+      if (terrainStress.segmentsX !== 192 || terrainStress.segmentsZ !== 192 ||
+          terrainStress.vertices !== 193 * 193 || terrainStress.triangles !== 192 * 192 * 2) {
+        throw new Error("Large district terrain resolution exceeded its bounded mesh budget.");
+      }
+      terrainStressRoot.traverse(object => object.geometry?.dispose?.());
+      terrainStress.ownedMaterials.forEach(material => material.dispose?.());
+
       const largeGridValidation = validateDistrict(largeGridDistrict);
       if (!largeGridValidation.valid || largeGridDistrict.parcels.length !== 49) {
         throw new Error("The large grid performance fixture did not produce 49 valid parcels.");
