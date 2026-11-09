@@ -236,7 +236,9 @@
         throw new Error("Opening the service gate did not remove its collision blocker.");
       }
 
-      status.textContent = "District, terrain, parcel-archetype, pedestrian, city-route, collision, and access-gate checks passed. Isolated from live gameplay.";
+      const registeredDistrictCount = world.getDistrictIds().length;
+      const registeredConnectionCount = world.getStatus().registeredConnections.length;
+
       // Removing a district must release its blockers and any inter-district links.
       const districtRemoved = world.unregisterDistrict(district.id);
       if (!districtRemoved || previewCollision.boxes.length !== 0 ||
@@ -244,7 +246,9 @@
           world.getDistrictIds().includes(district.id)) {
         throw new Error("District removal did not clean up collision blockers and city connections.");
       }
-\n      metrics.innerHTML = [
+      status.textContent = "All district, terrain, parcel, pedestrian, city-route, collision, gate, and cleanup checks passed. Isolated from live gameplay.";
+
+      metrics.innerHTML = [
         ["Roads", root.userData.roadCount],
         ["Junctions", root.userData.junctionCount],
         ["Sidewalk sections", root.userData.sidewalkCount],
@@ -257,15 +261,15 @@
         ["Service gate before grant", gateBeforeAuthorization?.open ? "open" : "closed"],
         ["Service gate after grant", gateGrant.gate?.open ? "open" : "closed"],
         ["Service route without permission", noPermissionServiceRoute.found ? "unexpected" : "blocked"],
-        ["Authorized service route", authorizedServiceRoute.found ? "available" : "blocked"],,
-        ["Pedestrian sidewalk route", pedestrianRoute.found ? "available" : "blocked"]
+        ["Authorized service route", authorizedServiceRoute.found ? "available" : "blocked"],
+        ["Pedestrian sidewalk route", pedestrianRoute.found ? "available" : "blocked"],
         ["Ordinary vehicle route", ordinaryTrafficRoute.found ? "unexpected" : "restricted"],
-        ["Registered districts", world.getDistrictIds().length],
-        ["Inter-district links", world.getStatus().registeredConnections.length],
+        ["Registered districts before cleanup", registeredDistrictCount],
+        ["Inter-district links before cleanup", registeredConnectionCount],
         ["Cross-district route", authorizedCityRoute.found ? "available" : "blocked"],
-        ["Cross-district without permission", deniedCityRoute.found ? "unexpected" : "blocked"],,
-        ["District cleanup", "verified"]
-        ["Active villa colliders", previewCollision.boxes.length],
+        ["Cross-district without permission", deniedCityRoute.found ? "unexpected" : "blocked"],
+        ["District cleanup", "verified"],
+        ["Colliders after cleanup", previewCollision.boxes.length],
         ["Parcel archetypes", "4 supported"],
         ["Archetype cleanup", "verified"]
       ].map(([label, value]) => '<span class="metric">' + label + ': ' + value + '</span>').join("");
