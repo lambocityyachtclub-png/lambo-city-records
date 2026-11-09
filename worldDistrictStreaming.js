@@ -107,6 +107,15 @@ export default class WorldDistrictStreaming {
       }
     }
     for (const candidate of detailRemovals.slice(0, this.options.maxRemovalsPerUpdate)) {
+      if (candidate.distance <= this.options.proxyOutRadius &&
+          !this.worldSystem.isDistrictProxied(candidate.id)) {
+        errors.push({
+          id: candidate.id,
+          stage: "detail-remove",
+          message: "Kept full detail because its far proxy was not ready."
+        });
+        continue;
+      }
       try {
         if (this.worldSystem.removeDistrict(candidate.id)) removed.push(candidate.id);
       } catch (error) {
