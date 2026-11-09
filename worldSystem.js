@@ -7,6 +7,7 @@ import { buildDistrictGeometry, updateDistrictParcelFocus } from "./worldBuilder
 import { buildDistrictProxy, disposeDistrictProxy } from "./worldDistrictProxyBuilder.js";
 import { findRoute as findDistrictRoute, findWorldRoute as findCityRoute } from "./worldNavigation.js";
 import { sampleTerrainHeight, sampleRoadSurfaceHeight } from "./worldTerrainMath.js";
+import { buildPhysicalConnection, disposePhysicalConnection } from "./worldConnectionBuilder.js";
 
 export default class WorldSystem {
   constructor(options = {}) {
@@ -15,6 +16,7 @@ export default class WorldSystem {
     this.roots = new Map();
     this.proxyRoots = new Map();
     this.connections = new Map();
+    this.connectionRoots = new Map();
     this.scene = null;
     this.collision = null;
     this.protectedLandmarks = options.protectedLandmarks || [];
@@ -126,7 +128,9 @@ export default class WorldSystem {
     this.removeDistrict(id);
     this.removeDistrictProxy(id);
     for (const [connectionId, connection] of this.connections) {
-      if (connection.from?.districtId === id || connection.to?.districtId === id) this.connections.delete(connectionId);
+      if (connection.from?.districtId === id || connection.to?.districtId === id) {
+        this.unregisterConnection(connectionId);
+      }
     }
     return this.districts.delete(id);
   }
@@ -176,12 +180,32 @@ export default class WorldSystem {
     if (connection.access !== undefined && !["public", "permission-controlled", "closed"].includes(connection.access)) {
       return { registered: false, reason: "INVALID_CONNECTION_ACCESS" };
     }
+    let connectorRoot = null;
+    if (connection.physical?.enabled === true) {
+      if (!this.scene) return { registered: false, reason: "SCENE_NOT_INITIALIZED" };
+      const fromNode = fromDistrict.roadNetwork.nodes.find(node => node.id === connection.from.nodeId);
+      const toNode = toDistrict.roadNetwork.nodes.find(node => node.id === connection.to.nodeId);
+      try {
+        connectorRoot = buildPhysicalConnection(this.scene, connection, fromNode, toNode);
+      } catch (error) {
+        return { registered: false, reason: String(error?.message || error) };
+      }
+    }
     this.connections.set(connection.id, connection);
-    return { registered: true, id: connection.id };
+    if (connectorRoot) this.connectionRoots.set(connection.id, connectorRoot);
+    return {
+      registered: true,
+      id: connection.id,
+      physical: !!connectorRoot
+    };
   }
 
   unregisterConnection(id) {
-    return this.connections.delete(id);
+    const registered = this.connections.delete(id);
+    const root = this.connectionRoots.get(id);
+    if (root) disposePhysicalConnection(this.scene, root);
+    this.connectionRoots.delete(id);
+    return registered;
   }
 
   findWorldRoute(fromDistrictId, fromNodeId, toDistrictId, toNodeId, routeOptions = {}) {
