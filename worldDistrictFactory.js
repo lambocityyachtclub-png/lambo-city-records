@@ -1,6 +1,11 @@
 // LAMBO CITY — compact district recipe compiler
 // Turns a small layout recipe into a complete data-only district blueprint.
 // Geometry, collision, and routing are generated later by WorldSystem.
+// Hard limits keep a single recipe safe for iPad-class memory and frame budgets.
+const MAX_GRID_ROWS = 16;
+const MAX_GRID_COLUMNS = 16;
+const MAX_LOOP_JUNCTIONS = 64;
+const MAX_DISTRICT_PARCELS = 256;
 function finite(value, label) {
   if (!Number.isFinite(value)) throw new Error("District recipe requires a finite " + label + ".");
   return value;
@@ -22,9 +27,9 @@ export function createGridDistrictFromRecipe(recipe) {
   const roadWidth = grid.width === undefined ? 8 : finite(grid.width, "grid road width");
   const sidewalkWidth = grid.sidewalkWidth === undefined ? 3 : finite(grid.sidewalkWidth, "grid sidewalk width");
   const rows = grid.rows, columns = grid.columns;
-  if (roadWidth <= 0 || sidewalkWidth < 0 || !Number.isInteger(rows) || rows < 2 ||
-      !Number.isInteger(columns) || columns < 2) {
-    throw new Error("Grid recipe needs positive road dimensions and at least two rows and columns.");
+  if (roadWidth <= 0 || sidewalkWidth < 0 || !Number.isInteger(rows) || rows < 2 || rows > MAX_GRID_ROWS ||
+      !Number.isInteger(columns) || columns < 2 || columns > MAX_GRID_COLUMNS) {
+    throw new Error("Grid recipe needs positive road dimensions and between 2 and " + MAX_GRID_ROWS + " rows and columns.");
   }
   const margin = roadWidth / 2 + sidewalkWidth + 1;
   if (grid.bounds.minX - margin < bounds.minX || grid.bounds.maxX + margin > bounds.maxX ||
@@ -176,6 +181,7 @@ export function createDistrictFromRecipe(recipe) {
   };
 
   const junctions = Array.isArray(loop.junctions) ? loop.junctions : [];
+  if (junctions.length > MAX_LOOP_JUNCTIONS) throw new Error("A road loop may contain at most " + MAX_LOOP_JUNCTIONS + " junctions.");
   for (const junction of junctions) {
     if (!junction || typeof junction.id !== "string" || !["south", "east", "north", "west"].includes(junction.side)) {
       throw new Error("Road-loop junctions need an id and a valid side.");
@@ -285,6 +291,9 @@ export function createDistrictFromRecipe(recipe) {
     }
     const count = band.count === undefined ? 0 : band.count;
     if (!Number.isInteger(count) || count < 0) throw new Error("Parcel-band count must be a non-negative whole number.");
+    if (parcels.length + count > MAX_DISTRICT_PARCELS) {
+      throw new Error("A district recipe may generate at most " + MAX_DISTRICT_PARCELS + " parcels.");
+    }
     const start = finite(band.start, "parcel-band start");
     const spacing = finite(band.spacing, "parcel-band spacing");
     if (count > 1 && spacing === 0) throw new Error("Parcel-band spacing cannot be zero when generating multiple parcels.");
