@@ -201,9 +201,11 @@ assert.equal(conventionSidewalkNode.z, CONFERENCE_CENTER_DISTRICT.roadNetwork.no
 assert.ok(Math.abs(terrain.sampleRoadSurfaceHeight(CONFERENCE_CENTER_DISTRICT, boardwalkSidewalkNode.x, boardwalkSidewalkNode.z, {
   roadTopY: 0.77, sidewalkTopY: 0.82, sidewalkWidth: 3
 }) - 0.70) < 0.001);
-assert.ok(Math.abs(terrain.sampleRoadSurfaceHeight(CONFERENCE_CENTER_DISTRICT, boardwalkSidewalkNode.x, (boardwalkSidewalkNode.z + conventionSidewalkNode.z) / 2, {
-  roadTopY: 0.77, sidewalkTopY: 0.82, sidewalkWidth: 3
-}) - 0.76) < 0.001);
+assert.ok(Math.abs(terrain.sampleRoadSurfaceHeight(CONFERENCE_CENTER_DISTRICT,
+  (boardwalkSidewalkNode.x + conventionSidewalkNode.x) / 2,
+  (boardwalkSidewalkNode.z + conventionSidewalkNode.z) / 2, {
+    roadTopY: 0.77, sidewalkTopY: 0.82, sidewalkWidth: 3
+  }) - 0.76) < 0.001);
 assert.ok(Math.abs(terrain.sampleRoadSurfaceHeight(CONFERENCE_CENTER_DISTRICT, conventionSidewalkNode.x, conventionSidewalkNode.z, {
   roadTopY: 0.77, sidewalkTopY: 0.82, sidewalkWidth: 3
 }) - 0.82) < 0.001);
