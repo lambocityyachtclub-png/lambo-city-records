@@ -225,7 +225,7 @@ export function buildParcelGeometry(parent, district, options = {}) {
   parent.userData.detailParcelCount = detailCount;
   parent.userData.proxyParcelCount = proxyCount;
   parent.userData.proxyBatchCount = proxyParcels.size;
-  return { parcels: built, buildings, styles, root, detailCount, proxyCount, proxyBatchCount: proxyParcels.size, ownedMaterials: Object.values(materials) };
+  return { parcels: built, buildings, styles, root, detailCount, proxyCount, proxyBatchCount: proxyParcels.size, detailParcelIds: Array.from(detailedIds), focusPosition: { x: focus.x, z: focus.z }, ownedMaterials: Object.values(materials) };
 }
 
 export default { buildParcelGeometry, PARCEL_STYLES };
