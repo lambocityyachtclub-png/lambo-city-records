@@ -15,17 +15,6 @@ function makeSidewalkMaterial() {
   return new THREE.MeshStandardMaterial({ color: 0xb9ad98, roughness: 0.86 });
 }
 
-function addRoadBox(root, name, width, length, centerX, centerZ, angle, y, thickness, material) {
-  const mesh = new THREE.Mesh(new THREE.BoxGeometry(width, thickness, length), material);
-  mesh.name = name;
-  mesh.position.set(centerX, y, centerZ);
-  mesh.rotation.y = angle;
-  mesh.receiveShadow = true;
-  mesh.castShadow = false;
-  root.add(mesh);
-  return mesh;
-}
-
 export function buildDistrictGeometry(scene, district, options = {}) {
   if (!scene || !district?.roadNetwork ||
       !Array.isArray(district.roadNetwork.nodes) ||
