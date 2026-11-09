@@ -47,10 +47,10 @@ export default class WorldDistrictStreaming {
   }
 
   update(delta, context = {}) {
-    if (!this.worldSystem) return { built: [], removed: [], proxied: [], unproxied: [], errors: [], skipped: "NOT_INITIALIZED" };
+    if (!this.worldSystem) return { built: [], removed: [], proxied: [], unproxied: [], refreshed: [], errors: [], skipped: "NOT_INITIALIZED" };
     const position = context.playerPosition || context.player?.position || context.position;
     if (!position || !Number.isFinite(position.x) || !Number.isFinite(position.z)) {
-      return { built: [], removed: [], proxied: [], unproxied: [], errors: [], skipped: "NO_PLAYER_POSITION" };
+      return { built: [], removed: [], proxied: [], unproxied: [], refreshed: [], errors: [], skipped: "NO_PLAYER_POSITION" };
     }
 
     const detailBuilds = [], detailRemovals = [], proxyBuilds = [], proxyRemovals = [], focusUpdates = [];
@@ -101,12 +101,13 @@ export default class WorldDistrictStreaming {
     }
     for (const candidate of detailBuilds.slice(0, this.options.maxBuildsPerUpdate)) {
       try {
+        const hadProxy = this.worldSystem.isDistrictProxied(candidate.id);
         this.worldSystem.buildDistrict(candidate.id, {
           focusPosition: { x: position.x, z: position.z },
           maxDetailedParcels: this.options.maxDetailedParcels
         });
         built.push(candidate.id);
-        if (this.worldSystem.removeDistrictProxy(candidate.id)) unproxied.push(candidate.id);
+        if (hadProxy) unproxied.push(candidate.id);
       } catch (error) {
         errors.push({ id: candidate.id, stage: "detail-build", message: String(error?.message || error) });
       }
