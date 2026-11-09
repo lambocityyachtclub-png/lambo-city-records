@@ -120,6 +120,40 @@ export function validateDistrict(district, options = {}) {
     }
   }
 
+
+  // Parcel footprints must fit within the district boundary before buildings
+  // are generated. Rotation is converted to an axis-aligned map footprint.
+  if (Array.isArray(district.parcels)) {
+    const parcelIds = new Set();
+    for (const parcel of district.parcels) {
+      if (!parcel || typeof parcel.id !== "string" || !parcel.id.trim()) {
+        issues.push(issue("INVALID_PARCEL", "Every parcel needs a valid id."));
+        continue;
+      }
+      if (parcelIds.has(parcel.id)) issues.push(issue("DUPLICATE_PARCEL_ID", "Parcel id is repeated: " + parcel.id));
+      parcelIds.add(parcel.id);
+      if (!parcel.center || !Number.isFinite(parcel.center.x) || !Number.isFinite(parcel.center.z)) {
+        issues.push(issue("INVALID_PARCEL_CENTER", "Parcel " + parcel.id + " needs a finite map position."));
+        continue;
+      }
+      const width = parcel.footprint?.width ?? 13;
+      const depth = parcel.footprint?.depth ?? 11;
+      const rotation = Number.isFinite(parcel.rotationY) ? parcel.rotationY : 0;
+      if (!Number.isFinite(width) || !Number.isFinite(depth) || width <= 0 || depth <= 0) {
+        issues.push(issue("INVALID_PARCEL_FOOTPRINT", "Parcel " + parcel.id + " needs positive footprint dimensions."));
+        continue;
+      }
+      if (boundsValid) {
+        const halfX = (Math.abs(Math.cos(rotation)) * width + Math.abs(Math.sin(rotation)) * depth) / 2;
+        const halfZ = (Math.abs(Math.sin(rotation)) * width + Math.abs(Math.cos(rotation)) * depth) / 2;
+        if (parcel.center.x - halfX < bounds.minX || parcel.center.x + halfX > bounds.maxX ||
+            parcel.center.z - halfZ < bounds.minZ || parcel.center.z + halfZ > bounds.maxZ) {
+          issues.push(issue("PARCEL_OUT_OF_BOUNDS", "Parcel " + parcel.id + " extends beyond the district boundary."));
+        }
+      }
+    }
+  }
+
   const protectedIds = new Set(options.protectedLandmarks || []);
   for (const landmarkId of district.overlapsProtectedLandmarks || []) {
     if (protectedIds.has(landmarkId)) {
