@@ -34,7 +34,8 @@ export default class WorldSystemRuntime {
         const district = isRecipe ? createDistrictFromRecipe(item) : item;
         const result = this.worldSystem.registerDistrict(district);
         if (!result.registered) {
-          throw new Error("District " + (district?.id || "unknown") + " was rejected: " + result.reason);
+          const details = result.validation?.issues?.map(issue => issue.code + ": " + issue.message).join("; ");
+          throw new Error("District " + (district?.id || "unknown") + " was rejected: " + (details || result.reason || "unknown validation error"));
         }
         this.registeredDistrictIds.push(district.id);
       }
@@ -67,6 +68,20 @@ export default class WorldSystemRuntime {
   getWorldSystem() {
     return this.worldSystem;
   }
+
+  getStatus() {
+    const worldStatus = this.worldSystem?.getStatus?.() || {
+      registeredDistricts: [],
+      builtDistricts: [],
+      registeredConnections: []
+    };
+    return {
+      ready: this.ready,
+      registeredDistrictIds: [...this.registeredDistrictIds],
+      ...worldStatus
+    };
+  }
+
 
   setGateAccess(districtId, gateId, permissions = []) {
     if (!this.ready) return false;
