@@ -418,21 +418,21 @@
         throw new Error("Landscape density and terrain finish validation did not reject invalid values.");
       }
       if (world.getDistrictAtPosition(-43, 97)?.id !== district.id ||
-          Math.abs(world.getGroundHeightAt(-60, 55) - 0.77) > 0.001 ||
+          Math.abs(world.getGroundHeightAt(-60, 60) - 0.77) > 0.001 ||
           world.getDistrictAtPosition(1000, 1000) !== null) {
         throw new Error("World-coordinate district lookup or automatic ground sampling failed.");
       }
-      const plazaGroundY = world.getGroundHeight(district.id, -50, 64.5);
+      const plazaGroundY = world.getGroundHeight(district.id, -50, 67);
       const courtyardGroundY = world.getGroundHeight(district.id, -43, 148);
       const baseGroundY = world.getGroundHeight(district.id, -100, 70);
-      const roadGroundY = world.getGroundHeight(district.id, -60, 55);
-      const sidewalkGroundY = world.getGroundHeight(district.id, -60, 49);
-      const approachSidewalkGroundY = world.getGroundHeight(district.id, -43, 64.5);
-      const unbuiltCustomSidewalkGroundY = world.getGroundHeight(futureDistrict.id, 250, 63);
+      const roadGroundY = world.getGroundHeight(district.id, -60, 60);
+      const sidewalkGroundY = world.getGroundHeight(district.id, -60, 54);
+      const approachSidewalkGroundY = world.getGroundHeight(district.id, -43, 67);
+      const unbuiltCustomSidewalkGroundY = world.getGroundHeight(futureDistrict.id, 250, 68);
       if (Math.abs(unbuiltCustomSidewalkGroundY - 0.80) > 0.001 ||
           Math.abs(plazaGroundY - 0.68) > 0.001 ||
           Math.abs(courtyardGroundY - 0.70) > 0.001 ||
-          Math.abs(baseGroundY - 0.64) > 0.001 ||
+          Math.abs(baseGroundY - 0.65) > 0.001 ||
           Math.abs(roadGroundY - 0.77) > 0.001 ||
           Math.abs(sidewalkGroundY - 0.82) > 0.001 ||
           Math.abs(approachSidewalkGroundY - 0.82) > 0.001) {
