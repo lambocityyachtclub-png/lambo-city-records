@@ -549,10 +549,20 @@ export default {
       behavior.
     */
 
+    const initialWorldGroundY = this._elevatorY === null
+      ? context.systems?.worldSystemHost?.getGroundHeightAt?.(
+          player.position.x, player.position.z
+        )
+      : null;
+    const initialWorldFloorY = Number.isFinite(initialWorldGroundY)
+      ? initialWorldGroundY + 0.65
+      : null;
+
     const collisionY =
       this._elevatorY !== null
         ? this._elevatorY
         : (
+            initialWorldFloorY ??
             this._floorY ??
             player.position.y ??
             1.3
@@ -661,8 +671,13 @@ export default {
 
     } else {
 
-      const floorY =
-        this._floorY ?? 1.3;
+      const sampledWorldGroundY =
+        context.systems?.worldSystemHost?.getGroundHeightAt?.(
+          player.position.x, player.position.z
+        );
+      const floorY = Number.isFinite(sampledWorldGroundY)
+        ? sampledWorldGroundY + 0.65
+        : (this._floorY ?? 1.3);
 
       if (moving) {
 
