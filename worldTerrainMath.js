@@ -47,7 +47,8 @@ function getRoadSurfaceCache(district, defaultRoadWidth) {
       fromTopY: Number.isFinite(segment.fromTopY) ? segment.fromTopY : null,
       toTopY: Number.isFinite(segment.toTopY) ? segment.toTopY : null,
       sidewalkFromTopY: Number.isFinite(segment.sidewalkFromTopY) ? segment.sidewalkFromTopY : null,
-      sidewalkToTopY: Number.isFinite(segment.sidewalkToTopY) ? segment.sidewalkToTopY : null
+      sidewalkToTopY: Number.isFinite(segment.sidewalkToTopY) ? segment.sidewalkToTopY : null,
+      sidewalkSides: Array.isArray(segment.sidewalkSides) ? segment.sidewalkSides : [-1, 1]
     });
     if (!pedestrianSurface) {
       for (const nodeId of [segment.from, segment.to]) {
@@ -101,8 +102,15 @@ export function sampleRoadSurfaceHeight(district, x, z, surfaceOptions = {}) {
       if (interpolatedTopY !== null) roadHeight = interpolatedTopY;
     } else if (surfaceOptions.buildSidewalks !== false && !segment.pedestrianOnly &&
                distance <= segment.width / 2 + sidewalkWidth) {
-      onSidewalk = true;
-      if (interpolatedSidewalkY !== null) sidewalkHeight = interpolatedSidewalkY;
+      const sideX = segment.dz / segmentLength;
+      const sideZ = -segment.dx / segmentLength;
+      const signedSideDistance = (x - nearestX) * sideX + (z - nearestZ) * sideZ;
+      const sideSign = signedSideDistance < 0 ? -1 : 1;
+      if (Math.abs(signedSideDistance) >= segment.width / 2 - 0.001 &&
+          segment.sidewalkSides.includes(sideSign)) {
+        onSidewalk = true;
+        if (interpolatedSidewalkY !== null) sidewalkHeight = interpolatedSidewalkY;
+      }
     }
   }
   for (const junction of cache.junctions) {
