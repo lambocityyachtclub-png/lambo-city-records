@@ -59,6 +59,7 @@ import Elevator from "./elevator.js";
 import BoardwalkOverlooks from "./boardwalkOverlooks.js";
 import PerformanceMonitor from "./performanceMonitor.js";
 import WorldSystemHost from "./worldSystemHost.js";
+import WorldStreaming from "./worldStreaming.js";
 import ConferenceCenterBlueprint from "./worldDistricts/conferenceCenter.js";
 const engine = new Engine();
 engine.registerSystems({
@@ -121,6 +122,7 @@ engine.registerSystems({
   hud: HUD,
   performanceMonitor: PerformanceMonitor,
   worldSystemHost: WorldSystemHost,
+  worldStreaming: WorldStreaming,
 });
 
 // Load upper floors only when selected in the elevator.
