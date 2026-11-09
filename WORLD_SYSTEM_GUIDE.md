@@ -17,7 +17,8 @@ The World System is the reusable foundation for adding named districts without h
 - Nearby parcel detail follows the player inside large districts; detailed parcel meshes are grouped by material and geometry into a small number of instanced draws. The detailed parcel budget is capped independently from the instanced distant parcel batches.
 - `worldSystemHost.js` is registered with `main.js` and `engine.js` as a lightweight, no-build bridge. It publishes the explicit `window.__lamboCityWorldSystem` API; only a deliberate `initialize()` call loads `worldSystemRuntime.js`, registers blueprints/recipes, and enables per-frame streaming updates.
 - `worldDistricts/conferenceCenter.js` is the first district blueprint.
-- `world-system-preview.html` is the isolated preview and browser-side check harness.
+- `world-system-preview.html` is the isolated validation and browser-side check harness.
+- `world-district-composer.html` is an isolated visual authoring tool for composing and regenerating neighborhoods from high-level briefs; it never writes to live gameplay.
 
 ## High-level district briefs
 
@@ -39,6 +40,10 @@ const district = createDistrictFromRecipe({
 Supported characters are `coastal`, `mixed-use`, `retail`, and `park`. Density presets create a 3×3, 4×4, or 5×5 street grid for low, medium, or high density. The composer chooses a matching parcel mix, road width, sidewalk width, and public/resident/service tier definitions. Center, dimensions, road widths, parcel styles, terrain zones, and landscape zones can be overridden. The result is still data-only and must pass `validateDistrict` before it can be registered or built.
 
 The runtime host accepts the same brief through its explicit `registerDistrict` API after initialization. This creates a practical foundation for a future visual city-builder: a user can specify the neighborhood's identity, scale, and density without hand-authoring every intersection or parcel. It is a structured brief compiler, not a free-form natural-language AI prompt parser.
+
+## Visual district composer
+
+Open `world-district-composer.html` to use the visual authoring tool. It exposes the high-level brief fields—name, neighborhood character, density, width, and depth—then compiles and validates a new district and renders it with the same World System geometry builder. The controls also support touch-sized layouts and orbit/pinch/pan navigation. This is a development tool, not a live-game editor; it does not publish, save, or activate districts in the production city.
 
 ## Supported parcel styles
 
