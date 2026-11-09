@@ -9,6 +9,7 @@ import { findRoute as findDistrictRoute, findWorldRoute as findCityRoute } from 
 import { sampleTerrainHeight, sampleRoadSurfaceHeight } from "./worldTerrainMath.js";
 import { buildPhysicalConnection, disposePhysicalConnection } from "./worldConnectionBuilder.js";
 import { getVehicleRoadSurface, isVehicleFootprintOnRoad, isVehicleMoveOnRoad, buildVehicleUTurnPath, getMinimumUTurnSpace } from "./worldVehicleRoadRules.js";
+import VehicleRoadController from "./vehicleRoadController.js";
 
 export default class WorldSystem {
   constructor(options = {}) {
@@ -263,6 +264,11 @@ export default class WorldSystem {
     return !!district && isVehicleMoveOnRoad(district, current, next, {
       ...options, openGates: this.getOpenGateIds(districtId)
     });
+  }
+
+  createVehicleController(districtId, initialState = {}, options = {}) {
+    const district = this.districts.get(districtId);
+    return district ? new VehicleRoadController(district, initialState, options) : null;
   }
 
   buildVehicleUTurnPath(districtId, nodeId, vehicle = {}, options = {}) {
