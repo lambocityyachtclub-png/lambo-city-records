@@ -138,10 +138,14 @@ export function buildDistrictGeometry(scene, district, options = {}) {
       const halfX = (Math.abs(Math.cos(rotation)) * width + Math.abs(Math.sin(rotation)) * depth) / 2;
       const halfZ = (Math.abs(Math.sin(rotation)) * width + Math.abs(Math.cos(rotation)) * depth) / 2;
       const name = "worldDistrict_" + district.id + "_parcel_" + parcel.id;
+      const floors = Math.max(3, Math.min(9, Math.floor(parcel.floors || 5)));
+      const maxY = parcel.style === "luxury-apartment"
+        ? 1.2 + floors * 3 + 0.55
+        : (parcel.style === "retail-promenade" ? 5.2 : 11);
       collision.registerBox(name, {
         x: parcel.center.x, z: parcel.center.z,
         width: halfX * 2, depth: halfZ * 2,
-        minY: 0, maxY: 11, level: options.collisionLevel || "world"
+        minY: 0, maxY, level: options.collisionLevel || "world"
       });
       collisionIds.push(name);
     }
