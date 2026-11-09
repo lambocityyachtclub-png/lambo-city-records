@@ -25,8 +25,10 @@ const liveArenaSource = await readFile(resolve(root, "conferenceCenterDistrict.j
 assert.match(liveMainSource, /WorldSystemHost\.initialize\(\{/,
   "the approved district blueprint must initialize in the live scene");
 assert.match(liveMainSource, /districts:\s*\[ConferenceCenterBlueprint\]/);
-assert.doesNotMatch(liveMainSource, /worldStreaming:\s*WorldStreaming/,
-  "the old duplicate arena streamer must not compete with World System streaming");
+assert.match(liveMainSource, /worldStreaming:\s*WorldStreaming/,
+  "the arena landmark keeps its own lightweight LOD beside World System district streaming");
+assert.match(liveArenaSource, /lamboCityConferenceCenterLandmark/,
+  "the protected arena shell must have an independent visibility root");
 assert.doesNotMatch(liveArenaSource, /arenaBoulevardSouth|arenaBoulevardNorth|arenaBoulevardWest|arenaBoulevardEast/,
   "legacy arena roads must not duplicate the generated road network");
 assert.match(liveArenaSource, /arenaArrivalPlaza/,
