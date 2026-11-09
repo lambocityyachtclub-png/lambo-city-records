@@ -116,4 +116,30 @@ assert.ok(Math.abs(terrain.sampleTerrainHeight(district, -43, 64.5) - 0.68) < 0.
 assert.ok(Math.abs(terrain.sampleTerrainHeight(district, -43, 148) - 0.70) < 0.001);
 assert.ok(Math.abs(terrain.sampleTerrainHeight(district, -100, 70) - 0.64) < 0.001);
 
-console.log("World System pure checks passed: recipe, schema, parcel-road clearance, permissions, pedestrian routing, cross-district routing, and terrain sampling.");
+const gridDistrict = createDistrictFromRecipe({
+  id: "world-system-grid-test",
+  name: "World System Grid Test",
+  roadLayout: "grid",
+  bounds: { minX: 0, maxX: 160, minZ: 0, maxZ: 160 },
+  roadGrid: {
+    bounds: { minX: 20, maxX: 140, minZ: 20, maxZ: 140 },
+    rows: 3,
+    columns: 3,
+    width: 8,
+    sidewalkWidth: 3,
+    pedestrianRoutes: true,
+    parcelStyles: ["luxury-apartment", "retail-promenade", "urban-park", "coastal-villa"]
+  }
+});
+const gridValidation = validateDistrict(gridDistrict);
+assert.equal(gridValidation.valid, true, gridValidation.issues.map(issue => issue.code + ": " + issue.message).join("\\n"));
+assert.equal(gridDistrict.roadNetwork.nodes.length, 9);
+assert.equal(gridDistrict.roadNetwork.segments.length, 24);
+assert.equal(gridDistrict.parcels.length, 4);
+assert.equal(gridDistrict.parcels.some(parcel => parcel.style === "urban-park"), true);
+const gridPedestrian = navigation.findRoute(
+  gridDistrict, "grid-r0-c0", "grid-r2-c2", { mode: "pedestrian" }
+);
+assert.equal(gridPedestrian.found, true);
+
+console.log("World System pure checks passed: loop and grid recipes, schema, parcel-road clearance, permissions, pedestrian routing, cross-district routing, and terrain sampling.");
