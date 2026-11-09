@@ -6,7 +6,7 @@ function box(parent, name, size, position, material) {
   const mesh = new THREE.Mesh(new THREE.BoxGeometry(...size), material);
   mesh.name = name;
   mesh.position.set(...position);
-  mesh.castShadow = true;
+  mesh.castShadow = false;
   mesh.receiveShadow = true;
   parent.add(mesh);
   return mesh;
@@ -120,6 +120,7 @@ export function buildParcelGeometry(parent, district, options = {}) {
   const root = new THREE.Group();
   root.name = "worldSystemParcels_" + district.id;
   root.userData.generatedBy = "LAMBO_CITY_ParcelBuilder";
+  root.userData.dynamicParcelShadows = false;
 
   const validParcels = district.parcels.filter(parcel =>
     parcel?.center && Number.isFinite(parcel.center.x) && Number.isFinite(parcel.center.z) &&
