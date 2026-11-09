@@ -134,6 +134,18 @@ export default class WorldSystemRuntime {
     return this.ready ? this.worldSystem.getGroundHeightAt(x, z) : null;
   }
 
+  getVehicleRoadSurfaceAt(districtId, point, options = {}) {
+    return this.ready ? this.worldSystem.getVehicleRoadSurfaceAt(districtId, point, options) : null;
+  }
+
+  isVehicleFootprintOnRoad(districtId, vehicle, options = {}) {
+    return this.ready && this.worldSystem.isVehicleFootprintOnRoad(districtId, vehicle, options);
+  }
+
+  getVehicleTurnSpace(vehicle = {}) {
+    return this.ready ? this.worldSystem.getVehicleTurnSpace(vehicle) : null;
+  }
+
   findWorldRoute(fromDistrictId, fromNodeId, toDistrictId, toNodeId, options = {}) {
     if (!this.ready) {
       return { found: false, reason: "NOT_READY", nodes: [], steps: [], distance: 0 };
