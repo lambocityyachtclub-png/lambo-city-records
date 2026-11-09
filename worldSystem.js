@@ -78,6 +78,11 @@ export default class WorldSystem {
         disposedMaterials.add(material);
       }
     });
+    for (const material of root.userData.ownedMaterials || []) {
+      if (!material || externalMaterials.has(material) || disposedMaterials.has(material)) continue;
+      material.dispose?.();
+      disposedMaterials.add(material);
+    }
     this.roots.delete(id);
     return true;
   }
