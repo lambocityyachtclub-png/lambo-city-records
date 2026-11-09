@@ -144,7 +144,7 @@ export function buildDistrictProxy(scene, district, options = {}) {
 
   const landmarkMaterial = new THREE.MeshBasicMaterial({ color: 0x8a806d, fog: true });
   for (const landmark of district.landmarks || []) {
-    if (!landmark?.center || !landmark?.footprint) continue;
+    if (landmark?.proxyVisible === false || !landmark?.center || !landmark?.footprint) continue;
     const height = Number.isFinite(landmark.proxyHeight) ? landmark.proxyHeight : 24;
     const mesh = new THREE.Mesh(
       new THREE.BoxGeometry(landmark.footprint.width * 0.9, height, landmark.footprint.depth * 0.9),
