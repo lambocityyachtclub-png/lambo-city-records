@@ -130,6 +130,14 @@
       if (root.userData.terrainZoneCount !== district.terrainZones.length) {
         throw new Error("Not all declared terrain grades were generated.");
       }
+      const plazaGroundY = world.getGroundHeight(district.id, -43, 64.5);
+      const courtyardGroundY = world.getGroundHeight(district.id, -43, 148);
+      const baseGroundY = world.getGroundHeight(district.id, -100, 70);
+      if (Math.abs(plazaGroundY - 0.68) > 0.001 ||
+          Math.abs(courtyardGroundY - 0.70) > 0.001 ||
+          Math.abs(baseGroundY - 0.64) > 0.001) {
+        throw new Error("Terrain height sampling does not match the generated grade data.");
+      }
       const noPermissionServiceRoute = world.findRoute(
         district.id,
         "boardwalk-service-entry",
@@ -199,6 +207,7 @@
         ["Villa parcels", root.userData.parcelCount],
         ["Access tiers", district.accessTiers.length],
         ["Terrain grades", root.userData.terrainZoneCount],
+        ["Terrain height samples", "verified"],
         ["Landscape zones", root.userData.landscapeZoneCount],
         ["Landscape features", root.userData.landscapeFeatureCount],
         ["Service gate before grant", gateBeforeAuthorization?.open ? "open" : "closed"],
