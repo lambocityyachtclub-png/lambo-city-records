@@ -82,6 +82,9 @@
 
     try {
       const validation = validateDistrict(district);
+      if (!Array.isArray(district.accessTiers) || district.accessTiers.length !== 3) {
+        throw new Error("The district must declare all three access tiers.");
+      }
       if (!validation.valid) {
         throw new Error(validation.issues.map(item => item.code + ": " + item.message).join("\n"));
       }
@@ -190,6 +193,7 @@
         ["Junctions", root.userData.junctionCount],
         ["Sidewalk sections", root.userData.sidewalkCount],
         ["Villa parcels", root.userData.parcelCount],
+        ["Access tiers", district.accessTiers.length],
         ["Landscape zones", root.userData.landscapeZoneCount],
         ["Landscape features", root.userData.landscapeFeatureCount],
         ["Service gate before grant", gateBeforeAuthorization?.open ? "open" : "closed"],
