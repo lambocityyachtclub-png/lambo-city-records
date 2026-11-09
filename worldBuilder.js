@@ -37,6 +37,12 @@ export function buildDistrictGeometry(scene, district, options = {}) {
   root.name = "worldSystemDistrict_" + district.id;
   root.userData.districtId = district.id;
   root.userData.generatedBy = "LAMBO_CITY_WorldBuilder";
+  root.userData.surfaceHeights = {
+    roadTopY: Number.isFinite(options.roadTopY) ? options.roadTopY : 0.77,
+    sidewalkTopY: Number.isFinite(options.sidewalkTopY) ? options.sidewalkTopY : (Number.isFinite(options.roadTopY) ? options.roadTopY : 0.77) + 0.03,
+    roadWidth: Number.isFinite(options.roadWidth) ? options.roadWidth : 9,
+    sidewalkWidth: Number.isFinite(options.sidewalkWidth) ? options.sidewalkWidth : 3
+  };
   root.userData.externalMaterials = [options.roadMaterial, options.sidewalkMaterial, options.terrainMaterial].filter(Boolean);
   root.userData.ownedMaterials = [];
 
