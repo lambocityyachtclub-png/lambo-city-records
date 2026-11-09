@@ -5,6 +5,7 @@
 import { validateDistrict } from "./worldDistrictSchema.js";
 import { buildDistrictGeometry } from "./worldBuilder.js";
 import { findRoute as findDistrictRoute, findWorldRoute as findCityRoute } from "./worldNavigation.js";
+import { sampleTerrainHeight } from "./worldTerrainBuilder.js";
 
 export default class WorldSystem {
   constructor(options = {}) {
@@ -137,6 +138,13 @@ export default class WorldSystem {
       toNodeId,
       routeOptions
     );
+  }
+
+  getGroundHeight(id, x, z) {
+    const district = this.districts.get(id);
+    if (!district || !Number.isFinite(x) || !Number.isFinite(z)) return null;
+    const groundY = Number.isFinite(this.options.groundTopY) ? this.options.groundTopY : 0.64;
+    return sampleTerrainHeight(district, x, z, groundY);
   }
 
   findRoute(id, fromNodeId, toNodeId, routeOptions = {}) {
