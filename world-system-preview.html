@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#090d12">
+  <title>LAMBO CITY — World System Preview</title>
+  <style>
+    :root { color-scheme: dark; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: #090d12; color: #f2eee5; }
+    #stage { position: fixed; inset: 0; }
+    canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+    .panel { position: fixed; z-index: 2; left: max(14px, env(safe-area-inset-left)); top: max(14px, env(safe-area-inset-top)); width: min(360px, calc(100vw - 28px)); padding: 15px 16px; border: 1px solid rgba(201,168,95,.45); border-radius: 13px; background: rgba(7,11,16,.88); backdrop-filter: blur(12px); box-shadow: 0 12px 40px rgba(0,0,0,.32); }
+    .eyebrow { color: #c9a85f; font-size: 10px; letter-spacing: .22em; text-transform: uppercase; }
+    h1 { margin: 6px 0 5px; font-size: 17px; font-weight: 650; letter-spacing: .02em; }
+    #status { color: #b9c4c9; font-size: 12px; line-height: 1.5; }
+    #metrics { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 11px; }
+    .metric { border: 1px solid rgba(255,255,255,.12); border-radius: 8px; padding: 6px 8px; color: #e9dfc8; font-size: 11px; }
+    .hint { margin-top: 10px; color: #89949b; font-size: 10px; line-height: 1.4; }
+    #error { display: none; color: #ffb6a8; margin-top: 8px; font-size: 12px; white-space: pre-wrap; }
+    @media (max-width: 600px) { .panel { width: min(310px, calc(100vw - 28px)); } }
+  </style>
+</head>
+<body>
+  <div id="stage"></div>
+  <section class="panel" aria-live="polite">
+    <div class="eyebrow">LAMBO CITY · Development preview</div>
+    <h1>World System / Arena District</h1>
+    <div id="status">Preparing the district blueprint…</div>
+    <div id="metrics"></div>
+    <div class="hint">Drag to orbit · Pinch to zoom · Two-finger drag to pan. This is an isolated generated preview, not the live game.</div>
+    <div id="error"></div>
+  </section>
+  <script type="module">
+    import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
+    import { OrbitControls } from "https://unpkg.com/three@0.160.0/examples/jsm/controls/OrbitControls.js";
+    import WorldSystem from "./worldSystem.js";
+    import district from "./worldDistricts/conferenceCenter.js";
+    import { validateDistrict } from "./worldDistrictSchema.js";
+
+    const status = document.getElementById("status");
+    const metrics = document.getElementById("metrics");
+    const error = document.getElementById("error");
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x090d12);
+    scene.fog = new THREE.Fog(0x090d12, 180, 360);
+
+    const camera = new THREE.PerspectiveCamera(48, window.innerWidth / window.innerHeight, 0.1, 700);
+    camera.position.set(-5, 95, 205);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.05;
+    document.getElementById("stage").appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.set(-43, 7, 97);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.07;
+    controls.maxPolarAngle = Math.PI * 0.49;
+    controls.minDistance = 35;
+    controls.maxDistance = 300;
+
+    scene.add(new THREE.HemisphereLight(0xdce8f1, 0x25201a, 2.0));
+    const key = new THREE.DirectionalLight(0xffe2b0, 2.2);
+    key.position.set(-70, 130, -40);
+    scene.add(key);
+
+    const ground = new THREE.Mesh(
+      new THREE.PlaneGeometry(124, 113),
+      new THREE.MeshStandardMaterial({ color: 0x39332b, roughness: 1 })
+    );
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.set(-43, 0.64, 101.5);
+    ground.receiveShadow = true;
+    scene.add(ground);
+
+    const grid = new THREE.GridHelper(124, 31, 0x786a4c, 0x393a3b);
+    grid.position.set(-43, 0.67, 101.5);
+    scene.add(grid);
+
+    try {
+      const validation = validateDistrict(district);
+      if (!validation.valid) {
+        throw new Error(validation.issues.map(item => item.code + ": " + item.message).join("\n"));
+      }
+      const world = new WorldSystem();
+      world.init(scene);
+      const registration = world.registerDistrict(district);
+      if (!registration.registered) {
+        throw new Error(registration.validation.issues.map(item => item.message).join("\n"));
+      }
+      const root = world.buildDistrict(district.id, { roadTopY: 0.77, sidewalkTopY: 0.82, roadWidth: 9, sidewalkWidth: 3 });
+      status.textContent = "Blueprint validated. Generated district is isolated from live gameplay.";
+      metrics.innerHTML = [
+        ["Roads", root.userData.roadCount],
+        ["Junctions", root.userData.junctionCount],
+        ["Sidewalk sections", root.userData.sidewalkCount],
+        ["Villa parcels", root.userData.parcelCount]
+      ].map(([label, value]) => '<span class="metric">' + label + ': ' + value + '</span>').join("");
+    } catch (err) {
+      status.textContent = "The district could not be generated.";
+      error.style.display = "block";
+      error.textContent = String(err?.stack || err);
+    }
+
+    function resize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+    }
+    window.addEventListener("resize", resize);
+    renderer.setAnimationLoop(() => {
+      controls.update();
+      renderer.render(scene, camera);
+    });
+  </script>
+</body>
+</html>
