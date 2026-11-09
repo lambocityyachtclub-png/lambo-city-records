@@ -70,6 +70,11 @@ const CONFERENCE_CENTER_DISTRICT = Object.freeze({
     Object.freeze({ id: "villa-north-two", use: "residential", center: Object.freeze({ x: -28, z: 148 }), footprint: Object.freeze({ width: 13, depth: 11 }), rotationY: 0, style: "coastal-villa" })
   ]),
 
+  terrainZones: Object.freeze([
+    Object.freeze({ id: "arena-arrival-grade", center: Object.freeze({ x: -43, z: 64.5 }), width: 30, depth: 13, edgeY: 0.645, topY: 0.68, transitionWidth: 2.5, materialColor: 0x8f897d }),
+    Object.freeze({ id: "north-courtyard-grade", center: Object.freeze({ x: -43, z: 148 }), width: 12, depth: 7, edgeY: 0.645, topY: 0.70, transitionWidth: 1.2, materialColor: 0x746f63 })
+  ]),
+
   landscapeZones: Object.freeze([
     Object.freeze({ id: "north-villa-courtyard", center: Object.freeze({ x: -43, z: 148 }), width: 12, depth: 7, treeCount: 3, shrubCount: 6, pavingColor: 0x77766d, plantingColor: 0x344b3c })
   ]),
