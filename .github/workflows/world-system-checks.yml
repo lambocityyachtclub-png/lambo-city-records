@@ -43,6 +43,7 @@ jobs:
             worldSystemRuntime.js \
             worldSystemHost.js \
             worldSystem.js \
+            player.js \
             worldDistricts/conferenceCenter.js
           do
             node --input-type=module --check < "$file"
