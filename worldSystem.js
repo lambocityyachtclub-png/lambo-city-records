@@ -8,7 +8,7 @@ import { buildDistrictProxy, disposeDistrictProxy } from "./worldDistrictProxyBu
 import { findRoute as findDistrictRoute, findWorldRoute as findCityRoute } from "./worldNavigation.js";
 import { sampleTerrainHeight, sampleRoadSurfaceHeight } from "./worldTerrainMath.js";
 import { buildPhysicalConnection, disposePhysicalConnection } from "./worldConnectionBuilder.js";
-import { getVehicleRoadSurface, isVehicleFootprintOnRoad, getMinimumUTurnSpace } from "./worldVehicleRoadRules.js";
+import { getVehicleRoadSurface, isVehicleFootprintOnRoad, isVehicleMoveOnRoad, getMinimumUTurnSpace } from "./worldVehicleRoadRules.js";
 
 export default class WorldSystem {
   constructor(options = {}) {
@@ -254,6 +254,13 @@ export default class WorldSystem {
   isVehicleFootprintOnRoad(districtId, vehicle, options = {}) {
     const district = this.districts.get(districtId);
     return !!district && isVehicleFootprintOnRoad(district, vehicle, {
+      ...options, openGates: this.getOpenGateIds(districtId)
+    });
+  }
+
+  isVehicleMoveOnRoad(districtId, current, next, options = {}) {
+    const district = this.districts.get(districtId);
+    return !!district && isVehicleMoveOnRoad(district, current, next, {
       ...options, openGates: this.getOpenGateIds(districtId)
     });
   }
