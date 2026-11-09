@@ -101,6 +101,10 @@ const host = {
     return runtime?.ready && runtime.isVehicleMoveOnRoad(districtId, current, next, options);
   },
 
+  createVehicleController(districtId, initialState = {}, options = {}) {
+    return runtime?.ready ? runtime.createVehicleController(districtId, initialState, options) : null;
+  },
+
   buildVehicleUTurnPath(districtId, nodeId, vehicle = {}, options = {}) {
     return runtime?.ready ? runtime.buildVehicleUTurnPath(districtId, nodeId, vehicle, options) : { valid: false, reason: "NOT_READY", points: [] };
   },
@@ -149,6 +153,7 @@ host.api = Object.freeze({
   getVehicleRoadSurfaceAt: (districtId, point, options) => host.getVehicleRoadSurfaceAt(districtId, point, options),
   isVehicleFootprintOnRoad: (districtId, vehicle, options) => host.isVehicleFootprintOnRoad(districtId, vehicle, options),
   isVehicleMoveOnRoad: (districtId, current, next, options) => host.isVehicleMoveOnRoad(districtId, current, next, options),
+  createVehicleController: (districtId, initialState, options) => host.createVehicleController(districtId, initialState, options),
   buildVehicleUTurnPath: (districtId, nodeId, vehicle, options) => host.buildVehicleUTurnPath(districtId, nodeId, vehicle, options),
   getVehicleTurnSpace: vehicle => host.getVehicleTurnSpace(vehicle),
   getStatus: () => host.getStatus(),
