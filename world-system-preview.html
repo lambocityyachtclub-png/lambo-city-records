@@ -48,7 +48,7 @@
     import district from "./worldDistricts/conferenceCenter.js";
     import { validateDistrict } from "./worldDistrictSchema.js";
     import CITY_MAP from "./cityMap.js";
-    import { getVehicleRoadSurface, isVehicleFootprintOnRoad, getMinimumUTurnSpace } from "./worldVehicleRoadRules.js";
+    import { getVehicleRoadSurface, isVehicleFootprintOnRoad, buildVehicleUTurnPath, getMinimumUTurnSpace } from "./worldVehicleRoadRules.js";
 
     const status = document.getElementById("status");
     const metrics = document.getElementById("metrics");
@@ -617,7 +617,15 @@
       const sidewalkTestPoint = { x: roadTestPoint.x, z: roadTestPoint.z - 6 };
       const northWestTurn = district.roadNetwork.nodes.find(node => node.id === "boulevard-north-west");
       const vehicleTurnSpace = getMinimumUTurnSpace({ length: 4.8, width: 2.1 });
-      if (getVehicleRoadSurface(district, roadTestPoint)?.type !== "road" ||
+      const fullUTurn = buildVehicleUTurnPath(district, "boulevard-north-west", {
+        length: 4.8, width: 2.1, turningRadius: 6.5
+      });
+      const undersizedUTurn = buildVehicleUTurnPath(district, "boulevard-south-west", {
+        length: 4.8, width: 2.1, turningRadius: 6.5
+      });
+      if (!fullUTurn.valid || fullUTurn.points.length < 24 ||
+          undersizedUTurn.valid ||
+          getVehicleRoadSurface(district, roadTestPoint)?.type !== "road" ||
           getVehicleRoadSurface(district, sidewalkTestPoint) !== null ||
           getVehicleRoadSurface(district, { x: northWestTurn.x + 8, z: northWestTurn.z })?.type !== "turning-area" ||
           !isVehicleFootprintOnRoad(district, { ...roadTestPoint, length: 4.8, width: 2.1, heading: Math.PI / 2 }) ||
