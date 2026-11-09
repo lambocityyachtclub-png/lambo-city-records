@@ -96,7 +96,7 @@ export function buildDistrictGeometry(scene, district, options = {}) {
         height: 0.14
       });
     } else if (segment.mode !== "pedestrian" && options.buildSidewalks !== false && sidewalkWidth > 0) {
-      const offset = width / 2 + sidewalkWidth / 2;
+      const offset = Number.isFinite(segment.sidewalkOffset) ? segment.sidewalkOffset : width / 2 + sidewalkWidth / 2;
       const sideX = Math.cos(angle) * offset;
       const sideZ = -Math.sin(angle) * offset;
       const sidewalkSides = Array.isArray(segment.sidewalkSides)
@@ -127,7 +127,9 @@ export function buildDistrictGeometry(scene, district, options = {}) {
   for (const item of validSegments) {
     if (item.segment.mode === "pedestrian") continue;
     for (const nodeId of [item.segment.from, item.segment.to]) {
-      junctionWidths.set(nodeId, Math.max(junctionWidths.get(nodeId) || 0, item.width));
+      const node = nodes.get(nodeId);
+      const apronWidth = Number.isFinite(node?.turningArea?.width) ? node.turningArea.width : item.width;
+      junctionWidths.set(nodeId, Math.max(junctionWidths.get(nodeId) || 0, apronWidth));
       junctionDegrees.set(nodeId, (junctionDegrees.get(nodeId) || 0) + 1);
     }
   }
