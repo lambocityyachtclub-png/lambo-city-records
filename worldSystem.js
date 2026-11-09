@@ -237,8 +237,50 @@ export default class WorldSystem {
   }
 
   getGroundHeightAt(x, z) {
+    if (!Number.isFinite(x) || !Number.isFinite(z)) return null;
     const district = this.getDistrictAtPosition(x, z);
-    return district ? this.getGroundHeight(district.id, x, z) : null;
+    if (district) return this.getGroundHeight(district.id, x, z);
+    return this.getPhysicalConnectionHeightAt(x, z);
+  }
+
+  getPhysicalConnectionHeightAt(x, z) {
+    let onRoad = false;
+    let onSidewalk = false;
+    let roadHeight = 0.77;
+    let sidewalkHeight = 0.82;
+
+    for (const connection of this.connections.values()) {
+      const physical = connection?.physical;
+      if (physical?.enabled !== true || physical.surface !== "land" ||
+          physical.surfaceVerified !== true || !Array.isArray(physical.path)) continue;
+      const mode = connection.mode || "vehicle";
+      const width = Number.isFinite(physical.width) ? physical.width : 9;
+      const roadWidth = mode === "pedestrian" ? Math.min(width, 6) : width;
+      const sidewalkWidth = Number.isFinite(physical.sidewalkWidth) ? physical.sidewalkWidth : 3;
+      const currentRoadHeight = Number.isFinite(physical.roadTopY) ? physical.roadTopY : 0.77;
+      const currentSidewalkHeight = Number.isFinite(physical.sidewalkTopY)
+        ? physical.sidewalkTopY : currentRoadHeight + 0.05;
+      for (let index = 0; index < physical.path.length - 1; index++) {
+        const from = physical.path[index], to = physical.path[index + 1];
+        const dx = to.x - from.x, dz = to.z - from.z;
+        const lengthSquared = dx * dx + dz * dz;
+        if (lengthSquared <= 0) continue;
+        const t = ((x - from.x) * dx + (z - from.z) * dz) / lengthSquared;
+        if (t < 0 || t > 1) continue;
+        const nearestX = from.x + t * dx;
+        const nearestZ = from.z + t * dz;
+        const distance = Math.hypot(x - nearestX, z - nearestZ);
+        if (distance <= roadWidth / 2) {
+          onRoad = true;
+          roadHeight = currentRoadHeight;
+        } else if (mode !== "pedestrian" && physical.sidewalks !== false &&
+                   sidewalkWidth > 0 && distance <= roadWidth / 2 + sidewalkWidth) {
+          onSidewalk = true;
+          sidewalkHeight = currentSidewalkHeight;
+        }
+      }
+    }
+    return onRoad ? roadHeight : (onSidewalk ? sidewalkHeight : null);
   }
 
   getGroundHeight(id, x, z) {
