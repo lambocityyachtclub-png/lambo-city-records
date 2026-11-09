@@ -92,7 +92,43 @@ jobs:
                 "\\nFailed requests: " + failedRequests.join("\\n"));
             }
             if (pageErrors.length) throw new Error(pageErrors.join("\\n"));
-            console.log(status);
+            console.log("Desktop preview: " + status);
+
+            // Repeat the complete preview at an iPad-sized touch viewport.
+            // This is responsive/touch-emulation coverage, not a substitute
+            // for the final physical-device review.
+            const tablet = await browser.newPage({
+              viewport: { width: 834, height: 1194 },
+              deviceScaleFactor: 2,
+              isMobile: true,
+              hasTouch: true
+            });
+            const tabletErrors = [];
+            tablet.on("pageerror", error => tabletErrors.push(error.message));
+            await tablet.goto("http://127.0.0.1:8000/world-system-preview.html", {
+              waitUntil: "domcontentloaded"
+            });
+            await tablet.waitForFunction(() => {
+              const value = document.querySelector("#status")?.textContent || "";
+              return value.startsWith("All district, terrain, parcel");
+            }, { timeout: 30000 });
+            const tabletCanvas = await tablet.locator("canvas").evaluate(canvas => ({
+              width: canvas.clientWidth,
+              height: canvas.clientHeight,
+              touchAction: getComputedStyle(canvas).touchAction
+            }));
+            const panelBox = await tablet.locator(".panel").boundingBox();
+            if (!tabletCanvas.width || !tabletCanvas.height ||
+                tabletCanvas.touchAction !== "none" ||
+                !panelBox || panelBox.width > 834 ||
+                tabletErrors.length) {
+              throw new Error("iPad-sized preview check failed: " + JSON.stringify({
+                canvas: tabletCanvas,
+                panel: panelBox,
+                errors: tabletErrors
+              }));
+            }
+            console.log("iPad-sized touch preview: " + JSON.stringify(tabletCanvas));
           } finally {
             await browser.close();
           }
