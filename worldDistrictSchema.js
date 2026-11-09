@@ -237,8 +237,10 @@ export function validateDistrict(district, options = {}) {
     }
   }
 
-  // Landscape zones must remain inside the district and clear of parcel footprints.
-  if (Array.isArray(district.landscapeZones)) {
+  // Landscape zones must be bounded, lightweight, and clear of parcel footprints.
+  if (district.landscapeZones !== undefined && !Array.isArray(district.landscapeZones)) {
+    issues.push(issue("INVALID_LANDSCAPE_ZONES", "Landscape zones must be an array."));
+  } else if (Array.isArray(district.landscapeZones)) {
     const zoneIds = new Set();
     for (const zone of district.landscapeZones) {
       if (!zone || typeof zone.id !== "string" || !zone.id.trim()) {
@@ -251,6 +253,18 @@ export function validateDistrict(district, options = {}) {
           !Number.isFinite(zone.width) || !Number.isFinite(zone.depth) || zone.width <= 0 || zone.depth <= 0) {
         issues.push(issue("INVALID_LANDSCAPE_ZONE_SIZE", "Landscape zone " + zone.id + " needs a finite center and positive dimensions."));
         continue;
+      }
+      for (const [key, maximum] of [["treeCount", 4], ["shrubCount", 8]]) {
+        if (zone[key] !== undefined &&
+            (!Number.isInteger(zone[key]) || zone[key] < 0 || zone[key] > maximum)) {
+          issues.push(issue("INVALID_LANDSCAPE_DENSITY", "Landscape zone " + zone.id + " " + key + " must be an integer from 0 to " + maximum + "."));
+        }
+      }
+      for (const key of ["pavingColor", "plantingColor"]) {
+        if (zone[key] !== undefined &&
+            (!Number.isInteger(zone[key]) || zone[key] < 0 || zone[key] > 0xffffff)) {
+          issues.push(issue("INVALID_LANDSCAPE_COLOR", "Landscape zone " + zone.id + " " + key + " must be a 24-bit color."));
+        }
       }
       const minX = zone.center.x - zone.width / 2, maxX = zone.center.x + zone.width / 2;
       const minZ = zone.center.z - zone.depth / 2, maxZ = zone.center.z + zone.depth / 2;
@@ -297,6 +311,10 @@ export function validateDistrict(district, options = {}) {
         if (zone.transitionWidth !== undefined &&
             (!Number.isFinite(zone.transitionWidth) || zone.transitionWidth < 0)) {
           issues.push(issue("INVALID_TERRAIN_TRANSITION", "Terrain zone " + zone.id + " needs a non-negative transition width."));
+        }
+        if (zone.materialColor !== undefined &&
+            (!Number.isInteger(zone.materialColor) || zone.materialColor < 0 || zone.materialColor > 0xffffff)) {
+          issues.push(issue("INVALID_TERRAIN_COLOR", "Terrain zone " + zone.id + " materialColor must be a 24-bit color."));
         }
         const minX = zone.center.x - zone.width / 2, maxX = zone.center.x + zone.width / 2;
         const minZ = zone.center.z - zone.depth / 2, maxZ = zone.center.z + zone.depth / 2;
