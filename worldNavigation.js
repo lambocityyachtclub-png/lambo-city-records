@@ -74,7 +74,7 @@ export function findRoute(district, fromId, toId, options = {}) {
   const openGates = options.openGates instanceof Set ? options.openGates : new Set();
   const adjacency = new Map(nodes.map(node => [node.id, []]));
   for (const segment of segments) {
-    if (!segmentAllowed(segment, mode, permissions, openGates, districtId)) continue;
+    if (!segmentAllowed(segment, mode, permissions, openGates, district.id || "")) continue;
     const from = nodeById.get(segment.from), to = nodeById.get(segment.to);
     if (!from || !to) continue;
     const distance = Math.hypot(to.x - from.x, to.z - from.z);
