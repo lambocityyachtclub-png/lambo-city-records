@@ -50,6 +50,7 @@ const CONFERENCE_CENTER_DISTRICT = Object.freeze({
     Object.freeze({
       id: MASTER_ARENA.arena.id,
       role: "primary-landmark",
+      proxyVisible: false,
       center: Object.freeze({ x: centerX, z: centerZ }),
       footprint: Object.freeze({
         width: MASTER_ARENA.arena.footprintWidth,
