@@ -1,6 +1,6 @@
 // LAMBO CITY — terrain and low-cost landscape generator
-// Flat district grading is the first terrain pass. Elevation transitions and
-// shoreline meshes remain explicit future data, never guessed across water.
+// Builds a flat district base plus explicit local elevation transitions.
+// Shoreline meshes and water crossings are never guessed from district bounds.
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 
 function makeMaterial(color, roughness = 1) {
