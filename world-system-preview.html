@@ -187,7 +187,7 @@
       if (root.userData.terrainZoneCount !== district.terrainZones.length) {
         throw new Error("Not all declared terrain grades were generated.");
       }
-      const plazaGroundY = world.getGroundHeight(district.id, -43, 64.5);
+      const plazaGroundY = world.getGroundHeight(district.id, -50, 64.5);
       const courtyardGroundY = world.getGroundHeight(district.id, -43, 148);
       const baseGroundY = world.getGroundHeight(district.id, -100, 70);
       const roadGroundY = world.getGroundHeight(district.id, -60, 55);
