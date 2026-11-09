@@ -10,11 +10,12 @@ async function loadPureModule(filename) {
   return import(url);
 }
 
-const [{ createDistrictFromRecipe }, { validateDistrict }, navigation, terrain] = await Promise.all([
+const [{ createDistrictFromRecipe }, { validateDistrict }, navigation, terrain, streamingModule] = await Promise.all([
   loadPureModule("worldDistrictFactory.js"),
   loadPureModule("worldDistrictSchema.js"),
   loadPureModule("worldNavigation.js"),
-  loadPureModule("worldTerrainMath.js")
+  loadPureModule("worldTerrainMath.js"),
+  loadPureModule("worldDistrictStreaming.js")
 ]);
 
 const recipe = {
@@ -128,6 +129,40 @@ assert.ok(Math.abs(terrain.sampleRoadSurfaceHeight(district, -50, 61, {
 }) - 0.80) < 0.001);
 assert.equal(terrain.sampleRoadSurfaceHeight(district, -100, 70), null);
 
+const streamState = { built: false, proxied: false, focusRefreshes: 0 };
+const streamFixture = {
+  getDistrictIds: () => ["stream-test"],
+  getDistrict: () => ({ id: "stream-test", bounds: { minX: 0, maxX: 100, minZ: 0, maxZ: 100 } }),
+  isDistrictBuilt: () => streamState.built,
+  isDistrictProxied: () => streamState.proxied,
+  buildDistrictProxy: () => { streamState.proxied = true; return {}; },
+  removeDistrictProxy: () => { const had = streamState.proxied; streamState.proxied = false; return had; },
+  buildDistrict: () => { streamState.built = true; streamState.proxied = false; return {}; },
+  removeDistrict: () => { const had = streamState.built; streamState.built = false; return had; },
+  updateDistrictDetailFocus: () => { streamState.focusRefreshes++; return true; }
+};
+const streamer = new streamingModule.default({
+  streamInRadius: 50, streamOutRadius: 75, proxyInRadius: 200, proxyOutRadius: 250
+}).init(streamFixture);
+const farProxyUpdate = streamer.update(0, { playerPosition: { x: 180, z: 50 } });
+assert.equal(farProxyUpdate.proxied.includes("stream-test"), true);
+assert.equal(streamState.proxied, true);
+const detailUpdate = streamer.update(0, { playerPosition: { x: 50, z: 50 } });
+assert.equal(detailUpdate.built.includes("stream-test"), true);
+assert.equal(streamState.built, true);
+assert.equal(streamState.proxied, false);
+const focusUpdate = streamer.update(0, { playerPosition: { x: 160, z: 50 } });
+assert.equal(focusUpdate.refreshed.includes("stream-test"), true);
+assert.equal(streamState.focusRefreshes, 1);
+const handoffUpdate = streamer.update(0, { playerPosition: { x: 190, z: 50 } });
+assert.equal(handoffUpdate.proxied.includes("stream-test"), true);
+assert.equal(handoffUpdate.removed.includes("stream-test"), true);
+assert.equal(streamState.built, false);
+assert.equal(streamState.proxied, true);
+const proxyRemoval = streamer.update(0, { playerPosition: { x: 400, z: 50 } });
+assert.equal(proxyRemoval.unproxied.includes("stream-test"), true);
+assert.equal(streamState.proxied, false);
+
 const gridDistrict = createDistrictFromRecipe({
   id: "world-system-grid-test",
   name: "World System Grid Test",
@@ -178,4 +213,4 @@ assert.ok(Math.abs(terrain.sampleRoadSurfaceHeight(district, -37, 55, {
   roadTopY: 0.77, sidewalkTopY: 0.82, sidewalkWidth: 3
 }) - 0.77) < 0.001);
 
-console.log("World System pure checks passed: bounded loop/grid recipes, schema, parcel-road clearance, permission + physical gate routing, pedestrian routing, cross-district routing, terrain/road/sidewalk sampling, and iPad-safe recipe limits.");
+console.log("World System pure checks passed: bounded loop/grid recipes, schema, parcel-road clearance, permission + physical gate routing, pedestrian routing, cross-district routing, terrain/road/sidewalk sampling, iPad-safe recipe limits, and detail/proxy streaming handoffs.");
