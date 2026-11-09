@@ -115,6 +115,13 @@ assert.equal(authorizedWorld.steps.some(step => step.type === "connection"), tru
 assert.ok(Math.abs(terrain.sampleTerrainHeight(district, -43, 64.5) - 0.68) < 0.001);
 assert.ok(Math.abs(terrain.sampleTerrainHeight(district, -43, 148) - 0.70) < 0.001);
 assert.ok(Math.abs(terrain.sampleTerrainHeight(district, -100, 70) - 0.64) < 0.001);
+assert.ok(Math.abs(terrain.sampleRoadSurfaceHeight(district, -50, 55, {
+  roadTopY: 0.77, sidewalkTopY: 0.80, sidewalkWidth: 3
+}) - 0.77) < 0.001);
+assert.ok(Math.abs(terrain.sampleRoadSurfaceHeight(district, -50, 61, {
+  roadTopY: 0.77, sidewalkTopY: 0.80, sidewalkWidth: 3
+}) - 0.80) < 0.001);
+assert.equal(terrain.sampleRoadSurfaceHeight(district, -100, 70), null);
 
 const gridDistrict = createDistrictFromRecipe({
   id: "world-system-grid-test",
@@ -142,4 +149,4 @@ const gridPedestrian = navigation.findRoute(
 );
 assert.equal(gridPedestrian.found, true);
 
-console.log("World System pure checks passed: loop and grid recipes, schema, parcel-road clearance, permissions, pedestrian routing, cross-district routing, and terrain sampling.");
+console.log("World System pure checks passed: loop and grid recipes, schema, parcel-road clearance, permissions, pedestrian routing, cross-district routing, and terrain/road-surface sampling.");
