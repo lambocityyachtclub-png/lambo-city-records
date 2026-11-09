@@ -137,6 +137,9 @@ export function buildDistrictGeometry(scene, district, options = {}) {
   root.userData.parcelCount = parcelResult.parcels;
   root.userData.buildingCount = parcelResult.buildings;
   root.userData.parcelStyles = parcelResult.styles;
+  root.userData.detailParcelCount = parcelResult.detailCount;
+  root.userData.proxyParcelCount = parcelResult.proxyCount;
+  root.userData.proxyBatchCount = parcelResult.proxyBatchCount;
   root.userData.ownedMaterials.push(...parcelResult.ownedMaterials);
   // Optional collision registration uses the existing player's AABB API.
   // Roads and sidewalks remain walkable; building footprints block movement.
