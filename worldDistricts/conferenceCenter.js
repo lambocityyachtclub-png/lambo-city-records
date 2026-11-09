@@ -87,7 +87,7 @@ const CONFERENCE_CENTER_DISTRICT = Object.freeze({
       Object.freeze({ id: "boulevard-west", from: "boulevard-north-west", to: "boulevard-south-west", mode: "vehicle", lanes: 2, width: MASTER_BOULEVARD.roadWidth, loop: true }),
       Object.freeze({ id: "boardwalk-gated-service-approach", from: "boardwalk-service-entry", to: "boulevard-south-access-junction", mode: "service", width: 8, access: "permission-controlled", requiredAccess: "service", gate: Object.freeze({ id: "arena-boardwalk-service-gate", offset: 1.4 }) }),
       Object.freeze({ id: "arena-service-arrival-approach", from: "boulevard-south-access-junction", to: "arena-arrival-approach", mode: "service", width: 8, access: "permission-controlled", requiredAccess: "service" }),
-      Object.freeze({ id: "walk-boardwalk-connection", from: "walk-boardwalk-approach", to: "walk-south-entry", mode: "pedestrian", navigationOnly: true }),
+      Object.freeze({ id: "walk-boardwalk-connection", from: "walk-boardwalk-approach", to: "walk-south-entry", mode: "pedestrian", width: MASTER_BOULEVARD.sidewalkWidth, physicalSurface: "sidewalk" }),
       Object.freeze({ id: "walk-south-west", from: "walk-south-west", to: "walk-south-entry", mode: "pedestrian", navigationOnly: true }),
       Object.freeze({ id: "walk-south-east", from: "walk-south-entry", to: "walk-south-east", mode: "pedestrian", navigationOnly: true }),
       Object.freeze({ id: "walk-east", from: "walk-south-east", to: "walk-east-north", mode: "pedestrian", navigationOnly: true }),
