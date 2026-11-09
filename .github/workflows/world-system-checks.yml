@@ -1,0 +1,62 @@
+name: World System Checks
+
+on:
+  push:
+    branches:
+      - feature/lambo-city-completion
+  pull_request:
+    paths:
+      - "world*.js"
+      - "worldDistricts/**"
+      - "world-system-preview.html"
+      - "tests/world-system-node-tests.mjs"
+      - ".github/workflows/world-system-checks.yml"
+
+jobs:
+  world-system:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Check World System module syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          for file in \
+            worldDistrictSchema.js \
+            worldDistrictFactory.js \
+            worldBuilder.js \
+            worldParcelBuilder.js \
+            worldTerrainMath.js \
+            worldTerrainBuilder.js \
+            worldAccessGate.js \
+            worldNavigation.js \
+            worldDistrictStreaming.js \
+            worldSystem.js \
+            worldDistricts/conferenceCenter.js
+          do
+            node --input-type=module --check < "$file"
+          done
+
+      - name: Check preview module syntax
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          html = Path("world-system-preview.html").read_text()
+          match = re.search(r'<script type="module">(.*?)</script>', html, re.S)
+          if not match:
+              raise SystemExit("Preview module script was not found.")
+          Path("/tmp/world-system-preview.mjs").write_text(match.group(1))
+          PY
+          node --check /tmp/world-system-preview.mjs
+
+      - name: Run pure World System tests
+        run: node tests/world-system-node-tests.mjs
