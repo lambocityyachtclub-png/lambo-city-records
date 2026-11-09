@@ -365,6 +365,36 @@
       if (!runtime.getStatus().ready || !runtime.getStatus().registeredDistrictIds.includes(recipeDistrict.id)) {
         throw new Error("The runtime bridge did not report its registered district state.");
       }
+      const runtimeExpansion = JSON.parse(JSON.stringify(recipeDistrict));
+      runtimeExpansion.id = "runtime-dynamic-district";
+      runtimeExpansion.name = "Runtime Dynamic District";
+      runtimeExpansion.bounds.minX += 500;
+      runtimeExpansion.bounds.maxX += 500;
+      runtimeExpansion.roadNetwork.nodes.forEach(node => { node.x += 500; });
+      runtimeExpansion.parcels.forEach(parcel => { parcel.center.x += 500; });
+      runtimeExpansion.landmarks.forEach(landmark => { landmark.center.x += 500; });
+      runtimeExpansion.landscapeZones.forEach(zone => { zone.center.x += 500; });
+      runtimeExpansion.terrainZones.forEach(zone => { zone.center.x += 500; });
+      const runtimeExpansionResult = runtime.registerDistrict(runtimeExpansion);
+      const runtimeLinkResult = runtime.registerConnection({
+        id: "runtime-dynamic-city-link",
+        from: { districtId: recipeDistrict.id, nodeId: "boulevard-north-east" },
+        to: { districtId: runtimeExpansion.id, nodeId: "boulevard-south-west" },
+        mode: "vehicle",
+        access: "public"
+      });
+      const runtimeExpansionRoute = runtime.findWorldRoute(
+        recipeDistrict.id, "boulevard-north-east",
+        runtimeExpansion.id, "boulevard-south-west",
+        { mode: "vehicle" }
+      );
+      if (!runtimeExpansionResult.registered || !runtimeLinkResult.registered ||
+          !runtimeExpansionRoute.found ||
+          !runtime.getStatus().registeredDistrictIds.includes(runtimeExpansion.id) ||
+          !runtime.unregisterConnection("runtime-dynamic-city-link") ||
+          !runtime.unregisterDistrict(runtimeExpansion.id)) {
+        throw new Error("The live runtime could not add, connect, route through, and cleanly remove a new district.");
+      }
       runtime.update(0, { playerPosition: { x: -43, z: 100 } });
       if (!runtime.getWorldSystem().isDistrictBuilt(recipeDistrict.id) ||
           !runtime.getStatus().builtDistricts.includes(recipeDistrict.id)) {
