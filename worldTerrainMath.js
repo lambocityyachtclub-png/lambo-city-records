@@ -71,7 +71,7 @@ function getRoadSurfaceCache(district, defaultRoadWidth) {
 export function sampleRoadSurfaceHeight(district, x, z, surfaceOptions = {}) {
   if (!Number.isFinite(x) || !Number.isFinite(z) || !district || typeof district !== "object") return null;
   const roadBaseTopY = Number.isFinite(surfaceOptions.roadTopY) ? surfaceOptions.roadTopY : 0.77;
-  const sidewalkBaseTopY = Number.isFinite(surfaceOptions.sidewalkTopY) ? surfaceOptions.sidewalkTopY : roadBaseTopY + 0.03;
+  const sidewalkBaseTopY = Number.isFinite(surfaceOptions.sidewalkTopY) ? surfaceOptions.sidewalkTopY : (Number.isFinite(district.roadNetwork?.sidewalkTopY) ? district.roadNetwork.sidewalkTopY : roadBaseTopY + 0.03);
   const defaultRoadWidth = Number.isFinite(surfaceOptions.roadWidth) ? surfaceOptions.roadWidth : 9;
   const sidewalkWidth = Number.isFinite(surfaceOptions.sidewalkWidth) ? surfaceOptions.sidewalkWidth : 3;
   const cache = getRoadSurfaceCache(district, defaultRoadWidth);
