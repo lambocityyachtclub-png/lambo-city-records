@@ -35,6 +35,7 @@ export default class WorldDistrictStreaming {
         typeof worldSystem.getDistrict !== "function" ||
         typeof worldSystem.isDistrictBuilt !== "function" ||
         typeof worldSystem.isDistrictProxied !== "function" ||
+        typeof worldSystem.updateDistrictDetailFocus !== "function" ||
         typeof worldSystem.buildDistrictProxy !== "function" ||
         typeof worldSystem.removeDistrictProxy !== "function") {
       throw new Error("WorldDistrictStreaming requires an initialized WorldSystem with proxy support.");
@@ -50,7 +51,7 @@ export default class WorldDistrictStreaming {
       return { built: [], removed: [], proxied: [], unproxied: [], errors: [], skipped: "NO_PLAYER_POSITION" };
     }
 
-    const detailBuilds = [], detailRemovals = [], proxyBuilds = [], proxyRemovals = [];
+    const detailBuilds = [], detailRemovals = [], proxyBuilds = [], proxyRemovals = [], focusUpdates = [];
     for (const id of this.worldSystem.getDistrictIds()) {
       const district = this.worldSystem.getDistrict(id);
       if (!district?.bounds) continue;
@@ -62,8 +63,9 @@ export default class WorldDistrictStreaming {
         if (distance > this.options.streamOutRadius) {
           detailRemovals.push({ id, distance });
           if (!proxied && distance <= this.options.proxyOutRadius) proxyBuilds.push({ id, distance });
-        } else if (proxied) {
-          proxyRemovals.push({ id, distance });
+        } else {
+          if (proxied) proxyRemovals.push({ id, distance });
+          focusUpdates.push({ id, distance });
         }
         continue;
       }
@@ -82,7 +84,7 @@ export default class WorldDistrictStreaming {
     detailRemovals.sort((a, b) => b.distance - a.distance);
     proxyBuilds.sort((a, b) => a.distance - b.distance);
     proxyRemovals.sort((a, b) => b.distance - a.distance);
-    const built = [], removed = [], proxied = [], unproxied = [], errors = [];
+    const built = [], removed = [], proxied = [], unproxied = [], refreshed = [], errors = [];
 
     // Build the far proxy before removing nearby full detail so the district
     // never disappears between the two levels.
@@ -104,6 +106,13 @@ export default class WorldDistrictStreaming {
         if (this.worldSystem.removeDistrictProxy(candidate.id)) unproxied.push(candidate.id);
       } catch (error) {
         errors.push({ id: candidate.id, stage: "detail-build", message: String(error?.message || error) });
+      }
+    }
+    for (const candidate of focusUpdates) {
+      try {
+        if (this.worldSystem.updateDistrictDetailFocus(candidate.id, position)) refreshed.push(candidate.id);
+      } catch (error) {
+        errors.push({ id: candidate.id, stage: "detail-refresh", message: String(error?.message || error) });
       }
     }
     for (const candidate of detailRemovals.slice(0, this.options.maxRemovalsPerUpdate)) {
@@ -131,7 +140,7 @@ export default class WorldDistrictStreaming {
     }
 
     return {
-      built, removed, proxied, unproxied, errors,
+      built, removed, proxied, unproxied, refreshed, errors,
       nearestBuildDistance: detailBuilds[0]?.distance ?? null,
       nearestProxyDistance: proxyBuilds[0]?.distance ?? null
     };
