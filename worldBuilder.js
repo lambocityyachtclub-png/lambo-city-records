@@ -135,6 +135,7 @@ export function buildDistrictGeometry(scene, district, options = {}) {
     }
   }
   root.userData.collisionIds = collisionIds;
+  root.userData.collisionSystem = collision || null;
   const accessGates = buildAccessGates(root, district, collision);
   root.userData.accessGates = accessGates;
   root.userData.accessGateIds = accessGates.map(gate => gate.id);
