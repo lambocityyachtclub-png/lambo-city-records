@@ -3,6 +3,8 @@
 
 const REQUIRED_TEXT = ["id", "name", "type"];
 const REQUIRED_BOUNDS = ["minX", "maxX", "minZ", "maxZ"];
+const MAX_LANDSCAPE_ZONES = 16;
+const MAX_TERRAIN_ZONES = 24;
 
 function issue(code, message, severity = "error") {
   return { code, message, severity };
@@ -241,6 +243,9 @@ export function validateDistrict(district, options = {}) {
   if (district.landscapeZones !== undefined && !Array.isArray(district.landscapeZones)) {
     issues.push(issue("INVALID_LANDSCAPE_ZONES", "Landscape zones must be an array."));
   } else if (Array.isArray(district.landscapeZones)) {
+    if (district.landscapeZones.length > MAX_LANDSCAPE_ZONES) {
+      issues.push(issue("LANDSCAPE_ZONE_LIMIT", "A district may contain at most " + MAX_LANDSCAPE_ZONES + " landscape zones."));
+    }
     const zoneIds = new Set();
     for (const zone of district.landscapeZones) {
       if (!zone || typeof zone.id !== "string" || !zone.id.trim()) {
@@ -290,6 +295,9 @@ export function validateDistrict(district, options = {}) {
     if (!Array.isArray(district.terrainZones)) {
       issues.push(issue("INVALID_TERRAIN_ZONES", "Terrain zones must be an array."));
     } else {
+      if (district.terrainZones.length > MAX_TERRAIN_ZONES) {
+        issues.push(issue("TERRAIN_ZONE_LIMIT", "A district may contain at most " + MAX_TERRAIN_ZONES + " terrain zones."));
+      }
       const terrainIds = new Set();
       const terrainFootprints = [];
       for (const zone of district.terrainZones) {
