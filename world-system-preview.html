@@ -41,6 +41,7 @@
     import WorldSystemRuntime from "./worldSystemRuntime.js";
     import { createDistrictFromRecipe } from "./worldDistrictFactory.js";
     import { buildParcelGeometry } from "./worldParcelBuilder.js";
+    import { updateDistrictParcelFocus } from "./worldBuilder.js";
     import district from "./worldDistricts/conferenceCenter.js";
     import { validateDistrict } from "./worldDistrictSchema.js";
 
@@ -250,6 +251,27 @@
           largeParcelResult.proxyBatchCount !== 4 || largeParcelResult.buildings !== 37) {
         throw new Error("Large districts did not cap detailed buildings and batch distant parcel proxies.");
       }
+      const focusRoot = new THREE.Group();
+      const focusInitial = buildParcelGeometry(focusRoot, largeGridDistrict, {
+        focusPosition: { x: 60, z: 60 }, maxDetailedParcels: 12
+      });
+      focusRoot.userData.parcelRoot = focusInitial.root;
+      focusRoot.userData.parcelOwnedMaterials = focusInitial.ownedMaterials;
+      focusRoot.userData.ownedMaterials = [...focusInitial.ownedMaterials];
+      focusRoot.userData.parcelFocusPosition = focusInitial.focusPosition;
+      focusRoot.userData.parcelBuildOptions = { maxDetailedParcels: 12 };
+      focusRoot.userData.detailParcelIds = focusInitial.detailParcelIds;
+      focusRoot.userData.parcelDetailSignature = [...focusInitial.detailParcelIds].sort().join("|");
+      const initialFocusIds = [...focusInitial.detailParcelIds].sort().join("|");
+      const focusChanged = updateDistrictParcelFocus(focusRoot, largeGridDistrict, { x: 440, z: 440 });
+      const refreshedFocusIds = [...focusRoot.userData.detailParcelIds].sort().join("|");
+      const focusSkippedSmallMove = !updateDistrictParcelFocus(focusRoot, largeGridDistrict, { x: 441, z: 441 });
+      if (!focusChanged || initialFocusIds === refreshedFocusIds || !focusSkippedSmallMove ||
+          focusRoot.userData.detailParcelCount !== 12 || focusRoot.userData.proxyParcelCount !== 37) {
+        throw new Error("Nearby detailed parcels did not move with the player's focus while keeping the LOD budget.");
+      }
+      focusRoot.traverse(object => object.geometry?.dispose?.());
+      focusRoot.userData.ownedMaterials.forEach(material => material.dispose?.());
       largeParcelRoot.traverse(object => object.geometry?.dispose?.());
       largeParcelResult.ownedMaterials.forEach(material => material.dispose?.());
 
