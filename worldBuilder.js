@@ -115,12 +115,15 @@ export function buildDistrictGeometry(scene, district, options = {}) {
   // landmark structures remain owned by their current district module.
   const parcelResult = buildParcelGeometry(root, district, options);
   root.userData.parcelCount = parcelResult.parcels;
+  root.userData.buildingCount = parcelResult.buildings;
+  root.userData.parcelStyles = parcelResult.styles;
   // Optional collision registration uses the existing player's AABB API.
   // Roads and sidewalks remain walkable; only villa footprints block movement.
   const collision = options.collision;
   const collisionIds = [];
   if (collision && typeof collision.registerBox === "function") {
     for (const parcel of district.parcels || []) {
+      if (parcel?.style === "urban-park") continue;
       if (!parcel?.center || !Number.isFinite(parcel.center.x) || !Number.isFinite(parcel.center.z)) continue;
       const footprint = parcel.footprint || { width: 13, depth: 11 };
       const width = Number.isFinite(footprint.width) ? footprint.width : 13;
