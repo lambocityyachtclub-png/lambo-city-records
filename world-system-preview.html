@@ -279,6 +279,23 @@
       if (root.userData.terrainZoneCount !== district.terrainZones.length) {
         throw new Error("Not all declared terrain grades were generated.");
       }
+      const terrainRoot = root.children.find(child => child.name === "worldTerrain_" + district.id);
+      const terrainFinishCount = terrainRoot?.children.filter(child => child.name.startsWith("worldTerrainZone_")).length || 0;
+      const courtyardMesh = terrainRoot?.children.find(child => child.name === "worldLandscapeZone_north-villa-courtyard");
+      if (terrainFinishCount !== district.terrainZones.length || !courtyardMesh ||
+          Math.abs(courtyardMesh.position.y - 0.705) > 0.001) {
+        throw new Error("Terrain finish meshes or local-grade landscape placement are incorrect.");
+      }
+      const invalidLandscapeDensity = structuredClone(district);
+      invalidLandscapeDensity.landscapeZones[0].treeCount = 99;
+      const densityValidation = validateDistrict(invalidLandscapeDensity);
+      const invalidTerrainFinish = structuredClone(district);
+      invalidTerrainFinish.terrainZones[0].materialColor = -1;
+      const finishValidation = validateDistrict(invalidTerrainFinish);
+      if (densityValidation.valid || !densityValidation.issues.some(item => item.code === "INVALID_LANDSCAPE_DENSITY") ||
+          finishValidation.valid || !finishValidation.issues.some(item => item.code === "INVALID_TERRAIN_COLOR")) {
+        throw new Error("Landscape density and terrain finish validation did not reject invalid values.");
+      }
       if (world.getDistrictAtPosition(-43, 97)?.id !== district.id ||
           Math.abs(world.getGroundHeightAt(-60, 55) - 0.77) > 0.001 ||
           world.getDistrictAtPosition(1000, 1000) !== null) {
@@ -382,6 +399,8 @@
         ["Access tiers", district.accessTiers.length],
         ["Terrain grades", root.userData.terrainZoneCount],
         ["Terrain height samples", "verified"],
+        ["Terrain finishes / planting grade", "verified"],
+        ["Landscape limits", "verified"],
         ["Road / sidewalk grounding", "verified"],
         ["Coordinate-based world lookup", "verified"],
         ["Landscape zones", root.userData.landscapeZoneCount],
