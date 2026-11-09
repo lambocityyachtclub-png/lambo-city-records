@@ -156,7 +156,7 @@ export default class WorldSystem {
       fromNodeId,
       toDistrictId,
       toNodeId,
-      routeOptions
+      { ...routeOptions, openGates: this.getOpenGateKeys() }
     );
   }
 
@@ -195,12 +195,31 @@ export default class WorldSystem {
       : roadHeight;
   }
 
+  getOpenGateKeys() {
+    const openGates = new Set();
+    for (const [districtId, district] of this.districts) {
+      const statuses = new Map(
+        (this.roots.get(districtId)?.userData.accessGates || [])
+          .map(gate => [gate.id, gate.getStatus().open === true])
+      );
+      for (const segment of district?.roadNetwork?.segments || []) {
+        if (segment.gate && statuses.get(segment.gate.id) === true) {
+          openGates.add(JSON.stringify([districtId, segment.gate.id]));
+        }
+      }
+    }
+    return openGates;
+  }
+
   findRoute(id, fromNodeId, toNodeId, routeOptions = {}) {
     const district = this.districts.get(id);
     if (!district) {
       return { found: false, reason: "UNKNOWN_DISTRICT", nodeIds: [], segmentIds: [], distance: 0 };
     }
-    return findDistrictRoute(district, fromNodeId, toNodeId, routeOptions);
+    return findDistrictRoute(district, fromNodeId, toNodeId, {
+      ...routeOptions,
+      openGates: this.getOpenGateKeys()
+    });
   }
 
   getDistrict(id) {
