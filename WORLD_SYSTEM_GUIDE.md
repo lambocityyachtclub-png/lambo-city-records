@@ -37,7 +37,7 @@ A district blueprint contains:
 - `parcels` with center, footprint, style, and optional rotation/floor count.
 - `accessTiers` and restricted-road metadata.
 
-Terrain zones must stay within the district, avoid parcel footprints, and not overlap one another. The height sampler uses the same transition formula as the generated terrain mesh.
+Terrain zones must stay within the district, avoid parcel footprints, and not overlap one another. The validator also checks rotated parcel footprints against road and sidewalk corridors. The height sampler uses the same transition formula as the generated terrain mesh.
 
 ## Access tiers and gates
 
