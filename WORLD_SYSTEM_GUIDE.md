@@ -95,7 +95,7 @@ Use `findRoute` for one district and `findWorldRoute` for a route across registe
 
 Connections remain route-only by default. To generate a visible connector, provide an explicit `physical` definition with `enabled: true`, `surface: "land"`, `surfaceVerified: true`, and a world-space `path` whose first and last points exactly match the registered endpoint nodes. The path may include intermediate waypoints to follow a surveyed road alignment. Width and sidewalk width can be specified; road and sidewalk sections are built as instanced batches.
 
-The `surfaceVerified` flag is the map author's confirmation, not an automatic terrain or water survey. The builder rejects water surfaces and will not invent bridges, piers, or causeways. A future bridge must have its own explicitly designed geometry and clearance checks. Removing either endpoint district or unregistering the connection disposes its connector geometry. The current second-district preview fixture remains route-only; it is not presented as a real physical city street.
+The `surfaceVerified` flag is the map author's confirmation, not an automatic terrain or water survey. The builder rejects water surfaces and will not invent bridges, piers, or causeways. A future bridge must have its own explicitly designed geometry and clearance checks. Ground-height queries also follow the connector's road and sidewalk elevations outside district bounds, and stop returning those heights when the connector is removed. Removing either endpoint district or unregistering the connection disposes its connector geometry. The current second-district preview fixture remains route-only; it is not presented as a real physical city street.
 
 ## Safe build workflow
 
