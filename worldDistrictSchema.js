@@ -105,17 +105,23 @@ export function validateDistrict(district, options = {}) {
         if (segment.access !== "permission-controlled" ||
             !segment.gate || typeof segment.gate.id !== "string" || !segment.gate.id.trim()) {
           issues.push(issue("INVALID_ACCESS_GATE", "A physical gate must have an id and belong to a permission-controlled road."));
-        } else if (gateIds.has(segment.gate.id)) {
-          issues.push(issue("DUPLICATE_ACCESS_GATE", "Gate id is repeated within the district: " + segment.gate.id));
-        } else if (Number.isFinite(segment.gate.offset) && nodeIds.has(segment.from) && nodeIds.has(segment.to)) {
-          gateIds.add(segment.gate.id);
-          const from = nodeById.get(segment.from), to = nodeById.get(segment.to);
-          const length = Math.hypot(to.x - from.x, to.z - from.z);
-          if (segment.gate.offset < 0 || segment.gate.offset >= length) {
-            issues.push(issue("ACCESS_GATE_OUT_OF_SEGMENT", "Gate on segment " + segment.id + " must be placed within the road segment."));
+        } else {
+          if (gateIds.has(segment.gate.id)) {
+            issues.push(issue("DUPLICATE_ACCESS_GATE", "Gate id is repeated within the district: " + segment.gate.id));
+          } else {
+            gateIds.add(segment.gate.id);
           }
-        } else if (segment.gate.offset !== undefined) {
-          issues.push(issue("INVALID_ACCESS_GATE_OFFSET", "Gate offset on segment " + segment.id + " must be a finite number."));
+          if (segment.gate.offset !== undefined) {
+            if (!Number.isFinite(segment.gate.offset)) {
+              issues.push(issue("INVALID_ACCESS_GATE_OFFSET", "Gate offset on segment " + segment.id + " must be a finite number."));
+            } else if (nodeIds.has(segment.from) && nodeIds.has(segment.to)) {
+              const from = nodeById.get(segment.from), to = nodeById.get(segment.to);
+              const length = Math.hypot(to.x - from.x, to.z - from.z);
+              if (segment.gate.offset < 0 || segment.gate.offset >= length) {
+                issues.push(issue("ACCESS_GATE_OUT_OF_SEGMENT", "Gate on segment " + segment.id + " must be placed within the road segment."));
+              }
+            }
+          }
         }
       }
       if (![ "vehicle", "pedestrian", "shared", "service" ].includes(segment.mode)) {
