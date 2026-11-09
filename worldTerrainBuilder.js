@@ -44,7 +44,7 @@ export function sampleTerrainHeight(district, x, z, fallbackY = 0.64, surfaceOpt
     const distance = Math.hypot(x - nearestX, z - nearestZ);
     const width = Number.isFinite(segment.width) ? segment.width : defaultRoadWidth;
     if (distance <= width / 2) onRoad = true;
-    else if (segment.mode !== "pedestrian" && distance <= width / 2 + sidewalkWidth) onSidewalk = true;
+    else if (surfaceOptions.buildSidewalks !== false && segment.mode !== "pedestrian" && distance <= width / 2 + sidewalkWidth) onSidewalk = true;
   }
   if (onSidewalk) return sidewalkTopY;
   if (onRoad) return roadTopY;
