@@ -522,13 +522,6 @@
         "arena-arrival-approach",
         { mode: "service", permissions: ["service"] }
       );
-      const gateGrant = world.setGateAccess(district.id, "arena-boardwalk-service-gate", ["service"]);
-      const authorizedServiceRoute = world.findRoute(
-        district.id,
-        "boardwalk-service-entry",
-        "arena-arrival-approach",
-        { mode: "service", permissions: ["service"] }
-      );
       const pedestrianRoute = world.findRoute(
         district.id,
         "walk-south-west",
@@ -563,6 +556,13 @@
       if (noPermissionServiceRoute.found) {
         throw new Error("Service route was incorrectly allowed without permission.");
       }
+      const gateGrant = world.setGateAccess(district.id, "arena-boardwalk-service-gate", ["service"]);
+      const authorizedServiceRoute = world.findRoute(
+        district.id,
+        "boardwalk-service-entry",
+        "arena-arrival-approach",
+        { mode: "service", permissions: ["service"] }
+      );
       if (!gateGrant.updated || !gateGrant.gate?.open || !authorizedServiceRoute.found) {
         throw new Error("Authorized service access did not open the gate and enable the route.");
       }
