@@ -143,7 +143,10 @@ export default class WorldSystem {
   getGroundHeight(id, x, z) {
     const district = this.districts.get(id);
     if (!district || !Number.isFinite(x) || !Number.isFinite(z)) return null;
-    const groundY = Number.isFinite(this.options.groundTopY) ? this.options.groundTopY : 0.64;
+    const root = this.roots.get(id);
+    const groundY = Number.isFinite(root?.userData?.groundTopY)
+      ? root.userData.groundTopY
+      : (Number.isFinite(this.options.groundTopY) ? this.options.groundTopY : 0.64);
     return sampleTerrainHeight(district, x, z, groundY);
   }
 
