@@ -257,6 +257,7 @@ export function validateDistrict(district, options = {}) {
       issues.push(issue("LANDSCAPE_ZONE_LIMIT", "A district may contain at most " + MAX_LANDSCAPE_ZONES + " landscape zones."));
     }
     const zoneIds = new Set();
+    const landscapeFootprints = [];
     for (const zone of district.landscapeZones) {
       if (!zone || typeof zone.id !== "string" || !zone.id.trim()) {
         issues.push(issue("INVALID_LANDSCAPE_ZONE", "Every landscape zone needs a valid id."));
@@ -283,6 +284,13 @@ export function validateDistrict(district, options = {}) {
       }
       const minX = zone.center.x - zone.width / 2, maxX = zone.center.x + zone.width / 2;
       const minZ = zone.center.z - zone.depth / 2, maxZ = zone.center.z + zone.depth / 2;
+      for (const previous of landscapeFootprints) {
+        if (minX < previous.maxX && maxX > previous.minX &&
+            minZ < previous.maxZ && maxZ > previous.minZ) {
+          issues.push(issue("LANDSCAPE_ZONE_OVERLAP", "Landscape zones " + previous.id + " and " + zone.id + " overlap."));
+        }
+      }
+      landscapeFootprints.push({ id: zone.id, minX, maxX, minZ, maxZ });
       if (boundsValid && (minX < bounds.minX || maxX > bounds.maxX || minZ < bounds.minZ || maxZ > bounds.maxZ)) {
         issues.push(issue("LANDSCAPE_ZONE_OUT_OF_BOUNDS", "Landscape zone " + zone.id + " extends beyond district boundaries."));
       }
