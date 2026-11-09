@@ -37,6 +37,7 @@ export function buildDistrictGeometry(scene, district, options = {}) {
   root.name = "worldSystemDistrict_" + district.id;
   root.userData.districtId = district.id;
   root.userData.generatedBy = "LAMBO_CITY_WorldBuilder";
+  root.userData.externalMaterials = [options.roadMaterial, options.sidewalkMaterial, options.terrainMaterial].filter(Boolean);
 
   const nodes = new Map(district.roadNetwork.nodes.map(node => [node.id, node]));
   const roadMaterial = options.roadMaterial || makeRoadMaterial();
