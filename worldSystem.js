@@ -5,7 +5,7 @@
 import { validateDistrict } from "./worldDistrictSchema.js";
 import { buildDistrictGeometry } from "./worldBuilder.js";
 import { findRoute as findDistrictRoute, findWorldRoute as findCityRoute } from "./worldNavigation.js";
-import { sampleTerrainHeight } from "./worldTerrainBuilder.js";
+import { sampleTerrainHeight } from "./worldTerrainMath.js";
 
 export default class WorldSystem {
   constructor(options = {}) {
