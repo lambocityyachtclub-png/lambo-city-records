@@ -46,6 +46,23 @@ export function sampleTerrainHeight(district, x, z, fallbackY = 0.64, surfaceOpt
     if (distance <= width / 2) onRoad = true;
     else if (surfaceOptions.buildSidewalks !== false && segment.mode !== "pedestrian" && distance <= width / 2 + sidewalkWidth) onSidewalk = true;
   }
+  const junctionWidths = new Map();
+  for (const segment of district?.roadNetwork?.segments || []) {
+    if (segment.navigationOnly === true) continue;
+    const width = Number.isFinite(segment.width) ? segment.width : defaultRoadWidth;
+    for (const nodeId of [segment.from, segment.to]) {
+      junctionWidths.set(nodeId, Math.max(junctionWidths.get(nodeId) || 0, width));
+    }
+  }
+  for (const [nodeId, width] of junctionWidths) {
+    const node = nodes.get(nodeId);
+    const degree = (district?.roadNetwork?.segments || []).filter(segment =>
+      segment.navigationOnly !== true && (segment.from === nodeId || segment.to === nodeId)
+    ).length;
+    if (degree >= 2 && Math.abs(x - node.x) <= width / 2 && Math.abs(z - node.z) <= width / 2) {
+      onRoad = true;
+    }
+  }
   if (onSidewalk) return sidewalkTopY;
   if (onRoad) return roadTopY;
   return height;
