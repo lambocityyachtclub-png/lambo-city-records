@@ -24,10 +24,9 @@ export default class WorldDistrictStreaming {
       maxRemovalsPerUpdate: Math.min(2, Math.max(1, Math.floor(options.maxRemovalsPerUpdate || 1))),
       maxProxyBuildsPerUpdate: Math.min(2, Math.max(1, Math.floor(options.maxProxyBuildsPerUpdate || 1))),
       maxProxyRemovalsPerUpdate: Math.min(2, Math.max(1, Math.floor(options.maxProxyRemovalsPerUpdate || 1))),
-      maxDetailedParcels: Number.isInteger(options.maxDetailedParcels) ? Math.max(0, Math.min(64, options.maxDetailedParcels)) : 24,
-      focusRefreshDistance: Number.isFinite(options.focusRefreshDistance) ? Math.max(0, options.focusRefreshDistance) : 20,
       maxDetailedParcels: Number.isInteger(options.maxDetailedParcels)
         ? Math.max(0, Math.min(64, options.maxDetailedParcels)) : 24,
+      focusRefreshDistance: Number.isFinite(options.focusRefreshDistance) ? Math.max(0, options.focusRefreshDistance) : 20,
       maxFocusUpdatesPerUpdate: Math.min(2, Math.max(1, Math.floor(options.maxFocusUpdatesPerUpdate || 1)))
     };
     this.worldSystem = null;
