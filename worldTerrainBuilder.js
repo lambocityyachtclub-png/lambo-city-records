@@ -9,6 +9,34 @@ function makeMaterial(color, roughness = 1) {
   return new THREE.MeshStandardMaterial({ color, roughness });
 }
 
+function buildTerrainZoneSurface(district, zone, groundTopY) {
+  const width = zone.width, depth = zone.depth;
+  const segmentsX = Math.max(4, Math.min(32, Math.ceil(width / 2)));
+  const segmentsZ = Math.max(4, Math.min(32, Math.ceil(depth / 2)));
+  const positions = [], indices = [];
+  for (let row = 0; row <= segmentsZ; row++) {
+    const z = zone.center.z - depth / 2 + depth * row / segmentsZ;
+    for (let column = 0; column <= segmentsX; column++) {
+      const x = zone.center.x - width / 2 + width * column / segmentsX;
+      positions.push(x, sampleTerrainHeight(district, x, z, groundTopY) + 0.012, z);
+    }
+  }
+  for (let row = 0; row < segmentsZ; row++) {
+    for (let column = 0; column < segmentsX; column++) {
+      const a = row * (segmentsX + 1) + column;
+      const b = a + 1;
+      const c = a + segmentsX + 1;
+      const d = c + 1;
+      indices.push(a, c, b, b, c, d);
+    }
+  }
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+  geometry.setIndex(indices);
+  geometry.computeVertexNormals();
+  return geometry;
+}
+
 export function buildTerrainAndLandscape(parent, district, options = {}) {
   if (!parent || !district?.bounds) throw new Error("A district root and valid bounds are required.");
   const bounds = district.bounds;
@@ -53,13 +81,28 @@ export function buildTerrainAndLandscape(parent, district, options = {}) {
   ground.receiveShadow = true;
   root.add(ground);
 
+  // Explicit terrain zones receive their own low-poly surface tint while
+  // sharing the exact same height function as the underlying grade mesh.
+  for (const zone of terrainZones) {
+    if (!zone?.center || !Number.isFinite(zone.center.x) || !Number.isFinite(zone.center.z) ||
+        !Number.isFinite(zone.width) || !Number.isFinite(zone.depth) ||
+        zone.width <= 0 || zone.depth <= 0) continue;
+    const zoneMaterial = makeMaterial(zone.materialColor || 0x8f897d, 0.94);
+    ownedMaterials.push(zoneMaterial);
+    const zoneSurface = new THREE.Mesh(buildTerrainZoneSurface(district, zone, groundTopY), zoneMaterial);
+    zoneSurface.name = "worldTerrainZone_" + zone.id;
+    zoneSurface.receiveShadow = true;
+    zoneSurface.renderOrder = 1;
+    root.add(zoneSurface);
+  }
+
   const zones = Array.isArray(district.landscapeZones) ? district.landscapeZones : [];
   let featureCount = 0;
   for (const zone of zones) {
     if (!zone?.center || !Number.isFinite(zone.center.x) || !Number.isFinite(zone.center.z)) continue;
     const zoneRoot = new THREE.Group();
     zoneRoot.name = "worldLandscapeZone_" + zone.id;
-    zoneRoot.position.set(zone.center.x, groundTopY + 0.035, zone.center.z);
+    zoneRoot.position.set(zone.center.x, sampleTerrainHeight(district, zone.center.x, zone.center.z, groundTopY) + 0.005, zone.center.z);
     root.add(zoneRoot);
 
     const zoneWidth = Number.isFinite(zone.width) ? zone.width : 8;
