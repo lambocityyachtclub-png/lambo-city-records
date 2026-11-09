@@ -69,7 +69,7 @@ const deniedService = navigation.findRoute(
 );
 const authorizedService = navigation.findRoute(
   district, "boardwalk-service-entry", "arena-arrival-approach",
-  { mode: "service", permissions: ["service"] }
+  { mode: "service", permissions: ["service"], openGates: new Set([JSON.stringify([district.id, "test-service-gate"])]) }
 );
 const publicVehicle = navigation.findRoute(
   district, "boardwalk-service-entry", "arena-arrival-approach", { mode: "vehicle" }
@@ -78,6 +78,11 @@ const pedestrian = navigation.findRoute(
   district, "walk-south-west", "walk-north-east", { mode: "pedestrian" }
 );
 assert.equal(deniedService.found, false);
+const permissionWithoutOpenGate = navigation.findRoute(
+  district, "boardwalk-service-entry", "arena-arrival-approach",
+  { mode: "service", permissions: ["service"] }
+);
+assert.equal(permissionWithoutOpenGate.found, false);
 assert.equal(authorizedService.found, true);
 assert.equal(publicVehicle.found, false);
 assert.equal(pedestrian.found, true);
@@ -106,7 +111,7 @@ const deniedWorld = navigation.findWorldRoute(
 const authorizedWorld = navigation.findWorldRoute(
   [[district.id, district], [future.id, future]], [connection],
   district.id, "boardwalk-service-entry", future.id, "boulevard-south-west",
-  { mode: "service", permissions: ["service"] }
+  { mode: "service", permissions: ["service"], openGates: new Set([JSON.stringify([district.id, "test-service-gate"])]) }
 );
 assert.equal(deniedWorld.found, false);
 assert.equal(authorizedWorld.found, true);
