@@ -19,7 +19,7 @@ export function sampleTerrainHeight(district, x, z, fallbackY = 0.64) {
     const blend = t * t * (3 - 2 * t);
     const edgeY = Number.isFinite(zone.edgeY) ? zone.edgeY : fallbackY + 0.005;
     const topY = Number.isFinite(zone.topY) ? zone.topY : edgeY;
-    height = Math.max(height, edgeY + (topY - edgeY) * blend);
+    height = edgeY + (topY - edgeY) * blend;
   }
   return height;
 }
