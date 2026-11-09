@@ -84,6 +84,20 @@ export function validateDistrict(district, options = {}) {
           (typeof segment.requiredAccess !== "string" || !segment.requiredAccess.trim())) {
         issues.push(issue("MISSING_REQUIRED_ACCESS", "Restricted road segment " + segment.id + " must declare its required access tier."));
       }
+      if (segment.gate !== undefined) {
+        if (segment.access !== "permission-controlled" ||
+            !segment.gate || typeof segment.gate.id !== "string" || !segment.gate.id.trim()) {
+          issues.push(issue("INVALID_ACCESS_GATE", "A physical gate must have an id and belong to a permission-controlled road."));
+        } else if (Number.isFinite(segment.gate.offset) && nodeIds.has(segment.from) && nodeIds.has(segment.to)) {
+          const from = nodeById.get(segment.from), to = nodeById.get(segment.to);
+          const length = Math.hypot(to.x - from.x, to.z - from.z);
+          if (segment.gate.offset < 0 || segment.gate.offset >= length) {
+            issues.push(issue("ACCESS_GATE_OUT_OF_SEGMENT", "Gate on segment " + segment.id + " must be placed within the road segment."));
+          }
+        } else if (segment.gate.offset !== undefined) {
+          issues.push(issue("INVALID_ACCESS_GATE_OFFSET", "Gate offset on segment " + segment.id + " must be a finite number."));
+        }
+      }
       if (![ "vehicle", "pedestrian", "shared", "service" ].includes(segment.mode)) {
         issues.push(issue("INVALID_ROAD_MODE", "Road segment " + segment.id + " has an unsupported travel mode."));
       }
