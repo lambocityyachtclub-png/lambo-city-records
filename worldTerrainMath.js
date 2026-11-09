@@ -66,12 +66,13 @@ function getRoadSurfaceCache(district, defaultRoadWidth) {
 
 export function sampleRoadSurfaceHeight(district, x, z, surfaceOptions = {}) {
   if (!Number.isFinite(x) || !Number.isFinite(z) || !district || typeof district !== "object") return null;
-  const roadTopY = Number.isFinite(surfaceOptions.roadTopY) ? surfaceOptions.roadTopY : 0.77;
-  const sidewalkTopY = Number.isFinite(surfaceOptions.sidewalkTopY) ? surfaceOptions.sidewalkTopY : roadTopY + 0.03;
+  const roadBaseTopY = Number.isFinite(surfaceOptions.roadTopY) ? surfaceOptions.roadTopY : 0.77;
+  const sidewalkBaseTopY = Number.isFinite(surfaceOptions.sidewalkTopY) ? surfaceOptions.sidewalkTopY : roadBaseTopY + 0.03;
   const defaultRoadWidth = Number.isFinite(surfaceOptions.roadWidth) ? surfaceOptions.roadWidth : 9;
   const sidewalkWidth = Number.isFinite(surfaceOptions.sidewalkWidth) ? surfaceOptions.sidewalkWidth : 3;
   const cache = getRoadSurfaceCache(district, defaultRoadWidth);
   let onRoad = false, onSidewalk = false;
+  let roadHeight = roadBaseTopY, sidewalkHeight = sidewalkBaseTopY;
 
   for (const segment of cache.segments) {
     const t = ((x - segment.fromX) * segment.dx + (z - segment.fromZ) * segment.dz) / segment.lengthSquared;
@@ -89,20 +90,20 @@ export function sampleRoadSurfaceHeight(district, x, z, surfaceOptions = {}) {
       }
     } else if (distance <= segment.width / 2) {
       onRoad = true;
-      if (interpolatedTopY !== null) roadTopY = interpolatedTopY;
+      if (interpolatedTopY !== null) roadHeight = interpolatedTopY;
     } else if (surfaceOptions.buildSidewalks !== false && !segment.pedestrianOnly &&
                distance <= segment.width / 2 + sidewalkWidth) {
       onSidewalk = true;
       if (interpolatedTopY !== null) sidewalkHeight = interpolatedTopY +
-        (sidewalkTopY - (Number.isFinite(surfaceOptions.roadTopY) ? surfaceOptions.roadTopY : 0.77));
+        (sidewalkBaseTopY - roadBaseTopY);
     }
   }
   for (const junction of cache.junctions) {
     if (Math.abs(x - junction.x) <= junction.width / 2 &&
         Math.abs(z - junction.z) <= junction.width / 2) onRoad = true;
   }
-  if (onRoad) return roadTopY;
-  if (onSidewalk) return sidewalkTopY;
+  if (onRoad) return roadHeight;
+  if (onSidewalk) return sidewalkHeight;
   return null;
 }
 
