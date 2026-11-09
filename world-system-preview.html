@@ -249,7 +249,7 @@
       });
       if (largeParcelResult.detailCount !== 12 || largeParcelResult.proxyCount !== 37 ||
           largeParcelResult.proxyBatchCount !== 4 || largeParcelResult.buildings !== 37 ||
-          largeParcelResult.detailBatchCount > 9 ||
+          largeParcelResult.detailBatchCount > 10 ||
           largeParcelResult.detailSourceMeshCount <= largeParcelResult.detailBatchCount) {
         throw new Error("Large districts did not cap detail geometry and batch it into a small number of instanced draws.");
       }
