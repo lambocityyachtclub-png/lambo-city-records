@@ -39,6 +39,7 @@ jobs:
             worldTerrainMath.js \
             worldTerrainBuilder.js \
             worldAccessGate.js \
+            worldConnectionBuilder.js \
             worldNavigation.js \
             worldDistrictStreaming.js \
             worldSystemRuntime.js \
