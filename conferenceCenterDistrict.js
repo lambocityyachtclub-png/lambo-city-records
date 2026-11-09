@@ -69,9 +69,13 @@ export default {
   init(scene, context = {}) {
     if (scene.getObjectByName("lamboCityConferenceCenterDistrict")) return;
 
+    const districtRoot = new THREE.Group();
+    districtRoot.name = "lamboCityConferenceCenterDistrict";
+    scene.add(districtRoot);
+
     const root = new THREE.Group();
-    root.name = "lamboCityConferenceCenterDistrict";
-    scene.add(root);
+    root.name = "lamboCityConferenceCenterLandmark";
+    districtRoot.add(root);
 
     const arena = PLAN.arena;
     const boulevard = PLAN.boulevard;
@@ -168,7 +172,7 @@ export default {
       collision.registerBox("arenaSouthEastMass", { x: right - 8.5, z: front + 0.9, width: 17, depth: 1.8, ...bounds });
     }
 
-    this._root = root;
+    this._root = districtRoot;
   },
 
   update() {}
