@@ -79,6 +79,11 @@ function createGate(parent, segment, from, to, collision) {
   function destroy() {
     if (collision && typeof collision.unregister === "function") collision.unregister(collisionName);
     parent.remove(root);
+    root.traverse(object => {
+      object.geometry?.dispose?.();
+      if (Array.isArray(object.material)) object.material.forEach(material => material?.dispose?.());
+      else object.material?.dispose?.();
+    });
   }
 
   setOpen(false);
