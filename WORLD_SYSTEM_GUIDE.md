@@ -13,6 +13,7 @@ The World System is the reusable foundation for adding named districts without h
 - `worldAccessGate.js` creates physical gates and updates their collision state when an access tier is granted.
 - `worldNavigation.js` provides A* routing inside one district and across registered district connectors.
 - `worldDistrictStreaming.js` builds nearby registered districts on demand and removes their geometry after the player leaves, using separate in/out distances to prevent flicker.
+- `worldSystemRuntime.js` is the lazy bridge the engine can call later; it loads the system only when explicitly initialized, registers blueprints/recipes, and delegates per-frame streaming updates.
 - `worldDistricts/conferenceCenter.js` is the first district blueprint.
 - `world-system-preview.html` is the isolated preview and browser-side check harness.
 
@@ -68,7 +69,7 @@ Use `findRoute` for one district and `findWorldRoute` for a route across registe
 5. Review the complete generated area on the primary iPad target.
 6. Only after the combined review, plan any live-game integration.
 
-Do not wire new districts into engine startup by default. Keep generation on demand, preserve existing approved structures, and avoid loading distant district detail at initial startup. The streaming controller limits how many districts it builds or removes in one update to reduce sudden work spikes.
+Do not wire new districts into engine startup by default. Keep generation on demand, preserve existing approved structures, and avoid loading distant district detail at initial startup. The runtime bridge must be explicitly initialized by the host engine; until then it adds no startup work. The streaming controller limits how many districts it builds or removes in one update to reduce sudden work spikes.
 
 ## Current boundary
 
