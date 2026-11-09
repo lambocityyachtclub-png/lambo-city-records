@@ -52,8 +52,6 @@ export function buildDistrictGeometry(scene, district, options = {}) {
   const sidewalkMaterial = options.sidewalkMaterial || makeSidewalkMaterial();
   if (!options.roadMaterial) root.userData.ownedMaterials.push(roadMaterial);
   if (!options.sidewalkMaterial) root.userData.ownedMaterials.push(sidewalkMaterial);
-  if (!options.roadMaterial) root.userData.ownedMaterials.push(roadMaterial);
-  if (!options.sidewalkMaterial) root.userData.ownedMaterials.push(sidewalkMaterial);
   const defaultWidth = Number.isFinite(options.roadWidth) ? options.roadWidth : 9;
   const sidewalkWidth = Number.isFinite(options.sidewalkWidth)
     ? options.sidewalkWidth
