@@ -665,13 +665,13 @@
           world.getDistrictAtPosition(1000, 1000) !== null) {
         throw new Error("World-coordinate district lookup or automatic ground sampling failed.");
       }
-      const plazaGroundY = world.getGroundHeight(district.id, -55, 70.5);
+      const plazaGroundY = world.getGroundHeight(district.id, -55, 68.5);
       const courtyardGroundY = world.getGroundHeight(district.id, -43, 148);
       const baseGroundY = world.getGroundHeight(district.id, -100, 70);
       const roadGroundY = world.getGroundHeight(district.id, -60, 60);
-      const sidewalkGroundY = world.getGroundHeight(district.id, -60, 56.5);
+      const sidewalkGroundY = world.getGroundHeight(district.id, -70, 53.5);
       const approachSidewalkGroundY = world.getGroundHeight(district.id, -60, 142);
-      const unbuiltCustomSidewalkGroundY = world.getGroundHeight(futureDistrict.id, 240, 56.5);
+      const unbuiltCustomSidewalkGroundY = world.getGroundHeight(futureDistrict.id, 212, 90);
       if (Math.abs(unbuiltCustomSidewalkGroundY - 0.80) > 0.001 ||
           Math.abs(plazaGroundY - 0.68) > 0.001 ||
           Math.abs(courtyardGroundY - 0.70) > 0.001 ||
