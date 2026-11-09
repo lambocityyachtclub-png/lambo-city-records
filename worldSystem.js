@@ -50,7 +50,10 @@ export default class WorldSystem {
     if (!this.scene) throw new Error("WorldSystem must be initialized with a scene before building.");
     const district = this.districts.get(id);
     if (!district) throw new Error("Unknown district: " + id);
-    if (this.roots.has(id)) return this.roots.get(id);
+    if (this.roots.has(id)) {
+      this.removeDistrictProxy(id);
+      return this.roots.get(id);
+    }
 
     const root = buildDistrictGeometry(this.scene, district, {
       ...buildOptions,
@@ -253,6 +256,10 @@ export default class WorldSystem {
 
   isDistrictBuilt(id) {
     return this.roots.has(id);
+  }
+
+  isDistrictProxied(id) {
+    return this.proxyRoots.has(id);
   }
 
   getDistrictIds() {
