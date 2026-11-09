@@ -3,7 +3,7 @@
 // Nothing is built automatically at startup; callers explicitly request a build.
 
 import { validateDistrict } from "./worldDistrictSchema.js";
-import { buildDistrictGeometry } from "./worldBuilder.js";
+import { buildDistrictGeometry, updateDistrictParcelFocus } from "./worldBuilder.js";
 import { buildDistrictProxy, disposeDistrictProxy } from "./worldDistrictProxyBuilder.js";
 import { findRoute as findDistrictRoute, findWorldRoute as findCityRoute } from "./worldNavigation.js";
 import { sampleTerrainHeight, sampleRoadSurfaceHeight } from "./worldTerrainMath.js";
@@ -62,6 +62,13 @@ export default class WorldSystem {
     this.roots.set(id, root);
     this.removeDistrictProxy(id);
     return root;
+  }
+
+  updateDistrictDetailFocus(id, position, options = {}) {
+    const root = this.roots.get(id);
+    const district = this.districts.get(id);
+    if (!root || !district) return false;
+    return updateDistrictParcelFocus(root, district, position, options);
   }
 
   buildDistrictProxy(id, proxyOptions = {}) {
