@@ -444,7 +444,9 @@
       if (Math.abs(hostPlayer.position.y - 1.47) > 0.01) {
         throw new Error("The live player did not follow a generated sidewalk elevation.");
       }
-      WorldSystemHost.buildDistrict(recipeDistrict.id);
+      WorldSystemHost.buildDistrict(recipeDistrict.id, {
+        roadTopY: 0.77, sidewalkTopY: 0.82, roadWidth: 9, sidewalkWidth: 3
+      });
       if (hostCollision.boxes.length !== recipeDistrict.parcels.length + 1) {
         throw new Error("The engine host did not register generated parcel and gate collision.");
       }
