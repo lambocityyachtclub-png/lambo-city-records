@@ -154,6 +154,41 @@ export function validateDistrict(district, options = {}) {
     }
   }
 
+  // Landscape zones must remain inside the district and clear of parcel footprints.
+  if (Array.isArray(district.landscapeZones)) {
+    const zoneIds = new Set();
+    for (const zone of district.landscapeZones) {
+      if (!zone || typeof zone.id !== "string" || !zone.id.trim()) {
+        issues.push(issue("INVALID_LANDSCAPE_ZONE", "Every landscape zone needs a valid id."));
+        continue;
+      }
+      if (zoneIds.has(zone.id)) issues.push(issue("DUPLICATE_LANDSCAPE_ZONE", "Landscape zone id is repeated: " + zone.id));
+      zoneIds.add(zone.id);
+      if (!zone.center || !Number.isFinite(zone.center.x) || !Number.isFinite(zone.center.z) ||
+          !Number.isFinite(zone.width) || !Number.isFinite(zone.depth) || zone.width <= 0 || zone.depth <= 0) {
+        issues.push(issue("INVALID_LANDSCAPE_ZONE_SIZE", "Landscape zone " + zone.id + " needs a finite center and positive dimensions."));
+        continue;
+      }
+      const minX = zone.center.x - zone.width / 2, maxX = zone.center.x + zone.width / 2;
+      const minZ = zone.center.z - zone.depth / 2, maxZ = zone.center.z + zone.depth / 2;
+      if (boundsValid && (minX < bounds.minX || maxX > bounds.maxX || minZ < bounds.minZ || maxZ > bounds.maxZ)) {
+        issues.push(issue("LANDSCAPE_ZONE_OUT_OF_BOUNDS", "Landscape zone " + zone.id + " extends beyond district boundaries."));
+      }
+      for (const parcel of district.parcels || []) {
+        if (!parcel?.center || !Number.isFinite(parcel.center.x) || !Number.isFinite(parcel.center.z)) continue;
+        const parcelWidth = parcel.footprint?.width ?? 13;
+        const parcelDepth = parcel.footprint?.depth ?? 11;
+        const angle = Number.isFinite(parcel.rotationY) ? parcel.rotationY : 0;
+        const halfX = (Math.abs(Math.cos(angle)) * parcelWidth + Math.abs(Math.sin(angle)) * parcelDepth) / 2;
+        const halfZ = (Math.abs(Math.sin(angle)) * parcelWidth + Math.abs(Math.cos(angle)) * parcelDepth) / 2;
+        if (minX < parcel.center.x + halfX && maxX > parcel.center.x - halfX &&
+            minZ < parcel.center.z + halfZ && maxZ > parcel.center.z - halfZ) {
+          issues.push(issue("LANDSCAPE_PARCEL_OVERLAP", "Landscape zone " + zone.id + " overlaps parcel " + parcel.id + "."));
+        }
+      }
+    }
+  }
+
   const protectedIds = new Set(options.protectedLandmarks || []);
   for (const landmarkId of district.overlapsProtectedLandmarks || []) {
     if (protectedIds.has(landmarkId)) {
