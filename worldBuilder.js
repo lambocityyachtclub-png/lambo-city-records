@@ -72,19 +72,25 @@ export function buildDistrictGeometry(scene, district, options = {}) {
     const centerX = (from.x + to.x) / 2;
     const centerZ = (from.z + to.z) / 2;
     validSegments.push({ segment, from, to, width, angle, centerX, centerZ, length });
+    const roadFromY = Number.isFinite(segment.fromTopY) ? segment.fromTopY : roadY;
+    const roadToY = Number.isFinite(segment.toTopY) ? segment.toTopY : roadY;
+    const slopeAngle = -Math.atan2(roadToY - roadFromY, length);
     roadInstances.push({
       x: centerX, z: centerZ, width, length: length + width * 0.02,
-      angle, y: roadY - thickness / 2, height: thickness
+      angle, slopeAngle, y: (roadFromY + roadToY) / 2 - thickness / 2, height: thickness
     });
 
     if (segment.mode === "pedestrian" && segment.physicalSurface === "sidewalk") {
       const pathWidth = Number.isFinite(segment.width) ? segment.width : sidewalkWidth;
+      const pathFromY = Number.isFinite(segment.fromTopY) ? segment.fromTopY : sidewalkY;
+      const pathToY = Number.isFinite(segment.toTopY) ? segment.toTopY : sidewalkY;
       sidewalkInstances.push({
         x: centerX, z: centerZ,
         width: pathWidth,
         length: length + pathWidth,
         angle,
-        y: sidewalkY - 0.07,
+        slopeAngle: -Math.atan2(pathToY - pathFromY, length),
+        y: (pathFromY + pathToY) / 2 - 0.07,
         height: 0.14
       });
     } else if (segment.mode !== "pedestrian" && options.buildSidewalks !== false && sidewalkWidth > 0) {
@@ -92,13 +98,16 @@ export function buildDistrictGeometry(scene, district, options = {}) {
       const sideX = Math.cos(angle) * offset;
       const sideZ = -Math.sin(angle) * offset;
       for (const sign of [-1, 1]) {
+        const sideFromY = roadFromY + (sidewalkY - roadY);
+        const sideToY = roadToY + (sidewalkY - roadY);
         sidewalkInstances.push({
           x: centerX + sideX * sign,
           z: centerZ + sideZ * sign,
           width: sidewalkWidth,
           length: length + sidewalkWidth + (segment.loop ? 15 : 0),
           angle,
-          y: sidewalkY - 0.07,
+          slopeAngle: -Math.atan2(sideToY - sideFromY, length),
+          y: (sideFromY + sideToY) / 2 - 0.07,
           height: 0.14
         });
       }
@@ -137,7 +146,7 @@ export function buildDistrictGeometry(scene, district, options = {}) {
     const transform = new THREE.Object3D();
     items.forEach((item, index) => {
       transform.position.set(item.x, item.y, item.z);
-      transform.rotation.set(0, item.angle, 0);
+      transform.rotation.set(item.slopeAngle || 0, item.angle, 0);
       transform.scale.set(item.width, item.height, item.length);
       transform.updateMatrix();
       mesh.setMatrixAt(index, transform.matrix);
