@@ -103,7 +103,7 @@ export const PARCEL_STYLES = Object.freeze([
 ]);
 
 export function buildParcelGeometry(parent, district, options = {}) {
-  if (!parent || !district || !Array.isArray(district.parcels)) return { parcels: 0, buildings: 0, styles: {} };
+  if (!parent || !district || !Array.isArray(district.parcels)) return { parcels: 0, buildings: 0, styles: {}, ownedMaterials: [] };
 
   const materials = {
     foundation: new THREE.MeshStandardMaterial({ color: 0x343a3d, roughness: 0.78, metalness: 0.18 }),
