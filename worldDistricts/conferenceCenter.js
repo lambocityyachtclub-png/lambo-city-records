@@ -137,7 +137,7 @@ const CONFERENCE_CENTER_DISTRICT = Object.freeze({
     "Keep the south-facing arena arrival approach clear.",
     "Do not place roads or foundations over open water without an approved structure.",
     "Preserve the complete four-sided boulevard loop and its connected south access junction.",
-    "Use the shared city map as the coordinate source; begin generated land beyond the mapped boardwalk deck."
+    "Use the shared city map as the coordinate source; join the generated street to the mapped Boardwalk road edge and keep the existing Boardwalk sidewalk connected."
   ])
 });
 
