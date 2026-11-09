@@ -60,7 +60,7 @@ These tiers are an access-control foundation, not yet connected to player profil
 
 Use `registerConnection` to connect a node in one registered district to a node in another. Connections are route-graph links; they do not automatically create a bridge, road mesh, or water crossing. Physical connector geometry must be explicitly designed and validated.
 
-Use `findRoute` for one district and `findWorldRoute` for a route across registered districts. Route modes are vehicle, pedestrian, and service. Restricted edges are only included when the caller supplies the required permission.
+Use `findRoute` for one district and `findWorldRoute` for a route across registered districts. Route modes are vehicle, pedestrian, and service. Restricted edges are only included when the caller supplies the required permission. If a segment also has a physical gate, the route planner additionally requires that gate to be physically open; having a permission tier alone never routes a player through a closed barrier.
 
 ## Safe build workflow
 
