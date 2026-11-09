@@ -83,6 +83,21 @@ export default class WorldSystemRuntime {
   }
 
 
+  getDistrictAtPosition(x, z) {
+    return this.ready ? this.worldSystem.getDistrictAtPosition(x, z) : null;
+  }
+
+  getGroundHeightAt(x, z) {
+    return this.ready ? this.worldSystem.getGroundHeightAt(x, z) : null;
+  }
+
+  findWorldRoute(fromDistrictId, fromNodeId, toDistrictId, toNodeId, options = {}) {
+    if (!this.ready) {
+      return { found: false, reason: "NOT_READY", nodes: [], steps: [], distance: 0 };
+    }
+    return this.worldSystem.findWorldRoute(fromDistrictId, fromNodeId, toDistrictId, toNodeId, options);
+  }
+
   setGateAccess(districtId, gateId, permissions = []) {
     if (!this.ready) return false;
     return this.worldSystem.setGateAccess(districtId, gateId, permissions);
