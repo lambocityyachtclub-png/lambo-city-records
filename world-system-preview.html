@@ -485,7 +485,7 @@
           Math.abs(roadGroundY - 0.77) > 0.001 ||
           Math.abs(sidewalkGroundY - 0.82) > 0.001 ||
           Math.abs(approachSidewalkGroundY - 0.82) > 0.001) {
-        throw new Error("Terrain height sampling does not match the generated grade data.");
+        throw new Error("Terrain height sampling does not match the generated grade data: " + JSON.stringify({ unbuiltCustomSidewalkGroundY, plazaGroundY, courtyardGroundY, baseGroundY, roadGroundY, sidewalkGroundY, approachSidewalkGroundY }));
       }
       const failedBuildCollision = {
         boxes: [],
