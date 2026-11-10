@@ -46,7 +46,7 @@ test("a specialist cannot change files outside its declared scope", () => {
 
 test("all workers are blocked from production wiring and deployment controls", () => {
   for (const id of [
-    "studio", "audio-assets", "world-architecture", "environment-water",
+    "vision-planning", "studio", "audio-assets", "world-architecture", "environment-water",
     "yachts-vehicles", "convention-center", "performance-qa", "security-release"
   ]) {
     assert.throws(() => validateWorkerChangedFiles(id, [".github/workflows/deploy.yml"]));
