@@ -35,6 +35,10 @@ import {
   createSpecialistWorkerRoster
 } from "./specialistWorkerRoster.js";
 
+import {
+  createSpecialistWorkerExecution
+} from "../execution/specialistWorkerExecution.js";
+
 export const DEVELOPMENT_SYSTEM_VERSION = "1.0.0";
 
 export const DEVELOPMENT_SYSTEM_STATUS = Object.freeze({
@@ -69,6 +73,14 @@ export async function createDevelopmentSystem(options = {}) {
   const workerRoster = createSpecialistWorkerRoster({
     developmentDirector: director
   });
+
+  const workerExecution = options.specialistExecution
+    ? createSpecialistWorkerExecution({
+        developmentDirector: director,
+        workerRoster,
+        ...options.specialistExecution
+      })
+    : null;
 
   const policy = getDevelopmentPolicy();
 
@@ -148,6 +160,9 @@ export async function createDevelopmentSystem(options = {}) {
       director: director.getSnapshot(),
       studioRunner: studioRunner.getProfile(),
       workers: workerRoster.listWorkers(),
+      configuredExecutionWorkers: workerExecution
+        ? workerExecution.getConfiguredWorkers()
+        : [],
       policy
     };
   }
@@ -200,6 +215,16 @@ export async function createDevelopmentSystem(options = {}) {
         throw new Error("The development system is disabled.");
       }
       return workerRoster.submitFinding(workerId, finding);
-    }
+    },
+    executeWorkerTask: async workerId => {
+      if (status !== DEVELOPMENT_SYSTEM_STATUS.READY) {
+        throw new Error("The development system is disabled.");
+      }
+      if (!workerExecution) {
+        throw new Error("Specialist execution adapters have not been configured by the trusted host.");
+      }
+      return workerExecution.executeNextTask(workerId);
+    },
+    getWorkerExecution: () => workerExecution
   });
 }
