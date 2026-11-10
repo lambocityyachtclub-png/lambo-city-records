@@ -22,12 +22,30 @@ export default class WorldSystem {
     this.scene = null;
     this.collision = null;
     this.protectedLandmarks = options.protectedLandmarks || [];
+    this.vehiclePermissionProvider = typeof options.getVehiclePermissions === "function"
+      ? options.getVehiclePermissions
+      : null;
   }
 
   init(scene, context = {}) {
     this.scene = scene || null;
     this.collision = context.systems?.collision || this.options.collision || null;
+    if (typeof context.getVehiclePermissions === "function") {
+      this.vehiclePermissionProvider = context.getVehiclePermissions;
+    }
     return this;
+  }
+
+  _getVehiclePermissions(districtId, subject = null) {
+    if (!this.vehiclePermissionProvider) return [];
+    try {
+      const permissions = this.vehiclePermissionProvider(districtId, subject);
+      return Array.isArray(permissions) ? [...new Set(permissions.filter(item =>
+        typeof item === "string" && item.trim()
+      ))] : [];
+    } catch (_) {
+      return [];
+    }
   }
 
   registerDistrict(district) {
@@ -218,7 +236,11 @@ export default class WorldSystem {
       fromNodeId,
       toDistrictId,
       toNodeId,
-      { ...routeOptions, openGates: this.getOpenGateKeys() }
+      {
+        ...routeOptions,
+        permissions: this._getVehiclePermissions(fromDistrictId),
+        openGates: this.getOpenGateKeys()
+      }
     );
   }
 
@@ -248,35 +270,59 @@ export default class WorldSystem {
   getVehicleRoadSurfaceAt(districtId, point, options = {}) {
     const district = this.districts.get(districtId);
     return district ? getVehicleRoadSurface(district, point, {
-      ...options, openGates: this.getOpenGateIds(districtId)
+      ...options,
+      permissions: this._getVehiclePermissions(districtId),
+      openGates: this.getOpenGateIds(districtId)
     }) : null;
   }
 
   isVehicleFootprintOnRoad(districtId, vehicle, options = {}) {
     const district = this.districts.get(districtId);
     return !!district && isVehicleFootprintOnRoad(district, vehicle, {
-      ...options, openGates: this.getOpenGateIds(districtId)
+      ...options,
+      permissions: this._getVehiclePermissions(districtId),
+      openGates: this.getOpenGateIds(districtId)
     });
   }
 
   isVehicleMoveOnRoad(districtId, current, next, options = {}) {
     const district = this.districts.get(districtId);
     return !!district && isVehicleMoveOnRoad(district, current, next, {
-      ...options, openGates: this.getOpenGateIds(districtId)
+      ...options,
+      permissions: this._getVehiclePermissions(districtId),
+      openGates: this.getOpenGateIds(districtId)
     });
   }
 
   createVehicleController(districtId, initialState = {}, options = {}) {
     const district = this.districts.get(districtId);
-    return district ? new VehicleRoadController(district, initialState, {
-      ...options,
-      openGates: options.openGates ?? [...this.getOpenGateIds(districtId)]
-    }) : null;
+    if (!district) return null;
+
+    // Never accept caller-supplied permissions or gate IDs. These callbacks
+    // read the authoritative gate and trusted permission state on every move.
+    const {
+      permissions: _callerPermissions,
+      openGates: _callerOpenGates,
+      getPermissions: _callerPermissionProvider,
+      getOpenGates: _callerGateProvider,
+      ...vehicleOptions
+    } = options || {};
+
+    return new VehicleRoadController(district, initialState, {
+      ...vehicleOptions,
+      getPermissions: () => this._getVehiclePermissions(districtId, initialState),
+      getOpenGates: () => this.getOpenGateIds(districtId)
+    });
   }
 
   buildVehicleUTurnPath(districtId, nodeId, vehicle = {}, options = {}) {
     const district = this.districts.get(districtId);
-    return district ? buildVehicleUTurnPath(district, nodeId, vehicle, options) : { valid: false, reason: "UNKNOWN_DISTRICT", points: [] };
+    if (!district) return { valid: false, reason: "UNKNOWN_DISTRICT", points: [] };
+    return buildVehicleUTurnPath(district, nodeId, vehicle, {
+      ...options,
+      permissions: this._getVehiclePermissions(districtId),
+      openGates: this.getOpenGateIds(districtId)
+    });
   }
 
   getVehicleTurnSpace(vehicle = {}) {
