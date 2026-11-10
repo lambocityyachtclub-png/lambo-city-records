@@ -70,7 +70,7 @@ test("composes Studio and World adapters through one catalog runtime", async () 
   const studio = createContentPackRuntime({
     studioAudioAssetStore: { async get(id) { return { id, blob }; } }
   });
-  studio.register(manifest("studio-audio-store", "asset:take-one"));
+  studio.register(manifest("studio-audio-store", "asset:take-one", { sizeBytes: blob.size }));
   assert.equal((await studio.loadAsset("lc.runtime.integration", "runtime-asset")).blob, blob);
 
   const world = createContentPackRuntime({
@@ -177,6 +177,7 @@ test("one opt-in runtime serves existing Studio audio and validated World recipe
   const studioPack = manifest("studio-audio-store", "asset:take-shared-01");
   studioPack.id = "lc.studio.shared-audio";
   studioPack.assets[0].id = "studio-take-01";
+  studioPack.assets[0].sizeBytes = blob.size;
 
   const worldPack = manifest("world-recipe", "recipe:district-shoreline");
   worldPack.id = "lc.world.shoreline";
