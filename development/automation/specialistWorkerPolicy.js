@@ -202,7 +202,7 @@ export function validateWorkerChangedEntries(workerId, entries) {
     throw new Error("The specialist proposal contains no changed file entries.");
   }
   const unsafe = entries.filter(entry =>
-    entry && (entry.mode === "120000" || entry.mode === "160000")
+    entry && [entry.mode, entry.previousMode].some(mode => mode === "120000" || mode === "160000")
   );
   if (unsafe.length) {
     throw new Error(
