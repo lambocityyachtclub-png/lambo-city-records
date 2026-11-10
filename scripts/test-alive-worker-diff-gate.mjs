@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtemp, mkdir, readFile, rm, symlink, writeFile } from "node:fs/promises";
+import { mkdtemp, mkdir, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -21,6 +21,7 @@ try {
   runGit(["config", "user.email", "alive-gate-test@example.invalid"]);
   await mkdir(join(temporaryRepo, "development/planning"), { recursive: true });
   await writeFile(join(temporaryRepo, "development/planning/plan.json"), "{}\n");
+  await writeFile(join(temporaryRepo, "world.js"), "export const protectedWorld = true;\n");
   runGit(["add", "."]);
   runGit(["commit", "-m", "baseline"]);
 
