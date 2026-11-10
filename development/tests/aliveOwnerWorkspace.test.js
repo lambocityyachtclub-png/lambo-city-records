@@ -209,7 +209,7 @@ test("private queue verifier requires the private branch and scoped public worke
     };
     return {
       ok: true,
-      json: async () => ({ type: "file", name: "development-engine-tests.yml" })
+      json: async () => ({ type: "file", name: "development-engine-tests.yml", encoding: "base64", content: Buffer.from("resolve-alive-private-task.mjs ALIVE_PRIVATE_QUEUE_READ_TOKEN").toString("base64") })
     };
   });
   assert.equal(result.ok, true);
