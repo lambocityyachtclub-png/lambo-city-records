@@ -205,9 +205,12 @@ const southWestRoadNode = CONFERENCE_CENTER_DISTRICT.roadNetwork.nodes.find(node
 const southAccessNode = CONFERENCE_CENTER_DISTRICT.roadNetwork.nodes.find(node => node.id === "boulevard-south-access-junction");
 const southRoadMidX = (southWestRoadNode.x + southAccessNode.x) / 2;
 const southRoadSidewalkZ = southWestRoadNode.z - (CONFERENCE_CENTER_DISTRICT.roadNetwork.segments.find(item => item.id === "boulevard-south-west").sidewalkOffset);
-assert.ok(Math.abs(terrain.sampleRoadSurfaceHeight(CONFERENCE_CENTER_DISTRICT, southRoadMidX, southRoadSidewalkZ, {
+const southSidewalkSample = terrain.sampleRoadSurfaceHeight(CONFERENCE_CENTER_DISTRICT, southRoadMidX, southRoadSidewalkZ, {
   roadTopY: 0.77, sidewalkTopY: 0.82, sidewalkWidth: 3
-}) - 0.82) < 0.001, "the south boulevard sidewalk must have a matching physical elevation sample");
+});
+assert.ok(Math.abs(southSidewalkSample - 0.82) < 0.001,
+  "south sidewalk sample " + southSidewalkSample + " at " + southRoadMidX + "," + southRoadSidewalkZ +
+  " offset " + CONFERENCE_CENTER_DISTRICT.roadNetwork.segments.find(item => item.id === "boulevard-south-west").sidewalkOffset);
 
 assert.equal(CONFERENCE_CENTER_DISTRICT.roadNetwork.nodes.filter(node => node.turningArea?.width === 18 && node.turningArea?.depth === 18).length, 4);
 assert.equal(
