@@ -52,7 +52,7 @@ const WORKERS = Object.freeze([
     id: "convention-center",
     name: "Convention & Venue Specialist",
     description: "Convention Center, venues, event spaces, meeting rooms, stages and visitor flows.",
-    areas: ["convention_center", "venues", "meeting_rooms", "events", "spectator_spaces"],
+    areas: ["convention_center", "venues", "meeting_rooms", "events", "spectator_spaces", "visitor_flow"],
     capabilities: ["venue_recipes", "event_space_validation", "visitor_flow"]
   },
   {
