@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - feature/lambo-city-completion
+      - integration/lc-alive-complete-validation-2026-11-10
   pull_request:
     paths:
       - "world*.js"
