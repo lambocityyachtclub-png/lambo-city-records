@@ -234,3 +234,28 @@ test("enforces declared byte budgets against loaded buffers and Studio blobs", a
   );
   assert.equal(catalog.getSnapshot().cachedAssetCount, 0);
 });
+
+
+test("does not trust a custom file-like object's reported size", async () => {
+  const catalog = createContentPackCatalog({
+    loader: async () => ({
+      size: 1,
+      async arrayBuffer() { return new ArrayBuffer(1024); }
+    })
+  });
+  catalog.register(pack({
+    id: "lc.untrusted-file-size",
+    assets: [{
+      id: "fake-file",
+      category: "audio",
+      sizeBytes: 8,
+      source: { kind: "host", locator: "builtin:fake-file", license: "owner-provided" }
+    }]
+  }));
+
+  await assert.rejects(
+    catalog.loadAsset("lc.untrusted-file-size", "fake-file"),
+    /Custom file-like host assets must expose an explicit measured sizeBytes value/
+  );
+  assert.equal(catalog.getSnapshot().cachedAssetCount, 0);
+});
