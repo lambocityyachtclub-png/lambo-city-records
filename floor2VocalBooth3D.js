@@ -9,6 +9,71 @@ let recordingStartedAt = 0;
 let recordingActive = false;
 let takeCount = 0;
 
+async function saveVoiceNoteTake(root, trackId) {
+  const take = await StudioRecordingEngine.stopTrackRecording(trackId);
+  let track = StudioMultitrackWorkspace.tracks.find(item => item.id === trackId);
+  if (!track) track = StudioMultitrackWorkspace.createTrack("audio", "Voice Notes");
+  const date = new Date();
+  const name = "Voice Note · " + date.toLocaleString();
+  const tempo = Math.max(20, Number(StudioMultitrackWorkspace.getTempoAtBar(StudioMultitrackWorkspace.playheadBar)) || 100);
+  const objectUrl = take.blob?.size && typeof URL !== "undefined" && typeof URL.createObjectURL === "function"
+    ? URL.createObjectURL(take.blob)
+    : null;
+  const clip = {
+    id: take.id,
+    name,
+    blob: take.blob,
+    recordingFormat: take.recordingFormat,
+    durationMs: take.durationMs,
+    createdAt: date.toISOString(),
+    startBar: Math.max(1, Number(StudioMultitrackWorkspace.playheadBar) || 1),
+    lengthBars: Math.max(.25, (take.durationMs / 1000) / (240 / tempo)),
+    objectUrl
+  };
+  track.clips.push(clip);
+  StudioMultitrackWorkspace.render();
+  StudioMultitrackWorkspace.scheduleProjectAutosave();
+  recordingActive = false;
+  if (root?.dataset) delete root.dataset.voiceNoteTrackId;
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent("lc-vocal-recording-state", {
+      detail: { recording: false, name, format: take.recordingFormat }
+    }));
+  }
+  return { take, name };
+}
+
+export async function disposeVocalBoothPanel(beatLab, cleanup, root) {
+  if (beatLab?.recordingStartPending) beatLab.cancelRecordingStart?.();
+  if (typeof cleanup === "function") cleanup();
+
+  try {
+    if (StudioRecordingEngine.activeTake) {
+      if (typeof beatLab?.stopRecording === "function") {
+        await beatLab.stopRecording();
+      } else {
+        const take = await StudioRecordingEngine.stopTake();
+        StudioMultitrackWorkspace.addRecordingTake(take);
+      }
+      recordingActive = false;
+      takeCount += 1;
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("lc-vocal-recording-state", {
+          detail: { recording: false, name: "Vocal Take " + String(takeCount).padStart(2, "0") }
+        }));
+      }
+    } else if (root?.dataset?.voiceNoteTrackId &&
+        StudioRecordingEngine.activeTrackTake?.trackId === root.dataset.voiceNoteTrackId) {
+      await saveVoiceNoteTake(root, root.dataset.voiceNoteTrackId);
+    }
+  } catch (error) {
+    recordingActive = false;
+    console.error("Vocal Booth disposal recording stop error:", error);
+  } finally {
+    recordingActive = false;
+  }
+}
+
 function formatTime(ms) {
   const seconds = Math.max(0, Math.floor(ms / 1000));
   return String(Math.floor(seconds / 60)).padStart(2,"0") + ":" + String(seconds % 60).padStart(2,"0");
@@ -16,6 +81,7 @@ function formatTime(ms) {
 
 export function createVocalBoothPanel({ beatLab } = {}) {
   const root = document.createElement("section");
+  let panelDisposed = false;
   root.className = "lc-vocal-booth";
   root.style.cssText = "display:grid;gap:14px;min-height:calc(100vh - 150px);padding:clamp(12px,2vw,24px);border-radius:14px;background:radial-gradient(ellipse at 50% 15%,#4c285f,#24142f 62%,#100d19);color:#f5eef8;font-family:Arial,sans-serif;box-sizing:border-box";
   root.innerHTML =
@@ -88,12 +154,33 @@ export function createVocalBoothPanel({ beatLab } = {}) {
     else talkbackStatus("Talkback off · recording path remains isolated.");
   };
   const onTalkbackError=event=>talkbackStatus("TALKBACK ERROR · "+(event.detail?.message||"Microphone unavailable."));
+  const onCountIn=event=>{
+    const detail=event.detail||{};
+    if(detail.cancelled){status("Count-in cancelled · recording did not start.");return;}
+    status(detail.complete?"Count-in complete · recording.":"GET READY · "+detail.beat+" / 4");
+  };
+  window.addEventListener("lc-vocal-count-in",onCountIn);
   window.addEventListener("lc-talkback-state",onTalkbackState);
   window.addEventListener("lc-talkback-error",onTalkbackError);
-  root.addEventListener("lc-vocal-booth-dispose",()=>{
-    window.removeEventListener("lc-talkback-state",onTalkbackState);
-    window.removeEventListener("lc-talkback-error",onTalkbackError);
-  },{once:true});
+  const disposePanel = () => {
+    if (panelDisposed) return root.disposalPromise || Promise.resolve();
+    panelDisposed = true;
+    const disposal = disposeVocalBoothPanel(beatLab,()=>{
+      window.removeEventListener("lc-vocal-count-in",onCountIn);
+      window.removeEventListener("lc-talkback-state",onTalkbackState);
+      window.removeEventListener("lc-talkback-error",onTalkbackError);
+    },root);
+    root.disposalPromise = disposal;
+    disposal.catch(error=>console.error("Vocal Booth disposal failed:",error));
+    if (activePanel?.root === root) activePanel = null;
+    return disposal;
+  };
+  root.addEventListener("lc-vocal-booth-dispose",()=>{ void disposePanel(); },{once:true});
+  root.dispose = () => {
+    if (panelDisposed) return root.disposalPromise || Promise.resolve();
+    root.dispatchEvent(new CustomEvent("lc-vocal-booth-dispose"));
+    return root.disposalPromise || Promise.resolve();
+  };
   const showTake=(name,format)=>{root.querySelector("[data-vocal-take-name]").textContent=name;root.querySelector("[data-vocal-take-format]").textContent=format||"Original audio take";};
   root.addEventListener("click",async event=>{
     const button=event.target.closest("[data-vocal-action]");
@@ -109,13 +196,22 @@ export function createVocalBoothPanel({ beatLab } = {}) {
           status("Beat session stopped.");
           break;
         case "record":
+          if(recordingActive)return;
+          if(beatLab.recordingStartPending){
+            if(beatLab.recordingStartCoordinator?.isCurrent(beatLab.recordingStartToken))beatLab.cancelRecordingStart?.();
+            else status("Finishing the previous count-in cancellation. Tap Record again in a moment.");
+            return;
+          }
+          status("Four-count starting…");
           await beatLab.startRecording();
+          if(!StudioRecordingEngine.activeTake)return;
           recordingStartedAt=performance.now();
           recordingActive=true;
           status("Recording vocals and session stems.");
           window.dispatchEvent(new CustomEvent("lc-vocal-recording-state",{detail:{recording:true,mode:"vocal"}}));
           break;
         case "stop-recording":
+          if(!recordingActive||!StudioRecordingEngine.activeTake)return;
           await beatLab.stopRecording();
           recordingActive=false;
           takeCount+=1;
@@ -125,12 +221,12 @@ export function createVocalBoothPanel({ beatLab } = {}) {
           window.dispatchEvent(new CustomEvent("lc-vocal-recording-state",{detail:{recording:false,name:"Vocal Take "+String(takeCount).padStart(2,"0")}}));
           break;
         case "quick-note-start":{
-          if(StudioRecordingEngine.activeTake||StudioRecordingEngine.activeTrackTake)throw new Error("Finish the current recording before starting a Voice Note.");
+          if(StudioRecordingEngine.activeTake||StudioRecordingEngine.activeTrackTake||beatLab?.recordingStopPending)throw new Error("Finish saving the current recording before starting a Voice Note.");
           const audio=await StudioAudioEngine.resume();
           if(!audio||audio.state!=="running")throw new Error("Studio audio could not start.");
           let track=StudioMultitrackWorkspace.tracks.find(item=>item.type==="audio"&&item.name==="Voice Notes");
           if(!track){StudioMultitrackWorkspace.recordHistory("Create Voice Notes track");track=StudioMultitrackWorkspace.createTrack("audio","Voice Notes");}
-          await StudioRecordingEngine.startTrackRecording({audio,trackId:track.id});
+          await StudioRecordingEngine.startTrackRecording({audio,trackId:track.id,shouldCancel:()=>panelDisposed||Boolean(beatLab?.recordingStopPending)});
           root.dataset.voiceNoteTrackId=track.id;
           recordingStartedAt=performance.now();
           recordingActive=true;
@@ -143,22 +239,12 @@ export function createVocalBoothPanel({ beatLab } = {}) {
         case "quick-note-stop":{
           const trackId=root.dataset.voiceNoteTrackId;
           if(!trackId)return;
-          const take=await StudioRecordingEngine.stopTrackRecording(trackId);
-          const track=StudioMultitrackWorkspace.tracks.find(item=>item.id===trackId);
-          const date=new Date();
-          const name="Voice Note · "+date.toLocaleString();
-          const clip={id:take.id,name,blob:take.blob,recordingFormat:take.recordingFormat,durationMs:take.durationMs,createdAt:date.toISOString(),startBar:Math.max(1,Number(StudioMultitrackWorkspace.playheadBar)||1),lengthBars:Math.max(.25,(take.durationMs/1000)/(240/Math.max(20,Number(StudioMultitrackWorkspace.getTempoAtBar(StudioMultitrackWorkspace.playheadBar))||100))),objectUrl:take.blob?.size?URL.createObjectURL(take.blob):null};
-          track.clips.push(clip);
-          StudioMultitrackWorkspace.render();
-          StudioMultitrackWorkspace.scheduleProjectAutosave();
-          recordingActive=false;
+          const result=await saveVoiceNoteTake(root,trackId);
           button.disabled=false;
           root.querySelector('[data-vocal-action="quick-note-start"]').disabled=false;
           root.querySelector('[data-vocal-action="quick-note-stop"]').disabled=true;
           voiceStatus("Saved to the shared song timeline.");
-          showTake(name,take.recordingFormat);
-          window.dispatchEvent(new CustomEvent("lc-vocal-recording-state",{detail:{recording:false,name,format:take.recordingFormat}}));
-          delete root.dataset.voiceNoteTrackId;
+          showTake(result.name,result.take.recordingFormat);
           break;
         }
         case "export-vocals":
@@ -319,7 +405,14 @@ export default {
     }
   },
   destroy(){
+    const panelRoot = activePanel?.root || null;
+    const disposal = panelRoot?.dispose?.();
+    if (!disposal && panelRoot?.dispatchEvent) {
+      panelRoot.dispatchEvent(new CustomEvent("lc-vocal-booth-dispose"));
+    }
+    activePanel=null;
     this.booth?.userData&&(this.booth.userData.lcVocalBoothVisualsReady=false);
     this.booth=null;
+    return disposal;
   }
 };

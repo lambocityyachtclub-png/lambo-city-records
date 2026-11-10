@@ -31,6 +31,23 @@ import {
   STUDIO_RUNNER_VERSION
 } from "../runners/studio/studioDevelopmentRunner.js";
 
+import {
+  createSpecialistWorkerRoster
+} from "./specialistWorkerRoster.js";
+
+import {
+  createSpecialistWorkerExecution
+} from "../execution/specialistWorkerExecution.js";
+
+import {
+  createHostedSpecialistQueueAdapter,
+  HOSTED_SPECIALIST_QUEUE_VERSION
+} from "../execution/hostedSpecialistQueueAdapter.js";
+
+import {
+  createVisionIntakePlanner
+} from "./visionIntakePlanner.js";
+
 export const DEVELOPMENT_SYSTEM_VERSION = "1.0.0";
 
 export const DEVELOPMENT_SYSTEM_STATUS = Object.freeze({
@@ -61,6 +78,34 @@ export async function createDevelopmentSystem(options = {}) {
   const studioRunner = createStudioDevelopmentRunner({
     developmentDirector: director
   });
+
+  const workerRoster = createSpecialistWorkerRoster({
+    developmentDirector: director
+  });
+
+  const workerExecution = options.specialistExecution
+    ? createSpecialistWorkerExecution({
+        developmentDirector: director,
+        workerRoster,
+        ...options.specialistExecution
+      })
+    : null;
+
+  const hostedQueue = options.hostedQueue
+    ? createHostedSpecialistQueueAdapter({
+        developmentDirector: director,
+        workerRoster,
+        ...options.hostedQueue
+      })
+    : null;
+
+  const visionIntake = options.visionPlanner
+    ? createVisionIntakePlanner({
+        planner: options.visionPlanner,
+        workerRoster,
+        developmentDirector: director
+      })
+    : null;
 
   const policy = getDevelopmentPolicy();
 
@@ -113,10 +158,55 @@ export async function createDevelopmentSystem(options = {}) {
       "Organizes development findings for LAMBO CITY Studio."
   });
 
+  // Register the workforce as one managed module. Individual workers
+  // remain scoped entries within the roster rather than duplicate modules.
+  registry.registerModule({
+    id: "specialist-worker-roster",
+    name: "Specialist Development Workforce",
+    type: MODULE_TYPES.RUNNER,
+    version: workerRoster.version,
+    path: "development/engine/specialistWorkerRoster.js",
+    enabled: true,
+    capabilities: workerRoster.listWorkers().flatMap(worker => worker.capabilities),
+    description: "Coordinates nine domain-scoped development specialists."
+  });
+
+  if (hostedQueue) {
+    registry.registerModule({
+      id: "hosted-specialist-queue",
+      name: "Hosted Specialist Queue Adapter",
+      type: MODULE_TYPES.RUNNER,
+      version: HOSTED_SPECIALIST_QUEUE_VERSION,
+      path: "development/execution/hostedSpecialistQueueAdapter.js",
+      enabled: true,
+      capabilities: ["hosted-task-dispatch", "isolated-code-generation", "draft-pr-handoff"],
+      description: "Dispatches eligible Director tasks to the isolated hosted specialist workflow."
+    });
+  }
+
+  if (visionIntake) {
+    registry.registerModule({
+      id: "vision-intake-planner",
+      name: "Vision Intake & Task Planner",
+      type: MODULE_TYPES.ENGINE,
+      version: "1.0.0",
+      path: "development/engine/visionIntakePlanner.js",
+      enabled: true,
+      capabilities: ["vision-decomposition", "dependency-planning", "launch-scope-classification"],
+      description: "Validates owner vision plans and submits selected work to the Development Director."
+    });
+  }
+
   let status = DEVELOPMENT_SYSTEM_STATUS.READY;
 
   function getStatus() {
     return status;
+  }
+
+  function assertReady() {
+    if (status !== DEVELOPMENT_SYSTEM_STATUS.READY) {
+      throw new Error("The development system is disabled.");
+    }
   }
 
   function getSnapshot() {
@@ -126,9 +216,72 @@ export async function createDevelopmentSystem(options = {}) {
       registry: registry.getSnapshot(),
       director: director.getSnapshot(),
       studioRunner: studioRunner.getProfile(),
+      workers: workerRoster.listWorkers(),
+      configuredExecutionWorkers: workerExecution
+        ? workerExecution.getConfiguredWorkers()
+        : [],
+      hostedQueueConfigured: Boolean(hostedQueue),
+      hostedQueue: hostedQueue ? hostedQueue.getSnapshot() : null,
+      visionIntakeConfigured: Boolean(visionIntake),
       policy
     };
   }
+
+  const registryView = Object.freeze({
+    getModule: registry.getModule,
+    listModules: registry.listModules,
+    findByCapability: registry.findByCapability,
+    getSnapshot: registry.getSnapshot
+  });
+
+  const directorView = Object.freeze({
+    initialize: async (...args) => { assertReady(); return director.initialize(...args); },
+    createTask: async (...args) => { assertReady(); return director.createTask(...args); },
+    approveTask: async (...args) => { assertReady(); return director.approveTask(...args); },
+    rejectTask: async (...args) => { assertReady(); return director.rejectTask(...args); },
+    claimNextTask: async (...args) => { assertReady(); return director.claimNextTask(...args); },
+    updateTask: async (...args) => { assertReady(); return director.updateTask(...args); },
+    getTask: director.getTask,
+    listTasks: director.listTasks,
+    getSnapshot: director.getSnapshot
+  });
+
+  const studioRunnerView = Object.freeze({
+    getProfile: studioRunner.getProfile,
+    submitFinding: async (...args) => { assertReady(); return studioRunner.submitFinding(...args); },
+    submitFindings: async (...args) => { assertReady(); return studioRunner.submitFindings(...args); },
+    setEnabled: value => { assertReady(); return studioRunner.setEnabled(value); }
+  });
+
+  const workerRosterView = Object.freeze({
+    version: workerRoster.version,
+    listWorkers: (...args) => workerRoster.listWorkers(...args),
+    setWorkerEnabled: (workerId, enabled) => {
+      assertReady();
+      return workerRoster.setWorkerEnabled(workerId, enabled);
+    },
+    submitFinding: async (workerId, finding) => {
+      assertReady();
+      return workerRoster.submitFinding(workerId, finding);
+    }
+  });
+
+  const hostedQueueView = hostedQueue ? Object.freeze({
+    dispatchNextTask: async workerId => {
+      assertReady();
+      return hostedQueue.dispatchNextTask(workerId);
+    },
+    getSnapshot: hostedQueue.getSnapshot
+  }) : null;
+
+  const workerExecutionView = workerExecution ? Object.freeze({
+    executeNextTask: async workerId => {
+      assertReady();
+      return workerExecution.executeNextTask(workerId);
+    },
+    getConfiguredWorkers: () => workerExecution.getConfiguredWorkers(),
+    getAllowedPaths: workerId => workerExecution.getAllowedPaths(workerId)
+  }) : null;
 
   function disable() {
     status = DEVELOPMENT_SYSTEM_STATUS.DISABLED;
@@ -143,34 +296,53 @@ export async function createDevelopmentSystem(options = {}) {
   }
 
   function submitStudioFinding(finding) {
-    if (status !== DEVELOPMENT_SYSTEM_STATUS.READY) {
-      throw new Error(
-        "The development system is disabled."
-      );
-    }
-
+    assertReady();
     return studioRunner.submitFinding(finding);
   }
 
   function submitStudioFindings(findings) {
-    if (status !== DEVELOPMENT_SYSTEM_STATUS.READY) {
-      throw new Error(
-        "The development system is disabled."
-      );
-    }
-
+    assertReady();
     return studioRunner.submitFindings(findings);
   }
 
   return Object.freeze({
-    registry,
-    director,
-    studioRunner,
+    registry: registryView,
+    director: directorView,
+    studioRunner: studioRunnerView,
+    workerRoster: workerRosterView,
     getStatus,
     getSnapshot,
     enable,
     disable,
     submitStudioFinding,
-    submitStudioFindings
+    submitStudioFindings,
+    submitWorkerFinding: (workerId, finding) => workerRosterView.submitFinding(workerId, finding),
+    executeWorkerTask: async workerId => {
+      assertReady();
+      if (!workerExecutionView) {
+        throw new Error("Specialist execution adapters have not been configured by the trusted host.");
+      }
+      return workerExecutionView.executeNextTask(workerId);
+    },
+    getWorkerExecution: () => workerExecutionView,
+    dispatchHostedTask: async workerId => {
+      assertReady();
+      if (!hostedQueueView) {
+        throw new Error("Hosted specialist queue adapter has not been configured by the trusted host.");
+      }
+      return hostedQueueView.dispatchNextTask(workerId);
+    },
+    getHostedQueue: () => hostedQueueView,
+    intakeVision: async vision => {
+      assertReady();
+      if (!visionIntake) throw new Error("Vision planner adapter has not been configured by the trusted host.");
+      return visionIntake.intakeVision({ vision });
+    },
+    getVisionPlan: () => visionIntake ? visionIntake.getPlan() : null,
+    submitVisionTasks: async taskKeys => {
+      assertReady();
+      if (!visionIntake) throw new Error("Vision planner adapter has not been configured by the trusted host.");
+      return visionIntake.submitPlanTasks(taskKeys);
+    }
   });
 }
