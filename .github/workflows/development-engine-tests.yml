@@ -49,11 +49,12 @@ jobs:
       base_sha: ${{ steps.task.outputs.base_sha }}
       proposal_base_sha: ${{ steps.task.outputs.proposal_base_sha }}
     steps:
-      - name: Check out pushed branch
+      - name: Check out pushed branch without persisted credentials
         uses: actions/checkout@v4
         with:
           ref: ${{ github.sha }}
           fetch-depth: 0
+          persist-credentials: false
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
@@ -143,21 +144,22 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
-  publish-draft-pr:
-    name: Retest proposal and open draft PR
+  test-proposal:
+    name: Test proposal without write credentials
     needs: generate-proposal
     if: needs.generate-proposal.outputs.has_task == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 25
     permissions:
-      contents: write
-      pull-requests: write
+      contents: read
+      actions: read
     steps:
-      - name: Check out clean base
+      - name: Check out clean base without persisted credentials
         uses: actions/checkout@v4
         with:
           ref: ${{ needs.generate-proposal.outputs.proposal_base_sha }}
           fetch-depth: 0
+          persist-credentials: false
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
@@ -167,7 +169,7 @@ jobs:
         with:
           name: alive-worker-proposal-${{ needs.generate-proposal.outputs.task_id }}
           path: /tmp/alive-worker-proposal
-      - name: Apply patch and repeat the path gate
+      - name: Apply patch and repeat the path and file-type gate
         env:
           WORKER_ID: ${{ needs.generate-proposal.outputs.worker_id }}
         run: |
@@ -176,9 +178,44 @@ jobs:
           git apply /tmp/alive-worker-proposal/alive-worker.patch
           node --experimental-default-type=module scripts/validate-alive-worker-diff.mjs "$WORKER_ID" /tmp/alive-worker-proposal/alive-worker-changed-files.txt
           git diff --check
-      - name: Run complete Development Engine tests again
+      - name: Run complete Development Engine tests without write credentials
         run: |
           node --experimental-default-type=module --test development/tests/*.test.js
+
+  publish-draft-pr:
+    name: Publish tested proposal as a draft PR
+    needs: [generate-proposal, test-proposal]
+    if: needs.generate-proposal.outputs.has_task == 'true' && needs.test-proposal.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Check out clean base without persisted credentials
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.generate-proposal.outputs.proposal_base_sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Download tested proposal artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: alive-worker-proposal-${{ needs.generate-proposal.outputs.task_id }}
+          path: /tmp/alive-worker-proposal
+      - name: Apply patch and repeat the path and file-type gate
+        env:
+          WORKER_ID: ${{ needs.generate-proposal.outputs.worker_id }}
+        run: |
+          set -euo pipefail
+          git apply --check /tmp/alive-worker-proposal/alive-worker.patch
+          git apply /tmp/alive-worker-proposal/alive-worker.patch
+          node --experimental-default-type=module scripts/validate-alive-worker-diff.mjs "$WORKER_ID" /tmp/alive-worker-proposal/alive-worker-changed-files.txt
+          git diff --check
       - name: Publish isolated branch and draft pull request
         env:
           GH_TOKEN: ${{ github.token }}
@@ -194,19 +231,20 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add --all
           git commit -m "feat(alive): $TASK_TITLE"
-          git push origin "HEAD:refs/heads/$BRANCH"
+          AUTH_HEADER="$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 | tr -d '\\n')"
+          git -c http.extraheader="AUTHORIZATION: basic $AUTH_HEADER" push origin "HEAD:refs/heads/$BRANCH"
           cat > /tmp/alive-worker-pr-body.md <<EOF
           ## LAMBO CITY ALIVE specialist proposal
 
           - **Task:** $TASK_ID
           - **Worker:** $WORKER_ID
           - **Base:** $BASE_BRANCH
-          - **Automated Development Engine tests:** passed before PR creation
+          - **Automated Development Engine tests:** passed in a separate read-only job
 
-          This is an isolated, AI-generated proposal. The code-generation job had repository read access only. A separate job revalidated worker path permissions, reran the Development Engine suite, and created this draft PR.
+          This is an isolated, AI-generated proposal. Generated code was tested in a separate job with no repository write credentials. This publishing job revalidates the worker path and file-type gate, then creates this draft PR without executing the generated code.
 
-          No production branch changes were made. No merge or deployment was performed. Studio/World checks run when their corresponding code paths are changed; this proposal also receives the full Development Engine test gate before it is opened.
+          No production branch changes were made. No merge or deployment was performed. Studio/World checks run when their corresponding code paths are changed.
           EOF
-          gh pr create --draft --base "$BASE_BRANCH" --head "$BRANCH" \
-            --title "[ALIVE] $TASK_TITLE" \
+          gh pr create --draft --base "$BASE_BRANCH" --head "$BRANCH" \\
+            --title "[ALIVE] $TASK_TITLE" \\
             --body-file /tmp/alive-worker-pr-body.md
