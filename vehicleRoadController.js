@@ -75,7 +75,7 @@ export default class VehicleRoadController {
 
   _roadOptions(extra = {}) {
     this._refreshAccessState();
-    return { permissions: this.permissions, openGates: this.openGates, ...extra };
+    return { permissions: [...this.permissions], openGates: this.openGates, ...extra };
   }
 
   _vehicleAt(state) {
