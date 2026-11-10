@@ -48,6 +48,7 @@ permissions:
 
 jobs:
   read-only-ai-review:
+    if: vars.ALIVE_AI_REVIEW_ENABLED == 'true'
     name: Read-only Copilot engineering review
     runs-on: ubuntu-latest
     timeout-minutes: 15
