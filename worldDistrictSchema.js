@@ -93,7 +93,19 @@ export function validateDistrict(district, options = {}) {
 
     const segmentIds = new Set();
     const gateIds = new Set();
-    const adjacency = new Map(Array.from(nodeIds, id => [id, []]));
+    const graphModes = {
+      vehicle: { nodeIds: new Set(), adjacency: new Map() },
+      pedestrian: { nodeIds: new Set(), adjacency: new Map() }
+    };
+    const addGraphEdge = (mode, from, to) => {
+      const graph = graphModes[mode];
+      graph.nodeIds.add(from);
+      graph.nodeIds.add(to);
+      if (!graph.adjacency.has(from)) graph.adjacency.set(from, []);
+      if (!graph.adjacency.has(to)) graph.adjacency.set(to, []);
+      graph.adjacency.get(from).push(to);
+      graph.adjacency.get(to).push(from);
+    };
     let physicalGateCount = 0;
     for (const segment of network.segments) {
       if (!segment || typeof segment.id !== "string" || !segment.id.trim()) {
@@ -164,28 +176,43 @@ export function validateDistrict(district, options = {}) {
           Math.hypot(to.x - from.x, to.z - from.z) < 0.01) {
         issues.push(issue("ZERO_LENGTH_ROAD", "Road segment " + segment.id + " is too short to build."));
       }
-      adjacency.get(segment.from)?.push(segment.to);
-      adjacency.get(segment.to)?.push(segment.from);
+      if (segment.mode === "pedestrian" || segment.mode === "shared") {
+        addGraphEdge("pedestrian", segment.from, segment.to);
+      }
+      if (segment.mode === "vehicle" || segment.mode === "service" || segment.mode === "shared") {
+        addGraphEdge("vehicle", segment.from, segment.to);
+      }
     }
 
-    // A district road graph must be one connected network, not isolated road islands.
-    if (nodeIds.size > 1 && network.segments.length > 0) {
-      const first = nodeIds.values().next().value;
+    // Vehicle and pedestrian networks are distinct systems. Each must be
+    // internally connected, but a sidewalk must not be forced to cross a
+    // vehicle lane merely to satisfy a single mixed-mode graph.
+    const usedNodeIds = new Set([
+      ...graphModes.vehicle.nodeIds,
+      ...graphModes.pedestrian.nodeIds
+    ]);
+    if (usedNodeIds.size !== nodeIds.size) {
+      issues.push(issue("DISCONNECTED_ROAD_NETWORK", "Every declared node must belong to a connected vehicle or pedestrian network."));
+    }
+    for (const [mode, graph] of Object.entries(graphModes)) {
+      if (graph.nodeIds.size <= 1) continue;
+      const first = graph.nodeIds.values().next().value;
       const visited = new Set([first]);
       const queue = [first];
       while (queue.length) {
         const current = queue.shift();
-        for (const next of adjacency.get(current) || []) {
+        for (const next of graph.adjacency.get(current) || []) {
           if (!visited.has(next)) {
             visited.add(next);
             queue.push(next);
           }
         }
       }
-      if (visited.size !== nodeIds.size) {
-        issues.push(issue("DISCONNECTED_ROAD_NETWORK", "Every road node must connect to the same district road network."));
+      if (visited.size !== graph.nodeIds.size) {
+        issues.push(issue("DISCONNECTED_ROAD_NETWORK", "Every " + mode + " node must connect within its own district network."));
       }
-    } else if (nodeIds.size > 0 && network.segments.length === 0) {
+    }
+    if (nodeIds.size > 0 && network.segments.length === 0) {
       issues.push(issue("ROAD_NETWORK_HAS_NO_SEGMENTS", "Road nodes exist, but no road segments connect them."));
     }
   }
