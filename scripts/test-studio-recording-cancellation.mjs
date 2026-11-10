@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import StudioRecordingEngine from "../studioRecordingEngine.js";
+import StudioMultitrackWorkspace from "../studioMultitrackWorkspace.js";
 import { disposeVocalBoothPanel } from "../floor2VocalBooth3D.js";
 
 const originalNavigator = Object.getOwnPropertyDescriptor(globalThis, "navigator");
@@ -100,6 +101,41 @@ try {
   }, () => {}, { dataset: {} });
   assert.equal(stopActiveTakeCalls, 1, "disposing a Booth with an active vocal take must stop and save it");
   assert.equal(StudioRecordingEngine.activeTake, null);
+
+  const originalStopTrackRecording = StudioRecordingEngine.stopTrackRecording;
+  const originalTracks = StudioMultitrackWorkspace.tracks;
+  const originalPlayheadBar = StudioMultitrackWorkspace.playheadBar;
+  const originalGetTempoAtBar = StudioMultitrackWorkspace.getTempoAtBar;
+  const originalRender = StudioMultitrackWorkspace.render;
+  const originalAutosave = StudioMultitrackWorkspace.scheduleProjectAutosave;
+  const voiceTrack = { id: "voice-note-dispose-test", clips: [] };
+  const voiceRoot = { dataset: { voiceNoteTrackId: voiceTrack.id } };
+  StudioRecordingEngine.activeTrackTake = { trackId: voiceTrack.id };
+  StudioRecordingEngine.stopTrackRecording = async trackId => {
+    assert.equal(trackId, voiceTrack.id);
+    StudioRecordingEngine.activeTrackTake = null;
+    return {
+      id: "voice-note-dispose-take",
+      blob: new Blob([new Uint8Array([1, 2, 3])]),
+      recordingFormat: "Browser MediaRecorder",
+      durationMs: 1000
+    };
+  };
+  StudioMultitrackWorkspace.tracks = [voiceTrack];
+  StudioMultitrackWorkspace.playheadBar = 1;
+  StudioMultitrackWorkspace.getTempoAtBar = () => 100;
+  StudioMultitrackWorkspace.render = () => {};
+  StudioMultitrackWorkspace.scheduleProjectAutosave = () => {};
+  await disposeVocalBoothPanel({}, () => {}, voiceRoot);
+  assert.equal(voiceTrack.clips.length, 1, "disposing during Voice Notes must save the active note to the song timeline");
+  assert.equal(voiceRoot.dataset.voiceNoteTrackId, undefined);
+  assert.equal(StudioRecordingEngine.activeTrackTake, null);
+  StudioRecordingEngine.stopTrackRecording = originalStopTrackRecording;
+  StudioMultitrackWorkspace.tracks = originalTracks;
+  StudioMultitrackWorkspace.playheadBar = originalPlayheadBar;
+  StudioMultitrackWorkspace.getTempoAtBar = originalGetTempoAtBar;
+  StudioMultitrackWorkspace.render = originalRender;
+  StudioMultitrackWorkspace.scheduleProjectAutosave = originalAutosave;
 
   console.log("Studio recording cancellation, Voice Notes startup cancellation, Booth take finalization, and resource cleanup checks passed.");
 } finally {
