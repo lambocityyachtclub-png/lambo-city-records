@@ -91,7 +91,7 @@ test("disabled development system blocks all specialist workers", async () => {
   const system = await createDevelopmentSystem();
   system.disable();
   await assert.rejects(
-    system.submitWorkerFinding("performance-qa", {
+    () => system.submitWorkerFinding("performance-qa", {
       title: "Run browser audit",
       description: "Check iPad and desktop behavior.",
       area: "browser_compatibility"
