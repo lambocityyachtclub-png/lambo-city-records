@@ -221,12 +221,12 @@ test("disposal rejects in-flight asset results and guards the public catalog vie
   assert.equal(typeof resolveHostAsset, "function");
   await runtime.dispose();
   assert.equal(hostSignal.aborted, true, "runtime disposal must abort active host resolver signals");
-  resolveHostAsset({ id: "late-host-asset" });
-
   await assert.rejects(
     pending,
     /disposed while an asset was loading/
   );
+  resolveHostAsset({ id: "late-host-asset" });
+  await Promise.resolve();
   assert.equal(runtime.getSnapshot().cachedAssetCount, 0);
   await assert.rejects(
     runtime.catalog.loadAsset("lc.runtime.integration", "runtime-asset"),
