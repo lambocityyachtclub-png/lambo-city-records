@@ -208,10 +208,11 @@ function getLoadedByteSize(value) {
   if (value && Number.isSafeInteger(value.sizeBytes) && value.sizeBytes >= 0) return value.sizeBytes;
   if (value && typeof value === "object" &&
       (Array.isArray(value) || Object.getPrototypeOf(value) === Object.prototype)) {
-    try {
-      const serialized = JSON.stringify(value);
-      if (typeof serialized === "string") return new TextEncoder().encode(serialized).byteLength;
-    } catch {}
+    const serialized = JSON.stringify(value);
+    if (typeof serialized !== "string") {
+      throw new Error("Unable to measure serialized content size for a loaded asset.");
+    }
+    return new TextEncoder().encode(serialized).byteLength;
   }
   return null;
 }
