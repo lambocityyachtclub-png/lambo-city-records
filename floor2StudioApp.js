@@ -512,6 +512,8 @@ this.handleStudioKeydown = (event) => {
 
     if (StudioRecordingEngine.activeTake) {
       void this.stopRecording();
+    } else if (this.recordingStartPending) {
+      this.cancelRecordingStart();
     } else {
       void this.startRecording();
     }
@@ -1131,6 +1133,7 @@ if (!this.audio || this.audio.state !== "running") {
       // Start the beat first, then complete a four-beat pre-roll before
       // opening the recorder. The count-in is therefore never captured.
       if (!this.playing) await this.start();
+      if (!this.playing) throw new Error("Beat Lab playback could not start. Check the Studio audio output and try again.");
       const bpm = Math.max(60, Math.min(180, Number(this.pattern?.bpm) || 100));
       const beatMs = 60000 / bpm;
       for (let beat = 1; beat <= 4; beat += 1) {
