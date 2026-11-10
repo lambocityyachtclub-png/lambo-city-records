@@ -38,6 +38,16 @@ test("rejects invalid categories, duplicate assets, missing licensing, and budge
   assert.throws(() => validateContentPackManifest(pack({ performanceBudget: { maxTotalBytes: 100 } })), /maxTotalBytes/);
 });
 
+test("requires valid SHA-256 integrity metadata for remote URL assets", () => {
+  const remote = pack({ assets: [{
+    id: "remote-audio", category: "audio", sizeBytes: 128,
+    source: { kind: "url", locator: "https://cdn.example.invalid/audio.wav", license: "licensed" }
+  }] });
+  assert.throws(() => validateContentPackManifest(remote), /must declare SHA-256 integrity/);
+  remote.assets[0].integrity = { algorithm: "sha256", digest: "not-a-hash" };
+  assert.throws(() => validateContentPackManifest(remote), /integrity must contain a SHA-256 hex digest/);
+});
+
 test("enforces application compatibility at registration", () => {
   const catalog = createContentPackCatalog({ appVersion: "1.5.0" });
   catalog.register(pack());
@@ -117,6 +127,7 @@ test("loads a declared fallback asset when the primary host load fails", async (
   catalog.register(pack({ id: "lc.primary", assets: [{
     id: "primary", category: "audio", sizeBytes: 20,
     source: { kind: "url", locator: "https://assets.example.invalid/primary.wav", license: "owner-provided" },
+    integrity: { algorithm: "sha256", digest: "a".repeat(64) },
     fallback: { packId: "lc.fallback", assetId: "backup" }
   }] }));
   assert.deepEqual(await catalog.loadAsset("lc.primary", "primary"), { id: "backup" });
