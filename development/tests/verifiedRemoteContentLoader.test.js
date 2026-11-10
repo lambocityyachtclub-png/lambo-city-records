@@ -36,6 +36,7 @@ test("rejects untrusted origins, non-HTTPS URLs, and missing integrity", async (
   });
   await assert.rejects(loader(request({ source: { locator: "http://cdn.example.test/a" } })), /not allowlisted for HTTPS/);
   await assert.rejects(loader(request({ source: { locator: "https://evil.example.test/a" } })), /not allowlisted for HTTPS/);
+  await assert.rejects(loader(request({ source: { locator: "https://user:secret@cdn.example.test/a" } })), /must not contain embedded credentials/);
   await assert.rejects(loader(request({ asset: { integrity: null } })), /requires a valid SHA-256/);
 });
 
