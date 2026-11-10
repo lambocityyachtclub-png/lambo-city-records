@@ -68,7 +68,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          copilot -p "$(cat /tmp/lc-alive-review-prompt.md)" -s | tee lc-alive-ai-review.md
+          cat /tmp/lc-alive-review-prompt.md | copilot -s | tee lc-alive-ai-review.md
           test -s lc-alive-ai-review.md
 
       - name: Publish review artifact
