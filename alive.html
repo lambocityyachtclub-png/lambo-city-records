@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#090b0d">
+  <meta name="referrer" content="same-origin">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; base-uri 'self'; form-action 'self'; object-src 'none'">
+  <title>LAMBO CITY ALIVE — Owner Workspace</title>
+  <link rel="stylesheet" href="./alive.css">
+  <script type="module" src="./alive.js"></script>
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <a class="brand" href="./" aria-label="LAMBO CITY home">
+        <span class="brand-mark">LC</span>
+        <span><strong>LAMBO CITY</strong><small>RECORDS</small></span>
+      </a>
+      <span class="owner-tag">PRIVATE OWNER WORKSPACE</span>
+    </header>
+
+    <section class="hero">
+      <p class="eyebrow">THE DEVELOPMENT ENGINE</p>
+      <h1>LAMBO CITY <span>ALIVE</span></h1>
+      <p class="intro">Your vision in. A clear, reviewable build plan out.</p>
+      <p class="promise">Specialists work inside defined boundaries. Every code proposal is tested and brought back for your review. Nothing reaches production automatically.</p>
+    </section>
+
+    <section id="setup-panel" class="panel hidden" aria-live="polite">
+      <p class="eyebrow">PRIVATE ACCESS</p>
+      <h2>Owner access is being secured</h2>
+      <p id="setup-message">The private owner workspace is not configured yet.</p>
+    </section>
+
+    <section id="login-panel" class="panel hidden">
+      <p class="eyebrow">OWNER SIGN-IN</p>
+      <h2>Welcome back</h2>
+      <form id="login-form">
+        <label for="owner-password">Owner password</label>
+        <input id="owner-password" name="password" type="password" autocomplete="current-password" maxlength="512" required>
+        <button type="submit" class="primary">Unlock workspace</button>
+      </form>
+      <p id="login-message" class="message" role="status"></p>
+    </section>
+
+    <section id="workspace" class="hidden">
+      <div class="status-grid">
+        <article class="status-card">
+          <span class="status-label">OWNER ACCESS</span>
+          <strong id="owner-status">Secure</strong>
+        </article>
+        <article class="status-card">
+          <span class="status-label">SPECIALIST QUEUE</span>
+          <strong id="queue-status">Checking</strong>
+        </article>
+        <article class="status-card">
+          <span class="status-label">RELEASE CONTROL</span>
+          <strong>Owner approval</strong>
+        </article>
+      </div>
+
+      <section class="panel vision-panel">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">01 / YOUR DIRECTION</p>
+            <h2>What should ALIVE build next?</h2>
+          </div>
+          <span class="live-dot">CONTROLLED</span>
+        </div>
+        <p class="muted">Describe the outcome in your own words. You do not need to write technical tickets or decide which specialist handles it.</p>
+        <form id="vision-form">
+          <label for="vision">Your vision</label>
+          <textarea id="vision" name="vision" rows="8" maxlength="8000" placeholder="Describe what you want LAMBO CITY to become, what should improve, or what you want built next..." required></textarea>
+          <div class="form-footer">
+            <span class="muted">Up to 8,000 characters</span>
+            <button type="submit" class="primary" id="submit-vision">Send direction to ALIVE</button>
+          </div>
+        </form>
+        <p id="vision-message" class="message" role="status"></p>
+      </section>
+
+      <section class="panel task-panel">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">02 / WORK IN MOTION</p>
+            <h2>Your latest request</h2>
+          </div>
+          <button id="refresh-status" class="secondary" type="button">Refresh status</button>
+        </div>
+        <div id="task-empty" class="empty-state">Your submitted requests will appear here.</div>
+        <div id="task-details" class="hidden">
+          <div class="task-meta"><span id="task-state">Queued</span><span id="task-id"></span></div>
+          <p id="task-description" class="muted"></p>
+          <ul id="check-list" class="check-list"></ul>
+          <a id="proposal-link" class="proposal-link hidden" href="#" target="_blank" rel="noopener noreferrer">Open specialist proposal</a>
+        </div>
+      </section>
+
+      <footer class="workspace-footer">
+        <p>ALIVE keeps launch work, foundation work, future ideas, and blocked decisions separate. Specialist proposals remain isolated until you approve the next step.</p>
+        <button id="logout" class="text-button" type="button">Sign out</button>
+      </footer>
+    </section>
+    <footer class="site-footer">LAMBO CITY RECORDS LLC · PRIVATE DEVELOPMENT WORKSPACE</footer>
+  </main>
+</body>
+</html>
