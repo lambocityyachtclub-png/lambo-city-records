@@ -4,7 +4,7 @@ const TASK_ID = /^[a-z0-9][a-z0-9-]{2,63}$/;
 
 export function createOwnerVisionTask(vision, options = {}) {
   if (typeof vision !== "string" || !vision.trim()) {
-    throw new Error("Tell ALIVE what you want to build first.");
+    throw new Error("Owner vision is required.");
   }
   const normalizedVision = vision.trim();
   if (normalizedVision.length > 8000) {
