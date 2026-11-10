@@ -393,3 +393,15 @@ test("Development System disable guards every exposed specialist worker entry po
     /development system is disabled/
   );
 });
+
+
+test("Development System exposes a read-only registry facade", async () => {
+  const system = await createDevelopmentSystem();
+
+  assert.equal(system.registry.getSnapshot().totalModules, 4);
+  assert.equal(typeof system.registry.getModule, "function");
+  assert.equal(typeof system.registry.listModules, "function");
+  assert.equal(typeof system.registry.registerModule, "undefined");
+  assert.equal(typeof system.registry.unregisterModule, "undefined");
+  assert.equal(typeof system.registry.setModuleEnabled, "undefined");
+});
