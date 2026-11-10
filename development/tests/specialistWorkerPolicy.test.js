@@ -38,6 +38,15 @@ test("Studio worker can change Studio code and tests", () => {
   assert.equal(isWorkerPathAllowed("studio", "development/tests/studio-feature.test.js"), true);
 });
 
+test("declared wildcard scopes match only their explicit filename families", () => {
+  assert.equal(isWorkerPathAllowed("audio-assets", "studio/sample-library.json"), true);
+  assert.equal(isWorkerPathAllowed("vision-planning", "docs/LAMBO_CITY_ALIVE_OVERVIEW.md"), true);
+  assert.equal(isWorkerPathAllowed("studio", "scripts/test-studio-export.mjs"), true);
+  assert.equal(isWorkerPathAllowed("world-architecture", "scripts/test-world-district.mjs"), true);
+  assert.equal(isWorkerPathAllowed("studio", "scripts/test-world-district.mjs"), false);
+  assert.equal(isWorkerPathAllowed("vision-planning", "docs/OTHER_PROJECT.md"), false);
+});
+
 test("scope matching rejects similarly prefixed files and directories", () => {
   assert.equal(isWorkerPathAllowed("studio", "studio-secret.js"), false);
   assert.equal(isWorkerPathAllowed("studio", "studio-private/config.js"), false);
