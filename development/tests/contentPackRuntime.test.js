@@ -200,3 +200,31 @@ test("one opt-in runtime serves existing Studio audio and validated World recipe
   assert.equal(loadedTake.blob, blob);
   assert.equal(loadedRecipe, recipe);
 });
+
+
+test("disposal rejects in-flight asset results and guards the public catalog view", async () => {
+  let resolveHostAsset;
+  const runtime = createContentPackRuntime({
+    resolveHostAsset: () => new Promise(resolve => { resolveHostAsset = resolve; })
+  });
+  runtime.register(manifest("host", "builtin:pending"));
+  const pending = runtime.loadAsset("lc.runtime.integration", "runtime-asset");
+
+  assert.equal(typeof resolveHostAsset, "function");
+  await runtime.dispose();
+  resolveHostAsset({ id: "late-host-asset" });
+
+  await assert.rejects(
+    pending,
+    /disposed while an asset was loading/
+  );
+  assert.equal(runtime.getSnapshot().cachedAssetCount, 0);
+  assert.throws(
+    () => runtime.catalog.loadAsset("lc.runtime.integration", "runtime-asset"),
+    /has been disposed/
+  );
+  assert.throws(
+    () => runtime.catalog.register(manifest("host", "builtin:late")),
+    /has been disposed/
+  );
+});
