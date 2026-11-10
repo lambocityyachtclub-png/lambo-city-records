@@ -41,5 +41,5 @@ jobs:
             development/tests/specialistWorkerExecution.test.js \
             development/tests/contentPackCatalog.test.js \
             development/tests/contentPackHostAdapters.test.js \
-            development/tests/verifiedRemoteContentLoader.test.js \\
+            development/tests/verifiedRemoteContentLoader.test.js \
             development/tests/contentPackRuntime.test.js
