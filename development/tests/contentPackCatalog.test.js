@@ -191,11 +191,13 @@ test("enforces declared byte budgets against loaded buffers and Studio blobs", a
   const catalog = createContentPackCatalog({
     loader: async ({ asset }) => asset.id === "buffered"
       ? new Uint8Array([1, 2, 3])
-      : { id: asset.id, blob: { size: 3, async arrayBuffer() { return new ArrayBuffer(3); } } }
+      : asset.id === "studio-blob"
+        ? { id: asset.id, blob: { size: 3, async arrayBuffer() { return new ArrayBuffer(3); } } }
+        : { id: asset.id, recipeData: "this JSON payload is larger than its declared budget" }
   });
   catalog.register(pack({
     id: "lc.actual-size",
-    performanceBudget: { maxAssetBytes: 2, maxTotalBytes: 4 },
+    performanceBudget: { maxAssetBytes: 2, maxTotalBytes: 6 },
     assets: [
       {
         id: "buffered",
@@ -208,6 +210,12 @@ test("enforces declared byte budgets against loaded buffers and Studio blobs", a
         category: "audio",
         sizeBytes: 2,
         source: { kind: "studio-audio-store", locator: "asset:studio-blob", license: "owner-provided" }
+      },
+      {
+        id: "json-recipe",
+        category: "recipe",
+        sizeBytes: 2,
+        source: { kind: "host", locator: "builtin:json-recipe", license: "owner-provided" }
       }
     ]
   }));
@@ -219,6 +227,10 @@ test("enforces declared byte budgets against loaded buffers and Studio blobs", a
   await assert.rejects(
     catalog.loadAsset("lc.actual-size", "studio-blob"),
     /loaded 3 bytes, exceeding its declared sizeBytes budget of 2/
+  );
+  await assert.rejects(
+    catalog.loadAsset("lc.actual-size", "json-recipe"),
+    /exceeding its declared sizeBytes budget of 2/
   );
   assert.equal(catalog.getSnapshot().cachedAssetCount, 0);
 });
