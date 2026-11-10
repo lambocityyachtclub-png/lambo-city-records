@@ -1,4 +1,5 @@
 name: World System Checks
+# Includes host lifecycle, live gate access, and streaming proxy regression coverage.
 
 on:
   push:
