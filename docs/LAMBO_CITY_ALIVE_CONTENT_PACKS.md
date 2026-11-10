@@ -17,14 +17,14 @@ This layer provides a runtime-independent, versioned content-pack contract for S
 
 ## Browser validation
 
-The dedicated GitHub Actions workflow `ALIVE Browser Content Cache Checks` runs Playwright against real Chromium and WebKit browser engines. On the current validated content-catalog commit, both engines passed:
+The dedicated GitHub Actions workflow `ALIVE Browser Content Cache Checks` runs Playwright against real Chromium and WebKit browser engines, including a WebKit run with an iPad-sized 1024×1366 touch-emulated viewport. The browser test verifies:
 
 - verified bytes are downloaded once and reused from IndexedDB;
 - persisted bytes survive closing and reopening the database;
 - corrupt cached bytes are detected and replaced;
 - a cache-capacity failure does not block delivery of verified content.
 
-This is automated WebKit coverage, not a physical iPad or iOS Safari acceptance test. Actual device storage quotas, Safari lifecycle behavior, microphone permission, and GPU/performance characteristics still require a real iPad Safari session.
+This is automated WebKit coverage with an iPad-sized touch-emulated viewport, not a physical iPad or the shipping iOS Safari browser. Actual device storage quotas, Safari lifecycle behavior, microphone permission, and GPU/performance characteristics still require a real iPad Safari session.
 
 ## Runtime integration boundary
 
@@ -48,8 +48,8 @@ A safe next integration step is feature-level opt-in:
 
 ## Validation on this branch
 
-- Development Engine Tests: 119 passed, 0 failed.
-- ALIVE Browser Content Cache Checks: Chromium passed; WebKit passed.
+- Development Engine Tests: 120 passed, 0 failed, including one combined runtime test proving Studio audio and validated World recipes can be loaded through the same opt-in catalog runtime.
+- ALIVE Browser Content Cache Checks: Chromium, WebKit desktop, and WebKit iPad-sized touch-emulated viewport passed on the prior validated browser-test revision; the new iPad-sized case is being re-run on this integration branch.
 - The browser checks ran on the content-catalog branch before this documentation-only integration-validation branch was created.
 - A fresh combined integration run is required on the new branch before considering the ALIVE foundation chain ready for the development branch.
 
