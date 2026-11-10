@@ -189,7 +189,6 @@ export function validateContentPackManifest(manifest) {
 
 
 function getLoadedByteSize(value) {
-  if (value && Number.isSafeInteger(value.sizeBytes) && value.sizeBytes >= 0) return value.sizeBytes;
   if (value instanceof ArrayBuffer) return value.byteLength;
   if (ArrayBuffer.isView(value)) return value.byteLength;
   if (
@@ -206,6 +205,7 @@ function getLoadedByteSize(value) {
     const byteSize = getLoadedByteSize(value.bytes);
     if (byteSize !== null) return byteSize;
   }
+  if (value && Number.isSafeInteger(value.sizeBytes) && value.sizeBytes >= 0) return value.sizeBytes;
   if (value && typeof value === "object" &&
       (Array.isArray(value) || Object.getPrototypeOf(value) === Object.prototype)) {
     try {
