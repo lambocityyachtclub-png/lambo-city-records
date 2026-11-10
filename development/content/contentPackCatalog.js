@@ -211,9 +211,11 @@ function measureJsonByteSize(value, maxBytes) {
       for (let index = 0; index < item.length; index += 1) {
         if (index > 0) total += 1;
         const entry = item[index];
-        total += entry === undefined || typeof entry === "function" || typeof entry === "symbol"
+        const entrySize = entry === undefined || typeof entry === "function" || typeof entry === "symbol"
           ? 4
           : measure(entry, depth + 1);
+        if (entrySize === null) { seen.delete(item); return null; }
+        total += entrySize;
         if (total > maxBytes) return maxBytes + 1;
       }
       seen.delete(item);
@@ -235,7 +237,9 @@ function measureJsonByteSize(value, maxBytes) {
         if (!first) total += 1;
         first = false;
         if (key.length > maxBytes) return maxBytes + 1;
-        total += encoder.encode(JSON.stringify(key)).byteLength + 1 + measure(entry, depth + 1);
+        const entrySize = measure(entry, depth + 1);
+        if (entrySize === null) { seen.delete(item); return null; }
+        total += encoder.encode(JSON.stringify(key)).byteLength + 1 + entrySize;
         if (total > maxBytes) return maxBytes + 1;
       }
       seen.delete(item);
@@ -269,10 +273,14 @@ function getLoadedByteSize(value, maxBytes) {
     const byteSize = getLoadedByteSize(value.bytes, maxBytes);
     if (byteSize !== null) return byteSize;
   }
-  if (value && Number.isSafeInteger(value.sizeBytes) && value.sizeBytes >= 0) return value.sizeBytes;
-  if (value && typeof value === "object") {
+  if (value && typeof value === "object" &&
+      (Array.isArray(value) || Object.getPrototypeOf(value) === Object.prototype || Object.getPrototypeOf(value) === null)) {
     const measured = measureJsonByteSize(value, maxBytes);
     if (measured !== null) return measured;
+    throw new Error("JSON content assets contain an unsupported value and cannot be size-validated.");
+  }
+  if (value && Number.isSafeInteger(value.sizeBytes) && value.sizeBytes >= 0) return value.sizeBytes;
+  if (value && typeof value === "object") {
     throw new Error("Non-JSON host assets must expose an explicit measured sizeBytes value.");
   }
   return null;
