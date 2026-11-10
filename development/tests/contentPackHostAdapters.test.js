@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createContentPackHostLoader } from "../content/contentPackHostAdapters.js";
+import { createVerifiedRemoteContentLoader } from "../content/verifiedRemoteContentLoader.js";
 
 function request(kind, locator) {
   return {
@@ -87,4 +88,33 @@ test("remote URL assets fail closed when integrity verification fails or is not 
 test("generic host assets require an explicit host resolver", async () => {
   const loader = createContentPackHostLoader();
   await assert.rejects(loader(request("host", "builtin:asset")), /Host asset resolver/);
+});
+
+
+test("composes verified remote delivery and persistent cache behind the catalog host adapter", async () => {
+  const digest = "a".repeat(64);
+  const records = new Map();
+  let downloads = 0;
+  const verifiedLoader = createVerifiedRemoteContentLoader({
+    allowedOrigins: ["https://assets.example.invalid"],
+    resolve: async () => { downloads += 1; return new Uint8Array([2, 4, 6]); },
+    sha256: async bytes => bytes.length === 3 ? digest : "b".repeat(64),
+    cache: {
+      async get(key) { return records.get(key); },
+      async set(key, value) { records.set(key, value); },
+      async delete(key) { records.delete(key); }
+    }
+  });
+  const hostLoader = createContentPackHostLoader({
+    allowedUrlOrigins: ["https://assets.example.invalid"],
+    resolveUrlAsset: verifiedLoader,
+    verifyUrlIntegrity: async ({ integrity, value }) =>
+      integrity.digest === digest && value instanceof Uint8Array && value.length === 3
+  });
+  const first = await hostLoader(request("url", "https://assets.example.invalid/asset.bin"));
+  const second = await hostLoader(request("url", "https://assets.example.invalid/asset.bin"));
+  assert.deepEqual(first, new Uint8Array([2, 4, 6]));
+  assert.deepEqual(second, first);
+  assert.equal(downloads, 1);
+  assert.equal(records.size, 1);
 });
