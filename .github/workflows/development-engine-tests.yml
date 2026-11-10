@@ -118,9 +118,9 @@ jobs:
         run: |
           set -euo pipefail
           copilot -p "$(cat /tmp/alive-worker-prompt.md)" -s \
-            --available-tools='bash,edit,view,grep,glob,create,apply_patch' \
-            --allow-tool='write, shell(node:*), shell(git status), shell(git diff), shell(git log), shell(git show), shell(git ls-files)' \
-            --deny-tool='shell(git push), shell(git commit), shell(git checkout), shell(git reset), shell(git clean), shell(git config), shell(curl), shell(wget)'
+            --available-tools='edit,view,grep,glob,create,apply_patch' \
+            --allow-tool='write' \
+            --deny-tool='shell' --deny-tool='url' --deny-tool='memory'
       - name: Validate paths and package patch
         if: steps.task.outputs.has_task == 'true'
         env:
