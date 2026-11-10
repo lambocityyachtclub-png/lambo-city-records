@@ -163,17 +163,24 @@ export function createVocalBoothPanel({ beatLab } = {}) {
   window.addEventListener("lc-talkback-state",onTalkbackState);
   window.addEventListener("lc-talkback-error",onTalkbackError);
   const disposePanel = () => {
+    if (panelDisposed) return root.disposalPromise || Promise.resolve();
     panelDisposed = true;
     const disposal = disposeVocalBoothPanel(beatLab,()=>{
       window.removeEventListener("lc-vocal-count-in",onCountIn);
       window.removeEventListener("lc-talkback-state",onTalkbackState);
       window.removeEventListener("lc-talkback-error",onTalkbackError);
     },root);
+    root.disposalPromise = disposal;
     disposal.catch(error=>console.error("Vocal Booth disposal failed:",error));
     if (activePanel?.root === root) activePanel = null;
+    return disposal;
   };
-  root.addEventListener("lc-vocal-booth-dispose",disposePanel,{once:true});
-  root.dispose = () => root.dispatchEvent(new CustomEvent("lc-vocal-booth-dispose"));
+  root.addEventListener("lc-vocal-booth-dispose",()=>{ void disposePanel(); },{once:true});
+  root.dispose = () => {
+    if (panelDisposed) return root.disposalPromise || Promise.resolve();
+    root.dispatchEvent(new CustomEvent("lc-vocal-booth-dispose"));
+    return root.disposalPromise || Promise.resolve();
+  };
   const showTake=(name,format)=>{root.querySelector("[data-vocal-take-name]").textContent=name;root.querySelector("[data-vocal-take-format]").textContent=format||"Original audio take";};
   root.addEventListener("click",async event=>{
     const button=event.target.closest("[data-vocal-action]");
@@ -398,9 +405,14 @@ export default {
     }
   },
   destroy(){
-    if(activePanel?.root?.dispatchEvent) activePanel.root.dispatchEvent(new CustomEvent("lc-vocal-booth-dispose"));
+    const panelRoot = activePanel?.root || null;
+    const disposal = panelRoot?.dispose?.();
+    if (!disposal && panelRoot?.dispatchEvent) {
+      panelRoot.dispatchEvent(new CustomEvent("lc-vocal-booth-dispose"));
+    }
     activePanel=null;
     this.booth?.userData&&(this.booth.userData.lcVocalBoothVisualsReady=false);
     this.booth=null;
+    return disposal;
   }
 };
