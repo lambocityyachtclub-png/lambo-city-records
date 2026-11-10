@@ -11,7 +11,10 @@ on:
       - ".github/workflows/floor2-studio-checks.yml"
       - "floor2StudioApp.js"
       - "studioRecordingEngine.js"
+      - "floor2VocalBooth3D.js"
+      - "studioRecordingStartCoordinator.js"
       - "scripts/test-studio-recording-cancellation.mjs"
+      - "scripts/test-studio-recording-start-coordinator.mjs"
   workflow_dispatch:
 
 permissions:
