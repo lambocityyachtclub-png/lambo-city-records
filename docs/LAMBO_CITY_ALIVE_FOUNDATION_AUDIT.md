@@ -32,7 +32,7 @@ Expansion must preserve approved visuals and workflows. A new feature should be 
 1. **Engine registration remains manual.** `main.js` imports and enumerates systems; `engine.js` initializes them through a long hand-maintained sequence. Adding a module still requires central-file edits.
 2. **The development engine is a foundation, not an autonomous service.** `developmentSystem.js` explicitly does not start a worker, execute generated code, modify files, or deploy.
 3. **Only a Studio specialist runner is registered.** World, NPC, digital-real-estate, and entertainment runners are described in the blueprint but are not yet connected as implemented specialist runners.
-4. **The controlled executor is adapter-driven.** It requires an explicitly supplied isolated workspace adapter, review store, and path allowlist. This is good separation, but a complete production-grade hosted job runner and review integration are not connected here.
+4. **The controlled executor has an adapter-contract gap.** It expects `createWorkspace`, `prepareChanges`, and `runTests`, while the low-level isolated workspace adapter originally exposed file operations only. PR #23 adds a separately injected composition adapter to bridge those contracts. A production-grade hosted job runner, trusted planner/test sandbox, and complete review integration are still not connected.
 5. **Persistence is optional.** Without a storage adapter, director tasks remain in memory and are not durable across process restarts.
 6. **World content and engine plugins are different concerns.** The World System can register district recipes, but that does not yet provide a universal lifecycle registry for every engine module, Studio station, sound pack, and environment asset.
 7. **Asset/content discovery needs a shared contract.** Sound libraries, architectural recipes, materials, animation sets, and reusable environment components need versioned manifests and validation rather than ad-hoc imports.
@@ -115,8 +115,8 @@ This service must remain separate from the live game runtime. Do not give genera
 - Keep the existing approved experience unchanged.
 
 ### Phase 1 — Module contract proof
-- Design a manifest schema and lifecycle registry in an isolated branch.
-- Add unit tests for dependency order, cycles, duplicate IDs, missing dependencies, failed initialization, disposal, and lazy loading.
+- Design a manifest schema and lifecycle registry in an isolated branch. **Prototype opened in PR #23** (`development/engine/moduleLifecycleRegistry.js`).
+- Add unit tests for dependency order, cycles, duplicate IDs, missing dependencies, failed initialization, and reverse disposal. **Initial automated coverage passes in PR #23**; lazy-load and engine-compatibility proofs remain open.
 - Prove compatibility with a small non-critical module before moving any core system.
 - Do not convert all modules in one pass.
 
@@ -126,7 +126,7 @@ This service must remain separate from the live game runtime. Do not give genera
 - Test lazy loading, cache behavior, missing assets, and graceful fallback.
 
 ### Phase 3 — Development-service completion
-- Connect durable storage, safe workspace execution, review records, and job orchestration.
+- Connect durable storage, safe workspace execution, review records, and job orchestration. **PR #23 adds an injected workspace pipeline adapter and tests; it does not yet provide a hosted code-generation planner or sandboxed test runner.**
 - Add specialist runners only when their scope, allowed paths, tests, and approval rules are defined.
 - Add observability, retries, idempotency, and resumable task states before enabling recurring background work.
 
@@ -156,13 +156,13 @@ This service must remain separate from the live game runtime. Do not give genera
 |---|---|---|
 | P0 | Protect production and development checkpoint | Recorded |
 | P0 | Audit engine registration and development service | Complete at source-inspection level |
-| P1 | Prove universal module manifest/lifecycle registry in isolation | Not started |
+| P1 | Prove universal module manifest/lifecycle registry in isolation | Prototype + automated tests in PR #23; awaiting review and hardening |
 | P1 | Inventory all module imports, dependencies, empty files, and load costs | In progress |
 | P1 | Validate Studio PR #20 automated workflow and preview | Automated workflow passed; browser microphone acceptance pending |
 | P2 | Build versioned Studio sound/instrument/effect catalog | Planned |
 | P2 | Build reusable world content/recipe catalog | Planned |
 | P2 | Add World/NPC/Real Estate/Entertainment specialist runners | Planned |
-| P3 | Connect durable hosted task orchestration and review | Planned; requires deployment/security design |
+| P3 | Connect durable hosted task orchestration and review | Partial pipeline adapter prototype in PR #23; hosted orchestration and sandboxing still require design |
 | P3 | Begin controlled location-by-location world expansion | Planned |
 
 ## 7. What counts as done
@@ -180,4 +180,4 @@ The owner should only be asked to test the browser experience at meaningful cons
 
 ---
 
-**Immediate next step:** prove the module manifest and lifecycle registry as a standalone, test-first prototype. Keep the current engine unchanged until that prototype passes and can be integrated without changing existing runtime behavior.
+**Immediate next step:** review and harden the PR #23 module lifecycle and workspace-pipeline prototypes. Keep the current engine unchanged until compatibility is proven with a non-critical module in an isolated preview.
