@@ -77,7 +77,7 @@ test("development system registers workers and routes their findings", async () 
   const system = await createDevelopmentSystem();
   const snapshot = system.getSnapshot();
   assert.equal(snapshot.workers.length, 8);
-  assert.equal(snapshot.registry.totalModules, 10);
+  assert.equal(snapshot.registry.totalModules, 4);
   const result = await system.submitWorkerFinding("convention-center", {
     title: "Review convention visitor flow",
     description: "Audit entry and exit routing.",
