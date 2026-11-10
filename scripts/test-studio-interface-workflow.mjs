@@ -39,7 +39,7 @@ for (const [name,systemKey,binding] of [
     name + " must be registered with the engine after its lazy import");
   assert.ok(main.includes('["' + systemKey + '", [engine.scene, engine.context]]'),
     name + " must initialize after the Floor 2 architecture is ready");
-  assert.doesNotMatch(engine, new RegExp("this\\\\.systems\\\\." + systemKey + "\\\\?\\\\.init"),
+  assert.equal(engine.includes('initialize("' + systemKey + '"'), false,
     name + " must not initialize during initial world startup");
 }
 
