@@ -149,6 +149,23 @@ const district = createDistrictFromRecipe(recipe);
 const masterMapValidation = validateDistrict(CONFERENCE_CENTER_DISTRICT);
 assert.equal(masterMapValidation.valid, true,
   masterMapValidation.issues.map(item => item.code + ": " + item.message).join("\n"));
+const disconnectedPedestrian = {
+  ...CONFERENCE_CENTER_DISTRICT,
+  roadNetwork: {
+    ...CONFERENCE_CENTER_DISTRICT.roadNetwork,
+    nodes: [
+      ...CONFERENCE_CENTER_DISTRICT.roadNetwork.nodes,
+      { id: "isolated-walk-a", x: -20, z: 80 },
+      { id: "isolated-walk-b", x: -15, z: 80 }
+    ],
+    segments: [
+      ...CONFERENCE_CENTER_DISTRICT.roadNetwork.segments,
+      { id: "isolated-walk-link", from: "isolated-walk-a", to: "isolated-walk-b", mode: "pedestrian", width: 3, navigationOnly: true }
+    ]
+  }
+};
+assert.equal(validateDistrict(disconnectedPedestrian).issues.some(item => item.code === "DISCONNECTED_ROAD_NETWORK"), true,
+  "a disconnected pedestrian island must still be rejected");
 assert.equal(CONFERENCE_CENTER_DISTRICT.groundTopY, CITY_MAP.surfaces.groundTopY);
 assert.equal(CONFERENCE_CENTER_DISTRICT.bounds.minZ, CITY_MAP.districts.marinaBoardwalk.road.maxZ);
 assert.equal(CONFERENCE_CENTER_DISTRICT.roadNetwork.nodes.filter(node => node.turningArea?.width === 18 && node.turningArea?.depth === 18).length, 2);
