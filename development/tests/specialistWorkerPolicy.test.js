@@ -37,7 +37,14 @@ test("Studio worker can change Studio code and tests", () => {
   assert.equal(isWorkerPathAllowed("studio", "development/tests/studio-feature.test.js"), true);
 });
 
-test("scope matching rejects similarly prefixed files and directories", () => {\n  assert.equal(isWorkerPathAllowed("studio", "studio-secret.js"), false);\n  assert.equal(isWorkerPathAllowed("studio", "studio-private/config.js"), false);\n  assert.equal(isWorkerPathAllowed("world-architecture", "worldSystemSecrets.js"), false);\n  assert.equal(isWorkerPathAllowed("convention-center", "conferenceCenterSecrets.js"), false);\n});\n\ntest("a specialist cannot change files outside its declared scope", () => {
+test("scope matching rejects similarly prefixed files and directories", () => {
+  assert.equal(isWorkerPathAllowed("studio", "studio-secret.js"), false);
+  assert.equal(isWorkerPathAllowed("studio", "studio-private/config.js"), false);
+  assert.equal(isWorkerPathAllowed("world-architecture", "worldSystemSecrets.js"), false);
+  assert.equal(isWorkerPathAllowed("convention-center", "conferenceCenterSecrets.js"), false);
+});
+
+test("a specialist cannot change files outside its declared scope", () => {
   assert.throws(
     () => validateWorkerChangedFiles("studio", ["world.js"]),
     /outside its scope/
