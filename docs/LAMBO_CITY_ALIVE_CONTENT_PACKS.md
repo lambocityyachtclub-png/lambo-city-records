@@ -42,3 +42,16 @@ This is a tested manifest/catalog contract and injected loading seam, not a host
 - `url` and `host` sources require separately injected resolvers. The adapter intentionally does not fetch arbitrary URLs; the trusted URL resolver must enforce origin allowlists and integrity verification.
 
 These are adapter contract proofs with injected services, not a connection to production Studio or World runtime. The host chooses when to construct and pass the adapter to the catalog.
+
+## Verified delivery and persistent cache service
+
+`createVerifiedRemoteContentLoader` is a separate host service that can be injected as the URL resolver for the catalog adapter. It requires:
+
+- an explicit HTTPS origin allowlist;
+- a resolver that returns bytes;
+- a SHA-256 provider that computes a digest from those bytes;
+- optionally, a persistent cache implementing `get(key)`, `set(key, bytes)`, and `delete(key)`.
+
+The service verifies every cache hit before reuse, evicts corrupt cache entries, enforces a maximum byte size, verifies downloaded bytes against the manifest digest before caching, and never writes unverified bytes to persistence. The cache interface is intentionally storage-agnostic: a browser host may later implement it with IndexedDB or Cache Storage, while tests use an in-memory adapter. This prototype does not create a database or choose a storage quota policy.
+
+The resolver and digest provider are trusted host dependencies. A production resolver must handle authentication, request cancellation, network timeouts, and approved CDN configuration; the digest provider must calculate real SHA-256 over the returned bytes. The service itself does not assume browser globals or perform network requests.
