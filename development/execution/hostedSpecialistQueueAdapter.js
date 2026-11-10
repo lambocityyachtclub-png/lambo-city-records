@@ -84,6 +84,7 @@ export function createHostedSpecialistQueueAdapter(options = {}) {
     );
     if (!task) return null;
 
+    let queueSubmissionState = "not_attempted";
     try {
       if (task.status !== TASK_STATUS.IN_PROGRESS) {
         throw new Error("Director did not move the selected task into progress.");
@@ -116,6 +117,7 @@ export function createHostedSpecialistQueueAdapter(options = {}) {
 
       const path = "development/queue/incoming/" + queueTaskId + ".json";
       const content = JSON.stringify(queueTask, null, 2) + "\n";
+      queueSubmissionState = "submitting";
       const commit = await queueClient.createTaskFile({
         branch: targetBranch,
         path,
@@ -127,6 +129,7 @@ export function createHostedSpecialistQueueAdapter(options = {}) {
         throw new Error("The hosted queue client did not confirm a Git commit SHA.");
       }
 
+      queueSubmissionState = "submitted";
       const hostedQueue = Object.freeze({
         state: "submitted",
         branch: targetBranch,
@@ -161,18 +164,46 @@ export function createHostedSpecialistQueueAdapter(options = {}) {
       });
     } catch (error) {
       const reason = errorMessage(error);
-      await developmentDirector.updateTask(task.id, {
-        status: TASK_STATUS.BLOCKED,
-        result: {
-          hostedQueue: {
-            state: "blocked",
-            reason
+      const queueState = queueSubmissionState === "not_attempted" ? "blocked" : "unknown";
+      let trackingError = null;
+      let statusConfirmed = false;
+      try {
+        const update = {
+          result: {
+            ...(task.result && typeof task.result === "object" ? task.result : {}),
+            hostedQueue: { state: queueState, reason }
           }
+        };
+        if (queueState === "blocked") update.status = TASK_STATUS.BLOCKED;
+        const updatedTask = await developmentDirector.updateTask(task.id, update);
+        const expectedStatus = queueState === "blocked" ? TASK_STATUS.BLOCKED : TASK_STATUS.IN_PROGRESS;
+        statusConfirmed = updatedTask?.status === expectedStatus;
+        if (!statusConfirmed) {
+          trackingError = "Development Director did not confirm the expected task status.";
         }
-      }).catch(() => {});
-      throw new Error("Hosted specialist dispatch failed; task moved to blocked: " + reason, {
-        cause: error
-      });
+      } catch (trackingFailure) {
+        trackingError = errorMessage(trackingFailure);
+      }
+
+      let message;
+      if (queueState === "blocked" && statusConfirmed) {
+        message = "Hosted specialist dispatch failed before queue submission; task moved to blocked: " + reason;
+      } else if (queueState === "blocked") {
+        message = "Hosted specialist dispatch failed before queue submission, but the task could not be confirmed as blocked. Manual review required. Dispatch error: " +
+          reason + ". Status update error: " + (trackingError || "status not confirmed");
+      } else if (statusConfirmed) {
+        message = "Hosted specialist queue submission result is uncertain; task remains in progress pending reconciliation: " + reason;
+      } else {
+        message = "Hosted specialist queue submission result is uncertain and task status could not be confirmed. Manual review required. Dispatch error: " +
+          reason + ". Status update error: " + (trackingError || "status not confirmed");
+      }
+
+      const dispatchError = new Error(message, { cause: error });
+      dispatchError.taskId = task.id;
+      dispatchError.dispatchState = statusConfirmed ? queueState : "status_unconfirmed";
+      dispatchError.queueSubmissionState = queueSubmissionState;
+      dispatchError.trackingError = trackingError;
+      throw dispatchError;
     }
   }
 
