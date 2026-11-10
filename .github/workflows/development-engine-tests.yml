@@ -6,6 +6,8 @@ on:
       - integration/lc-alive-agentic-worker-2026-11-10
     paths:
       - "development/**"
+      - "scripts/validate-alive-worker-diff.mjs"
+      - "scripts/test-alive-worker-diff-gate.mjs"
       - ".github/workflows/development-engine-tests.yml"
 
   pull_request:
@@ -22,8 +24,10 @@ jobs:
     permissions:
       contents: read
     steps:
-      - name: Check out repository
+      - name: Check out repository without persisted credentials
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
@@ -31,6 +35,9 @@ jobs:
       - name: Run complete Development Engine test suite
         run: |
           node --experimental-default-type=module --test development/tests/*.test.js
+
+      - name: Test worker path and file-type validation
+        run: node --experimental-default-type=module scripts/test-alive-worker-diff-gate.mjs
 
   generate-proposal:
     name: Generate scoped specialist proposal
