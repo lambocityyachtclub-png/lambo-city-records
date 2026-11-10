@@ -150,7 +150,7 @@ test("composes opt-in IndexedDB persistence lazily through the shared content ru
   await runtime.dispose();
   await runtime.close();
   assert.equal(indexedDB.closes, 1);
-  await assert.rejects(
+  assert.throws(
     () => runtime.loadAsset("lc.runtime.integration", "runtime-asset"),
     /has been disposed/
   );
