@@ -1,5 +1,5 @@
 import { readFile, writeFile } from "node:fs/promises";
-import { dirname, isAbsolute, relative, resolve, sep } from "node:path";
+import { isAbsolute, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const OWNER = "lambocityyachtclub-png";
@@ -71,7 +71,7 @@ async function main() {
   }
   const output = resolve(outputPath);
   const tempRoot = resolve("/tmp") + sep;
-  if (!isAbsolute(outputPath) || !output.startsWith(tempRoot) || dirname(output) === output) {
+  if (!isAbsolute(outputPath) || !output.startsWith(tempRoot)) {
     throw new Error("Private task output must be written under /tmp.");
   }
   const pointer = JSON.parse(await readFile(pointerPath, "utf8"));
