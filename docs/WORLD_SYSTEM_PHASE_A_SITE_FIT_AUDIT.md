@@ -98,3 +98,64 @@ The future expansion must include:
 - This report is a planning artifact on the dedicated planning branch only.
 
 **Phase A outcome:** The source-level map/architecture review is complete and confirms the need for a separate expansion district. The full physical site-fit survey is not yet complete; candidate placement must wait for verified whole-world geometry and shoreline/collision evidence.
+
+## 8. Expanded source-level land-envelope survey
+
+A second pass inspected the actual ground-generating modules (`world.js`, `marina.js`, `dock.js`, `dockPath.js`, and `water.js`) rather than relying only on district metadata.
+
+### Authored ground and structure extents
+
+| Existing element | Authored footprint / extent | Site-fit implication |
+|---|---|---|
+| West waterfront ground | X -65 to -21; Z 10 to 45 | Existing marina/HQ-side land; not spare expansion land |
+| East waterfront ground | X 21 to 65; Z 10 to 45 | Existing marina/store-side land; not spare expansion land |
+| Boardwalk road | X -45 to 45; Z 42 to 50 | Protected VIP waterfront route; ordinary traffic restricted |
+| Arena/Convention district ground | X -105 to 19; Z 45 to 158 | Existing committed district envelope |
+| Arena boulevard | Center (-43, 97), outer 84 × 84 | Full loop and sidewalks occupy the central district |
+| Arena | Center (-43, 97), footprint 54 × 44 | Protected landmark footprint |
+| West/east villa rows | Parcel centers around X -98.5 and 12.5; Z 80 and 112 | Planned residential parcels occupy outer boulevard edges |
+| North villa row | Parcel centers around X -58 and -28; Z 148.5 | Planned residential parcels approach the north edge of the district |
+| Main dock | X -7 to 7; Z -41 to 35 | Existing waterfront structure, not a land connector |
+| Grand Stage ground | X -65 to 65; Z -99.5 to -44.5 | Protected event/stage land, separate from Convention expansion |
+| Ocean surface | 800 × 800 animated water plane centered at origin | Visual water surface only; it does not certify buildable land or a surveyed shoreline |
+
+The waterfront ground extents are directly authored in `world.js` and repeated as named extents in `marina.js`. The arena ground and district bounds are defined in the shared map/district blueprint. The dock and stage are separate built structures. The ocean plane is a large visual surface and must not be mistaken for terrain or evidence that a new road/land platform is safe to build.
+
+### Top-down source schematic (not to scale)
+
+```text
+                         +Z / INLAND
+                              ^
+              No adjacent land envelope verified
+              beyond the north edge of Arena District
+
+       WEST              ARENA / CONVENTION             EAST
+     X < -105          X -105 .......... 19           X > 19
+                         [north villas]
+                         [boulevard loop]
+                         [arena]
+                         [south arrival]
+                              |
+                     Boardwalk at Z 42–50
+              VIP pedestrian waterfront / restricted vehicles
+                 existing land sections Z 10–45
+                              |
+                    dock / marina approach
+                              |
+                 Grand Stage / stage ground
+                              v
+                         -Z / OCEAN
+```
+
+### Land-fit conclusion
+
+The source-defined land is fragmented into the existing marina/waterfront, the Convention/Arena district, and the separate Grand Stage area. The adjacent east, west, and north areas outside the Convention/Arena ground envelope are not defined as continuous land in the inspected ground modules. The ocean plane beneath the scene is not a usable land parcel.
+
+**No buildable adjacent site for the complete Sports & Motors program can be verified from the current source geometry.** A separate expansion district remains the right software architecture, but registering it with guessed bounds would only create a data blueprint over unverified water/empty space. No candidate coordinate rectangle is therefore approved.
+
+### What this means for the next design decision
+
+Before any Sports & Motors district can be placed, LAMBO CITY needs an explicit, approved land strategy backed by a full-world visual/terrain survey. That could mean identifying additional land already present but not represented in the inspected modules, or separately approving a designed land-extension project with its own shoreline engineering and access plan. This audit does not select either option and does not authorize reclamation, a bridge, a pier, or water fill.
+
+The current milestone is therefore complete at the source-geometry level: it establishes the exact known ground extents and proves that the present source files do not establish a safe contiguous expansion site. A live browser scene review remains necessary to discover any geometry not represented by these modules.
+
