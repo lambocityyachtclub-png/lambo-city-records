@@ -50,3 +50,19 @@ The queue workflow is intentionally restricted to the branch `integration/lc-ali
 This is the first real hosted code-generation bridge, not yet a fully self-running development company. It can turn a validated queued task into a tested draft PR. The current browser-side Development Director is not yet connected to this hosted queue; the next layer is an authenticated server-side bridge that transfers approved Director tasks into this queue and reports PR/check status back into the review store. That bridge must keep owner approval for protected actions and must never expose GitHub tokens to the browser.
 
 The queue is operated through repository task files for this isolated prototype. The eventual user experience should be plain-language direction through the LAMBO CITY ALIVE control surface, not requiring the owner to edit JSON or use GitHub.
+
+
+## Optional Development Director → hosted queue adapter
+
+The ALIVE foundation now includes an optional, tested bridge from the existing Development Director to the hosted specialist queue:
+
+- \`createHostedSpecialistQueueAdapter\` can be injected into \`createDevelopmentSystem\` as \`hostedQueue\`.
+- \`dispatchHostedTask(workerId)\` claims the next eligible task for that specialist, checks its area, acceptance criteria, and recorded owner approval when required, then serializes it into the validated queue format.
+- Successful dispatch records the queue branch, task-file path, and Git commit SHA on the Director task. A failed dispatch moves the task to \`blocked\` with a recorded reason.
+- \`createGitHubTaskQueueClient\` is a server-side Contents API adapter. It writes only validated task JSON to \`development/queue/incoming/\` on an isolated \`integration/lc-alive-agentic-worker-*\` branch. Its token is held in the trusted host closure and is not returned in snapshots.
+
+The complete Development Engine suite now includes the queue adapter and GitHub client tests: **149 passed, 0 failed** on the integration branch.
+
+### What is still not connected
+
+The adapter is optional and is not configured in the live website. The Vercel project currently has no server-side GitHub queue credential configured, and the live browser interface does not call this adapter. The hosted queue has been exercised through a repository task commit and produced a draft proposal PR; the Director-to-GitHub adapter is separately validated with an injected test client. Connecting the real server-side credential and the owner-facing plain-language control surface remains a separate integration step. No credential belongs in browser code.
