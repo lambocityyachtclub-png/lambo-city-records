@@ -88,9 +88,16 @@ export function createVocalBoothPanel({ beatLab } = {}) {
     else talkbackStatus("Talkback off · recording path remains isolated.");
   };
   const onTalkbackError=event=>talkbackStatus("TALKBACK ERROR · "+(event.detail?.message||"Microphone unavailable."));
+  const onCountIn=event=>{
+    const detail=event.detail||{};
+    if(detail.cancelled){status("Count-in cancelled · recording did not start.");return;}
+    status(detail.complete?"Count-in complete · recording.":"GET READY · "+detail.beat+" / 4");
+  };
+  window.addEventListener("lc-vocal-count-in",onCountIn);
   window.addEventListener("lc-talkback-state",onTalkbackState);
   window.addEventListener("lc-talkback-error",onTalkbackError);
   root.addEventListener("lc-vocal-booth-dispose",()=>{
+    window.removeEventListener("lc-vocal-count-in",onCountIn);
     window.removeEventListener("lc-talkback-state",onTalkbackState);
     window.removeEventListener("lc-talkback-error",onTalkbackError);
   },{once:true});
@@ -109,13 +116,17 @@ export function createVocalBoothPanel({ beatLab } = {}) {
           status("Beat session stopped.");
           break;
         case "record":
+          if(recordingActive||beatLab.recordingStartPending)return;
+          status("Four-count starting…");
           await beatLab.startRecording();
+          if(!StudioRecordingEngine.activeTake)return;
           recordingStartedAt=performance.now();
           recordingActive=true;
           status("Recording vocals and session stems.");
           window.dispatchEvent(new CustomEvent("lc-vocal-recording-state",{detail:{recording:true,mode:"vocal"}}));
           break;
         case "stop-recording":
+          if(!recordingActive||!StudioRecordingEngine.activeTake)return;
           await beatLab.stopRecording();
           recordingActive=false;
           takeCount+=1;
