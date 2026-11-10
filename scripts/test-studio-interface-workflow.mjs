@@ -101,7 +101,7 @@ assert.match(vocalBooth,/data-booth-mode="notes" hidden/,"Voice Notes must be a 
 assert.match(vocalBooth,/data-booth-mode="vocal"/,"Full vocal recording controls must be scoped to Vocal Booth mode.");
 assert.match(vocalBooth,/data-vocal-talkback/,"The dedicated Talkback control must remain available in the booth.");
 assert.match(vocalBooth,/StudioTalkback\.bindControl/,"Talkback must use the shared Talkback service.");
-assert.match(vocalBooth,/startTrackRecording\(\{audio,trackId:track\.id\}\)/,"Voice Notes must record into the shared multitrack session.");
+assert.match(vocalBooth,/startTrackRecording\(\{audio,trackId:track\.id,shouldCancel:\(\)=>panelDisposed\|\|Boolean\(beatLab\?\.recordingStopPending\)\}\)/,"Voice Notes must record into the shared multitrack session with disposal cancellation.");
 assert.match(vocalBooth,/stopTrackRecording\(trackId\)/,"Voice Notes must save a take into the shared session.");
 assert.match(vocalBooth,/scheduleProjectAutosave\(\)/,"Voice Notes must autosave after saving a clip.");
 assert.match(vocalBooth,/Finish and save the active recording before switching modes/,"Mode switching must not strand an active recording.");
