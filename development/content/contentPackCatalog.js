@@ -289,11 +289,11 @@ function getLoadedByteSize(value, maxBytes, seen = new Set()) {
       if (Number.isSafeInteger(value.sizeBytes) && value.sizeBytes >= 0) return value.sizeBytes;
       throw new Error("Custom file-like host assets must expose an explicit measured sizeBytes value.");
     }
-    if (value && value.blob && value.blob !== value) {
+    if (value && value.blob) {
       const blobSize = getLoadedByteSize(value.blob, maxBytes, seen);
       if (blobSize !== null) return blobSize;
     }
-    if (value && value.bytes && value.bytes !== value) {
+    if (value && value.bytes) {
       const byteSize = getLoadedByteSize(value.bytes, maxBytes, seen);
       if (byteSize !== null) return byteSize;
     }
