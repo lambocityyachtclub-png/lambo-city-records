@@ -143,10 +143,11 @@
         registerBox(name, bounds) { this.boxes.push({ name, ...bounds }); },
         unregister(name) { this.boxes = this.boxes.filter(box => box.name !== name); }
       };
+      // Test-only trusted host permission provider. Tests explicitly change
+      // this trusted state; player-supplied options cannot grant service access.
+      let trustedVehiclePermissions = [];
       const world = new WorldSystem({
-        // Test-only trusted host permission provider. Player-supplied options
-        // cannot grant service access to vehicle controllers or routes.
-        getVehiclePermissions: () => ["service"]
+        getVehiclePermissions: () => trustedVehiclePermissions
       });
       world.init(scene, { systems: { collision: previewCollision } });
       const recipeDistrict = createDistrictFromRecipe({
@@ -755,6 +756,7 @@
         throw new Error("Service route was incorrectly allowed without permission.");
       }
       const gateGrant = world.setGateAccess(district.id, "arena-boardwalk-service-gate", ["service"]);
+      trustedVehiclePermissions = ["service"];
       const authorizedServiceRoute = world.findRoute(
         district.id,
         "boardwalk-service-entry",
@@ -787,11 +789,13 @@
         futureDistrict.id, "boulevard-south-west", "boulevard-south-west",
         { mode: "service", permissions: ["service"] }
       );
+      trustedVehiclePermissions = [];
       const deniedCityRoute = world.findWorldRoute(
         district.id, "boardwalk-service-entry",
         futureDistrict.id, "boulevard-south-west",
-        { mode: "service" }
+        { mode: "service", permissions: ["service"] }
       );
+      trustedVehiclePermissions = ["service"];
       const authorizedCityRoute = world.findWorldRoute(
         district.id, "boardwalk-service-entry",
         futureDistrict.id, "boulevard-south-west",
