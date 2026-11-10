@@ -52,7 +52,7 @@ export default async function handler(req, res) {
     const path = "development/queue/incoming/" + task.id + ".json";
     const result = await queue.createTaskFile({
       path,
-      branch: QUEUE_BRANCH,
+      branch: privateQueue.branch,
       content: JSON.stringify(task, null, 2) + "\n",
       commitMessage: "ALIVE owner vision intake: " + task.id
     });
