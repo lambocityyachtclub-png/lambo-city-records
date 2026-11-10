@@ -96,6 +96,7 @@ const WORKERS = Object.freeze({
 });
 
 const PROTECTED_EXACT = new Set([
+  "docs/ALIVE_PRIVATE_QUEUE_SETUP.md",
   "main.js",
   "engine.js",
   "index.html",
