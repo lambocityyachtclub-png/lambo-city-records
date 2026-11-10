@@ -1,84 +1,58 @@
-# LAMBO CITY ALIVE — Shared Content Pack Contract
+# LAMBO CITY ALIVE — Shared Content Packs and Host Integration
 
-This layer is a runtime-independent metadata catalog. It complements, rather than replaces, the existing Studio IndexedDB audio asset store and World System district recipe/schema. It does not change either subsystem or load assets at startup.
+## Purpose
 
-## Pack manifest
+This layer provides a runtime-independent, versioned content-pack contract for Studio and World content. It complements the existing Studio audio asset database and World System district recipe/schema. It does not replace either subsystem or load assets at startup.
 
-A pack declares:
+## What is implemented
 
-- `id`, semantic `version`, and a supported `category`;
-- optional pack dependencies with semantic version ranges;
-- app compatibility bounds;
-- source publisher/license/attribution;
-- performance budgets;
-- assets with stable IDs, category, byte size, loading strategy, source locator, license, cache key, and optional fallback.
+- Versioned manifests with stable asset IDs, supported categories, source/license metadata, compatibility bounds, dependency ranges, byte budgets, cache keys, lazy/eager loading strategy, and optional fallback assets.
+- Dependency ordering and validation for missing, incompatible, and cyclic pack dependencies.
+- On-demand loading, successful-value caching, concurrent-load deduplication, retry after failure, and declared fallback behavior.
+- Studio adapter: resolves `asset:<id>` through the existing injected `StudioAudioAssetStore.get(id)` and returns the original recorded audio record. It does not create or replace the Studio audio database.
+- World adapter: resolves `recipe:<id>` through an injected World recipe resolver and requires the existing district validator to return `valid: true` before returning the recipe.
+- Verified remote delivery: HTTPS origin allowlist, manifest SHA-256 integrity, byte-size limit, verification of cached and newly resolved bytes, corrupt-cache eviction, and non-fatal cache errors.
+- Separate IndexedDB persistence adapter: lazy open, copied binary records, per-entry limits, quota/error reporting, close behavior, and no access to the Studio audio database.
+- Explicit `createContentPackRuntime(options)` composition root connects the catalog to the Studio, World, and remote host adapters when the application host injects those services. Construction itself does not open storage, make network requests, or initialize Three.js.
 
-Supported categories include audio, instrument, effect, preset, building, environment, vehicle, yacht, water, material, animation, NPC, venue, recipe, and other.
+## Browser validation
 
-## Loading and safety
+The dedicated GitHub Actions workflow `ALIVE Browser Content Cache Checks` runs Playwright against real Chromium and WebKit browser engines. On the current validated content-catalog commit, both engines passed:
 
-`createContentPackCatalog({ appVersion, loader })` registers and validates metadata. Registration performs no downloads. `loadAsset(packId, assetId)` is the only operation that invokes the injected host loader. Successful values are cached by cache key; concurrent requests share one in-flight load; failed loads are retryable. A declared fallback can be attempted if the primary host loader fails.
+- verified bytes are downloaded once and reused from IndexedDB;
+- persisted bytes survive closing and reopening the database;
+- corrupt cached bytes are detected and replaced;
+- a cache-capacity failure does not block delivery of verified content.
 
-The loader is a host capability. Remote URL assets must declare a SHA-256 digest in the manifest. The supplied host adapter rejects non-HTTPS or non-allowlisted origins and requires an injected integrity verifier to approve the resolved bytes before returning them. The resolver must also enforce authentication, storage permissions, and cancellation policy. The catalog intentionally does not fetch URLs itself, open IndexedDB, access the filesystem, or create Three.js objects.
+This is automated WebKit coverage, not a physical iPad or iOS Safari acceptance test. Actual device storage quotas, Safari lifecycle behavior, microphone permission, and GPU/performance characteristics still require a real iPad Safari session.
 
-## Existing system adapters
+## Runtime integration boundary
 
-- Studio audio: a future host adapter can resolve `studio-audio-store` locators through the existing `StudioAudioAssetStore.get(assetId)`. The store remains authoritative for recorded beat/vocal/mix blobs and project ownership.
-- World System: a future host adapter can resolve `world-recipe` locators against existing district recipe definitions and continue using `validateDistrict` before any district is registered or built.
-- Three.js runtime: a future feature-specific loader can create scene resources only after the relevant district/interface is requested, and must dispose those resources with its owning module.
+The adapters and composition root are implemented and tested with injected host services. They are not yet wired into the production game startup path. This is intentional: Studio's current store and World System host remain authoritative, and the content catalog must be explicitly opted into by a feature host after compatibility checks. No content pack is automatically downloaded or installed, and no new content is activated merely because the catalog exists.
 
-These adapters are intentionally not connected in this prototype. No existing recording, project-file, district, or engine behavior changes.
+A safe next integration step is feature-level opt-in:
+1. Studio passes its existing `StudioAudioAssetStore` instance to the content runtime only when a Studio content feature requests catalog-backed assets.
+2. World passes a resolver for an explicitly registered district recipe plus the existing district validation function; the recipe is not registered or built until the World host requests it.
+3. Remote delivery remains disabled unless the host supplies a real SHA-256 implementation, authenticated resolver, explicit HTTPS origin allowlist, and cache policy.
+4. Every loaded scene resource remains owned and disposed by the feature module that requested it.
 
-## Current limits
+## Current boundaries and outstanding work
 
-This is a tested manifest/catalog contract and injected loading seam, not a hosted CDN, asset marketplace, remote content manager, signed pack installer, or automatic updater. It has no production asset URLs or bundled sample packs. It must be integrated behind explicit owner review after real host adapters and asset integrity checks exist.
+- No production runtime wiring or production deployment is included.
+- No production CDN, signed asset publisher, marketplace, automatic updater, or sample content pack is configured.
+- Authentication, request cancellation/timeouts, and trusted URL resolution remain responsibilities of the host service.
+- The IndexedDB browser tests use Playwright WebKit, not the actual iPad Safari app/browser.
+- Browser quota tests simulate constrained capacity; they do not predict device-specific quota limits.
+- The content catalog is not a substitute for the existing Studio project/session format or World System recipe compiler.
+- The module registry remains an isolated prototype and is not yet wired into `engine.js` or `main.js`.
 
-## Host adapter proof
+## Validation on this branch
 
-`development/content/contentPackHostAdapters.js` adds an explicit dispatcher for the existing systems:
+- Development Engine Tests: 119 passed, 0 failed.
+- ALIVE Browser Content Cache Checks: Chromium passed; WebKit passed.
+- The browser checks ran on the content-catalog branch before this documentation-only integration-validation branch was created.
+- A fresh combined integration run is required on the new branch before considering the ALIVE foundation chain ready for the development branch.
 
-- `studio-audio-store` resolves `asset:<id>` through an injected `StudioAudioAssetStore.get(id)` and returns the existing stored audio record. It does not create another IndexedDB database.
-- `world-recipe` resolves `recipe:<id>` through an injected recipe resolver and requires the existing district validator to return `valid: true` before returning the recipe.
-- `url` and `host` sources require separately injected resolvers. The adapter intentionally does not fetch arbitrary URLs; the trusted URL resolver must enforce origin allowlists and integrity verification.
+## Release policy
 
-These are adapter contract proofs with injected services, not a connection to production Studio or World runtime. The host chooses when to construct and pass the adapter to the catalog.
-
-## Verified delivery and persistent cache service
-
-`createVerifiedRemoteContentLoader` is a separate host service that can be injected as the URL resolver for the catalog adapter. It requires:
-
-- an explicit HTTPS origin allowlist;
-- a resolver that returns bytes;
-- a SHA-256 provider that computes a digest from those bytes;
-- optionally, a persistent cache implementing `get(key)`, `set(key, bytes)`, and `delete(key)`.
-
-The service verifies every cache hit before reuse, evicts corrupt cache entries, enforces a maximum byte size, verifies downloaded bytes against the manifest digest before caching, and never writes unverified bytes to persistence. The cache interface is intentionally storage-agnostic: a browser host may later implement it with IndexedDB or Cache Storage, while tests use an in-memory adapter. This prototype does not create a database or choose a storage quota policy.
-
-The resolver and digest provider are trusted host dependencies. A production resolver must handle authentication, request cancellation, network timeouts, and approved CDN configuration; the digest provider must calculate real SHA-256 over the returned bytes. The service itself does not assume browser globals or perform network requests.
-
-## Composing the verified loader with the catalog host adapter
-
-The verified remote loader can be supplied as the URL resolver in `createContentPackHostLoader`. The host adapter's integrity callback should call the same trusted SHA-256 provider against the returned byte array and expected manifest digest. This intentionally keeps policy layers explicit: the verified loader owns allowlisted resolution and persistent-cache verification; the catalog adapter remains the common source-kind dispatcher. The host must supply the real digest implementation and persistent cache implementation, and must not substitute a callback that simply returns `true`.
-
-A browser implementation can provide a persistent cache backed by IndexedDB or Cache Storage, but that concrete storage choice is deliberately outside this runtime-independent module. The existing Studio audio asset database remains separate and is not repurposed as a general CDN cache.
-
-## Validation update
-
-The verified delivery/cache service is covered by the development CI suite. Latest completed run: 107 tests passed, 0 failed. This includes composition through the catalog host adapter, persistent cache hits, corrupt-cache eviction, origin allowlisting, byte-size enforcement, and tamper rejection. The cache is still an injected interface; no browser database or production CDN integration has been created.
-
-## Explicit runtime composition
-
-`createContentPackRuntime(options)` is the opt-in composition root. It connects the catalog to the existing host adapter and, when both are supplied, the verified remote loader. It exposes catalog operations and a service-capability snapshot. Constructing it does not open a database, make a network request, or initialize a Three.js scene. Studio, World, remote delivery, persistent cache, and generic host capabilities are supplied independently by the application host. The service snapshot makes missing adapters visible instead of silently substituting fake implementations.
-
-## Browser IndexedDB persistence adapter
-
-`createIndexedDbContentCache({ indexedDB, ...options })` is a separate, lazy browser cache for verified remote content. The host explicitly supplies the browser's IndexedDB factory; the adapter does not access a global browser object. It uses its own database name (`lambo-city-content-cache` by default) and object store (`assets`), and never opens or modifies the existing Studio recording database.
-
-- The database is opened only on the first cache read/write/delete, not when the runtime is constructed.
-- Binary payloads are copied on write and read; malformed and over-limit records are discarded.
-- A per-entry byte ceiling is enforced before storage.
-- Quota errors are reported distinctly through `onError`.
-- The verified loader treats cache failures as non-fatal: a valid downloaded asset is still returned even if IndexedDB is full or unavailable. Failed cache reads become network misses; failed writes do not break playback/content loading.
-- `close()` closes the dedicated cache database and prevents later operations.
-
-This is a concrete browser persistence adapter, not a live runtime integration. The browser host still needs to provide a real SHA-256 implementation and an authenticated, allowlisted content resolver. Device-specific quota and eviction policies still require iPad Safari acceptance testing. The adapter deliberately does not clear unrelated browser data or delete the Studio audio store.
+This work is a development integration candidate only. Keep the current production deployment and rollback candidate unchanged. Do not merge to `main`, promote a deployment, or enable autonomous code execution until the integrated branch passes its complete CI/browser checks and a human-reviewed release candidate is approved.
