@@ -6,7 +6,7 @@ The owner workspace is deliberately fail-closed. It will not send owner directio
 
 1. In GitHub, create a new repository under `lambocityyachtclub-png` named **`lambo-city-alive-control`**.
 2. Set its visibility to **Private**. Do not initialize it with a README or public license.
-3. After the private repository exists, the ALIVE setup process creates the isolated queue branch:
+3. The private repository is a storage vault only; it does not need its own Actions workflow. After it exists, the ALIVE setup process creates the isolated queue branch:
    `integration/lc-alive-agentic-worker-2026-11-10`.
 
 ## Credentials
@@ -20,7 +20,7 @@ Create two GitHub fine-grained personal access tokens. Do not paste either token
 - Add it to the Vercel project as the sensitive environment variable `ALIVE_PRIVATE_QUEUE_GITHUB_TOKEN`.
 - Targets: Preview and Production.
 
-This token lets the server write the private task and a public pointer containing only the task ID and private file location. The raw owner vision is never written to the public repository.
+This token lets the server write the private task and a public pointer containing only the task ID and private file location. The raw owner vision is never written to the public repository. The public repository permission is needed only to create that pointer on the isolated worker branch.
 
 ### GitHub Actions read token
 
@@ -29,7 +29,7 @@ This token lets the server write the private task and a public pointer containin
 - In `lambo-city-records`, open **Settings → Secrets and variables → Actions → New repository secret**.
 - Name it `ALIVE_PRIVATE_QUEUE_READ_TOKEN` and paste the read-only token as its value.
 
-The hosted worker uses this secret to retrieve the private task into a temporary runner file. It does not commit the private task or raw owner vision to the public code repository.
+The existing public `development-engine-tests.yml` workflow is triggered by the task-ID-only pointer commit. It uses this secret to retrieve the private task into a temporary runner file. It does not commit the private task or raw owner vision to the public code repository.
 
 ## Owner sign-in
 
