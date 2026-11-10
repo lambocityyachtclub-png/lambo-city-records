@@ -6,6 +6,7 @@ import StudioMPCLibrary from "./studioMPCLibrary.js";
 import StudioRecordingEngine from "./studioRecordingEngine.js";
 import StudioVocalEffects from "./studioVocalEffects.js";
 import { createStudioPitchCorrectionNode } from "./studioPitchCorrection.js";
+import { createRecordingStartCoordinator } from "./studioRecordingStartCoordinator.js";
 import {
   createSongProject,
   saveSongProject,
@@ -96,6 +97,11 @@ this.pitchCorrectionSettings = {
   speedMs: 25
 };
 this.lastRecordedTake = null;
+this.recordingStartPending = false;
+this.recordingStartToken = 0;
+this.recordingStartCoordinator = createRecordingStartCoordinator();
+this.recordingStopPending = false;
+this.recordingStopPromise = null;
 this.noiseBuffer = null;
     this.timer = null;
     this.playing = false;
@@ -510,6 +516,8 @@ this.handleStudioKeydown = (event) => {
 
     if (StudioRecordingEngine.activeTake) {
       void this.stopRecording();
+    } else if (this.recordingStartPending) {
+      this.cancelRecordingStart();
     } else {
       void this.startRecording();
     }
@@ -1096,16 +1104,27 @@ if (!this.audio || this.audio.state !== "running") {
   },
 
  
-   async startRecording() {
+  async startRecording() {
     let pitchCorrectionNode = null;
+    let startedBeatForCountIn = false;
+    let takeStarted = false;
+    let finalStatus = null;
+    if (StudioRecordingEngine.activeTake || this.recordingStartCoordinator?.isPending() || this.recordingStopPending) {
+      this.status("A recording is already in progress.");
+      return;
+    }
+    const coordinator = this.recordingStartCoordinator || (this.recordingStartCoordinator = createRecordingStartCoordinator());
+    const startToken = coordinator.begin();
+    if (startToken === null) {
+      this.recordingStartPending = true;
+      this.status("Finishing the previous count-in cancellation. Tap Record again in a moment.");
+      return;
+    }
+    this.recordingStartToken = startToken;
+    this.recordingStartPending = true;
     try {
-      if (StudioRecordingEngine.activeTake) {
-        this.status("A recording is already in progress.");
-        return;
-      }
-
       this.audio = await StudioAudioEngine.resume();
-
+      if (!coordinator.isCurrent(startToken)) return;
       if (!this.audio || this.audio.state !== "running") {
         throw new Error("Studio audio is not running.");
       }
@@ -1113,53 +1132,110 @@ if (!this.audio || this.audio.state !== "running") {
       if (!this.vocalEffects) {
         this.vocalEffects = StudioVocalEffects.create(this.audio);
       }
-
-      this.vocalEffects.setDelayMix(
-        this.vocalEffectSettings.delay
-      );
-
-      this.vocalEffects.setReverbMix(
-        this.vocalEffectSettings.reverb
-      );
+      this.vocalEffects.setDelayMix(this.vocalEffectSettings.delay);
+      this.vocalEffects.setReverbMix(this.vocalEffectSettings.reverb);
 
       if (this.pitchCorrectionSettings?.enabled) {
         pitchCorrectionNode = await createStudioPitchCorrectionNode(this.audio, this.pitchCorrectionSettings);
+        if (!coordinator.isCurrent(startToken)) return;
       }
 
-      await StudioRecordingEngine.startTake({
+      // Start the beat first, then complete a four-beat pre-roll before
+      // opening the recorder. The count-in is therefore never captured.
+      if (!this.playing) {
+        await this.start();
+        startedBeatForCountIn = this.playing;
+      }
+      if (!coordinator.isCurrent(startToken)) return;
+      if (!this.playing) throw new Error("Beat Lab playback could not start. Check the Studio audio output and try again.");
+      const bpm = Math.max(60, Math.min(180, Number(this.pattern?.bpm) || 100));
+      const beatMs = 60000 / bpm;
+      for (let beat = 1; beat <= 4; beat += 1) {
+        if (!coordinator.isCurrent(startToken)) return;
+        this.status("GET READY · " + beat + " / 4");
+        window.dispatchEvent(new CustomEvent("lc-vocal-count-in", {
+          detail: { beat, total: 4, bpm }
+        }));
+        await coordinator.wait(startToken, beatMs);
+      }
+      if (!coordinator.isCurrent(startToken)) return;
+      window.dispatchEvent(new CustomEvent("lc-vocal-count-in", {
+        detail: { beat: 0, total: 4, bpm, complete: true }
+      }));
+
+      const take = await StudioRecordingEngine.startTake({
         audio: this.audio,
         beatOutput: StudioAudioExport.getOutput(this.audio),
         vocalEffects: this.vocalEffects,
-        pitchCorrectionNode
+        pitchCorrectionNode,
+        shouldCancel: () => !coordinator.isCurrent(startToken)
       });
 
-      this.status(
-        "Recording vocals, Beat Lab, and mix… Tap STOP RECORDING when finished."
-      );
+      // A permission prompt or recorder initialization can finish after the
+      // user cancels. Never leave a take running in that race window.
+      if (!coordinator.isCurrent(startToken)) {
+        if (take?.id && StudioRecordingEngine.activeTake?.id === take.id) {
+          try { await StudioRecordingEngine.stopTake(); } catch (error) {
+            console.warn("LAMBO CITY cancelled take cleanup failed:", error);
+          }
+        }
+        return;
+      }
 
+      pitchCorrectionNode = null;
+      takeStarted = true;
+      this.status("Recording vocals, Beat Lab, and mix… Tap STOP RECORDING when finished.");
     } catch (error) {
-      console.error("LAMBO CITY recording error:", error);
-      this.status(`RECORDING ERROR: ${error?.message || error}`);
+      if (!coordinator.isCurrent(startToken)) {
+        finalStatus = "Count-in cancelled · recording did not start.";
+      } else {
+        console.error("LAMBO CITY recording error:", error);
+        finalStatus = `RECORDING ERROR: ${error?.message || error}`;
+      }
+      window.dispatchEvent(new CustomEvent("lc-vocal-count-in", {
+        detail: { beat: 0, total: 4, cancelled: true }
+      }));
+    } finally {
+      try { pitchCorrectionNode?.disconnect(); } catch {}
+      if (startedBeatForCountIn && !takeStarted && this.playing) {
+        this.stop();
+      }
+      if (!coordinator.isCurrent(startToken)) {
+        finalStatus = "Count-in cancelled · recording did not start.";
+      }
+      if (finalStatus) this.status(finalStatus);
+      coordinator.finish(startToken);
+      this.recordingStartPending = coordinator.isPending();
     }
   },
 
+  cancelRecordingStart() {
+    if (!this.recordingStartPending || !this.recordingStartCoordinator) return false;
+    if (!this.recordingStartCoordinator.cancel(this.recordingStartToken)) return false;
+    this.status("Count-in cancelled · recording did not start.");
+    window.dispatchEvent(new CustomEvent("lc-vocal-count-in", {
+      detail: { beat: 0, total: 4, cancelled: true }
+    }));
+    return true;
+  },
+
    async stopRecording() {
-    try {
-      this.lastRecordedTake =
-        await StudioRecordingEngine.stopTake();
-
-      StudioMultitrackWorkspace.addRecordingTake(
-        this.lastRecordedTake
-      );
-
-      this.status(
-        "Recording finished. Vocal, Beat Lab, and Master Mix clips added to Multitrack."
-      );
-
-    } catch (error) {
-      console.error("LAMBO CITY recording stop error:", error);
-      this.status(`STOP RECORDING ERROR: ${error?.message || error}`);
-    }
+    if (this.recordingStopPromise) return this.recordingStopPromise;
+    this.recordingStopPending = true;
+    this.recordingStopPromise = (async () => {
+      try {
+        this.lastRecordedTake = await StudioRecordingEngine.stopTake();
+        StudioMultitrackWorkspace.addRecordingTake(this.lastRecordedTake);
+        this.status("Recording finished. Vocal, Beat Lab, and Master Mix clips added to Multitrack.");
+      } catch (error) {
+        console.error("LAMBO CITY recording stop error:", error);
+        this.status(`STOP RECORDING ERROR: ${error?.message || error}`);
+      } finally {
+        this.recordingStopPending = false;
+        this.recordingStopPromise = null;
+      }
+    })();
+    return this.recordingStopPromise;
   },
 
   exportRecording() {
@@ -1692,7 +1768,10 @@ StudioSoundKit.play(
   },
 
   close() {
-    
+    this.cancelRecordingStart?.();
+    const recordingCleanup = StudioRecordingEngine.activeTake
+      ? this.stopRecording()
+      : this.recordingStopPromise;
     if (this.handleStudioKeydown) {
       document.removeEventListener(
         "keydown",
@@ -1713,10 +1792,12 @@ StudioSoundKit.play(
       this.style.remove();
       this.style = null;
     }
+    return recordingCleanup || Promise.resolve();
   },
 
   destroy() {
-    this.close();
+    this.cancelRecordingStart?.();
+    const recordingCleanup = this.close();
 
     if (this.handleCanvasClick && this.renderer?.domElement) {
       this.renderer.domElement.removeEventListener(
@@ -1728,6 +1809,7 @@ StudioSoundKit.play(
     this.handleCanvasClick = null;
     this.raycaster = null;
     this.pointer = null;
+    return recordingCleanup;
   },
 
   update() {}

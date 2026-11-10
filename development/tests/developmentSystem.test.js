@@ -207,9 +207,11 @@ test("Development System initializes all modules", async () => {
     DEVELOPMENT_SYSTEM_STATUS.READY
   );
 
-  assert.equal(snapshot.registry.totalModules, 3);
-  assert.equal(snapshot.registry.enabledModules, 3);
+  assert.equal(snapshot.registry.totalModules, 4);
+  assert.equal(snapshot.registry.enabledModules, 4);
   assert.equal(snapshot.studioRunner.id, "studio");
+  assert.equal(snapshot.workers.length, 9);
+  assert.ok(snapshot.registry.modules.some(module => module.id === "specialist-worker-roster"));
 });
 
 
@@ -323,4 +325,83 @@ test("Development System restores tasks after a restart", async () => {
       force: true
     });
   }
+});
+
+
+test("Development System disable guards every exposed specialist worker entry point", async () => {
+  const workspaceAdapter = {
+    async createWorkspace() { return { workspaceId: "disabled-worker-workspace" }; },
+    async readFile() { return ""; },
+    async writeFile() { return { written: true }; },
+    async listChangedFiles() { return []; },
+    async destroyWorkspace() { return { destroyed: true }; }
+  };
+  const system = await createDevelopmentSystem({
+    specialistExecution: {
+      workspaceAdapters: { studio: workspaceAdapter },
+      changePlanners: { studio: async () => ({ summary: "no-op" }) },
+      testRunners: { studio: async () => ({ passed: true }) },
+      reviewStore: { async createReview() { return { id: "review-disabled-test" }; } },
+      allowedPathsByWorker: { studio: ["development"] }
+    }
+  });
+  const execution = system.getWorkerExecution();
+
+  assert.ok(execution);
+  assert.deepEqual(execution.getConfiguredWorkers(), ["studio"]);
+  system.disable();
+
+  await assert.rejects(
+    system.director.createTask({
+      title: "Disabled direct director task",
+      description: "This must be blocked through the exposed director view.",
+      area: "studio_audio",
+      runner: "studio"
+    }),
+    /development system is disabled/
+  );
+  assert.throws(
+    () => system.studioRunner.setEnabled(true),
+    /development system is disabled/
+  );
+  await assert.rejects(
+    system.studioRunner.submitFinding({
+      title: "Disabled direct Studio runner submission",
+      description: "This must be blocked through the exposed runner view.",
+      area: "beat_lab"
+    }),
+    /development system is disabled/
+  );
+  assert.throws(
+    () => system.workerRoster.setWorkerEnabled("studio", false),
+    /development system is disabled/
+  );
+  await assert.rejects(
+    () => system.workerRoster.submitFinding("studio", {
+      title: "Disabled worker submission",
+      description: "This must be blocked through the exposed roster view.",
+      area: "studio_audio"
+    }),
+    /development system is disabled/
+  );
+  await assert.rejects(
+    execution.executeNextTask("studio"),
+    /development system is disabled/
+  );
+  await assert.rejects(
+    system.executeWorkerTask("studio"),
+    /development system is disabled/
+  );
+});
+
+
+test("Development System exposes a read-only registry facade", async () => {
+  const system = await createDevelopmentSystem();
+
+  assert.equal(system.registry.getSnapshot().totalModules, 4);
+  assert.equal(typeof system.registry.getModule, "function");
+  assert.equal(typeof system.registry.listModules, "function");
+  assert.equal(typeof system.registry.registerModule, "undefined");
+  assert.equal(typeof system.registry.unregisterModule, "undefined");
+  assert.equal(typeof system.registry.setModuleEnabled, "undefined");
 });

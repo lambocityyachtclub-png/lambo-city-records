@@ -27,16 +27,20 @@ const source = Object.fromEntries(await Promise.all(files.map(async file => [
 
 const main = source["main.js"];
 const engine = source["engine.js"];
-for (const [name,path] of [
-  ["StudioMixMasterConsole3D","./studioMixMasterConsole3D.js"],
-  ["Floor2LiveDrummer","./floor2LiveDrummer.js"],
-  ["Floor2VocalBooth3D","./floor2VocalBooth3D.js"],
-  ["Floor2CitySynth","./floor2CitySynth.js"]
+for (const [name,systemKey,binding] of [
+  ["StudioMixMasterConsole3D","studioMixMasterConsole3D","mixMaster"],
+  ["Floor2LiveDrummer","floor2LiveDrummer","liveDrummer"],
+  ["Floor2VocalBooth3D","floor2VocalBooth3D","vocalBooth"],
+  ["Floor2CitySynth","floor2CitySynth","citySynth"]
 ]) {
-  assert.ok(main.includes('from "' + path + '"'), name + " must be imported by the world");
-  const systemKey = name[0].toLowerCase() + name.slice(1);
-  assert.ok(main.includes(systemKey + ": " + name), name + " must be registered with the engine");
-  assert.ok(engine.includes("this.systems." + systemKey + "?.init?.(this.scene, this.context)"), name + " must initialize after the Floor 2 scene is ready");
+  assert.ok(main.includes('import("./' + systemKey + '.js")'),
+    name + " must be dynamically imported when Floor 2 is selected");
+  assert.ok(main.includes(systemKey + ": " + binding + ".default"),
+    name + " must be registered with the engine after its lazy import");
+  assert.ok(main.includes('["' + systemKey + '", [engine.scene, engine.context]]'),
+    name + " must initialize after the Floor 2 architecture is ready");
+  assert.equal(engine.includes('initialize("' + systemKey + '"'), false,
+    name + " must not initialize during initial world startup");
 }
 
 const workspace = source["studioDAWWorkspace.js"];
@@ -101,7 +105,7 @@ assert.match(vocalBooth,/data-booth-mode="notes" hidden/,"Voice Notes must be a 
 assert.match(vocalBooth,/data-booth-mode="vocal"/,"Full vocal recording controls must be scoped to Vocal Booth mode.");
 assert.match(vocalBooth,/data-vocal-talkback/,"The dedicated Talkback control must remain available in the booth.");
 assert.match(vocalBooth,/StudioTalkback\.bindControl/,"Talkback must use the shared Talkback service.");
-assert.match(vocalBooth,/startTrackRecording\(\{audio,trackId:track\.id\}\)/,"Voice Notes must record into the shared multitrack session.");
+assert.match(vocalBooth,/startTrackRecording\(\{audio,trackId:track\.id,shouldCancel:\(\)=>panelDisposed\|\|Boolean\(beatLab\?\.recordingStopPending\)\}\)/,"Voice Notes must record into the shared multitrack session with disposal cancellation.");
 assert.match(vocalBooth,/stopTrackRecording\(trackId\)/,"Voice Notes must save a take into the shared session.");
 assert.match(vocalBooth,/scheduleProjectAutosave\(\)/,"Voice Notes must autosave after saving a clip.");
 assert.match(vocalBooth,/Finish and save the active recording before switching modes/,"Mode switching must not strand an active recording.");
