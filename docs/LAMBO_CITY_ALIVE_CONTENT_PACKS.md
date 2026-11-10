@@ -56,7 +56,7 @@ A safe next integration step is feature-level opt-in:
 
 ## AI-assisted development review
 
-A read-only GitHub Copilot CLI review workflow is included on the isolated ALIVE integration branch. It receives only `contents: read` and `copilot-requests: write`, is restricted to this integration branch or a manual dispatch, and publishes a review artifact. The prompt treats source diffs as untrusted data and does not grant shell, file-edit, repository-write, merge, or deployment tools. It requires an active Copilot entitlement for the repository owner; GitHub Actions supplies a short-lived token and no long-lived secret is stored. This is an AI review connection, not autonomous code generation or task execution.
+A read-only GitHub Copilot CLI review workflow is included on the isolated ALIVE integration branch. It receives only `contents: read` and `copilot-requests: write`, is restricted to this integration branch or a manual dispatch, and streams its bounded review prompt through standard input and publishes a review artifact. The prompt treats source diffs as untrusted data and does not grant shell, file-edit, repository-write, merge, or deployment tools. It requires an active Copilot entitlement for the repository owner; GitHub Actions supplies a short-lived token and no long-lived secret is stored. This is an AI review connection, not autonomous code generation or task execution.
 
 ## Release policy
 
