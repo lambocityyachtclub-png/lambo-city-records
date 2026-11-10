@@ -788,6 +788,11 @@ const StudioDAWApp = {
             .then(() => this.editScreen?.status("Vocal take stopped and saved."));
           return;
         }
+        if (Floor2StudioApp.recordingStartPending) {
+          Floor2StudioApp.cancelRecordingStart();
+          this.editScreen?.status("Vocal count-in cancelled.");
+          return;
+        }
         if (this.transportActionPending) {
           this.stopSessionPlayback();
           return;
@@ -818,6 +823,7 @@ const StudioDAWApp = {
   },
 
   close() {
+    Floor2StudioApp.cancelRecordingStart?.();
     StudioTalkback.stop();
     StudioTalkback.unbindAll();
     this.vocalsPanel?.dispatchEvent(new CustomEvent("lc-vocal-booth-dispose"));
