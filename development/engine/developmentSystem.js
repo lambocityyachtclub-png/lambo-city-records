@@ -39,6 +39,11 @@ import {
   createSpecialistWorkerExecution
 } from "../execution/specialistWorkerExecution.js";
 
+import {
+  createHostedSpecialistQueueAdapter,
+  HOSTED_SPECIALIST_QUEUE_VERSION
+} from "../execution/hostedSpecialistQueueAdapter.js";
+
 export const DEVELOPMENT_SYSTEM_VERSION = "1.0.0";
 
 export const DEVELOPMENT_SYSTEM_STATUS = Object.freeze({
@@ -79,6 +84,14 @@ export async function createDevelopmentSystem(options = {}) {
         developmentDirector: director,
         workerRoster,
         ...options.specialistExecution
+      })
+    : null;
+
+  const hostedQueue = options.hostedQueue
+    ? createHostedSpecialistQueueAdapter({
+        developmentDirector: director,
+        workerRoster,
+        ...options.hostedQueue
       })
     : null;
 
@@ -146,6 +159,19 @@ export async function createDevelopmentSystem(options = {}) {
     description: "Coordinates eight domain-scoped development specialists."
   });
 
+  if (hostedQueue) {
+    registry.registerModule({
+      id: "hosted-specialist-queue",
+      name: "Hosted Specialist Queue Adapter",
+      type: MODULE_TYPES.RUNNER,
+      version: HOSTED_SPECIALIST_QUEUE_VERSION,
+      path: "development/execution/hostedSpecialistQueueAdapter.js",
+      enabled: true,
+      capabilities: ["hosted-task-dispatch", "isolated-code-generation", "draft-pr-handoff"],
+      description: "Dispatches eligible Director tasks to the isolated hosted specialist workflow."
+    });
+  }
+
   let status = DEVELOPMENT_SYSTEM_STATUS.READY;
 
   function getStatus() {
@@ -169,6 +195,8 @@ export async function createDevelopmentSystem(options = {}) {
       configuredExecutionWorkers: workerExecution
         ? workerExecution.getConfiguredWorkers()
         : [],
+      hostedQueueConfigured: Boolean(hostedQueue),
+      hostedQueue: hostedQueue ? hostedQueue.getSnapshot() : null,
       policy
     };
   }
@@ -211,6 +239,14 @@ export async function createDevelopmentSystem(options = {}) {
       return workerRoster.submitFinding(workerId, finding);
     }
   });
+
+  const hostedQueueView = hostedQueue ? Object.freeze({
+    dispatchNextTask: async workerId => {
+      assertReady();
+      return hostedQueue.dispatchNextTask(workerId);
+    },
+    getSnapshot: hostedQueue.getSnapshot
+  }) : null;
 
   const workerExecutionView = workerExecution ? Object.freeze({
     executeNextTask: async workerId => {
@@ -262,6 +298,14 @@ export async function createDevelopmentSystem(options = {}) {
       }
       return workerExecutionView.executeNextTask(workerId);
     },
-    getWorkerExecution: () => workerExecutionView
+    getWorkerExecution: () => workerExecutionView,
+    dispatchHostedTask: async workerId => {
+      assertReady();
+      if (!hostedQueueView) {
+        throw new Error("Hosted specialist queue adapter has not been configured by the trusted host.");
+      }
+      return hostedQueueView.dispatchNextTask(workerId);
+    },
+    getHostedQueue: () => hostedQueueView
   });
 }
