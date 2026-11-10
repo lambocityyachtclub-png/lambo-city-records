@@ -79,7 +79,11 @@ export default class VehicleRoadController {
   setAccess(permissions = [], openGates = []) {
     this.permissions = Array.isArray(permissions) ? [...permissions] : [];
     this.openGates = openGates instanceof Set ? new Set(openGates) : new Set(openGates || []);
-    return this._hasRoadFootprint(this.state);
+    const valid = this._hasRoadFootprint(this.state);
+    this.state.valid = valid;
+    this.state.blocked = !valid;
+    if (!valid) this.state.speed = 0;
+    return valid;
   }
 
   getState() {
