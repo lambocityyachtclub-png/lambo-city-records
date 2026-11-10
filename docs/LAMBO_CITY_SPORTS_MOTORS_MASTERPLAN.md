@@ -63,6 +63,14 @@ The current provisional Arena/Convention District map entry records:
 
 **Important:** The Arena District coordinates are explicitly described in `cityMap.js` as provisional pending full geometry and collision audit. The current district bounds are not proof of spare developable land. No exact track or amenity coordinates are assigned in this blueprint. The next site-fit pass must inspect the full live-world geometry, parcel footprints, terrain, water/shoreline boundary, collision, pedestrian links, and protected landmark envelopes before recommending a location.
 
+## Preliminary site-fit finding from the mapped blueprint
+
+The current Arena/Convention District envelope is already assigned to the arena, the complete boulevard and its turning geometry, six villa parcels, the south arrival/service approach, and the pedestrian loop. The arena alone occupies a 54 × 44 footprint; the boulevard is an 84 × 84 outer loop; the district envelope is 124 × 113 world units. The existing villa parcels sit outside the boulevard on its west, east, and north sides.
+
+**Planning conclusion:** Do not try to squeeze the Grand Prix loop plus basketball, skatepark, and golf range into the current Arena/Convention District bounds. The mapped blueprint does not establish a sufficiently large, unoccupied, verified land envelope for that full program. The likely solution is a separately registered expansion district attached to the Convention District through a verified land connector, but its direction and exact location must remain undecided until the full live-world scene, adjacent parcels, and shoreline are surveyed. This avoids shrinking the existing boulevard, moving villas, blocking the arena arrival, or inventing land over water.
+
+The current map registry calls the Arena District coordinates provisional and explicitly requires a full geometry/collision audit. Accordingly, this is a reliable planning constraint, not a final surveyed site boundary.
+
 ## Boardwalk access policy — preserve
 
 The Marina Boardwalk is a pedestrian-waterfront/VIP destination, not the general driving area:
