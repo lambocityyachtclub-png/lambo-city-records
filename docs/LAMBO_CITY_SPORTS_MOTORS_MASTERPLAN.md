@@ -129,3 +129,11 @@ The audit confirms that the existing Arena/Convention envelope is already assign
 
 **Important status distinction:** this completes the repository/source-level audit only. The full live-world survey—adjacent scene geometry, terrain continuity, shoreline/water boundary, collision inventory, and candidate land envelope—remains open. No candidate coordinates are approved, and no runtime geometry or production code was changed. The next approval-ready milestone is a verified whole-world top-down site-fit plan.
 
+## Phase A expanded land-envelope finding
+
+The Phase A audit now includes a second source-geometry pass across `world.js`, `marina.js`, `dock.js`, `dockPath.js`, and `water.js`. It records the existing waterfront ground, Boardwalk, Arena/Convention ground, dock, Grand Stage ground, and the 800 × 800 visual ocean plane.
+
+The inspected source files do **not** define a continuous adjacent land parcel beyond the Arena/Convention district. The ocean plane is visual water, not proof of developable terrain. Therefore, no safe candidate coordinates for the Sports & Motors program can currently be approved. The next decision requires a full-world visual/terrain survey and an explicit land strategy; no reclamation, bridge, pier, or water fill is authorized by this finding.
+
+See the expanded [Phase A site-fit audit](./WORLD_SYSTEM_PHASE_A_SITE_FIT_AUDIT.md) for the footprint table and schematic.
+
