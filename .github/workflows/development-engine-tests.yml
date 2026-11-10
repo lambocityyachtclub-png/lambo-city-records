@@ -34,7 +34,7 @@ jobs:
             development/tests/developmentTaskStorage.test.js \
             development/tests/controlledDevelopmentExecutor.test.js \
             development/tests/isolatedWorkspaceAdapter.test.js \
-            development/tests/developmentReviewStorage.test.js \
+            development/tests/developmentReviewStorage.test.js \\\n            development/tests/moduleLifecycleRegistry.test.js \\\n            development/tests/developmentWorkspacePipeline.test.js \\\n            development/tests/specialistWorkerRoster.test.js \\\n            development/tests/specialistWorkerExecution.test.js \\\n            development/tests/contentPackCatalog.test.js \
             development/tests/moduleLifecycleRegistry.test.js \
             development/tests/developmentWorkspacePipeline.test.js \
             development/tests/specialistWorkerRoster.test.js \
