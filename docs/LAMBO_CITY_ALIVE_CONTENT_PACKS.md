@@ -54,6 +54,10 @@ A safe next integration step is feature-level opt-in:
 - The browser checks ran on the content-catalog branch before this documentation-only integration-validation branch was created.
 - A fresh combined integration run is required on the new branch before considering the ALIVE foundation chain ready for the development branch.
 
+## AI-assisted development review
+
+A read-only GitHub Copilot CLI review workflow is included on the isolated ALIVE integration branch. It receives only `contents: read` and `copilot-requests: write`, is restricted to this integration branch or a manual dispatch, and publishes a review artifact. The prompt treats source diffs as untrusted data and does not grant shell, file-edit, repository-write, merge, or deployment tools. It requires an active Copilot entitlement for the repository owner; GitHub Actions supplies a short-lived token and no long-lived secret is stored. This is an AI review connection, not autonomous code generation or task execution.
+
 ## Release policy
 
 This work is a development integration candidate only. Keep the current production deployment and rollback candidate unchanged. Do not merge to `main`, promote a deployment, or enable autonomous code execution until the integrated branch passes its complete CI/browser checks and a human-reviewed release candidate is approved.
