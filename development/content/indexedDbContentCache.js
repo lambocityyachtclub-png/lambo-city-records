@@ -46,6 +46,7 @@ export function createIndexedDbContentCache(options = {}) {
 
     databasePromise = new Promise((resolve, reject) => {
       let request;
+      let settled = false;
       try { request = indexedDB.open(databaseName, version); }
       catch (error) { reject(makeError("Unable to open IndexedDB content cache.", error)); return; }
 
@@ -56,17 +57,23 @@ export function createIndexedDbContentCache(options = {}) {
         }
       };
       request.onblocked = () => {
+        if (settled) return;
+        settled = true;
         const error = new Error("IndexedDB content cache upgrade is blocked by another open tab.");
         report("open", error);
         reject(error);
       };
       request.onerror = () => {
+        if (settled) return;
+        settled = true;
         const error = request.error || new Error("IndexedDB content cache failed to open.");
         report("open", error);
         reject(error);
       };
       request.onsuccess = () => {
         const db = request.result;
+        if (settled) { db.close(); return; }
+        settled = true;
         db.onversionchange = () => {
           try { db.close(); } finally { databasePromise = null; }
         };
