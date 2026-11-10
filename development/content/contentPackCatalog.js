@@ -344,6 +344,7 @@ export function createContentPackCatalog(options = {}) {
   const cacheKeyOwners = new Map();
   const cache = new Map();
   const inFlight = new Map();
+  const activeLoads = new Set();
   const loader = options.loader;
   if (loader !== undefined && typeof loader !== "function") fail("loader must be a function.");
 
@@ -423,15 +424,51 @@ export function createContentPackCatalog(options = {}) {
     return { pack, asset };
   }
 
+  function settleInFlight(entry, cacheKey) {
+    entry.settled = true;
+    activeLoads.delete(entry);
+    if (inFlight.get(cacheKey) === entry) inFlight.delete(cacheKey);
+  }
+
+  async function waitForInFlight(entry, cacheKey, signal) {
+    entry.waiters += 1;
+    try {
+      return await awaitWithAbort(entry.promise, signal);
+    } finally {
+      entry.waiters -= 1;
+      if (entry.waiters === 0 && !entry.settled) {
+        entry.controller.abort("No active callers remain for this asset load.");
+        if (inFlight.get(cacheKey) === entry) inFlight.delete(cacheKey);
+      }
+    }
+  }
+
   async function loadAsset(packId, assetId, loadOptions = {}) {
     if (loadOptions.signal?.aborted) throw new Error("Content asset load was aborted.");
     if (typeof loader !== "function") fail("no host loader was supplied; metadata can still be browsed.");
+    if (typeof AbortController !== "function") {
+      throw new Error("Content catalog requires AbortController support for safe shared loading.");
+    }
     const { pack, asset } = findAsset(packId, assetId);
     resolvePackOrder(packId);
     const cacheKey = asset.cacheKey;
     if (!loadOptions.forceReload && cache.has(cacheKey)) return cache.get(cacheKey);
-    if (!loadOptions.forceReload && inFlight.has(cacheKey)) return inFlight.get(cacheKey);
 
+    let entry = inFlight.get(cacheKey);
+    if (entry?.controller.signal.aborted) {
+      if (inFlight.get(cacheKey) === entry) inFlight.delete(cacheKey);
+      entry = null;
+    }
+    if (entry) return waitForInFlight(entry, cacheKey, loadOptions.signal);
+
+    const controller = new AbortController();
+    entry = {
+      controller,
+      waiters: 0,
+      settled: false,
+      promise: null
+    };
+    const sharedLoadOptions = { ...loadOptions, signal: controller.signal };
     const task = (async () => {
       try {
         const value = await awaitWithAbort(loader(Object.freeze({
@@ -439,30 +476,39 @@ export function createContentPackCatalog(options = {}) {
           asset,
           source: asset.source,
           dependencyOrder: resolvePackOrder(packId),
-          signal: loadOptions.signal || null
-        })), loadOptions.signal);
-        if (loadOptions.signal?.aborted) throw new Error("Content asset load was aborted.");
+          signal: controller.signal
+        })), controller.signal);
+        if (controller.signal.aborted) throw new Error("Content asset load was aborted.");
         if (value === undefined || value === null) throw new Error("Host loader returned no asset value.");
         const loadedByteSize = getLoadedByteSize(value, asset.sizeBytes);
         if (loadedByteSize !== null && loadedByteSize > asset.sizeBytes) {
           throw new Error("Asset " + pack.id + "/" + asset.id + " loaded " + loadedByteSize +
             " bytes, exceeding its declared sizeBytes budget of " + asset.sizeBytes + ".");
         }
-        if (loadOptions.signal?.aborted) throw new Error("Content asset load was aborted.");
+        if (controller.signal.aborted) throw new Error("Content asset load was aborted.");
         cache.set(cacheKey, value);
         return value;
       } catch (error) {
-        if (loadOptions.signal?.aborted) throw new Error("Content asset load was aborted.");
-        if (!asset.fallback || loadOptions.disableFallback === true) throw error;
+        if (controller.signal.aborted) throw new Error("Content asset load was aborted.");
+        if (!asset.fallback || sharedLoadOptions.disableFallback === true) throw error;
         return loadAsset(asset.fallback.packId, asset.fallback.assetId, {
-          ...loadOptions, forceReload: false, disableFallback: true
+          ...sharedLoadOptions, forceReload: false, disableFallback: true
         });
-      } finally {
-        inFlight.delete(cacheKey);
       }
     })();
-    inFlight.set(cacheKey, task);
-    return task;
+    entry.promise = task;
+    inFlight.set(cacheKey, entry);
+    activeLoads.add(entry);
+    task.then(
+      () => settleInFlight(entry, cacheKey),
+      () => settleInFlight(entry, cacheKey)
+    );
+    return waitForInFlight(entry, cacheKey, loadOptions.signal);
+  }
+
+  function abortAllLoads(reason = "Content catalog disposed.") {
+    for (const entry of activeLoads) entry.controller.abort(reason);
+    inFlight.clear();
   }
 
   function clearCache(cacheKey) {
@@ -477,11 +523,12 @@ export function createContentPackCatalog(options = {}) {
     resolvePackOrder,
     getAsset: (packId, assetId) => findAsset(packId, assetId).asset,
     loadAsset,
+    abortAllLoads,
     clearCache,
     getSnapshot: () => ({
       packCount: packs.size,
       cachedAssetCount: cache.size,
-      loadingAssetCount: inFlight.size,
+      loadingAssetCount: activeLoads.size,
       packIds: [...packs.keys()]
     })
   });
