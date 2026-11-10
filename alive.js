@@ -74,12 +74,11 @@ async function refreshStatus() {
     const base = await api("/api/alive/status");
     $("#queue-status").textContent = base.connected ? "Connected" : "Setup needed";
     if (!base.connected) {
-      message(visionMessage, "The private workspace is open, but its server-side GitHub queue connection still needs setup in Vercel. Do not paste a token into this page.", true);
+      message(visionMessage, "The private workspace is open, but its separate private ALIVE control repository and worker workflow still need to be connected. Your ideas will not be sent to the public code repository.", true);
       return;
     }
     if (!lastTask) return;
     const query = new URLSearchParams({ taskId: lastTask.taskId });
-    if (lastTask.commitSha) query.set("commitSha", lastTask.commitSha);
     const status = await api("/api/alive/status?" + query.toString());
     if (status.task) renderTask(status);
   } catch (error) {
@@ -142,7 +141,7 @@ $("#vision-form").addEventListener("submit", async event => {
       method: "POST",
       body: JSON.stringify({ vision: $("#vision").value })
     });
-    saveLastTask({ taskId: result.taskId, commitSha: result.commitSha });
+    saveLastTask({ taskId: result.taskId });
     $("#vision").value = "";
     renderTask({ state: "queued", task: { taskId: result.taskId, checks: [] } });
     message(visionMessage, "Your vision has been added to the isolated ALIVE queue.");
