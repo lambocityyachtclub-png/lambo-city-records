@@ -205,6 +205,13 @@ function getLoadedByteSize(value) {
     const byteSize = getLoadedByteSize(value.bytes);
     if (byteSize !== null) return byteSize;
   }
+  if (value && typeof value === "object" &&
+      (Array.isArray(value) || Object.getPrototypeOf(value) === Object.prototype)) {
+    try {
+      const serialized = JSON.stringify(value);
+      if (typeof serialized === "string") return new TextEncoder().encode(serialized).byteLength;
+    } catch {}
+  }
   return null;
 }
 
