@@ -22,6 +22,7 @@ const cityMapModule = await loadPureModule("cityMap.js");
 const CITY_MAP = cityMapModule.default;
 const liveMainSource = await readFile(resolve(root, "main.js"), "utf8");
 const liveArenaSource = await readFile(resolve(root, "conferenceCenterDistrict.js"), "utf8");
+const liveWorldSystemSource = await readFile(resolve(root, "worldSystem.js"), "utf8");
 assert.match(liveMainSource, /WorldSystemHost\.initialize\(\{/,
   "the approved district blueprint must initialize in the live scene");
 assert.match(liveMainSource, /districts:\s*\[ConferenceCenterBlueprint\]/);
@@ -31,6 +32,12 @@ assert.match(liveArenaSource, /lamboCityConferenceCenterLandmark/,
   "the protected arena shell must have an independent visibility root");
 assert.doesNotMatch(liveArenaSource, /arenaBoulevardSouth|arenaBoulevardNorth|arenaBoulevardWest|arenaBoulevardEast/,
   "legacy arena roads must not duplicate the generated road network");
+assert.match(liveWorldSystemSource, /getPermissions:\s*\(\)\s*=>\s*this\._getVehiclePermissions\(districtId, initialState\)/,
+  "vehicle controllers must read permission state from the trusted World System provider");
+assert.match(liveWorldSystemSource, /getOpenGates:\s*\(\)\s*=>\s*this\.getOpenGateIds\(districtId\)/,
+  "vehicle controllers must read gate state live instead of trusting caller-supplied IDs");
+assert.match(liveWorldSystemSource, /permissions:\s*this\._getVehiclePermissions\(districtId\)/,
+  "read-only vehicle road queries must also use authoritative permissions");
 assert.match(liveArenaSource, /arenaArrivalPlaza/,
   "the existing arena arrival plaza remains preserved");
 const blueprintSource = await readFile(resolve(root, "worldDistricts/conferenceCenter.js"), "utf8");
