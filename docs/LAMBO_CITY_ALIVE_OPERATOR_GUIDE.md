@@ -26,6 +26,6 @@ Review the draft diff, task criteria, path scope, test results, and relevant CI 
 
 The hosted queue is not connected to the Development Director or a plain-language ALIVE control surface. Workers do not run continuously in the background. The browser-side Development System is not wired into the live game or a hosted scheduler; task execution depends on configured trusted services.
 
-**Release limitation:** `.github/workflows/alive-ai-review.yml` is configured for pushes to a specific integration branch or manual dispatch, not `pull_request`. Therefore, its read-only AI review is not automatically triggered for the hosted workflow's draft proposal PRs, despite broader integration documentation describing that review. The workflow was not changed here. Do not treat that review as a completed PR gate; owner review and applicable automated checks remain necessary.
+**Automated review:** the read-only Copilot engineering review is configured to run for pull requests targeting the isolated ALIVE worker branch. It produces a review artifact and workflow summary; it does not approve, merge, or release a proposal. The owner still evaluates its findings alongside the test results and relevant Studio/World checks.
 
 Before connecting the owner-facing control surface or expanding hosted operation, establish an authenticated server-side bridge that keeps credentials out of the browser and reports task, test, and review status. Keep protected actions, merge, and release owner-controlled.
