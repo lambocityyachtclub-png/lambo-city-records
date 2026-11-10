@@ -191,6 +191,7 @@ export function createContentPackCatalog(options = {}) {
   const appVersion = options.appVersion || null;
   if (appVersion) parseVersion(appVersion, "catalog appVersion");
   const packs = new Map();
+  const cacheKeyOwners = new Map();
   const cache = new Map();
   const inFlight = new Map();
   const loader = options.loader;
@@ -206,6 +207,20 @@ export function createContentPackCatalog(options = {}) {
     if (appVersion && pack.compatibility.maxAppVersion &&
         compareVersions(appVersion, pack.compatibility.maxAppVersion) > 0) {
       fail("pack " + pack.id + " supports app version " + pack.compatibility.maxAppVersion + " or older.");
+    }
+    const pendingCacheKeys = new Set();
+    for (const asset of pack.assets) {
+      if (pendingCacheKeys.has(asset.cacheKey)) {
+        fail("duplicate cacheKey " + asset.cacheKey + " within pack " + pack.id + ".");
+      }
+      const owner = cacheKeyOwners.get(asset.cacheKey);
+      if (owner) {
+        fail("cacheKey " + asset.cacheKey + " is already assigned to " + owner + ".");
+      }
+      pendingCacheKeys.add(asset.cacheKey);
+    }
+    for (const asset of pack.assets) {
+      cacheKeyOwners.set(asset.cacheKey, pack.id + "/" + asset.id);
     }
     packs.set(pack.id, pack);
     return getPack(pack.id);
