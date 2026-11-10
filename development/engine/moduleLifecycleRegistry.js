@@ -110,8 +110,10 @@ export function createEngineModuleRegistry(options = {}) {
 
     try {
       for (const record of order) {
-        await record.module.init(scene, context);
+        // Track before init so dispose() can clean up partial initialization
+        // if the module throws after allocating resources.
         initializedOrder.push(record.id);
+        await record.module.init(scene, context);
       }
       state = "ready";
       return getSnapshot();
