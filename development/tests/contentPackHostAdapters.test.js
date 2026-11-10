@@ -5,7 +5,11 @@ import { createContentPackHostLoader } from "../content/contentPackHostAdapters.
 function request(kind, locator) {
   return {
     pack: { id: "lc.adapter.test", version: "1.0.0" },
-    asset: { id: "adapter-asset", category: kind === "world-recipe" ? "recipe" : "audio" },
+    asset: {
+      id: "adapter-asset",
+      category: kind === "world-recipe" ? "recipe" : "audio",
+      ...(kind === "url" ? { integrity: { algorithm: "sha256", digest: "a".repeat(64) } } : {})
+    },
     source: { kind, locator, license: "owner-provided" }
   };
 }
@@ -49,8 +53,38 @@ test("World adapter refuses invalid recipes and incomplete configuration", async
   await assert.rejects(incomplete(request("world-recipe", "recipe:bad")), /must both be configured/);
 });
 
-test("remote URL and generic host assets require explicit host resolvers", async () => {
+test("remote URL assets require allowlisted HTTPS and successful integrity verification", async () => {
+  let verified = 0;
+  const loader = createContentPackHostLoader({
+    allowedUrlOrigins: ["https://assets.example.invalid"],
+    resolveUrlAsset: async ({ url }) => ({ url, bytes: new Uint8Array([1, 2, 3]) }),
+    verifyUrlIntegrity: async ({ integrity, value }) => {
+      verified += 1;
+      return integrity.algorithm === "sha256" && value.bytes.length === 3;
+    }
+  });
+  const result = await loader(request("url", "https://assets.example.invalid/a.wav"));
+  assert.equal(result.url, "https://assets.example.invalid/a.wav");
+  assert.equal(verified, 1);
+  await assert.rejects(loader(request("url", "http://assets.example.invalid/a.wav")), /not allowlisted for HTTPS/);
+  await assert.rejects(loader(request("url", "https://untrusted.example.invalid/a.wav")), /not allowlisted for HTTPS/);
+});
+
+test("remote URL assets fail closed when integrity verification fails or is not configured", async () => {
+  const options = {
+    allowedUrlOrigins: ["https://assets.example.invalid"],
+    resolveUrlAsset: async () => ({ bytes: new Uint8Array([1]) }),
+    verifyUrlIntegrity: async () => false
+  };
+  const loader = createContentPackHostLoader(options);
+  await assert.rejects(loader(request("url", "https://assets.example.invalid/a.wav")), /failed SHA-256 integrity verification/);
+  assert.throws(() => createContentPackHostLoader({
+    allowedUrlOrigins: ["https://assets.example.invalid"],
+    resolveUrlAsset: async () => ({})
+  }), /requires a SHA-256 integrity verifier/);
+});
+
+test("generic host assets require an explicit host resolver", async () => {
   const loader = createContentPackHostLoader();
-  await assert.rejects(loader(request("url", "https://assets.example.invalid/a.wav")), /Trusted URL asset resolver/);
   await assert.rejects(loader(request("host", "builtin:asset")), /Host asset resolver/);
 });
