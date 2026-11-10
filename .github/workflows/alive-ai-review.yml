@@ -8,6 +8,10 @@ on:
       - "development/**"
       - "docs/**"
       - ".github/workflows/alive-ai-review.yml"
+      - ".github/workflows/floor2-studio-checks.yml"
+      - "floor2StudioApp.js"
+      - "studioRecordingEngine.js"
+      - "scripts/test-studio-recording-cancellation.mjs"
   workflow_dispatch:
 
 permissions:
@@ -69,8 +73,8 @@ jobs:
         run: |
           set -euo pipefail
           cd "$RUNNER_TEMP"
-          cat /tmp/lc-alive-review-prompt.md | copilot --available-tools="" -s | tee "$GITHUB_WORKSPACE/lc-alive-ai-review.md"
-          test -s lc-alive-ai-review.md
+          cat /tmp/lc-alive-review-prompt.md | copilot --available-tools="" --deny-tool=shell --deny-tool=write --deny-tool=read --deny-tool=url --deny-tool=memory -s | tee "$GITHUB_WORKSPACE/lc-alive-ai-review.md"
+          test -s "$GITHUB_WORKSPACE/lc-alive-ai-review.md"
 
       - name: Publish review artifact
         uses: actions/upload-artifact@v4
