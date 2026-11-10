@@ -47,6 +47,21 @@ try {
   assert.equal(disconnectedPitchNodes, 1, "the uncommitted pitch-correction node must be disconnected");
   assert.equal(StudioRecordingEngine.activeTake, null, "a cancelled initialization must not publish an active take");
 
+  const permissionRequestsBeforeTrackCancel = permissionRequests;
+  const stoppedTracksBeforeTrackCancel = stoppedTracks;
+  let trackCancelChecks = 0;
+  await assert.rejects(
+    StudioRecordingEngine.startTrackRecording({
+      audio: { state: "running" },
+      trackId: "voice-notes-cancel-test",
+      shouldCancel: () => ++trackCancelChecks > 1
+    }),
+    /Track recording start was cancelled/
+  );
+  assert.equal(permissionRequests, permissionRequestsBeforeTrackCancel + 1);
+  assert.equal(stoppedTracks, stoppedTracksBeforeTrackCancel + 1, "a Voice Notes stream granted after Booth disposal must be stopped");
+  assert.equal(StudioRecordingEngine.activeTrackTake, null, "cancelled Voice Notes startup must not publish an active track take");
+
   let unexpectedPermissionRequest = false;
   await assert.rejects(
     StudioRecordingEngine.startTake({
@@ -61,21 +76,32 @@ try {
 
   let boothCancelCalls = 0;
   let boothCleanupCalls = 0;
-  disposeVocalBoothPanel({
+  await disposeVocalBoothPanel({
     recordingStartPending: true,
     cancelRecordingStart() { boothCancelCalls += 1; }
   }, () => { boothCleanupCalls += 1; });
   assert.equal(boothCancelCalls, 1, "disposing a booth must cancel a pending count-in");
   assert.equal(boothCleanupCalls, 1, "booth event listeners must be cleaned up");
 
-  disposeVocalBoothPanel({
+  await disposeVocalBoothPanel({
     recordingStartPending: false,
     cancelRecordingStart() { boothCancelCalls += 1; }
   }, () => { boothCleanupCalls += 1; });
   assert.equal(boothCancelCalls, 1, "disposing an idle booth must not cancel a new recording");
   assert.equal(boothCleanupCalls, 2);
 
-  console.log("Studio recording cancellation, Booth disposal, and resource cleanup checks passed.");
+  let stopActiveTakeCalls = 0;
+  StudioRecordingEngine.activeTake = { id: "active-booth-take" };
+  await disposeVocalBoothPanel({
+    async stopRecording() {
+      stopActiveTakeCalls += 1;
+      StudioRecordingEngine.activeTake = null;
+    }
+  }, () => {}, { dataset: {} });
+  assert.equal(stopActiveTakeCalls, 1, "disposing a Booth with an active vocal take must stop and save it");
+  assert.equal(StudioRecordingEngine.activeTake, null);
+
+  console.log("Studio recording cancellation, Voice Notes startup cancellation, Booth take finalization, and resource cleanup checks passed.");
 } finally {
   StudioRecordingEngine.activeTake = null;
   StudioRecordingEngine.activeTrackTake = null;
