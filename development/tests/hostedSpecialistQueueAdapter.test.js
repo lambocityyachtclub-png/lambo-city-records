@@ -105,8 +105,53 @@ test("hosted dispatch blocks a task when the trusted queue client fails", async 
     acceptanceCriteria: ["The task moves to blocked if the queue commit fails."]
   });
 
-  await assert.rejects(system.dispatchHostedTask("studio"), /simulated GitHub write failure/);
-  assert.equal(system.director.getTask(submitted.task.id).status, TASK_STATUS.BLOCKED);
+  await assert.rejects(system.dispatchHostedTask("studio"), /result is uncertain.*simulated GitHub write failure/);
+  const task = system.director.getTask(submitted.task.id);
+  assert.equal(task.status, TASK_STATUS.IN_PROGRESS,
+    "a failed or ambiguous queue write must not be reported as blocked");
+  assert.equal(task.result.hostedQueue.state, "unknown");
+});
+
+test("hosted dispatch reports an unconfirmed task state when status persistence also fails", async () => {
+  const task = {
+    id: "task-status-write-failure",
+    title: "Task status write failure",
+    description: "A valid task used to exercise uncertain dispatch tracking.",
+    area: "studio_interface",
+    priority: "normal",
+    acceptanceCriteria: ["The queue dispatch failure is reported accurately."],
+    status: TASK_STATUS.IN_PROGRESS,
+    requiresApproval: false,
+    history: [],
+    result: {}
+  };
+  const developmentDirector = {
+    async claimNextTask() { return task; },
+    async updateTask() { throw new Error("simulated task storage failure"); }
+  };
+  const workerRoster = {
+    listWorkers: () => [{
+      id: "studio",
+      runnerId: "studio",
+      enabled: true,
+      areas: ["studio_interface"]
+    }]
+  };
+  const adapter = createHostedSpecialistQueueAdapter({
+    developmentDirector,
+    workerRoster,
+    queueClient: memoryQueueClient({ fail: true }),
+    branch: BRANCH
+  });
+
+  await assert.rejects(adapter.dispatchNextTask("studio"), error => {
+    assert.equal(error.taskId, task.id);
+    assert.equal(error.queueSubmissionState, "submitting");
+    assert.equal(error.dispatchState, "status_unconfirmed");
+    assert.match(error.trackingError, /simulated task storage failure/);
+    assert.match(error.message, /task status could not be confirmed/);
+    return true;
+  });
 });
 
 test("hosted queue is optional and disabled when no trusted host client is injected", async () => {
