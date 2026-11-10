@@ -27,6 +27,7 @@ export function createOwnerVisionTask(vision, options = {}) {
       "For each proposed task, identify the authorized specialist, area, acceptance criteria, and explicit dependencies; reject missing or cyclic dependencies.",
       "Keep future and blocked items out of the executable task queue. Do not create Director tasks merely because a plan was generated.",
       "Preserve the balanced Create (Studio), Experience (World), and Earn (Commerce) strategy; prioritize LAMBO CITY-owned products before any creator marketplace or seller-payout system.",
+      "Treat the raw owner vision as private input. Do not quote or copy it into public PR descriptions, commit messages, code comments, tests, or public documentation; include only a minimal sanitized implementation summary and exclude personal or confidential details.",
       "Preserve approved Studio interface designs, modular architecture, lazy loading, and existing production behavior.",
       "Do not edit live runtime wiring, authentication, payments, secrets, deployment settings, or production branches."
     ],
