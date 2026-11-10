@@ -57,6 +57,28 @@ export function createContentPackRuntime(options = {}) {
     loader: hostLoader
   });
 
+  function assertActive() {
+    if (disposed) throw new Error("Content pack runtime has been disposed.");
+  }
+
+  async function loadAsset(...args) {
+    assertActive();
+    try {
+      const value = await catalog.loadAsset(...args);
+      if (disposed) {
+        catalog.clearCache();
+        throw new Error("Content pack runtime was disposed while an asset was loading.");
+      }
+      return value;
+    } catch (error) {
+      if (disposed) {
+        catalog.clearCache();
+        throw new Error("Content pack runtime was disposed while an asset was loading.");
+      }
+      throw error;
+    }
+  }
+
   async function dispose() {
     if (disposed) return;
     disposed = true;
@@ -66,14 +88,21 @@ export function createContentPackRuntime(options = {}) {
     }
   }
 
-  function assertActive() {
-    if (disposed) throw new Error("Content pack runtime has been disposed.");
-  }
+  const catalogView = Object.freeze({
+    register: (...args) => { assertActive(); return catalog.register(...args); },
+    getPack: catalog.getPack,
+    listPacks: catalog.listPacks,
+    resolvePackOrder: catalog.resolvePackOrder,
+    getAsset: catalog.getAsset,
+    loadAsset,
+    clearCache: () => { assertActive(); return catalog.clearCache(); },
+    getSnapshot: catalog.getSnapshot
+  });
 
   return Object.freeze({
-    catalog,
+    catalog: catalogView,
     register: (...args) => { assertActive(); return catalog.register(...args); },
-    loadAsset: (...args) => { assertActive(); return catalog.loadAsset(...args); },
+    loadAsset,
     getPack: catalog.getPack,
     listPacks: catalog.listPacks,
     resolvePackOrder: catalog.resolvePackOrder,
