@@ -5,10 +5,7 @@ import {
   sendAliveJson
 } from "../../server/alive/security.js";
 import { createOwnerVisionTask } from "../../server/alive/visionTask.js";
-
-const OWNER = "lambocityyachtclub-png";
-const REPOSITORY = "lambo-city-records";
-const QUEUE_BRANCH = "integration/lc-alive-agentic-worker-2026-11-10";
+import { verifyPrivateQueue } from "../../server/alive/privateQueue.js";
 
 export default async function handler(req, res) {
   if (String(req.method || "").toUpperCase() !== "POST") {
@@ -21,11 +18,17 @@ export default async function handler(req, res) {
   if (!hasAliveOwnerSession(req)) {
     return sendAliveJson(res, 401, { error: "Owner sign-in is required." });
   }
-  const token = process.env.ALIVE_GITHUB_TOKEN;
-  if (typeof token !== "string" || !token.trim()) {
+  const privateQueue = await verifyPrivateQueue();
+  if (!privateQueue.ok) {
+    const reason = privateQueue.reason;
+    const error = reason === "repository_must_be_private"
+      ? "The configured ALIVE queue repository is not private. Submission has been blocked."
+      : reason === "private_workflow_missing"
+        ? "The private ALIVE worker workflow is not installed yet. Submission has been blocked."
+        : "The private ALIVE queue is not connected yet. Your vision will not be sent to the public code repository.";
     return sendAliveJson(res, 503, {
-      error: "The secure GitHub queue connection is not configured yet.",
-      setup: "Add ALIVE_GITHUB_TOKEN as an encrypted, server-only Vercel environment variable. Never enter it in this page."
+      error,
+      setup: "A separate private ALIVE control repository and its worker handoff must be configured before owner ideas can be submitted."
     });
   }
 
@@ -41,10 +44,10 @@ export default async function handler(req, res) {
     const { createGitHubTaskQueueClient } =
       await import("../../development/execution/githubTaskQueueClient.js");
     const queue = createGitHubTaskQueueClient({
-      owner: OWNER,
-      repo: REPOSITORY,
-      token,
-      branch: QUEUE_BRANCH
+      owner: privateQueue.owner,
+      repo: privateQueue.repo,
+      token: privateQueue.token,
+      branch: privateQueue.branch
     });
     const path = "development/queue/incoming/" + task.id + ".json";
     const result = await queue.createTaskFile({
@@ -56,7 +59,7 @@ export default async function handler(req, res) {
     return sendAliveJson(res, 202, {
       accepted: true,
       taskId: task.id,
-      commitSha: result.commitSha,
+      queueCommitSha: result.commitSha,
       branch: result.branch,
       path: result.path,
       state: "queued"
