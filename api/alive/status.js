@@ -1,21 +1,24 @@
 import {
   hasAliveOwnerSession,
-  requireSameOrigin,
   sendAliveJson
 } from "../../server/alive/security.js";
+import { verifyPrivateQueue } from "../../server/alive/privateQueue.js";
 
-const OWNER = "lambocityyachtclub-png";
-const REPOSITORY = "lambo-city-records";
-const QUEUE_BRANCH = "integration/lc-alive-agentic-worker-2026-11-10";
+const PUBLIC_OWNER = "lambocityyachtclub-png";
+const PUBLIC_REPOSITORY = "lambo-city-records";
+const PUBLIC_WORKER_BRANCH = "integration/lc-alive-agentic-worker-2026-11-10";
 const TASK_ID = /^[a-z0-9][a-z0-9-]{2,63}$/;
-const SHA = /^[a-f0-9]{40}$/i;
 
 async function githubGet(path) {
-  const headers = {
-    Accept: "application/vnd.github+json",
-    "X-GitHub-Api-Version": "2022-11-28"
-  };
-  const response = await fetch("https://api.github.com/repos/" + OWNER + "/" + REPOSITORY + path, { headers });
+  const response = await fetch(
+    "https://api.github.com/repos/" + PUBLIC_OWNER + "/" + PUBLIC_REPOSITORY + path,
+    {
+      headers: {
+        Accept: "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28"
+      }
+    }
+  );
   if (!response.ok) throw new Error("GitHub status request failed.");
   return response.json();
 }
@@ -29,48 +32,37 @@ export default async function handler(req, res) {
     return sendAliveJson(res, 401, { error: "Owner sign-in is required." });
   }
 
-  const token = typeof process.env.ALIVE_GITHUB_TOKEN === "string"
-    ? process.env.ALIVE_GITHUB_TOKEN.trim() : "";
   const url = new URL(req.url || "/api/alive/status", "https://owner.invalid");
   const taskId = url.searchParams.get("taskId") || "";
-  const commitSha = url.searchParams.get("commitSha") || "";
-
   if (taskId && !TASK_ID.test(taskId)) {
     return sendAliveJson(res, 400, { error: "Invalid ALIVE task ID." });
   }
-  if (commitSha && !SHA.test(commitSha)) {
-    return sendAliveJson(res, 400, { error: "Invalid task commit reference." });
-  }
 
+  const privateQueue = await verifyPrivateQueue();
   const response = {
-    connected: !!token,
-    queueBranch: QUEUE_BRANCH,
-    state: token ? "ready" : "github_setup_required",
+    connected: privateQueue.ok,
+    queueBranch: privateQueue.ok ? privateQueue.branch : null,
+    state: privateQueue.ok ? "ready" : "private_queue_setup_required",
     task: null
   };
-  if (!token || (!taskId && !commitSha)) {
-    return sendAliveJson(res, 200, response);
-  }
+  if (!privateQueue.ok || !taskId) return sendAliveJson(res, 200, response);
 
   try {
-    let pullRequest = null;
-    if (taskId) {
-      const query = new URLSearchParams({
-        state: "all",
-        head: OWNER + ":alive-proposal/" + taskId,
-        base: QUEUE_BRANCH,
-        per_page: "5"
-      });
-      const pulls = await githubGet("/pulls?" + query.toString());
-      pullRequest = Array.isArray(pulls) ? pulls.find(item =>
-        typeof item?.head?.ref === "string" &&
-        item.head.ref === "alive-proposal/" + taskId
-      ) || null : null;
-    }
+    const query = new URLSearchParams({
+      state: "all",
+      head: PUBLIC_OWNER + ":alive-proposal/" + taskId,
+      base: PUBLIC_WORKER_BRANCH,
+      per_page: "5"
+    });
+    const pulls = await githubGet("/pulls?" + query.toString());
+    const pullRequest = Array.isArray(pulls) ? pulls.find(item =>
+      typeof item?.head?.ref === "string" &&
+      item.head.ref === "alive-proposal/" + taskId
+    ) || null : null;
 
     let checks = [];
-    if (commitSha) {
-      const result = await githubGet("/commits/" + commitSha + "/check-runs?per_page=50");
+    if (pullRequest?.head?.sha && /^[a-f0-9]{40}$/i.test(pullRequest.head.sha)) {
+      const result = await githubGet("/commits/" + pullRequest.head.sha + "/check-runs?per_page=50");
       checks = Array.isArray(result.check_runs) ? result.check_runs.map(item => ({
         name: String(item.name || "Automated check"),
         status: String(item.status || "unknown"),
@@ -81,14 +73,15 @@ export default async function handler(req, res) {
 
     let state = "queued";
     if (pullRequest) state = pullRequest.state === "closed" ? "proposal_closed" : "proposal_ready";
-    else if (checks.some(item => item.conclusion && item.conclusion !== "success" && item.conclusion !== "skipped")) state = "needs_attention";
-    else if (checks.some(item => item.status === "queued" || item.status === "in_progress")) state = "working";
-    else if (checks.length && checks.every(item => item.status === "completed")) state = "checks_complete";
+    if (checks.some(item => item.conclusion && item.conclusion !== "success" && item.conclusion !== "skipped")) {
+      state = "needs_attention";
+    } else if (checks.some(item => item.status === "queued" || item.status === "in_progress")) {
+      state = "working";
+    }
 
     response.state = state;
     response.task = {
-      taskId: taskId || null,
-      commitSha: commitSha || null,
+      taskId,
       checks,
       pullRequest: pullRequest ? {
         title: String(pullRequest.title || "ALIVE specialist proposal"),
