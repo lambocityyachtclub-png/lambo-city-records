@@ -120,3 +120,12 @@ The site-fit is complete only when it provides:
 7. A recommendation ready for the user's single combined review.
 
 This file is the persistent source of truth for the future Sports & Motors District unless the user changes the vision.
+
+## Phase A progress — source-level audit completed
+
+A read-only source-level audit is recorded in [WORLD_SYSTEM_PHASE_A_SITE_FIT_AUDIT.md](./WORLD_SYSTEM_PHASE_A_SITE_FIT_AUDIT.md). It verifies the authored Arena/Convention District coordinate layout and inspects the World System host/runtime and streaming configuration.
+
+The audit confirms that the existing Arena/Convention envelope is already assigned to the arena, boulevard, six villa parcels, arrival/service access, and pedestrian circulation. It therefore recommends a separately registered expansion district rather than squeezing the Grand Prix circuit and recreation amenities into the current bounds.
+
+**Important status distinction:** this completes the repository/source-level audit only. The full live-world survey—adjacent scene geometry, terrain continuity, shoreline/water boundary, collision inventory, and candidate land envelope—remains open. No candidate coordinates are approved, and no runtime geometry or production code was changed. The next approval-ready milestone is a verified whole-world top-down site-fit plan.
+
