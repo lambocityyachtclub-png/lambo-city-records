@@ -42,5 +42,5 @@ jobs:
             development/tests/contentPackCatalog.test.js \
             development/tests/contentPackHostAdapters.test.js \
             development/tests/verifiedRemoteContentLoader.test.js \
-            development/tests/contentPackRuntime.test.js \\
+            development/tests/contentPackRuntime.test.js \
             development/tests/indexedDbContentCache.test.js
