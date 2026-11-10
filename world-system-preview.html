@@ -143,7 +143,11 @@
         registerBox(name, bounds) { this.boxes.push({ name, ...bounds }); },
         unregister(name) { this.boxes = this.boxes.filter(box => box.name !== name); }
       };
-      const world = new WorldSystem();
+      const world = new WorldSystem({
+        // Test-only trusted host permission provider. Player-supplied options
+        // cannot grant service access to vehicle controllers or routes.
+        getVehiclePermissions: () => ["service"]
+      });
       world.init(scene, { systems: { collision: previewCollision } });
       const recipeDistrict = createDistrictFromRecipe({
         id: "recipe-compiler-test",
@@ -514,6 +518,7 @@
         throw new Error("The browser-visible engine bridge must stay read-only until a trusted host explicitly initializes the runtime.");
       }
       await WorldSystemHost.initialize({
+        worldOptions: { getVehiclePermissions: () => ["service"] },
         districts: [recipeDistrict],
         streamingOptions: { streamInRadius: 50, streamOutRadius: 75 }
       });
