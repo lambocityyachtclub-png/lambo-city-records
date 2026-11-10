@@ -41,7 +41,7 @@ export default async function handler(req, res) {
   const privateQueue = await verifyPrivateQueue();
   const response = {
     connected: privateQueue.ok,
-    queueBranch: privateQueue.ok ? privateQueue.branch : null,
+    queueBranch: privateQueue.ok ? privateQueue.publicBranch : null,
     state: privateQueue.ok ? "ready" : "private_queue_setup_required",
     task: null
   };
