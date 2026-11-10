@@ -97,29 +97,29 @@ async function runBrowser(name, browserType, contextOptions = {}) {
       }
       await reopened.close();
 
-      const quotaEvents = [];
+      const capacityEvents = [];
       const constrainedCache = createIndexedDbContentCache({
         indexedDB,
         databaseName: databaseName + "-small",
         maxEntryBytes: 1,
-        onError: event => quotaEvents.push(event)
+        onError: event => capacityEvents.push(event)
       });
-      let quotaDownloads = 0;
-      const quotaSafeLoader = createVerifiedRemoteContentLoader({
+      let oversizeDownloads = 0;
+      const capacitySafeLoader = createVerifiedRemoteContentLoader({
         allowedOrigins: ["https://assets.example.test"],
-        resolve: async () => { quotaDownloads += 1; return payload; },
+        resolve: async () => { oversizeDownloads += 1; return payload; },
         sha256,
         cache: constrainedCache,
-        onCacheError: event => quotaEvents.push(event)
+        onCacheError: event => capacityEvents.push(event)
       });
-      const usable = await quotaSafeLoader(request);
-      if (quotaDownloads !== 1 || usable.join(",") !== payload.join(",") || quotaEvents.length === 0) {
-        throw new Error("Cache capacity failure blocked verified content delivery.");
+      const usable = await capacitySafeLoader(request);
+      if (oversizeDownloads !== 1 || usable.join(",") !== payload.join(",") || capacityEvents.length === 0) {
+        throw new Error("Oversized cache-entry rejection blocked verified content delivery.");
       }
       await constrainedCache.close();
       indexedDB.deleteDatabase(databaseName);
       indexedDB.deleteDatabase(databaseName + "-small");
-      return { downloads, persisted: true, corruptionRecovered: true, quotaFallback: true };
+      return { downloads, persisted: true, corruptionRecovered: true, oversizeFallback: true };
     });
     console.log(name + ": " + JSON.stringify(result));
   } finally {
