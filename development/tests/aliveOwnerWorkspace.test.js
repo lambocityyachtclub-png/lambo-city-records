@@ -16,6 +16,7 @@ import { createOwnerVisionTask } from "../../server/alive/visionTask.js";
 import sessionHandler from "../../api/alive/session.js";
 import visionHandler from "../../api/alive/vision.js";
 import statusHandler from "../../api/alive/status.js";
+import { verifyPrivateQueue } from "../../server/alive/privateQueue.js";
 
 const OWNER_PASSWORD = "owner-workspace-test-password";
 const SESSION_SECRET = "test-session-secret-that-is-long-enough-for-hmac";
@@ -174,13 +175,26 @@ test("owner session endpoint fails closed when owner setup is absent or origin i
   assert.equal(response.statusCode, 403);
 });
 
-test("vision endpoint refuses requests until the server-side GitHub token exists", async () => {
+test("public repository can never be selected as the owner vision queue", async () => {
+  const result = await verifyPrivateQueue({
+    ALIVE_PRIVATE_QUEUE_WORKFLOW_READY: "true",
+    ALIVE_PRIVATE_QUEUE_GITHUB_TOKEN: REPO_TOKEN,
+    ALIVE_PRIVATE_QUEUE_OWNER: "lambocityyachtclub-png",
+    ALIVE_PRIVATE_QUEUE_REPO: "lambo-city-records",
+    ALIVE_PRIVATE_QUEUE_BRANCH: "integration/lc-alive-agentic-worker-2026-11-10"
+  }, async () => { throw new Error("Public repository must be rejected before network access."); });
+  assert.equal(result.ok, false);
+  assert.equal(result.reason, "setup_required");
+});
+
+test("vision endpoint refuses requests until a private queue and worker workflow are configured", async () => {
   const hash = makePasswordHash();
   const token = createAliveSessionToken(SESSION_SECRET);
   await withEnv({
     ALIVE_OWNER_PASSWORD_HASH: hash,
     ALIVE_SESSION_SECRET: SESSION_SECRET,
-    ALIVE_GITHUB_TOKEN: ""
+    ALIVE_PRIVATE_QUEUE_GITHUB_TOKEN: "",
+    ALIVE_PRIVATE_QUEUE_WORKFLOW_READY: "false"
   }, async () => {
     const response = mockResponse();
     await visionHandler({
@@ -191,19 +205,35 @@ test("vision endpoint refuses requests until the server-side GitHub token exists
       }
     }, response);
     assert.equal(response.statusCode, 503);
-    assert.match(response.payload.error, /GitHub queue connection/);
+    assert.match(response.payload.error, /public code repository/);
   });
 });
 
-test("vision endpoint writes only a validated owner task to the fixed queue branch", async () => {
+test("vision endpoint writes owner ideas only to a verified private queue repository", async () => {
   const hash = makePasswordHash();
   const token = createAliveSessionToken(SESSION_SECRET);
   const originalFetch = globalThis.fetch;
   let requestedUrl = "";
   let requestedBody = null;
   let requestedAuth = "";
+  let fetchCount = 0;
   globalThis.fetch = async (url, options) => {
-    requestedUrl = String(url);
+    fetchCount++;
+    const value = String(url);
+    if (fetchCount === 1) {
+      assert.match(value, /\/repos\/lambocityyachtclub-png\/lambo-city-alive-control$/);
+      assert.equal(options.headers.Authorization, "Bearer " + REPO_TOKEN);
+      return { ok: true, json: async () => ({
+        private: true, archived: false, disabled: false, default_branch: "main"
+      }) };
+    }
+    if (fetchCount === 2) {
+      assert.match(value, /alive-private-queue\.yml/);
+      return { ok: true, json: async () => ({
+        type: "file", name: "alive-private-queue.yml"
+      }) };
+    }
+    requestedUrl = value;
     requestedBody = JSON.parse(options.body);
     requestedAuth = options.headers.Authorization;
     return {
@@ -219,7 +249,11 @@ test("vision endpoint writes only a validated owner task to the fixed queue bran
     await withEnv({
       ALIVE_OWNER_PASSWORD_HASH: hash,
       ALIVE_SESSION_SECRET: SESSION_SECRET,
-      ALIVE_GITHUB_TOKEN: REPO_TOKEN
+      ALIVE_PRIVATE_QUEUE_WORKFLOW_READY: "true",
+      ALIVE_PRIVATE_QUEUE_GITHUB_TOKEN: REPO_TOKEN,
+      ALIVE_PRIVATE_QUEUE_OWNER: "lambocityyachtclub-png",
+      ALIVE_PRIVATE_QUEUE_REPO: "lambo-city-alive-control",
+      ALIVE_PRIVATE_QUEUE_BRANCH: "integration/lc-alive-agentic-worker-2026-11-10"
     }, async () => {
       const response = mockResponse();
       await visionHandler({
@@ -232,51 +266,77 @@ test("vision endpoint writes only a validated owner task to the fixed queue bran
       assert.equal(response.statusCode, 202);
       assert.equal(response.payload.accepted, true);
       assert.match(response.payload.taskId, /^owner-vision-/);
-      assert.equal(response.payload.commitSha, "a".repeat(40));
-      assert.match(requestedUrl, /development\/queue\/incoming\/owner-vision-/);
+      assert.equal(response.payload.queueCommitSha, "a".repeat(40));
+      assert.match(requestedUrl, /repos\/lambocityyachtclub-png\/lambo-city-alive-control\/contents\/development\/queue\/incoming\/owner-vision-/);
       assert.equal(requestedBody.branch, "integration/lc-alive-agentic-worker-2026-11-10");
       const queuedTask = JSON.parse(Buffer.from(requestedBody.content, "base64").toString("utf8"));
       assert.equal(queuedTask.workerId, "vision-planning");
       assert.equal(queuedTask.branch, undefined);
       assert.equal(requestedAuth, "Bearer " + REPO_TOKEN);
+      assert.equal(requestedUrl.includes("/lambo-city-records/"), false);
     });
   } finally {
     globalThis.fetch = originalFetch;
   }
 });
 
-test("status endpoint uses public read-only GitHub data and never returns credentials", async () => {
+test("status endpoint verifies the private queue and reads only public proposal status", async () => {
   const hash = makePasswordHash();
   const token = createAliveSessionToken(SESSION_SECRET);
   const originalFetch = globalThis.fetch;
   const calls = [];
   globalThis.fetch = async (url, options) => {
     calls.push({ url: String(url), headers: options.headers });
+    if (String(url).endsWith("/repos/lambocityyachtclub-png/lambo-city-alive-control")) {
+      return { ok: true, json: async () => ({
+        private: true, archived: false, disabled: false, default_branch: "main"
+      }) };
+    }
+    if (String(url).includes("alive-private-queue.yml")) {
+      return { ok: true, json: async () => ({
+        type: "file", name: "alive-private-queue.yml"
+      }) };
+    }
+    if (String(url).includes("/pulls?")) {
+      return { ok: true, json: async () => [{
+        title: "ALIVE vision proposal",
+        state: "open",
+        draft: true,
+        html_url: "https://github.com/lambocityyachtclub-png/lambo-city-records/pull/99",
+        head: { ref: "alive-proposal/owner-vision-test-001", sha: "c".repeat(40) }
+      }] };
+    }
     return {
       ok: true,
-      json: async () => String(url).includes("/pulls?")
-        ? []
-        : { check_runs: [{ name: "Development Engine", status: "completed", conclusion: "success" }] }
+      json: async () => ({
+        check_runs: [{ name: "Development Engine", status: "completed", conclusion: "success" }]
+      })
     };
   };
   try {
     await withEnv({
       ALIVE_OWNER_PASSWORD_HASH: hash,
       ALIVE_SESSION_SECRET: SESSION_SECRET,
-      ALIVE_GITHUB_TOKEN: REPO_TOKEN
+      ALIVE_PRIVATE_QUEUE_WORKFLOW_READY: "true",
+      ALIVE_PRIVATE_QUEUE_GITHUB_TOKEN: REPO_TOKEN,
+      ALIVE_PRIVATE_QUEUE_OWNER: "lambocityyachtclub-png",
+      ALIVE_PRIVATE_QUEUE_REPO: "lambo-city-alive-control",
+      ALIVE_PRIVATE_QUEUE_BRANCH: "integration/lc-alive-agentic-worker-2026-11-10"
     }, async () => {
       const response = mockResponse();
       await statusHandler({
         method: "GET",
-        url: "/api/alive/status?taskId=owner-vision-test-001&commitSha=" + "c".repeat(40),
+        url: "/api/alive/status?taskId=owner-vision-test-001",
         headers: { cookie: aliveSessionCookie(token), host: "lambocityrecords.com" }
       }, response);
       assert.equal(response.statusCode, 200);
       assert.equal(response.payload.connected, true);
-      assert.equal(response.payload.state, "checks_complete");
+      assert.equal(response.payload.state, "proposal_ready");
       assert.equal(response.payload.task.checks.length, 1);
-      assert.equal(calls.length, 2);
-      assert.equal(calls.every(call => !call.headers.Authorization), true);
+      assert.equal(calls.length, 4);
+      assert.equal(calls[0].headers.Authorization, "Bearer " + REPO_TOKEN);
+      assert.equal(calls[1].headers.Authorization, "Bearer " + REPO_TOKEN);
+      assert.equal(calls.slice(2).every(call => !call.headers.Authorization), true);
       assert.equal(JSON.stringify(response.payload).includes(REPO_TOKEN), false);
     });
   } finally {
