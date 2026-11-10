@@ -254,55 +254,67 @@ function measureJsonByteSize(value, maxBytes) {
 
 const MAX_JSON_SIZE_MEASUREMENT_BYTES = 16 * 1024 * 1024;
 
-function getLoadedByteSize(value, maxBytes) {
-  if (typeof value === "boolean" || typeof value === "number") {
-    return new TextEncoder().encode(JSON.stringify(value)).byteLength;
-  }
-  if (typeof value === "function" || typeof value === "symbol" || typeof value === "bigint") {
-    throw new Error("Non-serializable content assets must expose a supported byte representation or measured sizeBytes.");
-  }
-  if (typeof value === "string") {
-    if (value.length > maxBytes) return maxBytes + 1;
-    return new TextEncoder().encode(value).byteLength;
-  }
-  if (value instanceof ArrayBuffer) return value.byteLength;
-  if (ArrayBuffer.isView(value)) return value.byteLength;
-  if (value && typeof Blob === "function") {
-    const sizeGetter = Object.getOwnPropertyDescriptor(Blob.prototype, "size")?.get;
-    if (typeof sizeGetter === "function") {
-      try {
-        const nativeBlobSize = sizeGetter.call(value);
-        if (Number.isSafeInteger(nativeBlobSize) && nativeBlobSize >= 0) return nativeBlobSize;
-      } catch {}
+function getLoadedByteSize(value, maxBytes, seen = new Set()) {
+  const trackObject = value !== null && typeof value === "object";
+  if (trackObject) {
+    if (seen.has(value)) {
+      throw new Error("Cyclic content wrappers cannot be size-validated.");
     }
+    seen.add(value);
   }
-  if (value && typeof value.arrayBuffer === "function") {
-    if (Number.isSafeInteger(value.sizeBytes) && value.sizeBytes >= 0) return value.sizeBytes;
-    throw new Error("Custom file-like host assets must expose an explicit measured sizeBytes value.");
-  }
-  if (value && value.blob && value.blob !== value) {
-    const blobSize = getLoadedByteSize(value.blob, maxBytes);
-    if (blobSize !== null) return blobSize;
-  }
-  if (value && value.bytes && value.bytes !== value) {
-    const byteSize = getLoadedByteSize(value.bytes, maxBytes);
-    if (byteSize !== null) return byteSize;
-  }
-  if (value && typeof value === "object" &&
-      (Array.isArray(value) || Object.getPrototypeOf(value) === Object.prototype || Object.getPrototypeOf(value) === null)) {
-    const measurementLimit = Math.min(maxBytes, MAX_JSON_SIZE_MEASUREMENT_BYTES);
-    const measured = measureJsonByteSize(value, measurementLimit);
-    if (measured !== null && measured > measurementLimit && measurementLimit < maxBytes) {
-      throw new Error("JSON content assets exceed the 16 MiB measurement cap; use byte-backed content or a trusted host object with measured sizeBytes.");
+
+  try {
+    if (typeof value === "boolean" || typeof value === "number") {
+      return new TextEncoder().encode(JSON.stringify(value)).byteLength;
     }
-    if (measured !== null) return measured;
-    throw new Error("JSON content assets contain an unsupported value and cannot be size-validated.");
+    if (typeof value === "function" || typeof value === "symbol" || typeof value === "bigint") {
+      throw new Error("Non-serializable content assets must expose a supported byte representation or measured sizeBytes.");
+    }
+    if (typeof value === "string") {
+      if (value.length > maxBytes) return maxBytes + 1;
+      return new TextEncoder().encode(value).byteLength;
+    }
+    if (value instanceof ArrayBuffer) return value.byteLength;
+    if (ArrayBuffer.isView(value)) return value.byteLength;
+    if (value && typeof Blob === "function") {
+      const sizeGetter = Object.getOwnPropertyDescriptor(Blob.prototype, "size")?.get;
+      if (typeof sizeGetter === "function") {
+        try {
+          const nativeBlobSize = sizeGetter.call(value);
+          if (Number.isSafeInteger(nativeBlobSize) && nativeBlobSize >= 0) return nativeBlobSize;
+        } catch {}
+      }
+    }
+    if (value && typeof value.arrayBuffer === "function") {
+      if (Number.isSafeInteger(value.sizeBytes) && value.sizeBytes >= 0) return value.sizeBytes;
+      throw new Error("Custom file-like host assets must expose an explicit measured sizeBytes value.");
+    }
+    if (value && value.blob && value.blob !== value) {
+      const blobSize = getLoadedByteSize(value.blob, maxBytes, seen);
+      if (blobSize !== null) return blobSize;
+    }
+    if (value && value.bytes && value.bytes !== value) {
+      const byteSize = getLoadedByteSize(value.bytes, maxBytes, seen);
+      if (byteSize !== null) return byteSize;
+    }
+    if (value && typeof value === "object" &&
+        (Array.isArray(value) || Object.getPrototypeOf(value) === Object.prototype || Object.getPrototypeOf(value) === null)) {
+      const measurementLimit = Math.min(maxBytes, MAX_JSON_SIZE_MEASUREMENT_BYTES);
+      const measured = measureJsonByteSize(value, measurementLimit);
+      if (measured !== null && measured > measurementLimit && measurementLimit < maxBytes) {
+        throw new Error("JSON content assets exceed the 16 MiB measurement cap; use byte-backed content or a trusted host object with measured sizeBytes.");
+      }
+      if (measured !== null) return measured;
+      throw new Error("JSON content assets contain an unsupported value and cannot be size-validated.");
+    }
+    if (value && Number.isSafeInteger(value.sizeBytes) && value.sizeBytes >= 0) return value.sizeBytes;
+    if (value && typeof value === "object") {
+      throw new Error("Non-JSON host assets must expose an explicit measured sizeBytes value.");
+    }
+    return null;
+  } finally {
+    if (trackObject) seen.delete(value);
   }
-  if (value && Number.isSafeInteger(value.sizeBytes) && value.sizeBytes >= 0) return value.sizeBytes;
-  if (value && typeof value === "object") {
-    throw new Error("Non-JSON host assets must expose an explicit measured sizeBytes value.");
-  }
-  return null;
 }
 
 export function createContentPackCatalog(options = {}) {
