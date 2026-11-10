@@ -8,13 +8,20 @@
 import { createContentPackCatalog } from "./contentPackCatalog.js";
 import { createContentPackHostLoader } from "./contentPackHostAdapters.js";
 import { createVerifiedRemoteContentLoader } from "./verifiedRemoteContentLoader.js";
+import { createIndexedDbContentCache } from "./indexedDbContentCache.js";
 
 export function createContentPackRuntime(options = {}) {
   const sha256 = options.sha256 || null;
   const resolveRemote = options.resolveRemote || null;
+  if (options.remoteCache && options.indexedDBCache) {
+    throw new Error("Choose either remoteCache or indexedDBCache, not both.");
+  }
+  const remoteCache = options.remoteCache || (options.indexedDBCache
+    ? createIndexedDbContentCache(options.indexedDBCache)
+    : null);
   let remoteLoader = null;
 
-  if (resolveRemote || sha256 || options.remoteCache || options.allowedUrlOrigins) {
+  if (resolveRemote || sha256 || remoteCache || options.allowedUrlOrigins) {
     if (typeof resolveRemote !== "function" || typeof sha256 !== "function") {
       throw new Error("Content runtime remote delivery requires both resolveRemote and sha256 host services.");
     }
@@ -22,7 +29,7 @@ export function createContentPackRuntime(options = {}) {
       allowedOrigins: options.allowedUrlOrigins || [],
       resolve: resolveRemote,
       sha256,
-      cache: options.remoteCache || null,
+      cache: remoteCache,
       maxAssetBytes: options.maxRemoteAssetBytes
     });
   }
@@ -61,7 +68,7 @@ export function createContentPackRuntime(options = {}) {
       studioAudioStore: Boolean(options.studioAudioAssetStore),
       worldRecipeResolver: Boolean(options.resolveWorldRecipe && options.validateDistrict),
       remoteDelivery: Boolean(remoteLoader),
-      persistentRemoteCache: Boolean(options.remoteCache),
+      persistentRemoteCache: Boolean(remoteCache),
       genericHostResolver: Boolean(options.resolveHostAsset)
     })
   });
