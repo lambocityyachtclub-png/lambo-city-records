@@ -192,7 +192,7 @@ test("enforces declared byte budgets against loaded buffers and Studio blobs", a
     loader: async ({ asset }) => asset.id === "buffered"
       ? new Uint8Array([1, 2, 3])
       : asset.id === "studio-blob"
-        ? { id: asset.id, blob: { size: 3, async arrayBuffer() { return new ArrayBuffer(3); } } }
+        ? { id: asset.id, blob: new Blob([new Uint8Array([1, 2, 3])]) }
         : { id: asset.id, recipeData: "this JSON payload is larger than its declared budget" }
   });
   catalog.register(pack({
