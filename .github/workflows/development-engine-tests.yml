@@ -2,6 +2,8 @@ name: Development Engine Tests
 
 on:
   push:
+    branches:
+      - integration/lc-alive-agentic-worker-2026-11-10
     paths:
       - "development/**"
       - ".github/workflows/development-engine-tests.yml"
@@ -45,6 +47,7 @@ jobs:
       worker_id: ${{ steps.task.outputs.worker_id }}
       title: ${{ steps.task.outputs.title }}
       base_sha: ${{ steps.task.outputs.base_sha }}
+      proposal_base_sha: ${{ steps.task.outputs.proposal_base_sha }}
     steps:
       - name: Check out pushed branch
         uses: actions/checkout@v4
@@ -67,7 +70,7 @@ jobs:
             echo "has_task=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          mapfile -t task_files < <(git diff --name-only "$BEFORE_SHA" "$HEAD_SHA" -- 'development/queue/incoming/*.json')
+          mapfile -t task_files < <(git diff --diff-filter=AM --name-only "$BEFORE_SHA" "$HEAD_SHA" -- 'development/queue/incoming/*.json')
           if [[ "${#task_files[@]}" -eq 0 ]]; then
             echo "has_task=false" >> "$GITHUB_OUTPUT"
             echo "No ALIVE task was queued in this push; skipping specialist generation."
@@ -87,6 +90,7 @@ jobs:
           echo "worker_id=$WORKER_ID" >> "$GITHUB_OUTPUT"
           echo "title=$TITLE" >> "$GITHUB_OUTPUT"
           echo "base_sha=$BEFORE_SHA" >> "$GITHUB_OUTPUT"
+          echo "proposal_base_sha=$HEAD_SHA" >> "$GITHUB_OUTPUT"
       - name: Install pinned GitHub Copilot CLI
         if: steps.task.outputs.has_task == 'true'
         run: npm install --global @github/copilot@1.0.108
@@ -106,7 +110,7 @@ jobs:
         run: |
           set -euo pipefail
           copilot -p "$(cat /tmp/alive-worker-prompt.md)" -s \
-            --available-tools='bash,edit,view,grep,glob' \
+            --available-tools='bash,edit,view,grep,glob,create,apply_patch' \
             --allow-tool='write, shell(node:*), shell(git status), shell(git diff), shell(git log), shell(git show), shell(git ls-files)' \
             --deny-tool='shell(git push), shell(git commit), shell(git checkout), shell(git reset), shell(git clean), shell(git config), shell(curl), shell(wget)'
       - name: Validate paths and package patch
@@ -152,7 +156,7 @@ jobs:
       - name: Check out clean base
         uses: actions/checkout@v4
         with:
-          ref: ${{ needs.generate-proposal.outputs.base_sha }}
+          ref: ${{ needs.generate-proposal.outputs.proposal_base_sha }}
           fetch-depth: 0
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -201,7 +205,7 @@ jobs:
 
           This is an isolated, AI-generated proposal. The code-generation job had repository read access only. A separate job revalidated worker path permissions, reran the Development Engine suite, and created this draft PR.
 
-          No production branch changes were made. No merge or deployment was performed. Existing Studio, World, and read-only AI review workflows will run against this pull request.
+          No production branch changes were made. No merge or deployment was performed. Studio/World checks run when their corresponding code paths are changed; this proposal also receives the full Development Engine test gate before it is opened.
           EOF
           gh pr create --draft --base "$BASE_BRANCH" --head "$BRANCH" \
             --title "[ALIVE] $TASK_TITLE" \
