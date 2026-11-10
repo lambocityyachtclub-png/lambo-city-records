@@ -77,7 +77,9 @@ test("composes Studio and World adapters through one catalog runtime", async () 
     resolveWorldRecipe: async id => id === recipe.id ? recipe : null,
     validateDistrict: value => ({ valid: value === recipe })
   });
-  world.register(manifest("world-recipe", "recipe:district-one"));
+  world.register(manifest("world-recipe", "recipe:district-one", {
+    sizeBytes: new TextEncoder().encode(JSON.stringify(recipe)).byteLength
+  }));
   assert.equal(await world.loadAsset("lc.runtime.integration", "runtime-asset"), recipe);
 });
 
@@ -182,6 +184,7 @@ test("one opt-in runtime serves existing Studio audio and validated World recipe
   const worldPack = manifest("world-recipe", "recipe:district-shoreline");
   worldPack.id = "lc.world.shoreline";
   worldPack.assets[0].id = "shoreline-recipe";
+  worldPack.assets[0].sizeBytes = new TextEncoder().encode(JSON.stringify(recipe)).byteLength;
 
   runtime.register(studioPack);
   runtime.register(worldPack);
