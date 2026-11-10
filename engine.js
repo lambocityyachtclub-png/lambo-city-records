@@ -54,26 +54,6 @@ this.systems.recordsHQ?.init?.(this.scene);
 this.systems.recordsHQFoundation?.init?.(this.scene);
 this.systems.elevator?.init?.(this.scene);
 this.systems.recordsHQFloor1?.init?.(this.scene);
-this.systems.recordsHQFloor2Studio?.init?.(this.scene);
-
-this.systems.floor2StudioApp?.init?.(
-  this.scene,
-  this.context
-);
-
-this.systems.floor2InstrumentApp?.init?.(
-  this.scene,
-  this.context
-);
-
-this.systems.floor2DrumStation?.init?.(
-  this.scene,
-  this.context
-);
-this.systems.floor2StudioNavigation?.init?.(
-  this.scene,
-  this.context
-);
 this.systems.recordsHQFloor3Executive?.init?.(this.scene);
 this.systems.recordsHQFloor3Details?.init?.(this.scene);
 this.systems.recordsHQFloor3Experience?.init?.(this.scene, this.context);
@@ -82,19 +62,6 @@ this.systems.recordsHQEntranceThreshold?.init?.(this.scene);
 this.systems.recordsHQMediaDetails?.init?.(this.scene);
 this.systems.recordsHQMerchDetails?.init?.(this.scene);
 this.systems.recordsHQElevator?.init?.(this.scene);
-
-// Session controls need the initialized renderer and the elevator arrival hook.
-this.systems.floor2StudioSession?.init?.(
-  this.scene,
-  this.context
-);
-
-// The dedicated music-interface modules enhance the already-built stations.
-// Their Three.js imports are lazy so standalone Studio remains independent.
-this.systems.studioMixMasterConsole3D?.init?.(this.scene, this.context);
-this.systems.floor2LiveDrummer?.init?.(this.scene, this.context);
-this.systems.floor2VocalBooth3D?.init?.(this.scene, this.context);
-this.systems.floor2CitySynth?.init?.(this.scene, this.context);
 
 this.systems.boardwalkOverlooks?.init?.(this.scene);
     this.systems.input?.init?.();
