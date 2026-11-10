@@ -35,7 +35,7 @@ Expansion must preserve approved visuals and workflows. A new feature should be 
 4. **The controlled executor has an adapter-contract gap.** It expects `createWorkspace`, `prepareChanges`, and `runTests`, while the low-level isolated workspace adapter originally exposed file operations only. PR #23 adds a separately injected composition adapter to bridge those contracts. A production-grade hosted job runner, trusted planner/test sandbox, and complete review integration are still not connected.
 5. **Persistence is optional.** Without a storage adapter, director tasks remain in memory and are not durable across process restarts.
 6. **World content and engine plugins are different concerns.** The World System can register district recipes, but that does not yet provide a universal lifecycle registry for every engine module, Studio station, sound pack, and environment asset.
-7. **Asset/content discovery needs a shared contract.** Sound libraries, architectural recipes, materials, animation sets, and reusable environment components need versioned manifests and validation rather than ad-hoc imports.
+7. **Asset/content discovery needs a shared contract.** The Studio already has an IndexedDB audio asset store for recorded beat/vocal/mix assets, and the World System has a bounded district-recipe compiler and district schema validator. These are useful domain-specific foundations, but there is not yet one versioned content-pack manifest for discovering, validating, loading, caching, and tracking compatibility of sound packs, instruments, building kits, yacht assets, materials, and environment details.
 
 These are architecture findings from source inspection, not claims that every browser runtime behavior has been tested.
 
@@ -159,8 +159,8 @@ This service must remain separate from the live game runtime. Do not give genera
 | P1 | Prove universal module manifest/lifecycle registry in isolation | Prototype + automated tests in PR #23; awaiting review and hardening |
 | P1 | Inventory all module imports, dependencies, empty files, and load costs | In progress |
 | P1 | Validate Studio PR #20 automated workflow and preview | Automated workflow passed; browser microphone acceptance pending |
-| P2 | Build versioned Studio sound/instrument/effect catalog | Planned |
-| P2 | Build reusable world content/recipe catalog | Planned |
+| P2 | Build versioned Studio sound/instrument/effect catalog | Audit found recording asset persistence; sound-pack manifest/catalog still planned |
+| P2 | Build reusable world content/recipe catalog | District recipe compiler/schema already exist; shared content-pack manifest still planned |
 | P2 | Add World/NPC/Real Estate/Entertainment specialist runners | Planned |
 | P3 | Connect durable hosted task orchestration and review | Partial pipeline adapter prototype in PR #23; hosted orchestration and sandboxing still require design |
 | P3 | Begin controlled location-by-location world expansion | Planned |
