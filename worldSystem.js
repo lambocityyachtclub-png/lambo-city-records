@@ -268,7 +268,10 @@ export default class WorldSystem {
 
   createVehicleController(districtId, initialState = {}, options = {}) {
     const district = this.districts.get(districtId);
-    return district ? new VehicleRoadController(district, initialState, options) : null;
+    return district ? new VehicleRoadController(district, initialState, {
+      ...options,
+      openGates: options.openGates ?? [...this.getOpenGateIds(districtId)]
+    }) : null;
   }
 
   buildVehicleUTurnPath(districtId, nodeId, vehicle = {}, options = {}) {
