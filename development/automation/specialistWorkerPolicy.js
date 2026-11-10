@@ -112,6 +112,7 @@ const PROTECTED_PREFIXES = Object.freeze([
   ".github/",
   ".vercel/",
   "api/",
+  "server/",
   "auth/",
   "payments/",
   "billing/",
