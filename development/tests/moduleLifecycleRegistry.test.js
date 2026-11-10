@@ -51,9 +51,12 @@ test("registry rolls back initialized modules when a later init fails", async ()
   const events = [];
   const registry = createEngineModuleRegistry();
   registry.register({ id: "first", module: { init: () => events.push("first:init"), dispose: () => events.push("first:dispose") } });
-  registry.register({ id: "second", dependencies: ["first"], module: { init: () => { throw new Error("init failed"); } } });
+  registry.register({ id: "second", dependencies: ["first"], module: {
+    init: () => { throw new Error("init failed"); },
+    dispose: () => events.push("second:dispose")
+  } });
   await assert.rejects(registry.initializeAll({}), /init failed/);
-  assert.deepEqual(events, ["first:init", "first:dispose"]);
+  assert.deepEqual(events, ["first:init", "second:dispose", "first:dispose"]);
   assert.equal(registry.getSnapshot().state, "idle");
 });
 
