@@ -17,16 +17,192 @@ jobs:
   test:
     name: Test Development Engine
     runs-on: ubuntu-latest
-
+    permissions:
+      contents: read
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
-
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
-
-      - name: Run development engine tests
+      - name: Run complete Development Engine test suite
         run: |
           node --experimental-default-type=module --test development/tests/*.test.js
+
+  generate-proposal:
+    name: Generate scoped specialist proposal
+    needs: test
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+      copilot-requests: write
+    outputs:
+      has_task: \${{ steps.task.outputs.has_task }}
+      task_id: \${{ steps.task.outputs.task_id }}
+      worker_id: \${{ steps.task.outputs.worker_id }}
+      title: \${{ steps.task.outputs.title }}
+      base_sha: \${{ steps.task.outputs.base_sha }}
+    steps:
+      - name: Check out pushed branch
+        uses: actions/checkout@v4
+        with:
+          ref: \${{ github.sha }}
+          fetch-depth: 0
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Identify and validate one queued task
+        id: task
+        env:
+          BEFORE_SHA: \${{ github.event.before }}
+          HEAD_SHA: \${{ github.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$BEFORE_SHA" =~ ^0+$ ]]; then
+            echo "has_task=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          mapfile -t task_files < <(git diff --name-only "$BEFORE_SHA" "$HEAD_SHA" -- 'development/queue/incoming/*.json')
+          if [[ "\${#task_files[@]}" -eq 0 ]]; then
+            echo "has_task=false" >> "$GITHUB_OUTPUT"
+            echo "No ALIVE task was queued in this push; skipping specialist generation."
+            exit 0
+          fi
+          if [[ "\${#task_files[@]}" -ne 1 || ! -f "\${task_files[0]}" ]]; then
+            echo "Each queue commit must add or update exactly one JSON task." >&2
+            exit 1
+          fi
+          TASK_FILE="\${task_files[0]}"
+          node --experimental-default-type=module scripts/prepare-alive-worker-task.mjs "$TASK_FILE" /tmp/alive-worker-prompt.md /tmp/alive-worker-metadata.json
+          TASK_ID="$(node -e 'const m=require("/tmp/alive-worker-metadata.json"); process.stdout.write(m.id)')"
+          WORKER_ID="$(node -e 'const m=require("/tmp/alive-worker-metadata.json"); process.stdout.write(m.workerId)')"
+          TITLE="$(node -e 'const m=require("/tmp/alive-worker-metadata.json"); process.stdout.write(m.title.replace(/[\r\n]/g," "))')"
+          echo "has_task=true" >> "$GITHUB_OUTPUT"
+          echo "task_id=$TASK_ID" >> "$GITHUB_OUTPUT"
+          echo "worker_id=$WORKER_ID" >> "$GITHUB_OUTPUT"
+          echo "title=$TITLE" >> "$GITHUB_OUTPUT"
+          echo "base_sha=$BEFORE_SHA" >> "$GITHUB_OUTPUT"
+      - name: Install pinned GitHub Copilot CLI
+        if: steps.task.outputs.has_task == 'true'
+        run: npm install --global @github/copilot@1.0.108
+      - name: Verify Copilot CLI version
+        if: steps.task.outputs.has_task == 'true'
+        run: copilot --version | tee /tmp/copilot-version.txt && grep -F "1.0.108" /tmp/copilot-version.txt
+      - name: Return to clean base before code generation
+        if: steps.task.outputs.has_task == 'true'
+        env:
+          BASE_SHA: \${{ steps.task.outputs.base_sha }}
+        run: git checkout "$BASE_SHA"
+      - name: Generate code in disposable runner
+        if: steps.task.outputs.has_task == 'true'
+        shell: bash
+        env:
+          GITHUB_TOKEN: \${{ github.token }}
+        run: |
+          set -euo pipefail
+          copilot -p "$(cat /tmp/alive-worker-prompt.md)" -s \
+            --available-tools='bash,edit,view,grep,glob' \
+            --allow-tool='write, shell(node:*), shell(git status), shell(git diff), shell(git log), shell(git show), shell(git ls-files)' \
+            --deny-tool='shell(git push), shell(git commit), shell(git checkout), shell(git reset), shell(git clean), shell(git config), shell(curl), shell(wget)'
+      - name: Validate paths and package patch
+        if: steps.task.outputs.has_task == 'true'
+        env:
+          WORKER_ID: \${{ steps.task.outputs.worker_id }}
+          TASK_ID: \${{ steps.task.outputs.task_id }}
+        run: |
+          set -euo pipefail
+          git add -N -- .
+          git diff --name-only HEAD > /tmp/alive-worker-changed-files.txt
+          node --experimental-default-type=module scripts/validate-alive-worker-diff.mjs "$WORKER_ID" /tmp/alive-worker-changed-files.txt
+          git diff --binary HEAD > /tmp/alive-worker.patch
+          test -s /tmp/alive-worker.patch
+          cp /tmp/alive-worker-changed-files.txt alive-worker-changed-files.txt
+          cp /tmp/alive-worker.patch alive-worker.patch
+          cp /tmp/alive-worker-metadata.json alive-worker-metadata.json
+          printf '# Specialist report\n\nTask: %s\nWorker: %s\n\nChanged files:\n' "$TASK_ID" "$WORKER_ID" > alive-worker-report.md
+          sed 's/^/- /' alive-worker-changed-files.txt >> alive-worker-report.md
+      - name: Upload isolated proposal artifact
+        if: steps.task.outputs.has_task == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: alive-worker-proposal-\${{ steps.task.outputs.task_id }}
+          path: |
+            alive-worker.patch
+            alive-worker-changed-files.txt
+            alive-worker-metadata.json
+            alive-worker-report.md
+          if-no-files-found: error
+          retention-days: 7
+
+  publish-draft-pr:
+    name: Retest proposal and open draft PR
+    needs: generate-proposal
+    if: needs.generate-proposal.outputs.has_task == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Check out clean base
+        uses: actions/checkout@v4
+        with:
+          ref: \${{ needs.generate-proposal.outputs.base_sha }}
+          fetch-depth: 0
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Download isolated proposal artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: alive-worker-proposal-\${{ needs.generate-proposal.outputs.task_id }}
+          path: /tmp/alive-worker-proposal
+      - name: Apply patch and repeat the path gate
+        env:
+          WORKER_ID: \${{ needs.generate-proposal.outputs.worker_id }}
+        run: |
+          set -euo pipefail
+          git apply --check /tmp/alive-worker-proposal/alive-worker.patch
+          git apply /tmp/alive-worker-proposal/alive-worker.patch
+          node --experimental-default-type=module scripts/validate-alive-worker-diff.mjs "$WORKER_ID" /tmp/alive-worker-proposal/alive-worker-changed-files.txt
+          git diff --check
+      - name: Run complete Development Engine tests again
+        run: |
+          node --experimental-default-type=module --test development/tests/*.test.js
+      - name: Publish isolated branch and draft pull request
+        env:
+          GH_TOKEN: \${{ github.token }}
+          TASK_ID: \${{ needs.generate-proposal.outputs.task_id }}
+          TASK_TITLE: \${{ needs.generate-proposal.outputs.title }}
+          WORKER_ID: \${{ needs.generate-proposal.outputs.worker_id }}
+          BASE_BRANCH: \${{ github.ref_name }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          BRANCH="alive-proposal/$TASK_ID"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add --all
+          git commit -m "feat(alive): $TASK_TITLE"
+          git push origin "HEAD:refs/heads/$BRANCH"
+          cat > /tmp/alive-worker-pr-body.md <<EOF
+          ## LAMBO CITY ALIVE specialist proposal
+
+          - **Task:** $TASK_ID
+          - **Worker:** $WORKER_ID
+          - **Base:** $BASE_BRANCH
+          - **Automated Development Engine tests:** passed before PR creation
+
+          This is an isolated, AI-generated proposal. The code-generation job had repository read access only. A separate job revalidated worker path permissions, reran the Development Engine suite, and created this draft PR.
+
+          No production branch changes were made. No merge or deployment was performed. Existing Studio, World, and read-only AI review workflows will run against this pull request.
+          EOF
+          gh pr create --draft --base "$BASE_BRANCH" --head "$BRANCH" \
+            --title "[ALIVE] $TASK_TITLE" \
+            --body-file /tmp/alive-worker-pr-body.md
