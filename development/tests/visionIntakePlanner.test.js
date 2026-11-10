@@ -56,7 +56,7 @@ test("blocked tasks cannot be submitted and protected work retains owner approva
   await system.intakeVision("Prepare the plan.");
   await assert.rejects(system.submitVisionTasks(["payments-release"]), /Blocked work/);
   const submitted = await system.submitVisionTasks(["creator-marketplace"]);
-  assert.equal(submitted[0].task.status, "queued");
+  assert.equal(submitted[0].task.status, "pending_approval");
 });
 
 test("vision intake requires a trusted planner adapter and non-empty direction", async () => {
