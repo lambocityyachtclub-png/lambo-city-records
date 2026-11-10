@@ -390,6 +390,33 @@ const proxyRemoval = streamer.update(0, { playerPosition: { x: 400, z: 50 } });
 assert.equal(proxyRemoval.unproxied.includes("stream-test"), true);
 assert.equal(streamState.proxied, false);
 
+const failedBuildState = { built: false, proxied: true };
+const failedBuildFixture = {
+  getDistrictIds: () => ["failed-detail"],
+  getDistrict: () => ({ id: "failed-detail", bounds: { minX: 0, maxX: 100, minZ: 0, maxZ: 100 } }),
+  isDistrictBuilt: () => failedBuildState.built,
+  isDistrictProxied: () => failedBuildState.proxied,
+  buildDistrictProxy: () => { failedBuildState.proxied = true; return {}; },
+  removeDistrictProxy: () => { const had = failedBuildState.proxied; failedBuildState.proxied = false; return had; },
+  buildDistrict: () => { throw new Error("simulated detailed build failure"); },
+  removeDistrict: () => false,
+  updateDistrictDetailFocus: () => false
+};
+const failedBuildStreamer = new streamingModule.default({
+  streamInRadius: 50,
+  streamOutRadius: 75,
+  proxyInRadius: 200,
+  proxyOutRadius: 250,
+  maxProxyRemovalsPerUpdate: 2
+}).init(failedBuildFixture);
+const failedBuildUpdate = failedBuildStreamer.update(0, { playerPosition: { x: 50, z: 50 } });
+assert.equal(failedBuildState.proxied, true,
+  "the far proxy must remain visible when the detailed district build fails");
+assert.deepEqual(failedBuildUpdate.keptProxies, ["failed-detail"]);
+assert.ok(failedBuildUpdate.errors.some(error =>
+  error.id === "failed-detail" && error.stage === "detail-build"
+));
+
 const gridDistrict = createDistrictFromRecipe({
   id: "world-system-grid-test",
   name: "World System Grid Test",
