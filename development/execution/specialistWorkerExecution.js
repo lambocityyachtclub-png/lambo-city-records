@@ -60,8 +60,19 @@ export function createSpecialistWorkerExecution(options = {}) {
     const testRunner = testRunners[id];
     const allowedPaths = allowedPathsByWorker[id];
 
-    if (!workspaceAdapter || !changePlanner || !testRunner || !Array.isArray(allowedPaths) || !allowedPaths.length) {
-      throw new Error("Missing explicit isolated execution configuration for worker: " + id);
+    const configured = [workspaceAdapter, changePlanner, testRunner, allowedPaths]
+      .filter(value => value !== undefined && value !== null).length;
+
+    // Partial configuration is a setup error; wholly unconfigured workers
+    // remain registered and can still collect tasks until their host adapters
+    // are ready.
+    if (configured === 0) continue;
+    if (
+      configured !== 4 ||
+      !Array.isArray(allowedPaths) ||
+      allowedPaths.length === 0
+    ) {
+      throw new Error("Incomplete isolated execution configuration for worker: " + id);
     }
 
     const pipeline = createDevelopmentWorkspacePipeline({
