@@ -9,6 +9,23 @@ function requireFunction(value, name) {
   if (typeof value !== "function") throw new Error("Verified content loader requires " + name + ".");
 }
 
+function awaitWithAbort(value, signal) {
+  if (!signal) return Promise.resolve(value);
+  if (signal.aborted) return Promise.reject(new Error("Content asset load was aborted."));
+  if (typeof signal.addEventListener !== "function" || typeof signal.removeEventListener !== "function") {
+    return Promise.reject(new Error("Content asset load signal is invalid."));
+  }
+  let onAbort;
+  const aborted = new Promise((_, reject) => {
+    onAbort = () => reject(new Error("Content asset load was aborted."));
+    signal.addEventListener("abort", onAbort, { once: true });
+    if (signal.aborted) onAbort();
+  });
+  return Promise.race([Promise.resolve(value), aborted]).finally(() => {
+    signal.removeEventListener("abort", onAbort);
+  });
+}
+
 function toBytes(value) {
   if (value instanceof Uint8Array) return value;
   if (value instanceof ArrayBuffer) return new Uint8Array(value);
@@ -42,8 +59,8 @@ export function createVerifiedRemoteContentLoader(options = {}) {
     }
   }
 
-  async function digestMatches(bytes, expected) {
-    const actual = await sha256(bytes);
+  async function digestMatches(bytes, expected, signal) {
+    const actual = await awaitWithAbort(sha256(bytes, { signal }), signal);
     if (typeof actual !== "string" || !/^[a-f0-9]{64}$/i.test(actual)) {
       throw new Error("SHA-256 provider must return a 64-character hexadecimal digest.");
     }
@@ -76,41 +93,39 @@ export function createVerifiedRemoteContentLoader(options = {}) {
 
     if (cache) {
       let cached = null;
-      try { cached = await cache.get(cacheKey, { signal }); }
+      try { cached = await awaitWithAbort(cache.get(cacheKey, { signal }), signal); }
       catch (error) { if (signal?.aborted) throw new Error("Content asset load was aborted."); reportCacheError("get", error); }
       if (signal?.aborted) throw new Error("Content asset load was aborted.");
       if (cached !== undefined && cached !== null) {
-        let valid = false;
         try {
           const cachedBytes = toBytes(cached);
           if (cachedBytes.byteLength <= maxAssetBytes &&
-              await digestMatches(cachedBytes, integrity.digest)) {
+              await digestMatches(cachedBytes, integrity.digest, signal)) {
             if (signal?.aborted) throw new Error("Content asset load was aborted.");
             return cachedBytes;
           }
-        } catch {
+        } catch (error) {
+          if (signal?.aborted) throw new Error("Content asset load was aborted.");
           // Corrupt or incompatible cache entries are evicted and fetched again.
         }
-        if (!valid) {
-          try { await cache.delete(cacheKey, { signal }); }
-          catch (error) { if (signal?.aborted) throw new Error("Content asset load was aborted."); reportCacheError("delete", error); }
-        }
+        try { await awaitWithAbort(cache.delete(cacheKey, { signal }), signal); }
+        catch (error) { if (signal?.aborted) throw new Error("Content asset load was aborted."); reportCacheError("delete", error); }
       }
     }
 
-    const resolved = await resolve({ url: url.href, request, signal });
+    const resolved = await awaitWithAbort(resolve({ url: url.href, request, signal }), signal);
     if (signal?.aborted) throw new Error("Content asset load was aborted.");
     const bytes = toBytes(resolved);
     if (bytes.byteLength > maxAssetBytes) {
       throw new Error("Remote content exceeds the configured maximum asset size.");
     }
-    if (!await digestMatches(bytes, integrity.digest)) {
+    if (!await digestMatches(bytes, integrity.digest, signal)) {
       throw new Error("Remote content failed SHA-256 integrity verification.");
     }
     if (signal?.aborted) throw new Error("Content asset load was aborted.");
     if (cache) {
-      try { await cache.set(cacheKey, bytes.slice(), { signal }); }
-      catch (error) { reportCacheError("set", error); }
+      try { await awaitWithAbort(cache.set(cacheKey, bytes.slice(), { signal }), signal); }
+      catch (error) { if (signal?.aborted) throw new Error("Content asset load was aborted."); reportCacheError("set", error); }
     }
     return bytes;
   };
