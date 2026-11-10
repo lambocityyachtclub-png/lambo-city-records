@@ -34,6 +34,7 @@ on:
       - "studioMetronome.js"
       - "scripts/test-studio-midi-file.mjs"
       - "scripts/test-studio-multitrack-recording.mjs"
+      - "scripts/test-studio-recording-cancellation.mjs"
       - "scripts/test-studio-metronome.mjs"
       - "studioDAWExport.js"
       - "studioDAWSessionStore.js"
@@ -97,6 +98,7 @@ on:
       - "studioMidiFile.js"
       - "scripts/test-studio-midi-file.mjs"
       - "scripts/test-studio-multitrack-recording.mjs"
+      - "scripts/test-studio-recording-cancellation.mjs"
       - "studioDAWExport.js"
       - "studioDAWSessionStore.js"
       - "studioMultitrackWorkspace.js"
@@ -251,3 +253,6 @@ jobs:
 
       - name: Test Vocal Booth, Voice Notes, and piano MIDI integration
         run: node --experimental-default-type=module scripts/test-studio-vocal-piano-integration.mjs
+
+      - name: Test vocal recording cancellation and resource cleanup
+        run: node --experimental-default-type=module scripts/test-studio-recording-cancellation.mjs
