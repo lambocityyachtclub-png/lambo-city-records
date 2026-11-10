@@ -206,7 +206,7 @@ export async function createDevelopmentSystem(options = {}) {
   });
 
   const workerExecutionView = workerExecution ? Object.freeze({
-    executeNextTask: workerId => {
+    executeNextTask: async workerId => {
       assertReady();
       return workerExecution.executeNextTask(workerId);
     },
@@ -248,7 +248,7 @@ export async function createDevelopmentSystem(options = {}) {
     submitStudioFinding,
     submitStudioFindings,
     submitWorkerFinding: (workerId, finding) => workerRosterView.submitFinding(workerId, finding),
-    executeWorkerTask: workerId => {
+    executeWorkerTask: async workerId => {
       assertReady();
       if (!workerExecutionView) {
         throw new Error("Specialist execution adapters have not been configured by the trusted host.");
