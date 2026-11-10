@@ -747,7 +747,14 @@
         "arena-arrival-approach",
         { mode: "service", permissions: ["service"] }
       );
-      if (!gateGrant.updated || !gateGrant.gate?.open || !authorizedServiceRoute.found) {
+      const openGateIds = world.getOpenGateIds(district.id);
+      const gateStatuses = world.getGateStatuses(district.id);
+      const authorizedServiceVehicle = world.createVehicleController(district.id,
+        { x: -37, z: 54, heading: 0 }, { permissions: ["service"] });
+      if (!gateGrant.updated || !gateGrant.gate?.open || !authorizedServiceRoute.found ||
+          !openGateIds.includes("arena-boardwalk-service-gate") ||
+          !gateStatuses.some(gate => gate.id === "arena-boardwalk-service-gate" && gate.open) ||
+          !authorizedServiceVehicle?.state.valid) {
         throw new Error("Authorized service access did not open the gate and enable the route.");
       }
       const serviceToNorthRoute = world.findRoute(
