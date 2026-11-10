@@ -289,7 +289,7 @@ const StudioRecordingEngine = {
     }
   },
 
- async startTake({ audio, beatOutput, vocalEffects, pitchCorrectionNode } = {}) {
+ async startTake({ audio, beatOutput, vocalEffects, pitchCorrectionNode, shouldCancel = null } = {}) {
     if (this.activeTake || this.activeTrackTake) {
       throw new Error("A recording is already in progress.");
     }
@@ -305,15 +305,12 @@ const StudioRecordingEngine = {
     if (!navigator.mediaDevices?.getUserMedia) {
       throw new Error("Microphone access is unavailable. Open LAMBO CITY over HTTPS.");
     }
+    if (shouldCancel !== null && typeof shouldCancel !== "function") {
+      throw new Error("shouldCancel must be a function when provided.");
+    }
+    const isCancelled = () => typeof shouldCancel === "function" && shouldCancel();
 
-    const microphoneStream = await navigator.mediaDevices.getUserMedia({
-      audio: {
-        echoCancellation: true,
-        noiseSuppression: true,
-        autoGainControl: true
-      }
-    });
-
+    let microphoneStream;
     let microphoneSource;
     let vocalSource;
     let beatDestination;
@@ -322,6 +319,15 @@ const StudioRecordingEngine = {
     let pcmRecorders = [];
 
     try {
+      if (isCancelled()) throw new Error("Recording start was cancelled.");
+      microphoneStream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true
+        }
+      });
+      if (isCancelled()) throw new Error("Recording start was cancelled.");
       microphoneSource = audio.createMediaStreamSource(microphoneStream);
 
       // Prefer three independent uncompressed PCM captures. If the browser
@@ -332,10 +338,12 @@ const StudioRecordingEngine = {
           const recorder = await createStudioPCMRecorder(audio);
           if (!recorder) throw new Error("AudioWorklet PCM capture is unavailable.");
           pcmRecorders.push(recorder);
+          if (isCancelled()) throw new Error("Recording start was cancelled.");
         }
       } catch (error) {
         pcmRecorders.forEach(recorder => recorder.dispose());
         pcmRecorders = [];
+        if (isCancelled()) throw new Error("Recording start was cancelled.");
         console.warn("LAMBO CITY combined PCM capture unavailable; using MediaRecorder fallback:", error);
       }
 
@@ -365,6 +373,7 @@ const StudioRecordingEngine = {
       const beatRecorder = beatPCM || createRecorder(beatDestination.stream);
       const vocalRecorder = vocalPCM || createRecorder(vocalDestination.stream);
       const mixRecorder = mixPCM || createRecorder(mixDestination.stream);
+      if (isCancelled()) throw new Error("Recording start was cancelled.");
       [beatRecorder, vocalRecorder, mixRecorder].forEach(recorder => {
         if (recorder.recorder) recorder.recorder.start();
       });
@@ -413,7 +422,7 @@ const StudioRecordingEngine = {
       try { vocalDestination?.disconnect(); } catch {}
       try { mixDestination?.disconnect(); } catch {}
       pcmRecorders.forEach(recorder => { try { recorder.dispose(); } catch {} });
-      microphoneStream.getTracks().forEach(track => track.stop());
+      microphoneStream?.getTracks().forEach(track => track.stop());
       throw error;
     }
   },

@@ -36,4 +36,11 @@ jobs:
             development/tests/isolatedWorkspaceAdapter.test.js \
             development/tests/developmentReviewStorage.test.js \
             development/tests/moduleLifecycleRegistry.test.js \
-            development/tests/developmentWorkspacePipeline.test.js
+            development/tests/developmentWorkspacePipeline.test.js \
+            development/tests/specialistWorkerRoster.test.js \
+            development/tests/specialistWorkerExecution.test.js \
+            development/tests/contentPackCatalog.test.js \
+            development/tests/contentPackHostAdapters.test.js \
+            development/tests/verifiedRemoteContentLoader.test.js \
+            development/tests/contentPackRuntime.test.js \
+            development/tests/indexedDbContentCache.test.js
