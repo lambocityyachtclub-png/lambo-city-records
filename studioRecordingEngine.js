@@ -343,6 +343,7 @@ const StudioRecordingEngine = {
       } catch (error) {
         pcmRecorders.forEach(recorder => recorder.dispose());
         pcmRecorders = [];
+        if (isCancelled()) throw new Error("Recording start was cancelled.");
         console.warn("LAMBO CITY combined PCM capture unavailable; using MediaRecorder fallback:", error);
       }
 
