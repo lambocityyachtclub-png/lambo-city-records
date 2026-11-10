@@ -71,6 +71,9 @@ export function createContentPackHostLoader(options = {}) {
       if (!resolveUrlAsset) throw new Error("Trusted URL asset resolver is not configured.");
       let parsed;
       try { parsed = new URL(source.locator); } catch { throw new Error("Remote content URL is invalid."); }
+      if (parsed.username || parsed.password) {
+        throw new Error("Remote content URL must not contain embedded credentials.");
+      }
       if (parsed.protocol !== "https:" || !allowedUrlOrigins.has(parsed.origin)) {
         throw new Error("Remote content URL origin is not allowlisted for HTTPS.");
       }
