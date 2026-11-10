@@ -31,6 +31,10 @@ import {
   STUDIO_RUNNER_VERSION
 } from "../runners/studio/studioDevelopmentRunner.js";
 
+import {
+  createSpecialistWorkerRoster
+} from "./specialistWorkerRoster.js";
+
 export const DEVELOPMENT_SYSTEM_VERSION = "1.0.0";
 
 export const DEVELOPMENT_SYSTEM_STATUS = Object.freeze({
@@ -59,6 +63,10 @@ export async function createDevelopmentSystem(options = {}) {
   await director.initialize();
 
   const studioRunner = createStudioDevelopmentRunner({
+    developmentDirector: director
+  });
+
+  const workerRoster = createSpecialistWorkerRoster({
     developmentDirector: director
   });
 
@@ -113,6 +121,21 @@ export async function createDevelopmentSystem(options = {}) {
       "Organizes development findings for LAMBO CITY Studio."
   });
 
+  // Register all temporary specialist workers in the development directory.
+  for (const worker of workerRoster.listWorkers()) {
+    if (worker.id === STUDIO_RUNNER_ID) continue;
+    registry.registerModule({
+      id: "worker-" + worker.id,
+      name: worker.name,
+      type: MODULE_TYPES.RUNNER,
+      version: workerRoster.version,
+      path: "development/engine/specialistWorkerRoster.js",
+      enabled: true,
+      capabilities: worker.capabilities,
+      description: worker.description
+    });
+  }
+
   let status = DEVELOPMENT_SYSTEM_STATUS.READY;
 
   function getStatus() {
@@ -126,6 +149,7 @@ export async function createDevelopmentSystem(options = {}) {
       registry: registry.getSnapshot(),
       director: director.getSnapshot(),
       studioRunner: studioRunner.getProfile(),
+      workers: workerRoster.listWorkers(),
       policy
     };
   }
@@ -166,11 +190,18 @@ export async function createDevelopmentSystem(options = {}) {
     registry,
     director,
     studioRunner,
+    workerRoster,
     getStatus,
     getSnapshot,
     enable,
     disable,
     submitStudioFinding,
-    submitStudioFindings
+    submitStudioFindings,
+    submitWorkerFinding: (workerId, finding) => {
+      if (status !== DEVELOPMENT_SYSTEM_STATUS.READY) {
+        throw new Error("The development system is disabled.");
+      }
+      return workerRoster.submitFinding(workerId, finding);
+    }
   });
 }
