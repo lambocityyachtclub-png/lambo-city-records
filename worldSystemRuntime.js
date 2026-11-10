@@ -165,6 +165,14 @@ export default class WorldSystemRuntime {
     return this.worldSystem.findWorldRoute(fromDistrictId, fromNodeId, toDistrictId, toNodeId, options);
   }
 
+  getGateStatuses(districtId) {
+    return this.ready ? this.worldSystem.getGateStatuses(districtId) : [];
+  }
+
+  getOpenGateIds(districtId) {
+    return this.ready ? [...this.worldSystem.getOpenGateIds(districtId)] : [];
+  }
+
   setGateAccess(districtId, gateId, permissions = []) {
     if (!this.ready) return false;
     return this.worldSystem.setGateAccess(districtId, gateId, permissions);
