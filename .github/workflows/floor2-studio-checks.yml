@@ -35,6 +35,9 @@ on:
       - "scripts/test-studio-midi-file.mjs"
       - "scripts/test-studio-multitrack-recording.mjs"
       - "scripts/test-studio-recording-cancellation.mjs"
+      - "scripts/test-studio-recording-start-coordinator.mjs"
+      - "studioRecordingStartCoordinator.js"
+      - "floor2VocalBooth3D.js"
       - "scripts/test-studio-metronome.mjs"
       - "studioDAWExport.js"
       - "studioDAWSessionStore.js"
@@ -99,6 +102,9 @@ on:
       - "scripts/test-studio-midi-file.mjs"
       - "scripts/test-studio-multitrack-recording.mjs"
       - "scripts/test-studio-recording-cancellation.mjs"
+      - "scripts/test-studio-recording-start-coordinator.mjs"
+      - "studioRecordingStartCoordinator.js"
+      - "floor2VocalBooth3D.js"
       - "studioDAWExport.js"
       - "studioDAWSessionStore.js"
       - "studioMultitrackWorkspace.js"
@@ -256,3 +262,6 @@ jobs:
 
       - name: Test vocal recording cancellation and resource cleanup
         run: node --experimental-default-type=module scripts/test-studio-recording-cancellation.mjs
+
+      - name: Test serialized recording count-in cancellation
+        run: node --experimental-default-type=module scripts/test-studio-recording-start-coordinator.mjs
