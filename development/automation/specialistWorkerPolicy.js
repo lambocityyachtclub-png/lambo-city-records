@@ -5,10 +5,6 @@
  * diff gate. It is deliberately independent of the game runtime.
  */
 
-const COMMON_TEST_PATHS = Object.freeze([
-  "development/tests/"
-]);
-
 const WORKERS = Object.freeze({
   "vision-planning": Object.freeze({
     name: "Vision Planning & Product Systems Specialist",
@@ -17,7 +13,7 @@ const WORKERS = Object.freeze({
       "development/engine/visionIntakePlanner.js",
       "development/planning/",
       "development/tests/",
-      "docs/LAMBO_CITY_ALIVE_"
+      "docs/LAMBO_CITY_ALIVE_*"
     ])
   }),
   "studio": Object.freeze({
@@ -38,7 +34,7 @@ const WORKERS = Object.freeze({
       "studioSongProject.js", "studioSoundKit.js", "studioStandalone.js", "studioTalkback.js",
       "studioVocalEffects.js",
       "development/runners/studio/", "development/content/",
-      "development/tests/", "scripts/test-studio-",
+      "development/tests/", "scripts/test-studio-*",
       "FLOOR2_STUDIO_EXPERIENCE.md", "STUDIO_EDIT_ROADMAP.md"
     ])
   }),
@@ -46,7 +42,7 @@ const WORKERS = Object.freeze({
     name: "Audio & Sound Library Specialist",
     description: "Sound packs, sample libraries, audio formats, asset persistence, licensing metadata and audio performance.",
     allowedPaths: Object.freeze([
-      "studio", "sounds/", "audio/", "development/content/",
+      "studio/", "sounds/", "audio/", "development/content/",
       "development/tests/", "scripts/test-studio-"
     ])
   }),
@@ -55,7 +51,7 @@ const WORKERS = Object.freeze({
     description: "World boundaries, district structure, roads, parcels, navigation and world-system integration.",
     allowedPaths: Object.freeze([
       "worldSystem.js", "worldSystemHost.js", "worldSystemRuntime.js", "district/", "cityMap.js", "conferenceCenterDistrict.js", "worldDistricts/", "worldDistrictFactory.js", "worldDistrictProxyBuilder.js", "worldDistrictSchema.js", "worldDistrictStreaming.js",
-      "development/tests/", "scripts/test-world-"
+      "development/tests/", "scripts/test-world-*"
     ])
   }),
   "environment-water": Object.freeze({
@@ -176,6 +172,7 @@ export function isWorkerPathAllowed(workerId, filePath) {
   if (!worker) throw new Error("Unknown specialist worker: " + String(workerId));
   return worker.allowedPaths.some(prefix => {
     if (prefix.endsWith("/")) return path.startsWith(prefix);
+    if (prefix.endsWith("*")) return path.startsWith(prefix.slice(0, -1));
     return path === prefix;
   });
 }
