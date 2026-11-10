@@ -4,9 +4,11 @@ import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = resolve(fileURLToPath(new URL("..", import.meta.url)));
-const [main, engine] = await Promise.all([
+const [main, engine, elevator, session] = await Promise.all([
   readFile(resolve(root, "main.js"), "utf8"),
-  readFile(resolve(root, "engine.js"), "utf8")
+  readFile(resolve(root, "engine.js"), "utf8"),
+  readFile(resolve(root, "recordsHQElevator.js"), "utf8"),
+  readFile(resolve(root, "floor2StudioSession.js"), "utf8")
 ]);
 
 const floor2Modules = [
@@ -40,6 +42,16 @@ assert.match(main, /await Promise\.resolve\(systems\[name\]\.init\(\.\.\.args\)\
   "the elevator must wait for asynchronous Studio initialization");
 assert.match(main, /window\.__lamboCityFloor2Ready = false/,
   "Floor 2 must be marked unavailable while loading");
+assert.match(main, /floor2InitializationStarted = true/,
+  "a partially initialized Floor 2 must not be initialized a second time");
+assert.match(elevator, /window\.__lamboCityPrepareFloor\?\.\(selectedFloor\)/,
+  "the elevator must request destination modules before arrival");
+assert.match(elevator, /if \(!destinationLoadReady\)/,
+  "the elevator must wait for destination loading to finish");
+assert.match(elevator, /window\.__lamboCityBeginFloor2Session\?\.\(arrivedPlayer\)/,
+  "the loaded Floor 2 session must begin only after the elevator opens");
+assert.match(session, /window\.__lamboCityEnterFloor2CockpitDirect/,
+  "the direct phone shortcut must remain available after Floor 2 has been discovered");
 
 for (const moduleName of floor2Modules) {
   const startupInit = new RegExp(
