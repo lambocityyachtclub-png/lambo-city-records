@@ -106,4 +106,20 @@ const scene = { add() {} };
   assert.equal(host.isReady(), false);
 }
 
+
+{
+  const host = createWorldSystemHost({
+    createRuntime: () => fakeRuntime(deferred())
+  });
+  for (const method of [
+    "initialize", "registerDistrict", "registerConnection", "buildDistrict",
+    "setGateAccess", "createVehicleController", "unregisterDistrict", "dispose"
+  ]) {
+    assert.equal(host.api[method], undefined,
+      method + " must not be exposed on the browser-visible World System bridge");
+  }
+  assert.equal(typeof host.api.getGroundHeightAt, "function");
+  assert.equal(typeof host.api.getStatus, "function");
+}
+
 console.log("World System host lifecycle checks passed: cancellation, stale-run isolation, shared initialization, and disposal.");
