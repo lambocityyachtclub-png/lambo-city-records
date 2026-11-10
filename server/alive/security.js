@@ -168,7 +168,9 @@ export function aliveOwnerAuthConfigured(env = process.env) {
       parts[1] === String(SCRYPT_N) && parts[2] === String(SCRYPT_R) &&
       parts[3] === String(SCRYPT_P)) {
     try {
-      hashShapeValid = Buffer.from(parts[4], "base64url").length === 16 &&
+      hashShapeValid = /^[A-Za-z0-9_-]{22}$/.test(parts[4]) &&
+        /^[A-Za-z0-9_-]{86}$/.test(parts[5]) &&
+        Buffer.from(parts[4], "base64url").length === 16 &&
         Buffer.from(parts[5], "base64url").length === SCRYPT_KEY_BYTES;
     } catch { hashShapeValid = false; }
   }
