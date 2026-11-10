@@ -92,9 +92,10 @@ test("fails closed when remote delivery is only partially configured", () => {
 function runtimeFakeIndexedDB() {
   const records = new Map();
   let opens = 0;
+  let closes = 0;
   const db = {
     objectStoreNames: { contains: () => true },
-    close() {},
+    close() { closes += 1; },
     transaction() {
       const tx = {};
       tx.objectStore = () => ({
@@ -120,6 +121,7 @@ function runtimeFakeIndexedDB() {
   return {
     records,
     get opens() { return opens; },
+    get closes() { return closes; },
     open() {
       opens += 1;
       const req = {};
@@ -145,6 +147,13 @@ test("composes opt-in IndexedDB persistence lazily through the shared content ru
   assert.deepEqual(await runtime.loadAsset("lc.runtime.integration", "runtime-asset"), new Uint8Array([3, 2, 1]));
   assert.equal(downloads, 1);
   assert.equal(indexedDB.records.size, 1);
+  await runtime.dispose();
+  await runtime.close();
+  assert.equal(indexedDB.closes, 1);
+  await assert.rejects(
+    runtime.loadAsset("lc.runtime.integration", "runtime-asset"),
+    /has been disposed/
+  );
 });
 
 
