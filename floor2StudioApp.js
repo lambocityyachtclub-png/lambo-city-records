@@ -1769,7 +1769,9 @@ StudioSoundKit.play(
 
   close() {
     this.cancelRecordingStart?.();
-    if (StudioRecordingEngine.activeTake) this.stopRecording();
+    const recordingCleanup = StudioRecordingEngine.activeTake
+      ? this.stopRecording()
+      : this.recordingStopPromise;
     if (this.handleStudioKeydown) {
       document.removeEventListener(
         "keydown",
@@ -1790,11 +1792,12 @@ StudioSoundKit.play(
       this.style.remove();
       this.style = null;
     }
+    return recordingCleanup || Promise.resolve();
   },
 
   destroy() {
     this.cancelRecordingStart?.();
-    this.close();
+    const recordingCleanup = this.close();
 
     if (this.handleCanvasClick && this.renderer?.domElement) {
       this.renderer.domElement.removeEventListener(
@@ -1806,6 +1809,7 @@ StudioSoundKit.play(
     this.handleCanvasClick = null;
     this.raycaster = null;
     this.pointer = null;
+    return recordingCleanup;
   },
 
   update() {}
