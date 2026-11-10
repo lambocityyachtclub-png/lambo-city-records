@@ -24,7 +24,19 @@ const WORKERS = Object.freeze({
     name: "Studio & DAW Specialist",
     description: "Studio stations, recording, editing, MPC, piano, Beat Lab, mixing, effects and project workflow.",
     allowedPaths: Object.freeze([
-      "floor2StudioApp.js", "floor2VocalBooth3D.js", "studio",
+      "floor2StudioApp.js", "floor2VocalBooth3D.js", "studio/",
+      "studio.html", "studioAudioAssetStore.js", "studioAudioEngine.js", "studioAudioExport.js",
+      "studioDAWApp.js", "studioDAWArrangementPlayback.js", "studioDAWBeatLabPanel.js",
+      "studioDAWEditPanel.js", "studioDAWEditScreen.js", "studioDAWExport.js",
+      "studioDAWMidiEditor.js", "studioDAWSessionLayouts.js", "studioDAWSessionStore.js",
+      "studioDAWSessionTemplates.js", "studioDAWTimeline.js", "studioDAWWorkspace.js",
+      "studioInterfaceVisuals.js", "studioMPCLibrary.js", "studioMPCSampler.js",
+      "studioMetronome.js", "studioMidiFile.js", "studioMixMasterApp.js",
+      "studioMixMasterConsole3D.js", "studioMultitrackWorkspace.js", "studioPCMRecorder.js",
+      "studioPCMRecorderWorklet.js", "studioPitchCorrection.js", "studioPitchCorrectionWorklet.js",
+      "studioProjectPackage.js", "studioRecordingEngine.js", "studioRecordingStartCoordinator.js",
+      "studioSongProject.js", "studioSoundKit.js", "studioStandalone.js", "studioTalkback.js",
+      "studioVocalEffects.js",
       "development/runners/studio/", "development/content/",
       "development/tests/", "scripts/test-studio-",
       "FLOOR2_STUDIO_EXPERIENCE.md", "STUDIO_EDIT_ROADMAP.md"
@@ -42,7 +54,7 @@ const WORKERS = Object.freeze({
     name: "World Architecture Specialist",
     description: "World boundaries, district structure, roads, parcels, navigation and world-system integration.",
     allowedPaths: Object.freeze([
-      "worldSystem", "district", "cityMap.js", "conferenceCenterDistrict.js",
+      "worldSystem.js", "worldSystemHost.js", "worldSystemRuntime.js", "district/", "cityMap.js", "conferenceCenterDistrict.js", "worldDistricts/", "worldDistrictFactory.js", "worldDistrictProxyBuilder.js", "worldDistrictSchema.js", "worldDistrictStreaming.js",
       "development/tests/", "scripts/test-world-"
     ])
   }),
@@ -50,7 +62,7 @@ const WORKERS = Object.freeze({
     name: "Environment & Water Specialist",
     description: "Water, shoreline, terrain, landscaping, environmental materials, lighting and performance.",
     allowedPaths: Object.freeze([
-      "world.js", "water.js", "marina.js", "dock.js", "boardwalk",
+      "world.js", "water.js", "marina.js", "dock.js", "boardwalk/",
       "environment/", "development/tests/", "scripts/test-world-"
     ])
   }),
@@ -58,15 +70,15 @@ const WORKERS = Object.freeze({
     name: "Yachts & Vehicle Specialist",
     description: "Yachts, boats, vehicle models, handling, marina interactions, parking and circulation.",
     allowedPaths: Object.freeze([
-      "cars.js", "marina.js", "vehicles/", "vehicle", "yachts/",
-      "yacht", "boats/", "development/tests/", "scripts/test-world-"
+      "cars.js", "marina.js", "vehicles/", "vehicleRoadController.js", "yachts/",
+      "yacht.js", "yachtLuxuryDetails.js", "boats/", "development/tests/", "scripts/test-world-"
     ])
   }),
   "convention-center": Object.freeze({
     name: "Convention & Venue Specialist",
     description: "Convention Center, venues, event spaces, meeting rooms, stages and visitor flows.",
     allowedPaths: Object.freeze([
-      "conferenceCenter", "arena", "worldSystem",
+      "conferenceCenterDistrict.js", "conferenceCenter/", "arena/", "worldSystem.js", "worldSystemHost.js", "worldSystemRuntime.js",
       "development/tests/", "scripts/test-world-"
     ])
   }),
@@ -162,7 +174,10 @@ export function isWorkerPathAllowed(workerId, filePath) {
   const path = validateRepositoryPath(filePath);
   const worker = WORKERS[workerId];
   if (!worker) throw new Error("Unknown specialist worker: " + String(workerId));
-  return worker.allowedPaths.some(prefix => path === prefix || path.startsWith(prefix));
+  return worker.allowedPaths.some(prefix => {
+    if (prefix.endsWith("/")) return path.startsWith(prefix);
+    return path === prefix;
+  });
 }
 
 export function validateWorkerChangedFiles(workerId, filePaths) {
