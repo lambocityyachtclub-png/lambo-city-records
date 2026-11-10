@@ -44,8 +44,14 @@ export async function verifyPrivateQueue(env = process.env, fetchImpl = fetch) {
     const workflowResponse = await fetchImpl(workflowUrl, { headers });
     if (!workflowResponse.ok) return { ok: false, reason: "public_worker_workflow_missing" };
     const workflow = await workflowResponse.json();
-    if (workflow?.type !== "file" || workflow?.name !== PUBLIC_WORKFLOW) {
+    if (workflow?.type !== "file" || workflow?.name !== PUBLIC_WORKFLOW ||
+        workflow?.encoding !== "base64" || typeof workflow?.content !== "string") {
       return { ok: false, reason: "public_worker_workflow_missing" };
+    }
+    const workflowSource = Buffer.from(workflow.content.replace(/\\s/g, ""), "base64").toString("utf8");
+    if (!workflowSource.includes("resolve-alive-private-task.mjs") ||
+        !workflowSource.includes("ALIVE_PRIVATE_QUEUE_READ_TOKEN")) {
+      return { ok: false, reason: "public_worker_private_resolver_missing" };
     }
 
     return {
