@@ -186,7 +186,7 @@ test("GitHub queue client rejects untrusted paths, branches, invalid tasks, and 
   };
   await assert.rejects(
     client.createTaskFile({ branch: "main", path: "development/queue/incoming/sample-task.json", content: JSON.stringify(valid), commitMessage: "queue" }),
-    /cannot write outside/
+    /isolated ALIVE worker integration branch/
   );
   await assert.rejects(
     client.createTaskFile({ branch: BRANCH, path: "main.js", content: JSON.stringify(valid), commitMessage: "queue" }),
