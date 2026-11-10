@@ -152,6 +152,12 @@ export async function createDevelopmentSystem(options = {}) {
     return status;
   }
 
+  function assertReady() {
+    if (status !== DEVELOPMENT_SYSTEM_STATUS.READY) {
+      throw new Error("The development system is disabled.");
+    }
+  }
+
   function getSnapshot() {
     return {
       version: DEVELOPMENT_SYSTEM_VERSION,
@@ -167,6 +173,28 @@ export async function createDevelopmentSystem(options = {}) {
     };
   }
 
+  const workerRosterView = Object.freeze({
+    version: workerRoster.version,
+    listWorkers: (...args) => workerRoster.listWorkers(...args),
+    setWorkerEnabled: (workerId, enabled) => {
+      assertReady();
+      return workerRoster.setWorkerEnabled(workerId, enabled);
+    },
+    submitFinding: async (workerId, finding) => {
+      assertReady();
+      return workerRoster.submitFinding(workerId, finding);
+    }
+  });
+
+  const workerExecutionView = workerExecution ? Object.freeze({
+    executeNextTask: workerId => {
+      assertReady();
+      return workerExecution.executeNextTask(workerId);
+    },
+    getConfiguredWorkers: () => workerExecution.getConfiguredWorkers(),
+    getAllowedPaths: workerId => workerExecution.getAllowedPaths(workerId)
+  }) : null;
+
   function disable() {
     status = DEVELOPMENT_SYSTEM_STATUS.DISABLED;
     studioRunner.setEnabled(false);
@@ -180,22 +208,12 @@ export async function createDevelopmentSystem(options = {}) {
   }
 
   function submitStudioFinding(finding) {
-    if (status !== DEVELOPMENT_SYSTEM_STATUS.READY) {
-      throw new Error(
-        "The development system is disabled."
-      );
-    }
-
+    assertReady();
     return studioRunner.submitFinding(finding);
   }
 
   function submitStudioFindings(findings) {
-    if (status !== DEVELOPMENT_SYSTEM_STATUS.READY) {
-      throw new Error(
-        "The development system is disabled."
-      );
-    }
-
+    assertReady();
     return studioRunner.submitFindings(findings);
   }
 
@@ -203,28 +221,21 @@ export async function createDevelopmentSystem(options = {}) {
     registry,
     director,
     studioRunner,
-    workerRoster,
+    workerRoster: workerRosterView,
     getStatus,
     getSnapshot,
     enable,
     disable,
     submitStudioFinding,
     submitStudioFindings,
-    submitWorkerFinding: async (workerId, finding) => {
-      if (status !== DEVELOPMENT_SYSTEM_STATUS.READY) {
-        throw new Error("The development system is disabled.");
-      }
-      return workerRoster.submitFinding(workerId, finding);
-    },
-    executeWorkerTask: async workerId => {
-      if (status !== DEVELOPMENT_SYSTEM_STATUS.READY) {
-        throw new Error("The development system is disabled.");
-      }
-      if (!workerExecution) {
+    submitWorkerFinding: (workerId, finding) => workerRosterView.submitFinding(workerId, finding),
+    executeWorkerTask: workerId => {
+      assertReady();
+      if (!workerExecutionView) {
         throw new Error("Specialist execution adapters have not been configured by the trusted host.");
       }
-      return workerExecution.executeNextTask(workerId);
+      return workerExecutionView.executeNextTask(workerId);
     },
-    getWorkerExecution: () => workerExecution
+    getWorkerExecution: () => workerExecutionView
   });
 }
