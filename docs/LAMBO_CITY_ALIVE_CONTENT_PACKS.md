@@ -69,3 +69,16 @@ The verified delivery/cache service is covered by the development CI suite. Late
 ## Explicit runtime composition
 
 `createContentPackRuntime(options)` is the opt-in composition root. It connects the catalog to the existing host adapter and, when both are supplied, the verified remote loader. It exposes catalog operations and a service-capability snapshot. Constructing it does not open a database, make a network request, or initialize a Three.js scene. Studio, World, remote delivery, persistent cache, and generic host capabilities are supplied independently by the application host. The service snapshot makes missing adapters visible instead of silently substituting fake implementations.
+
+## Browser IndexedDB persistence adapter
+
+`createIndexedDbContentCache({ indexedDB, ...options })` is a separate, lazy browser cache for verified remote content. The host explicitly supplies the browser's IndexedDB factory; the adapter does not access a global browser object. It uses its own database name (`lambo-city-content-cache` by default) and object store (`assets`), and never opens or modifies the existing Studio recording database.
+
+- The database is opened only on the first cache read/write/delete, not when the runtime is constructed.
+- Binary payloads are copied on write and read; malformed and over-limit records are discarded.
+- A per-entry byte ceiling is enforced before storage.
+- Quota errors are reported distinctly through `onError`.
+- The verified loader treats cache failures as non-fatal: a valid downloaded asset is still returned even if IndexedDB is full or unavailable. Failed cache reads become network misses; failed writes do not break playback/content loading.
+- `close()` closes the dedicated cache database and prevents later operations.
+
+This is a concrete browser persistence adapter, not a live runtime integration. The browser host still needs to provide a real SHA-256 implementation and an authenticated, allowlisted content resolver. Device-specific quota and eviction policies still require iPad Safari acceptance testing. The adapter deliberately does not clear unrelated browser data or delete the Studio audio store.
