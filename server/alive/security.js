@@ -161,8 +161,18 @@ export function clearAliveSessionCookie() {
 }
 
 export function aliveOwnerAuthConfigured(env = process.env) {
-  return typeof env.ALIVE_OWNER_PASSWORD_HASH === "string" &&
-    env.ALIVE_OWNER_PASSWORD_HASH.startsWith("scrypt$") &&
+  const parts = typeof env.ALIVE_OWNER_PASSWORD_HASH === "string"
+    ? env.ALIVE_OWNER_PASSWORD_HASH.split("$") : [];
+  let hashShapeValid = false;
+  if (parts.length === 6 && parts[0] === "scrypt" &&
+      parts[1] === String(SCRYPT_N) && parts[2] === String(SCRYPT_R) &&
+      parts[3] === String(SCRYPT_P)) {
+    try {
+      hashShapeValid = Buffer.from(parts[4], "base64url").length === 16 &&
+        Buffer.from(parts[5], "base64url").length === SCRYPT_KEY_BYTES;
+    } catch { hashShapeValid = false; }
+  }
+  return hashShapeValid &&
     typeof env.ALIVE_SESSION_SECRET === "string" &&
     Buffer.byteLength(env.ALIVE_SESSION_SECRET, "utf8") >= 32;
 }
