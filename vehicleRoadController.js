@@ -37,10 +37,13 @@ export default class VehicleRoadController {
       turningRadius: Number.isFinite(options.turningRadius) ? options.turningRadius : 6.5,
       uTurnSpeed: Number.isFinite(options.uTurnSpeed) ? options.uTurnSpeed : 2.5
     };
-    this.permissions = Array.isArray(options.permissions) ? [...options.permissions] : [];
-    this.openGates = options.openGates instanceof Set
-      ? new Set(options.openGates)
-      : new Set(options.openGates || []);
+    // Access is supplied only by trusted World System callbacks. Caller-provided
+    // permission arrays or gate IDs are deliberately ignored.
+    this.getPermissions = typeof options.getPermissions === "function" ? options.getPermissions : null;
+    this.getOpenGates = typeof options.getOpenGates === "function" ? options.getOpenGates : null;
+    this.permissions = new Set();
+    this.openGates = new Set();
+    this._refreshAccessState();
     this.state = {
       x: initialState.x,
       z: initialState.z,
@@ -55,7 +58,23 @@ export default class VehicleRoadController {
     if (!this.state.valid) this.state.blocked = true;
   }
 
+  _refreshAccessState() {
+    const readList = provider => {
+      if (!provider) return [];
+      try {
+        const value = provider();
+        if (value instanceof Set) return [...value];
+        return Array.isArray(value) ? value : [];
+      } catch (_) {
+        return [];
+      }
+    };
+    this.permissions = new Set(readList(this.getPermissions));
+    this.openGates = new Set(readList(this.getOpenGates));
+  }
+
   _roadOptions(extra = {}) {
+    this._refreshAccessState();
     return { permissions: this.permissions, openGates: this.openGates, ...extra };
   }
 
@@ -76,16 +95,6 @@ export default class VehicleRoadController {
     );
   }
 
-  setAccess(permissions = [], openGates = []) {
-    this.permissions = Array.isArray(permissions) ? [...permissions] : [];
-    this.openGates = openGates instanceof Set ? new Set(openGates) : new Set(openGates || []);
-    const valid = this._hasRoadFootprint(this.state);
-    this.state.valid = valid;
-    this.state.blocked = !valid;
-    if (!valid) this.state.speed = 0;
-    return valid;
-  }
-
   getState() {
     return { ...this.state, length: this.options.length, width: this.options.width };
   }
@@ -99,6 +108,12 @@ export default class VehicleRoadController {
   }
 
   requestUTurn(nodeId, options = {}) {
+    this.state.valid = this._hasRoadFootprint(this.state);
+    if (!this.state.valid) {
+      this.state.speed = 0;
+      this.state.blocked = true;
+      this._uturn = null;
+    }
     if (!this.state.valid || this._uturn) {
       return { accepted: false, reason: this._uturn ? "TURN_ALREADY_ACTIVE" : "VEHICLE_NOT_ON_ROAD" };
     }
@@ -178,7 +193,20 @@ export default class VehicleRoadController {
   }
 
   update(delta, controls = {}) {
-    if (!this.state.valid || !this.district) {
+    if (!this.district) {
+      this.state.valid = false;
+      this.state.speed = 0;
+      this.state.blocked = true;
+      return { moved: false, blocked: true, uturnCompleted: false, state: this.getState() };
+    }
+
+    // Re-read authoritative access on every update. Closing a gate or
+    // revoking a permission invalidates the controller before it can move.
+    this.state.valid = this._hasRoadFootprint(this.state);
+    if (!this.state.valid) {
+      this.state.speed = 0;
+      this.state.blocked = true;
+      this._uturn = null;
       return { moved: false, blocked: true, uturnCompleted: false, state: this.getState() };
     }
     const dt = clamp(Number.isFinite(delta) ? delta : 0, 0, 0.05);
