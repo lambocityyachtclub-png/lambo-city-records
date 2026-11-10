@@ -423,6 +423,7 @@ export default class WorldSystem {
     }
     return findDistrictRoute(district, fromNodeId, toNodeId, {
       ...routeOptions,
+      permissions: this._getVehiclePermissions(id),
       openGates: this.getOpenGateKeys()
     });
   }
