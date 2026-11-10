@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - integration/lc-alive-complete-validation-2026-11-10
+      - integration/lc-alive-agentic-worker-2026-11-10
     paths:
       - "development/**"
       - "docs/**"
@@ -15,8 +16,23 @@ on:
       - "studioRecordingStartCoordinator.js"
       - "scripts/test-studio-recording-cancellation.mjs"
       - "scripts/test-studio-recording-start-coordinator.mjs"
+      - "main.js"
+      - "engine.js"
+      - "renderer.js"
+      - "player.js"
+      - "performanceMonitor.js"
+      - "deviceGraphics.js"
+      - "cityMap.js"
+      - "marina.js"
+      - "conferenceCenterDistrict.js"
+      - "world*.js"
+      - "worldDistricts/**"
+      - "vehicleRoadController.js"
+      - "worldAccessGate.js"
+      - "tests/**"
   pull_request:
     branches:
+      - main
       - integration/lc-alive-agentic-worker-2026-11-10
 
   workflow_dispatch:
@@ -45,7 +61,7 @@ jobs:
       - name: Prepare the bounded review prompt
         shell: bash
         env:
-          BASE_REF: ${{ github.event.pull_request.base.ref || 'feature/lambo-city-completion' }}
+          BASE_REF: ${{ github.event.pull_request.base.ref || 'main' }}
         run: |
           set -euo pipefail
           git fetch origin "$BASE_REF"
