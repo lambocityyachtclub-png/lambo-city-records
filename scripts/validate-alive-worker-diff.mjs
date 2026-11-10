@@ -9,7 +9,7 @@ if (!workerId || !fileListPath) {
 
 const contents = await readFile(fileListPath, "utf8");
 const expectedPaths = contents.split(/\r?\n/).map(item => item.trim()).filter(Boolean);
-const rawDiff = execFileSync("git", ["diff", "--raw", "--no-abbrev", "HEAD"], {
+const rawDiff = execFileSync("git", ["diff", "--raw", "--no-abbrev", "--no-renames", "HEAD"], {
   encoding: "utf8"
 });
 const entries = rawDiff.split(/\r?\n/).filter(Boolean).map(line => {
