@@ -196,6 +196,23 @@ export function validateWorkerChangedFiles(workerId, filePaths) {
   return unique;
 }
 
+
+export function validateWorkerChangedEntries(workerId, entries) {
+  if (!Array.isArray(entries) || entries.length === 0) {
+    throw new Error("The specialist proposal contains no changed file entries.");
+  }
+  const unsafe = entries.filter(entry =>
+    entry && (entry.mode === "120000" || entry.mode === "160000")
+  );
+  if (unsafe.length) {
+    throw new Error(
+      "Specialist proposals cannot add or modify symbolic links or submodules: " +
+      unsafe.map(entry => String(entry.path || "unknown path")).join(", ")
+    );
+  }
+  return validateWorkerChangedFiles(workerId, entries.map(entry => entry.path));
+}
+
 export function validateWorkerTask(task) {
   if (!task || typeof task !== "object" || Array.isArray(task)) {
     throw new Error("Worker task must be a JSON object.");
