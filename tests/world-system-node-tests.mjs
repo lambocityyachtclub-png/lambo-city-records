@@ -196,6 +196,9 @@ for (const nodeId of ["boulevard-south-west", "boulevard-south-east"]) {
   ).valid, true, "the south boulevard corners must also support a full passenger-car U-turn");
 }
 assert.equal(CONFERENCE_CENTER_DISTRICT.roadNetwork.segments.filter(segment => segment.id.startsWith("boulevard-") && segment.sidewalkOffset).length, 5);
+assert.equal(CONFERENCE_CENTER_DISTRICT.roadNetwork.segments.filter(segment =>
+  segment.id.startsWith("boulevard-") && segment.sidewalkOffset >= 10.5
+).length, 5, "all boulevard sidewalks must remain outside the 18×18 U-turn aprons");
 for (const segmentId of ["boulevard-south-west", "boulevard-south-east"]) {
   const segment = CONFERENCE_CENTER_DISTRICT.roadNetwork.segments.find(item => item.id === segmentId);
   assert.deepEqual(segment.sidewalkSides, [1],
