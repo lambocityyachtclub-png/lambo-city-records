@@ -366,7 +366,7 @@ test("the shared asset load aborts when its final waiting caller cancels", async
   await assert.rejects(pending, /Content asset load was aborted/);
   assert.equal(sharedSignal.aborted, true, "the underlying load is aborted when no callers remain");
   resolveLoad(new Uint8Array([1, 2, 3]));
-  await Promise.resolve();
+  await new Promise(resolve => setImmediate(resolve));
   assert.equal(catalog.getSnapshot().cachedAssetCount, 0);
   assert.equal(catalog.getSnapshot().loadingAssetCount, 0);
 });
