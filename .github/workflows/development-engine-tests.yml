@@ -8,6 +8,7 @@ on:
       - "development/**"
       - "scripts/validate-alive-worker-diff.mjs"
       - "scripts/test-alive-worker-diff-gate.mjs"
+      - "scripts/resolve-alive-private-task.mjs"
       - "api/alive/**"
       - "server/alive/**"
       - "alive.html"
@@ -93,6 +94,7 @@ jobs:
         env:
           BEFORE_SHA: ${{ github.event.before }}
           HEAD_SHA: ${{ github.sha }}
+          ALIVE_PRIVATE_QUEUE_READ_TOKEN: ${{ secrets.ALIVE_PRIVATE_QUEUE_READ_TOKEN }}
         shell: bash
         run: |
           set -euo pipefail
@@ -111,6 +113,14 @@ jobs:
             exit 1
           fi
           TASK_FILE="${task_files[0]}"
+          if node -e 'const p=JSON.parse(require("node:fs").readFileSync(process.argv[1],"utf8")); process.exit(p && p.privateQueue ? 0 : 1)' "$TASK_FILE"; then
+            if [[ -z "$ALIVE_PRIVATE_QUEUE_READ_TOKEN" ]]; then
+              echo "Private ALIVE task resolver credential is not configured." >&2
+              exit 1
+            fi
+            node --experimental-default-type=module scripts/resolve-alive-private-task.mjs "$TASK_FILE" /tmp/alive-private-task.json
+            TASK_FILE="/tmp/alive-private-task.json"
+          fi
           node --experimental-default-type=module scripts/prepare-alive-worker-task.mjs "$TASK_FILE" /tmp/alive-worker-prompt.md /tmp/alive-worker-metadata.json
           TASK_ID="$(node -e 'const m=require("/tmp/alive-worker-metadata.json"); process.stdout.write(m.id)')"
           WORKER_ID="$(node -e 'const m=require("/tmp/alive-worker-metadata.json"); process.stdout.write(m.workerId)')"
