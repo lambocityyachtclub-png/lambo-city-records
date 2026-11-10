@@ -64,6 +64,7 @@ try {
   assert.equal(StudioRecordingEngine.activeTrackTake, null, "cancelled Voice Notes startup must not publish an active track take");
 
   let unexpectedPermissionRequest = false;
+  const permissionRequestsBeforeAlreadyCancelled = permissionRequests;
   await assert.rejects(
     StudioRecordingEngine.startTake({
       audio: { state: "running" },
@@ -72,7 +73,7 @@ try {
     }),
     /Recording start was cancelled/
   );
-  unexpectedPermissionRequest = permissionRequests !== 1;
+  unexpectedPermissionRequest = permissionRequests !== permissionRequestsBeforeAlreadyCancelled;
   assert.equal(unexpectedPermissionRequest, false, "an already-cancelled request must not open the microphone");
 
   let boothCancelCalls = 0;
