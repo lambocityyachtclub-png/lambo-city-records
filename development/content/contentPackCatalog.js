@@ -222,6 +222,9 @@ function measureJsonByteSize(value, maxBytes) {
     if (typeof item === "undefined" || typeof item === "function" || typeof item === "symbol") return 0;
 
     if (Array.isArray(item)) {
+      if (typeof item.toJSON === "function") {
+        throw new Error("Custom toJSON assets must provide an explicit measured sizeBytes value.");
+      }
       if (seen.has(item)) throw new Error("Circular JSON content assets cannot be size-validated.");
       seen.add(item);
       let total = 2;
