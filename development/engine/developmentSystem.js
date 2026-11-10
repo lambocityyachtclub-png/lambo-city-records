@@ -168,7 +168,7 @@ export async function createDevelopmentSystem(options = {}) {
     path: "development/engine/specialistWorkerRoster.js",
     enabled: true,
     capabilities: workerRoster.listWorkers().flatMap(worker => worker.capabilities),
-    description: "Coordinates eight domain-scoped development specialists."
+    description: "Coordinates nine domain-scoped development specialists."
   });
 
   if (hostedQueue) {
