@@ -113,6 +113,7 @@ window.__lamboCityPrepareFloor = floor => {
   if (floor !== 2 && floor !== 3 && floor !== 4) return Promise.resolve();
 
   if (!destinationLoads.has(floor)) {
+    let floor2InitializationStarted = false;
     const load = (async () => {
       if (floor === 2) {
         window.__lamboCityFloor2Ready = false;
@@ -163,6 +164,9 @@ window.__lamboCityPrepareFloor = floor => {
           }
         }
 
+        // Once module initialization starts, retain a failed promise rather
+        // than retrying partially initialized systems and duplicating listeners.
+        floor2InitializationStarted = true;
         Object.assign(engine.systems, systems);
         engine.context.systems = engine.systems;
 
@@ -186,6 +190,7 @@ window.__lamboCityPrepareFloor = floor => {
         if (!engine.scene.getObjectByName("recordsHQFloor2Studio")) {
           throw new Error("Floor 2 architecture did not attach to the live scene.");
         }
+        window.__lamboCityFloor2LoadError = null;
         window.__lamboCityFloor2Ready = true;
       } else if (floor === 3) {
         window.__lamboCityFloor3Ready = false;
@@ -239,7 +244,13 @@ window.__lamboCityPrepareFloor = floor => {
         engine.systems.recordsHQRooftopVIP?.init?.(engine.scene);
       }
     })().catch(error => {
-      destinationLoads.delete(floor);
+      if (floor === 2) {
+        window.__lamboCityFloor2Ready = false;
+        window.__lamboCityFloor2LoadError = String(error?.message || error);
+        if (!floor2InitializationStarted) destinationLoads.delete(floor);
+      } else {
+        destinationLoads.delete(floor);
+      }
       throw error;
     });
 
