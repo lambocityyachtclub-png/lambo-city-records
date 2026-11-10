@@ -259,3 +259,25 @@ test("does not trust a custom file-like object's reported size", async () => {
   );
   assert.equal(catalog.getSnapshot().cachedAssetCount, 0);
 });
+
+
+test("rejects cyclic nested content wrappers during byte measurement", async () => {
+  const cyclic = {};
+  cyclic.blob = cyclic;
+  const catalog = createContentPackCatalog({ loader: async () => cyclic });
+  catalog.register(pack({
+    id: "lc.cyclic-wrapper",
+    assets: [{
+      id: "cycle",
+      category: "audio",
+      sizeBytes: 8,
+      source: { kind: "host", locator: "builtin:cycle", license: "owner-provided" }
+    }]
+  }));
+
+  await assert.rejects(
+    catalog.loadAsset("lc.cyclic-wrapper", "cycle"),
+    /Cyclic content wrappers cannot be size-validated/
+  );
+  assert.equal(catalog.getSnapshot().cachedAssetCount, 0);
+});
