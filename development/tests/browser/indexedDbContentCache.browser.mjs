@@ -113,7 +113,7 @@ async function runBrowser(name, browserType) {
         onCacheError: event => quotaEvents.push(event)
       });
       const usable = await quotaSafeLoader(request);
-      if (quotaDownloads !== 1 || usable.join(",") !== payload.join("") || quotaEvents.length === 0) {
+      if (quotaDownloads !== 1 || usable.join(",") !== payload.join(",") || quotaEvents.length === 0) {
         throw new Error("Cache capacity failure blocked verified content delivery.");
       }
       await constrainedCache.close();
