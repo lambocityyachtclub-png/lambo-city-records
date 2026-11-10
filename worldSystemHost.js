@@ -36,9 +36,19 @@ export function createWorldSystemHost({ createRuntime = () => new WorldSystemRun
       const activeScene = scene;
       const activeContext = context;
       const activeGeneration = generation;
-      const candidate = createRuntime();
+      let candidate;
+      try {
+        candidate = createRuntime();
+        if (!candidate || typeof candidate.init !== "function" || typeof candidate.dispose !== "function") {
+          throw new Error("World System host runtime factory must return an object with init() and dispose().");
+        }
+      } catch (error) {
+        return Promise.reject(error);
+      }
+
       let pending;
-      pending = Promise.resolve(candidate.init(activeScene, activeContext, configuration))
+      pending = Promise.resolve()
+        .then(() => candidate.init(activeScene, activeContext, configuration))
         .then(() => {
           if (activeGeneration !== generation || scene !== activeScene) {
             candidate.dispose();
