@@ -1,0 +1,36 @@
+name: ALIVE Browser Content Cache Checks
+
+on:
+  push:
+    paths:
+      - "development/content/**"
+      - "development/tests/**"
+      - ".github/workflows/alive-browser-content-cache.yml"
+  pull_request:
+    paths:
+      - "development/content/**"
+      - "development/tests/browser/**"
+      - ".github/workflows/alive-browser-content-cache.yml"
+  workflow_dispatch:
+
+jobs:
+  browser-cache:
+    name: Test IndexedDB cache in Chromium and WebKit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Playwright
+        run: npm install --no-save playwright
+
+      - name: Install Chromium and WebKit
+        run: npx playwright install --with-deps chromium webkit
+
+      - name: Test real browser IndexedDB persistence
+        run: node development/tests/browser/indexedDbContentCache.browser.mjs

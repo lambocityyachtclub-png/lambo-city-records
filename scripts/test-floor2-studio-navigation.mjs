@@ -1,24 +1,29 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
-const [engine, world, drums, navigation, workspace] = await Promise.all([
+const [engine, main, world, drums, navigation, workspace] = await Promise.all([
   readFile(new URL("../engine.js", import.meta.url), "utf8"),
+  readFile(new URL("../main.js", import.meta.url), "utf8"),
   readFile(new URL("../recordsHQFloor2Studio.js", import.meta.url), "utf8"),
   readFile(new URL("../floor2DrumStation.js", import.meta.url), "utf8"),
   readFile(new URL("../floor2StudioNavigation.js", import.meta.url), "utf8"),
   readFile(new URL("../studioDAWWorkspace.js", import.meta.url), "utf8")
 ]);
 
-const worldInit = engine.indexOf("this.systems.recordsHQFloor2Studio?.init?.(this.scene)");
-const drumInit = engine.indexOf("this.systems.floor2DrumStation?.init?.(");
-const navigationInit = engine.indexOf("this.systems.floor2StudioNavigation?.init?.(");
-const sessionInit = engine.indexOf("this.systems.floor2StudioSession?.init?.(");
-const mixConsoleInit = engine.indexOf("this.systems.studioMixMasterConsole3D?.init?.(");
-const liveDrummerInit = engine.indexOf("this.systems.floor2LiveDrummer?.init?.(");
-const vocalBoothInit = engine.indexOf("this.systems.floor2VocalBooth3D?.init?.(");
-const citySynthInit = engine.indexOf("this.systems.floor2CitySynth?.init?.(");
+const worldInit = main.indexOf('["recordsHQFloor2Studio", [engine.scene]]');
+const drumInit = main.indexOf('["floor2DrumStation", [engine.scene, engine.context]]');
+const navigationInit = main.indexOf('["floor2StudioNavigation", [engine.scene, engine.context]]');
+const sessionInit = main.indexOf('["floor2StudioSession", [engine.scene, engine.context]]');
+const mixConsoleInit = main.indexOf('["studioMixMasterConsole3D", [engine.scene, engine.context]]');
+const liveDrummerInit = main.indexOf('["floor2LiveDrummer", [engine.scene, engine.context]]');
+const vocalBoothInit = main.indexOf('["floor2VocalBooth3D", [engine.scene, engine.context]]');
+const citySynthInit = main.indexOf('["floor2CitySynth", [engine.scene, engine.context]]');
 
-assert.ok(worldInit >= 0, "Floor 2 room must initialize");
+assert.ok(main.includes('import("./recordsHQFloor2Studio.js")'),
+  "Floor 2 architecture must load only when the elevator selects Floor 2");
+assert.ok(worldInit >= 0, "Floor 2 room must initialize lazily");
+assert.doesNotMatch(engine, /this\.systems\.recordsHQFloor2Studio\?\.init/,
+  "Floor 2 architecture must not initialize during initial world startup");
 assert.ok(drumInit > worldInit, "Drum station must initialize after the Floor 2 room");
 assert.ok(navigationInit > drumInit, "Studio navigation must initialize after the drum station");
 assert.ok(sessionInit > navigationInit, "Floor 2 session controller must initialize after navigation");

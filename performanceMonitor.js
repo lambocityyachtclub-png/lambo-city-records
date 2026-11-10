@@ -52,10 +52,9 @@ export default {
     lastFrameAt = lastSampleAt;
 
     const params = new URLSearchParams(window.location.search);
-    if (params.get("perf") === "1") {
-      overlay = makeOverlay();
-    }
+    if (params.get("perf") === "1") overlay = makeOverlay();
 
+    const graphics = window.__lamboCityGraphics || {};
     snapshot = {
       fps: 0,
       frameMs: 0,
@@ -67,7 +66,9 @@ export default {
       pixelRatio: renderer?.getPixelRatio?.() ?? 1,
       viewport: window.innerWidth + "x" + window.innerHeight,
       deviceMemoryGB: navigator.deviceMemory ?? null,
-      hardwareThreads: navigator.hardwareConcurrency ?? null
+      hardwareThreads: navigator.hardwareConcurrency ?? null,
+      graphicsTier: graphics.tier || "unknown",
+      graphicsLabel: graphics.label || "Unspecified"
     };
 
     window.__lamboCityPerformance = snapshot;
@@ -104,6 +105,7 @@ export default {
     if (overlay) {
       overlay.textContent = [
         "LAMBO CITY  /  PERF",
+        "QUALITY      " + snapshot.graphicsTier.toUpperCase(),
         "FPS          " + snapshot.fps,
         "FRAME        " + snapshot.frameMs + " ms",
         "DRAW CALLS   " + snapshot.drawCalls,
