@@ -188,7 +188,71 @@ export function validateContentPackManifest(manifest) {
 }
 
 
-function getLoadedByteSize(value) {
+function measureJsonByteSize(value, maxBytes) {
+  const encoder = new TextEncoder();
+  const seen = new Set();
+
+  function measure(item, depth = 0) {
+    if (depth > 64) throw new Error("JSON asset nesting exceeds the size-measurement limit.");
+    if (item === null) return 4;
+    if (typeof item === "string") {
+      if (item.length > maxBytes) return maxBytes + 1;
+      return encoder.encode(JSON.stringify(item)).byteLength;
+    }
+    if (typeof item === "boolean") return item ? 4 : 5;
+    if (typeof item === "number") return encoder.encode(JSON.stringify(item)).byteLength;
+    if (typeof item === "bigint") throw new Error("BigInt values are not valid JSON content assets.");
+    if (typeof item === "undefined" || typeof item === "function" || typeof item === "symbol") return 0;
+
+    if (Array.isArray(item)) {
+      if (seen.has(item)) throw new Error("Circular JSON content assets cannot be size-validated.");
+      seen.add(item);
+      let total = 2;
+      for (let index = 0; index < item.length; index += 1) {
+        if (index > 0) total += 1;
+        const entry = item[index];
+        total += entry === undefined || typeof entry === "function" || typeof entry === "symbol"
+          ? 4
+          : measure(entry, depth + 1);
+        if (total > maxBytes) return maxBytes + 1;
+      }
+      seen.delete(item);
+      return total;
+    }
+
+    if (item && typeof item === "object" &&
+        (Object.getPrototypeOf(item) === Object.prototype || Object.getPrototypeOf(item) === null)) {
+      if (typeof item.toJSON === "function") {
+        throw new Error("Custom toJSON assets must provide an explicit measured sizeBytes value.");
+      }
+      if (seen.has(item)) throw new Error("Circular JSON content assets cannot be size-validated.");
+      seen.add(item);
+      let total = 2;
+      let first = true;
+      for (const key of Object.keys(item)) {
+        const entry = item[key];
+        if (entry === undefined || typeof entry === "function" || typeof entry === "symbol") continue;
+        if (!first) total += 1;
+        first = false;
+        if (key.length > maxBytes) return maxBytes + 1;
+        total += encoder.encode(JSON.stringify(key)).byteLength + 1 + measure(entry, depth + 1);
+        if (total > maxBytes) return maxBytes + 1;
+      }
+      seen.delete(item);
+      return total;
+    }
+
+    return null;
+  }
+
+  return measure(value);
+}
+
+function getLoadedByteSize(value, maxBytes) {
+  if (typeof value === "string") {
+    if (value.length > maxBytes) return maxBytes + 1;
+    return new TextEncoder().encode(value).byteLength;
+  }
   if (value instanceof ArrayBuffer) return value.byteLength;
   if (ArrayBuffer.isView(value)) return value.byteLength;
   if (
@@ -198,21 +262,18 @@ function getLoadedByteSize(value) {
     typeof value.arrayBuffer === "function"
   ) return value.size;
   if (value && value.blob && value.blob !== value) {
-    const blobSize = getLoadedByteSize(value.blob);
+    const blobSize = getLoadedByteSize(value.blob, maxBytes);
     if (blobSize !== null) return blobSize;
   }
   if (value && value.bytes && value.bytes !== value) {
-    const byteSize = getLoadedByteSize(value.bytes);
+    const byteSize = getLoadedByteSize(value.bytes, maxBytes);
     if (byteSize !== null) return byteSize;
   }
   if (value && Number.isSafeInteger(value.sizeBytes) && value.sizeBytes >= 0) return value.sizeBytes;
-  if (value && typeof value === "object" &&
-      (Array.isArray(value) || Object.getPrototypeOf(value) === Object.prototype)) {
-    const serialized = JSON.stringify(value);
-    if (typeof serialized !== "string") {
-      throw new Error("Unable to measure serialized content size for a loaded asset.");
-    }
-    return new TextEncoder().encode(serialized).byteLength;
+  if (value && typeof value === "object") {
+    const measured = measureJsonByteSize(value, maxBytes);
+    if (measured !== null) return measured;
+    throw new Error("Non-JSON host assets must expose an explicit measured sizeBytes value.");
   }
   return null;
 }
@@ -320,7 +381,7 @@ export function createContentPackCatalog(options = {}) {
           dependencyOrder: resolvePackOrder(packId)
         }));
         if (value === undefined || value === null) throw new Error("Host loader returned no asset value.");
-        const loadedByteSize = getLoadedByteSize(value);
+        const loadedByteSize = getLoadedByteSize(value, asset.sizeBytes);
         if (loadedByteSize !== null && loadedByteSize > asset.sizeBytes) {
           throw new Error("Asset " + pack.id + "/" + asset.id + " loaded " + loadedByteSize +
             " bytes, exceeding its declared sizeBytes budget of " + asset.sizeBytes + ".");
