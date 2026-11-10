@@ -431,13 +431,13 @@ export function createContentPackCatalog(options = {}) {
 
     const task = (async () => {
       try {
-        const value = await loader(Object.freeze({
+        const value = await awaitWithAbort(loader(Object.freeze({
           pack: getPack(pack.id),
           asset,
           source: asset.source,
           dependencyOrder: resolvePackOrder(packId),
           signal: loadOptions.signal || null
-        }));
+        })), loadOptions.signal);
         if (loadOptions.signal?.aborted) throw new Error("Content asset load was aborted.");
         if (value === undefined || value === null) throw new Error("Host loader returned no asset value.");
         const loadedByteSize = getLoadedByteSize(value, asset.sizeBytes);
