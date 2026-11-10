@@ -351,6 +351,27 @@ test("Development System disable guards every exposed specialist worker entry po
   assert.deepEqual(execution.getConfiguredWorkers(), ["studio"]);
   system.disable();
 
+  await assert.rejects(
+    system.director.createTask({
+      title: "Disabled direct director task",
+      description: "This must be blocked through the exposed director view.",
+      area: "studio_audio",
+      runner: "studio"
+    }),
+    /development system is disabled/
+  );
+  assert.throws(
+    () => system.studioRunner.setEnabled(true),
+    /development system is disabled/
+  );
+  await assert.rejects(
+    system.studioRunner.submitFinding({
+      title: "Disabled direct Studio runner submission",
+      description: "This must be blocked through the exposed runner view.",
+      area: "beat_lab"
+    }),
+    /development system is disabled/
+  );
   assert.throws(
     () => system.workerRoster.setWorkerEnabled("studio", false),
     /development system is disabled/
