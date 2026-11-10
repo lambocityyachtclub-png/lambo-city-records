@@ -98,7 +98,7 @@ const StudioRecordingEngine = {
   takes: [],
   playback: null,
 
-  async startTrackRecording({ audio, trackId, vocalEffects, inputNode, pitchCorrectionNode, monitorInput = false, inputDeviceId = "", inputChannel = null, allowConcurrent = false } = {}) {
+  async startTrackRecording({ audio, trackId, vocalEffects, inputNode, pitchCorrectionNode, monitorInput = false, inputDeviceId = "", inputChannel = null, allowConcurrent = false, shouldCancel = null } = {}) {
     if (this.activeTake || (this.activeTrackTake && !allowConcurrent)) {
       throw new Error("Another studio recording is already in progress.");
     }
@@ -108,6 +108,10 @@ const StudioRecordingEngine = {
       try { pitchCorrectionNode?.disconnect(); } catch {}
       throw new Error("Microphone access is unavailable. Open LAMBO CITY over HTTPS.");
     }
+    if (shouldCancel !== null && typeof shouldCancel !== "function") {
+      throw new Error("shouldCancel must be a function when provided.");
+    }
+    const isCancelled = () => typeof shouldCancel === "function" && shouldCancel();
     let microphoneStream;
     let microphoneSource;
     let recordingSource;
@@ -118,6 +122,7 @@ const StudioRecordingEngine = {
     let monitorGain;
     let inputAnalyser;
     try {
+      if (isCancelled()) throw new Error("Track recording start was cancelled.");
       microphoneStream = inputNode ? null : await navigator.mediaDevices.getUserMedia({
         audio: {
           echoCancellation: false,
@@ -127,6 +132,7 @@ const StudioRecordingEngine = {
           ...(Number.isInteger(inputChannel) && inputChannel >= 0 ? { channelCount: { ideal: inputChannel + 1 } } : {})
         }
       });
+      if (isCancelled()) throw new Error("Track recording start was cancelled.");
       microphoneSource = inputNode || audio.createMediaStreamSource(microphoneStream);
       recordingSource = microphoneSource;
       if (!inputNode && Number.isInteger(inputChannel) && inputChannel >= 0) {
@@ -145,6 +151,7 @@ const StudioRecordingEngine = {
       this.inputAnalyser = inputAnalyser;
       try {
         pcmRecorder = await createStudioPCMRecorder(audio);
+        if (isCancelled()) throw new Error("Track recording start was cancelled.");
       } catch (error) {
         console.warn("LAMBO CITY PCM capture unavailable; using browser MediaRecorder fallback:", error);
       }
@@ -179,6 +186,7 @@ const StudioRecordingEngine = {
         if (monitorGain) recordingSource.connect(monitorGain);
       }
       const recorder = pcmRecorder || createRecorder(destination.stream);
+      if (isCancelled()) throw new Error("Track recording start was cancelled.");
       if (recorder.recorder) recorder.recorder.start();
       const take = {
         id: `track-take-${Date.now()}-${trackId}`,
