@@ -232,7 +232,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add --all
           git commit -m "feat(alive): $TASK_TITLE"
-          AUTH_HEADER="$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 | tr -d '\\n')"
+          AUTH_HEADER="$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)"
           git -c http.extraheader="AUTHORIZATION: basic $AUTH_HEADER" push origin "HEAD:refs/heads/$BRANCH"
           cat > /tmp/alive-worker-pr-body.md <<EOF
           ## LAMBO CITY ALIVE specialist proposal
