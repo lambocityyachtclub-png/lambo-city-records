@@ -101,11 +101,14 @@ export function createVocalBoothPanel({ beatLab } = {}) {
   window.addEventListener("lc-vocal-count-in",onCountIn);
   window.addEventListener("lc-talkback-state",onTalkbackState);
   window.addEventListener("lc-talkback-error",onTalkbackError);
-  const disposePanel = () => disposeVocalBoothPanel(beatLab,()=>{
-    window.removeEventListener("lc-vocal-count-in",onCountIn);
-    window.removeEventListener("lc-talkback-state",onTalkbackState);
-    window.removeEventListener("lc-talkback-error",onTalkbackError);
-  });
+  const disposePanel = () => {
+    disposeVocalBoothPanel(beatLab,()=>{
+      window.removeEventListener("lc-vocal-count-in",onCountIn);
+      window.removeEventListener("lc-talkback-state",onTalkbackState);
+      window.removeEventListener("lc-talkback-error",onTalkbackError);
+    });
+    if (activePanel?.root === root) activePanel = null;
+  };
   root.addEventListener("lc-vocal-booth-dispose",disposePanel,{once:true});
   root.dispose = () => root.dispatchEvent(new CustomEvent("lc-vocal-booth-dispose"));
   const showTake=(name,format)=>{root.querySelector("[data-vocal-take-name]").textContent=name;root.querySelector("[data-vocal-take-format]").textContent=format||"Original audio take";};
@@ -338,7 +341,7 @@ export default {
     }
   },
   destroy(){
-    if(activePanel?.root?.isConnected) activePanel.root.dispatchEvent(new CustomEvent("lc-vocal-booth-dispose"));
+    if(activePanel?.root?.dispatchEvent) activePanel.root.dispatchEvent(new CustomEvent("lc-vocal-booth-dispose"));
     activePanel=null;
     this.booth?.userData&&(this.booth.userData.lcVocalBoothVisualsReady=false);
     this.booth=null;
