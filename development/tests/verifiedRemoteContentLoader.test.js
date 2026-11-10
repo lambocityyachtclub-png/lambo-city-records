@@ -146,3 +146,28 @@ test("continues to remote resolution when cache reads fail", async () => {
   assert.deepEqual(await loader(request()), new Uint8Array([8, 8]));
   assert.equal(downloads, 1);
 });
+
+
+test("passes abort signals to remote resolvers and rejects late bytes", async () => {
+  const controller = new AbortController();
+  let resolverSignal;
+  let finishResolve;
+  const loader = createVerifiedRemoteContentLoader({
+    allowedOrigins: ["https://cdn.example.test"],
+    resolve: ({ signal }) => {
+      resolverSignal = signal;
+      return new Promise(resolve => { finishResolve = resolve; });
+    },
+    sha256: async () => "a".repeat(64)
+  });
+  const input = request();
+  input.signal = controller.signal;
+  const pending = loader(input);
+
+  assert.ok(resolverSignal);
+  controller.abort("test cancellation");
+  assert.equal(resolverSignal.aborted, true);
+  finishResolve(new Uint8Array([1, 2, 3]));
+
+  await assert.rejects(pending, /Content asset load was aborted/);
+});
