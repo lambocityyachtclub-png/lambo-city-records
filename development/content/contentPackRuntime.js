@@ -104,6 +104,7 @@ export function createContentPackRuntime(options = {}) {
     disposed = true;
     for (const controller of activeLoadControllers) controller.abort("Content pack runtime disposed.");
     activeLoadControllers.clear();
+    catalog.abortAllLoads("Content pack runtime disposed.");
     catalog.clearCache();
     if (ownsRemoteCache && typeof remoteCache?.close === "function") {
       await remoteCache.close();
