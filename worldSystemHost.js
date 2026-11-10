@@ -175,28 +175,26 @@ export function createWorldSystemHost({ createRuntime = () => new WorldSystemRun
     }
   };
 
+  // The browser-visible bridge is deliberately read-only. Registration,
+  // building, gate grants, controller creation, and disposal remain private
+  // to trusted modules that hold this host instance.
   host.api = Object.freeze({
-    initialize: configuration => host.initialize(configuration),
     isReady: () => host.isReady(),
-    registerDistrict: (districtOrRecipe, options) => host.registerDistrict(districtOrRecipe, options),
-    registerConnection: connection => host.registerConnection(connection),
-    buildDistrict: (id, options) => host.buildDistrict(id, options),
-    findRoute: (districtId, fromNodeId, toNodeId, options) => host.findRoute(districtId, fromNodeId, toNodeId, options),
+    findRoute: (districtId, fromNodeId, toNodeId, options) =>
+      host.findRoute(districtId, fromNodeId, toNodeId, options),
     findWorldRoute: (fromDistrictId, fromNodeId, toDistrictId, toNodeId, options) =>
       host.findWorldRoute(fromDistrictId, fromNodeId, toDistrictId, toNodeId, options),
     getGateStatuses: districtId => host.getGateStatuses(districtId),
     getOpenGateIds: districtId => host.getOpenGateIds(districtId),
-    setGateAccess: (districtId, gateId, permissions) => host.setGateAccess(districtId, gateId, permissions),
     getGroundHeightAt: (x, z) => host.getGroundHeightAt(x, z),
-    getVehicleRoadSurfaceAt: (districtId, point, options) => host.getVehicleRoadSurfaceAt(districtId, point, options),
-    isVehicleFootprintOnRoad: (districtId, vehicle, options) => host.isVehicleFootprintOnRoad(districtId, vehicle, options),
-    isVehicleMoveOnRoad: (districtId, current, next, options) => host.isVehicleMoveOnRoad(districtId, current, next, options),
-    createVehicleController: (districtId, initialState, options) => host.createVehicleController(districtId, initialState, options),
-    buildVehicleUTurnPath: (districtId, nodeId, vehicle, options) => host.buildVehicleUTurnPath(districtId, nodeId, vehicle, options),
+    getVehicleRoadSurfaceAt: (districtId, point, options) =>
+      host.getVehicleRoadSurfaceAt(districtId, point, options),
+    isVehicleFootprintOnRoad: (districtId, vehicle, options) =>
+      host.isVehicleFootprintOnRoad(districtId, vehicle, options),
+    isVehicleMoveOnRoad: (districtId, current, next, options) =>
+      host.isVehicleMoveOnRoad(districtId, current, next, options),
     getVehicleTurnSpace: vehicle => host.getVehicleTurnSpace(vehicle),
-    getStatus: () => host.getStatus(),
-    unregisterDistrict: id => host.unregisterDistrict(id),
-    dispose: () => host.dispose()
+    getStatus: () => host.getStatus()
   });
 
   return host;
