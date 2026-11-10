@@ -16,10 +16,12 @@ export function createContentPackRuntime(options = {}) {
   if (options.remoteCache && options.indexedDBCache) {
     throw new Error("Choose either remoteCache or indexedDBCache, not both.");
   }
+  const ownsRemoteCache = !options.remoteCache && Boolean(options.indexedDBCache);
   const remoteCache = options.remoteCache || (options.indexedDBCache
     ? createIndexedDbContentCache(options.indexedDBCache)
     : null);
   let remoteLoader = null;
+  let disposed = false;
 
   if (resolveRemote || sha256 || remoteCache || options.allowedUrlOrigins) {
     if (typeof resolveRemote !== "function" || typeof sha256 !== "function") {
@@ -55,14 +57,29 @@ export function createContentPackRuntime(options = {}) {
     loader: hostLoader
   });
 
+  async function dispose() {
+    if (disposed) return;
+    disposed = true;
+    catalog.clearCache();
+    if (ownsRemoteCache && typeof remoteCache?.close === "function") {
+      await remoteCache.close();
+    }
+  }
+
+  function assertActive() {
+    if (disposed) throw new Error("Content pack runtime has been disposed.");
+  }
+
   return Object.freeze({
     catalog,
-    register: catalog.register,
-    loadAsset: catalog.loadAsset,
+    register: (...args) => { assertActive(); return catalog.register(...args); },
+    loadAsset: (...args) => { assertActive(); return catalog.loadAsset(...args); },
     getPack: catalog.getPack,
     listPacks: catalog.listPacks,
     resolvePackOrder: catalog.resolvePackOrder,
-    clearCache: catalog.clearCache,
+    clearCache: () => { assertActive(); return catalog.clearCache(); },
+    dispose,
+    close: dispose,
     getSnapshot: catalog.getSnapshot,
     getServiceStatus: () => Object.freeze({
       studioAudioStore: Boolean(options.studioAudioAssetStore),
