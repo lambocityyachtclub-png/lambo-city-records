@@ -94,6 +94,13 @@ assert.equal(new VehicleRoadController(CONFERENCE_CENTER_DISTRICT, serviceVehicl
 assert.equal(new VehicleRoadController(
   CONFERENCE_CENTER_DISTRICT, serviceVehiclePosition, { permissions: ["service"] }
 ).state.valid, false, "service tier alone must not bypass a closed physical gate");
+const waitingServiceVehicle = new VehicleRoadController(
+  CONFERENCE_CENTER_DISTRICT, serviceVehiclePosition, { permissions: ["service"] }
+);
+assert.equal(waitingServiceVehicle.setAccess(
+  ["service"], ["arena-boardwalk-service-gate"]
+), true, "a waiting service vehicle should become valid when the gate is authorized and opened");
+assert.equal(waitingServiceVehicle.state.valid, true);
 assert.equal(new VehicleRoadController(
   CONFERENCE_CENTER_DISTRICT, serviceVehiclePosition,
   { permissions: ["service"], openGates: ["arena-boardwalk-service-gate"] }
