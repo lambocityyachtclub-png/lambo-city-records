@@ -53,6 +53,8 @@ export function createVerifiedRemoteContentLoader(options = {}) {
   return async function loadVerifiedRemoteAsset(request) {
     const source = request?.source;
     const asset = request?.asset;
+    const signal = request?.signal || null;
+    if (signal?.aborted) throw new Error("Content asset load was aborted.");
     if (!source || source.kind !== "url" || !asset) {
       throw new Error("Verified remote loader only accepts catalog URL assets.");
     }
@@ -74,27 +76,30 @@ export function createVerifiedRemoteContentLoader(options = {}) {
 
     if (cache) {
       let cached = null;
-      try { cached = await cache.get(cacheKey); }
-      catch (error) { reportCacheError("get", error); }
+      try { cached = await cache.get(cacheKey, { signal }); }
+      catch (error) { if (signal?.aborted) throw new Error("Content asset load was aborted."); reportCacheError("get", error); }
+      if (signal?.aborted) throw new Error("Content asset load was aborted.");
       if (cached !== undefined && cached !== null) {
         let valid = false;
         try {
           const cachedBytes = toBytes(cached);
           if (cachedBytes.byteLength <= maxAssetBytes &&
               await digestMatches(cachedBytes, integrity.digest)) {
+            if (signal?.aborted) throw new Error("Content asset load was aborted.");
             return cachedBytes;
           }
         } catch {
           // Corrupt or incompatible cache entries are evicted and fetched again.
         }
         if (!valid) {
-          try { await cache.delete(cacheKey); }
-          catch (error) { reportCacheError("delete", error); }
+          try { await cache.delete(cacheKey, { signal }); }
+          catch (error) { if (signal?.aborted) throw new Error("Content asset load was aborted."); reportCacheError("delete", error); }
         }
       }
     }
 
-    const resolved = await resolve({ url: url.href, request });
+    const resolved = await resolve({ url: url.href, request, signal });
+    if (signal?.aborted) throw new Error("Content asset load was aborted.");
     const bytes = toBytes(resolved);
     if (bytes.byteLength > maxAssetBytes) {
       throw new Error("Remote content exceeds the configured maximum asset size.");
@@ -102,8 +107,9 @@ export function createVerifiedRemoteContentLoader(options = {}) {
     if (!await digestMatches(bytes, integrity.digest)) {
       throw new Error("Remote content failed SHA-256 integrity verification.");
     }
+    if (signal?.aborted) throw new Error("Content asset load was aborted.");
     if (cache) {
-      try { await cache.set(cacheKey, bytes.slice()); }
+      try { await cache.set(cacheKey, bytes.slice(), { signal }); }
       catch (error) { reportCacheError("set", error); }
     }
     return bytes;
