@@ -39,4 +39,5 @@ jobs:
             development/tests/developmentWorkspacePipeline.test.js \
             development/tests/specialistWorkerRoster.test.js \
             development/tests/specialistWorkerExecution.test.js \
-            development/tests/contentPackCatalog.test.js
+            development/tests/contentPackCatalog.test.js \\
+            development/tests/contentPackHostAdapters.test.js
