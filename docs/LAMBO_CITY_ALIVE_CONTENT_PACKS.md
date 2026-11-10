@@ -25,7 +25,7 @@ The dedicated GitHub Actions workflow `ALIVE Browser Content Cache Checks` runs 
 - corrupt cached bytes are detected and replaced;
 - a cache-capacity failure does not block delivery of verified content.
 
-The integrated branch browser workflow passed in Chromium, desktop WebKit, and WebKit with the iPad-sized 1024×1366 touch-emulated viewport. This is automated WebKit coverage, not a physical iPad or the shipping iOS Safari browser. Actual device storage quotas, Safari lifecycle behavior, microphone permission, and GPU/performance characteristics still require a real iPad Safari session.
+The integrated branch browser workflow passed in Chromium, desktop WebKit, and WebKit with the iPad-sized 1024×1366 touch-emulated viewport. Browser runs test persistent IndexedDB behavior and oversized-entry rejection; a separate unit test injects a `QuotaExceededError` to verify verified content still returns when a cache write fails. This is automated WebKit coverage, not a physical iPad or the shipping iOS Safari browser. Actual device storage quotas, Safari lifecycle behavior, microphone permission, and GPU/performance characteristics still require a real iPad Safari session.
 
 ## Runtime integration boundary
 
