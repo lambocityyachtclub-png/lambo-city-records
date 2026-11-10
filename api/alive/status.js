@@ -10,12 +10,11 @@ const QUEUE_BRANCH = "integration/lc-alive-agentic-worker-2026-11-10";
 const TASK_ID = /^[a-z0-9][a-z0-9-]{2,63}$/;
 const SHA = /^[a-f0-9]{40}$/i;
 
-async function githubGet(path, token) {
+async function githubGet(path) {
   const headers = {
     Accept: "application/vnd.github+json",
     "X-GitHub-Api-Version": "2022-11-28"
   };
-  if (token) headers.Authorization = "Bearer " + token;
   const response = await fetch("https://api.github.com/repos/" + OWNER + "/" + REPOSITORY + path, { headers });
   if (!response.ok) throw new Error("GitHub status request failed.");
   return response.json();
@@ -62,7 +61,7 @@ export default async function handler(req, res) {
         base: QUEUE_BRANCH,
         per_page: "5"
       });
-      const pulls = await githubGet("/pulls?" + query.toString(), token);
+      const pulls = await githubGet("/pulls?" + query.toString());
       pullRequest = Array.isArray(pulls) ? pulls.find(item =>
         typeof item?.head?.ref === "string" &&
         item.head.ref === "alive-proposal/" + taskId
@@ -71,7 +70,7 @@ export default async function handler(req, res) {
 
     let checks = [];
     if (commitSha) {
-      const result = await githubGet("/commits/" + commitSha + "/check-runs?per_page=50", token);
+      const result = await githubGet("/commits/" + commitSha + "/check-runs?per_page=50");
       checks = Array.isArray(result.check_runs) ? result.check_runs.map(item => ({
         name: String(item.name || "Automated check"),
         status: String(item.status || "unknown"),
