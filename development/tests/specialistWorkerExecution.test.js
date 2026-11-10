@@ -103,16 +103,17 @@ test("specialist execution rejects incomplete worker configuration", async () =>
   );
 });
 
-test("a worker cannot execute a protected task before owner approval", async () => {
+test("protected specialist work stays out of the execution queue pending owner approval", async () => {
   const system = await createDevelopmentSystem({
     specialistExecution: studioExecutionConfig()
   });
   const submitted = await system.submitWorkerFinding("security-release", {
-    title: "Publish production",
+    title: "Publish production release",
     description: "Protected release must wait for owner approval.",
-    area: "production_release",
+    area: "release_readiness",
     protectedActions: ["production_release"]
-  }).catch(error => error);
-
-  assert.ok(submitted instanceof Error);
+  });
+  assert.equal(submitted.task.status, TASK_STATUS.PENDING_APPROVAL);
+  const claimed = await system.director.claimNextTask("security-release", "security-release");
+  assert.equal(claimed, null);
 });
