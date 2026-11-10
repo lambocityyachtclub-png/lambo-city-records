@@ -91,4 +91,19 @@ const scene = { add() {} };
   assert.equal(host.isReady(), false);
 }
 
+
+{
+  let disposed = false;
+  const host = createWorldSystemHost({
+    createRuntime: () => ({
+      init() { throw new Error("synchronous initialization failure"); },
+      dispose() { disposed = true; }
+    })
+  });
+  host.init(scene);
+  await assert.rejects(host.initialize(), /synchronous initialization failure/);
+  assert.equal(disposed, true);
+  assert.equal(host.isReady(), false);
+}
+
 console.log("World System host lifecycle checks passed: cancellation, stale-run isolation, shared initialization, and disposal.");
