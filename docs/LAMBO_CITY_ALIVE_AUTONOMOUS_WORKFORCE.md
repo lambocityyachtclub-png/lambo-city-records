@@ -66,3 +66,19 @@ The complete Development Engine suite now includes the queue adapter and GitHub 
 ### What is still not connected
 
 The adapter is optional and is not configured in the live website. The Vercel project currently has no server-side GitHub queue credential configured, and the live browser interface does not call this adapter. The hosted queue has been exercised through a repository task commit and produced a draft proposal PR; the Director-to-GitHub adapter is separately validated with an injected test client. Connecting the real server-side credential and the owner-facing plain-language control surface remains a separate integration step. No credential belongs in browser code.
+
+
+## Vision Intake & Task Planner
+
+The ninth specialist is the Vision Planning & Product Systems Specialist. Its bounded scope covers the owner-direction intake planner, planning artifacts, tests and ALIVE documentation.
+
+The optional \`createVisionIntakePlanner\` accepts a trusted host planning function. It validates the returned work breakdown against the nine-worker roster, specialist areas, acceptance criteria, dependency references and dependency cycles. Work is classified into four lanes:
+
+- \`launch\`: work intended for first-launch acceptance.
+- \`foundation\`: architecture and reliability work needed to support launch.
+- \`future\`: roadmap work retained for later; it cannot enter the execution queue.
+- \`blocked\`: work waiting on a prerequisite or owner decision; it cannot enter the execution queue.
+
+The planner does not create Director tasks when a vision is first submitted. The owner must explicitly select task keys to submit. Selected tasks are created in dependency order, and protected actions retain the Director's owner-approval gate. The planner adapter is opt-in and requires a trusted host language-model planner; no model credential or browser-side planner is configured in production.
+
+The expanded Development Engine suite passed **154 tests, 0 failures** on commit \`58b00a5bc1c1a3de4ce29b26c3359877f9ec20d4\`. The next commit adds an additional guard preventing future roadmap work from entering the execution queue.

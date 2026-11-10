@@ -55,7 +55,11 @@ test("blocked tasks cannot be submitted and protected work retains owner approva
   const system = await makeSystem(plan);
   await system.intakeVision("Prepare the plan.");
   await assert.rejects(system.submitVisionTasks(["payments-release"]), /Blocked work/);
-  const submitted = await system.submitVisionTasks(["creator-marketplace"]);
+  await assert.rejects(system.submitVisionTasks(["creator-marketplace"]), /Future work stays on the roadmap/);
+  plan.items[2].lane = "foundation";
+  const approvedPlanSystem = await makeSystem(plan);
+  await approvedPlanSystem.intakeVision("Prepare the plan.");
+  const submitted = await approvedPlanSystem.submitVisionTasks(["creator-marketplace"]);
   assert.equal(submitted[0].task.status, "pending_approval");
 });
 

@@ -118,8 +118,13 @@ export function createVisionIntakePlanner(options = {}) {
       const item = byKey.get(key);
       if (!item) throw new Error("Unknown selected task key: " + key);
       if (item.lane === "blocked") throw new Error("Blocked work cannot be submitted: " + key);
+      if (item.lane === "future") throw new Error("Future work stays on the roadmap and cannot enter the execution queue: " + key);
       for (const dep of item.dependencies) {
         if (!selected.has(dep)) throw new Error("Select dependency " + dep + " before submitting " + key);
+        const dependency = byKey.get(dep);
+        if (dependency.lane === "blocked" || dependency.lane === "future") {
+          throw new Error("Execution work cannot depend on blocked or future work: " + dep);
+        }
       }
     }
     const ordered = [];
