@@ -173,6 +173,13 @@ export async function createDevelopmentSystem(options = {}) {
     };
   }
 
+  const registryView = Object.freeze({
+    getModule: registry.getModule,
+    listModules: registry.listModules,
+    findByCapability: registry.findByCapability,
+    getSnapshot: registry.getSnapshot
+  });
+
   const directorView = Object.freeze({
     initialize: async (...args) => { assertReady(); return director.initialize(...args); },
     createTask: async (...args) => { assertReady(); return director.createTask(...args); },
@@ -237,7 +244,7 @@ export async function createDevelopmentSystem(options = {}) {
   }
 
   return Object.freeze({
-    registry,
+    registry: registryView,
     director: directorView,
     studioRunner: studioRunnerView,
     workerRoster: workerRosterView,
