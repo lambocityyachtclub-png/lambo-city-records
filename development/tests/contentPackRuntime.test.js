@@ -150,8 +150,8 @@ test("composes opt-in IndexedDB persistence lazily through the shared content ru
   await runtime.dispose();
   await runtime.close();
   assert.equal(indexedDB.closes, 1);
-  assert.throws(
-    () => runtime.loadAsset("lc.runtime.integration", "runtime-asset"),
+  await assert.rejects(
+    runtime.loadAsset("lc.runtime.integration", "runtime-asset"),
     /has been disposed/
   );
 });
@@ -220,8 +220,8 @@ test("disposal rejects in-flight asset results and guards the public catalog vie
     /disposed while an asset was loading/
   );
   assert.equal(runtime.getSnapshot().cachedAssetCount, 0);
-  assert.throws(
-    () => runtime.catalog.loadAsset("lc.runtime.integration", "runtime-asset"),
+  await assert.rejects(
+    runtime.catalog.loadAsset("lc.runtime.integration", "runtime-asset"),
     /has been disposed/
   );
   assert.throws(
