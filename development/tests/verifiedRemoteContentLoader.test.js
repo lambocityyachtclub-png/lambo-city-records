@@ -167,7 +167,7 @@ test("passes abort signals to remote resolvers and rejects late bytes", async ()
   assert.ok(resolverSignal);
   controller.abort("test cancellation");
   assert.equal(resolverSignal.aborted, true);
-  finishResolve(new Uint8Array([1, 2, 3]));
-
   await assert.rejects(pending, /Content asset load was aborted/);
+  finishResolve(new Uint8Array([1, 2, 3]));
+  await Promise.resolve();
 });
