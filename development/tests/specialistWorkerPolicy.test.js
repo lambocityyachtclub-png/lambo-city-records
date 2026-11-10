@@ -5,6 +5,7 @@ import {
   isWorkerPathAllowed,
   validateRepositoryPath,
   validateWorkerChangedFiles,
+  validateWorkerChangedEntries,
   validateWorkerTask,
   buildSpecialistPrompt
 } from "../automation/specialistWorkerPolicy.js";
@@ -42,6 +43,19 @@ test("scope matching rejects similarly prefixed files and directories", () => {
   assert.equal(isWorkerPathAllowed("studio", "studio-private/config.js"), false);
   assert.equal(isWorkerPathAllowed("world-architecture", "worldSystemSecrets.js"), false);
   assert.equal(isWorkerPathAllowed("convention-center", "conferenceCenterSecrets.js"), false);
+});
+
+
+test("worker proposals reject symlinks and submodules even inside authorized paths", () => {
+  assert.throws(() => validateWorkerChangedEntries("vision-planning", [
+    { path: "development/planning/escape", mode: "120000" }
+  ]), /symbolic links or submodules/);
+  assert.throws(() => validateWorkerChangedEntries("vision-planning", [
+    { path: "development/planning/external", mode: "160000" }
+  ]), /symbolic links or submodules/);
+  assert.deepEqual(validateWorkerChangedEntries("vision-planning", [
+    { path: "development/planning/plan.json", mode: "100644" }
+  ]), ["development/planning/plan.json"]);
 });
 
 test("a specialist cannot change files outside its declared scope", () => {
