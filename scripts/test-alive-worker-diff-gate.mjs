@@ -39,6 +39,19 @@ try {
   const rejected = runValidator(symlinkList);
   assert.notEqual(rejected.status, 0, "a symlink proposal must be rejected");
   assert.match(rejected.stderr + rejected.stdout, /symbolic links or submodules/);
+
+  await rm(join(temporaryRepo, "development/planning/escape"), { force: true });
+  runGit(["reset", "--", "development/planning/escape"]);
+  runGit(["mv", "world.js", "development/planning/moved-world.js"]);
+  const renameList = join(temporaryRepo, "rename-files.txt");
+  const renamedPaths = execFileSync("git", ["diff", "--no-renames", "--name-only", "HEAD"], {
+    cwd: temporaryRepo,
+    encoding: "utf8"
+  });
+  await writeFile(renameList, renamedPaths);
+  const renamed = runValidator(renameList);
+  assert.notEqual(renamed.status, 0, "renaming an out-of-scope file into an allowed folder must be rejected");
+  assert.match(renamed.stderr + renamed.stdout, /outside its scope/);
 } finally {
   await rm(temporaryRepo, { recursive: true, force: true });
 }
