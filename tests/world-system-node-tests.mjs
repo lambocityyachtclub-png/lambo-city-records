@@ -93,18 +93,36 @@ const serviceVehiclePosition = { x: -37, z: 54, heading: 0 };
 assert.equal(new VehicleRoadController(CONFERENCE_CENTER_DISTRICT, serviceVehiclePosition).state.valid, false);
 assert.equal(new VehicleRoadController(
   CONFERENCE_CENTER_DISTRICT, serviceVehiclePosition, { permissions: ["service"] }
-).state.valid, false, "service tier alone must not bypass a closed physical gate");
-const waitingServiceVehicle = new VehicleRoadController(
-  CONFERENCE_CENTER_DISTRICT, serviceVehiclePosition, { permissions: ["service"] }
-);
-assert.equal(waitingServiceVehicle.setAccess(
-  ["service"], ["arena-boardwalk-service-gate"]
-), true, "a waiting service vehicle should become valid when the gate is authorized and opened");
-assert.equal(waitingServiceVehicle.state.valid, true);
+).state.valid, false, "caller-supplied permissions alone must not bypass a closed physical gate");
 assert.equal(new VehicleRoadController(
   CONFERENCE_CENTER_DISTRICT, serviceVehiclePosition,
   { permissions: ["service"], openGates: ["arena-boardwalk-service-gate"] }
-).state.valid, true, "authorized vehicles may use the service road only after the gate is open");
+).state.valid, false, "caller-supplied permissions and gate IDs must be ignored");
+
+let trustedServicePermissions = [];
+let trustedOpenGates = [];
+const waitingServiceVehicle = new VehicleRoadController(
+  CONFERENCE_CENTER_DISTRICT,
+  serviceVehiclePosition,
+  {
+    getPermissions: () => trustedServicePermissions,
+    getOpenGates: () => trustedOpenGates
+  }
+);
+assert.equal(waitingServiceVehicle.state.valid, false);
+trustedServicePermissions = ["service"];
+trustedOpenGates = ["arena-boardwalk-service-gate"];
+const openedGateUpdate = waitingServiceVehicle.update(0.05, { throttle: 0 });
+assert.equal(openedGateUpdate.blocked, false,
+  "a trusted host grant and live open-gate state should authorize the service vehicle");
+assert.equal(waitingServiceVehicle.state.valid, true);
+
+trustedOpenGates = [];
+const closedGateUpdate = waitingServiceVehicle.update(0.05, { throttle: 1 });
+assert.equal(closedGateUpdate.blocked, true,
+  "closing the physical gate must invalidate an already-created vehicle controller");
+assert.equal(waitingServiceVehicle.state.valid, false);
+assert.equal(waitingServiceVehicle.state.speed, 0);
 
 const recipe = {
   id: "world-system-node-test",
