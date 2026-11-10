@@ -189,6 +189,7 @@ export function validateContentPackManifest(manifest) {
 
 
 function getLoadedByteSize(value) {
+  if (value && Number.isSafeInteger(value.sizeBytes) && value.sizeBytes >= 0) return value.sizeBytes;
   if (value instanceof ArrayBuffer) return value.byteLength;
   if (ArrayBuffer.isView(value)) return value.byteLength;
   if (
