@@ -32,3 +32,13 @@ These adapters are intentionally not connected in this prototype. No existing re
 ## Current limits
 
 This is a tested manifest/catalog contract and injected loading seam, not a hosted CDN, asset marketplace, remote content manager, signed pack installer, or automatic updater. It has no production asset URLs or bundled sample packs. It must be integrated behind explicit owner review after real host adapters and asset integrity checks exist.
+
+## Host adapter proof
+
+`development/content/contentPackHostAdapters.js` adds an explicit dispatcher for the existing systems:
+
+- `studio-audio-store` resolves `asset:<id>` through an injected `StudioAudioAssetStore.get(id)` and returns the existing stored audio record. It does not create another IndexedDB database.
+- `world-recipe` resolves `recipe:<id>` through an injected recipe resolver and requires the existing district validator to return `valid: true` before returning the recipe.
+- `url` and `host` sources require separately injected resolvers. The adapter intentionally does not fetch arbitrary URLs; the trusted URL resolver must enforce origin allowlists and integrity verification.
+
+These are adapter contract proofs with injected services, not a connection to production Studio or World runtime. The host chooses when to construct and pass the adapter to the catalog.
