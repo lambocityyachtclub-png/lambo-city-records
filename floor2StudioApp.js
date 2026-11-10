@@ -1102,6 +1102,9 @@ if (!this.audio || this.audio.state !== "running") {
  
   async startRecording() {
     let pitchCorrectionNode = null;
+    let startedBeatForCountIn = false;
+    let takeStarted = false;
+    let finalStatus = null;
     if (StudioRecordingEngine.activeTake || this.recordingStartPending) {
       this.status("A recording is already in progress.");
       return;
@@ -1123,16 +1126,16 @@ if (!this.audio || this.audio.state !== "running") {
 
       if (this.pitchCorrectionSettings?.enabled) {
         pitchCorrectionNode = await createStudioPitchCorrectionNode(this.audio, this.pitchCorrectionSettings);
-        if (startToken !== this.recordingStartToken) {
-          try { pitchCorrectionNode?.disconnect(); } catch {}
-          pitchCorrectionNode = null;
-          return;
-        }
+        if (startToken !== this.recordingStartToken) return;
       }
 
       // Start the beat first, then complete a four-beat pre-roll before
       // opening the recorder. The count-in is therefore never captured.
-      if (!this.playing) await this.start();
+      if (!this.playing) {
+        await this.start();
+        startedBeatForCountIn = this.playing;
+      }
+      if (startToken !== this.recordingStartToken) return;
       if (!this.playing) throw new Error("Beat Lab playback could not start. Check the Studio audio output and try again.");
       const bpm = Math.max(60, Math.min(180, Number(this.pattern?.bpm) || 100));
       const beatMs = 60000 / bpm;
@@ -1149,22 +1152,47 @@ if (!this.audio || this.audio.state !== "running") {
         detail: { beat: 0, total: 4, bpm, complete: true }
       }));
 
-      await StudioRecordingEngine.startTake({
+      const take = await StudioRecordingEngine.startTake({
         audio: this.audio,
         beatOutput: StudioAudioExport.getOutput(this.audio),
         vocalEffects: this.vocalEffects,
-        pitchCorrectionNode
+        pitchCorrectionNode,
+        shouldCancel: () => startToken !== this.recordingStartToken
       });
+
+      // A permission prompt or recorder initialization can finish after the
+      // user cancels. Never leave a take running in that race window.
+      if (startToken !== this.recordingStartToken) {
+        if (take?.id && StudioRecordingEngine.activeTake?.id === take.id) {
+          try { await StudioRecordingEngine.stopTake(); } catch (error) {
+            console.warn("LAMBO CITY cancelled take cleanup failed:", error);
+          }
+        }
+        return;
+      }
+
       pitchCorrectionNode = null;
+      takeStarted = true;
       this.status("Recording vocals, Beat Lab, and mix… Tap STOP RECORDING when finished.");
     } catch (error) {
-      try { pitchCorrectionNode?.disconnect(); } catch {}
-      console.error("LAMBO CITY recording error:", error);
-      this.status(`RECORDING ERROR: ${error?.message || error}`);
+      if (startToken !== this.recordingStartToken) {
+        finalStatus = "Count-in cancelled · recording did not start.";
+      } else {
+        console.error("LAMBO CITY recording error:", error);
+        finalStatus = `RECORDING ERROR: ${error?.message || error}`;
+      }
       window.dispatchEvent(new CustomEvent("lc-vocal-count-in", {
         detail: { beat: 0, total: 4, cancelled: true }
       }));
     } finally {
+      try { pitchCorrectionNode?.disconnect(); } catch {}
+      if (startedBeatForCountIn && !takeStarted && this.playing) {
+        this.stop();
+      }
+      if (startToken !== this.recordingStartToken) {
+        finalStatus = "Count-in cancelled · recording did not start.";
+      }
+      if (finalStatus) this.status(finalStatus);
       if (startToken === this.recordingStartToken) this.recordingStartPending = false;
     }
   },
