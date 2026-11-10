@@ -173,6 +173,25 @@ export async function createDevelopmentSystem(options = {}) {
     };
   }
 
+  const directorView = Object.freeze({
+    initialize: async (...args) => { assertReady(); return director.initialize(...args); },
+    createTask: async (...args) => { assertReady(); return director.createTask(...args); },
+    approveTask: async (...args) => { assertReady(); return director.approveTask(...args); },
+    rejectTask: async (...args) => { assertReady(); return director.rejectTask(...args); },
+    claimNextTask: async (...args) => { assertReady(); return director.claimNextTask(...args); },
+    updateTask: async (...args) => { assertReady(); return director.updateTask(...args); },
+    getTask: director.getTask,
+    listTasks: director.listTasks,
+    getSnapshot: director.getSnapshot
+  });
+
+  const studioRunnerView = Object.freeze({
+    getProfile: studioRunner.getProfile,
+    submitFinding: async (...args) => { assertReady(); return studioRunner.submitFinding(...args); },
+    submitFindings: async (...args) => { assertReady(); return studioRunner.submitFindings(...args); },
+    setEnabled: value => { assertReady(); return studioRunner.setEnabled(value); }
+  });
+
   const workerRosterView = Object.freeze({
     version: workerRoster.version,
     listWorkers: (...args) => workerRoster.listWorkers(...args),
@@ -219,8 +238,8 @@ export async function createDevelopmentSystem(options = {}) {
 
   return Object.freeze({
     registry,
-    director,
-    studioRunner,
+    director: directorView,
+    studioRunner: studioRunnerView,
     workerRoster: workerRosterView,
     getStatus,
     getSnapshot,
