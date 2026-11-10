@@ -168,14 +168,14 @@ assert.equal(validateDistrict(disconnectedPedestrian).issues.some(item => item.c
   "a disconnected pedestrian island must still be rejected");
 assert.equal(CONFERENCE_CENTER_DISTRICT.groundTopY, CITY_MAP.surfaces.groundTopY);
 assert.equal(CONFERENCE_CENTER_DISTRICT.bounds.minZ, CITY_MAP.districts.marinaBoardwalk.road.maxZ);
-assert.equal(CONFERENCE_CENTER_DISTRICT.roadNetwork.nodes.filter(node => node.turningArea?.width === 18 && node.turningArea?.depth === 18).length, 2);
+assert.equal(CONFERENCE_CENTER_DISTRICT.roadNetwork.nodes.filter(node => node.turningArea?.width === 18 && node.turningArea?.depth === 18).length, 4);
 assert.equal(CONFERENCE_CENTER_DISTRICT.roadNetwork.segments.filter(segment => segment.id.startsWith("boulevard-") && segment.sidewalkOffset >= 10.5).length, 3);
-assert.equal(CONFERENCE_CENTER_DISTRICT.roadNetwork.nodes.filter(node => node.turningArea?.width === 14 && node.turningArea?.depth === 14).length, 2);
+assert.equal(CONFERENCE_CENTER_DISTRICT.roadNetwork.nodes.filter(node => node.turningArea?.width === 14 && node.turningArea?.depth === 14).length, 0);
 assert.equal(vehicleRules.getVehicleRoadSurface(CONFERENCE_CENTER_DISTRICT, { x: -50, z: 62.5 })?.type, "road");
 assert.equal(vehicleRules.getVehicleRoadSurface(CONFERENCE_CENTER_DISTRICT, { x: -50, z: 56.5 }), null,
   "the shifted pedestrian sidewalk must not be drivable");
 assert.equal(vehicleRules.getVehicleRoadSurface(CONFERENCE_CENTER_DISTRICT, { x: -84, z: 131.5 })?.type, "turning-area");
-assert.equal(CONFERENCE_CENTER_DISTRICT.roadNetwork.nodes.filter(node => node.turningArea?.width >= 16).length, 2);
+assert.equal(CONFERENCE_CENTER_DISTRICT.roadNetwork.nodes.filter(node => node.turningArea?.width >= 16).length, 4);
 const passengerCarUTurn = vehicleRules.buildVehicleUTurnPath(
   CONFERENCE_CENTER_DISTRICT, "boulevard-north-west",
   { length: 4.8, width: 2.1, turningRadius: 6.5 }
@@ -187,16 +187,16 @@ for (const nodeId of ["boulevard-north-west", "boulevard-north-east"]) {
   assert.equal(vehicleRules.buildVehicleUTurnPath(
     CONFERENCE_CENTER_DISTRICT, nodeId,
     { length: 4.8, width: 2.1, turningRadius: 6.5 }
-  ).valid, true, "the designated north aprons must support a full passenger-car U-turn");
+  ).valid, true, "every boulevard corner apron must support a full passenger-car U-turn");
 }
 for (const nodeId of ["boulevard-south-west", "boulevard-south-east"]) {
   assert.equal(vehicleRules.buildVehicleUTurnPath(
     CONFERENCE_CENTER_DISTRICT, nodeId,
     { length: 4.8, width: 2.1, turningRadius: 6.5 }
-  ).valid, false, "ordinary south junctions must not be misrepresented as U-turn aprons");
+  ).valid, true, "the south boulevard corners must also support a full passenger-car U-turn");
 }
 assert.equal(CONFERENCE_CENTER_DISTRICT.roadNetwork.segments.filter(segment => segment.id.startsWith("boulevard-") && segment.sidewalkOffset).length, 5);
-assert.equal(CONFERENCE_CENTER_DISTRICT.roadNetwork.nodes.filter(node => node.turningArea?.width === 18 && node.turningArea?.depth === 18).length, 2);
+assert.equal(CONFERENCE_CENTER_DISTRICT.roadNetwork.nodes.filter(node => node.turningArea?.width === 18 && node.turningArea?.depth === 18).length, 4);
 assert.equal(
   CONFERENCE_CENTER_DISTRICT.roadNetwork.nodes.find(node => node.id === "boardwalk-service-entry").z,
   CONFERENCE_CENTER_DISTRICT.bounds.minZ
