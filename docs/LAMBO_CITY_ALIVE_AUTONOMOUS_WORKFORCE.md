@@ -4,7 +4,7 @@
 
 The specialist roster now has a bounded, hosted code-proposal path:
 
-1. A task is written as a small JSON file under \`development/queue/incoming/\` on the isolated ALIVE worker branch.
+1. A task is written as a small JSON file under `development/queue/incoming/` on the isolated ALIVE worker branch.
 2. A GitHub Actions job validates the task against the eight existing specialist roles.
 3. GitHub Copilot CLI works in a disposable hosted runner with repository read access and scoped file-write tools. It does not receive a repository-write token.
 4. A deterministic path gate rejects edits outside that specialist's allowlist and blocks production wiring, workflow files, deployment configuration, secrets, billing and payment paths.
@@ -25,7 +25,7 @@ The specialist roster now has a bounded, hosted code-proposal path:
 
 Each task file must contain only these fields:
 
-\`\`\`json
+```json
 {
   "id": "studio-vocal-polish",
   "workerId": "studio",
@@ -39,11 +39,11 @@ Each task file must contain only these fields:
     "FLOOR2_STUDIO_EXPERIENCE.md"
   ]
 }
-\`\`\`
+```
 
-Supported worker IDs: \`studio\`, \`audio-assets\`, \`world-architecture\`, \`environment-water\`, \`yachts-vehicles\`, \`convention-center\`, \`performance-qa\`, and \`security-release\`.
+Supported worker IDs: `studio`, `audio-assets`, `world-architecture`, `environment-water`, `yachts-vehicles`, `convention-center`, `performance-qa`, and `security-release`.
 
-The queue workflow is intentionally restricted to the branch \`integration/lc-alive-agentic-worker-2026-11-10\`. It does not run from production. A task commit triggers one isolated proposal run. Do not put secrets, access tokens, payment data, or private personal data in a task.
+The queue workflow is intentionally restricted to the branch `integration/lc-alive-agentic-worker-2026-11-10`. It does not run from production. A task commit triggers one isolated proposal run. Do not put secrets, access tokens, payment data, or private personal data in a task.
 
 ## Current boundary and next integration step
 
