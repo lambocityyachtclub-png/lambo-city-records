@@ -303,3 +303,70 @@ test("rejects array toJSON hooks that could bypass declared size budgets", async
   );
   assert.equal(catalog.getSnapshot().cachedAssetCount, 0);
 });
+
+
+test("one caller can cancel without breaking another caller's shared asset load", async () => {
+  let resolveLoad;
+  let sharedSignal;
+  let loaderCalls = 0;
+  const catalog = createContentPackCatalog({
+    loader: ({ signal }) => {
+      loaderCalls += 1;
+      sharedSignal = signal;
+      return new Promise(resolve => { resolveLoad = resolve; });
+    }
+  });
+  catalog.register(pack({
+    id: "lc.shared-load",
+    assets: [{
+      id: "shared-audio",
+      category: "audio",
+      sizeBytes: 3,
+      source: { kind: "host", locator: "builtin:shared-audio", license: "owner-provided" }
+    }]
+  }));
+  const firstCaller = new AbortController();
+  const secondCaller = new AbortController();
+  const first = catalog.loadAsset("lc.shared-load", "shared-audio", { signal: firstCaller.signal });
+  const second = catalog.loadAsset("lc.shared-load", "shared-audio", { signal: secondCaller.signal });
+
+  assert.equal(loaderCalls, 1, "concurrent callers share one underlying load");
+  firstCaller.abort();
+  await assert.rejects(first, /Content asset load was aborted/);
+  assert.equal(sharedSignal.aborted, false, "one caller cannot abort the shared load for another caller");
+
+  const bytes = new Uint8Array([1, 2, 3]);
+  resolveLoad(bytes);
+  assert.deepEqual(await second, bytes);
+  assert.equal(catalog.getSnapshot().cachedAssetCount, 1);
+});
+
+test("the shared asset load aborts when its final waiting caller cancels", async () => {
+  let resolveLoad;
+  let sharedSignal;
+  const catalog = createContentPackCatalog({
+    loader: ({ signal }) => {
+      sharedSignal = signal;
+      return new Promise(resolve => { resolveLoad = resolve; });
+    }
+  });
+  catalog.register(pack({
+    id: "lc.no-waiters",
+    assets: [{
+      id: "orphaned-audio",
+      category: "audio",
+      sizeBytes: 3,
+      source: { kind: "host", locator: "builtin:orphaned-audio", license: "owner-provided" }
+    }]
+  }));
+  const caller = new AbortController();
+  const pending = catalog.loadAsset("lc.no-waiters", "orphaned-audio", { signal: caller.signal });
+  caller.abort();
+
+  await assert.rejects(pending, /Content asset load was aborted/);
+  assert.equal(sharedSignal.aborted, true, "the underlying load is aborted when no callers remain");
+  resolveLoad(new Uint8Array([1, 2, 3]));
+  await Promise.resolve();
+  assert.equal(catalog.getSnapshot().cachedAssetCount, 0);
+  assert.equal(catalog.getSnapshot().loadingAssetCount, 0);
+});
