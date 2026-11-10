@@ -267,12 +267,19 @@ function getLoadedByteSize(value, maxBytes) {
   }
   if (value instanceof ArrayBuffer) return value.byteLength;
   if (ArrayBuffer.isView(value)) return value.byteLength;
-  if (
-    value &&
-    Number.isSafeInteger(value.size) &&
-    value.size >= 0 &&
-    typeof value.arrayBuffer === "function"
-  ) return value.size;
+  if (value && typeof Blob === "function") {
+    const sizeGetter = Object.getOwnPropertyDescriptor(Blob.prototype, "size")?.get;
+    if (typeof sizeGetter === "function") {
+      try {
+        const nativeBlobSize = sizeGetter.call(value);
+        if (Number.isSafeInteger(nativeBlobSize) && nativeBlobSize >= 0) return nativeBlobSize;
+      } catch {}
+    }
+  }
+  if (value && typeof value.arrayBuffer === "function") {
+    if (Number.isSafeInteger(value.sizeBytes) && value.sizeBytes >= 0) return value.sizeBytes;
+    throw new Error("Custom file-like host assets must expose an explicit measured sizeBytes value.");
+  }
   if (value && value.blob && value.blob !== value) {
     const blobSize = getLoadedByteSize(value.blob, maxBytes);
     if (blobSize !== null) return blobSize;
