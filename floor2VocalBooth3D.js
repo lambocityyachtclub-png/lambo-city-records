@@ -62,7 +62,8 @@ export async function disposeVocalBoothPanel(beatLab, cleanup, root) {
           detail: { recording: false, name: "Vocal Take " + String(takeCount).padStart(2, "0") }
         }));
       }
-    } else if (StudioRecordingEngine.activeTrackTake && root?.dataset?.voiceNoteTrackId) {
+    } else if (root?.dataset?.voiceNoteTrackId &&
+        StudioRecordingEngine.activeTrackTake?.trackId === root.dataset.voiceNoteTrackId) {
       await saveVoiceNoteTake(root, root.dataset.voiceNoteTrackId);
     }
   } catch (error) {
