@@ -19,7 +19,7 @@ Supported categories include audio, instrument, effect, preset, building, enviro
 
 `createContentPackCatalog({ appVersion, loader })` registers and validates metadata. Registration performs no downloads. `loadAsset(packId, assetId)` is the only operation that invokes the injected host loader. Successful values are cached by cache key; concurrent requests share one in-flight load; failed loads are retryable. A declared fallback can be attempted if the primary host loader fails.
 
-The loader is a host capability and must enforce its own origin allowlist, authentication, integrity/hash verification, storage permissions, and cancellation policy. The catalog intentionally does not fetch URLs itself, open IndexedDB, access the filesystem, or create Three.js objects.
+The loader is a host capability. Remote URL assets must declare a SHA-256 digest in the manifest. The supplied host adapter rejects non-HTTPS or non-allowlisted origins and requires an injected integrity verifier to approve the resolved bytes before returning them. The resolver must also enforce authentication, storage permissions, and cancellation policy. The catalog intentionally does not fetch URLs itself, open IndexedDB, access the filesystem, or create Three.js objects.
 
 ## Existing system adapters
 
