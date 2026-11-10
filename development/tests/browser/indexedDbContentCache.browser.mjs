@@ -32,10 +32,10 @@ await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
 const address = server.address();
 const baseUrl = "http://127.0.0.1:" + address.port;
 
-async function runBrowser(name, browserType) {
+async function runBrowser(name, browserType, contextOptions = {}) {
   const browser = await browserType.launch({ headless: true });
   try {
-    const page = await browser.newPage();
+    const page = await browser.newPage(contextOptions);
     await page.goto(baseUrl);
     const result = await page.evaluate(async () => {
       const { createIndexedDbContentCache } = await import("/development/content/indexedDbContentCache.js");
@@ -130,6 +130,11 @@ async function runBrowser(name, browserType) {
 try {
   await runBrowser("Chromium", chromium);
   await runBrowser("WebKit", webkit);
+  await runBrowser("WebKit iPad-sized touch viewport", webkit, {
+    viewport: { width: 1024, height: 1366 },
+    deviceScaleFactor: 2,
+    hasTouch: true
+  });
 } finally {
   await new Promise(resolve => server.close(resolve));
 }
