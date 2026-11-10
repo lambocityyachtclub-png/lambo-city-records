@@ -174,6 +174,14 @@ assert.equal(CONFERENCE_CENTER_DISTRICT.roadNetwork.nodes.filter(node => node.tu
 assert.equal(vehicleRules.getVehicleRoadSurface(CONFERENCE_CENTER_DISTRICT, { x: -50, z: 62.5 })?.type, "road");
 assert.equal(vehicleRules.getVehicleRoadSurface(CONFERENCE_CENTER_DISTRICT, { x: -50, z: 56.5 }), null,
   "the shifted pedestrian sidewalk must not be drivable");
+const curbApproachVehicle = { x: -50, z: 59.3, heading: Math.PI / 2, length: 4.8, width: 2.1 };
+assert.equal(vehicleRules.isVehicleFootprintOnRoad(CONFERENCE_CENTER_DISTRICT, curbApproachVehicle), false,
+  "the full vehicle footprint must stop before its body reaches the raised curb");
+assert.equal(vehicleRules.isVehicleMoveOnRoad(CONFERENCE_CENTER_DISTRICT,
+  { ...curbApproachVehicle, z: 62.5 }, curbApproachVehicle), false,
+  "swept vehicle movement must not cross the curb boundary");
+assert.equal(vehicleRules.getVehicleRoadSurface(CONFERENCE_CENTER_DISTRICT, { x: -50, z: 57.88 }), null,
+  "the raised curb line itself must never be treated as drivable road");
 assert.equal(vehicleRules.getVehicleRoadSurface(CONFERENCE_CENTER_DISTRICT, { x: -84, z: 131.5 })?.type, "turning-area");
 assert.equal(CONFERENCE_CENTER_DISTRICT.roadNetwork.nodes.filter(node => node.turningArea?.width >= 16).length, 4);
 const passengerCarUTurn = vehicleRules.buildVehicleUTurnPath(
