@@ -187,6 +187,27 @@ export function validateContentPackManifest(manifest) {
   });
 }
 
+
+function getLoadedByteSize(value) {
+  if (value instanceof ArrayBuffer) return value.byteLength;
+  if (ArrayBuffer.isView(value)) return value.byteLength;
+  if (
+    value &&
+    Number.isSafeInteger(value.size) &&
+    value.size >= 0 &&
+    typeof value.arrayBuffer === "function"
+  ) return value.size;
+  if (value && value.blob && value.blob !== value) {
+    const blobSize = getLoadedByteSize(value.blob);
+    if (blobSize !== null) return blobSize;
+  }
+  if (value && value.bytes && value.bytes !== value) {
+    const byteSize = getLoadedByteSize(value.bytes);
+    if (byteSize !== null) return byteSize;
+  }
+  return null;
+}
+
 export function createContentPackCatalog(options = {}) {
   const appVersion = options.appVersion || null;
   if (appVersion) parseVersion(appVersion, "catalog appVersion");
@@ -290,6 +311,11 @@ export function createContentPackCatalog(options = {}) {
           dependencyOrder: resolvePackOrder(packId)
         }));
         if (value === undefined || value === null) throw new Error("Host loader returned no asset value.");
+        const loadedByteSize = getLoadedByteSize(value);
+        if (loadedByteSize !== null && loadedByteSize > asset.sizeBytes) {
+          throw new Error("Asset " + pack.id + "/" + asset.id + " loaded " + loadedByteSize +
+            " bytes, exceeding its declared sizeBytes budget of " + asset.sizeBytes + ".");
+        }
         cache.set(cacheKey, value);
         return value;
       } catch (error) {
