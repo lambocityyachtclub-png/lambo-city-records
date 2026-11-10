@@ -33,6 +33,7 @@ try {
   runGit(["checkout", "--", "development/planning/plan.json"]);
   await symlink("../../.github/workflows/deploy.yml",
     join(temporaryRepo, "development/planning/escape"));
+  runGit(["add", "-N", "--", "development/planning/escape"]);
   const symlinkList = join(temporaryRepo, "symlink-files.txt");
   await writeFile(symlinkList, "development/planning/escape\n");
   const rejected = runValidator(symlinkList);
