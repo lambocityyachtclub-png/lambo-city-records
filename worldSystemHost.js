@@ -79,6 +79,14 @@ const host = {
       : { found: false, reason: "NOT_INITIALIZED", nodes: [], steps: [], distance: 0 };
   },
 
+  getGateStatuses(districtId) {
+    return runtime?.ready ? runtime.getGateStatuses(districtId) : [];
+  },
+
+  getOpenGateIds(districtId) {
+    return runtime?.ready ? runtime.getOpenGateIds(districtId) : [];
+  },
+
   setGateAccess(districtId, gateId, permissions = []) {
     return runtime?.ready
       ? runtime.setGateAccess(districtId, gateId, permissions)
@@ -148,6 +156,8 @@ host.api = Object.freeze({
   findRoute: (districtId, fromNodeId, toNodeId, options) => host.findRoute(districtId, fromNodeId, toNodeId, options),
   findWorldRoute: (fromDistrictId, fromNodeId, toDistrictId, toNodeId, options) =>
     host.findWorldRoute(fromDistrictId, fromNodeId, toDistrictId, toNodeId, options),
+  getGateStatuses: districtId => host.getGateStatuses(districtId),
+  getOpenGateIds: districtId => host.getOpenGateIds(districtId),
   setGateAccess: (districtId, gateId, permissions) => host.setGateAccess(districtId, gateId, permissions),
   getGroundHeightAt: (x, z) => host.getGroundHeightAt(x, z),
   getVehicleRoadSurfaceAt: (districtId, point, options) => host.getVehicleRoadSurfaceAt(districtId, point, options),
