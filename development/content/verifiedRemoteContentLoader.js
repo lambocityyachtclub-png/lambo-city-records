@@ -58,6 +58,9 @@ export function createVerifiedRemoteContentLoader(options = {}) {
     }
     let url;
     try { url = new URL(source.locator); } catch { throw new Error("Remote content URL is invalid."); }
+    if (url.username || url.password) {
+      throw new Error("Remote content URL must not contain embedded credentials.");
+    }
     if (url.protocol !== "https:" || !allowedOrigins.has(url.origin)) {
       throw new Error("Remote content URL origin is not allowlisted for HTTPS.");
     }
