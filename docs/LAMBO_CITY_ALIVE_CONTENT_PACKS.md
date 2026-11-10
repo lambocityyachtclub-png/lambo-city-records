@@ -65,3 +65,7 @@ A browser implementation can provide a persistent cache backed by IndexedDB or C
 ## Validation update
 
 The verified delivery/cache service is covered by the development CI suite. Latest completed run: 107 tests passed, 0 failed. This includes composition through the catalog host adapter, persistent cache hits, corrupt-cache eviction, origin allowlisting, byte-size enforcement, and tamper rejection. The cache is still an injected interface; no browser database or production CDN integration has been created.
+
+## Explicit runtime composition
+
+`createContentPackRuntime(options)` is the opt-in composition root. It connects the catalog to the existing host adapter and, when both are supplied, the verified remote loader. It exposes catalog operations and a service-capability snapshot. Constructing it does not open a database, make a network request, or initialize a Three.js scene. Studio, World, remote delivery, persistent cache, and generic host capabilities are supplied independently by the application host. The service snapshot makes missing adapters visible instead of silently substituting fake implementations.
