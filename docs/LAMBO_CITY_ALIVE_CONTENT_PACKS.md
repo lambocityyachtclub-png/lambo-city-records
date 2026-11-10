@@ -61,3 +61,7 @@ The resolver and digest provider are trusted host dependencies. A production res
 The verified remote loader can be supplied as the URL resolver in `createContentPackHostLoader`. The host adapter's integrity callback should call the same trusted SHA-256 provider against the returned byte array and expected manifest digest. This intentionally keeps policy layers explicit: the verified loader owns allowlisted resolution and persistent-cache verification; the catalog adapter remains the common source-kind dispatcher. The host must supply the real digest implementation and persistent cache implementation, and must not substitute a callback that simply returns `true`.
 
 A browser implementation can provide a persistent cache backed by IndexedDB or Cache Storage, but that concrete storage choice is deliberately outside this runtime-independent module. The existing Studio audio asset database remains separate and is not repurposed as a general CDN cache.
+
+## Validation update
+
+The verified delivery/cache service is covered by the development CI suite. Latest completed run: 107 tests passed, 0 failed. This includes composition through the catalog host adapter, persistent cache hits, corrupt-cache eviction, origin allowlisting, byte-size enforcement, and tamper rejection. The cache is still an injected interface; no browser database or production CDN integration has been created.
