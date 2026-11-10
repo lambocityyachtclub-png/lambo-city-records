@@ -507,8 +507,11 @@
         unregister(name) { this.boxes = this.boxes.filter(box => box.name !== name); }
       };
       WorldSystemHost.init(hostScene, { systems: { collision: hostCollision } });
-      if (WorldSystemHost.isReady() || typeof window.__lamboCityWorldSystem?.initialize !== "function") {
-        throw new Error("The engine host initialized district runtime work before an explicit request.");
+      if (WorldSystemHost.isReady() ||
+          typeof window.__lamboCityWorldSystem?.initialize !== "undefined" ||
+          typeof window.__lamboCityWorldSystem?.setGateAccess !== "undefined" ||
+          typeof window.__lamboCityWorldSystem?.getGroundHeightAt !== "function") {
+        throw new Error("The browser-visible engine bridge must stay read-only until a trusted host explicitly initializes the runtime.");
       }
       await WorldSystemHost.initialize({
         districts: [recipeDistrict],
