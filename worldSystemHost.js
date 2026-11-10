@@ -175,9 +175,9 @@ export function createWorldSystemHost({ createRuntime = () => new WorldSystemRun
     }
   };
 
-  // The browser-visible bridge is deliberately read-only. Registration,
-  // building, gate grants, controller creation, and disposal remain private
-  // to trusted modules that hold this host instance.
+  // The browser-visible bridge is read-only to prevent accidental mutation.
+  // This is not a security boundary: client code is downloadable. Entitlements,
+  // purchases, private content, and multiplayer access must be authorized server-side.
   host.api = Object.freeze({
     isReady: () => host.isReady(),
     findRoute: (districtId, fromNodeId, toNodeId, options) =>
