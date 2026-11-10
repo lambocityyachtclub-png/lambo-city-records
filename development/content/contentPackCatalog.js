@@ -188,6 +188,23 @@ export function validateContentPackManifest(manifest) {
 }
 
 
+function awaitWithAbort(value, signal) {
+  if (!signal) return Promise.resolve(value);
+  if (signal.aborted) return Promise.reject(new Error("Content asset load was aborted."));
+  if (typeof signal.addEventListener !== "function" || typeof signal.removeEventListener !== "function") {
+    return Promise.reject(new Error("Content asset load signal is invalid."));
+  }
+  let onAbort;
+  const aborted = new Promise((_, reject) => {
+    onAbort = () => reject(new Error("Content asset load was aborted."));
+    signal.addEventListener("abort", onAbort, { once: true });
+    if (signal.aborted) onAbort();
+  });
+  return Promise.race([Promise.resolve(value), aborted]).finally(() => {
+    signal.removeEventListener("abort", onAbort);
+  });
+}
+
 function measureJsonByteSize(value, maxBytes) {
   const encoder = new TextEncoder();
   const seen = new Set();
