@@ -121,20 +121,18 @@ export async function createDevelopmentSystem(options = {}) {
       "Organizes development findings for LAMBO CITY Studio."
   });
 
-  // Register all temporary specialist workers in the development directory.
-  for (const worker of workerRoster.listWorkers()) {
-    if (worker.id === STUDIO_RUNNER_ID) continue;
-    registry.registerModule({
-      id: "worker-" + worker.id,
-      name: worker.name,
-      type: MODULE_TYPES.RUNNER,
-      version: workerRoster.version,
-      path: "development/engine/specialistWorkerRoster.js",
-      enabled: true,
-      capabilities: worker.capabilities,
-      description: worker.description
-    });
-  }
+  // Register the workforce as one managed module. Individual workers
+  // remain scoped entries within the roster rather than duplicate modules.
+  registry.registerModule({
+    id: "specialist-worker-roster",
+    name: "Specialist Development Workforce",
+    type: MODULE_TYPES.RUNNER,
+    version: workerRoster.version,
+    path: "development/engine/specialistWorkerRoster.js",
+    enabled: true,
+    capabilities: workerRoster.listWorkers().flatMap(worker => worker.capabilities),
+    description: "Coordinates eight domain-scoped development specialists."
+  });
 
   let status = DEVELOPMENT_SYSTEM_STATUS.READY;
 
@@ -197,7 +195,7 @@ export async function createDevelopmentSystem(options = {}) {
     disable,
     submitStudioFinding,
     submitStudioFindings,
-    submitWorkerFinding: (workerId, finding) => {
+    submitWorkerFinding: async (workerId, finding) => {
       if (status !== DEVELOPMENT_SYSTEM_STATUS.READY) {
         throw new Error("The development system is disabled.");
       }
