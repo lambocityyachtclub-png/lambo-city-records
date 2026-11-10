@@ -214,12 +214,12 @@ export function createVocalBoothPanel({ beatLab } = {}) {
           window.dispatchEvent(new CustomEvent("lc-vocal-recording-state",{detail:{recording:false,name:"Vocal Take "+String(takeCount).padStart(2,"0")}}));
           break;
         case "quick-note-start":{
-          if(StudioRecordingEngine.activeTake||StudioRecordingEngine.activeTrackTake)throw new Error("Finish the current recording before starting a Voice Note.");
+          if(StudioRecordingEngine.activeTake||StudioRecordingEngine.activeTrackTake||beatLab?.recordingStopPending)throw new Error("Finish saving the current recording before starting a Voice Note.");
           const audio=await StudioAudioEngine.resume();
           if(!audio||audio.state!=="running")throw new Error("Studio audio could not start.");
           let track=StudioMultitrackWorkspace.tracks.find(item=>item.type==="audio"&&item.name==="Voice Notes");
           if(!track){StudioMultitrackWorkspace.recordHistory("Create Voice Notes track");track=StudioMultitrackWorkspace.createTrack("audio","Voice Notes");}
-          await StudioRecordingEngine.startTrackRecording({audio,trackId:track.id,shouldCancel:()=>panelDisposed});
+          await StudioRecordingEngine.startTrackRecording({audio,trackId:track.id,shouldCancel:()=>panelDisposed||Boolean(beatLab?.recordingStopPending)});
           root.dataset.voiceNoteTrackId=track.id;
           recordingStartedAt=performance.now();
           recordingActive=true;
