@@ -781,6 +781,18 @@ const StudioDAWApp = {
         }
 
         event.preventDefault();
+        // During an active vocal take, Spacebar is a hard stop rather than
+        // a transport toggle. This keeps the shortcut predictable while recording.
+        if (StudioRecordingEngine.activeTake) {
+          void Floor2StudioApp.stopRecording()
+            .then(() => this.editScreen?.status("Vocal take stopped and saved."));
+          return;
+        }
+        if (Floor2StudioApp.recordingStartPending) {
+          Floor2StudioApp.cancelRecordingStart();
+          this.editScreen?.status("Vocal count-in cancelled.");
+          return;
+        }
         if (this.transportActionPending) {
           this.stopSessionPlayback();
           return;
@@ -811,6 +823,7 @@ const StudioDAWApp = {
   },
 
   close() {
+    Floor2StudioApp.cancelRecordingStart?.();
     StudioTalkback.stop();
     StudioTalkback.unbindAll();
     this.vocalsPanel?.dispatchEvent(new CustomEvent("lc-vocal-booth-dispose"));
