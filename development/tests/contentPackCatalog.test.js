@@ -185,3 +185,40 @@ test("rejects duplicate cache keys within and across content packs", () => {
     ]
   })), /duplicate cacheKey same-key within pack/);
 });
+
+
+test("enforces declared byte budgets against loaded buffers and Studio blobs", async () => {
+  const catalog = createContentPackCatalog({
+    loader: async ({ asset }) => asset.id === "buffered"
+      ? new Uint8Array([1, 2, 3])
+      : { id: asset.id, blob: { size: 3, async arrayBuffer() { return new ArrayBuffer(3); } } }
+  });
+  catalog.register(pack({
+    id: "lc.actual-size",
+    performanceBudget: { maxAssetBytes: 2, maxTotalBytes: 4 },
+    assets: [
+      {
+        id: "buffered",
+        category: "audio",
+        sizeBytes: 2,
+        source: { kind: "host", locator: "builtin:buffered", license: "owner-provided" }
+      },
+      {
+        id: "studio-blob",
+        category: "audio",
+        sizeBytes: 2,
+        source: { kind: "studio-audio-store", locator: "asset:studio-blob", license: "owner-provided" }
+      }
+    ]
+  }));
+
+  await assert.rejects(
+    catalog.loadAsset("lc.actual-size", "buffered"),
+    /loaded 3 bytes, exceeding its declared sizeBytes budget of 2/
+  );
+  await assert.rejects(
+    catalog.loadAsset("lc.actual-size", "studio-blob"),
+    /loaded 3 bytes, exceeding its declared sizeBytes budget of 2/
+  );
+  assert.equal(catalog.getSnapshot().cachedAssetCount, 0);
+});
