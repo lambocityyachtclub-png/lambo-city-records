@@ -28,7 +28,6 @@ on:
       - "world*.js"
       - "vehicleRoadController.js"
       - "worldDistricts/**"
-      - "vehicleRoadController.js"
       - "worldAccessGate.js"
       - "tests/**"
       - "scripts/validate-alive-worker-diff.mjs"
