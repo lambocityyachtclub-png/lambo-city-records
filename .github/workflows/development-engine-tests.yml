@@ -36,4 +36,6 @@ jobs:
             development/tests/isolatedWorkspaceAdapter.test.js \
             development/tests/developmentReviewStorage.test.js \
             development/tests/moduleLifecycleRegistry.test.js \
-            development/tests/developmentWorkspacePipeline.test.js
+            development/tests/developmentWorkspacePipeline.test.js \
+            development/tests/specialistWorkerRoster.test.js \
+            development/tests/specialistWorkerExecution.test.js
