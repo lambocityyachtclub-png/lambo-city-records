@@ -139,3 +139,49 @@ test("requires an injected loader for loading but still supports metadata discov
   assert.equal(catalog.listPacks().length, 1);
   await assert.rejects(catalog.loadAsset("lc.core.audio", "kick-01"), /no host loader/);
 });
+
+
+test("rejects duplicate cache keys within and across content packs", () => {
+  const catalog = createContentPackCatalog();
+  catalog.register(pack({
+    id: "lc.cache.owner",
+    assets: [{
+      id: "asset-one",
+      category: "audio",
+      sizeBytes: 10,
+      cacheKey: "shared-audio-key",
+      source: { kind: "host", locator: "builtin:one", license: "owner-provided" }
+    }]
+  }));
+
+  assert.throws(() => catalog.register(pack({
+    id: "lc.cache.collision",
+    assets: [{
+      id: "asset-two",
+      category: "audio",
+      sizeBytes: 10,
+      cacheKey: "shared-audio-key",
+      source: { kind: "host", locator: "builtin:two", license: "owner-provided" }
+    }]
+  })), /cacheKey shared-audio-key is already assigned/);
+
+  assert.throws(() => catalog.register(pack({
+    id: "lc.cache.internal-collision",
+    assets: [
+      {
+        id: "asset-a",
+        category: "audio",
+        sizeBytes: 10,
+        cacheKey: "same-key",
+        source: { kind: "host", locator: "builtin:a", license: "owner-provided" }
+      },
+      {
+        id: "asset-b",
+        category: "audio",
+        sizeBytes: 10,
+        cacheKey: "same-key",
+        source: { kind: "host", locator: "builtin:b", license: "owner-provided" }
+      }
+    ]
+  })), /duplicate cacheKey same-key within pack/);
+});
