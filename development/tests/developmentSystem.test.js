@@ -351,6 +351,10 @@ test("Development System disable guards every exposed specialist worker entry po
   assert.deepEqual(execution.getConfiguredWorkers(), ["studio"]);
   system.disable();
 
+  assert.throws(
+    () => system.workerRoster.setWorkerEnabled("studio", false),
+    /development system is disabled/
+  );
   await assert.rejects(
     () => system.workerRoster.submitFinding("studio", {
       title: "Disabled worker submission",
