@@ -180,6 +180,6 @@ The owner should only be asked to test the browser experience at meaningful cons
 
 ---
 
-**Latest implementation update:** PR #25 adds the shared versioned content-pack catalog and injected Studio/World host-adapter contracts. GitHub Actions passed 97 automated development tests on the latest PR #25 commit. The catalog remains metadata-only until a trusted host supplies loaders; it does not download, install, or preload content. Existing Studio IndexedDB and World district recipe/schema remain authoritative and unchanged.
+**Latest implementation update:** PR #25 adds the shared versioned content-pack catalog and injected Studio/World host-adapter contracts. GitHub Actions passed 100 automated development tests on the latest PR #25 code, including remote content origin and SHA-256 integrity failure cases. The catalog remains metadata-only until a trusted host supplies loaders; it does not download, install, or preload content. Existing Studio IndexedDB and World district recipe/schema remain authoritative and unchanged.
 
 **Immediate next step:** review the combined PR #23–#25 foundation, then separately design trusted asset integrity, delivery, and cache persistence. Keep the current engine and production runtime unchanged until compatibility is proven in an isolated preview.
