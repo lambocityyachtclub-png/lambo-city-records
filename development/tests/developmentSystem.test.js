@@ -384,12 +384,12 @@ test("Development System disable guards every exposed specialist worker entry po
     }),
     /development system is disabled/
   );
-  assert.throws(
-    () => execution.executeNextTask("studio"),
+  await assert.rejects(
+    execution.executeNextTask("studio"),
     /development system is disabled/
   );
-  assert.throws(
-    () => system.executeWorkerTask("studio"),
+  await assert.rejects(
+    system.executeWorkerTask("studio"),
     /development system is disabled/
   );
 });
