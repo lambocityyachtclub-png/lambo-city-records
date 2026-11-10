@@ -21,6 +21,7 @@ export function createVerifiedRemoteContentLoader(options = {}) {
   const resolve = options.resolve;
   const sha256 = options.sha256;
   const cache = options.cache || null;
+  const onCacheError = typeof options.onCacheError === "function" ? options.onCacheError : null;
   const maxAssetBytes = options.maxAssetBytes ?? 64 * 1024 * 1024;
 
   requireFunction(resolve, "resolve");
@@ -33,6 +34,12 @@ export function createVerifiedRemoteContentLoader(options = {}) {
     requireFunction(cache.get, "cache.get");
     requireFunction(cache.set, "cache.set");
     requireFunction(cache.delete, "cache.delete");
+  }
+
+  function reportCacheError(operation, error) {
+    if (onCacheError) {
+      try { onCacheError({ operation, error, quotaExceeded: error?.name === "QuotaExceededError" || error?.code === "CONTENT_CACHE_QUOTA" }); } catch {}
+    }
   }
 
   async function digestMatches(bytes, expected) {
@@ -63,16 +70,24 @@ export function createVerifiedRemoteContentLoader(options = {}) {
       ":sha256:" + integrity.digest.toLowerCase();
 
     if (cache) {
-      const cached = await cache.get(cacheKey);
+      let cached = null;
+      try { cached = await cache.get(cacheKey); }
+      catch (error) { reportCacheError("get", error); }
       if (cached !== undefined && cached !== null) {
+        let valid = false;
         try {
           const cachedBytes = toBytes(cached);
           if (cachedBytes.byteLength <= maxAssetBytes &&
-              await digestMatches(cachedBytes, integrity.digest)) return cachedBytes;
+              await digestMatches(cachedBytes, integrity.digest)) {
+            return cachedBytes;
+          }
         } catch {
           // Corrupt or incompatible cache entries are evicted and fetched again.
         }
-        await cache.delete(cacheKey);
+        if (!valid) {
+          try { await cache.delete(cacheKey); }
+          catch (error) { reportCacheError("delete", error); }
+        }
       }
     }
 
@@ -84,7 +99,10 @@ export function createVerifiedRemoteContentLoader(options = {}) {
     if (!await digestMatches(bytes, integrity.digest)) {
       throw new Error("Remote content failed SHA-256 integrity verification.");
     }
-    if (cache) await cache.set(cacheKey, bytes.slice());
+    if (cache) {
+      try { await cache.set(cacheKey, bytes.slice()); }
+      catch (error) { reportCacheError("set", error); }
+    }
     return bytes;
   };
 }
