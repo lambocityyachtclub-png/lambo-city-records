@@ -1,0 +1,20 @@
+{
+  "id": "vision-intake-review-v1",
+  "workerId": "vision-planning",
+  "title": "Harden the owner Vision Intake Planner",
+  "vision": "Review the new LAMBO CITY ALIVE Vision Intake & Task Planner as a production-quality development subsystem. The owner's goal is to communicate a vision in ordinary language and have ALIVE turn it into a safe, dependency-aware plan that separates first-launch work, foundation work, future ideas, and blocked decisions. Preserve the human approval gate, keep future and blocked work out of the execution queue, preserve the user's balanced launch strategy and owned-products-first commerce direction, and do not wire anything into the live website or production deployment. Inspect the existing implementation and make the smallest complete improvements to validation, dependency handling, error behavior, and tests. Do not invent an LLM provider or credentials; the planner remains injected by a trusted host.",
+  "acceptanceCriteria": [
+    "Vision plans reject malformed, duplicate, unsafe, or unauthorized work items and invalid dependency graphs.",
+    "Only explicitly selected launch or foundation tasks can enter the Development Director queue; future and blocked tasks remain outside execution.",
+    "Task creation preserves dependency order and owner approval requirements, with tests for partial failures or any newly handled edge cases.",
+    "The planner remains opt-in and does not import into the live game or access credentials, network, or production."
+  ],
+  "priority": "high",
+  "referenceFiles": [
+    "development/engine/visionIntakePlanner.js",
+    "development/engine/developmentDirector.js",
+    "development/engine/specialistWorkerRoster.js",
+    "development/automation/specialistWorkerPolicy.js",
+    "development/tests/visionIntakePlanner.test.js"
+  ]
+}
