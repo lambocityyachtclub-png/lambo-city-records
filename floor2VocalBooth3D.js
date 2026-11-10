@@ -9,9 +9,66 @@ let recordingStartedAt = 0;
 let recordingActive = false;
 let takeCount = 0;
 
-export function disposeVocalBoothPanel(beatLab, cleanup) {
+async function saveVoiceNoteTake(root, trackId) {
+  const take = await StudioRecordingEngine.stopTrackRecording(trackId);
+  let track = StudioMultitrackWorkspace.tracks.find(item => item.id === trackId);
+  if (!track) track = StudioMultitrackWorkspace.createTrack("audio", "Voice Notes");
+  const date = new Date();
+  const name = "Voice Note · " + date.toLocaleString();
+  const tempo = Math.max(20, Number(StudioMultitrackWorkspace.getTempoAtBar(StudioMultitrackWorkspace.playheadBar)) || 100);
+  const objectUrl = take.blob?.size && typeof URL !== "undefined" && typeof URL.createObjectURL === "function"
+    ? URL.createObjectURL(take.blob)
+    : null;
+  const clip = {
+    id: take.id,
+    name,
+    blob: take.blob,
+    recordingFormat: take.recordingFormat,
+    durationMs: take.durationMs,
+    createdAt: date.toISOString(),
+    startBar: Math.max(1, Number(StudioMultitrackWorkspace.playheadBar) || 1),
+    lengthBars: Math.max(.25, (take.durationMs / 1000) / (240 / tempo)),
+    objectUrl
+  };
+  track.clips.push(clip);
+  StudioMultitrackWorkspace.render();
+  StudioMultitrackWorkspace.scheduleProjectAutosave();
+  recordingActive = false;
+  if (root?.dataset) delete root.dataset.voiceNoteTrackId;
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent("lc-vocal-recording-state", {
+      detail: { recording: false, name, format: take.recordingFormat }
+    }));
+  }
+  return { take, name };
+}
+
+export async function disposeVocalBoothPanel(beatLab, cleanup, root) {
   if (beatLab?.recordingStartPending) beatLab.cancelRecordingStart?.();
   if (typeof cleanup === "function") cleanup();
+
+  try {
+    if (StudioRecordingEngine.activeTake) {
+      if (typeof beatLab?.stopRecording === "function") {
+        await beatLab.stopRecording();
+      } else {
+        const take = await StudioRecordingEngine.stopTake();
+        StudioMultitrackWorkspace.addRecordingTake(take);
+      }
+      recordingActive = false;
+      takeCount += 1;
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("lc-vocal-recording-state", {
+          detail: { recording: false, name: "Vocal Take " + String(takeCount).padStart(2, "0") }
+        }));
+      }
+    } else if (StudioRecordingEngine.activeTrackTake && root?.dataset?.voiceNoteTrackId) {
+      await saveVoiceNoteTake(root, root.dataset.voiceNoteTrackId);
+    }
+  } catch (error) {
+    recordingActive = false;
+    console.error("Vocal Booth disposal recording stop error:", error);
+  }
 }
 
 function formatTime(ms) {
@@ -102,11 +159,12 @@ export function createVocalBoothPanel({ beatLab } = {}) {
   window.addEventListener("lc-talkback-state",onTalkbackState);
   window.addEventListener("lc-talkback-error",onTalkbackError);
   const disposePanel = () => {
-    disposeVocalBoothPanel(beatLab,()=>{
+    const disposal = disposeVocalBoothPanel(beatLab,()=>{
       window.removeEventListener("lc-vocal-count-in",onCountIn);
       window.removeEventListener("lc-talkback-state",onTalkbackState);
       window.removeEventListener("lc-talkback-error",onTalkbackError);
-    });
+    },root);
+    disposal.catch(error=>console.error("Vocal Booth disposal failed:",error));
     if (activePanel?.root === root) activePanel = null;
   };
   root.addEventListener("lc-vocal-booth-dispose",disposePanel,{once:true});
@@ -169,22 +227,12 @@ export function createVocalBoothPanel({ beatLab } = {}) {
         case "quick-note-stop":{
           const trackId=root.dataset.voiceNoteTrackId;
           if(!trackId)return;
-          const take=await StudioRecordingEngine.stopTrackRecording(trackId);
-          const track=StudioMultitrackWorkspace.tracks.find(item=>item.id===trackId);
-          const date=new Date();
-          const name="Voice Note · "+date.toLocaleString();
-          const clip={id:take.id,name,blob:take.blob,recordingFormat:take.recordingFormat,durationMs:take.durationMs,createdAt:date.toISOString(),startBar:Math.max(1,Number(StudioMultitrackWorkspace.playheadBar)||1),lengthBars:Math.max(.25,(take.durationMs/1000)/(240/Math.max(20,Number(StudioMultitrackWorkspace.getTempoAtBar(StudioMultitrackWorkspace.playheadBar))||100))),objectUrl:take.blob?.size?URL.createObjectURL(take.blob):null};
-          track.clips.push(clip);
-          StudioMultitrackWorkspace.render();
-          StudioMultitrackWorkspace.scheduleProjectAutosave();
-          recordingActive=false;
+          const result=await saveVoiceNoteTake(root,trackId);
           button.disabled=false;
           root.querySelector('[data-vocal-action="quick-note-start"]').disabled=false;
           root.querySelector('[data-vocal-action="quick-note-stop"]').disabled=true;
           voiceStatus("Saved to the shared song timeline.");
-          showTake(name,take.recordingFormat);
-          window.dispatchEvent(new CustomEvent("lc-vocal-recording-state",{detail:{recording:false,name,format:take.recordingFormat}}));
-          delete root.dataset.voiceNoteTrackId;
+          showTake(result.name,result.take.recordingFormat);
           break;
         }
         case "export-vocals":
