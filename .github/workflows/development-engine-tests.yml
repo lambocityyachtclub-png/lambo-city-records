@@ -8,11 +8,23 @@ on:
       - "development/**"
       - "scripts/validate-alive-worker-diff.mjs"
       - "scripts/test-alive-worker-diff-gate.mjs"
+      - "api/alive/**"
+      - "server/alive/**"
+      - "alive.html"
+      - "alive.js"
+      - "alive.css"
+      - "vercel.json"
       - ".github/workflows/development-engine-tests.yml"
 
   pull_request:
     paths:
       - "development/**"
+      - "api/alive/**"
+      - "server/alive/**"
+      - "alive.html"
+      - "alive.js"
+      - "alive.css"
+      - "vercel.json"
       - ".github/workflows/development-engine-tests.yml"
 
   workflow_dispatch:
@@ -35,6 +47,16 @@ jobs:
       - name: Run complete Development Engine test suite
         run: |
           node --experimental-default-type=module --test development/tests/*.test.js
+
+      - name: Syntax-check private ALIVE owner workspace
+        run: |
+          node --check alive.js
+          node --experimental-default-type=module --check api/alive/session.js
+          node --experimental-default-type=module --check api/alive/vision.js
+          node --experimental-default-type=module --check api/alive/status.js
+          node --experimental-default-type=module --check server/alive/security.js
+          node --experimental-default-type=module --check server/alive/visionTask.js
+          node -e 'JSON.parse(require("node:fs").readFileSync("vercel.json", "utf8"))'
 
       - name: Test worker path and file-type validation
         run: node --experimental-default-type=module scripts/test-alive-worker-diff-gate.mjs
