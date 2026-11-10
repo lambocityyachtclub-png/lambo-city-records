@@ -24,29 +24,26 @@ const floor2Modules = [
 
 for (const moduleName of floor2Modules) {
   const staticImport = new RegExp(
-    String.raw`import\\s+[^;]+from\\s+["']\\./${moduleName}\\.js["']`
-  );
-  const lazyImport = new RegExp(
-    String.raw`import\\(["']\\./${moduleName}\\.js["']\\)`
+    "import\\s+[^;]+from\\s+[\"']\\.\\/" + moduleName + "\\.js[\"']"
   );
   assert.doesNotMatch(main, staticImport,
     moduleName + " must not be statically loaded with the initial world");
-  assert.match(main, lazyImport,
+  assert.ok(main.includes('import("./' + moduleName + '.js")'),
     moduleName + " must be dynamically loaded when Floor 2 is selected");
 }
 
 assert.match(main, /floor !== 2 && floor !== 3 && floor !== 4/,
   "Floor 2 loading must be an explicit destination action");
-assert.match(main, /window\\.__lamboCityFloor2Ready = true/,
+assert.match(main, /window\.__lamboCityFloor2Ready = true/,
   "Floor 2 readiness must be published only after initialization");
-assert.match(main, /await Promise\\.resolve\\(systems\\[name\\]\\.init\\(\\.\\.\\.args\\)\\)/,
+assert.match(main, /await Promise\.resolve\(systems\[name\]\.init\(\.\.\.args\)\)/,
   "the elevator must wait for asynchronous Studio initialization");
-assert.match(main, /window\\.__lamboCityFloor2Ready = false/,
+assert.match(main, /window\.__lamboCityFloor2Ready = false/,
   "Floor 2 must be marked unavailable while loading");
 
 for (const moduleName of floor2Modules) {
   const startupInit = new RegExp(
-    String.raw`this\\.systems\\.${moduleName}\\?\\.init`
+    "this\\.systems\\." + moduleName + "\\?\\.init"
   );
   assert.doesNotMatch(engine, startupInit,
     moduleName + " must not initialize during the initial engine boot");
