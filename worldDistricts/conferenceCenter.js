@@ -28,7 +28,6 @@ const boardwalkEdgeZ = CITY_MAP.districts.marinaBoardwalk.road.maxZ;
 const serviceEntryZ = boardwalkEdgeZ;
 const boardwalkSidewalkZ = CITY_MAP.districts.marinaBoardwalk.sidewalks[1].centerZ;
 const arrivalZ = centerZ - MASTER_ARENA.arena.footprintDepth / 2 - 1;
-const walkArenaZ = walkSouthZ + (arrivalZ - walkSouthZ) * 0.7;
 const westVillaX = MASTER_BOULEVARD.centerX - MASTER_BOULEVARD.outerWidth / 2 - 13.5;
 const eastVillaX = MASTER_BOULEVARD.centerX + MASTER_BOULEVARD.outerWidth / 2 + 13.5;
 const northVillaZ = MASTER_BOULEVARD.centerZ + MASTER_BOULEVARD.outerDepth / 2 + 9.5;
@@ -83,7 +82,6 @@ const CONFERENCE_CENTER_DISTRICT = Object.freeze({
       Object.freeze({ id: "walk-east-north", x: walkEastX, z: walkNorthZ, surface: "sidewalk" }),
       Object.freeze({ id: "walk-north-east", x: loopEastX, z: walkNorthZ, surface: "sidewalk" }),
       Object.freeze({ id: "walk-north-west", x: walkWestX, z: walkNorthZ, surface: "sidewalk" }),
-      Object.freeze({ id: "walk-arena-approach", x: serviceX, z: walkArenaZ, surface: "sidewalk" })
     ]),
     segments: Object.freeze([
       Object.freeze({ id: "boulevard-south-west", from: "boulevard-south-west", to: "boulevard-south-access-junction", mode: "vehicle", lanes: 2, width: MASTER_BOULEVARD.roadWidth, sidewalkOffset: southSidewalkOffset, sidewalkSides: Object.freeze([-1]), loop: true }),
@@ -99,8 +97,6 @@ const CONFERENCE_CENTER_DISTRICT = Object.freeze({
       Object.freeze({ id: "walk-north-east", from: "walk-east-north", to: "walk-north-east", mode: "pedestrian", navigationOnly: true }),
       Object.freeze({ id: "walk-north-west", from: "walk-north-east", to: "walk-north-west", mode: "pedestrian", navigationOnly: true }),
       Object.freeze({ id: "walk-west", from: "walk-north-west", to: "walk-south-west", mode: "pedestrian", navigationOnly: true }),
-      Object.freeze({ id: "walk-to-arena-crossing", from: "walk-south-entry", to: "walk-arena-approach", mode: "pedestrian", navigationOnly: true }),
-      Object.freeze({ id: "walk-arena-arrival", from: "walk-arena-approach", to: "arena-arrival-approach", mode: "pedestrian", navigationOnly: true })
     ])
   }),
 
