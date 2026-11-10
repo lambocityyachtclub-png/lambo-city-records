@@ -159,8 +159,8 @@ This service must remain separate from the live game runtime. Do not give genera
 | P1 | Prove universal module manifest/lifecycle registry in isolation | Prototype + automated tests in PR #23; awaiting review and hardening |
 | P1 | Inventory all module imports, dependencies, empty files, and load costs | In progress |
 | P1 | Validate Studio PR #20 automated workflow and preview | Automated workflow passed; browser microphone acceptance pending |
-| P2 | Build versioned Studio sound/instrument/effect catalog | Audit found recording asset persistence; sound-pack manifest/catalog still planned |
-| P2 | Build reusable world content/recipe catalog | District recipe compiler/schema already exist; shared content-pack manifest still planned |
+| P2 | Build versioned Studio sound/instrument/effect catalog | Shared manifest/catalog and injected Studio asset-store adapter prototype in PR #25; no production connection |
+| P2 | Build reusable world content/recipe catalog | Shared manifest/catalog and injected World recipe resolver + district validator adapter prototype in PR #25; no production connection |
 | P2 | Add World/NPC/Real Estate/Entertainment specialist runners | Planned |
 | P3 | Connect durable hosted task orchestration and review | Partial pipeline adapter prototype in PR #23; hosted orchestration and sandboxing still require design |
 | P3 | Begin controlled location-by-location world expansion | Planned |
@@ -180,4 +180,6 @@ The owner should only be asked to test the browser experience at meaningful cons
 
 ---
 
-**Immediate next step:** review and harden the PR #23 module lifecycle and workspace-pipeline prototypes. Keep the current engine unchanged until compatibility is proven with a non-critical module in an isolated preview.
+**Latest implementation update:** PR #25 adds the shared versioned content-pack catalog and injected Studio/World host-adapter contracts. GitHub Actions passed 97 automated development tests on the latest PR #25 commit. The catalog remains metadata-only until a trusted host supplies loaders; it does not download, install, or preload content. Existing Studio IndexedDB and World district recipe/schema remain authoritative and unchanged.
+
+**Immediate next step:** review the combined PR #23–#25 foundation, then separately design trusted asset integrity, delivery, and cache persistence. Keep the current engine and production runtime unchanged until compatibility is proven in an isolated preview.
