@@ -133,6 +133,34 @@ test("loads a declared fallback asset when the primary host load fails", async (
   assert.deepEqual(await catalog.loadAsset("lc.primary", "primary"), { id: "backup" });
 });
 
+test("rejects a fallback that resolves to its own in-flight cache key", async () => {
+  let loaderCalls = 0;
+  const catalog = createContentPackCatalog({
+    loader: async () => {
+      loaderCalls += 1;
+      throw new Error("primary asset unavailable");
+    }
+  });
+  catalog.register(pack({
+    id: "lc.self-fallback",
+    assets: [{
+      id: "self",
+      category: "audio",
+      sizeBytes: 16,
+      source: { kind: "host", locator: "builtin:self", license: "owner-provided" },
+      fallback: { packId: "lc.self-fallback", assetId: "self" }
+    }]
+  }));
+
+  await assert.rejects(
+    catalog.loadAsset("lc.self-fallback", "self"),
+    /Content fallback cycle detected/
+  );
+  assert.equal(loaderCalls, 1, "a self-referential fallback must not await its own shared promise");
+  assert.equal(catalog.getSnapshot().loadingAssetCount, 0);
+  assert.equal(catalog.getSnapshot().cachedAssetCount, 0);
+});
+
 test("requires an injected loader for loading but still supports metadata discovery", async () => {
   const catalog = createContentPackCatalog();
   catalog.register(pack());
