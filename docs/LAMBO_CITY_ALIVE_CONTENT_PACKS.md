@@ -55,3 +55,9 @@ These are adapter contract proofs with injected services, not a connection to pr
 The service verifies every cache hit before reuse, evicts corrupt cache entries, enforces a maximum byte size, verifies downloaded bytes against the manifest digest before caching, and never writes unverified bytes to persistence. The cache interface is intentionally storage-agnostic: a browser host may later implement it with IndexedDB or Cache Storage, while tests use an in-memory adapter. This prototype does not create a database or choose a storage quota policy.
 
 The resolver and digest provider are trusted host dependencies. A production resolver must handle authentication, request cancellation, network timeouts, and approved CDN configuration; the digest provider must calculate real SHA-256 over the returned bytes. The service itself does not assume browser globals or perform network requests.
+
+## Composing the verified loader with the catalog host adapter
+
+The verified remote loader can be supplied as the URL resolver in `createContentPackHostLoader`. The host adapter's integrity callback should call the same trusted SHA-256 provider against the returned byte array and expected manifest digest. This intentionally keeps policy layers explicit: the verified loader owns allowlisted resolution and persistent-cache verification; the catalog adapter remains the common source-kind dispatcher. The host must supply the real digest implementation and persistent cache implementation, and must not substitute a callback that simply returns `true`.
+
+A browser implementation can provide a persistent cache backed by IndexedDB or Cache Storage, but that concrete storage choice is deliberately outside this runtime-independent module. The existing Studio audio asset database remains separate and is not repurposed as a general CDN cache.
