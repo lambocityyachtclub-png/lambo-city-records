@@ -153,6 +153,7 @@ const StudioRecordingEngine = {
         pcmRecorder = await createStudioPCMRecorder(audio);
         if (isCancelled()) throw new Error("Track recording start was cancelled.");
       } catch (error) {
+        if (isCancelled()) throw new Error("Track recording start was cancelled.");
         console.warn("LAMBO CITY PCM capture unavailable; using browser MediaRecorder fallback:", error);
       }
       destination = pcmRecorder?.node || audio.createMediaStreamDestination();
