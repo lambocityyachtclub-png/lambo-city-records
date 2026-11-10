@@ -22,6 +22,7 @@ export function createContentPackRuntime(options = {}) {
     : null);
   let remoteLoader = null;
   let disposed = false;
+  const activeLoadControllers = new Set();
 
   if (resolveRemote || sha256 || remoteCache || options.allowedUrlOrigins) {
     if (typeof resolveRemote !== "function" || typeof sha256 !== "function") {
@@ -61,27 +62,48 @@ export function createContentPackRuntime(options = {}) {
     if (disposed) throw new Error("Content pack runtime has been disposed.");
   }
 
-  async function loadAsset(...args) {
+  async function loadAsset(packId, assetId, loadOptions = {}) {
     assertActive();
+    if (typeof AbortController !== "function") {
+      throw new Error("Content runtime requires AbortController support for safe asset disposal.");
+    }
+    const optionsForLoad = loadOptions && typeof loadOptions === "object" ? loadOptions : {};
+    const controller = new AbortController();
+    const externalSignal = optionsForLoad.signal || null;
+    const abortFromExternal = () => controller.abort(externalSignal?.reason);
+    if (externalSignal?.aborted) controller.abort(externalSignal.reason);
+    else externalSignal?.addEventListener?.("abort", abortFromExternal, { once: true });
+    activeLoadControllers.add(controller);
+
     try {
-      const value = await catalog.loadAsset(...args);
+      const value = await catalog.loadAsset(packId, assetId, {
+        ...optionsForLoad,
+        signal: controller.signal
+      });
       if (disposed) {
         catalog.clearCache();
         throw new Error("Content pack runtime was disposed while an asset was loading.");
       }
+      if (controller.signal.aborted) throw new Error("Content asset load was aborted.");
       return value;
     } catch (error) {
       if (disposed) {
         catalog.clearCache();
         throw new Error("Content pack runtime was disposed while an asset was loading.");
       }
+      if (controller.signal.aborted) throw new Error("Content asset load was aborted.");
       throw error;
+    } finally {
+      activeLoadControllers.delete(controller);
+      externalSignal?.removeEventListener?.("abort", abortFromExternal);
     }
   }
 
   async function dispose() {
     if (disposed) return;
     disposed = true;
+    for (const controller of activeLoadControllers) controller.abort("Content pack runtime disposed.");
+    activeLoadControllers.clear();
     catalog.clearCache();
     if (ownsRemoteCache && typeof remoteCache?.close === "function") {
       await remoteCache.close();
