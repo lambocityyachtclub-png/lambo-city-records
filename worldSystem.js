@@ -310,7 +310,7 @@ export default class WorldSystem {
 
     return new VehicleRoadController(district, initialState, {
       ...vehicleOptions,
-      getPermissions: () => this._getVehiclePermissions(districtId, initialState),
+      getPermissions: () => this._getVehiclePermissions(districtId),
       getOpenGates: () => this.getOpenGateIds(districtId)
     });
   }
