@@ -14,6 +14,13 @@ export const WORKER_ROSTER_VERSION = "1.0.0";
 
 const WORKERS = Object.freeze([
   {
+    id: "vision-planning",
+    name: "Vision Planning & Product Systems Specialist",
+    description: "Turns owner direction into dependency-aware launch, foundation, future and blocked work plans.",
+    areas: ["vision_intake", "product_planning", "roadmap_architecture", "dependency_planning"],
+    capabilities: ["vision_decomposition", "dependency_mapping", "launch_scope_planning"]
+  },
+  {
     id: "studio",
     name: "Studio & DAW Specialist",
     description: "Floor 2 Studio stations, recording, editing, MPC, piano, Beat Lab, mixing and workflow.",

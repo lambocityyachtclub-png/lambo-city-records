@@ -13,10 +13,10 @@ async function makeRoster() {
 test("roster exposes the complete temporary specialist workforce", async () => {
   const { roster } = await makeRoster();
   const workers = roster.listWorkers();
-  assert.equal(workers.length, 8);
+  assert.equal(workers.length, 9);
   assert.deepEqual(
     workers.map(worker => worker.id).sort(),
-    ["audio-assets", "convention-center", "environment-water", "performance-qa", "security-release", "studio", "world-architecture", "yachts-vehicles"].sort()
+    ["audio-assets", "convention-center", "environment-water", "performance-qa", "security-release", "studio", "vision-planning", "world-architecture", "yachts-vehicles"].sort()
   );
   assert.ok(workers.every(worker => worker.enabled));
   assert.ok(workers.every(worker => worker.restrictions.some(item => item.includes("No direct repository writes"))));

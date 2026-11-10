@@ -44,6 +44,10 @@ import {
   HOSTED_SPECIALIST_QUEUE_VERSION
 } from "../execution/hostedSpecialistQueueAdapter.js";
 
+import {
+  createVisionIntakePlanner
+} from "./visionIntakePlanner.js";
+
 export const DEVELOPMENT_SYSTEM_VERSION = "1.0.0";
 
 export const DEVELOPMENT_SYSTEM_STATUS = Object.freeze({
@@ -92,6 +96,14 @@ export async function createDevelopmentSystem(options = {}) {
         developmentDirector: director,
         workerRoster,
         ...options.hostedQueue
+      })
+    : null;
+
+  const visionIntake = options.visionPlanner
+    ? createVisionIntakePlanner({
+        planner: options.visionPlanner,
+        workerRoster,
+        developmentDirector: director
       })
     : null;
 
@@ -172,6 +184,19 @@ export async function createDevelopmentSystem(options = {}) {
     });
   }
 
+  if (visionIntake) {
+    registry.registerModule({
+      id: "vision-intake-planner",
+      name: "Vision Intake & Task Planner",
+      type: MODULE_TYPES.ENGINE,
+      version: "1.0.0",
+      path: "development/engine/visionIntakePlanner.js",
+      enabled: true,
+      capabilities: ["vision-decomposition", "dependency-planning", "launch-scope-classification"],
+      description: "Validates owner vision plans and submits selected work to the Development Director."
+    });
+  }
+
   let status = DEVELOPMENT_SYSTEM_STATUS.READY;
 
   function getStatus() {
@@ -197,6 +222,7 @@ export async function createDevelopmentSystem(options = {}) {
         : [],
       hostedQueueConfigured: Boolean(hostedQueue),
       hostedQueue: hostedQueue ? hostedQueue.getSnapshot() : null,
+      visionIntakeConfigured: Boolean(visionIntake),
       policy
     };
   }
@@ -306,6 +332,17 @@ export async function createDevelopmentSystem(options = {}) {
       }
       return hostedQueueView.dispatchNextTask(workerId);
     },
-    getHostedQueue: () => hostedQueueView
+    getHostedQueue: () => hostedQueueView,
+    intakeVision: async vision => {
+      assertReady();
+      if (!visionIntake) throw new Error("Vision planner adapter has not been configured by the trusted host.");
+      return visionIntake.intakeVision({ vision });
+    },
+    getVisionPlan: () => visionIntake ? visionIntake.getPlan() : null,
+    submitVisionTasks: async taskKeys => {
+      assertReady();
+      if (!visionIntake) throw new Error("Vision planner adapter has not been configured by the trusted host.");
+      return visionIntake.submitPlanTasks(taskKeys);
+    }
   });
 }

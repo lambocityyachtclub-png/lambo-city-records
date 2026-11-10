@@ -10,6 +10,16 @@ const COMMON_TEST_PATHS = Object.freeze([
 ]);
 
 const WORKERS = Object.freeze({
+  "vision-planning": Object.freeze({
+    name: "Vision Planning & Product Systems Specialist",
+    description: "Vision intake, task decomposition, launch sequencing and dependency planning.",
+    allowedPaths: Object.freeze([
+      "development/engine/visionIntakePlanner.js",
+      "development/planning/",
+      "development/tests/",
+      "docs/LAMBO_CITY_ALIVE_"
+    ])
+  }),
   "studio": Object.freeze({
     name: "Studio & DAW Specialist",
     description: "Studio stations, recording, editing, MPC, piano, Beat Lab, mixing, effects and project workflow.",

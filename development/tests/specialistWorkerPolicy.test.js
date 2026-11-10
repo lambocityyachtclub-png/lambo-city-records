@@ -20,9 +20,9 @@ function task(overrides = {}) {
   };
 }
 
-test("all eight roster workers have bounded change scopes", () => {
+test("all nine roster workers have bounded change scopes", () => {
   const ids = [
-    "studio", "audio-assets", "world-architecture", "environment-water",
+    "vision-planning", "studio", "audio-assets", "world-architecture", "environment-water",
     "yachts-vehicles", "convention-center", "performance-qa", "security-release"
   ];
   for (const id of ids) {
