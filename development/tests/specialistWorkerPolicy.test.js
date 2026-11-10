@@ -74,6 +74,16 @@ test("a specialist cannot change files outside its declared scope", () => {
   );
 });
 
+test("all specialists are blocked from private owner API and server security code", () => {
+  for (const id of [
+    "vision-planning", "studio", "audio-assets", "world-architecture", "environment-water",
+    "yachts-vehicles", "convention-center", "performance-qa", "security-release"
+  ]) {
+    assert.throws(() => isWorkerPathAllowed(id, "api/alive/session.js"), /Protected repository path/);
+    assert.throws(() => isWorkerPathAllowed(id, "server/alive/security.js"), /Protected repository path/);
+  }
+});
+
 test("all workers are blocked from production wiring and deployment controls", () => {
   for (const id of [
     "vision-planning", "studio", "audio-assets", "world-architecture", "environment-water",
