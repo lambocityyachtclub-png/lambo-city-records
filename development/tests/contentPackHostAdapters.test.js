@@ -69,6 +69,7 @@ test("remote URL assets require allowlisted HTTPS and successful integrity verif
   assert.equal(verified, 1);
   await assert.rejects(loader(request("url", "http://assets.example.invalid/a.wav")), /not allowlisted for HTTPS/);
   await assert.rejects(loader(request("url", "https://untrusted.example.invalid/a.wav")), /not allowlisted for HTTPS/);
+  await assert.rejects(loader(request("url", "https://user:secret@assets.example.invalid/a.wav")), /must not contain embedded credentials/);
 });
 
 test("remote URL assets fail closed when integrity verification fails or is not configured", async () => {
