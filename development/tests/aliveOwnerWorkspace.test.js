@@ -79,7 +79,7 @@ test("owner vision task is bounded and carries the project planning guardrails",
 });
 
 test("owner vision task rejects blank, oversized, and malformed IDs", () => {
-  assert.throws(() => createOwnerVisionTask(" "), /vision/i);
+  assert.throws(() => createOwnerVisionTask(" "), /Owner vision is required/);
   assert.throws(() => createOwnerVisionTask("x".repeat(8001)), /8,000/);
   assert.throws(() => createOwnerVisionTask("A vision", { id: "../unsafe" }), /task ID/i);
 });
@@ -234,7 +234,10 @@ test("vision endpoint writes only a validated owner task to the fixed queue bran
       assert.match(response.payload.taskId, /^owner-vision-/);
       assert.equal(response.payload.commitSha, "a".repeat(40));
       assert.match(requestedUrl, /development\/queue\/incoming\/owner-vision-/);
-      assert.equal(requestedBody.branch, undefined);
+      assert.equal(requestedBody.branch, "integration/lc-alive-agentic-worker-2026-11-10");
+      const queuedTask = JSON.parse(Buffer.from(requestedBody.content, "base64").toString("utf8"));
+      assert.equal(queuedTask.workerId, "vision-planning");
+      assert.equal(queuedTask.branch, undefined);
       assert.equal(requestedAuth, "Bearer " + REPO_TOKEN);
     });
   } finally {
