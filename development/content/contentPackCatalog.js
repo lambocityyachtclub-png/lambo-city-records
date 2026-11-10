@@ -404,6 +404,7 @@ export function createContentPackCatalog(options = {}) {
   }
 
   async function loadAsset(packId, assetId, loadOptions = {}) {
+    if (loadOptions.signal?.aborted) throw new Error("Content asset load was aborted.");
     if (typeof loader !== "function") fail("no host loader was supplied; metadata can still be browsed.");
     const { pack, asset } = findAsset(packId, assetId);
     resolvePackOrder(packId);
@@ -417,17 +418,21 @@ export function createContentPackCatalog(options = {}) {
           pack: getPack(pack.id),
           asset,
           source: asset.source,
-          dependencyOrder: resolvePackOrder(packId)
+          dependencyOrder: resolvePackOrder(packId),
+          signal: loadOptions.signal || null
         }));
+        if (loadOptions.signal?.aborted) throw new Error("Content asset load was aborted.");
         if (value === undefined || value === null) throw new Error("Host loader returned no asset value.");
         const loadedByteSize = getLoadedByteSize(value, asset.sizeBytes);
         if (loadedByteSize !== null && loadedByteSize > asset.sizeBytes) {
           throw new Error("Asset " + pack.id + "/" + asset.id + " loaded " + loadedByteSize +
             " bytes, exceeding its declared sizeBytes budget of " + asset.sizeBytes + ".");
         }
+        if (loadOptions.signal?.aborted) throw new Error("Content asset load was aborted.");
         cache.set(cacheKey, value);
         return value;
       } catch (error) {
+        if (loadOptions.signal?.aborted) throw new Error("Content asset load was aborted.");
         if (!asset.fallback || loadOptions.disableFallback === true) throw error;
         return loadAsset(asset.fallback.packId, asset.fallback.assetId, {
           ...loadOptions, forceReload: false, disableFallback: true
