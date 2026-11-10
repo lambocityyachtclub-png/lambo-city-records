@@ -32,7 +32,7 @@ assert.match(liveArenaSource, /lamboCityConferenceCenterLandmark/,
   "the protected arena shell must have an independent visibility root");
 assert.doesNotMatch(liveArenaSource, /arenaBoulevardSouth|arenaBoulevardNorth|arenaBoulevardWest|arenaBoulevardEast/,
   "legacy arena roads must not duplicate the generated road network");
-assert.match(liveWorldSystemSource, /getPermissions:\s*\(\)\s*=>\s*this\._getVehiclePermissions\(districtId, initialState\)/,
+assert.match(liveWorldSystemSource, /getPermissions:\s*\(\)\s*=>\s*this\._getVehiclePermissions\(districtId\)/,
   "vehicle controllers must read permission state from the trusted World System provider");
 assert.match(liveWorldSystemSource, /getOpenGates:\s*\(\)\s*=>\s*this\.getOpenGateIds\(districtId\)/,
   "vehicle controllers must read gate state live instead of trusting caller-supplied IDs");
