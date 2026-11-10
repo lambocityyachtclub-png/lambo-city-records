@@ -65,7 +65,7 @@ For repeatable neighborhoods, start with `createDistrictFromRecipe(recipe)`. The
 A district blueprint contains:
 
 - A unique `id`, a readable `name`, and rectangular `bounds`.
-- A `roadNetwork` with unique nodes and connected segments.
+- A `roadNetwork` with unique nodes and connected vehicle/service segments plus a separately connected pedestrian network. The validator checks each travel mode independently, so a sidewalk can connect around a restricted road without inventing an unsafe vehicle-lane crossing.
 - Optional `navigationOnly: true` segments for pedestrian or other route links that must not generate another road surface.
 - Optional `terrainZones` with center, width, depth, edge elevation, top elevation, transition width, and a surface color.
 - Optional `landscapeZones` for small planted courtyards.
