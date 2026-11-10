@@ -281,3 +281,25 @@ test("rejects cyclic nested content wrappers during byte measurement", async () 
   );
   assert.equal(catalog.getSnapshot().cachedAssetCount, 0);
 });
+
+
+test("rejects array toJSON hooks that could bypass declared size budgets", async () => {
+  const payload = ["small"];
+  payload.toJSON = () => ({ expanded: "this serialized payload exceeds the declared budget" });
+  const catalog = createContentPackCatalog({ loader: async () => payload });
+  catalog.register(pack({
+    id: "lc.array-to-json",
+    assets: [{
+      id: "array-hook",
+      category: "recipe",
+      sizeBytes: 16,
+      source: { kind: "host", locator: "builtin:array-hook", license: "owner-provided" }
+    }]
+  }));
+
+  await assert.rejects(
+    catalog.loadAsset("lc.array-to-json", "array-hook"),
+    /Custom toJSON assets must provide an explicit measured sizeBytes value/
+  );
+  assert.equal(catalog.getSnapshot().cachedAssetCount, 0);
+});
