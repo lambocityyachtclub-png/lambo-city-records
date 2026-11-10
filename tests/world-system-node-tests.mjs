@@ -196,6 +196,19 @@ for (const nodeId of ["boulevard-south-west", "boulevard-south-east"]) {
   ).valid, true, "the south boulevard corners must also support a full passenger-car U-turn");
 }
 assert.equal(CONFERENCE_CENTER_DISTRICT.roadNetwork.segments.filter(segment => segment.id.startsWith("boulevard-") && segment.sidewalkOffset).length, 5);
+for (const segmentId of ["boulevard-south-west", "boulevard-south-east"]) {
+  const segment = CONFERENCE_CENTER_DISTRICT.roadNetwork.segments.find(item => item.id === segmentId);
+  assert.deepEqual(segment.sidewalkSides, [1],
+    "the south boulevard sidewalk must be generated on the south-facing side, away from the arena and vehicle lane");
+}
+const southWestRoadNode = CONFERENCE_CENTER_DISTRICT.roadNetwork.nodes.find(node => node.id === "boulevard-south-west");
+const southAccessNode = CONFERENCE_CENTER_DISTRICT.roadNetwork.nodes.find(node => node.id === "boulevard-south-access-junction");
+const southRoadMidX = (southWestRoadNode.x + southAccessNode.x) / 2;
+const southRoadSidewalkZ = southWestRoadNode.z - (CONFERENCE_CENTER_DISTRICT.roadNetwork.segments.find(item => item.id === "boulevard-south-west").sidewalkOffset);
+assert.ok(Math.abs(terrain.sampleRoadSurfaceHeight(CONFERENCE_CENTER_DISTRICT, southRoadMidX, southRoadSidewalkZ, {
+  roadTopY: 0.77, sidewalkTopY: 0.82, sidewalkWidth: 3
+}) - 0.82) < 0.001, "the south boulevard sidewalk must have a matching physical elevation sample");
+
 assert.equal(CONFERENCE_CENTER_DISTRICT.roadNetwork.nodes.filter(node => node.turningArea?.width === 18 && node.turningArea?.depth === 18).length, 4);
 assert.equal(
   CONFERENCE_CENTER_DISTRICT.roadNetwork.nodes.find(node => node.id === "boardwalk-service-entry").z,
