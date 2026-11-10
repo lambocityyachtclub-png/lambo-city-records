@@ -255,6 +255,12 @@ function measureJsonByteSize(value, maxBytes) {
 const MAX_JSON_SIZE_MEASUREMENT_BYTES = 16 * 1024 * 1024;
 
 function getLoadedByteSize(value, maxBytes) {
+  if (typeof value === "boolean" || typeof value === "number") {
+    return new TextEncoder().encode(JSON.stringify(value)).byteLength;
+  }
+  if (typeof value === "function" || typeof value === "symbol" || typeof value === "bigint") {
+    throw new Error("Non-serializable content assets must expose a supported byte representation or measured sizeBytes.");
+  }
   if (typeof value === "string") {
     if (value.length > maxBytes) return maxBytes + 1;
     return new TextEncoder().encode(value).byteLength;
