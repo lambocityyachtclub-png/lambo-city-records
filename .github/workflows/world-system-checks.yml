@@ -8,6 +8,7 @@ on:
   pull_request:
     paths:
       - "world*.js"
+      - "vehicleRoadController.js"
       - "worldDistricts/**"
       - "world-system-preview.html"
       - "world-district-composer.html"
