@@ -30,7 +30,10 @@ jobs:
           fetch-depth: 0
 
       - name: Install GitHub Copilot CLI
-        run: npm install --global @github/copilot
+        run: npm install --global @github/copilot@1.0.108
+
+      - name: Verify pinned Copilot CLI version
+        run: copilot --version | tee /tmp/copilot-version.txt && grep -F "1.0.108" /tmp/copilot-version.txt
 
       - name: Prepare the bounded review prompt
         shell: bash
