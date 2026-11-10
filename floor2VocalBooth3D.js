@@ -116,7 +116,8 @@ export function createVocalBoothPanel({ beatLab } = {}) {
           status("Beat session stopped.");
           break;
         case "record":
-          if(recordingActive||beatLab.recordingStartPending)return;
+          if(recordingActive)return;
+          if(beatLab.recordingStartPending){beatLab.cancelRecordingStart?.();return;}
           status("Four-count starting…");
           await beatLab.startRecording();
           if(!StudioRecordingEngine.activeTake)return;
