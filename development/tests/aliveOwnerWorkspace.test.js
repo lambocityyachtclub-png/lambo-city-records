@@ -17,6 +17,7 @@ import sessionHandler from "../../api/alive/session.js";
 import visionHandler from "../../api/alive/vision.js";
 import statusHandler from "../../api/alive/status.js";
 import { verifyPrivateQueue } from "../../server/alive/privateQueue.js";
+import { resolvePrivateTaskPointer } from "../../scripts/resolve-alive-private-task.mjs";
 
 const OWNER_PASSWORD = "owner-workspace-test-password";
 const SESSION_SECRET = "test-session-secret-that-is-long-enough-for-hmac";
@@ -175,26 +176,57 @@ test("owner session endpoint fails closed when owner setup is absent or origin i
   assert.equal(response.statusCode, 403);
 });
 
-test("public repository can never be selected as the owner vision queue", async () => {
-  const result = await verifyPrivateQueue({
-    ALIVE_PRIVATE_QUEUE_WORKFLOW_READY: "true",
-    ALIVE_PRIVATE_QUEUE_GITHUB_TOKEN: REPO_TOKEN,
-    ALIVE_PRIVATE_QUEUE_OWNER: "lambocityyachtclub-png",
-    ALIVE_PRIVATE_QUEUE_REPO: "lambo-city-records",
-    ALIVE_PRIVATE_QUEUE_BRANCH: "integration/lc-alive-agentic-worker-2026-11-10"
-  }, async () => { throw new Error("Public repository must be rejected before network access."); });
-  assert.equal(result.ok, false);
-  assert.equal(result.reason, "setup_required");
+test("private queue verifier rejects a public repository and requires the private repo token", async () => {
+  const missing = await verifyPrivateQueue({}, async () => {
+    throw new Error("No network call should occur without the server token.");
+  });
+  assert.equal(missing.ok, false);
+  assert.equal(missing.reason, "setup_required");
+
+  const token = await verifyPrivateQueue({ ALIVE_PRIVATE_QUEUE_GITHUB_TOKEN: REPO_TOKEN }, async url => ({
+    ok: true,
+    json: async () => String(url).includes("/repos/lambocityyachtclub-png/lambo-city-alive-control")
+      ? { private: false, archived: false, disabled: false }
+      : {}
+  }));
+  assert.equal(token.ok, false);
+  assert.equal(token.reason, "repository_must_be_private");
 });
 
-test("vision endpoint refuses requests until a private queue and worker workflow are configured", async () => {
+test("private queue verifier requires the private branch and scoped public worker workflow", async () => {
+  const calls = [];
+  const result = await verifyPrivateQueue({
+    ALIVE_PRIVATE_QUEUE_GITHUB_TOKEN: REPO_TOKEN
+  }, async (url, options) => {
+    calls.push({ url: String(url), auth: options.headers.Authorization });
+    if (calls.length === 1) return {
+      ok: true,
+      json: async () => ({ private: true, archived: false, disabled: false })
+    };
+    if (calls.length === 2 || calls.length === 3) return {
+      ok: true,
+      json: async () => ({ name: "integration/lc-alive-agentic-worker-2026-11-10" })
+    };
+    return {
+      ok: true,
+      json: async () => ({ type: "file", name: "development-engine-tests.yml" })
+    };
+  });
+  assert.equal(result.ok, true);
+  assert.equal(result.owner, "lambocityyachtclub-png");
+  assert.equal(result.repo, "lambo-city-alive-control");
+  assert.equal(result.publicRepo, "lambo-city-records");
+  assert.equal(calls.length, 4);
+  assert.ok(calls.every(call => call.auth === "Bearer " + REPO_TOKEN));
+});
+
+test("vision endpoint refuses requests until private queue access is configured", async () => {
   const hash = makePasswordHash();
   const token = createAliveSessionToken(SESSION_SECRET);
   await withEnv({
     ALIVE_OWNER_PASSWORD_HASH: hash,
     ALIVE_SESSION_SECRET: SESSION_SECRET,
-    ALIVE_PRIVATE_QUEUE_GITHUB_TOKEN: "",
-    ALIVE_PRIVATE_QUEUE_WORKFLOW_READY: "false"
+    ALIVE_PRIVATE_QUEUE_GITHUB_TOKEN: ""
   }, async () => {
     const response = mockResponse();
     await visionHandler({
@@ -209,34 +241,27 @@ test("vision endpoint refuses requests until a private queue and worker workflow
   });
 });
 
-test("vision endpoint writes owner ideas only to a verified private queue repository", async () => {
+test("vision endpoint stores raw direction privately and publishes only a non-sensitive task pointer", async () => {
   const hash = makePasswordHash();
   const token = createAliveSessionToken(SESSION_SECRET);
   const originalFetch = globalThis.fetch;
-  let requestedUrl = "";
-  let requestedBody = null;
-  let requestedAuth = "";
-  let fetchCount = 0;
+  const calls = [];
   globalThis.fetch = async (url, options) => {
-    fetchCount++;
     const value = String(url);
-    if (fetchCount === 1) {
-      assert.match(value, /\/repos\/lambocityyachtclub-png\/lambo-city-alive-control$/);
-      assert.equal(options.headers.Authorization, "Bearer " + REPO_TOKEN);
-      return { ok: true, json: async () => ({
-        private: true, archived: false, disabled: false, default_branch: "main"
-      }) };
-    }
-    if (fetchCount === 2) {
-      assert.match(value, /alive-private-queue\.yml/);
-      return { ok: true, json: async () => ({
-        type: "file", name: "alive-private-queue.yml"
-      }) };
-    }
-    requestedUrl = value;
-    requestedBody = JSON.parse(options.body);
-    requestedAuth = options.headers.Authorization;
-    return {
+    calls.push({ url: value, method: options.method || "GET", body: options.body, auth: options.headers.Authorization });
+    if (calls.length === 1) return {
+      ok: true,
+      json: async () => ({ private: true, archived: false, disabled: false })
+    };
+    if (calls.length === 2 || calls.length === 3) return {
+      ok: true,
+      json: async () => ({ name: "integration/lc-alive-agentic-worker-2026-11-10" })
+    };
+    if (calls.length === 4) return {
+      ok: true,
+      json: async () => ({ type: "file", name: "development-engine-tests.yml" })
+    };
+    if (calls.length === 5) return {
       ok: true,
       status: 201,
       json: async () => ({
@@ -244,20 +269,24 @@ test("vision endpoint writes owner ideas only to a verified private queue reposi
         content: { sha: "b".repeat(40) }
       })
     };
+    return {
+      ok: true,
+      status: 201,
+      json: async () => ({
+        commit: { sha: "c".repeat(40) },
+        content: { sha: "d".repeat(40) }
+      })
+    };
   };
   try {
     await withEnv({
       ALIVE_OWNER_PASSWORD_HASH: hash,
       ALIVE_SESSION_SECRET: SESSION_SECRET,
-      ALIVE_PRIVATE_QUEUE_WORKFLOW_READY: "true",
-      ALIVE_PRIVATE_QUEUE_GITHUB_TOKEN: REPO_TOKEN,
-      ALIVE_PRIVATE_QUEUE_OWNER: "lambocityyachtclub-png",
-      ALIVE_PRIVATE_QUEUE_REPO: "lambo-city-alive-control",
-      ALIVE_PRIVATE_QUEUE_BRANCH: "integration/lc-alive-agentic-worker-2026-11-10"
+      ALIVE_PRIVATE_QUEUE_GITHUB_TOKEN: REPO_TOKEN
     }, async () => {
       const response = mockResponse();
       await visionHandler({
-        ...sameOriginRequest("POST", { vision: "Create a better Studio workflow." }),
+        ...sameOriginRequest("POST", { vision: "Create a confidential Studio workflow improvement." }),
         headers: {
           ...sameOriginRequest("POST").headers,
           cookie: aliveSessionCookie(token)
@@ -266,18 +295,64 @@ test("vision endpoint writes owner ideas only to a verified private queue reposi
       assert.equal(response.statusCode, 202);
       assert.equal(response.payload.accepted, true);
       assert.match(response.payload.taskId, /^owner-vision-/);
-      assert.equal(response.payload.queueCommitSha, "a".repeat(40));
-      assert.match(requestedUrl, /repos\/lambocityyachtclub-png\/lambo-city-alive-control\/contents\/development\/queue\/incoming\/owner-vision-/);
-      assert.equal(requestedBody.branch, "integration/lc-alive-agentic-worker-2026-11-10");
-      const queuedTask = JSON.parse(Buffer.from(requestedBody.content, "base64").toString("utf8"));
-      assert.equal(queuedTask.workerId, "vision-planning");
-      assert.equal(queuedTask.branch, undefined);
-      assert.equal(requestedAuth, "Bearer " + REPO_TOKEN);
-      assert.equal(requestedUrl.includes("/lambo-city-records/"), false);
+      assert.equal(response.payload.queueCommitSha, "c".repeat(40));
+      assert.equal(response.payload.branch, "integration/lc-alive-agentic-worker-2026-11-10");
+      assert.equal(calls.length, 6);
+
+      const privateBody = JSON.parse(calls[4].body);
+      const privateTask = JSON.parse(Buffer.from(privateBody.content, "base64").toString("utf8"));
+      assert.equal(privateTask.vision, "Create a confidential Studio workflow improvement.");
+      assert.match(calls[4].url, /lambo-city-alive-control\/contents\/development\/queue\/incoming/);
+
+      const publicBody = JSON.parse(calls[5].body);
+      const pointer = JSON.parse(Buffer.from(publicBody.content, "base64").toString("utf8"));
+      assert.equal(pointer.id, privateTask.id);
+      assert.equal(pointer.privateQueue.repo, "lambo-city-alive-control");
+      assert.equal(JSON.stringify(pointer).includes("confidential Studio"), false);
+      assert.match(calls[5].url, /lambo-city-records\/contents\/development\/queue\/incoming/);
+      assert.equal(calls.every(call => call.auth === "Bearer " + REPO_TOKEN), true);
     });
   } finally {
     globalThis.fetch = originalFetch;
   }
+});
+
+test("private task resolver rejects forged pointers and loads only the approved private task", async () => {
+  const task = createOwnerVisionTask("Private planning direction.", { id: "owner-vision-test-002" });
+  const pointer = {
+    id: task.id,
+    privateQueue: {
+      owner: "lambocityyachtclub-png",
+      repo: "lambo-city-alive-control",
+      branch: "integration/lc-alive-agentic-worker-2026-11-10",
+      path: "development/queue/incoming/" + task.id + ".json"
+    }
+  };
+  let calls = 0;
+  const resolved = await resolvePrivateTaskPointer(pointer, REPO_TOKEN, async (url, options) => {
+    calls++;
+    assert.equal(options.headers.Authorization, "Bearer " + REPO_TOKEN);
+    if (calls === 1) return {
+      ok: true,
+      json: async () => ({ private: true, archived: false, disabled: false })
+    };
+    if (calls === 2) return { ok: true, json: async () => ({ name: pointer.privateQueue.branch }) };
+    return {
+      ok: true,
+      json: async () => ({
+        type: "file",
+        encoding: "base64",
+        content: Buffer.from(JSON.stringify(task), "utf8").toString("base64")
+      })
+    };
+  });
+  assert.equal(resolved.id, task.id);
+  assert.equal(resolved.vision, task.vision);
+  assert.equal(calls, 3);
+  await assert.rejects(resolvePrivateTaskPointer({
+    ...pointer,
+    privateQueue: { ...pointer.privateQueue, repo: "lambo-city-records" }
+  }, REPO_TOKEN, async () => { throw new Error("Forged pointer must be rejected before fetch."); }), /approved repository scope/);
 });
 
 test("status endpoint verifies the private queue and reads only public proposal status", async () => {
@@ -287,16 +362,18 @@ test("status endpoint verifies the private queue and reads only public proposal 
   const calls = [];
   globalThis.fetch = async (url, options) => {
     calls.push({ url: String(url), headers: options.headers });
-    if (String(url).endsWith("/repos/lambocityyachtclub-png/lambo-city-alive-control")) {
-      return { ok: true, json: async () => ({
-        private: true, archived: false, disabled: false, default_branch: "main"
-      }) };
-    }
-    if (String(url).includes("alive-private-queue.yml")) {
-      return { ok: true, json: async () => ({
-        type: "file", name: "alive-private-queue.yml"
-      }) };
-    }
+    if (calls.length === 1) return {
+      ok: true,
+      json: async () => ({ private: true, archived: false, disabled: false })
+    };
+    if (calls.length === 2 || calls.length === 3) return {
+      ok: true,
+      json: async () => ({ name: "integration/lc-alive-agentic-worker-2026-11-10" })
+    };
+    if (calls.length === 4) return {
+      ok: true,
+      json: async () => ({ type: "file", name: "development-engine-tests.yml" })
+    };
     if (String(url).includes("/pulls?")) {
       return { ok: true, json: async () => [{
         title: "ALIVE vision proposal",
@@ -317,11 +394,7 @@ test("status endpoint verifies the private queue and reads only public proposal 
     await withEnv({
       ALIVE_OWNER_PASSWORD_HASH: hash,
       ALIVE_SESSION_SECRET: SESSION_SECRET,
-      ALIVE_PRIVATE_QUEUE_WORKFLOW_READY: "true",
-      ALIVE_PRIVATE_QUEUE_GITHUB_TOKEN: REPO_TOKEN,
-      ALIVE_PRIVATE_QUEUE_OWNER: "lambocityyachtclub-png",
-      ALIVE_PRIVATE_QUEUE_REPO: "lambo-city-alive-control",
-      ALIVE_PRIVATE_QUEUE_BRANCH: "integration/lc-alive-agentic-worker-2026-11-10"
+      ALIVE_PRIVATE_QUEUE_GITHUB_TOKEN: REPO_TOKEN
     }, async () => {
       const response = mockResponse();
       await statusHandler({
@@ -331,12 +404,12 @@ test("status endpoint verifies the private queue and reads only public proposal 
       }, response);
       assert.equal(response.statusCode, 200);
       assert.equal(response.payload.connected, true);
+      assert.equal(response.payload.queueBranch, "integration/lc-alive-agentic-worker-2026-11-10");
       assert.equal(response.payload.state, "proposal_ready");
       assert.equal(response.payload.task.checks.length, 1);
-      assert.equal(calls.length, 4);
-      assert.equal(calls[0].headers.Authorization, "Bearer " + REPO_TOKEN);
-      assert.equal(calls[1].headers.Authorization, "Bearer " + REPO_TOKEN);
-      assert.equal(calls.slice(2).every(call => !call.headers.Authorization), true);
+      assert.equal(calls.length, 6);
+      assert.equal(calls.slice(0, 4).every(call => call.headers.Authorization === "Bearer " + REPO_TOKEN), true);
+      assert.equal(calls.slice(4).every(call => !call.headers.Authorization), true);
       assert.equal(JSON.stringify(response.payload).includes(REPO_TOKEN), false);
     });
   } finally {
