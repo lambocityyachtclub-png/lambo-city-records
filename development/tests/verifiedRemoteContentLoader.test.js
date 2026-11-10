@@ -109,3 +109,39 @@ test("requires explicit host services and accepts only remote catalog requests",
   });
   await assert.rejects(loader({ source: { kind: "host" }, asset: {} }), /only accepts catalog URL assets/);
 });
+
+
+test("uses verified bytes even when persistent cache writes fail from quota", async () => {
+  const events = [];
+  const loader = createVerifiedRemoteContentLoader({
+    allowedOrigins: ["https://cdn.example.test"],
+    resolve: async () => new Uint8Array([1, 2, 3]),
+    sha256: async () => digest,
+    cache: {
+      async get() { return null; },
+      async set() { const error = new Error("full"); error.name = "QuotaExceededError"; throw error; },
+      async delete() {}
+    },
+    onCacheError: event => events.push(event)
+  });
+  assert.deepEqual(await loader(request()), new Uint8Array([1, 2, 3]));
+  assert.equal(events.length, 1);
+  assert.equal(events[0].operation, "set");
+  assert.equal(events[0].quotaExceeded, true);
+});
+
+test("continues to remote resolution when cache reads fail", async () => {
+  let downloads = 0;
+  const loader = createVerifiedRemoteContentLoader({
+    allowedOrigins: ["https://cdn.example.test"],
+    resolve: async () => { downloads += 1; return new Uint8Array([8, 8]); },
+    sha256: async bytes => bytes.length === 2 ? digest : "b".repeat(64),
+    cache: {
+      async get() { throw new Error("database unavailable"); },
+      async set() { throw new Error("still unavailable"); },
+      async delete() {}
+    }
+  });
+  assert.deepEqual(await loader(request()), new Uint8Array([8, 8]));
+  assert.equal(downloads, 1);
+});
