@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import StudioRecordingEngine from "../studioRecordingEngine.js";
+import { disposeVocalBoothPanel } from "../floor2VocalBooth3D.js";
 
 const originalNavigator = Object.getOwnPropertyDescriptor(globalThis, "navigator");
 let permissionRequests = 0;
@@ -58,7 +59,23 @@ try {
   unexpectedPermissionRequest = permissionRequests !== 1;
   assert.equal(unexpectedPermissionRequest, false, "an already-cancelled request must not open the microphone");
 
-  console.log("Studio recording cancellation and resource cleanup checks passed.");
+  let boothCancelCalls = 0;
+  let boothCleanupCalls = 0;
+  disposeVocalBoothPanel({
+    recordingStartPending: true,
+    cancelRecordingStart() { boothCancelCalls += 1; }
+  }, () => { boothCleanupCalls += 1; });
+  assert.equal(boothCancelCalls, 1, "disposing a booth must cancel a pending count-in");
+  assert.equal(boothCleanupCalls, 1, "booth event listeners must be cleaned up");
+
+  disposeVocalBoothPanel({
+    recordingStartPending: false,
+    cancelRecordingStart() { boothCancelCalls += 1; }
+  }, () => { boothCleanupCalls += 1; });
+  assert.equal(boothCancelCalls, 1, "disposing an idle booth must not cancel a new recording");
+  assert.equal(boothCleanupCalls, 2);
+
+  console.log("Studio recording cancellation, Booth disposal, and resource cleanup checks passed.");
 } finally {
   StudioRecordingEngine.activeTake = null;
   StudioRecordingEngine.activeTrackTake = null;
