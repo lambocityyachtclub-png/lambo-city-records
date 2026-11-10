@@ -68,6 +68,8 @@ export async function disposeVocalBoothPanel(beatLab, cleanup, root) {
   } catch (error) {
     recordingActive = false;
     console.error("Vocal Booth disposal recording stop error:", error);
+  } finally {
+    recordingActive = false;
   }
 }
 
@@ -78,6 +80,7 @@ function formatTime(ms) {
 
 export function createVocalBoothPanel({ beatLab } = {}) {
   const root = document.createElement("section");
+  let panelDisposed = false;
   root.className = "lc-vocal-booth";
   root.style.cssText = "display:grid;gap:14px;min-height:calc(100vh - 150px);padding:clamp(12px,2vw,24px);border-radius:14px;background:radial-gradient(ellipse at 50% 15%,#4c285f,#24142f 62%,#100d19);color:#f5eef8;font-family:Arial,sans-serif;box-sizing:border-box";
   root.innerHTML =
@@ -159,6 +162,7 @@ export function createVocalBoothPanel({ beatLab } = {}) {
   window.addEventListener("lc-talkback-state",onTalkbackState);
   window.addEventListener("lc-talkback-error",onTalkbackError);
   const disposePanel = () => {
+    panelDisposed = true;
     const disposal = disposeVocalBoothPanel(beatLab,()=>{
       window.removeEventListener("lc-vocal-count-in",onCountIn);
       window.removeEventListener("lc-talkback-state",onTalkbackState);
@@ -214,7 +218,7 @@ export function createVocalBoothPanel({ beatLab } = {}) {
           if(!audio||audio.state!=="running")throw new Error("Studio audio could not start.");
           let track=StudioMultitrackWorkspace.tracks.find(item=>item.type==="audio"&&item.name==="Voice Notes");
           if(!track){StudioMultitrackWorkspace.recordHistory("Create Voice Notes track");track=StudioMultitrackWorkspace.createTrack("audio","Voice Notes");}
-          await StudioRecordingEngine.startTrackRecording({audio,trackId:track.id});
+          await StudioRecordingEngine.startTrackRecording({audio,trackId:track.id,shouldCancel:()=>panelDisposed});
           root.dataset.voiceNoteTrackId=track.id;
           recordingStartedAt=performance.now();
           recordingActive=true;
