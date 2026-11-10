@@ -227,7 +227,15 @@ export function validateWorkerTask(task) {
 }
 
 export function buildSpecialistPrompt(task) {
-  const normalized = validateWorkerTask(task);
+  const normalized = validateWorkerTask({
+    id: task?.id,
+    workerId: task?.workerId,
+    title: task?.title,
+    vision: task?.vision,
+    acceptanceCriteria: task?.acceptanceCriteria,
+    priority: task?.priority,
+    referenceFiles: task?.referenceFiles
+  });
   const scope = normalized.allowedPaths.map(path => "- " + path).join("\n");
   const references = normalized.referenceFiles.length
     ? normalized.referenceFiles.map(path => "- " + path).join("\n")
