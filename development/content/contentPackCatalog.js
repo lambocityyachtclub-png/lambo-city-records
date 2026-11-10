@@ -111,6 +111,15 @@ function validateAsset(asset, packId, maxAssetBytes) {
   if (!SOURCE_KINDS.has(kind)) fail("asset " + id + " has an unsupported source kind.");
   const locator = requireText(source.locator, "asset source locator");
   const license = requireText(source.license, "asset source license");
+  let integrity = null;
+  if (asset.integrity !== undefined && asset.integrity !== null) {
+    if (asset.integrity.algorithm !== "sha256" ||
+        typeof asset.integrity.digest !== "string" || !/^[a-f0-9]{64}$/i.test(asset.integrity.digest)) {
+      fail("asset " + id + " integrity must contain a SHA-256 hex digest.");
+    }
+    integrity = Object.freeze({ algorithm: "sha256", digest: asset.integrity.digest.toLowerCase() });
+  }
+  if (kind === "url" && !integrity) fail("remote URL asset " + id + " must declare SHA-256 integrity.");
   let fallback = null;
   if (asset.fallback !== undefined && asset.fallback !== null) {
     if (!asset.fallback || typeof asset.fallback !== "object") fail("asset " + id + " fallback must identify another asset.");
@@ -123,6 +132,7 @@ function validateAsset(asset, packId, maxAssetBytes) {
     id, packId, category, sizeBytes, loadStrategy: strategy,
     cacheKey: requireText(asset.cacheKey || (packId + ":" + id), "asset cacheKey"),
     source: Object.freeze({ kind, locator, license, attribution: asset.source.attribution || null }),
+    integrity,
     fallback
   });
 }
