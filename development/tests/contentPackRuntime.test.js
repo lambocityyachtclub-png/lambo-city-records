@@ -146,3 +146,48 @@ test("composes opt-in IndexedDB persistence lazily through the shared content ru
   assert.equal(downloads, 1);
   assert.equal(indexedDB.records.size, 1);
 });
+
+
+test("one opt-in runtime serves existing Studio audio and validated World recipes together", async () => {
+  const blob = new Blob(["shared-studio-take"], { type: "audio/wav" });
+  const recipe = { id: "district-shoreline", revision: 3 };
+  const runtime = createContentPackRuntime({
+    studioAudioAssetStore: {
+      async get(id) {
+        return id === "take-shared-01"
+          ? { id, projectId: "project-01", trackName: "vocal", blob }
+          : null;
+      }
+    },
+    resolveWorldRecipe: async id => id === recipe.id ? recipe : null,
+    validateDistrict: value => ({
+      valid: value === recipe && value.revision === 3
+    })
+  });
+
+  const studioPack = manifest("studio-audio-store", "asset:take-shared-01");
+  studioPack.id = "lc.studio.shared-audio";
+  studioPack.assets[0].id = "studio-take-01";
+
+  const worldPack = manifest("world-recipe", "recipe:district-shoreline");
+  worldPack.id = "lc.world.shoreline";
+  worldPack.assets[0].id = "shoreline-recipe";
+
+  runtime.register(studioPack);
+  runtime.register(worldPack);
+
+  assert.deepEqual(runtime.getServiceStatus(), {
+    studioAudioStore: true,
+    worldRecipeResolver: true,
+    remoteDelivery: false,
+    persistentRemoteCache: false,
+    genericHostResolver: false
+  });
+
+  const loadedTake = await runtime.loadAsset("lc.studio.shared-audio", "studio-take-01");
+  const loadedRecipe = await runtime.loadAsset("lc.world.shoreline", "shoreline-recipe");
+
+  assert.equal(loadedTake.id, "take-shared-01");
+  assert.equal(loadedTake.blob, blob);
+  assert.equal(loadedRecipe, recipe);
+});
