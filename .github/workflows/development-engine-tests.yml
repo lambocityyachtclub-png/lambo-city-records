@@ -129,7 +129,7 @@ jobs:
         run: |
           set -euo pipefail
           git add -N -- .
-          git diff --name-only HEAD > /tmp/alive-worker-changed-files.txt
+          git diff --no-renames --name-only HEAD > /tmp/alive-worker-changed-files.txt
           node --experimental-default-type=module scripts/validate-alive-worker-diff.mjs "$WORKER_ID" /tmp/alive-worker-changed-files.txt
           git diff --binary HEAD > /tmp/alive-worker.patch
           test -s /tmp/alive-worker.patch
