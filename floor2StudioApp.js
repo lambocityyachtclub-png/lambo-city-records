@@ -100,6 +100,8 @@ this.lastRecordedTake = null;
 this.recordingStartPending = false;
 this.recordingStartToken = 0;
 this.recordingStartCoordinator = createRecordingStartCoordinator();
+this.recordingStopPending = false;
+this.recordingStopPromise = null;
 this.noiseBuffer = null;
     this.timer = null;
     this.playing = false;
@@ -1107,7 +1109,7 @@ if (!this.audio || this.audio.state !== "running") {
     let startedBeatForCountIn = false;
     let takeStarted = false;
     let finalStatus = null;
-    if (StudioRecordingEngine.activeTake || this.recordingStartCoordinator?.isPending()) {
+    if (StudioRecordingEngine.activeTake || this.recordingStartCoordinator?.isPending() || this.recordingStopPending) {
       this.status("A recording is already in progress.");
       return;
     }
@@ -1218,22 +1220,22 @@ if (!this.audio || this.audio.state !== "running") {
   },
 
    async stopRecording() {
-    try {
-      this.lastRecordedTake =
-        await StudioRecordingEngine.stopTake();
-
-      StudioMultitrackWorkspace.addRecordingTake(
-        this.lastRecordedTake
-      );
-
-      this.status(
-        "Recording finished. Vocal, Beat Lab, and Master Mix clips added to Multitrack."
-      );
-
-    } catch (error) {
-      console.error("LAMBO CITY recording stop error:", error);
-      this.status(`STOP RECORDING ERROR: ${error?.message || error}`);
-    }
+    if (this.recordingStopPromise) return this.recordingStopPromise;
+    this.recordingStopPending = true;
+    this.recordingStopPromise = (async () => {
+      try {
+        this.lastRecordedTake = await StudioRecordingEngine.stopTake();
+        StudioMultitrackWorkspace.addRecordingTake(this.lastRecordedTake);
+        this.status("Recording finished. Vocal, Beat Lab, and Master Mix clips added to Multitrack.");
+      } catch (error) {
+        console.error("LAMBO CITY recording stop error:", error);
+        this.status(`STOP RECORDING ERROR: ${error?.message || error}`);
+      } finally {
+        this.recordingStopPending = false;
+        this.recordingStopPromise = null;
+      }
+    })();
+    return this.recordingStopPromise;
   },
 
   exportRecording() {
@@ -1766,7 +1768,8 @@ StudioSoundKit.play(
   },
 
   close() {
-    
+    this.cancelRecordingStart?.();
+    if (StudioRecordingEngine.activeTake) this.stopRecording();
     if (this.handleStudioKeydown) {
       document.removeEventListener(
         "keydown",
