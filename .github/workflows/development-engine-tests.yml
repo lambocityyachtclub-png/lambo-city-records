@@ -40,16 +40,16 @@ jobs:
       contents: read
       copilot-requests: write
     outputs:
-      has_task: \${{ steps.task.outputs.has_task }}
-      task_id: \${{ steps.task.outputs.task_id }}
-      worker_id: \${{ steps.task.outputs.worker_id }}
-      title: \${{ steps.task.outputs.title }}
-      base_sha: \${{ steps.task.outputs.base_sha }}
+      has_task: ${{ steps.task.outputs.has_task }}
+      task_id: ${{ steps.task.outputs.task_id }}
+      worker_id: ${{ steps.task.outputs.worker_id }}
+      title: ${{ steps.task.outputs.title }}
+      base_sha: ${{ steps.task.outputs.base_sha }}
     steps:
       - name: Check out pushed branch
         uses: actions/checkout@v4
         with:
-          ref: \${{ github.sha }}
+          ref: ${{ github.sha }}
           fetch-depth: 0
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -58,8 +58,8 @@ jobs:
       - name: Identify and validate one queued task
         id: task
         env:
-          BEFORE_SHA: \${{ github.event.before }}
-          HEAD_SHA: \${{ github.sha }}
+          BEFORE_SHA: ${{ github.event.before }}
+          HEAD_SHA: ${{ github.sha }}
         shell: bash
         run: |
           set -euo pipefail
@@ -68,16 +68,16 @@ jobs:
             exit 0
           fi
           mapfile -t task_files < <(git diff --name-only "$BEFORE_SHA" "$HEAD_SHA" -- 'development/queue/incoming/*.json')
-          if [[ "\${#task_files[@]}" -eq 0 ]]; then
+          if [[ "${#task_files[@]}" -eq 0 ]]; then
             echo "has_task=false" >> "$GITHUB_OUTPUT"
             echo "No ALIVE task was queued in this push; skipping specialist generation."
             exit 0
           fi
-          if [[ "\${#task_files[@]}" -ne 1 || ! -f "\${task_files[0]}" ]]; then
+          if [[ "${#task_files[@]}" -ne 1 || ! -f "${task_files[0]}" ]]; then
             echo "Each queue commit must add or update exactly one JSON task." >&2
             exit 1
           fi
-          TASK_FILE="\${task_files[0]}"
+          TASK_FILE="${task_files[0]}"
           node --experimental-default-type=module scripts/prepare-alive-worker-task.mjs "$TASK_FILE" /tmp/alive-worker-prompt.md /tmp/alive-worker-metadata.json
           TASK_ID="$(node -e 'const m=require("/tmp/alive-worker-metadata.json"); process.stdout.write(m.id)')"
           WORKER_ID="$(node -e 'const m=require("/tmp/alive-worker-metadata.json"); process.stdout.write(m.workerId)')"
@@ -96,13 +96,13 @@ jobs:
       - name: Return to clean base before code generation
         if: steps.task.outputs.has_task == 'true'
         env:
-          BASE_SHA: \${{ steps.task.outputs.base_sha }}
+          BASE_SHA: ${{ steps.task.outputs.base_sha }}
         run: git checkout "$BASE_SHA"
       - name: Generate code in disposable runner
         if: steps.task.outputs.has_task == 'true'
         shell: bash
         env:
-          GITHUB_TOKEN: \${{ github.token }}
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           copilot -p "$(cat /tmp/alive-worker-prompt.md)" -s \
@@ -112,8 +112,8 @@ jobs:
       - name: Validate paths and package patch
         if: steps.task.outputs.has_task == 'true'
         env:
-          WORKER_ID: \${{ steps.task.outputs.worker_id }}
-          TASK_ID: \${{ steps.task.outputs.task_id }}
+          WORKER_ID: ${{ steps.task.outputs.worker_id }}
+          TASK_ID: ${{ steps.task.outputs.task_id }}
         run: |
           set -euo pipefail
           git add -N -- .
@@ -130,7 +130,7 @@ jobs:
         if: steps.task.outputs.has_task == 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: alive-worker-proposal-\${{ steps.task.outputs.task_id }}
+          name: alive-worker-proposal-${{ steps.task.outputs.task_id }}
           path: |
             alive-worker.patch
             alive-worker-changed-files.txt
@@ -152,7 +152,7 @@ jobs:
       - name: Check out clean base
         uses: actions/checkout@v4
         with:
-          ref: \${{ needs.generate-proposal.outputs.base_sha }}
+          ref: ${{ needs.generate-proposal.outputs.base_sha }}
           fetch-depth: 0
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -161,11 +161,11 @@ jobs:
       - name: Download isolated proposal artifact
         uses: actions/download-artifact@v4
         with:
-          name: alive-worker-proposal-\${{ needs.generate-proposal.outputs.task_id }}
+          name: alive-worker-proposal-${{ needs.generate-proposal.outputs.task_id }}
           path: /tmp/alive-worker-proposal
       - name: Apply patch and repeat the path gate
         env:
-          WORKER_ID: \${{ needs.generate-proposal.outputs.worker_id }}
+          WORKER_ID: ${{ needs.generate-proposal.outputs.worker_id }}
         run: |
           set -euo pipefail
           git apply --check /tmp/alive-worker-proposal/alive-worker.patch
@@ -177,11 +177,11 @@ jobs:
           node --experimental-default-type=module --test development/tests/*.test.js
       - name: Publish isolated branch and draft pull request
         env:
-          GH_TOKEN: \${{ github.token }}
-          TASK_ID: \${{ needs.generate-proposal.outputs.task_id }}
-          TASK_TITLE: \${{ needs.generate-proposal.outputs.title }}
-          WORKER_ID: \${{ needs.generate-proposal.outputs.worker_id }}
-          BASE_BRANCH: \${{ github.ref_name }}
+          GH_TOKEN: ${{ github.token }}
+          TASK_ID: ${{ needs.generate-proposal.outputs.task_id }}
+          TASK_TITLE: ${{ needs.generate-proposal.outputs.title }}
+          WORKER_ID: ${{ needs.generate-proposal.outputs.worker_id }}
+          BASE_BRANCH: ${{ github.ref_name }}
         shell: bash
         run: |
           set -euo pipefail
