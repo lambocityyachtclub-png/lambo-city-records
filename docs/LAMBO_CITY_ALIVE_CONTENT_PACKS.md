@@ -9,7 +9,7 @@ This layer provides a runtime-independent, versioned content-pack contract for S
 - Versioned manifests with stable asset IDs, supported categories, source/license metadata, compatibility bounds, dependency ranges, byte budgets, cache keys, lazy/eager loading strategy, and optional fallback assets.
 - Dependency ordering and validation for missing, incompatible, and cyclic pack dependencies.
 - Globally unique asset cache keys; duplicate keys are rejected within a pack or across registered packs.
-- Loaded-byte budget enforcement for buffers, native Blob/File values (brand-checked), Studio audio records, JSON recipes, and non-JSON host objects with explicit measured `sizeBytes`; custom file-like objects cannot spoof `size`, JSON measurement is bounded by the declared asset budget and a 16 MiB hard cap, and unsupported/circular payloads fail closed.
+- Loaded-byte budget enforcement for buffers, native Blob/File values (brand-checked), Studio audio records, JSON recipes, and non-JSON host objects with explicit measured `sizeBytes`; custom file-like objects cannot spoof `size`, recursive wrapper cycles are rejected, JSON measurement is bounded by the declared asset budget and a 16 MiB hard cap, and unsupported payloads fail closed.
 - On-demand loading, successful-value caching, concurrent-load deduplication, retry after failure, and declared fallback behavior.
 - Studio adapter: resolves `asset:<id>` through the existing injected `StudioAudioAssetStore.get(id)` and returns the original recorded audio record. It does not create or replace the Studio audio database.
 - World adapter: resolves `recipe:<id>` through an injected World recipe resolver and requires the existing district validator to return `valid: true` before returning the recipe.
@@ -53,7 +53,7 @@ A safe next integration step is feature-level opt-in:
 
 ## Validation on this branch
 
-- Development Engine Tests: 125 passed, 0 failed on the integrated branch, including Studio + World composition, cache-key collision rejection, loaded-byte budgets, runtime disposal, disabled-system API guards, and rejection of spoofed file-like size metadata.
+- Development Engine Tests: 127 passed, 0 failed on the integrated branch, including Studio + World composition, cache-key collision rejection, loaded-byte budgets, runtime disposal/abort, disabled-system API guards, spoofed file-like size rejection, cyclic-wrapper rejection, and remote resolver abort.
 - Floor 2 Studio Checks: passed, including pitch correction, Vocal Booth/Voice Notes integration, Booth disposal cancellation, recording resource cleanup, and cancel/restart serialization.
 - ALIVE Browser Content Cache Checks: Chromium, desktop WebKit, and iPad-sized touch-emulated WebKit passed on the integrated branch.
 - World System Checks passed on the unchanged underlying development checkpoint, including full Three.js preview assertions in Chromium. The integrated ALIVE changes do not alter World runtime entrypoints.
