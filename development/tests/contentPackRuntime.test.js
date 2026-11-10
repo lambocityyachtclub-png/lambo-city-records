@@ -87,3 +87,62 @@ test("fails closed when remote delivery is only partially configured", () => {
     resolveRemote: async () => new Uint8Array([1])
   }), /requires both resolveRemote and sha256/);
 });
+
+
+function runtimeFakeIndexedDB() {
+  const records = new Map();
+  let opens = 0;
+  const db = {
+    objectStoreNames: { contains: () => true },
+    close() {},
+    transaction() {
+      const tx = {};
+      tx.objectStore = () => ({
+        get(key) {
+          const req = {};
+          queueMicrotask(() => { req.result = records.get(key) || null; req.onsuccess?.(); tx.oncomplete?.(); });
+          return req;
+        },
+        put(record) {
+          const req = {};
+          queueMicrotask(() => { records.set(record.key, { ...record, bytes: record.bytes.slice(0) }); req.onsuccess?.(); tx.oncomplete?.(); });
+          return req;
+        },
+        delete(key) {
+          const req = {};
+          queueMicrotask(() => { records.delete(key); req.onsuccess?.(); tx.oncomplete?.(); });
+          return req;
+        }
+      });
+      return tx;
+    }
+  };
+  return {
+    records,
+    get opens() { return opens; },
+    open() {
+      opens += 1;
+      const req = {};
+      queueMicrotask(() => { req.result = db; req.onupgradeneeded?.(); req.onsuccess?.(); });
+      return req;
+    }
+  };
+}
+
+test("composes opt-in IndexedDB persistence lazily through the shared content runtime", async () => {
+  const indexedDB = runtimeFakeIndexedDB();
+  let downloads = 0;
+  const runtime = createContentPackRuntime({
+    allowedUrlOrigins: ["https://cdn.example.test"],
+    resolveRemote: async () => { downloads += 1; return new Uint8Array([3, 2, 1]); },
+    sha256: async bytes => bytes.length === 3 ? digest : "b".repeat(64),
+    indexedDBCache: { indexedDB, databaseName: "lc-test-cache" }
+  });
+  assert.equal(indexedDB.opens, 0);
+  runtime.register(manifest("url", "https://cdn.example.test/audio.bin"));
+  assert.deepEqual(await runtime.loadAsset("lc.runtime.integration", "runtime-asset"), new Uint8Array([3, 2, 1]));
+  assert.equal(indexedDB.opens, 1);
+  assert.deepEqual(await runtime.loadAsset("lc.runtime.integration", "runtime-asset"), new Uint8Array([3, 2, 1]));
+  assert.equal(downloads, 1);
+  assert.equal(indexedDB.records.size, 1);
+});
