@@ -39,11 +39,36 @@ test("vision plan rejects unknown workers, unauthorized areas and dependency cyc
   assert.throws(() => validateVisionPlan(cyclic, roster), /dependency cycle/);
 });
 
+test("vision plan rejects duplicate, unsafe and execution-blocking work definitions", async () => {
+  const system = await makeSystem();
+  const roster = system.workerRoster;
+  const duplicateKey = validPlan();
+  duplicateKey.items.push({ ...duplicateKey.items[0] });
+  assert.throws(() => validateVisionPlan(duplicateKey, roster), /Duplicate task key/);
+
+  const duplicateDependency = validPlan();
+  duplicateDependency.items[1].dependencies = ["studio-core-audit", "studio-core-audit"];
+  assert.throws(() => validateVisionPlan(duplicateDependency, roster), /must be unique/);
+
+  const unknownAction = validPlan();
+  unknownAction.items[0].protectedActions = ["invented_permission"];
+  assert.throws(() => validateVisionPlan(unknownAction, roster), /recognized owner-approval actions/);
+
+  const unexpectedField = validPlan();
+  unexpectedField.items[0].execute = true;
+  assert.throws(() => validateVisionPlan(unexpectedField, roster), /unsupported fields/);
+
+  const invalidDependencyLane = validPlan();
+  invalidDependencyLane.items[1].dependencies = ["creator-marketplace"];
+  assert.throws(() => validateVisionPlan(invalidDependencyLane, roster), /cannot depend on blocked or future work/);
+});
+
 test("vision plan only creates tasks when explicitly selected and preserves dependency order", async () => {
   const system = await makeSystem();
   await system.intakeVision("Prepare the launch plan.");
   assert.equal(system.director.listTasks().length, 0);
   await assert.rejects(system.submitVisionTasks(["studio-export-flow"]), /Select dependency/);
+  await assert.rejects(system.submitVisionTasks(["studio-core-audit", "studio-core-audit"]), /must be unique/);
   const submitted = await system.submitVisionTasks(["studio-export-flow", "studio-core-audit"]);
   assert.deepEqual(submitted.map(item => item.key), ["studio-core-audit", "studio-export-flow"]);
   assert.equal(submitted[1].task.dependencies[0], submitted[0].task.id);
@@ -61,6 +86,40 @@ test("blocked tasks cannot be submitted and protected work retains owner approva
   await approvedPlanSystem.intakeVision("Prepare the plan.");
   const submitted = await approvedPlanSystem.submitVisionTasks(["creator-marketplace"]);
   assert.equal(submitted[0].task.status, "pending_approval");
+});
+
+test("vision submission rechecks worker authorization and reports partial creation failures", async () => {
+  const system = await makeSystem();
+  await system.intakeVision("Prepare the launch plan.");
+  system.workerRoster.setWorkerEnabled("studio", false);
+  await assert.rejects(system.submitVisionTasks(["studio-core-audit"]), /authorization changed/);
+  system.workerRoster.setWorkerEnabled("studio", true);
+
+  let attempts = 0;
+  const failure = new Error("storage unavailable");
+  const planner = createVisionIntakePlanner({
+    planner: async () => validPlan(),
+    workerRoster: system.workerRoster,
+    developmentDirector: {
+      createTask: async () => {
+        attempts += 1;
+        if (attempts === 2) throw failure;
+        return { id: "created-task-1" };
+      }
+    }
+  });
+  await planner.intakeVision({ vision: "Prepare the launch plan." });
+  await assert.rejects(
+    planner.submitPlanTasks(["studio-export-flow", "studio-core-audit"]),
+    error => {
+      assert.match(error.message, /failed while creating vision task studio-export-flow; its state may be partially applied/);
+      assert.equal(error.failedTaskKey, "studio-export-flow");
+      assert.equal(error.failedTaskMayExist, true);
+      assert.deepEqual(error.createdTasks, [{ key: "studio-core-audit", taskId: "created-task-1" }]);
+      assert.equal(error.cause, failure);
+      return true;
+    }
+  );
 });
 
 test("vision intake requires a trusted planner adapter and non-empty direction", async () => {
