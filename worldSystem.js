@@ -155,6 +155,9 @@ export default class WorldSystem {
     return this.districts.delete(id);
   }
 
+  // Client-side gameplay state only. This is not an entitlement or multiplayer
+  // security boundary; private content, purchases, and real permissions require
+  // server-side authorization before the client opens a gate.
   setGateAccess(id, gateId, permissions = []) {
     const root = this.roots.get(id);
     if (!root) return { updated: false, reason: "DISTRICT_NOT_BUILT" };
