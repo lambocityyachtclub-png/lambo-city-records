@@ -27,16 +27,20 @@ const source = Object.fromEntries(await Promise.all(files.map(async file => [
 
 const main = source["main.js"];
 const engine = source["engine.js"];
-for (const [name,path] of [
-  ["StudioMixMasterConsole3D","./studioMixMasterConsole3D.js"],
-  ["Floor2LiveDrummer","./floor2LiveDrummer.js"],
-  ["Floor2VocalBooth3D","./floor2VocalBooth3D.js"],
-  ["Floor2CitySynth","./floor2CitySynth.js"]
+for (const [name,systemKey,binding] of [
+  ["StudioMixMasterConsole3D","studioMixMasterConsole3D","mixMaster"],
+  ["Floor2LiveDrummer","floor2LiveDrummer","liveDrummer"],
+  ["Floor2VocalBooth3D","floor2VocalBooth3D","vocalBooth"],
+  ["Floor2CitySynth","floor2CitySynth","citySynth"]
 ]) {
-  assert.ok(main.includes('from "' + path + '"'), name + " must be imported by the world");
-  const systemKey = name[0].toLowerCase() + name.slice(1);
-  assert.ok(main.includes(systemKey + ": " + name), name + " must be registered with the engine");
-  assert.ok(engine.includes("this.systems." + systemKey + "?.init?.(this.scene, this.context)"), name + " must initialize after the Floor 2 scene is ready");
+  assert.ok(main.includes('import("./' + systemKey + '.js")'),
+    name + " must be dynamically imported when Floor 2 is selected");
+  assert.ok(main.includes(systemKey + ": " + binding + ".default"),
+    name + " must be registered with the engine after its lazy import");
+  assert.ok(main.includes('["' + systemKey + '", [engine.scene, engine.context]]'),
+    name + " must initialize after the Floor 2 architecture is ready");
+  assert.doesNotMatch(engine, new RegExp("this\\\\.systems\\\\." + systemKey + "\\\\?\\\\.init"),
+    name + " must not initialize during initial world startup");
 }
 
 const workspace = source["studioDAWWorkspace.js"];
