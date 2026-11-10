@@ -6,6 +6,7 @@ import StudioMPCLibrary from "./studioMPCLibrary.js";
 import StudioRecordingEngine from "./studioRecordingEngine.js";
 import StudioVocalEffects from "./studioVocalEffects.js";
 import { createStudioPitchCorrectionNode } from "./studioPitchCorrection.js";
+import { createRecordingStartCoordinator } from "./studioRecordingStartCoordinator.js";
 import {
   createSongProject,
   saveSongProject,
@@ -98,6 +99,7 @@ this.pitchCorrectionSettings = {
 this.lastRecordedTake = null;
 this.recordingStartPending = false;
 this.recordingStartToken = 0;
+this.recordingStartCoordinator = createRecordingStartCoordinator();
 this.noiseBuffer = null;
     this.timer = null;
     this.playing = false;
@@ -1105,15 +1107,22 @@ if (!this.audio || this.audio.state !== "running") {
     let startedBeatForCountIn = false;
     let takeStarted = false;
     let finalStatus = null;
-    if (StudioRecordingEngine.activeTake || this.recordingStartPending) {
+    if (StudioRecordingEngine.activeTake || this.recordingStartCoordinator?.isPending()) {
       this.status("A recording is already in progress.");
       return;
     }
-    const startToken = ++this.recordingStartToken;
+    const coordinator = this.recordingStartCoordinator || (this.recordingStartCoordinator = createRecordingStartCoordinator());
+    const startToken = coordinator.begin();
+    if (startToken === null) {
+      this.recordingStartPending = true;
+      this.status("Finishing the previous count-in cancellation. Tap Record again in a moment.");
+      return;
+    }
+    this.recordingStartToken = startToken;
     this.recordingStartPending = true;
     try {
       this.audio = await StudioAudioEngine.resume();
-      if (startToken !== this.recordingStartToken) return;
+      if (!coordinator.isCurrent(startToken)) return;
       if (!this.audio || this.audio.state !== "running") {
         throw new Error("Studio audio is not running.");
       }
@@ -1126,7 +1135,7 @@ if (!this.audio || this.audio.state !== "running") {
 
       if (this.pitchCorrectionSettings?.enabled) {
         pitchCorrectionNode = await createStudioPitchCorrectionNode(this.audio, this.pitchCorrectionSettings);
-        if (startToken !== this.recordingStartToken) return;
+        if (!coordinator.isCurrent(startToken)) return;
       }
 
       // Start the beat first, then complete a four-beat pre-roll before
@@ -1135,19 +1144,19 @@ if (!this.audio || this.audio.state !== "running") {
         await this.start();
         startedBeatForCountIn = this.playing;
       }
-      if (startToken !== this.recordingStartToken) return;
+      if (!coordinator.isCurrent(startToken)) return;
       if (!this.playing) throw new Error("Beat Lab playback could not start. Check the Studio audio output and try again.");
       const bpm = Math.max(60, Math.min(180, Number(this.pattern?.bpm) || 100));
       const beatMs = 60000 / bpm;
       for (let beat = 1; beat <= 4; beat += 1) {
-        if (startToken !== this.recordingStartToken) return;
+        if (!coordinator.isCurrent(startToken)) return;
         this.status("GET READY · " + beat + " / 4");
         window.dispatchEvent(new CustomEvent("lc-vocal-count-in", {
           detail: { beat, total: 4, bpm }
         }));
-        await new Promise(resolve => window.setTimeout(resolve, beatMs));
+        await coordinator.wait(startToken, beatMs);
       }
-      if (startToken !== this.recordingStartToken) return;
+      if (!coordinator.isCurrent(startToken)) return;
       window.dispatchEvent(new CustomEvent("lc-vocal-count-in", {
         detail: { beat: 0, total: 4, bpm, complete: true }
       }));
@@ -1157,12 +1166,12 @@ if (!this.audio || this.audio.state !== "running") {
         beatOutput: StudioAudioExport.getOutput(this.audio),
         vocalEffects: this.vocalEffects,
         pitchCorrectionNode,
-        shouldCancel: () => startToken !== this.recordingStartToken
+        shouldCancel: () => !coordinator.isCurrent(startToken)
       });
 
       // A permission prompt or recorder initialization can finish after the
       // user cancels. Never leave a take running in that race window.
-      if (startToken !== this.recordingStartToken) {
+      if (!coordinator.isCurrent(startToken)) {
         if (take?.id && StudioRecordingEngine.activeTake?.id === take.id) {
           try { await StudioRecordingEngine.stopTake(); } catch (error) {
             console.warn("LAMBO CITY cancelled take cleanup failed:", error);
@@ -1175,7 +1184,7 @@ if (!this.audio || this.audio.state !== "running") {
       takeStarted = true;
       this.status("Recording vocals, Beat Lab, and mix… Tap STOP RECORDING when finished.");
     } catch (error) {
-      if (startToken !== this.recordingStartToken) {
+      if (!coordinator.isCurrent(startToken)) {
         finalStatus = "Count-in cancelled · recording did not start.";
       } else {
         console.error("LAMBO CITY recording error:", error);
@@ -1189,18 +1198,18 @@ if (!this.audio || this.audio.state !== "running") {
       if (startedBeatForCountIn && !takeStarted && this.playing) {
         this.stop();
       }
-      if (startToken !== this.recordingStartToken) {
+      if (!coordinator.isCurrent(startToken)) {
         finalStatus = "Count-in cancelled · recording did not start.";
       }
       if (finalStatus) this.status(finalStatus);
-      if (startToken === this.recordingStartToken) this.recordingStartPending = false;
+      coordinator.finish(startToken);
+      this.recordingStartPending = coordinator.isPending();
     }
   },
 
   cancelRecordingStart() {
-    if (!this.recordingStartPending) return false;
-    this.recordingStartToken += 1;
-    this.recordingStartPending = false;
+    if (!this.recordingStartPending || !this.recordingStartCoordinator) return false;
+    if (!this.recordingStartCoordinator.cancel(this.recordingStartToken)) return false;
     this.status("Count-in cancelled · recording did not start.");
     window.dispatchEvent(new CustomEvent("lc-vocal-count-in", {
       detail: { beat: 0, total: 4, cancelled: true }
@@ -1781,6 +1790,7 @@ StudioSoundKit.play(
   },
 
   destroy() {
+    this.cancelRecordingStart?.();
     this.close();
 
     if (this.handleCanvasClick && this.renderer?.domElement) {
