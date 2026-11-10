@@ -208,14 +208,19 @@ test("one opt-in runtime serves existing Studio audio and validated World recipe
 
 test("disposal rejects in-flight asset results and guards the public catalog view", async () => {
   let resolveHostAsset;
+  let hostSignal;
   const runtime = createContentPackRuntime({
-    resolveHostAsset: () => new Promise(resolve => { resolveHostAsset = resolve; })
+    resolveHostAsset: ({ signal }) => {
+      hostSignal = signal;
+      return new Promise(resolve => { resolveHostAsset = resolve; });
+    }
   });
   runtime.register(manifest("host", "builtin:pending"));
   const pending = runtime.loadAsset("lc.runtime.integration", "runtime-asset");
 
   assert.equal(typeof resolveHostAsset, "function");
   await runtime.dispose();
+  assert.equal(hostSignal.aborted, true, "runtime disposal must abort active host resolver signals");
   resolveHostAsset({ id: "late-host-asset" });
 
   await assert.rejects(
