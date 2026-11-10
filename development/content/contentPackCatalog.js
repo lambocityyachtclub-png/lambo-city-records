@@ -252,6 +252,8 @@ function measureJsonByteSize(value, maxBytes) {
   return measure(value);
 }
 
+const MAX_JSON_SIZE_MEASUREMENT_BYTES = 16 * 1024 * 1024;
+
 function getLoadedByteSize(value, maxBytes) {
   if (typeof value === "string") {
     if (value.length > maxBytes) return maxBytes + 1;
@@ -275,7 +277,11 @@ function getLoadedByteSize(value, maxBytes) {
   }
   if (value && typeof value === "object" &&
       (Array.isArray(value) || Object.getPrototypeOf(value) === Object.prototype || Object.getPrototypeOf(value) === null)) {
-    const measured = measureJsonByteSize(value, maxBytes);
+    const measurementLimit = Math.min(maxBytes, MAX_JSON_SIZE_MEASUREMENT_BYTES);
+    const measured = measureJsonByteSize(value, measurementLimit);
+    if (measured !== null && measured > measurementLimit && measurementLimit < maxBytes) {
+      throw new Error("JSON content assets exceed the 16 MiB measurement cap; use byte-backed content or a trusted host object with measured sizeBytes.");
+    }
     if (measured !== null) return measured;
     throw new Error("JSON content assets contain an unsupported value and cannot be size-validated.");
   }
