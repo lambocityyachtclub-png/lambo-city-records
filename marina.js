@@ -30,10 +30,9 @@ export default {
     this._buildDockRamp(scene);
     this._buildStreet(scene);
     this._buildStores(scene);
-    // Keep the street and boardwalk travel surfaces free of props.
-    // Roadside palms and the freestanding neon sign are intentionally
-    // not initialized here. The road, sidewalks, dock ramp, and
-    // waterfront boundary remain intact.
+    this._buildPalms(scene);
+    // Restore the original roadside lighting. The freestanding neon
+    // sign remains disabled and no promenade/boardwalk props are added.
     this._buildWaterfrontGlass(scene);
   },
 
@@ -133,7 +132,50 @@ export default {
     });
 
 
-    // No roadside lamp props: keep the road and sidewalks clear.
+    // Original roadside streetlights, positioned beyond the sidewalk edge.
+    for (
+      var lx = STREET_X_MIN;
+      lx <= STREET_X_MAX;
+      lx += 18
+    ) {
+
+      var pole = new THREE.Mesh(
+        new THREE.CylinderGeometry(
+          0.15,
+          0.15,
+          8,
+          6
+        ),
+        new THREE.MeshStandardMaterial({
+          color: 0x333333
+        })
+      );
+
+      pole.position.set(
+        lx,
+        4.5,
+        STREET_Z + 9
+      );
+
+      scene.add(pole);
+
+      var lampHead = new THREE.Mesh(
+        new THREE.BoxGeometry(2, 0.3, 0.3),
+        new THREE.MeshStandardMaterial({
+          color: 0xffeeaa,
+          emissive: 0xffeeaa,
+          emissiveIntensity: 1.2
+        })
+      );
+
+      lampHead.position.set(
+        lx,
+        8.5,
+        STREET_Z + 9
+      );
+
+      scene.add(lampHead);
+    }
   },
 
 
