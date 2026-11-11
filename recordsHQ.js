@@ -535,7 +535,8 @@ export default {
 
     );
 
-    roundabout.position.set(2, .1, -24);
+    // Local coordinates place the turnaround beside the HQ-side path.
+    roundabout.position.set(30, .1, -2);
 
     group.add(roundabout);
 
@@ -561,7 +562,7 @@ export default {
 
     ring.rotation.x = Math.PI / 2;
 
-    ring.position.set(2, .25, -24);
+    ring.position.set(30, .25, -2);
 
     group.add(ring);
 
