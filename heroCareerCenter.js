@@ -120,7 +120,7 @@ export default {
     const dz=player.position.z-INTERACTION_POINT.z;
     active=Math.hypot(dx,dz)<=ACTIVATION_DISTANCE;
     if(!open) prompt.style.display=active?"block":"none";
-    const input=window.__lamboCityInput;
+    const input=context && context.systems && context.systems.input;
     const pressed=!!(input && input.keys && input.keys.e);
     if(pressed && !lastE && active && !open) openPanel();
     lastE=pressed;
