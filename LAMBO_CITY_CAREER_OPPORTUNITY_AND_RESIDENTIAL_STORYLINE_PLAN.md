@@ -220,3 +220,35 @@ One registered artist creates a campaign for an actual release; another register
 - Use isolated branches and tests for new systems.
 - Do not modify the live deployment, merge, or deploy without explicit user approval.
 - Report what was inspected, what changed, what was tested, and what remains unverified.
+
+
+## 11. Founder-led proof of concept: HERO as the first artist
+
+The project owner intends to use their own artist activity as the first real-world example for the Career & Opportunity System. The first pilot should use the existing **LAMBO CITY VOL 1** release by **HERO**, distributed through CD Baby.
+
+This is a founder-led demonstration, not a claim that CD Baby or ASCAP has sponsored or endorsed LAMBO CITY.
+
+### Artist case study
+
+- Create the first artist career profile around HERO.
+- Use LAMBO CITY VOL 1 as the first release campaign.
+- Record the real release metadata and authorized artwork/links.
+- Build a sample campaign with promotional tasks such as street-team participation, approved social promotion, creative assets, and a listening event.
+- Track applications, deliverables, review, and verified outcomes.
+- Show how an independent artist can use the system to organize a release and collaborate with other creators.
+
+### LAMBO CITY Radio and music-rights proof of concept
+
+The project owner also intends to use LAMBO CITY Radio as a practical example of music usage and rights administration. The owner plans to submit the appropriate licensing and playlist information to ASCAP and use actual royalty statements/payments received as evidence of the process.
+
+Important separation:
+- The game can teach how music usage, cue sheets/playlist reporting where applicable, registrations, licensing, and royalties work.
+- The system must not assume that radio playback automatically creates an ASCAP payment. Eligibility, reporting requirements, repertoire data, licensing arrangements, and payment timing must be verified with ASCAP and the relevant rights holders.
+- Any financial amounts displayed as real-world royalties must come from documented statements or payment records and be labeled with the reporting period and source.
+- Simulated examples and in-game rewards must be clearly distinguished from actual royalty income.
+- Do not claim an ASCAP integration or sponsor relationship unless one is formally established. Start with a manually documented case study using records the owner is authorized to share; protect private financial and account information.
+
+### First implementation milestone
+
+Build the HERO artist profile and LAMBO CITY VOL 1 release campaign as the first controlled proof of concept. Keep the ASCAP / LAMBO CITY Radio royalty case study as a separate evidence-backed module so the campaign workflow can be tested without waiting for royalty processing.
+
