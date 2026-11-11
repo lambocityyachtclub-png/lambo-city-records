@@ -513,21 +513,21 @@ export default {
 
 
     // ========================================================
-    // ROUNDABOUT APPROACH — CLOSE THE GAP FROM THE PATIO WALK
+    // ROUNDABOUT APPROACH — CONTINUOUS CONNECTION FROM PATIO WALK
     // ========================================================
-    // The turnaround is east of the patio. This short angled apron
-    // joins the patio edge to the southwest edge of the roundabout,
-    // so the approach reads as one continuous drivable/walkable surface.
+    // The patio walkway ends near local X=10. Extend the paved approach
+    // all the way to the southwest side of the existing roundabout.
+    // This overlaps both surfaces so there is no visible gap.
     const roundaboutApproach = new THREE.Mesh(
-      new THREE.BoxGeometry(2.5, 0.12, 3.2),
+      new THREE.BoxGeometry(15.5, 0.12, 3.8),
       new THREE.MeshStandardMaterial({
         color: 0x29292e,
         roughness: 0.42,
         metalness: 0.22
       })
     );
-    roundaboutApproach.position.set(22.78, 0.12, -7.28);
-    roundaboutApproach.rotation.y = -0.63;
+    roundaboutApproach.position.set(17.0, 0.12, -6.45);
+    roundaboutApproach.rotation.y = -0.20;
     group.add(roundaboutApproach);
 
     const approachGold = new THREE.MeshStandardMaterial({
@@ -538,17 +538,17 @@ export default {
       roughness: 0.3
     });
 
-    [-1.48, 1.48].forEach(offset => {
+    [-1.78, 1.78].forEach(offset => {
       const edge = new THREE.Mesh(
-        new THREE.BoxGeometry(2.35, 0.035, 0.055),
+        new THREE.BoxGeometry(15.2, 0.035, 0.055),
         approachGold
       );
       edge.position.set(
-        22.78 + Math.sin(-0.63) * offset,
+        17.0 + Math.sin(-0.20) * offset,
         0.205,
-        -7.28 + Math.cos(-0.63) * offset
+        -6.45 + Math.cos(-0.20) * offset
       );
-      edge.rotation.y = -0.63;
+      edge.rotation.y = -0.20;
       group.add(edge);
     });
 
