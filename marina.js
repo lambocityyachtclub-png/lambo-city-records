@@ -30,8 +30,10 @@ export default {
     this._buildDockRamp(scene);
     this._buildStreet(scene);
     this._buildStores(scene);
-    this._buildPalms(scene);
-    this._buildNeon(scene);
+    // Keep the street and boardwalk travel surfaces free of props.
+    // Roadside palms and the freestanding neon sign are intentionally
+    // not initialized here. The road, sidewalks, dock ramp, and
+    // waterfront boundary remain intact.
     this._buildWaterfrontGlass(scene);
   },
 
