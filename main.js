@@ -57,7 +57,6 @@ import RecordsHQMerchDetails from "./recordsHQMerchDetails.js";
 import HeroCareerCenter from "./heroCareerCenter.js";
 import RecordsHQElevator from "./recordsHQElevator.js";
 import Elevator from "./elevator.js";
-import BoardwalkOverlooks from "./boardwalkOverlooks.js";
 import PerformanceMonitor from "./performanceMonitor.js";
 const engine = new Engine();
 engine.registerSystems({
@@ -114,7 +113,6 @@ engine.registerSystems({
   recordsHQMerchDetails: RecordsHQMerchDetails,
   heroCareerCenter: HeroCareerCenter,
   recordsHQElevator: RecordsHQElevator,
-  boardwalkOverlooks: BoardwalkOverlooks,
   input: Input,
   player: Player,
   elevator: Elevator,
