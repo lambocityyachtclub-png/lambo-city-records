@@ -53,6 +53,319 @@ function createSignTexture() {
 }
 
 // ============================================================
+// WATERFRONT PROMENADE
+// ============================================================
+
+function buildWaterfrontPromenade(group) {
+
+  // ----------------------------------------------------------
+  // SHARED MATERIALS
+  // ----------------------------------------------------------
+
+  const promenadeStone = new THREE.MeshStandardMaterial({
+    color: 0x202024,
+    roughness: .48,
+    metalness: .18
+  });
+
+  const promenadeEdge = new THREE.MeshStandardMaterial({
+    color: 0x111114,
+    roughness: .38,
+    metalness: .35
+  });
+
+  const gold = new THREE.MeshStandardMaterial({
+    color: 0xffd700,
+    emissive: 0xffd700,
+    emissiveIntensity: 1.15,
+    roughness: .3,
+    metalness: .7
+  });
+
+  const glass = new THREE.MeshStandardMaterial({
+    color: 0x87dfff,
+    emissive: 0x155d73,
+    emissiveIntensity: .35,
+    transparent: true,
+    opacity: .42,
+    roughness: .12,
+    metalness: .15
+  });
+
+  const planterMat = new THREE.MeshStandardMaterial({
+    color: 0x111111,
+    roughness: .7,
+    metalness: .15
+  });
+
+  const plantMat = new THREE.MeshStandardMaterial({
+    color: 0x174f42,
+    roughness: .9
+  });
+
+
+  // ----------------------------------------------------------
+  // MAIN PROMENADE
+  //
+  // Extends from the HQ plaza toward the waterfront.
+  // ----------------------------------------------------------
+
+  const promenade = new THREE.Mesh(
+    new THREE.BoxGeometry(
+      12,
+      .14,
+      18
+    ),
+    promenadeStone
+  );
+
+  promenade.position.set(-7, .12, 18);
+
+  group.add(promenade);
+
+
+  // ----------------------------------------------------------
+  // DARK OUTER BORDER
+  // ----------------------------------------------------------
+
+  const borderLeft = new THREE.Mesh(
+    new THREE.BoxGeometry(
+      .32,
+      .18,
+      18
+    ),
+    promenadeEdge
+  );
+
+  borderLeft.position.set(-12.85, .19, 18);
+
+  group.add(borderLeft);
+
+
+  const borderRight = new THREE.Mesh(
+    new THREE.BoxGeometry(
+      .32,
+      .18,
+      18
+    ),
+    promenadeEdge
+  );
+
+  borderRight.position.set(-1.15, .19, 18);
+
+  group.add(borderRight);
+
+
+  // ----------------------------------------------------------
+  // GOLD INLAY LINES
+  // ----------------------------------------------------------
+
+  // The promenade remains a continuous stone walk; no decorative
+  // gold stripes compete with the HQ facade or pedestrian route.
+
+
+  // ----------------------------------------------------------
+  // WATERFRONT END CAP
+  // ----------------------------------------------------------
+
+  const endCap = new THREE.Mesh(
+    new THREE.BoxGeometry(
+      12.3,
+      .22,
+      .5
+    ),
+    promenadeEdge
+  );
+
+  endCap.position.set(-7, .2, 27);
+
+  group.add(endCap);
+
+
+  // ----------------------------------------------------------
+  // GLASS GUARD / ARCHITECTURAL RAIL
+  // ----------------------------------------------------------
+
+  const glassRail = new THREE.Mesh(
+    new THREE.BoxGeometry(
+      10.5,
+      1.25,
+      .08
+    ),
+    glass
+  );
+
+  glassRail.position.set(-7, .82, 26.6);
+
+  group.add(glassRail);
+
+
+  // ----------------------------------------------------------
+  // GOLD RAIL TOP
+  // ----------------------------------------------------------
+
+  const railTop = new THREE.Mesh(
+    new THREE.BoxGeometry(
+      10.7,
+      .08,
+      .12
+    ),
+    gold
+  );
+
+  railTop.position.set(-7, 1.48, 26.6);
+
+  group.add(railTop);
+
+
+  // ----------------------------------------------------------
+  // LOW ARCHITECTURAL LIGHT PILLARS
+  // ----------------------------------------------------------
+
+  const pillarGeometry = new THREE.BoxGeometry(
+    .28,
+    1.5,
+    .28
+  );
+
+  [
+    [-12.2, 10],
+    [-1.8, 10],
+    [-12.2, 18],
+    [-1.8, 18],
+    [-12.2, 26],
+    [-1.8, 26]
+  ].forEach(([x, z]) => {
+
+    const pillar = new THREE.Mesh(
+      pillarGeometry,
+      gold
+    );
+
+    pillar.position.set(x, .78, z);
+
+    group.add(pillar);
+  });
+
+
+  // ----------------------------------------------------------
+  // LUXURY PLANTERS
+  // ----------------------------------------------------------
+
+  const planterGeometry = new THREE.CylinderGeometry(
+    .42,
+    .34,
+    .48,
+    12
+  );
+
+  const plantGeometry = new THREE.ConeGeometry(
+    .34,
+    1.15,
+    7
+  );
+
+
+  [
+    [-11.4, 12],
+    [-2.6, 16],
+    [-11.4, 21],
+    [-2.6, 24]
+  ].forEach(([x, z]) => {
+
+    const planter = new THREE.Mesh(
+      planterGeometry,
+      planterMat
+    );
+
+    planter.position.set(x, .36, z);
+
+    group.add(planter);
+
+
+    const plant = new THREE.Mesh(
+      plantGeometry,
+      plantMat
+    );
+
+    plant.position.set(x, 1.12, z);
+
+    group.add(plant);
+  });
+
+
+  // ----------------------------------------------------------
+  // SECONDARY WATERFRONT PLAZA
+  // ----------------------------------------------------------
+
+  const waterfrontPlaza = new THREE.Mesh(
+    new THREE.BoxGeometry(
+      16,
+      .12,
+      5
+    ),
+    promenadeStone
+  );
+
+  waterfrontPlaza.position.set(-7, .13, 29);
+
+  group.add(waterfrontPlaza);
+
+
+  // ----------------------------------------------------------
+  // WATERFRONT PLAZA GOLD BORDER
+  // ----------------------------------------------------------
+
+  const plazaFront = new THREE.Mesh(
+    new THREE.BoxGeometry(
+      16,
+      .08,
+      .08
+    ),
+    gold
+  );
+
+  plazaFront.position.set(-7, .22, 31.35);
+
+  group.add(plazaFront);
+
+
+  // ----------------------------------------------------------
+  // SUBTLE SEATING BLOCKS
+  // ----------------------------------------------------------
+
+  const seatGeometry = new THREE.BoxGeometry(
+    2.2,
+    .45,
+    .8
+  );
+
+  const seatMat = new THREE.MeshStandardMaterial({
+    color: 0x080808,
+    roughness: .42,
+    metalness: .25
+  });
+
+
+  [
+    [-11, 29],
+    [-3, 29]
+  ].forEach(([x, z]) => {
+
+    const seat = new THREE.Mesh(
+      seatGeometry,
+      seatMat
+    );
+
+    seat.position.set(x, .42, z);
+
+    group.add(seat);
+  });
+}
+
+
+
+// ============================================================
 // MAIN HQ
 // ============================================================
 
@@ -609,6 +922,11 @@ export default {
 
     // The old cross-plaza VIP barrier was removed; the entrance and
     // boardwalk-to-HQ route remain visually continuous.
+
+    // Restore the original waterfront promenade that visually ties
+    // the Records HQ plaza into the marina boardwalk.
+    buildWaterfrontPromenade(group);
+
 
     // ========================================================
     // FINAL ADD
