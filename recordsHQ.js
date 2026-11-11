@@ -544,9 +544,9 @@ export default {
         approachGold
       );
       edge.position.set(
-        22.78 + Math.cos(-0.63) * offset,
+        22.78 + Math.sin(-0.63) * offset,
         0.205,
-        -7.28 - Math.sin(-0.63) * offset
+        -7.28 + Math.cos(-0.63) * offset
       );
       edge.rotation.y = -0.63;
       group.add(edge);
