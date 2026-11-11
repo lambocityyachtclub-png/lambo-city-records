@@ -513,6 +513,46 @@ export default {
 
 
     // ========================================================
+    // ROUNDABOUT APPROACH — CLOSE THE GAP FROM THE PATIO WALK
+    // ========================================================
+    // The turnaround is east of the patio. This short angled apron
+    // joins the patio edge to the southwest edge of the roundabout,
+    // so the approach reads as one continuous drivable/walkable surface.
+    const roundaboutApproach = new THREE.Mesh(
+      new THREE.BoxGeometry(2.5, 0.12, 3.2),
+      new THREE.MeshStandardMaterial({
+        color: 0x29292e,
+        roughness: 0.42,
+        metalness: 0.22
+      })
+    );
+    roundaboutApproach.position.set(22.78, 0.12, -7.28);
+    roundaboutApproach.rotation.y = -0.63;
+    group.add(roundaboutApproach);
+
+    const approachGold = new THREE.MeshStandardMaterial({
+      color: 0xffd700,
+      emissive: 0xffb000,
+      emissiveIntensity: 0.55,
+      metalness: 0.72,
+      roughness: 0.3
+    });
+
+    [-1.48, 1.48].forEach(offset => {
+      const edge = new THREE.Mesh(
+        new THREE.BoxGeometry(2.35, 0.035, 0.055),
+        approachGold
+      );
+      edge.position.set(
+        22.78 + Math.sin(-0.63) * offset,
+        0.205,
+        -7.28 + Math.cos(-0.63) * offset
+      );
+      edge.rotation.y = -0.63;
+      group.add(edge);
+    });
+
+    // ========================================================
     // HQ ROUNDABOUT TURNAROUND
     // ========================================================
 
