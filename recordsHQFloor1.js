@@ -404,33 +404,9 @@ export default {
     );
 
 
-    // Screen.
-
-    const videoScreen =
-      new THREE.Mesh(
-
-        new THREE.BoxGeometry(
-          0.06,
-          2.35,
-          4.35
-        ),
-
-        screen
-
-      );
-
-    videoScreen.position.set(
-      videoX + 0.12,
-      1.9,
-      videoZ
-    );
-
-    videoScreen.rotation.y =
-      Math.PI / 2;
-
-    videoWall.add(
-      videoScreen
-    );
+    // The separate mediaDisplayScreen below is the only screen mesh.
+    // Keeping a second rotated black screen here caused it to protrude
+    // through the Records HQ wall and is intentionally omitted.
 
 
     // Screen frame.
