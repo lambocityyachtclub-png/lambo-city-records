@@ -132,7 +132,7 @@ jobs:
               -H "Authorization: Bearer $OIDC_TOKEN" \
               -H "Content-Type: application/json" \
               --data "$(jq -n --arg taskId "$PRIVATE_TASK_ID" '{taskId:$taskId}')" \
-              "https://alive-preview.lambocityrecords.com/api/alive/private-task")"
+              "https://lambo-city-records-git-71b9dc-lambocityyachtclub-2911s-projects.vercel.app/api/alive/private-task")"
             if [[ "$TASK_HTTP_CODE" != "200" ]]; then
               echo "ALIVE private-task endpoint failed with HTTP $TASK_HTTP_CODE." >&2
               cat /tmp/alive-task-response.json >&2
