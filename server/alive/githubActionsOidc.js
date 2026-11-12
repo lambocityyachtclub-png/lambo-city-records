@@ -1,7 +1,7 @@
 import { createPublicKey, verify as verifySignature } from "node:crypto";
 
 const ISSUER = "https://token.actions.githubusercontent.com";
-const AUDIENCE = "https://alive-preview.lambocityrecords.com/api/alive/private-task";
+const AUDIENCE = "https://github.com/lambocityyachtclub-png";
 const OWNER = "lambocityyachtclub-png";
 const PUBLIC_REPOSITORY = "lambo-city-records";
 const PUBLIC_REPOSITORY_ID = "1227528136";
