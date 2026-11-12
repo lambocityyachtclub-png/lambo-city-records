@@ -39,8 +39,7 @@ export function createVercelAIGatewayProposalProvider(options = {}) {
   const model = options.model || process.env.ALIVE_AI_MODEL || DEFAULT_MODEL;
   const endpoint = options.endpoint || DEFAULT_ENDPOINT;
   const fetchImpl = options.fetchImpl || globalThis.fetch;
-  const enabled = options.enabled === true ||
-    process.env.ALIVE_AI_ENABLED === "true";
+  const enabled = options.enabled ?? (process.env.ALIVE_AI_ENABLED === "true");
   const timeoutMs = options.timeoutMs ?? 90000;
   const maxContextBytes = options.maxContextBytes ?? 400000;
   const maxFileBytes = options.maxFileBytes ?? 512 * 1024;
