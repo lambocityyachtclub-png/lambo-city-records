@@ -74,9 +74,9 @@ jobs:
       contents: read
       id-token: write
     outputs:
-      has_task: ${{ steps.task.outputs.has_task }}
-      task_id: ${{ steps.task.outputs.task_id }}
-      worker_id: ${{ steps.task.outputs.worker_id }}
+      has_task: ${{ needs.resolve-task.outputs.has_task }}
+      task_id: ${{ needs.resolve-task.outputs.task_id }}
+      worker_id: ${{ needs.resolve-task.outputs.worker_id }}
       title: ${{ steps.task.outputs.title }}
       base_sha: ${{ steps.task.outputs.base_sha }}
       proposal_base_sha: ${{ steps.task.outputs.proposal_base_sha }}
@@ -140,10 +140,10 @@ jobs:
           echo "base_sha=$BEFORE_SHA" >> "$GITHUB_OUTPUT"
           echo "proposal_base_sha=$HEAD_SHA" >> "$GITHUB_OUTPUT"
       - name: Upload prepared private task input
-        if: steps.task.outputs.has_task == 'true'
+        if: needs.resolve-task.outputs.has_task == 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: alive-worker-input-${{ steps.task.outputs.task_id }}
+          name: alive-worker-input-${{ needs.resolve-task.outputs.task_id }}
           path: |
             /tmp/alive-worker-prompt.md
             /tmp/alive-worker-metadata.json
@@ -188,7 +188,7 @@ jobs:
           BASE_SHA: ${{ needs.resolve-task.outputs.base_sha }}
         run: git checkout "$BASE_SHA"
       - name: Generate code in disposable runner
-        if: steps.task.outputs.has_task == 'true'
+        if: needs.resolve-task.outputs.has_task == 'true'
         shell: bash
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -199,10 +199,10 @@ jobs:
             --allow-tool='write' \
             --deny-tool='shell' --deny-tool='url' --deny-tool='memory'
       - name: Validate paths and package patch
-        if: steps.task.outputs.has_task == 'true'
+        if: needs.resolve-task.outputs.has_task == 'true'
         env:
-          WORKER_ID: ${{ steps.task.outputs.worker_id }}
-          TASK_ID: ${{ steps.task.outputs.task_id }}
+          WORKER_ID: ${{ needs.resolve-task.outputs.worker_id }}
+          TASK_ID: ${{ needs.resolve-task.outputs.task_id }}
         run: |
           set -euo pipefail
           git add -N -- .
@@ -216,10 +216,10 @@ jobs:
           printf '# Specialist report\n\nTask: %s\nWorker: %s\n\nChanged files:\n' "$TASK_ID" "$WORKER_ID" > alive-worker-report.md
           sed 's/^/- /' alive-worker-changed-files.txt >> alive-worker-report.md
       - name: Upload isolated proposal artifact
-        if: steps.task.outputs.has_task == 'true'
+        if: needs.resolve-task.outputs.has_task == 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: alive-worker-proposal-${{ steps.task.outputs.task_id }}
+          name: alive-worker-proposal-${{ needs.resolve-task.outputs.task_id }}
           path: |
             alive-worker.patch
             alive-worker-changed-files.txt
