@@ -128,9 +128,9 @@ jobs:
             fi
             OIDC_TOKEN="$(jq -er '.value' /tmp/alive-oidc-response.json)"
             TASK_HTTP_CODE="$(curl --silent --show-error -o /tmp/alive-task-response.json -w '%{http_code}' \
-              -H "x-vercel-trusted-oidc-idp-token: $OIDC_TOKEN" \\
-              -H "Authorization: Bearer $OIDC_TOKEN" \\
-              -H "Content-Type: application/json" \\
+              -H "x-vercel-trusted-oidc-idp-token: $OIDC_TOKEN" \
+              -H "Authorization: Bearer $OIDC_TOKEN" \
+              -H "Content-Type: application/json" \
               --data "$(jq -n --arg taskId "$PRIVATE_TASK_ID" '{taskId:$taskId}')" \
               "https://alive-preview.lambocityrecords.com/api/alive/private-task")"
             if [[ "$TASK_HTTP_CODE" != "200" ]]; then
@@ -342,6 +342,6 @@ jobs:
 
           No production branch changes were made. No merge or deployment was performed. Studio/World checks run when their corresponding code paths are changed.
           EOF
-          gh pr create --draft --base "$BASE_BRANCH" --head "$BRANCH" \\
-            --title "[ALIVE] $TASK_TITLE" \\
+          gh pr create --draft --base "$BASE_BRANCH" --head "$BRANCH" \
+            --title "[ALIVE] $TASK_TITLE" \
             --body-file /tmp/alive-worker-pr-body.md
