@@ -130,8 +130,17 @@ function sortTasks(tasks) {
 export function createDevelopmentDirector(options = {}) {
   const {
     storage = null,
-    clock = timestamp
+    clock = timestamp,
+    leaseDurationMs = 30 * 60 * 1000
   } = options;
+
+  if (
+    !Number.isInteger(leaseDurationMs) ||
+    leaseDurationMs < 60 * 1000 ||
+    leaseDurationMs > 24 * 60 * 60 * 1000
+  ) {
+    throw new Error("leaseDurationMs must be between 1 minute and 24 hours.");
+  }
 
   if (
     storage !== null &&
@@ -312,6 +321,7 @@ const requiresApproval = policyDecision.requiresApproval;
       acceptanceCriteria,
 
       assignedWorker: null,
+      leaseExpiresAt: null,
       result: null,
       rejectionReason: null,
 
@@ -399,6 +409,31 @@ const requiresApproval = policyDecision.requiresApproval;
     requireText(runnerId, "Runner ID");
     requireText(workerId, "Worker ID");
 
+    const now = new Date(clock()).getTime();
+
+    // Recover work abandoned by a worker that stopped before completing it.
+    // Older task records without a lease use updatedAt as a compatibility fallback.
+    for (const task of tasks) {
+      if (task.status !== TASK_STATUS.IN_PROGRESS) continue;
+
+      const recordedExpiry = task.leaseExpiresAt
+        ? Date.parse(task.leaseExpiresAt)
+        : Date.parse(task.updatedAt) + leaseDurationMs;
+
+      if (Number.isFinite(recordedExpiry) && recordedExpiry <= now) {
+        const previousWorker = task.assignedWorker || null;
+        task.status = TASK_STATUS.QUEUED;
+        task.assignedWorker = null;
+        task.leaseExpiresAt = null;
+        record(task, "task_lease_expired_requeued", {
+          previousWorker,
+          leaseDurationMs
+        });
+      }
+    }
+
+    await persist();
+
     const eligible = sortTasks(tasks).find(task => {
       if (task.runner !== runnerId) return false;
       if (task.status !== TASK_STATUS.QUEUED) return false;
@@ -419,6 +454,7 @@ const requiresApproval = policyDecision.requiresApproval;
 
     eligible.status = TASK_STATUS.IN_PROGRESS;
     eligible.assignedWorker = workerId;
+    eligible.leaseExpiresAt = new Date(now + leaseDurationMs).toISOString();
 
     record(eligible, "task_claimed", {
       runnerId,
@@ -498,6 +534,13 @@ const requiresApproval = policyDecision.requiresApproval;
     const previousStatus = task.status;
 
     Object.assign(task, updates);
+
+    if (
+      updates.status !== undefined &&
+      updates.status !== TASK_STATUS.IN_PROGRESS
+    ) {
+      task.leaseExpiresAt = null;
+    }
 
     record(task, "task_updated", {
       previousStatus,
