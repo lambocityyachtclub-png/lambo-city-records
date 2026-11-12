@@ -21,7 +21,7 @@ function makeToken(overrides = {}) {
   const header = Buffer.from(JSON.stringify({ alg: "RS256", typ: "JWT", kid: "test-key" })).toString("base64url");
   const claims = {
     iss: "https://token.actions.githubusercontent.com",
-    aud: "https://alive-preview.lambocityrecords.com/api/alive/private-task",
+    aud: "https://github.com/lambocityyachtclub-png",
     exp: now + 300,
     iat: now,
     repository: OWNER + "/" + REPOSITORY,
