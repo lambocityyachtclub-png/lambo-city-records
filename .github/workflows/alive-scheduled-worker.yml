@@ -1,0 +1,43 @@
+name: ALIVE Scheduled Development Worker
+
+on:
+  schedule:
+    - cron: "17 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lambo-city-alive-worker
+  cancel-in-progress: false
+
+jobs:
+  run-worker:
+    if: ${{ vars.ALIVE_WORKER_ENABLED == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install isolated runtime dependencies
+        run: npm install --prefix development/runtime --ignore-scripts --no-audit --no-fund
+
+      - name: Run one bounded ALIVE task
+        env:
+          ALIVE_WORKER_ENABLED: ${{ vars.ALIVE_WORKER_ENABLED }}
+          ALIVE_AI_ENABLED: ${{ vars.ALIVE_AI_ENABLED }}
+          ALIVE_SANDBOX_ENABLED: ${{ vars.ALIVE_SANDBOX_ENABLED }}
+          ALIVE_ALLOWED_PATHS: ${{ vars.ALIVE_ALLOWED_PATHS }}
+          DATABASE_URL: ${{ secrets.ALIVE_DATABASE_URL }}
+          AI_GATEWAY_API_KEY: ${{ secrets.AI_GATEWAY_API_KEY }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_TEAM_ID: ${{ vars.VERCEL_TEAM_ID }}
+          VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
+        run: node --experimental-default-type=module development/runtime/runAliveWorker.js
