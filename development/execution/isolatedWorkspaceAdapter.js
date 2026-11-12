@@ -479,6 +479,7 @@ export function createIsolatedWorkspaceAdapter(options = {}) {
         taskId: workspace.taskId,
         allowedPaths: [...normalizedPaths]
       },
+      listFiles: async () => [...workspace.baseline.keys()].sort(),
       readFile: filePath => readFile({
         workspaceId: workspace.workspaceId,
         filePath
