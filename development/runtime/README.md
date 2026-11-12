@@ -18,7 +18,7 @@ This is server-side development infrastructure. Do not import it from browser/ga
 - A persistent task storage adapter and review store must be supplied by the host application.
 - The host must supply a narrow `allowedPaths` list. Do not include secrets, credentials, `.git`, `.vercel`, or dependency/build folders.
 
-Install runtime dependencies with `npm install --prefix development/runtime`.
+Install runtime dependencies with `npm install --prefix development/runtime`. Run the worker host on Node 22 with `--experimental-default-type=module` so the existing server-side `.js` modules load as ES modules.
 
 ## Safety and rollout
 
