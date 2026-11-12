@@ -74,8 +74,7 @@ function truncate(value, max = 24000) {
 
 export function createVercelSandboxTestRunner(options = {}) {
   const sandboxFactory = options.sandboxFactory;
-  const enabled = options.enabled === true ||
-    process.env.ALIVE_SANDBOX_ENABLED === "true";
+  const enabled = options.enabled ?? (process.env.ALIVE_SANDBOX_ENABLED === "true");
   const timeoutMs = options.timeoutMs ?? 180000;
   const limits = {
     maxFiles: options.maxFiles ?? 1200,
