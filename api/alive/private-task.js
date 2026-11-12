@@ -5,10 +5,11 @@ import {
 } from "../../server/alive/githubActionsOidc.js";
 
 function bearerToken(req) {
-  const value = req?.headers?.authorization;
+  const trustedValue = req?.headers?.["x-vercel-trusted-oidc-idp-token"];
+  const value = trustedValue || req?.headers?.authorization;
   const header = Array.isArray(value) ? String(value[0] || "") : String(value || "");
-  const match = /^Bearer ([A-Za-z0-9._~-]+)$/.exec(header);
-  return match ? match[1] : "";
+  const normalized = /^Bearer ([A-Za-z0-9._~-]+)$/.exec(header);
+  return normalized ? normalized[1] : header.trim();
 }
 
 export default async function handler(req, res) {
