@@ -2,6 +2,10 @@ import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 
 export default {
   init(scene) {
+    if (scene.getObjectByName("lamboCityWorldDistrict")) return;
+    const root = new THREE.Group();
+    root.name = "lamboCityWorldDistrict";
+    scene.add(root);
 
     // ============================================================
     // MARINA GROUND
@@ -25,14 +29,14 @@ export default {
       gm
     );
     leftLand.position.set(-43, 0.4, 27.5);
-    scene.add(leftLand);
+    root.add(leftLand);
 
     const rightLand = new THREE.Mesh(
       new THREE.BoxGeometry(44, 0.5, 35),
       gm
     );
     rightLand.position.set(43, 0.4, 27.5);
-    scene.add(rightLand);
+    root.add(rightLand);
 
 
     // ============================================================
@@ -48,7 +52,7 @@ export default {
     );
 
     sg.position.set(0, 0.4, -72);
-    scene.add(sg);
+    root.add(sg);
 
 
     // ============================================================
@@ -64,7 +68,7 @@ export default {
     );
 
     stage.position.set(0, 1.1, -74);
-    scene.add(stage);
+    root.add(stage);
 
 
     // ============================================================
@@ -79,7 +83,7 @@ export default {
     );
 
     bw.position.set(0, 11, -83.5);
-    scene.add(bw);
+    root.add(bw);
 
 
     // ============================================================
@@ -97,7 +101,7 @@ export default {
 
     screen.name = "stageScreenOuter";
     screen.position.set(0, 12, -83);
-    scene.add(screen);
+    root.add(screen);
 
 
     // ============================================================
@@ -115,7 +119,7 @@ export default {
 
     screenC.name = "stageScreenInner";
     screenC.position.set(0, 12, -82.8);
-    scene.add(screenC);
+    root.add(screenC);
 
 
     // ============================================================
@@ -133,7 +137,7 @@ export default {
 
     sign.name = "stageGoldSign";
     sign.position.set(0, 19.5, -82.8);
-    scene.add(sign);
+    root.add(sign);
 
 
     // ============================================================
@@ -151,7 +155,7 @@ export default {
       );
 
       t.position.set(x, 13, -83);
-      scene.add(t);
+      root.add(t);
 
 
       // Tower neon strips
@@ -167,7 +171,7 @@ export default {
         );
 
         strip.position.set(x, y, -83);
-        scene.add(strip);
+        root.add(strip);
       });
 
 
@@ -178,7 +182,7 @@ export default {
       );
 
       tl.position.set(x, 24, -80);
-      scene.add(tl);
+      root.add(tl);
     });
 
 
@@ -205,7 +209,7 @@ export default {
       );
 
       trim.position.set(e.x, 1.85, e.z);
-      scene.add(trim);
+      root.add(trim);
     });
 
 
@@ -235,7 +239,7 @@ export default {
       );
 
       bl.position.set(b.x, b.h / 2, b.z);
-      scene.add(bl);
+      root.add(bl);
 
 
       // WINDOWS
@@ -260,7 +264,7 @@ export default {
             b.z + 6.1
           );
 
-          scene.add(w);
+          root.add(w);
         }
       }
 
@@ -281,7 +285,7 @@ export default {
         b.z + 6
       );
 
-      scene.add(rn);
+      root.add(rn);
 
 
       // ROOFTOP LIGHT
@@ -299,7 +303,7 @@ export default {
           b.z + 6
         );
 
-        scene.add(rl);
+        root.add(rl);
       }
     });
 
@@ -320,7 +324,7 @@ export default {
       );
 
       s.position.set(x, 1.55, -70);
-      scene.add(s);
+      root.add(s);
     });
 
 

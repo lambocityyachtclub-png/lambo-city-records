@@ -100,6 +100,8 @@ this.systems.floor2CitySynth?.init?.(this.scene, this.context);
 this.systems.boardwalkOverlooks?.init?.(this.scene);
     this.systems.input?.init?.();
     this.systems.player?.init?.(this.scene);
+    this.systems.worldSystemHost?.init?.(this.scene, this.context);
+    this.systems.worldStreaming?.init?.(this.scene, this.context);
     this.systems.hud?.init?.();
     this.loop();
   }

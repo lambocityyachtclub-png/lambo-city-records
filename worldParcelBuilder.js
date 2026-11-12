@@ -1,0 +1,371 @@
+// LAMBO CITY — modular parcel archetype generator
+// Supported parcel styles are data-driven and independent of the live scene.
+import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
+
+function box(parent, name, size, position, material) {
+  const mesh = new THREE.Mesh(new THREE.BoxGeometry(...size), material);
+  mesh.name = name;
+  mesh.position.set(...position);
+  mesh.castShadow = false;
+  mesh.receiveShadow = true;
+  parent.add(mesh);
+  return mesh;
+}
+
+function buildVilla(building, parcel, width, depth, materials) {
+  // Coastal contemporary villa: recessed upper floor, ocean-facing glass,
+  // sheltered terraces, private garage, entry canopy, and roof pergola.
+  box(building, parcel.id + "_foundation", [width, 0.55, depth], [0, 0.92, 0], materials.foundation);
+  box(building, parcel.id + "_lower_volume", [width - 1, 4.2, depth - 1], [0, 3.3, 0], materials.wall);
+  box(building, parcel.id + "_upper_volume", [width - 1.4, 3.8, depth - 1.4], [0, 7.3, 0], materials.wall);
+  box(building, parcel.id + "_roof", [width + 0.1, 0.55, depth + 0.1], [0, 9.48, 0], materials.roof);
+
+  // Full-height ocean glazing is broken into readable bays by slim mullions.
+  const oceanWallZ = -depth / 2 + 0.56;
+  box(building, parcel.id + "_lower_glass", [width - 3.2, 2.5, 0.12], [0, 3.25, oceanWallZ], materials.glass);
+  box(building, parcel.id + "_upper_glass", [width - 3.4, 2.3, 0.12], [0, 7.25, oceanWallZ + 0.2], materials.glass);
+  for (let index = -2; index <= 2; index++) {
+    const x = index * 1.75;
+    box(building, parcel.id + "_lower_mullion_" + index, [0.075, 2.55, 0.18],
+      [x, 3.25, oceanWallZ], materials.metal);
+    box(building, parcel.id + "_upper_mullion_" + index, [0.075, 2.35, 0.18],
+      [x, 7.25, oceanWallZ + 0.2], materials.metal);
+  }
+
+  // Deep terraces remain inside the surveyed parcel footprint.
+  const balconyWidth = width - 1.8;
+  const balconyZ = -depth / 2 + 1.1;
+  box(building, parcel.id + "_lower_balcony", [balconyWidth, 0.18, 1.25],
+    [0, 4.82, balconyZ], materials.metal);
+  box(building, parcel.id + "_upper_balcony", [balconyWidth - 0.2, 0.18, 1.2],
+    [0, 8.78, balconyZ + 0.12], materials.metal);
+  for (const side of [-1, 1]) {
+    const x = side * (balconyWidth / 2 - 0.12);
+    box(building, parcel.id + "_lower_balcony_side_rail_" + side, [0.12, 0.9, 1.15],
+      [x, 5.28, balconyZ], materials.glass);
+    box(building, parcel.id + "_upper_balcony_side_rail_" + side, [0.12, 0.82, 1.1],
+      [x, 9.22, balconyZ + 0.12], materials.glass);
+  }
+  box(building, parcel.id + "_lower_balcony_front_rail", [balconyWidth, 0.9, 0.10],
+    [0, 5.28, balconyZ - 0.58], materials.glass);
+  box(building, parcel.id + "_upper_balcony_front_rail", [balconyWidth - 0.2, 0.82, 0.10],
+    [0, 9.22, balconyZ - 0.43], materials.glass);
+
+  // Vertical champagne-metal fins and side glazing add depth to the facades.
+  for (const side of [-1, 1]) {
+    const x = side * (width / 2 - 0.62);
+    box(building, parcel.id + "_architectural_fin_" + side, [0.24, 8.2, 0.34],
+      [x, 5.35, -depth / 2 + 0.55], materials.metal);
+    box(building, parcel.id + "_side_glass_" + side, [0.12, 1.8, 3.2],
+      [side * (width / 2 - 0.55), 3.2, 0], materials.glass);
+    box(building, parcel.id + "_upper_side_glass_" + side, [0.12, 1.7, 2.8],
+      [side * (width / 2 - 0.75), 7.25, 0], materials.glass);
+  }
+
+  // Street-facing private garage and a separate, sheltered pedestrian entry.
+  const streetWallZ = depth / 2 - 0.56;
+  box(building, parcel.id + "_garage_door", [3.3, 2.25, 0.14],
+    [3.0, 2.35, streetWallZ], materials.metal);
+  for (let index = 0; index < 5; index++) {
+    box(building, parcel.id + "_garage_panel_" + index, [0.035, 2.15, 0.025],
+      [1.72 + index * 0.64, 2.35, streetWallZ - 0.09], materials.roof);
+  }
+  box(building, parcel.id + "_entry_door", [1.35, 2.55, 0.14],
+    [-3.1, 2.5, streetWallZ], materials.metal);
+  box(building, parcel.id + "_entry_canopy", [4.0, 0.18, 1.05],
+    [-3.1, 3.95, depth / 2 - 1.0], materials.roof);
+  for (const x of [-5.0, -1.2]) {
+    box(building, parcel.id + "_entry_column_" + x, [0.22, 2.75, 0.22],
+      [x, 2.55, depth / 2 - 0.65], materials.metal);
+  }
+
+  // Clean roof parapet and a light pergola over the private upper terrace.
+  const roofY = 9.78;
+  box(building, parcel.id + "_roof_parapet_front", [width, 0.32, 0.18],
+    [0, roofY, depth / 2 - 0.12], materials.metal);
+  box(building, parcel.id + "_roof_parapet_back", [width, 0.32, 0.18],
+    [0, roofY, -depth / 2 + 0.12], materials.metal);
+  for (const side of [-1, 1]) {
+    box(building, parcel.id + "_roof_parapet_side_" + side, [0.18, 0.32, depth],
+      [side * (width / 2 - 0.12), roofY, 0], materials.metal);
+  }
+  for (const x of [-2.2, 2.2]) {
+    for (const z of [-1.6, 1.6]) {
+      box(building, parcel.id + "_pergola_post_" + x + "_" + z, [0.16, 1.8, 0.16],
+        [x, 10.78, z], materials.metal);
+    }
+  }
+  for (let index = -2; index <= 2; index++) {
+    box(building, parcel.id + "_pergola_slat_" + index, [5.0, 0.12, 0.16],
+      [0, 11.62, index * 0.72], materials.metal);
+  }
+
+  // Low planting beds frame the driveway without obstructing the entry.
+  for (const side of [-1, 1]) {
+    const x = side * (width / 2 - 1.2);
+    box(building, parcel.id + "_landscape_bed_" + side, [1.5, 0.28, 1.8],
+      [x, 1.16, depth / 2 - 1.2], materials.soil);
+    const shrub = new THREE.Mesh(new THREE.IcosahedronGeometry(0.52, 0), materials.planting);
+    shrub.name = parcel.id + "_shrub_" + side;
+    shrub.position.set(x, 1.58, depth / 2 - 1.2);
+    shrub.castShadow = false;
+    building.add(shrub);
+  }
+}
+function buildApartment(building, parcel, width, depth, materials) {
+  const floors = Math.max(3, Math.min(9, Math.floor(parcel.floors || 5)));
+  const floorHeight = 3.0;
+  const totalHeight = floors * floorHeight;
+  const baseY = 1.2;
+  box(building, parcel.id + "_foundation", [width + 1, 0.55, depth + 1], [0, 0.92, 0], materials.foundation);
+  box(building, parcel.id + "_apartment_mass", [width - 1, totalHeight, depth - 1],
+    [0, baseY + totalHeight / 2, 0], materials.wall);
+  box(building, parcel.id + "_roof", [width + 0.2, 0.55, depth + 0.2],
+    [0, baseY + totalHeight + 0.28, 0], materials.roof);
+  for (let floor = 0; floor < floors; floor++) {
+    const y = baseY + floor * floorHeight + 1.55;
+    box(building, parcel.id + "_glass_band_" + floor, [Math.max(2, width - 3.2), 2.05, 0.12],
+      [0, y, -depth / 2 + 0.52], materials.glass);
+    if (floor > 0) {
+      box(building, parcel.id + "_balcony_" + floor, [width + 0.2, 0.16, 1.25],
+        [0, baseY + floor * floorHeight + 0.45, -depth / 2 - 0.48], materials.metal);
+    }
+  }
+  for (const side of [-1, 1]) {
+    box(building, parcel.id + "_vertical_fin_" + side, [0.28, totalHeight, 0.34],
+      [side * (width / 2 - 0.8), baseY + totalHeight / 2, -depth / 2 - 0.04], materials.metal);
+  }
+  box(building, parcel.id + "_entry", [3.2, 2.6, 0.18], [0, 2.5, depth / 2 - 0.42], materials.metal);
+  building.userData.floors = floors;
+}
+
+function buildRetail(building, parcel, width, depth, materials) {
+  box(building, parcel.id + "_foundation", [width + 0.8, 0.45, depth + 0.8], [0, 0.86, 0], materials.foundation);
+  box(building, parcel.id + "_retail_mass", [width - 0.8, 3.8, depth - 0.8], [0, 3.05, 0], materials.wall);
+  box(building, parcel.id + "_storefront_glass", [Math.max(2, width - 2.4), 2.45, 0.12],
+    [0, 2.65, -depth / 2 + 0.46], materials.glass);
+  box(building, parcel.id + "_sign_fascia", [width - 1, 0.72, 0.22],
+    [0, 4.65, -depth / 2 + 0.34], materials.metal);
+  box(building, parcel.id + "_canopy", [width + 0.4, 0.18, 1.25],
+    [0, 4.0, -depth / 2 - 0.42], materials.roof);
+  box(building, parcel.id + "_entry", [2.5, 2.6, 0.16], [0, 2.45, depth / 2 - 0.38], materials.metal);
+}
+
+function buildPark(building, parcel, width, depth, materials) {
+  box(building, parcel.id + "_park_lawn", [width, 0.16, depth], [0, 0.73, 0], materials.planting);
+  const trunkGeometry = new THREE.CylinderGeometry(0.12, 0.18, 1.45, 5);
+  const canopyGeometry = new THREE.IcosahedronGeometry(0.9, 0);
+  const trunkMaterial = materials.treeTrunk;
+  const canopyMaterial = materials.treeCanopy;
+  const spots = [[-width * 0.28, -depth * 0.22], [width * 0.28, -depth * 0.22], [0, depth * 0.22]];
+  for (let i = 0; i < spots.length; i++) {
+    const [x, z] = spots[i];
+    const trunk = new THREE.Mesh(trunkGeometry, trunkMaterial);
+    trunk.name = parcel.id + "_park_tree_trunk_" + i;
+    trunk.position.set(x, 1.5, z);
+    building.add(trunk);
+    const canopy = new THREE.Mesh(canopyGeometry, canopyMaterial);
+    canopy.name = parcel.id + "_park_tree_canopy_" + i;
+    canopy.position.set(x, 2.65, z);
+    canopy.scale.setScalar(0.85 + (i % 2) * 0.12);
+    building.add(canopy);
+  }
+  building.userData.walkable = true;
+}
+
+function batchParcelMeshes(root) {
+  root.updateMatrixWorld(true);
+  const batches = new Map();
+  let sourceMeshCount = 0;
+
+  root.traverse(object => {
+    if (!object.isMesh || object.isInstancedMesh || !object.geometry || !object.material ||
+        Array.isArray(object.material)) return;
+    const isBox = object.geometry.type === "BoxGeometry";
+    const geometryKey = isBox
+      ? "unit-box"
+      : object.geometry.type + ":" + JSON.stringify(object.geometry.parameters || {});
+    const key = object.material.uuid + ":" + geometryKey;
+    if (!batches.has(key)) {
+      batches.set(key, {
+        material: object.material,
+        geometry: isBox ? new THREE.BoxGeometry(1, 1, 1) : object.geometry.clone(),
+        isBox,
+        items: []
+      });
+    }
+    const scale = isBox
+      ? new THREE.Matrix4().makeScale(
+          object.geometry.parameters.width,
+          object.geometry.parameters.height,
+          object.geometry.parameters.depth
+        )
+      : null;
+    const matrix = object.matrixWorld.clone();
+    if (scale) matrix.multiply(scale);
+    batches.get(key).items.push({ mesh: object, matrix });
+    sourceMeshCount += 1;
+  });
+
+  let batchCount = 0;
+  for (const [key, batch] of batches) {
+    const instances = new THREE.InstancedMesh(batch.geometry, batch.material, batch.items.length);
+    instances.name = "worldParcelDetailBatch_" + batchCount;
+    instances.castShadow = false;
+    instances.receiveShadow = true;
+    batch.items.forEach((item, index) => instances.setMatrixAt(index, item.matrix));
+    instances.instanceMatrix.needsUpdate = true;
+    instances.computeBoundingSphere();
+    root.add(instances);
+    for (const item of batch.items) {
+      item.mesh.parent?.remove(item.mesh);
+      item.mesh.geometry.dispose?.();
+    }
+    batchCount += 1;
+  }
+
+  for (const child of [...root.children]) {
+    if (child.isGroup && child.children.length === 0) {
+      root.remove(child);
+    }
+  }
+  root.userData.detailSourceMeshCount = sourceMeshCount;
+  root.userData.detailBatchCount = batchCount;
+  return { sourceMeshCount, batchCount };
+}
+
+export const PARCEL_STYLES = Object.freeze([
+  "coastal-villa",
+  "luxury-apartment",
+  "retail-promenade",
+  "urban-park"
+]);
+
+export function buildParcelGeometry(parent, district, options = {}) {
+  if (!parent || !district || !Array.isArray(district.parcels)) return { parcels: 0, buildings: 0, styles: {}, ownedMaterials: [] };
+
+  const materials = {
+    foundation: new THREE.MeshStandardMaterial({ color: 0x343a3d, roughness: 0.78, metalness: 0.18 }),
+    wall: new THREE.MeshStandardMaterial({ color: 0xd4cbb9, roughness: 0.76 }),
+    glass: new THREE.MeshStandardMaterial({ color: 0x6fa9bb, roughness: 0.12, metalness: 0.24, transparent: true, opacity: 0.58 }),
+    metal: new THREE.MeshStandardMaterial({ color: 0x9d875d, roughness: 0.34, metalness: 0.68 }),
+    roof: new THREE.MeshStandardMaterial({ color: 0x343a3d, roughness: 0.68, metalness: 0.24 }),
+    planting: new THREE.MeshStandardMaterial({ color: 0x344c3d, roughness: 0.95 }),
+    soil: new THREE.MeshStandardMaterial({ color: 0x514638, roughness: 1 }),
+    treeTrunk: new THREE.MeshStandardMaterial({ color: 0x66503a, roughness: 1 }),
+    treeCanopy: new THREE.MeshStandardMaterial({ color: 0x35533d, roughness: 1 })
+  };
+
+  const root = new THREE.Group();
+  root.name = "worldSystemParcels_" + district.id;
+  root.userData.generatedBy = "LAMBO_CITY_ParcelBuilder";
+  root.userData.dynamicParcelShadows = false;
+
+  const validParcels = district.parcels.filter(parcel =>
+    parcel?.center && Number.isFinite(parcel.center.x) && Number.isFinite(parcel.center.z) &&
+    Number.isFinite(parcel.footprint?.width ?? 13) && Number.isFinite(parcel.footprint?.depth ?? 11) &&
+    (parcel.footprint?.width ?? 13) > 0 && (parcel.footprint?.depth ?? 11) > 0 &&
+    PARCEL_STYLES.includes(parcel.style || "coastal-villa")
+  );
+  const maxDetailedParcels = Number.isInteger(options.maxDetailedParcels)
+    ? Math.max(0, Math.min(validParcels.length, options.maxDetailedParcels))
+    : Math.min(validParcels.length, 24);
+  const focus = options.focusPosition &&
+    Number.isFinite(options.focusPosition.x) && Number.isFinite(options.focusPosition.z)
+    ? options.focusPosition
+    : {
+        x: (district.bounds?.minX + district.bounds?.maxX) / 2,
+        z: (district.bounds?.minZ + district.bounds?.maxZ) / 2
+      };
+  const detailOrder = [...validParcels].sort((a, b) =>
+    Math.hypot(a.center.x - focus.x, a.center.z - focus.z) -
+    Math.hypot(b.center.x - focus.x, b.center.z - focus.z)
+  );
+  const detailedIds = new Set(detailOrder.slice(0, maxDetailedParcels).map(parcel => parcel.id));
+
+  let built = 0, buildings = 0, detailCount = 0;
+  const styles = {}, proxyParcels = new Map();
+  for (const parcel of validParcels) {
+    const footprint = parcel.footprint || { width: 13, depth: 11 };
+    const width = Number.isFinite(footprint.width) ? footprint.width : 13;
+    const depth = Number.isFinite(footprint.depth) ? footprint.depth : 11;
+    const style = parcel.style || "coastal-villa";
+    styles[style] = (styles[style] || 0) + 1;
+    built += 1;
+    if (style !== "urban-park") buildings += 1;
+
+    if (!detailedIds.has(parcel.id)) {
+      if (!proxyParcels.has(style)) proxyParcels.set(style, []);
+      proxyParcels.get(style).push({ parcel, width, depth });
+      continue;
+    }
+
+    const building = new THREE.Group();
+    building.name = "worldParcel_" + parcel.id;
+    building.position.set(parcel.center.x, 0, parcel.center.z);
+    building.rotation.y = Number.isFinite(parcel.rotationY) ? parcel.rotationY : 0;
+    root.add(building);
+
+    if (style === "coastal-villa") {
+      buildVilla(building, parcel, width, depth, materials);
+    } else if (style === "luxury-apartment") {
+      buildApartment(building, parcel, width, depth, materials);
+    } else if (style === "retail-promenade") {
+      buildRetail(building, parcel, width, depth, materials);
+    } else if (style === "urban-park") {
+      buildPark(building, parcel, width, depth, materials);
+    }
+
+    building.userData.parcelId = parcel.id;
+    building.userData.use = parcel.use || "unassigned";
+    building.userData.style = style;
+    building.userData.footprint = { width, depth };
+    detailCount += 1;
+  }
+
+  // Distant parcels collapse into one instanced mass per archetype. This keeps
+  // large generated districts visually populated without thousands of meshes.
+  let proxyCount = 0;
+  for (const [style, entries] of proxyParcels) {
+    const proxyMaterial = style === "urban-park" ? materials.planting
+      : (style === "retail-promenade" ? materials.roof : materials.wall);
+    const batch = new THREE.InstancedMesh(
+      new THREE.BoxGeometry(1, 1, 1),
+      proxyMaterial,
+      entries.length
+    );
+    const matrix = new THREE.Object3D();
+    for (let index = 0; index < entries.length; index++) {
+      const { parcel, width, depth } = entries[index];
+      const floors = Math.max(3, Math.min(9, Math.floor(parcel.floors || 5)));
+      const height = style === "coastal-villa" ? 9.2
+        : style === "luxury-apartment" ? floors * 3 + 1.1
+        : style === "retail-promenade" ? 4.55
+        : 0.16;
+      matrix.position.set(parcel.center.x, 0.65 + height / 2, parcel.center.z);
+      matrix.rotation.set(0, Number.isFinite(parcel.rotationY) ? parcel.rotationY : 0, 0);
+      matrix.scale.set(width, height, depth);
+      matrix.updateMatrix();
+      batch.setMatrixAt(index, matrix.matrix);
+    }
+    batch.instanceMatrix.needsUpdate = true;
+    batch.name = "worldParcelProxyBatch_" + style;
+    batch.castShadow = false;
+    batch.receiveShadow = true;
+    batch.userData.style = style;
+    batch.userData.parcelCount = entries.length;
+    root.add(batch);
+    proxyCount += entries.length;
+  }
+
+  const detailBatchStats = batchParcelMeshes(root);
+  parent.add(root);
+  parent.userData.parcelCount = built;
+  parent.userData.parcelStyles = styles;
+  parent.userData.detailParcelCount = detailCount;
+  parent.userData.proxyParcelCount = proxyCount;
+  parent.userData.proxyBatchCount = proxyParcels.size;
+  return { parcels: built, buildings, styles, root, detailCount, proxyCount, proxyBatchCount: proxyParcels.size, detailSourceMeshCount: detailBatchStats.sourceMeshCount, detailBatchCount: detailBatchStats.batchCount, detailParcelIds: Array.from(detailedIds), focusPosition: { x: focus.x, z: focus.z }, ownedMaterials: Object.values(materials) };
+}
+
+export default { buildParcelGeometry, PARCEL_STYLES };
