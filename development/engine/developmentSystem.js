@@ -206,7 +206,9 @@ export async function createDevelopmentSystem(options = {}) {
       studioRunner: studioRunner.getProfile(),
       executor: executor ? {
         configured: true,
-        allowedPaths: executor.getAllowedPaths()
+        allowedPaths: typeof executor.getAllowedPaths === "function"
+          ? executor.getAllowedPaths()
+          : null
       } : {
         configured: false,
         reason: "A controlled executor and its adapters have not been supplied."
