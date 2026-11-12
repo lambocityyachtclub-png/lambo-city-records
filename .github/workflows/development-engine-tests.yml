@@ -55,6 +55,8 @@ jobs:
           node --experimental-default-type=module --check api/alive/session.js
           node --experimental-default-type=module --check api/alive/vision.js
           node --experimental-default-type=module --check api/alive/status.js
+          node --experimental-default-type=module --check api/alive/private-task.js
+          node --experimental-default-type=module --check server/alive/githubActionsOidc.js
           node --experimental-default-type=module --check server/alive/security.js
           node --experimental-default-type=module --check server/alive/visionTask.js
           node -e 'JSON.parse(require("node:fs").readFileSync("vercel.json", "utf8"))'
