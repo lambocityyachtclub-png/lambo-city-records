@@ -81,3 +81,20 @@ test("PostgreSQL adapter rejects reviews with failing tests", async () => {
 test("PostgreSQL adapter requires a database pool", () => {
   assert.throws(() => createPostgresDevelopmentStorage(), /pool/);
 });
+
+test("PostgreSQL adapter exposes bounded owner-review queues", async () => {
+  const storage = createPostgresDevelopmentStorage({ pool: makePool() });
+  const review = await storage.createReview({
+    taskId: "task-queue",
+    taskTitle: "Queue item",
+    changedFiles: ["development/example.js"],
+    testResults: { passed: true }
+  });
+  const pending = await storage.listReviews({ status: "awaiting_owner_review", limit: 10, offset: 0 });
+  assert.equal(pending.length, 1);
+  assert.equal(pending[0].id, review.id);
+  assert.deepEqual(await storage.listReviews({ status: "approved" }), []);
+  await assert.rejects(storage.listReviews({ status: "unknown" }), /Review status must be/);
+  await assert.rejects(storage.listReviews({ limit: 101 }), /between 1 and 100/);
+  await assert.rejects(storage.listReviews({ offset: -1 }), /non-negative integer/);
+});
