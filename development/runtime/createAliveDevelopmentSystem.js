@@ -15,8 +15,13 @@ export function createAliveExecutionAdapters(options = {}) {
     enabled: options.aiEnabled === true,
     ...(options.ai || {})
   });
+  const sandboxFactory = options.sandbox?.sandboxFactory || (async sandboxOptions => {
+    const sdk = await import("@vercel/sandbox");
+    return sdk.Sandbox.create(sandboxOptions);
+  });
   const testRunner = createVercelSandboxTestRunner({
     enabled: options.sandboxEnabled === true,
+    sandboxFactory,
     ...(options.sandbox || {})
   });
   const workspaceAdapter = createIsolatedWorkspaceAdapter({
