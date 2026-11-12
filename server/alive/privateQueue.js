@@ -31,8 +31,34 @@ export async function verifyPrivateQueue(env = process.env, fetchImpl = fetch) {
     }
 
     const privateBranchUrl = privateRoot + "/branches/" + encodeURIComponent(PRIVATE_BRANCH);
-    const privateBranchResponse = await fetchImpl(privateBranchUrl, { headers });
-    if (!privateBranchResponse.ok) return { ok: false, reason: "private_queue_branch_missing" };
+    let privateBranchResponse = await fetchImpl(privateBranchUrl, { headers });
+    if (!privateBranchResponse.ok) {
+      const defaultBranch = typeof privateRepo.default_branch === "string"
+        ? privateRepo.default_branch : "main";
+      const defaultRefUrl = privateRoot + "/git/ref/heads/" + encodeURIComponent(defaultBranch);
+      const defaultRefResponse = await fetchImpl(defaultRefUrl, { headers });
+      if (!defaultRefResponse.ok) return { ok: false, reason: "private_queue_default_branch_missing" };
+      const defaultRef = await defaultRefResponse.json();
+      const sourceSha = defaultRef?.object?.sha;
+      if (typeof sourceSha !== "string" || !/^[a-f0-9]{40}$/i.test(sourceSha)) {
+        return { ok: false, reason: "private_queue_default_branch_invalid" };
+      }
+      const createBranchResponse = await fetchImpl(privateRoot + "/git/refs", {
+        method: "POST",
+        headers: { ...headers, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ref: "refs/heads/" + PRIVATE_BRANCH,
+          sha: sourceSha
+        })
+      });
+      if (!createBranchResponse.ok) {
+        privateBranchResponse = await fetchImpl(privateBranchUrl, { headers });
+        if (!privateBranchResponse.ok) return { ok: false, reason: "private_queue_branch_missing" };
+      } else {
+        privateBranchResponse = await fetchImpl(privateBranchUrl, { headers });
+        if (!privateBranchResponse.ok) return { ok: false, reason: "private_queue_branch_missing" };
+      }
+    }
 
     const publicRoot = "https://api.github.com/repos/" + PUBLIC_OWNER + "/" + PUBLIC_REPOSITORY;
     const publicBranchUrl = publicRoot + "/branches/" + encodeURIComponent(PUBLIC_BRANCH);

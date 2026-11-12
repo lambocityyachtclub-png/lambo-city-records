@@ -55,6 +55,8 @@ jobs:
           node --experimental-default-type=module --check api/alive/session.js
           node --experimental-default-type=module --check api/alive/vision.js
           node --experimental-default-type=module --check api/alive/status.js
+          node --experimental-default-type=module --check api/alive/private-task.js
+          node --experimental-default-type=module --check server/alive/githubActionsOidc.js
           node --experimental-default-type=module --check server/alive/security.js
           node --experimental-default-type=module --check server/alive/visionTask.js
           node -e 'JSON.parse(require("node:fs").readFileSync("vercel.json", "utf8"))'
@@ -71,6 +73,7 @@ jobs:
     permissions:
       contents: read
       copilot-requests: write
+      id-token: write
     outputs:
       has_task: ${{ steps.task.outputs.has_task }}
       task_id: ${{ steps.task.outputs.task_id }}
@@ -94,7 +97,7 @@ jobs:
         env:
           BEFORE_SHA: ${{ github.event.before }}
           HEAD_SHA: ${{ github.sha }}
-          ALIVE_PRIVATE_QUEUE_READ_TOKEN: ${{ secrets.ALIVE_PRIVATE_QUEUE_READ_TOKEN }}
+
         shell: bash
         run: |
           set -euo pipefail
@@ -114,11 +117,17 @@ jobs:
           fi
           TASK_FILE="${task_files[0]}"
           if node -e 'const p=JSON.parse(require("node:fs").readFileSync(process.argv[1],"utf8")); process.exit(p && p.privateQueue ? 0 : 1)' "$TASK_FILE"; then
-            if [[ -z "$ALIVE_PRIVATE_QUEUE_READ_TOKEN" ]]; then
-              echo "Private ALIVE task resolver credential is not configured." >&2
-              exit 1
-            fi
-            node --experimental-default-type=module scripts/resolve-alive-private-task.mjs "$TASK_FILE" /tmp/alive-private-task.json
+            PRIVATE_TASK_ID="$(node -e 'const p=JSON.parse(require("node:fs").readFileSync(process.argv[1],"utf8")); process.stdout.write(String(p.id || ""))' "$TASK_FILE")"
+            OIDC_RESPONSE="$(curl --fail --silent --show-error \
+              -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+              "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=https%3A%2F%2Flambocityrecords.com%2Fapi%2Falive%2Fprivate-task")"
+            OIDC_TOKEN="$(printf '%s' "$OIDC_RESPONSE" | jq -er '.value')"
+            TASK_RESPONSE="$(curl --fail --silent --show-error \
+              -H "Authorization: Bearer $OIDC_TOKEN" \
+              -H "Content-Type: application/json" \
+              --data "$(jq -n --arg taskId "$PRIVATE_TASK_ID" '{taskId:$taskId}')" \
+              "https://lambocityrecords.com/api/alive/private-task")"
+            printf '%s' "$TASK_RESPONSE" | jq -e '.task' > /tmp/alive-private-task.json
             TASK_FILE="/tmp/alive-private-task.json"
           fi
           node --experimental-default-type=module scripts/prepare-alive-worker-task.mjs "$TASK_FILE" /tmp/alive-worker-prompt.md /tmp/alive-worker-metadata.json
