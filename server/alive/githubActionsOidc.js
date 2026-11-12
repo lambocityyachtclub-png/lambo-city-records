@@ -126,7 +126,7 @@ export async function resolveAuthorizedPrivateTask(taskId, claims, token, fetchI
   }
   let task;
   try {
-    task = JSON.parse(Buffer.from(file.content.replace(/\\s/g, ""), "base64").toString("utf8"));
+    task = JSON.parse(Buffer.from(file.content.replace(/\s/g, ""), "base64").toString("utf8"));
   } catch {
     throw new Error("The private ALIVE task file is not valid JSON.");
   }
