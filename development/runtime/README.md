@@ -37,3 +37,16 @@ Both paid capabilities default to disabled in the runtime. The scheduled workflo
 The worker processes at most one queued task per six-hour schedule tick. The Sandbox receives only allowlisted workspace files and runs with outbound networking denied. Proposed changes remain in the isolated workspace and enter the persistent owner-review queue. The runtime never commits, merges, deploys, or writes to production.
 
 Do not enable the workflow until the managed database is provisioned, credentials are saved as Actions secrets, the initial path allowlist is reviewed, and the owner has approved the expected model and sandbox spending. Scheduling is configured but gated; no autonomous run is active by default.
+
+## Private owner review dashboard
+
+The static owner dashboard is available at `/alive-review.html`. It talks only to the same-origin `/api/alive/reviews` serverless endpoint. The endpoint requires a bearer token and reads/writes the existing PostgreSQL review records; it does not merge, commit, or deploy approved proposals.
+
+Configure these **Vercel Project Environment Variables** before using the dashboard:
+
+- `DATABASE_URL`: the Neon connection string for the dedicated ALIVE database/branch. Add it as a sensitive environment variable for the environments where the dashboard should be available.
+- `ALIVE_REVIEW_TOKEN`: a newly generated, unique random secret with at least 32 characters. Do not reuse the database password, Vercel token, or any GitHub token.
+
+Redeploy the project after adding the variables. Open `/alive-review.html`, enter the owner review token, and use the Pending / Approved / Rejected filter. The token is held in page memory only and is cleared when the page is locked or reloaded. The API rejects unauthenticated requests, disables caching, and supports only GET and POST. Owner approval records a decision only; production changes remain a separate future process.
+
+The root project declares the `pg` dependency used by the Vercel function. The dashboard must remain private operational tooling and must not be linked from the public game navigation.
