@@ -427,7 +427,7 @@ test("Workspace adapter applies provider proposals only inside the isolated copy
         summary: "Improve isolated test fixture.",
         files: [{
           path: "development/example/sample.js",
-          content: "export const value = 99;\\n"
+          content: "export const value = 99;\n"
         }]
       };
     },
@@ -463,8 +463,8 @@ test("Workspace adapter applies provider proposals only inside the isolated copy
     filePath: "development/example/sample.js"
   });
 
-  assert.equal(original, "export const value = 1;\\n");
-  assert.equal(isolated, "export const value = 99;\\n");
+  assert.equal(original, "export const value = 1;\n");
+  assert.equal(isolated, "export const value = 99;\n");
 
   const testResults = await adapter.runTests({
     workspaceId: workspace.workspaceId,
