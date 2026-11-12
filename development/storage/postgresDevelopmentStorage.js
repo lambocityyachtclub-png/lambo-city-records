@@ -147,14 +147,27 @@ export function createPostgresDevelopmentStorage(options = {}) {
 
   async function listReviews(filters = {}) {
     return serialize(async () => {
+      const status = filters.status == null ? null : requireText(filters.status, "Review status");
+      if (status && !Object.values(REVIEW_STATUSES).includes(status)) {
+        throw new Error("Review status must be awaiting_owner_review, approved, or rejected.");
+      }
+      const limit = filters.limit == null ? 50 : Number(filters.limit);
+      const offset = filters.offset == null ? 0 : Number(filters.offset);
+      if (!Number.isInteger(limit) || limit < 1 || limit > 100) {
+        throw new Error("Review limit must be an integer between 1 and 100.");
+      }
+      if (!Number.isInteger(offset) || offset < 0) {
+        throw new Error("Review offset must be a non-negative integer.");
+      }
       await ensureSchema();
-      const result = filters.status
+      const result = status
         ? await pool.query(
-            "SELECT review FROM lambo_alive_reviews WHERE status = $1 ORDER BY created_at DESC",
-            [filters.status]
+            "SELECT review FROM lambo_alive_reviews WHERE status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
+            [status, limit, offset]
           )
         : await pool.query(
-            "SELECT review FROM lambo_alive_reviews ORDER BY created_at DESC"
+            "SELECT review FROM lambo_alive_reviews ORDER BY created_at DESC LIMIT $1 OFFSET $2",
+            [limit, offset]
           );
       return result.rows.map(row => clone(row.review));
     });
