@@ -257,6 +257,66 @@ test("Development System cannot run an unconfigured worker", async () => {
   );
 });
 
+
+test("Development System wires supplied adapters into the controlled executor", async () => {
+  const system = await createDevelopmentSystem({
+    workspaceAdapter: {
+      async createWorkspace() {
+        return { workspaceId: "isolated-system-test" };
+      },
+      async prepareChanges() {
+        return {
+          changedFiles: ["development/example.js"],
+          changes: { summary: "test proposal" }
+        };
+      },
+      async runTests() {
+        return { passed: true, total: 1, failed: 0 };
+      }
+    },
+    reviewStore: {
+      async createReview(review) {
+        return { id: "review-system-test", ...review };
+      }
+    },
+    allowedPaths: ["development"],
+    workerRunnerIds: ["studio"],
+    maxTasksPerRun: 1
+  });
+
+  assert.equal(system.getSnapshot().executor.configured, true);
+  assert.deepEqual(
+    system.getSnapshot().executor.allowedPaths,
+    ["development"]
+  );
+  assert.equal(system.getSnapshot().worker.enabled, true);
+
+  const task = await system.director.createTask({
+    title: "Exercise connected controlled executor",
+    description: "Verify bootstrap wiring.",
+    area: "studio_audio",
+    runner: "studio"
+  });
+
+  const result = await system.runWorkerOnce();
+
+  assert.equal(result.processed, 1);
+  assert.equal(result.results[0].taskId, task.id);
+  assert.equal(result.results[0].status, TASK_STATUS.REVIEW);
+  assert.equal(result.results[0].productionChangesMade, false);
+  assert.equal(system.director.getTask(task.id).status, TASK_STATUS.REVIEW);
+});
+
+test("Development System rejects incomplete execution adapter configuration", async () => {
+  await assert.rejects(
+    () => createDevelopmentSystem({
+      workspaceAdapter: {},
+      allowedPaths: ["development"]
+    }),
+    /requires workspaceAdapter, reviewStore, and a non-empty allowedPaths/
+  );
+});
+
 test("Development System can be disabled and re-enabled", async () => {
   const system = await createDevelopmentSystem();
 
