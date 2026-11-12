@@ -55,6 +55,8 @@ jobs:
           node --experimental-default-type=module --check api/alive/session.js
           node --experimental-default-type=module --check api/alive/vision.js
           node --experimental-default-type=module --check api/alive/status.js
+          node --experimental-default-type=module --check api/alive/private-task.js
+          node --experimental-default-type=module --check server/alive/githubActionsOidc.js
           node --experimental-default-type=module --check server/alive/security.js
           node --experimental-default-type=module --check server/alive/visionTask.js
           node -e 'JSON.parse(require("node:fs").readFileSync("vercel.json", "utf8"))'
@@ -62,24 +64,24 @@ jobs:
       - name: Test worker path and file-type validation
         run: node --experimental-default-type=module scripts/test-alive-worker-diff-gate.mjs
 
-  generate-proposal:
-    name: Generate scoped specialist proposal
+  resolve-task:
+    name: Resolve one authorized ALIVE task
     needs: test
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 10
     permissions:
       contents: read
-      copilot-requests: write
+      id-token: write
     outputs:
-      has_task: ${{ steps.task.outputs.has_task }}
-      task_id: ${{ steps.task.outputs.task_id }}
-      worker_id: ${{ steps.task.outputs.worker_id }}
+      has_task: ${{ needs.resolve-task.outputs.has_task }}
+      task_id: ${{ needs.resolve-task.outputs.task_id }}
+      worker_id: ${{ needs.resolve-task.outputs.worker_id }}
       title: ${{ steps.task.outputs.title }}
       base_sha: ${{ steps.task.outputs.base_sha }}
       proposal_base_sha: ${{ steps.task.outputs.proposal_base_sha }}
     steps:
-      - name: Check out pushed branch without persisted credentials
+      - name: Check out queued commit without persisted credentials
         uses: actions/checkout@v4
         with:
           ref: ${{ github.sha }}
@@ -94,7 +96,7 @@ jobs:
         env:
           BEFORE_SHA: ${{ github.event.before }}
           HEAD_SHA: ${{ github.sha }}
-          ALIVE_PRIVATE_QUEUE_READ_TOKEN: ${{ secrets.ALIVE_PRIVATE_QUEUE_READ_TOKEN }}
+
         shell: bash
         run: |
           set -euo pipefail
@@ -114,11 +116,17 @@ jobs:
           fi
           TASK_FILE="${task_files[0]}"
           if node -e 'const p=JSON.parse(require("node:fs").readFileSync(process.argv[1],"utf8")); process.exit(p && p.privateQueue ? 0 : 1)' "$TASK_FILE"; then
-            if [[ -z "$ALIVE_PRIVATE_QUEUE_READ_TOKEN" ]]; then
-              echo "Private ALIVE task resolver credential is not configured." >&2
-              exit 1
-            fi
-            node --experimental-default-type=module scripts/resolve-alive-private-task.mjs "$TASK_FILE" /tmp/alive-private-task.json
+            PRIVATE_TASK_ID="$(node -e 'const p=JSON.parse(require("node:fs").readFileSync(process.argv[1],"utf8")); process.stdout.write(String(p.id || ""))' "$TASK_FILE")"
+            OIDC_RESPONSE="$(curl --fail --silent --show-error \
+              -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+              "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=https%3A%2F%2Flambocityrecords.com%2Fapi%2Falive%2Fprivate-task")"
+            OIDC_TOKEN="$(printf '%s' "$OIDC_RESPONSE" | jq -er '.value')"
+            TASK_RESPONSE="$(curl --fail --silent --show-error \
+              -H "Authorization: Bearer $OIDC_TOKEN" \
+              -H "Content-Type: application/json" \
+              --data "$(jq -n --arg taskId "$PRIVATE_TASK_ID" '{taskId:$taskId}')" \
+              "https://lambocityrecords.com/api/alive/private-task")"
+            printf '%s' "$TASK_RESPONSE" | jq -e '.task' > /tmp/alive-private-task.json
             TASK_FILE="/tmp/alive-private-task.json"
           fi
           node --experimental-default-type=module scripts/prepare-alive-worker-task.mjs "$TASK_FILE" /tmp/alive-worker-prompt.md /tmp/alive-worker-metadata.json
@@ -131,19 +139,56 @@ jobs:
           echo "title=$TITLE" >> "$GITHUB_OUTPUT"
           echo "base_sha=$BEFORE_SHA" >> "$GITHUB_OUTPUT"
           echo "proposal_base_sha=$HEAD_SHA" >> "$GITHUB_OUTPUT"
+      - name: Upload prepared private task input
+        if: needs.resolve-task.outputs.has_task == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: alive-worker-input-${{ needs.resolve-task.outputs.task_id }}
+          path: |
+            /tmp/alive-worker-prompt.md
+            /tmp/alive-worker-metadata.json
+          if-no-files-found: error
+          retention-days: 1
+
+  generate-proposal:
+    name: Generate scoped specialist proposal
+    needs: resolve-task
+    if: needs.resolve-task.outputs.has_task == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+      copilot-requests: write
+    steps:
+      - name: Check out queued commit without persisted credentials
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.resolve-task.outputs.proposal_base_sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Download prepared private task input
+        uses: actions/download-artifact@v4
+        with:
+          name: alive-worker-input-${{ needs.resolve-task.outputs.task_id }}
+          path: /tmp/alive-worker-input
+      - name: Stage prepared task prompt
+        run: |
+          cp /tmp/alive-worker-input/alive-worker-prompt.md /tmp/alive-worker-prompt.md
+          cp /tmp/alive-worker-input/alive-worker-metadata.json /tmp/alive-worker-metadata.json
       - name: Install pinned GitHub Copilot CLI
-        if: steps.task.outputs.has_task == 'true'
         run: npm install --global @github/copilot@1.0.108
       - name: Verify Copilot CLI version
-        if: steps.task.outputs.has_task == 'true'
         run: copilot --version | tee /tmp/copilot-version.txt && grep -F "1.0.108" /tmp/copilot-version.txt
       - name: Return to clean base before code generation
-        if: steps.task.outputs.has_task == 'true'
         env:
-          BASE_SHA: ${{ steps.task.outputs.base_sha }}
+          BASE_SHA: ${{ needs.resolve-task.outputs.base_sha }}
         run: git checkout "$BASE_SHA"
       - name: Generate code in disposable runner
-        if: steps.task.outputs.has_task == 'true'
+        if: needs.resolve-task.outputs.has_task == 'true'
         shell: bash
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -154,10 +199,10 @@ jobs:
             --allow-tool='write' \
             --deny-tool='shell' --deny-tool='url' --deny-tool='memory'
       - name: Validate paths and package patch
-        if: steps.task.outputs.has_task == 'true'
+        if: needs.resolve-task.outputs.has_task == 'true'
         env:
-          WORKER_ID: ${{ steps.task.outputs.worker_id }}
-          TASK_ID: ${{ steps.task.outputs.task_id }}
+          WORKER_ID: ${{ needs.resolve-task.outputs.worker_id }}
+          TASK_ID: ${{ needs.resolve-task.outputs.task_id }}
         run: |
           set -euo pipefail
           git add -N -- .
@@ -171,10 +216,10 @@ jobs:
           printf '# Specialist report\n\nTask: %s\nWorker: %s\n\nChanged files:\n' "$TASK_ID" "$WORKER_ID" > alive-worker-report.md
           sed 's/^/- /' alive-worker-changed-files.txt >> alive-worker-report.md
       - name: Upload isolated proposal artifact
-        if: steps.task.outputs.has_task == 'true'
+        if: needs.resolve-task.outputs.has_task == 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: alive-worker-proposal-${{ steps.task.outputs.task_id }}
+          name: alive-worker-proposal-${{ needs.resolve-task.outputs.task_id }}
           path: |
             alive-worker.patch
             alive-worker-changed-files.txt
@@ -185,8 +230,8 @@ jobs:
 
   test-proposal:
     name: Test proposal without write credentials
-    needs: generate-proposal
-    if: needs.generate-proposal.outputs.has_task == 'true'
+    needs: [resolve-task, generate-proposal]
+    if: needs.resolve-task.outputs.has_task == 'true' && needs.generate-proposal.result == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 25
     permissions:
@@ -196,7 +241,7 @@ jobs:
       - name: Check out clean base without persisted credentials
         uses: actions/checkout@v4
         with:
-          ref: ${{ needs.generate-proposal.outputs.proposal_base_sha }}
+          ref: ${{ needs.resolve-task.outputs.proposal_base_sha }}
           fetch-depth: 0
           persist-credentials: false
       - name: Set up Node.js
@@ -206,11 +251,11 @@ jobs:
       - name: Download isolated proposal artifact
         uses: actions/download-artifact@v4
         with:
-          name: alive-worker-proposal-${{ needs.generate-proposal.outputs.task_id }}
+          name: alive-worker-proposal-${{ needs.resolve-task.outputs.task_id }}
           path: /tmp/alive-worker-proposal
       - name: Apply patch and repeat the path and file-type gate
         env:
-          WORKER_ID: ${{ needs.generate-proposal.outputs.worker_id }}
+          WORKER_ID: ${{ needs.resolve-task.outputs.worker_id }}
         run: |
           set -euo pipefail
           git apply --check /tmp/alive-worker-proposal/alive-worker.patch
@@ -223,8 +268,8 @@ jobs:
 
   publish-draft-pr:
     name: Publish tested proposal as a draft PR
-    needs: [generate-proposal, test-proposal]
-    if: needs.generate-proposal.outputs.has_task == 'true' && needs.test-proposal.result == 'success'
+    needs: [resolve-task, generate-proposal, test-proposal]
+    if: needs.resolve-task.outputs.has_task == 'true' && needs.test-proposal.result == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -235,7 +280,7 @@ jobs:
       - name: Check out clean base without persisted credentials
         uses: actions/checkout@v4
         with:
-          ref: ${{ needs.generate-proposal.outputs.proposal_base_sha }}
+          ref: ${{ needs.resolve-task.outputs.proposal_base_sha }}
           fetch-depth: 0
           persist-credentials: false
       - name: Set up Node.js
@@ -245,11 +290,11 @@ jobs:
       - name: Download tested proposal artifact
         uses: actions/download-artifact@v4
         with:
-          name: alive-worker-proposal-${{ needs.generate-proposal.outputs.task_id }}
+          name: alive-worker-proposal-${{ needs.resolve-task.outputs.task_id }}
           path: /tmp/alive-worker-proposal
       - name: Apply patch and repeat the path and file-type gate
         env:
-          WORKER_ID: ${{ needs.generate-proposal.outputs.worker_id }}
+          WORKER_ID: ${{ needs.resolve-task.outputs.worker_id }}
         run: |
           set -euo pipefail
           git apply --check /tmp/alive-worker-proposal/alive-worker.patch
@@ -259,9 +304,9 @@ jobs:
       - name: Publish isolated branch and draft pull request
         env:
           GH_TOKEN: ${{ github.token }}
-          TASK_ID: ${{ needs.generate-proposal.outputs.task_id }}
-          TASK_TITLE: ${{ needs.generate-proposal.outputs.title }}
-          WORKER_ID: ${{ needs.generate-proposal.outputs.worker_id }}
+          TASK_ID: ${{ needs.resolve-task.outputs.task_id }}
+          TASK_TITLE: ${{ needs.resolve-task.outputs.title }}
+          WORKER_ID: ${{ needs.resolve-task.outputs.worker_id }}
           BASE_BRANCH: ${{ github.ref_name }}
         shell: bash
         run: |
