@@ -36,6 +36,10 @@ import {
   DEVELOPMENT_WORKER_VERSION
 } from "./developmentWorker.js";
 
+import {
+  createControlledDevelopmentExecutor
+} from "../execution/controlledDevelopmentExecutor.js";
+
 export const DEVELOPMENT_SYSTEM_VERSION = "1.0.0";
 
 export const DEVELOPMENT_SYSTEM_STATUS = Object.freeze({
@@ -48,6 +52,9 @@ export async function createDevelopmentSystem(options = {}) {
     storage = null,
     clock,
     workerExecutor = null,
+    workspaceAdapter = null,
+    reviewStore = null,
+    allowedPaths = null,
     workerRunnerIds = [STUDIO_RUNNER_ID],
     workerId = "lambo-city-development-worker",
     maxTasksPerRun = 3
@@ -73,9 +80,46 @@ export async function createDevelopmentSystem(options = {}) {
 
   const policy = getDevelopmentPolicy();
 
-  const worker = workerExecutor
+  const hasExecutionConfiguration = (
+    workspaceAdapter !== null ||
+    reviewStore !== null ||
+    allowedPaths !== null
+  );
+
+  if (
+    hasExecutionConfiguration &&
+    (
+      !workspaceAdapter ||
+      !reviewStore ||
+      !Array.isArray(allowedPaths) ||
+      allowedPaths.length === 0
+    )
+  ) {
+    throw new Error(
+      "Execution configuration requires workspaceAdapter, reviewStore, and a non-empty allowedPaths array."
+    );
+  }
+
+  if (workerExecutor && hasExecutionConfiguration) {
+    throw new Error(
+      "Supply either workerExecutor or workspaceAdapter/reviewStore/allowedPaths, not both."
+    );
+  }
+
+  const executor = workerExecutor || (
+    hasExecutionConfiguration
+      ? createControlledDevelopmentExecutor({
+          developmentDirector: director,
+          workspaceAdapter,
+          reviewStore,
+          allowedPaths
+        })
+      : null
+  );
+
+  const worker = executor
     ? createDevelopmentWorker({
-        executor: workerExecutor,
+        executor,
         runnerIds: workerRunnerIds,
         workerId,
         maxTasksPerRun
@@ -160,6 +204,13 @@ export async function createDevelopmentSystem(options = {}) {
       registry: registry.getSnapshot(),
       director: director.getSnapshot(),
       studioRunner: studioRunner.getProfile(),
+      executor: executor ? {
+        configured: true,
+        allowedPaths: executor.getAllowedPaths()
+      } : {
+        configured: false,
+        reason: "A controlled executor and its adapters have not been supplied."
+      },
       worker: worker ? worker.getSnapshot() : {
         version: DEVELOPMENT_WORKER_VERSION,
         enabled: false,
@@ -223,6 +274,7 @@ export async function createDevelopmentSystem(options = {}) {
     director,
     studioRunner,
     worker,
+    executor,
     runWorkerOnce,
     getStatus,
     getSnapshot,
