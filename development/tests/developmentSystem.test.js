@@ -207,11 +207,55 @@ test("Development System initializes all modules", async () => {
     DEVELOPMENT_SYSTEM_STATUS.READY
   );
 
-  assert.equal(snapshot.registry.totalModules, 3);
+  assert.equal(snapshot.registry.totalModules, 4);
   assert.equal(snapshot.registry.enabledModules, 3);
+  assert.equal(snapshot.worker.enabled, false);
+  assert.equal(snapshot.worker.mode, "one-shot");
   assert.equal(snapshot.studioRunner.id, "studio");
 });
 
+
+
+test("Development System exposes a configured one-shot worker", async () => {
+  const calls = [];
+  const system = await createDevelopmentSystem({
+    workerExecutor: {
+      async executeNextTask(input) {
+        calls.push(input);
+        return {
+          executed: true,
+          status: TASK_STATUS.REVIEW,
+          productionChangesMade: false
+        };
+      }
+    },
+    workerRunnerIds: ["studio", "world"],
+    workerId: "integration-test-worker",
+    maxTasksPerRun: 2
+  });
+
+  const snapshot = system.getSnapshot();
+
+  assert.equal(snapshot.worker.enabled, true);
+  assert.deepEqual(snapshot.worker.runnerIds, ["studio", "world"]);
+
+  const result = await system.runWorkerOnce();
+
+  assert.equal(result.processed, 2);
+  assert.equal(calls.length, 2);
+  assert.ok(calls.every(call =>
+    call.workerId === "integration-test-worker"
+  ));
+});
+
+test("Development System cannot run an unconfigured worker", async () => {
+  const system = await createDevelopmentSystem();
+
+  await assert.rejects(
+    () => system.runWorkerOnce(),
+    /worker is not configured/
+  );
+});
 
 test("Development System can be disabled and re-enabled", async () => {
   const system = await createDevelopmentSystem();
