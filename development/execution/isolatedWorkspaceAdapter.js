@@ -533,6 +533,10 @@ export function createIsolatedWorkspaceAdapter(options = {}) {
         summary: typeof proposal.summary === "string"
           ? proposal.summary.slice(0, 2000)
           : "Proposed changes prepared in isolated workspace.",
+        diff: typeof proposal.diff === "string" &&
+          Buffer.byteLength(proposal.diff, "utf8") <= 1024 * 1024
+          ? proposal.diff
+          : null,
         proposedFileCount: proposal.files.length
       }
     };
