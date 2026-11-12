@@ -408,3 +408,126 @@ test("Workspace adapter requires a task ID", async t => {
     /taskId is required/
   );
 });
+
+
+test("Workspace adapter applies provider proposals only inside the isolated copy", async t => {
+  const calls = [];
+  const {
+    projectRoot,
+    adapter: baseAdapter
+  } = await createFixture(t);
+
+  const adapter = createIsolatedWorkspaceAdapter({
+    projectRoot,
+    workspaceRoot: path.join(path.dirname(projectRoot), "provider-workspaces"),
+    allowedPaths: ["development"],
+    proposalProvider: async input => {
+      calls.push(input.workspace.workspaceId);
+      return {
+        summary: "Improve isolated test fixture.",
+        files: [{
+          path: "development/example/sample.js",
+          content: "export const value = 99;\\n"
+        }]
+      };
+    },
+    testRunner: async input => ({
+      passed: true,
+      total: 1,
+      failed: 0,
+      testedFiles: input.changedFiles
+    })
+  });
+
+  const workspace = await adapter.createWorkspace({
+    taskId: "task-proposal-adapter"
+  });
+
+  const proposal = await adapter.prepareChanges({
+    workspaceId: workspace.workspaceId,
+    task: { id: "task-proposal-adapter" }
+  });
+
+  assert.deepEqual(proposal.changedFiles, [
+    "development/example/sample.js"
+  ]);
+  assert.equal(proposal.changes.summary, "Improve isolated test fixture.");
+  assert.deepEqual(calls, [workspace.workspaceId]);
+
+  const original = await fs.readFile(
+    path.join(projectRoot, "development", "example", "sample.js"),
+    "utf8"
+  );
+  const isolated = await adapter.readFile({
+    workspaceId: workspace.workspaceId,
+    filePath: "development/example/sample.js"
+  });
+
+  assert.equal(original, "export const value = 1;\\n");
+  assert.equal(isolated, "export const value = 99;\\n");
+
+  const testResults = await adapter.runTests({
+    workspaceId: workspace.workspaceId,
+    task: { id: "task-proposal-adapter" }
+  });
+
+  assert.equal(testResults.passed, true);
+  assert.equal(testResults.isolatedWorkspace, true);
+  assert.equal(testResults.executionAdapter, "injected-test-runner");
+
+  await adapter.destroyWorkspace(workspace.workspaceId);
+  await baseAdapter.getAllowedPaths();
+});
+
+test("Workspace adapter refuses to prepare changes without a proposal provider", async t => {
+  const { adapter } = await createFixture(t);
+  const workspace = await adapter.createWorkspace({
+    taskId: "task-missing-provider"
+  });
+
+  await assert.rejects(
+    adapter.prepareChanges({ workspaceId: workspace.workspaceId }),
+    /No trusted proposalProvider is configured/
+  );
+
+  await adapter.destroyWorkspace(workspace.workspaceId);
+});
+
+test("Workspace adapter refuses to run code without a trusted test runner", async t => {
+  const { adapter } = await createFixture(t);
+  const workspace = await adapter.createWorkspace({
+    taskId: "task-missing-test-runner"
+  });
+
+  await assert.rejects(
+    adapter.runTests({ workspaceId: workspace.workspaceId }),
+    /No trusted sandboxed testRunner is configured/
+  );
+
+  await adapter.destroyWorkspace(workspace.workspaceId);
+});
+
+test("Workspace adapter rejects proposals outside the allowlist", async t => {
+  const { projectRoot } = await createFixture(t);
+  const adapter = createIsolatedWorkspaceAdapter({
+    projectRoot,
+    allowedPaths: ["development"],
+    proposalProvider: async () => ({
+      files: [{
+        path: "src/main.js",
+        content: "must not be written"
+      }]
+    }),
+    testRunner: async () => ({ passed: true })
+  });
+  const workspace = await adapter.createWorkspace({
+    taskId: "task-proposal-outside-allowlist"
+  });
+
+  await assert.rejects(
+    adapter.prepareChanges({ workspaceId: workspace.workspaceId }),
+    /outside the workspace allowlist/
+  );
+
+  await adapter.destroyWorkspace(workspace.workspaceId);
+});
