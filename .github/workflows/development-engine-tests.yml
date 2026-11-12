@@ -74,9 +74,9 @@ jobs:
       contents: read
       id-token: write
     outputs:
-      has_task: ${{ needs.resolve-task.outputs.has_task }}
-      task_id: ${{ needs.resolve-task.outputs.task_id }}
-      worker_id: ${{ needs.resolve-task.outputs.worker_id }}
+      has_task: ${{ steps.task.outputs.has_task }}
+      task_id: ${{ steps.task.outputs.task_id }}
+      worker_id: ${{ steps.task.outputs.worker_id }}
       title: ${{ steps.task.outputs.title }}
       base_sha: ${{ steps.task.outputs.base_sha }}
       proposal_base_sha: ${{ steps.task.outputs.proposal_base_sha }}
@@ -140,7 +140,7 @@ jobs:
           echo "base_sha=$BEFORE_SHA" >> "$GITHUB_OUTPUT"
           echo "proposal_base_sha=$HEAD_SHA" >> "$GITHUB_OUTPUT"
       - name: Upload prepared private task input
-        if: needs.resolve-task.outputs.has_task == 'true'
+        if: steps.task.outputs.has_task == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: alive-worker-input-${{ needs.resolve-task.outputs.task_id }}
