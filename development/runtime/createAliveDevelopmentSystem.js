@@ -12,17 +12,17 @@ import { createVercelSandboxTestRunner } from "../execution/vercelSandboxTestRun
 
 export function createAliveExecutionAdapters(options = {}) {
   const proposalProvider = createVercelAIGatewayProposalProvider({
-    enabled: options.aiEnabled === true,
-    ...(options.ai || {})
+    ...(options.ai || {}),
+    enabled: options.aiEnabled ?? (process.env.ALIVE_AI_ENABLED === "true")
   });
   const sandboxFactory = options.sandbox?.sandboxFactory || (async sandboxOptions => {
     const sdk = await import("@vercel/sandbox");
     return sdk.Sandbox.create(sandboxOptions);
   });
   const testRunner = createVercelSandboxTestRunner({
-    enabled: options.sandboxEnabled === true,
-    sandboxFactory,
-    ...(options.sandbox || {})
+    ...(options.sandbox || {}),
+    enabled: options.sandboxEnabled ?? (process.env.ALIVE_SANDBOX_ENABLED === "true"),
+    sandboxFactory
   });
   const workspaceAdapter = createIsolatedWorkspaceAdapter({
     projectRoot: options.projectRoot,
