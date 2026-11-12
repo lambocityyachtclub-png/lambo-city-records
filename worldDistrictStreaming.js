@@ -47,10 +47,10 @@ export default class WorldDistrictStreaming {
   }
 
   update(delta, context = {}) {
-    if (!this.worldSystem) return { built: [], removed: [], proxied: [], unproxied: [], refreshed: [], errors: [], skipped: "NOT_INITIALIZED" };
+    if (!this.worldSystem) return { built: [], removed: [], proxied: [], unproxied: [], keptProxies: [], refreshed: [], errors: [], skipped: "NOT_INITIALIZED" };
     const position = context.playerPosition || context.player?.position || context.position;
     if (!position || !Number.isFinite(position.x) || !Number.isFinite(position.z)) {
-      return { built: [], removed: [], proxied: [], unproxied: [], refreshed: [], errors: [], skipped: "NO_PLAYER_POSITION" };
+      return { built: [], removed: [], proxied: [], unproxied: [], keptProxies: [], refreshed: [], errors: [], skipped: "NO_PLAYER_POSITION" };
     }
 
     const detailBuilds = [], detailRemovals = [], proxyBuilds = [], proxyRemovals = [], focusUpdates = [];
@@ -87,7 +87,7 @@ export default class WorldDistrictStreaming {
     proxyBuilds.sort((a, b) => a.distance - b.distance);
     proxyRemovals.sort((a, b) => b.distance - a.distance);
     focusUpdates.sort((a, b) => a.distance - b.distance);
-    const built = [], removed = [], proxied = [], unproxied = [], refreshed = [], errors = [];
+    const built = [], removed = [], proxied = [], unproxied = [], keptProxies = [], refreshed = [], errors = [];
 
     // Build the far proxy before removing nearby full detail so the district
     // never disappears between the two levels.
@@ -137,7 +137,15 @@ export default class WorldDistrictStreaming {
         errors.push({ id: candidate.id, stage: "detail-remove", message: String(error?.message || error) });
       }
     }
+    const detailBuildIds = new Set(detailBuilds.map(candidate => candidate.id));
     for (const candidate of proxyRemovals.slice(0, this.options.maxProxyRemovalsPerUpdate)) {
+      // Keep the fallback proxy until the detailed district has actually
+      // completed its build. A failed or deferred build must never create a
+      // blank gap in the world.
+      if (detailBuildIds.has(candidate.id) && !this.worldSystem.isDistrictBuilt(candidate.id)) {
+        keptProxies.push(candidate.id);
+        continue;
+      }
       try {
         if (this.worldSystem.removeDistrictProxy(candidate.id)) unproxied.push(candidate.id);
       } catch (error) {
@@ -146,7 +154,7 @@ export default class WorldDistrictStreaming {
     }
 
     return {
-      built, removed, proxied, unproxied, refreshed, errors,
+      built, removed, proxied, unproxied, keptProxies, refreshed, errors,
       nearestBuildDistance: detailBuilds[0]?.distance ?? null,
       nearestProxyDistance: proxyBuilds[0]?.distance ?? null
     };

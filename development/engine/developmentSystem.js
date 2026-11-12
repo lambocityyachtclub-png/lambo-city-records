@@ -39,6 +39,15 @@ import {
   createSpecialistWorkerExecution
 } from "../execution/specialistWorkerExecution.js";
 
+import {
+  createHostedSpecialistQueueAdapter,
+  HOSTED_SPECIALIST_QUEUE_VERSION
+} from "../execution/hostedSpecialistQueueAdapter.js";
+
+import {
+  createVisionIntakePlanner
+} from "./visionIntakePlanner.js";
+
 export const DEVELOPMENT_SYSTEM_VERSION = "1.0.0";
 
 export const DEVELOPMENT_SYSTEM_STATUS = Object.freeze({
@@ -79,6 +88,22 @@ export async function createDevelopmentSystem(options = {}) {
         developmentDirector: director,
         workerRoster,
         ...options.specialistExecution
+      })
+    : null;
+
+  const hostedQueue = options.hostedQueue
+    ? createHostedSpecialistQueueAdapter({
+        developmentDirector: director,
+        workerRoster,
+        ...options.hostedQueue
+      })
+    : null;
+
+  const visionIntake = options.visionPlanner
+    ? createVisionIntakePlanner({
+        planner: options.visionPlanner,
+        workerRoster,
+        developmentDirector: director
       })
     : null;
 
@@ -143,8 +168,34 @@ export async function createDevelopmentSystem(options = {}) {
     path: "development/engine/specialistWorkerRoster.js",
     enabled: true,
     capabilities: workerRoster.listWorkers().flatMap(worker => worker.capabilities),
-    description: "Coordinates eight domain-scoped development specialists."
+    description: "Coordinates nine domain-scoped development specialists."
   });
+
+  if (hostedQueue) {
+    registry.registerModule({
+      id: "hosted-specialist-queue",
+      name: "Hosted Specialist Queue Adapter",
+      type: MODULE_TYPES.RUNNER,
+      version: HOSTED_SPECIALIST_QUEUE_VERSION,
+      path: "development/execution/hostedSpecialistQueueAdapter.js",
+      enabled: true,
+      capabilities: ["hosted-task-dispatch", "isolated-code-generation", "draft-pr-handoff"],
+      description: "Dispatches eligible Director tasks to the isolated hosted specialist workflow."
+    });
+  }
+
+  if (visionIntake) {
+    registry.registerModule({
+      id: "vision-intake-planner",
+      name: "Vision Intake & Task Planner",
+      type: MODULE_TYPES.ENGINE,
+      version: "1.0.0",
+      path: "development/engine/visionIntakePlanner.js",
+      enabled: true,
+      capabilities: ["vision-decomposition", "dependency-planning", "launch-scope-classification"],
+      description: "Validates owner vision plans and submits selected work to the Development Director."
+    });
+  }
 
   let status = DEVELOPMENT_SYSTEM_STATUS.READY;
 
@@ -169,6 +220,9 @@ export async function createDevelopmentSystem(options = {}) {
       configuredExecutionWorkers: workerExecution
         ? workerExecution.getConfiguredWorkers()
         : [],
+      hostedQueueConfigured: Boolean(hostedQueue),
+      hostedQueue: hostedQueue ? hostedQueue.getSnapshot() : null,
+      visionIntakeConfigured: Boolean(visionIntake),
       policy
     };
   }
@@ -211,6 +265,14 @@ export async function createDevelopmentSystem(options = {}) {
       return workerRoster.submitFinding(workerId, finding);
     }
   });
+
+  const hostedQueueView = hostedQueue ? Object.freeze({
+    dispatchNextTask: async workerId => {
+      assertReady();
+      return hostedQueue.dispatchNextTask(workerId);
+    },
+    getSnapshot: hostedQueue.getSnapshot
+  }) : null;
 
   const workerExecutionView = workerExecution ? Object.freeze({
     executeNextTask: async workerId => {
@@ -262,6 +324,25 @@ export async function createDevelopmentSystem(options = {}) {
       }
       return workerExecutionView.executeNextTask(workerId);
     },
-    getWorkerExecution: () => workerExecutionView
+    getWorkerExecution: () => workerExecutionView,
+    dispatchHostedTask: async workerId => {
+      assertReady();
+      if (!hostedQueueView) {
+        throw new Error("Hosted specialist queue adapter has not been configured by the trusted host.");
+      }
+      return hostedQueueView.dispatchNextTask(workerId);
+    },
+    getHostedQueue: () => hostedQueueView,
+    intakeVision: async vision => {
+      assertReady();
+      if (!visionIntake) throw new Error("Vision planner adapter has not been configured by the trusted host.");
+      return visionIntake.intakeVision({ vision });
+    },
+    getVisionPlan: () => visionIntake ? visionIntake.getPlan() : null,
+    submitVisionTasks: async taskKeys => {
+      assertReady();
+      if (!visionIntake) throw new Error("Vision planner adapter has not been configured by the trusted host.");
+      return visionIntake.submitPlanTasks(taskKeys);
+    }
   });
 }

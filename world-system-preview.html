@@ -143,7 +143,12 @@
         registerBox(name, bounds) { this.boxes.push({ name, ...bounds }); },
         unregister(name) { this.boxes = this.boxes.filter(box => box.name !== name); }
       };
-      const world = new WorldSystem();
+      // Test-only trusted host permission provider. Tests explicitly change
+      // this trusted state; player-supplied options cannot grant service access.
+      let trustedVehiclePermissions = [];
+      const world = new WorldSystem({
+        getVehiclePermissions: () => trustedVehiclePermissions
+      });
       world.init(scene, { systems: { collision: previewCollision } });
       const recipeDistrict = createDistrictFromRecipe({
         id: "recipe-compiler-test",
@@ -507,10 +512,14 @@
         unregister(name) { this.boxes = this.boxes.filter(box => box.name !== name); }
       };
       WorldSystemHost.init(hostScene, { systems: { collision: hostCollision } });
-      if (WorldSystemHost.isReady() || typeof window.__lamboCityWorldSystem?.initialize !== "function") {
-        throw new Error("The engine host initialized district runtime work before an explicit request.");
+      if (WorldSystemHost.isReady() ||
+          typeof window.__lamboCityWorldSystem?.initialize !== "undefined" ||
+          typeof window.__lamboCityWorldSystem?.setGateAccess !== "undefined" ||
+          typeof window.__lamboCityWorldSystem?.getGroundHeightAt !== "function") {
+        throw new Error("The browser-visible engine bridge must stay read-only until a trusted host explicitly initializes the runtime.");
       }
       await WorldSystemHost.initialize({
+        worldOptions: { getVehiclePermissions: () => ["service"] },
         districts: [recipeDistrict],
         streamingOptions: { streamInRadius: 50, streamOutRadius: 75 }
       });
@@ -747,6 +756,7 @@
         throw new Error("Service route was incorrectly allowed without permission.");
       }
       const gateGrant = world.setGateAccess(district.id, "arena-boardwalk-service-gate", ["service"]);
+      trustedVehiclePermissions = ["service"];
       const authorizedServiceRoute = world.findRoute(
         district.id,
         "boardwalk-service-entry",
@@ -779,11 +789,13 @@
         futureDistrict.id, "boulevard-south-west", "boulevard-south-west",
         { mode: "service", permissions: ["service"] }
       );
+      trustedVehiclePermissions = [];
       const deniedCityRoute = world.findWorldRoute(
         district.id, "boardwalk-service-entry",
         futureDistrict.id, "boulevard-south-west",
-        { mode: "service" }
+        { mode: "service", permissions: ["service"] }
       );
+      trustedVehiclePermissions = ["service"];
       const authorizedCityRoute = world.findWorldRoute(
         district.id, "boardwalk-service-entry",
         futureDistrict.id, "boulevard-south-west",

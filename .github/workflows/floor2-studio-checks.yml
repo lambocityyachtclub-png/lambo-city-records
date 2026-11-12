@@ -11,6 +11,7 @@ on:
       - "floor2VocalBooth3D.js"
       - "floor2CitySynth.js"
       - "scripts/test-studio-interface-workflow.mjs"
+      - "scripts/test-studio-lazy-loading.mjs"
       - "floor2StudioApp.js"
       - "floor2StudioNavigation.js"
       - "floor2InstrumentApp.js"
@@ -253,6 +254,9 @@ jobs:
 
       - name: Test approved five-step music interface workflow
         run: node --experimental-default-type=module scripts/test-studio-interface-workflow.mjs
+
+      - name: Test Floor 2 lazy loading and startup performance boundary
+        run: node --experimental-default-type=module scripts/test-studio-lazy-loading.mjs
 
       - name: Test Floor 2 Studio station registration and navigation
         run: node --experimental-default-type=module scripts/test-floor2-studio-navigation.mjs

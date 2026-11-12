@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - integration/lc-alive-complete-validation-2026-11-10
+      - integration/lc-alive-agentic-worker-2026-11-10
     paths:
       - "development/**"
       - "docs/**"
@@ -15,6 +16,29 @@ on:
       - "studioRecordingStartCoordinator.js"
       - "scripts/test-studio-recording-cancellation.mjs"
       - "scripts/test-studio-recording-start-coordinator.mjs"
+      - "main.js"
+      - "engine.js"
+      - "renderer.js"
+      - "player.js"
+      - "performanceMonitor.js"
+      - "deviceGraphics.js"
+      - "cityMap.js"
+      - "marina.js"
+      - "conferenceCenterDistrict.js"
+      - "world*.js"
+      - "vehicleRoadController.js"
+      - "worldDistricts/**"
+      - "worldAccessGate.js"
+      - "tests/**"
+      - "scripts/validate-alive-worker-diff.mjs"
+      - "scripts/test-alive-worker-diff-gate.mjs"
+      - ".github/workflows/development-engine-tests.yml"
+      - ".github/workflows/world-system-checks.yml"
+  pull_request:
+    branches:
+      - main
+      - integration/lc-alive-agentic-worker-2026-11-10
+
   workflow_dispatch:
 
 permissions:
@@ -23,6 +47,7 @@ permissions:
 
 jobs:
   read-only-ai-review:
+    if: vars.ALIVE_AI_REVIEW_ENABLED == 'true'
     name: Read-only Copilot engineering review
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -41,7 +66,7 @@ jobs:
       - name: Prepare the bounded review prompt
         shell: bash
         env:
-          BASE_REF: feature/lambo-city-completion
+          BASE_REF: ${{ github.event.pull_request.base.ref || 'main' }}
         run: |
           set -euo pipefail
           git fetch origin "$BASE_REF"

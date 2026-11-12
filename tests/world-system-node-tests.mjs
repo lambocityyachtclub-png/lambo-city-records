@@ -22,6 +22,7 @@ const cityMapModule = await loadPureModule("cityMap.js");
 const CITY_MAP = cityMapModule.default;
 const liveMainSource = await readFile(resolve(root, "main.js"), "utf8");
 const liveArenaSource = await readFile(resolve(root, "conferenceCenterDistrict.js"), "utf8");
+const liveWorldSystemSource = await readFile(resolve(root, "worldSystem.js"), "utf8");
 assert.match(liveMainSource, /WorldSystemHost\.initialize\(\{/,
   "the approved district blueprint must initialize in the live scene");
 assert.match(liveMainSource, /districts:\s*\[ConferenceCenterBlueprint\]/);
@@ -31,6 +32,12 @@ assert.match(liveArenaSource, /lamboCityConferenceCenterLandmark/,
   "the protected arena shell must have an independent visibility root");
 assert.doesNotMatch(liveArenaSource, /arenaBoulevardSouth|arenaBoulevardNorth|arenaBoulevardWest|arenaBoulevardEast/,
   "legacy arena roads must not duplicate the generated road network");
+assert.match(liveWorldSystemSource, /getPermissions:\s*\(\)\s*=>\s*this\._getVehiclePermissions\(districtId\)/,
+  "vehicle controllers must read permission state from the trusted World System provider");
+assert.match(liveWorldSystemSource, /getOpenGates:\s*\(\)\s*=>\s*this\.getOpenGateIds\(districtId\)/,
+  "vehicle controllers must read gate state live instead of trusting caller-supplied IDs");
+assert.match(liveWorldSystemSource, /permissions:\s*this\._getVehiclePermissions\(districtId\)/,
+  "read-only vehicle road queries must also use authoritative permissions");
 assert.match(liveArenaSource, /arenaArrivalPlaza/,
   "the existing arena arrival plaza remains preserved");
 const blueprintSource = await readFile(resolve(root, "worldDistricts/conferenceCenter.js"), "utf8");
@@ -93,18 +100,36 @@ const serviceVehiclePosition = { x: -37, z: 54, heading: 0 };
 assert.equal(new VehicleRoadController(CONFERENCE_CENTER_DISTRICT, serviceVehiclePosition).state.valid, false);
 assert.equal(new VehicleRoadController(
   CONFERENCE_CENTER_DISTRICT, serviceVehiclePosition, { permissions: ["service"] }
-).state.valid, false, "service tier alone must not bypass a closed physical gate");
-const waitingServiceVehicle = new VehicleRoadController(
-  CONFERENCE_CENTER_DISTRICT, serviceVehiclePosition, { permissions: ["service"] }
-);
-assert.equal(waitingServiceVehicle.setAccess(
-  ["service"], ["arena-boardwalk-service-gate"]
-), true, "a waiting service vehicle should become valid when the gate is authorized and opened");
-assert.equal(waitingServiceVehicle.state.valid, true);
+).state.valid, false, "caller-supplied permissions alone must not bypass a closed physical gate");
 assert.equal(new VehicleRoadController(
   CONFERENCE_CENTER_DISTRICT, serviceVehiclePosition,
   { permissions: ["service"], openGates: ["arena-boardwalk-service-gate"] }
-).state.valid, true, "authorized vehicles may use the service road only after the gate is open");
+).state.valid, false, "caller-supplied permissions and gate IDs must be ignored");
+
+let trustedServicePermissions = [];
+let trustedOpenGates = [];
+const waitingServiceVehicle = new VehicleRoadController(
+  CONFERENCE_CENTER_DISTRICT,
+  serviceVehiclePosition,
+  {
+    getPermissions: () => trustedServicePermissions,
+    getOpenGates: () => trustedOpenGates
+  }
+);
+assert.equal(waitingServiceVehicle.state.valid, false);
+trustedServicePermissions = ["service"];
+trustedOpenGates = ["arena-boardwalk-service-gate"];
+const openedGateUpdate = waitingServiceVehicle.update(0.05, { throttle: 0 });
+assert.equal(openedGateUpdate.blocked, false,
+  "a trusted host grant and live open-gate state should authorize the service vehicle");
+assert.equal(waitingServiceVehicle.state.valid, true);
+
+trustedOpenGates = [];
+const closedGateUpdate = waitingServiceVehicle.update(0.05, { throttle: 1 });
+assert.equal(closedGateUpdate.blocked, true,
+  "closing the physical gate must invalidate an already-created vehicle controller");
+assert.equal(waitingServiceVehicle.state.valid, false);
+assert.equal(waitingServiceVehicle.state.speed, 0);
 
 const recipe = {
   id: "world-system-node-test",
@@ -364,6 +389,33 @@ assert.equal(streamState.proxied, true);
 const proxyRemoval = streamer.update(0, { playerPosition: { x: 400, z: 50 } });
 assert.equal(proxyRemoval.unproxied.includes("stream-test"), true);
 assert.equal(streamState.proxied, false);
+
+const failedBuildState = { built: false, proxied: true };
+const failedBuildFixture = {
+  getDistrictIds: () => ["failed-detail"],
+  getDistrict: () => ({ id: "failed-detail", bounds: { minX: 0, maxX: 100, minZ: 0, maxZ: 100 } }),
+  isDistrictBuilt: () => failedBuildState.built,
+  isDistrictProxied: () => failedBuildState.proxied,
+  buildDistrictProxy: () => { failedBuildState.proxied = true; return {}; },
+  removeDistrictProxy: () => { const had = failedBuildState.proxied; failedBuildState.proxied = false; return had; },
+  buildDistrict: () => { throw new Error("simulated detailed build failure"); },
+  removeDistrict: () => false,
+  updateDistrictDetailFocus: () => false
+};
+const failedBuildStreamer = new streamingModule.default({
+  streamInRadius: 50,
+  streamOutRadius: 75,
+  proxyInRadius: 200,
+  proxyOutRadius: 250,
+  maxProxyRemovalsPerUpdate: 2
+}).init(failedBuildFixture);
+const failedBuildUpdate = failedBuildStreamer.update(0, { playerPosition: { x: 50, z: 50 } });
+assert.equal(failedBuildState.proxied, true,
+  "the far proxy must remain visible when the detailed district build fails");
+assert.deepEqual(failedBuildUpdate.keptProxies, ["failed-detail"]);
+assert.ok(failedBuildUpdate.errors.some(error =>
+  error.id === "failed-detail" && error.stage === "detail-build"
+));
 
 const gridDistrict = createDistrictFromRecipe({
   id: "world-system-grid-test",

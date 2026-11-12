@@ -1,174 +1,204 @@
-// LAMBO CITY — lazy host bridge for generated districts
-// The host is registered with the engine but does no world work at startup.
-// A future city-building interface can explicitly initialize and populate it.
+// LAMBO CITY — lazy host bridge for generated districts.
+// The host is registered with the engine but does no world work until explicitly initialized.
 import WorldSystemRuntime from "./worldSystemRuntime.js";
 
-let scene = null;
-let context = null;
-let runtime = null;
-let initialization = null;
+export function createWorldSystemHost({ createRuntime = () => new WorldSystemRuntime() } = {}) {
+  let scene = null;
+  let context = null;
+  let runtime = null;
+  let initialization = null;
+  let generation = 0;
 
-const host = {
-  init(activeScene, activeContext = {}) {
-    scene = activeScene || null;
-    context = activeContext || {};
-    if (typeof window !== "undefined") {
-      window.__lamboCityWorldSystem = this.api;
-    }
-    return this;
-  },
-
-  async initialize(configuration = {}) {
-    if (runtime?.ready) return runtime;
-    if (initialization) return initialization;
-    if (!scene || typeof scene.add !== "function") {
-      throw new Error("LAMBO CITY World System host needs the initialized game scene.");
-    }
-
-    const candidate = new WorldSystemRuntime();
-    initialization = candidate.init(scene, context, configuration)
-      .then(() => {
-        runtime = candidate;
-        return runtime;
-      })
-      .catch(error => {
-        candidate.dispose();
+  const host = {
+    init(activeScene, activeContext = {}) {
+      const nextScene = activeScene || null;
+      if (scene !== nextScene) {
+        generation += 1;
+        runtime?.dispose();
         runtime = null;
-        throw error;
-      })
-      .finally(() => {
         initialization = null;
-      });
-    return initialization;
-  },
+      }
+      scene = nextScene;
+      context = activeContext || {};
+      if (typeof window !== "undefined") {
+        window.__lamboCityWorldSystem = this.api;
+      }
+      return this;
+    },
 
-  isReady() {
-    return !!runtime?.ready;
-  },
+    initialize(configuration = {}) {
+      if (runtime?.ready) return Promise.resolve(runtime);
+      if (initialization) return initialization;
+      if (!scene || typeof scene.add !== "function") {
+        return Promise.reject(new Error("LAMBO CITY World System host needs the initialized game scene."));
+      }
 
-  getRuntime() {
-    return runtime;
-  },
+      const activeScene = scene;
+      const activeContext = context;
+      const activeGeneration = generation;
+      let candidate;
+      try {
+        candidate = createRuntime();
+        if (!candidate || typeof candidate.init !== "function" || typeof candidate.dispose !== "function") {
+          throw new Error("World System host runtime factory must return an object with init() and dispose().");
+        }
+      } catch (error) {
+        return Promise.reject(error);
+      }
 
-  registerDistrict(districtOrRecipe, options = {}) {
-    if (!runtime?.ready) return { registered: false, reason: "NOT_INITIALIZED" };
-    return runtime.registerDistrict(districtOrRecipe, options);
-  },
+      let pending;
+      pending = Promise.resolve()
+        .then(() => candidate.init(activeScene, activeContext, configuration))
+        .then(() => {
+          if (activeGeneration !== generation || scene !== activeScene) {
+            candidate.dispose();
+            throw new Error("LAMBO CITY World System initialization was cancelled.");
+          }
+          runtime = candidate;
+          return runtime;
+        })
+        .catch(error => {
+          candidate.dispose();
+          if (activeGeneration === generation && runtime === candidate) runtime = null;
+          throw error;
+        })
+        .finally(() => {
+          if (initialization === pending) initialization = null;
+        });
+      initialization = pending;
+      return pending;
+    },
 
-  registerConnection(connection) {
-    if (!runtime?.ready) return { registered: false, reason: "NOT_INITIALIZED" };
-    return runtime.registerConnection(connection);
-  },
+    isReady() {
+      return !!runtime?.ready;
+    },
 
-  buildDistrict(id, options = {}) {
-    const world = runtime?.ready ? runtime.getWorldSystem() : null;
-    if (!world) throw new Error("Initialize the LAMBO CITY World System before building a district.");
-    return world.buildDistrict(id, options);
-  },
+    getRuntime() {
+      return runtime;
+    },
 
-  findRoute(districtId, fromNodeId, toNodeId, options = {}) {
-    const world = runtime?.ready ? runtime.getWorldSystem() : null;
-    return world
-      ? world.findRoute(districtId, fromNodeId, toNodeId, options)
-      : { found: false, reason: "NOT_INITIALIZED", nodeIds: [], segmentIds: [], distance: 0 };
-  },
+    registerDistrict(districtOrRecipe, options = {}) {
+      if (!runtime?.ready) return { registered: false, reason: "NOT_INITIALIZED" };
+      return runtime.registerDistrict(districtOrRecipe, options);
+    },
 
-  findWorldRoute(fromDistrictId, fromNodeId, toDistrictId, toNodeId, options = {}) {
-    return runtime
-      ? runtime.findWorldRoute(fromDistrictId, fromNodeId, toDistrictId, toNodeId, options)
-      : { found: false, reason: "NOT_INITIALIZED", nodes: [], steps: [], distance: 0 };
-  },
+    registerConnection(connection) {
+      if (!runtime?.ready) return { registered: false, reason: "NOT_INITIALIZED" };
+      return runtime.registerConnection(connection);
+    },
 
-  getGateStatuses(districtId) {
-    return runtime?.ready ? runtime.getGateStatuses(districtId) : [];
-  },
+    buildDistrict(id, options = {}) {
+      const world = runtime?.ready ? runtime.getWorldSystem() : null;
+      if (!world) throw new Error("Initialize the LAMBO CITY World System before building a district.");
+      return world.buildDistrict(id, options);
+    },
 
-  getOpenGateIds(districtId) {
-    return runtime?.ready ? runtime.getOpenGateIds(districtId) : [];
-  },
+    findRoute(districtId, fromNodeId, toNodeId, options = {}) {
+      const world = runtime?.ready ? runtime.getWorldSystem() : null;
+      return world
+        ? world.findRoute(districtId, fromNodeId, toNodeId, options)
+        : { found: false, reason: "NOT_INITIALIZED", nodeIds: [], segmentIds: [], distance: 0 };
+    },
 
-  setGateAccess(districtId, gateId, permissions = []) {
-    return runtime?.ready
-      ? runtime.setGateAccess(districtId, gateId, permissions)
-      : false;
-  },
+    findWorldRoute(fromDistrictId, fromNodeId, toDistrictId, toNodeId, options = {}) {
+      return runtime
+        ? runtime.findWorldRoute(fromDistrictId, fromNodeId, toDistrictId, toNodeId, options)
+        : { found: false, reason: "NOT_INITIALIZED", nodes: [], steps: [], distance: 0 };
+    },
 
-  getGroundHeightAt(x, z) {
-    return runtime?.ready ? runtime.getGroundHeightAt(x, z) : null;
-  },
+    getGateStatuses(districtId) {
+      return runtime?.ready ? runtime.getGateStatuses(districtId) : [];
+    },
 
-  getVehicleRoadSurfaceAt(districtId, point, options = {}) {
-    return runtime?.ready ? runtime.getVehicleRoadSurfaceAt(districtId, point, options) : null;
-  },
+    getOpenGateIds(districtId) {
+      return runtime?.ready ? runtime.getOpenGateIds(districtId) : [];
+    },
 
-  isVehicleFootprintOnRoad(districtId, vehicle, options = {}) {
-    return runtime?.ready && runtime.isVehicleFootprintOnRoad(districtId, vehicle, options);
-  },
+    setGateAccess(districtId, gateId, permissions = []) {
+      return runtime?.ready ? runtime.setGateAccess(districtId, gateId, permissions) : false;
+    },
 
-  isVehicleMoveOnRoad(districtId, current, next, options = {}) {
-    return runtime?.ready && runtime.isVehicleMoveOnRoad(districtId, current, next, options);
-  },
+    getGroundHeightAt(x, z) {
+      return runtime?.ready ? runtime.getGroundHeightAt(x, z) : null;
+    },
 
-  createVehicleController(districtId, initialState = {}, options = {}) {
-    return runtime?.ready ? runtime.createVehicleController(districtId, initialState, options) : null;
-  },
+    getVehicleRoadSurfaceAt(districtId, point, options = {}) {
+      return runtime?.ready ? runtime.getVehicleRoadSurfaceAt(districtId, point, options) : null;
+    },
 
-  buildVehicleUTurnPath(districtId, nodeId, vehicle = {}, options = {}) {
-    return runtime?.ready ? runtime.buildVehicleUTurnPath(districtId, nodeId, vehicle, options) : { valid: false, reason: "NOT_READY", points: [] };
-  },
+    isVehicleFootprintOnRoad(districtId, vehicle, options = {}) {
+      return runtime?.ready && runtime.isVehicleFootprintOnRoad(districtId, vehicle, options);
+    },
 
-  getVehicleTurnSpace(vehicle = {}) {
-    return runtime?.ready ? runtime.getVehicleTurnSpace(vehicle) : null;
-  },
+    isVehicleMoveOnRoad(districtId, current, next, options = {}) {
+      return runtime?.ready && runtime.isVehicleMoveOnRoad(districtId, current, next, options);
+    },
 
-  getStatus() {
-    return runtime?.getStatus() || {
-      ready: false,
-      registeredDistrictIds: [],
-      registeredDistricts: [],
-      builtDistricts: [],
-      proxiedDistricts: [],
-      registeredConnections: []
-    };
-  },
+    createVehicleController(districtId, initialState = {}, options = {}) {
+      return runtime?.ready ? runtime.createVehicleController(districtId, initialState, options) : null;
+    },
 
-  unregisterDistrict(id) {
-    return runtime?.ready ? runtime.unregisterDistrict(id) : false;
-  },
+    buildVehicleUTurnPath(districtId, nodeId, vehicle = {}, options = {}) {
+      return runtime?.ready
+        ? runtime.buildVehicleUTurnPath(districtId, nodeId, vehicle, options)
+        : { valid: false, reason: "NOT_READY", points: [] };
+    },
 
-  dispose() {
-    runtime?.dispose();
-    runtime = null;
-    initialization = null;
-  },
+    getVehicleTurnSpace(vehicle = {}) {
+      return runtime?.ready ? runtime.getVehicleTurnSpace(vehicle) : null;
+    },
 
-  update(delta, activeContext = {}) {
-    if (runtime?.ready) runtime.update(delta, activeContext);
-  }
-};
+    getStatus() {
+      return runtime?.getStatus() || {
+        ready: false,
+        registeredDistrictIds: [],
+        registeredDistricts: [],
+        builtDistricts: [],
+        proxiedDistricts: [],
+        registeredConnections: []
+      };
+    },
 
-host.api = Object.freeze({
-  initialize: configuration => host.initialize(configuration),
-  isReady: () => host.isReady(),
-  registerDistrict: (districtOrRecipe, options) => host.registerDistrict(districtOrRecipe, options),
-  registerConnection: connection => host.registerConnection(connection),
-  buildDistrict: (id, options) => host.buildDistrict(id, options),
-  findRoute: (districtId, fromNodeId, toNodeId, options) => host.findRoute(districtId, fromNodeId, toNodeId, options),
-  findWorldRoute: (fromDistrictId, fromNodeId, toDistrictId, toNodeId, options) =>
-    host.findWorldRoute(fromDistrictId, fromNodeId, toDistrictId, toNodeId, options),
-  getGateStatuses: districtId => host.getGateStatuses(districtId),
-  getOpenGateIds: districtId => host.getOpenGateIds(districtId),
-  setGateAccess: (districtId, gateId, permissions) => host.setGateAccess(districtId, gateId, permissions),
-  getGroundHeightAt: (x, z) => host.getGroundHeightAt(x, z),
-  getVehicleRoadSurfaceAt: (districtId, point, options) => host.getVehicleRoadSurfaceAt(districtId, point, options),
-  isVehicleFootprintOnRoad: (districtId, vehicle, options) => host.isVehicleFootprintOnRoad(districtId, vehicle, options),
-  isVehicleMoveOnRoad: (districtId, current, next, options) => host.isVehicleMoveOnRoad(districtId, current, next, options),
-  createVehicleController: (districtId, initialState, options) => host.createVehicleController(districtId, initialState, options),
-  buildVehicleUTurnPath: (districtId, nodeId, vehicle, options) => host.buildVehicleUTurnPath(districtId, nodeId, vehicle, options),
-  getVehicleTurnSpace: vehicle => host.getVehicleTurnSpace(vehicle),
-  getStatus: () => host.getStatus(),
-  unregisterDistrict: id => host.unregisterDistrict(id),
-  dispose: () => host.dispose()
-});
+    unregisterDistrict(id) {
+      return runtime?.ready ? runtime.unregisterDistrict(id) : false;
+    },
 
+    dispose() {
+      generation += 1;
+      runtime?.dispose();
+      runtime = null;
+      initialization = null;
+    },
+
+    update(delta, activeContext = {}) {
+      if (runtime?.ready) runtime.update(delta, activeContext);
+    }
+  };
+
+  // The browser-visible bridge is read-only to prevent accidental mutation.
+  // This is not a security boundary: client code is downloadable. Entitlements,
+  // purchases, private content, and multiplayer access must be authorized server-side.
+  host.api = Object.freeze({
+    isReady: () => host.isReady(),
+    findRoute: (districtId, fromNodeId, toNodeId, options) =>
+      host.findRoute(districtId, fromNodeId, toNodeId, options),
+    findWorldRoute: (fromDistrictId, fromNodeId, toDistrictId, toNodeId, options) =>
+      host.findWorldRoute(fromDistrictId, fromNodeId, toDistrictId, toNodeId, options),
+    getGateStatuses: districtId => host.getGateStatuses(districtId),
+    getOpenGateIds: districtId => host.getOpenGateIds(districtId),
+    getGroundHeightAt: (x, z) => host.getGroundHeightAt(x, z),
+    getVehicleRoadSurfaceAt: (districtId, point, options) =>
+      host.getVehicleRoadSurfaceAt(districtId, point, options),
+    isVehicleFootprintOnRoad: (districtId, vehicle, options) =>
+      host.isVehicleFootprintOnRoad(districtId, vehicle, options),
+    isVehicleMoveOnRoad: (districtId, current, next, options) =>
+      host.isVehicleMoveOnRoad(districtId, current, next, options),
+    getVehicleTurnSpace: vehicle => host.getVehicleTurnSpace(vehicle),
+    getStatus: () => host.getStatus()
+  });
+
+  return host;
+}
+
+const host = createWorldSystemHost();
 export default host;

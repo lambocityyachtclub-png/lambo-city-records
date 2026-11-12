@@ -491,6 +491,13 @@ export function createContentPackCatalog(options = {}) {
       } catch (error) {
         if (controller.signal.aborted) throw new Error("Content asset load was aborted.");
         if (!asset.fallback || sharedLoadOptions.disableFallback === true) throw error;
+        const fallback = findAsset(asset.fallback.packId, asset.fallback.assetId);
+        if (fallback.asset.cacheKey === cacheKey) {
+          throw new Error(
+            "Content fallback cycle detected for " + pack.id + "/" + asset.id +
+            ": its fallback resolves to the same in-flight cache key."
+          );
+        }
         return loadAsset(asset.fallback.packId, asset.fallback.assetId, {
           ...sharedLoadOptions, forceReload: false, disableFallback: true
         });

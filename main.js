@@ -41,16 +41,6 @@ import DockLuxuryOverhaul from "./dockLuxuryOverhaul.js";
 import RecordsHQ from "./recordsHQ.js";
 import RecordsHQFoundation from "./recordsHQFoundation.js";
 import RecordsHQFloor1 from "./recordsHQFloor1.js";
-import RecordsHQFloor2Studio from "./recordsHQFloor2Studio.js";
-import Floor2StudioApp from "./floor2StudioApp.js";
-import Floor2InstrumentApp from "./floor2InstrumentApp.js";
-import Floor2DrumStation from "./floor2DrumStation.js";
-import Floor2StudioNavigation from "./floor2StudioNavigation.js";
-import Floor2StudioSession from "./floor2StudioSession.js";
-import StudioMixMasterConsole3D from "./studioMixMasterConsole3D.js";
-import Floor2LiveDrummer from "./floor2LiveDrummer.js";
-import Floor2VocalBooth3D from "./floor2VocalBooth3D.js";
-import Floor2CitySynth from "./floor2CitySynth.js";
 import RecordsHQEntranceThreshold from "./recordsHQEntranceThreshold.js";
 import RecordsHQMediaDetails from "./recordsHQMediaDetails.js";
 import RecordsHQMerchDetails from "./recordsHQMerchDetails.js";
@@ -101,16 +91,6 @@ engine.registerSystems({
   recordsHQ: RecordsHQ,
   recordsHQFoundation: RecordsHQFoundation,
   recordsHQFloor1: RecordsHQFloor1,
-  recordsHQFloor2Studio: RecordsHQFloor2Studio,
-  floor2StudioApp: Floor2StudioApp,
-  floor2InstrumentApp: Floor2InstrumentApp,
-  floor2DrumStation: Floor2DrumStation,
-  floor2StudioNavigation: Floor2StudioNavigation,
-  floor2StudioSession: Floor2StudioSession,
-  studioMixMasterConsole3D: StudioMixMasterConsole3D,
-  floor2LiveDrummer: Floor2LiveDrummer,
-  floor2VocalBooth3D: Floor2VocalBooth3D,
-  floor2CitySynth: Floor2CitySynth,
   recordsHQEntranceThreshold: RecordsHQEntranceThreshold,
   recordsHQMediaDetails: RecordsHQMediaDetails,
   recordsHQMerchDetails: RecordsHQMerchDetails,
@@ -128,12 +108,91 @@ engine.registerSystems({
 // Load upper floors only when selected in the elevator.
 // Each destination is cached so returning to a floor never rebuilds it.
 const destinationLoads = new Map();
+window.__lamboCityFloor2Ready = false;
 window.__lamboCityPrepareFloor = floor => {
-  if (floor !== 3 && floor !== 4) return Promise.resolve();
+  if (floor !== 2 && floor !== 3 && floor !== 4) return Promise.resolve();
 
   if (!destinationLoads.has(floor)) {
+    let floor2InitializationStarted = false;
     const load = (async () => {
-      if (floor === 3) {
+      if (floor === 2) {
+        window.__lamboCityFloor2Ready = false;
+        const [
+          studio,
+          beatLab,
+          instrument,
+          drumStation,
+          navigation,
+          session,
+          mixMaster,
+          liveDrummer,
+          vocalBooth,
+          citySynth
+        ] = await Promise.all([
+          import("./recordsHQFloor2Studio.js"),
+          import("./floor2StudioApp.js"),
+          import("./floor2InstrumentApp.js"),
+          import("./floor2DrumStation.js"),
+          import("./floor2StudioNavigation.js"),
+          import("./floor2StudioSession.js"),
+          import("./studioMixMasterConsole3D.js"),
+          import("./floor2LiveDrummer.js"),
+          import("./floor2VocalBooth3D.js"),
+          import("./floor2CitySynth.js")
+        ]);
+
+        if (!engine.scene || !engine.camera || !engine.renderer) {
+          throw new Error("The LAMBO CITY scene is not ready for Floor 2.");
+        }
+
+        const systems = {
+          recordsHQFloor2Studio: studio.default,
+          floor2StudioApp: beatLab.default,
+          floor2InstrumentApp: instrument.default,
+          floor2DrumStation: drumStation.default,
+          floor2StudioNavigation: navigation.default,
+          floor2StudioSession: session.default,
+          studioMixMasterConsole3D: mixMaster.default,
+          floor2LiveDrummer: liveDrummer.default,
+          floor2VocalBooth3D: vocalBooth.default,
+          floor2CitySynth: citySynth.default
+        };
+
+        for (const [name, system] of Object.entries(systems)) {
+          if (!system || typeof system.init !== "function") {
+            throw new Error("Floor 2 module failed to initialize: " + name);
+          }
+        }
+
+        // Once module initialization starts, retain a failed promise rather
+        // than retrying partially initialized systems and duplicating listeners.
+        floor2InitializationStarted = true;
+        Object.assign(engine.systems, systems);
+        engine.context.systems = engine.systems;
+
+        const initializationOrder = [
+          ["recordsHQFloor2Studio", [engine.scene]],
+          ["floor2StudioApp", [engine.scene, engine.context]],
+          ["floor2InstrumentApp", [engine.scene, engine.context]],
+          ["floor2DrumStation", [engine.scene, engine.context]],
+          ["floor2StudioNavigation", [engine.scene, engine.context]],
+          ["floor2StudioSession", [engine.scene, engine.context]],
+          ["studioMixMasterConsole3D", [engine.scene, engine.context]],
+          ["floor2LiveDrummer", [engine.scene, engine.context]],
+          ["floor2VocalBooth3D", [engine.scene, engine.context]],
+          ["floor2CitySynth", [engine.scene, engine.context]]
+        ];
+
+        for (const [name, args] of initializationOrder) {
+          await Promise.resolve(systems[name].init(...args));
+        }
+
+        if (!engine.scene.getObjectByName("recordsHQFloor2Studio")) {
+          throw new Error("Floor 2 architecture did not attach to the live scene.");
+        }
+        window.__lamboCityFloor2LoadError = null;
+        window.__lamboCityFloor2Ready = true;
+      } else if (floor === 3) {
         window.__lamboCityFloor3Ready = false;
         const [executive, details, experience] = await Promise.all([
           import("./recordsHQFloor3Executive.js"),
@@ -185,7 +244,13 @@ window.__lamboCityPrepareFloor = floor => {
         engine.systems.recordsHQRooftopVIP?.init?.(engine.scene);
       }
     })().catch(error => {
-      destinationLoads.delete(floor);
+      if (floor === 2) {
+        window.__lamboCityFloor2Ready = false;
+        window.__lamboCityFloor2LoadError = String(error?.message || error);
+        if (!floor2InitializationStarted) destinationLoads.delete(floor);
+      } else {
+        destinationLoads.delete(floor);
+      }
       throw error;
     });
 
