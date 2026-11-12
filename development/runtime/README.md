@@ -42,11 +42,11 @@ Do not enable the workflow until the managed database is provisioned, credential
 
 The static owner dashboard is available at `/alive-review.html`. It talks only to the same-origin `/api/alive/reviews` serverless endpoint. The endpoint requires a bearer token and reads/writes the existing PostgreSQL review records; it does not merge, commit, or deploy approved proposals.
 
-Configure these **Vercel Project Environment Variables** before using the dashboard:
+The isolated feature-branch Preview environment has been configured with branch-scoped sensitive values for `DATABASE_URL` and `ALIVE_REVIEW_TOKEN`. Production and other Preview branches are not configured by this change. For any additional environment, add:
 
-- `DATABASE_URL`: the Neon connection string for the dedicated ALIVE database/branch. Add it as a sensitive environment variable for the environments where the dashboard should be available.
-- `ALIVE_REVIEW_TOKEN`: a newly generated, unique random secret with at least 32 characters. Do not reuse the database password, Vercel token, or any GitHub token.
+- `DATABASE_URL`: the Neon connection string for the dedicated ALIVE database/branch, as a sensitive environment variable.
+- `ALIVE_REVIEW_TOKEN`: a unique random secret with at least 32 characters. Do not reuse the database password, Vercel token, or any GitHub token.
 
-Redeploy the project after adding the variables. Open `/alive-review.html`, enter the owner review token, and use the Pending / Approved / Rejected filter. The token is held in page memory only and is cleared when the page is locked or reloaded. The API rejects unauthenticated requests, disables caching, and supports only GET and POST. Owner approval records a decision only; production changes remain a separate future process.
+Redeploy the target environment after adding or changing these variables. Open `/alive-review.html`, enter the owner review token, and use the Pending / Approved / Rejected filter. The token is held in page memory only and is cleared when the page is locked or reloaded. The API rejects unauthenticated requests, disables caching, and supports only GET and POST. Owner approval records a decision only; production changes remain a separate future process.
 
 The root project declares the `pg` dependency used by the Vercel function. The dashboard must remain private operational tooling and must not be linked from the public game navigation.
