@@ -236,6 +236,30 @@ test("Executor sends successful changes to owner review", async () => {
   assert.equal(updatedTask.result.success, true);
 });
 
+test("Executor blocks empty proposals before testing or review", async () => {
+  const {
+    director,
+    task,
+    executor,
+    calls,
+    reviews
+  } = await createTestSetup({
+    changedFiles: []
+  });
+
+  const result = await executor.executeNextTask({
+    runnerId: "studio"
+  });
+
+  assert.equal(result.status, TASK_STATUS.BLOCKED);
+  assert.match(result.reason, /No changed files were produced/);
+  assert.equal(calls.tests, 0);
+  assert.equal(calls.review, 0);
+  assert.equal(calls.destroy, 1);
+  assert.equal(reviews.length, 0);
+  assert.equal(director.getTask(task.id).status, TASK_STATUS.BLOCKED);
+});
+
 test("Executor blocks a task when automated tests fail", async () => {
   const {
     director,
