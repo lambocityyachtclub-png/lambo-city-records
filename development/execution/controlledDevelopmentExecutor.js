@@ -365,6 +365,18 @@ export function createControlledDevelopmentExecutor(options = {}) {
         reason: error.message,
         taskUpdated: blocked.updated
       };
+    } finally {
+      if (
+        workspaceId &&
+        typeof workspaceAdapter.destroyWorkspace === "function"
+      ) {
+        try {
+          await workspaceAdapter.destroyWorkspace(workspaceId);
+        } catch {
+          // Workspace cleanup failure must not hide the task result.
+          // The adapter's host should separately monitor temporary storage.
+        }
+      }
     }
   }
 
