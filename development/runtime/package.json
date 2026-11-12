@@ -4,6 +4,7 @@
   "type": "module",
   "description": "Server-side runtime dependencies for the LAMBO CITY ALIVE development worker.",
   "dependencies": {
-    "@vercel/sandbox": "4.0.0"
+    "@vercel/sandbox": "4.0.0",
+    "pg": "8.16.3"
   }
 }
