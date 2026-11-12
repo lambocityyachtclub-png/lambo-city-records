@@ -6,6 +6,7 @@ on:
       - integration/lc-alive-agentic-worker-2026-11-10
     paths:
       - "development/**"
+      - "development/queue/incoming/**"
       - "scripts/validate-alive-worker-diff.mjs"
       - "scripts/test-alive-worker-diff-gate.mjs"
       - "scripts/resolve-alive-private-task.mjs"
