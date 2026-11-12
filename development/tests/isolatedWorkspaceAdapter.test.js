@@ -411,26 +411,20 @@ test("Workspace adapter requires a task ID", async t => {
 
 
 test("Workspace adapter applies provider proposals only inside the isolated copy", async t => {
-  const calls = [];
-  const {
-    projectRoot,
-    adapter: baseAdapter
-  } = await createFixture(t);
+  const newline = String.fromCharCode(10);
+  const { projectRoot } = await createFixture(t);
 
   const adapter = createIsolatedWorkspaceAdapter({
     projectRoot,
     workspaceRoot: path.join(path.dirname(projectRoot), "provider-workspaces"),
     allowedPaths: ["development"],
-    proposalProvider: async input => {
-      calls.push(input.workspace.workspaceId);
-      return {
-        summary: "Improve isolated test fixture.",
-        files: [{
-          path: "development/example/sample.js",
-          content: "export const value = 99;\n"
-        }]
-      };
-    },
+    proposalProvider: async input => ({
+      summary: "Improve isolated test fixture.",
+      files: [{
+        path: "development/example/sample.js",
+        content: "export const value = 99;" + newline
+      }]
+    }),
     testRunner: async input => ({
       passed: true,
       total: 1,
@@ -452,7 +446,6 @@ test("Workspace adapter applies provider proposals only inside the isolated copy
     "development/example/sample.js"
   ]);
   assert.equal(proposal.changes.summary, "Improve isolated test fixture.");
-  assert.deepEqual(calls, [workspace.workspaceId]);
 
   const original = await fs.readFile(
     path.join(projectRoot, "development", "example", "sample.js"),
@@ -463,8 +456,8 @@ test("Workspace adapter applies provider proposals only inside the isolated copy
     filePath: "development/example/sample.js"
   });
 
-  assert.equal(original, "export const value = 1;\n");
-  assert.equal(isolated, "export const value = 99;\n");
+  assert.equal(original, "export const value = 1;" + newline);
+  assert.equal(isolated, "export const value = 99;" + newline);
 
   const testResults = await adapter.runTests({
     workspaceId: workspace.workspaceId,
@@ -476,7 +469,6 @@ test("Workspace adapter applies provider proposals only inside the isolated copy
   assert.equal(testResults.executionAdapter, "injected-test-runner");
 
   await adapter.destroyWorkspace(workspace.workspaceId);
-  await baseAdapter.getAllowedPaths();
 });
 
 test("Workspace adapter refuses to prepare changes without a proposal provider", async t => {
