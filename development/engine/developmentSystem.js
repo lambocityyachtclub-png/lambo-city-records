@@ -31,6 +31,15 @@ import {
   STUDIO_RUNNER_VERSION
 } from "../runners/studio/studioDevelopmentRunner.js";
 
+import {
+  createDevelopmentWorker,
+  DEVELOPMENT_WORKER_VERSION
+} from "./developmentWorker.js";
+
+import {
+  createControlledDevelopmentExecutor
+} from "../execution/controlledDevelopmentExecutor.js";
+
 export const DEVELOPMENT_SYSTEM_VERSION = "1.0.0";
 
 export const DEVELOPMENT_SYSTEM_STATUS = Object.freeze({
@@ -41,7 +50,14 @@ export const DEVELOPMENT_SYSTEM_STATUS = Object.freeze({
 export async function createDevelopmentSystem(options = {}) {
   const {
     storage = null,
-    clock
+    clock,
+    workerExecutor = null,
+    workspaceAdapter = null,
+    reviewStore = null,
+    allowedPaths = null,
+    workerRunnerIds = [STUDIO_RUNNER_ID],
+    workerId = "lambo-city-development-worker",
+    maxTasksPerRun = 3
   } = options;
 
   const registry = createDevelopmentRegistry();
@@ -63,6 +79,52 @@ export async function createDevelopmentSystem(options = {}) {
   });
 
   const policy = getDevelopmentPolicy();
+
+  const hasExecutionConfiguration = (
+    workspaceAdapter !== null ||
+    reviewStore !== null ||
+    allowedPaths !== null
+  );
+
+  if (
+    hasExecutionConfiguration &&
+    (
+      !workspaceAdapter ||
+      !reviewStore ||
+      !Array.isArray(allowedPaths) ||
+      allowedPaths.length === 0
+    )
+  ) {
+    throw new Error(
+      "Execution configuration requires workspaceAdapter, reviewStore, and a non-empty allowedPaths array."
+    );
+  }
+
+  if (workerExecutor && hasExecutionConfiguration) {
+    throw new Error(
+      "Supply either workerExecutor or workspaceAdapter/reviewStore/allowedPaths, not both."
+    );
+  }
+
+  const executor = workerExecutor || (
+    hasExecutionConfiguration
+      ? createControlledDevelopmentExecutor({
+          developmentDirector: director,
+          workspaceAdapter,
+          reviewStore,
+          allowedPaths
+        })
+      : null
+  );
+
+  const worker = executor
+    ? createDevelopmentWorker({
+        executor,
+        runnerIds: workerRunnerIds,
+        workerId,
+        maxTasksPerRun
+      })
+    : null;
 
   registry.registerModule({
     id: "development-policy",
@@ -113,6 +175,22 @@ export async function createDevelopmentSystem(options = {}) {
       "Organizes development findings for LAMBO CITY Studio."
   });
 
+  registry.registerModule({
+    id: "development-worker",
+    name: "Development Worker",
+    type: MODULE_TYPES.SERVICE,
+    version: DEVELOPMENT_WORKER_VERSION,
+    path: "development/engine/developmentWorker.js",
+    enabled: worker !== null,
+    capabilities: [
+      "bounded-task-processing",
+      "specialist-runner-dispatch",
+      "one-shot-background-invocation"
+    ],
+    description:
+      "Runs a bounded batch through an explicitly supplied controlled executor."
+  });
+
   let status = DEVELOPMENT_SYSTEM_STATUS.READY;
 
   function getStatus() {
@@ -126,6 +204,21 @@ export async function createDevelopmentSystem(options = {}) {
       registry: registry.getSnapshot(),
       director: director.getSnapshot(),
       studioRunner: studioRunner.getProfile(),
+      executor: executor ? {
+        configured: true,
+        allowedPaths: typeof executor.getAllowedPaths === "function"
+          ? executor.getAllowedPaths()
+          : null
+      } : {
+        configured: false,
+        reason: "A controlled executor and its adapters have not been supplied."
+      },
+      worker: worker ? worker.getSnapshot() : {
+        version: DEVELOPMENT_WORKER_VERSION,
+        enabled: false,
+        mode: "one-shot",
+        reason: "A controlled executor has not been supplied."
+      },
       policy
     };
   }
@@ -133,13 +226,29 @@ export async function createDevelopmentSystem(options = {}) {
   function disable() {
     status = DEVELOPMENT_SYSTEM_STATUS.DISABLED;
     studioRunner.setEnabled(false);
+    worker?.setEnabled(false);
     return getStatus();
   }
 
   function enable() {
     status = DEVELOPMENT_SYSTEM_STATUS.READY;
     studioRunner.setEnabled(true);
+    worker?.setEnabled(true);
     return getStatus();
+  }
+
+  async function runWorkerOnce() {
+    if (status !== DEVELOPMENT_SYSTEM_STATUS.READY) {
+      throw new Error("The development system is disabled.");
+    }
+
+    if (!worker) {
+      throw new Error(
+        "The development worker is not configured. Supply a controlled executor."
+      );
+    }
+
+    return worker.runOnce();
   }
 
   function submitStudioFinding(finding) {
@@ -166,6 +275,9 @@ export async function createDevelopmentSystem(options = {}) {
     registry,
     director,
     studioRunner,
+    worker,
+    executor,
+    runWorkerOnce,
     getStatus,
     getSnapshot,
     enable,

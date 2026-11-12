@@ -1,0 +1,76 @@
+name: ALIVE Database Connectivity Check
+
+on:
+  push:
+    branches:
+      - feat/alive-development-worker-foundation
+    paths:
+      - ".github/workflows/alive-database-connectivity.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lambo-city-alive-database-check
+  cancel-in-progress: true
+
+jobs:
+  verify-database:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install PostgreSQL client dependency
+        run: npm install --prefix development/runtime --ignore-scripts --no-audit --no-fund
+
+      - name: Verify ALIVE database connection and schema
+        env:
+          DATABASE_URL: ${{ secrets.ALIVE_DATABASE_URL }}
+        run: |
+          node --input-type=module <<'NODE'
+          import pg from "./development/runtime/node_modules/pg/lib/index.js";
+
+          if (!process.env.DATABASE_URL) {
+            throw new Error("ALIVE_DATABASE_URL repository secret is missing.");
+          }
+
+          const pool = new pg.Pool({
+            connectionString: process.env.DATABASE_URL,
+            connectionTimeoutMillis: 10000,
+            max: 1,
+            ssl: { rejectUnauthorized: true }
+          });
+
+          try {
+            const result = await pool.query(`
+              SELECT
+                current_database() AS database_name,
+                current_user AS role_name,
+                to_regclass('public.lambo_alive_task_state') IS NOT NULL AS task_table_exists,
+                to_regclass('public.lambo_alive_reviews') IS NOT NULL AS review_table_exists
+            `);
+
+            const row = result.rows[0];
+            if (!row.task_table_exists || !row.review_table_exists) {
+              throw new Error("ALIVE database connected, but one or more required tables are missing.");
+            }
+
+            process.stdout.write(JSON.stringify({
+              connected: true,
+              database: row.database_name,
+              role: row.role_name,
+              taskTable: row.task_table_exists,
+              reviewTable: row.review_table_exists
+            }, null, 2) + "\n");
+          } finally {
+            await pool.end();
+          }
+          NODE

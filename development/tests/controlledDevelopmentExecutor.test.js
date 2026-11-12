@@ -27,7 +27,8 @@ async function createTestSetup(options = {}) {
     workspace: 0,
     prepare: 0,
     tests: 0,
-    review: 0
+    review: 0,
+    destroy: 0
   };
 
   const workspaceAdapter = {
@@ -58,6 +59,10 @@ async function createTestSetup(options = {}) {
         total: 5,
         failed: 0
       };
+    },
+
+    async destroyWorkspace() {
+      calls.destroy++;
     }
   };
 
@@ -212,6 +217,7 @@ test("Executor sends successful changes to owner review", async () => {
   assert.equal(calls.prepare, 1);
   assert.equal(calls.tests, 1);
   assert.equal(calls.review, 1);
+  assert.equal(calls.destroy, 1);
 
   assert.equal(reviews.length, 1);
   assert.equal(
@@ -228,6 +234,30 @@ test("Executor sends successful changes to owner review", async () => {
 
   assert.equal(updatedTask.status, TASK_STATUS.REVIEW);
   assert.equal(updatedTask.result.success, true);
+});
+
+test("Executor blocks empty proposals before testing or review", async () => {
+  const {
+    director,
+    task,
+    executor,
+    calls,
+    reviews
+  } = await createTestSetup({
+    changedFiles: []
+  });
+
+  const result = await executor.executeNextTask({
+    runnerId: "studio"
+  });
+
+  assert.equal(result.status, TASK_STATUS.BLOCKED);
+  assert.match(result.reason, /No changed files were produced/);
+  assert.equal(calls.tests, 0);
+  assert.equal(calls.review, 0);
+  assert.equal(calls.destroy, 1);
+  assert.equal(reviews.length, 0);
+  assert.equal(director.getTask(task.id).status, TASK_STATUS.BLOCKED);
 });
 
 test("Executor blocks a task when automated tests fail", async () => {
@@ -253,6 +283,7 @@ test("Executor blocks a task when automated tests fail", async () => {
   assert.equal(result.taskId, task.id);
   assert.equal(calls.tests, 1);
   assert.equal(calls.review, 0);
+  assert.equal(calls.destroy, 1);
   assert.equal(reviews.length, 0);
 
   const updatedTask = director.getTask(task.id);

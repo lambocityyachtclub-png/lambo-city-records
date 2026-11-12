@@ -207,11 +207,115 @@ test("Development System initializes all modules", async () => {
     DEVELOPMENT_SYSTEM_STATUS.READY
   );
 
-  assert.equal(snapshot.registry.totalModules, 3);
+  assert.equal(snapshot.registry.totalModules, 4);
   assert.equal(snapshot.registry.enabledModules, 3);
+  assert.equal(snapshot.worker.enabled, false);
+  assert.equal(snapshot.worker.mode, "one-shot");
   assert.equal(snapshot.studioRunner.id, "studio");
 });
 
+
+
+test("Development System exposes a configured one-shot worker", async () => {
+  const calls = [];
+  const system = await createDevelopmentSystem({
+    workerExecutor: {
+      async executeNextTask(input) {
+        calls.push(input);
+        return {
+          executed: true,
+          status: TASK_STATUS.REVIEW,
+          productionChangesMade: false
+        };
+      }
+    },
+    workerRunnerIds: ["studio", "world"],
+    workerId: "integration-test-worker",
+    maxTasksPerRun: 2
+  });
+
+  const snapshot = system.getSnapshot();
+
+  assert.equal(snapshot.worker.enabled, true);
+  assert.deepEqual(snapshot.worker.runnerIds, ["studio", "world"]);
+
+  const result = await system.runWorkerOnce();
+
+  assert.equal(result.processed, 2);
+  assert.equal(calls.length, 2);
+  assert.ok(calls.every(call =>
+    call.workerId === "integration-test-worker"
+  ));
+});
+
+test("Development System cannot run an unconfigured worker", async () => {
+  const system = await createDevelopmentSystem();
+
+  await assert.rejects(
+    () => system.runWorkerOnce(),
+    /worker is not configured/
+  );
+});
+
+
+test("Development System wires supplied adapters into the controlled executor", async () => {
+  const system = await createDevelopmentSystem({
+    workspaceAdapter: {
+      async createWorkspace() {
+        return { workspaceId: "isolated-system-test" };
+      },
+      async prepareChanges() {
+        return {
+          changedFiles: ["development/example.js"],
+          changes: { summary: "test proposal" }
+        };
+      },
+      async runTests() {
+        return { passed: true, total: 1, failed: 0 };
+      }
+    },
+    reviewStore: {
+      async createReview(review) {
+        return { id: "review-system-test", ...review };
+      }
+    },
+    allowedPaths: ["development"],
+    workerRunnerIds: ["studio"],
+    maxTasksPerRun: 1
+  });
+
+  assert.equal(system.getSnapshot().executor.configured, true);
+  assert.deepEqual(
+    system.getSnapshot().executor.allowedPaths,
+    ["development"]
+  );
+  assert.equal(system.getSnapshot().worker.enabled, true);
+
+  const task = await system.director.createTask({
+    title: "Exercise connected controlled executor",
+    description: "Verify bootstrap wiring.",
+    area: "studio_audio",
+    runner: "studio"
+  });
+
+  const result = await system.runWorkerOnce();
+
+  assert.equal(result.processed, 1);
+  assert.equal(result.results[0].taskId, task.id);
+  assert.equal(result.results[0].status, TASK_STATUS.REVIEW);
+  assert.equal(result.results[0].productionChangesMade, false);
+  assert.equal(system.director.getTask(task.id).status, TASK_STATUS.REVIEW);
+});
+
+test("Development System rejects incomplete execution adapter configuration", async () => {
+  await assert.rejects(
+    () => createDevelopmentSystem({
+      workspaceAdapter: {},
+      allowedPaths: ["development"]
+    }),
+    /requires workspaceAdapter, reviewStore, and a non-empty allowedPaths/
+  );
+});
 
 test("Development System can be disabled and re-enabled", async () => {
   const system = await createDevelopmentSystem();

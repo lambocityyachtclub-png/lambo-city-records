@@ -1,0 +1,10 @@
+{
+  "name": "lambo-city-alive-runtime",
+  "private": true,
+  "type": "module",
+  "description": "Server-side runtime dependencies for the LAMBO CITY ALIVE development worker.",
+  "dependencies": {
+    "@vercel/sandbox": "4.0.0",
+    "pg": "8.16.3"
+  }
+}
