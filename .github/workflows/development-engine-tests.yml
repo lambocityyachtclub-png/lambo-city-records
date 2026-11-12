@@ -129,7 +129,6 @@ jobs:
             OIDC_TOKEN="$(jq -er '.value' /tmp/alive-oidc-response.json)"
             TASK_HTTP_CODE="$(curl --silent --show-error -o /tmp/alive-task-response.json -w '%{http_code}' \
               -H "x-vercel-trusted-oidc-idp-token: $OIDC_TOKEN" \
-              -H "Authorization: Bearer $OIDC_TOKEN" \
               -H "Content-Type: application/json" \
               --data "$(jq -n --arg taskId "$PRIVATE_TASK_ID" '{taskId:$taskId}')" \
               "https://lambo-city-records-git-71b9dc-lambocityyachtclub-2911s-projects.vercel.app/api/alive/private-task")"
