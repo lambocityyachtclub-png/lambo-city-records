@@ -1,6 +1,6 @@
 # LAMBO CITY ALIVE — Private Queue Setup
 
-The owner workspace is deliberately fail-closed. It will not send owner direction to the public `lambo-city-records` repository.
+The owner workspace is deliberately fail-closed. It will not send owner direction to the public `lambo-city-records` repository. The integrated non-production ALIVE preview is served at `https://alive-preview.lambocityrecords.com` and is mapped to `integration/lc-alive-agentic-worker-2026-11-10`. The GitHub Actions worker retrieves private tasks from `https://alive-preview.lambocityrecords.com/api/alive/private-task`; production remains unchanged.
 
 ## One-time repository setup
 
