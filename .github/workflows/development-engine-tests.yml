@@ -118,16 +118,26 @@ jobs:
           TASK_FILE="${task_files[0]}"
           if node -e 'const p=JSON.parse(require("node:fs").readFileSync(process.argv[1],"utf8")); process.exit(p && p.privateQueue ? 0 : 1)' "$TASK_FILE"; then
             PRIVATE_TASK_ID="$(node -e 'const p=JSON.parse(require("node:fs").readFileSync(process.argv[1],"utf8")); process.stdout.write(String(p.id || ""))' "$TASK_FILE")"
-            OIDC_RESPONSE="$(curl --fail --silent --show-error \
+            OIDC_HTTP_CODE="$(curl --silent --show-error -o /tmp/alive-oidc-response.json -w '%{http_code}' \
               -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
               "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=https%3A%2F%2Falive-preview.lambocityrecords.com%2Fapi%2Falive%2Fprivate-task")"
-            OIDC_TOKEN="$(printf '%s' "$OIDC_RESPONSE" | jq -er '.value')"
-            TASK_RESPONSE="$(curl --fail --silent --show-error \
+            if [[ "$OIDC_HTTP_CODE" != "200" ]]; then
+              echo "GitHub OIDC token request failed with HTTP $OIDC_HTTP_CODE." >&2
+              cat /tmp/alive-oidc-response.json >&2
+              exit 1
+            fi
+            OIDC_TOKEN="$(jq -er '.value' /tmp/alive-oidc-response.json)"
+            TASK_HTTP_CODE="$(curl --silent --show-error -o /tmp/alive-task-response.json -w '%{http_code}' \
               -H "Authorization: Bearer $OIDC_TOKEN" \
               -H "Content-Type: application/json" \
               --data "$(jq -n --arg taskId "$PRIVATE_TASK_ID" '{taskId:$taskId}')" \
               "https://alive-preview.lambocityrecords.com/api/alive/private-task")"
-            printf '%s' "$TASK_RESPONSE" | jq -e '.task' > /tmp/alive-private-task.json
+            if [[ "$TASK_HTTP_CODE" != "200" ]]; then
+              echo "ALIVE private-task endpoint failed with HTTP $TASK_HTTP_CODE." >&2
+              cat /tmp/alive-task-response.json >&2
+              exit 1
+            fi
+            jq -e '.task' /tmp/alive-task-response.json > /tmp/alive-private-task.json
             TASK_FILE="/tmp/alive-private-task.json"
           fi
           node --experimental-default-type=module scripts/prepare-alive-worker-task.mjs "$TASK_FILE" /tmp/alive-worker-prompt.md /tmp/alive-worker-metadata.json
