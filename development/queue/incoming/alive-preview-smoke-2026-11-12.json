@@ -1,0 +1,9 @@
+{
+  "id": "alive-preview-smoke-2026-11-12",
+  "privateQueue": {
+    "owner": "lambocityyachtclub-png",
+    "repo": "lambo-city-alive-control",
+    "branch": "integration/lc-alive-agentic-worker-2026-11-10",
+    "path": "development/queue/incoming/alive-preview-smoke-2026-11-12.json"
+  }
+}
