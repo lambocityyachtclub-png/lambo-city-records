@@ -154,7 +154,11 @@ export function createIsolatedWorkspaceAdapter(options = {}) {
   const {
     projectRoot,
     allowedPaths,
-    workspaceRoot = os.tmpdir()
+    workspaceRoot = os.tmpdir(),
+    proposalProvider = null,
+    testRunner = null,
+    maxProposalFiles = 40,
+    maxFileBytes = 512 * 1024
   } = options;
 
   if (
@@ -174,6 +178,30 @@ export function createIsolatedWorkspaceAdapter(options = {}) {
   const normalizedPaths = [
     ...new Set(allowedPaths.map(validateRelativePath))
   ];
+
+  if (!Number.isInteger(maxProposalFiles) || maxProposalFiles < 1 || maxProposalFiles > 200) {
+    throw new Error("maxProposalFiles must be between 1 and 200.");
+  }
+
+  if (!Number.isInteger(maxFileBytes) || maxFileBytes < 1 || maxFileBytes > 2 * 1024 * 1024) {
+    throw new Error("maxFileBytes must be between 1 byte and 2 MiB.");
+  }
+
+  function getProposalMethod() {
+    if (typeof proposalProvider === "function") return proposalProvider;
+    if (proposalProvider && typeof proposalProvider.proposeChanges === "function") {
+      return proposalProvider.proposeChanges.bind(proposalProvider);
+    }
+    return null;
+  }
+
+  function getTestMethod() {
+    if (typeof testRunner === "function") return testRunner;
+    if (testRunner && typeof testRunner.runTests === "function") {
+      return testRunner.runTests.bind(testRunner);
+    }
+    return null;
+  }
 
   const workspaces = new Map();
 
@@ -425,6 +453,127 @@ export function createIsolatedWorkspaceAdapter(options = {}) {
     };
   }
 
+  /**
+   * Ask an explicitly injected proposal provider for file contents,
+   * then apply those contents only inside this isolated workspace.
+   *
+   * Provider contract:
+   * proposeChanges({ task, workspace, readFile }) => {
+   *   files: [{ path, content }], summary?: string
+   * }
+   */
+  async function prepareChanges(input = {}) {
+    const workspace = getWorkspace(input.workspaceId);
+    const propose = getProposalMethod();
+
+    if (!propose) {
+      throw new Error(
+        "No trusted proposalProvider is configured for isolated code preparation."
+      );
+    }
+
+    const proposal = await propose({
+      task: input.task,
+      workspace: {
+        workspaceId: workspace.workspaceId,
+        taskId: workspace.taskId,
+        allowedPaths: [...normalizedPaths]
+      },
+      readFile: filePath => readFile({
+        workspaceId: workspace.workspaceId,
+        filePath
+      })
+    });
+
+    if (!proposal || !Array.isArray(proposal.files)) {
+      throw new Error("Proposal provider must return a files array.");
+    }
+
+    if (proposal.files.length > maxProposalFiles) {
+      throw new Error(
+        `Proposal exceeds the ${maxProposalFiles}-file limit.`
+      );
+    }
+
+    const seen = new Set();
+
+    for (const file of proposal.files) {
+      if (!file || typeof file !== "object") {
+        throw new Error("Every proposed file must be an object.");
+      }
+
+      const safePath = validateRelativePath(file.path);
+      if (seen.has(safePath)) {
+        throw new Error(`Duplicate proposed file path: ${safePath}`);
+      }
+      seen.add(safePath);
+
+      if (typeof file.content !== "string") {
+        throw new Error(`Proposed file content must be text: ${safePath}`);
+      }
+
+      if (Buffer.byteLength(file.content, "utf8") > maxFileBytes) {
+        throw new Error(`Proposed file exceeds the per-file size limit: ${safePath}`);
+      }
+
+      await writeFile({
+        workspaceId: workspace.workspaceId,
+        filePath: safePath,
+        content: file.content
+      });
+    }
+
+    const changedFiles = await listChangedFiles({
+      workspaceId: workspace.workspaceId
+    });
+
+    return {
+      changedFiles,
+      changes: {
+        summary: typeof proposal.summary === "string"
+          ? proposal.summary.slice(0, 2000)
+          : "Proposed changes prepared in isolated workspace.",
+        proposedFileCount: proposal.files.length
+      }
+    };
+  }
+
+  /**
+   * Delegate tests to an explicitly injected trusted test adapter.
+   * This module deliberately does not spawn processes or execute code.
+   */
+  async function runTests(input = {}) {
+    const workspace = getWorkspace(input.workspaceId);
+    const run = getTestMethod();
+
+    if (!run) {
+      throw new Error(
+        "No trusted sandboxed testRunner is configured; generated code will not be executed."
+      );
+    }
+
+    const changedFiles = await listChangedFiles({
+      workspaceId: workspace.workspaceId
+    });
+
+    const result = await run({
+      task: input.task,
+      workspace: await getWorkspaceInfo(workspace.workspaceId),
+      changedFiles
+    });
+
+    if (!result || typeof result.passed !== "boolean") {
+      throw new Error("Test runner must return a boolean passed field.");
+    }
+
+    return {
+      ...result,
+      passed: result.passed === true,
+      isolatedWorkspace: true,
+      executionAdapter: "injected-test-runner"
+    };
+  }
+
   async function listChangedFiles(input = {}) {
     const workspace = getWorkspace(input.workspaceId);
     const current = new Map();
@@ -496,6 +645,8 @@ export function createIsolatedWorkspaceAdapter(options = {}) {
     createWorkspace,
     readFile,
     writeFile,
+    prepareChanges,
+    runTests,
     listChangedFiles,
     getWorkspaceInfo,
     destroyWorkspace,
