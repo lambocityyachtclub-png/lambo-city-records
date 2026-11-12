@@ -126,7 +126,7 @@ jobs:
               -H "Authorization: Bearer $OIDC_TOKEN" \
               -H "Content-Type: application/json" \
               --data "$(jq -n --arg taskId "$PRIVATE_TASK_ID" '{taskId:$taskId}')" \
-              "https://lambocityrecords.com/api/alive/private-task")"
+              "https://alive-preview.lambocityrecords.com/api/alive/private-task")"
             printf '%s' "$TASK_RESPONSE" | jq -e '.task' > /tmp/alive-private-task.json
             TASK_FILE="/tmp/alive-private-task.json"
           fi
