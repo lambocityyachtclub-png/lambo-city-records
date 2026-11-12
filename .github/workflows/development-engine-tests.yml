@@ -143,7 +143,7 @@ jobs:
         if: steps.task.outputs.has_task == 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: alive-worker-input-${{ needs.resolve-task.outputs.task_id }}
+          name: alive-worker-input-${{ steps.task.outputs.task_id }}
           path: |
             /tmp/alive-worker-prompt.md
             /tmp/alive-worker-metadata.json
