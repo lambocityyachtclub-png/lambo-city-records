@@ -1,0 +1,382 @@
+{
+  "schemaVersion": 1,
+  "system": "lambo-city-blueprint-reconciliation",
+  "status": "reconciliation-draft",
+  "policy": {
+    "sourceOfTruth": "Owner-authored direction remains authoritative; this register records evidence and does not rewrite source documents.",
+    "noAutomaticPromotion": true,
+    "noTaskCreation": true,
+    "ownerApprovalRequiredForBlueprintAuthority": true
+  },
+  "records": [
+    {
+      "id": "master-north-star-preserve-existing",
+      "scope": "master",
+      "departmentId": "master",
+      "title": "Preserve and finish the existing LAMBO CITY world",
+      "implementationStatus": "planned",
+      "verificationStatus": "source-reviewed",
+      "confidence": "high",
+      "statement": "Inspect existing systems first, preserve working landmarks and features, and prioritize connecting and finishing the established world over rebuilding it.",
+      "interpretation": "This is governing project direction, not a claim that every destination is complete.",
+      "sources": [
+        {
+          "path": "LAMBO_CITY_NORTHSTAR.md",
+          "locator": "section: THE CURRENT WORLD IS THE FOUNDATION",
+          "role": "owner-direction"
+        },
+        {
+          "path": "LAMBO_CITY_NORTHSTAR.md",
+          "locator": "section: THE MOST IMPORTANT RULE",
+          "role": "owner-direction"
+        }
+      ],
+      "dependencies": [],
+      "openQuestions": []
+    },
+    {
+      "id": "master-technical-platform",
+      "scope": "master",
+      "departmentId": "master",
+      "title": "Preserve the existing Three.js and modular JavaScript platform",
+      "implementationStatus": "planned",
+      "verificationStatus": "source-reviewed",
+      "confidence": "high",
+      "statement": "The current world uses Three.js and modular JavaScript; avoid introducing a new frontend framework, bundler, or architecture without approval.",
+      "interpretation": "This is a platform constraint for world development. Separate development tooling must not force a rewrite of the visitor-facing game.",
+      "sources": [
+        {
+          "path": "LAMBO_CITY_NORTHSTAR.md",
+          "locator": "section: TECHNOLOGY",
+          "role": "owner-direction"
+        },
+        {
+          "path": "LAMBO_CITY_DAW_ARCHITECTURE.md",
+          "locator": "section: CORE ARCHITECTURE",
+          "role": "architecture-direction"
+        }
+      ],
+      "dependencies": [],
+      "openQuestions": []
+    },
+    {
+      "id": "world-system-registry-present",
+      "scope": "department",
+      "departmentId": "world-districts",
+      "title": "Modular World System registry and district lifecycle",
+      "implementationStatus": "partial",
+      "verificationStatus": "source-reviewed",
+      "confidence": "high",
+      "statement": "A WorldSystem source module provides district registration, validation, explicit building, proxy lifecycle, connections, and navigation integration.",
+      "interpretation": "The module is present in source. This record does not certify every district, map connection, collision surface, or live player journey.",
+      "sources": [
+        {
+          "path": "worldSystem.js",
+          "locator": "class: WorldSystem; methods: registerDistrict, buildDistrict, registerConnection",
+          "role": "implementation"
+        },
+        {
+          "path": "tests/world-system-node-tests.mjs",
+          "locator": "file:test-suite",
+          "role": "automated-test"
+        },
+        {
+          "path": "WORLD_SYSTEM_GUIDE.md",
+          "locator": "document:world-system-guide",
+          "role": "architecture-direction"
+        }
+      ],
+      "dependencies": [
+        "performance-quality"
+      ],
+      "openQuestions": [
+        "Confirm the integrated world on supported physical devices before marking the player experience complete."
+      ]
+    },
+    {
+      "id": "conference-center-foundation",
+      "scope": "department",
+      "departmentId": "convention-center",
+      "title": "Conference Center district foundation",
+      "implementationStatus": "partial",
+      "verificationStatus": "runtime-not-verified",
+      "confidence": "high",
+      "statement": "A data-driven Conference Center district module and a completion blueprint describe the district, roads, pedestrian paths, parcels, and remaining vehicle/cinematic work.",
+      "interpretation": "The district definition exists, but its own status is blueprint-validation and the completion document explicitly lists live driving integration and final cinematic polish as outstanding.",
+      "sources": [
+        {
+          "path": "worldDistricts/conferenceCenter.js",
+          "locator": "constant: CONFERENCE_CENTER_DISTRICT; status: blueprint-validation",
+          "role": "implementation"
+        },
+        {
+          "path": "CONFERENCE_CENTER_COMPLETION_BLUEPRINT.md",
+          "locator": "section: Work still required",
+          "role": "owner-direction"
+        },
+        {
+          "path": "LAMBO_CITY_MASTER_BLUEPRINT.md",
+          "locator": "section: Provisional spatial planning envelope",
+          "role": "architecture-direction"
+        }
+      ],
+      "dependencies": [
+        "world-districts",
+        "vehicles-yachts",
+        "performance-quality"
+      ],
+      "openQuestions": [
+        "Validate the integrated district geometry, collision, live driving and iPad performance."
+      ]
+    },
+    {
+      "id": "water-system-source-present",
+      "scope": "department",
+      "departmentId": "water-environment",
+      "title": "Ocean surface and animated water foundation",
+      "implementationStatus": "partial",
+      "verificationStatus": "source-reviewed",
+      "confidence": "high",
+      "statement": "The repository contains a Three.js ocean module with a water surface, shimmer and reflection layers, animated vertex movement, and a frame-rate limiter.",
+      "interpretation": "The source exists, but this inspection does not verify shoreline connections, water interaction, full environmental behavior, or real-device performance.",
+      "sources": [
+        {
+          "path": "water.js",
+          "locator": "module: Ocean System v2; exports init and update",
+          "role": "implementation"
+        }
+      ],
+      "dependencies": [
+        "world-districts",
+        "performance-quality"
+      ],
+      "openQuestions": [
+        "Inspect how water is registered in the active scene and validate its boundaries and performance on iPad."
+      ]
+    },
+    {
+      "id": "studio-shared-production-core",
+      "scope": "department",
+      "departmentId": "studio-music",
+      "title": "Shared Studio production and project architecture",
+      "implementationStatus": "partial",
+      "verificationStatus": "source-reviewed",
+      "confidence": "high",
+      "statement": "The Studio direction specifies one shared production engine and song/session format for standalone Studio and Floor 2, and the repository contains recording, project package, DAW workspace, multitrack and export modules.",
+      "interpretation": "The architecture and modules are present. End-to-end recording, save/reopen, editing, mix/master, export and cross-entry-point parity still require workflow validation.",
+      "sources": [
+        {
+          "path": "LAMBO_CITY_DAW_ARCHITECTURE.md",
+          "locator": "section: CORE ARCHITECTURE",
+          "role": "architecture-direction"
+        },
+        {
+          "path": "FLOOR2_STUDIO_EXPERIENCE.md",
+          "locator": "section: Engineering constraints",
+          "role": "owner-direction"
+        },
+        {
+          "path": "studioProjectPackage.js",
+          "locator": "file:studio-project-package",
+          "role": "implementation"
+        },
+        {
+          "path": "studioRecordingEngine.js",
+          "locator": "file:studio-recording-engine",
+          "role": "implementation"
+        },
+        {
+          "path": "studioDAWWorkspace.js",
+          "locator": "file:studio-daw-workspace",
+          "role": "implementation"
+        }
+      ],
+      "dependencies": [
+        "performance-quality",
+        "security-release"
+      ],
+      "openQuestions": [
+        "Verify the same project can be used from standalone Studio and Floor 2 without creating duplicate production state."
+      ]
+    },
+    {
+      "id": "studio-pitch-correction",
+      "scope": "department",
+      "departmentId": "studio-music",
+      "title": "Vocal pitch-correction processor",
+      "implementationStatus": "partial",
+      "verificationStatus": "runtime-not-verified",
+      "confidence": "high",
+      "statement": "The repository contains a shared pitch-correction AudioWorklet node factory and a dedicated processor module.",
+      "interpretation": "The processor source is present. This is not proof that the control is correctly connected through every vocal recording, playback and export path, or that it has passed physical iPad Safari testing.",
+      "sources": [
+        {
+          "path": "studioPitchCorrection.js",
+          "locator": "export: createStudioPitchCorrectionNode",
+          "role": "implementation"
+        },
+        {
+          "path": "studioPitchCorrectionWorklet.js",
+          "locator": "file:studio-pitch-correction-worklet",
+          "role": "implementation"
+        },
+        {
+          "path": "STUDIO_EDIT_ROADMAP.md",
+          "locator": "topic:pitch-correction",
+          "role": "architecture-direction"
+        }
+      ],
+      "dependencies": [
+        "studio-music",
+        "performance-quality"
+      ],
+      "openQuestions": [
+        "Complete live vocal, playback, offline render and export checks on supported browsers."
+      ]
+    },
+    {
+      "id": "hero-stage-performance",
+      "scope": "department",
+      "departmentId": "jumbotron-events",
+      "title": "HERO Grand Stage performance experience",
+      "implementationStatus": "planned",
+      "verificationStatus": "not-started",
+      "confidence": "high",
+      "statement": "The North Star defines a future HERO performance as a major event using the existing Grand Stage, music, lighting, jumbotron/video, movement and audience systems.",
+      "interpretation": "This is future experience direction. The existing stage video viewer is explicitly documented as an HQ-only experience and must not be mistaken for a completed Grand Stage performance system.",
+      "sources": [
+        {
+          "path": "LAMBO_CITY_NORTHSTAR.md",
+          "locator": "section: THE GRAND STAGE",
+          "role": "owner-direction"
+        },
+        {
+          "path": "stageVideo.js",
+          "locator": "module-comment: official performance viewer is HQ-only",
+          "role": "implementation"
+        }
+      ],
+      "dependencies": [
+        "people-experiences",
+        "lambo-city-radio",
+        "performance-quality"
+      ],
+      "openQuestions": [
+        "The actual HERO stage-performance audio asset must be supplied before the performance can be implemented or validated."
+      ]
+    },
+    {
+      "id": "commerce-no-live-payments",
+      "scope": "department",
+      "departmentId": "commerce",
+      "title": "Commerce is planning-only; live selling is not authorized",
+      "implementationStatus": "planned",
+      "verificationStatus": "source-reviewed",
+      "confidence": "high",
+      "statement": "The commerce plan approves strategic planning for music, merchandise and digital products, while explicitly withholding authorization for live checkout, payment credentials and real payments.",
+      "interpretation": "Do not build or activate live payments from this planning document. Mock catalog/prototype work is a separate later phase.",
+      "sources": [
+        {
+          "path": "LAMBO_CITY_COMMERCE_PLAN.md",
+          "locator": "section: Status and Phased roadmap",
+          "role": "owner-direction"
+        }
+      ],
+      "dependencies": [
+        "security-release"
+      ],
+      "openQuestions": [
+        "Payment provider, fees, tax, refunds, fulfillment and launch readiness require separate review and explicit approval."
+      ]
+    },
+    {
+      "id": "digital-real-estate-no-sales",
+      "scope": "department",
+      "departmentId": "digital-real-estate",
+      "title": "Digital real estate is a future concept, not a live ownership product",
+      "implementationStatus": "future",
+      "verificationStatus": "owner-decision-required",
+      "confidence": "high",
+      "statement": "The plan describes possible homes, apartments, studios, offices and venues, but requires the exact customer rights and legal model to be defined before any offer.",
+      "interpretation": "No property sale, ownership promise, transfer, rental or presale is authorized by this planning document.",
+      "sources": [
+        {
+          "path": "LAMBO_CITY_DIGITAL_REAL_ESTATE_PLAN.md",
+          "locator": "section: Ownership Model Must Be Decided Before Implementation",
+          "role": "owner-direction"
+        }
+      ],
+      "dependencies": [
+        "world-districts",
+        "security-release"
+      ],
+      "openQuestions": [
+        "Define customer rights, legal structure, privacy, support and operating model before implementation of transactions."
+      ]
+    },
+    {
+      "id": "alive-autonomous-development",
+      "scope": "master",
+      "departmentId": "master",
+      "title": "ALIVE as a protected, expandable development system",
+      "implementationStatus": "partial",
+      "verificationStatus": "source-reviewed",
+      "confidence": "high",
+      "statement": "The ALIVE direction calls for a central director, specialist runners, discovery, isolated workspaces, testing, progress history and owner-controlled release boundaries.",
+      "interpretation": "The current blueprint discovery is only an inventory foundation. It does not establish full semantic understanding, independent operation, safe autonomous implementation or vendor-independent runtime.",
+      "sources": [
+        {
+          "path": "LAMBO_CITY_AUTONOMOUS_DEVELOPMENT_ENGINE.md",
+          "locator": "sections: CORE OPERATING MODEL and PROTECTED DEVELOPMENT ENVIRONMENT",
+          "role": "owner-direction"
+        },
+        {
+          "path": "development/blueprints/discoverBlueprints.mjs",
+          "locator": "export: discoverBlueprints",
+          "role": "implementation"
+        },
+        {
+          "path": "development/blueprints/departmentCatalog.json",
+          "locator": "root: departments",
+          "role": "implementation"
+        }
+      ],
+      "dependencies": [
+        "security-release",
+        "performance-quality"
+      ],
+      "openQuestions": [
+        "Reconcile the independent ALIVE core design with optional hosted execution adapters before enabling background workers."
+      ]
+    },
+    {
+      "id": "scope-game-backend-vs-alive",
+      "scope": "master",
+      "departmentId": "master",
+      "title": "Separate visitor-facing game scope from ALIVE development infrastructure",
+      "implementationStatus": "conflict",
+      "verificationStatus": "owner-decision-required",
+      "confidence": "medium",
+      "statement": "The World Plan excludes accounts, backend, multiplayer and online persistence from the current single-player game phase, while the ALIVE plan describes a separate hosted development environment for background work.",
+      "interpretation": "These may be compatible because ALIVE infrastructure is separate from the visitor-facing game. The boundary must be stated explicitly so the game is not made dependent on ALIVE or its hosted services.",
+      "sources": [
+        {
+          "path": "LAMBO_CITY_WORLD_PLAN.md",
+          "locator": "sections: Architecture principles and Non-goals for the current phase",
+          "role": "owner-direction"
+        },
+        {
+          "path": "LAMBO_CITY_AUTONOMOUS_DEVELOPMENT_ENGINE.md",
+          "locator": "section: Continuous Background Operation",
+          "role": "owner-direction"
+        }
+      ],
+      "dependencies": [
+        "security-release"
+      ],
+      "openQuestions": [
+        "Confirm in the Master Blueprint that ALIVE's development infrastructure remains independent and optional to the live game."
+      ]
+    }
+  ]
+}
