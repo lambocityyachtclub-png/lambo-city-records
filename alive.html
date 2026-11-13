@@ -79,9 +79,10 @@
           <label for="vision">Your vision</label>
           <textarea id="vision" name="vision" rows="8" maxlength="8000" placeholder="Describe what you want LAMBO CITY to become, what should improve, or what you want built next..." required></textarea>
           <div class="form-footer">
-            <span class="muted">Up to 8,000 characters</span>
+            <span class="muted">Up to 8,000 characters · saved locally first</span>
             <button type="submit" class="primary" id="submit-vision">Save direction locally</button>
           </div>
+          <button type="button" class="secondary hidden" id="submit-hosted-vision">Submit saved direction to hosted queue</button>
         </form>
         <p id="vision-message" class="message" role="status"></p>
       </section>
