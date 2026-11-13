@@ -87,3 +87,15 @@ test("writer creates a machine-readable discovery snapshot and readable report",
     await fs.rm(rootDir, { recursive: true, force: true });
   }
 });
+
+test("discovery scans the actual repository and identifies the existing master sources", async () => {
+  const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
+  const result = await discoverBlueprints({ rootDir, catalog });
+  assert.ok(result.summary.filesScanned > 100);
+  assert.equal(result.departments.length, 10);
+  assert.ok(result.master.discoveredSourceFiles.includes("LAMBO_CITY_NORTHSTAR.md"));
+  assert.ok(result.master.discoveredSourceFiles.includes("LAMBO_CITY_MASTER_BLUEPRINT.md"));
+  assert.ok(result.departments.every(item => item.status === "discovery-draft"));
+  assert.ok(result.departments.some(item => item.id === "lambo-city-radio"));
+  assert.ok(result.departments.some(item => item.id === "jumbotron-events"));
+});
