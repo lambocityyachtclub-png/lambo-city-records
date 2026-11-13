@@ -178,8 +178,8 @@ export default {
   station: null,
   rings: [],
   hitHandler: null,
-  async init(scene) {
-    THREE = await import("https://unpkg.com/three@0.160.0/build/three.module.js");
+  async init(scene, context) {
+    THREE = context?.THREE || await import("https://unpkg.com/three@0.160.0/build/three.module.js");
     const studio = scene?.getObjectByName("recordsHQFloor2Studio");
     const station = studio?.getObjectByName("floor2DrumStation");
     if (!station) {
