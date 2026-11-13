@@ -21,8 +21,7 @@ jobs:
         run: node scripts/test-camera-baseline.mjs
       - name: Verify world startup wiring
         run: node scripts/test-world-startup-wiring.mjs
-      - name: Syntax-check engine and application entry point
-        run: |
-          node --check engine.js
-          node --check main.js
-          node --check camera.js
+      - name: Check world startup wiring regressions
+        run: node scripts/test-world-startup-wiring.mjs
+      - name: Syntax-check every JavaScript module
+        run: node scripts/check-all-js-syntax.mjs
