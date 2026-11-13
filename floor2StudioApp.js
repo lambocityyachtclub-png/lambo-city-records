@@ -5,7 +5,7 @@ import StudioMPCSampler from "./studioMPCSampler.js";
 import StudioMPCLibrary from "./studioMPCLibrary.js";
 import StudioRecordingEngine from "./studioRecordingEngine.js";
 import StudioVocalEffects from "./studioVocalEffects.js";
-import { createStudioPitchCorrectionNode } from "./studioPitchCorrection.js";
+import { createStudioPitchCorrectionNode, normalizePitchCorrectionSettings } from "./studioPitchCorrection.js";
 import { createRecordingStartCoordinator } from "./studioRecordingStartCoordinator.js";
 import {
   createSongProject,
@@ -1135,8 +1135,15 @@ if (!this.audio || this.audio.state !== "running") {
       this.vocalEffects.setDelayMix(this.vocalEffectSettings.delay);
       this.vocalEffects.setReverbMix(this.vocalEffectSettings.reverb);
 
-      if (this.pitchCorrectionSettings?.enabled) {
-        pitchCorrectionNode = await createStudioPitchCorrectionNode(this.audio, this.pitchCorrectionSettings);
+      const vocalTracks = StudioMultitrackWorkspace.tracks.filter(track =>
+        track.inputSource === "mic" && /vocal/i.test(track.name)
+      );
+      const activeVocalTrack = vocalTracks.find(track => track.id === StudioMultitrackWorkspace.activePitchTrackId) || vocalTracks[0];
+      const pitchSettings = normalizePitchCorrectionSettings(
+        activeVocalTrack?.effects?.pitchCorrection || this.pitchCorrectionSettings || {}
+      );
+      if (pitchSettings.enabled) {
+        pitchCorrectionNode = await createStudioPitchCorrectionNode(this.audio, pitchSettings);
         if (!coordinator.isCurrent(startToken)) return;
       }
 
