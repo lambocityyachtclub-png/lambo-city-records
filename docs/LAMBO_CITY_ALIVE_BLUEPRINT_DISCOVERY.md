@@ -78,6 +78,14 @@ The first pass is intentionally deterministic. It uses keywords and file paths a
 - Evidence lines are bounded and common credential-like assignments and token patterns are redacted.
 - The scanner does not execute repository code.
 
+## Runtime reachability review
+
+The static dependency graph starts from the repository's visitor and standalone entrypoints when present: `index.html`, `main.js`, `studio.html`, and `alive.html`. It follows resolved literal local edges and reports which candidate department files are reachable through those edges.
+
+A file not listed as reachable is **not** automatically unused or broken. It may be loaded by a computed path, runtime registry, script injection, worker, CDN integration, or another dynamic mechanism. The report therefore uses the wording "not statically reachable" and never treats absence from this graph as permission to remove a file.
+
+The CI workflow publishes the generated JSON and Markdown report as a short-lived seven-day artifact so the actual findings can be reviewed without committing generated inventories or changing the application.
+
 ## Static dependency map
 
 The discovery report also includes a conservative static dependency map for literal relative/root-relative JavaScript imports, dynamic imports, CommonJS requires, HTML `src`/`href` references, and CSS `url()`/`@import` references.
