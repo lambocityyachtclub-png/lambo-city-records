@@ -28,7 +28,6 @@ The following are source pointers for inspection and traceability. They are not 
 - `development/engine/developmentDirector.js`
 - `development/engine/developmentRegistry.js`
 - `development/engine/moduleLifecycleRegistry.js`
-- `development/engine/developmentWorker.js`
 - `development/engine/specialistWorkerRoster.js`
 - `development/engine/visionIntakePlanner.js`
 - `development/runners/studio/studioDevelopmentRunner.js`
