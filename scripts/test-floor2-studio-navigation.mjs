@@ -51,7 +51,10 @@ assert.match(elevator, /function startTravel\(player = getPlayer\(\)\)/,
   "Elevator travel must accept the player supplied by the first ready update.");
 assert.match(elevator, /if \(travelStartPending\) \{\s*travelStartPending = false;\s*startTravel\(player\);\s*\}/,
   "A queued phone trip must resume automatically when the player becomes ready.");
-assert.match(elevator, /isBusy: \(\) => traveling \|\| Boolean\(pendingLandingPlayer\) \|\| travelStartPending/,
+assert.match(elevator, /isBusy: \(\) =>[\s\S]*?travelStartPending[\s\S]*?window\.__lamboCityFloor2SessionMode === "arrival"/, "Phone requests must queue while travel, landing, or Floor 2 arrival is active.");
+assert.match(phoneNavigation, /queuedDestination = destination/, "Busy phone requests must retain the requested destination.");
+assert.match(phoneNavigation, /navigate\.flush = \(\) =>/, "Queued phone requests must expose a safe idle-time flush.");
+assert.match(elevator, /window\.__lamboCityNavigateToFloor\?\.flush\?\.\(\)/, "The elevator must resume queued phone requests when it becomes idle.");
   "A pending trip must block duplicate elevator requests.");
 assert.match(elevator, /window\.__lamboCityPrepareFloor\?\.\(selectedFloor\)/, "Elevator travel must wait for the destination loader");
 assert.match(elevator, /window\.__lamboCityBeginFloor2Session\?\.\(arrivedPlayer\)/, "Floor 2 arrival must open the Studio session");
