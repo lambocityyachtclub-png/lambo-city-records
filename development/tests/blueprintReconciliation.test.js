@@ -108,7 +108,7 @@ test("writer verifies every referenced source path and emits JSON plus Markdown"
     assert.match(report, /Blueprint Reconciliation Draft/);
     await fs.rm(path.join(rootDir, register.records[0].sources[0].path));
     const second = await writeBlueprintReconciliation({ rootDir });
-    assert.equal(second.result.summary.missingSources, 1);
+    assert.equal(second.result.summary.missingSources, register.records.filter(record => record.sources.some(source => source.path === register.records[0].sources[0].path)).length);
   } finally {
     await fs.rm(rootDir, { recursive: true, force: true });
   }
