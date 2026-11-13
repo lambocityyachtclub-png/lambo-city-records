@@ -79,11 +79,28 @@ export function buildStaticDependencyGraph(files = []) {
   }
 
   const incoming = new Map();
+  const outgoing = new Map();
   for (const edge of edges) {
     if (!edge.to) continue;
     const callers = incoming.get(edge.to) || [];
     callers.push(edge.from);
     incoming.set(edge.to, callers);
+    const targets = outgoing.get(edge.from) || [];
+    targets.push(edge.to);
+    outgoing.set(edge.from, targets);
+  }
+
+  const rootCandidates = ["index.html", "main.js", "studio.html", "alive.html"];
+  const rootEntrypoints = rootCandidates.filter(filePath => knownPaths.has(filePath));
+  const reachable = new Set(rootEntrypoints);
+  const queue = [...rootEntrypoints];
+  while (queue.length) {
+    const current = queue.shift();
+    for (const target of outgoing.get(current) || []) {
+      if (reachable.has(target)) continue;
+      reachable.add(target);
+      queue.push(target);
+    }
   }
 
   return {
@@ -98,8 +115,12 @@ export function buildStaticDependencyGraph(files = []) {
       resolvedEdges: edges.filter(edge => edge.status === "resolved").length,
       unresolvedLocalEdges: edges.filter(edge => edge.status === "unresolved-local").length,
       externalReferences: externalReferences.length,
-      filesWithCallers: incoming.size
+      filesWithCallers: incoming.size,
+      rootEntrypoints: rootEntrypoints.length,
+      staticallyReachableFiles: reachable.size
     },
+    rootEntrypoints,
+    reachableFiles: [...reachable].sort(),
     edges,
     externalReferences,
     incoming: [...incoming.entries()]
