@@ -14,7 +14,7 @@ const MAX_FILE_BYTES = 1024 * 1024;
 const MAX_FILES = 20000;
 const MARKER_PATTERN = /\b(TODO|FIXME|TBD|WIP|INCOMPLETE|PLANNED|FUTURE|DEPRECATED)\b/gi;
 const HEADING_PATTERN = /^\s{0,3}(#{1,6})\s+(.+?)\s*#*\s*$/;
-const SECRET_PATH_PATTERN = /(^|\/)\.env(?:\.|$)|(^|\/)(?:secrets?|credentials?)(?:\/|$)|private[-_]?queue|token[-_]?store/i;
+const SECRET_PATH_PATTERN = /(^|\/)\.env(?:\.|$)|(^|\/)(?:secrets?|credentials?)(?:\/|$)|(^|\/)queue(?:\/|$)|private[-_]?queue|token[-_]?store/i;
 const SECRET_LINE_PATTERN = /(api[_-]?key|access[_-]?token|refresh[_-]?token|client[_-]?secret|password|authorization)\s*[:=]\s*[^,;]+/i;
 
 function normalizeRelativePath(value) {
