@@ -177,33 +177,11 @@ function isNearBuilding(player) {
 }
 
 function updateExplorationCamera(player, delta, moving, insideHQ, npcSystem, hasMoved) {
-  // Outdoor docks, boardwalk, and stage keep the original steady wide camera.
-  // Only Records HQ uses the closer exploration framing below.
-  const closeFraming = insideHQ;
-
-  // Restore the established dock / boardwalk travel shot from the
-  // original camera version: high, wide, steady, and trailing the route.
-  // This avoids the newer orbit-follow behavior changing the travel angle.
-  if (!closeFraming) {
-    const drift = Math.sin(cinTime * 0.25) * 1.2;
-    const desired = new THREE.Vector3(
-      player.position.x + drift,
-      player.position.y + 13,
-      player.position.z + 22
-    );
-    const smooth = 0.07;
-    camera.position.x += (desired.x - camera.position.x) * smooth;
-    camera.position.y += (desired.y - camera.position.y) * smooth;
-    camera.position.z += (desired.z - camera.position.z) * smooth;
-    camera.lookAt(
-      player.position.x,
-      player.position.y + 2,
-      player.position.z - 5
-    );
-    return;
-  }
-
   const now = performance.now();
+
+  // Keep the approved startup composition wide and elevated. Once HERO
+  // begins exploring, retain the intermediate wide view until he reaches
+  // an existing character/building, where the familiar close framing returns.
   if (moving && now - lastOrbitInputAt > 1500) {
     cameraYaw = dampAngle(
       cameraYaw,
@@ -212,8 +190,15 @@ function updateExplorationCamera(player, delta, moving, insideHQ, npcSystem, has
     );
   }
 
-  const distance = insideHQ ? 6.7 : FOLLOW_DISTANCE;
-  const cameraHeight = insideHQ ? 3.25 : 3.4;
+  const closeFraming = insideHQ ||
+    (hasMoved && (isNearExistingCharacter(player, npcSystem) ||
+      isNearBuilding(player)));
+  const startupWideView = !insideHQ && !hasMoved && !closeFraming;
+  const distance = insideHQ ? 6.7 :
+    closeFraming ? FOLLOW_DISTANCE : startupWideView ? 17.0 : 15.5;
+  const cameraHeight = insideHQ ? 3.25 :
+    closeFraming ? 3.4 : startupWideView ? 8.0 : 7.2;
+
   const target = new THREE.Vector3(
     player.position.x,
     player.position.y + LOOK_HEIGHT,
@@ -227,19 +212,17 @@ function updateExplorationCamera(player, delta, moving, insideHQ, npcSystem, has
     target.z + Math.cos(cameraYaw) * horizontal
   );
 
-  camera.position.lerp(
-    desired,
-    dampFactor(delta, FOLLOW_RESPONSE)
-  );
+  const t = dampFactor(delta, closeFraming ? FOLLOW_RESPONSE : 2.8);
+  camera.position.lerp(desired, t);
 
+  const lookAhead = closeFraming ? 8.0 : 13.5;
   const lookTarget = target.clone().add(new THREE.Vector3(
-    Math.sin(player.rotation.y) * 8.0,
+    Math.sin(player.rotation.y) * lookAhead,
     0,
-    Math.cos(player.rotation.y) * 8.0
+    Math.cos(player.rotation.y) * lookAhead
   ));
   camera.lookAt(lookTarget);
 }
-
 function updateElevatorExteriorCamera(player, delta) {
   // Exterior three-quarter tracking shot: the cabin travels vertically
   // through frame while the camera remains outside the passenger space.
