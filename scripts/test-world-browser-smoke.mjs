@@ -43,7 +43,9 @@ async function smokeWorld({ label, isMobile }) {
         !!document.getElementById("lambo-city-joystick") &&
         !!document.getElementById("lambo-city-mobile-buttons") &&
         !!window.__lamboCityPlayerSystem &&
-        typeof window.__lamboCityNavigateToFloor === "function";
+        typeof window.__lamboCityNavigateToFloor === "function" &&
+        Array.isArray(window.__lamboCityStartupErrors) &&
+        window.__lamboCityStartupErrors.length === 0;
     }, null, { timeout: 30000 }).catch(error => {
       throw new Error(label + ": startup did not finish. " + error.message +
         "\nPage errors: " + pageErrors.join("\n") +
@@ -63,7 +65,9 @@ async function smokeWorld({ label, isMobile }) {
         joystick: !!document.getElementById("lambo-city-joystick"),
         mobileButtons: !!document.getElementById("lambo-city-mobile-buttons"),
         studioNotLoadedBeforeRequest:
-          typeof window.__lamboCityEnterFloor2CockpitDirect === "undefined"
+          typeof window.__lamboCityEnterFloor2CockpitDirect === "undefined",
+        startupErrors: window.__lamboCityStartupErrors || [],
+        worldSystemError: window.__lamboCityWorldSystemError || null
       };
     });
 
@@ -74,6 +78,15 @@ async function smokeWorld({ label, isMobile }) {
     assert.equal(startup.mobileButtons, true, label + ": mobile action buttons must initialize");
     assert.equal(startup.studioNotLoadedBeforeRequest, true,
       label + ": Floor 2 must remain lazy-loaded before the player requests Studio");
+    assert.deepEqual(startup.startupErrors, [],
+      label + ": no feature initialization failures may be hidden by startup isolation");
+    assert.equal(startup.worldSystemError, null,
+      label + ": the World System must initialize without errors");
+    await page.evaluate(async () => {
+      if (window.__lamboCityWorldSystemReady) {
+        await window.__lamboCityWorldSystemReady;
+      }
+    });
     assert.deepEqual(pageErrors, [], label + ": no uncaught startup errors");
 
     // Open the citizen phone using the same F control exposed to players.
