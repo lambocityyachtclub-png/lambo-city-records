@@ -19,6 +19,8 @@ jobs:
         run: node --test tests/startup-isolation.test.mjs
       - name: Verify approved camera baseline
         run: node scripts/test-camera-baseline.mjs
+      - name: Verify world startup wiring
+        run: node scripts/test-world-startup-wiring.mjs
       - name: Syntax-check engine and application entry point
         run: |
           node --check engine.js
