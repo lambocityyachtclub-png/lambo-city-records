@@ -43,9 +43,7 @@ assert.match(main, /engine\.context\.THREE = THREE/,
 assert.match(scene, /export \{ THREE \}/,
   "The core scene module must expose the shared Three.js namespace.");
 
-assert.match(main, /fallbackTimer = window\.setTimeout\(finish, 50\)/,
-  "Floor 2 loading must not depend on a throttled animation frame.");
-assert.match(main, /window\.requestAnimationFrame\(finish\)/,
-  "Visible browsers should still yield to the next animation frame when available.");
+assert.doesNotMatch(main, /yieldToFrame|fallbackTimer/,
+  "Floor 2 loading must not stall while waiting for an animation frame or timer.");
 
-console.log("PASS: world startup wiring, shared Three.js, and bounded frame yielding");
+console.log("PASS: world startup wiring, shared Three.js, and non-blocking Floor 2 loading");
