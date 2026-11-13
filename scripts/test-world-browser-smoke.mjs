@@ -59,7 +59,9 @@ async function smokeWorld({ label, isMobile }) {
 
     // Open the citizen phone using the same F control exposed to players.
     if (isMobile) {
-      await page.locator("#lambo-city-mobile-buttons button").nth(1).click();
+      await page.locator("#lambo-city-mobile-buttons button").nth(1).dispatchEvent("pointerdown", {
+        pointerId: 1, pointerType: "touch", isPrimary: true, button: 0, buttons: 1
+      });
     } else {
       await page.keyboard.press("f");
     }
@@ -80,7 +82,9 @@ async function smokeWorld({ label, isMobile }) {
     await page.waitForFunction(() => window.__lamboCityFloor2SessionMode === "free");
 
     if (isMobile) {
-      await page.locator("#lambo-city-mobile-buttons button").nth(1).click();
+      await page.locator("#lambo-city-mobile-buttons button").nth(1).dispatchEvent("pointerdown", {
+        pointerId: 1, pointerType: "touch", isPrimary: true, button: 0, buttons: 1
+      });
     } else {
       await page.keyboard.press("f");
     }
