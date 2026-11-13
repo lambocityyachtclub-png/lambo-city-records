@@ -371,6 +371,8 @@ export default {
   // ============================================================
 
   _buildWaterfrontGlass(scene) {
+    // Capture the district root for the nested addGlassSection helper.
+    const root = this._root;
 
     var glassMat = new THREE.MeshStandardMaterial({
       color: 0x87dfff,
@@ -431,7 +433,7 @@ export default {
         centerZ
       );
 
-      this._root.add(base);
+      root.add(base);
 
 
       // Glass
@@ -448,7 +450,7 @@ export default {
         centerZ
       );
 
-      this._root.add(glass);
+      root.add(glass);
 
 
       // Top rail
@@ -465,7 +467,7 @@ export default {
         centerZ
       );
 
-      this._root.add(topRail);
+      root.add(topRail);
 
 
       // Bottom rail
@@ -482,7 +484,7 @@ export default {
         centerZ
       );
 
-      this._root.add(bottomRail);
+      root.add(bottomRail);
 
 
       // Posts
@@ -504,7 +506,7 @@ export default {
           pz
         );
 
-        this._root.add(post);
+        root.add(post);
       });
     }
 
