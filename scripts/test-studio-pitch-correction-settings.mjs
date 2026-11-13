@@ -14,6 +14,7 @@ for (const setting of ["enabled", "root", "scale", "amount", "speedMs"]) {
     "EDIT should expose the " + setting + " pitch setting."
   );
 }
+assert.match(editScreen, /normalizePitchCorrectionSettings/);
 assert.match(editScreen, /VOCAL PITCH CORRECTION/);
 assert.match(editScreen, /Monophonic lead-vocal correction/);
 assert.match(editScreen, /workspace\.recordHistory\("Vocal pitch correction "/);
