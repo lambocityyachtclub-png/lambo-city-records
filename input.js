@@ -822,6 +822,10 @@ export default {
     );
 
     const navigateFromPhone = floor => {
+      window.__lamboCityPhoneNavigationRequested = {
+        floor,
+        at: performance.now()
+      };
       // Let the originating click/tap finish before starting streamed
       // module loading or removing the phone's own button.
       const closePhone = () => {
@@ -830,6 +834,7 @@ export default {
       };
 
       const startNavigation = () => {
+        window.__lamboCityPhoneNavigationStarted = true;
         const navigate = window.__lamboCityNavigateToFloor;
         if (typeof navigate !== "function" || !navigate(floor)) return;
         closePhone();
@@ -838,7 +843,7 @@ export default {
       // Leave the input event and its browser action fully complete before
       // importing/initializing the streamed Studio modules.
       if (typeof window.setTimeout === "function") {
-        window.setTimeout(startNavigation, 120);
+        window.setTimeout(startNavigation, 1000);
       } else if (typeof window.requestAnimationFrame === "function") {
         window.requestAnimationFrame(startNavigation);
       } else {
