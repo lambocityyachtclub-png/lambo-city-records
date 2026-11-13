@@ -94,12 +94,12 @@ The local-first implementation has now been added as a separate draft on top of 
 
 - `development/storage/indexedDbDevelopmentStorage.js` persists Development Director tasks and owner review records in browser IndexedDB.
 - `development/runtime/createLocalAliveControlPlane.js` composes the existing Development System with that local storage.
-- `alive.js` starts the local control plane only after owner sign-in, displays its readiness, and saves owner directions into a local IndexedDB inbox before attempting the separate hosted queue.
-- The local path configures no AI provider, hosted queue, PostgreSQL connection, Vercel Sandbox, or code executor. It does not make network calls or execute generated code.
+- `alive.js` starts the local control plane only after owner sign-in, displays its readiness, and saves owner directions into a local IndexedDB inbox without automatically submitting them to the separate hosted queue.
+- The local path configures no AI provider, hosted queue, PostgreSQL connection, Vercel Sandbox, or code executor. Saving a direction does not call the hosted vision API, trigger GitHub Actions, or execute generated code.
 - Browser tests verify local vision intake, protected task approval, review decisions, persistence after close/reopen, and that productionChangesMade remains false.
 - Chromium, WebKit, and a WebKit iPad-sized touch viewport passed the browser test on PR #52 head `db9ea3f899375634ec2d8283976e6f5852c16321`.
 
-This closes the local bootstrap, local task/review persistence, and local vision-intake foundation gates. It does **not** yet provide cross-device sync, export/import backup, a complete local task/review interface, or autonomous code execution. Local records remain in the current browser profile and are not automatically shared with another device.
+This closes the local bootstrap, local task/review persistence, and local vision-intake foundation gates while keeping hosted execution off by default. It does **not** yet provide cross-device sync, export/import backup, a complete local task/review interface, or autonomous code execution. Local records remain in the current browser profile and are not automatically shared with another device.
 
 ## 4. Recommended canonical architecture
 
