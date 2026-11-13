@@ -36,7 +36,7 @@ export default {
     this._buildStreet(scene);
     this._buildStores(scene);
     this._buildPalms(scene);
-    this._buildNeon(scene);
+    // Keep the original neon sign disabled; preserve clear street frontage.
     this._buildWaterfrontGlass(scene);
   },
 
@@ -136,7 +136,50 @@ export default {
     });
 
 
-    // No roadside lamp props: keep the road and sidewalks clear.
+    // Original roadside streetlights, positioned beyond the sidewalk edge.
+    for (
+      var lx = STREET_X_MIN;
+      lx <= STREET_X_MAX;
+      lx += 18
+    ) {
+
+      var pole = new THREE.Mesh(
+        new THREE.CylinderGeometry(
+          0.15,
+          0.15,
+          8,
+          6
+        ),
+        new THREE.MeshStandardMaterial({
+          color: 0x333333
+        })
+      );
+
+      pole.position.set(
+        lx,
+        4.5,
+        STREET_Z + 9
+      );
+
+      scene.add(pole);
+
+      var lampHead = new THREE.Mesh(
+        new THREE.BoxGeometry(2, 0.3, 0.3),
+        new THREE.MeshStandardMaterial({
+          color: 0xffeeaa,
+          emissive: 0xffeeaa,
+          emissiveIntensity: 1.2
+        })
+      );
+
+      lampHead.position.set(
+        lx,
+        8.5,
+        STREET_Z + 9
+      );
+
+      scene.add(lampHead);
+    }
   },
 
 
