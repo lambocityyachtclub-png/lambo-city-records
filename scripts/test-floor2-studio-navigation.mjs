@@ -1,9 +1,11 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
-const [engine, main, world, drums, navigation, workspace] = await Promise.all([
+const [engine, main, input, elevator, world, drums, navigation, workspace] = await Promise.all([
   readFile(new URL("../engine.js", import.meta.url), "utf8"),
   readFile(new URL("../main.js", import.meta.url), "utf8"),
+  readFile(new URL("../input.js", import.meta.url), "utf8"),
+  readFile(new URL("../recordsHQElevator.js", import.meta.url), "utf8"),
   readFile(new URL("../recordsHQFloor2Studio.js", import.meta.url), "utf8"),
   readFile(new URL("../floor2DrumStation.js", import.meta.url), "utf8"),
   readFile(new URL("../floor2StudioNavigation.js", import.meta.url), "utf8"),
@@ -32,6 +34,13 @@ assert.ok(mixConsoleInit > sessionInit && liveDrummerInit > mixConsoleInit && vo
 assert.doesNotMatch(engine, /this\.systems\.(?:recordsHQFloor2Studio|floor2DrumStation|floor2StudioNavigation|floor2StudioSession|studioMixMasterConsole3D|floor2LiveDrummer|floor2VocalBooth3D|floor2CitySynth)\?\.init/, "Floor 2 modules must not initialize during the initial world startup");
 assert.match(floor2Loader, /window\.__lamboCityFloor2Ready = true/);
 assert.match(floor2Loader, /engine\.scene\.getObjectByName\("recordsHQFloor2Studio"\)/);
+assert.match(input, /id\s*=\s*"lambo-city-joystick"/, "The iPad joystick must remain part of the input system");
+assert.match(input, /phone\.querySelector\("#lambo-phone-studio"\)[\s\S]*?navigateFromPhone\(2\)/, "The phone Studio tile must route to Floor 2");
+assert.match(input, /const navigateFromPhone = floor => \{[\s\S]*?window\.__lamboCityNavigateToFloor[\s\S]*?navigate\(floor\)/, "Phone shortcuts must use the shared elevator navigation path");
+assert.match(elevator, /window\.__lamboCityNavigateToFloor = floor =>/);
+assert.match(elevator, /window\.__lamboCityPrepareFloor\?\.\(selectedFloor\)/, "Elevator travel must wait for the destination loader");
+assert.match(elevator, /window\.__lamboCityBeginFloor2Session\?\.\(arrivedPlayer\)/, "Floor 2 arrival must open the Studio session");
+assert.ok(engine.indexOf("this.systems.input?.init?.();") >= 0 && engine.indexOf("this.systems.input?.init?.();") < engine.indexOf("this.systems.performanceMonitor?.init?."), "iPad input and joystick must initialize immediately after the core renderer/context");
 
 assert.match(world, /group\.userData\.studioStations\s*=\s*\{/);
 assert.match(drums, /station\.name\s*=\s*"floor2DrumStation"/);
