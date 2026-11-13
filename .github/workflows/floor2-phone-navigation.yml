@@ -1,0 +1,27 @@
+name: Floor 2 phone navigation regression
+
+on:
+  pull_request:
+    paths:
+      - "recordsHQElevator.js"
+      - "floor2PhoneNavigation.js"
+      - "scripts/test-floor2-phone-navigation.mjs"
+      - ".github/workflows/floor2-phone-navigation.yml"
+  push:
+    branches:
+      - "restore/latest-integrated-features-2026-11-12"
+    paths:
+      - "recordsHQElevator.js"
+      - "floor2PhoneNavigation.js"
+      - "scripts/test-floor2-phone-navigation.mjs"
+      - ".github/workflows/floor2-phone-navigation.yml"
+
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: node scripts/test-floor2-phone-navigation.mjs
