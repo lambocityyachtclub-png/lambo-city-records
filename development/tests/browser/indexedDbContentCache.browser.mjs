@@ -240,7 +240,9 @@ async function runBrowser(name, browserType, contextOptions = {}) {
     await page.locator("#vision").fill("Keep LAMBO CITY ALIVE local-first and protect the Floor 2 Studio workflow.");
     await page.locator("#submit-vision").click();
     await page.waitForFunction(() =>
-      document.querySelector("#task-state")?.textContent === "SAVED LOCALLY"
+      document.querySelector("#task-state")?.textContent === "SAVED LOCALLY" &&
+      (document.querySelector("#vision-message")?.textContent || "").includes("No hosted worker") &&
+      (document.querySelector("#local-core-summary")?.textContent || "").includes("1 saved directions")
     );
     const ownerWorkspaceState = await page.evaluate(() => ({
       localCoreStatus: document.querySelector("#local-core-status")?.textContent,
@@ -260,7 +262,7 @@ async function runBrowser(name, browserType, contextOptions = {}) {
       !ownerWorkspaceState.storageNote.includes("not synced or backed up") ||
       hostedVisionSubmissionRequests !== 0
     ) {
-      throw new Error("Owner workspace did not save locally with hosted vision submission disabled.");
+      throw new Error("Owner workspace did not save locally with hosted vision submission disabled: " + JSON.stringify(ownerWorkspaceState) + "; hosted requests=" + hostedVisionSubmissionRequests);
     }
     result.ownerWorkspaceLocalOnly = true;
     result.hostedVisionSubmissionRequests = hostedVisionSubmissionRequests;
