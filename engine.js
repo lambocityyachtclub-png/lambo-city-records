@@ -32,6 +32,7 @@ export default class Engine {
     this.systems.worldSkin?.init?.(this.scene);
     this.systems.dockCore?.init?.(this.scene);
     this.systems.marina?.init?.(this.scene);
+    this.systems.waterfrontStorefrontDetails?.init?.(this.scene, this.context);
     this.systems.conferenceCenterDistrict?.init?.(this.scene, this.context);
     this.systems.stageVideo?.init?.(this.scene);
     this.systems.stageScreenMedia?.init?.(this.scene);
