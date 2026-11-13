@@ -94,3 +94,7 @@ assert.match(main, /engine\.registerSystems\(systems\)/,
   "All streamed upper-floor modules must merge into the live engine registry.");
 assert.match(main, /engine\.initSystem\(name, \.\.\.args\)/,
   "Streamed upper-floor modules must use the engine's isolated initializer with their scene/context arguments.");
+assert.match(main, /const yieldToFrame = \(\) => new Promise\(resolve => \{/,
+  "Streamed Studio initialization must expose a frame-yield helper.");
+assert.match(main, /await yieldToFrame\(\)/,
+  "The elevator and phone UI must receive frames between streamed Studio module initializations.");
