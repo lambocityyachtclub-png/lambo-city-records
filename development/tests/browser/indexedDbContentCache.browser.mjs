@@ -133,6 +133,16 @@ async function runBrowser(name, browserType, contextOptions = {}) {
       ) {
         throw new Error("Local ALIVE core unexpectedly enabled an external provider or execution adapter.");
       }
+      const localVision = await localCore.visionStore.createVision({
+        vision: "Create a local-first LAMBO CITY owner planning inbox."
+      });
+      if (localVision.remoteStatus !== "not_submitted" || localVision.remoteTaskId !== null) {
+        throw new Error("Local vision was incorrectly marked as submitted to a hosted queue.");
+      }
+      await localCore.visionStore.setRemoteStatus({
+        visionId: localVision.id,
+        remoteStatus: "unavailable"
+      });
       const createdTask = await localCore.system.director.createTask({
         title: "Browser-local ALIVE persistence check",
         description: "Verify task and owner approval records persist without hosted services.",
@@ -167,12 +177,16 @@ async function runBrowser(name, browserType, contextOptions = {}) {
       const reopenedCore = await createLocalAliveControlPlane({ indexedDB, databaseName: localDatabaseName });
       const persistedTasks = reopenedCore.system.director.listTasks();
       const persistedReview = await reopenedCore.reviewStore.getReview(createdReview.id);
+      const persistedVision = await reopenedCore.visionStore.getVision(localVision.id);
       if (
         persistedTasks.length !== 1 ||
         persistedTasks[0].id !== createdTask.id ||
         persistedTasks[0].status !== "queued" ||
         !persistedReview ||
         persistedReview.status !== "approved" ||
+        !persistedVision ||
+        persistedVision.vision !== "Create a local-first LAMBO CITY owner planning inbox." ||
+        persistedVision.remoteStatus !== "unavailable" ||
         persistedReview.productionChangesMade !== false
       ) {
         throw new Error("Local ALIVE tasks or review decisions did not survive database reopen.");
@@ -189,6 +203,7 @@ async function runBrowser(name, browserType, contextOptions = {}) {
         oversizeFallback: true,
         localAliveCore: true,
         localTaskAndReviewPersistence: true,
+        localVisionInboxPersistence: true,
         paidAdaptersDisabled: true
       };
     });
