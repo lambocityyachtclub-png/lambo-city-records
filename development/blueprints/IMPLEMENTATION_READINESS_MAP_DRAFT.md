@@ -2,7 +2,7 @@
 
 **Status:** draft — not owner-approved  
 **Evidence snapshot:** Department Source Verification workflow run 43355322431, source commit 92a1ae5f99cf669356554bd7a2fa860b614577a2  
-**Evidence artifact:** lambo-city-department-source-verification  
+**Evidence artifact:** lambo-city-department-source-verification (artifact 14005787234)  
 **Purpose:** establish a dependency-aware order for implementation without treating source presence as completion or creating work authorization.
 
 ## 1. Executive direction
