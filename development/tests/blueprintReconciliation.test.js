@@ -40,7 +40,10 @@ test("source provenance is required and private or absolute paths are rejected",
   const invalid = structuredClone(register);
   invalid.records[0].sources[0].path = ".env";
   assert.throws(() => reconcileBlueprintRegister(invalid, catalog), /prohibited/);
-  const traversal = structuredClone(register);\n  traversal.records[0].sources[0].path = "../outside.md";\n  assert.throws(() => reconcileBlueprintRegister(traversal, catalog), /prohibited/);\n  const missing = structuredClone(register);
+  const traversal = structuredClone(register);
+  traversal.records[0].sources[0].path = "../outside.md";
+  assert.throws(() => reconcileBlueprintRegister(traversal, catalog), /prohibited/);
+  const missing = structuredClone(register);
   missing.records[0].sources = [];
   assert.throws(() => reconcileBlueprintRegister(missing, catalog), /at least one source/);
 });
@@ -64,7 +67,7 @@ test("a conflict cannot be silently marked resolved and a verified-present claim
 
 test("unknown departments and duplicate record identifiers are rejected", () => {
   const unknown = structuredClone(register);
-  unknown.records[0].departmentId = "unknown-team";
+  unknown.records.find(item => item.scope === "department").departmentId = "unknown-team";
   assert.throws(() => reconcileBlueprintRegister(unknown, catalog), /Unknown department/);
   const duplicate = structuredClone(register);
   duplicate.records.push(structuredClone(duplicate.records[0]));
@@ -99,6 +102,9 @@ test("writer verifies every referenced source path and emits JSON plus Markdown"
     assert.ok(await fs.readFile(path.join(rootDir, "development/planning/blueprint-reconciliation/reconciliation.json"), "utf8"));
     const report = await fs.readFile(path.join(rootDir, "development/planning/blueprint-reconciliation/README.md"), "utf8");
     assert.match(report, /Blueprint Reconciliation Draft/);
+    await fs.rm(path.join(rootDir, register.records[0].sources[0].path));
+    const second = await writeBlueprintReconciliation({ rootDir });
+    assert.equal(second.result.summary.missingSources, 1);
   } finally {
     await fs.rm(rootDir, { recursive: true, force: true });
   }
