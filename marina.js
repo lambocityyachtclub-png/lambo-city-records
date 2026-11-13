@@ -27,7 +27,11 @@ const WATERFRONT_BACK_Z = 45;
 export default {
 
   init(scene) {
-    if (scene.getObjectByName("lamboCityMarinaDistrict")) return;
+    const existingRoot = scene.getObjectByName("lamboCityMarinaDistrict");
+    if (existingRoot) {
+      this._root = existingRoot;
+      return;
+    }
     const root = new THREE.Group();
     root.name = "lamboCityMarinaDistrict";
     scene.add(root);
