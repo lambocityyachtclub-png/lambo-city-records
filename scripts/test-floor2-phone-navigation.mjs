@@ -79,16 +79,43 @@ const flush = () => new Promise(resolve => setTimeout(resolve, 0));
   assert.equal(directCalls, 1);
 }
 
-// Busy elevator/landing state rejects navigation without side effects.
+// A busy elevator/landing state queues the requested floor and runs it once idle.
 {
-  let selected = false;
+  let busy = true;
+  const selected = [];
   const navigate = createPhoneFloorNavigator({
-    isBusy: () => true,
-    selectFloor: () => { selected = true; }
+    isBusy: () => busy,
+    isFloor2Discovered: () => false,
+    selectFloor: floor => { selected.push(floor); return true; }
   });
 
-  assert.equal(navigate(2), false);
-  assert.equal(selected, false);
+  assert.equal(navigate(2), true);
+  assert.deepEqual(selected, []);
+  assert.equal(navigate.getQueuedDestination(), 2);
+
+  busy = false;
+  assert.equal(navigate.flush(), true);
+  assert.deepEqual(selected, [2]);
+  assert.equal(navigate.getQueuedDestination(), null);
+}
+
+// A transient selectFloor rejection is retained and retried when the lift is idle.
+{
+  let attempts = 0;
+  const navigate = createPhoneFloorNavigator({
+    isFloor2Discovered: () => false,
+    selectFloor: () => {
+      attempts += 1;
+      return attempts > 1;
+    }
+  });
+
+  assert.equal(navigate(2), true);
+  assert.equal(attempts, 1);
+  assert.equal(navigate.getQueuedDestination(), 2);
+  assert.equal(navigate.flush(), true);
+  assert.equal(attempts, 2);
+  assert.equal(navigate.getQueuedDestination(), null);
 }
 
 const inputSource = await readFile(new URL("../input.js", import.meta.url), "utf8");
