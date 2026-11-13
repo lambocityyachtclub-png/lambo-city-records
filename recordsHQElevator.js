@@ -847,8 +847,15 @@ export default {
     // session is lazy-loaded, so a returning visitor must wait for that
     // module before the direct cockpit shortcut can be used.
     window.__lamboCityNavigateToFloor = createPhoneFloorNavigator({
-      isBusy: () => traveling || Boolean(pendingLandingPlayer) || travelStartPending,
+      isBusy: () =>
+        traveling ||
+        Boolean(pendingLandingPlayer) ||
+        travelStartPending ||
+        Boolean(floor3AutoArrival) ||
+        failedReturnDoorPending ||
+        window.__lamboCityFloor2SessionMode === "arrival",
       isFloor2Discovered: () => window.__lamboCityFloor2Discovered === true,
+      getFloor2SessionMode: () => window.__lamboCityFloor2SessionMode || "free",
       hasDirectEntry: () =>
         typeof window.__lamboCityEnterFloor2CockpitDirect === "function",
       enterDirect: () =>
@@ -1177,6 +1184,10 @@ export default {
 
     lastEState =
       ePressed;
+
+    // Process phone requests as soon as the active elevator/arrival sequence
+    // has released the player. Queued requests are never silently discarded.
+    window.__lamboCityNavigateToFloor?.flush?.();
 
 
     // ========================================================
