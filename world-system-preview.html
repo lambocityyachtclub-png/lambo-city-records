@@ -216,6 +216,10 @@
       futureDistrict.name = "Future District Routing Test";
       futureDistrict.bounds.minX += 300;
       futureDistrict.bounds.maxX += 300;
+      if (futureDistrict.streamingBounds) {
+        futureDistrict.streamingBounds.minX += 300;
+        futureDistrict.streamingBounds.maxX += 300;
+      }
       futureDistrict.roadNetwork.nodes.forEach(node => { node.x += 300; });
       futureDistrict.roadNetwork.sidewalkWidth = 5;
       futureDistrict.parcels.forEach(parcel => { parcel.center.x += 300; });
