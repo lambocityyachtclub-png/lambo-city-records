@@ -160,7 +160,8 @@ assert.match(source["floor2CitySynth.js"],/data-synth-filter/);
 
 for (const file of ["studioMixMasterConsole3D.js","floor2LiveDrummer.js","floor2VocalBooth3D.js","floor2CitySynth.js"]) {
   assert.doesNotMatch(source[file],/^import \* as THREE/m,"Scene modules must lazy-load Three.js so standalone Studio stays independent.");
-  assert.match(source[file],/async init\(scene/,"Each world feature must expose an init(scene) lifecycle.");
+  assert.match(source[file],/init\(scene,\s*context/,"Each world feature must expose an init(scene, context) lifecycle.");
+  assert.match(source[file],/context\?\.THREE/,"Each world feature must use the shared Three.js namespace supplied by the engine.");
   assert.match(source[file],/update\(/,"Each world feature must expose an update lifecycle.");
 }
 
