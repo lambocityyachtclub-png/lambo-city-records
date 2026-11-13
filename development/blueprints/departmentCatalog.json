@@ -25,81 +25,281 @@
       "id": "water-environment",
       "title": "Water & Environment",
       "purpose": "Ocean, water surfaces, waves, shoreline, beaches, docks, marina environment, weather, terrain, landscaping and environmental presentation.",
-      "specialistIds": ["environment-water"],
-      "keywords": ["water", "ocean", "wave", "shoreline", "beach", "dock", "marina", "terrain", "weather", "environment"],
-      "sourceHints": ["water", "environment", "shoreline", "terrain", "marina", "dock"]
+      "specialistIds": [
+        "environment-water"
+      ],
+      "keywords": [
+        "water",
+        "ocean",
+        "wave",
+        "shoreline",
+        "beach",
+        "dock",
+        "marina",
+        "terrain",
+        "weather",
+        "environment"
+      ],
+      "sourceHints": [
+        "water",
+        "environment",
+        "shoreline",
+        "terrain",
+        "marina",
+        "dock"
+      ]
     },
     {
       "id": "jumbotron-events",
       "title": "Jumbotron & Events",
       "purpose": "Jumbotron screens, stage presentation, concerts, live events, event scheduling, audience experiences and venue media.",
-      "specialistIds": ["convention-center", "performance-qa"],
-      "keywords": ["jumbotron", "grand stage", "stage", "concert", "live event", "event", "audience", "screen", "show", "performance"],
-      "sourceHints": ["jumbotron", "stage", "event", "performance", "venue"]
+      "specialistIds": [
+        "convention-center",
+        "performance-qa"
+      ],
+      "keywords": [
+        "jumbotron",
+        "grand stage",
+        "stage",
+        "concert",
+        "live event",
+        "event",
+        "audience",
+        "screen",
+        "show",
+        "performance"
+      ],
+      "sourceHints": [
+        "jumbotron",
+        "stage",
+        "event",
+        "venue",
+        "hero-performance",
+        "hero-post-performance"
+      ]
     },
     {
       "id": "lambo-city-radio",
       "title": "LAMBO CITY Radio",
       "purpose": "Radio identity, broadcast programming, stations, playlists, schedules, audio routing and listening experiences.",
-      "specialistIds": ["audio-assets", "studio"],
-      "keywords": ["radio", "broadcast", "station", "playlist", "programming", "stream", "dj", "audio routing"],
-      "sourceHints": ["radio", "broadcast", "playlist", "audio"]
+      "specialistIds": [
+        "audio-assets",
+        "studio"
+      ],
+      "keywords": [
+        "radio",
+        "broadcast",
+        "station",
+        "playlist",
+        "programming",
+        "stream",
+        "dj",
+        "audio routing"
+      ],
+      "sourceHints": [
+        "radio",
+        "broadcast",
+        "playlist"
+      ]
     },
     {
       "id": "studio-music",
       "title": "Studio & Music",
       "purpose": "The shared production core, standalone and in-world Studio, DAW, MPC, instruments, recording, editing, vocals, mixing, mastering, project saving and export.",
-      "specialistIds": ["studio", "audio-assets"],
-      "keywords": ["studio", "daw", "mpc", "recording", "vocal booth", "beat lab", "pitch correction", "multitrack", "mixing", "mastering", "audio asset"],
-      "sourceHints": ["studio", "daw", "mpc", "vocal", "beat-lab", "audio"]
+      "specialistIds": [
+        "studio",
+        "audio-assets"
+      ],
+      "keywords": [
+        "studio",
+        "daw",
+        "mpc",
+        "recording",
+        "vocal booth",
+        "beat lab",
+        "pitch correction",
+        "multitrack",
+        "mixing",
+        "mastering",
+        "audio asset"
+      ],
+      "sourceHints": [
+        "studio",
+        "daw",
+        "mpc",
+        "vocal",
+        "beat-lab",
+        "audio"
+      ]
     },
     {
       "id": "convention-center",
       "title": "Convention Center",
       "purpose": "Convention and exhibition buildings, meeting rooms, conferences, venues, visitor flows, public spaces and event infrastructure.",
-      "specialistIds": ["convention-center", "world-architecture"],
-      "keywords": ["convention center", "conference center", "exhibition", "meeting room", "conference", "venue", "visitor flow", "arena"],
-      "sourceHints": ["convention", "conference", "venue", "exhibition", "meeting"]
+      "specialistIds": [
+        "convention-center",
+        "world-architecture"
+      ],
+      "keywords": [
+        "convention center",
+        "conference center",
+        "exhibition",
+        "meeting room",
+        "conference",
+        "venue",
+        "visitor flow",
+        "arena"
+      ],
+      "sourceHints": [
+        "convention",
+        "conference",
+        "venue",
+        "exhibition",
+        "meeting"
+      ]
     },
     {
       "id": "world-districts",
       "title": "World & Districts",
       "purpose": "City layout, districts, roads, parcels, buildings, navigation, map circulation, world streaming, scene composition and protected landmarks.",
-      "specialistIds": ["world-architecture", "performance-qa"],
-      "keywords": ["district", "world system", "city map", "road", "sidewalk", "parcel", "building", "navigation", "collision", "landmark", "streaming"],
-      "sourceHints": ["world", "district", "city-map", "road", "parcel", "building"]
+      "specialistIds": [
+        "world-architecture",
+        "performance-qa"
+      ],
+      "keywords": [
+        "district",
+        "world system",
+        "city map",
+        "road",
+        "sidewalk",
+        "parcel",
+        "building",
+        "navigation",
+        "collision",
+        "landmark",
+        "streaming"
+      ],
+      "sourceHints": [
+        "world",
+        "district",
+        "city-map",
+        "road",
+        "parcel",
+        "building"
+      ]
     },
     {
       "id": "vehicles-yachts",
       "title": "Vehicles & Yachts",
       "purpose": "Cars, driving, boats, yachts, marina interactions, vehicle handling, parking, ownership and customization.",
-      "specialistIds": ["yachts-vehicles"],
-      "keywords": ["vehicle", "car", "driving", "boat", "yacht", "jet ski", "parking", "handling", "customization"],
-      "sourceHints": ["vehicle", "car", "yacht", "boat", "marina", "jet-ski"]
+      "specialistIds": [
+        "yachts-vehicles"
+      ],
+      "keywords": [
+        "vehicle",
+        "car",
+        "driving",
+        "boat",
+        "yacht",
+        "jet ski",
+        "parking",
+        "handling",
+        "customization"
+      ],
+      "sourceHints": [
+        "vehicle",
+        "car",
+        "yacht",
+        "boat",
+        "marina",
+        "jet-ski",
+        "cars",
+        "vehicles",
+        "boats"
+      ]
     },
     {
       "id": "people-experiences",
       "title": "People & Experiences",
       "purpose": "NPCs, HERO, characters, social experiences, player interactions, VIP experiences, audience behavior and future community features.",
-      "specialistIds": ["world-architecture", "convention-center"],
-      "keywords": ["npc", "hero", "character", "player interaction", "social", "vip", "paparazzi", "security escort", "crowd", "spectator"],
-      "sourceHints": ["npc", "hero", "character", "social", "player", "crowd"]
+      "specialistIds": [
+        "world-architecture",
+        "convention-center"
+      ],
+      "keywords": [
+        "npc",
+        "hero",
+        "character",
+        "player interaction",
+        "social",
+        "vip",
+        "paparazzi",
+        "security escort",
+        "crowd",
+        "spectator"
+      ],
+      "sourceHints": [
+        "npc",
+        "hero",
+        "character",
+        "social",
+        "player",
+        "crowd"
+      ]
     },
     {
       "id": "performance-quality",
       "title": "Performance & Quality",
       "purpose": "Cross-department performance, reliability, accessibility, iPad and desktop compatibility, automated testing and regression prevention.",
-      "specialistIds": ["performance-qa"],
-      "keywords": ["performance", "optimization", "regression", "accessibility", "compatibility", "memory leak", "load time", "frame rate", "test"],
-      "sourceHints": ["test", "performance", "optimization", "accessibility"]
+      "specialistIds": [
+        "performance-qa"
+      ],
+      "keywords": [
+        "performance",
+        "optimization",
+        "regression",
+        "accessibility",
+        "compatibility",
+        "memory leak",
+        "load time",
+        "frame rate",
+        "test"
+      ],
+      "sourceHints": [
+        "test",
+        "performance",
+        "optimization",
+        "accessibility"
+      ]
     },
     {
       "id": "security-release",
       "title": "Security & Release",
       "purpose": "Cross-department permissions, secrets handling, approval gates, release readiness, rollback planning and production protection.",
-      "specialistIds": ["security-release"],
-      "keywords": ["security", "secret", "credential", "approval", "release", "rollback", "deployment", "production"],
-      "sourceHints": ["security", "release", "deployment", "approval", "rollback"]
+      "specialistIds": [
+        "security-release"
+      ],
+      "keywords": [
+        "security",
+        "secret",
+        "credential",
+        "approval",
+        "release",
+        "rollback",
+        "deployment",
+        "production"
+      ],
+      "sourceHints": [
+        "security",
+        "release",
+        "deployment",
+        "approval",
+        "rollback",
+        "access-gate",
+        "development-policy",
+        "guardrails",
+        "change-scope-guard"
+      ]
     }
   ]
 }

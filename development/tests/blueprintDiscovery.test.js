@@ -31,7 +31,7 @@ test("discovery creates independent department drafts from repository evidence",
     assert.equal(result.departments.length, catalog.departments.length);
     const water = result.departments.find(item => item.id === "water-environment");
     const radio = result.departments.find(item => item.id === "lambo-city-radio");
-    assert.ok(water.sourceFiles.includes("docs/water-plan.md"));
+    assert.ok(water.documentationFiles.includes("docs/water-plan.md"));
     assert.ok(radio.sourceFiles.includes("studio/radio.js"));
     assert.equal(water.status, "discovery-draft");
     assert.equal(result.summary.filesScanned, 3);
@@ -96,6 +96,15 @@ test("discovery scans the actual repository and identifies the existing master s
   assert.ok(result.master.discoveredSourceFiles.includes("LAMBO_CITY_NORTHSTAR.md"));
   assert.ok(result.master.discoveredSourceFiles.includes("LAMBO_CITY_MASTER_BLUEPRINT.md"));
   assert.ok(result.departments.every(item => item.status === "discovery-draft"));
-  assert.ok(result.departments.some(item => item.id === "lambo-city-radio"));
-  assert.ok(result.departments.some(item => item.id === "jumbotron-events"));
+  assert.ok(result.departments.every(item => Array.isArray(item.runtimeConnectedSourceFiles)));
+  assert.ok(result.departments.every(item => Array.isArray(item.notStaticallyReachableSourceFiles)));
+  assert.ok(result.dependencyGraph.rootEntrypoints.includes("main.js"));
+  assert.ok(result.dependencyGraph.reachableFiles.includes("main.js"));
+  const radio = result.departments.find(item => item.id === "lambo-city-radio");
+  const events = result.departments.find(item => item.id === "jumbotron-events");
+  const vehicles = result.departments.find(item => item.id === "vehicles-yachts");
+  assert.equal(radio.sourceFiles.length, 0);
+  assert.ok(events.sourceFiles.includes("heroPerformance.js"));
+  assert.ok(!events.sourceFiles.includes("performanceMonitor.js"));
+  assert.ok(vehicles.sourceFiles.includes("cars.js"));
 });

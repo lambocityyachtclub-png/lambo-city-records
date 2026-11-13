@@ -78,11 +78,21 @@ The first pass is intentionally deterministic. It uses keywords and file paths a
 - Evidence lines are bounded and common credential-like assignments and token patterns are redacted.
 - The scanner does not execute repository code.
 
+## Runtime reachability review
+
+The static dependency graph starts from the repository's visitor and standalone entrypoints when present: `index.html`, `main.js`, `studio.html`, and `alive.html`. It follows resolved literal local edges and reports which candidate department files are reachable through those edges.
+
+A file not listed as reachable is **not** automatically unused or broken. It may be loaded by a computed path, runtime registry, script injection, worker, CDN integration, or another dynamic mechanism. The report therefore uses the wording "not statically reachable" and never treats absence from this graph as permission to remove a file.
+
+The CI workflow publishes the generated JSON and Markdown report as a short-lived seven-day artifact so the actual findings can be reviewed without committing generated inventories or changing the application.
+
 ## Static dependency map
 
 The discovery report also includes a conservative static dependency map for literal relative/root-relative JavaScript imports, dynamic imports, CommonJS requires, HTML `src`/`href` references, and CSS `url()`/`@import` references.
 
-Each local edge is marked resolved only when its target is present in the scanned file inventory. Missing local targets are reported as unresolved candidates rather than guessed. External CDN references are listed separately; bare package names are not treated as repository files.
+Each local edge is marked resolved only when its target is present in the scanned file inventory. Missing local targets from non-test source files are reported separately from intentionally unresolved references inside test fixtures. External CDN references are listed separately; bare package names are not treated as repository files.
+
+Department path-matched files are split into code candidates, test candidates, documentation references, and configuration references. Path matches are still candidates for review, not authoritative ownership. Keyword matches are supporting clues only and are never counted as confirmed source ownership. Path hints use whole filename/path tokens rather than loose substrings, preventing matches such as "road" inside "roadmap". The catalog deliberately avoids treating general audio infrastructure as a dedicated Radio product implementation.
 
 This map is an aid for review, not a complete runtime dependency graph. It cannot reliably infer computed paths, dynamic registries, script injection, Three.js scene registration, event-driven relationships, or dependencies loaded through runtime data. Those relationships still require source and runtime inspection.
 

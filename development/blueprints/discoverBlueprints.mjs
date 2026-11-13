@@ -29,6 +29,30 @@ function isIgnored(relativePath, entryName) {
   return false;
 }
 
+function pathTokens(value) {
+  return value
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter(Boolean);
+}
+
+function pathMatchesHint(relativePath, hint) {
+  const fileTokens = pathTokens(relativePath);
+  const hintTokens = pathTokens(hint);
+  if (!hintTokens.length || hintTokens.length > fileTokens.length) return false;
+  for (let start = 0; start <= fileTokens.length - hintTokens.length; start += 1) {
+    if (hintTokens.every((token, index) => fileTokens[start + index] === token)) return true;
+  }
+  return false;
+}
+
+function isTestPath(relativePath) {
+  const normalized = relativePath.toLowerCase();
+  return normalized.startsWith("tests/") || normalized.includes("/tests/") ||
+    normalized.includes("/__tests__/") || path.posix.basename(normalized).startsWith("test-");
+}
+
 function classifyFile(relativePath) {
   const extension = path.extname(relativePath).toLowerCase();
   if (!ALLOWED_EXTENSIONS.has(extension)) return null;
@@ -134,10 +158,29 @@ export async function discoverBlueprints(options = {}) {
         kind: file.kind,
         evidence: file.departments.find(match => match.id === department.id).evidence
       }));
-    const hintedPaths = inventory
-      .filter(file => department.sourceHints.some(hint => file.path.toLowerCase().includes(hint)))
-      .map(file => file.path);
-    const sourcePaths = [...new Set([...evidence.map(item => item.path), ...hintedPaths])].sort();
+    const hintedFiles = inventory
+      .filter(file => department.sourceHints.some(hint => pathMatchesHint(file.path, hint)));
+    const pathMatchedFiles = [...new Set(hintedFiles.map(file => file.path))].sort();
+    const sourcePaths = hintedFiles
+      .filter(file => file.kind === "source" && !isTestPath(file.path))
+      .map(file => file.path)
+      .sort();
+    const testPaths = hintedFiles
+      .filter(file => isTestPath(file.path))
+      .map(file => file.path)
+      .sort();
+    const documentationPaths = hintedFiles
+      .filter(file => file.kind === "documentation")
+      .map(file => file.path)
+      .sort();
+    const configurationPaths = hintedFiles
+      .filter(file => file.kind === "configuration")
+      .map(file => file.path)
+      .sort();
+    const keywordEvidenceFiles = [...new Set(evidence.map(item => item.path))].sort();
+    const staticallyReachable = new Set(dependencyGraph.reachableFiles);
+    const runtimeConnectedSourceFiles = sourcePaths.filter(filePath => staticallyReachable.has(filePath));
+    const notStaticallyReachableSourceFiles = sourcePaths.filter(filePath => !staticallyReachable.has(filePath));
     return {
       id: department.id,
       title: department.title,
@@ -145,6 +188,13 @@ export async function discoverBlueprints(options = {}) {
       specialistIds: [...department.specialistIds],
       status: "discovery-draft",
       sourceFiles: sourcePaths,
+      testFiles: testPaths,
+      documentationFiles: documentationPaths,
+      configurationFiles: configurationPaths,
+      pathMatchedFiles,
+      keywordEvidenceFiles,
+      runtimeConnectedSourceFiles,
+      notStaticallyReachableSourceFiles,
       evidence,
       notes: [
         "This is an automatically assembled discovery draft, not an owner-approved specification.",
@@ -207,8 +257,11 @@ export function renderBlueprintReport(result) {
     "",
     `- Source files analyzed: ${result.dependencyGraph.summary.filesAnalyzed}`,
     `- Resolved local references: ${result.dependencyGraph.summary.resolvedEdges}`,
-    `- Unresolved local references: ${result.dependencyGraph.summary.unresolvedLocalEdges}`,
+    `- Unresolved local references (non-test sources): ${result.dependencyGraph.summary.unresolvedLocalEdges}`,
+    `- Unresolved references inside test fixtures: ${result.dependencyGraph.summary.unresolvedTestFixtures}`,
     `- External references: ${result.dependencyGraph.summary.externalReferences}`,
+    `- Root entrypoints: ${result.dependencyGraph.rootEntrypoints.join(", ") || "None detected"}`,
+    `- Files statically reachable from those entrypoints: ${result.dependencyGraph.summary.staticallyReachableFiles}`,
     "",
     "**Unresolved local references requiring review:**",
     ...result.dependencyGraph.edges.filter(edge => edge.status === "unresolved-local").slice(0, 40).map(edge => `- ${edge.from} → ${edge.specifier}`),
@@ -220,10 +273,16 @@ export function renderBlueprintReport(result) {
     ""
   ];
   for (const department of result.departments) {
-    lines.push(`### ${department.title}`, "", `- ID: ${department.id}`, `- Status: ${department.status}`, `- Specialist coverage: ${department.specialistIds.join(", ") || "Not assigned"}`, `- Candidate source files: ${department.sourceFiles.length}`, "");
-    lines.push("**Purpose:** " + department.purpose, "", "**Candidate sources:**");
+    lines.push(`### ${department.title}`, "", `- ID: ${department.id}`, `- Status: ${department.status}`, `- Specialist coverage: ${department.specialistIds.join(", ") || "Not assigned"}`, `- Path-matched candidate files: ${department.sourceFiles.length}`, `- Keyword-evidence files (review clues): ${department.keywordEvidenceFiles.length}`, `- Path-matched candidates statically reachable: ${department.runtimeConnectedSourceFiles.length}`, "");
+    lines.push("**Purpose:** " + department.purpose, "", "**Path-matched candidate files:**");
     if (department.sourceFiles.length) department.sourceFiles.forEach(source => lines.push(`- ${source}`));
     else lines.push("- No matching files found in this scan.");
+    lines.push("", "**Keyword-evidence files (not confirmed ownership):**");
+    if (department.keywordEvidenceFiles.length) department.keywordEvidenceFiles.forEach(source => lines.push(`- ${source}`));
+    else lines.push("- None detected.");
+    lines.push("", "**Path-matched files statically reachable from entrypoints:**");
+    if (department.runtimeConnectedSourceFiles.length) department.runtimeConnectedSourceFiles.forEach(source => lines.push(`- ${source}`));
+    else lines.push("- None detected from the configured entrypoints.");
     lines.push("", "**Review notes:**", ...department.notes.map(note => `- ${note}`), "");
   }
   lines.push("## Safety and Interpretation", "", "- No source files were modified.", "- No development tasks were created or submitted.", "- Private queue, environment, credential, and secret-named paths are excluded.", "- Keyword evidence can produce false positives and false negatives.", "- A human must reconcile source conflicts, confirm current implementation, and approve the resulting department blueprints.", "");
