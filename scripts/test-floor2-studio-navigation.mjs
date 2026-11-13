@@ -90,7 +90,7 @@ assert.match(engine, /this\.systems\[name\] = new Proxy/,
   "The engine must isolate newly registered modules.");
 assert.match(engine, /this\.context\.systems = this\.systems/,
   "The live context must retain the merged engine registry.");
-assert.match(main, /engine\.registerSystems\(\{\s*\[name\]: system\s*\}\)/,
-  "Each streamed upper-floor module must merge into the live engine registry.");
-assert.match(main, /await engine\.initSystem\(name\)/,
-  "Streamed upper-floor modules must use the engine's isolated initializer.");
+assert.match(main, /engine\.registerSystems\(systems\)/,
+  "All streamed upper-floor modules must merge into the live engine registry.");
+assert.match(main, /engine\.initSystem\(name, \.\.\.args\)/,
+  "Streamed upper-floor modules must use the engine's isolated initializer with their scene/context arguments.");
