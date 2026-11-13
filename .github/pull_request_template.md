@@ -10,7 +10,7 @@
 
 ## Founder authorization
 <!-- For application source, protected systems, or any deletion, enter APPROVED only when the owner explicitly authorized this exact task. -->
-APPROVED
+NOT APPROVED — change only after explicit owner authorization for this exact task.
 
 ## Validation performed
 - [ ] Full diff reviewed; no unrelated files changed
