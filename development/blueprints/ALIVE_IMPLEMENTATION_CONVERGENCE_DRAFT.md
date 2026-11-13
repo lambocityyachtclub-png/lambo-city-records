@@ -110,21 +110,34 @@ This closes the local bootstrap, local task/review persistence, and local vision
 5. **Owner review:** proposals remain draft-only until explicit owner review. Approval records a decision; it does not merge, deploy, spend money, change billing, alter secrets, or activate workers.
 6. **Visitor-world isolation:** ALIVE development infrastructure must not be imported by the public game runtime. The public game must not depend on ALIVE development services.
 
-## 5. Minimum ALIVE completion gates before returning to Floor 2
+## 5. Bounded ALIVE foundation gates and Floor 2 handoff
 
-These are the bounded foundation gates; they do not require completing every future department feature.
+This milestone completes the local-first planning and recordkeeping foundation, not an autonomous code-execution platform. It does not require completing every future department feature.
 
-- [ ] One documented canonical ALIVE code lineage; competing drafts remain isolated until reviewed.
-- [x] Local owner bootstrap starts with no AI, Sandbox, Vercel token, or database credentials (PR #52).
-- [x] Local owner vision, task and review persistence survives browser database close/reopen using IndexedDB (PR #52).
-- [ ] A complete local task/review interface supports manual planning and owner decisions without an external model.
-- [ ] Any code-execution path requires a trusted isolated workspace, explicit path allowlist, tests, cleanup, and draft-only output.
-- [ ] Authentication, private owner data, and visitor-world boundaries are covered by automated tests.
-- [ ] Optional hosted adapters are off by default and have separate opt-in tests.
-- [x] Development Engine and browser CI pass on the selected candidate (PR #52 head; Chromium, WebKit, and iPad-sized WebKit check).
-- [x] Floor 2 remains lazily loaded and its existing Studio interfaces and protected room layout are unchanged by the ALIVE source/bootstrap changes (source graph and existing Studio checks; physical device acceptance remains outstanding).
+### Local-first foundation status
 
-Once these gates pass, ALIVE is sufficient to support controlled Floor 2 development. Radio, commerce, future districts, and other planned departments can continue expanding later without blocking Studio completion.
+- [x] Local owner bootstrap starts with no AI, Sandbox, Vercel token, hosted queue, or database credentials (PR #52).
+- [x] Browser IndexedDB persists owner directions, Development Director tasks, and review decisions across database close/reopen (PR #52).
+- [x] Browser tests exercise local direction intake, task creation, protected-task owner approval, review decisions, and persistence in Chromium, WebKit, and an iPad-sized WebKit touch viewport.
+- [x] The local bootstrap exposes no hosted queue or code-execution workers; AI and Sandbox adapters remain unconfigured.
+- [x] Local owner direction capture does not submit to a hosted queue or call a model. Hosted execution remains off by default.
+- [x] The local core records decisions only; it does not merge, deploy, spend money, alter secrets, or change production.
+- [x] Master, Department, Security & Release, and runtime documentation describe local-first behavior and browser-profile storage limits.
+
+### Conditions for any later autonomous execution or remote operation
+
+- [ ] A canonical ALIVE code lineage is reviewed and explicitly approved; competing branches remain draft and unmerged.
+- [ ] Any code-execution path has a trusted isolated workspace, explicit path allowlist, network restrictions, tests, cleanup, provenance and draft-only output. This is **not required** for the current manual Floor 2 development workflow.
+- [ ] Authentication, private owner data and visitor-world boundaries receive complete security review and automated coverage before remote owner-workspace expansion.
+- [ ] Optional hosted adapters have separate opt-in tests and explicit owner activation before use.
+- [ ] A reviewed export/import backup path exists before local records are treated as durable business records.
+- [ ] Physical iPad Safari and desktop acceptance is completed; automated WebKit viewport coverage is not a substitute.
+
+### Floor 2 handoff
+
+The bounded local-first foundation is sufficient to resume controlled Floor 2 development now. ChatGPT-assisted planning and draft PR review remain the active development workflow; the local ALIVE inbox and task/review APIs provide local recordkeeping, not autonomous implementation. Floor 2 work remains separately tested and lazily loaded. Radio, commerce, future districts, yachts and other planned departments do not block Studio completion.
+
+The local task/review management interface, export/import backup, cross-device sync, autonomous code execution and full remote ALIVE operation remain future work.
 
 ## 6. Explicit non-decisions
 
