@@ -72,7 +72,7 @@ async function smokeWorld({ label, isMobile }) {
       window.__lamboCityFloor2SessionMode === "seated" &&
       window.__lamboCityFloor2Discovered === true &&
       typeof window.__lamboCityEnterFloor2CockpitDirect === "function"
-    , { timeout: 60000 });
+    , null, { timeout: 60000 });
 
     // End the session without clearing discovery, then use the phone again.
     // This exercises the returning-visitor direct cockpit shortcut.
@@ -88,7 +88,7 @@ async function smokeWorld({ label, isMobile }) {
     await page.locator("#lambo-phone-studio").click();
     await page.waitForFunction(() =>
       window.__lamboCityFloor2SessionMode === "seated"
-    , { timeout: 15000 });
+    , null, { timeout: 15000 });
 
     assert.deepEqual(pageErrors, [], label + ": no uncaught errors during Studio navigation");
     console.log("PASS: " + label + " world startup, touch/phone controls, first Studio visit, and returning shortcut");
