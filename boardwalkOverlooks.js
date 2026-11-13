@@ -46,9 +46,10 @@ let lanternLights = [];
 
 export default {
   init(scene) {
+    // Keep the store-side waterfront overlook, but leave the Records HQ
+    // street/sidewalk end open and flush with the original marina sidewalk.
     this._buildStoreOverlook(scene);
-    this._buildRecordsOverlook(scene);
-    this._registerColliders();
+    this._registerStoreCollider();
   },
 
   // ==========================================================
@@ -242,39 +243,19 @@ export default {
   // Uses the existing collision.js public API only; collision.js
   // itself is untouched.
   // ==========================================================
-  _registerColliders() {
-    const westCx = WEST_EDGE - DECK_LEN / 2;   // -51.5, matches _buildStoreOverlook's cx
-    const eastCx = EAST_EDGE + DECK_LEN / 2;   // 51.5, matches _buildRecordsOverlook's cx
+  _registerStoreCollider() {
+    const westCx = WEST_EDGE - DECK_LEN / 2;
 
-    // Tip rails — extended to the deck's full depth (was 2 short of it,
-    // which left a gap at each corner the player could slip through).
     Collision.registerBox("overlookRailWest", {
       x: WEST_EDGE - DECK_LEN - 0.3,
       z: STREET_Z,
       width: 1,
       depth: STREET_DEPTH
     });
-    Collision.registerBox("overlookRailEast", {
-      x: EAST_EDGE + DECK_LEN + 0.3,
-      z: STREET_Z,
-      width: 1,
-      depth: STREET_DEPTH
-    });
 
-    // Side rails — previously visual-only (the sideRail meshes had no
-    // matching collider), which is what let players walk straight
-    // through them onto the water. Matches the sideRail mesh geometry.
     [STREET_Z_MIN + 0.2, STREET_Z_MAX - 0.2].forEach((z, i) => {
       Collision.registerBox(`overlookSideWest${i}`, {
         x: westCx - 0.5,
-        z,
-        width: DECK_LEN - 1,
-        depth: 1
-      });
-    });
-    [STREET_Z_MIN + 0.5, STREET_Z_MAX - 0.5].forEach((z, i) => {
-      Collision.registerBox(`overlookSideEast${i}`, {
-        x: eastCx - 0.5,
         z,
         width: DECK_LEN - 1,
         depth: 1
