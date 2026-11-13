@@ -43,7 +43,7 @@ test("discovery creates independent department drafts from repository evidence",
 test("discovery excludes private queues and environment files and redacts sensitive evidence", async () => {
   const rootDir = await fixture();
   try {
-    await fs.writeFile(path.join(rootDir, "docs", "security-notes.md"), "Authorization: Bearer abcdefghijklmnopqrstuvwxyz123456\n");
+    await fs.writeFile(path.join(rootDir, "docs", "security-notes.md"), "Security Authorization: Bearer abcdefghijklmnopqrstuvwxyz123456\n");
     const result = await discoverBlueprints({ rootDir, catalog });
     const paths = result.inventory.map(item => item.path);
     assert.ok(!paths.some(item => item === ".env" || item.includes("private-queue")));
