@@ -54,6 +54,7 @@ button:disabled { opacity:.55; cursor:wait; transform:none; }
 .status-card { padding:17px 18px; }
 .status-card strong { display:block; margin-top:6px; font-size:15px; }
 .status-detail { display:block; margin-top:6px; color:var(--muted); font-size:10px; line-height:1.4; }
+.local-storage-note { margin:10px 2px 18px; color:var(--muted); font-size:11px; line-height:1.5; }
 .status-label { font-size:9px; }
 .live-dot { color:var(--lime); font-size:10px; letter-spacing:.16em; white-space:nowrap; }
 .live-dot::before { content:""; display:inline-block; width:6px; height:6px; margin:0 8px 1px 0; border-radius:50%; background:var(--lime); box-shadow:0 0 10px rgba(199,230,107,.6); }
