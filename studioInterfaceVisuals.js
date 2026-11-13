@@ -34,8 +34,8 @@ const STUDIO_VISUAL_CSS = `
 }
 .lc-vocal-booth .lc-vocal-room-hero {
   position:relative;
-  min-height:clamp(230px,35vw,390px);
-  aspect-ratio:2.25/1;
+  min-height:clamp(390px,54vw,540px);
+  aspect-ratio:1.78/1;
   overflow:hidden;
   isolation:isolate;
   border:1px solid rgba(240,180,255,.42);
@@ -101,6 +101,25 @@ const STUDIO_VISUAL_CSS = `
 .lc-vocal-room-screen small {
   grid-column:2;color:#b9c4d3;font:9px monospace;letter-spacing:.5px;
 }
+.lc-vocal-room-actions {
+  position:absolute;left:50%;bottom:4%;transform:translateX(-50%);
+  z-index:3;display:flex;justify-content:center;gap:10px;flex-wrap:wrap;
+  width:min(92%,560px);
+}
+.lc-vocal-room-actions button {
+  min-height:46px;padding:12px 18px;border-radius:8px;
+  border:1px solid #d8a5ed;background:linear-gradient(145deg,#30203d,#100d18);
+  color:#f8eaff;font-size:11px;font-weight:900;letter-spacing:1px;
+  box-shadow:0 7px 18px #0009,0 0 18px #bd65df33;
+  touch-action:manipulation;
+}
+.lc-vocal-room-actions .lc-vocal-room-record {
+  border-color:#ffb8bd;background:linear-gradient(#ed858d,#8d263b);
+  color:#fff;font-size:12px;
+}
+.lc-vocal-room-actions .lc-vocal-room-monitor[aria-pressed=true] {
+  border-color:#a8ed70;background:linear-gradient(#a8ed70,#4d963e);color:#10200d;
+}
 .lc-vocal-room-microphone {
   position:absolute;left:50%;bottom:5%;width:3px;height:34%;
   background:linear-gradient(90deg,#17151a,#b8a2a4,#17151a);
@@ -108,14 +127,14 @@ const STUDIO_VISUAL_CSS = `
 }
 .lc-vocal-room-microphone:before {
   content:"";position:absolute;left:50%;top:0;transform:translate(-50%,-25%);
-  width:17px;height:39px;border-radius:9px 9px 6px 6px;
+  width:30px;height:72px;border-radius:16px 16px 9px 9px;
   border:2px solid #a87978;
   background:repeating-linear-gradient(180deg,#d7a0a0 0 2px,#3d2530 2px 4px);
   box-shadow:0 0 10px #e9a5cf88;
 }
 .lc-vocal-room-microphone:after {
   content:"";position:absolute;left:50%;bottom:0;transform:translateX(-50%);
-  width:92px;height:3px;background:#1a1720;
+  width:150px;height:4px;background:#1a1720;
   box-shadow:0 0 0 1px #8d778b;
 }
 .lc-vocal-booth [data-booth-mode-switch] {
@@ -272,11 +291,31 @@ export function applyVocalBoothVisual(root) {
       <div class="lc-vocal-room-wave"></div>
       <small>VOICE NOTE · VOCAL TAKE · SESSION MONITOR</small>
     </div>
-    <div class="lc-vocal-room-microphone"></div>
+    <div class="lc-vocal-room-microphone" aria-hidden="true"></div>
+    <div class="lc-vocal-room-actions">
+      <button type="button" class="lc-vocal-room-monitor" data-booth-monitor aria-pressed="false">◉ ENABLE LIVE MONITOR</button>
+      <button type="button" class="lc-vocal-room-record" data-vocal-action="record">● TAP MIC TO RECORD</button>
+    </div>
   `;
   const header = root.querySelector(":scope > header");
   if (header) header.after(hero);
   else root.prepend(hero);
+
+  const monitorButton = hero.querySelector("[data-booth-monitor]");
+  const talkbackButton = root.querySelector("[data-vocal-talkback]");
+  const syncMonitor = event => {
+    const active = Boolean(event.detail?.active);
+    monitorButton?.setAttribute("aria-pressed", String(active));
+    if (monitorButton) monitorButton.textContent = active ? "● LIVE MONITOR ON" : "◉ ENABLE LIVE MONITOR";
+  };
+  const toggleMonitor = () => talkbackButton?.click();
+  monitorButton?.addEventListener("click", toggleMonitor);
+  window.addEventListener("lc-talkback-state", syncMonitor);
+  root.addEventListener("lc-vocal-booth-dispose", () => {
+    monitorButton?.removeEventListener("click", toggleMonitor);
+    window.removeEventListener("lc-talkback-state", syncMonitor);
+  }, { once: true });
+  monitorButton?.setAttribute("aria-pressed", String(Boolean(window.__lamboCityTalkbackActive)));
   return root;
 }
 
