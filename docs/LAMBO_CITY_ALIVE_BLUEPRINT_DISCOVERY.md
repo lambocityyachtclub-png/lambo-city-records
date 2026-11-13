@@ -78,6 +78,14 @@ The first pass is intentionally deterministic. It uses keywords and file paths a
 - Evidence lines are bounded and common credential-like assignments and token patterns are redacted.
 - The scanner does not execute repository code.
 
+## Static dependency map
+
+The discovery report also includes a conservative static dependency map for literal relative/root-relative JavaScript imports, dynamic imports, CommonJS requires, HTML `src`/`href` references, and CSS `url()`/`@import` references.
+
+Each local edge is marked resolved only when its target is present in the scanned file inventory. Missing local targets are reported as unresolved candidates rather than guessed. External CDN references are listed separately; bare package names are not treated as repository files.
+
+This map is an aid for review, not a complete runtime dependency graph. It cannot reliably infer computed paths, dynamic registries, script injection, Three.js scene registration, event-driven relationships, or dependencies loaded through runtime data. Those relationships still require source and runtime inspection.
+
 ## Required next steps after discovery
 
 1. Review the generated source inventory and confirm each department's relevant files.

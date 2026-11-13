@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { buildStaticDependencyGraph } from "./dependencyGraph.mjs";
 
 const DEFAULT_IGNORES = new Set([
   ".git", "node_modules", "vendor", "dist", "build", "coverage",
@@ -117,10 +118,13 @@ export async function discoverBlueprints(options = {}) {
   }
   const files = await walk(rootDir);
   const inventory = [];
+  const dependencyFiles = [];
   for (const file of files) {
     const content = await fs.readFile(file.absolute, "utf8");
     inventory.push(analyzeFile(file, content, catalog));
+    dependencyFiles.push({ path: file.path, content });
   }
+  const dependencyGraph = buildStaticDependencyGraph(dependencyFiles);
 
   const departments = catalog.departments.map(department => {
     const evidence = inventory
@@ -165,6 +169,7 @@ export async function discoverBlueprints(options = {}) {
       status: "source-identified-not-yet-reconciled",
       discoveredSourceFiles: discoveredMasterFiles
     },
+    dependencyGraph,
     summary: {
       filesScanned: inventory.length,
       documentationFiles: inventory.filter(file => file.kind === "documentation").length,
@@ -197,6 +202,19 @@ export function renderBlueprintReport(result) {
     `- Source files: ${result.summary.sourceFiles}`,
     `- Configuration files: ${result.summary.configurationFiles}`,
     `- Files with planning markers: ${result.summary.filesWithPlanningMarkers}`,
+    "",
+    "## Static Dependency Map",
+    "",
+    `- Source files analyzed: ${result.dependencyGraph.summary.filesAnalyzed}`,
+    `- Resolved local references: ${result.dependencyGraph.summary.resolvedEdges}`,
+    `- Unresolved local references: ${result.dependencyGraph.summary.unresolvedLocalEdges}`,
+    `- External references: ${result.dependencyGraph.summary.externalReferences}`,
+    "",
+    "**Unresolved local references requiring review:**",
+    ...result.dependencyGraph.edges.filter(edge => edge.status === "unresolved-local").slice(0, 40).map(edge => `- ${edge.from} → ${edge.specifier}`),
+    ...(result.dependencyGraph.summary.unresolvedLocalEdges ? [] : ["- None detected by static analysis."]),
+    "",
+    ...result.dependencyGraph.limitations.map(note => `- ${note}`),
     "",
     "## Department Blueprints",
     ""
