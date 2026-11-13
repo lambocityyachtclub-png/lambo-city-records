@@ -18,6 +18,7 @@ export async function createLocalAliveControlPlane(options = {}) {
       system,
       taskStorage: persistence.taskStorage,
       reviewStore: persistence.reviewStore,
+      visionStore: persistence.visionStore,
       storageMode: "browser-indexeddb",
       localOnly: true,
       hostedQueueConfigured: false,
