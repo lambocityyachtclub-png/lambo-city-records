@@ -6,6 +6,15 @@ on:
       - "main.js"
       - "hud.js"
       - "engine.js"
+      - "recordsHQFloor1.js"
+      - "recordsHQ.js"
+      - "marina.js"
+      - "world.js"
+      - "renderer.js"
+      - "player.js"
+      - "input.js"
+      - "scripts/test-camera-baseline.mjs"
+      - "camera.js"
       - "recordsHQElevator.js"
       - "floor2PhoneNavigation.js"
       - "studioMixMasterConsole3D.js"
@@ -78,6 +87,15 @@ on:
       - "main.js"
       - "hud.js"
       - "engine.js"
+      - "recordsHQFloor1.js"
+      - "recordsHQ.js"
+      - "marina.js"
+      - "world.js"
+      - "renderer.js"
+      - "player.js"
+      - "input.js"
+      - "scripts/test-camera-baseline.mjs"
+      - "camera.js"
       - "recordsHQElevator.js"
       - "floor2PhoneNavigation.js"
       - "studioMixMasterConsole3D.js"
@@ -149,6 +167,14 @@ jobs:
             main.js \
             hud.js \
             engine.js \
+            camera.js \
+            input.js \
+            player.js \
+            renderer.js \
+            world.js \
+            marina.js \
+            recordsHQ.js \
+            recordsHQFloor1.js \
             recordsHQElevator.js \
             floor2PhoneNavigation.js \
             studioMixMasterConsole3D.js \
@@ -251,6 +277,9 @@ jobs:
 
       - name: Test approved five-step music interface workflow
         run: node --experimental-default-type=module scripts/test-studio-interface-workflow.mjs
+
+      - name: Verify approved world camera baseline
+        run: node scripts/test-camera-baseline.mjs
 
       - name: Test Floor 2 Studio station registration and navigation
         run: node --experimental-default-type=module scripts/test-floor2-studio-navigation.mjs
