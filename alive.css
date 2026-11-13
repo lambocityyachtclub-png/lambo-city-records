@@ -87,3 +87,5 @@ button:disabled { opacity:.55; cursor:wait; transform:none; }
   .status-card { padding:13px; }
   .status-card strong { font-size:13px; }
 }
+
+.hidden { display: none !important; }
