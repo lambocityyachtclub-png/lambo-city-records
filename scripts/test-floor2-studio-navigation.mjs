@@ -68,8 +68,12 @@ assert.match(elevator, /window\.__lamboCityPrepareFloor\?\.\(selectedFloor\)/, "
 assert.match(elevator, /window\.__lamboCityBeginFloor2Session\?\.\(arrivedPlayer\)/, "Floor 2 arrival must open the Studio session");
 assert.ok(engine.indexOf('this.initSystem("input", this.scene, this.context);') >= 0 && engine.indexOf('this.initSystem("input", this.scene, this.context);') < engine.indexOf('this.initSystem("performanceMonitor", this.renderer, this.context);'), "iPad input and joystick must initialize immediately after the core renderer/context");
 
+assert.match(studioApp, /THREE = context\\?\\.THREE/,
+  "Floor 2 Studio must use the world's shared Three.js runtime when available.");
+assert.match(studioApp, /await import\\(["']https:\\/\\/unpkg\\.com\\/three@0\\.160\\.0/,
+  "Standalone Studio may lazily load Three.js for its presentation wrapper.");
+
 for (const [name, source] of [
-  ["Floor 2 Studio app", studioApp],
   ["Mix and Master console", mixMaster],
   ["Live Drummer", liveDrummer],
   ["Vocal Booth", vocalBooth],
