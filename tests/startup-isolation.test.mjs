@@ -45,6 +45,8 @@ test("one feature update failure does not block other updates or later frames", 
   engine.scene = {};
   engine.camera = {};
   engine.renderer = { render() {} };
+  engine.initSystem("brokenFeature", engine.scene, engine.context);
+  engine.initSystem("healthyFeature", engine.scene, engine.context);
   engine.update(0.016);
   engine.update(0.016);
 
