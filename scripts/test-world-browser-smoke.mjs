@@ -93,6 +93,27 @@ async function smokeWorld({ label, isMobile }) {
       label + ": the World System must initialize without errors");
     assert.deepEqual(pageErrors, [], label + ": no uncaught startup errors");
 
+    const worldSystem = await page.evaluate(async () => {
+      if (!window.__lamboCityWorldSystemReady) {
+        return { available: false, status: null, error: "World System promise was not registered" };
+      }
+      const status = await Promise.race([
+        window.__lamboCityWorldSystemReady,
+        new Promise(resolve => setTimeout(() => resolve(null), 15000))
+      ]);
+      return {
+        available: status !== null,
+        status,
+        error: window.__lamboCityWorldSystemError || null
+      };
+    });
+    assert.equal(worldSystem.available, true, label + ": World System must initialize");
+    assert.equal(worldSystem.error, null, label + ": World System must not report an initialization error");
+    assert.equal(worldSystem.status?.ready, true, label + ": World System runtime must be ready");
+    assert.ok(worldSystem.status?.registeredDistrictIds?.length > 0,
+      label + ": the Conference Center district blueprint must be registered");
+    console.log("PASS: " + label + " World System and Conference Center blueprint initialized");
+
     // Open the citizen phone using the same F control exposed to players.
     if (isMobile) {
       await page.locator("#lambo-city-mobile-buttons button").nth(1).tap();
@@ -109,10 +130,25 @@ async function smokeWorld({ label, isMobile }) {
     // First visit must load Floor 2, complete the elevator arrival, and seat
     // the player before the session's direct-entry hook is considered ready.
     await page.waitForFunction(() =>
-      window.__lamboCityFloor2SessionMode === "seated" &&
-      window.__lamboCityFloor2Discovered === true &&
-      typeof window.__lamboCityEnterFloor2CockpitDirect === "function"
+      window.__lamboCityFloor2SessionMode === "seated" ||
+      !!window.__lamboCityFloor2LoadError
     , null, { timeout: 45000 });
+    const floor2Status = await page.evaluate(() => ({
+      ready: window.__lamboCityFloor2Ready === true,
+      mode: window.__lamboCityFloor2SessionMode || null,
+      discovered: window.__lamboCityFloor2Discovered === true,
+      directEntry: typeof window.__lamboCityEnterFloor2CockpitDirect,
+      loadError: window.__lamboCityFloor2LoadError || null,
+      startupErrors: window.__lamboCityStartupErrors || []
+    }));
+    assert.equal(floor2Status.loadError, null,
+      label + ": Floor 2 loader error: " + String(floor2Status.loadError));
+    assert.equal(floor2Status.ready, true, label + ": Floor 2 modules must finish loading");
+    assert.equal(floor2Status.mode, "seated", label + ": first visit must complete the elevator-to-cockpit arrival");
+    assert.equal(floor2Status.discovered, true, label + ": first visit must persist Floor 2 discovery");
+    assert.equal(floor2Status.directEntry, "function", label + ": the return shortcut must be registered");
+    assert.deepEqual(floor2Status.startupErrors, [],
+      label + ": no isolated system initialization/update failures are allowed");
     console.log("PASS: " + label + " first-time Floor 2 load and elevator arrival completed");
 
     // End the session without clearing discovery, then use the phone again.
