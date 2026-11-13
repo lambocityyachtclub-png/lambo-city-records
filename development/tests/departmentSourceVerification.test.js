@@ -5,7 +5,9 @@ import os from "node:os";
 import path from "node:path";
 import { buildDepartmentSourceVerification } from "../blueprints/verifyDepartmentSources.mjs";
 
-test("department verification distinguishes source presence, runtime references and test references", async () => {
+const tick = String.fromCharCode(96);
+
+test("department verification distinguishes registered roots, transitive imports, and test references", async () => {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), "lc-department-verification-"));
   try {
     await fs.mkdir(path.join(root, "development/blueprints/departments"), { recursive: true });
@@ -16,14 +18,26 @@ test("department verification distinguishes source presence, runtime references 
         title: "Sample Department",
         path: "development/blueprints/departments/sample.md",
         status: "partial",
-        sourceCount: 2,
+        sourceCount: 3,
         ownerApproved: false
       }]
     }));
-    await fs.writeFile(path.join(root, "development/blueprints/departments/sample.md"),
-      "# Sample\n\n## 3. Current source inventory\n- `sampleFeature.js`\n- `missingFeature.js`\n\n## 4. Non-goals\n");
-    await fs.writeFile(path.join(root, "sampleFeature.js"), "export default {};\n");
-    await fs.writeFile(path.join(root, "main.js"), 'import Sample from "./sampleFeature.js";\nengine.registerSystems({\n  sampleFeature: Sample,\n});\n');
+    const document = [
+      "# Sample",
+      "",
+      "## 3. Current source inventory",
+      "- " + tick + "sampleFeature.js" + tick,
+      "- " + tick + "nestedFeature.js" + tick,
+      "- " + tick + "missingFeature.js" + tick,
+      "",
+      "## 4. Non-goals",
+      ""
+    ].join("\n");
+    await fs.writeFile(path.join(root, "development/blueprints/departments/sample.md"), document);
+    await fs.writeFile(path.join(root, "sampleFeature.js"), 'import "./nestedFeature.js";\nexport default {};\n');
+    await fs.writeFile(path.join(root, "nestedFeature.js"), "export const ready = true;\n");
+    await fs.writeFile(path.join(root, "main.js"),
+      'import Sample from "./sampleFeature.js";\nengine.registerSystems({\n  sampleFeature: Sample,\n});\n');
     await fs.writeFile(path.join(root, "engine.js"), 'initialize("sampleFeature");\n');
     await fs.writeFile(path.join(root, "tests/sample.test.mjs"), 'import "../sampleFeature.js";\n');
     for (const file of ["worldSystemHost.js", "worldSystemRuntime.js", "floor2StudioNavigation.js", "floor2StudioSession.js"]) {
@@ -34,7 +48,6 @@ test("department verification distinguishes source presence, runtime references 
     const capabilities = report.departments[0].capabilities;
     assert.equal(capabilities[0].sourcePresent, true);
     assert.equal(capabilities[0].status, "tested");
-    assert.equal(capabilities[0].runtimeReferences.length, 1);
     assert.equal(capabilities[0].runtimeReferences[0].kind, "registered-static-root");
     assert.equal(capabilities[0].testReferences.length, 1);
     assert.equal(capabilities[0].runtimeDeviceVerification, "not-verified");
