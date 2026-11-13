@@ -240,8 +240,8 @@ export default {
   screenTexture:null,
   recordingHandler:null,
   frameElapsed:0,
-  async init(scene){
-    THREE = await import("https://unpkg.com/three@0.160.0/build/three.module.js");
+  async init(scene, context){
+    THREE = context?.THREE || await import("https://unpkg.com/three@0.160.0/build/three.module.js");
     const studio=scene?.getObjectByName("recordsHQFloor2Studio");
     const booth=studio?.getObjectByName("floor2RecordingBooth");
     if(!booth){console.warn("LAMBO CITY Vocal Booth: existing booth not found.");return;}
