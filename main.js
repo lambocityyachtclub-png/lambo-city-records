@@ -112,37 +112,6 @@ engine.registerSystems({
 // Load upper floors only when selected in the elevator.
 // Each destination is cached so returning to a floor never rebuilds it.
 const destinationLoads = new Map();
-const yieldToFrame = () => new Promise(resolve => {
-  let finished = false;
-  let fallbackTimer = null;
-
-  const finish = () => {
-    if (finished) return;
-    finished = true;
-    if (fallbackTimer !== null && typeof window !== "undefined") {
-      window.clearTimeout(fallbackTimer);
-    }
-    resolve();
-  };
-
-  if (typeof window !== "undefined") {
-    // requestAnimationFrame is preferred while visible, but can be paused
-    // in background tabs, iPad multitasking, or headless browser sessions.
-    // The fallback guarantees streamed modules never wait forever for a frame.
-    fallbackTimer = window.setTimeout(finish, 50);
-    if (typeof window.requestAnimationFrame === "function") {
-      try {
-        window.requestAnimationFrame(finish);
-      } catch (_) {
-        finish();
-      }
-    } else {
-      finish();
-    }
-  } else {
-    setTimeout(finish, 0);
-  }
-});
 window.__lamboCityFloor2Ready = false;
 window.__lamboCityFloor2LoadPhase = "idle";
 window.__lamboCityFloor2LoadingModule = null;
@@ -234,9 +203,8 @@ window.__lamboCityPrepareFloor = floor => {
           }
           window.__lamboCityFloor2InitProgress.push(name);
           window.__lamboCityFloor2LoadingModule = null;
-          // Give the world one frame between interface modules so the
-          // elevator, camera, and phone UI remain responsive during loading.
-          await yieldToFrame();
+          // Each init is awaited, including asynchronous interface modules.
+          // The phone click has already completed before this loader starts.
         }
 
         if (!engine.scene.getObjectByName("recordsHQFloor2Studio")) {
