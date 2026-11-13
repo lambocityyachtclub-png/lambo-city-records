@@ -18,7 +18,10 @@ jobs:
           node-version: 22
       - name: Run startup isolation regression tests
         run: node --test tests/startup-isolation.test.mjs
+      - name: Verify approved camera baseline
+        run: node scripts/test-camera-baseline.mjs
       - name: Syntax-check engine and application entry point
         run: |
           node --check engine.js
           node --check main.js
+          node --check camera.js
