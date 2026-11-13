@@ -137,7 +137,8 @@ export async function discoverBlueprints(options = {}) {
     const hintedPaths = inventory
       .filter(file => department.sourceHints.some(hint => file.path.toLowerCase().includes(hint)))
       .map(file => file.path);
-    const sourcePaths = [...new Set([...evidence.map(item => item.path), ...hintedPaths])].sort();
+    const sourcePaths = [...new Set(hintedPaths)].sort();
+    const keywordEvidenceFiles = [...new Set(evidence.map(item => item.path))].sort();
     const staticallyReachable = new Set(dependencyGraph.reachableFiles);
     const runtimeConnectedSourceFiles = sourcePaths.filter(filePath => staticallyReachable.has(filePath));
     const notStaticallyReachableSourceFiles = sourcePaths.filter(filePath => !staticallyReachable.has(filePath));
@@ -148,6 +149,7 @@ export async function discoverBlueprints(options = {}) {
       specialistIds: [...department.specialistIds],
       status: "discovery-draft",
       sourceFiles: sourcePaths,
+      keywordEvidenceFiles,
       runtimeConnectedSourceFiles,
       notStaticallyReachableSourceFiles,
       evidence,
@@ -212,7 +214,8 @@ export function renderBlueprintReport(result) {
     "",
     `- Source files analyzed: ${result.dependencyGraph.summary.filesAnalyzed}`,
     `- Resolved local references: ${result.dependencyGraph.summary.resolvedEdges}`,
-    `- Unresolved local references: ${result.dependencyGraph.summary.unresolvedLocalEdges}`,
+    `- Unresolved local references (non-test sources): ${result.dependencyGraph.summary.unresolvedLocalEdges}`,
+    `- Unresolved references inside test fixtures: ${result.dependencyGraph.summary.unresolvedTestFixtures}`,
     `- External references: ${result.dependencyGraph.summary.externalReferences}`,
     `- Root entrypoints: ${result.dependencyGraph.rootEntrypoints.join(", ") || "None detected"}`,
     `- Files statically reachable from those entrypoints: ${result.dependencyGraph.summary.staticallyReachableFiles}`,
@@ -227,11 +230,14 @@ export function renderBlueprintReport(result) {
     ""
   ];
   for (const department of result.departments) {
-    lines.push(`### ${department.title}`, "", `- ID: ${department.id}`, `- Status: ${department.status}`, `- Specialist coverage: ${department.specialistIds.join(", ") || "Not assigned"}`, `- Candidate source files: ${department.sourceFiles.length}`, `- Statically reachable candidate files: ${department.runtimeConnectedSourceFiles.length}`, "");
-    lines.push("**Purpose:** " + department.purpose, "", "**Candidate sources:**");
+    lines.push(`### ${department.title}`, "", `- ID: ${department.id}`, `- Status: ${department.status}`, `- Specialist coverage: ${department.specialistIds.join(", ") || "Not assigned"}`, `- Path-matched candidate files: ${department.sourceFiles.length}`, `- Keyword-evidence files (review clues): ${department.keywordEvidenceFiles.length}`, `- Path-matched candidates statically reachable: ${department.runtimeConnectedSourceFiles.length}`, "");
+    lines.push("**Purpose:** " + department.purpose, "", "**Path-matched candidate files:**");
     if (department.sourceFiles.length) department.sourceFiles.forEach(source => lines.push(`- ${source}`));
     else lines.push("- No matching files found in this scan.");
-    lines.push("", "**Statically reachable candidate files:**");
+    lines.push("", "**Keyword-evidence files (not confirmed ownership):**");
+    if (department.keywordEvidenceFiles.length) department.keywordEvidenceFiles.forEach(source => lines.push(`- ${source}`));
+    else lines.push("- None detected.");
+    lines.push("", "**Path-matched files statically reachable from entrypoints:**");
     if (department.runtimeConnectedSourceFiles.length) department.runtimeConnectedSourceFiles.forEach(source => lines.push(`- ${source}`));
     else lines.push("- None detected from the configured entrypoints.");
     lines.push("", "**Review notes:**", ...department.notes.map(note => `- ${note}`), "");
