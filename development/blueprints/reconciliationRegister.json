@@ -267,8 +267,8 @@
     },
     {
       "id": "commerce-no-live-payments",
-      "scope": "department",
-      "departmentId": "commerce",
+      "scope": "master",
+      "departmentId": "master",
       "title": "Commerce is planning-only; live selling is not authorized",
       "implementationStatus": "planned",
       "verificationStatus": "source-reviewed",
@@ -291,8 +291,8 @@
     },
     {
       "id": "digital-real-estate-no-sales",
-      "scope": "department",
-      "departmentId": "digital-real-estate",
+      "scope": "master",
+      "departmentId": "master",
       "title": "Digital real estate is a future concept, not a live ownership product",
       "implementationStatus": "future",
       "verificationStatus": "owner-decision-required",
