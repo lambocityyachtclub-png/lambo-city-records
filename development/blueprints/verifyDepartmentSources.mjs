@@ -352,6 +352,7 @@ export async function buildDepartmentSourceVerification(root = ROOT) {
       testFilePresenceIsNotPassingTestProof: true,
       physicalDeviceValidationRequired: true,
       ownerApprovalRequiredForTaskAuthorization: true,
+      publicExperienceIsolationChecked: true,
       runtimeDeviceVerificationDefault: "not-verified"
     },
     entrypointsInspected: ENTRYPOINTS,
@@ -376,7 +377,7 @@ function renderMarkdown(report) {
     ""
   ];
   lines.push("## Public experience / ALIVE isolation", "");
-  lines.push("- Result: " + (report.runtimeIsolation.passed ? "passed — no public experience imports into development infrastructure" : "review required — public experience imports found"));
+  lines.push("- Result: " + (report.runtimeIsolation.passed ? "passed — no public experience imports into ALIVE development infrastructure" : "review required — public experience imports found"));
   lines.push("- Public domains: " + report.runtimeIsolation.publicDomains.join(", "));
   for (const item of report.runtimeIsolation.publicExperienceDevelopmentImports) {
     lines.push("- " + item.path + " reached from " + item.runtimeDomain + " via " + item.importedFrom + ":" + item.line);
