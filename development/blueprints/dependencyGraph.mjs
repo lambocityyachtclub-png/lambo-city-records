@@ -68,7 +68,7 @@ export function buildStaticDependencyGraph(files = []) {
       if (!specifier.startsWith(".") && !specifier.startsWith("/")) continue;
       const candidates = candidatePaths(file.path, specifier);
       const resolved = candidates.find(candidate => knownPaths.has(candidate));
-      const isTestSource = /(^|\\/)(?:tests?|__tests__)\\//i.test(file.path) || /(^|\\/)test-[^/]+\\.(?:mjs|cjs|js)$/i.test(file.path);
+      const isTestSource = file.path.startsWith("tests/") || file.path.includes("/tests/") || file.path.includes("/__tests__/") || /^test-[^/]+\.(?:mjs|cjs|js)$/i.test(path.posix.basename(file.path));
       edges.push({
         from: file.path,
         to: resolved || null,
