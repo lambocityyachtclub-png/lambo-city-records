@@ -50,7 +50,7 @@ function pathMatchesHint(relativePath, hint) {
 function isTestPath(relativePath) {
   const normalized = relativePath.toLowerCase();
   return normalized.startsWith("tests/") || normalized.includes("/tests/") ||
-    normalized.includes("/__tests__/") || /^test-[^/]+\\.(?:mjs|cjs|js)$/i.test(path.posix.basename(relativePath));
+    normalized.includes("/__tests__/") || path.posix.basename(normalized).startsWith("test-");
 }
 
 function classifyFile(relativePath) {
