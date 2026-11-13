@@ -4,8 +4,10 @@ import { chromium } from "playwright";
 
 const BASE_URL = process.env.LAMBO_CITY_TEST_URL || "http://127.0.0.1:4173";
 const phoneSource = await readFile(new URL("../input.js", import.meta.url), "utf8");
-assert.match(phoneSource, /const startNavigation = \(\) => \{[\s\S]*?window\.requestAnimationFrame\(startNavigation\)/,
-  "Studio phone navigation must begin after the activating click/tap finishes.");
+assert.match(phoneSource, /const startNavigation = \(\) => \{[\s\S]*?window\.setTimeout\(startNavigation, 120\)/,
+  "Studio phone navigation must wait until the activating click/tap has been acknowledged.");
+assert.match(phoneSource, /window\.requestAnimationFrame\(startNavigation\)/,
+  "The phone navigation fallback must remain available when timers are unavailable.");
 assert.doesNotMatch(phoneSource, /const navigateFromPhone = floor => \{\s*const navigate = window\.__lamboCityNavigateToFloor;\s*if \(typeof navigate !== "function" \|\| !navigate\(floor\)\) return;\s*phone\.remove\(\);/,
   "Studio phone navigation must not synchronously navigate and remove its own click target.");
 
