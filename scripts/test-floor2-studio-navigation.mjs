@@ -82,8 +82,8 @@ for (const [name, source] of [
   ["Vocal Booth", vocalBooth],
   ["City Synth", citySynth]
 ]) {
-  assert.ok(source.includes("THREE = context?.THREE || await import("),
-    `${name} must prefer the shared Three.js context`);
+  assert.ok(source.includes("THREE = context?.THREE;"),
+    `${name} must use the shared Three.js context without another CDN import`);
 }
 
 assert.match(world, /group\.userData\.studioStations\s*=\s*\{/);
