@@ -6,6 +6,8 @@ on:
       - "main.js"
       - "hud.js"
       - "engine.js"
+      - "recordsHQElevator.js"
+      - "floor2PhoneNavigation.js"
       - "studioMixMasterConsole3D.js"
       - "floor2LiveDrummer.js"
       - "floor2VocalBooth3D.js"
@@ -76,6 +78,8 @@ on:
       - "main.js"
       - "hud.js"
       - "engine.js"
+      - "recordsHQElevator.js"
+      - "floor2PhoneNavigation.js"
       - "studioMixMasterConsole3D.js"
       - "floor2LiveDrummer.js"
       - "floor2VocalBooth3D.js"
@@ -145,6 +149,8 @@ jobs:
             main.js \
             hud.js \
             engine.js \
+            recordsHQElevator.js \
+            floor2PhoneNavigation.js \
             studioMixMasterConsole3D.js \
             floor2LiveDrummer.js \
             floor2VocalBooth3D.js \
