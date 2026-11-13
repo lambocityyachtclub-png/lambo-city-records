@@ -1,6 +1,8 @@
 name: LAMBO CITY Change Scope Guard
 
 on:
+  push:
+    branches: ['protect/**']
   pull_request:
     branches: [main]
     types: [opened, synchronize, reopened, edited, ready_for_review]
@@ -22,7 +24,22 @@ jobs:
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
         with:
           script: |
-            const pr = context.payload.pull_request;
+            let pr = context.payload.pull_request;
+            if (!pr && context.eventName === "push") {
+              const branch = context.ref.replace("refs/heads/", "");
+              const matches = await github.rest.pulls.list({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                state: "open",
+                base: "main",
+                head: context.repo.owner + ":" + branch
+              });
+              pr = matches.data[0];
+            }
+            if (!pr) {
+              core.setFailed("Could not locate the open pull request for this protected development branch.");
+              return;
+            }
             const body = pr.body || "";
             const scopeHeading = "## Authorized change scope";
             const authHeading = "## Founder authorization";
