@@ -10,7 +10,24 @@ const ENTRYPOINTS = [
   "worldSystemHost.js",
   "worldSystemRuntime.js",
   "floor2StudioNavigation.js",
-  "floor2StudioSession.js"
+  "floor2StudioSession.js",
+  "alive.js",
+  "api/alive/session.js",
+  "api/alive/private-task.js",
+  "api/alive/status.js",
+  "api/alive/vision.js",
+  "development/engine/developmentSystem.js",
+  "development/runners/studio/studioDevelopmentRunner.js"
+];
+
+const SERVICE_ROOTS = [
+  { path: "alive.js", kind: "owner-workspace-browser-root", domain: "alive-owner-workspace", file: "alive.html", line: 11 },
+  { path: "api/alive/session.js", kind: "serverless-api-root", domain: "alive-api", file: "api/alive/session.js" },
+  { path: "api/alive/private-task.js", kind: "serverless-api-root", domain: "alive-api", file: "api/alive/private-task.js" },
+  { path: "api/alive/status.js", kind: "serverless-api-root", domain: "alive-api", file: "api/alive/status.js" },
+  { path: "api/alive/vision.js", kind: "serverless-api-root", domain: "alive-api", file: "api/alive/vision.js" },
+  { path: "development/engine/developmentSystem.js", kind: "development-engine-root", domain: "alive-development-engine", file: "development/engine/developmentSystem.js" },
+  { path: "development/runners/studio/studioDevelopmentRunner.js", kind: "development-runner-root", domain: "alive-development-engine", file: "development/runners/studio/studioDevelopmentRunner.js" }
 ];
 
 function lineHits(source, predicate) {
@@ -45,6 +62,14 @@ async function buildActiveModuleGraph(root, entrypointSources) {
   const main = entrypointSources["main.js"] || "";
   const engine = entrypointSources["engine.js"] || "";
   const roots = [];
+  for (const serviceRoot of SERVICE_ROOTS) {
+    try {
+      const stat = await fs.stat(path.join(root, serviceRoot.path));
+      if (stat.isFile()) roots.push({ ...serviceRoot, runtimeDomain: serviceRoot.domain });
+    } catch (error) {
+      if (error.code !== "ENOENT") throw error;
+    }
+  }
   const mainLines = main.split(/\r?\n/);
   for (let index = 0; index < mainLines.length; index += 1) {
     const line = mainLines[index];
@@ -62,7 +87,8 @@ async function buildActiveModuleGraph(root, entrypointSources) {
           file: "main.js",
           line: index + 1,
           registrationLine: keyEntry.line,
-          key: keyEntry.key
+          key: keyEntry.key,
+          runtimeDomain: "visitor-world"
         });
       }
     }
@@ -79,7 +105,8 @@ async function buildActiveModuleGraph(root, entrypointSources) {
         kind: "registered-lazy-root",
         file: "main.js",
         line: index + 1,
-        key
+        key,
+        runtimeDomain: "visitor-world"
       });
     }
   }
@@ -98,7 +125,9 @@ async function buildActiveModuleGraph(root, entrypointSources) {
         line: current.root.line,
         kind: current.root.kind,
         key: current.root.key,
-        registrationLine: current.root.registrationLine
+        registrationLine: current.root.registrationLine,
+        runtimeDomain: current.root.runtimeDomain,
+        rootPath: current.root.path
       });
     }
     referencesByPath.set(current.path, refs);
@@ -118,16 +147,29 @@ async function buildActiveModuleGraph(root, entrypointSources) {
       const edgeKind = assetMatch ? "worklet-or-asset-reference" :
         dynamicMatch ? "transitive-lazy-import" : "transitive-static-import";
       const targetRefs = referencesByPath.get(target) || [];
-      targetRefs.push({ file: current.path, line: index + 1, kind: edgeKind, viaRoot: current.root.path });
+      targetRefs.push({ file: current.path, line: index + 1, kind: edgeKind, viaRoot: current.root.path, runtimeDomain: current.root.runtimeDomain });
       referencesByPath.set(target, targetRefs);
       if (!visited.has(target)) queue.push({ path: target, root: current.root, chain: current.chain.concat(current.path) });
     }
   }
   return { roots, referencesByPath };
 }
-function capabilityStatus(sourcePresent, runtimeRefs, testRefs) {
-  const connected = runtimeRefs.length > 0;
+function classifyReferenceType(sourcePath) {
+  const extension = path.extname(sourcePath).toLowerCase();
+  if (/(^|\\/)tests?\\//i.test(sourcePath) || /(^|\\/)test-[^/]+\\.mjs$/i.test(sourcePath) || /\\.(test|spec)\\.(mjs|js)$/i.test(sourcePath)) return "test-source";
+  if (extension === ".md" || extension === ".txt") return "documentation";
+  if ([".json", ".yml", ".yaml", ".toml"].includes(extension)) return "configuration";
+  if ([".js", ".mjs", ".cjs"].includes(extension)) return "code-module";
+  return "asset-or-other";
+}
+
+function capabilityStatus(sourcePresent, referenceType, runtimeRefs, testRefs) {
   if (!sourcePresent) return "planned";
+  if (referenceType === "documentation") return "documentation-reference";
+  if (referenceType === "configuration") return "configuration-reference";
+  if (referenceType === "test-source") return "test-source";
+  if (referenceType !== "code-module") return "asset-or-other";
+  const connected = runtimeRefs.length > 0;
   if (connected && testRefs.length) return "tested";
   if (connected) return "connected";
   return "source-only";
@@ -161,6 +203,7 @@ export async function buildDepartmentSourceVerification(root = ROOT) {
         source = null;
       }
       const basename = path.basename(sourcePath);
+      const referenceType = classifyReferenceType(sourcePath);
       const runtimeReferences = activeGraph.referencesByPath.get(sourcePath) || [];
       const testReferences = [];
       if (source) {
@@ -181,12 +224,14 @@ export async function buildDepartmentSourceVerification(root = ROOT) {
           }
         }
       }
-      const status = capabilityStatus(Boolean(source), runtimeReferences, testReferences);
+      const status = capabilityStatus(Boolean(source), referenceType, runtimeReferences, testReferences);
       inventory.push({
         path: sourcePath,
+        referenceType,
         sourcePresent: Boolean(source),
         sourceBytes: source?.length ?? 0,
         runtimeReferences,
+        runtimeDomains: [...new Set(runtimeReferences.map(ref => ref.runtimeDomain).filter(Boolean))],
         testReferences,
         status,
         testResult: testReferences.length ? "test-source-found-result-not-inferred" : "no-direct-test-reference-found",
@@ -203,6 +248,7 @@ export async function buildDepartmentSourceVerification(root = ROOT) {
       title: department.title,
       blueprintStatus: department.status,
       ownerApproved: department.ownerApproved === true,
+      runtimeDomains: [...new Set(inventory.flatMap(item => item.runtimeDomains))],
       sourceCountDeclared: department.sourceCount,
       sourceCountInspected: inventory.length,
       counts,
