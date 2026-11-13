@@ -92,7 +92,7 @@ The discovery report also includes a conservative static dependency map for lite
 
 Each local edge is marked resolved only when its target is present in the scanned file inventory. Missing local targets from non-test source files are reported separately from intentionally unresolved references inside test fixtures. External CDN references are listed separately; bare package names are not treated as repository files.
 
-Department path-matched candidate files are kept separate from keyword-evidence files. Path matches are still candidates for review, not authoritative ownership. Keyword matches are supporting clues only and are never counted as confirmed source ownership.
+Department path-matched files are split into code candidates, test candidates, documentation references, and configuration references. Path matches are still candidates for review, not authoritative ownership. Keyword matches are supporting clues only and are never counted as confirmed source ownership. Path hints use whole filename/path tokens rather than loose substrings, preventing matches such as "road" inside "roadmap". The catalog deliberately avoids treating general audio infrastructure as a dedicated Radio product implementation.
 
 This map is an aid for review, not a complete runtime dependency graph. It cannot reliably infer computed paths, dynamic registries, script injection, Three.js scene registration, event-driven relationships, or dependencies loaded through runtime data. Those relationships still require source and runtime inspection.
 
