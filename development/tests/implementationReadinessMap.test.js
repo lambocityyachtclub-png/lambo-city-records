@@ -15,7 +15,7 @@ test("implementation readiness map covers all ten departments and keeps evidence
   assert.match(file, /not owner-approved/);
   assert.match(file, /does not prove correct behavior/);
   assert.match(file, /No Development Director tasks are created or submitted/);
-  assert.match(file, /65 registered or separately hosted runtime roots/);
+  assert.match(file, /66 registered or separately hosted runtime roots/);
   assert.match(file, /Phase B — prioritize Floor 2 Studio/);
   assert.match(file, /dependency-cycle resolution proposal/i);
   assert.match(file, /actual approved stage-performance MP3/);
