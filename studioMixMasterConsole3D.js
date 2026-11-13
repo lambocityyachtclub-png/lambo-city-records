@@ -78,7 +78,7 @@ export default {
   frameElapsed:0,
   pointerDown:null,
   async init(scene,context){
-    THREE = await import("https://unpkg.com/three@0.160.0/build/three.module.js");
+    THREE = context?.THREE || await import("https://unpkg.com/three@0.160.0/build/three.module.js");
     this.scene=scene;
     this.renderer=context?.renderer||null;
     const studio=scene?.getObjectByName("recordsHQFloor2Studio");
