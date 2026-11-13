@@ -22,6 +22,7 @@ import CinematicFlowSystem from "./cinematicFlowSystem.js";
 import CinematicWorldSkin from "./cinematicWorldSkin.js";
 import CinematicDockCore from "./cinematicDockCore.js";
 import Marina from "./marina.js";
+import WaterfrontStorefrontDetails from "./waterfrontStorefrontDetails.js";
 import ConferenceCenterDistrict from "./conferenceCenterDistrict.js";
 import StageVideo from "./stageVideo.js";
 import StageScreenMedia from "./stageScreenMedia.js";
@@ -80,6 +81,7 @@ engine.registerSystems({
   worldSkin: CinematicWorldSkin,
   dockCore: CinematicDockCore,
   marina: Marina,
+  waterfrontStorefrontDetails: WaterfrontStorefrontDetails,
   conferenceCenterDistrict: ConferenceCenterDistrict,
   stageVideo: StageVideo,
   stageScreenMedia: StageScreenMedia,
