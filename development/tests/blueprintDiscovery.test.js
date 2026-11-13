@@ -31,7 +31,7 @@ test("discovery creates independent department drafts from repository evidence",
     assert.equal(result.departments.length, catalog.departments.length);
     const water = result.departments.find(item => item.id === "water-environment");
     const radio = result.departments.find(item => item.id === "lambo-city-radio");
-    assert.ok(water.sourceFiles.includes("docs/water-plan.md"));
+    assert.ok(water.documentationFiles.includes("docs/water-plan.md"));
     assert.ok(radio.sourceFiles.includes("studio/radio.js"));
     assert.equal(water.status, "discovery-draft");
     assert.equal(result.summary.filesScanned, 3);
