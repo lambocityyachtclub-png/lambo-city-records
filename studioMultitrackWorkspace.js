@@ -1847,6 +1847,11 @@ const StudioMultitrackWorkspace = {
       throw new Error("The completed recording take is incomplete.");
     }
 
+    const selectedVocalTrack = this.tracks.find(track =>
+      track.id === this.activePitchTrackId &&
+      track.inputSource === "mic" &&
+      /vocal/i.test(track.name)
+    );
     const recordings = [
       {
         trackName: "Vocals",
@@ -1867,9 +1872,9 @@ const StudioMultitrackWorkspace = {
 
     this.recordHistory("Add recorded takes");
     recordings.forEach(recording => {
-      let track = this.tracks.find(
-        item => item.name === recording.trackName
-      );
+      let track = recording.trackName === "Vocals" && selectedVocalTrack
+        ? selectedVocalTrack
+        : this.tracks.find(item => item.name === recording.trackName);
 
       if (!track) {
         track = this.createTrack("audio", recording.trackName);
