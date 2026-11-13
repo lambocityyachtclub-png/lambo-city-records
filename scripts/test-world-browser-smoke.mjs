@@ -146,6 +146,8 @@ async function smokeWorld({ label, isMobile }) {
           started: window.__lamboCityPhoneNavigationStarted === true,
           mode: window.__lamboCityFloor2SessionMode || null,
           loadError: window.__lamboCityFloor2LoadError || null,
+          loadPhase: window.__lamboCityFloor2LoadPhase || null,
+          initProgress: window.__lamboCityFloor2InitProgress || [],
           startupErrors: window.__lamboCityStartupErrors || [],
           phoneHitTest: (() => {
             const button = document.querySelector("#lambo-phone-studio");
