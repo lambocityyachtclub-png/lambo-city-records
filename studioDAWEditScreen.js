@@ -700,6 +700,7 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext,
       root.addEventListener("change", event => {
         if (event.target.matches("[data-pitch-track]")) {
           this.activePitchTrackId = event.target.value;
+          StudioMultitrackWorkspace.activePitchTrackId = event.target.value;
           this.renderPitchCorrectionPanel();
           return;
         }
@@ -945,8 +946,9 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext,
         return;
       }
 
-      const track = vocalTracks.find(item => item.id === this.activePitchTrackId) || vocalTracks[0];
+      const track = vocalTracks.find(item => item.id === StudioMultitrackWorkspace.activePitchTrackId) || vocalTracks[0];
       this.activePitchTrackId = track.id;
+      StudioMultitrackWorkspace.activePitchTrackId = track.id;
       track.effects = track.effects || {};
       track.effects.pitchCorrection = {
         enabled: false,
