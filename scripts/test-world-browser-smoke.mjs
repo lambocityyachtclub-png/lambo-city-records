@@ -43,8 +43,7 @@ async function smokeWorld({ label, isMobile }) {
         !!document.getElementById("lambo-city-joystick") &&
         !!document.getElementById("lambo-city-mobile-buttons") &&
         !!window.__lamboCityPlayerSystem &&
-        typeof window.__lamboCityNavigateToFloor === "function" &&
-        (window.__lamboCityStartupErrors || []).length === 0;
+        typeof window.__lamboCityNavigateToFloor === "function";
     }, null, { timeout: 30000 }).catch(error => {
       throw new Error(label + ": startup did not finish. " + error.message +
         "\nPage errors: " + pageErrors.join("\n") +
@@ -66,7 +65,8 @@ async function smokeWorld({ label, isMobile }) {
         studioNotLoadedBeforeRequest:
           typeof window.__lamboCityEnterFloor2CockpitDirect === "undefined",
         startupErrors: window.__lamboCityStartupErrors || [],
-        worldSystemError: window.__lamboCityWorldSystemError || null
+        worldSystemError: window.__lamboCityWorldSystemError || null,
+        worldSystemReady: !!window.__lamboCityWorldSystemReady
       };
     });
 
@@ -79,6 +79,8 @@ async function smokeWorld({ label, isMobile }) {
       label + ": Floor 2 must remain lazy-loaded before the player requests Studio");
     assert.deepEqual(startup.startupErrors, [],
       label + ": no feature initialization failures may be hidden by startup isolation");
+    assert.equal(startup.worldSystemReady, true,
+      label + ": the shared World System must be registered");
     await page.evaluate(async () => {
       if (window.__lamboCityWorldSystemReady) {
         await window.__lamboCityWorldSystemReady;
