@@ -1,0 +1,937 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#090d12">
+  <title>LAMBO CITY — World System Preview</title>
+  <style>
+    :root { color-scheme: dark; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: #090d12; color: #f2eee5; }
+    #stage { position: fixed; inset: 0; }
+    canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+    .panel { position: fixed; z-index: 2; left: max(14px, env(safe-area-inset-left)); top: max(14px, env(safe-area-inset-top)); width: min(360px, calc(100vw - 28px)); padding: 15px 16px; border: 1px solid rgba(201,168,95,.45); border-radius: 13px; background: rgba(7,11,16,.88); backdrop-filter: blur(12px); box-shadow: 0 12px 40px rgba(0,0,0,.32); }
+    .eyebrow { color: #c9a85f; font-size: 10px; letter-spacing: .22em; text-transform: uppercase; }
+    h1 { margin: 6px 0 5px; font-size: 17px; font-weight: 650; letter-spacing: .02em; }
+    #status { color: #b9c4c9; font-size: 12px; line-height: 1.5; }
+    #metrics { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 11px; }
+    .metric { border: 1px solid rgba(255,255,255,.12); border-radius: 8px; padding: 6px 8px; color: #e9dfc8; font-size: 11px; }
+    .hint { margin-top: 10px; color: #89949b; font-size: 10px; line-height: 1.4; }
+    #error { display: none; color: #ffb6a8; margin-top: 8px; font-size: 12px; white-space: pre-wrap; }
+    @media (max-width: 600px) { .panel { width: min(310px, calc(100vw - 28px)); } }
+  </style>
+</head>
+<body>
+  <div id="stage"></div>
+  <section class="panel" aria-live="polite">
+    <div class="eyebrow">LAMBO CITY · Development preview</div>
+    <h1>World System / Arena District</h1>
+    <div id="status">Preparing the district blueprint…</div>
+    <div id="metrics"></div>
+    <div class="hint">Drag to orbit · Pinch to zoom · Two-finger drag to pan. The second district is a data-only routing fixture; this is not the live game.</div>
+    <div id="error"></div>
+  </section>
+  <script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js"}}</script>
+  <script type="module">
+    import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
+    import { OrbitControls } from "https://unpkg.com/three@0.160.0/examples/jsm/controls/OrbitControls.js";
+    import WorldSystem from "./worldSystem.js";
+    import WorldDistrictStreaming from "./worldDistrictStreaming.js";
+    import WorldSystemRuntime from "./worldSystemRuntime.js";
+    import WorldSystemHost from "./worldSystemHost.js";
+    import Player from "./player.js";
+    import { createDistrictFromRecipe } from "./worldDistrictFactory.js";
+    import { buildParcelGeometry } from "./worldParcelBuilder.js";
+    import { updateDistrictParcelFocus } from "./worldBuilder.js";
+    import { buildTerrainAndLandscape } from "./worldTerrainBuilder.js";
+    import district from "./worldDistricts/conferenceCenter.js";
+    import { validateDistrict } from "./worldDistrictSchema.js";
+    import CITY_MAP from "./cityMap.js";
+    import { getVehicleRoadSurface, isVehicleFootprintOnRoad, buildVehicleUTurnPath, getMinimumUTurnSpace } from "./worldVehicleRoadRules.js";
+
+    const status = document.getElementById("status");
+    const metrics = document.getElementById("metrics");
+    const error = document.getElementById("error");
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x090d12);
+    scene.fog = new THREE.Fog(0x090d12, 180, 360);
+
+    const camera = new THREE.PerspectiveCamera(48, window.innerWidth / window.innerHeight, 0.1, 700);
+    camera.position.set(-5, 95, 205);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.05;
+    document.getElementById("stage").appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.set(-43, 7, 97);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.07;
+    controls.maxPolarAngle = Math.PI * 0.49;
+    controls.minDistance = 35;
+    controls.maxDistance = 300;
+
+    scene.add(new THREE.HemisphereLight(0xdce8f1, 0x25201a, 2.0));
+    const key = new THREE.DirectionalLight(0xffe2b0, 2.2);
+    key.position.set(-70, 130, -40);
+    scene.add(key);
+
+    // Preview-only reference for the existing Boardwalk street surface.
+    const boardwalkRoadGuide = new THREE.Mesh(
+      new THREE.BoxGeometry(CITY_MAP.districts.marinaBoardwalk.road.length, 0.3, CITY_MAP.districts.marinaBoardwalk.road.width),
+      new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.9 })
+    );
+    boardwalkRoadGuide.name = "previewOnlyExistingBoardwalkRoad";
+    boardwalkRoadGuide.position.set(
+      CITY_MAP.districts.marinaBoardwalk.road.centerX,
+      0.51,
+      CITY_MAP.districts.marinaBoardwalk.road.centerZ
+    );
+    scene.add(boardwalkRoadGuide);
+
+    // Preview-only reference for the existing mapped Boardwalk sidewalk.
+    // Its end overlaps the generated spur; the live Boardwalk is not modified.
+    const boardwalkSidewalkGuide = new THREE.Mesh(
+      new THREE.BoxGeometry(CITY_MAP.districts.marinaBoardwalk.road.length, 0.3, 5),
+      new THREE.MeshStandardMaterial({ color: 0xb9ad98, roughness: 0.86 })
+    );
+    boardwalkSidewalkGuide.name = "previewOnlyExistingBoardwalkSidewalk";
+    boardwalkSidewalkGuide.position.set(
+      CITY_MAP.districts.marinaBoardwalk.road.centerX,
+      0.55,
+      CITY_MAP.districts.marinaBoardwalk.sidewalks[1].centerZ
+    );
+    scene.add(boardwalkSidewalkGuide);
+
+    const arenaGuide = new THREE.Mesh(new THREE.BoxGeometry(54, 8, 44), new THREE.MeshStandardMaterial({ color: 0x101720, transparent: true, opacity: 0.22, wireframe: true }));
+    arenaGuide.name = "previewOnlyExistingArenaFootprint";
+    arenaGuide.position.set(-43, 4.8, 97);
+    scene.add(arenaGuide);
+
+    const grid = new THREE.GridHelper(124, 31, 0x786a4c, 0x393a3b);
+    grid.position.set(-43, 0.67, 101.5);
+    scene.add(grid);
+
+    try {
+      const validation = validateDistrict(district);
+      if (!Array.isArray(district.accessTiers) || district.accessTiers.length !== 3) {
+        throw new Error("The district must declare all three access tiers.");
+      }
+      if (!validation.valid) {
+        throw new Error(validation.issues.map(item => item.code + ": " + item.message).join("\n"));
+      }
+      const masterBoulevard = CITY_MAP.districts.arenaDistrict.boulevard;
+      const serviceEntryNode = district.roadNetwork.nodes.find(node => node.id === "boardwalk-service-entry");
+      const boardwalkServiceSegment = district.roadNetwork.segments.find(segment => segment.id === "boardwalk-gated-service-approach");
+      if (district.groundTopY !== CITY_MAP.surfaces.groundTopY ||
+          Math.abs(district.bounds.minZ - CITY_MAP.districts.marinaBoardwalk.road.maxZ) > 0.001 ||
+          Math.abs(serviceEntryNode?.z - district.bounds.minZ) > 0.001 ||
+          Math.abs(district.roadNetwork.nodes.find(node => node.id === "boulevard-south-west")?.x -
+            (masterBoulevard.centerX - (masterBoulevard.outerWidth / 2 - (masterBoulevard.roadWidth / 2 + masterBoulevard.sidewalkWidth)))) > 0.001 ||
+          Math.abs(district.roadNetwork.nodes.find(node => node.id === "boulevard-north-east")?.z -
+            (masterBoulevard.centerZ + (masterBoulevard.outerDepth / 2 - (masterBoulevard.roadWidth / 2 + masterBoulevard.sidewalkWidth)))) > 0.001 ||
+          boardwalkServiceSegment?.gate?.offset !== 1.4) {
+        throw new Error("The generated district street no longer meets the mapped Boardwalk road edge.");
+      }
+      const previewCollision = {
+        boxes: [],
+        registerBox(name, bounds) { this.boxes.push({ name, ...bounds }); },
+        unregister(name) { this.boxes = this.boxes.filter(box => box.name !== name); }
+      };
+      const world = new WorldSystem();
+      world.init(scene, { systems: { collision: previewCollision } });
+      const recipeDistrict = createDistrictFromRecipe({
+        id: "recipe-compiler-test",
+        name: "Recipe Compiler Test",
+        type: "coastal-neighborhood",
+        bounds: { minX: -106, maxX: 19, minZ: 43, maxZ: 160 },
+        roadLoop: {
+          bounds: { minX: -77.5, maxX: -8.5, minZ: 62.5, maxZ: 131.5 },
+          width: 9,
+          sidewalkWidth: 3,
+          pedestrianLoop: true,
+          junctions: [{ id: "boulevard-south-access-junction", side: "south", position: -37 }]
+        },
+        parcelBands: [
+          { side: "west", idPrefix: "west-villa", count: 2, fixed: -98.5, start: 80, spacing: 32, style: "coastal-villa", footprint: { width: 13, depth: 11 }, rotationY: Math.PI / 2 },
+          { side: "east", idPrefix: "east-villa", count: 2, fixed: 12.5, start: 80, spacing: 32, style: "coastal-villa", footprint: { width: 13, depth: 11 }, rotationY: -Math.PI / 2 },
+          { side: "north", idPrefix: "north-villa", count: 2, fixed: 148.5, start: -58, spacing: 30, style: "coastal-villa", footprint: { width: 13, depth: 11 } }
+        ],
+        serviceAccess: {
+          entry: { id: "boardwalk-service-entry", x: -37, z: 50.5 },
+          connectTo: "boulevard-south-access-junction",
+          arrival: { id: "arena-arrival-approach", x: -37, z: 74 },
+          requiredAccess: "service",
+          gate: { id: "recipe-test-service-gate", offset: 1.4 }
+        },
+        accessTiers: district.accessTiers,
+        terrainZones: district.terrainZones,
+        landscapeZones: district.landscapeZones,
+        landmarks: district.landmarks
+      });
+      const recipeValidation = validateDistrict(recipeDistrict);
+      if (!recipeValidation.valid || recipeDistrict.parcels.length !== 6 ||
+          recipeDistrict.roadNetwork.nodes.length < 11 ||
+          recipeDistrict.roadNetwork.segments.length < 12) {
+        throw new Error("Compact district recipe did not compile into a valid connected blueprint: " + JSON.stringify({ issues: recipeValidation.issues, nodes: recipeDistrict.roadNetwork.nodes, bounds: recipeDistrict.bounds, parcels: recipeDistrict.parcels }));
+      }
+      const gridRecipe = createDistrictFromRecipe({
+        id: "grid-recipe-compiler-test",
+        name: "Grid Recipe Compiler Test",
+        bounds: { minX: 0, maxX: 100, minZ: 0, maxZ: 100 },
+        roadLayout: "grid",
+        roadGrid: {
+          bounds: { minX: 20, maxX: 80, minZ: 20, maxZ: 80 },
+          rows: 2, columns: 2, width: 8, sidewalkWidth: 3
+        }
+      });
+      if (gridRecipe.roadNetwork.nodes.length !== 4 || gridRecipe.parcels.length !== 1 ||
+          !validateDistrict(gridRecipe).valid) {
+        throw new Error("Compact grid recipe did not produce a valid, bounded neighborhood.");
+      }
+      let oversizedGridRejected = false;
+      try {
+        createDistrictFromRecipe({
+          id: "oversized-grid-test", name: "Oversized Grid Test",
+          bounds: { minX: 0, maxX: 100, minZ: 0, maxZ: 100 },
+          roadLayout: "grid",
+          roadGrid: { bounds: { minX: 20, maxX: 80, minZ: 20, maxZ: 80 }, rows: 17, columns: 2 }
+        });
+      } catch (_) { oversizedGridRejected = true; }
+      if (!oversizedGridRejected) throw new Error("The grid recipe compiler accepted an oversized layout.");
+
+      const registration = world.registerDistrict(district);
+      if (!registration.registered) {
+        throw new Error(registration.validation.issues.map(item => item.message).join("\n"));
+      }
+
+      // Register a second data-only district to exercise city-wide routing.
+      const futureDistrict = JSON.parse(JSON.stringify(district));
+      futureDistrict.id = "future-district-routing-test";
+      futureDistrict.name = "Future District Routing Test";
+      futureDistrict.bounds.minX += 300;
+      futureDistrict.bounds.maxX += 300;
+      futureDistrict.roadNetwork.nodes.forEach(node => { node.x += 300; });
+      futureDistrict.roadNetwork.sidewalkWidth = 5;
+      futureDistrict.parcels.forEach(parcel => { parcel.center.x += 300; });
+      futureDistrict.landmarks.forEach(landmark => { landmark.center.x += 300; });
+      futureDistrict.landscapeZones.forEach(zone => { zone.center.x += 300; });
+      futureDistrict.terrainZones.forEach(zone => { zone.center.x += 300; });
+      const futureRegistration = world.registerDistrict(futureDistrict);
+      if (!futureRegistration.registered) {
+        throw new Error("Future district registration failed: " + futureRegistration.validation.issues.map(item => item.message).join("\\n"));
+      }
+      const connectionRegistration = world.registerConnection({
+        id: "arena-to-future-district-test-link",
+        from: { districtId: district.id, nodeId: "boulevard-north-east" },
+        to: { districtId: futureDistrict.id, nodeId: "boulevard-south-west" },
+        mode: "vehicle",
+        access: "public"
+      });
+      if (!connectionRegistration.registered) {
+        throw new Error("Inter-district connector registration failed: " + connectionRegistration.reason);
+      }
+      const connectorFrom = district.roadNetwork.nodes.find(node => node.id === "boulevard-north-east");
+      const connectorTo = futureDistrict.roadNetwork.nodes.find(node => node.id === "boulevard-south-west");
+      const connectorMidX = (connectorFrom.x + 149) / 2;
+      const connectorSidewalkZ = connectorFrom.z - 6;
+      const physicalConnector = world.registerConnection({
+        id: "verified-land-connector-geometry-test",
+        from: { districtId: district.id, nodeId: connectorFrom.id },
+        to: { districtId: futureDistrict.id, nodeId: connectorTo.id },
+        mode: "vehicle",
+        access: "public",
+        physical: {
+          enabled: true,
+          surface: "land",
+          surfaceVerified: true,
+          path: [
+            { x: connectorFrom.x, z: connectorFrom.z },
+            { x: 149, z: connectorFrom.z },
+            { x: 149, z: connectorTo.z },
+            { x: connectorTo.x, z: connectorTo.z }
+          ],
+          width: 9,
+          sidewalkWidth: 3
+        }
+      });
+      const physicalConnectorRoot = scene.children.find(child =>
+        child.name === "worldConnection_verified-land-connector-geometry-test"
+      );
+      if (!physicalConnector.registered || !physicalConnector.physical ||
+          !physicalConnectorRoot?.children.some(child => child.name === "worldConnectionRoadBatch" && child.isInstancedMesh) ||
+          !physicalConnectorRoot?.children.some(child => child.name === "worldConnectionSidewalkBatch" && child.isInstancedMesh)) {
+        throw new Error("A verified land connector did not generate batched road and sidewalk geometry.");
+      }
+      if (Math.abs(world.getGroundHeightAt(connectorMidX, connectorFrom.z) - 0.77) > 0.001 ||
+          Math.abs(world.getGroundHeightAt(connectorMidX, connectorSidewalkZ) - 0.82) > 0.001) {
+        throw new Error("World-coordinate ground sampling did not follow the physical connector road and sidewalk elevations.");
+      }
+      const rejectedWaterConnector = world.registerConnection({
+        id: "unverified-water-connector-test",
+        from: { districtId: district.id, nodeId: connectorFrom.id },
+        to: { districtId: futureDistrict.id, nodeId: connectorTo.id },
+        mode: "vehicle",
+        access: "public",
+        physical: {
+          enabled: true,
+          surface: "water",
+          surfaceVerified: true,
+          path: [
+            { x: connectorFrom.x, z: connectorFrom.z },
+            { x: connectorTo.x, z: connectorTo.z }
+          ]
+        }
+      });
+      if (rejectedWaterConnector.registered ||
+          rejectedWaterConnector.reason !== "UNSUPPORTED_PHYSICAL_SURFACE") {
+        throw new Error("The physical connector builder must reject water crossings instead of guessing bridge geometry.");
+      }
+      if (!world.unregisterConnection("verified-land-connector-geometry-test") ||
+          scene.children.some(child => child.name === "worldConnection_verified-land-connector-geometry-test") ||
+          world.getGroundHeightAt(connectorMidX, connectorFrom.z) !== null) {
+        throw new Error("Removing a physical district connector did not dispose its geometry and ground-height registration.");
+      }
+
+      // Build a separate fixture to exercise every parcel archetype without
+      // adding extra geometry to the main district preview.
+      const archetypeDistrict = JSON.parse(JSON.stringify(futureDistrict));
+      archetypeDistrict.id = "parcel-archetype-test";
+      archetypeDistrict.name = "Parcel Archetype Test";
+      archetypeDistrict.parcels[0].style = "luxury-apartment";
+      archetypeDistrict.parcels[1].style = "retail-promenade";
+      archetypeDistrict.parcels[2].style = "urban-park";
+      const archetypeScene = new THREE.Scene();
+      const archetypeCollision = {
+        boxes: [],
+        registerBox(name, bounds) { this.boxes.push({ name, ...bounds }); },
+        unregister(name) { this.boxes = this.boxes.filter(box => box.name !== name); }
+      };
+      const archetypeWorld = new WorldSystem();
+      archetypeWorld.init(archetypeScene, { systems: { collision: archetypeCollision } });
+      const archetypeRegistration = archetypeWorld.registerDistrict(archetypeDistrict);
+      if (!archetypeRegistration.registered) {
+        throw new Error("Parcel archetype fixture failed validation.");
+      }
+      const archetypeRoot = archetypeWorld.buildDistrict(archetypeDistrict.id);
+      if (archetypeRoot.userData.buildingCount !== 5 ||
+          archetypeRoot.userData.parcelStyles["luxury-apartment"] !== 1 ||
+          archetypeRoot.userData.parcelStyles["retail-promenade"] !== 1 ||
+          archetypeRoot.userData.parcelStyles["urban-park"] !== 1) {
+        throw new Error("Not all parcel archetypes generated correctly.");
+      }
+      if (archetypeCollision.boxes.length !== 6) {
+        throw new Error("The park parcel should remain walkable while buildings and the gate block movement.");
+      }
+      if (!archetypeWorld.removeDistrict(archetypeDistrict.id) || archetypeCollision.boxes.length !== 0) {
+        throw new Error("Removing a generated district did not clean up its collision volumes.");
+      }
+      const largeGridDistrict = createDistrictFromRecipe({
+        id: "large-grid-detail-budget-test",
+        name: "Large Grid Detail Budget Test",
+        roadLayout: "grid",
+        bounds: { minX: 0, maxX: 500, minZ: 0, maxZ: 500 },
+        roadGrid: {
+          bounds: { minX: 40, maxX: 460, minZ: 40, maxZ: 460 },
+          rows: 8,
+          columns: 8,
+          width: 8,
+          sidewalkWidth: 3,
+          parcelStyles: ["coastal-villa", "luxury-apartment", "retail-promenade", "urban-park"]
+        }
+      });
+      const terrainStressRoot = new THREE.Group();
+      const terrainStress = buildTerrainAndLandscape(terrainStressRoot, {
+        id: "terrain-resolution-budget-test",
+        bounds: { minX: 0, maxX: 2000, minZ: 0, maxZ: 2000 },
+        terrainZones: [], landscapeZones: []
+      });
+      if (terrainStress.segmentsX !== 192 || terrainStress.segmentsZ !== 192 ||
+          terrainStress.vertices !== 193 * 193 || terrainStress.triangles !== 192 * 192 * 2) {
+        throw new Error("Large district terrain resolution exceeded its bounded mesh budget.");
+      }
+      terrainStressRoot.traverse(object => object.geometry?.dispose?.());
+      terrainStress.ownedMaterials.forEach(material => material.dispose?.());
+
+      const largeGridValidation = validateDistrict(largeGridDistrict);
+      if (!largeGridValidation.valid || largeGridDistrict.parcels.length !== 49) {
+        throw new Error("The large grid performance fixture did not produce 49 valid parcels.");
+      }
+      const largeParcelRoot = new THREE.Group();
+      const largeParcelResult = buildParcelGeometry(largeParcelRoot, largeGridDistrict, {
+        focusPosition: { x: 250, z: 250 },
+        maxDetailedParcels: 12
+      });
+      if (largeParcelResult.detailCount !== 12 || largeParcelResult.proxyCount !== 37 ||
+          largeParcelResult.proxyBatchCount !== 4 || largeParcelResult.buildings !== 37 ||
+          largeParcelResult.detailBatchCount > 10 ||
+          largeParcelResult.detailSourceMeshCount <= largeParcelResult.detailBatchCount) {
+        throw new Error("Large districts did not cap detail geometry and batch it into a small number of instanced draws.");
+      }
+      const dynamicParcelShadowCasters = [];
+      largeParcelResult.root.traverse(object => {
+        if (object.isMesh && object.castShadow) dynamicParcelShadowCasters.push(object.name || object.type);
+      });
+      if (dynamicParcelShadowCasters.length !== 0) {
+        throw new Error("Generated parcel details should not add per-object dynamic shadow casters to the iPad rendering budget.");
+      }
+      const focusRoot = new THREE.Group();
+      const focusInitial = buildParcelGeometry(focusRoot, largeGridDistrict, {
+        focusPosition: { x: 60, z: 60 }, maxDetailedParcels: 12
+      });
+      focusRoot.userData.parcelRoot = focusInitial.root;
+      focusRoot.userData.parcelOwnedMaterials = focusInitial.ownedMaterials;
+      focusRoot.userData.ownedMaterials = [...focusInitial.ownedMaterials];
+      focusRoot.userData.parcelFocusPosition = focusInitial.focusPosition;
+      focusRoot.userData.parcelBuildOptions = { maxDetailedParcels: 12 };
+      focusRoot.userData.detailParcelIds = focusInitial.detailParcelIds;
+      focusRoot.userData.parcelDetailSignature = [...focusInitial.detailParcelIds].sort().join("|");
+      const initialFocusIds = [...focusInitial.detailParcelIds].sort().join("|");
+      const focusChanged = updateDistrictParcelFocus(focusRoot, largeGridDistrict, { x: 440, z: 440 });
+      const refreshedFocusIds = [...focusRoot.userData.detailParcelIds].sort().join("|");
+      const focusSkippedSmallMove = !updateDistrictParcelFocus(focusRoot, largeGridDistrict, { x: 441, z: 441 });
+      if (!focusChanged || initialFocusIds === refreshedFocusIds || !focusSkippedSmallMove ||
+          focusRoot.userData.detailParcelCount !== 12 || focusRoot.userData.proxyParcelCount !== 37) {
+        throw new Error("Nearby detailed parcels did not move with the player's focus while keeping the LOD budget.");
+      }
+      focusRoot.traverse(object => object.geometry?.dispose?.());
+      focusRoot.userData.ownedMaterials.forEach(material => material.dispose?.());
+      largeParcelRoot.traverse(object => object.geometry?.dispose?.());
+      largeParcelResult.ownedMaterials.forEach(material => material.dispose?.());
+
+      const districtStreamer = new WorldDistrictStreaming({
+        streamInRadius: 50,
+        streamOutRadius: 75,
+        maxBuildsPerUpdate: 1,
+        maxRemovalsPerUpdate: 1,
+        maxDetailedParcels: 2
+      }).init(archetypeWorld);
+      districtStreamer.update(0, { playerPosition: { x: 1000, z: 100 } });
+      if (archetypeWorld.isDistrictBuilt(archetypeDistrict.id) || !archetypeWorld.isDistrictProxied(archetypeDistrict.id)) {
+        throw new Error("A distant district did not remain visible as a low-cost proxy.");
+      }
+      districtStreamer.update(0, { playerPosition: { x: 257, z: 100 } });
+      const firstDetailStats = archetypeWorld.getDistrictBuildStats(archetypeDistrict.id);
+      if (!archetypeWorld.isDistrictBuilt(archetypeDistrict.id) || archetypeWorld.isDistrictProxied(archetypeDistrict.id) ||
+          firstDetailStats?.detailParcelCount !== 2 || firstDetailStats?.proxyParcelCount !== 4) {
+        throw new Error("A nearby district did not replace its far proxy with bounded full detail.");
+      }
+      const detailRefresh = districtStreamer.update(0, { playerPosition: { x: 379, z: 100 } });
+      const refreshedDetailStats = archetypeWorld.getDistrictBuildStats(archetypeDistrict.id);
+      if (!archetypeWorld.isDistrictBuilt(archetypeDistrict.id) ||
+          !detailRefresh.refreshed.includes(archetypeDistrict.id) ||
+          refreshedDetailStats?.detailParcelIds.join("|") === firstDetailStats.detailParcelIds.join("|")) {
+        throw new Error("District hysteresis or player-focused parcel detail refresh failed.");
+      }
+      districtStreamer.update(0, { playerPosition: { x: 409, z: 100 } });
+      if (archetypeWorld.isDistrictBuilt(archetypeDistrict.id) ||
+          !archetypeWorld.isDistrictProxied(archetypeDistrict.id) ||
+          archetypeCollision.boxes.length !== 0) {
+        throw new Error("A distant district did not switch to a far proxy and clean up its colliders.");
+      }
+      districtStreamer.update(0, { playerPosition: { x: 1500, z: 1500 } });
+      if (archetypeWorld.isDistrictProxied(archetypeDistrict.id)) {
+        throw new Error("A far proxy was not removed after leaving its proxy range.");
+      }
+      const runtimeScene = new THREE.Scene();
+      const runtimeCollision = {
+        boxes: [],
+        registerBox(name, bounds) { this.boxes.push({ name, ...bounds }); },
+        unregister(name) { this.boxes = this.boxes.filter(box => box.name !== name); }
+      };
+      const runtime = new WorldSystemRuntime();
+      await runtime.init(runtimeScene, { systems: { collision: runtimeCollision } }, {
+        districts: [recipeDistrict],
+        streamingOptions: { streamInRadius: 50, streamOutRadius: 75 }
+      });
+      if (runtime.getDistrictAtPosition(-43, 97)?.id !== recipeDistrict.id ||
+          Math.abs(runtime.getGroundHeightAt(-60, 62.5) - 0.77) > 0.001) {
+        throw new Error("The runtime bridge did not expose coordinate-based district and ground lookup.");
+      }
+      if (!runtime.getStatus().ready || !runtime.getStatus().registeredDistrictIds.includes(recipeDistrict.id)) {
+        throw new Error("The runtime bridge did not report its registered district state.");
+      }
+      const runtimeExpansion = JSON.parse(JSON.stringify(recipeDistrict));
+      runtimeExpansion.id = "runtime-dynamic-district";
+      runtimeExpansion.name = "Runtime Dynamic District";
+      runtimeExpansion.bounds.minX += 500;
+      runtimeExpansion.bounds.maxX += 500;
+      runtimeExpansion.roadNetwork.nodes.forEach(node => { node.x += 500; });
+      runtimeExpansion.parcels.forEach(parcel => { parcel.center.x += 500; });
+      runtimeExpansion.landmarks.forEach(landmark => { landmark.center.x += 500; });
+      runtimeExpansion.landscapeZones.forEach(zone => { zone.center.x += 500; });
+      runtimeExpansion.terrainZones.forEach(zone => { zone.center.x += 500; });
+      const runtimeExpansionResult = runtime.registerDistrict(runtimeExpansion);
+      const runtimeLinkResult = runtime.registerConnection({
+        id: "runtime-dynamic-city-link",
+        from: { districtId: recipeDistrict.id, nodeId: "boulevard-north-east" },
+        to: { districtId: runtimeExpansion.id, nodeId: "boulevard-south-west" },
+        mode: "vehicle",
+        access: "public"
+      });
+      const runtimeExpansionRoute = runtime.findWorldRoute(
+        recipeDistrict.id, "boulevard-north-east",
+        runtimeExpansion.id, "boulevard-south-west",
+        { mode: "vehicle" }
+      );
+      if (!runtimeExpansionResult.registered || !runtimeLinkResult.registered ||
+          !runtimeExpansionRoute.found ||
+          !runtime.getStatus().registeredDistrictIds.includes(runtimeExpansion.id) ||
+          !runtime.unregisterConnection("runtime-dynamic-city-link") ||
+          !runtime.unregisterDistrict(runtimeExpansion.id)) {
+        throw new Error("The live runtime could not add, connect, route through, and cleanly remove a new district.");
+      }
+      runtime.update(0, { playerPosition: { x: -43, z: 100 } });
+      if (!runtime.getWorldSystem().isDistrictBuilt(recipeDistrict.id) ||
+          !runtime.getStatus().builtDistricts.includes(recipeDistrict.id)) {
+        throw new Error("The lazy runtime bridge did not build a nearby district.");
+      }
+      runtime.update(0, { playerPosition: { x: 1000, z: 1000 } });
+      if (runtime.getWorldSystem().isDistrictBuilt(recipeDistrict.id) || runtimeCollision.boxes.length !== 0) {
+        throw new Error("The runtime bridge did not stream out and clean up the district.");
+      }
+      runtime.dispose();
+      if (runtime.getWorldSystem() !== null || runtime.ready || runtime.getStatus().registeredDistrictIds.length !== 0) {
+        throw new Error("The runtime bridge did not dispose cleanly.");
+      }
+
+      const hostScene = new THREE.Scene();
+      const hostCollision = {
+        boxes: [],
+        registerBox(name, bounds) { this.boxes.push({ name, ...bounds }); },
+        unregister(name) { this.boxes = this.boxes.filter(box => box.name !== name); }
+      };
+      WorldSystemHost.init(hostScene, { systems: { collision: hostCollision } });
+      if (WorldSystemHost.isReady() || typeof window.__lamboCityWorldSystem?.initialize !== "function") {
+        throw new Error("The engine host initialized district runtime work before an explicit request.");
+      }
+      await WorldSystemHost.initialize({
+        districts: [recipeDistrict],
+        streamingOptions: { streamInRadius: 50, streamOutRadius: 75 }
+      });
+      if (!WorldSystemHost.isReady() ||
+          Math.abs(WorldSystemHost.getGroundHeightAt(-60, 62.5) - 0.77) > 0.001) {
+        throw new Error("The engine host did not expose explicit initialization and generated ground sampling.");
+      }
+      const briefRegistration = WorldSystemHost.registerDistrict({
+        id: "host-brief-registration-test",
+        name: "Host Brief Registration Test",
+        brief: {
+          character: "mixed-use",
+          density: "medium",
+          center: { x: 500, z: 500 },
+          size: { width: 120, depth: 120 }
+        }
+      });
+      if (!briefRegistration.registered ||
+          briefRegistration.district?.parcels.length !== 9 ||
+          !WorldSystemHost.unregisterDistrict("host-brief-registration-test")) {
+        throw new Error("The initialized engine host did not compile, register, and remove a high-level district brief.");
+      }
+      WorldSystemHost.buildDistrict(recipeDistrict.id, {
+        roadTopY: 0.77, sidewalkTopY: 0.82, roadWidth: 9, sidewalkWidth: 3
+      });
+      const hostPlayer = Player.init(hostScene);
+      hostPlayer.position.set(-60, 1.3, 62.5);
+      const stationaryInput = {
+        keys: { w: false, a: false, s: false, d: false },
+        joystick: { active: false, x: 0, y: 0 }
+      };
+      Player.update(0.016, { systems: { input: stationaryInput, worldSystemHost: WorldSystemHost } });
+      if (Math.abs(hostPlayer.position.y - 1.42) > 0.01) {
+        throw new Error("The live player did not follow a generated road elevation.");
+      }
+      hostPlayer.position.set(-60, 1.3, 56.5);
+      Player.update(0.016, { systems: { input: stationaryInput, worldSystemHost: WorldSystemHost } });
+      if (Math.abs(hostPlayer.position.y - 1.47) > 0.01) {
+        throw new Error("The live player did not follow a generated sidewalk elevation.");
+      }
+      if (hostCollision.boxes.length !== recipeDistrict.parcels.length + 1) {
+        throw new Error("The engine host did not register generated parcel and gate collision.");
+      }
+      const hostGate = WorldSystemHost.setGateAccess(
+        recipeDistrict.id, "recipe-test-service-gate", ["service"]
+      );
+      if (!hostGate.updated || !hostGate.gate?.open) {
+        throw new Error("The engine host did not expose permission-controlled gate access.");
+      }
+      WorldSystemHost.dispose();
+      if (WorldSystemHost.isReady() || hostCollision.boxes.length !== 0) {
+        throw new Error("The engine host did not release its runtime and collision data.");
+      }
+
+      const rollbackCollision = {
+        boxes: [],
+        registerBox(name, bounds) { this.boxes.push({ name, ...bounds }); },
+        unregister(name) { this.boxes = this.boxes.filter(box => box.name !== name); }
+      };
+      const rollbackRuntime = new WorldSystemRuntime();
+      let rollbackRejected = false;
+      let rollbackErrorMessage = "";
+      try {
+        await rollbackRuntime.init(new THREE.Scene(), { systems: { collision: rollbackCollision } }, {
+          districts: [recipeDistrict, {
+            ...recipeDistrict,
+            id: "invalid-runtime-district",
+            bounds: { ...recipeDistrict.bounds, maxX: recipeDistrict.bounds.minX }
+          }]
+        });
+      } catch (runtimeError) {
+        rollbackErrorMessage = String(runtimeError?.message || runtimeError);
+        rollbackRejected = rollbackErrorMessage.includes("invalid-runtime-district");
+      }
+      if (!rollbackRejected || rollbackRuntime.ready || rollbackRuntime.getWorldSystem() !== null ||
+          rollbackCollision.boxes.length !== 0 || rollbackRuntime.getStatus().registeredDistrictIds.length !== 0) {
+        throw new Error("Runtime rollback mismatch: rejected=" + rollbackRejected + ", ready=" + rollbackRuntime.ready +
+          ", hasWorld=" + Boolean(rollbackRuntime.getWorldSystem()) +
+          ", registered=" + rollbackRuntime.getStatus().registeredDistrictIds.join(",") +
+          ", colliders=" + rollbackCollision.boxes.length + ", error=" + rollbackErrorMessage);
+      }
+
+      const root = world.buildDistrict(district.id, { roadTopY: 0.77, sidewalkTopY: 0.82, roadWidth: 9, sidewalkWidth: 3 });
+      if (root.userData.terrainZoneCount !== district.terrainZones.length ||
+          root.userData.terrainSurfaceCount !== district.terrainZones.length) {
+        throw new Error("Not all declared terrain grades were generated.");
+      }
+      const roadBatch = root.children.find(child => child.name === "worldRoadSurfaceBatch");
+      const sidewalkBatch = root.children.find(child => child.name === "worldSidewalkSurfaceBatch");
+      const curbBatch = root.children.find(child => child.name === "worldCurbSurfaceBatch");
+      const vergeBatch = root.children.find(child => child.name === "worldRoadVergeBatch");
+      if (!roadBatch?.isInstancedMesh || !sidewalkBatch?.isInstancedMesh ||
+          !curbBatch?.isInstancedMesh || curbBatch.count !== root.userData.curbCount || root.userData.curbCount < 1 ||
+          !vergeBatch?.isInstancedMesh || vergeBatch.count !== root.userData.vergeCount || root.userData.vergeCount < 1 ||
+          roadBatch.count !== root.userData.roadCount + root.userData.junctionCount ||
+          sidewalkBatch.count !== root.userData.sidewalkCount ||
+          !root.userData.sidewalkCount ||
+          !district.roadNetwork.segments.some(segment => segment.id === "walk-boardwalk-connection" && segment.physicalSurface === "sidewalk")) {
+        throw new Error("District roads, junctions, and the physical Boardwalk sidewalk connector were not generated into their expected batches.");
+      }
+      const southWestNode = district.roadNetwork.nodes.find(node => node.id === "boulevard-south-west");
+      const southJunction = district.roadNetwork.nodes.find(node => node.id === "boulevard-south-access-junction");
+      const roadTestPoint = { x: (southWestNode.x + southJunction.x) / 2, z: southWestNode.z };
+      const sidewalkTestPoint = { x: roadTestPoint.x, z: roadTestPoint.z - 6 };
+      const northWestTurn = district.roadNetwork.nodes.find(node => node.id === "boulevard-north-west");
+      const vehicleTurnSpace = getMinimumUTurnSpace({ length: 4.8, width: 2.1 });
+      const fullUTurn = buildVehicleUTurnPath(district, "boulevard-north-west", {
+        length: 4.8, width: 2.1, turningRadius: 6.5
+      });
+      const southWestUTurn = buildVehicleUTurnPath(district, "boulevard-south-west", {
+        length: 4.8, width: 2.1, turningRadius: 6.5
+      });
+      const southEastUTurn = buildVehicleUTurnPath(district, "boulevard-south-east", {
+        length: 4.8, width: 2.1, turningRadius: 6.5
+      });
+      const northEastUTurn = buildVehicleUTurnPath(district, "boulevard-north-east", {
+        length: 4.8, width: 2.1, turningRadius: 6.5
+      });
+      const runtimeVehicle = world.createVehicleController(district.id, {
+        x: roadTestPoint.x, z: roadTestPoint.z, heading: Math.PI / 2
+      });
+      const runtimeVehicleStartX = runtimeVehicle?.state.x;
+      const runtimeVehicleMove = runtimeVehicle?.update(0.05, { throttle: 1, steering: 0 });
+      if (!runtimeVehicle?.state.valid || runtimeVehicleMove?.blocked ||
+          !(runtimeVehicle.state.x > runtimeVehicleStartX)) {
+        throw new Error("The live World System host did not create a road-constrained vehicle controller.");
+      }
+      if (!fullUTurn.valid || fullUTurn.points.length < 24 ||
+          !southWestUTurn.valid || !southEastUTurn.valid || !northEastUTurn.valid ||
+          getVehicleRoadSurface(district, roadTestPoint)?.type !== "road" ||
+          getVehicleRoadSurface(district, sidewalkTestPoint) !== null ||
+          getVehicleRoadSurface(district, { x: northWestTurn.x + 8, z: northWestTurn.z })?.type !== "turning-area" ||
+          !isVehicleFootprintOnRoad(district, { ...roadTestPoint, length: 4.8, width: 2.1, heading: Math.PI / 2 }) ||
+          isVehicleFootprintOnRoad(district, { ...sidewalkTestPoint, length: 4.8, width: 2.1, heading: Math.PI / 2 }) ||
+          northWestTurn.turningArea.width < vehicleTurnSpace.minimumWidth ||
+          northWestTurn.turningArea.depth < vehicleTurnSpace.minimumDepth) {
+        throw new Error("Vehicle road-only boundaries or passenger-car U-turn clearance failed.");
+      }
+      const terrainRoot = root.children.find(child => child.name === "worldTerrain_" + district.id);
+      const terrainFinishCount = terrainRoot?.children.filter(child => child.name.startsWith("worldTerrainZone_")).length || 0;
+      const courtyardMesh = terrainRoot?.children.find(child => child.name === "worldLandscapeZone_north-villa-courtyard");
+      if (terrainFinishCount !== district.terrainZones.length || !courtyardMesh ||
+          Math.abs(courtyardMesh.position.y - 0.705) > 0.001) {
+        throw new Error("Terrain finish meshes or local-grade landscape placement are incorrect.");
+      }
+      const invalidLandscapeDensity = structuredClone(district);
+      invalidLandscapeDensity.landscapeZones[0].treeCount = 99;
+      const densityValidation = validateDistrict(invalidLandscapeDensity);
+      const invalidTerrainFinish = structuredClone(district);
+      invalidTerrainFinish.terrainZones[0].materialColor = -1;
+      const finishValidation = validateDistrict(invalidTerrainFinish);
+      if (densityValidation.valid || !densityValidation.issues.some(item => item.code === "INVALID_LANDSCAPE_DENSITY") ||
+          finishValidation.valid || !finishValidation.issues.some(item => item.code === "INVALID_TERRAIN_COLOR")) {
+        throw new Error("Landscape density and terrain finish validation did not reject invalid values.");
+      }
+      if (world.getDistrictAtPosition(-43, 97)?.id !== district.id ||
+          Math.abs(world.getGroundHeightAt(-60, 60) - 0.77) > 0.001 ||
+          world.getDistrictAtPosition(1000, 1000) !== null) {
+        throw new Error("World-coordinate district lookup or automatic ground sampling failed.");
+      }
+      const plazaGroundY = world.getGroundHeight(district.id, -55, 68.5);
+      const courtyardGroundY = world.getGroundHeight(district.id, -43, 148);
+      const baseGroundY = world.getGroundHeight(district.id, -100, 70);
+      const roadGroundY = world.getGroundHeight(district.id, -60, 60);
+      const sidewalkGroundY = world.getGroundHeight(district.id, -65, 52);
+      const approachSidewalkGroundY = world.getGroundHeight(district.id, -60, 142);
+      const unbuiltCustomSidewalkGroundY = world.getGroundHeight(futureDistrict.id, 212, 90);
+      if (Math.abs(unbuiltCustomSidewalkGroundY - 0.80) > 0.001 ||
+          Math.abs(plazaGroundY - 0.68) > 0.001 ||
+          Math.abs(courtyardGroundY - 0.70) > 0.001 ||
+          Math.abs(baseGroundY - 0.65) > 0.001 ||
+          Math.abs(roadGroundY - 0.77) > 0.001 ||
+          Math.abs(sidewalkGroundY - 0.82) > 0.001 ||
+          Math.abs(approachSidewalkGroundY - 0.82) > 0.001) {
+        throw new Error("Terrain height sampling does not match the generated grade data: " + JSON.stringify({ unbuiltCustomSidewalkGroundY, plazaGroundY, courtyardGroundY, baseGroundY, roadGroundY, sidewalkGroundY, approachSidewalkGroundY }));
+      }
+      const failedBuildCollision = {
+        boxes: [],
+        calls: 0,
+        registerBox(name, bounds) {
+          this.calls++;
+          if (this.calls === 2) throw new Error("intentional collision registration failure");
+          this.boxes.push({ name, ...bounds });
+        },
+        unregister(name) { this.boxes = this.boxes.filter(box => box.name !== name); }
+      };
+      let buildRollbackObserved = false;
+      try {
+        world.buildDistrict(futureDistrict.id, { collision: failedBuildCollision });
+      } catch (buildError) {
+        buildRollbackObserved = String(buildError?.message || buildError).includes("intentional collision registration failure");
+      }
+      if (!buildRollbackObserved || failedBuildCollision.boxes.length !== 0 ||
+          world.isDistrictBuilt(futureDistrict.id) ||
+          scene.children.some(child => child.name === "worldSystemDistrict_" + futureDistrict.id)) {
+        throw new Error("A failed district build did not roll back its geometry and collision registrations.");
+      }
+
+      const noPermissionServiceRoute = world.findRoute(
+        district.id,
+        "boardwalk-service-entry",
+        "arena-arrival-approach",
+        { mode: "service" }
+      );
+      const gateBeforeAuthorization = world.getGateStatuses(district.id)[0];
+      const servicePermissionWithClosedGate = world.findRoute(
+        district.id,
+        "boardwalk-service-entry",
+        "arena-arrival-approach",
+        { mode: "service", permissions: ["service"] }
+      );
+      const pedestrianRoute = world.findRoute(
+        district.id,
+        "walk-boardwalk-approach",
+        "walk-north-east",
+        { mode: "pedestrian" }
+      );
+      const ordinaryTrafficRoute = world.findRoute(
+        district.id,
+        "boardwalk-service-entry",
+        "arena-arrival-approach",
+        { mode: "vehicle" }
+      );
+      if (servicePermissionWithClosedGate.found) {
+        throw new Error("A route was exposed through a physical gate before it opened.");
+      }
+      if (!gateBeforeAuthorization || gateBeforeAuthorization.open !== false) {
+        throw new Error("The restricted boardwalk gate did not start closed.");
+      }
+      if (previewCollision.boxes.length !== district.parcels.length + 1) {
+        throw new Error("Expected one collider per villa plus the closed service gate.");
+      }
+      if (noPermissionServiceRoute.found) {
+        throw new Error("Service route was incorrectly allowed without permission.");
+      }
+      const gateGrant = world.setGateAccess(district.id, "arena-boardwalk-service-gate", ["service"]);
+      const authorizedServiceRoute = world.findRoute(
+        district.id,
+        "boardwalk-service-entry",
+        "arena-arrival-approach",
+        { mode: "service", permissions: ["service"] }
+      );
+      const openGateIds = world.getOpenGateIds(district.id);
+      const gateStatuses = world.getGateStatuses(district.id);
+      const authorizedServiceVehicle = world.createVehicleController(district.id,
+        { x: -37, z: 54, heading: 0 }, { permissions: ["service"] });
+      if (!gateGrant.updated || !gateGrant.gate?.open || !authorizedServiceRoute.found ||
+          !openGateIds.has("arena-boardwalk-service-gate") ||
+          !gateStatuses.some(gate => gate.id === "arena-boardwalk-service-gate" && gate.open) ||
+          !authorizedServiceVehicle?.state.valid) {
+        throw new Error("Authorized service access did not open the gate and enable the route.");
+      }
+      const serviceToNorthRoute = world.findRoute(
+        district.id, "boardwalk-service-entry", "boulevard-north-east",
+        { mode: "service", permissions: ["service"] }
+      );
+      const serviceToJunctionRoute = world.findRoute(
+        district.id, "boardwalk-service-entry", "boulevard-south-access-junction",
+        { mode: "service", permissions: ["service"] }
+      );
+      const junctionToNorthRoute = world.findRoute(
+        district.id, "boulevard-south-access-junction", "boulevard-north-east",
+        { mode: "service", permissions: ["service"] }
+      );
+      const futureDistrictEndpointRoute = world.findRoute(
+        futureDistrict.id, "boulevard-south-west", "boulevard-south-west",
+        { mode: "service", permissions: ["service"] }
+      );
+      const deniedCityRoute = world.findWorldRoute(
+        district.id, "boardwalk-service-entry",
+        futureDistrict.id, "boulevard-south-west",
+        { mode: "service" }
+      );
+      const authorizedCityRoute = world.findWorldRoute(
+        district.id, "boardwalk-service-entry",
+        futureDistrict.id, "boulevard-south-west",
+        { mode: "service", permissions: ["service"] }
+      );
+      if (ordinaryTrafficRoute.found) {
+        throw new Error("Ordinary vehicle traffic incorrectly received restricted access.");
+      }
+      if (!pedestrianRoute.found ||
+          !pedestrianRoute.segmentIds?.includes("walk-boardwalk-connection")) {
+        throw new Error("The pedestrian route must start at the Boardwalk sidewalk and use the physical sidewalk spur into the Convention Center network.");
+      }
+      const sidewalkSpur = district.roadNetwork.segments.find(segment => segment.id === "walk-boardwalk-connection");
+      const spurFrom = district.roadNetwork.nodes.find(node => node.id === sidewalkSpur?.from);
+      const spurTo = district.roadNetwork.nodes.find(node => node.id === sidewalkSpur?.to);
+      const spurMidpoint = { x: (spurFrom.x + spurTo.x) / 2, z: (spurFrom.z + spurTo.z) / 2 };
+      const serviceRoadSegment = district.roadNetwork.segments.find(segment => segment.id === "boardwalk-gated-service-approach");
+      const serviceRoadFrom = district.roadNetwork.nodes.find(node => node.id === serviceRoadSegment?.from);
+      const serviceRoadTo = district.roadNetwork.nodes.find(node => node.id === serviceRoadSegment?.to);
+      const serviceRoadMidpoint = { x: (serviceRoadFrom.x + serviceRoadTo.x) / 2, z: (serviceRoadFrom.z + serviceRoadTo.z) / 2 };
+      if (sidewalkSpur?.physicalSurface !== "sidewalk" ||
+          Math.abs(world.getGroundHeight(district.id, spurFrom.x, spurFrom.z) - 0.70) > 0.001 ||
+          Math.abs(world.getGroundHeight(district.id, spurMidpoint.x, spurMidpoint.z) - 0.76) > 0.001 ||
+          Math.abs(world.getGroundHeight(district.id, spurTo.x, spurTo.z) - 0.82) > 0.001 ||
+          Math.abs(world.getGroundHeight(district.id, serviceRoadMidpoint.x, serviceRoadMidpoint.z) - 0.715) > 0.001 ||
+          Math.abs(serviceRoadFrom.z - CITY_MAP.districts.marinaBoardwalk.road.maxZ) > 0.001 ||
+          Math.abs(serviceRoadSegment.fromTopY - CITY_MAP.surfaces.roadTopY + 0.11) > 0.001 ||
+          Math.abs(Math.abs(spurFrom.x - serviceRoadFrom.x) -
+            (serviceRoadSegment.width / 2 + sidewalkSpur.width / 2)) > 0.001 ||
+          serviceRoadSegment?.sidewalkSides?.length !== 0 ||
+          Math.abs(spurFrom.x - serviceRoadFrom.x) <= serviceRoadSegment.width / 2 + 0.5) {
+        throw new Error("The Boardwalk sidewalk must grade continuously into the Convention sidewalk without crossing the gated vehicle lane, and the connecting road must be graded into the city street.");
+      }
+      if (archetypeCollision.boxes.length !== 0) {
+        throw new Error("Temporary archetype collision data leaked after cleanup.");
+      }
+      if (deniedCityRoute.found || !authorizedCityRoute.found) {
+        throw new Error("City-wide routing did not preserve restricted access across district connections: " + JSON.stringify({ deniedCityRoute, authorizedCityRoute, serviceToNorthRoute, serviceToJunctionRoute, junctionToNorthRoute, openGateKeys: [...world.getOpenGateKeys()], futureDistrictEndpointRoute, connectionRegistration, gateGrant }));
+      }
+      if (previewCollision.boxes.length !== district.parcels.length) {
+        throw new Error("Opening the service gate did not remove its collision blocker.");
+      }
+
+      const districtRemovalConnector = world.registerConnection({
+        id: "district-removal-physical-connector-test",
+        from: { districtId: district.id, nodeId: connectorFrom.id },
+        to: { districtId: futureDistrict.id, nodeId: connectorTo.id },
+        mode: "vehicle",
+        access: "public",
+        physical: {
+          enabled: true,
+          surface: "land",
+          surfaceVerified: true,
+          path: [
+            { x: connectorFrom.x, z: connectorFrom.z },
+            { x: 149, z: connectorFrom.z },
+            { x: 149, z: connectorTo.z },
+            { x: connectorTo.x, z: connectorTo.z }
+          ],
+          width: 9,
+          sidewalkWidth: 3
+        }
+      });
+      if (!districtRemovalConnector.registered) {
+        throw new Error("Could not register the district-removal connector cleanup fixture.");
+      }
+      const districtRemovalConnectorName = "worldConnection_district-removal-physical-connector-test";
+      if (!scene.children.some(child => child.name === districtRemovalConnectorName)) {
+        throw new Error("The district-removal connector fixture did not create geometry.");
+      }
+
+      const registeredDistrictCount = world.getDistrictIds().length;
+      const registeredConnectionCount = world.getStatus().registeredConnections.length;
+
+      // Removing a district must release its blockers, links, and physical connector geometry.
+      const districtRemoved = world.unregisterDistrict(district.id);
+      if (!districtRemoved || previewCollision.boxes.length !== 0 ||
+          world.getStatus().registeredConnections.length !== 0 ||
+          world.getDistrictIds().includes(district.id) ||
+          scene.children.some(child => child.name === districtRemovalConnectorName)) {
+        throw new Error("District removal did not clean up collision blockers and city connections.");
+      }
+      status.textContent = "All district, terrain, parcel, pedestrian, city-route, collision, gate, and cleanup checks passed. Isolated from live gameplay.";
+
+      metrics.innerHTML = [
+        ["Roads", root.userData.roadCount],
+        ["Road / junction draw batches", 1],
+        ["Sidewalk draw batches", sidewalkBatch ? 1 : 0],
+        ["Junctions", root.userData.junctionCount],
+        ["Sidewalk sections", root.userData.sidewalkCount],
+        ["Raised curb sections", root.userData.curbCount],
+        ["Landscaped street verges", root.userData.vergeCount],
+        ["Vehicle stays off sidewalks", "verified"],
+        ["Passenger-car U-turn aprons", "verified"],
+        ["Detailed parcel draw batches", root.userData.detailBatchCount],
+        ["Detailed source meshes batched", root.userData.detailSourceMeshCount],
+        ["Terrain vertices", root.userData.terrainVertexCount],
+        ["Villa parcels", root.userData.parcelCount],
+        ["Access tiers", district.accessTiers.length],
+        ["Terrain grades / surfaces", root.userData.terrainZoneCount + " / " + root.userData.terrainSurfaceCount],
+        ["Terrain height samples", "verified"],
+        ["Terrain finishes / planting grade", "verified"],
+        ["Landscape limits", "verified"],
+        ["Road / sidewalk grounding", "verified"],
+        ["Coordinate-based world lookup", "verified"],
+        ["Landscape zones", root.userData.landscapeZoneCount],
+        ["Landscape features", root.userData.landscapeFeatureCount],
+        ["Closed gate blocks authorized route", servicePermissionWithClosedGate.found ? "failed" : "verified"],
+        ["Service gate before grant", gateBeforeAuthorization?.open ? "open" : "closed"],
+        ["Service gate after grant", gateGrant.gate?.open ? "open" : "closed"],
+        ["Service route without permission", noPermissionServiceRoute.found ? "unexpected" : "blocked"],
+        ["Authorized service route", authorizedServiceRoute.found ? "available" : "blocked"],
+        ["Boardwalk-to-Convention sidewalk", pedestrianRoute.found ? "continuous / graded" : "blocked"],
+        ["Boardwalk-to-Convention street", "continuous / graded"],
+        ["Ordinary vehicle route", ordinaryTrafficRoute.found ? "unexpected" : "restricted"],
+        ["Registered districts before cleanup", registeredDistrictCount],
+        ["Inter-district links before cleanup", registeredConnectionCount],
+        ["Cross-district route", authorizedCityRoute.found ? "available" : "blocked"],
+        ["Cross-district without permission", deniedCityRoute.found ? "unexpected" : "blocked"],
+        ["District cleanup", "verified"],
+        ["Colliders after cleanup", previewCollision.boxes.length],
+        ["Parcel archetypes", "4 supported"],
+        ["Archetype cleanup", "verified"],
+        ["District streaming", "detail / proxy / unload verified"],
+        ["Large-district parcel detail", "12 detailed + 37 instanced proxies"],
+        ["Generated parcel shadow cost", "no dynamic casters"],
+        ["Loop / grid recipe compiler", "verified"],
+        ["iPad recipe size limits", "verified"],
+        ["Runtime rollback", "verified"],
+        ["District build rollback", "verified"]
+      ].map(([label, value]) => '<span class="metric">' + label + ': ' + value + '</span>').join("");
+    } catch (err) {
+      status.textContent = "The district could not be generated.";
+      error.style.display = "block";
+      error.textContent = String(err?.stack || err);
+    }
+
+    function resize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+    }
+    window.addEventListener("resize", resize);
+    renderer.setAnimationLoop(() => {
+      controls.update();
+      renderer.render(scene, camera);
+    });
+  </script>
+</body>
+</html>
