@@ -38,6 +38,7 @@ let built = false;
 let inRange = false;
 let menuOpen = false;
 let traveling = false;
+let travelStartPending = false;
 
 let travelTimer = 0;
 let travelStartedAt = 0;
@@ -481,8 +482,8 @@ function selectFloor(
   floor
 ) {
 
-  if (traveling) {
-    return;
+  if (traveling || travelStartPending) {
+    return false;
   }
 
 
@@ -572,8 +573,18 @@ function floorNumberFromY(y) {
 // START TRAVEL
 // ============================================================
 
-function startTravel() {
+function startTravel(player = getPlayer()) {
 
+  // The phone controls can become interactive just before the first
+  // player update. Queue the destination instead of silently closing the
+  // phone and abandoning the trip when the player is not ready yet.
+  if (!player) {
+    travelStartPending = true;
+    setStatus("PREPARING ELEVATOR...");
+    return;
+  }
+
+  travelStartPending = false;
   traveling = true;
 
   travelTimer = 0;
@@ -608,23 +619,6 @@ function startTravel() {
 
   window.__lamboCityElevatorProgress =
     0;
-
-
-  const player =
-    getPlayer();
-
-
-  if (!player) {
-
-    traveling = false;
-
-    window.__lamboCityElevatorTraveling =
-      false;
-
-    closeMenu();
-
-    return;
-  }
 
 
   travelStartY =
@@ -851,7 +845,7 @@ export default {
     // session is lazy-loaded, so a returning visitor must wait for that
     // module before the direct cockpit shortcut can be used.
     window.__lamboCityNavigateToFloor = createPhoneFloorNavigator({
-      isBusy: () => traveling || Boolean(pendingLandingPlayer),
+      isBusy: () => traveling || Boolean(pendingLandingPlayer) || travelStartPending,
       isFloor2Discovered: () => window.__lamboCityFloor2Discovered === true,
       hasDirectEntry: () =>
         typeof window.__lamboCityEnterFloor2CockpitDirect === "function",
@@ -907,6 +901,11 @@ export default {
 
 
     currentPlayer = player;
+
+    if (travelStartPending) {
+      travelStartPending = false;
+      startTravel(player);
+    }
 
     // Release the Floor 3 landing-camera hold only after HERO has
     // physically crossed the rear elevator portal into the HQ.
