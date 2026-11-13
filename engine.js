@@ -92,7 +92,13 @@ export default class Engine {
     }
 
     this.initializedSystems.add(name);
-    const initArgs = args.length ? args : [this.scene, this.context];
+    const initArgs = args.length ? [...args] : [this.scene];
+    // Always provide the shared context, even when a streamed caller passes
+    // an explicit scene argument. Floor 2 modules use context.THREE rather
+    // than downloading a second Three.js runtime from another CDN.
+    if (initArgs[initArgs.length - 1] !== this.context) {
+      initArgs.push(this.context);
+    }
     const result = system.init?.(...initArgs);
     this.systemInitResults.set(name, result);
     return result;
