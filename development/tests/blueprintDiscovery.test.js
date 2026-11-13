@@ -74,7 +74,7 @@ test("writer creates a machine-readable discovery snapshot and readable report",
   try {
     await fs.mkdir(path.join(rootDir, "development", "blueprints"), { recursive: true });
     await fs.copyFile(catalogPath, path.join(rootDir, "development", "blueprints", "departmentCatalog.json"));
-    const outputDir = path.join(rootDir, "generated");
+    const outputDir = path.join(rootDir, "development", "planning", "blueprint-discovery");
     const { result } = await writeBlueprintDiscovery({ rootDir, outputDir });
     const secondRun = await discoverBlueprints({ rootDir, catalog });
     const json = JSON.parse(await fs.readFile(path.join(outputDir, "discovery.json"), "utf8"));
