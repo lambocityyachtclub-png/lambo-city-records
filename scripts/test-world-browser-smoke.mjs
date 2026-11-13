@@ -126,7 +126,7 @@ async function smokeWorld({ label, isMobile }) {
       await page.keyboard.press("f");
     }
     await page.waitForSelector("#phone-ui");
-    // The click handler closes the phone on the next animation frame.
+    // The click handler defers navigation so the pointer action can complete first.
     try {
       if (isMobile) {
         await page.locator("#lambo-phone-studio").tap({ timeout: 10000 });
