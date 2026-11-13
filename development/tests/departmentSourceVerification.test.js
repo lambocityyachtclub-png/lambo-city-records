@@ -40,6 +40,9 @@ test("department verification distinguishes registered roots, transitive imports
     await fs.writeFile(path.join(root, "development/blueprints/departments/sample.md"), document);
     await fs.writeFile(path.join(root, "sampleFeature.js"), 'import "./nestedFeature.js";\nexport default {};\n');
     await fs.writeFile(path.join(root, "nestedFeature.js"), "export const ready = true;\n");
+    await fs.writeFile(path.join(root, "architecture.md"), "# Architecture\n");
+    await fs.writeFile(path.join(root, "flags.json"), "{}\n");
+    await fs.writeFile(path.join(root, "scripts/test-sample.mjs"), "console.log('test');\n");
     await fs.writeFile(path.join(root, "main.js"),
       'import Sample from "./sampleFeature.js";\nengine.registerSystems({\n  sampleFeature: Sample,\n});\n');
     await fs.writeFile(path.join(root, "engine.js"), 'initialize("sampleFeature");\n');
