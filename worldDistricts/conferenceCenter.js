@@ -45,6 +45,15 @@ const CONFERENCE_CENTER_DISTRICT = Object.freeze({
     minZ: serviceEntryZ,
     maxZ: MASTER_ARENA.bounds.maxZ
   }),
+  // Keep the boardwalk service connector in the complete district bounds,
+  // but do not let that connector pull full arena/villa detail into Records HQ.
+  // The south sidewalk is the nearest point of the actual district core.
+  streamingBounds: Object.freeze({
+    minX: MASTER_ARENA.bounds.minX,
+    maxX: MASTER_ARENA.bounds.maxX,
+    minZ: walkSouthZ,
+    maxZ: MASTER_ARENA.bounds.maxZ
+  }),
 
   landmarks: Object.freeze([
     Object.freeze({
