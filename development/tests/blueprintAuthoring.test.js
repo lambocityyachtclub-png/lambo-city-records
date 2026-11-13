@@ -80,7 +80,7 @@ test("ALIVE implementation convergence audit preserves the local-first core boun
   assert.match(audit, /PR #44/);
   assert.match(audit, /PR #52/);
   assert.match(audit, /browser IndexedDB/);
-  assert.match(audit, /local owner bootstrap starts with no AI, Sandbox, Vercel token, or database credentials/i);
+  assert.match(audit, /Local owner bootstrap starts with no AI, Sandbox, Vercel token, hosted queue, or database credentials/i);
   assert.match(audit, /must not be imported by the public game runtime/i);
   assert.match(audit, /No branch is merged by this audit/);
   assert.match(readme, /ALIVE_IMPLEMENTATION_CONVERGENCE_DRAFT\.md/);
