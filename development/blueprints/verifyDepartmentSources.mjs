@@ -253,6 +253,22 @@ export async function buildDepartmentSourceVerification(root = ROOT) {
   }
 
   const activeGraph = await buildActiveModuleGraph(root, entrypointSources);
+  const publicDomains = new Set(["visitor-world", "studio-standalone"]);
+  const publicExperienceDevelopmentImports = [];
+  for (const [sourcePath, references] of activeGraph.referencesByPath.entries()) {
+    if (!sourcePath.startsWith("development/")) continue;
+    for (const reference of references) {
+      if (publicDomains.has(reference.runtimeDomain)) {
+        publicExperienceDevelopmentImports.push({
+          path: sourcePath,
+          runtimeDomain: reference.runtimeDomain,
+          importedFrom: reference.file,
+          line: reference.line,
+          kind: reference.kind
+        });
+      }
+    }
+  }
   const departments = [];
   for (const department of blueprintSet.departments) {
     const document = await fs.readFile(path.join(root, department.path), "utf8");
@@ -332,6 +348,11 @@ export async function buildDepartmentSourceVerification(root = ROOT) {
     },
     entrypointsInspected: ENTRYPOINTS,
     activeRuntimeRoots: activeGraph.roots,
+    runtimeIsolation: {
+      publicDomains: [...publicDomains],
+      publicExperienceDevelopmentImports,
+      passed: publicExperienceDevelopmentImports.length === 0
+    },
     departments
   };
 }
@@ -346,6 +367,13 @@ function renderMarkdown(report) {
     "- This is static source evidence, not proof of runtime/device behavior.",
     ""
   ];
+  lines.push("## Public experience / ALIVE isolation", "");
+  lines.push("- Result: " + (report.runtimeIsolation.passed ? "passed — no public experience imports into development infrastructure" : "review required — public experience imports found"));
+  lines.push("- Public domains: " + report.runtimeIsolation.publicDomains.join(", "));
+  for (const item of report.runtimeIsolation.publicExperienceDevelopmentImports) {
+    lines.push("- " + item.path + " reached from " + item.runtimeDomain + " via " + item.importedFrom + ":" + item.line);
+  }
+  lines.push("");
   for (const department of report.departments) {
     lines.push("## " + department.title + " (" + department.id + ")", "");
     lines.push("- Blueprint status: " + department.blueprintStatus);
