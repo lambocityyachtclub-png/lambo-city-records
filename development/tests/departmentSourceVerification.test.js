@@ -38,8 +38,11 @@ test("department verification distinguishes source presence, runtime references 
     assert.equal(capabilities[0].runtimeReferences[0].kind, "registered-static-root");
     assert.equal(capabilities[0].testReferences.length, 1);
     assert.equal(capabilities[0].runtimeDeviceVerification, "not-verified");
-    assert.equal(capabilities[1].sourcePresent, false);
-    assert.equal(capabilities[1].status, "planned");
+    assert.equal(capabilities[1].sourcePresent, true);
+    assert.equal(capabilities[1].status, "connected");
+    assert.equal(capabilities[1].runtimeReferences[0].kind, "transitive-static-import");
+    assert.equal(capabilities[2].sourcePresent, false);
+    assert.equal(capabilities[2].status, "planned");
     assert.equal(report.verificationPolicy.testFilePresenceIsNotPassingTestProof, true);
   } finally {
     await fs.rm(root, { recursive: true, force: true });
