@@ -673,7 +673,7 @@ export default {
       background:linear-gradient(180deg,#0a0020,#050010);
       border:2px solid rgba(255,215,0,0.4);
       border-radius:28px;
-      z-index:400;
+      z-index:10000;
       pointer-events:all;
       box-shadow:0 0 60px rgba(153,0,255,0.4);
       overflow:hidden;
