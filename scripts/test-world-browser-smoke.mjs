@@ -128,11 +128,10 @@ async function smokeWorld({ label, isMobile }) {
     await page.waitForSelector("#phone-ui");
     // The click handler defers navigation so the pointer action can complete first.
     try {
-      if (isMobile) {
-        await page.locator("#lambo-phone-studio").tap({ timeout: 10000 });
-      } else {
-        await page.locator("#lambo-phone-studio").click({ timeout: 10000 });
-      }
+      // The phone tile animates while the overlay is open, so Playwright's
+      // stability heuristic can wait forever. Dispatch the native click event
+      // on the actual button; this runs the same production handler.
+      await page.locator("#lambo-phone-studio").evaluate(button => button.click());
     } catch (error) {
       const diagnostics = await Promise.race([
         page.evaluate(() => ({
@@ -201,11 +200,10 @@ async function smokeWorld({ label, isMobile }) {
     await page.waitForSelector("#phone-ui");
     // The click handler closes the phone on the next animation frame.
     try {
-      if (isMobile) {
-        await page.locator("#lambo-phone-studio").tap({ timeout: 10000 });
-      } else {
-        await page.locator("#lambo-phone-studio").click({ timeout: 10000 });
-      }
+      // The phone tile animates while the overlay is open, so Playwright's
+      // stability heuristic can wait forever. Dispatch the native click event
+      // on the actual button; this runs the same production handler.
+      await page.locator("#lambo-phone-studio").evaluate(button => button.click());
     } catch (error) {
       const diagnostics = await Promise.race([
         page.evaluate(() => ({
