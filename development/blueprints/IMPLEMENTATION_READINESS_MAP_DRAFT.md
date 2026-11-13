@@ -1,7 +1,7 @@
 # LAMBO CITY Department Implementation Readiness Map (Draft)
 
 **Status:** draft — not owner-approved  
-**Evidence snapshot:** Department Source Verification workflow run 43354033284, source commit d813a56c7743818c7e8262767b3890cfba4456cf  
+**Evidence snapshot:** Department Source Verification workflow run 43355322431, source commit 92a1ae5f99cf669356554bd7a2fa860b614577a2  
 **Evidence artifact:** lambo-city-department-source-verification  
 **Purpose:** establish a dependency-aware order for implementation without treating source presence as completion or creating work authorization.
 
@@ -13,20 +13,20 @@ The map does not require all ten departments to be fully implemented before Floo
 
 ## 2. Verified evidence snapshot
 
-The report follows 65 registered or separately hosted runtime roots across the visitor world, ALIVE owner workspace, ALIVE API and development runner domains. It traces local import dependencies from those roots. All runtime/device verification remains not-verified.
+The report follows 66 registered or separately hosted runtime roots across visitor-world, Studio standalone, ALIVE owner workspace, ALIVE API and ALIVE CI worker domains. It traces local import dependencies from those roots. All runtime/device verification remains not-verified.
 
 | Department | Blueprint state | Source evidence summary | Runtime domain |
 |---|---|---|---|
 | Water & Environment | partial | 6 connected code modules; no direct tests identified | visitor-world |
 | Jumbotron & Events | planned | 9 connected modules; 1 code module source-only; 1 documentation reference | visitor-world |
-| LAMBO CITY Radio | discovery-needed | 2 connected shared-audio modules, 1 tested shared audio engine, 2 source-only; no verified station/player path | visitor-world |
-| Studio & Music | partial | 6 tested modules, 1 source-only module, 3 documentation references | visitor-world |
+| LAMBO CITY Radio | discovery-needed | 2 connected shared-audio modules, 1 tested shared audio engine, 2 source-only; visitor-world and Studio-standalone domains; no verified station/player path | visitor-world |
+| Studio & Music | partial | 7 tested modules, 3 documentation references | visitor-world |
 | Convention Center | partial | 4 connected modules, 2 documentation references | visitor-world |
 | World & Districts | partial | 7 connected modules, 2 tested modules, 3 documentation references | visitor-world |
 | Vehicles & Yachts | discovery-needed | 5 connected modules; cars.js is source-only and intentionally not active | visitor-world |
 | People & Experiences | partial | 5 connected modules, 2 source-only modules, 1 documentation reference | visitor-world |
 | Performance & Quality | cross-cutting | 1 connected runtime monitor, 3 test sources, 3 configuration references | visitor-world |
-| Security & Release | cross-cutting | 3 tested API/security modules, 1 connected API module, 5 source-only development modules, 1 configuration reference | alive-api |
+| Security & Release | cross-cutting | 13 tested modules, 3 connected modules, 12 source-only modules, 1 test source, 2 configuration references and 1 asset; alive-api, owner-workspace and CI-worker domains | alive-api |
 
 ### Evidence interpretation
 
