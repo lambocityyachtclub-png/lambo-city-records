@@ -34,8 +34,8 @@ test("department verification distinguishes source presence, runtime references 
     const capabilities = report.departments[0].capabilities;
     assert.equal(capabilities[0].sourcePresent, true);
     assert.equal(capabilities[0].status, "tested");
-    assert.equal(capabilities[0].runtimeReferences.length, 3);
-    assert.ok(capabilities[0].runtimeReferences.some(item => item.kind === "engine-initialize"));
+    assert.equal(capabilities[0].runtimeReferences.length, 1);
+    assert.equal(capabilities[0].runtimeReferences[0].kind, "registered-static-root");
     assert.equal(capabilities[0].testReferences.length, 1);
     assert.equal(capabilities[0].runtimeDeviceVerification, "not-verified");
     assert.equal(capabilities[1].sourcePresent, false);
