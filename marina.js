@@ -119,7 +119,7 @@ export default {
       roughness: 1
     });
 
-    [-1, 1].forEach(function(side) {
+    [-1, 1].forEach(side => {
 
       var sidewalk = new THREE.Mesh(
         new THREE.BoxGeometry(STREET_LEN, 0.3, 5),
@@ -206,7 +206,7 @@ export default {
       }
     ];
 
-    stores.forEach(function(s) {
+    stores.forEach(s => {
 
       var building = new THREE.Mesh(
         new THREE.BoxGeometry(10, 8, 12),
@@ -488,7 +488,7 @@ export default {
       // Posts
       var postPositions = [0, 0.5, 1];
 
-      postPositions.forEach(function(t) {
+      postPositions.forEach(t => {
 
         var px = startX + (endX - startX) * t;
         var pz = startZ + (endZ - startZ) * t;
