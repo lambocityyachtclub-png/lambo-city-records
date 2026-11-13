@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lambocityrecords.com/schemas/blueprint-reconciliation-v1.json",
+  "title": "LAMBO CITY Blueprint Reconciliation Register",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "system", "status", "policy", "records"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "system": { "const": "lambo-city-blueprint-reconciliation" },
+    "status": { "const": "reconciliation-draft" },
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sourceOfTruth", "noAutomaticPromotion", "noTaskCreation", "ownerApprovalRequiredForBlueprintAuthority"],
+      "properties": {
+        "sourceOfTruth": { "type": "string", "minLength": 1 },
+        "noAutomaticPromotion": { "const": true },
+        "noTaskCreation": { "const": true },
+        "ownerApprovalRequiredForBlueprintAuthority": { "const": true }
+      }
+    },
+    "records": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "scope", "departmentId", "title", "implementationStatus", "verificationStatus", "confidence", "statement", "interpretation", "sources", "dependencies", "openQuestions"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+          "scope": { "enum": ["master", "department"] },
+          "departmentId": { "type": "string", "minLength": 1 },
+          "title": { "type": "string", "minLength": 1 },
+          "implementationStatus": { "enum": ["present", "partial", "planned", "future", "blocked", "conflict"] },
+          "verificationStatus": { "enum": ["source-reviewed", "automated-tests-passed", "runtime-not-verified", "owner-decision-required", "not-started"] },
+          "confidence": { "enum": ["low", "medium", "high"] },
+          "statement": { "type": "string", "minLength": 1 },
+          "interpretation": { "type": "string", "minLength": 1 },
+          "sources": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["path", "locator", "role"],
+              "properties": {
+                "path": { "type": "string", "minLength": 1 },
+                "locator": { "type": "string", "minLength": 1 },
+                "role": { "enum": ["owner-direction", "architecture-direction", "implementation", "automated-test", "release-record"] }
+              }
+            }
+          },
+          "dependencies": { "type": "array", "items": { "type": "string" } },
+          "openQuestions": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    }
+  }
+}
