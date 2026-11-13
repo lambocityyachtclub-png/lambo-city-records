@@ -129,8 +129,11 @@ test("verification reports a visitor-world import into ALIVE development infrast
     await fs.writeFile(path.join(root, "main.js"),
       'import WorldEntry from "./worldEntry.js";\nengine.registerSystems({\n  worldEntry: WorldEntry,\n});\n');
     await fs.writeFile(path.join(root, "engine.js"), 'initialize("worldEntry");\n');
-    await fs.writeFile(path.join(root, "worldEntry.js"), 'import "./development/engine/privateCore.js";\n');
+    await fs.writeFile(path.join(root, "worldEntry.js"),
+      'import "./development/engine/privateCore.js";\nimport "./server/alive/security.js";\nimport "./api/alive/session.js";\n');
     await fs.writeFile(path.join(root, "development/engine/privateCore.js"), "export const privateCore = true;\n");
+    await fs.writeFile(path.join(root, "server/alive/security.js"), "export const ownerSecurity = true;\n");
+    await fs.writeFile(path.join(root, "api/alive/session.js"), "export const ownerSession = true;\n");
     const report = await buildDepartmentSourceVerification(root);
     assert.equal(report.runtimeIsolation.passed, false);
     assert.equal(report.runtimeIsolation.publicExperienceDevelopmentImports.length, 3);
