@@ -113,10 +113,34 @@ engine.registerSystems({
 // Each destination is cached so returning to a floor never rebuilds it.
 const destinationLoads = new Map();
 const yieldToFrame = () => new Promise(resolve => {
-  if (typeof window !== "undefined" && typeof window.requestAnimationFrame === "function") {
-    window.requestAnimationFrame(resolve);
+  let finished = false;
+  let fallbackTimer = null;
+
+  const finish = () => {
+    if (finished) return;
+    finished = true;
+    if (fallbackTimer !== null && typeof window !== "undefined") {
+      window.clearTimeout(fallbackTimer);
+    }
+    resolve();
+  };
+
+  if (typeof window !== "undefined") {
+    // requestAnimationFrame is preferred while visible, but can be paused
+    // in background tabs, iPad multitasking, or headless browser sessions.
+    // The fallback guarantees streamed modules never wait forever for a frame.
+    fallbackTimer = window.setTimeout(finish, 50);
+    if (typeof window.requestAnimationFrame === "function") {
+      try {
+        window.requestAnimationFrame(finish);
+      } catch (_) {
+        finish();
+      }
+    } else {
+      finish();
+    }
   } else {
-    setTimeout(resolve, 0);
+    setTimeout(finish, 0);
   }
 });
 window.__lamboCityFloor2Ready = false;
