@@ -1,3 +1,5 @@
+import { createLocalAliveControlPlane } from "./development/runtime/createLocalAliveControlPlane.js";
+
 const $ = selector => document.querySelector(selector);
 const setupPanel = $("#setup-panel");
 const loginPanel = $("#login-panel");
@@ -6,6 +8,7 @@ const setupMessage = $("#setup-message");
 const loginMessage = $("#login-message");
 const visionMessage = $("#vision-message");
 let lastTask = null;
+let localCore = null;
 
 function message(element, text, error = false) {
   element.textContent = text || "";
@@ -27,6 +30,27 @@ function show(section) {
   setupPanel.classList.toggle("hidden", section !== "setup");
   loginPanel.classList.toggle("hidden", section !== "login");
   workspace.classList.toggle("hidden", section !== "workspace");
+}
+async function startLocalCore() {
+  if (localCore) return;
+  const status = $("#local-core-status");
+  const summary = $("#local-core-summary");
+  try {
+    localCore = await createLocalAliveControlPlane();
+    const snapshot = localCore.getSnapshot();
+    status.textContent = "Ready";
+    summary.textContent =
+      (snapshot.workers?.length || 0) + " specialists · " +
+      (snapshot.director?.totalTasks || 0) + " local tasks · saved on this device";
+  } catch {
+    status.textContent = "Unavailable";
+    summary.textContent = "This browser could not open local task storage. The separate hosted queue remains independent.";
+  }
+}
+async function stopLocalCore() {
+  if (!localCore) return;
+  try { await localCore.close(); } catch { /* local view can still close */ }
+  localCore = null;
 }
 function readLastTask() {
   try {
@@ -99,6 +123,7 @@ async function start() {
       return;
     }
     show("workspace");
+    await startLocalCore();
     await refreshStatus();
     if (lastTask) {
       $("#task-empty").classList.add("hidden");
@@ -124,6 +149,7 @@ $("#login-form").addEventListener("submit", async event => {
     });
     $("#owner-password").value = "";
     show("workspace");
+    await startLocalCore();
     await refreshStatus();
   } catch (error) {
     message(loginMessage, error.message, true);
@@ -155,6 +181,7 @@ $("#vision-form").addEventListener("submit", async event => {
 $("#refresh-status").addEventListener("click", refreshStatus);
 $("#logout").addEventListener("click", async () => {
   try { await api("/api/alive/session", { method: "DELETE" }); } catch { /* local view still closes */ }
+  await stopLocalCore();
   lastTask = null;
   try { localStorage.removeItem("lc-alive-last-task"); } catch { /* ignore storage denial */ }
   show("login");
