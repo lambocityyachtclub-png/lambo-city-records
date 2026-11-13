@@ -22,4 +22,4 @@ The source-verification engine is `verifyDepartmentSources.mjs`. Its JSON and Ma
 
 ## Local-first ALIVE foundation
 
-PR #52 adds a browser-native local control plane through `development/runtime/createLocalAliveControlPlane.js` and `development/storage/indexedDbDevelopmentStorage.js`. It persists owner directions, tasks, and review decisions in the current browser profile before any optional hosted submission. It does not require AI, Vercel Sandbox, PostgreSQL, or a hosted queue to save local work. It is a control plane only; it does not execute code or sync records across devices.
+PR #52 adds a browser-native local control plane through `development/runtime/createLocalAliveControlPlane.js` and `development/storage/indexedDbDevelopmentStorage.js`. It persists owner directions, tasks, and review decisions in the current browser profile before any optional hosted submission. Saving a direction does not trigger the hosted queue or any model call. It does not require AI, Vercel Sandbox, PostgreSQL, or a hosted queue to save local work. It is a control plane only; it does not execute code or sync records across devices.
