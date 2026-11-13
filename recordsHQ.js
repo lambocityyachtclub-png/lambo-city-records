@@ -828,6 +828,50 @@ export default {
     // HQ ROUNDABOUT TURNAROUND
     // ========================================================
 
+           // ========================================================
+    // ROUNDABOUT APPROACH — CONTINUOUS CONNECTION FROM PATIO WALK
+    // ========================================================
+    // The patio walkway ends near local X=10. Extend the paved approach
+    // all the way to the southwest side of the existing roundabout.
+    // This overlaps both surfaces so there is no visible gap.
+    const roundaboutApproach = new THREE.Mesh(
+      new THREE.BoxGeometry(15.5, 0.12, 3.8),
+      new THREE.MeshStandardMaterial({
+        color: 0x29292e,
+        roughness: 0.42,
+        metalness: 0.22
+      })
+    );
+    roundaboutApproach.position.set(17.0, 0.12, -6.45);
+    roundaboutApproach.rotation.y = -0.20;
+    group.add(roundaboutApproach);
+
+    const approachGold = new THREE.MeshStandardMaterial({
+      color: 0xffd700,
+      emissive: 0xffb000,
+      emissiveIntensity: 0.55,
+      metalness: 0.72,
+      roughness: 0.3
+    });
+
+    [-1.78, 1.78].forEach(offset => {
+      const edge = new THREE.Mesh(
+        new THREE.BoxGeometry(15.2, 0.035, 0.055),
+        approachGold
+      );
+      edge.position.set(
+        17.0 + Math.sin(-0.20) * offset,
+        0.205,
+        -6.45 + Math.cos(-0.20) * offset
+      );
+      edge.rotation.y = -0.20;
+      group.add(edge);
+    });
+
+    // ========================================================
+    // HQ ROUNDABOUT TURNAROUND
+    // ========================================================
+
            const roundabout = new THREE.Mesh(
 
       new THREE.CylinderGeometry(
@@ -847,7 +891,7 @@ export default {
 
     );
 
-    roundabout.position.set(2, .1, -24);
+    roundabout.position.set(30, .1, -2);
 
     group.add(roundabout);
 
