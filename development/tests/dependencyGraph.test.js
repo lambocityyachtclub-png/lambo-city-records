@@ -56,3 +56,12 @@ test("computes conservative reachability from visitor and standalone entrypoints
   assert.ok(graph.reachableFiles.includes("studio.js"));
   assert.ok(!graph.reachableFiles.includes("unused.js"));
 });
+
+test("separates intentionally unresolved test fixtures from production references", () => {
+  const graph = buildStaticDependencyGraph([
+    { path: "tests/fixture.test.js", content: 'import "./missing-fixture.js";' },
+    { path: "main.js", content: 'import "./missing-runtime.js";' }
+  ]);
+  assert.equal(graph.summary.unresolvedLocalEdges, 1);
+  assert.equal(graph.summary.unresolvedTestFixtures, 1);
+});
