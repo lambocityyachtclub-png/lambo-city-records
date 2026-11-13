@@ -1,6 +1,5 @@
 
-import * as THREE from
-  "https://unpkg.com/three@0.160.0/build/three.module.js";
+let THREE = null;
 
 import StudioAudioEngine from
   "./studioAudioEngine.js";
@@ -21,6 +20,10 @@ const NOTES = [
 
 export default {
   init(scene, context) {
+    THREE = context?.THREE;
+    if (!THREE) {
+      throw new Error("LAMBO CITY Piano requires the shared core Three.js runtime.");
+    }
     this.scene = scene;
     this.camera = context?.camera;
     this.renderer = context?.renderer;
