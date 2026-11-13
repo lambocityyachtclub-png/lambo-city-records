@@ -44,6 +44,14 @@ assert.match(phoneNavigation, /getPrepareFloor\(\)/, "A discovered Floor 2 short
 assert.match(phoneNavigation, /prepareFloor\(2\)/, "The returning phone shortcut must prepare Floor 2 on demand");
 assert.match(phoneNavigation, /hasDirectEntry\(\) && enterDirect\(\)/, "The cockpit shortcut must enter only after its session hook exists");
 assert.match(phoneNavigation, /selectFloor\(2\)/, "A failed direct-entry preload must retain the physical elevator fallback");
+assert.match(elevator, /let travelStartPending = false/,
+  "The phone shortcut must queue a trip if the first player update has not arrived yet.");
+assert.match(elevator, /function startTravel\(player = getPlayer\(\)\)/,
+  "Elevator travel must accept the player supplied by the first ready update.");
+assert.match(elevator, /if \(travelStartPending\) \{\s*travelStartPending = false;\s*startTravel\(player\);\s*\}/,
+  "A queued phone trip must resume automatically when the player becomes ready.");
+assert.match(elevator, /isBusy: \(\) => traveling \|\| Boolean\(pendingLandingPlayer\) \|\| travelStartPending/,
+  "A pending trip must block duplicate elevator requests.");
 assert.match(elevator, /window\.__lamboCityPrepareFloor\?\.\(selectedFloor\)/, "Elevator travel must wait for the destination loader");
 assert.match(elevator, /window\.__lamboCityBeginFloor2Session\?\.\(arrivedPlayer\)/, "Floor 2 arrival must open the Studio session");
 assert.ok(engine.indexOf("this.systems.input?.init?.();") >= 0 && engine.indexOf("this.systems.input?.init?.();") < engine.indexOf("this.systems.performanceMonitor?.init?."), "iPad input and joystick must initialize immediately after the core renderer/context");
