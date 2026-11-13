@@ -96,6 +96,10 @@ test("discovery scans the actual repository and identifies the existing master s
   assert.ok(result.master.discoveredSourceFiles.includes("LAMBO_CITY_NORTHSTAR.md"));
   assert.ok(result.master.discoveredSourceFiles.includes("LAMBO_CITY_MASTER_BLUEPRINT.md"));
   assert.ok(result.departments.every(item => item.status === "discovery-draft"));
+  assert.ok(result.departments.every(item => Array.isArray(item.runtimeConnectedSourceFiles)));
+  assert.ok(result.departments.every(item => Array.isArray(item.notStaticallyReachableSourceFiles)));
+  assert.ok(result.dependencyGraph.rootEntrypoints.includes("main.js"));
+  assert.ok(result.dependencyGraph.reachableFiles.includes("main.js"));
   assert.ok(result.departments.some(item => item.id === "lambo-city-radio"));
   assert.ok(result.departments.some(item => item.id === "jumbotron-events"));
 });
