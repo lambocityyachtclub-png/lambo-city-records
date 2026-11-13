@@ -138,6 +138,24 @@
     "draftsAreNotTaskAuthorization": true,
     "sourcePresenceIsNotCompletionProof": true,
     "productionChangesRequireSeparateApproval": true,
-    "ownerAuthoredSourcesMustRemainUnmodified": true
+    "ownerAuthoredSourcesMustRemainUnmodified": true,
+    "localCoreDoesNotExecuteGeneratedCode": true,
+    "localRecordsAreBrowserProfileScoped": true
+  },
+  "foundation": {
+    "id": "alive-local-owner-control-plane",
+    "status": "implemented-in-draft",
+    "pullRequest": 52,
+    "storage": "browser-indexeddb",
+    "persists": [
+      "owner-directions",
+      "development-tasks",
+      "owner-review-decisions"
+    ],
+    "requiresExternalServices": false,
+    "codeExecutionEnabled": false,
+    "crossDeviceSync": false,
+    "backupExport": false,
+    "ownerApproved": false
   }
 }
