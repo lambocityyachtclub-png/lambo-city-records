@@ -12,13 +12,14 @@ test("department verification distinguishes registered roots, transitive imports
   try {
     await fs.mkdir(path.join(root, "development/blueprints/departments"), { recursive: true });
     await fs.mkdir(path.join(root, "tests"), { recursive: true });
+    await fs.mkdir(path.join(root, "scripts"), { recursive: true });
     await fs.writeFile(path.join(root, "development/blueprints/blueprintSet.json"), JSON.stringify({
       departments: [{
         id: "sample-department",
         title: "Sample Department",
         path: "development/blueprints/departments/sample.md",
         status: "partial",
-        sourceCount: 3,
+        sourceCount: 6,
         ownerApproved: false
       }]
     }));
@@ -29,6 +30,9 @@ test("department verification distinguishes registered roots, transitive imports
       "- " + tick + "sampleFeature.js" + tick,
       "- " + tick + "nestedFeature.js" + tick,
       "- " + tick + "missingFeature.js" + tick,
+      "- " + tick + "architecture.md" + tick,
+      "- " + tick + "flags.json" + tick,
+      "- " + tick + "scripts/test-sample.mjs" + tick,
       "",
       "## 4. Non-goals",
       ""
@@ -56,6 +60,9 @@ test("department verification distinguishes registered roots, transitive imports
     assert.equal(capabilities[1].runtimeReferences[0].kind, "transitive-static-import");
     assert.equal(capabilities[2].sourcePresent, false);
     assert.equal(capabilities[2].status, "planned");
+    assert.equal(capabilities[3].status, "documentation-reference");
+    assert.equal(capabilities[4].status, "configuration-reference");
+    assert.equal(capabilities[5].status, "test-source");
     assert.equal(report.verificationPolicy.testFilePresenceIsNotPassingTestProof, true);
   } finally {
     await fs.rm(root, { recursive: true, force: true });
