@@ -67,3 +67,21 @@ LAMBO CITY should scale upward:
 - The world gains detail, graphics, assets, atmosphere, and new experiences without removing existing locations or behavior.
 
 **Default decision when uncertain: preserve the existing implementation and stop for clarification.**
+
+
+## GitHub main-branch enforcement (required)
+
+The repository files above define the policy and automated scope check. GitHub repository settings must also enforce the check; a workflow and CODEOWNERS file alone cannot prevent a direct push or make a review mandatory.
+
+In **Settings → Rules → Rulesets** (or Branch protection rules), create an active rule targeting `main` with:
+
+- Require a pull request before merging.
+- Require at least one approving review.
+- Require review from Code Owners.
+- Require the status check **LAMBO CITY Change Scope Guard**.
+- Block force pushes.
+- Block branch deletion.
+- Do not allow bypass for routine automation or collaborators.
+- Keep production changes flowing through reviewed pull requests only.
+
+Until that repository rule is active, the workflow can report unauthorized scope but GitHub may still allow a merge or direct push. Treat this enforcement setting as a required final setup item, not as completed.
