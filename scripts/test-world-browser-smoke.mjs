@@ -253,6 +253,9 @@ async function smokeWorld({ label, isMobile }) {
           started: window.__lamboCityPhoneNavigationStarted === true,
           mode: window.__lamboCityFloor2SessionMode || null,
           loadError: window.__lamboCityFloor2LoadError || null,
+          loadPhase: window.__lamboCityFloor2LoadPhase || null,
+          loadingModule: window.__lamboCityFloor2LoadingModule || null,
+          initProgress: window.__lamboCityFloor2InitProgress || [],
           startupErrors: window.__lamboCityStartupErrors || []
         })),
         new Promise(resolve => setTimeout(() => resolve({ pageUnresponsive: true }), 3000))
