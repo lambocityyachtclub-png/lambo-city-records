@@ -115,11 +115,10 @@ async function smokeWorld({ label, isMobile }) {
       await page.keyboard.press("f");
     }
     await page.waitForSelector("#phone-ui");
-    if (isMobile) {
-      await page.locator("#lambo-phone-studio").tap();
-    } else {
-      await page.locator("#lambo-phone-studio").click();
-    }
+    // The tile closes/removes the phone synchronously after its click
+    // handler runs. Dispatch the same click event without waiting for the
+    // now-removed overlay element to remain attached.
+    await page.locator("#lambo-phone-studio").evaluate(button => button.click());
 
     // First visit must load Floor 2, complete the elevator arrival, and seat
     // the player before the session's direct-entry hook is considered ready.
@@ -156,11 +155,10 @@ async function smokeWorld({ label, isMobile }) {
       await page.keyboard.press("f");
     }
     await page.waitForSelector("#phone-ui");
-    if (isMobile) {
-      await page.locator("#lambo-phone-studio").tap();
-    } else {
-      await page.locator("#lambo-phone-studio").click();
-    }
+    // The tile closes/removes the phone synchronously after its click
+    // handler runs. Dispatch the same click event without waiting for the
+    // now-removed overlay element to remain attached.
+    await page.locator("#lambo-phone-studio").evaluate(button => button.click());
     await page.waitForFunction(() =>
       window.__lamboCityFloor2SessionMode === "seated"
     , null, { timeout: 10000 });
