@@ -187,8 +187,8 @@ export default {
   screenCanvas:null,
   screenContext:null,
   noteHandler:null,
-  async init(scene){
-    THREE = await import("https://unpkg.com/three@0.160.0/build/three.module.js");
+  async init(scene, context){
+    THREE = context?.THREE || await import("https://unpkg.com/three@0.160.0/build/three.module.js");
     const studio=scene?.getObjectByName("recordsHQFloor2Studio");
     const station=studio?.getObjectByName("floor2InstrumentStation");
     if(!station){console.warn("LAMBO CITY City Synth: piano station unavailable.");return;}
