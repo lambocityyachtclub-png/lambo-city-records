@@ -5,6 +5,7 @@ import path from "node:path";
 import { chromium, webkit } from "playwright";
 
 const root = process.cwd();
+let hostedVisionSubmissionRequests = 0;
 const server = createServer(async (req, res) => {
   try {
     const pathname = new URL(req.url, "http://127.0.0.1").pathname;
@@ -13,15 +14,39 @@ const server = createServer(async (req, res) => {
       res.end("<!doctype html><html><head><meta charset='utf-8'></head><body>IndexedDB browser test</body></html>");
       return;
     }
-    if (!pathname.startsWith("/development/")) {
+    if (pathname === "/api/alive/session" && req.method === "GET") {
+      res.writeHead(200, { "content-type": "application/json", "cache-control": "no-store" });
+      res.end(JSON.stringify({ configured: true, authenticated: true }));
+      return;
+    }
+    if (pathname === "/api/alive/status") {
+      res.writeHead(200, { "content-type": "application/json", "cache-control": "no-store" });
+      res.end(JSON.stringify({ connected: false }));
+      return;
+    }
+    if (pathname === "/api/alive/vision") {
+      hostedVisionSubmissionRequests += 1;
+      res.writeHead(500, { "content-type": "application/json", "cache-control": "no-store" });
+      res.end(JSON.stringify({ error: "Hosted vision submission must remain off in this browser test." }));
+      return;
+    }
+    const rootFiles = new Set(["/alive.html", "/alive.js", "/alive.css"]);
+    if (!pathname.startsWith("/development/") && !rootFiles.has(pathname)) {
       res.writeHead(404); res.end("Not found"); return;
     }
     const file = path.resolve(root, "." + pathname);
-    if (!file.startsWith(path.resolve(root, "development") + path.sep)) {
+    const allowedRoot = pathname.startsWith("/development/")
+      ? path.resolve(root, "development") + path.sep
+      : path.resolve(root) + path.sep;
+    if (!file.startsWith(allowedRoot)) {
       res.writeHead(403); res.end("Forbidden"); return;
     }
     const content = await readFile(file);
-    res.writeHead(200, { "content-type": "text/javascript; charset=utf-8", "cache-control": "no-store" });
+    const extension = path.extname(file);
+    const contentType = extension === ".html" ? "text/html; charset=utf-8"
+      : extension === ".css" ? "text/css; charset=utf-8"
+        : "text/javascript; charset=utf-8";
+    res.writeHead(200, { "content-type": contentType, "cache-control": "no-store" });
     res.end(content);
   } catch {
     res.writeHead(404); res.end("Not found");
@@ -207,6 +232,35 @@ async function runBrowser(name, browserType, contextOptions = {}) {
         paidAdaptersDisabled: true
       };
     });
+    hostedVisionSubmissionRequests = 0;
+    await page.goto(baseUrl + "/alive.html");
+    await page.waitForFunction(() =>
+      document.querySelector("#local-core-status")?.textContent === "Ready"
+    );
+    await page.locator("#vision").fill("Keep LAMBO CITY ALIVE local-first and protect the Floor 2 Studio workflow.");
+    await page.locator("#submit-vision").click();
+    await page.waitForFunction(() =>
+      document.querySelector("#task-state")?.textContent === "SAVED LOCALLY"
+    );
+    const ownerWorkspaceState = await page.evaluate(() => ({
+      localCoreStatus: document.querySelector("#local-core-status")?.textContent,
+      queueStatus: document.querySelector("#queue-status")?.textContent,
+      savedVisionState: document.querySelector("#task-state")?.textContent,
+      visionInputCleared: document.querySelector("#vision")?.value === "",
+      message: document.querySelector("#vision-message")?.textContent || ""
+    }));
+    if (
+      ownerWorkspaceState.localCoreStatus !== "Ready" ||
+      ownerWorkspaceState.queueStatus !== "Off by default" ||
+      ownerWorkspaceState.savedVisionState !== "SAVED LOCALLY" ||
+      !ownerWorkspaceState.visionInputCleared ||
+      !ownerWorkspaceState.message.includes("No hosted worker") ||
+      hostedVisionSubmissionRequests !== 0
+    ) {
+      throw new Error("Owner workspace did not save locally with hosted vision submission disabled.");
+    }
+    result.ownerWorkspaceLocalOnly = true;
+    result.hostedVisionSubmissionRequests = hostedVisionSubmissionRequests;
     console.log(name + ": " + JSON.stringify(result));
   } finally {
     await browser.close();
