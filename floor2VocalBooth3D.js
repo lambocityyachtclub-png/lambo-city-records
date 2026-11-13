@@ -117,6 +117,10 @@ export function createVocalBoothPanel({ beatLab } = {}) {
           break;
         case "record":
           if(recordingActive)return;
+          // Release the pre-record live-monitor microphone before opening the
+          // recording input. Monitoring and recording use the same session
+          // pitch/effect settings, but never hold two microphone streams open.
+          if(StudioTalkback.active)StudioTalkback.stop();
           if(beatLab.recordingStartPending){beatLab.cancelRecordingStart?.();return;}
           status("Four-count starting…");
           await beatLab.startRecording();
