@@ -109,10 +109,10 @@ The workflow research covers hip-hop beat production and vocal overdubs as well 
 - [ ] Verify PCM capture and fallback behavior on iPad Safari and desktop, including microphone, Beat Lab/MPC inputs, vocal effects, long takes, and save/reopen.
 - [x] Extend the WAV export engine to 16-, 24-, and 32-bit PCM at 44.1, 48, or 96 kHz; default master export is now 24-bit / 44.1 kHz, while the existing MP3 path remains intact.
 - [ ] Add visible WAV bit-depth and sample-rate choices during the final interface design pass.
-- [ ] Add a dedicated master true-peak limiter and loudness/peak metering; current master processing includes compression but not a dedicated final limiter or loudness target workflow.
+- [ ] Add true-peak oversampling and loudness/LUFS metering; the existing final safety stage is a sample-peak limiter, not a true-peak mastering limiter.
 - [ ] Add independent headphone/cue mixes and a practical monitor workflow; current microphone monitoring is a fixed direct-to-output path.
 - [x] Add a bypassable sample-peak safety limiter, adjustable ceiling, and output peak/RMS meter; persist limiter settings and apply the same protection to live playback and offline master renders.
-- [ ] Add true-peak / LUFS measurement and final limiter controls during the mastering interface pass.
+- [x] Expose the existing sample-peak limiter enable/bypass and adjustable ceiling controls in Mix & Master; settings persist and apply to live playback and offline WAV/MP3 renders.
 - [ ] Extend automation beyond track volume to pan, effect parameters, and sends.
 - [x] Add Standard MIDI File Type 0/1 import/export, tempo/time-signature transfer, and non-destructive quantize, swing, and humanize operations on the shared instrument/MIDI tracks; retain note data in existing session and `.lcp` persistence.
 - [ ] Add MIDI import/export and groove-processing controls during the final interface design pass.

@@ -18,7 +18,9 @@ export function createStudioMixMasterApp({ beatLab, workspace } = {}) {
     '<label style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center"><strong style="font-size:12px;color:#e6bb69">STUDIO MASTER LEVEL</strong><strong data-master-label>100%</strong>',
     '<input data-master-volume type="range" min="0" max="100" value="100" style="grid-column:1/-1;width:100%;accent-color:#e6bb69"></label>',
     '<label style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;margin-top:14px"><strong style="font-size:12px;color:#e6bb69">STEREO WIDTH</strong><strong data-width-label>100%</strong><input data-stereo-width type="range" min="0" max="200" value="100" style="grid-column:1/-1;width:100%;accent-color:#e6bb69"></label>',
-    '<label style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;margin-top:14px"><strong style="font-size:12px;color:#e6bb69">MASTER COMPRESSION</strong><strong data-master-comp-label>3:1</strong><input data-master-comp type="range" min="1" max="8" step="0.1" value="3" style="grid-column:1/-1;width:100%;accent-color:#e6bb69"></label></section>',
+    '<label style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;margin-top:14px"><strong style="font-size:12px;color:#e6bb69">MASTER COMPRESSION</strong><strong data-master-comp-label>3:1</strong><input data-master-comp type="range" min="1" max="8" step="0.1" value="3" style="grid-column:1/-1;width:100%;accent-color:#e6bb69"></label>',
+    '<div style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;margin-top:14px"><strong style="font-size:12px;color:#e6bb69">MASTER LIMITER</strong><button type="button" data-master-limiter-toggle aria-pressed="true" style="min-height:36px;padding:8px 12px;border:1px solid #80643a;border-radius:7px;background:#201c16;color:#f1d49c;font-weight:bold">LIMITER ON</button></div>',
+    '<label style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;margin-top:10px"><strong style="font-size:12px;color:#e6bb69">LIMITER CEILING</strong><strong data-master-limiter-ceiling-label>-1.0 dBFS</strong><input data-master-limiter-ceiling type="range" min="-6" max="0" step="0.1" value="-1" style="grid-column:1/-1;width:100%;accent-color:#e6bb69"></label></section>',
     '<div style="display:flex;flex-wrap:wrap;gap:8px"><button type="button" data-mix-action="add-bus" style="min-height:38px;padding:8px 11px;border:1px solid #80643a;border-radius:7px;background:#201c16;color:#f1d49c;font-weight:bold">＋ CREATE BUS</button><button type="button" data-mix-action="export-stems" style="min-height:38px;padding:8px 11px;border:1px solid #80643a;border-radius:7px;background:#201c16;color:#f1d49c;font-weight:bold">EXPORT ALL STEMS</button></div>',
     '<div><div style="margin-bottom:10px;color:#e6bb69;font-size:11px;letter-spacing:2px">TRACK MIXER · ROUTING · AUTOMATION · MIDI</div><div data-mix-tracks style="display:grid;gap:10px"></div></div>',
     '<div style="display:flex;flex-wrap:wrap;gap:10px"><button type="button" data-mix-action="edit" style="min-height:44px;padding:11px 15px;border:1px solid #80643a;border-radius:8px;background:#201c16;color:#f1d49c;font-weight:bold">OPEN EDIT TIMELINE</button>',
@@ -33,6 +35,17 @@ export function createStudioMixMasterApp({ beatLab, workspace } = {}) {
   const widthLabel = root.querySelector("[data-width-label]");
   const masterCompSlider = root.querySelector("[data-master-comp]");
   const masterCompLabel = root.querySelector("[data-master-comp-label]");
+  const masterLimiterToggle = root.querySelector("[data-master-limiter-toggle]");
+  const masterLimiterCeiling = root.querySelector("[data-master-limiter-ceiling]");
+  const masterLimiterCeilingLabel = root.querySelector("[data-master-limiter-ceiling-label]");
+  const initialLimiterEnabled = StudioMultitrackWorkspace.masterSettings?.limiterEnabled !== false;
+  const initialLimiterCeiling = Number(StudioMultitrackWorkspace.masterSettings?.limiterCeilingDb ?? -1);
+  if (masterLimiterToggle) {
+    masterLimiterToggle.textContent = initialLimiterEnabled ? "LIMITER ON" : "LIMITER BYPASSED";
+    masterLimiterToggle.setAttribute("aria-pressed", String(initialLimiterEnabled));
+  }
+  if (masterLimiterCeiling) masterLimiterCeiling.value = String(initialLimiterCeiling);
+  if (masterLimiterCeilingLabel) masterLimiterCeilingLabel.textContent = initialLimiterCeiling.toFixed(1) + " dBFS";
   if (masterCompSlider && StudioAudioEngine.compressor) masterCompSlider.value = String(StudioMultitrackWorkspace.masterSettings?.compressionRatio ?? StudioAudioEngine.compressor.ratio.value ?? 3);
   if (widthSlider) widthSlider.value = String(StudioMultitrackWorkspace.masterSettings?.stereoWidth ?? 100);
   if (widthLabel && widthSlider) widthLabel.textContent = widthSlider.value + "%";
@@ -43,6 +56,16 @@ export function createStudioMixMasterApp({ beatLab, workspace } = {}) {
   const status = message => {
     const node = root.querySelector("[data-mix-status]");
     if (node) node.textContent = message;
+  };
+  const applyMasterLimiter = (enabled, ceilingDb) => {
+    const settings = StudioAudioEngine.setMasterLimiter(enabled, ceilingDb);
+    StudioMultitrackWorkspace.masterSettings = {
+      ...(StudioMultitrackWorkspace.masterSettings || {}),
+      limiterEnabled: settings.enabled,
+      limiterCeilingDb: settings.ceilingDb
+    };
+    StudioMultitrackWorkspace.scheduleProjectAutosave();
+    return settings;
   };
 
   const renderTracks = () => {
@@ -313,11 +336,11 @@ export function createStudioMixMasterApp({ beatLab, workspace } = {}) {
 
   renderTracks();
   root.addEventListener("pointerdown", event => {
-    const control = event.target.closest("[data-eq-band], [data-comp-ratio], [data-track-effect], [data-pitch-setting], [data-track-volume], [data-track-pan], [data-track-send], [data-stereo-width], [data-master-comp], [data-master-volume]");
+    const control = event.target.closest("[data-eq-band], [data-comp-ratio], [data-track-effect], [data-pitch-setting], [data-track-volume], [data-track-pan], [data-track-send], [data-stereo-width], [data-master-comp], [data-master-volume], [data-master-limiter-ceiling], [data-master-limiter-toggle]");
     if (control) StudioMultitrackWorkspace.recordHistory("Adjust mixer control");
   });
   root.addEventListener("keydown", event => {
-    const control = event.target.closest("[data-eq-band], [data-comp-ratio], [data-track-effect], [data-pitch-setting], [data-track-volume], [data-track-pan], [data-track-send], [data-stereo-width], [data-master-comp], [data-master-volume]");
+    const control = event.target.closest("[data-eq-band], [data-comp-ratio], [data-track-effect], [data-pitch-setting], [data-track-volume], [data-track-pan], [data-track-send], [data-stereo-width], [data-master-comp], [data-master-volume], [data-master-limiter-ceiling], [data-master-limiter-toggle]");
     if (control && ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Home", "End"].includes(event.key)) StudioMultitrackWorkspace.recordHistory("Adjust mixer control");
   });
 
@@ -351,8 +374,18 @@ export function createStudioMixMasterApp({ beatLab, workspace } = {}) {
       status(track.name + " automation point removed.");
       return;
     }
-    const button = event.target.closest("[data-mix-action], [data-track-control]");
+    const button = event.target.closest("[data-mix-action], [data-track-control], [data-master-limiter-toggle]");
     if (!button) return;
+    if (button.matches("[data-master-limiter-toggle]")) {
+      const current = StudioMultitrackWorkspace.masterSettings || {};
+      const settings = applyMasterLimiter(current.limiterEnabled === false, Number(current.limiterCeilingDb ?? -1));
+      button.textContent = settings.enabled ? "LIMITER ON" : "LIMITER BYPASSED";
+      button.setAttribute("aria-pressed", String(settings.enabled));
+      status(settings.enabled
+        ? "Master safety limiter enabled · ceiling " + settings.ceilingDb.toFixed(1) + " dBFS."
+        : "Master safety limiter bypassed.");
+      return;
+    }
     if (button.dataset.mixAction === "add-bus") {
       const busCount = StudioMultitrackWorkspace.tracks.filter(item => item.type === "bus").length + 1;
       StudioMultitrackWorkspace.recordHistory("Create routing bus");
@@ -540,6 +573,14 @@ export function createStudioMixMasterApp({ beatLab, workspace } = {}) {
       StudioMultitrackWorkspace.scheduleProjectAutosave();
       if (masterCompLabel) masterCompLabel.textContent = value.toFixed(1) + ":1";
       status("Master compression ratio set to " + value.toFixed(1) + ":1.");
+      return;
+    }
+    if (event.target.matches("[data-master-limiter-ceiling]")) {
+      const value = Number(event.target.value);
+      const enabled = StudioMultitrackWorkspace.masterSettings?.limiterEnabled !== false;
+      const settings = applyMasterLimiter(enabled, value);
+      if (masterLimiterCeilingLabel) masterLimiterCeilingLabel.textContent = settings.ceilingDb.toFixed(1) + " dBFS";
+      status("Master limiter ceiling set to " + settings.ceilingDb.toFixed(1) + " dBFS.");
       return;
     }
     if (event.target.matches("[data-master-volume]")) {

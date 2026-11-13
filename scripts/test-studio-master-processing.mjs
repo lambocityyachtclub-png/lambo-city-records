@@ -1,5 +1,14 @@
 import assert from "node:assert/strict";
 import StudioAudioEngine from "../studioAudioEngine.js";
+import { readFile } from "node:fs/promises";
+
+const mixMasterApp = await readFile(new URL("../studioMixMasterApp.js", import.meta.url), "utf8");
+assert.match(mixMasterApp, /data-master-limiter-toggle/);
+assert.match(mixMasterApp, /data-master-limiter-ceiling/);
+assert.match(mixMasterApp, /StudioAudioEngine\.setMasterLimiter/);
+assert.match(mixMasterApp, /limiterEnabled/);
+assert.match(mixMasterApp, /limiterCeilingDb/);
+assert.match(mixMasterApp, /LIMITER BYPASSED/);
 
 function param() {
   return {

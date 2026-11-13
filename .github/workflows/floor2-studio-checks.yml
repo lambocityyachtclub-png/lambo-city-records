@@ -40,6 +40,7 @@ on:
       - "studioMultitrackWorkspace.js"
       - "studioAudioEngine.js"
       - "scripts/test-studio-master-processing.mjs"
+      # Keep Mix & Master UI changes covered by the same production regression suite.
       - "studioSoundKit.js"
       - "studioAudioExport.js"
       - "studioRecordingEngine.js"
@@ -88,6 +89,8 @@ on:
       - "recordsHQFloor2Studio.js"
       - "studioDAWApp.js"
       - "studioStandalone.js"
+      - "studioMixMasterApp.js"
+      - "scripts/test-studio-master-processing.mjs"
       - "studioDAWWorkspace.js"
       - "studioDAWBeatLabPanel.js"
       - "studioDAWEditPanel.js"
