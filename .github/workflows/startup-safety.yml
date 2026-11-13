@@ -2,7 +2,6 @@ name: LAMBO CITY startup safety checks
 
 on:
   pull_request:
-    branches: ["integration/studio-vocalbooth-2026-11-10"]
   push:
     branches: ["restore/**"]
 
