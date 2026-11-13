@@ -95,6 +95,7 @@ async function startLocalCore() {
   try {
     localCore = await createLocalAliveControlPlane();
     await updateLocalCoreSummary();
+    $("#queue-status").textContent = "Off by default";
     if (lastTask?.visionId) {
       const saved = await localCore.visionStore.getVision(lastTask.visionId);
       if (saved) renderLocalVision(saved);
@@ -154,33 +155,34 @@ async function refreshStatus() {
     try {
       localVision = await localCore.visionStore.getVision(lastTask.visionId);
       if (localVision) renderLocalVision(localVision);
-    } catch { /* remote status may still be available */ }
+    } catch { /* local record remains unchanged */ }
+  }
+
+  if (!lastTask?.taskId) {
+    $("#queue-status").textContent = "Off by default";
+    if (localVision) {
+      message(visionMessage, "Your direction is saved locally on this device. No hosted worker or model has been started.");
+    } else {
+      message(visionMessage, "Local ALIVE is ready. Hosted specialist execution remains off by default.");
+    }
+    return;
   }
 
   try {
-    const base = await api("/api/alive/status");
-    $("#queue-status").textContent = base.connected ? "Connected" : "Local only";
-    if (!base.connected) {
-      if (localVision) {
-        message(visionMessage, "Your direction is saved locally on this device. The hosted queue is not connected; no external processing has started.");
-      } else {
-        message(visionMessage, "The local ALIVE core is separate from the hosted queue. You can save directions locally even when the private worker repository is not connected.", true);
-      }
-      return;
-    }
-    if (!lastTask?.taskId) return;
     const query = new URLSearchParams({ taskId: lastTask.taskId });
     const status = await api("/api/alive/status?" + query.toString());
+    $("#queue-status").textContent = status.connected ? "Available · opt-in" : "Off by default";
     if (status.task) renderTask(status);
-  } catch (error) {
+    else if (localVision) renderLocalVision(localVision);
+  } catch {
+    $("#queue-status").textContent = "Status unavailable";
     if (localVision) {
-      message(visionMessage, "Your direction is safely saved locally. Hosted queue status is temporarily unavailable.");
+      message(visionMessage, "Your direction is safely saved locally. The separate hosted status service is unavailable.");
       return;
     }
-    message(visionMessage, error.message, true);
+    message(visionMessage, "The hosted status service is unavailable. No new hosted work has been started.", true);
   }
 }
-
 async function start() {
   readLastTask();
   try {
@@ -239,64 +241,23 @@ $("#vision-form").addEventListener("submit", async event => {
   button.disabled = true;
   message(visionMessage, "Saving your direction locally…");
 
-  let localVision = null;
-  if (localCore) {
-    try {
-      localVision = await localCore.visionStore.createVision({ vision: visionText });
-      saveLastTask({ visionId: localVision.id });
-      renderLocalVision(localVision);
-      await updateLocalCoreSummary();
-    } catch {
-      message(visionMessage, "Local storage is unavailable. Trying the separate hosted queue.", true);
-    }
-  }
-
   try {
-    const result = await api("/api/alive/vision", {
-      method: "POST",
-      body: JSON.stringify({ vision: visionText })
-    });
+    if (!localCore) {
+      throw new Error("Local ALIVE storage is unavailable. Your direction has not been sent or processed.");
+    }
+    const localVision = await localCore.visionStore.createVision({ vision: visionText });
+    saveLastTask({ visionId: localVision.id });
+    renderLocalVision(localVision);
     $("#vision").value = "";
-    if (localVision && localCore) {
-      try {
-        const updated = await localCore.visionStore.setRemoteStatus({
-          visionId: localVision.id,
-          remoteStatus: "submitted",
-          remoteTaskId: result.taskId
-        });
-        saveLastTask({ visionId: localVision.id, taskId: result.taskId });
-        renderLocalVision(updated);
-      } catch {
-        saveLastTask({ visionId: localVision.id, taskId: result.taskId });
-        renderTask({ state: "queued", task: { taskId: result.taskId, checks: [] } });
-      }
-    } else {
-      saveLastTask({ taskId: result.taskId });
-      renderTask({ state: "queued", task: { taskId: result.taskId, checks: [] } });
-    }
-    message(visionMessage, "Your direction has been saved locally and submitted to the isolated hosted queue.");
-    await refreshStatus();
+    await updateLocalCoreSummary();
+    $("#queue-status").textContent = "Off by default";
+    message(visionMessage, "Your direction is saved locally on this device. No hosted worker, model call, or code execution has been started.");
   } catch (error) {
-    $("#vision").value = localVision ? "" : $("#vision").value;
-    if (localVision && localCore) {
-      let saved = localVision;
-      try {
-        saved = await localCore.visionStore.setRemoteStatus({
-          visionId: localVision.id,
-          remoteStatus: "unavailable"
-        });
-      } catch { /* the original local record remains safe */ }
-      saveLastTask({ visionId: localVision.id });
-      renderLocalVision(saved);
-      message(visionMessage, "Your direction is saved locally on this device. The hosted queue is unavailable, so no external processing was started.");
-    } else {
-      message(visionMessage, error.message, true);
-    }
+    message(visionMessage, error.message, true);
   } finally {
     button.disabled = false;
   }
 });
-
 $("#refresh-status").addEventListener("click", refreshStatus);
 $("#logout").addEventListener("click", async () => {
   try { await api("/api/alive/session", { method: "DELETE" }); } catch { /* local view still closes */ }
