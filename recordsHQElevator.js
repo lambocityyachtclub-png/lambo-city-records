@@ -8,6 +8,7 @@
 // - No passenger/first-person elevator camera
 
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
+import { createPhoneFloorNavigator } from "./floor2PhoneNavigation.js";
 
 
 const ELEVATOR_POSITION = {
