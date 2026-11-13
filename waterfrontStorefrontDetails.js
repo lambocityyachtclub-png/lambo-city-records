@@ -3,6 +3,7 @@ import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 // Additive architectural detailing for the three existing west-side storefronts.
 // The original buildings, positions, street, sidewalks, Club Vista identity and
 // marina geometry remain owned by marina.js and are not rebuilt here.
+// These are presentation meshes only; store interaction and collision stay separate.
 
 const STOREFRONTS = [
   {
