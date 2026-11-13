@@ -8,6 +8,8 @@ assert.match(phoneSource, /const startNavigation = \(\) => \{[\s\S]*?window\.set
   "Studio phone navigation must wait until the activating click/tap has been acknowledged.");
 assert.match(phoneSource, /window\.requestAnimationFrame\(startNavigation\)/,
   "The phone navigation fallback must remain available when timers are unavailable.");
+assert.match(phoneSource, /if \(typeof navigate !== "function" \|\| !navigate\(floor\)\) return;\s*closePhone\(\);/,
+  "The phone closes only after the elevator accepts the requested destination.");
 assert.doesNotMatch(phoneSource, /const navigateFromPhone = floor => \{\s*const navigate = window\.__lamboCityNavigateToFloor;\s*if \(typeof navigate !== "function" \|\| !navigate\(floor\)\) return;\s*phone\.remove\(\);/,
   "Studio phone navigation must not synchronously navigate and remove its own click target.");
 
