@@ -50,6 +50,17 @@ assert.ok(engine.systems.lateSystem, "late systems must be added to the live reg
 assert.equal(engine.context.systems, engine.systems,
   "the live context must retain the current registry object");
 
+const explicitArgSystem = {
+  init(scene, context) {
+    assert.equal(scene, engine.scene, "systems initialized with an explicit scene still receive it first");
+    assert.equal(context, engine.context, "systems initialized with an explicit scene must also receive shared context");
+    return "explicit-args-ready";
+  }
+};
+engine.registerSystems({ explicitArgSystem });
+assert.equal(engine.initSystem("explicitArgSystem", engine.scene), "explicit-args-ready",
+  "an explicit scene argument must not suppress the shared context");
+
 assert.equal(await engine.initSystem("lateSystem"), "late-ready");
 await engine.initSystem("lateSystem");
 assert.equal(lateInitCount, 1, "a streamed system must initialize only once");
