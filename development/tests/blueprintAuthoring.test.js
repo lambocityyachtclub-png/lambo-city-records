@@ -66,8 +66,11 @@ test("ALIVE implementation convergence audit preserves the local-first core boun
   const readme = await fs.readFile(path.join(root, "development/blueprints/README.md"), "utf8");
   assert.match(audit, /PR #31/);
   assert.match(audit, /PR #44/);
+  assert.match(audit, /PR #52/);
+  assert.match(audit, /browser IndexedDB/);
   assert.match(audit, /local owner bootstrap starts with no AI, Sandbox, Vercel token, or database credentials/i);
   assert.match(audit, /must not be imported by the public game runtime/i);
   assert.match(audit, /No branch is merged by this audit/);
   assert.match(readme, /ALIVE_IMPLEMENTATION_CONVERGENCE_DRAFT\.md/);
+  assert.match(readme, /Local-first ALIVE foundation/);
 });
