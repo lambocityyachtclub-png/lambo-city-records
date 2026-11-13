@@ -76,10 +76,12 @@ test("writer creates a machine-readable discovery snapshot and readable report",
     await fs.copyFile(catalogPath, path.join(rootDir, "development", "blueprints", "departmentCatalog.json"));
     const outputDir = path.join(rootDir, "generated");
     const { result } = await writeBlueprintDiscovery({ rootDir, outputDir });
+    const secondRun = await discoverBlueprints({ rootDir, catalog });
     const json = JSON.parse(await fs.readFile(path.join(outputDir, "discovery.json"), "utf8"));
     const markdown = await fs.readFile(path.join(outputDir, "README.md"), "utf8");
     assert.equal(json.departments.length, catalog.departments.length);
     assert.equal(result.summary.filesScanned > 0, true);
+    assert.equal(secondRun.summary.filesScanned, result.summary.filesScanned);
     assert.match(markdown, /LAMBO CITY ALIVE — Blueprint Discovery Report/);
   } finally {
     await fs.rm(rootDir, { recursive: true, force: true });
