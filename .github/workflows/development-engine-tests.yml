@@ -9,6 +9,13 @@ on:
       - "scripts/validate-alive-worker-diff.mjs"
       - "scripts/test-alive-worker-diff-gate.mjs"
       - "scripts/resolve-alive-private-task.mjs"
+      - "studioDAWEditScreen.js"
+      - "studioMultitrackWorkspace.js"
+      - "floor2StudioApp.js"
+      - "studioPitchCorrection.js"
+      - "studioPitchCorrectionWorklet.js"
+      - "scripts/test-studio-pitch-correction.mjs"
+      - "scripts/test-studio-pitch-correction-settings.mjs"
       - "api/alive/**"
       - "server/alive/**"
       - "alive.html"
@@ -20,6 +27,13 @@ on:
   pull_request:
     paths:
       - "development/**"
+      - "studioDAWEditScreen.js"
+      - "studioMultitrackWorkspace.js"
+      - "floor2StudioApp.js"
+      - "studioPitchCorrection.js"
+      - "studioPitchCorrectionWorklet.js"
+      - "scripts/test-studio-pitch-correction.mjs"
+      - "scripts/test-studio-pitch-correction-settings.mjs"
       - "api/alive/**"
       - "server/alive/**"
       - "alive.html"
@@ -96,6 +110,19 @@ jobs:
 
       - name: Test worker path and file-type validation
         run: node --experimental-default-type=module scripts/test-alive-worker-diff-gate.mjs
+
+      - name: Test Floor 2 pitch correction DSP and shared UI settings
+        run: |
+          node --experimental-default-type=module scripts/test-studio-pitch-correction.mjs
+          node --experimental-default-type=module scripts/test-studio-pitch-correction-settings.mjs
+
+      - name: Syntax-check Floor 2 pitch correction integration
+        run: |
+          node --experimental-default-type=module --check studioDAWEditScreen.js
+          node --experimental-default-type=module --check studioMultitrackWorkspace.js
+          node --experimental-default-type=module --check floor2StudioApp.js
+          node --experimental-default-type=module --check studioPitchCorrection.js
+          node --experimental-default-type=module --check studioPitchCorrectionWorklet.js
 
   generate-proposal:
     name: Generate scoped specialist proposal
