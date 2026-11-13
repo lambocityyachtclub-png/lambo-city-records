@@ -1139,6 +1139,7 @@ if (!this.audio || this.audio.state !== "running") {
         track.inputSource === "mic" && /vocal/i.test(track.name)
       );
       const activeVocalTrack = vocalTracks.find(track => track.id === StudioMultitrackWorkspace.activePitchTrackId) || vocalTracks[0];
+      StudioMultitrackWorkspace.activePitchTrackId = activeVocalTrack?.id || null;
       const pitchSettings = normalizePitchCorrectionSettings(
         activeVocalTrack?.effects?.pitchCorrection || this.pitchCorrectionSettings || {}
       );
