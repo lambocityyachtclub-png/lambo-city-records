@@ -52,6 +52,10 @@ assert.match(elevator, /function startTravel\(player = getPlayer\(\)\)/,
 assert.match(elevator, /if \(travelStartPending\) \{\s*travelStartPending = false;\s*startTravel\(player\);\s*\}/,
   "A queued phone trip must resume automatically when the player becomes ready.");
 assert.match(elevator, /isBusy: \(\) =>[\s\S]*?travelStartPending[\s\S]*?window\.__lamboCityFloor2SessionMode === "arrival"/, "Phone requests must queue while travel, landing, or Floor 2 arrival is active.");
+assert.match(elevator, /Boolean\(floor3AutoArrival\)/,
+  "The Studio shortcut must not interrupt an active Floor 3 arrival.");
+assert.match(elevator, /failedReturnDoorPending/,
+  "The Studio shortcut must not interrupt a pending return-door transition.");
 assert.match(phoneNavigation, /queuedDestination = destination/, "Busy phone requests must retain the requested destination.");
 assert.match(phoneNavigation, /navigate\.flush = \(\) =>/, "Queued phone requests must expose a safe idle-time flush.");
 assert.match(elevator, /window\.__lamboCityNavigateToFloor\?\.flush\?\.\(\)/, "The elevator must resume queued phone requests when it becomes idle.");
