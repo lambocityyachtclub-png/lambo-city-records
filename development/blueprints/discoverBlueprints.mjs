@@ -46,7 +46,7 @@ function redactLine(line) {
 }
 
 function keywordExpression(keyword) {
-  const escaped = keyword.replace(/[.*+?^${}()|[\]\]/g, "\$&");
+  const escaped = [...keyword].map(char => "\\\\^$.*+?()[]{}|".includes(char) ? "\\\\" + char : char).join("");
   return new RegExp(escaped, "i");
 }
 
