@@ -300,6 +300,22 @@ export function applyVocalBoothVisual(root) {
   const header = root.querySelector(":scope > header");
   if (header) header.after(hero);
   else root.prepend(hero);
+
+  const monitorButton = hero.querySelector("[data-booth-monitor]");
+  const talkbackButton = root.querySelector("[data-vocal-talkback]");
+  const syncMonitor = event => {
+    const active = Boolean(event.detail?.active);
+    monitorButton?.setAttribute("aria-pressed", String(active));
+    if (monitorButton) monitorButton.textContent = active ? "● LIVE MONITOR ON" : "◉ ENABLE LIVE MONITOR";
+  };
+  const toggleMonitor = () => talkbackButton?.click();
+  monitorButton?.addEventListener("click", toggleMonitor);
+  window.addEventListener("lc-talkback-state", syncMonitor);
+  root.addEventListener("lc-vocal-booth-dispose", () => {
+    monitorButton?.removeEventListener("click", toggleMonitor);
+    window.removeEventListener("lc-talkback-state", syncMonitor);
+  }, { once: true });
+  monitorButton?.setAttribute("aria-pressed", String(Boolean(window.__lamboCityTalkbackActive)));
   return root;
 }
 
