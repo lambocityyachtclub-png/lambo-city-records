@@ -835,10 +835,14 @@ export default {
         closePhone();
       };
 
-      if (typeof window.requestAnimationFrame === "function") {
+      // Leave the input event and its browser action fully complete before
+      // importing/initializing the streamed Studio modules.
+      if (typeof window.setTimeout === "function") {
+        window.setTimeout(startNavigation, 120);
+      } else if (typeof window.requestAnimationFrame === "function") {
         window.requestAnimationFrame(startNavigation);
       } else {
-        window.setTimeout(startNavigation, 0);
+        startNavigation();
       }
       return true;
     };
