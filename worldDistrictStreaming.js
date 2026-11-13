@@ -57,32 +57,35 @@ export default class WorldDistrictStreaming {
     for (const id of this.worldSystem.getDistrictIds()) {
       const district = this.worldSystem.getDistrict(id);
       if (!district?.bounds) continue;
-      // A district may include a long connector road to a neighboring area.
-      // Use its optional core bounds for detail activation so that a nearby
-      // protected location does not trigger the entire district build.
-      const activationBounds = district.streamingBounds || district.bounds;
-      const distance = distanceToBounds(activationBounds, position.x, position.z);
+      // Detail activation can use a tighter core area when a district
+      // includes a long connector road. Far proxies still use the complete
+      // district bounds so connected streets remain visible at a distance.
+      const detailBounds = district.streamingBounds || district.bounds;
+      const detailDistance = distanceToBounds(detailBounds, position.x, position.z);
+      const proxyDistance = distanceToBounds(district.bounds, position.x, position.z);
       const built = this.worldSystem.isDistrictBuilt(id);
       const proxied = this.worldSystem.isDistrictProxied(id);
 
       if (built) {
-        if (distance > this.options.streamOutRadius) {
-          detailRemovals.push({ id, distance });
-          if (!proxied && distance <= this.options.proxyOutRadius) proxyBuilds.push({ id, distance });
+        if (detailDistance > this.options.streamOutRadius) {
+          detailRemovals.push({ id, distance: detailDistance });
+          if (!proxied && proxyDistance <= this.options.proxyOutRadius) {
+            proxyBuilds.push({ id, distance: proxyDistance });
+          }
         } else {
-          if (proxied) proxyRemovals.push({ id, distance });
-          focusUpdates.push({ id, distance });
+          if (proxied) proxyRemovals.push({ id, distance: proxyDistance });
+          focusUpdates.push({ id, distance: detailDistance });
         }
         continue;
       }
 
-      if (distance <= this.options.streamInRadius) {
-        detailBuilds.push({ id, distance });
-        if (proxied) proxyRemovals.push({ id, distance });
-      } else if (distance <= this.options.proxyInRadius) {
-        if (!proxied) proxyBuilds.push({ id, distance });
-      } else if (proxied && distance > this.options.proxyOutRadius) {
-        proxyRemovals.push({ id, distance });
+      if (detailDistance <= this.options.streamInRadius) {
+        detailBuilds.push({ id, distance: detailDistance });
+        if (proxied) proxyRemovals.push({ id, distance: proxyDistance });
+      } else if (proxyDistance <= this.options.proxyInRadius) {
+        if (!proxied) proxyBuilds.push({ id, distance: proxyDistance });
+      } else if (proxied && proxyDistance > this.options.proxyOutRadius) {
+        proxyRemovals.push({ id, distance: proxyDistance });
       }
     }
 
