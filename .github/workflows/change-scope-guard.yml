@@ -1,8 +1,6 @@
 name: LAMBO CITY Change Scope Guard
 
 on:
-  push:
-    branches: ['protect/**']
   pull_request:
     branches: [main]
     types: [opened, synchronize, reopened, edited, ready_for_review]
