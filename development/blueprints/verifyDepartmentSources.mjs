@@ -106,9 +106,10 @@ async function buildActiveModuleGraph(root, entrypointSources) {
     for (let index = 0; index < lines.length; index += 1) {
       const line = lines[index];
       const importMatch = line.match(/^\s*import\b.*?\s+from\s+["']([^"']+)["']/);
+      const sideEffectMatch = line.match(/^\s*import\s+["']([^"']+)["']/);
       const dynamicMatch = line.match(/import\(\s*["']([^"']+)["']\s*\)/);
       const assetMatch = line.match(/new URL\(\s*["']([^"']+)["']\s*,\s*import\.meta\.url\s*\)/);
-      const specifier = importMatch?.[1] || dynamicMatch?.[1] || assetMatch?.[1];
+      const specifier = importMatch?.[1] || sideEffectMatch?.[1] || dynamicMatch?.[1] || assetMatch?.[1];
       if (!specifier) continue;
       const target = await resolveLocalModule(root, current.path, specifier);
       if (!target) continue;
