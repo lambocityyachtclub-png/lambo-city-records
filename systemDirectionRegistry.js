@@ -11,7 +11,7 @@
  * approved specification for that system.
  */
 
-export const SYSTEM_DIRECTION_VERSION = 1;
+export const SYSTEM_DIRECTION_VERSION = 2;
 
 export const SYSTEM_DIRECTION_DOMAINS = [
   {
@@ -79,6 +79,12 @@ export const SYSTEM_DIRECTION_DOMAINS = [
     name: "Development & Quality System",
     scope: "Task planning, modular boundaries, automated checks, change isolation, review and release safeguards",
     order: 11
+  },
+  {
+    id: "company-ecosystem",
+    name: "Independent Entertainment Company & Business Ecosystem",
+    scope: "LAMBO CITY Records parent-company strategy, touring, fashion, brand collaborations, digital platforms, gaming, entertainment IP, partnerships, ownership and cross-division growth",
+    order: 12
   }
 ];
 
@@ -238,6 +244,14 @@ const domainSpecificQuestions = {
     "How much work may be proposed or implemented without asking you first?",
     "What isolation, testing, review, deployment, and rollback steps are mandatory?",
     "What kinds of changes must always stop for your explicit approval?"
+  ],
+  "company-ecosystem": [
+    "Which independent business capabilities should LAMBO CITY own, operate, or strategically control, and which should begin through partnerships?",
+    "How should Records, Touring, Fashion, Digital, Gaming, and Entertainment create opportunities for one another without becoming one fragile, tightly coupled system?",
+    "Which business models, brand collaborations, distribution channels, touring operations, and creator relationships fit the LAMBO CITY identity?",
+    "What must remain owner-controlled, including intellectual property, masters, brand identity, customer relationships, data, and major commercial decisions?",
+    "Which opportunities belong in the current phase, which require operational or financial readiness, and which are long-term ambitions?",
+    "What measurable evidence would show that each division is building a durable independent business?"
   ]
 };
 
