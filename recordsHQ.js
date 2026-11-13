@@ -218,35 +218,8 @@ function buildWaterfrontPromenade(group) {
   group.add(railTop);
 
 
-  // ----------------------------------------------------------
-  // LOW ARCHITECTURAL LIGHT PILLARS
-  // ----------------------------------------------------------
-
-  const pillarGeometry = new THREE.BoxGeometry(
-    .28,
-    1.5,
-    .28
-  );
-
-  [
-    [-12.2, 10],
-    [-1.8, 10],
-    [-12.2, 18],
-    [-1.8, 18],
-    [-12.2, 26],
-    [-1.8, 26]
-  ].forEach(([x, z]) => {
-
-    const pillar = new THREE.Mesh(
-      pillarGeometry,
-      gold
-    );
-
-    pillar.position.set(x, .78, z);
-
-    group.add(pillar);
-  });
-
+  // Six decorative light pillars were removed to keep the street
+  // and sidewalk beside the boardwalk completely unobstructed.
 
   // ----------------------------------------------------------
   // LUXURY PLANTERS
