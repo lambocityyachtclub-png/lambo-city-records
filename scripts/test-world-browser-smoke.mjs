@@ -122,11 +122,9 @@ async function smokeWorld({ label, isMobile }) {
       await page.keyboard.press("f");
     }
     await page.waitForSelector("#phone-ui");
-    if (isMobile) {
-      await page.locator("#lambo-phone-studio").tap();
-    } else {
-      await page.locator("#lambo-phone-studio").click();
-    }
+    // The click handler closes the phone on the next animation frame.
+    // Dispatch the native click without Playwright retrying a detached button.
+    await page.locator("#lambo-phone-studio").evaluate(button => button.click());
     await page.waitForSelector("#phone-ui", { state: "detached" });
 
     // First visit must load Floor 2, complete the elevator arrival, and seat
@@ -134,7 +132,23 @@ async function smokeWorld({ label, isMobile }) {
     await page.waitForFunction(() =>
       window.__lamboCityFloor2SessionMode === "seated" ||
       !!window.__lamboCityFloor2LoadError
-    , null, { timeout: 45000 });
+    , null, { timeout: 45000 }).catch(async error => {
+      const state = await page.evaluate(() => ({
+        phoneOpen: !!document.getElementById("phone-ui"),
+        floor2Ready: window.__lamboCityFloor2Ready === true,
+        floor2Mode: window.__lamboCityFloor2SessionMode || null,
+        floor2LoadError: window.__lamboCityFloor2LoadError || null,
+        discovered: window.__lamboCityFloor2Discovered === true,
+        elevatorTraveling: window.__lamboCityElevatorTraveling === true,
+        elevatorInRange: window.__lamboCityElevatorInRange === true,
+        elevatorOpen: window.__lamboCityElevatorOpen === true,
+        elevatorProgress: window.__lamboCityElevatorProgress ?? null,
+        queuedDestination: window.__lamboCityNavigateToFloor?.getQueuedDestination?.() ?? null,
+        startupErrors: window.__lamboCityStartupErrors || []
+      }));
+      throw new Error(label + ": Floor 2 phone request did not complete. " +
+        JSON.stringify(state) + "\\n" + error.message);
+    });
     const floor2Status = await page.evaluate(() => ({
       ready: window.__lamboCityFloor2Ready === true,
       mode: window.__lamboCityFloor2SessionMode || null,
@@ -164,11 +178,9 @@ async function smokeWorld({ label, isMobile }) {
       await page.keyboard.press("f");
     }
     await page.waitForSelector("#phone-ui");
-    if (isMobile) {
-      await page.locator("#lambo-phone-studio").tap();
-    } else {
-      await page.locator("#lambo-phone-studio").click();
-    }
+    // The click handler closes the phone on the next animation frame.
+    // Dispatch the native click without Playwright retrying a detached button.
+    await page.locator("#lambo-phone-studio").evaluate(button => button.click());
     await page.waitForSelector("#phone-ui", { state: "detached" });
     await page.waitForFunction(() =>
       window.__lamboCityFloor2SessionMode === "seated"
