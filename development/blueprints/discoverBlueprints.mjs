@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 const DEFAULT_IGNORES = new Set([
   ".git", "node_modules", "vendor", "dist", "build", "coverage",
   ".vercel", ".next", ".cache", ".turbo", "playwright-report",
-  "test-results"
+  "test-results", "blueprint-discovery"
 ]);
 const ALLOWED_EXTENSIONS = new Set([
   ".md", ".mdx", ".txt", ".js", ".mjs", ".cjs", ".html", ".css", ".json", ".yml", ".yaml"
