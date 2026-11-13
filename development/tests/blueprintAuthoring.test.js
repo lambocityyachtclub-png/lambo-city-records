@@ -15,6 +15,15 @@ test("Master and all ten Department Blueprints exist and remain unapproved draft
   assert.equal(new Set(set.departments.map(item => item.id)).size, 10);
   assert.equal(set.rules.draftsAreNotTaskAuthorization, true);
   assert.equal(set.rules.productionChangesRequireSeparateApproval, true);
+  assert.equal(set.foundation.id, "alive-local-owner-control-plane");
+  assert.equal(set.foundation.status, "implemented-in-draft");
+  assert.equal(set.foundation.storage, "browser-indexeddb");
+  assert.equal(set.foundation.requiresExternalServices, false);
+  assert.equal(set.foundation.codeExecutionEnabled, false);
+  assert.equal(set.foundation.crossDeviceSync, false);
+  assert.equal(set.foundation.ownerApproved, false);
+  assert.equal(set.rules.localCoreDoesNotExecuteGeneratedCode, true);
+  assert.equal(set.rules.localRecordsAreBrowserProfileScoped, true);
   await fs.access(path.join(root, set.master));
   await fs.access(path.join(root, set.readme));
   assert.deepEqual(
@@ -55,6 +64,9 @@ test("Master Blueprint preserves owner-authored sources and explicit unresolved 
   assert.match(master, /owner-decision-required/);
   assert.match(master, /visitor-facing Version 1 world/);
   assert.match(master, /not a task authorization/i);
+  assert.match(master, /browser IndexedDB/i);
+  assert.match(master, /does not execute generated code/i);
+  assert.match(master, /not encrypted against someone with access to that browser profile/i);
   assert.match(master, /live checkout, payment credentials/i);
 });
 
@@ -73,6 +85,10 @@ test("ALIVE implementation convergence audit preserves the local-first core boun
   assert.match(audit, /No branch is merged by this audit/);
   assert.match(readme, /ALIVE_IMPLEMENTATION_CONVERGENCE_DRAFT\.md/);
   assert.match(readme, /Local-first ALIVE foundation/);
+  assert.match(readme, /not a backup or cross-device sync mechanism/);
+  const security = await fs.readFile(path.join(root, "development/blueprints/departments/security-release.md"), "utf8");
+  assert.match(security, /browser control plane using IndexedDB/);
+  assert.match(security, /not a backup or cross-device sync mechanism/);
 });
 
 test("owner vision submission defaults to local storage and does not trigger the hosted worker", async () => {
