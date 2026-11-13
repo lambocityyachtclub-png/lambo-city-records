@@ -54,7 +54,7 @@ assert.match(elevator, /isBusy: \(\) => traveling \|\| Boolean\(pendingLandingPl
   "A pending trip must block duplicate elevator requests.");
 assert.match(elevator, /window\.__lamboCityPrepareFloor\?\.\(selectedFloor\)/, "Elevator travel must wait for the destination loader");
 assert.match(elevator, /window\.__lamboCityBeginFloor2Session\?\.\(arrivedPlayer\)/, "Floor 2 arrival must open the Studio session");
-assert.ok(engine.indexOf("this.systems.input?.init?.();") >= 0 && engine.indexOf("this.systems.input?.init?.();") < engine.indexOf("this.systems.performanceMonitor?.init?."), "iPad input and joystick must initialize immediately after the core renderer/context");
+assert.ok(engine.indexOf('this.initSystem("input", this.scene, this.context);') >= 0 && engine.indexOf('this.initSystem("input", this.scene, this.context);') < engine.indexOf('this.initSystem("performanceMonitor", this.renderer, this.context);'), "iPad input and joystick must initialize immediately after the core renderer/context");
 
 assert.match(world, /group\.userData\.studioStations\s*=\s*\{/);
 assert.match(drums, /station\.name\s*=\s*"floor2DrumStation"/);
