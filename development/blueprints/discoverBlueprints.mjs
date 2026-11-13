@@ -12,10 +12,10 @@ const ALLOWED_EXTENSIONS = new Set([
 ]);
 const MAX_FILE_BYTES = 1024 * 1024;
 const MAX_FILES = 20000;
-const MARKER_PATTERN = /\\b(TODO|FIXME|TBD|WIP|INCOMPLETE|PLANNED|FUTURE|DEPRECATED)\\b/gi;
-const HEADING_PATTERN = /^\\s{0,3}(#{1,6})\\s+(.+?)\\s*#*\\s*$/;
-const SECRET_PATH_PATTERN = /(^|\\/)\\.env(?:\\.|$)|(^|\\/)(?:secrets?|credentials?)(?:\\/|$)|private[-_]?queue|token[-_]?store/i;
-const SECRET_LINE_PATTERN = /(api[_-]?key|access[_-]?token|refresh[_-]?token|client[_-]?secret|password|authorization)\\s*[:=]\\s*[^,;]+/i;
+const MARKER_PATTERN = /\b(TODO|FIXME|TBD|WIP|INCOMPLETE|PLANNED|FUTURE|DEPRECATED)\b/gi;
+const HEADING_PATTERN = /^\s{0,3}(#{1,6})\s+(.+?)\s*#*\s*$/;
+const SECRET_PATH_PATTERN = /(^|\/)\.env(?:\.|$)|(^|\/)(?:secrets?|credentials?)(?:\/|$)|private[-_]?queue|token[-_]?store/i;
+const SECRET_LINE_PATTERN = /(api[_-]?key|access[_-]?token|refresh[_-]?token|client[_-]?secret|password|authorization)\s*[:=]\s*[^,;]+/i;
 
 function normalizeRelativePath(value) {
   return value.split(path.sep).join("/");
@@ -46,7 +46,7 @@ function redactLine(line) {
 }
 
 function keywordExpression(keyword) {
-  const escaped = keyword.replace(/[.*+?^${}()|[\\]\\]/g, "\\$&");
+  const escaped = keyword.replace(/[.*+?^${}()|[\]\]/g, "\$&");
   return new RegExp(escaped, "i");
 }
 
@@ -72,7 +72,7 @@ async function walk(rootDir, currentDir = rootDir, output = []) {
 }
 
 function analyzeFile(file, content, catalog) {
-  const lines = content.split(/\\r?\\n/);
+  const lines = content.split(/\r?\n/);
   const headings = [];
   const markers = [];
   const departmentEvidence = new Map();
@@ -209,7 +209,7 @@ export function renderBlueprintReport(result) {
     lines.push("", "**Review notes:**", ...department.notes.map(note => `- ${note}`), "");
   }
   lines.push("## Safety and Interpretation", "", "- No source files were modified.", "- No development tasks were created or submitted.", "- Private queue, environment, credential, and secret-named paths are excluded.", "- Keyword evidence can produce false positives and false negatives.", "- A human must reconcile source conflicts, confirm current implementation, and approve the resulting department blueprints.", "");
-  return lines.join("\\n");
+  return lines.join("\n");
 }
 
 export async function writeBlueprintDiscovery(options = {}) {
@@ -219,7 +219,7 @@ export async function writeBlueprintDiscovery(options = {}) {
   const catalog = JSON.parse(await fs.readFile(catalogPath, "utf8"));
   const result = await discoverBlueprints({ rootDir, catalog });
   await fs.mkdir(outputDir, { recursive: true });
-  await fs.writeFile(path.join(outputDir, "discovery.json"), JSON.stringify(result, null, 2) + "\\n", "utf8");
+  await fs.writeFile(path.join(outputDir, "discovery.json"), JSON.stringify(result, null, 2) + "\n", "utf8");
   await fs.writeFile(path.join(outputDir, "README.md"), renderBlueprintReport(result), "utf8");
   return { result, outputDir };
 }
@@ -231,9 +231,9 @@ if (invokedPath && invokedPath === fileURLToPath(import.meta.url)) {
       rootDir: process.argv[2] || process.cwd(),
       outputDir: process.argv[3] || "development/planning/blueprint-discovery"
     });
-    process.stdout.write(`LAMBO CITY blueprint discovery complete: ${result.summary.filesScanned} files scanned, ${result.departments.length} department drafts, output: ${outputDir}\\n`);
+    process.stdout.write(`LAMBO CITY blueprint discovery complete: ${result.summary.filesScanned} files scanned, ${result.departments.length} department drafts, output: ${outputDir}\n`);
   } catch (error) {
-    process.stderr.write(`Blueprint discovery failed: ${error.message}\\n`);
+    process.stderr.write(`Blueprint discovery failed: ${error.message}\n`);
     process.exitCode = 1;
   }
 }
