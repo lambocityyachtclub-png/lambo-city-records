@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import { createPhoneFloorNavigator } from "../floor2PhoneNavigation.js";
 
 const flush = () => new Promise(resolve => setTimeout(resolve, 0));
@@ -89,5 +90,13 @@ const flush = () => new Promise(resolve => setTimeout(resolve, 0));
   assert.equal(navigate(2), false);
   assert.equal(selected, false);
 }
+
+const inputSource = await readFile(new URL("../input.js", import.meta.url), "utf8");
+assert.match(inputSource, /window\.requestAnimationFrame\(closePhone\)/,
+  "The phone must close after the activating click/tap finishes.");
+assert.match(inputSource, /window\.setTimeout\(closePhone, 0\)/,
+  "The phone close must retain a safe fallback when animation frames are unavailable.");
+assert.doesNotMatch(inputSource, /if \(typeof navigate !== "function" \|\| !navigate\(floor\)\) return;\s*phone\.remove\(\);/,
+  "The phone must not remove the Studio button synchronously inside its own click handler.");
 
 console.log("PASS: Floor 2 phone navigation regression checks");
