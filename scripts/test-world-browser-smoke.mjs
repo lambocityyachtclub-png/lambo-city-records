@@ -4,7 +4,7 @@ import { chromium } from "playwright";
 
 const BASE_URL = process.env.LAMBO_CITY_TEST_URL || "http://127.0.0.1:4173";
 const phoneSource = await readFile(new URL("../input.js", import.meta.url), "utf8");
-assert.match(phoneSource, /const startNavigation = \(\) => \{[\s\S]*?window\.setTimeout\(startNavigation, 1000\)/,
+assert.match(phoneSource, /const startNavigation = \(\) => \{[\s\S]*?window\.setTimeout\(startNavigation, 120\)/,
   "Studio phone navigation must wait until the activating click/tap has been acknowledged.");
 assert.match(phoneSource, /window\.requestAnimationFrame\(startNavigation\)/,
   "The phone navigation fallback must remain available when timers are unavailable.");
