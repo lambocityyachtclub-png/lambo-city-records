@@ -7,7 +7,7 @@
 
 ## 1. Mission
 
-ALIVE review, worker policy, storage, API authentication and CI workflows exist in the development candidate. Hosted execution adapters and production release remain gated; the independent local core and full provider-independent operation still need separate engineering work.
+ALIVE review, worker policy, storage, API authentication and CI workflows exist in the development candidate. A browser-local owner control plane now persists directions, Development Director tasks and review records without hosted services. Hosted execution adapters and production release remain separately gated.
 
 ## 2. Scope and ownership
 
@@ -78,10 +78,11 @@ Dependencies are planning relationships, not permission for one department to ow
 ## 6. Proposed roadmap
 
 1. Keep draft blueprints and proposals read-only until explicit owner approval.
-2. Audit ALIVE core dependencies so local planning/review can operate without paid AI, Vercel Sandbox or hosted database services.
-3. Separate optional adapters (AI, sandbox, hosted storage/scheduler) from core interfaces and default them off.
-4. Review secret exposure, path allowlists, execution isolation, network access, artifact provenance and audit logs.
+2. [x] Add and browser-test a local owner control plane using IndexedDB for owner directions, Development Director task state and review decisions, without paid AI, Vercel Sandbox, hosted queue or managed database dependencies (PR #52).
+3. Keep optional adapters (AI, sandbox, hosted storage/scheduler) separate from the local core and disabled unless explicitly configured and approved.
+4. Review secret exposure, path allowlists, execution isolation, network access, artifact provenance and audit logs before any code-execution adapter is enabled.
 5. Define release checklist, preview verification, rollback and owner sign-off; never auto-promote production.
+6. Add a reviewed backup/export path before treating browser-local records as durable business records.
 
 ## 7. Draft acceptance criteria
 
@@ -94,7 +95,8 @@ Dependencies are planning relationships, not permission for one department to ow
 ## 8. Open questions / evidence gaps
 
 - Complete provider-independent ALIVE core audit before enabling scheduled worker operation.
-- Confirm local storage/runtime path for owner review when hosted Postgres is unavailable.
+- Local IndexedDB is browser-profile scoped, not encrypted against same-profile access, and not a backup or cross-device sync mechanism. Do not store credentials or secrets in it.
+- A complete task/review interface, export/import backup and remote owner-workspace access controls remain future work.
 - Review Hobby-plan commercial restrictions before any business launch or hosting decision.
 
 ## 9. Definition of done for this department
