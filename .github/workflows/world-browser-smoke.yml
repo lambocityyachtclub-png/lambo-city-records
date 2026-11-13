@@ -1,0 +1,64 @@
+name: LAMBO CITY world browser smoke
+
+on:
+  pull_request:
+    paths:
+      - "index.html"
+      - "main.js"
+      - "engine.js"
+      - "camera.js"
+      - "input.js"
+      - "player.js"
+      - "renderer.js"
+      - "world.js"
+      - "marina.js"
+      - "recordsHQ.js"
+      - "recordsHQFloor1.js"
+      - "recordsHQElevator.js"
+      - "floor2PhoneNavigation.js"
+      - "floor2StudioSession.js"
+      - "floor2StudioApp.js"
+      - "recordsHQFloor2Studio.js"
+      - "scripts/test-world-browser-smoke.mjs"
+      - ".github/workflows/world-browser-smoke.yml"
+  push:
+    branches:
+      - "restore/latest-integrated-features-2026-11-12"
+    paths:
+      - "index.html"
+      - "main.js"
+      - "engine.js"
+      - "camera.js"
+      - "input.js"
+      - "player.js"
+      - "renderer.js"
+      - "world.js"
+      - "marina.js"
+      - "recordsHQ.js"
+      - "recordsHQFloor1.js"
+      - "recordsHQElevator.js"
+      - "floor2PhoneNavigation.js"
+      - "floor2StudioSession.js"
+      - "floor2StudioApp.js"
+      - "recordsHQFloor2Studio.js"
+      - "scripts/test-world-browser-smoke.mjs"
+      - ".github/workflows/world-browser-smoke.yml"
+
+jobs:
+  browser-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install isolated browser test dependency
+        run: npm install --no-save --no-package-lock playwright@1.56.1
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Start static world server
+        run: |
+          python3 -m http.server 4173 --directory . > /tmp/lambo-city-world.log 2>&1 &
+          echo $! > /tmp/lambo-city-world.pid
+      - name: Test desktop and iPad-sized world experience
+        run: node scripts/test-world-browser-smoke.mjs
