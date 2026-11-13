@@ -104,14 +104,16 @@ async function smokeWorld({ label, isMobile }) {
     await page.waitForFunction(() => window.__lamboCityFloor2SessionMode === "free");
 
     if (isMobile) {
-      await page.locator("#lambo-city-mobile-buttons button").nth(1).dispatchEvent("pointerdown", {
-        pointerId: 1, pointerType: "touch", isPrimary: true, button: 0, buttons: 1
-      });
+      await page.locator("#lambo-city-mobile-buttons button").nth(1).tap();
     } else {
       await page.keyboard.press("f");
     }
     await page.waitForSelector("#phone-ui");
-    await page.locator("#lambo-phone-studio").click();
+    if (isMobile) {
+      await page.locator("#lambo-phone-studio").tap();
+    } else {
+      await page.locator("#lambo-phone-studio").click();
+    }
     await page.waitForFunction(() =>
       window.__lamboCityFloor2SessionMode === "seated"
     , null, { timeout: 15000 });
