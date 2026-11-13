@@ -119,7 +119,7 @@ this.noiseBuffer = null;
 
     let THREE;
     try {
-      THREE = await import("https://unpkg.com/three@0.160.0/build/three.module.js");
+      THREE = context?.THREE || await import("https://unpkg.com/three@0.160.0/build/three.module.js");
     } catch (error) {
       console.error("LAMBO CITY Beat Lab interaction could not load:", error);
       return;
