@@ -214,6 +214,7 @@ export default class Engine {
     if (typeof window !== "undefined") {
       window.__lamboCityEngineFrameCount =
         (window.__lamboCityEngineFrameCount || 0) + 1;
+      window.__lamboCityEngineLastFramePhase = "scheduled";
     }
     requestAnimationFrame(this.loop);
     // Keep simulation time close to wall time on lower-frame-rate devices.
@@ -223,8 +224,18 @@ export default class Engine {
       0.1
     );
     this.lastTime = time;
+    if (typeof window !== "undefined") window.__lamboCityEngineLastFramePhase = "updating";
     this.update(delta);
+    if (typeof window !== "undefined") window.__lamboCityEngineLastFramePhase = "rendering";
+    const renderStartedAt = typeof performance !== "undefined" ? performance.now() : 0;
     this.render();
+    if (typeof window !== "undefined") {
+      window.__lamboCityEngineRenderCount =
+        (window.__lamboCityEngineRenderCount || 0) + 1;
+      window.__lamboCityEngineLastRenderDurationMs =
+        typeof performance !== "undefined" ? performance.now() - renderStartedAt : null;
+      window.__lamboCityEngineLastFramePhase = "complete";
+    }
   };
 
   update(delta) {
