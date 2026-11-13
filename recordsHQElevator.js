@@ -514,6 +514,7 @@ function selectFloor(
 
 
   startTravel();
+  return true;
 }
 
 
