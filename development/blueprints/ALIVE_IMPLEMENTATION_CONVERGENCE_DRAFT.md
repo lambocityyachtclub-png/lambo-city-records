@@ -99,7 +99,7 @@ The local-first implementation has now been added as a separate draft on top of 
 - Browser tests verify local vision intake, protected task approval, review decisions, persistence after close/reopen, and that productionChangesMade remains false.
 - Chromium, WebKit, and a WebKit iPad-sized touch viewport passed the browser test on PR #52 head `db9ea3f899375634ec2d8283976e6f5852c16321`.
 
-This closes the local bootstrap, local task/review persistence, and local vision-intake foundation gates while keeping hosted execution off by default. It does **not** yet provide cross-device sync, export/import backup, a complete local task/review interface, or autonomous code execution. Local records remain in the current browser profile and are not automatically shared with another device.
+This closes the local bootstrap, local task/review persistence, and local vision-intake foundation gates while keeping hosted execution off by default. It does **not** yet provide cross-device sync, export/import backup, a complete local task/review interface, or autonomous code execution. IndexedDB is not encrypted against same-profile access and is not a backup; secrets must never be stored there. Local records remain in the current browser profile and are not automatically shared with another device.
 
 ## 4. Recommended canonical architecture
 
@@ -116,8 +116,8 @@ These are the bounded foundation gates; they do not require completing every fut
 
 - [ ] One documented canonical ALIVE code lineage; competing drafts remain isolated until reviewed.
 - [x] Local owner bootstrap starts with no AI, Sandbox, Vercel token, or database credentials (PR #52).
-- [x] Local task and review persistence survives browser database close/reopen using IndexedDB (PR #52).
-- [ ] Manual/assisted planning and owner decisions work without an external model.
+- [x] Local owner vision, task and review persistence survives browser database close/reopen using IndexedDB (PR #52).
+- [ ] A complete local task/review interface supports manual planning and owner decisions without an external model.
 - [ ] Any code-execution path requires a trusted isolated workspace, explicit path allowlist, tests, cleanup, and draft-only output.
 - [ ] Authentication, private owner data, and visitor-world boundaries are covered by automated tests.
 - [ ] Optional hosted adapters are off by default and have separate opt-in tests.
