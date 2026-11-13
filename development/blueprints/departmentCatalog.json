@@ -73,8 +73,9 @@
         "jumbotron",
         "stage",
         "event",
-        "performance",
-        "venue"
+        "venue",
+        "hero-performance",
+        "hero-post-performance"
       ]
     },
     {
@@ -211,7 +212,10 @@
         "yacht",
         "boat",
         "marina",
-        "jet-ski"
+        "jet-ski",
+        "cars",
+        "vehicles",
+        "boats"
       ]
     },
     {
