@@ -61,7 +61,7 @@ function validateRecord(record, index) {
   for (const [sourceIndex, source] of record.sources.entries()) {
     assertString(source.path, label + ".sources[" + sourceIndex + "].path");
     assertString(source.locator, label + ".sources[" + sourceIndex + "].locator");
-    if (PRIVATE_PATH.test(source.path) || source.path.startsWith("/") || source.path.split("/").includes("..") || source.path.includes("\\\\")) {
+    if (PRIVATE_PATH.test(source.path) || source.path.startsWith("/") || source.path.split("/").includes("..") || source.path.includes(String.fromCharCode(92))) {
       throw new Error(label + " contains a prohibited or non-relative source path.");
     }
     if (!SOURCE_ROLES.has(source.role)) {
