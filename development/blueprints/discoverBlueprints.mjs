@@ -29,6 +29,29 @@ function isIgnored(relativePath, entryName) {
   return false;
 }
 
+function pathTokens(value) {
+  return value
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter(Boolean);
+}
+
+function pathMatchesHint(relativePath, hint) {
+  const fileTokens = pathTokens(relativePath);
+  const hintTokens = pathTokens(hint);
+  if (!hintTokens.length || hintTokens.length > fileTokens.length) return false;
+  for (let start = 0; start <= fileTokens.length - hintTokens.length; start += 1) {
+    if (hintTokens.every((token, index) => fileTokens[start + index] === token)) return true;
+  }
+  return false;
+}
+
+function isTestPath(relativePath) {
+  return /(^|\\/)(?:tests?|__tests__)\\//i.test(relativePath) ||
+    /^test-[^/]+\\.(?:mjs|cjs|js)$/i.test(path.posix.basename(relativePath));
+}
+
 function classifyFile(relativePath) {
   const extension = path.extname(relativePath).toLowerCase();
   if (!ALLOWED_EXTENSIONS.has(extension)) return null;
@@ -134,10 +157,25 @@ export async function discoverBlueprints(options = {}) {
         kind: file.kind,
         evidence: file.departments.find(match => match.id === department.id).evidence
       }));
-    const hintedPaths = inventory
-      .filter(file => department.sourceHints.some(hint => file.path.toLowerCase().includes(hint)))
-      .map(file => file.path);
-    const sourcePaths = [...new Set(hintedPaths)].sort();
+    const hintedFiles = inventory
+      .filter(file => department.sourceHints.some(hint => pathMatchesHint(file.path, hint)));
+    const pathMatchedFiles = [...new Set(hintedFiles.map(file => file.path))].sort();
+    const sourcePaths = hintedFiles
+      .filter(file => file.kind === "source" && !isTestPath(file.path))
+      .map(file => file.path)
+      .sort();
+    const testPaths = hintedFiles
+      .filter(file => isTestPath(file.path))
+      .map(file => file.path)
+      .sort();
+    const documentationPaths = hintedFiles
+      .filter(file => file.kind === "documentation")
+      .map(file => file.path)
+      .sort();
+    const configurationPaths = hintedFiles
+      .filter(file => file.kind === "configuration")
+      .map(file => file.path)
+      .sort();
     const keywordEvidenceFiles = [...new Set(evidence.map(item => item.path))].sort();
     const staticallyReachable = new Set(dependencyGraph.reachableFiles);
     const runtimeConnectedSourceFiles = sourcePaths.filter(filePath => staticallyReachable.has(filePath));
@@ -149,6 +187,10 @@ export async function discoverBlueprints(options = {}) {
       specialistIds: [...department.specialistIds],
       status: "discovery-draft",
       sourceFiles: sourcePaths,
+      testFiles: testPaths,
+      documentationFiles: documentationPaths,
+      configurationFiles: configurationPaths,
+      pathMatchedFiles,
       keywordEvidenceFiles,
       runtimeConnectedSourceFiles,
       notStaticallyReachableSourceFiles,
