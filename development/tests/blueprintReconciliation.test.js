@@ -40,7 +40,7 @@ test("source provenance is required and private or absolute paths are rejected",
   const invalid = structuredClone(register);
   invalid.records[0].sources[0].path = ".env";
   assert.throws(() => reconcileBlueprintRegister(invalid, catalog), /prohibited/);
-  const missing = structuredClone(register);
+  const traversal = structuredClone(register);\n  traversal.records[0].sources[0].path = "../outside.md";\n  assert.throws(() => reconcileBlueprintRegister(traversal, catalog), /prohibited/);\n  const missing = structuredClone(register);
   missing.records[0].sources = [];
   assert.throws(() => reconcileBlueprintRegister(missing, catalog), /at least one source/);
 });
