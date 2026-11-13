@@ -36,6 +36,22 @@ function safeText(value) {
   return String(value == null ? "" : value);
 }
 
+function rootNamesLabel(value) {
+  return ["C", "C♯", "D", "D♯", "E", "F", "F♯", "G", "G♯", "A", "A♯", "B"][
+    Math.max(0, Math.min(11, Math.round(Number(value) || 0)))
+  ];
+}
+
+function escapeHtml(value) {
+  return safeText(value).replace(/[&<>"']/g, character => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  })[character]);
+}
+
 function createButton(label, action, className) {
   const button = document.createElement("button");
   button.type = "button";
@@ -49,6 +65,7 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext,
   return {
     root: null,
     inputMeterFrame: null,
+    activePitchTrackId: null,
     beatLab,
     onExit,
     onPrevious,
@@ -90,6 +107,17 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext,
         '#lc-premium-daw-edit-screen .lc-inspector{min-height:0;overflow:auto;padding:8px;border:1px solid #5a78a8;border-radius:10px;background:repeating-linear-gradient(0deg,transparent 0 25px,#1b4b7b22 25px 26px),linear-gradient(145deg,#14275f,#091638);box-shadow:inset 0 0 18px #020a24}',
         '#lc-premium-daw-edit-screen .lc-section-label{font-size:10px;letter-spacing:2px;color:#b9eaff;font-weight:900;margin:2px 0 8px}',
         '#lc-premium-daw-edit-screen .lc-strips{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}',
+        '#lc-premium-daw-edit-screen .lc-pitch-panel{margin-top:9px;padding:8px;border:1px solid #9a7c43;border-radius:8px;background:linear-gradient(145deg,#0b1c40,#07132d);display:grid;gap:7px;box-shadow:inset 0 0 10px #0008}',
+        '#lc-premium-daw-edit-screen .lc-pitch-heading{display:flex;align-items:center;justify-content:space-between;gap:6px;color:#f1d28c;font-size:9px;font-weight:900;letter-spacing:1.2px}',
+        '#lc-premium-daw-edit-screen .lc-pitch-toggle{display:flex;align-items:center;gap:6px;color:#f3d99e;font-size:9px;font-weight:900}',
+        '#lc-premium-daw-edit-screen .lc-pitch-toggle input{accent-color:#c9a24a;width:15px;height:15px}',
+        '#lc-premium-daw-edit-screen .lc-pitch-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}',
+        '#lc-premium-daw-edit-screen .lc-pitch-grid label{display:grid;gap:4px;min-width:0;color:#c5d7f2;font-size:8px;font-weight:800;letter-spacing:.5px}',
+        '#lc-premium-daw-edit-screen .lc-pitch-grid select{width:100%;min-height:26px;padding:3px 5px;border:1px solid #566f9c;border-radius:4px;background:#101d3d;color:#fff;font-size:10px}',
+        '#lc-premium-daw-edit-screen .lc-pitch-grid input[type=range]{width:100%;accent-color:#e6bb69;height:14px}',
+        '#lc-premium-daw-edit-screen .lc-pitch-value{color:#f1d28c;font-size:9px;text-align:right}',
+        '#lc-premium-daw-edit-screen .lc-pitch-note{margin:0;color:#9eafc8;font-size:8px;line-height:1.4}',
+        '#lc-premium-daw-edit-screen .lc-pitch-empty{padding:8px;border:1px dashed #53698f;border-radius:6px;color:#9eafc8;font-size:9px;line-height:1.4}',
         '#lc-premium-daw-edit-screen .lc-strip{min-width:0;padding:7px 5px;border:1px solid #aeb4c0;border-radius:8px;background:linear-gradient(135deg,#aeb4bf,#596475 24%,#1a2b55 25%,#071632 78%,#b4bac4 79%);box-shadow:0 3px 8px #0008;display:flex;flex-direction:column;gap:6px}',
         '#lc-premium-daw-edit-screen .lc-strip button{min-height:25px;padding:4px 3px;border-radius:4px;border:1px solid #5472a3;background:#122d65;color:#c9f4ff;font-size:9px;font-weight:800}',
         '#lc-premium-daw-edit-screen .lc-strip-name{padding:5px 2px;text-align:center;background:linear-gradient(90deg,#9d101a,#ef2936,#86101a);color:#fff;font-size:10px;font-weight:900;letter-spacing:1px;border:1px solid #ff7077}',
@@ -184,7 +212,7 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext,
         '<input data-session-file type="file" accept=".lcp,.lcsession,.json,application/json" hidden>',
         '</div>',
         '<div class="lc-main">',
-        '<aside class="lc-inspector"><div class="lc-section-label">▸ TRACK / MIXER</div><div class="lc-strips" data-mixer-strips></div></aside>',
+        '<aside class="lc-inspector"><div class="lc-section-label">▸ TRACK / MIXER</div><div class="lc-strips" data-mixer-strips></div><div data-pitch-panel></div></aside>',
         '<section class="lc-workarea">',
         '<div class="lc-edit-tools">',
         '<button type="button" disabled>t</button><button type="button" data-action="edit-menu">Edit ▾</button><button type="button" data-action="functions-menu">Functions ▾</button><button type="button" data-action="view-menu">View ▾</button>',
@@ -639,6 +667,11 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext,
 
       root.addEventListener("input", event => {
         const workspace = StudioMultitrackWorkspace;
+        const pitchControl = event.target.closest("[data-pitch-setting]");
+        if (pitchControl && pitchControl.type === "range") {
+          this.updatePitchCorrectionSetting(pitchControl, false);
+          return;
+        }
         if (event.target.matches("[data-zoom]")) {
           workspace.setZoom(Number(event.target.value));
           this.renderLanes();
@@ -665,6 +698,16 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext,
       });
 
       root.addEventListener("change", event => {
+        if (event.target.matches("[data-pitch-track]")) {
+          this.activePitchTrackId = event.target.value;
+          this.renderPitchCorrectionPanel();
+          return;
+        }
+        const pitchControl = event.target.closest("[data-pitch-setting]");
+        if (pitchControl) {
+          this.updatePitchCorrectionSetting(pitchControl, true);
+          return;
+        }
         if (event.target.matches("[data-input-device]")) {
           const selected = event.target.value || "";
           workspace.inputDeviceId = selected;
@@ -883,6 +926,120 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext,
         empty.className = "lc-section-label";
         empty.textContent = "Add audio tracks to populate the mixer.";
         host.appendChild(empty);
+      }
+      this.renderPitchCorrectionPanel();
+    },
+
+    renderPitchCorrectionPanel() {
+      const host = this.root?.querySelector("[data-pitch-panel]");
+      if (!host) return;
+      const vocalTracks = StudioMultitrackWorkspace.tracks.filter(track =>
+        track.inputSource === "mic" && /vocal/i.test(track.name)
+      );
+      host.replaceChildren();
+      if (!vocalTracks.length) {
+        const empty = document.createElement("div");
+        empty.className = "lc-pitch-empty";
+        empty.textContent = "Add a microphone track named VOCALS to enable lead-vocal pitch correction.";
+        host.appendChild(empty);
+        return;
+      }
+
+      const track = vocalTracks.find(item => item.id === this.activePitchTrackId) || vocalTracks[0];
+      this.activePitchTrackId = track.id;
+      track.effects = track.effects || {};
+      track.effects.pitchCorrection = {
+        enabled: false,
+        root: 0,
+        scale: "major",
+        amount: 100,
+        speedMs: 25,
+        ...(track.effects.pitchCorrection || {})
+      };
+      const settings = track.effects.pitchCorrection;
+      const rootNames = ["C", "C♯", "D", "D♯", "E", "F", "F♯", "G", "G♯", "A", "A♯", "B"];
+      const rootValue = Number(settings.root);
+      const root = Number.isFinite(rootValue) ? Math.max(0, Math.min(11, Math.round(rootValue))) : 0;
+      const amountValue = Number(settings.amount ?? 100);
+      const amount = Number.isFinite(amountValue) ? Math.max(0, Math.min(100, amountValue)) : 100;
+      const speedValue = Number(settings.speedMs ?? 25);
+      const speedMs = Number.isFinite(speedValue) ? Math.max(0, Math.min(120, speedValue)) : 25;
+      const scale = ["major", "minor", "chromatic"].includes(settings.scale) ? settings.scale : "major";
+      const trackOptions = vocalTracks.map(item =>
+        '<option value="' + escapeHtml(item.id) + '"' + (item.id === track.id ? " selected" : "") + '>' +
+        escapeHtml(item.name) + '</option>'
+      ).join("");
+      const rootOptions = rootNames.map((name, index) =>
+        '<option value="' + index + '"' + (index === root ? " selected" : "") + '>' + name + '</option>'
+      ).join("");
+      const scaleOptions = [
+        ["major", "MAJOR"],
+        ["minor", "MINOR"],
+        ["chromatic", "CHROMATIC"]
+      ].map(([value, label]) =>
+        '<option value="' + value + '"' + (scale === value ? " selected" : "") + '>' + label + '</option>'
+      ).join("");
+
+      host.innerHTML = [
+        '<section class="lc-pitch-panel" aria-label="Vocal pitch correction controls">',
+        '<div class="lc-pitch-heading"><span>VOCAL PITCH CORRECTION</span><span data-pitch-summary>' +
+          (settings.enabled ? "ON · " + rootNames[root] + " " + scale.toUpperCase() : "OFF") + '</span></div>',
+        '<label class="lc-pitch-toggle"><input type="checkbox" data-pitch-setting="enabled" data-track-id="' + escapeHtml(track.id) + '"' +
+          (settings.enabled ? " checked" : "") + '> ENABLE FOR LIVE VOCAL RECORDING</label>',
+        '<div class="lc-pitch-grid">',
+        '<label>VOCAL TRACK<select data-pitch-track>' + trackOptions + '</select></label>',
+        '<label>KEY<select data-pitch-setting="root" data-track-id="' + escapeHtml(track.id) + '">' + rootOptions + '</select></label>',
+        '<label>SCALE<select data-pitch-setting="scale" data-track-id="' + escapeHtml(track.id) + '">' + scaleOptions + '</select></label>',
+        '<label>STRENGTH <output class="lc-pitch-value" data-pitch-output="amount">' + Math.round(amount) + '%</output><input type="range" min="0" max="100" step="1" value="' + amount + '" data-pitch-setting="amount" data-track-id="' + escapeHtml(track.id) + '"></label>',
+        '<label>RETUNE SPEED <output class="lc-pitch-value" data-pitch-output="speedMs">' + Math.round(speedMs) + ' ms</output><input type="range" min="0" max="120" step="1" value="' + speedMs + '" data-pitch-setting="speedMs" data-track-id="' + escapeHtml(track.id) + '"></label>',
+        '</div>',
+        '<p class="lc-pitch-note">Monophonic lead-vocal correction. Saved with this song and shared by EDIT and Beat Lab vocal recording.</p>',
+        '</section>'
+      ].join("");
+    },
+
+    updatePitchCorrectionSetting(control, finish = false) {
+      const workspace = StudioMultitrackWorkspace;
+      const track = workspace.tracks.find(item => item.id === control.dataset.trackId);
+      if (!track) return;
+      const key = control.dataset.pitchSetting;
+      if (!["enabled", "root", "scale", "amount", "speedMs"].includes(key)) return;
+      track.effects = track.effects || {};
+      track.effects.pitchCorrection = {
+        enabled: false,
+        root: 0,
+        scale: "major",
+        amount: 100,
+        speedMs: 25,
+        ...(track.effects.pitchCorrection || {})
+      };
+      const settings = track.effects.pitchCorrection;
+      if (!control.dataset.historyStarted) {
+        workspace.recordHistory("Vocal pitch correction " + key);
+        if (control.type === "range" && !finish) control.dataset.historyStarted = "1";
+      }
+      if (key === "enabled") {
+        settings.enabled = Boolean(control.checked);
+      } else if (key === "scale") {
+        settings.scale = ["major", "minor", "chromatic"].includes(control.value) ? control.value : "major";
+      } else if (key === "root") {
+        settings.root = Math.max(0, Math.min(11, Math.round(Number(control.value) || 0)));
+      } else if (key === "amount") {
+        settings.amount = Math.max(0, Math.min(100, Number(control.value) || 0));
+      } else if (key === "speedMs") {
+        settings.speedMs = Math.max(0, Math.min(120, Number(control.value) || 0));
+      }
+      if (finish || control.type !== "range") delete control.dataset.historyStarted;
+      const output = this.root.querySelector('[data-pitch-output="' + key + '"]');
+      if (output && key === "amount") output.textContent = Math.round(settings.amount) + "%";
+      if (output && key === "speedMs") output.textContent = Math.round(settings.speedMs) + " ms";
+      const summary = this.root.querySelector("[data-pitch-summary]");
+      if (summary) summary.textContent = settings.enabled
+        ? "ON · " + rootNamesLabel(settings.root) + " " + settings.scale.toUpperCase()
+        : "OFF";
+      workspace.scheduleProjectAutosave();
+      if (finish || control.type !== "range") {
+        this.status(track.name + " pitch correction " + (settings.enabled ? "enabled" : "settings saved") + ".");
       }
     },
 
