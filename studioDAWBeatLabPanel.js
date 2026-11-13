@@ -31,6 +31,7 @@ export function createStudioDAWBeatLabPanel({
     mounted: false,
     handleClose: null,
     onSwitchToEdit: null,
+    onSwitchToDrummer: null,
 
     mount(container) {
       if (!container) {
@@ -75,13 +76,19 @@ export function createStudioDAWBeatLabPanel({
       returnButton.textContent = "← RETURN TO MPC";
       returnButton.style.cssText = "min-height:42px;padding:10px 14px;border:1px solid #665438;border-radius:8px;background:#171923;color:#f1d49c;font-weight:bold;touch-action:manipulation";
       returnButton.addEventListener("click", () => this.onReturn?.());
+      const drummerButton = document.createElement("button");
+      drummerButton.type = "button";
+      drummerButton.textContent = "LIVE DRUMMER";
+      drummerButton.setAttribute("aria-label", "Open optional Live Drummer performance tools");
+      drummerButton.style.cssText = "min-height:42px;padding:10px 14px;border:1px solid #596d8b;border-radius:8px;background:#17243a;color:#d9e4f4;font-weight:bold;touch-action:manipulation";
+      drummerButton.addEventListener("click", () => this.onSwitchToDrummer?.());
       const editorButton = document.createElement("button");
       editorButton.type = "button";
       editorButton.textContent = "SONG EDITOR →";
       editorButton.setAttribute("aria-label", "Switch to Song Editor");
       editorButton.style.cssText = "min-height:42px;padding:10px 14px;border:1px solid #9b7948;border-radius:8px;background:#211d16;color:#f1d49c;font-weight:bold;touch-action:manipulation";
       editorButton.addEventListener("click", () => this.onSwitchToEdit?.());
-      switchBar.append(returnButton, editorButton);
+      switchBar.append(returnButton, drummerButton, editorButton);
       host.appendChild(switchBar);
 
       // Move the existing interface into the Digital Beat Lab view.

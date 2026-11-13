@@ -735,10 +735,14 @@ const StudioDAWApp = {
       });
       this.beatLabPanel.onReturn = () => this.workspace?.setView("mpc");
       this.beatLabPanel.onSwitchToEdit = () => this.workspace?.setView("edit");
+      this.beatLabPanel.onSwitchToDrummer = () => this.workspace?.setView("drums");
       this.beatLabPanel.mount(this.panelHost);
       this.workspace.setPanel("beatlab", this.panelHost);
 
-      this.drumsPanel = createLiveDrummerPanel({ beatLab: Floor2StudioApp });
+      this.drumsPanel = createLiveDrummerPanel({
+        beatLab: Floor2StudioApp,
+        onReturn: () => this.workspace?.setView("beatlab")
+      });
       this.workspace.setPanel("drums", this.drumsPanel);
 
       // Connect the existing Multitrack Workspace

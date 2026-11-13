@@ -21,14 +21,17 @@
 const VIEWS = [
   { id: "edit", label: "EDITING" },
   { id: "mpc", label: "MPC" },
-  { id: "drums", label: "LIVE DRUMMER" },
   { id: "piano", label: "PIANO / CITY SYNTH" },
   { id: "vocals", label: "VOCAL BOOTH" },
   { id: "beatlab", label: "BEAT LAB" },
   { id: "mix", label: "MIX & MASTER" }
 ];
 
-const SECONDARY_VIEWS = [];
+// Optional performance tools are reachable from their parent station,
+// but do not add extra stops to the six-workspace producer workflow.
+const SECONDARY_VIEWS = [
+  { id: "drums", label: "LIVE DRUMMER" }
+];
 
 const ALL_VIEWS = [...VIEWS, ...SECONDARY_VIEWS];
 

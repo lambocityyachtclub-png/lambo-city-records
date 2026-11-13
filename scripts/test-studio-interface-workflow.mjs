@@ -8,6 +8,8 @@ const files = [
   "engine.js",
   "studioDAWApp.js",
   "studioDAWWorkspace.js",
+  "studioDAWEditScreen.js",
+  "studioDAWBeatLabPanel.js",
   "floor2StudioNavigation.js",
   "studioMixMasterConsole3D.js",
   "floor2LiveDrummer.js",
@@ -43,11 +45,18 @@ for (const [name,systemKey,binding] of [
     name + " must not initialize during initial world startup");
 }
 
+const editScreen = source["studioDAWEditScreen.js"];
+assert.match(editScreen,/if \(!modifier && key === "enter"\)/,"Return must reset the playhead only when the EDIT workspace has focus.");
+assert.match(editScreen,/target\.matches\("input,textarea,select"\)/,"Return must not steal text-entry keystrokes.");
+assert.match(editScreen,/workspace\.stopAll\(\)/);
+assert.match(editScreen,/workspace\.playheadBar = 1/);
+assert.match(editScreen,/Playhead returned to the beginning · stopped\./);
+assert.doesNotMatch(editScreen,/workspace\.playheadBar = 1;[\s\S]{0,250}startSessionPlayback/,"Return must stop at the beginning without auto-playing.");
+
 const workspace = source["studioDAWWorkspace.js"];
 const orderedSteps = [
   /id:\s*"edit",\s*label:\s*"EDITING"/,
   /id:\s*"mpc",\s*label:\s*"MPC"/,
-  /id:\s*"drums",\s*label:\s*"LIVE DRUMMER"/,
   /id:\s*"piano",\s*label:\s*"PIANO \/ CITY SYNTH"/,
   /id:\s*"vocals",\s*label:\s*"VOCAL BOOTH"/,
   /id:\s*"beatlab",\s*label:\s*"BEAT LAB"/,
@@ -60,7 +69,8 @@ for (const pattern of orderedSteps) {
   last = index;
 }
 assert.match(workspace,/const ALL_VIEWS = \[\.\.\.VIEWS, \.\.\.SECONDARY_VIEWS\]/);
-assert.match(workspace,/const SECONDARY_VIEWS = \[\];/,"Live Drummer must be a first-class navigable destination.");
+assert.match(workspace,/const SECONDARY_VIEWS = \[\s*\{ id: "drums", label: "LIVE DRUMMER" \}\s*\];/,"Live Drummer must remain an optional secondary tool, not a primary workflow stop.");
+assert.doesNotMatch(workspace.split("const SECONDARY_VIEWS")[0],/id:\s*"drums"/,"The primary producer workflow must retain its six approved destinations.");
 assert.match(workspace,/data-daw-navigation-label/);
 assert.match(workspace,/aria-label="Studio workspace navigation"/);
 assert.match(workspace,/data-daw-step="-1"/);
@@ -86,13 +96,20 @@ assert.match(app,/lc-live-drummer-state/);
 assert.match(source["floor2InstrumentApp.js"],/localHit\.x/);
 assert.match(source["floor2InstrumentApp.js"],/getTrackGain\("instrument"\)/);
 assert.match(source["floor2CitySynth.js"],/floor2CitySynthBlackKey/);
-assert.match(app,/createLiveDrummerPanel\(\{ beatLab: Floor2StudioApp \}\)/);
+assert.match(app,/createLiveDrummerPanel\(\{\s*beatLab: Floor2StudioApp,\s*onReturn:/);
 assert.match(app,/StudioMultitrackWorkspace\.resetSession\(\)/,"A fresh Studio launch must begin with a clean working session.");
 assert.match(app,/Floor2StudioApp\.startNewSession\?\.\(\)/,"A fresh Studio launch must also reset the Beat Lab song state.");
 assert.match(source["floor2StudioApp.js"],/startNewSession\(\)[\s\S]*?this\.currentProject = null;[\s\S]*?this\.pattern = makeDefaultPattern\(\)/);
 assert.match(source["studioMultitrackWorkspace.js"],/this\.activeProjectId = null;/,"New Session must detach from the previously opened saved project.");
 assert.match(source["studioMultitrackWorkspace.js"],/this\.activeProjectName = "Untitled Song"/);
 const drummer = source["floor2LiveDrummer.js"];
+const beatLabPanel = source["studioDAWBeatLabPanel.js"];
+assert.match(beatLabPanel,/LIVE DRUMMER/,"The optional Live Drummer must be reachable from the Beat Lab tools.");
+assert.match(beatLabPanel,/onSwitchToDrummer/);
+assert.match(app,/onSwitchToDrummer = \(\) => this\.workspace\?\.setView\("drums"\)/);
+assert.match(app,/onReturn: \(\) => this\.workspace\?\.setView\("beatlab"\)/);
+assert.match(drummer,/data-drum-menu aria-label="Return to Beat Lab"/);
+assert.match(drummer,/onReturn === "function"\) onReturn\(\)/);
 assert.match(drummer,/data-drum-mode-toggle/,"Live Drummer must switch modes inside the same interface.");
 assert.match(drummer,/SAMPLE PADS/);
 assert.match(drummer,/LIVE PERFORMANCE/);
