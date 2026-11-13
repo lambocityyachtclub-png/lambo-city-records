@@ -822,20 +822,23 @@ export default {
     );
 
     const navigateFromPhone = floor => {
-      const navigate = window.__lamboCityNavigateToFloor;
-      if (typeof navigate !== "function" || !navigate(floor)) return false;
-
-      // Let the originating click/tap finish before removing its own button.
-      // This keeps pointer activation reliable while Floor 2 loads on demand.
+      // Let the originating click/tap finish before starting streamed
+      // module loading or removing the phone's own button.
       const closePhone = () => {
         phone.remove();
         this._phoneOpen = false;
       };
 
+      const startNavigation = () => {
+        const navigate = window.__lamboCityNavigateToFloor;
+        if (typeof navigate !== "function" || !navigate(floor)) return;
+        closePhone();
+      };
+
       if (typeof window.requestAnimationFrame === "function") {
-        window.requestAnimationFrame(closePhone);
+        window.requestAnimationFrame(startNavigation);
       } else {
-        window.setTimeout(closePhone, 0);
+        window.setTimeout(startNavigation, 0);
       }
       return true;
     };
