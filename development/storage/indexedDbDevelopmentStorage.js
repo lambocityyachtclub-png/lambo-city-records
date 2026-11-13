@@ -1,6 +1,7 @@
-const DATABASE_VERSION = 1;
+const DATABASE_VERSION = 2;
 const TASK_STORE = "task-state";
 const REVIEW_STORE = "reviews";
+const VISION_STORE = "visions";
 const TASK_STATE_KEY = "development-director-tasks";
 
 const REVIEW_STATUSES = Object.freeze({
@@ -35,16 +36,16 @@ function transactionResult(transaction) {
   });
 }
 
-function createReviewId(cryptoApi) {
+function createRecordId(prefix, cryptoApi) {
   if (typeof cryptoApi?.randomUUID === "function") {
-    return "review-" + cryptoApi.randomUUID();
+    return prefix + "-" + cryptoApi.randomUUID();
   }
   if (typeof cryptoApi?.getRandomValues !== "function") {
     throw new Error("A secure browser crypto implementation is required for review IDs.");
   }
   const bytes = new Uint8Array(16);
   cryptoApi.getRandomValues(bytes);
-  return "review-" + Array.from(bytes, value => value.toString(16).padStart(2, "0")).join("");
+  return prefix + "-" + Array.from(bytes, value => value.toString(16).padStart(2, "0")).join("");
 }
 
 export function createIndexedDbDevelopmentStorage(options = {}) {
@@ -75,6 +76,9 @@ export function createIndexedDbDevelopmentStorage(options = {}) {
           }
           if (!database.objectStoreNames.contains(REVIEW_STORE)) {
             database.createObjectStore(REVIEW_STORE, { keyPath: "id" });
+          }
+          if (!database.objectStoreNames.contains(VISION_STORE)) {
+            database.createObjectStore(VISION_STORE, { keyPath: "id" });
           }
         };
         request.onsuccess = () => {
@@ -150,7 +154,7 @@ export function createIndexedDbDevelopmentStorage(options = {}) {
       }
       const now = new Date().toISOString();
       const review = {
-        id: createReviewId(cryptoApi),
+        id: createRecordId("review", cryptoApi),
         taskId,
         taskTitle,
         area: input.area || null,
@@ -213,6 +217,65 @@ export function createIndexedDbDevelopmentStorage(options = {}) {
     REVIEW_STATUSES
   });
 
+  const visionStore = Object.freeze({
+    async createVision(input = {}) {
+      const vision = requireText(input.vision, "Owner vision");
+      if (vision.length > 8000) {
+        throw new Error("Owner vision exceeds the 8,000 character limit.");
+      }
+      const now = new Date().toISOString();
+      const record = {
+        id: createRecordId("vision", cryptoApi),
+        vision,
+        status: "received",
+        remoteStatus: "not_submitted",
+        remoteTaskId: null,
+        createdAt: now,
+        updatedAt: now
+      };
+      await transact(VISION_STORE, "readwrite", store => requestResult(store.add(record)));
+      return clone(record);
+    },
+
+    async getVision(visionId) {
+      const id = requireText(visionId, "Vision ID");
+      const record = await transact(VISION_STORE, "readonly", store => requestResult(store.get(id)));
+      return record ? clone(record) : null;
+    },
+
+    async listVisions() {
+      const records = await transact(VISION_STORE, "readonly", store => requestResult(store.getAll()));
+      records.sort((left, right) => right.createdAt.localeCompare(left.createdAt));
+      return clone(records);
+    },
+
+    async setRemoteStatus(input = {}) {
+      const visionId = requireText(input.visionId, "Vision ID");
+      const remoteStatus = requireText(input.remoteStatus, "Remote status");
+      if (!["not_submitted", "submitted", "unavailable"].includes(remoteStatus)) {
+        throw new Error("Unsupported hosted queue status.");
+      }
+      const remoteTaskId = input.remoteTaskId == null
+        ? null
+        : requireText(input.remoteTaskId, "Remote task ID");
+      if (remoteStatus === "submitted" && !remoteTaskId) {
+        throw new Error("A remote task ID is required when the hosted queue accepts a vision.");
+      }
+      return transact(VISION_STORE, "readwrite", async store => {
+        const record = await requestResult(store.get(visionId));
+        if (!record) throw new Error("Owner vision not found: " + visionId);
+        const updated = {
+          ...record,
+          remoteStatus,
+          remoteTaskId: remoteStatus === "submitted" ? remoteTaskId : null,
+          updatedAt: new Date().toISOString()
+        };
+        await requestResult(store.put(updated));
+        return clone(updated);
+      });
+    }
+  });
+
   async function close() {
     if (closed) return;
     closed = true;
@@ -225,6 +288,7 @@ export function createIndexedDbDevelopmentStorage(options = {}) {
     databaseName,
     taskStorage,
     reviewStore,
+    visionStore,
     close,
     REVIEW_STATUSES
   });
