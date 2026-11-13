@@ -92,13 +92,15 @@ async function buildActiveModuleGraph(root, entrypointSources) {
     if (visited.has(current.path)) continue;
     visited.add(current.path);
     const refs = referencesByPath.get(current.path) || [];
-    refs.push({
-      file: current.root.file,
-      line: current.root.line,
-      kind: current.root.kind,
-      key: current.root.key,
-      registrationLine: current.root.registrationLine
-    });
+    if (current.path === current.root.path) {
+      refs.push({
+        file: current.root.file,
+        line: current.root.line,
+        kind: current.root.kind,
+        key: current.root.key,
+        registrationLine: current.root.registrationLine
+      });
+    }
     referencesByPath.set(current.path, refs);
 
     const source = await fs.readFile(path.join(root, current.path), "utf8");
