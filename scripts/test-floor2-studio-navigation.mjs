@@ -23,21 +23,29 @@ const floor2Loader = main.slice(
   main.indexOf("window.__lamboCityPrepareFloor = floor => {"),
   main.indexOf("\nengine.init();")
 );
+const coreOrder = floor2Loader.slice(floor2Loader.indexOf("const coreInitializationOrder = ["));
+const coreWorldInit = coreOrder.indexOf('["recordsHQFloor2Studio", [engine.scene]]');
+const coreSessionInit = coreOrder.indexOf('["floor2StudioSession", [engine.scene, engine.context]]');
 const order = floor2Loader.slice(floor2Loader.indexOf("const initializationOrder = ["));
-const worldInit = order.indexOf('["recordsHQFloor2Studio", [engine.scene]]');
+const beatLabInit = order.indexOf('["floor2StudioApp", [engine.scene, engine.context]]');
+const instrumentInit = order.indexOf('["floor2InstrumentApp", [engine.scene, engine.context]]');
 const drumInit = order.indexOf('["floor2DrumStation", [engine.scene, engine.context]]');
 const navigationInit = order.indexOf('["floor2StudioNavigation", [engine.scene, engine.context]]');
-const sessionInit = order.indexOf('["floor2StudioSession", [engine.scene, engine.context]]');
 const mixConsoleInit = order.indexOf('["studioMixMasterConsole3D", [engine.scene, engine.context]]');
 const liveDrummerInit = order.indexOf('["floor2LiveDrummer", [engine.scene, engine.context]]');
 const vocalBoothInit = order.indexOf('["floor2VocalBooth3D", [engine.scene, engine.context]]');
 const citySynthInit = order.indexOf('["floor2CitySynth", [engine.scene, engine.context]]');
 
-assert.ok(worldInit >= 0, "Floor 2 room must initialize on demand");
-assert.ok(drumInit > worldInit, "Drum station must initialize after the Floor 2 room");
+assert.ok(coreWorldInit >= 0, "Floor 2 room must initialize on demand");
+assert.ok(coreSessionInit > coreWorldInit, "The session controller must initialize immediately after the room core");
+assert.ok(floor2Loader.indexOf("resolveCoreReady()") > floor2Loader.indexOf("window.__lamboCityFloor2CoreReady = true"),
+  "The elevator may proceed only after the room and session hooks are ready");
+assert.ok(beatLabInit >= 0 && instrumentInit > beatLabInit,
+  "Beat Lab and piano interaction must initialize after the navigation core");
+assert.ok(drumInit > instrumentInit, "Drum station must initialize after the room and instrument core");
 assert.ok(navigationInit > drumInit, "Studio navigation must initialize after the drum station");
-assert.ok(sessionInit > navigationInit, "Floor 2 session controller must initialize after navigation");
-assert.ok(mixConsoleInit > sessionInit && liveDrummerInit > mixConsoleInit && vocalBoothInit > liveDrummerInit && citySynthInit > vocalBoothInit, "Four visual interface modules must initialize after the existing Floor 2 systems");
+assert.ok(mixConsoleInit > navigationInit && liveDrummerInit > mixConsoleInit && vocalBoothInit > liveDrummerInit && citySynthInit > vocalBoothInit,
+  "Optional visual interface modules must retain their dependency-aware initialization order");
 assert.doesNotMatch(engine, /this\.systems\.(?:recordsHQFloor2Studio|floor2DrumStation|floor2StudioNavigation|floor2StudioSession|studioMixMasterConsole3D|floor2LiveDrummer|floor2VocalBooth3D|floor2CitySynth)\?\.init/, "Floor 2 modules must not initialize during the initial world startup");
 assert.match(floor2Loader, /window\.__lamboCityFloor2Ready = true/);
 assert.match(floor2Loader, /engine\.scene\.getObjectByName\("recordsHQFloor2Studio"\)/);
@@ -125,6 +133,13 @@ assert.match(main, /engine\.registerSystems\(systems\)/,
 assert.match(main, /engine\.initSystem\(name, \.\.\.args\)/,
   "Streamed upper-floor modules must use the engine's isolated initializer with their scene/context arguments.");
 assert.match(main, /await Promise\.resolve\(engine\.initSystem\(name, \.\.\.args\)\)/,
-  "Every streamed Studio module must finish initialization before the elevator completes arrival.");
+  "Optional Studio modules must finish initialization before they are marked loaded.");
 assert.match(main, /window\.__lamboCityFloor2InitProgress\.push\(name\)/,
   "Floor 2 must record successful module initialization in order.");
+
+assert.match(main, /window\.__lamboCityFloor2CoreReady = true/,
+  "The room/session core must publish readiness before optional modules finish.");
+assert.match(main, /window\.__lamboCityFloor2ModulesReady = true/,
+  "The loader must separately report when every optional Studio module is ready.");
+assert.match(main, /await new Promise\(resolve => requestAnimationFrame\(resolve\)\)/,
+  "Optional module initialization must yield between visual layers so the world loop can continue.");

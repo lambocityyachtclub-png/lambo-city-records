@@ -114,87 +114,117 @@ engine.registerSystems({
 // Each destination is cached so returning to a floor never rebuilds it.
 const destinationLoads = new Map();
 window.__lamboCityFloor2Ready = false;
+window.__lamboCityFloor2CoreReady = false;
+window.__lamboCityFloor2ModulesReady = false;
 window.__lamboCityFloor2LoadPhase = "idle";
 window.__lamboCityFloor2LoadingModule = null;
 window.__lamboCityFloor2LoadedModules = [];
 window.__lamboCityPrepareFloor = floor => {
   if (floor !== 2 && floor !== 3 && floor !== 4) return Promise.resolve();
-
   if (!destinationLoads.has(floor)) {
-    let floor2InitializationStarted = false;
-    const load = (async () => {
-      if (floor === 2) {
+    if (floor === 2) {
+      let resolveCoreReady;
+      let rejectCoreReady;
+      const coreReady = new Promise((resolve, reject) => {
+        resolveCoreReady = resolve;
+        rejectCoreReady = reject;
+      });
+      destinationLoads.set(floor, coreReady);
+      let floor2InitializationStarted = false;
+      const loadFloor2 = async () => {
         window.__lamboCityFloor2Ready = false;
-        window.__lamboCityFloor2LoadPhase = "loading-module-graph";
+        window.__lamboCityFloor2CoreReady = false;
+        window.__lamboCityFloor2ModulesReady = false;
+        window.__lamboCityFloor2LoadError = null;
+        window.__lamboCityFloor2LoadPhase = "loading-core";
+        window.__lamboCityFloor2LoadingModule = null;
         window.__lamboCityFloor2InitProgress = [];
-        const [
-          studio,
-          beatLab,
-          instrument,
-          drumStation,
-          navigation,
-          session,
-          mixMaster,
-          liveDrummer,
-          vocalBooth,
-          citySynth
-        ] = await Promise.all([
+        window.__lamboCityFloor2LoadedModules = [];
+        // The room and session controller are the only hard arrival dependencies.
+        // Optional Studio interfaces continue loading after the cockpit is reached.
+        const [studio, session] = await Promise.all([
           import("./recordsHQFloor2Studio.js"),
+          import("./floor2StudioSession.js")
+        ]);
+        if (!engine.scene || !engine.camera || !engine.renderer) {
+          throw new Error("The LAMBO CITY scene is not ready for Floor 2.");
+        }
+        const coreSystems = {
+          recordsHQFloor2Studio: studio.default,
+          floor2StudioSession: session.default
+        };
+        for (const [name, system] of Object.entries(coreSystems)) {
+          if (!system || typeof system.init !== "function") {
+            throw new Error("Floor 2 core module failed to initialize: " + name);
+          }
+        }
+        floor2InitializationStarted = true;
+        engine.registerSystems(coreSystems);
+        const coreInitializationOrder = [
+          ["recordsHQFloor2Studio", [engine.scene]],
+          ["floor2StudioSession", [engine.scene, engine.context]]
+        ];
+        for (const [name, args] of coreInitializationOrder) {
+          window.__lamboCityFloor2LoadPhase = "initializing:" + name;
+          window.__lamboCityFloor2LoadingModule = name;
+          await Promise.resolve(engine.initSystem(name, ...args));
+          if (engine.failedSystems?.has(name)) {
+            throw new Error("Floor 2 core module failed to initialize: " + name);
+          }
+          window.__lamboCityFloor2InitProgress.push(name);
+          window.__lamboCityFloor2LoadedModules = [...window.__lamboCityFloor2InitProgress];
+          window.__lamboCityFloor2LoadingModule = null;
+        }
+        if (!engine.scene.getObjectByName("recordsHQFloor2Studio")) {
+          throw new Error("Floor 2 architecture did not attach to the live scene.");
+        }
+        if (
+          typeof window.__lamboCityBeginFloor2Session !== "function" ||
+          typeof window.__lamboCityEnterFloor2CockpitDirect !== "function"
+        ) {
+          throw new Error("Floor 2 session navigation hooks did not register.");
+        }
+        window.__lamboCityFloor2CoreReady = true;
+        window.__lamboCityFloor2Ready = true;
+        window.__lamboCityFloor2LoadPhase = "core-ready";
+        resolveCoreReady();
+        window.__lamboCityFloor2LoadPhase = "loading-optional-module-graph";
+        const [beatLab, instrument, drumStation, navigation, mixMaster, liveDrummer, vocalBooth, citySynth] = await Promise.all([
           import("./floor2StudioApp.js"),
           import("./floor2InstrumentApp.js"),
           import("./floor2DrumStation.js"),
           import("./floor2StudioNavigation.js"),
-          import("./floor2StudioSession.js"),
           import("./studioMixMasterConsole3D.js"),
           import("./floor2LiveDrummer.js"),
           import("./floor2VocalBooth3D.js"),
           import("./floor2CitySynth.js")
         ]);
-
-        window.__lamboCityFloor2LoadPhase = "modules-imported";
-        if (!engine.scene || !engine.camera || !engine.renderer) {
-          throw new Error("The LAMBO CITY scene is not ready for Floor 2.");
-        }
-
-        window.__lamboCityFloor2LoadPhase = "registering-modules";
-        window.__lamboCityFloor2LoadingModule = null;
         const systems = {
-          recordsHQFloor2Studio: studio.default,
           floor2StudioApp: beatLab.default,
           floor2InstrumentApp: instrument.default,
           floor2DrumStation: drumStation.default,
           floor2StudioNavigation: navigation.default,
-          floor2StudioSession: session.default,
           studioMixMasterConsole3D: mixMaster.default,
           floor2LiveDrummer: liveDrummer.default,
           floor2VocalBooth3D: vocalBooth.default,
           floor2CitySynth: citySynth.default
         };
-
         for (const [name, system] of Object.entries(systems)) {
           if (!system || typeof system.init !== "function") {
             throw new Error("Floor 2 module failed to initialize: " + name);
           }
         }
-
-        // Once module initialization starts, retain a failed promise rather
-        // than retrying partially initialized systems and duplicating listeners.
-        floor2InitializationStarted = true;
         engine.registerSystems(systems);
-
         const initializationOrder = [
-          ["recordsHQFloor2Studio", [engine.scene]],
           ["floor2StudioApp", [engine.scene, engine.context]],
           ["floor2InstrumentApp", [engine.scene, engine.context]],
           ["floor2DrumStation", [engine.scene, engine.context]],
           ["floor2StudioNavigation", [engine.scene, engine.context]],
-          ["floor2StudioSession", [engine.scene, engine.context]],
           ["studioMixMasterConsole3D", [engine.scene, engine.context]],
           ["floor2LiveDrummer", [engine.scene, engine.context]],
           ["floor2VocalBooth3D", [engine.scene, engine.context]],
           ["floor2CitySynth", [engine.scene, engine.context]]
         ];
-
         for (const [name, args] of initializationOrder) {
           window.__lamboCityFloor2LoadPhase = "initializing:" + name;
           window.__lamboCityFloor2LoadingModule = name;
@@ -203,85 +233,79 @@ window.__lamboCityPrepareFloor = floor => {
             throw new Error("Floor 2 module failed to initialize: " + name);
           }
           window.__lamboCityFloor2InitProgress.push(name);
+          window.__lamboCityFloor2LoadedModules = [...window.__lamboCityFloor2InitProgress];
           window.__lamboCityFloor2LoadingModule = null;
-          // Each init is awaited, including asynchronous interface modules.
-          // The phone click has already completed before this loader starts.
+          // Yield between optional visual layers so the arrival and touch controls keep updating.
+          await new Promise(resolve => requestAnimationFrame(resolve));
         }
-
-        if (!engine.scene.getObjectByName("recordsHQFloor2Studio")) {
-          throw new Error("Floor 2 architecture did not attach to the live scene.");
-        }
+        window.__lamboCityFloor2ModulesReady = true;
         window.__lamboCityFloor2LoadError = null;
         window.__lamboCityFloor2LoadPhase = "ready";
-        window.__lamboCityFloor2Ready = true;
-      } else if (floor === 3) {
-        window.__lamboCityFloor3Ready = false;
-        const [executive, details, experience] = await Promise.all([
-          import("./recordsHQFloor3Executive.js"),
-          import("./recordsHQFloor3Details.js"),
-          import("./recordsHQFloor3Experience.js")
-        ]);
-
-        if (!engine.scene) {
-          throw new Error("The LAMBO CITY scene is not ready for Floor 3.");
-        }
-
-        const systems = {
-          recordsHQFloor3Executive: executive.default,
-          recordsHQFloor3Details: details.default,
-          recordsHQFloor3Experience: experience.default
-        };
-
-        for (const [name, system] of Object.entries(systems)) {
-          if (!system || typeof system.init !== "function") {
-            throw new Error("Floor 3 module failed to initialize: " + name);
-          }
-        }
-
-        engine.registerSystems(systems);
-
-        // Initialize each visual layer only when its scene root is absent.
-        if (!engine.scene.getObjectByName("recordsHQFloor3Executive")) {
-          engine.initSystem("recordsHQFloor3Executive", engine.scene);
-        }
-        if (!engine.scene.getObjectByName("floor3ExecutiveDetails")) {
-          engine.initSystem("recordsHQFloor3Details", engine.scene);
-        }
-        engine.initSystem("recordsHQFloor3Experience", engine.scene, engine.context);
-
-        // Do not let the elevator report a successful arrival until the
-        // actual Floor 3 architecture is present in the live scene.
-        if (
-          !engine.scene.getObjectByName("recordsHQFloor3Executive") ||
-          !engine.scene.getObjectByName("floor3ExecutiveDetails")
-        ) {
-          throw new Error("Floor 3 scene layers did not attach to the live scene.");
-        }
-        window.__lamboCityFloor3Ready = true;
-      } else {
-        const rooftop = await import("./recordsHQRooftopVIP.js");
-        engine.registerSystems({ recordsHQRooftopVIP: rooftop.default });
-        engine.initSystem("recordsHQRooftopVIP", engine.scene);
-      }
-    })().catch(error => {
-      if (floor === 2) {
-        window.__lamboCityFloor2Ready = false;
+        window.__lamboCityFloor2LoadingModule = null;
+      };
+      loadFloor2().catch(error => {
+        const message = String(error?.message || error);
+        window.__lamboCityFloor2LoadError = message;
         window.__lamboCityFloor2LoadPhase = "failed";
         window.__lamboCityFloor2LoadingModule = null;
-        window.__lamboCityFloor2LoadError = String(error?.message || error);
-        if (!floor2InitializationStarted) destinationLoads.delete(floor);
-      } else {
+        if (!window.__lamboCityFloor2CoreReady) {
+          window.__lamboCityFloor2Ready = false;
+          if (!floor2InitializationStarted) destinationLoads.delete(floor);
+          rejectCore(error);
+        } else {
+          window.__lamboCityFloor2ModulesReady = false;
+          console.error("LAMBO CITY optional Floor 2 module loading failed:", error);
+        }
+      });
+    } else {
+      const load = (async () => {
+        if (floor === 3) {
+          window.__lamboCityFloor3Ready = false;
+          const [executive, details, experience] = await Promise.all([
+            import("./recordsHQFloor3Executive.js"),
+            import("./recordsHQFloor3Details.js"),
+            import("./recordsHQFloor3Experience.js")
+          ]);
+          if (!engine.scene) throw new Error("The LAMBO CITY scene is not ready for Floor 3.");
+          const systems = {
+            recordsHQFloor3Executive: executive.default,
+            recordsHQFloor3Details: details.default,
+            recordsHQFloor3Experience: experience.default
+          };
+          for (const [name, system] of Object.entries(systems)) {
+            if (!system || typeof system.init !== "function") {
+              throw new Error("Floor 3 module failed to initialize: " + name);
+            }
+          }
+          engine.registerSystems(systems);
+          if (!engine.scene.getObjectByName("recordsHQFloor3Executive")) {
+            engine.initSystem("recordsHQFloor3Executive", engine.scene);
+          }
+          if (!engine.scene.getObjectByName("floor3ExecutiveDetails")) {
+            engine.initSystem("recordsHQFloor3Details", engine.scene);
+          }
+          engine.initSystem("recordsHQFloor3Experience", engine.scene, engine.context);
+          if (
+            !engine.scene.getObjectByName("recordsHQFloor3Executive") ||
+            !engine.scene.getObjectByName("floor3ExecutiveDetails")
+          ) {
+            throw new Error("Floor 3 scene layers did not attach to the live scene.");
+          }
+          window.__lamboCityFloor3Ready = true;
+        } else {
+          const rooftop = await import("./recordsHQRooftopVIP.js");
+          engine.registerSystems({ recordsHQRooftopVIP: rooftop.default });
+          engine.initSystem("recordsHQRooftopVIP", engine.scene);
+        }
+      })().catch(error => {
         destinationLoads.delete(floor);
-      }
-      throw error;
-    });
-
-    destinationLoads.set(floor, load);
+        throw error;
+      });
+      destinationLoads.set(floor, load);
+    }
   }
-
   return destinationLoads.get(floor);
 };
-
 engine.init();
 
 // Register the approved Conference Center blueprint with the shared World

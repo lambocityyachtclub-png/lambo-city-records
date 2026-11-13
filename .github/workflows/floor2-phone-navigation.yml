@@ -4,6 +4,8 @@ on:
   pull_request:
     paths:
       - "recordsHQElevator.js"
+      - "main.js"
+      - "floor2StudioSession.js"
       - "input.js"
       - "floor2PhoneNavigation.js"
       - "scripts/test-floor2-phone-navigation.mjs"
@@ -13,6 +15,8 @@ on:
       - "restore/latest-integrated-features-2026-11-12"
     paths:
       - "recordsHQElevator.js"
+      - "main.js"
+      - "floor2StudioSession.js"
       - "input.js"
       - "floor2PhoneNavigation.js"
       - "scripts/test-floor2-phone-navigation.mjs"

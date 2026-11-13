@@ -177,11 +177,14 @@ async function smokeWorld({ label, isMobile }) {
       const state = await page.evaluate(() => ({
         phoneOpen: !!document.getElementById("phone-ui"),
         floor2Ready: window.__lamboCityFloor2Ready === true,
+        floor2CoreReady: window.__lamboCityFloor2CoreReady === true,
+        floor2ModulesReady: window.__lamboCityFloor2ModulesReady === true,
         floor2Mode: window.__lamboCityFloor2SessionMode || null,
         floor2LoadError: window.__lamboCityFloor2LoadError || null,
         floor2LoadPhase: window.__lamboCityFloor2LoadPhase || null,
         floor2LoadingModule: window.__lamboCityFloor2LoadingModule || null,
         floor2InitProgress: window.__lamboCityFloor2InitProgress || [],
+        floor2LoadedModules: window.__lamboCityFloor2LoadedModules || [],
         floor2ArrivalProgress: window.__lamboCityFloor2ArrivalProgress ?? null,
         floor2SessionUpdateCount: window.__lamboCityFloor2SessionUpdateCount || 0,
         floor2SessionLastDelta: window.__lamboCityFloor2SessionLastDelta ?? null,
@@ -204,6 +207,8 @@ async function smokeWorld({ label, isMobile }) {
     });
     const floor2Status = await page.evaluate(() => ({
       ready: window.__lamboCityFloor2Ready === true,
+      coreReady: window.__lamboCityFloor2CoreReady === true,
+      modulesReady: window.__lamboCityFloor2ModulesReady === true,
       mode: window.__lamboCityFloor2SessionMode || null,
       discovered: window.__lamboCityFloor2Discovered === true,
       directEntry: typeof window.__lamboCityEnterFloor2CockpitDirect,
@@ -214,16 +219,21 @@ async function smokeWorld({ label, isMobile }) {
     }));
     assert.equal(floor2Status.loadError, null,
       label + ": Floor 2 loader error: " + String(floor2Status.loadError));
-    assert.equal(floor2Status.ready, true, label + ": Floor 2 modules must finish loading");
-    assert.equal(floor2Status.loadPhase, "ready", label + ": Floor 2 loader must reach ready state");
-    assert.equal(floor2Status.initProgress.length, 10,
-      label + ": all ten Floor 2 modules must initialize before arrival");
+    assert.equal(floor2Status.ready, true, label + ": Floor 2 navigation core must be ready");
+    assert.equal(floor2Status.coreReady, true,
+      label + ": room architecture and session hooks must be ready before arrival");
+    assert.ok(floor2Status.initProgress.includes("recordsHQFloor2Studio"),
+      label + ": Floor 2 room architecture must initialize before arrival");
+    assert.ok(floor2Status.initProgress.includes("floor2StudioSession"),
+      label + ": Floor 2 session controller must initialize before arrival");
+    assert.notEqual(floor2Status.loadPhase, "failed",
+      label + ": optional Studio interfaces must not report a loader failure");
     assert.equal(floor2Status.mode, "seated", label + ": first visit must complete the elevator-to-cockpit arrival");
     assert.equal(floor2Status.discovered, true, label + ": first visit must persist Floor 2 discovery");
     assert.equal(floor2Status.directEntry, "function", label + ": the return shortcut must be registered");
     assert.deepEqual(floor2Status.startupErrors, [],
       label + ": no isolated system initialization/update failures are allowed");
-    console.log("PASS: " + label + " first-time Floor 2 load and elevator arrival completed");
+    console.log("PASS: " + label + " first-time Floor 2 core load and elevator arrival completed");
 
     if (isMobile) {
       const directEntryState = await page.evaluate(() => ({
