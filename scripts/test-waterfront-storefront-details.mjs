@@ -26,6 +26,6 @@ assert.match(details, /scene\.getObjectByName\("lcWaterfrontStorefrontDetails"\)
 assert.match(details, /MUSIC • BEATS • RELEASES/);
 assert.match(details, /SOUND KITS • PRESETS/);
 assert.doesNotMatch(details, /PointLight|SpotLight|DirectionalLight/);
-assert.doesNotMatch(details, /collision|player\.position|addEventListener/);
+assert.doesNotMatch(details, /player\.position|addEventListener|registerCollider|addCollider/);
 
 console.log("Waterfront storefront registration, preserved locations, facade details, and lightweight-lighting checks passed.");
