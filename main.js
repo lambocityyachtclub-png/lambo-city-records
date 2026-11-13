@@ -203,8 +203,13 @@ window.__lamboCityPrepareFloor = floor => {
 
         for (const [name, args] of initializationOrder) {
           window.__lamboCityFloor2LoadPhase = "initializing:" + name;
+          window.__lamboCityFloor2LoadingModule = name;
           await Promise.resolve(engine.initSystem(name, ...args));
+          if (engine.failedSystems?.has(name)) {
+            throw new Error("Floor 2 module failed to initialize: " + name);
+          }
           window.__lamboCityFloor2InitProgress.push(name);
+          window.__lamboCityFloor2LoadingModule = null;
           // Give the world one frame between interface modules so the
           // elevator, camera, and phone UI remain responsive during loading.
           await yieldToFrame();
