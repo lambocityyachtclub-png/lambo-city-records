@@ -55,7 +55,6 @@ assert.match(elevator, /isBusy: \(\) =>[\s\S]*?travelStartPending[\s\S]*?window\
 assert.match(phoneNavigation, /queuedDestination = destination/, "Busy phone requests must retain the requested destination.");
 assert.match(phoneNavigation, /navigate\.flush = \(\) =>/, "Queued phone requests must expose a safe idle-time flush.");
 assert.match(elevator, /window\.__lamboCityNavigateToFloor\?\.flush\?\.\(\)/, "The elevator must resume queued phone requests when it becomes idle.");
-  "A pending trip must block duplicate elevator requests.");
 assert.match(elevator, /window\.__lamboCityPrepareFloor\?\.\(selectedFloor\)/, "Elevator travel must wait for the destination loader");
 assert.match(elevator, /window\.__lamboCityBeginFloor2Session\?\.\(arrivedPlayer\)/, "Floor 2 arrival must open the Studio session");
 assert.ok(engine.indexOf('this.initSystem("input", this.scene, this.context);') >= 0 && engine.indexOf('this.initSystem("input", this.scene, this.context);') < engine.indexOf('this.initSystem("performanceMonitor", this.renderer, this.context);'), "iPad input and joystick must initialize immediately after the core renderer/context");
