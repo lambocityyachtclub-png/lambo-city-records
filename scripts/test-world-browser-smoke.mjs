@@ -32,7 +32,7 @@ async function smokeWorld({ label, isMobile }) {
       failedScriptRequests.push(request.url() + ": " + request.failure()?.errorText);
     }
   });
-  page.setDefaultTimeout(60000);
+  page.setDefaultTimeout(30000);
 
   try {
     await page.goto(BASE_URL, { waitUntil: "domcontentloaded" });
@@ -44,7 +44,7 @@ async function smokeWorld({ label, isMobile }) {
         !!document.getElementById("lambo-city-mobile-buttons") &&
         !!window.__lamboCityPlayerSystem &&
         typeof window.__lamboCityNavigateToFloor === "function";
-    }).catch(error => {
+    }, null, { timeout: 30000 }).catch(error => {
       throw new Error(label + ": startup did not finish. " + error.message +
         "\nPage errors: " + pageErrors.join("\n") +
         "\nConsole errors: " + consoleErrors.join("\n") +
@@ -95,7 +95,7 @@ async function smokeWorld({ label, isMobile }) {
       window.__lamboCityFloor2SessionMode === "seated" &&
       window.__lamboCityFloor2Discovered === true &&
       typeof window.__lamboCityEnterFloor2CockpitDirect === "function"
-    , null, { timeout: 60000 });
+    , null, { timeout: 45000 });
     console.log("PASS: " + label + " first-time Floor 2 load and elevator arrival completed");
 
     // End the session without clearing discovery, then use the phone again.
@@ -116,7 +116,7 @@ async function smokeWorld({ label, isMobile }) {
     }
     await page.waitForFunction(() =>
       window.__lamboCityFloor2SessionMode === "seated"
-    , null, { timeout: 15000 });
+    , null, { timeout: 10000 });
 
     assert.deepEqual(pageErrors, [], label + ": no uncaught errors during Studio navigation");
     assert.deepEqual(failedScriptRequests, [], label + ": no failed JavaScript module requests");
