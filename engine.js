@@ -5,7 +5,49 @@ export default class Engine {
     this.context = {};
   }
   registerSystems(systems) {
-    this.systems = systems;
+    // Isolate every feature at its lifecycle boundary. A failed optional
+    // module must not prevent the remaining world from initializing or
+    // interrupt the animation loop.
+    this.systems = Object.fromEntries(
+      Object.entries(systems).map(([name, system]) => {
+        if (!system || typeof system !== "object") return [name, system];
+        const failed = new Set();
+        const isolated = new Proxy(system, {
+          get(target, property) {
+            const value = Reflect.get(target, property, target);
+            if (typeof value !== "function") return value;
+
+            if (property === "init" || property === "update") {
+              return (...args) => {
+                if (failed.has(property)) return undefined;
+                try {
+                  return value.apply(target, args);
+                } catch (error) {
+                  failed.add(property);
+                  const record = {
+                    system: name,
+                    phase: property,
+                    message: String(error?.message || error),
+                    timestamp: Date.now()
+                  };
+                  console.error(
+                    `[LAMBO CITY] ${name}.${property} failed; isolating this feature.`,
+                    error
+                  );
+                  if (typeof window !== "undefined") {
+                    window.__lamboCityStartupErrors ||= [];
+                    window.__lamboCityStartupErrors.push(record);
+                  }
+                  return undefined;
+                }
+              };
+            }
+            return value.bind(target);
+          }
+        });
+        return [name, isolated];
+      })
+    );
   }
   init() {
     this.scene    = this.systems.scene?.init?.();
