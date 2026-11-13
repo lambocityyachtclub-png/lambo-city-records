@@ -7,12 +7,15 @@ const loadedContexts = new WeakSet();
 const pendingContexts = new WeakMap();
 
 export function normalizePitchCorrectionSettings(settings = {}) {
+  const rootValue = Number(settings.root ?? 0);
+  const amountValue = Number(settings.amount ?? 100);
+  const speedValue = Number(settings.speedMs ?? 25);
   return {
-    enabled: Boolean(settings.enabled),
-    root: Math.max(0, Math.min(11, Math.round(Number(settings.root) || 0))),
+    enabled: settings.enabled === true,
+    root: Number.isFinite(rootValue) ? Math.max(0, Math.min(11, Math.round(rootValue))) : 0,
     scale: ["major", "minor", "chromatic"].includes(settings.scale) ? settings.scale : "major",
-    amount: Math.max(0, Math.min(100, Number(settings.amount ?? 100))),
-    speedMs: Math.max(0, Math.min(120, Number(settings.speedMs ?? 25)))
+    amount: Number.isFinite(amountValue) ? Math.max(0, Math.min(100, amountValue)) : 100,
+    speedMs: Number.isFinite(speedValue) ? Math.max(0, Math.min(120, speedValue)) : 25
   };
 }
 
