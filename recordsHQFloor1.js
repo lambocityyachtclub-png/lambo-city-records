@@ -404,33 +404,8 @@ export default {
     );
 
 
-    // Screen.
-
-    const videoScreen =
-      new THREE.Mesh(
-
-        new THREE.BoxGeometry(
-          0.06,
-          2.35,
-          4.35
-        ),
-
-        screen
-
-      );
-
-    videoScreen.position.set(
-      videoX + 0.12,
-      1.9,
-      videoZ
-    );
-
-    videoScreen.rotation.y =
-      Math.PI / 2;
-
-    videoWall.add(
-      videoScreen
-    );
+    // The separate mediaDisplayScreen below is the only screen mesh.
+    // Keep the redundant rotated black screen omitted to prevent wall protrusion.
 
 
     // Screen frame.
