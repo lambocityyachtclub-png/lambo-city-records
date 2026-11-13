@@ -44,7 +44,7 @@ const vehicleControllerModule = await import(vehicleControllerUrl);
 const VehicleRoadController = vehicleControllerModule.default;
 const blockedVehicle = new VehicleRoadController(
   CONFERENCE_CENTER_DISTRICT,
-  { x: -60, z: 67.5, heading: Math.PI / 2 }
+  { x: -60, z: 62.5, heading: Math.PI / 2 }
 );
 assert.equal(blockedVehicle.state.valid, true);
 let curbBoundaryBlocked = false;
