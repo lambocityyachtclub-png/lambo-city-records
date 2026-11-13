@@ -92,10 +92,12 @@ const flush = () => new Promise(resolve => setTimeout(resolve, 0));
 }
 
 const inputSource = await readFile(new URL("../input.js", import.meta.url), "utf8");
-assert.match(inputSource, /window\.requestAnimationFrame\(closePhone\)/,
-  "The phone must close after the activating click/tap finishes.");
-assert.match(inputSource, /window\.setTimeout\(closePhone, 0\)/,
-  "The phone close must retain a safe fallback when animation frames are unavailable.");
+assert.match(inputSource, /const startNavigation = \(\) => \{/,
+  "Phone navigation must be deferred until after the activating click/tap handler returns.");
+assert.match(inputSource, /window\.requestAnimationFrame\(startNavigation\)/,
+  "Studio navigation must start on the next animation frame.");
+assert.match(inputSource, /window\.setTimeout\(startNavigation, 0\)/,
+  "Studio navigation must retain a safe fallback when animation frames are unavailable.");
 assert.doesNotMatch(inputSource, /if \(typeof navigate !== "function" \|\| !navigate\(floor\)\) return;\s*phone\.remove\(\);/,
   "The phone must not remove the Studio button synchronously inside its own click handler.");
 
