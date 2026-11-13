@@ -88,6 +88,19 @@ The PR #31 → PR #44 comparison reports 41 changed files. In addition to ALIVE-
 
 These are outside a pure ALIVE runtime port. They require separate source review and regression evidence before any adoption. In particular, Floor 1 changes must not be swept into an ALIVE infrastructure change.
 
+## 3.1 Local-first control plane update (PR #52)
+
+The local-first implementation has now been added as a separate draft on top of the blueprint/source-verification chain:
+
+- `development/storage/indexedDbDevelopmentStorage.js` persists Development Director tasks and owner review records in browser IndexedDB.
+- `development/runtime/createLocalAliveControlPlane.js` composes the existing Development System with that local storage.
+- `alive.js` starts the local control plane only after owner sign-in and displays its readiness.
+- The local path configures no AI provider, hosted queue, PostgreSQL connection, Vercel Sandbox, or code executor. It does not make network calls or execute generated code.
+- Browser tests verify protected task approval, review decisions, persistence after close/reopen, and that productionChangesMade remains false.
+- Chromium, WebKit, and a WebKit iPad-sized touch viewport passed the browser test on PR #52 head `db9ea3f899375634ec2d8283976e6f5852c16321`.
+
+This closes the local bootstrap and local persistence foundation gates. It does **not** yet provide cross-device sync, export/import backup, a complete local task/review interface, or autonomous code execution. Local records remain in the current browser profile and are not automatically shared with another device.
+
 ## 4. Recommended canonical architecture
 
 1. **Core control plane:** Development Director, specialist roster, policy, task dependencies, owner decisions, and review records. It must initialize without an AI provider, Sandbox, Vercel credentials, or managed database.
@@ -102,14 +115,14 @@ These are outside a pure ALIVE runtime port. They require separate source review
 These are the bounded foundation gates; they do not require completing every future department feature.
 
 - [ ] One documented canonical ALIVE code lineage; competing drafts remain isolated until reviewed.
-- [ ] Local owner bootstrap starts with no AI, Sandbox, Vercel token, or database credentials.
-- [ ] Local task and review persistence survives restart using the existing storage adapters.
+- [x] Local owner bootstrap starts with no AI, Sandbox, Vercel token, or database credentials (PR #52).
+- [x] Local task and review persistence survives browser database close/reopen using IndexedDB (PR #52).
 - [ ] Manual/assisted planning and owner decisions work without an external model.
 - [ ] Any code-execution path requires a trusted isolated workspace, explicit path allowlist, tests, cleanup, and draft-only output.
 - [ ] Authentication, private owner data, and visitor-world boundaries are covered by automated tests.
 - [ ] Optional hosted adapters are off by default and have separate opt-in tests.
-- [ ] Development Engine and browser CI pass on the selected candidate.
-- [ ] Floor 2 remains lazily loaded and its existing Studio interfaces and protected room layout are unchanged by ALIVE foundation work.
+- [x] Development Engine and browser CI pass on the selected candidate (PR #52 head; Chromium, WebKit, and iPad-sized WebKit check).
+- [x] Floor 2 remains lazily loaded and its existing Studio interfaces and protected room layout are unchanged by the ALIVE source/bootstrap changes (source graph and existing Studio checks; physical device acceptance remains outstanding).
 
 Once these gates pass, ALIVE is sufficient to support controlled Floor 2 development. Radio, commerce, future districts, and other planned departments can continue expanding later without blocking Studio completion.
 
