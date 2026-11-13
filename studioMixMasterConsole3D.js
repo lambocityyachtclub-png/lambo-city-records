@@ -77,8 +77,11 @@ export default {
   dragging:null,
   frameElapsed:0,
   pointerDown:null,
-  async init(scene,context){
-    THREE = context?.THREE || await import("https://unpkg.com/three@0.160.0/build/three.module.js");
+  init(scene,context = {}) {
+    THREE = context?.THREE;
+    if (!THREE) {
+      throw new Error("Shared Three.js 0.160.0 context is required for this Floor 2 module.");
+    }
     this.scene=scene;
     this.renderer=context?.renderer||null;
     const studio=scene?.getObjectByName("recordsHQFloor2Studio");
