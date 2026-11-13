@@ -32,9 +32,10 @@ async function smokeWorld({ label, isMobile }) {
   });
   if (isMobile) {
     // Exercise the returning-visitor shortcut on the touch-sized device.
-    await context.addInitScript(() =>
-      localStorage.setItem("lambo-city-floor2-discovered-v1", "1")
-    );
+    await context.addInitScript(() => {
+      localStorage.setItem("lambo-city-floor2-discovered-v1", "1");
+      window.__lamboCityFloor2Discovered = true;
+    });
   }
   const page = await context.newPage();
   const pageErrors = [];
