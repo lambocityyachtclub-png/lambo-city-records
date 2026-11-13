@@ -65,8 +65,10 @@ async function smokeWorld({ label, isMobile }) {
         studioNotLoadedBeforeRequest:
           typeof window.__lamboCityEnterFloor2CockpitDirect === "undefined",
         startupErrors: window.__lamboCityStartupErrors || [],
-        worldSystemError: window.__lamboCityWorldSystemError || null,
-        worldSystemReady: !!window.__lamboCityWorldSystemReady
+        worldSystemHostAvailable:
+          typeof window.__lamboCityWorldSystem?.initialize === "function",
+        worldSystemInitialized:
+          window.__lamboCityWorldSystem?.isReady?.() === true
       };
     });
 
@@ -79,18 +81,10 @@ async function smokeWorld({ label, isMobile }) {
       label + ": Floor 2 must remain lazy-loaded before the player requests Studio");
     assert.deepEqual(startup.startupErrors, [],
       label + ": no feature initialization failures may be hidden by startup isolation");
-    assert.equal(startup.worldSystemReady, true,
-      label + ": the shared World System must be registered");
-    await page.evaluate(async () => {
-      if (window.__lamboCityWorldSystemReady) {
-        await window.__lamboCityWorldSystemReady;
-      }
-    });
-    const worldSystemError = await page.evaluate(() =>
-      window.__lamboCityWorldSystemError || null
-    );
-    assert.equal(worldSystemError, null,
-      label + ": the World System must initialize without errors");
+    assert.equal(startup.worldSystemHostAvailable, true,
+      label + ": the shared World System host must be available to owner-controlled tooling");
+    assert.equal(startup.worldSystemInitialized, false,
+      label + ": the World System must remain lazy and must not load heavy district systems at startup");
     assert.deepEqual(pageErrors, [], label + ": no uncaught startup errors");
 
     const worldSystem = await page.evaluate(async () => {
