@@ -14,7 +14,7 @@ test("one feature init failure does not block later systems or the render loop",
     scene: { init: () => ({}) },
     camera: { init: () => ({}) },
     renderer: { init: () => ({ render: () => { renders += 1; } }) },
-    brokenFeature: { init() { throw new Error("expected init failure"); } },
+    world: { init() { throw new Error("expected init failure"); } },
     healthyFeature: { init() { healthyInit += 1; } }
   });
 
@@ -23,7 +23,7 @@ test("one feature init failure does not block later systems or the render loop",
   assert.equal(healthyInit, 1);
   assert.equal(renders, 1);
   assert.equal(window.__lamboCityStartupErrors.length, 1);
-  assert.equal(window.__lamboCityStartupErrors[0].system, "brokenFeature");
+  assert.equal(window.__lamboCityStartupErrors[0].system, "world");
   assert.equal(window.__lamboCityStartupErrors[0].phase, "init");
 });
 
