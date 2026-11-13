@@ -27,17 +27,27 @@ const source = Object.fromEntries(await Promise.all(files.map(async file => [
 
 const main = source["main.js"];
 const engine = source["engine.js"];
+// Floor 2 modules must be fetched only when the elevator requests Floor 2.
+// This keeps the opening world light while preserving the complete Studio stack.
+const floor2Loader = main.slice(
+  main.indexOf("window.__lamboCityPrepareFloor = floor => {"),
+  main.indexOf("\nengine.init();")
+);
+assert.ok(floor2Loader.includes('import("./recordsHQFloor2Studio.js")'));
 for (const [name,path] of [
   ["StudioMixMasterConsole3D","./studioMixMasterConsole3D.js"],
   ["Floor2LiveDrummer","./floor2LiveDrummer.js"],
   ["Floor2VocalBooth3D","./floor2VocalBooth3D.js"],
   ["Floor2CitySynth","./floor2CitySynth.js"]
 ]) {
-  assert.ok(main.includes('from "' + path + '"'), name + " must be imported by the world");
+  assert.ok(floor2Loader.includes('import("' + path + '")'), name + " must be dynamically imported on Floor 2 entry");
   const systemKey = name[0].toLowerCase() + name.slice(1);
-  assert.ok(main.includes(systemKey + ": " + name), name + " must be registered with the engine");
-  assert.ok(engine.includes("this.systems." + systemKey + "?.init?.(this.scene, this.context)"), name + " must initialize after the Floor 2 scene is ready");
+  assert.ok(floor2Loader.includes(systemKey + ": "), name + " must be registered with the Floor 2 runtime");
+  assert.ok(floor2Loader.includes('["' + systemKey + '", [engine.scene, engine.context]]'), name + " must initialize in the controlled Floor 2 sequence");
+  assert.ok(!new RegExp("this\\.systems\\." + systemKey + "\\?\\.init").test(engine), name + " must not initialize during world startup");
 }
+assert.ok(floor2Loader.includes("window.__lamboCityFloor2Ready = true"), "Floor 2 must be marked ready only after its scene is attached");
+assert.ok(floor2Loader.includes('engine.scene.getObjectByName("recordsHQFloor2Studio")'), "Floor 2 loading must verify its scene root before elevator arrival");
 
 const workspace = source["studioDAWWorkspace.js"];
 const orderedSteps = [
