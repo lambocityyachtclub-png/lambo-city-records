@@ -100,6 +100,11 @@ test("discovery scans the actual repository and identifies the existing master s
   assert.ok(result.departments.every(item => Array.isArray(item.notStaticallyReachableSourceFiles)));
   assert.ok(result.dependencyGraph.rootEntrypoints.includes("main.js"));
   assert.ok(result.dependencyGraph.reachableFiles.includes("main.js"));
-  assert.ok(result.departments.some(item => item.id === "lambo-city-radio"));
-  assert.ok(result.departments.some(item => item.id === "jumbotron-events"));
+  const radio = result.departments.find(item => item.id === "lambo-city-radio");
+  const events = result.departments.find(item => item.id === "jumbotron-events");
+  const vehicles = result.departments.find(item => item.id === "vehicles-yachts");
+  assert.equal(radio.sourceFiles.length, 0);
+  assert.ok(events.sourceFiles.includes("heroPerformance.js"));
+  assert.ok(!events.sourceFiles.includes("performanceMonitor.js"));
+  assert.ok(vehicles.sourceFiles.includes("cars.js"));
 });
