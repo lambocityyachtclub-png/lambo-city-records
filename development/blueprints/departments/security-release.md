@@ -21,20 +21,44 @@ Own access control, secret handling, owner approval, isolated execution policy, 
 
 ## 3. Current source inventory
 
-The following are source pointers for inspection and traceability. They are not proof of complete behavior.
+The following are source pointers for inspection and traceability. They are not proof of complete behavior. The inventory intentionally includes both active API/CI entrypoints and development-engine modules that may still be library-only or disconnected from an executable host.
 
 - `development/automation/specialistWorkerPolicy.js`
+- `development/engine/developmentSystem.js`
+- `development/engine/developmentDirector.js`
+- `development/engine/developmentRegistry.js`
+- `development/engine/moduleLifecycleRegistry.js`
+- `development/engine/developmentWorker.js`
 - `development/engine/specialistWorkerRoster.js`
+- `development/engine/visionIntakePlanner.js`
+- `development/runners/studio/studioDevelopmentRunner.js`
 - `development/execution/specialistWorkerExecution.js`
 - `development/execution/hostedSpecialistQueueAdapter.js`
+- `development/execution/controlledDevelopmentExecutor.js`
+- `development/execution/developmentWorkspacePipeline.js`
+- `development/execution/isolatedWorkspaceAdapter.js`
+- `development/execution/githubTaskQueueClient.js`
 - `development/policies/developmentPolicy.js`
 - `development/storage/developmentReviewStorage.js`
 - `development/storage/developmentTaskStorage.js`
 - `api/alive/session.js`
 - `api/alive/private-task.js`
+- `api/alive/status.js`
+- `api/alive/vision.js`
+- `server/alive/security.js`
+- `server/alive/privateQueue.js`
+- `server/alive/githubActionsOidc.js`
+- `server/alive/visionTask.js`
+- `scripts/prepare-alive-worker-task.mjs`
+- `scripts/validate-alive-worker-diff.mjs`
+- `scripts/test-alive-worker-diff-gate.mjs`
 - `.github/workflows/development-engine-tests.yml`
+- `.github/workflows/alive-ai-review.yml`
+- `alive.html`
+- `alive.js`
 
 **Current-state interpretation:** This department publishes shared standards and validation gates. Its presence in the repository does not mean every department currently meets those standards.
+
 
 ## 4. Non-goals
 
