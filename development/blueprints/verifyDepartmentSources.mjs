@@ -26,41 +26,102 @@ function sourceInventory(document) {
   return [...section.matchAll(/- \x60([^\x60]+)\x60/g)].map(match => match[1]);
 }
 
-function runtimeEvidenceFor(sourcePath, entrypointSources) {
-  const basename = path.basename(sourcePath);
+async function resolveLocalModule(root, importer, specifier) {
+  if (!specifier.startsWith(".")) return null;
+  const base = path.resolve(root, path.dirname(importer), specifier);
+  const candidates = [base, base + ".js", base + ".mjs", path.join(base, "index.js")];
+  for (const candidate of candidates) {
+    try {
+      const stat = await fs.stat(candidate);
+      if (stat.isFile()) return path.relative(root, candidate).split(path.sep).join("/");
+    } catch (error) {
+      if (error.code !== "ENOENT") throw error;
+    }
+  }
+  return null;
+}
+
+async function buildActiveModuleGraph(root, entrypointSources) {
   const main = entrypointSources["main.js"] || "";
   const engine = entrypointSources["engine.js"] || "";
-  const evidence = [];
-  const lines = main.split(/\r?\n/);
-  for (let index = 0; index < lines.length; index += 1) {
-    const line = lines[index];
-    const staticImport = line.match(/^\s*import\s+([A-Za-z_$][\w$]*)\s+from\s+["']\.\/([^"']+)["']/);
-    if (staticImport && path.basename(staticImport[2]) === basename) {
-      evidence.push({ file: "main.js", line: index + 1, kind: "static-import", symbol: staticImport[1] });
-      const registration = lines.flatMap((candidate, candidateIndex) => {
+  const roots = [];
+  const mainLines = main.split(/\r?\n/);
+  for (let index = 0; index < mainLines.length; index += 1) {
+    const line = mainLines[index];
+    const staticImport = line.match(/^\s*import\s+([A-Za-z_$][\w$]*)\s+from\s+["']([^"']+)["']/);
+    if (staticImport) {
+      const keyEntry = mainLines.flatMap((candidate, candidateIndex) => {
         const match = candidate.match(new RegExp("^\\s*(\\w+)\\s*:\\s*" + staticImport[1] + "\\s*,?\\s*$"));
         return match ? [{ key: match[1], line: candidateIndex + 1 }] : [];
       })[0];
-      if (registration) {
-        evidence.push({ file: "main.js", line: registration.line, kind: "registerSystems-entry", key: registration.key });
-        const engineHit = lineHits(engine, candidate => candidate.includes('initialize("' + registration.key + '"'))[0];
-        if (engineHit) evidence.push({ file: "engine.js", line: engineHit.line, kind: "engine-initialize", key: registration.key });
+      if (keyEntry && engine.includes('initialize("' + keyEntry.key + '"')) {
+        const target = await resolveLocalModule(root, "main.js", staticImport[2]);
+        if (target) roots.push({
+          path: target,
+          kind: "registered-static-root",
+          file: "main.js",
+          line: index + 1,
+          registrationLine: keyEntry.line,
+          key: keyEntry.key
+        });
       }
     }
-    const dynamicImport = line.includes('import("./' + basename + '")') ||
-      line.includes("import('./" + basename + "')");
+
+    const dynamicImport = line.match(/import\(\s*["']([^"']+)["']\s*\)/);
     if (dynamicImport) {
-      evidence.push({ file: "main.js", line: index + 1, kind: "lazy-import" });
-      const key = basename.replace(/\.[^.]+$/, "");
-      const systemMapping = lineHits(main, candidate => new RegExp("^\\s*" + key + "\\s*:").test(candidate))[0];
-      const initOrder = lineHits(main, candidate => candidate.includes('["' + key + '"'))[0];
-      if (systemMapping) evidence.push({ file: "main.js", line: systemMapping.line, kind: "lazy-system-mapping", key });
-      if (initOrder) evidence.push({ file: "main.js", line: initOrder.line, kind: "lazy-initialization-order", key });
+      const target = await resolveLocalModule(root, "main.js", dynamicImport[1]);
+      if (!target) continue;
+      const key = path.basename(target).replace(/\.[^.]+$/, "");
+      const mapped = mainLines.some(candidate => new RegExp("^\\s*" + key + "\\s*:").test(candidate));
+      const initialized = main.includes('["' + key + '"');
+      if (mapped && initialized) roots.push({
+        path: target,
+        kind: "registered-lazy-root",
+        file: "main.js",
+        line: index + 1,
+        key
+      });
     }
   }
-  return evidence;
-}
 
+  const referencesByPath = new Map();
+  const queue = roots.map(rootEntry => ({ path: rootEntry.path, root: rootEntry, chain: [] }));
+  const visited = new Set();
+  while (queue.length) {
+    const current = queue.shift();
+    if (visited.has(current.path)) continue;
+    visited.add(current.path);
+    const refs = referencesByPath.get(current.path) || [];
+    refs.push({
+      file: current.root.file,
+      line: current.root.line,
+      kind: current.root.kind,
+      key: current.root.key,
+      registrationLine: current.root.registrationLine
+    });
+    referencesByPath.set(current.path, refs);
+
+    const source = await fs.readFile(path.join(root, current.path), "utf8");
+    const lines = source.split(/\r?\n/);
+    for (let index = 0; index < lines.length; index += 1) {
+      const line = lines[index];
+      const importMatch = line.match(/^\s*import\b.*?\s+from\s+["']([^"']+)["']/);
+      const dynamicMatch = line.match(/import\(\s*["']([^"']+)["']\s*\)/);
+      const assetMatch = line.match(/new URL\(\s*["']([^"']+)["']\s*,\s*import\.meta\.url\s*\)/);
+      const specifier = importMatch?.[1] || dynamicMatch?.[1] || assetMatch?.[1];
+      if (!specifier) continue;
+      const target = await resolveLocalModule(root, current.path, specifier);
+      if (!target) continue;
+      const edgeKind = assetMatch ? "worklet-or-asset-reference" :
+        dynamicMatch ? "transitive-lazy-import" : "transitive-static-import";
+      const targetRefs = referencesByPath.get(target) || [];
+      targetRefs.push({ file: current.path, line: index + 1, kind: edgeKind, viaRoot: current.root.path });
+      referencesByPath.set(target, targetRefs);
+      if (!visited.has(target)) queue.push({ path: target, root: current.root, chain: current.chain.concat(current.path) });
+    }
+  }
+  return { roots, referencesByPath };
+}
 function capabilityStatus(sourcePresent, runtimeRefs, testRefs) {
   const connected = runtimeRefs.some(ref =>
     ref.kind === "engine-initialize" ||
@@ -86,6 +147,7 @@ export async function buildDepartmentSourceVerification(root = ROOT) {
     }
   }
 
+  const activeGraph = await buildActiveModuleGraph(root, entrypointSources);
   const departments = [];
   for (const department of blueprintSet.departments) {
     const document = await fs.readFile(path.join(root, department.path), "utf8");
@@ -99,7 +161,7 @@ export async function buildDepartmentSourceVerification(root = ROOT) {
         source = null;
       }
       const basename = path.basename(sourcePath);
-      const runtimeReferences = runtimeEvidenceFor(sourcePath, entrypointSources);
+      const runtimeReferences = activeGraph.referencesByPath.get(sourcePath) || [];
       const testReferences = [];
       if (source) {
         for (const testRoot of ["tests", "scripts", "development/tests"]) {
@@ -160,6 +222,7 @@ export async function buildDepartmentSourceVerification(root = ROOT) {
       runtimeDeviceVerificationDefault: "not-verified"
     },
     entrypointsInspected: ENTRYPOINTS,
+    activeRuntimeRoots: activeGraph.roots,
     departments
   };
 }
