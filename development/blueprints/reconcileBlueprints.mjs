@@ -61,7 +61,7 @@ function validateRecord(record, index) {
   for (const [sourceIndex, source] of record.sources.entries()) {
     assertString(source.path, label + ".sources[" + sourceIndex + "].path");
     assertString(source.locator, label + ".sources[" + sourceIndex + "].locator");
-    if (PRIVATE_PATH.test(source.path) || source.path.startsWith("/")) {
+    if (PRIVATE_PATH.test(source.path) || source.path.startsWith("/") || source.path.split("/").includes("..") || source.path.includes("\\\\")) {
       throw new Error(label + " contains a prohibited or non-relative source path.");
     }
     if (!SOURCE_ROLES.has(source.role)) {
@@ -248,10 +248,21 @@ export async function writeBlueprintReconciliation(options = {}) {
   const outputDir = path.resolve(rootDir, options.outputDir || "development/planning/blueprint-reconciliation");
   const register = JSON.parse(await fs.readFile(registerPath, "utf8"));
   const catalog = JSON.parse(await fs.readFile(catalogPath, "utf8"));
+  const sourcePaths = new Set();
+  for (const record of register.records || []) {
+    for (const source of record.sources || []) {
+      const absolute = path.resolve(rootDir, source.path);
+      if (!absolute.startsWith(rootDir + path.sep) || PRIVATE_PATH.test(source.path)) continue;
+      try {
+        const stat = await fs.stat(absolute);
+        if (stat.isFile()) sourcePaths.add(source.path);
+      } catch (_) {
+        // Missing source references are reported below; never silently accepted.
+      }
+    }
+  }
   const result = reconcileBlueprintRegister(register, catalog, {
-    sourceExists: relativePath => !relativePath.split("/").includes("..") &&
-      !PRIVATE_PATH.test(relativePath) &&
-      options.sourcePaths?.has(relativePath) === true
+    sourceExists: relativePath => sourcePaths.has(relativePath)
   });
   await fs.mkdir(outputDir, { recursive: true });
   await fs.writeFile(path.join(outputDir, "reconciliation.json"), JSON.stringify(result, null, 2) + "\n", "utf8");
@@ -269,13 +280,8 @@ if (invokedPath && invokedPath === fileURLToPath(import.meta.url)) {
       fs.readFile(registerPath, "utf8").then(JSON.parse),
       fs.readFile(catalogPath, "utf8").then(JSON.parse)
     ]);
-    const sourcePaths = new Set();
-    for (const record of register.records) {
-      for (const source of record.sources) sourcePaths.add(source.path);
-    }
     const { result, outputDir } = await writeBlueprintReconciliation({
       rootDir,
-      sourcePaths,
       outputDir: process.argv[3] || "development/planning/blueprint-reconciliation"
     });
     if (result.summary.missingSources) {
