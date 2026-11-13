@@ -3,6 +3,8 @@ export default class Engine {
     this.systems = {};
     this.rawSystems = {};
     this.initializedSystems = new Set();
+    this.initializingSystems = new Set();
+    this.failedSystems = new Set();
     this.systemInitResults = new Map();
     this.lastTime = 0;
     this.context = { systems: this.systems };
@@ -10,6 +12,7 @@ export default class Engine {
   }
 
   registerSystems(systems) {
+    const engine = this;
     // Merge new modules into the existing registry. Floor 2 and other
     // streamed departments are registered after startup; replacing this
     // object would silently remove the live world and render systems.
@@ -18,6 +21,8 @@ export default class Engine {
 
       this.rawSystems[name] = system;
       this.initializedSystems.delete(name);
+      this.initializingSystems.delete(name);
+      this.failedSystems.delete(name);
       this.systemInitResults.delete(name);
 
       if (!system || typeof system !== "object") {
@@ -38,6 +43,7 @@ export default class Engine {
                 return value.apply(target, args);
               } catch (error) {
                 failed.add("init");
+                engine.failedSystems.add(name);
                 console.error(`[LAMBO CITY] ${name}.init failed; continuing startup.`, error);
                 if (typeof window !== "undefined") {
                   window.__lamboCityStartupErrors ||= [];
@@ -54,7 +60,8 @@ export default class Engine {
 
           if (property === "update") {
             return (...args) => {
-              if (failed.has("update")) return undefined;
+              if (failed.has("init") || failed.has("update") ||
+                  !engine.initializedSystems.has(name)) return undefined;
               try {
                 return value.apply(target, args);
               } catch (error) {
@@ -87,11 +94,11 @@ export default class Engine {
     const system = this.systems[name];
     if (!system) return undefined;
 
-    if (this.initializedSystems.has(name)) {
+    if (this.initializedSystems.has(name) || this.initializingSystems.has(name)) {
       return this.systemInitResults.get(name);
     }
 
-    this.initializedSystems.add(name);
+    this.initializingSystems.add(name);
     const initArgs = args.length ? [...args] : [this.scene];
     // Always provide the shared context, even when a streamed caller passes
     // an explicit scene argument. Floor 2 modules use context.THREE rather
@@ -99,7 +106,35 @@ export default class Engine {
     if (initArgs[initArgs.length - 1] !== this.context) {
       initArgs.push(this.context);
     }
+
     const result = system.init?.(...initArgs);
+    if (result && typeof result.then === "function") {
+      const pending = Promise.resolve(result).then(value => {
+        this.initializingSystems.delete(name);
+        if (!this.failedSystems.has(name)) this.initializedSystems.add(name);
+        this.systemInitResults.set(name, value);
+        return value;
+      }).catch(error => {
+        this.initializingSystems.delete(name);
+        this.failedSystems.add(name);
+        console.error(`[LAMBO CITY] ${name}.init failed; continuing startup.`, error);
+        if (typeof window !== "undefined") {
+          window.__lamboCityStartupErrors ||= [];
+          window.__lamboCityStartupErrors.push({
+            system: name,
+            phase: "init",
+            message: String(error?.message || error)
+          });
+        }
+        this.systemInitResults.set(name, undefined);
+        return undefined;
+      });
+      this.systemInitResults.set(name, pending);
+      return pending;
+    }
+
+    this.initializingSystems.delete(name);
+    if (!this.failedSystems.has(name)) this.initializedSystems.add(name);
     this.systemInitResults.set(name, result);
     return result;
   }
