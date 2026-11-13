@@ -48,8 +48,9 @@ function pathMatchesHint(relativePath, hint) {
 }
 
 function isTestPath(relativePath) {
-  return /(^|\\/)(?:tests?|__tests__)\\//i.test(relativePath) ||
-    /^test-[^/]+\\.(?:mjs|cjs|js)$/i.test(path.posix.basename(relativePath));
+  const normalized = relativePath.toLowerCase();
+  return normalized.startsWith("tests/") || normalized.includes("/tests/") ||
+    normalized.includes("/__tests__/") || /^test-[^/]+\\.(?:mjs|cjs|js)$/i.test(path.posix.basename(relativePath));
 }
 
 function classifyFile(relativePath) {
