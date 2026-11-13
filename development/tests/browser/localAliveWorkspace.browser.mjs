@@ -54,6 +54,7 @@ async function testBrowser(name, browserType, contextOptions = {}) {
     await page.locator("#save-vision").click();
     await page.waitForFunction(() =>
       document.querySelector("#vision-count")?.textContent === "1" &&
+      document.querySelector("#visions-empty")?.classList.contains("hidden") === true &&
       (document.querySelector("#vision-message")?.textContent || "").includes("Saved locally")
     );
 
