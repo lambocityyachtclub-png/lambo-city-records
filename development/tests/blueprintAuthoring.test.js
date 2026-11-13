@@ -74,3 +74,17 @@ test("ALIVE implementation convergence audit preserves the local-first core boun
   assert.match(readme, /ALIVE_IMPLEMENTATION_CONVERGENCE_DRAFT\.md/);
   assert.match(readme, /Local-first ALIVE foundation/);
 });
+
+test("owner vision submission defaults to local storage and does not trigger the hosted worker", async () => {
+  const ownerWorkspace = await fs.readFile(path.join(root, "alive.js"), "utf8");
+  const localStorage = await fs.readFile(
+    path.join(root, "development/storage/indexedDbDevelopmentStorage.js"),
+    "utf8"
+  );
+  assert.match(ownerWorkspace, /createLocalAliveControlPlane/);
+  assert.match(ownerWorkspace, /visionStore\.createVision/);
+  assert.doesNotMatch(ownerWorkspace, /api\(["']\/api\/alive\/vision/);
+  assert.match(ownerWorkspace, /Hosted specialist execution remains off by default/);
+  assert.match(localStorage, /const VISION_STORE = "visions"/);
+  assert.match(localStorage, /remoteStatus: "not_submitted"/);
+});
