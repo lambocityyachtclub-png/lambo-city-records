@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
-const [engine, main, input, elevator, phoneNavigation, world, drums, navigation, workspace, studioApp, mixMaster, liveDrummer, vocalBooth, citySynth] = await Promise.all([
+const [engine, main, input, elevator, phoneNavigation, world, drums, navigation, workspace, instrumentApp, studioApp, mixMaster, liveDrummer, vocalBooth, citySynth] = await Promise.all([
   readFile(new URL("../engine.js", import.meta.url), "utf8"),
   readFile(new URL("../main.js", import.meta.url), "utf8"),
   readFile(new URL("../input.js", import.meta.url), "utf8"),
@@ -11,6 +11,7 @@ const [engine, main, input, elevator, phoneNavigation, world, drums, navigation,
   readFile(new URL("../floor2DrumStation.js", import.meta.url), "utf8"),
   readFile(new URL("../floor2StudioNavigation.js", import.meta.url), "utf8"),
   readFile(new URL("../studioDAWWorkspace.js", import.meta.url), "utf8"),
+  readFile(new URL("../floor2InstrumentApp.js", import.meta.url), "utf8"),
   readFile(new URL("../floor2StudioApp.js", import.meta.url), "utf8"),
   readFile(new URL("../studioMixMasterConsole3D.js", import.meta.url), "utf8"),
   readFile(new URL("../floor2LiveDrummer.js", import.meta.url), "utf8"),
@@ -68,10 +69,12 @@ assert.match(elevator, /window\.__lamboCityPrepareFloor\?\.\(selectedFloor\)/, "
 assert.match(elevator, /window\.__lamboCityBeginFloor2Session\?\.\(arrivedPlayer\)/, "Floor 2 arrival must open the Studio session");
 assert.ok(engine.indexOf('this.initSystem("input", this.scene, this.context);') >= 0 && engine.indexOf('this.initSystem("input", this.scene, this.context);') < engine.indexOf('this.initSystem("performanceMonitor", this.renderer, this.context);'), "iPad input and joystick must initialize immediately after the core renderer/context");
 
-assert.match(studioApp, /THREE = context\\?\\.THREE/,
-  "Floor 2 Studio must use the world's shared Three.js runtime when available.");
-assert.match(studioApp, /await import\\(["']https:\\/\\/unpkg\\.com\\/three@0\\.160\\.0/,
-  "Standalone Studio may lazily load Three.js for its presentation wrapper.");
+assert.match(instrumentApp, /THREE = context\\?\\.THREE/,
+  "The Floor 2 piano must use the shared Three.js runtime.");
+assert.doesNotMatch(instrumentApp, /https:\\/\\/unpkg\\.com\\/three@0\\.160\\.0/,
+  "The piano must not fetch a second Three.js runtime.");
+assert.match(studioApp, /THREE = context\\?\\.THREE \\|\\| await import\\(/,
+  "Floor 2 Studio must prefer the world's shared Three.js runtime, with a standalone fallback.");
 
 for (const [name, source] of [
   ["Mix and Master console", mixMaster],
@@ -79,10 +82,8 @@ for (const [name, source] of [
   ["Vocal Booth", vocalBooth],
   ["City Synth", citySynth]
 ]) {
-  assert.doesNotMatch(source, /unpkg\\.com\\/three@0\\.160\\.0/,
-    `${name} must not fetch a second Three.js runtime`);
-  assert.match(source, /THREE = context\\?\\.THREE/,
-    `${name} must use the shared Three.js context`);
+  assert.match(source, /THREE = context\\?\\.THREE \\|\\| await import\\(/,
+    `${name} must prefer the shared Three.js context`);
 }
 
 assert.match(world, /group\.userData\.studioStations\s*=\s*\{/);
