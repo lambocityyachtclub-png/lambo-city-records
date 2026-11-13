@@ -4,12 +4,23 @@ on:
   push:
     paths:
       - "development/content/**"
+      - "development/storage/**"
+      - "development/runtime/**"
+      - "development/engine/**"
+      - "development/execution/**"
+      - "development/policies/**"
+      - "development/runners/**"
+      - "development/automation/**"
       - "development/tests/**"
+      - "alive.html"
+      - "alive.js"
       - ".github/workflows/alive-browser-content-cache.yml"
   pull_request:
     paths:
       - "development/content/**"
       - "development/tests/browser/**"
+      - "alive.html"
+      - "alive.js"
       - ".github/workflows/alive-browser-content-cache.yml"
   workflow_dispatch:
 

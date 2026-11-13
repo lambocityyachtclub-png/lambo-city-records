@@ -79,6 +79,9 @@ test("department verification follows registered, HTML, and transitive module ro
     assert.ok(report.activeRuntimeRoots.some(item =>
       item.path === "studioStandalone.js" && item.runtimeDomain === "studio-standalone"
     ));
+    assert.equal(report.runtimeIsolation.passed, true);
+    assert.deepEqual(report.runtimeIsolation.publicExperienceDevelopmentImports, []);
+    assert.equal(report.verificationPolicy.publicExperienceIsolationChecked, true);
     assert.equal(report.verificationPolicy.testFilePresenceIsNotPassingTestProof, true);
   } finally {
     await fs.rm(root, { recursive: true, force: true });
@@ -108,6 +111,37 @@ test("verification never grants owner approval or creates Development Director t
     assert.equal(report.departments[0].ownerApproved, false);
     assert.equal("tasksCreated" in report, false);
     assert.equal(report.verificationPolicy.ownerApprovalRequiredForTaskAuthorization, true);
+    assert.equal(report.runtimeIsolation.passed, true);
+  } finally {
+    await fs.rm(root, { recursive: true, force: true });
+  }
+});
+
+test("verification reports a visitor-world import into ALIVE development infrastructure", async () => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), "lc-department-boundary-"));
+  try {
+    await fs.mkdir(path.join(root, "development/engine"), { recursive: true });
+    await fs.mkdir(path.join(root, "development/blueprints"), { recursive: true });
+    await fs.mkdir(path.join(root, "server/alive"), { recursive: true });
+    await fs.mkdir(path.join(root, "api/alive"), { recursive: true });
+    await fs.writeFile(path.join(root, "development/blueprints/blueprintSet.json"), JSON.stringify({
+      departments: []
+    }));
+    await fs.writeFile(path.join(root, "main.js"),
+      'import WorldEntry from "./worldEntry.js";\nengine.registerSystems({\n  worldEntry: WorldEntry,\n});\n');
+    await fs.writeFile(path.join(root, "engine.js"), 'initialize("worldEntry");\n');
+    await fs.writeFile(path.join(root, "worldEntry.js"),
+      'import "./development/engine/privateCore.js";\nimport "./server/alive/security.js";\nimport "./api/alive/session.js";\n');
+    await fs.writeFile(path.join(root, "development/engine/privateCore.js"), "export const privateCore = true;\n");
+    await fs.writeFile(path.join(root, "server/alive/security.js"), "export const ownerSecurity = true;\n");
+    await fs.writeFile(path.join(root, "api/alive/session.js"), "export const ownerSession = true;\n");
+    const report = await buildDepartmentSourceVerification(root);
+    assert.equal(report.runtimeIsolation.passed, false);
+    assert.equal(report.runtimeIsolation.publicExperienceDevelopmentImports.length, 3);
+    assert.ok(report.runtimeIsolation.publicExperienceDevelopmentImports.some(item => item.path === "development/engine/privateCore.js"));
+    assert.ok(report.runtimeIsolation.publicExperienceDevelopmentImports.some(item => item.path === "server/alive/security.js"));
+    assert.ok(report.runtimeIsolation.publicExperienceDevelopmentImports.some(item => item.path === "api/alive/session.js"));
+    assert.ok(report.runtimeIsolation.publicExperienceDevelopmentImports.every(item => item.runtimeDomain === "visitor-world"));
   } finally {
     await fs.rm(root, { recursive: true, force: true });
   }

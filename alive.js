@@ -1,3 +1,5 @@
+import { createLocalAliveControlPlane } from "./development/runtime/createLocalAliveControlPlane.js";
+
 const $ = selector => document.querySelector(selector);
 const setupPanel = $("#setup-panel");
 const loginPanel = $("#login-panel");
@@ -6,11 +8,13 @@ const setupMessage = $("#setup-message");
 const loginMessage = $("#login-message");
 const visionMessage = $("#vision-message");
 let lastTask = null;
+let localCore = null;
 
 function message(element, text, error = false) {
   element.textContent = text || "";
   element.classList.toggle("error", !!error);
 }
+
 async function api(path, options = {}) {
   const response = await fetch(path, {
     credentials: "same-origin",
@@ -23,23 +27,98 @@ async function api(path, options = {}) {
   if (!response.ok) throw new Error(data.error || "The request could not be completed.");
   return data;
 }
+
 function show(section) {
   setupPanel.classList.toggle("hidden", section !== "setup");
   loginPanel.classList.toggle("hidden", section !== "login");
   workspace.classList.toggle("hidden", section !== "workspace");
 }
-function readLastTask() {
-  try {
-    const value = JSON.parse(localStorage.getItem("lc-alive-last-task") || "null");
-    if (value && typeof value.taskId === "string" && /^[a-z0-9][a-z0-9-]{2,63}$/.test(value.taskId)) {
-      lastTask = value;
-    }
-  } catch { lastTask = null; }
-}
+
 function saveLastTask(task) {
   lastTask = task;
   try { localStorage.setItem("lc-alive-last-task", JSON.stringify(task)); } catch { /* status remains visible for this session */ }
 }
+
+function readLastTask() {
+  try {
+    const value = JSON.parse(localStorage.getItem("lc-alive-last-task") || "null");
+    const validTaskId = typeof value?.taskId === "string" && /^[a-z0-9][a-z0-9-]{2,63}$/.test(value.taskId);
+    const validVisionId = typeof value?.visionId === "string" && /^vision-[a-f0-9-]{16,64}$/i.test(value.visionId);
+    if (validTaskId || validVisionId) lastTask = value;
+  } catch { lastTask = null; }
+}
+
+async function updateLocalCoreSummary() {
+  if (!localCore) return;
+  const snapshot = localCore.getSnapshot();
+  const visions = await localCore.visionStore.listVisions();
+  $("#local-core-status").textContent = "Ready";
+  $("#local-core-summary").textContent =
+    (snapshot.workers?.length || 0) + " specialists · " +
+    (snapshot.director?.totalTasks || 0) + " local tasks · " +
+    visions.length + " saved directions";
+}
+
+function renderLocalVision(vision) {
+  $("#task-empty").classList.add("hidden");
+  $("#task-details").classList.remove("hidden");
+  $("#task-state").textContent = vision.remoteStatus === "submitted"
+    ? "SAVED LOCALLY · SUBMITTED"
+    : vision.remoteStatus === "unavailable"
+      ? "SAVED LOCALLY · LOCAL ONLY"
+      : "SAVED LOCALLY";
+  $("#task-id").textContent = vision.id;
+  $("#task-description").textContent = vision.remoteStatus === "submitted"
+    ? "Your direction is saved in this browser and was also submitted to the separate hosted specialist queue. Any resulting proposal remains draft-only."
+    : "Your direction is saved in this browser. It has not been sent to a hosted worker, model provider, or code executor.";
+  const list = $("#check-list");
+  list.replaceChildren();
+  const localItem = document.createElement("li");
+  localItem.textContent = "Local copy: saved on this device";
+  list.append(localItem);
+  const remoteItem = document.createElement("li");
+  remoteItem.textContent = vision.remoteStatus === "submitted"
+    ? "Hosted queue: accepted as " + vision.remoteTaskId
+    : vision.remoteStatus === "unavailable"
+      ? "Hosted queue: unavailable; local copy retained"
+      : "Hosted queue: not submitted";
+  list.append(remoteItem);
+  const link = $("#proposal-link");
+  link.removeAttribute("href");
+  link.classList.add("hidden");
+}
+
+async function startLocalCore() {
+  if (localCore) return;
+  const status = $("#local-core-status");
+  const summary = $("#local-core-summary");
+  try {
+    localCore = await createLocalAliveControlPlane();
+    await updateLocalCoreSummary();
+    $("#queue-status").textContent = "Off by default";
+    if (lastTask?.visionId) {
+      const saved = await localCore.visionStore.getVision(lastTask.visionId);
+      if (saved) renderLocalVision(saved);
+    } else {
+      const savedVisions = await localCore.visionStore.listVisions();
+      if (savedVisions.length) {
+        saveLastTask({ visionId: savedVisions[0].id, taskId: savedVisions[0].remoteTaskId || undefined });
+        renderLocalVision(savedVisions[0]);
+      }
+    }
+  } catch {
+    localCore = null;
+    status.textContent = "Unavailable";
+    summary.textContent = "This browser could not open local task storage. The separate hosted queue remains independent.";
+  }
+}
+
+async function stopLocalCore() {
+  if (!localCore) return;
+  try { await localCore.close(); } catch { /* local view can still close */ }
+  localCore = null;
+}
+
 function renderTask(data) {
   $("#task-empty").classList.add("hidden");
   $("#task-details").classList.remove("hidden");
@@ -69,20 +148,39 @@ function renderTask(data) {
     link.classList.add("hidden");
   }
 }
+
 async function refreshStatus() {
-  try {
-    const base = await api("/api/alive/status");
-    $("#queue-status").textContent = base.connected ? "Connected" : "Setup needed";
-    if (!base.connected) {
-      message(visionMessage, "The private workspace is open, but its separate private ALIVE control repository and worker workflow still need to be connected. Your ideas will not be sent to the public code repository.", true);
-      return;
+  let localVision = null;
+  if (localCore && lastTask?.visionId) {
+    try {
+      localVision = await localCore.visionStore.getVision(lastTask.visionId);
+      if (localVision) renderLocalVision(localVision);
+    } catch { /* local record remains unchanged */ }
+  }
+
+  if (!lastTask?.taskId) {
+    $("#queue-status").textContent = "Off by default";
+    if (localVision) {
+      message(visionMessage, "Your direction is saved locally on this device. No hosted worker or model has been started.");
+    } else {
+      message(visionMessage, "Local ALIVE is ready. Hosted specialist execution remains off by default.");
     }
-    if (!lastTask) return;
+    return;
+  }
+
+  try {
     const query = new URLSearchParams({ taskId: lastTask.taskId });
     const status = await api("/api/alive/status?" + query.toString());
+    $("#queue-status").textContent = status.connected ? "Available · opt-in" : "Off by default";
     if (status.task) renderTask(status);
-  } catch (error) {
-    message(visionMessage, error.message, true);
+    else if (localVision) renderLocalVision(localVision);
+  } catch {
+    $("#queue-status").textContent = "Status unavailable";
+    if (localVision) {
+      message(visionMessage, "Your direction is safely saved locally. The separate hosted status service is unavailable.");
+      return;
+    }
+    message(visionMessage, "The hosted status service is unavailable. No new hosted work has been started.", true);
   }
 }
 async function start() {
@@ -99,8 +197,9 @@ async function start() {
       return;
     }
     show("workspace");
+    await startLocalCore();
     await refreshStatus();
-    if (lastTask) {
+    if (lastTask && !lastTask.visionId) {
       $("#task-empty").classList.add("hidden");
       $("#task-details").classList.remove("hidden");
       $("#task-state").textContent = "SAVED REQUEST";
@@ -112,6 +211,7 @@ async function start() {
     setupMessage.textContent = error.message;
   }
 }
+
 $("#login-form").addEventListener("submit", async event => {
   event.preventDefault();
   const button = event.submitter;
@@ -124,6 +224,7 @@ $("#login-form").addEventListener("submit", async event => {
     });
     $("#owner-password").value = "";
     show("workspace");
+    await startLocalCore();
     await refreshStatus();
   } catch (error) {
     message(loginMessage, error.message, true);
@@ -131,21 +232,26 @@ $("#login-form").addEventListener("submit", async event => {
     if (button) button.disabled = false;
   }
 });
+
 $("#vision-form").addEventListener("submit", async event => {
   event.preventDefault();
   const button = $("#submit-vision");
+  const visionText = $("#vision").value.trim();
+  if (!visionText) return;
   button.disabled = true;
-  message(visionMessage, "Sending your direction to ALIVE…");
+  message(visionMessage, "Saving your direction locally…");
+
   try {
-    const result = await api("/api/alive/vision", {
-      method: "POST",
-      body: JSON.stringify({ vision: $("#vision").value })
-    });
-    saveLastTask({ taskId: result.taskId });
+    if (!localCore) {
+      throw new Error("Local ALIVE storage is unavailable. Your direction has not been sent or processed.");
+    }
+    const localVision = await localCore.visionStore.createVision({ vision: visionText });
+    saveLastTask({ visionId: localVision.id });
+    renderLocalVision(localVision);
     $("#vision").value = "";
-    renderTask({ state: "queued", task: { taskId: result.taskId, checks: [] } });
-    message(visionMessage, "Your vision has been added to the isolated ALIVE queue.");
-    await refreshStatus();
+    await updateLocalCoreSummary();
+    $("#queue-status").textContent = "Off by default";
+    message(visionMessage, "Your direction is saved locally on this device. No hosted worker, model call, or code execution has been started.");
   } catch (error) {
     message(visionMessage, error.message, true);
   } finally {
@@ -155,6 +261,7 @@ $("#vision-form").addEventListener("submit", async event => {
 $("#refresh-status").addEventListener("click", refreshStatus);
 $("#logout").addEventListener("click", async () => {
   try { await api("/api/alive/session", { method: "DELETE" }); } catch { /* local view still closes */ }
+  await stopLocalCore();
   lastTask = null;
   try { localStorage.removeItem("lc-alive-last-task"); } catch { /* ignore storage denial */ }
   show("login");

@@ -70,7 +70,9 @@ The North Star's journey—city, boardwalk/stores, marina, Yacht Club/dock, yach
 
 **Draft boundary requiring owner confirmation:** the visitor-facing Version 1 world remains a single-player experience and must not require ALIVE, an AI provider, a hosted worker, a database, commerce, payments, accounts, multiplayer or online persistence to load and explore.
 
-ALIVE is a separate development and maintenance system. It may inspect source, prepare proposals, run permitted tests and present review packages. It must remain optional to the live game. The source plans contain different statements about game backend exclusions and hosted ALIVE infrastructure; this boundary is therefore retained as an explicit owner-review item rather than treated as already approved.
+ALIVE is a separate development and maintenance system. Its local owner control plane can initialize in the private owner workspace and persist owner directions, Development Director tasks and review decisions in browser IndexedDB without an AI provider, hosted queue, managed database or Vercel Sandbox. This local core does not execute generated code, deploy changes, or synchronize records across devices. Its records are scoped to the current browser profile and are not encrypted against someone with access to that browser profile; do not store passwords, API keys, tokens or other secrets in them.
+
+The visitor-facing game must not import or depend on ALIVE development infrastructure. The exact boundary between the visitor game and any optional hosted ALIVE integrations remains an explicit owner-review item because the source plans contain different statements about backend exclusions and hosted ALIVE infrastructure. This draft records the implemented local-first direction without treating the broader boundary as already owner-approved.
 
 ## 6. Business and future expansion guardrails
 
@@ -87,6 +89,8 @@ Every blueprint record must distinguish:
 - **Confidence:** high, medium or low, supported by cited source paths and locators.
 
 A blueprint draft is not a task authorization. ALIVE must not auto-submit work from draft records. Only owner-approved roadmap items may enter the Vision Intake Planner / Development Director flow, and every implementation proposal remains subject to the established review and release gates.
+
+The local-first ALIVE control plane is a planning, task-state and owner-review foundation—not an autonomous developer. AI providers, hosted queues, remote storage, schedulers and isolated execution environments are independent optional adapters and must remain disabled unless separately configured and explicitly approved. A local owner review decision records a decision only; it does not merge, deploy, spend money or change production. Local IndexedDB data is browser-profile scoped, may be lost if browser data is cleared, and currently has no cross-device sync or built-in backup/export.
 
 ## 8. Shared department contract
 

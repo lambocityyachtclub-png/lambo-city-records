@@ -24,8 +24,8 @@
     <section class="hero">
       <p class="eyebrow">THE DEVELOPMENT ENGINE</p>
       <h1>LAMBO CITY <span>ALIVE</span></h1>
-      <p class="intro">Your vision in. A clear, reviewable build plan out.</p>
-      <p class="promise">Specialists work inside defined boundaries. Every code proposal is tested and brought back for your review. Nothing reaches production automatically.</p>
+      <p class="intro">Your vision in. A private, local work inbox out.</p>
+      <p class="promise">Your directions are saved privately on this device. Hosted AI, specialist execution, and cloud storage are separate options and remain off unless explicitly enabled. Nothing reaches production automatically.</p>
     </section>
 
     <section id="setup-panel" class="panel hidden" aria-live="polite">
@@ -52,14 +52,20 @@
           <strong id="owner-status">Secure</strong>
         </article>
         <article class="status-card">
-          <span class="status-label">SPECIALIST QUEUE</span>
-          <strong id="queue-status">Checking</strong>
+          <span class="status-label">HOSTED QUEUE · OPTIONAL</span>
+          <strong id="queue-status">Off by default</strong>
         </article>
         <article class="status-card">
           <span class="status-label">RELEASE CONTROL</span>
           <strong>Owner approval</strong>
         </article>
+        <article class="status-card">
+          <span class="status-label">LOCAL CORE</span>
+          <strong id="local-core-status">Starting</strong>
+          <small id="local-core-summary" class="status-detail">Local task and review records stay in this browser.</small>
+        </article>
       </div>
+      <p class="local-storage-note">Local directions and task records stay in this browser profile. They are not encrypted as a password vault, are not synced or backed up, and may be lost if browser site data is cleared. Do not store passwords, API keys or access tokens here.</p>
 
       <section class="panel vision-panel">
         <div class="panel-heading">
@@ -74,8 +80,8 @@
           <label for="vision">Your vision</label>
           <textarea id="vision" name="vision" rows="8" maxlength="8000" placeholder="Describe what you want LAMBO CITY to become, what should improve, or what you want built next..." required></textarea>
           <div class="form-footer">
-            <span class="muted">Up to 8,000 characters</span>
-            <button type="submit" class="primary" id="submit-vision">Send direction to ALIVE</button>
+            <span class="muted">Up to 8,000 characters · saved locally first</span>
+            <button type="submit" class="primary" id="submit-vision">Save direction locally</button>
           </div>
         </form>
         <p id="vision-message" class="message" role="status"></p>
