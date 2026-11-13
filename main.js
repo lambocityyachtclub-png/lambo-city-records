@@ -1,5 +1,5 @@
 import Engine from "./engine.js";
-import Scene from "./scene.js";
+import Scene, { THREE } from "./scene.js";
 import Camera from "./camera.js";
 import Renderer from "./renderer.js";
 import World from "./world.js";
@@ -53,6 +53,8 @@ import WorldSystemHost from "./worldSystemHost.js";
 import WorldStreaming from "./worldStreaming.js";
 import ConferenceCenterBlueprint from "./worldDistricts/conferenceCenter.js";
 const engine = new Engine();
+// All streamed departments share the single core Three.js 0.160.0 module.
+engine.context.THREE = THREE;
 engine.registerSystems({
   scene: Scene,
   camera: Camera,
