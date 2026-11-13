@@ -40,6 +40,8 @@ The following are source pointers for inspection and traceability. They are not 
 - `development/policies/developmentPolicy.js`
 - `development/storage/developmentReviewStorage.js`
 - `development/storage/developmentTaskStorage.js`
+- `development/storage/indexedDbDevelopmentStorage.js`
+- `development/runtime/createLocalAliveControlPlane.js`
 - `api/alive/session.js`
 - `api/alive/private-task.js`
 - `api/alive/status.js`
