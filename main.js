@@ -54,6 +54,7 @@ import Floor2CitySynth from "./floor2CitySynth.js";
 import RecordsHQEntranceThreshold from "./recordsHQEntranceThreshold.js";
 import RecordsHQMediaDetails from "./recordsHQMediaDetails.js";
 import RecordsHQMerchDetails from "./recordsHQMerchDetails.js";
+import HeroCareerCenter from "./heroCareerCenter.js";
 import RecordsHQElevator from "./recordsHQElevator.js";
 import Elevator from "./elevator.js";
 import BoardwalkOverlooks from "./boardwalkOverlooks.js";
@@ -114,6 +115,7 @@ engine.registerSystems({
   recordsHQEntranceThreshold: RecordsHQEntranceThreshold,
   recordsHQMediaDetails: RecordsHQMediaDetails,
   recordsHQMerchDetails: RecordsHQMerchDetails,
+  heroCareerCenter: HeroCareerCenter,
   recordsHQElevator: RecordsHQElevator,
   boardwalkOverlooks: BoardwalkOverlooks,
   input: Input,
