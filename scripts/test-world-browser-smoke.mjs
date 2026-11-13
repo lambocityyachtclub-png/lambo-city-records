@@ -124,6 +124,8 @@ async function smokeWorld({ label, isMobile }) {
     assert.equal(worldSystem.status?.ready, true, label + ": World System runtime must be ready");
     assert.ok(worldSystem.status?.registeredDistrictIds?.length > 0,
       label + ": the Conference Center district blueprint must be registered");
+    assert.deepEqual(worldSystem.status?.builtDistricts || [], [],
+      label + ": full Conference Center detail must remain unloaded while the player is at Records HQ");
     console.log("PASS: " + label + " World System and Conference Center blueprint initialized");
 
     // Open the citizen phone using the same F control exposed to players.
