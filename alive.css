@@ -50,9 +50,10 @@ button:disabled { opacity:.55; cursor:wait; transform:none; }
 .form-footer .primary { margin-top:0; }
 .message { min-height:22px; margin:12px 0 0; color:var(--lime); font-size:13px; }
 .message.error { color:var(--danger); }
-.status-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin:18px 0; }
+.status-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin:18px 0; }
 .status-card { padding:17px 18px; }
 .status-card strong { display:block; margin-top:6px; font-size:15px; }
+.status-detail { display:block; margin-top:6px; color:var(--muted); font-size:10px; line-height:1.4; }
 .status-label { font-size:9px; }
 .live-dot { color:var(--lime); font-size:10px; letter-spacing:.16em; white-space:nowrap; }
 .live-dot::before { content:""; display:inline-block; width:6px; height:6px; margin:0 8px 1px 0; border-radius:50%; background:var(--lime); box-shadow:0 0 10px rgba(199,230,107,.6); }
