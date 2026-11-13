@@ -35,3 +35,10 @@ assert.doesNotMatch(camera, /this\._removeOrbitControls/,
   "Camera update must not write to an undefined callback this.");
 
 console.log("PASS: world startup wiring and module callback regressions");
+
+assert.match(main, /import Scene, \{ THREE \} from "\.\/scene\.js"/,
+  "The scene module must provide the shared core Three.js namespace.");
+assert.match(main, /engine\.context\.THREE = THREE/,
+  "Streamed floor modules must receive the live core Three.js namespace.");
+assert.match(scene, /export \{ THREE \}/,
+  "The core scene module must expose the shared Three.js namespace.");
