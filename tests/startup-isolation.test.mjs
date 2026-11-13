@@ -15,7 +15,7 @@ test("one feature init failure does not block later systems or the render loop",
     camera: { init: () => ({}) },
     renderer: { init: () => ({ render: () => { renders += 1; } }) },
     world: { init() { throw new Error("expected init failure"); } },
-    healthyFeature: { init() { healthyInit += 1; } }
+    water: { init() { healthyInit += 1; } }
   });
 
   engine.init();
