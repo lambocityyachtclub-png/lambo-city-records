@@ -71,6 +71,17 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
+      - name: Generate read-only department source verification
+        run: node development/blueprints/verifyDepartmentSources.mjs
+
+      - name: Upload department source verification report
+        uses: actions/upload-artifact@v4
+        with:
+          name: lambo-city-department-source-verification
+          path: development/planning/department-source-verification/
+          if-no-files-found: error
+          retention-days: 7
+
       - name: Syntax-check private ALIVE owner workspace
         run: |
           node --check alive.js
