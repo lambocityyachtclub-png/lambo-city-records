@@ -116,8 +116,9 @@ async function buildActiveModuleGraph(root, entrypointSources) {
   const visited = new Set();
   while (queue.length) {
     const current = queue.shift();
-    if (visited.has(current.path)) continue;
-    visited.add(current.path);
+    const visitKey = current.root.runtimeDomain + ":" + current.path;
+    if (visited.has(visitKey)) continue;
+    visited.add(visitKey);
     const refs = referencesByPath.get(current.path) || [];
     if (current.path === current.root.path) {
       refs.push({
@@ -149,20 +150,22 @@ async function buildActiveModuleGraph(root, entrypointSources) {
       const targetRefs = referencesByPath.get(target) || [];
       targetRefs.push({ file: current.path, line: index + 1, kind: edgeKind, viaRoot: current.root.path, runtimeDomain: current.root.runtimeDomain });
       referencesByPath.set(target, targetRefs);
-      if (!visited.has(target)) queue.push({ path: target, root: current.root, chain: current.chain.concat(current.path) });
+      if (!visited.has(current.root.runtimeDomain + ":" + target)) queue.push({ path: target, root: current.root, chain: current.chain.concat(current.path) });
     }
   }
   return { roots, referencesByPath };
 }
 function classifyReferenceType(sourcePath) {
-  const extension = path.extname(sourcePath).toLowerCase();
-  if (/(^|\\/)tests?\\//i.test(sourcePath) || /(^|\\/)test-[^/]+\\.mjs$/i.test(sourcePath) || /\\.(test|spec)\\.(mjs|js)$/i.test(sourcePath)) return "test-source";
+  const normalized = sourcePath.replaceAll("\\", "/");
+  const extension = path.extname(normalized).toLowerCase();
+  if (normalized.startsWith("tests/") || normalized.includes("/tests/") ||
+      /(^|\/)test-[^/]+\.mjs$/i.test(normalized) ||
+      /\.(test|spec)\.(mjs|js)$/i.test(normalized)) return "test-source";
   if (extension === ".md" || extension === ".txt") return "documentation";
   if ([".json", ".yml", ".yaml", ".toml"].includes(extension)) return "configuration";
   if ([".js", ".mjs", ".cjs"].includes(extension)) return "code-module";
   return "asset-or-other";
 }
-
 function capabilityStatus(sourcePresent, referenceType, runtimeRefs, testRefs) {
   if (!sourcePresent) return "planned";
   if (referenceType === "documentation") return "documentation-reference";
