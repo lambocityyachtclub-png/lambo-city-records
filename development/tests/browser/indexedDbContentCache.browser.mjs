@@ -13,11 +13,11 @@ const server = createServer(async (req, res) => {
       res.end("<!doctype html><html><head><meta charset='utf-8'></head><body>IndexedDB browser test</body></html>");
       return;
     }
-    if (!pathname.startsWith("/development/content/")) {
+    if (!pathname.startsWith("/development/")) {
       res.writeHead(404); res.end("Not found"); return;
     }
     const file = path.resolve(root, "." + pathname);
-    if (!file.startsWith(path.resolve(root, "development/content") + path.sep)) {
+    if (!file.startsWith(path.resolve(root, "development") + path.sep)) {
       res.writeHead(403); res.end("Forbidden"); return;
     }
     const content = await readFile(file);
@@ -117,9 +117,80 @@ async function runBrowser(name, browserType, contextOptions = {}) {
         throw new Error("Oversized cache-entry rejection blocked verified content delivery.");
       }
       await constrainedCache.close();
+
+      const { createLocalAliveControlPlane } = await import("/development/runtime/createLocalAliveControlPlane.js");
+      const localDatabaseName = databaseName + "-alive-core";
+      const localCore = await createLocalAliveControlPlane({ indexedDB, databaseName: localDatabaseName });
+      const localSnapshot = localCore.getSnapshot();
+      if (
+        localCore.storageMode !== "browser-indexeddb" ||
+        localCore.localOnly !== true ||
+        localCore.aiProviderConfigured !== false ||
+        localCore.sandboxConfigured !== false ||
+        localCore.hostedQueueConfigured !== false ||
+        localSnapshot.hostedQueueConfigured !== false ||
+        localSnapshot.configuredExecutionWorkers.length !== 0
+      ) {
+        throw new Error("Local ALIVE core unexpectedly enabled an external provider or execution adapter.");
+      }
+      const createdTask = await localCore.system.director.createTask({
+        title: "Browser-local ALIVE persistence check",
+        description: "Verify task and owner approval records persist without hosted services.",
+        area: "studio_audio",
+        runner: "studio",
+        requiresApproval: true,
+        protectedActions: ["major_architecture"],
+        acceptanceCriteria: ["Task survives closing and reopening the local ALIVE database."]
+      });
+      if (createdTask.status !== "pending_approval") {
+        throw new Error("Protected local task did not enter pending owner approval.");
+      }
+      await localCore.system.director.approveTask(createdTask.id);
+      const createdReview = await localCore.reviewStore.createReview({
+        taskId: createdTask.id,
+        taskTitle: createdTask.title,
+        area: createdTask.area,
+        runner: createdTask.runner,
+        changedFiles: ["development/runtime/createLocalAliveControlPlane.js"],
+        testResults: { passed: true, summary: "Browser persistence test fixture." }
+      });
+      const decidedReview = await localCore.reviewStore.decideReview({
+        reviewId: createdReview.id,
+        decision: "approved",
+        ownerNote: "Approval records a decision only."
+      });
+      if (decidedReview.productionChangesMade !== false) {
+        throw new Error("Owner review decision incorrectly implied a production change.");
+      }
+      await localCore.close();
+
+      const reopenedCore = await createLocalAliveControlPlane({ indexedDB, databaseName: localDatabaseName });
+      const persistedTasks = reopenedCore.system.director.listTasks();
+      const persistedReview = await reopenedCore.reviewStore.getReview(createdReview.id);
+      if (
+        persistedTasks.length !== 1 ||
+        persistedTasks[0].id !== createdTask.id ||
+        persistedTasks[0].status !== "queued" ||
+        !persistedReview ||
+        persistedReview.status !== "approved" ||
+        persistedReview.productionChangesMade !== false
+      ) {
+        throw new Error("Local ALIVE tasks or review decisions did not survive database reopen.");
+      }
+      await reopenedCore.close();
+
       indexedDB.deleteDatabase(databaseName);
       indexedDB.deleteDatabase(databaseName + "-small");
-      return { downloads, persisted: true, corruptionRecovered: true, oversizeFallback: true };
+      indexedDB.deleteDatabase(localDatabaseName);
+      return {
+        downloads,
+        persisted: true,
+        corruptionRecovered: true,
+        oversizeFallback: true,
+        localAliveCore: true,
+        localTaskAndReviewPersistence: true,
+        paidAdaptersDisabled: true
+      };
     });
     console.log(name + ": " + JSON.stringify(result));
   } finally {
