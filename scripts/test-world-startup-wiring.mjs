@@ -25,8 +25,8 @@ assert.match(marina, /\[-1, 1\]\.forEach\(side => \{[\s\S]*?this\._root\.add\(si
   "The sidewalk callback must retain the district root binding.");
 assert.match(marina, /stores\.forEach\(s => \{[\s\S]*?this\._root\.add\(building\)/,
   "The store callback must retain the district root binding.");
-assert.match(marina, /postPositions\.forEach\(t => \{[\s\S]*?this\._root\.add\(post\)/,
-  "The waterfront post callback must retain the district root binding.");
+assert.match(marina, /postPositions\.forEach\(t => \{[\s\S]*?root\.add\(post\)/,
+  "The waterfront post callback must use its captured district root.");
 assert.match(camera, /let removeOrbitControls = null/,
   "Camera event cleanup must be stored in module scope.");
 assert.match(camera, /removeOrbitControls = \(\) => \{/,
