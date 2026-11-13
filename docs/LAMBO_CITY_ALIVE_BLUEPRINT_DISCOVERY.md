@@ -90,7 +90,9 @@ The CI workflow publishes the generated JSON and Markdown report as a short-live
 
 The discovery report also includes a conservative static dependency map for literal relative/root-relative JavaScript imports, dynamic imports, CommonJS requires, HTML `src`/`href` references, and CSS `url()`/`@import` references.
 
-Each local edge is marked resolved only when its target is present in the scanned file inventory. Missing local targets are reported as unresolved candidates rather than guessed. External CDN references are listed separately; bare package names are not treated as repository files.
+Each local edge is marked resolved only when its target is present in the scanned file inventory. Missing local targets from non-test source files are reported separately from intentionally unresolved references inside test fixtures. External CDN references are listed separately; bare package names are not treated as repository files.
+
+Department path-matched candidate files are kept separate from keyword-evidence files. Path matches are still candidates for review, not authoritative ownership. Keyword matches are supporting clues only and are never counted as confirmed source ownership.
 
 This map is an aid for review, not a complete runtime dependency graph. It cannot reliably infer computed paths, dynamic registries, script injection, Three.js scene registration, event-driven relationships, or dependencies loaded through runtime data. Those relationships still require source and runtime inspection.
 
