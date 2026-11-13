@@ -15,8 +15,12 @@ assert.match(marina, /stores\.forEach\(s => \{/,
   "Marina store construction must preserve the district root binding.");
 assert.match(marina, /postPositions\.forEach\(t => \{/,
   "Marina waterfront posts must preserve the district root binding.");
-assert.doesNotMatch(marina, /forEach\(function\([^)]*\)[\s\S]*?this\._root\.add/,
-  "Marina must not use unbound this inside collection callbacks.");
+assert.match(marina, /\[-1, 1\]\.forEach\(side => \{[\s\S]*?this\._root\.add\(sidewalk\)/,
+  "The sidewalk callback must retain the district root binding.");
+assert.match(marina, /stores\.forEach\(s => \{[\s\S]*?this\._root\.add\(building\)/,
+  "The store callback must retain the district root binding.");
+assert.match(marina, /postPositions\.forEach\(t => \{[\s\S]*?this\._root\.add\(post\)/,
+  "The waterfront post callback must retain the district root binding.");
 assert.match(camera, /let removeOrbitControls = null/,
   "Camera event cleanup must be stored in module scope.");
 assert.match(camera, /removeOrbitControls = \(\) => \{/,
