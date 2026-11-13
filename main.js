@@ -128,6 +128,8 @@ window.__lamboCityPrepareFloor = floor => {
     const load = (async () => {
       if (floor === 2) {
         window.__lamboCityFloor2Ready = false;
+        window.__lamboCityFloor2LoadPhase = "loading-module-graph";
+        window.__lamboCityFloor2InitProgress = [];
         const [
           studio,
           beatLab,
@@ -152,6 +154,7 @@ window.__lamboCityPrepareFloor = floor => {
           import("./floor2CitySynth.js")
         ]);
 
+        window.__lamboCityFloor2LoadPhase = "modules-imported";
         if (!engine.scene || !engine.camera || !engine.renderer) {
           throw new Error("The LAMBO CITY scene is not ready for Floor 2.");
         }
@@ -194,7 +197,9 @@ window.__lamboCityPrepareFloor = floor => {
         ];
 
         for (const [name, args] of initializationOrder) {
+          window.__lamboCityFloor2LoadPhase = "initializing:" + name;
           await Promise.resolve(engine.initSystem(name, ...args));
+          window.__lamboCityFloor2InitProgress.push(name);
           // Give the world one frame between interface modules so the
           // elevator, camera, and phone UI remain responsive during loading.
           await yieldToFrame();
@@ -204,6 +209,7 @@ window.__lamboCityPrepareFloor = floor => {
           throw new Error("Floor 2 architecture did not attach to the live scene.");
         }
         window.__lamboCityFloor2LoadError = null;
+        window.__lamboCityFloor2LoadPhase = "ready";
         window.__lamboCityFloor2Ready = true;
       } else if (floor === 3) {
         window.__lamboCityFloor3Ready = false;
