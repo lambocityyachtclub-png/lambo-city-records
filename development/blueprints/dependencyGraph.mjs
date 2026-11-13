@@ -68,12 +68,13 @@ export function buildStaticDependencyGraph(files = []) {
       if (!specifier.startsWith(".") && !specifier.startsWith("/")) continue;
       const candidates = candidatePaths(file.path, specifier);
       const resolved = candidates.find(candidate => knownPaths.has(candidate));
+      const isTestSource = /(^|\\/)(?:tests?|__tests__)\\//i.test(file.path) || /(^|\\/)test-[^/]+\\.(?:mjs|cjs|js)$/i.test(file.path);
       edges.push({
         from: file.path,
         to: resolved || null,
         specifier,
         kind: item.kind,
-        status: resolved ? "resolved" : "unresolved-local"
+        status: resolved ? "resolved" : isTestSource ? "unresolved-test-fixture" : "unresolved-local"
       });
     }
   }
@@ -114,6 +115,7 @@ export function buildStaticDependencyGraph(files = []) {
       filesAnalyzed: files.filter(file => CODE_EXTENSIONS.has(path.posix.extname(file.path).toLowerCase())).length,
       resolvedEdges: edges.filter(edge => edge.status === "resolved").length,
       unresolvedLocalEdges: edges.filter(edge => edge.status === "unresolved-local").length,
+      unresolvedTestFixtures: edges.filter(edge => edge.status === "unresolved-test-fixture").length,
       externalReferences: externalReferences.length,
       filesWithCallers: incoming.size,
       rootEntrypoints: rootEntrypoints.length,
