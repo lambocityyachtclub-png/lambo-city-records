@@ -211,6 +211,10 @@ export default class Engine {
   }
 
   loop = (time = 0) => {
+    if (typeof window !== "undefined") {
+      window.__lamboCityEngineFrameCount =
+        (window.__lamboCityEngineFrameCount || 0) + 1;
+    }
     requestAnimationFrame(this.loop);
     // Keep simulation time close to wall time on lower-frame-rate devices.
     // A 33ms cap made elevator and player motion crawl below 30 FPS.
