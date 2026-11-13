@@ -120,6 +120,9 @@ const yieldToFrame = () => new Promise(resolve => {
   }
 });
 window.__lamboCityFloor2Ready = false;
+window.__lamboCityFloor2LoadPhase = "idle";
+window.__lamboCityFloor2LoadingModule = null;
+window.__lamboCityFloor2LoadedModules = [];
 window.__lamboCityPrepareFloor = floor => {
   if (floor !== 2 && floor !== 3 && floor !== 4) return Promise.resolve();
 
@@ -159,6 +162,8 @@ window.__lamboCityPrepareFloor = floor => {
           throw new Error("The LAMBO CITY scene is not ready for Floor 2.");
         }
 
+        window.__lamboCityFloor2LoadPhase = "registering-modules";
+        window.__lamboCityFloor2LoadingModule = null;
         const systems = {
           recordsHQFloor2Studio: studio.default,
           floor2StudioApp: beatLab.default,
@@ -263,6 +268,8 @@ window.__lamboCityPrepareFloor = floor => {
     })().catch(error => {
       if (floor === 2) {
         window.__lamboCityFloor2Ready = false;
+        window.__lamboCityFloor2LoadPhase = "failed";
+        window.__lamboCityFloor2LoadingModule = null;
         window.__lamboCityFloor2LoadError = String(error?.message || error);
         if (!floor2InitializationStarted) destinationLoads.delete(floor);
       } else {
