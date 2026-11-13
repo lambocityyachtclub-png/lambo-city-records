@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import vm from "node:vm";
+import { createStudioPitchCorrectionNode, normalizePitchCorrectionSettings } from "../studioPitchCorrection.js";
 
 const source = readFileSync(new URL("../studioPitchCorrectionWorklet.js", import.meta.url), "utf8");
 let Processor;
@@ -77,3 +78,71 @@ assert.equal(processor.settings.amount, 70);
 assert.equal(processor.settings.speedMs, 40);
 
 console.log("Vocal pitch detection, scale targeting, signal pass-through, and live controls tests passed.");
+
+
+const normalized = normalizePitchCorrectionSettings({
+  enabled: true,
+  root: 13,
+  scale: "minor",
+  amount: 140,
+  speedMs: -10
+});
+assert.deepEqual(normalized, {
+  enabled: true,
+  root: 11,
+  scale: "minor",
+  amount: 100,
+  speedMs: 0
+});
+assert.deepEqual(normalizePitchCorrectionSettings({
+  enabled: 1,
+  root: Infinity,
+  scale: "unsupported",
+  amount: NaN,
+  speedMs: "fast"
+}), {
+  enabled: false,
+  root: 0,
+  scale: "major",
+  amount: 100,
+  speedMs: 25
+});
+
+const originalAudioWorkletNode = globalThis.AudioWorkletNode;
+class MockAudioWorkletNode {
+  constructor(context, processorName, options) {
+    this.context = context;
+    this.processorName = processorName;
+    this.options = options;
+    this.messages = [];
+    this.port = { postMessage: message => this.messages.push(message) };
+  }
+}
+globalThis.AudioWorkletNode = MockAudioWorkletNode;
+try {
+  const moduleLoads = [];
+  const context = {
+    audioWorklet: {
+      addModule(url) {
+        moduleLoads.push(url);
+        return Promise.resolve();
+      }
+    }
+  };
+  const [nodeA, nodeB] = await Promise.all([
+    createStudioPitchCorrectionNode(context, { enabled: true, root: 2, scale: "major", amount: 85, speedMs: 18 }),
+    createStudioPitchCorrectionNode(context, { enabled: true, root: 2, scale: "major", amount: 85, speedMs: 18 })
+  ]);
+  assert.equal(moduleLoads.length, 1, "The worklet module should load once per audio context.");
+  assert.equal(nodeA.processorName, "lambo-city-pitch-correction");
+  assert.equal(nodeB.processorName, "lambo-city-pitch-correction");
+  assert.deepEqual(nodeA.options.processorOptions, {
+    enabled: true, root: 2, scale: "major", amount: 85, speedMs: 18
+  });
+  assert.deepEqual(nodeA.messages[0], nodeA.options.processorOptions);
+} finally {
+  if (originalAudioWorkletNode === undefined) delete globalThis.AudioWorkletNode;
+  else globalThis.AudioWorkletNode = originalAudioWorkletNode;
+}
+
+console.log("Pitch settings normalization and per-context AudioWorklet loading tests passed.");
