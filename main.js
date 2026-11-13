@@ -110,6 +110,13 @@ engine.registerSystems({
 // Load upper floors only when selected in the elevator.
 // Each destination is cached so returning to a floor never rebuilds it.
 const destinationLoads = new Map();
+const yieldToFrame = () => new Promise(resolve => {
+  if (typeof window !== "undefined" && typeof window.requestAnimationFrame === "function") {
+    window.requestAnimationFrame(resolve);
+  } else {
+    setTimeout(resolve, 0);
+  }
+});
 window.__lamboCityFloor2Ready = false;
 window.__lamboCityPrepareFloor = floor => {
   if (floor !== 2 && floor !== 3 && floor !== 4) return Promise.resolve();
@@ -186,6 +193,9 @@ window.__lamboCityPrepareFloor = floor => {
 
         for (const [name, args] of initializationOrder) {
           await Promise.resolve(engine.initSystem(name, ...args));
+          // Give the world one frame between interface modules so the
+          // elevator, camera, and phone UI remain responsive during loading.
+          await yieldToFrame();
         }
 
         if (!engine.scene.getObjectByName("recordsHQFloor2Studio")) {
