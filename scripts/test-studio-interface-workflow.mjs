@@ -8,6 +8,7 @@ const files = [
   "engine.js",
   "studioDAWApp.js",
   "studioDAWWorkspace.js",
+  "studioDAWBeatLabPanel.js",
   "floor2StudioNavigation.js",
   "studioMixMasterConsole3D.js",
   "floor2LiveDrummer.js",
@@ -47,7 +48,6 @@ const workspace = source["studioDAWWorkspace.js"];
 const orderedSteps = [
   /id:\s*"edit",\s*label:\s*"EDITING"/,
   /id:\s*"mpc",\s*label:\s*"MPC"/,
-  /id:\s*"drums",\s*label:\s*"LIVE DRUMMER"/,
   /id:\s*"piano",\s*label:\s*"PIANO \/ CITY SYNTH"/,
   /id:\s*"vocals",\s*label:\s*"VOCAL BOOTH"/,
   /id:\s*"beatlab",\s*label:\s*"BEAT LAB"/,
@@ -60,7 +60,8 @@ for (const pattern of orderedSteps) {
   last = index;
 }
 assert.match(workspace,/const ALL_VIEWS = \[\.\.\.VIEWS, \.\.\.SECONDARY_VIEWS\]/);
-assert.match(workspace,/const SECONDARY_VIEWS = \[\];/,"Live Drummer must be a first-class navigable destination.");
+assert.match(workspace,/const SECONDARY_VIEWS = \[\s*\{ id: "drums", label: "LIVE DRUMMER" \}\s*\];/,"Live Drummer must remain an optional secondary tool, not a primary workflow stop.");
+assert.doesNotMatch(workspace.split("const SECONDARY_VIEWS")[0],/id:\s*"drums"/,"The primary producer workflow must retain its six approved destinations.");
 assert.match(workspace,/data-daw-navigation-label/);
 assert.match(workspace,/aria-label="Studio workspace navigation"/);
 assert.match(workspace,/data-daw-step="-1"/);
@@ -93,6 +94,13 @@ assert.match(source["floor2StudioApp.js"],/startNewSession\(\)[\s\S]*?this\.curr
 assert.match(source["studioMultitrackWorkspace.js"],/this\.activeProjectId = null;/,"New Session must detach from the previously opened saved project.");
 assert.match(source["studioMultitrackWorkspace.js"],/this\.activeProjectName = "Untitled Song"/);
 const drummer = source["floor2LiveDrummer.js"];
+const beatLabPanel = source["studioDAWBeatLabPanel.js"];
+assert.match(beatLabPanel,/LIVE DRUMMER/,"The optional Live Drummer must be reachable from the Beat Lab tools.");
+assert.match(beatLabPanel,/onSwitchToDrummer/);
+assert.match(app,/onSwitchToDrummer = \(\) => this\.workspace\?\.setView\("drums"\)/);
+assert.match(app,/onReturn: \(\) => this\.workspace\?\.setView\("beatlab"\)/);
+assert.match(drummer,/data-drum-menu aria-label="Return to Beat Lab"/);
+assert.match(drummer,/onReturn === "function"\) onReturn\(\)/);
 assert.match(drummer,/data-drum-mode-toggle/,"Live Drummer must switch modes inside the same interface.");
 assert.match(drummer,/SAMPLE PADS/);
 assert.match(drummer,/LIVE PERFORMANCE/);
