@@ -281,6 +281,9 @@ jobs:
       - name: Verify approved world camera baseline
         run: node scripts/test-camera-baseline.mjs
 
+      - name: Verify streamed engine registration
+        run: node --experimental-default-type=module scripts/test-engine-dynamic-systems.mjs
+
       - name: Test Floor 2 Studio station registration and navigation
         run: node --experimental-default-type=module scripts/test-floor2-studio-navigation.mjs
 
