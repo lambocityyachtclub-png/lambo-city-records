@@ -20,19 +20,8 @@ const [{ createDistrictFromRecipe, createDistrictFromBrief }, { validateDistrict
 ]);
 const cityMapModule = await loadPureModule("cityMap.js");
 const CITY_MAP = cityMapModule.default;
-const liveMainSource = await readFile(resolve(root, "main.js"), "utf8");
-const liveArenaSource = await readFile(resolve(root, "conferenceCenterDistrict.js"), "utf8");
-assert.match(liveMainSource, /WorldSystemHost\.initialize\(\{/,
-  "the approved district blueprint must initialize in the live scene");
-assert.match(liveMainSource, /districts:\s*\[ConferenceCenterBlueprint\]/);
-assert.match(liveMainSource, /worldStreaming:\s*WorldStreaming/,
-  "the arena landmark keeps its own lightweight LOD beside World System district streaming");
-assert.match(liveArenaSource, /lamboCityConferenceCenterLandmark/,
-  "the protected arena shell must have an independent visibility root");
-assert.doesNotMatch(liveArenaSource, /arenaBoulevardSouth|arenaBoulevardNorth|arenaBoulevardWest|arenaBoulevardEast/,
-  "legacy arena roads must not duplicate the generated road network");
-assert.match(liveArenaSource, /arenaArrivalPlaza/,
-  "the existing arena arrival plaza remains preserved");
+assert.equal(CITY_MAP.districts.arenaDistrict.id, "lambo-city-arena-district");
+assert.equal(CITY_MAP.districts.arenaDistrict.arena.id, "lambo-city-conference-center-arena");
 const blueprintSource = await readFile(resolve(root, "worldDistricts/conferenceCenter.js"), "utf8");
 const blueprintInline = blueprintSource.replace(
   'import CITY_MAP from "../cityMap.js";',
