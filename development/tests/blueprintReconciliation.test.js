@@ -93,7 +93,11 @@ test("writer verifies every referenced source path and emits JSON plus Markdown"
       for (const source of record.sources) {
         const filePath = path.join(rootDir, source.path);
         await fs.mkdir(path.dirname(filePath), { recursive: true });
-        await fs.writeFile(filePath, "fixture source\n");
+        try {
+          await fs.access(filePath);
+        } catch (_) {
+          await fs.writeFile(filePath, "fixture source\n");
+        }
       }
     }
     const sourcePaths = new Set(register.records.flatMap(record => record.sources.map(source => source.path)));
