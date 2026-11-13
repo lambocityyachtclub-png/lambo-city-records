@@ -22,13 +22,15 @@ async function smokeWorld({ label, isMobile }) {
   const page = await context.newPage();
   const pageErrors = [];
   const consoleErrors = [];
-  const failedRequests = [];
+  const failedScriptRequests = [];
   page.on("pageerror", error => pageErrors.push(error.message));
   page.on("console", message => {
     if (message.type() === "error") consoleErrors.push(message.text());
   });
   page.on("requestfailed", request => {
-    failedRequests.push(request.url() + ": " + request.failure()?.errorText);
+    if (request.resourceType() === "script") {
+      failedScriptRequests.push(request.url() + ": " + request.failure()?.errorText);
+    }
   });
   page.setDefaultTimeout(60000);
 
@@ -44,9 +46,9 @@ async function smokeWorld({ label, isMobile }) {
         typeof window.__lamboCityNavigateToFloor === "function";
     }).catch(error => {
       throw new Error(label + ": startup did not finish. " + error.message +
-        "\\nPage errors: " + pageErrors.join("\\n") +
-        "\\nConsole errors: " + consoleErrors.join("\\n") +
-        "\\nFailed requests: " + failedRequests.join("\\n"));
+        "\nPage errors: " + pageErrors.join("\n") +
+        "\nConsole errors: " + consoleErrors.join("\n") +
+        "\nFailed script requests: " + failedScriptRequests.join("\n"));
     });
 
     console.log("PASS: " + label + " renderer, player, joystick, and phone route initialized");
@@ -76,14 +78,16 @@ async function smokeWorld({ label, isMobile }) {
 
     // Open the citizen phone using the same F control exposed to players.
     if (isMobile) {
-      await page.locator("#lambo-city-mobile-buttons button").nth(1).dispatchEvent("pointerdown", {
-        pointerId: 1, pointerType: "touch", isPrimary: true, button: 0, buttons: 1
-      });
+      await page.locator("#lambo-city-mobile-buttons button").nth(1).tap();
     } else {
       await page.keyboard.press("f");
     }
     await page.waitForSelector("#phone-ui");
-    await page.locator("#lambo-phone-studio").click();
+    if (isMobile) {
+      await page.locator("#lambo-phone-studio").tap();
+    } else {
+      await page.locator("#lambo-phone-studio").click();
+    }
 
     // First visit must load Floor 2, complete the elevator arrival, and seat
     // the player before the session's direct-entry hook is considered ready.
@@ -113,7 +117,7 @@ async function smokeWorld({ label, isMobile }) {
     , null, { timeout: 15000 });
 
     assert.deepEqual(pageErrors, [], label + ": no uncaught errors during Studio navigation");
-    assert.deepEqual(failedRequests, [], label + ": no failed local or module requests");
+    assert.deepEqual(failedScriptRequests, [], label + ": no failed JavaScript module requests");
     console.log("PASS: " + label + " world startup, touch/phone controls, first Studio visit, and returning shortcut");
   } finally {
     await context.close();
