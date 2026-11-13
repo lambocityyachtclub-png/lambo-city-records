@@ -1,0 +1,75 @@
+name: LAMBO CITY Change Scope Guard
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, edited, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: change-scope-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  scope-guard:
+    name: LAMBO CITY Change Scope Guard
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enforce owner-authorized change scope
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const body = pr.body || "";
+            const scopeHeading = "## Authorized change scope";
+            const authHeading = "## Founder authorization";
+            const section = (heading) => {
+              const start = body.indexOf(heading);
+              if (start < 0) return "";
+              const rest = body.slice(start + heading.length);
+              const next = rest.search(/^##\s/m);
+              return (next < 0 ? rest : rest.slice(0, next)).trim();
+            };
+
+            const scopeText = section(scopeHeading);
+            const scope = [...scopeText.matchAll(/^\s*-\s+`([^\`]+)`\s*$/gm)].map(m => m[1]);
+            if (!scope.length) {
+              core.setFailed("Missing exact authorized file scope. List each allowed file or narrow directory under '## Authorized change scope'.");
+              return;
+            }
+
+            const authText = section(authHeading);
+            const founderApproved = /^\s*APPROVED\s*$/m.test(authText);
+            const files = await github.paginate(
+              github.rest.pulls.listFiles,
+              { owner: context.repo.owner, repo: context.repo.repo, pull_number: pr.number, per_page: 100 }
+            );
+
+            const outsideScope = files.filter(file =>
+              !scope.some(allowed => file.filename === allowed || (allowed.endsWith("/") && file.filename.startsWith(allowed)))
+            );
+            if (outsideScope.length) {
+              core.setFailed("Files outside the declared scope: " + outsideScope.map(f => f.filename).join(", "));
+              return;
+            }
+
+            const sourceExtensions = /\.(js|mjs|cjs|ts|tsx|jsx|css|scss|html|json|glsl|vert|frag)$/i;
+            const protectedChanges = files.filter(file =>
+              sourceExtensions.test(file.filename) || file.status === "removed"
+            );
+            if (protectedChanges.length && !founderApproved) {
+              core.setFailed("Application source changes and deletions require explicit founder authorization. Set 'Founder authorization' to APPROVED only when the owner authorized this exact task.");
+              return;
+            }
+
+            if (files.length === 0) {
+              core.setFailed("No changed files were returned; refusing to treat this pull request as validated.");
+              return;
+            }
+
+            core.info("Declared scope matches all " + files.length + " changed file(s).");
+            core.info("Founder authorization: " + (founderApproved ? "recorded" : "not required for documentation-only changes"));
+            core.info("Changed files: " + files.map(f => f.filename + " (" + f.status + ")").join(", "));
