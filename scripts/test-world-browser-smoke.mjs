@@ -30,6 +30,12 @@ async function smokeWorld({ label, isMobile }) {
     isMobile,
     hasTouch: isMobile
   });
+  if (isMobile) {
+    // Exercise the returning-visitor shortcut on the touch-sized device.
+    await context.addInitScript(() =>
+      localStorage.setItem("lambo-city-floor2-discovered-v1", "1")
+    );
+  }
   const page = await context.newPage();
   const pageErrors = [];
   const consoleErrors = [];
@@ -199,8 +205,26 @@ async function smokeWorld({ label, isMobile }) {
       label + ": no isolated system initialization/update failures are allowed");
     console.log("PASS: " + label + " first-time Floor 2 load and elevator arrival completed");
 
-    // End the session without clearing discovery, then use the phone again.
-    // This exercises the returning-visitor direct cockpit shortcut.
+    if (isMobile) {
+      const directEntryState = await page.evaluate(() => ({
+        mode: window.__lamboCityFloor2SessionMode,
+        discovered: window.__lamboCityFloor2Discovered === true,
+        elevatorTraveling: window.__lamboCityElevatorTraveling === true
+      }));
+      assert.equal(directEntryState.mode, "seated",
+        label + ": a returning visitor must enter the Floor 2 cockpit directly");
+      assert.equal(directEntryState.discovered, true,
+        label + ": persisted Floor 2 discovery must be restored");
+      assert.equal(directEntryState.elevatorTraveling, false,
+        label + ": returning phone navigation must bypass elevator travel");
+      assert.deepEqual(pageErrors, [],
+        label + ": no uncaught errors during touch Studio navigation");
+      console.log("PASS: " + label + " touch controls and returning-player direct cockpit entry");
+      return;
+    }
+
+    // End the desktop session without clearing discovery, then use the phone
+    // again to verify the returning-visitor direct cockpit shortcut.
     await page.evaluate(() => window.__lamboCityEndFloor2Session?.());
     await page.waitForFunction(() => window.__lamboCityFloor2SessionMode === "free");
 
