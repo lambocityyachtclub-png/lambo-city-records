@@ -54,6 +54,6 @@ test("Master Blueprint preserves owner-authored sources and explicit unresolved 
   assert.match(master, /LAMBO_CITY_MASTER_BLUEPRINT\.md/);
   assert.match(master, /owner-decision-required/);
   assert.match(master, /visitor-facing Version 1 world/);
-  assert.match(master, /No Development Director task/i);
+  assert.match(master, /not a task authorization/i);
   assert.match(master, /live checkout, payment credentials/i);
 });
