@@ -138,6 +138,9 @@ export async function discoverBlueprints(options = {}) {
       .filter(file => department.sourceHints.some(hint => file.path.toLowerCase().includes(hint)))
       .map(file => file.path);
     const sourcePaths = [...new Set([...evidence.map(item => item.path), ...hintedPaths])].sort();
+    const staticallyReachable = new Set(dependencyGraph.reachableFiles);
+    const runtimeConnectedSourceFiles = sourcePaths.filter(filePath => staticallyReachable.has(filePath));
+    const notStaticallyReachableSourceFiles = sourcePaths.filter(filePath => !staticallyReachable.has(filePath));
     return {
       id: department.id,
       title: department.title,
@@ -145,6 +148,8 @@ export async function discoverBlueprints(options = {}) {
       specialistIds: [...department.specialistIds],
       status: "discovery-draft",
       sourceFiles: sourcePaths,
+      runtimeConnectedSourceFiles,
+      notStaticallyReachableSourceFiles,
       evidence,
       notes: [
         "This is an automatically assembled discovery draft, not an owner-approved specification.",
@@ -209,6 +214,8 @@ export function renderBlueprintReport(result) {
     `- Resolved local references: ${result.dependencyGraph.summary.resolvedEdges}`,
     `- Unresolved local references: ${result.dependencyGraph.summary.unresolvedLocalEdges}`,
     `- External references: ${result.dependencyGraph.summary.externalReferences}`,
+    `- Root entrypoints: ${result.dependencyGraph.rootEntrypoints.join(", ") || "None detected"}`,
+    `- Files statically reachable from those entrypoints: ${result.dependencyGraph.summary.staticallyReachableFiles}`,
     "",
     "**Unresolved local references requiring review:**",
     ...result.dependencyGraph.edges.filter(edge => edge.status === "unresolved-local").slice(0, 40).map(edge => `- ${edge.from} → ${edge.specifier}`),
@@ -220,10 +227,13 @@ export function renderBlueprintReport(result) {
     ""
   ];
   for (const department of result.departments) {
-    lines.push(`### ${department.title}`, "", `- ID: ${department.id}`, `- Status: ${department.status}`, `- Specialist coverage: ${department.specialistIds.join(", ") || "Not assigned"}`, `- Candidate source files: ${department.sourceFiles.length}`, "");
+    lines.push(`### ${department.title}`, "", `- ID: ${department.id}`, `- Status: ${department.status}`, `- Specialist coverage: ${department.specialistIds.join(", ") || "Not assigned"}`, `- Candidate source files: ${department.sourceFiles.length}`, `- Statically reachable candidate files: ${department.runtimeConnectedSourceFiles.length}`, "");
     lines.push("**Purpose:** " + department.purpose, "", "**Candidate sources:**");
     if (department.sourceFiles.length) department.sourceFiles.forEach(source => lines.push(`- ${source}`));
     else lines.push("- No matching files found in this scan.");
+    lines.push("", "**Statically reachable candidate files:**");
+    if (department.runtimeConnectedSourceFiles.length) department.runtimeConnectedSourceFiles.forEach(source => lines.push(`- ${source}`));
+    else lines.push("- None detected from the configured entrypoints.");
     lines.push("", "**Review notes:**", ...department.notes.map(note => `- ${note}`), "");
   }
   lines.push("## Safety and Interpretation", "", "- No source files were modified.", "- No development tasks were created or submitted.", "- Private queue, environment, credential, and secret-named paths are excluded.", "- Keyword evidence can produce false positives and false negatives.", "- A human must reconcile source conflicts, confirm current implementation, and approve the resulting department blueprints.", "");
