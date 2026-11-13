@@ -49,6 +49,17 @@ jobs:
         run: |
           node --experimental-default-type=module --test development/tests/*.test.js
 
+      - name: Generate read-only LAMBO CITY blueprint discovery
+        run: node development/blueprints/discoverBlueprints.mjs
+
+      - name: Upload LAMBO CITY blueprint discovery report
+        uses: actions/upload-artifact@v4
+        with:
+          name: lambo-city-blueprint-discovery
+          path: development/planning/blueprint-discovery/
+          if-no-files-found: error
+          retention-days: 7
+
       - name: Syntax-check private ALIVE owner workspace
         run: |
           node --check alive.js
