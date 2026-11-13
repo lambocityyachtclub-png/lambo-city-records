@@ -120,6 +120,7 @@ test("verification reports a visitor-world import into ALIVE development infrast
   const root = await fs.mkdtemp(path.join(os.tmpdir(), "lc-department-boundary-"));
   try {
     await fs.mkdir(path.join(root, "development/engine"), { recursive: true });
+    await fs.mkdir(path.join(root, "development/blueprints"), { recursive: true });
     await fs.mkdir(path.join(root, "server/alive"), { recursive: true });
     await fs.mkdir(path.join(root, "api/alive"), { recursive: true });
     await fs.writeFile(path.join(root, "development/blueprints/blueprintSet.json"), JSON.stringify({
