@@ -18,7 +18,7 @@ async function fixture() {
   await fs.writeFile(path.join(rootDir, "docs", "water-plan.md"), "# Waterfront\n\n## Ocean and shoreline\nTODO: connect the dock to the boardwalk\n");
   await fs.writeFile(path.join(rootDir, "studio", "radio.js"), "// LAMBO CITY Radio playlist routing\nexport const station = 'city-radio';\n");
   await fs.writeFile(path.join(rootDir, ".env"), "SECRET_TOKEN=must-not-be-read\n");
-  await fs.writeFile(path.join(rootDir, "development", "queue", "incoming", "private-queue-task.json"), "{\"vision\":\"private\"}");
+  await fs.writeFile(path.join(rootDir, "development", "queue", "incoming", "owner-direction.json"), "{\"vision\":\"private\"}");
   return rootDir;
 }
 
