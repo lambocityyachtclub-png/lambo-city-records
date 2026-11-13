@@ -121,7 +121,7 @@ const flush = () => new Promise(resolve => setTimeout(resolve, 0));
 const inputSource = await readFile(new URL("../input.js", import.meta.url), "utf8");
 assert.match(inputSource, /const startNavigation = \(\) => \{/,
   "Phone navigation must be deferred until after the activating click/tap handler returns.");
-assert.match(inputSource, /window\.setTimeout\(startNavigation, 120\)/,
+assert.match(inputSource, /window\.setTimeout\(startNavigation, 1000\)/,
   "Streamed Studio loading must begin only after the tap event has completed.");
 assert.match(inputSource, /window\.requestAnimationFrame\(startNavigation\)/,
   "Animation-frame fallback must remain available when timers are unavailable.");
