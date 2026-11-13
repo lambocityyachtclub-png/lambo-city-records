@@ -40,3 +40,19 @@ test("discovers HTML script and stylesheet references", () => {
   ]);
   assert.equal(graph.summary.resolvedEdges, 2);
 });
+
+test("computes conservative reachability from visitor and standalone entrypoints", () => {
+  const graph = buildStaticDependencyGraph([
+    { path: "index.html", content: '<script type="module" src="./main.js"></script>' },
+    { path: "main.js", content: 'import "./engine.js";' },
+    { path: "engine.js", content: 'import "./world.js";' },
+    { path: "world.js", content: "export const world = true;" },
+    { path: "studio.html", content: '<script type="module" src="./studio.js"></script>' },
+    { path: "studio.js", content: "export const studio = true;" },
+    { path: "unused.js", content: "export const unused = true;" }
+  ]);
+  assert.deepEqual(graph.rootEntrypoints, ["index.html", "main.js", "studio.html"]);
+  assert.ok(graph.reachableFiles.includes("world.js"));
+  assert.ok(graph.reachableFiles.includes("studio.js"));
+  assert.ok(!graph.reachableFiles.includes("unused.js"));
+});
