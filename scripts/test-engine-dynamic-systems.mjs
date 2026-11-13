@@ -1,5 +1,10 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import Engine from "../engine.js";
+
+const engineSource = await readFile(new URL("../engine.js", import.meta.url), "utf8");
+assert.match(engineSource, /const delta = Math\.min\([\s\S]*?0\.1\s*\)/,
+  "The world simulation must not be capped to 33ms frames, which causes slow motion on slower devices.");
 
 const engine = new Engine();
 let coreInitCount = 0;
