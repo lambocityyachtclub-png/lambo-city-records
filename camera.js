@@ -22,6 +22,7 @@ let cameraPitch = 0.18;
 let cinTime = 0;
 let lastOrbitInputAt = 0;
 let initialized = false;
+let removeOrbitControls = null;
 let currentMode = "world";
 
 const FOLLOW_DISTANCE = 8.2;
@@ -122,7 +123,7 @@ function attachOrbitControls(renderer) {
   canvas.addEventListener("pointercancel", endPointer);
   canvas.addEventListener("lostpointercapture", endPointer);
 
-  this._removeOrbitControls = () => {
+  removeOrbitControls = () => {
     canvas?.removeEventListener("pointerdown", onPointerDown);
     canvas?.removeEventListener("pointermove", onPointerMove);
     canvas?.removeEventListener("pointerup", endPointer);
