@@ -69,4 +69,35 @@ engine.update(1 / 60);
 assert.equal(coreUpdateCount, 1, "the original world must keep updating after late registration");
 assert.equal(lateUpdateCount, 1, "the newly loaded system must join the live update loop");
 
-console.log("PASS: engine registry merge, one-time dynamic initialization, and live update loop");
+let finishAsyncInit;
+let asyncUpdateCount = 0;
+const asyncSystem = {
+  init() {
+    return new Promise(resolve => { finishAsyncInit = resolve; });
+  },
+  update() {
+    asyncUpdateCount++;
+  }
+};
+engine.registerSystems({ asyncSystem });
+const asyncInit = engine.initSystem("asyncSystem", engine.scene);
+engine.update(1 / 60);
+assert.equal(asyncUpdateCount, 0, "a streamed system must not update before async initialization finishes");
+finishAsyncInit("async-ready");
+assert.equal(await asyncInit, "async-ready");
+engine.update(1 / 60);
+assert.equal(asyncUpdateCount, 1, "a streamed system must join updates after async initialization finishes");
+
+let failedUpdateCount = 0;
+engine.registerSystems({
+  failedInitSystem: {
+    init() { throw new Error("expected init failure"); },
+    update() { failedUpdateCount++; }
+  }
+});
+engine.initSystem("failedInitSystem", engine.scene);
+engine.update(1 / 60);
+assert.equal(failedUpdateCount, 0, "a system whose init failed must never receive updates");
+assert.ok(engine.failedSystems.has("failedInitSystem"), "init failures must be recorded by the engine");
+
+console.log("PASS: dynamic registry merge, shared context, async init gating, and live update loop");
