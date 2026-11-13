@@ -88,6 +88,8 @@ on:
       - "recordsHQFloor2Studio.js"
       - "studioDAWApp.js"
       - "studioStandalone.js"
+      - "studioMixMasterApp.js"
+      - "scripts/test-studio-master-processing.mjs"
       - "studioDAWWorkspace.js"
       - "studioDAWBeatLabPanel.js"
       - "studioDAWEditPanel.js"
