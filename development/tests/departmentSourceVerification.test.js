@@ -81,6 +81,7 @@ test("department verification follows registered, HTML, and transitive module ro
     ));
     assert.equal(report.runtimeIsolation.passed, true);
     assert.deepEqual(report.runtimeIsolation.publicExperienceDevelopmentImports, []);
+    assert.equal(report.verificationPolicy.publicExperienceIsolationChecked, true);
     assert.equal(report.verificationPolicy.testFilePresenceIsNotPassingTestProof, true);
   } finally {
     await fs.rm(root, { recursive: true, force: true });
