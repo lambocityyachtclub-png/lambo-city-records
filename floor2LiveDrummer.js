@@ -14,14 +14,14 @@ const DRUM_HITS = [
   { label: "RIDE", sound: "cymbal", category: "cymbals" }
 ];
 
-export function createLiveDrummerPanel({ beatLab } = {}) {
+export function createLiveDrummerPanel({ beatLab, onReturn } = {}) {
   const root = document.createElement("section");
   root.className = "lc-live-drummer";
   const bpm = Math.max(60, Math.min(180, Number(StudioMultitrackWorkspace.tempo) || Number(beatLab?.pattern?.bpm) || 110));
   root.style.cssText = "min-height:calc(100vh - 150px);display:grid;grid-template-rows:auto 1fr auto auto;gap:14px;padding:clamp(12px,2vw,24px);border-radius:14px;color:#f4f6fb;background:radial-gradient(ellipse at 50% 30%,#284a79 0%,#1e3a6b 44%,#16294d 100%);font-family:Arial,sans-serif;box-sizing:border-box;overflow:hidden";
   root.innerHTML =
     '<header style="display:grid;grid-template-columns:48px 1fr auto;align-items:start;gap:12px">' +
-      '<button type="button" data-drum-menu aria-label="Performance menu" style="width:46px;height:46px;border:1px solid #7188a7;border-radius:12px;background:#102343;color:#fff;font-size:22px">☰</button>' +
+      '<button type="button" data-drum-menu aria-label="Return to Beat Lab" title="Return to Beat Lab" style="width:46px;height:46px;border:1px solid #7188a7;border-radius:12px;background:#102343;color:#fff;font-size:22px">←</button>' +
       '<div style="text-align:center"><div style="font-size:10px;letter-spacing:2.5px;color:#bdc8d8;font-weight:800">PERFORMANCE SCORE</div>' +
         '<div style="max-width:340px;margin:5px auto 6px;padding:5px 18px 8px;border-radius:10px;background:rgba(7,18,37,.78);border:1px solid rgba(210,177,112,.28)"><strong data-drum-score style="font-size:40px;line-height:1">0</strong><div data-score-progress style="height:3px;margin-top:7px;border-radius:5px;background:rgba(255,255,255,.12)"></div></div>' +
         '<div style="font-size:11px;letter-spacing:1.4px;color:#c6d0df"><span style="color:#9caac0">LEVEL 4:</span> <strong style="color:#f0c36c">FUNK FRENZY</strong></div></div>' +
@@ -164,7 +164,7 @@ export function createLiveDrummerPanel({ beatLab } = {}) {
     status.textContent = "Session tempo set to " + value + " BPM.";
   });
   root.querySelector("[data-drum-menu]").addEventListener("click", () => {
-    status.textContent = "FUNK FRENZY · Select a category, then play a drum surface.";
+    if (typeof onReturn === "function") onReturn();
   });
   renderHits();
   return root;
