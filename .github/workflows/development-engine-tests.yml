@@ -33,3 +33,11 @@ jobs:
 
       - name: Generate read-only ALIVE blueprint discovery report
         run: node development/blueprints/discoverBlueprints.mjs
+
+      - name: Upload read-only ALIVE discovery report
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: alive-blueprint-discovery
+          path: development/planning/blueprint-discovery/
+          if-no-files-found: error
+          retention-days: 7
