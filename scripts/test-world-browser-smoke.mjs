@@ -21,7 +21,15 @@ async function smokeWorld({ label, isMobile }) {
   });
   const page = await context.newPage();
   const pageErrors = [];
+  const consoleErrors = [];
+  const failedRequests = [];
   page.on("pageerror", error => pageErrors.push(error.message));
+  page.on("console", message => {
+    if (message.type() === "error") consoleErrors.push(message.text());
+  });
+  page.on("requestfailed", request => {
+    failedRequests.push(request.url() + ": " + request.failure()?.errorText);
+  });
   page.setDefaultTimeout(60000);
 
   try {
@@ -31,8 +39,17 @@ async function smokeWorld({ label, isMobile }) {
       const gl = canvas?.getContext("webgl2") || canvas?.getContext("webgl");
       return !!canvas && !!gl &&
         !!document.getElementById("lambo-city-joystick") &&
-        !!document.getElementById("lambo-city-mobile-buttons");
+        !!document.getElementById("lambo-city-mobile-buttons") &&
+        !!window.__lamboCityPlayerSystem &&
+        typeof window.__lamboCityNavigateToFloor === "function";
+    }).catch(error => {
+      throw new Error(label + ": startup did not finish. " + error.message +
+        "\\nPage errors: " + pageErrors.join("\\n") +
+        "\\nConsole errors: " + consoleErrors.join("\\n") +
+        "\\nFailed requests: " + failedRequests.join("\\n"));
     });
+
+    console.log("PASS: " + label + " renderer, player, joystick, and phone route initialized");
 
     const startup = await page.evaluate(() => {
       const canvas = document.querySelector("canvas");
@@ -75,6 +92,7 @@ async function smokeWorld({ label, isMobile }) {
       window.__lamboCityFloor2Discovered === true &&
       typeof window.__lamboCityEnterFloor2CockpitDirect === "function"
     , null, { timeout: 60000 });
+    console.log("PASS: " + label + " first-time Floor 2 load and elevator arrival completed");
 
     // End the session without clearing discovery, then use the phone again.
     // This exercises the returning-visitor direct cockpit shortcut.
@@ -95,6 +113,7 @@ async function smokeWorld({ label, isMobile }) {
     , null, { timeout: 15000 });
 
     assert.deepEqual(pageErrors, [], label + ": no uncaught errors during Studio navigation");
+    assert.deepEqual(failedRequests, [], label + ": no failed local or module requests");
     console.log("PASS: " + label + " world startup, touch/phone controls, first Studio visit, and returning shortcut");
   } finally {
     await context.close();
