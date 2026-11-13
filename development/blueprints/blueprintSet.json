@@ -1,0 +1,143 @@
+{
+  "schemaVersion": 1,
+  "blueprintSet": "lambo-city-department-blueprints",
+  "status": "draft-owner-review",
+  "master": "development/blueprints/LAMBO_CITY_MASTER_BLUEPRINT_DRAFT.md",
+  "readme": "development/blueprints/README.md",
+  "departments": [
+    {
+      "id": "water-environment",
+      "title": "Water & Environment",
+      "path": "development/blueprints/departments/water-environment.md",
+      "status": "partial",
+      "dependencies": [
+        "world-districts",
+        "performance-quality"
+      ],
+      "sourceCount": 6,
+      "ownerApproved": false
+    },
+    {
+      "id": "jumbotron-events",
+      "title": "Jumbotron & Events",
+      "path": "development/blueprints/departments/jumbotron-events.md",
+      "status": "planned",
+      "dependencies": [
+        "people-experiences",
+        "lambo-city-radio",
+        "performance-quality",
+        "world-districts"
+      ],
+      "sourceCount": 11,
+      "ownerApproved": false
+    },
+    {
+      "id": "lambo-city-radio",
+      "title": "LAMBO CITY Radio",
+      "path": "development/blueprints/departments/lambo-city-radio.md",
+      "status": "discovery-needed",
+      "dependencies": [
+        "studio-music",
+        "jumbotron-events",
+        "security-release",
+        "performance-quality"
+      ],
+      "sourceCount": 5,
+      "ownerApproved": false
+    },
+    {
+      "id": "studio-music",
+      "title": "Studio & Music",
+      "path": "development/blueprints/departments/studio-music.md",
+      "status": "partial",
+      "dependencies": [
+        "performance-quality",
+        "security-release"
+      ],
+      "sourceCount": 10,
+      "ownerApproved": false
+    },
+    {
+      "id": "convention-center",
+      "title": "Convention Center",
+      "path": "development/blueprints/departments/convention-center.md",
+      "status": "partial",
+      "dependencies": [
+        "world-districts",
+        "vehicles-yachts",
+        "performance-quality"
+      ],
+      "sourceCount": 6,
+      "ownerApproved": false
+    },
+    {
+      "id": "world-districts",
+      "title": "World & Districts",
+      "path": "development/blueprints/departments/world-districts.md",
+      "status": "partial",
+      "dependencies": [
+        "performance-quality",
+        "security-release"
+      ],
+      "sourceCount": 12,
+      "ownerApproved": false
+    },
+    {
+      "id": "vehicles-yachts",
+      "title": "Vehicles & Yachts",
+      "path": "development/blueprints/departments/vehicles-yachts.md",
+      "status": "discovery-needed",
+      "dependencies": [
+        "world-districts",
+        "water-environment",
+        "performance-quality",
+        "security-release"
+      ],
+      "sourceCount": 6,
+      "ownerApproved": false
+    },
+    {
+      "id": "people-experiences",
+      "title": "People & Experiences",
+      "path": "development/blueprints/departments/people-experiences.md",
+      "status": "partial",
+      "dependencies": [
+        "jumbotron-events",
+        "lambo-city-radio",
+        "security-release",
+        "performance-quality"
+      ],
+      "sourceCount": 8,
+      "ownerApproved": false
+    },
+    {
+      "id": "performance-quality",
+      "title": "Performance & Quality",
+      "path": "development/blueprints/departments/performance-quality.md",
+      "status": "cross-cutting",
+      "dependencies": [
+        "all departments"
+      ],
+      "sourceCount": 7,
+      "ownerApproved": false
+    },
+    {
+      "id": "security-release",
+      "title": "Security & Release",
+      "path": "development/blueprints/departments/security-release.md",
+      "status": "cross-cutting",
+      "dependencies": [
+        "performance-quality",
+        "all departments"
+      ],
+      "sourceCount": 7,
+      "ownerApproved": false
+    }
+  ],
+  "rules": {
+    "draftsAreNotTaskAuthorization": true,
+    "sourcePresenceIsNotCompletionProof": true,
+    "productionChangesRequireSeparateApproval": true,
+    "ownerAuthoredSourcesMustRemainUnmodified": true
+  }
+}
