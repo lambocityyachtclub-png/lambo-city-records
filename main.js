@@ -169,8 +169,7 @@ window.__lamboCityPrepareFloor = floor => {
         // Once module initialization starts, retain a failed promise rather
         // than retrying partially initialized systems and duplicating listeners.
         floor2InitializationStarted = true;
-        Object.assign(engine.systems, systems);
-        engine.context.systems = engine.systems;
+        engine.registerSystems(systems);
 
         const initializationOrder = [
           ["recordsHQFloor2Studio", [engine.scene]],
@@ -186,7 +185,7 @@ window.__lamboCityPrepareFloor = floor => {
         ];
 
         for (const [name, args] of initializationOrder) {
-          await Promise.resolve(systems[name].init(...args));
+          await Promise.resolve(engine.initSystem(name, ...args));
         }
 
         if (!engine.scene.getObjectByName("recordsHQFloor2Studio")) {
@@ -218,17 +217,16 @@ window.__lamboCityPrepareFloor = floor => {
           }
         }
 
-        Object.assign(engine.systems, systems);
-        engine.context.systems = engine.systems;
+        engine.registerSystems(systems);
 
         // Initialize each visual layer only when its scene root is absent.
         if (!engine.scene.getObjectByName("recordsHQFloor3Executive")) {
-          systems.recordsHQFloor3Executive.init(engine.scene);
+          engine.initSystem("recordsHQFloor3Executive", engine.scene);
         }
         if (!engine.scene.getObjectByName("floor3ExecutiveDetails")) {
-          systems.recordsHQFloor3Details.init(engine.scene);
+          engine.initSystem("recordsHQFloor3Details", engine.scene);
         }
-        systems.recordsHQFloor3Experience.init(engine.scene, engine.context);
+        engine.initSystem("recordsHQFloor3Experience", engine.scene, engine.context);
 
         // Do not let the elevator report a successful arrival until the
         // actual Floor 3 architecture is present in the live scene.
@@ -241,9 +239,8 @@ window.__lamboCityPrepareFloor = floor => {
         window.__lamboCityFloor3Ready = true;
       } else {
         const rooftop = await import("./recordsHQRooftopVIP.js");
-        engine.systems.recordsHQRooftopVIP = rooftop.default;
-        engine.context.systems = engine.systems;
-        engine.systems.recordsHQRooftopVIP?.init?.(engine.scene);
+        engine.registerSystems({ recordsHQRooftopVIP: rooftop.default });
+        engine.initSystem("recordsHQRooftopVIP", engine.scene);
       }
     })().catch(error => {
       if (floor === 2) {
