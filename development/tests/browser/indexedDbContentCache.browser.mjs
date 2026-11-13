@@ -247,7 +247,8 @@ async function runBrowser(name, browserType, contextOptions = {}) {
       queueStatus: document.querySelector("#queue-status")?.textContent,
       savedVisionState: document.querySelector("#task-state")?.textContent,
       visionInputCleared: document.querySelector("#vision")?.value === "",
-      message: document.querySelector("#vision-message")?.textContent || ""
+      message: document.querySelector("#vision-message")?.textContent || "",
+      storageNote: document.querySelector(".local-storage-note")?.textContent || ""
     }));
     if (
       ownerWorkspaceState.localCoreStatus !== "Ready" ||
@@ -255,6 +256,8 @@ async function runBrowser(name, browserType, contextOptions = {}) {
       ownerWorkspaceState.savedVisionState !== "SAVED LOCALLY" ||
       !ownerWorkspaceState.visionInputCleared ||
       !ownerWorkspaceState.message.includes("No hosted worker") ||
+      !ownerWorkspaceState.storageNote.includes("not encrypted as a password vault") ||
+      !ownerWorkspaceState.storageNote.includes("not synced or backed up") ||
       hostedVisionSubmissionRequests !== 0
     ) {
       throw new Error("Owner workspace did not save locally with hosted vision submission disabled.");
