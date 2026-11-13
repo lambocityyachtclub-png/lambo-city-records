@@ -60,6 +60,17 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
+      - name: Generate source-linked blueprint reconciliation
+        run: node development/blueprints/reconcileBlueprints.mjs
+
+      - name: Upload LAMBO CITY blueprint reconciliation report
+        uses: actions/upload-artifact@v4
+        with:
+          name: lambo-city-blueprint-reconciliation
+          path: development/planning/blueprint-reconciliation/
+          if-no-files-found: error
+          retention-days: 7
+
       - name: Syntax-check private ALIVE owner workspace
         run: |
           node --check alive.js
