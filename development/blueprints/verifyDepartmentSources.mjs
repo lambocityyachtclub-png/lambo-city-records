@@ -123,10 +123,7 @@ async function buildActiveModuleGraph(root, entrypointSources) {
   return { roots, referencesByPath };
 }
 function capabilityStatus(sourcePresent, runtimeRefs, testRefs) {
-  const connected = runtimeRefs.some(ref =>
-    ref.kind === "engine-initialize" ||
-    (ref.kind === "lazy-system-mapping" && runtimeRefs.some(item => item.kind === "lazy-initialization-order"))
-  );
+  const connected = runtimeRefs.length > 0;
   if (!sourcePresent) return "planned";
   if (connected && testRefs.length) return "tested";
   if (connected) return "connected";
