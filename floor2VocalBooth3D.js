@@ -240,8 +240,11 @@ export default {
   screenTexture:null,
   recordingHandler:null,
   frameElapsed:0,
-  async init(scene, context){
-    THREE = context?.THREE || await import("https://unpkg.com/three@0.160.0/build/three.module.js");
+  init(scene, context = {}) {
+    THREE = context?.THREE;
+    if (!THREE) {
+      throw new Error("Shared Three.js 0.160.0 context is required for this Floor 2 module.");
+    }
     const studio=scene?.getObjectByName("recordsHQFloor2Studio");
     const booth=studio?.getObjectByName("floor2RecordingBooth");
     if(!booth){console.warn("LAMBO CITY Vocal Booth: existing booth not found.");return;}
