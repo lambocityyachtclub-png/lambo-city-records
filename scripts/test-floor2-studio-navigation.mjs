@@ -43,7 +43,7 @@ assert.match(elevator, /isFloor2Discovered:\s*\(\)\s*=>\s*window\.__lamboCityFlo
 assert.match(phoneNavigation, /getPrepareFloor\(\)/, "A discovered Floor 2 shortcut must load its session before direct entry");
 assert.match(phoneNavigation, /prepareFloor\(2\)/, "The returning phone shortcut must prepare Floor 2 on demand");
 assert.match(phoneNavigation, /hasDirectEntry\(\) && enterDirect\(\)/, "The cockpit shortcut must enter only after its session hook exists");
-assert.match(phoneNavigation, /selectFloor\(2\)/, "A failed direct-entry preload must retain the physical elevator fallback");
+assert.match(phoneNavigation, /selectOrQueue\(2\)/, "A failed direct-entry preload must retain the physical elevator fallback.");
 assert.match(elevator, /let travelStartPending = false/,
   "The phone shortcut must queue a trip if the first player update has not arrived yet.");
 assert.match(elevator, /function startTravel\(player = getPlayer\(\)\)/,
