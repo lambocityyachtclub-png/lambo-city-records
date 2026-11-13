@@ -256,7 +256,15 @@ export async function buildDepartmentSourceVerification(root = ROOT) {
   const publicDomains = new Set(["visitor-world", "studio-standalone"]);
   const publicExperienceDevelopmentImports = [];
   for (const [sourcePath, references] of activeGraph.referencesByPath.entries()) {
-    if (!sourcePath.startsWith("development/")) continue;
+    const isAliveInfrastructure =
+      sourcePath.startsWith("development/") ||
+      sourcePath.startsWith("api/alive/") ||
+      sourcePath.startsWith("server/alive/") ||
+      sourcePath === "alive.js" ||
+      sourcePath.startsWith("alive-review.") ||
+      sourcePath === "scripts/prepare-alive-worker-task.mjs" ||
+      sourcePath === "scripts/validate-alive-worker-diff.mjs";
+    if (!isAliveInfrastructure) continue;
     for (const reference of references) {
       if (publicDomains.has(reference.runtimeDomain)) {
         publicExperienceDevelopmentImports.push({
