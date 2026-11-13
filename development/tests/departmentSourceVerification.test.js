@@ -23,8 +23,8 @@ test("department verification distinguishes source presence, runtime references 
     await fs.writeFile(path.join(root, "development/blueprints/departments/sample.md"),
       "# Sample\n\n## 3. Current source inventory\n- `sampleFeature.js`\n- `missingFeature.js`\n\n## 4. Non-goals\n");
     await fs.writeFile(path.join(root, "sampleFeature.js"), "export default {};\n");
-    await fs.writeFile(path.join(root, "main.js"), 'import Sample from "./sampleFeature.js";\\nengine.registerSystems({\\n  sampleFeature: Sample,\\n});\\n');
-    await fs.writeFile(path.join(root, "engine.js"), 'initialize("sampleFeature");\\n');
+    await fs.writeFile(path.join(root, "main.js"), 'import Sample from "./sampleFeature.js";\nengine.registerSystems({\n  sampleFeature: Sample,\n});\n');
+    await fs.writeFile(path.join(root, "engine.js"), 'initialize("sampleFeature");\n');
     await fs.writeFile(path.join(root, "tests/sample.test.mjs"), 'import "../sampleFeature.js";\n');
     for (const file of ["worldSystemHost.js", "worldSystemRuntime.js", "floor2StudioNavigation.js", "floor2StudioSession.js"]) {
       await fs.writeFile(path.join(root, file), "");
