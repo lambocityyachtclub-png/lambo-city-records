@@ -22,7 +22,7 @@ const monitor = await readFile(new URL("../performanceMonitor.js", import.meta.u
 assert.match(renderer, /DeviceGraphics\.getProfile\(\)/);
 assert.match(renderer, /DeviceGraphics\.applyRendererProfile\(renderer\)/);
 assert.match(renderer, /removeEventListener\("resize", resizeHandler\)/);
-assert.match(monitor, /QUALITY\s+\s*\+ snapshot\.graphicsTier\.toUpperCase\(\)/);
+assert.ok(monitor.includes('"QUALITY      " + snapshot.graphicsTier.toUpperCase()'));
 assert.match(monitor, /params\.get\("perf"\) === "1"/);
 
 console.log("Adaptive device graphics profile tests passed.");
