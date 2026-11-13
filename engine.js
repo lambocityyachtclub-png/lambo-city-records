@@ -66,6 +66,9 @@ export default class Engine {
     this.context.camera   = this.camera;
     this.context.renderer = this.renderer;
     this.context.systems  = this.systems;
+    // Build touch controls immediately after the core renderer/context exist.
+    // Do not let optional world-feature initialization delay or suppress the iPad joystick.
+    this.systems.input?.init?.();
     this.systems.performanceMonitor?.init?.(this.renderer, this.context);
     this.systems.world?.init?.(this.scene);
     this.systems.water?.init?.(this.scene);
@@ -149,7 +152,6 @@ this.systems.floor2VocalBooth3D?.init?.(this.scene, this.context);
 this.systems.floor2CitySynth?.init?.(this.scene, this.context);
 
 this.systems.boardwalkOverlooks?.init?.(this.scene);
-    this.systems.input?.init?.();
     this.systems.player?.init?.(this.scene);
     this.systems.worldSystemHost?.init?.(this.scene, this.context);
     this.systems.worldStreaming?.init?.(this.scene, this.context);
