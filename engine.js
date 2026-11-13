@@ -5,7 +5,58 @@ export default class Engine {
     this.context = {};
   }
   registerSystems(systems) {
-    this.systems = systems;
+    // A single optional feature must never prevent the core world from
+    // reaching its render loop. Keep each module isolated at its boundary.
+    this.systems = Object.fromEntries(
+      Object.entries(systems).map(([name, system]) => {
+        if (!system || typeof system !== "object") return [name, system];
+        const failed = new Set();
+        const isolated = new Proxy(system, {
+          get(target, property) {
+            const value = Reflect.get(target, property, target);
+            if (typeof value !== "function") return value;
+            if (property === "init") {
+              return (...args) => {
+                if (failed.has("init")) return undefined;
+                try {
+                  return value.apply(target, args);
+                } catch (error) {
+                  failed.add("init");
+                  console.error(`[LAMBO CITY] ${name}.init failed; continuing startup.`, error);
+                  window.__lamboCityStartupErrors ||= [];
+                  window.__lamboCityStartupErrors.push({
+                    system: name,
+                    phase: "init",
+                    message: String(error?.message || error)
+                  });
+                  return undefined;
+                }
+              };
+            }
+            if (property === "update") {
+              return (...args) => {
+                if (failed.has("update")) return undefined;
+                try {
+                  return value.apply(target, args);
+                } catch (error) {
+                  failed.add("update");
+                  console.error(`[LAMBO CITY] ${name}.update failed; disabling this update only.`, error);
+                  window.__lamboCityStartupErrors ||= [];
+                  window.__lamboCityStartupErrors.push({
+                    system: name,
+                    phase: "update",
+                    message: String(error?.message || error)
+                  });
+                  return undefined;
+                }
+              };
+            }
+            return value.bind(target);
+          }
+        });
+        return [name, isolated];
+      })
+    );
   }
   init() {
     this.scene    = this.systems.scene?.init?.();
