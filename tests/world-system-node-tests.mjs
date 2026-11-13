@@ -168,6 +168,12 @@ assert.equal(validateDistrict(disconnectedPedestrian).issues.some(item => item.c
   "a disconnected pedestrian island must still be rejected");
 assert.equal(CONFERENCE_CENTER_DISTRICT.groundTopY, CITY_MAP.surfaces.groundTopY);
 assert.equal(CONFERENCE_CENTER_DISTRICT.bounds.minZ, CITY_MAP.districts.marinaBoardwalk.road.maxZ);
+assert.ok(CONFERENCE_CENTER_DISTRICT.streamingBounds.minZ > CONFERENCE_CENTER_DISTRICT.bounds.minZ,
+  "the full district retains its boardwalk connector while detail streaming uses the actual district core");
+assert.ok(streamingModule.distanceToBounds(CONFERENCE_CENTER_DISTRICT.bounds, 28, 22) <= 30,
+  "Records HQ is intentionally close to the service-connector edge of the full district bounds");
+assert.ok(streamingModule.distanceToBounds(CONFERENCE_CENTER_DISTRICT.streamingBounds, 28, 22) > 30,
+  "Records HQ must remain outside the Conference Center's full-detail activation radius");
 assert.equal(CONFERENCE_CENTER_DISTRICT.roadNetwork.nodes.filter(node => node.turningArea?.width === 18 && node.turningArea?.depth === 18).length, 4);
 assert.equal(CONFERENCE_CENTER_DISTRICT.roadNetwork.segments.filter(segment => segment.id.startsWith("boulevard-") && segment.sidewalkOffset >= 10.5).length, 5);
 assert.equal(CONFERENCE_CENTER_DISTRICT.roadNetwork.nodes.filter(node => node.turningArea?.width === 14 && node.turningArea?.depth === 14).length, 0);
@@ -364,6 +370,34 @@ assert.equal(streamState.proxied, true);
 const proxyRemoval = streamer.update(0, { playerPosition: { x: 400, z: 50 } });
 assert.equal(proxyRemoval.unproxied.includes("stream-test"), true);
 assert.equal(streamState.proxied, false);
+
+const hqStreamState = { built: false, proxied: false };
+const hqStreamFixture = {
+  getDistrictIds: () => ["hq-nearby"],
+  getDistrict: () => ({
+    id: "hq-nearby",
+    bounds: { minX: -105, maxX: 19, minZ: 50, maxZ: 158 },
+    streamingBounds: { minX: -105, maxX: 19, minZ: 60, maxZ: 158 }
+  }),
+  isDistrictBuilt: () => hqStreamState.built,
+  isDistrictProxied: () => hqStreamState.proxied,
+  buildDistrictProxy: () => { hqStreamState.proxied = true; return {}; },
+  removeDistrictProxy: () => { const had = hqStreamState.proxied; hqStreamState.proxied = false; return had; },
+  buildDistrict: () => { hqStreamState.built = true; hqStreamState.proxied = false; return {}; },
+  removeDistrict: () => { const had = hqStreamState.built; hqStreamState.built = false; return had; },
+  updateDistrictDetailFocus: () => false
+};
+const hqStreamer = new streamingModule.default({
+  streamInRadius: 30, streamOutRadius: 45, proxyInRadius: 900, proxyOutRadius: 1000
+}).init(hqStreamFixture);
+const hqApproach = hqStreamer.update(0, { playerPosition: { x: 28, z: 22 } });
+assert.equal(hqApproach.built.includes("hq-nearby"), false,
+  "the nearby Records HQ must not trigger the full Conference Center detail build");
+assert.equal(hqApproach.proxied.includes("hq-nearby"), true,
+  "the lightweight far proxy may remain available near Records HQ");
+const conferenceApproach = hqStreamer.update(0, { playerPosition: { x: -43, z: 60 } });
+assert.equal(conferenceApproach.built.includes("hq-nearby"), true,
+  "full district detail must still build when the player approaches the Conference Center core");
 
 const gridDistrict = createDistrictFromRecipe({
   id: "world-system-grid-test",
