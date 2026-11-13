@@ -26,6 +26,6 @@ PR #52 adds a browser-native local control plane through `development/runtime/cr
 
 ## Local ALIVE runtime and data boundaries
 
-The local control plane is initialized only after owner authentication in the private ALIVE workspace. Its IndexedDB records are scoped to that browser profile; they are not encrypted against access by another person using the same browser profile, are not synchronized across devices, and are not a backup. Do not store passwords, API keys, tokens or other secrets in local ALIVE records. Clearing browser site data can remove these records.
+The local control plane is initialized only after owner authentication in the private ALIVE workspace. Its IndexedDB records are scoped to that browser profile; they are not encrypted against access by another person using the same browser profile, are not synchronized across devices, and are not a backup or cross-device sync mechanism. Do not store passwords, API keys, tokens or other secrets in local ALIVE records. Clearing browser site data can remove these records.
 
 The local core is not a code executor. AI, hosted queues, remote storage, schedulers and execution adapters are separate capabilities and are not enabled by the local bootstrap. See `development/runtime/README.md` for the operational contract and current limitations.
