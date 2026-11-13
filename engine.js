@@ -171,9 +171,11 @@ export default class Engine {
 
   loop = (time = 0) => {
     requestAnimationFrame(this.loop);
+    // Keep simulation time close to wall time on lower-frame-rate devices.
+    // A 33ms cap made elevator and player motion crawl below 30 FPS.
     const delta = Math.min(
       (time - this.lastTime) / 1000,
-      0.033
+      0.1
     );
     this.lastTime = time;
     this.update(delta);
