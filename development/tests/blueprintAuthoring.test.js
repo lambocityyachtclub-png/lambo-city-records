@@ -57,3 +57,17 @@ test("Master Blueprint preserves owner-authored sources and explicit unresolved 
   assert.match(master, /not a task authorization/i);
   assert.match(master, /live checkout, payment credentials/i);
 });
+
+test("ALIVE implementation convergence audit preserves the local-first core boundary", async () => {
+  const audit = await fs.readFile(
+    path.join(root, "development/blueprints/ALIVE_IMPLEMENTATION_CONVERGENCE_DRAFT.md"),
+    "utf8"
+  );
+  const readme = await fs.readFile(path.join(root, "development/blueprints/README.md"), "utf8");
+  assert.match(audit, /PR #31/);
+  assert.match(audit, /PR #44/);
+  assert.match(audit, /local owner bootstrap starts with no AI, Sandbox, Vercel token, or database credentials/i);
+  assert.match(audit, /must not be imported by the public game runtime/i);
+  assert.match(audit, /No branch is merged by this audit/);
+  assert.match(readme, /ALIVE_IMPLEMENTATION_CONVERGENCE_DRAFT\.md/);
+});
