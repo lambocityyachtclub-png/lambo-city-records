@@ -120,6 +120,8 @@ test("verification reports a visitor-world import into ALIVE development infrast
   const root = await fs.mkdtemp(path.join(os.tmpdir(), "lc-department-boundary-"));
   try {
     await fs.mkdir(path.join(root, "development/engine"), { recursive: true });
+    await fs.mkdir(path.join(root, "server/alive"), { recursive: true });
+    await fs.mkdir(path.join(root, "api/alive"), { recursive: true });
     await fs.writeFile(path.join(root, "development/blueprints/blueprintSet.json"), JSON.stringify({
       departments: []
     }));
@@ -130,9 +132,11 @@ test("verification reports a visitor-world import into ALIVE development infrast
     await fs.writeFile(path.join(root, "development/engine/privateCore.js"), "export const privateCore = true;\n");
     const report = await buildDepartmentSourceVerification(root);
     assert.equal(report.runtimeIsolation.passed, false);
-    assert.equal(report.runtimeIsolation.publicExperienceDevelopmentImports.length, 1);
-    assert.equal(report.runtimeIsolation.publicExperienceDevelopmentImports[0].path, "development/engine/privateCore.js");
-    assert.equal(report.runtimeIsolation.publicExperienceDevelopmentImports[0].runtimeDomain, "visitor-world");
+    assert.equal(report.runtimeIsolation.publicExperienceDevelopmentImports.length, 3);
+    assert.ok(report.runtimeIsolation.publicExperienceDevelopmentImports.some(item => item.path === "development/engine/privateCore.js"));
+    assert.ok(report.runtimeIsolation.publicExperienceDevelopmentImports.some(item => item.path === "server/alive/security.js"));
+    assert.ok(report.runtimeIsolation.publicExperienceDevelopmentImports.some(item => item.path === "api/alive/session.js"));
+    assert.ok(report.runtimeIsolation.publicExperienceDevelopmentImports.every(item => item.runtimeDomain === "visitor-world"));
   } finally {
     await fs.rm(root, { recursive: true, force: true });
   }
