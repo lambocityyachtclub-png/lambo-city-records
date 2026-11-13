@@ -348,6 +348,11 @@ export default {
   },
 
   update(delta, context) {
+    window.__lamboCityFloor2SessionUpdateCount =
+      (window.__lamboCityFloor2SessionUpdateCount || 0) + 1;
+    window.__lamboCityFloor2SessionLastDelta = delta;
+    window.__lamboCityFloor2SessionArrivalElapsed = arrivalElapsed;
+    window.__lamboCityFloor2SessionArrivalStartPresent = !!arrivalStart;
     playerSystem = context.systems?.player || playerSystem;
     renderer = context.renderer || renderer;
 
