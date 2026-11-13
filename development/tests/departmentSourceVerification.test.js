@@ -7,10 +7,11 @@ import { buildDepartmentSourceVerification } from "../blueprints/verifyDepartmen
 
 const tick = String.fromCharCode(96);
 
-test("department verification distinguishes registered roots, transitive imports, and test references", async () => {
+test("department verification follows registered, HTML, and transitive module roots without inventing runtime roots", async () => {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), "lc-department-verification-"));
   try {
     await fs.mkdir(path.join(root, "development/blueprints/departments"), { recursive: true });
+    await fs.mkdir(path.join(root, "development/engine"), { recursive: true });
     await fs.mkdir(path.join(root, "tests"), { recursive: true });
     await fs.mkdir(path.join(root, "scripts"), { recursive: true });
     await fs.writeFile(path.join(root, "development/blueprints/blueprintSet.json"), JSON.stringify({
@@ -19,7 +20,7 @@ test("department verification distinguishes registered roots, transitive imports
         title: "Sample Department",
         path: "development/blueprints/departments/sample.md",
         status: "partial",
-        sourceCount: 6,
+        sourceCount: 7,
         ownerApproved: false
       }]
     }));
@@ -33,16 +34,23 @@ test("department verification distinguishes registered roots, transitive imports
       "- " + tick + "architecture.md" + tick,
       "- " + tick + "flags.json" + tick,
       "- " + tick + "scripts/test-sample.mjs" + tick,
+      "- " + tick + "development/engine/developmentSystem.js" + tick,
       "",
       "## 4. Non-goals",
       ""
     ].join("\n");
     await fs.writeFile(path.join(root, "development/blueprints/departments/sample.md"), document);
-    await fs.writeFile(path.join(root, "sampleFeature.js"), 'import "./nestedFeature.js";\nexport default {};\n');
+    await fs.writeFile(path.join(root, "sampleFeature.js"),
+      'import {\n  ready\n} from "./nestedFeature.js";\nexport default ready;\n');
     await fs.writeFile(path.join(root, "nestedFeature.js"), "export const ready = true;\n");
     await fs.writeFile(path.join(root, "architecture.md"), "# Architecture\n");
     await fs.writeFile(path.join(root, "flags.json"), "{}\n");
     await fs.writeFile(path.join(root, "scripts/test-sample.mjs"), "console.log('test');\n");
+    await fs.writeFile(path.join(root, "development/engine/developmentSystem.js"), "export const libraryOnly = true;\n");
+    await fs.writeFile(path.join(root, "studio.html"),
+      '<!doctype html>\n<script type="module" src="./studioStandalone.js"></script>\n');
+    await fs.writeFile(path.join(root, "studioStandalone.js"),
+      'import {\n  default as Sample\n} from "./sampleFeature.js";\nvoid Sample;\n');
     await fs.writeFile(path.join(root, "main.js"),
       'import Sample from "./sampleFeature.js";\nengine.registerSystems({\n  sampleFeature: Sample,\n});\n');
     await fs.writeFile(path.join(root, "engine.js"), 'initialize("sampleFeature");\n');
@@ -60,12 +68,17 @@ test("department verification distinguishes registered roots, transitive imports
     assert.equal(capabilities[0].runtimeDeviceVerification, "not-verified");
     assert.equal(capabilities[1].sourcePresent, true);
     assert.equal(capabilities[1].status, "connected");
-    assert.equal(capabilities[1].runtimeReferences[0].kind, "transitive-static-import");
+    assert.ok(capabilities[1].runtimeReferences.some(item => item.kind === "transitive-static-import"));
     assert.equal(capabilities[2].sourcePresent, false);
     assert.equal(capabilities[2].status, "planned");
     assert.equal(capabilities[3].status, "documentation-reference");
     assert.equal(capabilities[4].status, "configuration-reference");
     assert.equal(capabilities[5].status, "test-source");
+    assert.equal(capabilities[6].status, "source-only");
+    assert.equal(capabilities[6].runtimeReferences.length, 0);
+    assert.ok(report.activeRuntimeRoots.some(item =>
+      item.path === "studioStandalone.js" && item.runtimeDomain === "studio-standalone"
+    ));
     assert.equal(report.verificationPolicy.testFilePresenceIsNotPassingTestProof, true);
   } finally {
     await fs.rm(root, { recursive: true, force: true });
