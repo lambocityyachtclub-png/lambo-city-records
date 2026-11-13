@@ -529,3 +529,52 @@ Do not build for the sake of building.
 ## THE GOAL:
 
 # MAKE LAMBO CITY FEEL COMPLETE.
+
+
+---
+
+# 21. INDEPENDENT ENTERTAINMENT COMPANY DIRECTION
+
+LAMBO CITY is intended to grow into a major independent entertainment company—not merely a game, website, or record label.
+
+The long-term business model brings complementary capabilities under one owner-directed parent ecosystem:
+
+- **LAMBO CITY Records:** music, artist development, releases, catalog, and label operations.
+- **LAMBO CITY Touring:** independent live performances, touring operations, and event production.
+- **LAMBO CITY Fashion:** owned clothing lines, lifestyle products, and selective brand collaborations.
+- **LAMBO CITY Digital:** apps, platforms, technology products, and direct audience relationships.
+- **LAMBO CITY Gaming:** the interactive world, gameplay, social experiences, and community.
+- **LAMBO CITY Entertainment:** film, media, soundtracks, original intellectual property, and strategic partnerships.
+
+These are strategic business capabilities and a long-term direction, not a requirement to launch every division immediately. Each division should be developed when its economics, operations, audience, and legal requirements are ready.
+
+## Strategic reference models
+
+Study the business principles and adapt them to LAMBO CITY's own identity:
+
+- **Jay-Z:** Roc-A-Fella, Rocawear, Roc Nation, and Tidal as examples to study for artist ownership, label building, fashion, touring, distribution, partnerships, and platform leverage.
+- **Tech N9ne:** Strange Music as an example to study for independent label operations, touring, merchandise, and direct fan relationships.
+- **Pharrell Williams:** cross-disciplinary creative direction, music, fashion, brand collaborations, film, and soundtrack opportunities.
+- **will.i.am:** the intersection of music, technology, entrepreneurship, collaboration, and artist-facing platforms.
+
+These are reference blueprints, not templates to copy. LAMBO CITY must build its own intellectual property, culture, products, relationships, and competitive position.
+
+## One connected company, modular divisions
+
+The divisions should reinforce one another while remaining independently understandable and maintainable. Music can create demand for events and fashion; events can introduce artists and the game; digital products can strengthen direct audience relationships; the game can provide immersive destinations for music, creators, and entertainment.
+
+Connections should be intentional and use clear interfaces. No division should become so dependent on another that a failure or delay disables its core operation.
+
+## Competitive ambition
+
+The ambition is to compete for audience attention, cultural relevance, customers, creators, and commercial opportunities alongside established companies—not to imitate their products or claim that LAMBO CITY already matches their scale.
+
+Compete through a distinctive combination of independent ownership, original culture and IP, direct community relationships, cross-division experiences, speed of experimentation, and carefully chosen partnerships.
+
+## Owner authority and operating discipline
+
+The founder remains the final authority over the brand, creative direction, intellectual property, partnerships, spending, and releases. AI and development systems may research, propose, prototype, implement within approved boundaries, and test. They must not independently spend money, sign agreements, grant rights, publish major releases, or change ownership and security controls.
+
+Preserve the existing working project. This company-level direction does not authorize a game rewrite, immediate launch of every division, or premature introduction of multiplayer, streaming infrastructure, financial products, or paid services.
+
+**The North Star:** Build LAMBO CITY into an independently controlled, interconnected entertainment institution whose divisions strengthen one another and whose technology helps the company evolve.
