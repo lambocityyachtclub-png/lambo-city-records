@@ -84,6 +84,7 @@ const StudioMultitrackWorkspace = {
   onTransportChange: null,
   selectedClipId: null,
   selectedTrackId: null,
+  activePitchTrackId: null,
   zoomBarWidth: 72,
   playheadBar: 1,
   snapMode: "bars",
