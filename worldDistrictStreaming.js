@@ -57,7 +57,11 @@ export default class WorldDistrictStreaming {
     for (const id of this.worldSystem.getDistrictIds()) {
       const district = this.worldSystem.getDistrict(id);
       if (!district?.bounds) continue;
-      const distance = distanceToBounds(district.bounds, position.x, position.z);
+      // A district may include a long connector road to a neighboring area.
+      // Use its optional core bounds for detail activation so that a nearby
+      // protected location does not trigger the entire district build.
+      const activationBounds = district.streamingBounds || district.bounds;
+      const distance = distanceToBounds(activationBounds, position.x, position.z);
       const built = this.worldSystem.isDistrictBuilt(id);
       const proxied = this.worldSystem.isDistrictProxied(id);
 
