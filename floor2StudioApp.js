@@ -75,7 +75,7 @@ function normalizePattern(data) {
 }
 
 export default {
-  async init(scene, context) {
+  init(scene, context = {}) {
     this.scene = scene;
     this.camera = context?.camera;
     this.renderer = context?.renderer;
@@ -119,7 +119,10 @@ this.noiseBuffer = null;
 
     let THREE;
     try {
-      THREE = context?.THREE || await import("https://unpkg.com/three@0.160.0/build/three.module.js");
+      THREE = context?.THREE;
+    if (!THREE) {
+      throw new Error("Shared Three.js 0.160.0 context is required for this Floor 2 module.");
+    }
     } catch (error) {
       console.error("LAMBO CITY Beat Lab interaction could not load:", error);
       return;
