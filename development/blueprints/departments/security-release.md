@@ -78,7 +78,7 @@ Dependencies are planning relationships, not permission for one department to ow
 ## 6. Proposed roadmap
 
 1. Keep draft blueprints and proposals read-only until explicit owner approval.
-2. [x] Add and browser-test a local owner control plane using IndexedDB for owner directions, Development Director task state and review decisions, without paid AI, Vercel Sandbox, hosted queue or managed database dependencies (PR #52).
+2. [x] Add and browser-test a browser control plane using IndexedDB for owner directions, Development Director task state and review decisions, without paid AI, Vercel Sandbox, hosted queue or managed database dependencies (PR #52).
 3. Keep optional adapters (AI, sandbox, hosted storage/scheduler) separate from the local core and disabled unless explicitly configured and approved.
 4. Review secret exposure, path allowlists, execution isolation, network access, artifact provenance and audit logs before any code-execution adapter is enabled.
 5. Define release checklist, preview verification, rollback and owner sign-off; never auto-promote production.
