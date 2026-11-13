@@ -1,10 +1,12 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
-const [camera, marina, elevator] = await Promise.all([
+const [camera, marina, elevator, main, scene] = await Promise.all([
   readFile(new URL("../camera.js", import.meta.url), "utf8"),
   readFile(new URL("../marina.js", import.meta.url), "utf8"),
-  readFile(new URL("../recordsHQElevator.js", import.meta.url), "utf8")
+  readFile(new URL("../recordsHQElevator.js", import.meta.url), "utf8"),
+  readFile(new URL("../main.js", import.meta.url), "utf8"),
+  readFile(new URL("../scene.js", import.meta.url), "utf8")
 ]);
 
 assert.match(elevator, /import \{ createPhoneFloorNavigator \} from "\.\/floor2PhoneNavigation\.js"/,
@@ -34,11 +36,11 @@ assert.match(camera, /removeOrbitControls = \(\) => \{/,
 assert.doesNotMatch(camera, /this\._removeOrbitControls/,
   "Camera update must not write to an undefined callback this.");
 
-console.log("PASS: world startup wiring and module callback regressions");
-
 assert.match(main, /import Scene, \{ THREE \} from "\.\/scene\.js"/,
   "The scene module must provide the shared core Three.js namespace.");
 assert.match(main, /engine\.context\.THREE = THREE/,
   "Streamed floor modules must receive the live core Three.js namespace.");
 assert.match(scene, /export \{ THREE \}/,
   "The core scene module must expose the shared Three.js namespace.");
+
+console.log("PASS: world startup wiring, shared Three.js, and module callback regressions");
