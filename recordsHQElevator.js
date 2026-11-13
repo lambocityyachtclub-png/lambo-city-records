@@ -847,27 +847,22 @@ export default {
     }
 
 
-    // Phone shortcuts use the same elevator travel, streaming, landing,
-    // and arrival systems as the physical elevator controls.
-    window.__lamboCityNavigateToFloor = floor => {
-      const destination = Number(floor);
-      if (![2, 3].includes(destination) || traveling || pendingLandingPlayer) {
-        return false;
+    // Phone shortcuts share the elevator's destination flow. Floor 2's
+    // session is lazy-loaded, so a returning visitor must wait for that
+    // module before the direct cockpit shortcut can be used.
+    window.__lamboCityNavigateToFloor = createPhoneFloorNavigator({
+      isBusy: () => traveling || Boolean(pendingLandingPlayer),
+      isFloor2Discovered: () => window.__lamboCityFloor2Discovered === true,
+      hasDirectEntry: () =>
+        typeof window.__lamboCityEnterFloor2CockpitDirect === "function",
+      enterDirect: () =>
+        window.__lamboCityEnterFloor2CockpitDirect?.(currentPlayer) === true,
+      getPrepareFloor: () => window.__lamboCityPrepareFloor,
+      selectFloor,
+      onError: error => {
+        console.error("LAMBO CITY Floor 2 phone shortcut could not preload the Studio:", error);
       }
-
-      // After the first completed Floor 2 discovery walk, the phone
-      // shortcut returns directly to the producer cockpit. The physical
-      // elevator continues to use its normal cinematic route.
-      if (
-        destination === 2 &&
-        window.__lamboCityFloor2Discovered === true
-      ) {
-        return window.__lamboCityEnterFloor2CockpitDirect?.(currentPlayer) === true;
-      }
-
-      selectFloor(destination);
-      return traveling;
-    };
+    });
 
     window.__lamboCityElevatorReady =
       true;
