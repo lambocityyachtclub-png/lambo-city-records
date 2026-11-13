@@ -125,8 +125,25 @@ async function smokeWorld({ label, isMobile }) {
     }
     await page.waitForSelector("#phone-ui");
     // The click handler closes the phone on the next animation frame.
-    // Dispatch the native click without Playwright retrying a detached button.
-    await page.locator("#lambo-phone-studio").evaluate(button => button.click());
+    try {
+      if (isMobile) {
+        await page.locator("#lambo-phone-studio").tap({ timeout: 10000 });
+      } else {
+        await page.locator("#lambo-phone-studio").click({ timeout: 10000 });
+      }
+    } catch (error) {
+      const diagnostics = await Promise.race([
+        page.evaluate(() => ({
+          requested: window.__lamboCityPhoneNavigationRequested || null,
+          started: window.__lamboCityPhoneNavigationStarted === true,
+          mode: window.__lamboCityFloor2SessionMode || null,
+          loadError: window.__lamboCityFloor2LoadError || null,
+          startupErrors: window.__lamboCityStartupErrors || []
+        })),
+        new Promise(resolve => setTimeout(() => resolve({ pageUnresponsive: true }), 3000))
+      ]);
+      throw new Error("Studio phone activation failed: " + JSON.stringify(diagnostics) + " · " + error.message);
+    }
     await page.waitForSelector("#phone-ui", { state: "detached" });
 
     // First visit must load Floor 2, complete the elevator arrival, and seat
@@ -181,8 +198,25 @@ async function smokeWorld({ label, isMobile }) {
     }
     await page.waitForSelector("#phone-ui");
     // The click handler closes the phone on the next animation frame.
-    // Dispatch the native click without Playwright retrying a detached button.
-    await page.locator("#lambo-phone-studio").evaluate(button => button.click());
+    try {
+      if (isMobile) {
+        await page.locator("#lambo-phone-studio").tap({ timeout: 10000 });
+      } else {
+        await page.locator("#lambo-phone-studio").click({ timeout: 10000 });
+      }
+    } catch (error) {
+      const diagnostics = await Promise.race([
+        page.evaluate(() => ({
+          requested: window.__lamboCityPhoneNavigationRequested || null,
+          started: window.__lamboCityPhoneNavigationStarted === true,
+          mode: window.__lamboCityFloor2SessionMode || null,
+          loadError: window.__lamboCityFloor2LoadError || null,
+          startupErrors: window.__lamboCityStartupErrors || []
+        })),
+        new Promise(resolve => setTimeout(() => resolve({ pageUnresponsive: true }), 3000))
+      ]);
+      throw new Error("Studio phone activation failed: " + JSON.stringify(diagnostics) + " · " + error.message);
+    }
     await page.waitForSelector("#phone-ui", { state: "detached" });
     await page.waitForFunction(() =>
       window.__lamboCityFloor2SessionMode === "seated"
