@@ -84,9 +84,13 @@ assert.doesNotMatch(workspace, /data-daw-secondary|data-daw-view=|data-flow-step
 
 console.log("Floor 2 Studio station registration and navigation checks passed.");
 
-assert.match(main, /engine\.registerSystems\(systems\)/,
-  "Streamed upper-floor modules must register through the live engine registry.");
-assert.match(main, /engine\.initSystem\(name, \.\.\.args\)/,
-  "Streamed upper-floor modules must use the engine's isolated, idempotent initializer.");
-assert.doesNotMatch(main, /Object\.assign\(engine\.systems, systems\)/,
-  "Streamed modules must not bypass the live engine lifecycle registry.");
+assert.match(engine, /initSystem\(name, \.\.\.args\)/,
+  "The engine must expose an idempotent initializer for streamed modules.");
+assert.match(engine, /this\.systems\[name\] = new Proxy/,
+  "The engine must isolate newly registered modules.");
+assert.match(engine, /this\.context\.systems = this\.systems/,
+  "The live context must retain the merged engine registry.");
+assert.match(main, /engine\.registerSystems\(\{\s*\[name\]: system\s*\}\)/,
+  "Each streamed upper-floor module must merge into the live engine registry.");
+assert.match(main, /await engine\.initSystem\(name\)/,
+  "Streamed upper-floor modules must use the engine's isolated initializer.");
