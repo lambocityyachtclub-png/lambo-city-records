@@ -11,23 +11,21 @@ const ENTRYPOINTS = [
   "worldSystemRuntime.js",
   "floor2StudioNavigation.js",
   "floor2StudioSession.js",
+  "alive.html",
   "alive.js",
+  "studio.html",
+  ".github/workflows/development-engine-tests.yml",
   "api/alive/session.js",
   "api/alive/private-task.js",
   "api/alive/status.js",
-  "api/alive/vision.js",
-  "development/engine/developmentSystem.js",
-  "development/runners/studio/studioDevelopmentRunner.js"
+  "api/alive/vision.js"
 ];
 
 const SERVICE_ROOTS = [
-  { path: "alive.js", kind: "owner-workspace-browser-root", domain: "alive-owner-workspace", file: "alive.html", line: 11 },
   { path: "api/alive/session.js", kind: "serverless-api-root", domain: "alive-api", file: "api/alive/session.js" },
   { path: "api/alive/private-task.js", kind: "serverless-api-root", domain: "alive-api", file: "api/alive/private-task.js" },
   { path: "api/alive/status.js", kind: "serverless-api-root", domain: "alive-api", file: "api/alive/status.js" },
-  { path: "api/alive/vision.js", kind: "serverless-api-root", domain: "alive-api", file: "api/alive/vision.js" },
-  { path: "development/engine/developmentSystem.js", kind: "development-engine-root", domain: "alive-development-engine", file: "development/engine/developmentSystem.js" },
-  { path: "development/runners/studio/studioDevelopmentRunner.js", kind: "development-runner-root", domain: "alive-development-engine", file: "development/runners/studio/studioDevelopmentRunner.js" }
+  { path: "api/alive/vision.js", kind: "serverless-api-root", domain: "alive-api", file: "api/alive/vision.js" }
 ];
 
 function lineHits(source, predicate) {
@@ -58,10 +56,32 @@ async function resolveLocalModule(root, importer, specifier) {
   return null;
 }
 
+function findModuleReferences(source) {
+  const found = [];
+  const patterns = [
+    { kind: "transitive-static-import", regex: /\bimport\s+(?:[\s\S]*?\s+from\s*)?["']([^"']+)["']/g },
+    { kind: "transitive-re-export", regex: /\bexport\s+(?:[\s\S]*?\s+from\s*)["']([^"']+)["']/g },
+    { kind: "transitive-lazy-import", regex: /\bimport\s*\(\s*["']([^"']+)["']\s*\)/g },
+    { kind: "worklet-or-asset-reference", regex: /new URL\(\s*["']([^"']+)["']\s*,\s*import\.meta\.url\s*\)/g }
+  ];
+  for (const pattern of patterns) {
+    for (const match of source.matchAll(pattern.regex)) {
+      const before = source.slice(0, match.index);
+      found.push({
+        specifier: match[1],
+        kind: pattern.kind,
+        line: before.split(/\r?\n/).length
+      });
+    }
+  }
+  return found.sort((left, right) => left.line - right.line);
+}
+
 async function buildActiveModuleGraph(root, entrypointSources) {
   const main = entrypointSources["main.js"] || "";
   const engine = entrypointSources["engine.js"] || "";
   const roots = [];
+
   for (const serviceRoot of SERVICE_ROOTS) {
     try {
       const stat = await fs.stat(path.join(root, serviceRoot.path));
@@ -70,6 +90,44 @@ async function buildActiveModuleGraph(root, entrypointSources) {
       if (error.code !== "ENOENT") throw error;
     }
   }
+
+  for (const htmlPath of ["alive.html", "studio.html"]) {
+    const html = entrypointSources[htmlPath] || "";
+    const scriptPattern = /<script\b[^>]*\bsrc=["']([^"']+)["'][^>]*>/gi;
+    for (const match of html.matchAll(scriptPattern)) {
+      if (!/\btype=["']module["']/i.test(match[0])) continue;
+      const target = await resolveLocalModule(root, htmlPath, match[1]);
+      if (!target) continue;
+      roots.push({
+        path: target,
+        kind: "registered-html-module-root",
+        file: htmlPath,
+        line: html.slice(0, match.index).split(/\r?\n/).length,
+        runtimeDomain: htmlPath === "studio.html" ? "studio-standalone" : "alive-owner-workspace"
+      });
+    }
+  }
+
+  const workflow = entrypointSources[".github/workflows/development-engine-tests.yml"] || "";
+  for (const scriptPath of [
+    "scripts/prepare-alive-worker-task.mjs",
+    "scripts/validate-alive-worker-diff.mjs"
+  ]) {
+    if (!workflow.includes(scriptPath)) continue;
+    try {
+      const stat = await fs.stat(path.join(root, scriptPath));
+      if (stat.isFile()) roots.push({
+        path: scriptPath,
+        kind: "workflow-invoked-script-root",
+        file: ".github/workflows/development-engine-tests.yml",
+        line: workflow.split(/\r?\n/).findIndex(line => line.includes(scriptPath)) + 1,
+        runtimeDomain: "alive-ci-worker"
+      });
+    } catch (error) {
+      if (error.code !== "ENOENT") throw error;
+    }
+  }
+
   const mainLines = main.split(/\r?\n/);
   for (let index = 0; index < mainLines.length; index += 1) {
     const line = mainLines[index];
@@ -134,23 +192,25 @@ async function buildActiveModuleGraph(root, entrypointSources) {
     referencesByPath.set(current.path, refs);
 
     const source = await fs.readFile(path.join(root, current.path), "utf8");
-    const lines = source.split(/\r?\n/);
-    for (let index = 0; index < lines.length; index += 1) {
-      const line = lines[index];
-      const importMatch = line.match(/^\s*import\b.*?\s+from\s+["']([^"']+)["']/);
-      const sideEffectMatch = line.match(/^\s*import\s+["']([^"']+)["']/);
-      const dynamicMatch = line.match(/import\(\s*["']([^"']+)["']\s*\)/);
-      const assetMatch = line.match(/new URL\(\s*["']([^"']+)["']\s*,\s*import\.meta\.url\s*\)/);
-      const specifier = importMatch?.[1] || sideEffectMatch?.[1] || dynamicMatch?.[1] || assetMatch?.[1];
-      if (!specifier) continue;
-      const target = await resolveLocalModule(root, current.path, specifier);
+    for (const reference of findModuleReferences(source)) {
+      const target = await resolveLocalModule(root, current.path, reference.specifier);
       if (!target) continue;
-      const edgeKind = assetMatch ? "worklet-or-asset-reference" :
-        dynamicMatch ? "transitive-lazy-import" : "transitive-static-import";
       const targetRefs = referencesByPath.get(target) || [];
-      targetRefs.push({ file: current.path, line: index + 1, kind: edgeKind, viaRoot: current.root.path, runtimeDomain: current.root.runtimeDomain });
+      targetRefs.push({
+        file: current.path,
+        line: reference.line,
+        kind: reference.kind,
+        viaRoot: current.root.path,
+        runtimeDomain: current.root.runtimeDomain
+      });
       referencesByPath.set(target, targetRefs);
-      if (!visited.has(current.root.runtimeDomain + ":" + target)) queue.push({ path: target, root: current.root, chain: current.chain.concat(current.path) });
+      if (!visited.has(current.root.runtimeDomain + ":" + target)) {
+        queue.push({
+          path: target,
+          root: current.root,
+          chain: current.chain.concat(current.path)
+        });
+      }
     }
   }
   return { roots, referencesByPath };
