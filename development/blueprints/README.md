@@ -23,3 +23,9 @@ The source-verification engine is `verifyDepartmentSources.mjs`. Its JSON and Ma
 ## Local-first ALIVE foundation
 
 PR #52 adds a browser-native local control plane through `development/runtime/createLocalAliveControlPlane.js` and `development/storage/indexedDbDevelopmentStorage.js`. It persists owner directions, tasks, and review decisions in the current browser profile before any optional hosted submission. Saving a direction does not trigger the hosted queue or any model call. It does not require AI, Vercel Sandbox, PostgreSQL, or a hosted queue to save local work. It is a control plane only; it does not execute code or sync records across devices.
+
+## Local ALIVE runtime and data boundaries
+
+The local control plane is initialized only after owner authentication in the private ALIVE workspace. Its IndexedDB records are scoped to that browser profile; they are not encrypted against access by another person using the same browser profile, are not synchronized across devices, and are not a backup. Do not store passwords, API keys, tokens or other secrets in local ALIVE records. Clearing browser site data can remove these records.
+
+The local core is not a code executor. AI, hosted queues, remote storage, schedulers and execution adapters are separate capabilities and are not enabled by the local bootstrap. See `development/runtime/README.md` for the operational contract and current limitations.
