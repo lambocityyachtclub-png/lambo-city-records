@@ -22,6 +22,7 @@ import { createSongProject, saveSongProject } from "./studioSongProject.js";
 import { exportSongProjectPackage, importSongProjectPackage } from "./studioProjectPackage.js";
 import StudioMPCSampler from "./studioMPCSampler.js";
 import StudioMPCLibrary from "./studioMPCLibrary.js";
+import { normalizePitchCorrectionSettings } from "./studioPitchCorrection.js";
 
 const COLORS = {
   navy: "#0B1A4A",
@@ -950,14 +951,7 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext,
       this.activePitchTrackId = track.id;
       StudioMultitrackWorkspace.activePitchTrackId = track.id;
       track.effects = track.effects || {};
-      track.effects.pitchCorrection = {
-        enabled: false,
-        root: 0,
-        scale: "major",
-        amount: 100,
-        speedMs: 25,
-        ...(track.effects.pitchCorrection || {})
-      };
+      track.effects.pitchCorrection = normalizePitchCorrectionSettings(track.effects.pitchCorrection || {});
       const settings = track.effects.pitchCorrection;
       const rootNames = ["C", "C♯", "D", "D♯", "E", "F", "F♯", "G", "G♯", "A", "A♯", "B"];
       const rootValue = Number(settings.root);
@@ -1007,14 +1001,7 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext,
       const key = control.dataset.pitchSetting;
       if (!["enabled", "root", "scale", "amount", "speedMs"].includes(key)) return;
       track.effects = track.effects || {};
-      track.effects.pitchCorrection = {
-        enabled: false,
-        root: 0,
-        scale: "major",
-        amount: 100,
-        speedMs: 25,
-        ...(track.effects.pitchCorrection || {})
-      };
+      track.effects.pitchCorrection = normalizePitchCorrectionSettings(track.effects.pitchCorrection || {});
       const settings = track.effects.pitchCorrection;
       if (!control.dataset.historyStarted) {
         workspace.recordHistory("Vocal pitch correction " + key);
