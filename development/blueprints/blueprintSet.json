@@ -156,6 +156,8 @@
     "codeExecutionEnabled": false,
     "crossDeviceSync": false,
     "backupExport": false,
-    "ownerApproved": false
+    "ownerApproved": false,
+    "visionSubmissionMode": "local-only",
+    "hostedQueueAutoSubmit": false
   }
 }
