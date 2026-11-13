@@ -1,0 +1,64 @@
+name: World System Checks
+
+on:
+  push:
+    paths:
+      - "main.js"
+      - "engine.js"
+      - "marina.js"
+      - "waterfrontStorefrontDetails.js"
+      - "world.js"
+      - "cityMap.js"
+      - "conferenceCenterDistrict.js"
+      - "dock.js"
+      - "water.js"
+      - "scripts/test-waterfront-storefront-details.mjs"
+      - ".github/workflows/world-system-checks.yml"
+
+  pull_request:
+    paths:
+      - "main.js"
+      - "engine.js"
+      - "marina.js"
+      - "waterfrontStorefrontDetails.js"
+      - "world.js"
+      - "cityMap.js"
+      - "conferenceCenterDistrict.js"
+      - "dock.js"
+      - "water.js"
+      - "scripts/test-waterfront-storefront-details.mjs"
+      - ".github/workflows/world-system-checks.yml"
+
+  workflow_dispatch:
+
+jobs:
+  world:
+    name: Validate World Modules
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Check world module syntax
+        run: |
+          for file in \
+            main.js \
+            engine.js \
+            marina.js \
+            waterfrontStorefrontDetails.js \
+            world.js \
+            cityMap.js \
+            conferenceCenterDistrict.js \
+            dock.js \
+            water.js
+          do
+            node --experimental-default-type=module --check "$file"
+          done
+
+      - name: Test additive waterfront storefront integration
+        run: node --experimental-default-type=module scripts/test-waterfront-storefront-details.mjs
