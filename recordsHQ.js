@@ -896,9 +896,8 @@ export default {
     // The old cross-plaza VIP barrier was removed; the entrance and
     // boardwalk-to-HQ route remain visually continuous.
 
-    // Restore the original waterfront promenade that visually ties
-    // the Records HQ plaza into the marina boardwalk.
-    buildWaterfrontPromenade(group);
+    // Keep the original street and sidewalk clear. The decorative HQ
+    // waterfront promenade overlay is intentionally not attached here.
 
 
     // ========================================================
