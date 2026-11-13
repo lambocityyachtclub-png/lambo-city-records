@@ -340,7 +340,7 @@ export function createStudioMixMasterApp({ beatLab, workspace } = {}) {
     if (control) StudioMultitrackWorkspace.recordHistory("Adjust mixer control");
   });
   root.addEventListener("keydown", event => {
-    const control = event.target.closest("[data-eq-band], [data-comp-ratio], [data-track-effect], [data-pitch-setting], [data-track-volume], [data-track-pan], [data-track-send], [data-stereo-width], [data-master-comp], [data-master-volume]");
+    const control = event.target.closest("[data-eq-band], [data-comp-ratio], [data-track-effect], [data-pitch-setting], [data-track-volume], [data-track-pan], [data-track-send], [data-stereo-width], [data-master-comp], [data-master-volume], [data-master-limiter-ceiling], [data-master-limiter-toggle]");
     if (control && ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Home", "End"].includes(event.key)) StudioMultitrackWorkspace.recordHistory("Adjust mixer control");
   });
 
