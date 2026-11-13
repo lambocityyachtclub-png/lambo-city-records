@@ -15,6 +15,12 @@ assert.match(marina, /stores\.forEach\(s => \{/,
   "Marina store construction must preserve the district root binding.");
 assert.match(marina, /postPositions\.forEach\(t => \{/,
   "Marina waterfront posts must preserve the district root binding.");
+assert.match(marina, /_buildWaterfrontGlass\(scene\) \{[\s\S]*?const root = this\._root;/,
+  "The nested waterfront builder must capture the district root before creating helper callbacks.");
+assert.match(marina, /function addGlassSection\([\s\S]*?root\.add\(base\)[\s\S]*?root\.add\(post\)/,
+  "Nested waterfront geometry must add to the captured root, not rely on callback this.");
+assert.doesNotMatch(marina, /function addGlassSection\([\s\S]*?this\._root\.add/,
+  "Nested waterfront callbacks must never dereference an unbound this.");
 assert.match(marina, /\[-1, 1\]\.forEach\(side => \{[\s\S]*?this\._root\.add\(sidewalk\)/,
   "The sidewalk callback must retain the district root binding.");
 assert.match(marina, /stores\.forEach\(s => \{[\s\S]*?this\._root\.add\(building\)/,
