@@ -53,6 +53,7 @@ import WorldSystemHost from "./worldSystemHost.js";
 import WorldStreaming from "./worldStreaming.js";
 import ConferenceCenterBlueprint from "./worldDistricts/conferenceCenter.js";
 const engine = new Engine();
+if (typeof window !== "undefined") window.__lamboCityEngine = engine;
 // All streamed departments share the single core Three.js 0.160.0 module.
 engine.context.THREE = THREE;
 engine.registerSystems({
