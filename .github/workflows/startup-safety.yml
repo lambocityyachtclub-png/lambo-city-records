@@ -21,6 +21,8 @@ jobs:
         run: node scripts/test-camera-baseline.mjs
       - name: Verify world startup wiring
         run: node scripts/test-world-startup-wiring.mjs
+      - name: Verify streamed engine registration
+        run: node --experimental-default-type=module scripts/test-engine-dynamic-systems.mjs
       - name: Check world startup wiring regressions
         run: node scripts/test-world-startup-wiring.mjs
       - name: Syntax-check every JavaScript module
