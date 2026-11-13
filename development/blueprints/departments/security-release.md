@@ -23,13 +23,16 @@ Own access control, secret handling, owner approval, isolated execution policy, 
 
 The following are source pointers for inspection and traceability. They are not proof of complete behavior.
 
-- `development/runtime/aliveReviewApi.js`
-- `development/runtime/createAliveDevelopmentSystem.js`
-- `development/runtime/runAliveWorker.js`
 - `development/automation/specialistWorkerPolicy.js`
+- `development/engine/specialistWorkerRoster.js`
+- `development/execution/specialistWorkerExecution.js`
+- `development/execution/hostedSpecialistQueueAdapter.js`
+- `development/policies/developmentPolicy.js`
 - `development/storage/developmentReviewStorage.js`
-- `api/alive/reviews.js`
-- `.github/workflows/alive-scheduled-worker.yml`
+- `development/storage/developmentTaskStorage.js`
+- `api/alive/session.js`
+- `api/alive/private-task.js`
+- `.github/workflows/development-engine-tests.yml`
 
 **Current-state interpretation:** This department publishes shared standards and validation gates. Its presence in the repository does not mean every department currently meets those standards.
 
