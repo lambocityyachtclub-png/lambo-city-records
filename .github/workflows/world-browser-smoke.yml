@@ -20,6 +20,8 @@ on:
       - "floor2StudioApp.js"
       - "recordsHQFloor2Studio.js"
       - "scripts/test-world-browser-smoke.mjs"
+      - "scripts/test-world-startup-wiring.mjs"
+      - "scripts/check-all-js-syntax.mjs"
       - ".github/workflows/world-browser-smoke.yml"
   push:
     branches:
@@ -42,6 +44,8 @@ on:
       - "floor2StudioApp.js"
       - "recordsHQFloor2Studio.js"
       - "scripts/test-world-browser-smoke.mjs"
+      - "scripts/test-world-startup-wiring.mjs"
+      - "scripts/check-all-js-syntax.mjs"
       - ".github/workflows/world-browser-smoke.yml"
 
 jobs:
@@ -61,5 +65,9 @@ jobs:
         run: |
           python3 -m http.server 4173 --directory . > /tmp/lambo-city-world.log 2>&1 &
           echo $! > /tmp/lambo-city-world.pid
+      - name: Check world startup wiring regressions
+        run: node scripts/test-world-startup-wiring.mjs
+      - name: Syntax-check every JavaScript module
+        run: node scripts/check-all-js-syntax.mjs
       - name: Test desktop and iPad-sized world experience
         run: node scripts/test-world-browser-smoke.mjs
