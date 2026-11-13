@@ -21,6 +21,8 @@ test("Master and all ten Department Blueprints exist and remain unapproved draft
   assert.equal(set.foundation.requiresExternalServices, false);
   assert.equal(set.foundation.codeExecutionEnabled, false);
   assert.equal(set.foundation.crossDeviceSync, false);
+  assert.equal(set.foundation.visionSubmissionMode, "local-only");
+  assert.equal(set.foundation.hostedQueueAutoSubmit, false);
   assert.equal(set.foundation.ownerApproved, false);
   assert.equal(set.rules.localCoreDoesNotExecuteGeneratedCode, true);
   assert.equal(set.rules.localRecordsAreBrowserProfileScoped, true);
