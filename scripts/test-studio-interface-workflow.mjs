@@ -8,6 +8,7 @@ const files = [
   "engine.js",
   "studioDAWApp.js",
   "studioDAWWorkspace.js",
+  "studioDAWEditScreen.js",
   "studioDAWBeatLabPanel.js",
   "floor2StudioNavigation.js",
   "studioMixMasterConsole3D.js",
@@ -43,6 +44,14 @@ for (const [name,systemKey,binding] of [
   assert.equal(engine.includes('initialize("' + systemKey + '"'), false,
     name + " must not initialize during initial world startup");
 }
+
+const editScreen = source["studioDAWEditScreen.js"];
+assert.match(editScreen,/if \(!modifier && key === "enter"\)/,"Return must reset the playhead only when the EDIT workspace has focus.");
+assert.match(editScreen,/target\.matches\("input,textarea,select"\)/,"Return must not steal text-entry keystrokes.");
+assert.match(editScreen,/workspace\.stopAll\(\)/);
+assert.match(editScreen,/workspace\.playheadBar = 1/);
+assert.match(editScreen,/Playhead returned to the beginning · stopped\./);
+assert.doesNotMatch(editScreen,/workspace\.playheadBar = 1;[\s\S]{0,250}startSessionPlayback/,"Return must stop at the beginning without auto-playing.");
 
 const workspace = source["studioDAWWorkspace.js"];
 const orderedSteps = [
