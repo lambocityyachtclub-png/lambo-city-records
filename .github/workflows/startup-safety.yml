@@ -1,0 +1,24 @@
+name: LAMBO CITY startup safety checks
+
+on:
+  pull_request:
+    branches: ["integration/studio-vocalbooth-2026-11-10"]
+  push:
+    branches: ["restore/**"]
+
+jobs:
+  startup-isolation:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Run startup isolation regression tests
+        run: node --test tests/startup-isolation.test.mjs
+      - name: Syntax-check engine and application entry point
+        run: |
+          node --check engine.js
+          node --check main.js
