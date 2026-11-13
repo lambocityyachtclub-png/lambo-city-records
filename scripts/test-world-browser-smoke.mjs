@@ -181,7 +181,7 @@ async function smokeWorld({ label, isMobile }) {
         floor2LoadError: window.__lamboCityFloor2LoadError || null,
         floor2LoadPhase: window.__lamboCityFloor2LoadPhase || null,
         floor2LoadingModule: window.__lamboCityFloor2LoadingModule || null,
-        floor2LoadedModules: window.__lamboCityFloor2LoadedModules || [],
+        floor2InitProgress: window.__lamboCityFloor2InitProgress || [],
         discovered: window.__lamboCityFloor2Discovered === true,
         elevatorTraveling: window.__lamboCityElevatorTraveling === true,
         elevatorInRange: window.__lamboCityElevatorInRange === true,
@@ -199,11 +199,16 @@ async function smokeWorld({ label, isMobile }) {
       discovered: window.__lamboCityFloor2Discovered === true,
       directEntry: typeof window.__lamboCityEnterFloor2CockpitDirect,
       loadError: window.__lamboCityFloor2LoadError || null,
+      loadPhase: window.__lamboCityFloor2LoadPhase || null,
+      initProgress: window.__lamboCityFloor2InitProgress || [],
       startupErrors: window.__lamboCityStartupErrors || []
     }));
     assert.equal(floor2Status.loadError, null,
       label + ": Floor 2 loader error: " + String(floor2Status.loadError));
     assert.equal(floor2Status.ready, true, label + ": Floor 2 modules must finish loading");
+    assert.equal(floor2Status.loadPhase, "ready", label + ": Floor 2 loader must reach ready state");
+    assert.equal(floor2Status.initProgress.length, 10,
+      label + ": all ten Floor 2 modules must initialize before arrival");
     assert.equal(floor2Status.mode, "seated", label + ": first visit must complete the elevator-to-cockpit arrival");
     assert.equal(floor2Status.discovered, true, label + ": first visit must persist Floor 2 discovery");
     assert.equal(floor2Status.directEntry, "function", label + ": the return shortcut must be registered");
