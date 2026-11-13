@@ -139,7 +139,19 @@ async function smokeWorld({ label, isMobile }) {
           started: window.__lamboCityPhoneNavigationStarted === true,
           mode: window.__lamboCityFloor2SessionMode || null,
           loadError: window.__lamboCityFloor2LoadError || null,
-          startupErrors: window.__lamboCityStartupErrors || []
+          startupErrors: window.__lamboCityStartupErrors || [],
+          phoneHitTest: (() => {
+            const button = document.querySelector("#lambo-phone-studio");
+            if (!button) return null;
+            const rect = button.getBoundingClientRect();
+            const top = document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2);
+            const style = getComputedStyle(button);
+            return {
+              rect: { x: rect.x, y: rect.y, width: rect.width, height: rect.height },
+              button: { zIndex: style.zIndex, pointerEvents: style.pointerEvents, visibility: style.visibility },
+              topElement: top ? { tag: top.tagName, id: top.id, className: String(top.className || "") } : null
+            };
+          })()
         })),
         new Promise(resolve => setTimeout(() => resolve({ pageUnresponsive: true }), 3000))
       ]);
