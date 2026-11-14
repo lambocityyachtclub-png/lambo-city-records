@@ -106,6 +106,33 @@ async function showInbox() {
   }));
 }
 
+function showRecoveryCodes(codes, user) {
+  const panel = overlay?.querySelector("[data-account-content]");
+  if (!panel) return;
+  panel.replaceChildren();
+
+  const title = document.createElement("div");
+  title.textContent = "SAVE YOUR BACKUP CODES";
+  title.style.cssText = "color:#e4c47f;font-size:11px;letter-spacing:2px;margin-bottom:10px;";
+  const note = document.createElement("p");
+  note.textContent = "These one-time codes are your emergency way back into LAMBO CITY if you lose access to your passkey. Save them somewhere private. Each code works once, and this is the only time this set will be shown.";
+  note.style.cssText = "color:#c6c0b4;font-size:12px;line-height:1.6;margin:0 0 12px;";
+  const list = document.createElement("pre");
+  list.textContent = codes.join("\\n");
+  list.style.cssText = "white-space:pre-wrap;word-break:break-all;background:#09070d;border:1px solid rgba(218,190,130,.3);border-radius:10px;padding:14px;color:#f1d99a;font:700 13px/1.9 monospace;letter-spacing:1px;";
+  const copy = button("COPY BACKUP CODES", async () => {
+    try {
+      await navigator.clipboard.writeText(codes.join("\\n"));
+      status("BACKUP CODES COPIED — STORE THEM SAFELY");
+    } catch {
+      status("Select and copy the codes above, then store them safely.", true);
+    }
+  });
+  const done = button("I SAVED MY BACKUP CODES", () => showSignedIn(user), true);
+  panel.append(title, note, list, copy, done);
+  status("SAVE THESE CODES BEFORE CONTINUING");
+}
+
 function showSignedIn(user) {
   const panel = overlay?.querySelector("[data-account-content]");
   if (!panel) return;
@@ -133,8 +160,17 @@ function showSignedIn(user) {
       status(error.message, true);
     }
   });
+  const recovery = button("CREATE / REPLACE BACKUP CODES", async () => {
+    try {
+      status("CREATING SECURE BACKUP CODES...");
+      const result = await request("/api/player/recovery-codes", { method: "POST", body: "{}" });
+      showRecoveryCodes(result.codes, user);
+    } catch (error) {
+      status(error.message, true);
+    }
+  });
   const inbox = button("OPEN MY CITY INBOX", showInbox);
-  panel.append(heading, name, email, note, inbox, signOut);
+  panel.append(heading, name, email, note, recovery, inbox, signOut);
   status("ACCOUNT CONNECTED");
 }
 
@@ -181,7 +217,9 @@ function renderSignIn() {
         body: JSON.stringify({ username: cleanName, avatarImages: [], bio: "" })
       });
       const session = await auth.getSession();
-      showSignedIn(session.data?.user || signedIn.data?.user || { name: cleanName, email: cleanEmail });
+      const currentUser = session.data?.user || signedIn.data?.user || { name: cleanName, email: cleanEmail };
+      const recovery = await request("/api/player/recovery-codes", { method: "POST", body: "{}" });
+      showRecoveryCodes(recovery.codes, currentUser);
     } catch (error) {
       status(error.message, true);
     }
@@ -212,6 +250,42 @@ function renderSignIn() {
     }
   }, true);
 
+  const recoveryDivider = document.createElement("div");
+  recoveryDivider.textContent = "LOST ACCESS TO YOUR PASSKEY?";
+  recoveryDivider.style.cssText = "text-align:center;color:#8e887e;font-size:9px;letter-spacing:1.5px;margin:18px 0 10px;";
+  const recoveryEmail = input("Account email for recovery", "email");
+  const recoveryCode = input("12-character backup code");
+  recoveryCode.maxLength = 12;
+  const recoverButton = button("RECOVER ACCOUNT & ADD NEW PASSKEY", async () => {
+    const cleanEmail = recoveryEmail.value.trim().toLowerCase();
+    const cleanCode = recoveryCode.value.trim().toUpperCase();
+    if (!cleanEmail || !/^[A-F0-9]{12}$/.test(cleanCode)) {
+      status("Enter your account email and one unused 12-character backup code.", true);
+      return;
+    }
+    try {
+      status("VERIFYING YOUR BACKUP CODE...");
+      const recovery = await request("/api/player/recover", {
+        method: "POST",
+        body: JSON.stringify({ email: cleanEmail, code: cleanCode })
+      });
+      const auth = await client();
+      status("CREATE A NEW PASSKEY ON THIS DEVICE...");
+      const registered = await auth.passkey.addPasskey({
+        name: "Recovered LAMBO CITY Passkey",
+        context: recovery.context,
+        createSession: true
+      });
+      if (registered.error) throw new Error(registered.error.message || "A new passkey could not be created.");
+      const session = await auth.getSession();
+      if (!session.data?.user) throw new Error("The new passkey was created, but your account session could not be restored.");
+      const newCodes = await request("/api/player/recovery-codes", { method: "POST", body: "{}" });
+      showRecoveryCodes(newCodes.codes, session.data.user);
+    } catch (error) {
+      status(error.message, true);
+    }
+  });
+
   const divider = document.createElement("div");
   divider.textContent = "ALREADY HAVE AN ACCOUNT?";
   divider.style.cssText = "text-align:center;color:#8e887e;font-size:9px;letter-spacing:1.5px;margin:18px 0 10px;";
@@ -230,7 +304,7 @@ function renderSignIn() {
     }
   });
 
-  panel.append(intro, username, email, send, code, verify, divider, passkeyLogin);
+  panel.append(intro, username, email, send, code, verify, divider, passkeyLogin, recoveryDivider, recoveryEmail, recoveryCode, recoverButton);
 }
 
 function open() {
