@@ -74,7 +74,7 @@ export default {
     // to the surrounding performance ground. The platform footprint
     // and overall stage scale remain unchanged.
     const stairBaseY = 0.65;
-    const stairRise = 0.23;
+    const stairRise = 0.1;
     const stairTreadWidth = 1.1;
     const stairDepth = 6.4;
     const stairStepMaterial = new THREE.MeshStandardMaterial({
@@ -91,8 +91,8 @@ export default {
     });
 
     [-1, 1].forEach(side => {
-      for (let step = 0; step < 4; step++) {
-        const stepHeight = 1.4 - (step + 1) * stairRise;
+      for (let step = 0; step < 5; step++) {
+        const stepHeight = 1.15 - (step + 1) * stairRise;
         const stepX = side * (17.55 + step * 1.05);
         const stepTop = 1.8 - (step + 1) * stairRise;
 
