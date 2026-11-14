@@ -1,0 +1,46 @@
+name: Creator-safe HERO Studio Access Checks
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "input.js"
+      - "studioAccess.js"
+      - "heroInvitation.js"
+      - "heroPostPerformance.js"
+      - "api/alive/session.js"
+      - "server/alive/security.js"
+      - ".github/workflows/creator-safe-hero-studio-access.yml"
+  push:
+    branches: [feature/creator-safe-hero-studio-invite]
+    paths:
+      - "input.js"
+      - "studioAccess.js"
+      - "heroInvitation.js"
+      - "heroPostPerformance.js"
+      - "api/alive/session.js"
+      - "server/alive/security.js"
+      - ".github/workflows/creator-safe-hero-studio-access.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  syntax:
+    name: Validate creator access and invitation modules
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Parse changed JavaScript modules
+        run: |
+          node --check input.js
+          node --check studioAccess.js
+          node --check heroInvitation.js
+          node --check heroPostPerformance.js
+          node --check api/alive/session.js
+          node --check server/alive/security.js
