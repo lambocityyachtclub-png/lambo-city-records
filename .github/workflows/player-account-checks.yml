@@ -45,6 +45,7 @@ jobs:
             playerAccounts.js \
             server/auth.js \
             server/recovery.js \
+            server/http.js \
             'api/auth/[...all].js' \
             api/player/profile.js \
             api/player/messages.js \
