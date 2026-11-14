@@ -38,7 +38,15 @@ const STAGE_RIGHT =
 // These waypoints stay on the existing built surfaces; no straight-line
 // shortcut across the marina water is permitted.
 const ROUTE = [
-  new THREE.Vector3(0, 1.3, -35),
+  // Clear the foot of the right staircase first, then follow the outside
+  // edge of the circular promenade. This keeps HERO east of the stage deck
+  // and its front fascia instead of cutting diagonally across the stage.
+  new THREE.Vector3(35, 1.3, -74),
+  new THREE.Vector3(35, 1.3, -58),
+  new THREE.Vector3(28, 1.3, -47),
+  // Rejoin the built pier-to-dock connector on its north side.
+  new THREE.Vector3(0, 1.3, -36),
+  // Continue along the central dock and existing HQ dock spur.
   new THREE.Vector3(0, 1.3, 13.75),
   new THREE.Vector3(20.1, 1.3, 13.75),
   // Step onto the existing Records HQ elevator landing.
