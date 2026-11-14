@@ -10,6 +10,7 @@
 ## Development isolation
 - Account foundation branch: `feature/player-account-foundation-clean`
 - Combined HERO/account integration branch: `feature/hero-account-integration`
+- Preview-only `DATABASE_URL` and `BETTER_AUTH_SECRET` are scoped to `feature/hero-account-integration`.
 - Neon project: `square-dew-67503197`
 - Neon branch: `player-accounts-dev`
 - Vercel environment variables `DATABASE_URL` and `BETTER_AUTH_SECRET` are scoped only to preview deployments for this Git branch.
