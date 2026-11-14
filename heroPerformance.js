@@ -8,7 +8,7 @@ const STAGE_CENTER = new THREE.Vector3(0, STAGE_SURFACE_Y, -74);
 const TRIGGER_DISTANCE = 22;
 const STAGE_LEFT = new THREE.Vector3(-19, STAGE_SURFACE_Y, -74);
 const RIGHT_STAIR_ENTRY_X = 16.5;
-const RIGHT_STAIR_EXIT_X = 21.5;
+const RIGHT_STAIR_EXIT_X = 22.5;
 
 // HERO's performance ends only when the real audio track ends.
 const ENTRY_DURATION = 3;
