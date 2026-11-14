@@ -1,3 +1,5 @@
+import HeroInvitation from "./heroInvitation.js";
+
 export default {
 
   keys: {},
@@ -45,6 +47,7 @@ export default {
           KeyD: "d",
           KeyE: "e",
           KeyF: "f",
+          KeyT: "t",
           ShiftLeft: "shift",
           ShiftRight: "shift"
         };
@@ -55,7 +58,7 @@ export default {
         this.keys[key] = true;
 
         if (
-          key === "f" &&
+          (key === "f" || key === "t") &&
           !e.repeat
         ) {
 
@@ -820,6 +823,87 @@ export default {
     document.body.appendChild(
       phone
     );
+
+    // Reuse the existing citizen phone and add a persistent HERO inbox
+    // without replacing or changing the Studio and Meeting shortcuts.
+    const messageRow = document.createElement("div");
+    messageRow.style.cssText = "padding:0 16px 8px";
+    const messageButton = document.createElement("button");
+    messageButton.type = "button";
+    messageButton.id = "lambo-phone-messages";
+    messageButton.style.cssText = "width:100%;padding:11px 12px;border:1px solid rgba(255,215,0,.42);border-radius:12px;background:rgba(255,215,0,.08);color:#fff;font:700 10px Arial,sans-serif;letter-spacing:1.2px;cursor:pointer";
+    const refreshMessageButton = () => {
+      const invitation = HeroInvitation.get();
+      messageButton.textContent = invitation?.delivered
+        ? (invitation.read ? "✉  MESSAGES" : "✉  MESSAGES  •  1 NEW")
+        : "✉  MESSAGES";
+    };
+    refreshMessageButton();
+    messageRow.appendChild(messageButton);
+    const studioGrid = phone.querySelector("#lambo-phone-studio")?.parentElement?.parentElement;
+    if (studioGrid) phone.insertBefore(messageRow, studioGrid);
+
+    let messagePanel = null;
+    const openHeroMessage = () => {
+      const invitation = HeroInvitation.markRead();
+      if (!invitation?.delivered || messagePanel) {
+        refreshMessageButton();
+        return;
+      }
+
+      messagePanel = document.createElement("div");
+      messagePanel.style.cssText = "position:absolute;inset:0;padding:22px 18px;background:linear-gradient(180deg,#100525,#050010);z-index:5;display:flex;flex-direction:column;box-sizing:border-box";
+      const heading = document.createElement("div");
+      heading.textContent = "HERO  •  INCOMING MESSAGE";
+      heading.style.cssText = "color:#ffd700;font-size:10px;letter-spacing:2px;margin-bottom:18px";
+      const subject = document.createElement("div");
+      subject.textContent = invitation.subject || "A message from HERO";
+      subject.style.cssText = "color:white;font-size:17px;font-weight:bold;margin-bottom:12px";
+      const body = document.createElement("div");
+      body.textContent = invitation.body || "";
+      body.style.cssText = "color:#eee;font-size:13px;line-height:1.7;white-space:normal";
+      const destination = document.createElement("div");
+      destination.textContent = "DESTINATION  •  " + (invitation.destination || "LAMBO CITY Records HQ");
+      destination.style.cssText = "color:#d6b86c;font-size:9px;letter-spacing:1px;margin-top:18px";
+      const status = document.createElement("div");
+      status.style.cssText = "color:#9b9b9b;font-size:10px;line-height:1.5;margin-top:12px";
+      status.textContent = invitation.accepted
+        ? "You accepted HERO's invitation."
+        : "This invitation stays in your phone until you accept it.";
+      const actions = document.createElement("div");
+      actions.style.cssText = "margin-top:auto;display:flex;flex-direction:column;gap:9px";
+      const accept = document.createElement("button");
+      accept.type = "button";
+      accept.textContent = invitation.accepted ? "INVITATION ACCEPTED" : "ACCEPT HQ INVITATION";
+      accept.disabled = !!invitation.accepted;
+      accept.style.cssText = "padding:11px;border:0;border-radius:20px;background:linear-gradient(90deg,#9900ff,#c18a16);color:#fff;font-weight:bold;font-size:10px;letter-spacing:1px;cursor:pointer";
+      accept.addEventListener("click", () => {
+        HeroInvitation.accept();
+        status.textContent = "Invitation accepted. HERO is heading to LAMBO CITY Records HQ.";
+        accept.textContent = "INVITATION ACCEPTED";
+        accept.disabled = true;
+      });
+      const back = document.createElement("button");
+      back.type = "button";
+      back.textContent = "BACK TO PHONE";
+      back.style.cssText = "padding:9px;border:1px solid rgba(255,255,255,.18);border-radius:20px;background:rgba(255,255,255,.06);color:#fff;font-size:10px;cursor:pointer";
+      back.addEventListener("click", () => {
+        messagePanel?.remove();
+        messagePanel = null;
+        refreshMessageButton();
+      });
+      actions.append(accept, back);
+      messagePanel.append(heading, subject, body, destination, status, actions);
+      phone.appendChild(messagePanel);
+      refreshMessageButton();
+    };
+
+    messageButton.addEventListener("click", openHeroMessage);
+    const invitationUpdated = () => refreshMessageButton();
+    window.addEventListener("lc-hero-invitation-updated", invitationUpdated);
+    phone.querySelector("#lambo-phone-close")?.addEventListener("click", () => {
+      window.removeEventListener("lc-hero-invitation-updated", invitationUpdated);
+    });
 
     const navigateFromPhone = floor => {
       const navigate = window.__lamboCityNavigateToFloor;
