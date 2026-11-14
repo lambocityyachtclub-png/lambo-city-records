@@ -31,7 +31,8 @@ assert.match(postPerformance, /walkStartY = hero\.position\.y/, "Post-performanc
 assert.match(postPerformance, /GROUND_TRANSITION_DURATION/, "HERO must transition smoothly from the stair landing to the boardwalk");
 assert.match(postPerformance, /new THREE\.Vector3\(0, 1\.3, -35\)/, "HERO must enter the central dock through the roundabout connection");
 assert.match(postPerformance, /new THREE\.Vector3\(0, 1\.3, 13\.75\)/, "HERO must follow the central dock to the HQ walkway junction");
-assert.match(postPerformance, /new THREE\.Vector3\(20\.1, 1\.3, 13\.75\)/, "HERO must finish at the actual HQ elevator approach");
+assert.match(postPerformance, /new THREE\.Vector3\(20\.1, 1\.3, 13\.75\)/, "HERO must follow the complete timber spur to the elevator approach");
+assert.match(postPerformance, /new THREE\.Vector3\(23, 1\.3, 14\.15\)/, "HERO must reach the existing Records HQ elevator landing");
 assert.match(postPerformance, /const target = ROUTE\[routeIndex\]/, "HERO must follow ordered route waypoints instead of a straight-line water shortcut");
 assert.match(collision, /function isOutsideSafeWaterfrontSurface/, "Waterfront walking boundaries must protect the pier and connected walkways");
 assert.match(collision, /onCircularPier/, "Roundabout edges must be protected from walking into water");
