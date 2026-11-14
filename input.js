@@ -900,6 +900,7 @@ export default {
 
     messageButton.addEventListener("click", openHeroMessage);
     const invitationUpdated = () => refreshMessageButton();
+    this._phoneInvitationUpdated = invitationUpdated;
     window.addEventListener("lc-hero-invitation-updated", invitationUpdated);
     phone.querySelector("#lambo-phone-close")?.addEventListener("click", () => {
       window.removeEventListener("lc-hero-invitation-updated", invitationUpdated);
@@ -936,6 +937,10 @@ export default {
           e.preventDefault();
 
           phone.remove();
+          if (this._phoneInvitationUpdated) {
+            window.removeEventListener("lc-hero-invitation-updated", this._phoneInvitationUpdated);
+            this._phoneInvitationUpdated = null;
+          }
 
           this._phoneOpen =
             false;
