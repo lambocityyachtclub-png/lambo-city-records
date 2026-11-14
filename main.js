@@ -3,6 +3,7 @@ import Scene from "./scene.js";
 import Camera from "./camera.js";
 import Renderer from "./renderer.js";
 import World from "./world.js";
+import FestivalStageUpgrade from "./festivalStageUpgrade.js";
 import Dock from "./dock.js";
 import DockPath from "./dockPath.js";
 import Water from "./water.js";
@@ -66,6 +67,7 @@ engine.registerSystems({
   camera: Camera,
   renderer: Renderer,
   world: World,
+  festivalStageUpgrade: FestivalStageUpgrade,
   water: Water,
   dock: Dock,
   dockPath: DockPath,

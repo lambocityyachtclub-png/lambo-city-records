@@ -17,6 +17,7 @@ export default class Engine {
     this.context.systems  = this.systems;
     this.systems.performanceMonitor?.init?.(this.renderer, this.context);
     this.systems.world?.init?.(this.scene);
+    this.systems.festivalStageUpgrade?.init?.(this.scene, this.context);
     this.systems.water?.init?.(this.scene);
     this.systems.dock?.init?.(this.scene);
     this.systems.dockPath?.init?.(this.scene);
