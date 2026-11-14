@@ -192,7 +192,7 @@ async function showProfileEditor(user) {
           avatarImages: current?.profile?.avatar_images || []
         })
       });
-      showSignedIn(user);
+      showSignedIn({ ...user, name: username.value.trim() });
       status("PROFILE SAVED");
     } catch (error) {
       status(error.message, true);
@@ -217,6 +217,9 @@ function showSignedIn(user) {
   const email = document.createElement("div");
   email.textContent = user.email || "";
   email.style.cssText = "font-size:12px;color:#aaa;margin-bottom:18px;";
+  request("/api/player/profile").then(data => {
+    if (data.profile?.username && name.isConnected) name.textContent = data.profile.username;
+  }).catch(() => {});
   const note = document.createElement("p");
   note.textContent = "Your account is connected. Your player identity and inbox are being prepared to follow you across supported devices.";
   note.style.cssText = "font-size:12px;line-height:1.6;color:#c6c0b4;margin:0 0 16px;";
