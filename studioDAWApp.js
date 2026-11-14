@@ -781,6 +781,12 @@ const StudioDAWApp = {
         }
 
         event.preventDefault();
+        // Spacebar is a hard stop while a vocal take is being captured.
+        if (StudioRecordingEngine.activeTake) {
+          void Floor2StudioApp.stopRecording()
+            .then(() => this.editScreen?.status("Vocal take stopped and saved."));
+          return;
+        }
         if (this.transportActionPending) {
           this.stopSessionPlayback();
           return;
