@@ -1,4 +1,5 @@
 import { auth, pool } from "../../server/auth.js";
+import { toWebHeaders } from "../../server/http.js";
 
 export default async function handler(req, res) {
   if (req.method !== "GET" && req.method !== "POST") {
@@ -7,7 +8,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const session = await auth.api.getSession({ headers: req.headers });
+    const session = await auth.api.getSession({ headers: toWebHeaders(req.headers) });
     if (!session?.user?.id) {
       return res.status(401).json({ error: "Sign in to access your messages." });
     }
