@@ -25,7 +25,8 @@ assert.match(performance, /StageMusic\.hasEnded\(\)/, "HERO exit must follow the
 assert.match(performance, /STAIR_BOTTOM_X/, "HERO exit must route down the right staircase");
 assert.match(performance, /STAIR_TOP_Y = 1\.68/, "HERO exit must begin at the top stair elevation");
 assert.match(performance, /STAIR_BOTTOM_Y = 0\.67/, "HERO exit must reach the stair landing elevation");
-assert.match(performance, /hero\.position\.y = THREE\.MathUtils\.lerp\(STAIR_TOP_Y, STAIR_BOTTOM_Y, eased\)/, "HERO must descend vertically with the staircase");
+assert.match(performance, /hero\.position\.y = STAIR_TOP_Y \+ \(STAIR_BOTTOM_Y - STAIR_TOP_Y\) \* eased/, "HERO must descend vertically with the staircase");
+assert.match(performance, /STAGE_DECK_Y = 1\.8/, "HERO must stand on the raised stage deck rather than inside it");
 assert.match(postPerformance, /walkStartY = hero\.position\.y/, "Post-performance walk must preserve the actual stair-landing height");
 assert.match(postPerformance, /GROUND_TRANSITION_DURATION/, "HERO must transition smoothly from the stair landing to the boardwalk");
 assert.doesNotMatch(npc, /setTimeout\(\(\) => showHeroDialogue\(\),\s*1500\)/, "HERO welcome must not interrupt the opening experience");
