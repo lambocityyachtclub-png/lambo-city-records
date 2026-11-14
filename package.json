@@ -6,7 +6,7 @@
     "node": ">=20"
   },
   "dependencies": {
-    "@better-auth/passkey": "1.7.22",
+    "@better-auth/passkey": "1.7.23",
     "better-auth": "1.7.23",
     "pg": "^8.16.3"
   }
