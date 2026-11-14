@@ -156,7 +156,11 @@ function showRecoveryCodes(codes, user) {
       status("Select and copy the codes above, then store them safely.", true);
     }
   });
-  const done = button("I SAVED MY BACKUP CODES", () => showSignedIn(user), true);
+  const done = button("I SAVED MY BACKUP CODES", async () => {
+    showSignedIn(user);
+    const profile = await request("/api/player/profile").catch(() => null);
+    if (!profile?.profile) showProfileEditor(user);
+  }, true);
   panel.append(title, note, list, copy, done);
   status("SAVE THESE CODES BEFORE CONTINUING");
 }
@@ -261,10 +265,6 @@ function renderSignIn() {
     const cleanName = username.value.trim();
     const cleanEmail = email.value.trim().toLowerCase();
     const otp = code.value.trim();
-    if (!/^[a-zA-Z0-9_]{3,20}$/.test(cleanName)) {
-      status("Choose a username with 3–20 letters, numbers, or underscores.", true);
-      return;
-    }
     if (!/^\d{6}$/.test(otp)) {
       status("Enter the 6-digit code from your email.", true);
       return;
@@ -272,22 +272,23 @@ function renderSignIn() {
     try {
       status("VERIFYING YOUR EMAIL...");
       const auth = await client();
-      const signedIn = await auth.signIn.emailOtp({ email: cleanEmail, otp, name: cleanName });
+      const fallbackName = cleanEmail.split("@")[0].replace(/[^a-zA-Z0-9_]/g, "").slice(0, 20) || "Citizen";
+      const displayName = /^[a-zA-Z0-9_]{3,20}$/.test(cleanName) ? cleanName : fallbackName;
+      const signedIn = await auth.signIn.emailOtp({ email: cleanEmail, otp, name: displayName });
       if (signedIn.error) throw new Error(signedIn.error.message || "Email verification failed.");
 
       status("FOLLOW THE PASSKEY PROMPT ON YOUR DEVICE...");
       const registered = await auth.passkey.addPasskey({ name: "LAMBO CITY Passkey" });
       if (registered.error) throw new Error(registered.error.message || "Passkey setup was not completed.");
 
-      try {
+      const session = await auth.getSession();
+      const existingProfile = await request("/api/player/profile").catch(() => null);
+      if (!existingProfile?.profile && /^[a-zA-Z0-9_]{3,20}$/.test(cleanName)) {
         await request("/api/player/profile", {
           method: "PUT",
           body: JSON.stringify({ username: cleanName, avatarImages: [], bio: "" })
-        });
-      } catch (profileError) {
-        status(profileError.message, true);
+        }).catch(profileError => status(profileError.message, true));
       }
-      const session = await auth.getSession();
       const currentUser = session.data?.user || signedIn.data?.user || { name: cleanName, email: cleanEmail };
       const recovery = await request("/api/player/recovery-codes", { method: "POST", body: "{}" });
       showRecoveryCodes(recovery.codes, currentUser);
@@ -298,12 +299,7 @@ function renderSignIn() {
   verify.style.display = "none";
 
   const send = button("SEND EMAIL CODE", async () => {
-    const cleanName = username.value.trim();
     const cleanEmail = email.value.trim().toLowerCase();
-    if (!/^[a-zA-Z0-9_]{3,20}$/.test(cleanName)) {
-      status("Choose a username with 3–20 letters, numbers, or underscores.", true);
-      return;
-    }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
       status("Enter a valid email address.", true);
       return;
