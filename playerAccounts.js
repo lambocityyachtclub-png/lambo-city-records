@@ -161,6 +161,43 @@ function showRecoveryCodes(codes, user) {
   status("SAVE THESE CODES BEFORE CONTINUING");
 }
 
+async function showProfileEditor(user) {
+  const panel = overlay?.querySelector("[data-account-content]");
+  if (!panel) return;
+  panel.replaceChildren();
+
+  const title = document.createElement("div");
+  title.textContent = "EDIT YOUR CITY PROFILE";
+  title.style.cssText = "color:#e4c47f;font-size:11px;letter-spacing:2px;margin-bottom:12px;";
+  const current = await request("/api/player/profile").catch(() => null);
+  const username = input("Username (3–20 letters, numbers, underscores)");
+  username.value = current?.profile?.username || user.name || "";
+  const bio = document.createElement("textarea");
+  bio.placeholder = "A little about you (optional)";
+  bio.value = current?.profile?.bio || "";
+  bio.maxLength = 280;
+  bio.rows = 3;
+  bio.style.cssText = "width:100%;box-sizing:border-box;resize:vertical;background:#100d18;border:1px solid rgba(218,190,130,.3);border-radius:9px;color:#fff;padding:13px 12px;font:13px/1.5 Arial,sans-serif;outline:none;";
+  const save = button("SAVE PROFILE", async () => {
+    try {
+      await request("/api/player/profile", {
+        method: "PUT",
+        body: JSON.stringify({
+          username: username.value.trim(),
+          bio: bio.value.trim(),
+          avatarImages: current?.profile?.avatar_images || []
+        })
+      });
+      showSignedIn(user);
+      status("PROFILE SAVED");
+    } catch (error) {
+      status(error.message, true);
+    }
+  }, true);
+  const back = button("BACK TO ACCOUNT", () => showSignedIn(user));
+  panel.append(title, username, bio, save, back);
+}
+
 function showSignedIn(user) {
   syncHeroInvitation().catch(() => {});
   const panel = overlay?.querySelector("[data-account-content]");
@@ -189,6 +226,7 @@ function showSignedIn(user) {
       status(error.message, true);
     }
   });
+  const edit = button("EDIT MY PROFILE", () => showProfileEditor(user));
   const recovery = button("CREATE / REPLACE BACKUP CODES", async () => {
     try {
       status("CREATING SECURE BACKUP CODES...");
@@ -199,7 +237,7 @@ function showSignedIn(user) {
     }
   });
   const inbox = button("OPEN MY CITY INBOX", showInbox);
-  panel.append(heading, name, email, note, recovery, inbox, signOut);
+  panel.append(heading, name, email, note, edit, recovery, inbox, signOut);
   status("ACCOUNT CONNECTED");
 }
 
@@ -241,10 +279,14 @@ function renderSignIn() {
       const registered = await auth.passkey.addPasskey({ name: "LAMBO CITY Passkey" });
       if (registered.error) throw new Error(registered.error.message || "Passkey setup was not completed.");
 
-      await request("/api/player/profile", {
-        method: "PUT",
-        body: JSON.stringify({ username: cleanName, avatarImages: [], bio: "" })
-      });
+      try {
+        await request("/api/player/profile", {
+          method: "PUT",
+          body: JSON.stringify({ username: cleanName, avatarImages: [], bio: "" })
+        });
+      } catch (profileError) {
+        status(profileError.message, true);
+      }
       const session = await auth.getSession();
       const currentUser = session.data?.user || signedIn.data?.user || { name: cleanName, email: cleanEmail };
       const recovery = await request("/api/player/recovery-codes", { method: "POST", body: "{}" });
