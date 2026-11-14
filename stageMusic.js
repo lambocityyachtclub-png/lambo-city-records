@@ -11,9 +11,9 @@
 // performance begins, the next user interaction attempts playback again.
 
 const TRACK = {
-  title: "Let's Rage",
+  title: "HERO - Lets Rage",
   artist: "HERO",
-  url: "https://res.cloudinary.com/z99sdnqv/video/upload/v1783884019/Let_s_Rage_qjmowr.mp3",
+  url: "https://res.cloudinary.com/z99sdnqv/video/upload/v1794623950/Let_s_Rage_Show_Version_hrc7tr.mp3",
 };
 
 let audio = null;
