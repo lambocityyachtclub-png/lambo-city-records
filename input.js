@@ -640,6 +640,10 @@ export default {
     if (existing) {
 
       existing.remove();
+      if (this._phoneInvitationUpdated) {
+        window.removeEventListener("lc-hero-invitation-updated", this._phoneInvitationUpdated);
+        this._phoneInvitationUpdated = null;
+      }
 
       this._phoneOpen =
         false;
