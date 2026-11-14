@@ -1,0 +1,25 @@
+# Focused checks for the founder-approved HERO song-sync change.
+name: HERO Performance Song Sync Checks
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "heroPerformance.js"
+      - "stageMusic.js"
+      - ".github/workflows/hero-performance-song-sync.yml"
+
+jobs:
+  syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Check HERO performance module syntax
+        run: node --check heroPerformance.js
+      - name: Check stage music module syntax
+        run: node --check stageMusic.js

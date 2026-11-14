@@ -5,7 +5,8 @@
 // This is separate from ambientMusic.js so "Let's Rage" is NOT the normal
 // visitor radio track.
 //
-// The performance always starts the song from 0:00.
+// The audio element's real "ended" event is the source of truth for the
+// performance finish. No separate duration timer can drift out of sync.
 //
 // Includes an iPad/Safari fallback: if the browser blocks playback when the
 // performance begins, the next user interaction attempts playback again.
@@ -18,6 +19,7 @@ const TRACK = {
 
 let audio = null;
 let pendingPlay = false;
+let trackEnded = false;
 
 function clampVolume(value) {
   return Math.max(0, Math.min(1, value));
@@ -52,6 +54,7 @@ export default {
 
     audio.addEventListener("ended", () => {
       pendingPlay = false;
+      trackEnded = true;
       audio.pause();
       audio.currentTime = 0;
     });
@@ -72,6 +75,7 @@ export default {
       audio.currentTime = 0;
     } catch (error) {}
 
+    trackEnded = false;
     audio.src = TRACK.url;
 
     pendingPlay = true;
@@ -83,6 +87,7 @@ export default {
     if (!audio) return;
 
     pendingPlay = false;
+    trackEnded = false;
     audio.pause();
 
     try {
@@ -97,6 +102,10 @@ export default {
 
   isPlaying() {
     return !!audio && !audio.paused;
+  },
+
+  hasEnded() {
+    return trackEnded;
   },
 
   getCurrentTrack() {

@@ -68,6 +68,59 @@ export default {
 
 
     // ============================================================
+    // GRAND STAGE — LEFT AND RIGHT ACCESS STAIRS
+    // ============================================================
+    // Compact side staircases connect the existing stage platform
+    // to the surrounding performance ground. The platform footprint
+    // and overall stage scale remain unchanged.
+    const stairBaseY = 0.65;
+    const stairRise = 0.1;
+    const stairTreadWidth = 1.1;
+    const stairDepth = 6.4;
+    const stairStepMaterial = new THREE.MeshStandardMaterial({
+      color: 0x17131f,
+      roughness: 0.48,
+      metalness: 0.55
+    });
+    const stairNosingMaterial = new THREE.MeshStandardMaterial({
+      color: 0x9900ff,
+      emissive: 0x9900ff,
+      emissiveIntensity: 1.35,
+      metalness: 0.45,
+      roughness: 0.35
+    });
+
+    [-1, 1].forEach(side => {
+      for (let step = 0; step < 5; step++) {
+        const stepHeight = 1.15 - (step + 1) * stairRise;
+        const stepX = side * (17.55 + step * 1.05);
+        const stepTop = 1.8 - (step + 1) * stairRise;
+
+        const tread = new THREE.Mesh(
+          new THREE.BoxGeometry(stairTreadWidth, stepHeight, stairDepth),
+          stairStepMaterial
+        );
+        tread.position.set(
+          stepX,
+          stairBaseY + stepHeight / 2,
+          -74
+        );
+        tread.name = `grandStageSideStair_${side > 0 ? "right" : "left"}_${step + 1}`;
+        tread.receiveShadow = true;
+        tread.castShadow = true;
+        scene.add(tread);
+
+        const nosing = new THREE.Mesh(
+          new THREE.BoxGeometry(stairTreadWidth + 0.06, 0.07, stairDepth + 0.08),
+          stairNosingMaterial
+        );
+        nosing.position.set(stepX, stepTop + 0.035, -74);
+        nosing.name = `grandStageSideStairNosing_${side > 0 ? "right" : "left"}_${step + 1}`;
+        scene.add(nosing);
+      }
+    });
+
+    // ============================================================
     // STAGE BACK WALL
     // ============================================================
 
@@ -195,8 +248,11 @@ export default {
     [
       { w: 34.3, d: 0.15, x: 0, z: -65.1 },
       { w: 34.3, d: 0.15, x: 0, z: -82.9 },
-      { w: 0.15, d: 18, x: -17.1, z: -74 },
-      { w: 0.15, d: 18, x: 17.1, z: -74 },
+      // Leave the side-stair openings clear; trim continues above and below each stair.
+      { w: 0.15, d: 5.8, x: -17.1, z: -80.1 },
+      { w: 0.15, d: 5.8, x: -17.1, z: -67.9 },
+      { w: 0.15, d: 5.8, x: 17.1, z: -80.1 },
+      { w: 0.15, d: 5.8, x: 17.1, z: -67.9 },
     ].forEach(e => {
 
       const trim = new THREE.Mesh(
