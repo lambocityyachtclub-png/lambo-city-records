@@ -33,14 +33,19 @@ const STAGE_RIGHT =
   );
 
 
-// Records HQ exterior/front area.
-// HERO approaches the HQ from the boardwalk side.
-const HQ_DESTINATION =
-  new THREE.Vector3(
-    28,
-    1.3,
-    30
-  );
+// HERO follows the real connected pedestrian route:
+// stage roundabout -> central timber dock -> HQ elevator walkway.
+// These waypoints stay on the existing built surfaces; no straight-line
+// shortcut across the marina water is permitted.
+const ROUTE = [
+  new THREE.Vector3(0, 1.3, -35),
+  new THREE.Vector3(0, 1.3, 13.75),
+  new THREE.Vector3(20.1, 1.3, 13.75),
+  // Step onto the existing Records HQ elevator landing.
+  new THREE.Vector3(23, 1.3, 14.15)
+];
+
+const HQ_DESTINATION = ROUTE[ROUTE.length - 1];
 
 
 // HERO walking speed.
@@ -62,6 +67,7 @@ let arrived = false;
 
 let time = 0;
 let walkStartY = 1.3;
+let routeIndex = 0;
 const GROUND_TRANSITION_DURATION = 1.25;
 
 
@@ -142,6 +148,7 @@ function begin() {
   arrived = false;
 
   time = 0;
+  routeIndex = 0;
   walkStartY = hero.position.y;
 
 }
@@ -157,91 +164,42 @@ function updateWalking(delta) {
     return;
   }
 
-
   time += delta;
 
+  const target = ROUTE[routeIndex] || HQ_DESTINATION;
+  const dx = target.x - hero.position.x;
+  const dz = target.z - hero.position.z;
+  const distance = Math.sqrt(dx * dx + dz * dz);
 
-  const dx =
-    HQ_DESTINATION.x -
-    hero.position.x;
+  if (distance <= 0.45) {
+    hero.position.x = target.x;
+    hero.position.z = target.z;
 
-  const dz =
-    HQ_DESTINATION.z -
-    hero.position.z;
+    if (routeIndex < ROUTE.length - 1) {
+      routeIndex += 1;
+      return;
+    }
 
-
-  const distance =
-    Math.sqrt(
-      dx * dx +
-      dz * dz
-    );
-
-
-  if (
-    distance <= ARRIVAL_DISTANCE
-  ) {
-
-    hero.position.x =
-      HQ_DESTINATION.x;
-
-    hero.position.z =
-      HQ_DESTINATION.z;
-
-    hero.position.y =
-      HQ_DESTINATION.y;
-
-    faceTarget(
-      HQ_DESTINATION
-    );
-
+    hero.position.y = HQ_DESTINATION.y;
+    faceTarget(HQ_DESTINATION);
     active = false;
-
     arrived = true;
-
     return;
-
   }
 
+  const step = Math.min(HERO_SPEED * delta, distance);
+  hero.position.x += (dx / distance) * step;
+  hero.position.z += (dz / distance) * step;
 
-  const nx =
-    dx / distance;
-
-  const nz =
-    dz / distance;
-
-
-  const step =
-    Math.min(
-      HERO_SPEED * delta,
-      distance
-    );
-
-
-  hero.position.x +=
-    nx * step;
-
-  hero.position.z +=
-    nz * step;
-
-
-  /*
-    Small natural walking motion.
-    This is intentionally subtle.
-  */
-
+  // Blend naturally from the lower stair landing to dock height.
   const groundBlend = Math.min(1, time / GROUND_TRANSITION_DURATION);
   const smoothGroundBlend = groundBlend * groundBlend * (3 - 2 * groundBlend);
   hero.position.y =
     THREE.MathUtils.lerp(walkStartY, HQ_DESTINATION.y, smoothGroundBlend) +
     Math.abs(Math.sin(time * 8)) * 0.025;
 
-
-  faceTarget(
-    HQ_DESTINATION
-  );
-
+  faceTarget(target);
 }
-
 
 // ------------------------------------------------------------
 // SYSTEM
@@ -349,6 +307,7 @@ export default {
 
     time = 0;
     walkStartY = 1.3;
+    routeIndex = 0;
 
     hero = null;
 
