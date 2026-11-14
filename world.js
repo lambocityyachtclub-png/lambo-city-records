@@ -248,8 +248,11 @@ export default {
     [
       { w: 34.3, d: 0.15, x: 0, z: -65.1 },
       { w: 34.3, d: 0.15, x: 0, z: -82.9 },
-      { w: 0.15, d: 18, x: -17.1, z: -74 },
-      { w: 0.15, d: 18, x: 17.1, z: -74 },
+      // Leave the side-stair openings clear; trim continues above and below each stair.
+      { w: 0.15, d: 5.8, x: -17.1, z: -80.1 },
+      { w: 0.15, d: 5.8, x: -17.1, z: -67.9 },
+      { w: 0.15, d: 5.8, x: 17.1, z: -80.1 },
+      { w: 0.15, d: 5.8, x: 17.1, z: -67.9 },
     ].forEach(e => {
 
       const trim = new THREE.Mesh(
