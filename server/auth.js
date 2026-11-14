@@ -76,6 +76,7 @@ export const auth = betterAuth({
       otpLength: 6,
       expiresIn: 300,
       allowedAttempts: 5,
+      storeOTP: "hashed",
       sendVerificationOTP: sendPlayerCode
     }),
     passkey({
