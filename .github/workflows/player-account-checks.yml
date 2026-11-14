@@ -1,0 +1,59 @@
+name: Player Account Checks
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "package.json"
+      - "playerAccounts.js"
+      - "server/**"
+      - "api/auth/**"
+      - "api/player/**"
+      - ".github/workflows/player-account-checks.yml"
+  push:
+    branches: [feature/player-account-foundation-clean]
+    paths:
+      - "package.json"
+      - "playerAccounts.js"
+      - "server/**"
+      - "api/auth/**"
+      - "api/player/**"
+      - ".github/workflows/player-account-checks.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  player-account:
+    name: Validate player account modules
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install pinned account dependencies
+        run: npm install --ignore-scripts --no-audit --no-fund
+
+      - name: Parse all player account modules
+        run: |
+          for file in \
+            playerAccounts.js \
+            server/auth.js \
+            server/recovery.js \
+            server/http.js \
+            'api/auth/[...all].js' \
+            api/player/profile.js \
+            api/player/messages.js \
+            api/player/recovery-codes.js \
+            api/player/recover.js
+          do
+            node --check "$file"
+          done
+
+      - name: Verify dependency tree
+        run: npm ls --depth=0
