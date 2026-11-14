@@ -40,7 +40,9 @@ const STAGE_RIGHT =
 const ROUTE = [
   new THREE.Vector3(0, 1.3, -35),
   new THREE.Vector3(0, 1.3, 13.75),
-  new THREE.Vector3(20.1, 1.3, 13.75)
+  new THREE.Vector3(20.1, 1.3, 13.75),
+  // Step onto the existing Records HQ elevator landing.
+  new THREE.Vector3(23, 1.3, 14.15)
 ];
 
 const HQ_DESTINATION = ROUTE[ROUTE.length - 1];
