@@ -1,3 +1,6 @@
+import StudioAccess from "./studioAccess.js";
+import HeroInvitation from "./heroInvitation.js";
+
 export default {
 
   keys: {},
@@ -113,6 +116,8 @@ export default {
     this._buildJoystick();
 
     this._buildMobileButtons();
+
+    window.addEventListener("lc-hero-invitation-updated", () => this._refreshPhoneMessages());
 
   },
 
@@ -730,6 +735,7 @@ export default {
         grid-template-columns:1fr 1fr;
         gap:10px;
       ">
+        <button id="lambo-phone-messages" type="button" style="grid-column:1 / -1;min-height:48px;border:1px solid rgba(255,215,0,.42);border-radius:12px;background:rgba(255,255,255,.045);color:#fff;font:700 10px Arial,sans-serif;letter-spacing:1.2px;cursor:pointer;">✉ &nbsp; MESSAGES <span id="lambo-phone-message-status" style="color:#c7b7a0;font-weight:400;">INBOX</span></button>
         <button id="lambo-phone-studio" type="button" style="
           min-height:76px;
           border:1px solid rgba(255,215,0,.55);
@@ -828,10 +834,9 @@ export default {
       this._phoneOpen = false;
     };
 
-    phone.querySelector("#lambo-phone-studio")?.addEventListener(
-      "click",
-      () => navigateFromPhone(2)
-    );
+    this._refreshPhoneMessages();
+    phone.querySelector("#lambo-phone-messages")?.addEventListener("click", () => this._openHeroMessage());
+    phone.querySelector("#lambo-phone-studio")?.addEventListener("click", () => StudioAccess.open(() => navigateFromPhone(2)));
     phone.querySelector("#lambo-phone-meeting")?.addEventListener(
       "click",
       () => navigateFromPhone(3)
@@ -863,6 +868,58 @@ export default {
 
   },
 
+
+  _refreshPhoneMessages() {
+    const status = document.getElementById("lambo-phone-message-status");
+    if (!status) return;
+    const invitation = HeroInvitation.get();
+    status.textContent = invitation ? (invitation.read ? "HERO MESSAGE" : "NEW · HERO") : "INBOX";
+    status.style.color = invitation && !invitation.read ? "#ffd700" : "#c7b7a0";
+  },
+
+  _openHeroMessage() {
+    const invitation = HeroInvitation.markRead();
+    const panel = document.createElement("div");
+    panel.id = "lc-hero-message-panel";
+    panel.style.cssText = "position:fixed;inset:0;z-index:12500;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,.76);font-family:Arial,sans-serif;";
+    const card = document.createElement("section");
+    card.style.cssText = "width:min(390px,100%);padding:24px;border:1px solid rgba(255,215,0,.5);border-radius:18px;background:linear-gradient(160deg,#170d24,#07070b);color:#fff;box-shadow:0 18px 55px rgba(0,0,0,.65);";
+    const sender = document.createElement("div");
+    sender.textContent = "CITIZEN PHONE · MESSAGES · " + (invitation ? "FROM HERO" : "INBOX");
+    sender.style.cssText = "color:#ffd700;font-size:10px;letter-spacing:2px;font-weight:700;";
+    const heading = document.createElement("h2");
+    heading.textContent = invitation ? invitation.subject : "Your inbox is clear";
+    heading.style.cssText = "font-size:22px;margin:16px 0 12px;";
+    const body = document.createElement("p");
+    body.textContent = invitation ? invitation.body : "HERO messages and important LAMBO CITY updates will appear here.";
+    body.style.cssText = "font-size:13px;line-height:1.7;color:#e5e5e5;";
+    card.append(sender, heading, body);
+    if (invitation) {
+      const access = document.createElement("p");
+      access.textContent = "DESTINATION · " + invitation.destination + " | STUDIO ACCESS UNLOCKED — Your Citizen Phone Studio button is now available.";
+      access.style.cssText = "margin-top:14px;padding:10px 12px;border-radius:10px;background:rgba(255,215,0,.08);color:#f0d98b;font-size:11px;line-height:1.5;";
+      card.append(access);
+    }
+    const actions = document.createElement("div");
+    actions.style.cssText = "display:flex;gap:10px;margin-top:20px;";
+    if (invitation) {
+      const accept = document.createElement("button");
+      accept.textContent = "ACCEPT INVITATION";
+      accept.style.cssText = "flex:1;padding:11px;border:0;border-radius:10px;background:linear-gradient(90deg,#b68a20,#f5d46a);color:#15110a;font-weight:700;cursor:pointer;";
+      accept.addEventListener("click", () => { HeroInvitation.accept(); panel.remove(); });
+      actions.append(accept);
+    }
+    const close = document.createElement("button");
+    close.textContent = "CLOSE";
+    close.style.cssText = "flex:1;padding:11px;border:1px solid rgba(255,255,255,.2);border-radius:10px;background:rgba(255,255,255,.07);color:#fff;font-weight:700;cursor:pointer;";
+    close.addEventListener("click", () => panel.remove());
+    actions.append(close);
+    card.append(actions);
+    panel.append(card);
+    document.getElementById("lc-hero-message-panel")?.remove();
+    document.body.append(panel);
+    this._refreshPhoneMessages();
+  },
 
   update() {}
 
