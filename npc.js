@@ -2,6 +2,7 @@ import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 import { createHeroModel } from "./hero-model.js";
 let heroMesh, crowdNPCs = [], time = 0, giftGiven = false;
 let performanceMode = false;
+let welcomeShown = false;
 export default {
   init(scene) {
     heroMesh = new THREE.Group();
@@ -18,7 +19,9 @@ export default {
     heroMesh.position.set(2.5,1.3,6);
     heroMesh.rotation.y = 0;
     scene.add(heroMesh);
-    setTimeout(() => showHeroDialogue(), 1500);
+    // The opening welcome is intentionally not shown at game startup.
+    // Progression can call showWelcome() when the player reaches the right moment.
+    welcomeShown = false;
        const colors = [0xff2200,0x0044ff,0x00aa44,0xffaa00,0xaa00ff,0xff0088,0x00ffcc,0xffffff];
     for (let i = 0; i < 16; i++) {
       const npc = new THREE.Group();
@@ -40,6 +43,12 @@ export default {
   },
 getHero() {
   return heroMesh;
+},
+showWelcome() {
+  if (welcomeShown) return false;
+  welcomeShown = true;
+  showHeroDialogue();
+  return true;
 },
 getCameraTargets() {
   return [heroMesh, ...crowdNPCs.map(character => character.mesh)].filter(Boolean);
