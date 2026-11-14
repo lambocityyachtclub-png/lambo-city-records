@@ -1,4 +1,4 @@
-import { auth, pool } from "../../server/auth.js";
+import { pool } from "../../server/auth.js";
 import { createRecoveryContext, hashRecoveryCode, hashRecoveryIdentity } from "../../server/recovery.js";
 
 export default async function handler(req, res) {
