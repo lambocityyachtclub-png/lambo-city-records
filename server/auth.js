@@ -2,6 +2,7 @@ import { betterAuth } from "better-auth";
 import { emailOTP } from "better-auth/plugins";
 import { passkey } from "@better-auth/passkey";
 import { Pool } from "pg";
+import { verifyRecoveryContext } from "./recovery.js";
 
 const databaseUrl = process.env.DATABASE_URL;
 if (!databaseUrl) {
@@ -80,7 +81,20 @@ export const auth = betterAuth({
     passkey({
       rpID: appHost,
       rpName: "LAMBO CITY",
-      origin: [appUrl]
+      origin: [appUrl],
+      registration: {
+        requireSession: false,
+        resolveUser: async ({ context }) => {
+          const recovery = verifyRecoveryContext(context);
+          const result = await pool.query(
+            'SELECT id, name, email FROM "user" WHERE id = $1 LIMIT 1',
+            [recovery.sub]
+          );
+          const user = result.rows[0];
+          if (!user) throw new Error("The account for this recovery request could not be found.");
+          return { id: user.id, name: user.name, email: user.email };
+        }
+      }
     })
   ],
   session: {
