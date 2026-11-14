@@ -2,9 +2,10 @@ import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 import StageMusic from "./stageMusic.js";
 import AmbientMusic from "./ambientMusic.js";
 
-const STAGE_CENTER = new THREE.Vector3(0, 1.3, -74);
+const STAGE_DECK_Y = 1.8;
+const STAGE_CENTER = new THREE.Vector3(0, STAGE_DECK_Y, -74);
 const TRIGGER_DISTANCE = 22;
-const STAGE_LEFT = new THREE.Vector3(-20.5, 1.3, -74);
+const STAGE_LEFT = new THREE.Vector3(-20.5, STAGE_DECK_Y, -74);
 const STAIR_TOP_X = 22.15;
 const STAIR_BOTTOM_X = 29.55;
 const STAIR_TOP_Y = 1.68;
@@ -59,7 +60,7 @@ function updateEntering(delta) {
   const t = Math.min(1, stateTime / ENTRY_DURATION);
   const x = THREE.MathUtils.lerp(STAGE_LEFT.x, -7, t);
   hero.position.x = x;
-  hero.position.y = 1.3 + Math.sin(t * Math.PI) * 0.05;
+  hero.position.y = STAGE_DECK_Y + Math.sin(t * Math.PI) * 0.05;
   faceDirection(-7, STAGE_Z);
 
   if (t >= 1) {
@@ -74,7 +75,7 @@ function updatePerformance(delta) {
   const t = performanceTime;
   const x = Math.sin(t * 0.65) * 12;
   hero.position.x = x;
-  hero.position.y = 1.3 + Math.abs(Math.sin(t * 2.2)) * 0.08;
+  hero.position.y = STAGE_DECK_Y + Math.abs(Math.sin(t * 2.2)) * 0.08;
 
   const direction = Math.cos(t * 0.65);
   if (Math.abs(direction) > 0.05) {
