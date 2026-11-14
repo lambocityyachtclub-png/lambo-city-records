@@ -37,6 +37,34 @@ async function request(path, options = {}) {
   return data;
 }
 
+async function syncHeroInvitation() {
+  let invitation;
+  try {
+    const raw = window.localStorage.getItem("lambocity-hero-hq-invitation-v1");
+    invitation = raw ? JSON.parse(raw) : null;
+  } catch {
+    return;
+  }
+  if (!invitation || invitation.delivered === false) return;
+
+  const auth = await client();
+  const session = await auth.getSession();
+  if (!session.data?.user) return;
+
+  const body = String(invitation.body || "").trim() ||
+    "What's up! I saw you out there. Welcome to LAMBO CITY. I want to see you at LAMBO CITY Records headquarters. Come through. I'll show you around and help you take your next step. — HERO";
+  await request("/api/player/messages", {
+    method: "POST",
+    body: JSON.stringify({
+      sender: invitation.sender || "HERO",
+      subject: invitation.subject || "HERO's invitation to LAMBO CITY Records HQ",
+      body,
+      messageType: "hero-invitation",
+      externalId: "hero-hq-invitation-v1"
+    })
+  });
+}
+
 function button(label, handler, primary = false) {
   const element = document.createElement("button");
   element.type = "button";
@@ -134,6 +162,7 @@ function showRecoveryCodes(codes, user) {
 }
 
 function showSignedIn(user) {
+  syncHeroInvitation().catch(() => {});
   const panel = overlay?.querySelector("[data-account-content]");
   if (!panel) return;
   panel.replaceChildren();
@@ -346,6 +375,9 @@ function open() {
 export default {
   init() {
     window.addEventListener("lc-open-player-account", open);
+    window.addEventListener("lc-hero-invitation-updated", () => {
+      syncHeroInvitation().catch(() => {});
+    });
     window.addEventListener("keydown", event => {
       if (event.key === "Escape") close();
     });
