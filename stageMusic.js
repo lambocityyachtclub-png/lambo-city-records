@@ -18,6 +18,7 @@ const TRACK = {
 
 let audio = null;
 let pendingPlay = false;
+let trackEnded = false;
 
 function clampVolume(value) {
   return Math.max(0, Math.min(1, value));
@@ -51,6 +52,7 @@ export default {
     audio.volume = 0.7;
 
     audio.addEventListener("ended", () => {
+      trackEnded = true;
       pendingPlay = false;
       audio.pause();
       audio.currentTime = 0;
@@ -65,6 +67,7 @@ export default {
 
   playFromStart() {
     if (!audio) return;
+    trackEnded = false;
 
     audio.pause();
 
@@ -82,6 +85,7 @@ export default {
   stop() {
     if (!audio) return;
 
+    trackEnded = false;
     pendingPlay = false;
     audio.pause();
 
@@ -97,6 +101,10 @@ export default {
 
   isPlaying() {
     return !!audio && !audio.paused;
+  },
+
+  hasEnded() {
+    return trackEnded;
   },
 
   getCurrentTrack() {
