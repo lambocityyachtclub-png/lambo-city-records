@@ -56,7 +56,7 @@ export default {
     // ============================================================
 
     const stage = new THREE.Mesh(
-      new THREE.BoxGeometry(34, 1.4, 18),
+      new THREE.BoxGeometry(44, 1.4, 18),
       new THREE.MeshStandardMaterial({
         color: 0x0d0d0d,
         roughness: 0.5
@@ -72,7 +72,7 @@ export default {
     // ============================================================
 
     const bw = new THREE.Mesh(
-      new THREE.BoxGeometry(34, 22, 1.2),
+      new THREE.BoxGeometry(44, 22, 1.2),
       new THREE.MeshStandardMaterial({
         color: 0x060606
       })
@@ -193,10 +193,10 @@ export default {
     });
 
     [
-      { w: 34.3, d: 0.15, x: 0, z: -65.1 },
-      { w: 34.3, d: 0.15, x: 0, z: -82.9 },
-      { w: 0.15, d: 18, x: -17.1, z: -74 },
-      { w: 0.15, d: 18, x: 17.1, z: -74 },
+      { w: 44.3, d: 0.15, x: 0, z: -65.1 },
+      { w: 44.3, d: 0.15, x: 0, z: -82.9 },
+      { w: 0.15, d: 18, x: -22.1, z: -74 },
+      { w: 0.15, d: 18, x: 22.1, z: -74 },
     ].forEach(e => {
 
       const trim = new THREE.Mesh(
@@ -308,7 +308,7 @@ export default {
     // STAGE NEON FLOOR STRIPS
     // ============================================================
 
-    [-12, -6, 0, 6, 12].forEach(x => {
+    [-16, -8, 0, 8, 16].forEach(x => {
 
       const s = new THREE.Mesh(
         new THREE.BoxGeometry(0.15, 0.06, 18),
