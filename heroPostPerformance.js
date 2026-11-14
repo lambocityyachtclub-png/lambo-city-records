@@ -34,12 +34,12 @@ function faceTarget(target) {
   hero.rotation.y = Math.atan2(dx, dz);
 }
 
-function moveToward(target, delta) {
+function moveToward(target, delta, stopDistance = ARRIVAL_DISTANCE) {
   if (!hero) return false;
   const dx = target.x - hero.position.x;
   const dz = target.z - hero.position.z;
   const distance = Math.sqrt(dx * dx + dz * dz);
-  if (distance <= ARRIVAL_DISTANCE) {
+  if (distance <= stopDistance) {
     hero.position.x = target.x;
     hero.position.z = target.z;
     hero.position.y = target.y ?? 1.3;
@@ -182,7 +182,7 @@ export default {
       y: 1.3,
       z: playerPosition.z - (dz / distance) * HERO_PLAYER_STANDOFF
     };
-    moveToward(target, delta);
+    moveToward(target, delta, 0.5);
   },
 
   reset() {
