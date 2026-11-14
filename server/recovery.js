@@ -14,6 +14,12 @@ export function hashRecoveryCode(code) {
     .digest("hex");
 }
 
+export function hashRecoveryIdentity(value) {
+  return createHmac("sha256", secret())
+    .update(String(value || "unknown").trim().toLowerCase())
+    .digest("hex");
+}
+
 export function createRecoveryContext(userId) {
   const payload = Buffer.from(JSON.stringify({
     sub: userId,
