@@ -5,9 +5,8 @@ const STAGE_CENTER = new THREE.Vector3(0, 1.3, -74);
 const TRIGGER_DISTANCE = 22;
 const STAGE_LEFT = new THREE.Vector3(-19, 1.3, -74);
 const STAGE_RIGHT = new THREE.Vector3(19, 1.3, -74);
-// The welcome performance is intentionally a short intro, not a full concert.
-// HERO performs for approximately 1 minute 45 seconds before leaving the stage.
-const PERFORMANCE_DURATION = 105;
+// HERO's performance ends when the actual stage audio track ends.
+// This keeps the entrance, performance, and exit on the same song timeline.
 const ENTRY_DURATION = 3;
 // A sharp, quick rockstar exit rather than a slow curtain call.
 const EXIT_DURATION = 1.35;
@@ -37,7 +36,7 @@ function beginPerformance(context) {
   npc.setPerformanceMode?.(true);
   // Pause the normal city radio while HERO performs.
   AmbientMusic.pause();
-  // Start HERO's performance song from 0:00.
+  // Start the song and HERO's entrance together at the beginning of the track.
   StageMusic.playFromStart();
   // Stage-left entrance position.
   hero.position.copy(STAGE_LEFT);
@@ -49,7 +48,7 @@ function beginPerformance(context) {
 function updateEntering(delta) {
   stateTime += delta;
   const t = Math.min(1, stateTime / ENTRY_DURATION);
-  // HERO walks from stage left toward center.
+  // HERO walks from stage left toward center while the song continues.
   const x = THREE.MathUtils.lerp(STAGE_LEFT.x, -7, t);
   hero.position.x = x;
   hero.position.y = 1.3 + Math.sin(t * Math.PI) * 0.05;
@@ -74,10 +73,8 @@ function updatePerformance(delta) {
       ? Math.PI / 2
       : -Math.PI / 2;
   }
-  // Simple performance movement.
-  // The existing stage lighting, lasers, smoke,
-  // screen and crowd systems continue independently.
-  if (performanceTime >= PERFORMANCE_DURATION) {
+  // The real audio "ended" event controls the exit. No independent timer.
+  if (StageMusic.hasEnded()) {
     state = "EXITING";
     stateTime = 0;
   }
@@ -96,15 +93,13 @@ function updateExiting(delta, context) {
   faceDirection(STAGE_RIGHT.x, -74);
   if (t >= 1) {
     const npc = context.systems?.npc;
-    // Stop HERO's stage music when the performance is finished.
+    // Stop HERO's stage music when the exit animation is finished.
     StageMusic.stop();
     // Restore the normal city radio.
     AmbientMusic.resume();
     state = "COMPLETE";
     stateTime = 0;
-    // Leave HERO standing at stage right for now.
-    // The future HQ/security/paparazzi system will
-    // take over his post-performance journey.
+    // Leave HERO standing at stage right for the post-performance journey.
     npc?.setPerformanceMode?.(false);
   }
 }
