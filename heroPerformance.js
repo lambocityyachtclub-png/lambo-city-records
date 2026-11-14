@@ -36,12 +36,12 @@ function beginPerformance(context) {
   npc.setPerformanceMode?.(true);
   // Pause the normal city radio while HERO performs.
   AmbientMusic.pause();
-  // Start the song and HERO's entrance together at the beginning of the track.
+  // Request playback. The entrance waits until the browser confirms audio
+  // is actually playing, so an iPad autoplay delay cannot desynchronize them.
   StageMusic.playFromStart();
-  // Stage-left entrance position.
   hero.position.copy(STAGE_LEFT);
-  hero.visible = true;
-  state = "ENTERING";
+  hero.visible = false;
+  state = "WAITING_FOR_AUDIO";
   stateTime = 0;
   performanceTime = 0;
 }
@@ -118,6 +118,14 @@ export default {
       return;
     }
     if (!hero) return;
+    if (state === "WAITING_FOR_AUDIO") {
+      if (!StageMusic.isPlaying()) return;
+      // Reveal HERO and begin his entrance on the first confirmed playback frame.
+      hero.visible = true;
+      state = "ENTERING";
+      stateTime = 0;
+      return;
+    }
     if (state === "ENTERING") {
       updateEntering(delta);
       return;
