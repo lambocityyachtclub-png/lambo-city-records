@@ -762,6 +762,15 @@ export default {
         </button>
       </div>
 
+      <div style="padding:10px 16px 2px;">
+        <button id="lambo-phone-account" type="button" style="
+          width:100%;min-height:48px;border:1px solid rgba(255,215,0,.55);
+          border-radius:12px;background:linear-gradient(135deg,rgba(255,215,0,.16),rgba(153,0,255,.18));
+          color:#fff;font:700 10px Arial,sans-serif;letter-spacing:1.3px;
+          cursor:pointer;touch-action:manipulation;
+        ">👤 &nbsp; MY LAMBO CITY ACCOUNT</button>
+      </div>
+
       <div style="
         padding:10px 16px 16px;
         display:grid;
@@ -820,6 +829,10 @@ export default {
     document.body.appendChild(
       phone
     );
+
+    phone.querySelector("#lambo-phone-account")?.addEventListener("click", () => {
+      window.dispatchEvent(new CustomEvent("lc-open-player-account"));
+    });
 
     const navigateFromPhone = floor => {
       const navigate = window.__lamboCityNavigateToFloor;
