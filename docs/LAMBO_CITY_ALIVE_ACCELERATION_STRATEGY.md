@@ -49,6 +49,16 @@ Before enabling background execution, verify each real connection:
 
 The private ALIVE control repository documents the private queue and, on its integration branch, contains a bounded preview smoke-test task dated 2026-11-12. The inspected integration-branch tree contains the README, queue README, and that single smoke-test JSON record; no worker source code is present in that branch tree. The task authorizes only a documentation-only smoke-test artifact. This does not prove that no worker exists elsewhere, but its implementation and hosted runtime are not verifiable from the inspected repository branch. Do not repurpose or silently broaden that task.
 
+Additional implementation facts verified in source:
+
+- `development/blueprints/discoverBlueprints.mjs` performs a read-only repository scan and emits discovery-draft reports. Its own contract says keyword matches are clues, not proof, and it does not create or submit development tasks.
+- `.github/workflows/development-engine-tests.yml` runs the existing development-engine and blueprint-discovery tests, generates the read-only report, and uploads it as an artifact. This is a useful scheduled-by-CI/on-change discovery step, not a continuously running autonomous director.
+- `development/execution/isolatedWorkspaceAdapter.js` creates a local temporary workspace outside the project root and enforces path and symlink checks. That is a concrete isolation adapter, but by itself it does not establish a hosted, durable worker or GitHub branch/PR integration.
+- `development/engine/developmentDirector.js` supports persistence through an injected storage adapter, but defaults to in-memory task state when no adapter is supplied.
+- `development/runners/studio/studioDevelopmentRunner.js` converts submitted findings into director tasks; its source explicitly says it does not read or write repository files or execute code.
+
+These are useful components, but the end-to-end connection between private queue retrieval, hosted worker, durable task state, isolated execution, and owner review still needs an environment-level verification.
+
 ## 4. Delivery sequence
 
 ### Stage A — Project understanding (read-only)
