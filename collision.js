@@ -53,7 +53,7 @@ function isOutsideSafeWaterfrontSurface(x, z, radius) {
     Math.hypot(x, z + 74) + radius <= 43.1;
 
   const onMainDock =
-    Math.abs(x) + radius <= 5.6 &&
+    Math.abs(x) + radius <= 6.2 &&
     z - radius >= -41 &&
     z + radius <= 35;
 
@@ -67,13 +67,20 @@ function isOutsideSafeWaterfrontSurface(x, z, radius) {
     x + radius <= 25.3 &&
     Math.abs(z - 14.15) + radius <= 1.35;
 
+  const onStreetWalkway =
+    x - radius >= -45 &&
+    x + radius <= 45 &&
+    z - radius >= 37 &&
+    z + radius <= 55;
+
   const onConnectedSurface =
     onLeftShore ||
     onRightShore ||
     onCircularPier ||
     onMainDock ||
     onHQDockSpur ||
-    atHQElevatorThreshold;
+    atHQElevatorThreshold ||
+    onStreetWalkway;
 
   // Only enforce this boundary in the stage/marina waterfront zone.
   // Other city districts retain their existing movement behavior.
