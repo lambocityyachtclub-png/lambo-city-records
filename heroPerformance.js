@@ -5,9 +5,12 @@ const STAGE_CENTER = new THREE.Vector3(0, 1.3, -74);
 const TRIGGER_DISTANCE = 22;
 const STAGE_LEFT = new THREE.Vector3(-19, 1.3, -74);
 const STAGE_RIGHT = new THREE.Vector3(19, 1.3, -74);
-const PERFORMANCE_DURATION = 24;
+// The welcome performance is intentionally a short intro, not a full concert.
+// HERO performs for approximately 1 minute 45 seconds before leaving the stage.
+const PERFORMANCE_DURATION = 105;
 const ENTRY_DURATION = 3;
-const EXIT_DURATION = 3;
+// A sharp, quick rockstar exit rather than a slow curtain call.
+const EXIT_DURATION = 1.35;
 let scene;
 let hero = null;
 let state = "IDLE";
