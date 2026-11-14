@@ -1,0 +1,35 @@
+name: Festival Main Stage Upgrade Checks
+
+on:
+  pull_request:
+    paths:
+      - "world.js"
+      - "collision.js"
+      - "festivalStageUpgrade.js"
+      - "heroPerformance.js"
+      - "stageMusic.js"
+      - "main.js"
+      - "engine.js"
+      - "scripts/test-festival-stage-upgrade.mjs"
+      - ".github/workflows/festival-main-stage-upgrade.yml"
+  workflow_dispatch:
+
+jobs:
+  festival-stage:
+    name: Validate Festival Stage and HERO Exit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check JavaScript syntax
+        run: |
+          for file in world.js collision.js festivalStageUpgrade.js heroPerformance.js stageMusic.js main.js engine.js scripts/test-festival-stage-upgrade.mjs
+          do
+            node --experimental-default-type=module --check "$file"
+          done
+      - name: Test stage integration and exit route
+        run: node --experimental-default-type=module scripts/test-festival-stage-upgrade.mjs
