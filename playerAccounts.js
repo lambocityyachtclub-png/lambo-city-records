@@ -118,11 +118,11 @@ function showRecoveryCodes(codes, user) {
   note.textContent = "These one-time codes are your emergency way back into LAMBO CITY if you lose access to your passkey. Save them somewhere private. Each code works once, and this is the only time this set will be shown.";
   note.style.cssText = "color:#c6c0b4;font-size:12px;line-height:1.6;margin:0 0 12px;";
   const list = document.createElement("pre");
-  list.textContent = codes.join("\\n");
+  list.textContent = codes.join("\n");
   list.style.cssText = "white-space:pre-wrap;word-break:break-all;background:#09070d;border:1px solid rgba(218,190,130,.3);border-radius:10px;padding:14px;color:#f1d99a;font:700 13px/1.9 monospace;letter-spacing:1px;";
   const copy = button("COPY BACKUP CODES", async () => {
     try {
-      await navigator.clipboard.writeText(codes.join("\\n"));
+      await navigator.clipboard.writeText(codes.join("\n"));
       status("BACKUP CODES COPIED — STORE THEM SAFELY");
     } catch {
       status("Select and copy the codes above, then store them safely.", true);
