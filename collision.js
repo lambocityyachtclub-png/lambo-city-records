@@ -23,6 +23,70 @@
 
 const colliders = [];
 
+// ============================================================
+// WATERFRONT WALKABLE-SURFACE BOUNDARIES
+// ============================================================
+//
+// Keep pedestrians on the existing connected surfaces:
+// - Circular stage pier (center 0,-74; radius 44)
+// - Central dock (x +/- 7; z -41 to 35)
+// - Timber HQ approach spur (x 5.25 to 20.1; z 13.75)
+// - HQ elevator threshold
+// - The two existing shore/land plates
+//
+// This is movement-only collision. It does not add or move geometry.
+// A small inset keeps the full character radius on the walking surface.
+function isOutsideSafeWaterfrontSurface(x, z, radius) {
+  const onLeftShore =
+    x - radius >= -65 &&
+    x + radius <= -21 &&
+    z - radius >= 10 &&
+    z + radius <= 45;
+
+  const onRightShore =
+    x - radius >= 21 &&
+    x + radius <= 65 &&
+    z - radius >= 10 &&
+    z + radius <= 45;
+
+  const onCircularPier =
+    Math.hypot(x, z + 74) + radius <= 43.1;
+
+  const onMainDock =
+    Math.abs(x) + radius <= 5.6 &&
+    z - radius >= -41 &&
+    z + radius <= 35;
+
+  const onHQDockSpur =
+    x - radius >= 4.65 &&
+    x + radius <= 20.7 &&
+    Math.abs(z - 13.75) + radius <= 1.2;
+
+  const atHQElevatorThreshold =
+    x - radius >= 19.5 &&
+    x + radius <= 25.3 &&
+    Math.abs(z - 14.15) + radius <= 1.35;
+
+  const onConnectedSurface =
+    onLeftShore ||
+    onRightShore ||
+    onCircularPier ||
+    onMainDock ||
+    onHQDockSpur ||
+    atHQElevatorThreshold;
+
+  // Only enforce this boundary in the stage/marina waterfront zone.
+  // Other city districts retain their existing movement behavior.
+  const withinWaterfrontZone =
+    x >= -46 &&
+    x <= 46 &&
+    z >= -120 &&
+    z <= 47;
+
+  return withinWaterfrontZone && !onConnectedSurface;
+}
+
+
 
 // ============================================================
 // RECORDS HQ FLOOR RANGES
@@ -948,6 +1012,12 @@ export default {
     radius = 0.6,
     y = 1.3
   ) {
+
+    // Prevent the player from stepping off the roundabout, central dock,
+    // or HQ dock spur into open water.
+    if (isOutsideSafeWaterfrontSurface(x, z, radius)) {
+      return true;
+    }
 
     return colliders.some(
       collider => {
