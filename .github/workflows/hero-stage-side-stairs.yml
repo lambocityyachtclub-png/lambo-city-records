@@ -1,0 +1,27 @@
+# Focused checks for the HERO side-stair exit and matching stage geometry.
+name: HERO Stage Side Stairs Checks
+
+on:
+  pull_request:
+    branches:
+      - main
+      - fix/hero-performance-song-sync
+    paths:
+      - "world.js"
+      - "heroPerformance.js"
+      - ".github/workflows/hero-stage-side-stairs.yml"
+
+jobs:
+  syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Check stage geometry module syntax
+        run: node --check world.js
+      - name: Check HERO exit controller syntax
+        run: node --check heroPerformance.js
