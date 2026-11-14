@@ -47,7 +47,7 @@ Before enabling background execution, verify each real connection:
 7. No worker can merge, deploy, spend money, change permissions, or silently broaden scope.
 8. Interrupted work can be identified and resumed or safely abandoned without duplicate execution.
 
-The private ALIVE control repository currently documents the private queue and contains a bounded preview smoke-test task dated 2026-11-12 on its integration branch. That task authorizes only a documentation-only smoke-test artifact. It is not evidence that the complete worker, reasoning loop, or production automation is operational. Do not repurpose or silently broaden that task.
+The private ALIVE control repository documents the private queue and, on its integration branch, contains a bounded preview smoke-test task dated 2026-11-12. The inspected integration-branch tree contains the README, queue README, and that single smoke-test JSON record; no worker source code is present in that branch tree. The task authorizes only a documentation-only smoke-test artifact. This does not prove that no worker exists elsewhere, but its implementation and hosted runtime are not verifiable from the inspected repository branch. Do not repurpose or silently broaden that task.
 
 ## 4. Delivery sequence
 
