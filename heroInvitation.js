@@ -25,6 +25,7 @@ function notify(message) {
   window.setTimeout(() => toast.remove(), 9000);
 }
 
+// Queue a two-tone notification for the next permitted user gesture when autoplay is blocked.
 function playNotificationChime() {
   const AudioContextClass = window.AudioContext || window.webkitAudioContext;
   if (!AudioContextClass) return;
