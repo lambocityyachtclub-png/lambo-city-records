@@ -1,5 +1,5 @@
 const AUTH_URL = "https://esm.sh/better-auth@1.7.23/client";
-const PASSKEY_URL = "https://esm.sh/@better-auth/passkey@1.7.22/client";
+const PASSKEY_URL = "https://esm.sh/@better-auth/passkey@1.7.23/client";
 const EMAIL_OTP_URL = "https://esm.sh/better-auth@1.7.23/client/plugins";
 
 let clientPromise;
