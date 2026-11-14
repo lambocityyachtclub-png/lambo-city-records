@@ -61,6 +61,51 @@ function close() {
   statusLine = null;
 }
 
+async function showInbox() {
+  const panel = overlay?.querySelector("[data-account-content]");
+  if (!panel) return;
+  panel.replaceChildren();
+  const title = document.createElement("div");
+  title.textContent = "LAMBO CITY INBOX";
+  title.style.cssText = "color:#e4c47f;font-size:11px;letter-spacing:2px;margin-bottom:14px;";
+  panel.appendChild(title);
+  try {
+    const result = await request("/api/player/messages");
+    if (!result.messages?.length) {
+      const empty = document.createElement("p");
+      empty.textContent = "Your city messages and invitations will appear here.";
+      empty.style.cssText = "color:#c6c0b4;font-size:12px;line-height:1.6;";
+      panel.appendChild(empty);
+    } else {
+      for (const message of result.messages) {
+        const item = document.createElement("article");
+        item.style.cssText = "padding:12px;margin:0 0 10px;border:1px solid rgba(218,190,130,.22);border-radius:10px;background:rgba(255,255,255,.035);";
+        const sender = document.createElement("div");
+        sender.textContent = message.sender || "LAMBO CITY";
+        sender.style.cssText = "color:#d8bd7d;font-size:9px;letter-spacing:1.5px;margin-bottom:5px;";
+        const subject = document.createElement("div");
+        subject.textContent = message.subject;
+        subject.style.cssText = "color:#fff;font-size:13px;font-weight:700;margin-bottom:6px;";
+        const body = document.createElement("div");
+        body.textContent = message.body;
+        body.style.cssText = "color:#c6c0b4;font-size:12px;line-height:1.55;white-space:pre-wrap;";
+        item.append(sender, subject, body);
+        panel.appendChild(item);
+      }
+    }
+  } catch (error) {
+    const errorText = document.createElement("p");
+    errorText.textContent = error.message;
+    errorText.style.cssText = "color:#ff9b9b;font-size:12px;";
+    panel.appendChild(errorText);
+  }
+  panel.appendChild(button("BACK TO ACCOUNT", async () => {
+    const auth = await client();
+    const session = await auth.getSession();
+    if (session.data?.user) showSignedIn(session.data.user);
+  }));
+}
+
 function showSignedIn(user) {
   const panel = overlay?.querySelector("[data-account-content]");
   if (!panel) return;
@@ -88,7 +133,8 @@ function showSignedIn(user) {
       status(error.message, true);
     }
   });
-  panel.append(heading, name, email, note, signOut);
+  const inbox = button("OPEN MY CITY INBOX", showInbox);
+  panel.append(heading, name, email, note, inbox, signOut);
   status("ACCOUNT CONNECTED");
 }
 
