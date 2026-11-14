@@ -2,63 +2,210 @@ name: World System Checks
 
 on:
   push:
-    paths:
-      - "main.js"
-      - "engine.js"
-      - "marina.js"
-      - "waterfrontStorefrontDetails.js"
-      - "world.js"
-      - "cityMap.js"
-      - "conferenceCenterDistrict.js"
-      - "dock.js"
-      - "water.js"
-      - "scripts/test-waterfront-storefront-details.mjs"
-      - ".github/workflows/world-system-checks.yml"
-
+    branches:
+      - feature/lambo-city-completion
   pull_request:
     paths:
-      - "main.js"
-      - "engine.js"
-      - "marina.js"
-      - "waterfrontStorefrontDetails.js"
-      - "world.js"
-      - "cityMap.js"
-      - "conferenceCenterDistrict.js"
-      - "dock.js"
-      - "water.js"
-      - "scripts/test-waterfront-storefront-details.mjs"
+      - "world*.js"
+      - "worldDistricts/**"
+      - "world-system-preview.html"
+      - "world-district-composer.html"
+      - "tests/world-system-node-tests.mjs"
       - ".github/workflows/world-system-checks.yml"
 
-  workflow_dispatch:
-
 jobs:
-  world:
-    name: Validate World Modules
+  world-system:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
+      - name: Set up Node
         uses: actions/setup-node@v4
         with:
           node-version: 22
 
-      - name: Check world module syntax
+      - name: Check World System module syntax
+        shell: bash
         run: |
+          set -euo pipefail
           for file in \
-            main.js \
-            engine.js \
-            marina.js \
-            waterfrontStorefrontDetails.js \
-            world.js \
-            cityMap.js \
-            conferenceCenterDistrict.js \
-            dock.js \
-            water.js
+            worldDistrictSchema.js \
+            worldDistrictFactory.js \
+            worldBuilder.js \
+            worldParcelBuilder.js \
+            worldDistrictProxyBuilder.js \
+            worldTerrainMath.js \
+            worldTerrainBuilder.js \
+            worldAccessGate.js \
+            worldConnectionBuilder.js \
+            worldNavigation.js \
+            worldDistrictStreaming.js \
+            worldVehicleRoadRules.js \
+            worldSystemRuntime.js \
+            worldSystemHost.js \
+            worldSystem.js \
+            player.js \
+            worldDistricts/conferenceCenter.js
           do
-            node --experimental-default-type=module --check "$file"
+            node --input-type=module --check < "$file"
           done
 
-      - name: Test additive waterfront storefront integration
-        run: node --experimental-default-type=module scripts/test-waterfront-storefront-details.mjs
+      - name: Check preview module syntax
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          for filename in ("world-system-preview.html", "world-district-composer.html"):
+              html = Path(filename).read_text()
+              match = re.search(r'<script type="module">(.*?)</script>', html, re.S)
+              if not match:
+                  raise SystemExit(f"Module script was not found in {filename}.")
+              output = "/tmp/" + filename.replace(".html", ".mjs")
+              Path(output).write_text(match.group(1))
+          PY
+          node --check /tmp/world-system-preview.mjs
+          node --check /tmp/world-district-composer.mjs
+
+      - name: Run pure World System tests
+        run: node tests/world-system-node-tests.mjs
+      - name: Run the full Three.js preview assertions in Chromium
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --prefix /tmp/lambo-city-browser playwright
+          /tmp/lambo-city-browser/node_modules/.bin/playwright install chromium
+          python3 -m http.server 8000 --directory . >/tmp/lambo-city-preview-server.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          node --input-type=module <<'JS'
+          import { chromium } from "/tmp/lambo-city-browser/node_modules/playwright/index.mjs";
+          const browser = await chromium.launch({ headless: true, args: ["--no-sandbox"] });
+          try {
+            const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+            const pageErrors = [];
+            const failedRequests = [];
+            page.on("pageerror", error => pageErrors.push(error.message));
+            page.on("requestfailed", request => failedRequests.push(request.url() + ": " + request.failure()?.errorText));
+            await page.goto("http://127.0.0.1:8000/world-system-preview.html", { waitUntil: "domcontentloaded" });
+            await page.waitForTimeout(20000);
+            const status = await page.locator("#status").textContent();
+            const details = await page.locator("#error").textContent().catch(() => "");
+            if (!status || status.startsWith("Preparing") || !status.startsWith("All district, terrain, parcel")) {
+              throw new Error("Preview did not complete. Status: " + status + "\\nDetails: " + details +
+                "\\nPage errors: " + pageErrors.join("\\n") +
+                "\\nFailed requests: " + failedRequests.join("\\n"));
+            }
+            if (pageErrors.length) throw new Error(pageErrors.join("\\n"));
+            console.log("Desktop preview: " + status);
+
+            // Repeat the complete preview at an iPad-sized touch viewport.
+            // This is responsive/touch-emulation coverage, not a substitute
+            // for the final physical-device review.
+            const tablet = await browser.newPage({
+              viewport: { width: 834, height: 1194 },
+              deviceScaleFactor: 2,
+              isMobile: true,
+              hasTouch: true
+            });
+            const tabletErrors = [];
+            tablet.on("pageerror", error => tabletErrors.push(error.message));
+            await tablet.goto("http://127.0.0.1:8000/world-system-preview.html", {
+              waitUntil: "domcontentloaded"
+            });
+            await tablet.waitForFunction(() => {
+              const value = document.querySelector("#status")?.textContent || "";
+              return value.startsWith("All district, terrain, parcel");
+            }, { timeout: 30000 });
+            const tabletCanvas = await tablet.locator("canvas").evaluate(canvas => ({
+              width: canvas.clientWidth,
+              height: canvas.clientHeight,
+              touchAction: getComputedStyle(canvas).touchAction
+            }));
+            const panelBox = await tablet.locator(".panel").boundingBox();
+            if (!tabletCanvas.width || !tabletCanvas.height ||
+                tabletCanvas.touchAction !== "none" ||
+                !panelBox || panelBox.width > 834 ||
+                tabletErrors.length) {
+              throw new Error("iPad-sized preview check failed: " + JSON.stringify({
+                canvas: tabletCanvas,
+                panel: panelBox,
+                errors: tabletErrors
+              }));
+            }
+            console.log("iPad-sized touch preview: " + JSON.stringify(tabletCanvas));
+
+            // Exercise the high-level district composer on desktop and tablet.
+            const composer = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+            const composerErrors = [];
+            composer.on("pageerror", error => composerErrors.push(error.message));
+            await composer.goto("http://127.0.0.1:8000/world-district-composer.html", {
+              waitUntil: "domcontentloaded"
+            });
+            await composer.waitForFunction(() =>
+              (document.querySelector("#status")?.textContent || "").includes("generated and validated"),
+              null,
+              { timeout: 30000 }
+            );
+            if (await composer.locator("#metrics .metric").count() < 8) {
+              throw new Error("District composer did not report its generated district metrics.");
+            }
+            await composer.locator("#district-name").fill("Coastal Composer Test");
+            await composer.locator("#character").selectOption("coastal");
+            await composer.locator("#density").selectOption("high");
+            await composer.locator("#generate").click();
+            await composer.waitForFunction(() =>
+              (document.querySelector("#status")?.textContent || "").includes("Coastal Composer Test generated"),
+              null,
+              { timeout: 30000 }
+            );
+            if (composerErrors.length || await composer.locator("#error").isVisible()) {
+              throw new Error("District composer desktop errors: " + composerErrors.join("\\n") +
+                " / " + await composer.locator("#error").textContent());
+            }
+            const exportedBrief = JSON.parse(await composer.locator("#recipe-output").inputValue());
+            if (exportedBrief.character !== "coastal" || exportedBrief.density !== "high" ||
+                exportedBrief.name !== "Coastal Composer Test" ||
+                await composer.locator("#copy-recipe").isDisabled()) {
+              throw new Error("District composer did not expose a reusable brief matching the generated neighborhood.");
+            }
+            console.log("District composer desktop generation and recipe export: passed");
+
+            const composerTablet = await browser.newPage({
+              viewport: { width: 834, height: 1194 },
+              deviceScaleFactor: 2,
+              isMobile: true,
+              hasTouch: true
+            });
+            const composerTabletErrors = [];
+            composerTablet.on("pageerror", error => composerTabletErrors.push(error.message));
+            await composerTablet.goto("http://127.0.0.1:8000/world-district-composer.html", {
+              waitUntil: "domcontentloaded"
+            });
+            await composerTablet.waitForFunction(() =>
+              (document.querySelector("#status")?.textContent || "").includes("generated and validated"),
+              null,
+              { timeout: 30000 }
+            );
+            const composerTabletCanvas = await composerTablet.locator("canvas").evaluate(canvas => ({
+              width: canvas.clientWidth,
+              height: canvas.clientHeight,
+              touchAction: getComputedStyle(canvas).touchAction
+            }));
+            const composerPanel = await composerTablet.locator(".panel").boundingBox();
+            if (!composerTabletCanvas.width || !composerTabletCanvas.height ||
+                composerTabletCanvas.touchAction !== "none" ||
+                !composerPanel || composerPanel.width > 834 ||
+                composerTabletErrors.length) {
+              throw new Error("District composer iPad-sized check failed: " + JSON.stringify({
+                canvas: composerTabletCanvas,
+                panel: composerPanel,
+                errors: composerTabletErrors
+              }));
+            }
+            console.log("District composer iPad-sized touch preview: " + JSON.stringify(composerTabletCanvas));
+          } finally {
+            await browser.close();
+          }
+          JS
