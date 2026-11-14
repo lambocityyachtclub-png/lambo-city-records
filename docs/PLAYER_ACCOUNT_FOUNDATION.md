@@ -8,7 +8,8 @@
 - Account data is hosted separately from the Three.js world runtime.
 
 ## Development isolation
-- Git branch: `feature/player-account-foundation`
+- Account foundation branch: `feature/player-account-foundation-clean`
+- Combined HERO/account integration branch: `feature/hero-account-integration`
 - Neon project: `square-dew-67503197`
 - Neon branch: `player-accounts-dev`
 - Vercel environment variables `DATABASE_URL` and `BETTER_AUTH_SECRET` are scoped only to preview deployments for this Git branch.
@@ -32,3 +33,10 @@ No production environment variables are changed by this feature. Do not merge or
 
 ## Database
 The migration in this folder is applied to the isolated development branch. Keep it as the source-controlled record of the account schema.
+
+## HERO invitation integration
+- HERO's post-performance invitation is first stored in the existing device-local Citizen Phone inbox.
+- When the player signs in, the account client copies that invitation into the authenticated account inbox.
+- The stable external message ID makes repeated sync attempts idempotent for the same player account.
+- The invitation remains available in the Citizen Phone even before account sign-in.
+- This does not collect a phone number or send SMS. Any future SMS feature requires a separate explicit opt-in and consent flow.
