@@ -8,12 +8,12 @@ import * as THREE from
 import HeroInvitation from "./heroInvitation.js";
 
 const STAGE_RIGHT = new THREE.Vector3(19, 1.3, -74);
-const ENCOUNTER_WAYPOINT = new THREE.Vector3(23.5, 1.3, -22);
+const ENCOUNTER_WAYPOINT = new THREE.Vector3(5, 1.3, -62);
 const HQ_DESTINATION = new THREE.Vector3(28, 1.3, 30);
 
 const HERO_SPEED = 4.5;
 const ARRIVAL_DISTANCE = 2.5;
-const PLAYER_ENCOUNTER_DISTANCE = 16;
+const PLAYER_ENCOUNTER_DISTANCE = 34;
 const ENCOUNTER_TIMEOUT = 35;
 
 let hero = null;
