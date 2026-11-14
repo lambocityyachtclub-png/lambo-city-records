@@ -174,7 +174,7 @@ export default {
       {
         x: 0,
         z: -74,
-        width: 34,
+        width: 44,
         depth: 18
       }
     );
@@ -185,7 +185,7 @@ export default {
       {
         x: 0,
         z: -88,
-        width: 40,
+        width: 50,
         depth: 10
       }
     );
@@ -196,7 +196,7 @@ export default {
       {
         x: 0,
         z: -83.5,
-        width: 34,
+        width: 44,
         depth: 1.2
       }
     );

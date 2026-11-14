@@ -61,6 +61,8 @@ let active = false;
 let arrived = false;
 
 let time = 0;
+let walkStartY = 1.3;
+const GROUND_TRANSITION_DURATION = 1.25;
 
 
 // ------------------------------------------------------------
@@ -140,6 +142,7 @@ function begin() {
   arrived = false;
 
   time = 0;
+  walkStartY = hero.position.y;
 
 }
 
@@ -226,14 +229,11 @@ function updateWalking(delta) {
     This is intentionally subtle.
   */
 
+  const groundBlend = Math.min(1, time / GROUND_TRANSITION_DURATION);
+  const smoothGroundBlend = groundBlend * groundBlend * (3 - 2 * groundBlend);
   hero.position.y =
-    1.3 +
-    Math.abs(
-      Math.sin(
-        time * 8
-      )
-    ) *
-    0.035;
+    THREE.MathUtils.lerp(walkStartY, HQ_DESTINATION.y, smoothGroundBlend) +
+    Math.abs(Math.sin(time * 8)) * 0.025;
 
 
   faceTarget(
@@ -323,9 +323,8 @@ export default {
         stage-exit position.
       */
 
-      hero.position.y =
-        1.3;
-
+      // Preserve the exact stair-landing height. begin() records it and
+      // blends HERO onto the normal boardwalk level while he walks away.
       begin();
 
     }
@@ -349,6 +348,7 @@ export default {
     arrived = false;
 
     time = 0;
+    walkStartY = 1.3;
 
     hero = null;
 
