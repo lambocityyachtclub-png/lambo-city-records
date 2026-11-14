@@ -13,6 +13,10 @@ export default async function handler(req, res) {
     }
 
     if (req.method === "GET") {
+      await pool.query(
+        "UPDATE player_messages SET read_at = now() WHERE user_id = $1 AND read_at IS NULL",
+        [session.user.id]
+      );
       const result = await pool.query(
         `SELECT id, sender, subject, body, message_type, read_at, created_at
          FROM player_messages
