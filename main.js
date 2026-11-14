@@ -196,4 +196,7 @@ window.__lamboCityPrepareFloor = floor => {
   return destinationLoads.get(floor);
 };
 
+// Player account UI is event-driven and does not need a Three.js scene.
+// Initialize it explicitly because Engine only initializes registered world systems.
+PlayerAccounts.init();
 engine.init();
