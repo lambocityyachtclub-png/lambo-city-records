@@ -7,6 +7,8 @@ const TRIGGER_DISTANCE = 22;
 const STAGE_LEFT = new THREE.Vector3(-20.5, 1.3, -74);
 const STAIR_TOP_X = 22.15;
 const STAIR_BOTTOM_X = 29.55;
+const STAIR_TOP_Y = 1.68;
+const STAIR_BOTTOM_Y = 0.67;
 const STAGE_Z = -74;
 const ENTRY_DURATION = 3;
 const EXIT_DURATION = 4.2;
@@ -17,6 +19,7 @@ let state = "IDLE";
 let stateTime = 0;
 let performanceTime = 0;
 let exitStartX = 0;
+let exitStartY = 1.3;
 let exitStartZ = STAGE_Z;
 
 function distanceToStage(player) {
@@ -82,6 +85,7 @@ function updatePerformance(delta) {
   // starts HERO's walk to the right-hand staircase.
   if (StageMusic.hasEnded()) {
     exitStartX = hero.position.x;
+    exitStartY = hero.position.y;
     exitStartZ = hero.position.z;
     state = "EXITING";
     stateTime = 0;
@@ -97,21 +101,26 @@ function updateExiting(delta, context) {
     const approachT = t / approachEnd;
     const eased = approachT * approachT * (3 - 2 * approachT);
     hero.position.x = THREE.MathUtils.lerp(exitStartX, STAIR_TOP_X, eased);
+    hero.position.y = THREE.MathUtils.lerp(exitStartY, STAIR_TOP_Y, eased);
     hero.position.z = THREE.MathUtils.lerp(exitStartZ, STAGE_Z, eased);
   } else {
     const stairT = (t - approachEnd) / (1 - approachEnd);
     const eased = stairT * stairT * (3 - 2 * stairT);
     hero.position.x = THREE.MathUtils.lerp(STAIR_TOP_X, STAIR_BOTTOM_X, eased);
+    hero.position.y = STAIR_TOP_Y + (STAIR_BOTTOM_Y - STAIR_TOP_Y) * eased;
     hero.position.z = STAGE_Z;
   }
 
-  // Subtle footfall rhythm as HERO descends the built-in stair treads.
-  hero.position.y = 1.3 + Math.abs(Math.sin(stateTime * 11)) * 0.025;
+  // Keep HERO aligned with the actual stair elevation as he descends.
+  // A very small footfall bounce adds life without lifting him off the treads.
+  if (t >= approachEnd) {
+    hero.position.y += Math.abs(Math.sin(stateTime * 11)) * 0.012;
+  }
   faceDirection(STAIR_BOTTOM_X, STAGE_Z);
 
   if (t >= 1) {
     const npc = context.systems?.npc;
-    hero.position.set(STAIR_BOTTOM_X, 1.3, STAGE_Z);
+    hero.position.set(STAIR_BOTTOM_X, STAIR_BOTTOM_Y, STAGE_Z);
     StageMusic.stop();
     AmbientMusic.resume();
     state = "COMPLETE";
@@ -173,6 +182,7 @@ export default {
     stateTime = 0;
     performanceTime = 0;
     exitStartX = 0;
+    exitStartY = 1.3;
     exitStartZ = STAGE_Z;
     hero = null;
   }
