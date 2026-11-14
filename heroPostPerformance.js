@@ -17,6 +17,7 @@ let active = false;
 let arrived = false;
 let approachingPlayer = false;
 let conversationOpen = false;
+let conversationResolved = false;
 let invitationDelivered = false;
 let time = 0;
 
@@ -101,6 +102,7 @@ function openInvitationDialogue() {
   const close = () => {
     overlay.remove();
     conversationOpen = false;
+    conversationResolved = true;
   };
   coming.addEventListener("click", () => {
     HeroInvitation.accept();
@@ -149,7 +151,7 @@ export default {
       return;
     }
 
-    if (!arrived || conversationOpen) return;
+    if (!arrived || conversationOpen || conversationResolved) return;
 
     const playerPosition = {
       x: player.position.x,
@@ -192,6 +194,7 @@ export default {
     arrived = false;
     approachingPlayer = false;
     conversationOpen = false;
+    conversationResolved = false;
     invitationDelivered = false;
     time = 0;
   }
