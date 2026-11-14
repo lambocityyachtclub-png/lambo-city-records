@@ -94,3 +94,12 @@ CREATE TABLE IF NOT EXISTS player_recovery_codes (
   used_at timestamptz,
   created_at timestamptz NOT NULL DEFAULT now()
 );
+
+CREATE TABLE IF NOT EXISTS player_recovery_attempts (
+  email_hash text NOT NULL,
+  ip_hash text NOT NULL,
+  attempts integer NOT NULL DEFAULT 0,
+  window_started_at timestamptz NOT NULL DEFAULT now(),
+  locked_until timestamptz,
+  PRIMARY KEY (email_hash, ip_hash)
+);
