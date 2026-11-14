@@ -1,5 +1,6 @@
 import { randomBytes } from "node:crypto";
 import { auth, pool } from "../../server/auth.js";
+import { toWebHeaders } from "../../server/http.js";
 import { hashRecoveryCode } from "../../server/recovery.js";
 
 export default async function handler(req, res) {
@@ -10,7 +11,7 @@ export default async function handler(req, res) {
 
   let connection;
   try {
-    const session = await auth.api.getSession({ headers: req.headers });
+    const session = await auth.api.getSession({ headers: toWebHeaders(req.headers) });
     if (!session?.user?.id) {
       return res.status(401).json({ error: "Sign in before creating backup codes." });
     }
