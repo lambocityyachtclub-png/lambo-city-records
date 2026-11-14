@@ -1,12 +1,15 @@
 const STORAGE_KEY = "lambocity-hero-hq-invitation-v2";
 const EVENT_NAME = "lc-hero-invitation-updated";
+let memoryInvitation = null;
+let pendingAudioContext = null;
 
 function readStored() {
   try {
     const value = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
-    return value && value.delivered === true ? value : null;
+    memoryInvitation = value && value.delivered === true ? value : memoryInvitation;
+    return value && value.delivered === true ? value : memoryInvitation;
   } catch {
-    return null;
+    return memoryInvitation;
   }
 }
 
@@ -27,28 +30,42 @@ function playNotificationChime() {
   if (!AudioContextClass) return;
   try {
     const context = new AudioContextClass();
-    // Browsers may block sound until a user gesture. Never force-resume audio.
-    if (context.state !== "running") {
-      context.close().catch(() => {});
+    pendingAudioContext = context;
+    const play = () => {
+      if (!pendingAudioContext || pendingAudioContext !== context) return;
+      const now = context.currentTime;
+      [880, 1174.66].forEach((frequency, index) => {
+        const oscillator = context.createOscillator();
+        const gain = context.createGain();
+        oscillator.type = "sine";
+        oscillator.frequency.value = frequency;
+        gain.gain.setValueAtTime(0.0001, now + index * 0.13);
+        gain.gain.exponentialRampToValueAtTime(0.12, now + index * 0.13 + 0.025);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + index * 0.13 + 0.2);
+        oscillator.connect(gain);
+        gain.connect(context.destination);
+        oscillator.start(now + index * 0.13);
+        oscillator.stop(now + index * 0.13 + 0.22);
+      });
+      pendingAudioContext = null;
+      window.setTimeout(() => context.close().catch(() => {}), 700);
+    };
+    if (context.state === "running") {
+      play();
       return;
     }
-    const now = context.currentTime;
-    [880, 1174.66].forEach((frequency, index) => {
-      const oscillator = context.createOscillator();
-      const gain = context.createGain();
-      oscillator.type = "sine";
-      oscillator.frequency.value = frequency;
-      gain.gain.setValueAtTime(0.0001, now + index * 0.13);
-      gain.gain.exponentialRampToValueAtTime(0.12, now + index * 0.13 + 0.025);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + index * 0.13 + 0.2);
-      oscillator.connect(gain);
-      gain.connect(context.destination);
-      oscillator.start(now + index * 0.13);
-      oscillator.stop(now + index * 0.13 + 0.22);
-    });
-    window.setTimeout(() => context.close().catch(() => {}), 700);
+    const resumeOnGesture = () => {
+      document.removeEventListener("pointerdown", resumeOnGesture);
+      document.removeEventListener("keydown", resumeOnGesture);
+      context.resume().then(() => {
+        if (context.state === "running") play();
+        else context.close().catch(() => {});
+      }).catch(() => context.close().catch(() => {}));
+    };
+    document.addEventListener("pointerdown", resumeOnGesture, { once: true });
+    document.addEventListener("keydown", resumeOnGesture, { once: true });
   } catch {
-    // The persistent phone message and visual notification remain available.
+    pendingAudioContext = null;
   }
 }
 
@@ -73,6 +90,7 @@ export default {
       deliveredAt: new Date().toISOString()
     };
 
+    memoryInvitation = invitation;
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(invitation));
     } catch {
