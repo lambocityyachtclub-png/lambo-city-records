@@ -14,6 +14,7 @@ const PRESETS = Object.freeze({
 let scene = null;
 let baseline = null;
 let activePreset = "baseline";
+let transition = null;
 
 function applyFog(color, density) {
   if (!scene?.fog) {
@@ -34,14 +35,50 @@ function getStatus() {
     availablePresets: ["baseline", ...Object.keys(PRESETS)],
     fogEnabled: Boolean(scene?.fog),
     fogColor: scene?.fog?.color?.getHexString?.() ?? null,
-    fogDensity: scene?.fog?.density ?? null
+    fogDensity: scene?.fog?.density ?? null,
+    transition: transition ? {
+      targetPreset: transition.targetPreset,
+      duration: transition.duration,
+      elapsed: transition.elapsed
+    } : null
   };
 }
 
 const controls = {
   getStatus,
 
+  transitionTo(name, duration = 2) {
+    if (!scene?.fog || !baseline) {
+      return { success: false, error: "Scene fog baseline is unavailable." };
+    }
+    const target = name === "baseline" ? baseline : PRESETS[name];
+    if (!target) {
+      return { success: false, error: "Unknown atmosphere preset." };
+    }
+    const seconds = Number(duration);
+    if (!Number.isFinite(seconds)) {
+      return { success: false, error: "Transition duration must be a finite number." };
+    }
+    const safeDuration = Math.max(0.1, Math.min(30, seconds));
+    const targetColor = name === "baseline"
+      ? target.color.clone()
+      : scene.fog.color.clone().setHex(target.color);
+
+    transition = {
+      targetPreset: name,
+      fromColor: scene.fog.color.clone(),
+      toColor: targetColor,
+      fromDensity: scene.fog.density,
+      toDensity: target.density,
+      duration: safeDuration,
+      elapsed: 0
+    };
+    activePreset = "transitioning";
+    return { success: true, status: getStatus() };
+  },
+
   setPreset(name) {
+    transition = null;
     if (name === "baseline") {
       if (!baseline || !scene?.fog) {
         return { success: false, error: "Baseline fog settings are unavailable." };
@@ -69,6 +106,7 @@ const controls = {
 export default {
   init(scene_) {
     scene = scene_ || null;
+    transition = null;
     baseline = scene?.fog ? {
       color: scene.fog.color.clone(),
       density: scene.fog.density
@@ -78,7 +116,34 @@ export default {
     return controls;
   },
 
-  update() {
-    // No per-frame work; presets are changed only by explicit requests.
+  update(delta) {
+    if (!transition || !scene?.fog) return;
+
+    const safeDelta = Math.max(0, Math.min(Number(delta) || 0, 0.1));
+    transition.elapsed = Math.min(
+      transition.duration,
+      transition.elapsed + safeDelta
+    );
+    const progress = transition.elapsed / transition.duration;
+
+    scene.fog.color.lerpColors(
+      transition.fromColor,
+      transition.toColor,
+      progress
+    );
+    if (typeof scene.fog.density === "number") {
+      scene.fog.density =
+        transition.fromDensity +
+        (transition.toDensity - transition.fromDensity) * progress;
+    }
+
+    if (progress >= 1) {
+      activePreset = transition.targetPreset;
+      scene.fog.color.copy(transition.toColor);
+      if (typeof scene.fog.density === "number") {
+        scene.fog.density = transition.toDensity;
+      }
+      transition = null;
+    }
   }
 };
