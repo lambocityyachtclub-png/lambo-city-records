@@ -152,12 +152,14 @@ const waterVisualControls = {
         planarReflector.material.transparent = true;
         planarReflector.material.opacity = opacity;
         planarReflector.material.depthWrite = false;
+        planarReflector.material.needsUpdate = true;
 
         const renderReflection = planarReflector.onBeforeRender.bind(planarReflector);
         planarReflector.onBeforeRender = (activeRenderer, activeScene, activeCamera) => {
           if (!planarReflectionEnabled || planarReflectionClock < planarNextRefreshAt) return;
           planarNextRefreshAt = planarReflectionClock + planarReflectionIntervalSeconds;
           const visibility = [waterMesh.visible, shimmerMesh.visible, reflectionMesh.visible];
+          let refreshFailed = false;
           try {
             waterMesh.visible = false;
             shimmerMesh.visible = false;
@@ -165,11 +167,12 @@ const waterVisualControls = {
             renderReflection(activeRenderer, activeScene, activeCamera);
           } catch (error) {
             console.warn("[LAMBO CITY Water] Planar reflection refresh failed.", error);
-            disablePlanarReflection();
+            refreshFailed = true;
           } finally {
             waterMesh.visible = visibility[0];
             shimmerMesh.visible = visibility[1];
             reflectionMesh.visible = visibility[2];
+            if (refreshFailed) disablePlanarReflection();
           }
         };
         waterScene.add(planarReflector);
