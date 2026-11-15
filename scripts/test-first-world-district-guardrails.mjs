@@ -2,6 +2,27 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import CITY_MAP from "../cityMap.js";
 
+const apartmentArchitecture = await readFile(
+  new URL("../APARTMENT_SYSTEM_ARCHITECTURE.md", import.meta.url),
+  "utf8"
+);
+for (const requirement of [
+  "at least 300",
+  "atomic server-side transaction",
+  "idempotent",
+  "verified server session",
+  "cannot read, or overwrite Account B",
+  "optimistic concurrency",
+  "load only the assigned unit",
+  "300 simulated account claims produce 300 unique assignments",
+  "Leaving and re-entering an apartment restores the saved design"
+]) {
+  assert.ok(
+    apartmentArchitecture.includes(requirement),
+    "The apartment architecture contract is missing: " + requirement
+  );
+}
+
 const blueprint = await readFile(
   new URL("../LAMBO_CITY_MASTER_BLUEPRINT.md", import.meta.url),
   "utf8"
