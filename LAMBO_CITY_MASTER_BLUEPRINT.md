@@ -328,3 +328,43 @@ The **opposite side of the boardwalk toward the Jumbotron is out of scope** for 
 As of this source review, the current feature-branch `cityMap.js` contains the provisional Conference Center / Arena footprint, boulevard concept, and outer villa-parcel intent. The current `conferenceCenterDistrict.js` is still the interim Conference Center structure and its single store-side access road. The inspected source does **not** yet register or build the basketball court or skate park. Those amenities are owner-approved planning requirements, not existing implemented scene objects.
 
 This is a documentation-only planning update. No coordinates, scene meshes, collision, navigation, or production behavior are changed by this section. Before implementation, survey the actual land, water edge, storefront entrances, Records HQ approach, and all protected landmarks; then publish a complete, dimensioned district layout for owner review.
+
+
+## Store-side Arena District site survey — source-verified constraints
+
+**Survey status:** source-code coordinate audit only; not a runtime terrain scan. The measurements below are existing source geometry, not a final approved street layout.
+
+### Existing fixed geometry
+
+| Element | Source-verified footprint / location | Planning implication |
+|---|---|---|
+| Marina boardwalk street | X -45 to +45; Z 42 to 50; road width 8 | Existing east-west street is protected and remains pedestrian-priority / service-only |
+| Boardwalk sidewalks | Centered near Z 39.5 and 52.5 | Preserve existing pedestrian circulation |
+| Storefront row | Centers X -20, -32, -44; building depth spans Z 25 to 37 | Preserve storefronts and their entrances |
+| Storefront threshold | Approximately Z 38.05 to 38.48 | Keep a clear pedestrian approach to the existing stores |
+| Interim Conference Center land | X -70 to -16; Z 64 to 126 | Existing built land plate; not enough by itself to prove a complete loop |
+| Interim land connector | X -70 to -16; Z 45 to 64 | Existing north-side connection from boardwalk area to conference land |
+| Interim access road | Center X -37; Z 46 to 80; width 8 | Existing single approach road, not a loop |
+| Interim Conference Center | Center (-43,97); foundation 28 × 24 | Current building is interim and smaller than the arena-scale master-plan target |
+| Provisional arena land reserve | X -105 to +19; Z 48 to 158 | Planning reserve only; much of this is not yet built terrain |
+| Provisional arena footprint | Center (-43,97); 54 × 44 | Previous target footprint; retain as provisional pending site fit |
+| Records HQ | Center (28,22); approximate footprint X 19.25 to 36.75, Z 15.25 to 28.75 | Protect building, front approach, and rear/elevator approach |
+| HQ dock spur | X 5.25 to 20.10; centered Z 13.75; width 2.4 | Must remain clear and connected to elevator |
+
+### Critical route-fit finding
+
+The current source does **not** contain a completed street loop. It contains one northbound access road from the store-side boardwalk and a separate provisional boulevard outline in `cityMap.js`.
+
+There is also a real land-continuity issue to resolve before assigning final road coordinates: the existing conference land plate ends at X=-16, while the existing HQ-side shore plate begins at X=+21. The 37-unit interval between those land plates is not a surveyed continuous ground corridor north of the boardwalk. The central dock corridor and the Records HQ approach are protected. A return leg toward the HQ side therefore cannot simply be drawn across this gap as if solid land already exists.
+
+The final site plan must explicitly show how the district loop reaches the HQ-side return point using a continuous, supported land route, while:
+- keeping the whole new district on the store / Convention Center side of the boardwalk;
+- using the existing boardwalk as the preserved connection, not rebuilding it;
+- avoiding the Jumbotron-facing / opposite side of the boardwalk entirely;
+- preserving the central dock, dock-to-boardwalk connector, HQ dock spur, and HQ elevator access;
+- keeping the Convention Center as the centerpiece, recreation (basketball court and skate park) central and nearby, and apartments / villas on the outer perimeter;
+- providing connected sidewalks, crossings, accessible pedestrian paths, and safe player collision boundaries.
+
+### Planning correction
+
+The earlier 84 × 74 boulevard outline is **not** a final road design and must not be implemented as-is. It was a provisional arena-district reservation, not a surveyed loop that reaches the Records HQ side. The next design artifact must be a full top-down parcel and circulation plan with a continuous route, verified land support, arena footprint, recreation parcels, outer residential parcels, and protected-area overlays. Only after that plan is reviewed and approved should `cityMap.js`, terrain, road meshes, and collision be changed.
