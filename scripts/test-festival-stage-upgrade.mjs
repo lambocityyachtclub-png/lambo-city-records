@@ -71,6 +71,15 @@ assert.match(audience, /grandStagePhotographerMediaPit/, "Audience zone must inc
 assert.match(audience, /grandStageCrowdBarrierPosts/, "Audience zone must include touring crowd-control barricade posts");
 assert.match(audience, /grandStageCrowdBarrierMeshBars/, "Barricades must have realistic mesh infill");
 assert.match(audience, /grandStageCentralSecurityLaneEdges/, "Audience zone must mark the central security and dock corridor");
+assert.match(collision, /grandStageAudienceFrontBarrierLeft/, "Front audience barricades must block player walk-through");
+assert.match(collision, /grandStageAudienceRearBarrierLeft/, "Rear audience barricades must block player walk-through");
+assert.match(collision, /grandStageAudienceSideBarrierLeft/, "Side audience barricades must block player walk-through");
+assert.match(collision, /grandStageSecurityGateFrontLeft/, "Security gate posts must have physical collision");
+assert.match(collision, /grandStageSecurityGateRearRight/, "Rear security gate posts must have physical collision");
+assert.match(collision, /width: 14\.2, depth: 0\.24/, "Audience barrier collision must span the visible modular barrier runs");
+assert.match(collision, /maxY: 2\.4,[\s\S]*level: "grand-stage-audience"/, "Audience barrier collision must apply at player height");
+assert.match(collision, /x: -7\.15, z: -57\.4/, "Left central entry opening must remain clear of the continuous barrier run");
+assert.match(collision, /x: 7\.15, z: -57\.4/, "Right central entry opening must remain clear of the continuous barrier run");
 assert.match(audience, /corridorHalfWidth: 6\.8/, "Central corridor must remain wide and open for established dock access");
 assert.match(audience, /Math\.PI \/ 2/, "Audience-side barricade returns must be built from reusable rotated modules");
 assert.match(audience, /InstancedMesh/, "Repeated audience-zone hardware must use instancing");
