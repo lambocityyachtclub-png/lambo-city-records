@@ -368,3 +368,74 @@ The final site plan must explicitly show how the district loop reaches the HQ-si
 ### Planning correction
 
 The earlier 84 × 74 boulevard outline is **not** a final road design and must not be implemented as-is. It was a provisional arena-district reservation, not a surveyed loop that reaches the Records HQ side. The next design artifact must be a full top-down parcel and circulation plan with a continuous route, verified land support, arena footprint, recreation parcels, outer residential parcels, and protected-area overlays. Only after that plan is reviewed and approved should `cityMap.js`, terrain, road meshes, and collision be changed.
+
+## Owner-approved district layout direction — 2026-11-15
+
+This section is the current owner-approved direction and supersedes earlier provisional Arena District street geometry wherever the two conflict. It is a planning brief, not authorization to build scene geometry.
+
+### Fixed design intent
+
+- The Convention Center / Arena is the visual and functional centerpiece of the district.
+- A basketball court and skate park belong in the central recreation area, close to the Convention Center and integrated into the public realm.
+- Apartments and villas occupy the district's outer perimeter. Their height and massing must remain subordinate to the Convention Center landmark.
+- The district should read as one connected outlet / shopping / entertainment destination, not as a detached extension or a collection of unrelated parcels.
+- The street route follows the owner's described sequence: leave the existing boardwalk at its district-side end, make the first left, continue along the district street, make the second left, and return toward the Records HQ side. The final centerline and exact approach point must be proven against the surveyed scene before coordinates are assigned.
+- The existing boardwalk, storefront row, Records HQ, dock, marina, Grand Stage, Jumbotron, roundabout, and all other approved geography are fixed anchors.
+
+### Absolute geographic exclusion
+
+No new streets, buildings, district extensions, terrain pads, or construction are to be placed on the opposite / Jumbotron-facing side of the existing boardwalk. This is a hard exclusion, not a future expansion reserve. The Grand Stage, Jumbotron, dock, and their approaches remain untouched.
+
+### Conceptual top-down circulation diagram
+
+The following is a relationship diagram only; it is deliberately not to scale and does not assign world coordinates:
+
+```text
+                    OUTER RESIDENTIAL PERIMETER
+             [Apartments / Villas around district edge]
+
+       ┌───────────────────────────────────────────────┐
+       │                                               │
+       │   [Basketball Court]   [Skate Park]            │
+       │            CENTRAL RECREATION                  │
+       │                                               │
+       │             [CONVENTION CENTER]                │
+       │                 CENTERPIECE                    │
+       │                                               │
+       │  Retail / dining / entertainment frontages    │
+       └───────┐                               ┌───────┘
+               │  District street             │
+               │  first left → onward        │
+               └───────────────┐               │
+                               └───────────────┘
+                      return leg toward Records HQ
+
+   Existing boardwalk / storefronts / Records HQ remain fixed.
+   Jumbotron-facing opposite side: PROTECTED — NO CONSTRUCTION.
+```
+
+The diagram communicates adjacency and program only. Its drawn corners do not define the actual route geometry. The route must be drafted as a continuous centerline with connected junctions and safe pedestrian crossings; no dead ends or floating pavement.
+
+### Existing constraints that must be resolved before coordinates
+
+- The existing boardwalk road is centered at Z=46, spans X=-45..45, and is pedestrian-priority / service-emergency access only. It must not silently become an ordinary vehicle thoroughfare.
+- The existing storefronts are west of the current district approach, around X=-20, -32, and -44. Their building positions, doors, and threshold clearances are fixed.
+- The current Conference Center pad and approach are interim geometry around X=-70..-16, Z=45..126. They are not a completed district street loop.
+- The current HQ-side shore plate is X=21..65, Z=10..45, while the Conference Center connector / pad occupies X=-70..-16. The intervening area is not proven as continuous buildable land. Any return route toward HQ requires a verified land / terrain continuity plan that stays on the permitted district side and preserves the HQ dock spur and elevator approach.
+- The former provisional square-boulevard dimensions and villa placement notes are not final geometry. Do not copy them into scene code or use them as a coordinate template.
+- No coordinates are approved yet for the new street centerline, land extension, Convention Center replacement footprint, courts, skate park, residential parcels, or return junction.
+
+### Next planning deliverable and approval gate
+
+Prepare a measured top-down parcel and circulation plan with:
+1. Existing protected geometry and no-build overlays.
+2. A continuous district-side land footprint that closes the described route without crossing water or touching the Jumbotron-facing exclusion.
+3. The exact first-left and second-left junctions, return connection toward Records HQ, and all route endpoints.
+4. A Convention Center footprint and arrival plaza at the center of the district.
+5. Central basketball and skate park parcels with pedestrian links to the arena and retail street.
+6. Outer apartment / villa parcels, access points, setbacks, and sightline protection.
+7. Separate vehicle, shared-street, and pedestrian paths, with a clear policy for the existing boardwalk.
+8. Matching collision boundaries, thresholds, and route connectivity.
+
+Only after that plan is source-checked and presented for owner review should any `cityMap.js`, terrain, road, building, collision, or navigation implementation begin. This approval authorizes continued planning and documentation only; it does not authorize construction or production deployment.
+
