@@ -20,6 +20,8 @@ let time = 0;
 let frame = 0;
 
 let visualBaseline = null;
+let shimmerOpacityOverride = null;
+let reflectionOpacityOverride = null;
 
 function getWaterVisualStatus() {
   return {
@@ -75,7 +77,10 @@ const waterVisualControls = {
       if (!Number.isFinite(number)) {
         return { success: false, error: key + " opacity must be a finite number." };
       }
-      material.opacity = Math.max(0, Math.min(0.3, number));
+      const opacity = Math.max(0, Math.min(0.3, number));
+      material.opacity = opacity;
+      if (key === "shimmer") shimmerOpacityOverride = opacity;
+      if (key === "reflection") reflectionOpacityOverride = opacity;
     }
 
     return { success: true, status: getWaterVisualStatus() };
@@ -88,6 +93,8 @@ const waterVisualControls = {
 
     Object.assign(waterMesh.material, visualBaseline.surface);
     waterMesh.material.needsUpdate = true;
+    shimmerOpacityOverride = null;
+    reflectionOpacityOverride = null;
     shimmerMesh.material.opacity = visualBaseline.shimmerOpacity;
     reflectionMesh.material.opacity = visualBaseline.reflectionOpacity;
 
@@ -328,18 +335,18 @@ export default {
 
     if(reflectionMesh){
 
-      reflectionMesh.material.opacity =
-        0.07 +
-        Math.sin(time*0.5)*0.02;
+      reflectionMesh.material.opacity = reflectionOpacityOverride ?? (
+        0.07 + Math.sin(time*0.5)*0.02
+      );
 
     }
 
 
     if(shimmerMesh){
 
-      shimmerMesh.material.opacity =
-        0.10 +
-        Math.sin(time*0.8)*0.03;
+      shimmerMesh.material.opacity = shimmerOpacityOverride ?? (
+        0.10 + Math.sin(time*0.8)*0.03
+      );
 
     }
 
