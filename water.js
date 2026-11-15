@@ -18,6 +18,8 @@ let reflectionMesh;
 
 let time = 0;
 let frame = 0;
+let waveBaseX = null;
+let waveBaseZ = null;
 
 
 export default {
@@ -36,6 +38,16 @@ export default {
       48,
       48
     );
+
+    // Vertex X/Z coordinates never change. Cache them once so the
+    // animation loop only updates the Y component of the existing buffer.
+    const initialPositions = geo.attributes.position;
+    waveBaseX = new Float32Array(initialPositions.count);
+    waveBaseZ = new Float32Array(initialPositions.count);
+    for (let i = 0; i < initialPositions.count; i++) {
+      waveBaseX[i] = initialPositions.getX(i);
+      waveBaseZ[i] = initialPositions.getZ(i);
+    }
 
 
     const mat = new THREE.MeshStandardMaterial({
@@ -174,57 +186,22 @@ export default {
 
 
 
-    for(
-      let i = 0;
-      i < pos.count;
-      i++
-    ){
+    const values = pos.array;
 
-
-      const x = pos.getX(i);
-
-      const z = pos.getZ(i);
-
-
+    for (let i = 0; i < pos.count; i++) {
+      const x = waveBaseX[i];
+      const z = waveBaseZ[i];
 
       // Large ocean swell
-
-      const swell =
-        Math.sin(
-          x * 0.015 +
-          time * 0.35
-        ) * 0.22;
-
-
+      const swell = Math.sin(x * 0.015 + time * 0.35) * 0.22;
 
       // Cross wave movement
-
-      const wave =
-        Math.cos(
-          z * 0.025 +
-          time * 0.45
-        ) * 0.12;
-
-
+      const wave = Math.cos(z * 0.025 + time * 0.45) * 0.12;
 
       // Small surface ripples
+      const ripple = Math.sin((x + z) * 0.08 + time * 0.9) * 0.05;
 
-      const ripple =
-        Math.sin(
-          (x + z) * 0.08 +
-          time * 0.9
-        ) * 0.05;
-
-
-
-      pos.setY(
-        i,
-        swell +
-        wave +
-        ripple
-      );
-
-
+      values[i * 3 + 1] = swell + wave + ripple;
     }
 
 
