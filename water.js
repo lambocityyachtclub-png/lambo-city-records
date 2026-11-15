@@ -37,6 +37,7 @@ let planarReflectionIntervalSeconds = 3;
 let planarReflectionOpacity = 0.18;
 let planarReflectionClock = 0;
 let planarNextRefreshAt = 0;
+let planarRequestToken = 0;
 
 function getWaterVisualStatus() {
   return {
@@ -110,6 +111,7 @@ const waterVisualControls = {
   getStatus: getWaterVisualStatus,
 
   async setPlanarReflection(enabled, options = {}) {
+    const requestToken = ++planarRequestToken;
     if (!enabled) {
       disablePlanarReflection();
       return { success: true, status: getWaterVisualStatus() };
@@ -135,6 +137,9 @@ const waterVisualControls = {
           import("https://esm.sh/three@0.160.0"),
           import("https://esm.sh/three@0.160.0/examples/jsm/objects/Reflector.js")
         ]);
+        if (requestToken !== planarRequestToken) {
+          return { success: false, error: "Planar reflection request was superseded." };
+        }
         const Reflector = reflectorModule.Reflector;
         planarReflector = new Reflector(
           new THREE_MODULE.PlaneGeometry(800, 800),
@@ -187,7 +192,7 @@ const waterVisualControls = {
         };
         waterScene.add(planarReflector);
       } catch (error) {
-        disablePlanarReflection();
+        if (requestToken === planarRequestToken) disablePlanarReflection();
         console.warn("[LAMBO CITY Water] Planar reflection modules could not be loaded.", error);
         return {
           success: false,
@@ -216,6 +221,7 @@ const waterVisualControls = {
       return { success: false, error: "Scene, renderer, or water material is unavailable." };
     }
 
+    planarRequestToken++;
     disablePlanarReflection();
     const requestedSize = Number(options.resolution) || 128;
     const size = Math.max(64, Math.min(256, Math.round(requestedSize)));
@@ -314,6 +320,7 @@ const waterVisualControls = {
       return { success: false, error: "Water visual baseline is unavailable." };
     }
 
+    planarRequestToken++;
     disableEnvironmentReflection();
     disablePlanarReflection();
     reflectionIntervalSeconds = 3;
