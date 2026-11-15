@@ -57,6 +57,13 @@ function isOutsideSafeWaterfrontSurface(x, z, radius) {
     z - radius >= -41 &&
     z + radius <= 35;
 
+  // Connect the existing central dock to the existing boardwalk.
+  // This is collision-only: no world geometry or layout is changed.
+  const onDockBoardwalkConnector =
+    Math.abs(x) + radius <= 6.2 &&
+    z - radius >= 33.8 &&
+    z + radius <= 38.2;
+
   const onHQDockSpur =
     x - radius >= 4.65 &&
     x + radius <= 20.7 &&
@@ -78,12 +85,12 @@ function isOutsideSafeWaterfrontSurface(x, z, radius) {
     onRightShore ||
     onCircularPier ||
     onMainDock ||
+    onDockBoardwalkConnector ||
     onHQDockSpur ||
     atHQElevatorThreshold ||
     onStreetWalkway;
 
-  // Only enforce this boundary in the stage/marina waterfront zone.
-  // Other city districts retain their existing movement behavior.
+  // Only enforce this boundary in the existing stage/marina zone.
   const withinWaterfrontZone =
     x >= -46 &&
     x <= 46 &&
@@ -92,7 +99,6 @@ function isOutsideSafeWaterfrontSurface(x, z, radius) {
 
   return withinWaterfrontZone && !onConnectedSurface;
 }
-
 
 
 // ============================================================
