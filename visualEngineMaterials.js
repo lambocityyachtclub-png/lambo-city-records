@@ -6,6 +6,14 @@
 
 let scene = null;
 let renderer = null;
+const materialBaselines = new WeakMap();
+
+const MATERIAL_PRESETS = Object.freeze({
+  polished: Object.freeze({ roughness: 0.18, metalness: 0.72 }),
+  satin: Object.freeze({ roughness: 0.38, metalness: 0.35 }),
+  matte: Object.freeze({ roughness: 0.82, metalness: 0.05 }),
+  chrome: Object.freeze({ roughness: 0.08, metalness: 0.95 })
+});
 
 function collectTextures() {
   const textures = new Set();
@@ -40,6 +48,38 @@ function getTextureReport() {
 
 const controls = {
   getReport: getTextureReport,
+
+  setMaterialPreset(material, presetName) {
+    const preset = MATERIAL_PRESETS[presetName];
+    if (!material || !preset) {
+      return { success: false, error: "Provide a material and choose polished, satin, matte, or chrome." };
+    }
+    if (!materialBaselines.has(material)) {
+      materialBaselines.set(material, {
+        roughness: material.roughness,
+        metalness: material.metalness
+      });
+    }
+    if (typeof material.roughness === "number") material.roughness = preset.roughness;
+    if (typeof material.metalness === "number") material.metalness = preset.metalness;
+    material.needsUpdate = true;
+    return {
+      success: true,
+      preset: presetName,
+      roughness: material.roughness ?? null,
+      metalness: material.metalness ?? null
+    };
+  },
+
+  restoreMaterial(material) {
+    const baseline = material && materialBaselines.get(material);
+    if (!baseline) return { success: false, error: "No saved material baseline exists." };
+    if (typeof baseline.roughness === "number") material.roughness = baseline.roughness;
+    if (typeof baseline.metalness === "number") material.metalness = baseline.metalness;
+    material.needsUpdate = true;
+    materialBaselines.delete(material);
+    return { success: true };
+  },
 
   setTextureAnisotropy(requestedLevel = 1) {
     const maximum = renderer?.capabilities?.getMaxAnisotropy?.() ?? 1;
