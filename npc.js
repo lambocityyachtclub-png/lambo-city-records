@@ -23,7 +23,10 @@ export default {
     // Progression can call showWelcome() when the player reaches the right moment.
     welcomeShown = false;
 
+    crowdNPCs = [];
     const colors = [0xff2200,0x0044ff,0x00aa44,0xffaa00,0xaa00ff,0xff0088,0x00ffcc,0xffffff];
+    const legMaterial = new THREE.MeshStandardMaterial({color:0x17191d,roughness:0.82});
+    const shoeMaterial = new THREE.MeshStandardMaterial({color:0x090a0c,roughness:0.72});
     for (let i = 0; i < 16; i++) {
       const npc = new THREE.Group();
       npc.name = "lamboCityCrowdCharacter_" + String(i + 1).padStart(2, "0");
@@ -45,6 +48,12 @@ export default {
       const rightArm = createCrowdArm(0.52, 2.02, bodyMaterial);
       npc.add(leftArm);
       npc.add(rightArm);
+
+      // Articulated hip pivots give every existing crowd rig a readable walk cycle.
+      const leftLeg = createCrowdLeg(-0.23, 0.84, legMaterial, shoeMaterial);
+      const rightLeg = createCrowdLeg(0.23, 0.84, legMaterial, shoeMaterial);
+      npc.add(leftLeg);
+      npc.add(rightLeg);
 
       // A small phone prop makes the phone-recording persona readable.
       const phone = new THREE.Mesh(
@@ -72,7 +81,11 @@ export default {
         headPivot,
         leftArm,
         rightArm,
-        phone
+        leftLeg,
+        rightLeg,
+        phone,
+        homeX: x,
+        homeZ: z
       });
     }
   },
@@ -111,6 +124,18 @@ getCameraTargets() {
     }
   }
 };
+
+function createCrowdLeg(x, y, legMaterial, shoeMaterial) {
+  const pivot = new THREE.Group();
+  pivot.position.set(x, y, 0);
+  const leg = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.82, 0.30), legMaterial);
+  leg.position.y = -0.39;
+  pivot.add(leg);
+  const shoe = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.17, 0.48), shoeMaterial);
+  shoe.position.set(0, -0.79, 0.09);
+  pivot.add(shoe);
+  return pivot;
+}
 
 function createCrowdArm(x, y, material) {
   const pivot = new THREE.Group();
