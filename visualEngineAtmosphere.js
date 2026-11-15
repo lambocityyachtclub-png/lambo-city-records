@@ -60,8 +60,9 @@ const controls = {
     }
 
     const result = applyFog(preset.color, preset.density);
-    if (result.success) activePreset = name;
-    return result;
+    if (!result.success) return result;
+    activePreset = name;
+    return { success: true, status: getStatus() };
   }
 };
 
