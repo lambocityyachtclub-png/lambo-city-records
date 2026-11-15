@@ -18,6 +18,7 @@ export default class Engine {
     // Centralized quality controls initialize before world systems are created.
     this.systems.visualEngine?.init?.(this.scene, this.context);
     this.systems.visualEngineShadows?.init?.(this.scene, this.context);
+    this.systems.visualEnginePostProcessing?.init?.(this.scene, this.context);
     this.systems.performanceMonitor?.init?.(this.renderer, this.context);
     this.systems.world?.init?.(this.scene);
     this.systems.festivalStageUpgrade?.init?.(this.scene, this.context);
@@ -138,6 +139,7 @@ this.systems.boardwalkOverlooks?.init?.(this.scene);
   }
   render() {
     if (!this.scene || !this.camera || !this.renderer) return;
+    if (this.systems.visualEnginePostProcessing?.render?.()) return;
     this.renderer.render(
       this.scene,
       this.camera
