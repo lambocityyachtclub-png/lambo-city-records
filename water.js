@@ -22,6 +22,15 @@ let frame = 0;
 let visualBaseline = null;
 let shimmerOpacityOverride = null;
 let reflectionOpacityOverride = null;
+let waterScene = null;
+let waterRenderer = null;
+let reflectionCamera = null;
+let reflectionTarget = null;
+let environmentReflectionEnabled = false;
+let reflectionElapsed = 0;
+let reflectionIntervalSeconds = 3;
+let reflectionBusy = false;
+let environmentReflectionIntensity = 0.45;
 
 function getWaterVisualStatus() {
   return {
@@ -32,7 +41,14 @@ function getWaterVisualStatus() {
     } : null,
     shimmerOpacity: shimmerMesh?.material?.opacity ?? null,
     reflectionOpacity: reflectionMesh?.material?.opacity ?? null,
-    baselineCaptured: Boolean(visualBaseline)
+    baselineCaptured: Boolean(visualBaseline),
+    environmentReflection: {
+      enabled: environmentReflectionEnabled,
+      ready: Boolean(reflectionCamera && reflectionTarget),
+      resolution: reflectionTarget?.width ?? null,
+      refreshIntervalSeconds: reflectionIntervalSeconds,
+      intensity: environmentReflectionIntensity
+    }
   };
 }
 
@@ -52,8 +68,59 @@ const WATER_VISUAL_PRESETS = Object.freeze({
   })
 });
 
+function disableEnvironmentReflection() {
+  environmentReflectionEnabled = false;
+  reflectionElapsed = 0;
+  if (waterMesh?.material && visualBaseline?.environment) {
+    waterMesh.material.envMap = visualBaseline.environment.envMap;
+    waterMesh.material.envMapIntensity = visualBaseline.environment.envMapIntensity;
+    waterMesh.material.needsUpdate = true;
+  }
+  reflectionCamera = null;
+  if (reflectionTarget) reflectionTarget.dispose();
+  reflectionTarget = null;
+}
+
 const waterVisualControls = {
   getStatus: getWaterVisualStatus,
+
+  setEnvironmentReflection(enabled, options = {}) {
+    if (!enabled) {
+      disableEnvironmentReflection();
+      return { success: true, status: getWaterVisualStatus() };
+    }
+    if (!waterScene || !waterRenderer || !waterMesh?.material) {
+      return { success: false, error: "Scene, renderer, or water material is unavailable." };
+    }
+
+    const requestedSize = Number(options.resolution) || 128;
+    const size = Math.max(64, Math.min(256, Math.round(requestedSize)));
+    const requestedInterval = Number(options.refreshIntervalSeconds) || 3;
+    const interval = Math.max(2, Math.min(10, requestedInterval));
+    const requestedIntensity = Number(options.intensity);
+    const intensity = Number.isFinite(requestedIntensity)
+      ? Math.max(0, Math.min(1, requestedIntensity))
+      : 0.45;
+
+    if (!reflectionTarget || reflectionTarget.width !== size) {
+      disableEnvironmentReflection();
+      reflectionTarget = new THREE.WebGLCubeRenderTarget(size, {
+        generateMipmaps: true,
+        minFilter: THREE.LinearMipmapLinearFilter
+      });
+      reflectionCamera = new THREE.CubeCamera(0.1, 500, reflectionTarget);
+      reflectionCamera.position.set(0, 1.2, 0);
+    }
+
+    reflectionIntervalSeconds = interval;
+    environmentReflectionIntensity = intensity;
+    waterMesh.material.envMap = reflectionTarget.texture;
+    waterMesh.material.envMapIntensity = intensity;
+    waterMesh.material.needsUpdate = true;
+    environmentReflectionEnabled = true;
+    reflectionElapsed = interval;
+    return { success: true, status: getWaterVisualStatus() };
+  },
 
   setPreset(name) {
     if (name === "baseline") return waterVisualControls.restoreBaseline();
@@ -122,6 +189,7 @@ const waterVisualControls = {
       return { success: false, error: "Water visual baseline is unavailable." };
     }
 
+    disableEnvironmentReflection();
     Object.assign(waterMesh.material, visualBaseline.surface);
     waterMesh.material.needsUpdate = true;
     shimmerOpacityOverride = null;
@@ -136,8 +204,9 @@ const waterVisualControls = {
 
 export default {
 
-  init(scene) {
-
+  init(scene, context = {}) {
+    waterScene = scene || null;
+    waterRenderer = context.renderer || null;
 
     // ================================
     // MAIN OCEAN SURFACE
@@ -263,6 +332,10 @@ export default {
         metalness: waterMesh.material.metalness,
         opacity: waterMesh.material.opacity
       },
+      environment: {
+        envMap: waterMesh.material.envMap,
+        envMapIntensity: waterMesh.material.envMapIntensity
+      },
       shimmerOpacity: shimmerMesh.material.opacity,
       reflectionOpacity: reflectionMesh.material.opacity
     };
@@ -282,6 +355,30 @@ export default {
 
     frame++;
 
+    // Optional, low-resolution cube-map reflections. This is deliberately
+    // disabled by default and refreshed infrequently to protect mobile GPUs.
+    if (environmentReflectionEnabled && !reflectionBusy && reflectionCamera && waterRenderer) {
+      reflectionElapsed += Math.max(0, Math.min(Number(delta) || 0, 0.05));
+      if (reflectionElapsed >= reflectionIntervalSeconds) {
+        reflectionElapsed = 0;
+        reflectionBusy = true;
+        const visibility = [waterMesh.visible, shimmerMesh.visible, reflectionMesh.visible];
+        try {
+          waterMesh.visible = false;
+          shimmerMesh.visible = false;
+          reflectionMesh.visible = false;
+          reflectionCamera.update(waterRenderer, waterScene);
+        } catch (error) {
+          console.warn("[LAMBO CITY Water] Environment reflection refresh failed.", error);
+          disableEnvironmentReflection();
+        } finally {
+          waterMesh.visible = visibility[0];
+          shimmerMesh.visible = visibility[1];
+          reflectionMesh.visible = visibility[2];
+          reflectionBusy = false;
+        }
+      }
+    }
 
     // Performance limiter
     // keeps iPad Safari smooth
