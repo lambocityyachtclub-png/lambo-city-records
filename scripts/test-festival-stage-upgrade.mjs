@@ -5,6 +5,7 @@ const read = path => fs.readFileSync(new URL("../" + path, import.meta.url), "ut
 const world = read("world.js");
 const collision = read("collision.js");
 const stage = read("festivalStageUpgrade.js");
+const architecture = read("festivalStageArchitecture.js");
 const performance = read("heroPerformance.js");
 const postPerformance = read("heroPostPerformance.js");
 const npc = read("npc.js");
@@ -47,5 +48,14 @@ assert.match(npc, /showWelcome\(\)/, "HERO welcome must remain available to late
 assert.match(music, /hasEnded\(\)/, "StageMusic must expose its real ended state");
 assert.match(main, /FestivalStageUpgrade/, "Main must register the festival stage module");
 assert.match(engine, /festivalStageUpgrade\?\.init/, "Engine must initialize the stage module");
+assert.match(main, /FestivalStageArchitecture/, "Main must register the stage architecture detail layer");
+assert.match(engine, /festivalStageArchitecture\?\.init/, "Engine must initialize the stage architecture detail layer");
+assert.match(architecture, /grandStageTrussLattice/, "Realistic overhead truss lattice must be built");
+assert.match(architecture, /grandStageSpeakerCones/, "Line-array speaker cabinets must receive visible hardware detail");
+assert.match(architecture, /grandStageFasciaStructuralRibs/, "Stage fascia must have structural depth and support ribs");
+assert.match(architecture, /InstancedMesh/, "Repeated architectural detail must use instancing for performance");
+assert.doesNotMatch(architecture, /new THREE\.PointLight/, "Stage realism layer must not add expensive real-time lights");
+assert.match(architecture, /centerZ: -74/, "Stage detail layer must retain the approved stage center");
+assert.match(architecture, /frontZ: -65/, "Stage detail layer must retain the approved stage front boundary");
 
 console.log("Festival stage geometry, sponsor slots, registration, and HERO exit-route checks passed.");
