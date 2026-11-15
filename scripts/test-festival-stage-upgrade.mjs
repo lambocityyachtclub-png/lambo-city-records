@@ -21,7 +21,10 @@ assert.match(stage, /addStaircase\(root, "left"\)/, "Left staircase geometry mus
 assert.match(stage, /addStaircase\(root, "right"\)/, "Right staircase geometry must be created");
 assert.match(stage, /PRESENTING PARTNER/, "Sponsor-ready front banners must be present");
 assert.match(stage, /sponsor-visibility band/, "The audience-facing fascia must provide a dedicated sponsor visibility zone");
-assert.match(stage, /\[width, 1\.98, 0\.06\]/, "Front sponsor panels must be enlarged enough to remain readable from the audience");
+assert.match(stage, /new THREE\.PlaneGeometry\(width,\s*1\.98\)/, "Sponsor artwork must use a clean front-facing display plane");
+assert.match(stage, /canvas\.width = 1600;[\s\S]*canvas\.height = 240;/, "Sponsor artwork texture must match the wide physical banner aspect ratio");
+assert.match(stage, /fillText\([\s\S]*1450\)/, "Sponsor text must be constrained inside the visible banner safe area");
+assert.match(stage, /face\.position\.set\(x, 1\.36, -62\.58\)/, "Sponsor artwork must sit clearly in front of its fascia mounting frame");
 assert.match(stage, /setSponsorBranding/, "Sponsor artwork must be replaceable without rebuilding geometry");
 assert.match(stage, /festivalSideScreen_/, "Festival side LED screens must be created");
 assert.match(stage, /festivalMainTruss/, "Main overhead production truss must be created");
