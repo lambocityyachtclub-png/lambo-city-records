@@ -16,7 +16,6 @@ on:
       - "engine.js"
       - "scripts/test-festival-stage-upgrade.mjs"
       - ".github/workflows/festival-main-stage-upgrade.yml"
-      - ".github/workflows/festival-main-stage-upgrade.yml"
   workflow_dispatch:
 
 jobs:
