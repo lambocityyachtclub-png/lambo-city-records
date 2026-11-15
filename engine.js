@@ -109,6 +109,8 @@ this.systems.boardwalkOverlooks?.init?.(this.scene);
     this.systems.input?.init?.();
     this.systems.player?.init?.(this.scene);
     this.systems.hud?.init?.();
+    // Diagnostics attach after the complete initial scene has been assembled.
+    this.systems.visualEngineDiagnostics?.init?.(this.scene, this.context);
     this.loop();
   }
   loop = (time = 0) => {
