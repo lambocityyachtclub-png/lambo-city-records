@@ -6,6 +6,7 @@ const world = read("world.js");
 const collision = read("collision.js");
 const stage = read("festivalStageUpgrade.js");
 const architecture = read("festivalStageArchitecture.js");
+const finishing = read("festivalStageFinishing.js");
 const performance = read("heroPerformance.js");
 const postPerformance = read("heroPostPerformance.js");
 const npc = read("npc.js");
