@@ -54,6 +54,9 @@ const controls = {
     if (!material || !preset) {
       return { success: false, error: "Provide a material and choose polished, satin, matte, or chrome." };
     }
+    if (typeof material.roughness !== "number" && typeof material.metalness !== "number") {
+      return { success: false, error: "This material does not support roughness or metalness controls." };
+    }
     if (!materialBaselines.has(material)) {
       materialBaselines.set(material, {
         roughness: material.roughness,
