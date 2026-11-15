@@ -23,7 +23,9 @@ function inspectScene() {
     transparentMaterials: 0,
     materialTypes: {},
     lightTypes: {},
-    textureTypes: {}
+    textureTypes: {},
+    textureSlots: {},
+    textureColorSpaces: {}
   };
 
   const geometries = new Set();
@@ -62,7 +64,13 @@ function inspectScene() {
 
       Object.keys(material).forEach(key => {
         const value = material[key];
-        if (value?.isTexture) textures.add(value);
+        if (value?.isTexture) {
+          textures.add(value);
+          report.textureSlots[key] = (report.textureSlots[key] || 0) + 1;
+          const colorSpace = value.colorSpace || "unspecified";
+          report.textureColorSpaces[colorSpace] =
+            (report.textureColorSpaces[colorSpace] || 0) + 1;
+        }
       });
     });
   });
