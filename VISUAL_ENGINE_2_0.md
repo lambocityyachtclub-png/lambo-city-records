@@ -24,7 +24,7 @@ Evolve the existing Three.js 0.160.0 renderer into a modular, performance-aware 
 
 2. **Diagnostics and profiling**
    - Existing ?perf=1 overlay remains available.
-   - On-demand scene audit reports scene object counts, geometry/material/texture counts, lights, renderer capabilities, and performance snapshot.
+   - On-demand scene audit reports scene object counts, geometry/material/texture counts, texture slots/color spaces, named objects, lights, renderer capabilities, and performance snapshot.
    - Diagnostics must not run full scene traversal every frame.
 
 3. **Materials and texture quality**
@@ -59,6 +59,8 @@ Evolve the existing Three.js 0.160.0 renderer into a modular, performance-aware 
 - visualEngineMaterials.js: opt-in texture anisotropy controls, exposed as window.__lamboCityVisualMaterials.setTextureAnisotropy(level); default texture settings remain untouched.
 - visualEngineAtmosphere.js: reversible fog presets, exposed as window.__lamboCityAtmosphere.setPreset(name); the current scene fog is captured as the baseline and restored with the baseline preset.
 - visualEngineColor.js: reversible renderer tone-mapping and exposure controls, exposed as window.__lamboCityVisualColor; existing ACES / exposure values are captured and left unchanged by default.
+- visualEngineShadows.js: opt-in directional shadow pipeline. Shadows remain disabled unless meshes are explicitly registered as casters/receivers and a directional light is registered; point-light shadows are excluded.
+- lighting.js: registers the existing sun with the shadow controller without enabling shadows or changing the default lighting.
 - water.js: reversible water surface and shimmer/reflection-layer presets, exposed as window.__lamboCityWaterVisuals.setPreset(name); the established water look and wave animation remain the default.
 - performanceMonitor.js: existing optional ?perf=1 overlay and renderer metrics.
 - engine.js / main.js: register and initialize the Visual Engine modules without changing the existing scene feature modules.
