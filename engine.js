@@ -121,9 +121,15 @@ this.systems.boardwalkOverlooks?.init?.(this.scene);
   };
   update(delta) {
     this.context.delta = delta;
-    Object.values(this.systems).forEach(sys =>
-      sys?.update?.(delta, this.context)
-    );
+
+    // Iterate the live registry directly. This preserves registration order
+    // and includes systems added later, without allocating an array or
+    // callback on every animation frame.
+    for (const name in this.systems) {
+      if (!Object.prototype.hasOwnProperty.call(this.systems, name)) continue;
+      const system = this.systems[name];
+      system?.update?.(delta, this.context);
+    }
   }
   render() {
     if (!this.scene || !this.camera || !this.renderer) return;
