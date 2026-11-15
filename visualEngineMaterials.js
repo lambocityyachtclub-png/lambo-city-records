@@ -7,6 +7,7 @@
 let scene = null;
 let renderer = null;
 const materialBaselines = new WeakMap();
+const textureBaselines = new Map();
 
 const MATERIAL_PRESETS = Object.freeze({
   polished: Object.freeze({ roughness: 0.18, metalness: 0.72 }),
@@ -42,12 +43,54 @@ function getTextureReport() {
     textureCount: textures.length,
     maxSupportedAnisotropy: renderer?.capabilities?.getMaxAnisotropy?.() ?? 1,
     currentMinimum: values.length ? Math.min(...values) : null,
-    currentMaximum: values.length ? Math.max(...values) : null
+    currentMaximum: values.length ? Math.max(...values) : null,
+    trackedTextureBaselines: textureBaselines.size
   };
 }
 
 const controls = {
   getReport: getTextureReport,
+
+  applyMaterialPresetToObject(root, presetName) {
+    if (!root || typeof root.traverse !== "function") {
+      return { success: false, error: "Provide a Three.js object or group." };
+    }
+    let applied = 0;
+    let skipped = 0;
+    const seen = new Set();
+    root.traverse(object => {
+      const list = Array.isArray(object.material)
+        ? object.material
+        : object.material ? [object.material] : [];
+      list.forEach(material => {
+        if (seen.has(material)) return;
+        seen.add(material);
+        const result = controls.setMaterialPreset(material, presetName);
+        if (result.success) applied++;
+        else skipped++;
+      });
+    });
+    return { success: applied > 0, applied, skipped };
+  },
+
+  restoreObjectMaterials(root) {
+    if (!root || typeof root.traverse !== "function") {
+      return { success: false, error: "Provide a Three.js object or group." };
+    }
+    let restored = 0;
+    const seen = new Set();
+    root.traverse(object => {
+      const list = Array.isArray(object.material)
+        ? object.material
+        : object.material ? [object.material] : [];
+      list.forEach(material => {
+        if (seen.has(material)) return;
+        seen.add(material);
+        if (controls.restoreMaterial(material).success) restored++;
+      });
+    });
+    return { success: restored > 0, restored };
+  },
 
   setMaterialPreset(material, presetName) {
     const preset = MATERIAL_PRESETS[presetName];
@@ -90,6 +133,7 @@ const controls = {
     const textures = collectTextures();
 
     textures.forEach(texture => {
+      if (!textureBaselines.has(texture)) textureBaselines.set(texture, texture.anisotropy);
       if (texture.anisotropy !== level) {
         texture.anisotropy = level;
         texture.needsUpdate = true;
@@ -97,6 +141,19 @@ const controls = {
     });
 
     return { success: true, appliedLevel: level, ...getTextureReport() };
+  },
+
+  restoreTextureAnisotropy() {
+    let restored = 0;
+    textureBaselines.forEach((baseline, texture) => {
+      if (texture.anisotropy !== baseline) {
+        texture.anisotropy = baseline;
+        texture.needsUpdate = true;
+      }
+      restored++;
+    });
+    textureBaselines.clear();
+    return { success: true, restored, ...getTextureReport() };
   }
 };
 
