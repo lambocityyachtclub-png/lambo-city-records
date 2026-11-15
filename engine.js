@@ -24,7 +24,7 @@ export default class Engine {
     this.systems.festivalStageArchitecture?.init?.(this.scene, this.context);
     this.systems.festivalStageFinishing?.init?.(this.scene, this.context);
     this.systems.festivalAudienceZone?.init?.(this.scene, this.context);
-    this.systems.water?.init?.(this.scene);
+    this.systems.water?.init?.(this.scene, this.context);
     this.systems.dock?.init?.(this.scene);
     this.systems.dockPath?.init?.(this.scene);
     this.systems.sky?.init?.(this.scene);
