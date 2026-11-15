@@ -305,13 +305,15 @@ function buildSpeakerCabinetHardware(parent, steel, goldMetal) {
 }
 
 function buildLedCabinetSeams(parent, seamMaterial) {
-  const seams = [];
+  const vertical = [];
+  const horizontal = [];
+
   STAGE.screenX.forEach(centerX => {
     [-2.25, -0.75, 0.75, 2.25].forEach(offset => {
-      seams.push([centerX + offset, 11.8, -81.975]);
+      vertical.push([centerX + offset, 11.8, -81.975]);
     });
     [-3.0, -1.0, 1.0, 3.0].forEach(offset => {
-      seams.push([centerX, 11.8 + offset, -81.975, 0, 0, Math.PI / 2]);
+      horizontal.push([centerX, 11.8 + offset, -81.975]);
     });
   });
 
@@ -319,20 +321,13 @@ function buildLedCabinetSeams(parent, seamMaterial) {
     parent,
     "grandStageLedCabinetModuleSeams",
     [0.022, 8.65, 0.012],
-    seams.slice(0, 8),
+    vertical,
     seamMaterial
   );
-
-  const horizontal = [];
-  STAGE.screenX.forEach(centerX => {
-    [-3.0, -1.0, 1.0, 3.0].forEach(offset => {
-      horizontal.push([centerX, 11.8 + offset, -81.975, 0, 0, Math.PI / 2]);
-    });
-  });
   addInstancedBoxes(
     parent,
     "grandStageLedCabinetHorizontalSeams",
-    [0.022, 7.25, 0.012],
+    [7.25, 0.022, 0.012],
     horizontal,
     seamMaterial
   );
