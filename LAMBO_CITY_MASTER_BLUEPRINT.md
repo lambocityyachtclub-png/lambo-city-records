@@ -503,3 +503,81 @@ The next parcel drawing must show, on one consistent top-down coordinate plane:
 
 No new world coordinates are approved by this audit. The old boulevard dimensions remain superseded provisional notes and must not be used as implementation coordinates. The next deliverable is a measured site plan for owner review; code implementation remains gated on that review.
 
+
+
+## Owner-approved first-world completion district — residential capacity and site layout
+
+**Owner approval:** 2026-11-15. The owner's hand-drawn site sketch is the controlling spatial relationship for this district and supersedes earlier provisional placement assumptions wherever they differ. This approval authorizes moving the district design forward; it does not authorize changing protected existing geography or guessing unverified coordinates.
+
+### Controlling site arrangement
+
+- Keep the complete district on the same side of the existing boardwalk as the Convention Center district land.
+- The district street forms one continuous square loop around the neighborhood, with connected corners, sidewalks, safe crossings, and clear pedestrian access.
+- Place the basketball court and skate park toward the front / boardwalk-facing side of the district.
+- Place the Convention Center farther back, as the principal landmark and anchor of the district.
+- Place residential apartment buildings beyond the outer sidewalks, around the outside perimeter of the square street.
+- Integrate storefronts and suitable food, retail, and entertainment destinations along the district street. Their exact frontage and parcel positions are part of detailed site planning.
+- Keep the existing boardwalk, waterfront storefronts, Records HQ, dock, marina, Grand Stage, Jumbotron, roundabout, and all other approved landmarks fixed.
+- Do not add streets, buildings, parcels, or extensions on the opposite / Jumbotron-facing side of the boardwalk.
+- The street loop must be a real connected route. The existing boardwalk remains pedestrian-priority; do not silently turn it into an ordinary vehicle road.
+
+### Residential capacity — minimum 300 private homes
+
+The residential program must support **at least 300 registered residents, with one individually assigned private apartment per user**. This is a capacity requirement, not a target number of visible apartment doors or a requirement to render 300 fully detailed interiors simultaneously.
+
+Architecture requirements:
+- Use repeatable, modular apartment-building and unit layouts so capacity can grow without hand-building every residence.
+- Plan enough apartments for at least 300 distinct user assignments, with expansion capacity beyond the initial minimum.
+- Give each user a persistent private apartment instance or logically isolated unit; one user's furniture, finishes, inventory, or layout must never overwrite another user's home.
+- Support private entry and return-to-home access from the world and the user's profile/home interface.
+- Treat the apartment as the user's personal home screen / home base after registration, not merely a decorative building.
+- Save apartment ownership, room layout, furniture placement, material selections, and customization state to the user's account-backed data.
+- Reconstruct the apartment from saved data when the user returns. Do not depend on a browser-only session or local-only storage as the authoritative save.
+- Design for scalable loading: render the exterior neighborhood efficiently and load a user's detailed interior when they enter it. Do not instantiate hundreds of fully furnished interiors at initial world load.
+
+### User-controlled interior customization
+
+Each resident should be able to design their apartment to their taste. The customization system should support:
+- Furniture selection, placement, rotation, arrangement, and removal.
+- Interior materials and finishes, including marble flooring, granite or marble countertops, cabinetry, wall finishes, and future material collections.
+- Room surfaces, color palettes, lighting, décor, and personal objects.
+- Clear ownership boundaries, save / restore, and sensible placement validation so furniture does not block doors or become embedded in walls.
+- A modular catalog so new furniture and material options can be added without rebuilding the apartment system.
+
+Premium materials are selectable design options, not claims that every unit must use the same luxury finish. The user chooses the look.
+
+### Account, privacy, and scalable data model
+
+The future implementation should separate:
+1. User identity and apartment assignment.
+2. Apartment template / building / unit definition.
+3. Per-user room layout and customization records.
+4. Catalog definitions for furniture, materials, and décor.
+5. Saved object transforms and finish selections.
+
+Use stable IDs for users, buildings, units, catalog items, and placed objects. Enforce server-side ownership checks so only the assigned user (and explicitly authorized collaborators, if later introduced) can edit a private home. Avoid storing sensitive account credentials in apartment records.
+
+### Completion definition for the first world
+
+The first-world district is not complete until:
+- The square street and sidewalk network is continuous and walkable.
+- The front recreation zone contains both the basketball court and skate park.
+- The Convention Center occupies the rear landmark position.
+- Storefronts form a coherent active retail / entertainment frontage.
+- The outer residential perimeter has enough modular inventory to assign at least 300 private apartments.
+- A registered user can enter their own apartment, customize furniture and materials, save, leave, and return to the same design.
+- Apartment interiors are loaded on demand and do not overwhelm initial world performance.
+- Protected geography and existing navigation remain intact.
+- The complete district has been tested for pedestrian routes, entrances, collision, and performance.
+
+### Implementation gates
+
+1. Complete the measured parcel and circulation plan against actual scene geometry. Keep unknown dimensions explicitly marked; do not invent coordinates or build over unverified land / water.
+2. Reconcile the existing interim Conference Center and its access road as one coordinated district design, avoiding duplicate or overlapping structures.
+3. Implement the continuous square street, ground foundation, sidewalks, crossings, and pedestrian routes as one tested system.
+4. Build the front recreation zone and rear Convention Center.
+5. Build the outer apartment perimeter using reusable building and unit modules sized for at least 300 assigned homes.
+6. Implement account-linked private apartment assignment, on-demand interiors, customization catalog, and persistent saves.
+7. Validate the complete first-world experience before declaring the first world finished.
+
+**Scope boundary:** This owner approval is for the district described above and the 300-home residential capability. It does not approve construction on the prohibited opposite side of the boardwalk, movement of protected landmarks, or unverified road / parcel coordinates. Existing production remains untouched until reviewed and explicitly released.
