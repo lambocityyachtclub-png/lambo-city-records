@@ -707,16 +707,17 @@ The diagram expresses only the owner's approved relationships: recreation toward
 
 ### Route and land survey items deliberately left unassigned
 
-The current source does not provide a verified continuous land corridor joining the west-side interim district pad to the HQ-side public approach. It also does not establish the exact player approach heading for the owner's two-left-turn instruction. In addition, the current east boardwalk overlook builder is not called by its initializer. Accordingly, the following are not represented as settled coordinates:
-- Exact first-left and second-left junction nodes and route direction.
+The owner-confirmed approach direction is now resolved: travel westbound along the existing boardwalk toward the west/store-side district entrance; turn left inland (+Z) toward the Convention Center; continue straight; then turn left east (+X) toward the Records HQ side. This fixes the directional meaning of the first two left turns without guessing the player's heading. The current source still does not provide a verified continuous land corridor joining the west-side interim district pad to the HQ-side public approach. In addition, the current east boardwalk overlook builder is not called by its initializer. Accordingly, the following remain unassigned:
+- Exact first-left and second-left junction coordinates and curb-return geometry.
 - Exact east / HQ-side loop return junction and tie-in.
+- The remaining road legs and corner geometry needed to close the complete square loop.
 - Any new land footprint bridging the current district land and HQ-side approach.
 - Final square-loop dimensions, curb returns, sidewalk widths, parcel depths, and elevation transitions.
 - Basketball and skate park footprints and their safe pedestrian approaches.
 - Residential building footprints and apartment count distribution.
 - New retail parcel footprints and entrances.
 
-These are explicit survey dependencies, not omitted design decisions. The owner-approved square loop, program arrangement, 300-home requirement, and Jumbotron-side exclusion remain fixed.
+The route direction is now documented as a confirmed design input; only the junction coordinates and continuous land / loop closure remain survey dependencies. These are explicit survey dependencies, not omitted design decisions. The owner-approved square loop, program arrangement, 300-home requirement, and Jumbotron-side exclusion remain fixed.
 
 ### Blueprint closure status
 
