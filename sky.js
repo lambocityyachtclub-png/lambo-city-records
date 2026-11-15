@@ -1,4 +1,57 @@
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
+
+let cloudMaterials = [];
+let starMaterial = null;
+let moonMaterial = null;
+let haloMaterial = null;
+let skyBaseline = null;
+
+function getSkyStatus() {
+  return {
+    cloudCount: cloudMaterials.length,
+    cloudOpacity: cloudMaterials[0]?.opacity ?? null,
+    starOpacity: starMaterial?.opacity ?? null,
+    moonOpacity: moonMaterial?.opacity ?? null,
+    haloOpacity: haloMaterial?.opacity ?? null
+  };
+}
+
+const skyControls = {
+  getStatus: getSkyStatus,
+
+  setCloudOpacity(value) {
+    const opacity = Number(value);
+    if (!Number.isFinite(opacity)) return { success: false, error: "Cloud opacity must be a number." };
+    const safe = Math.max(0, Math.min(0.3, opacity));
+    cloudMaterials.forEach(material => { material.opacity = safe; });
+    return { success: true, status: getSkyStatus() };
+  },
+
+  setStarOpacity(value) {
+    const opacity = Number(value);
+    if (!starMaterial || !Number.isFinite(opacity)) return { success: false, error: "Star opacity is unavailable or invalid." };
+    starMaterial.opacity = Math.max(0, Math.min(1, opacity));
+    return { success: true, status: getSkyStatus() };
+  },
+
+  setMoonGlow(value) {
+    const opacity = Number(value);
+    if (!moonMaterial || !haloMaterial || !Number.isFinite(opacity)) return { success: false, error: "Moon glow is unavailable or invalid." };
+    const safe = Math.max(0, Math.min(1, opacity));
+    moonMaterial.opacity = safe;
+    haloMaterial.opacity = safe * 0.06;
+    return { success: true, status: getSkyStatus() };
+  },
+
+  restoreBaseline() {
+    if (!skyBaseline) return { success: false, error: "Sky baseline is unavailable." };
+    cloudMaterials.forEach(material => { material.opacity = skyBaseline.cloudOpacity; });
+    starMaterial.opacity = skyBaseline.starOpacity;
+    moonMaterial.opacity = skyBaseline.moonOpacity;
+    haloMaterial.opacity = skyBaseline.haloOpacity;
+    return { success: true, status: getSkyStatus() };
+  }
+};
 export default {
   init(scene) {
     const canvas = document.createElement('canvas');
@@ -24,6 +77,7 @@ export default {
     ));
 
     // CLOUDS — layered planes
+    cloudMaterials = [];
     const cloudMat = new THREE.MeshBasicMaterial({
       color: 0xff6633, transparent: true, opacity: 0.08,
       side: THREE.DoubleSide
@@ -40,6 +94,7 @@ export default {
       );
       cloud.rotation.x = -0.1;
       scene.add(cloud);
+      cloudMaterials.push(cloudMat);
     }
 
     // STARS
@@ -53,23 +108,32 @@ export default {
       i++;
     }
     starGeo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-    scene.add(new THREE.Points(starGeo,
-      new THREE.PointsMaterial({ color:0xffffff, size:0.5, transparent:true, opacity:0.85 })
-    ));
+    starMaterial = new THREE.PointsMaterial({ color:0xffffff, size:0.5, transparent:true, opacity:0.85 });
+    scene.add(new THREE.Points(starGeo, starMaterial));
 
     // MOON
     const moon = new THREE.Mesh(
       new THREE.SphereGeometry(8,16,16),
-      new THREE.MeshBasicMaterial({ color:0xfffde8 })
+      new THREE.MeshBasicMaterial({ color:0xfffde8, transparent:true, opacity:1 })
     );
     moon.position.set(-140, 200, -300);
+    moonMaterial = moon.material;
     scene.add(moon);
     const halo = new THREE.Mesh(
       new THREE.SphereGeometry(14,16,16),
       new THREE.MeshBasicMaterial({ color:0xffffcc, transparent:true, opacity:0.05 })
     );
     halo.position.copy(moon.position);
+    haloMaterial = halo.material;
     scene.add(halo);
+
+    skyBaseline = {
+      cloudOpacity: cloudMat.opacity,
+      starOpacity: starMaterial.opacity,
+      moonOpacity: moonMaterial.opacity,
+      haloOpacity: haloMaterial.opacity
+    };
+    window.__lamboCitySkyVisuals = skyControls;
   },
   update() {}
 };
