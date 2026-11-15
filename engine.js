@@ -113,6 +113,7 @@ this.systems.boardwalkOverlooks?.init?.(this.scene);
     this.systems.visualEngineDiagnostics?.init?.(this.scene, this.context);
     this.systems.visualEngineMaterials?.init?.(this.scene, this.context);
     this.systems.visualEngineAtmosphere?.init?.(this.scene, this.context);
+    this.systems.visualEngineColor?.init?.(this.scene, this.context);
     this.loop();
   }
   loop = (time = 0) => {
