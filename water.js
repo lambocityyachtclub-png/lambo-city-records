@@ -36,8 +36,39 @@ function getWaterVisualStatus() {
   };
 }
 
+const WATER_VISUAL_PRESETS = Object.freeze({
+  baseline: null,
+  cinematic: Object.freeze({
+    surface: { roughness: 0.16, metalness: 0.58, opacity: 0.94 },
+    layers: { shimmer: 0.12, reflection: 0.10 }
+  }),
+  glossy: Object.freeze({
+    surface: { roughness: 0.08, metalness: 0.78, opacity: 0.97 },
+    layers: { shimmer: 0.14, reflection: 0.12 }
+  }),
+  soft: Object.freeze({
+    surface: { roughness: 0.32, metalness: 0.38, opacity: 0.90 },
+    layers: { shimmer: 0.07, reflection: 0.05 }
+  })
+});
+
 const waterVisualControls = {
   getStatus: getWaterVisualStatus,
+
+  setPreset(name) {
+    if (name === "baseline") return this.restoreBaseline();
+    const preset = WATER_VISUAL_PRESETS[name];
+    if (!preset) {
+      return {
+        success: false,
+        error: "Choose baseline, cinematic, glossy, or soft."
+      };
+    }
+
+    const surfaceResult = this.setSurface(preset.surface);
+    if (!surfaceResult.success) return surfaceResult;
+    return this.setReflectionLayers(preset.layers);
+  },
 
   setSurface(settings = {}) {
     if (!waterMesh?.material) {
