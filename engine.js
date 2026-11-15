@@ -15,6 +15,8 @@ export default class Engine {
     this.context.camera   = this.camera;
     this.context.renderer = this.renderer;
     this.context.systems  = this.systems;
+    // Centralized quality controls initialize before world systems are created.
+    this.systems.visualEngine?.init?.(this.scene, this.context);
     this.systems.performanceMonitor?.init?.(this.renderer, this.context);
     this.systems.world?.init?.(this.scene);
     this.systems.festivalStageUpgrade?.init?.(this.scene, this.context);
