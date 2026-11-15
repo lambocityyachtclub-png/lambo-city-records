@@ -23,7 +23,10 @@ assert.match(security, /state === "EXITING"/, "The security detail must coordina
 assert.match(security, /left\.mode = "ESCORTING"/, "The left guard must escort HERO behind him on the exit");
 assert.match(security, /hero\.position\.x >= 33\.2/, "The stair guard must wait until HERO clears the bottom landing before rejoining");
 assert.match(security, /followTarget\(hero, guard\)/, "Both guards must follow HERO outside the performance sequence");
-assert.match(security, /collision\?\.isBlocked\?\.\(nextX, nextZ, 0\.42/, "Following guards must respect safe waterfront surfaces and world obstacles");
+assert.match(security, /collision\?\.isBlocked\?\.\(x, z, 0\.42/, "Following guards must respect safe waterfront surfaces and world obstacles");
+assert.match(security, /const xOnly = \{ x: fullX, z: root\.position\.z \}/, "Guards must slide along blocked obstacles instead of freezing");
+assert.match(security, /onNarrowHQSpur/, "Guards must form a single-file escort on the narrow HQ dock spur");
+assert.match(security, /sideOffset = onNarrowHQSpur \? 0/, "The narrow HQ spur must keep the escort centered on the walkway");
 assert.match(security, /homeOffset: guards\.length === 0/, "One guard must stay closer while the other maintains more distance");
 assert.doesNotMatch(security, /new THREE\.PointLight|setInterval\(|setTimeout\(/, "Security must not add expensive lights or timer-driven work");
 
