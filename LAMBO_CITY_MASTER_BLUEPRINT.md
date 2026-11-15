@@ -720,10 +720,11 @@ This is a **feasibility hypothesis, not a surveyed or approved footprint**. The 
 
 ### Route and land survey items deliberately left unassigned
 
-The owner-confirmed approach direction is now resolved: travel westbound along the existing boardwalk toward the west/store-side district entrance; turn left inland (+Z) toward the Convention Center; continue straight; then turn left east (+X) toward the Records HQ side. This fixes the directional meaning of the first two left turns without guessing the player's heading. The current source still does not provide a verified continuous land corridor joining the west-side interim district pad to the HQ-side public approach. In addition, the current east boardwalk overlook builder is not called by its initializer. Accordingly, the following remain unassigned:
-- Exact first-left and second-left junction coordinates and curb-return geometry.
-- Exact east / HQ-side loop return junction and tie-in.
-- The remaining road legs and corner geometry needed to close the complete square loop.
+The owner has now explicitly approved a complete four-sided, closed square street loop, comparable to a Monopoly board. The westbound boardwalk approach is only the entry connector, not one of the square's sides. At the entry, the route turns left inland (+Z) toward the Convention Center, follows the first side, then makes three additional left turns at the next three corners. It continues along the fourth and final side until it reconnects to the entry approach, closing the loop. All four sides and all four corners must be continuous and drivable. The existing boardwalk remains pedestrian-priority / service access and is not used as an ordinary vehicle leg. This resolves the route topology; it does not certify the compass direction of the remaining corners or any exact junction coordinates. The current source still does not provide a verified continuous land corridor joining the west-side interim district pad to the HQ-side public approach. In addition, the current east boardwalk overlook builder is not called by its initializer. Accordingly, the following remain unassigned:
+- Exact boardwalk-side entry connector and first-left junction coordinates and curb-return geometry.
+- Exact coordinates and geometry for the next three left-turn corners.
+- Exact fourth-side connection back to the entry approach, including the closed-loop return junction.
+- Final surveyed alignment, land foundation, elevations, road widths, curb returns, and collision boundaries for all four sides.
 - Any new land footprint bridging the current district land and HQ-side approach.
 - Final square-loop dimensions, curb returns, sidewalk widths, parcel depths, and elevation transitions.
 - Basketball and skate park footprints and their safe pedestrian approaches.
