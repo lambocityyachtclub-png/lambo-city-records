@@ -655,3 +655,73 @@ Do not begin tower or yacht construction as part of the Convention Center distri
 - Do not merge the draft PR or deploy to production without a separate explicit release approval.
 - Do not change existing protected world geometry, cityMap.js coordinates, collision, camera, or navigation based only on this blueprint. Each implementation stage must be reviewed and tested against the measured plan.
 - The blueprint may be marked complete as a planning artifact only after the measured top-down parcel plan, route schedule, capacity architecture, and unresolved survey items are all documented. The world itself is not complete until the runtime completion gate above is passed.
+
+
+## Final source survey and blueprint closure record — 2026-11-15
+
+This section closes the approved first-world planning brief against the current feature-branch source. It distinguishes verified existing geometry from approved design relationships and from dimensions that still require an in-engine site survey. It does not authorize speculative coordinates or construction over unverified terrain.
+
+### Verified fixed anchors and existing geometry
+
+| System | Verified source facts | Constraint for the district |
+|---|---|---|
+| Boardwalk street | `marina.js`: centerline Z=46, X=-45..45, 8-unit road width; sidewalks centered at Z=39.5 and 52.5 | Preserve its current pedestrian-priority / service-access role; do not count it as a normal vehicle leg of the square loop |
+| Waterfront land | `world.js`: two land plates, each 44×35, centered at (-43, 27.5) and (43, 27.5); their combined envelope is X=-65..65, Z=10..45 with a central gap | Preserve the open central waterfront / dock approach; no continuous land bridge may be assumed across the gap |
+| Boardwalk stores | `marina.js`: three 10×8×12 store shells in the existing west-side row; `waterfrontStorefrontDetails.js` supplies their entry/frontage detail | Keep existing storefronts, thresholds, and approach space fixed; new retail is additional district frontage |
+| Interim Convention Center district | `conferenceCenterDistrict.js`: district ground and connector centered around X=-43, ground spans X=-70..-16 and Z=64..126; interim access road at X=-37 runs from Z=46 to Z=80 | Treat this as existing interim construction to coordinate into the final design, not as the completed square loop |
+| Records HQ | `recordsHQ.js`: HQ group origin (28,22); `collision.js`: protected footprint X=19.25..36.75, Z=15.25..28.75 and elevator threshold near (23,14.15) | Keep the HQ, elevator, dock spur, and public arrival path clear |
+| HQ roundabout | `recordsHQ.js`: local turnaround center (30,-2) inside the HQ group, giving world center approximately (58,20) | Preserve it as an existing fixed landmark and verify its approach/clearance in the final route survey |
+| Grand Stage / Jumbotron | `world.js`: stage ground centered (0,-72), 130×55; platform centered (0,-74), 44×18; screen centered (0,-83); stage towers at X=±17, Z=-83 | This entire oceanward stage/Jumbotron area is outside the district build scope |
+| Yacht | `yacht.js` and `yachtLuxuryDetails.js`: existing yacht group origin (38,-2,-28), with matching detail overlay | Preserve the current yacht and defer its redesign / placement work to the later Yacht phase |
+
+### Existing black-and-white buildings beside the Jumbotron — source identification status
+
+The owner's future Yacht Club Towers direction is recorded and reserved. The current source survey confirms the Jumbotron, the two narrow stage-support towers at X=±17, and generic background-skyline boxes in `world.js`. It does **not** yet positively identify the two specific black-and-white buildings the owner pointed out as dedicated, individually named tower assets. Therefore:
+- Preserve the owner's visual identification as the controlling design intent.
+- Do not rename, move, rebuild, or replace any stage support or skyline object now.
+- Before the future Yacht Club Towers phase, inspect the rendered scene and trace the exact two visible building objects to their source geometry, transforms, and dependencies. Their existing positions and silhouettes remain protected.
+
+### Final district relationship diagram — conceptual, not to scale
+
+```text
+                         INLAND / REAR
+          [ OUTER APARTMENT & VILLA RESIDENTIAL EDGE ]
+        +------------------------------------------------+
+        |                 SQUARE STREET LOOP              |
+        |   [Retail]                              [Retail]|
+        |                                                |
+        |            [ CONVENTION CENTER ]                |
+        |               [Arrival Plaza]                  |
+        |                                                |
+        |   [Basketball Court]       [Skate Park]         |
+        |                                                |
+        +--------------------ENTRY-----------------------+
+                  BOARDWALK-SIDE DISTRICT APPROACH
+                  Existing boardwalk stays protected
+
+                         OCEAN / JUMBOTRON SIDE
+                  NO NEW DISTRICT CONSTRUCTION
+```
+
+The diagram expresses only the owner's approved relationships: recreation toward the front, Convention Center farther back, residential buildings outside the outer sidewalks, and retail integrated along the district street. The final surveyed plan must refine the exact parcel arrangement while retaining those relationships.
+
+### Route and land survey items deliberately left unassigned
+
+The current source does not provide a verified continuous land corridor joining the west-side interim district pad to the HQ-side public approach. It also does not establish the exact player approach heading for the owner's two-left-turn instruction. In addition, the current east boardwalk overlook builder is not called by its initializer. Accordingly, the following are not represented as settled coordinates:
+- Exact first-left and second-left junction nodes and route direction.
+- Exact east / HQ-side loop return junction and tie-in.
+- Any new land footprint bridging the current district land and HQ-side approach.
+- Final square-loop dimensions, curb returns, sidewalk widths, parcel depths, and elevation transitions.
+- Basketball and skate park footprints and their safe pedestrian approaches.
+- Residential building footprints and apartment count distribution.
+- New retail parcel footprints and entrances.
+
+These are explicit survey dependencies, not omitted design decisions. The owner-approved square loop, program arrangement, 300-home requirement, and Jumbotron-side exclusion remain fixed.
+
+### Blueprint closure status
+
+**Design brief: complete and owner-approved.** The district program, spatial relationships, protected geography, minimum 300-home residential system, first-world building-freeze boundary, and deferred Yacht Club phase are now documented.
+
+**Construction coordinate plan: not yet certified.** A safe final coordinate plan requires an in-engine survey of the land seam, route heading, HQ return tie-in, and visible fixed-object envelopes. No new coordinates should be fabricated to make the document appear more complete.
+
+**Implementation status: unchanged.** This record does not change `cityMap.js`, terrain, roads, buildings, collision, player navigation, or production. The interim district remains interim until a separately reviewed implementation replaces or integrates it as one complete square-loop district.
