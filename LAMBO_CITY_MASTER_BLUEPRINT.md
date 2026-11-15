@@ -54,3 +54,174 @@ Each module declares district ID/name/bounds/origin; ground footprints/elevation
 
 ## Validation gate
 Production is not complete until the road loop is visually continuous, all four corners connect, the arena entrance is reachable, villa parcels do not block the approach or ocean sightlines, collision matches visible architecture, and protected landmarks remain unchanged.
+
+
+---
+
+# Verified implementation baseline — 2026-11-15
+
+The following sections extend the existing master plan. They do not cancel the approved Arena District concept above. Where the earlier plan contains provisional planning dimensions, retain them as planning envelopes until they are checked against the current rendered scene.
+
+## Coordinate convention (confirmed)
+
+The project coordinate convention is:
+- **+X:** east / right; **-X:** west / left.
+- **+Z:** inland / north; **-Z:** ocean / stage.
+- **Y:** vertical elevation / floor level.
+- Ground positions are written as (X, Z); full positions as (X, Y, Z).
+- Values are Three.js world units unless stated otherwise.
+
+## Source-verifiable anchors and collision envelopes
+
+The following values were checked in the feature-branch `collision.js`. These are primarily safe movement envelopes and architectural collision constants, not necessarily exact visible mesh bounds.
+
+| Feature | Source-verified values | Meaning |
+|---|---|---|
+| Grand Stage / circular pier | Center (0, -74); safe circular radius 43.1 | Collision-safe circular pier envelope; visible geometry radius still needs comparison |
+| Stage platform | Center (0, -74); collision box 44 wide × 18 deep | Physical movement collider, not a complete visual footprint |
+| Central dock | X center 0, safe half-width 6.2; Z -41 to 35 | Safe walking envelope, inset by player radius |
+| Dock-to-boardwalk connector | X half-width 6.2; Z 33.8 to 38.2 | Explicit narrow movement connection; owner reports this route now works in preview |
+| Street / boardwalk walkable envelope | X -45 to +45; Z 37 to 55 | Safe movement envelope |
+| Left shore plate | X -65 to -21; Z 10 to 45 | Safe movement envelope |
+| Right shore plate | X +21 to +65; Z 10 to 45 | Safe movement envelope |
+| HQ dock approach spur | X 4.65 to 20.7; centered Z=13.75 | Narrow safe corridor to HQ approach |
+| HQ elevator threshold | X 19.5 to 25.3; centered Z=14.15 | Narrow safe corridor |
+| Records HQ center | (28, 22) | Architectural constant |
+| Records HQ footprint | X 19.25 to 36.75; Z 15.25 to 28.75 | Architectural collision constants |
+| HQ elevator | Approximately (23, 14.15) | Architectural / collision constant |
+| HQ floor 1 | Y 0.0–8.0 | Collision level band |
+| HQ floor 2 | Y 8.0–16.2 | Collision level band |
+| HQ floor 3 | Y 16.2–23.8 | Collision level band |
+| HQ rooftop | Y 23.8+ | Collision level band |
+
+### Reconcile the boardwalk street and sidewalk planning values
+
+The existing approved master-plan notes specify the marina / boardwalk street around Z=42–50 (center Z=46), with sidewalk centerlines at Z=39.5 and Z=52.5. The current collision module permits a broader pedestrian envelope Z=37–55. These values describe different layers (road / sidewalk planning vs. collision-safe region); do not treat them as contradictory or collapse them into one geometry dimension. Survey the rendered road and sidewalk meshes before modifying either.
+
+## Current world-system inventory
+
+The current feature-branch `main.js` and `engine.js` confirm the following registered systems. Multiple modules may layer details onto one geographic destination; this is a code inventory, not a claim that every module is a separate district.
+
+### Waterfront and open-world systems
+- Core world, scene, camera, renderer
+- Water and sky
+- Dock and dock path
+- Marina and dock-core features
+- Waterfront storefront details
+- Boardwalk overlooks
+- Yacht and yacht luxury details
+- Palm scenery
+- Dock entrance and dock luxury details
+- Conference Center district
+
+### Grand Stage and live-event systems
+- Festival Stage upgrade, architecture, and finishing
+- Festival audience zone
+- Grand Stage pier
+- Stage video, screen media, banner, music, and audio zone
+- Spotlights, lasers, smoke, and crowd pulse
+- HERO performance and post-performance systems
+- Character and NPC systems
+
+### Records HQ systems
+- HQ structure and foundation
+- Floor 1
+- Floor 2 Studio and Studio navigation/session systems
+- Floor 3 executive/details/experience systems (lazy-loaded)
+- Rooftop VIP system (lazy-loaded)
+- Elevator, entrance threshold, media details, merch details
+- HERO career center
+
+### Player and shared systems
+- Input, player, HUD, collision
+- Cinematic flow, world skin, dock core
+- Visual Engine and performance monitor
+
+## Current pedestrian connectivity
+
+The inspected collision source defines safe walking areas for the circular stage pier, central dock, dock-to-boardwalk connector, street / boardwalk envelope, two shore plates, HQ approach spur, and HQ elevator threshold.
+
+The dock-to-boardwalk connector explicitly bridges the former small gap around Z=35–37. The owner has confirmed that walking works normally in the current preview. Keep this connector intact unless a separately verified issue requires a targeted change.
+
+Required route checks as the map is completed:
+1. Central dock ↔ boardwalk / street walkway.
+2. Boardwalk ↔ storefronts and overlooks.
+3. Boardwalk / waterfront ↔ Records HQ entrance and elevator approach.
+4. Dock ↔ Grand Stage audience access ↔ stage pier.
+5. Main street / roundabout ↔ adjacent city districts.
+6. Conference Center / future arena plaza ↔ surrounding street and pedestrian network.
+
+Routes 5 and 6 still need exact endpoints and source-backed geometry survey.
+
+## District registry and confidence levels
+
+| District / landmark | Current known information | Remaining survey |
+|---|---|---|
+| Marina / boardwalk street | Planning street Z=42–50, center Z=46; sidewalk centerlines Z=39.5 and 52.5; collision envelope X -45..45, Z 37..55 | Visible mesh bounds, exact road/sidewalk edges, dock and storefront junctions |
+| Central dock | Collision-safe envelope X ±6.2, Z -41..35 | Visible deck bounds, ramps, marina slips, all access endpoints |
+| Grand Stage / pier | Center (0,-74); collision-safe radius 43.1; stage platform collider 44×18 | Visible pier / stage bounds, audience and backstage route geometry |
+| Records HQ | Center (28,22); approximate footprint X 19.25..36.75, Z 15.25..28.75 | Visible exterior survey, plaza / boardwalk threshold, all entrances |
+| Conference Center (existing interim structure) | Center (-43,97); footprint 28×24 per existing master-plan notes | Re-measure current geometry, collision, land foundation, entrance and adjacent street |
+| Arena District (approved concept) | Planning origin (-43,97); reserve land X -105..+19, Z 48..158; arena planning footprint ~54×44 centered (-43,97); square boulevard ~84×74 overall | Verify all current land, terrain, water, street, collision, and landmark overlaps before implementation |
+| Villa apartment parcels | Planned outside west, north, and east edges of arena boulevard; keep south approach and arena sightline open | Parcel coordinates, heights, footprints, access, and view corridors |
+| Roundabout | Existing approved world landmark | Exact center, diameter, road centerlines, connected spokes |
+| Jumbotron | Existing approved world landmark | Exact position, orientation, footprint, sightlines, access |
+| Storefront row | Existing waterfront detail system | Individual building footprints, entrances, sidewalks, collision |
+| Boardwalk overlooks | Existing registered system | Exact positions, footprints, and path links |
+| Marina / yachts / villa waterfront | Existing systems and approved landmarks | Exact asset locations, shoreline boundary, pedestrian links |
+
+**Important:** The Arena District numbers are the existing approved planning concept, not proof that the entire reserve area is currently built, flat, or collision-free. The Conference Center center and footprint above are from the prior master-plan notes and must be rechecked against current source before any replacement or expansion work.
+
+## Street, pedestrian, and district module standards
+
+Every road or pedestrian path added or modified must record:
+- Stable route ID and display name.
+- Ordered centerline points (X/Z) or explicit polygon / rectangle.
+- Width, surface type, elevation, and endpoints.
+- Road class: vehicle street, pedestrian-only route, or shared route.
+- Sidewalks, crossings, curb returns, ramps, and junction continuity where applicable.
+- Collision-safe boundary including player-radius allowance.
+- Connected route IDs at each endpoint.
+- Adjacent building entrances and public-space links.
+- Sightline and landmark visibility considerations.
+
+Every district module must declare:
+- Stable district ID, name, origin, and bounds.
+- Ground footprint and elevation.
+- Building footprints, entrance positions, and orientation.
+- Road centerlines, widths, endpoints, and junctions.
+- Pedestrian links and accessible thresholds.
+- Shoreline / water edges and intentional bridges or piers.
+- Collision boundaries and openings.
+- A root / ownership boundary for clean module lifecycle and future maintenance.
+
+### Connectivity rules
+
+- A visible path is not considered connected until collision and player movement confirm it.
+- Adjacent walkable areas must overlap or connect after the player collision radius is considered.
+- Water is not walkable ground; a crossing requires an intentional bridge, pier, or ramp.
+- A described road loop must connect every side, corner, and junction.
+- A building entrance must meet a walkable sidewalk, plaza, or path with a matching collision opening.
+- Never use a broad walkable rectangle to connect unrelated places or accidentally open a water boundary.
+- Future district modules must attach to existing route endpoints rather than silently shifting protected geography.
+
+## Implementation and verification sequence
+
+1. Complete source survey of world, dock, dock path, marina, boardwalk, storefronts, overlooks, conference center, stage, roundabout, Jumbotron, villa, roads, and collision.
+2. Compare visible mesh bounds with collision-safe bounds.
+3. Publish the verified coordinate and route registry in this file.
+4. Audit the Conference Center / Arena District footprint against the current land and all protected landmarks.
+5. Only then plan any arena replacement, boulevard loop, villa parcels, or new districts as one coordinated layout.
+6. Test full pedestrian routes on iPad Safari and desktop, including water and building boundaries.
+7. Keep all changes on the feature branch until owner review; no production merge without explicit approval.
+
+## Sources inspected for this revision
+
+- `LAMBO_CITY_MASTER_BLUEPRINT.md` — preserved prior approved Arena District concept, street standards, and district module contract.
+- `collision.js` — current waterfront safe-surface envelopes, dock-boardwalk connector, stage pier, Records HQ footprint, elevator threshold, and floor Y ranges.
+- `main.js` — registered world-system inventory and lazy-load entry points.
+- `engine.js` — actual system initialization order.
+
+## Change log
+
+- **2026-11-15:** Added a source-verified spatial baseline and current module inventory to the existing master blueprint. Preserved the prior Arena District plan and marked all unverified geometry as survey work. Documentation only; no scene code or production files changed.
