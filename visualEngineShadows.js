@@ -117,7 +117,7 @@ const controls = {
   registerNamedObject(name, settings = {}) {
     const root = scene?.getObjectByName?.(name);
     if (!root) return { success: false, error: "No scene object found with that name." };
-    return this.registerObject(root, settings);
+    return controls.registerObject(root, settings);
   },
 
   registerDirectionalLight(light, options = {}) {
