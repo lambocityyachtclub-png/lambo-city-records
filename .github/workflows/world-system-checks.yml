@@ -89,6 +89,8 @@ jobs:
 
       - name: Test additive waterfront storefront integration
         run: node --experimental-default-type=module scripts/test-waterfront-storefront-details.mjs
+      - name: Test first-world district planning guardrails
+        run: node --experimental-default-type=module scripts/test-first-world-district-guardrails.mjs
 
       - name: Test LAMBO CITY character identities and crowd behavior
         run: node --experimental-default-type=module scripts/test-character-system.mjs
