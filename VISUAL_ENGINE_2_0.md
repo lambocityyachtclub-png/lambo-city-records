@@ -61,7 +61,7 @@ Evolve the existing Three.js 0.160.0 renderer into a modular, performance-aware 
 - visualEngineColor.js: reversible renderer tone-mapping and exposure controls, exposed as window.__lamboCityVisualColor; existing ACES / exposure values are captured and left unchanged by default.
 - visualEngineShadows.js: opt-in directional shadow pipeline. At scene initialization it discovers only meshes already explicitly tagged with castShadow/receiveShadow by their feature modules; shadows remain disabled until deliberately enabled. Groups/named objects can also be registered manually; point-light shadows are excluded.
 - lighting.js: registers the existing sun with the shadow controller without enabling shadows or changing the default lighting.
-- water.js: reversible water surface and shimmer/reflection-layer presets, exposed as window.__lamboCityWaterVisuals.setPreset(name); the established water look and wave animation remain the default.
+- water.js: reversible water surface and shimmer/reflection-layer presets plus an explicitly opt-in, low-resolution cube-map environment reflection mode. The reflection mode uses the existing MeshStandardMaterial, defaults to 128px per cube face with a 3-second refresh interval, clamps resolution to 64–256px and refresh interval to 2–10 seconds, and performs no extra render passes unless deliberately enabled. It is an environment reflection, not a planar mirror/reflection pass; the established water look and wave animation remain the default.
 - sky.js: reversible cloud, star, and moon-glow controls, exposed as window.__lamboCitySkyVisuals; existing sky colors, object positions, and default intensities remain unchanged.
 - performanceMonitor.js: existing optional ?perf=1 overlay and renderer metrics.
 - engine.js / main.js: register and initialize the Visual Engine modules without changing the existing scene feature modules.
@@ -79,6 +79,12 @@ window.__lamboCityVisualMaterials.getReport()
 window.__lamboCityAtmosphere.getStatus()
 window.__lamboCityVisualColor.getStatus()
 window.__lamboCityWaterVisuals.getStatus()
+window.__lamboCityWaterVisuals.setEnvironmentReflection(true, {
+  resolution: 128,
+  refreshIntervalSeconds: 3,
+  intensity: 0.45
+})
+window.__lamboCityWaterVisuals.setEnvironmentReflection(false)
 window.__lamboCitySkyVisuals.getStatus()
 window.__lamboCityVisualShadows.getStatus()
 ```
@@ -103,6 +109,7 @@ Do not enable shadows or change material, water, sky, fog, or tone-mapping prese
 - Default profile preserves current baseline appearance.
 - Adaptive resolution remains disabled unless deliberately enabled.
 - No regression in camera, navigation, collisions, Floor 2 Studio, stage performance, HERO sequence, or lazy-loaded HQ floors.
+- Optional cube-map water reflections are tested at 64px, 128px, and 256px on iPad Safari and desktop; compare frame rate and visual artifacts, and confirm disabling restores the exact baseline material settings.
 - Any new shadows, reflections, atmosphere, or post-processing are measured with ?perf=1.
 - No feature is called complete based only on source inspection; runtime verification is still required.
 
