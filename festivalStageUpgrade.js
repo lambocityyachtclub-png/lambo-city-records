@@ -281,7 +281,7 @@ function addSpeakerArray(parent, side) {
       [sign * 24.5 + offset, 24.18, -78.4],
       riggingMat
     );
-  }
+  });
 }
 
 function addStageTruss(parent) {
