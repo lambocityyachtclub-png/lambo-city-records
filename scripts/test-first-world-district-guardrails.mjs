@@ -11,7 +11,7 @@ for (const requirement of [
   "atomic server-side transaction",
   "idempotent",
   "verified server session",
-  "cannot read, or overwrite Account B",
+  "Residents cannot list, open, edit, or overwrite another resident's private interior",
   "optimistic concurrency",
   "load only the assigned unit",
   "300 simulated account claims produce 300 unique assignments",
