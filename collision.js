@@ -61,8 +61,8 @@ function isOutsideSafeWaterfrontSurface(x, z, radius) {
   // This is collision-only: no world geometry or layout is changed.
   const onDockBoardwalkConnector =
     Math.abs(x) + radius <= 6.2 &&
-    z - radius >= 33.8 &&
-    z + radius <= 38.2;
+    z - radius >= 32.5 &&
+    z + radius <= 42.5;
 
   const onHQDockSpur =
     x - radius >= 4.65 &&
