@@ -59,7 +59,7 @@ Evolve the existing Three.js 0.160.0 renderer into a modular, performance-aware 
 - visualEngineMaterials.js: opt-in texture anisotropy controls plus reversible per-material polished/satin/matte/chrome presets; default texture and material settings remain untouched.
 - visualEngineAtmosphere.js: reversible fog presets plus smooth, delta-time-based transitions through window.__lamboCityAtmosphere.transitionTo(name, seconds); the current scene fog is captured as the baseline, and transitions are idle unless explicitly requested.
 - visualEngineColor.js: reversible renderer tone-mapping and exposure controls, exposed as window.__lamboCityVisualColor; existing ACES / exposure values are captured and left unchanged by default.
-- visualEngineShadows.js: opt-in directional shadow pipeline. At scene initialization it discovers only meshes already explicitly tagged with castShadow/receiveShadow by their feature modules; shadows remain disabled until deliberately enabled. Groups/named objects can also be registered manually; point-light shadows are excluded.
+- visualEngineShadows.js: opt-in directional shadow pipeline. At scene initialization it discovers only meshes already explicitly tagged with castShadow/receiveShadow by their feature modules; shadows remain disabled until deliberately enabled. Enabling requires at least one caster, receiver, and directional light, defaults to a maximum of 24 active casters (hard cap 64), supports explicit per-mesh priority, and restores the original mesh, light-shadow, and renderer settings when disabled. Groups/named objects can also be registered manually; point-light shadows are excluded.
 - lighting.js: registers the existing sun with the shadow controller without enabling shadows or changing the default lighting.
 - water.js: reversible water surface and shimmer/reflection-layer presets plus an explicitly opt-in, low-resolution cube-map environment reflection mode. The reflection mode uses the existing MeshStandardMaterial, defaults to 128px per cube face with a 3-second refresh interval, clamps resolution to 64–256px and refresh interval to 2–10 seconds, and performs no extra render passes unless deliberately enabled. It is an environment reflection, not a planar mirror/reflection pass; the established water look and wave animation remain the default.
 - sky.js: reversible cloud, star, and moon-glow controls, exposed as window.__lamboCitySkyVisuals; existing sky colors, object positions, and default intensities remain unchanged.
@@ -89,6 +89,8 @@ window.__lamboCityWaterVisuals.setEnvironmentReflection(true, {
 window.__lamboCityWaterVisuals.setEnvironmentReflection(false)
 window.__lamboCitySkyVisuals.getStatus()
 window.__lamboCityVisualShadows.getStatus()
+window.__lamboCityVisualShadows.enable({ maxCasters: 24 })
+window.__lamboCityVisualShadows.disable()
 ```
 
 Quality profile controls (deliberate test actions only):
@@ -113,6 +115,7 @@ Do not enable shadows or change material, water, sky, fog, or tone-mapping prese
 - Adaptive resolution remains disabled unless deliberately enabled.
 - No regression in camera, navigation, collisions, Floor 2 Studio, stage performance, HERO sequence, or lazy-loaded HQ floors.
 - Optional cube-map water reflections are tested at 64px, 128px, and 256px on iPad Safari and desktop; compare frame rate and visual artifacts, and confirm disabling restores the exact baseline material settings.
+- Optional shadows are tested with a 24-caster budget first; inspect activeCasters/skippedCasters and compare performance before considering a higher budget.
 - Any new shadows, reflections, atmosphere, or post-processing are measured with ?perf=1.
 - No feature is called complete based only on source inspection; runtime verification is still required.
 
