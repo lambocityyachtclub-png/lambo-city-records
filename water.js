@@ -156,7 +156,7 @@ const waterVisualControls = {
           throw new Error("Reflector shader does not match the expected Three.js 0.160.0 output.");
         }
         reflectionMaterial.fragmentShader = reflectionShader
-          .replace("uniform vec3 color;", "uniform vec3 color;\\nuniform float opacity;")
+          .replace("uniform vec3 color;", "uniform vec3 color;\nuniform float opacity;")
           .replace(alphaOutput, "gl_FragColor = vec4( blendOverlay( base.rgb, color ), opacity );");
         reflectionMaterial.uniforms.opacity = { value: opacity };
         reflectionMaterial.transparent = true;
