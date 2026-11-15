@@ -79,10 +79,10 @@ const controls = {
     loading = true;
     try {
       const [THREE, composerModule, renderPassModule, bloomModule] = await Promise.all([
-        import("https://unpkg.com/three@0.160.0/build/three.module.js"),
-        import("https://unpkg.com/three@0.160.0/examples/jsm/postprocessing/EffectComposer.js"),
-        import("https://unpkg.com/three@0.160.0/examples/jsm/postprocessing/RenderPass.js"),
-        import("https://unpkg.com/three@0.160.0/examples/jsm/postprocessing/UnrealBloomPass.js")
+        import("https://esm.sh/three@0.160.0"),
+        import("https://esm.sh/three@0.160.0/examples/jsm/postprocessing/EffectComposer.js"),
+        import("https://esm.sh/three@0.160.0/examples/jsm/postprocessing/RenderPass.js"),
+        import("https://esm.sh/three@0.160.0/examples/jsm/postprocessing/UnrealBloomPass.js")
       ]);
 
       const EffectComposer = composerModule.EffectComposer;
