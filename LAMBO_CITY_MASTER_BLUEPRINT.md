@@ -712,7 +712,8 @@ A source-boundary comparison identifies one plausible way to connect the west-si
 - The existing west-side district connector occupies X=-70..-16 and Z=45..64.
 - The existing HQ-side shore plate occupies X=21..65 and Z=10..45.
 - The intervening inland-side gap is therefore between the west connector's east edge (X=-16) and the HQ-side shore's west edge (X=21), above the boardwalk land edge.
-- A future land-continuity study may evaluate an inland-side extension that joins those source-verified boundaries, with any vehicle alignment kept north of the existing boardwalk sidewalk and any southbound HQ tie-in routed around the sidewalk's east endpoint rather than through the pedestrian boardwalk.
+- For feasibility calculations only, the bridging envelope to evaluate is X=-16..65 and Z=45..64: it begins at the existing west connector's east edge, spans the 37-unit gap between the two shore-side land systems, and meets the HQ-side shore plate at its north edge. This is a bounding envelope, not a final parcel or road footprint.
+- Any district vehicle alignment must remain north of the existing boardwalk sidewalk. A southbound HQ-side tie-in can only be evaluated east of the sidewalk's X=45 endpoint, then within the existing HQ-side shore land, while preserving the HQ footprint, dock spur, and roundabout clearance.
 - The central dock footprint ends at Z=35, so this inland-side study area is north of the dock's verified end. The Jumbotron / stage area is oceanward at negative Z and remains excluded.
 
 This is a **feasibility hypothesis, not a surveyed or approved footprint**. The exact land shape, elevation, retaining edges, water boundary, boardwalk clearances, route centerline, and collision behavior must be inspected in the rendered scene before any geometry is committed. Do not turn this envelope into a road or slab by assumption.
