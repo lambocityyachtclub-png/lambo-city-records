@@ -1,3 +1,5 @@
+> **Current controlling plan (2026-11-15):** The owner's latest approved sketch and clarifications control the Arena / Convention Center district arrangement. The original 84×74 boulevard and villa coordinates near the top of this document are historical provisional concepts only; they are **not approved construction coordinates**. The later owner-approved site arrangement, topology audit, and implementation gates supersede those early dimensions wherever they differ. This blueprint is a planning and implementation specification; it does not claim the district or 300 apartments have already been built.
+
 # LAMBO CITY — Master City Blueprint
 
 **Status:** Arena District master-plan revision; geometry implementation pending visual validation.
@@ -581,3 +583,75 @@ The first-world district is not complete until:
 7. Validate the complete first-world experience before declaring the first world finished.
 
 **Scope boundary:** This owner approval is for the district described above and the 300-home residential capability. It does not approve construction on the prohibited opposite side of the boardwalk, movement of protected landmarks, or unverified road / parcel coordinates. Existing production remains untouched until reviewed and explicitly released.
+
+
+## First-world completion boundary and next expansion phase — 2026-11-15
+
+### Owner's final building-phase direction
+
+The owner has approved completing the Convention Center district and its residential capability as the final planned world-building phase for the first LAMBO CITY world. Once the approved district is implemented, connected, and validated, the project should pause new world expansion and move into a dedicated visual-polish and experience-design phase. Do not interpret this scope boundary as permission to redesign or relocate already approved world assets.
+
+### Controlling district composition
+
+The hand-drawn site sketch and the owner's follow-up clarification control the spatial relationships:
+
+- All new district streets, parcels, buildings, recreation facilities, and public spaces stay on the same permitted side of the existing boardwalk as the Convention Center district.
+- The district street is one continuous square loop, with all four sides and corners connected. Sidewalks, crossings, curb returns, and pedestrian connections must be designed as part of the same coordinated system.
+- The basketball court and skate park occupy the front / boardwalk-facing portion of the district.
+- The Convention Center sits farther back and remains the district's principal landmark.
+- Residential apartment buildings sit outside the outer sidewalks, around the perimeter of the square street.
+- Storefronts, dining, and entertainment uses are integrated into the district frontage. The detailed mix, architectural expression, and exact storefront placements are design decisions for the district plan, subject to access, sightline, and parcel constraints.
+- The existing waterfront storefront row remains protected; new retail must complement it rather than replace, overlap, or block it.
+- The square loop must connect to the existing district approach and return toward the Records HQ public approach without blocking the central dock, HQ dock spur, elevator threshold, or boardwalk pedestrian route.
+- The boardwalk remains pedestrian-priority with service / emergency access only. It is not to become the ordinary vehicle leg of the new square street unless a separately reviewed traffic plan explicitly proves that safe arrangement.
+- The entire opposite / Jumbotron-facing side of the boardwalk remains a no-build area for this district: no new streets, buildings, land pads, recreation parcels, or district extensions.
+
+### 300+ resident apartment capacity — implementation requirement
+
+The residential system must provide at least 300 separately assignable private apartments, with one apartment assigned to each registered resident. The 300 figure is a minimum supported capacity, not a requirement to render 300 furnished interiors at once.
+
+Required resident experience:
+1. On registration, assign the user a unique private apartment and expose it as their personal home / home-screen destination.
+2. Allow the resident to enter their apartment from the world and return to it through their profile or home interface.
+3. Provide user-directed interior design: furniture selection, placement, rotation, arrangement, removal, room layout, lighting, colors, décor, and finish choices.
+4. Include premium options such as marble floors, granite or marble countertops, cabinetry, wall finishes, and future material collections. These are optional catalog choices; users decide their own style.
+5. Persist each resident's ownership, layout, furniture, and material selections to account-backed storage, and restore the same design when they return.
+6. Enforce private ownership so one resident cannot overwrite or edit another resident's home without explicit future collaboration permission.
+7. Use modular building shells, unit templates, furniture definitions, and material catalogs so the system can expand beyond 300 residents without hand-authoring every home.
+8. Load detailed interiors on demand. The world should not instantiate hundreds of fully furnished apartment interiors during initial load.
+9. Keep the apartment system independent of any one building façade: units can be assigned across multiple residential buildings while sharing a common customization and persistence core.
+
+The system is not complete merely because apartment façades or doors exist. Completion requires account assignment, private entry, customization, save, exit, and successful restoration of the resident's own design.
+
+### First-world completion gate and building freeze
+
+The first-world building phase is considered complete only when all of the following are true:
+
+- The district-side land foundation is continuous and source-verified; roads and buildings are never suspended over water or unsupported terrain.
+- The square street loop is physically continuous, collision-matched, and navigable around all four corners.
+- The pedestrian network connects the boardwalk approach, storefronts, recreation areas, Convention Center, residential entrances, and Records HQ return route.
+- The front recreation area includes both the LAMBO CITY basketball court and skate park.
+- The Convention Center is placed in the rear landmark position with a clear arrival plaza and accessible entrance.
+- The retail / dining / entertainment frontage is coherent and does not obstruct sidewalks, crossings, or building access.
+- The outer residential perimeter supports at least 300 unique private apartment assignments.
+- A registered user can enter their assigned apartment, customize furniture and finishes, save, leave, and return to the same private design.
+- Runtime loading and performance are validated on the supported desktop and iPad experience; apartment interiors are loaded on demand.
+- Existing boardwalk movement, dock-to-boardwalk connection, HQ approach, stage access, marina, and protected landmarks remain intact.
+
+After this gate is met, stop adding new world districts or buildings for the first-world scope. Shift to visual and experiential upgrades: architecture finish, materials, lighting, landscaping, animation, sound, NPC behavior, interactions, usability, accessibility, and performance. Improvements must preserve approved geography, camera behavior, navigation, and working systems.
+
+### Reserved next expansion phase: LAMBO CITY Yacht Club
+
+The following work is intentionally deferred until after the first-world building phase and its visual-polish transition:
+
+- **LAMBO CITY Yacht Club Towers:** the two existing black-and-white buildings positioned on opposite sides of the Jumbotron are reserved for the future Yacht Club Towers identity and experience. Their existing locations and silhouettes are protected; this phase is a future design / interior / experience upgrade, not authorization to move or rebuild them.
+- **LAMBO CITY Yacht:** the owner will begin designing the yacht as a separate future project. Its placement, scale, exterior, interior, boarding experience, and marina interactions will be planned against the existing waterfront and navigation without disturbing approved marina geography.
+
+Do not begin tower or yacht construction as part of the Convention Center district. When that future phase begins, first inspect the existing tower and yacht source modules and record their current coordinates, dimensions, and navigation links before proposing changes.
+
+### Delivery and release discipline
+
+- Keep all district planning and implementation on the existing feature branch until reviewed.
+- Do not merge the draft PR or deploy to production without a separate explicit release approval.
+- Do not change existing protected world geometry, cityMap.js coordinates, collision, camera, or navigation based only on this blueprint. Each implementation stage must be reviewed and tested against the measured plan.
+- The blueprint may be marked complete as a planning artifact only after the measured top-down parcel plan, route schedule, capacity architecture, and unresolved survey items are all documented. The world itself is not complete until the runtime completion gate above is passed.
