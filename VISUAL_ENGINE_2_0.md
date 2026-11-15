@@ -139,6 +139,10 @@ Do not enable shadows or change material, water, sky, fog, or tone-mapping prese
 - Any new shadows, reflections, atmosphere, or post-processing are measured with ?perf=1.
 - No feature is called complete based only on source inspection; runtime verification is still required.
 
+## Development authorization
+
+The owner authorized completion of this Visual Engine 2.0 feature-branch scope. The PR remains a draft; this does not authorize merging to main or deploying to production.
+
 ## Status
 
 The quality-management, diagnostics, reversible texture filtering/material helpers, reversible atmosphere controls and transitions, renderer color controls, opt-in water appearance presets and low-resolution cube-map reflections, reversible sky controls, budgeted directional-shadow framework, and optional dynamically loaded bloom path are implemented on the feature branch. Targeted world caster/receiver tuning, measured shadow/reflection/bloom quality, planar water reflections, and broader asset-specific material improvements remain in development. This document is the scope and verification contract for the branch; it is not a claim that those later layers are already finished.
