@@ -11,6 +11,10 @@
 
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 
+let speakerConeInstances = null;
+let speakerConeBasePositions = [];
+let speakerPulseTime = 0;
+
 const STAGE = Object.freeze({
   centerX: 0,
   centerZ: -74,
@@ -185,10 +189,11 @@ function buildSpeakerHardware(parent) {
   const rings = [];
 
   [-1, 1].forEach(sign => {
-    for (let cabinet = 0; cabinet < 4; cabinet++) {
-      const y = 15.2 - cabinet * 2.25;
+    for (let cabinet = 0; cabinet < 6; cabinet++) {
+      const y = 20.2 - cabinet * 2.0;
       [-0.48, 0.48].forEach(offset => {
-        const position = [sign * 24.5, y + offset, -77.40];
+        const splay = (cabinet - 2.5) * 0.022;
+        const position = [sign * 24.5, y + offset, -77.40, splay];
         cones.push(position);
         rings.push(position);
       });
@@ -197,18 +202,20 @@ function buildSpeakerHardware(parent) {
 
   const coneInstances = new THREE.InstancedMesh(coneGeometry, coneMat, cones.length);
   coneInstances.name = "grandStageSpeakerCones";
+  speakerConeInstances = coneInstances;
+  speakerConeBasePositions = cones.map(position => position.slice());
   const ringInstances = new THREE.InstancedMesh(ringGeometry, surroundMat, rings.length);
   ringInstances.name = "grandStageSpeakerSurrounds";
 
   const helper = new THREE.Object3D();
   cones.forEach((position, index) => {
     helper.position.set(...position);
-    helper.rotation.x = Math.PI / 2;
+    helper.rotation.x = Math.PI / 2 + (position[3] || 0);
     helper.updateMatrix();
     coneInstances.setMatrixAt(index, helper.matrix);
 
-    // TorusGeometry already faces +Z; keep its plane perpendicular to the speaker axis.
-    helper.rotation.set(0, 0, 0);
+    // TorusGeometry already faces +Z; match the cabinet's subtle splay.
+    helper.rotation.set(position[3] || 0, 0, 0);
     helper.updateMatrix();
     ringInstances.setMatrixAt(index, helper.matrix);
   });
@@ -311,5 +318,29 @@ export default {
     buildLightingFixtureDetails(root, darkMetal, lensMetal);
   },
 
-  update() {}
+  update(delta, context) {
+    if (!speakerConeInstances) return;
+
+    // A restrained bass-cone excursion follows the existing live-performance
+    // playback state. The 126 BPM visual pulse matches the venue's established
+    // crowd-pulse rhythm without routing or modifying the approved audio chain.
+    const music = context?.systems?.stageMusic;
+    const playing = !!music?.isPlaying?.();
+    if (playing) speakerPulseTime += delta;
+
+    const beatDuration = 60 / 126;
+    const beatPhase = (speakerPulseTime % beatDuration) / beatDuration;
+    const pulse = playing ? Math.pow(Math.max(0, Math.sin(beatPhase * Math.PI)), 4) : 0;
+    const excursion = pulse * 0.045;
+    const helper = new THREE.Object3D();
+
+    speakerConeBasePositions.forEach((position, index) => {
+      helper.position.set(position[0], position[1], position[2] + excursion);
+      helper.rotation.x = Math.PI / 2 + (position[3] || 0);
+      helper.updateMatrix();
+      speakerConeInstances.setMatrixAt(index, helper.matrix);
+    });
+
+    speakerConeInstances.instanceMatrix.needsUpdate = true;
+  }
 };

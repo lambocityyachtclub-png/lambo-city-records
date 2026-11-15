@@ -21,33 +21,35 @@ let initialized = false;
 
 function makeBannerTexture(title, brand) {
   const canvas = document.createElement("canvas");
-  canvas.width = 1024;
-  canvas.height = 256;
+  // Match the 13.2 x 2.64 sponsor panel's 5:1 aspect ratio so
+  // sponsor artwork is not stretched or visually cropped on the fascia.
+  canvas.width = 1600;
+  canvas.height = 320;
   const ctx = canvas.getContext("2d");
 
-  const gradient = ctx.createLinearGradient(0, 0, 1024, 256);
+  const gradient = ctx.createLinearGradient(0, 0, 1600, 320);
   gradient.addColorStop(0, "#09090d");
   gradient.addColorStop(0.5, "#17121e");
   gradient.addColorStop(1, "#07070a");
   ctx.fillStyle = gradient;
-  ctx.fillRect(0, 0, 1024, 256);
+  ctx.fillRect(0, 0, 1600, 320);
 
   ctx.strokeStyle = "#c79b2d";
   ctx.lineWidth = 8;
-  ctx.strokeRect(10, 10, 1004, 236);
+  ctx.strokeRect(10, 10, 1580, 300);
 
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.shadowColor = "#a855f7";
   ctx.shadowBlur = 20;
   ctx.fillStyle = "#e8c86a";
-  ctx.font = "bold 36px Arial, sans-serif";
-  ctx.fillText(String(title || "").toUpperCase().slice(0, 36), 512, 76);
+  ctx.font = "bold 40px Arial, sans-serif";
+  ctx.fillText(String(title || "").toUpperCase().slice(0, 36), 800, 94, 1450);
 
   ctx.shadowBlur = 8;
   ctx.fillStyle = "#ffffff";
-  ctx.font = "bold 72px Arial, sans-serif";
-  ctx.fillText(String(brand || "").toUpperCase().slice(0, 24), 512, 166);
+  ctx.font = "bold 78px Arial, sans-serif";
+  ctx.fillText(String(brand || "").toUpperCase().slice(0, 24), 800, 232, 1450);
 
   ctx.shadowBlur = 0;
   const texture = new THREE.CanvasTexture(canvas);
@@ -84,8 +86,8 @@ function addSponsorPanel(parent, sponsor, x, width) {
   addBox(
     parent,
     "festivalSponsorFrame_" + sponsor.key,
-    [width + 0.28, 1.9, 0.34],
-    [x, 1.28, -62.82],
+    [width + 0.32, 2.94, 0.38],
+    [x, 1.55, -62.82],
     frameMat
   );
 
@@ -94,16 +96,22 @@ function addSponsorPanel(parent, sponsor, x, width) {
   material.map = texture;
   material.emissive = new THREE.Color(0x171018);
   material.emissiveMap = texture;
-  material.emissiveIntensity = 0.42;
+  material.emissiveIntensity = 0.58;
   material.needsUpdate = true;
 
-  const face = addBox(
-    parent,
-    "festivalSponsorBanner_" + sponsor.key,
-    [width, 1.62, 0.06],
-    [x, 1.30, -62.60],
+  // This dedicated sponsor-visibility band uses a single front-facing
+  // display plane instead of a shallow box, avoiding fascia UV distortion
+  // and keeping the complete sponsor artwork cleanly visible.
+  const face = new THREE.Mesh(
+    new THREE.PlaneGeometry(width, 2.64),
     material
   );
+  face.name = "festivalSponsorBanner_" + sponsor.key;
+  face.position.set(x, 1.55, -62.58);
+  face.renderOrder = 2;
+  face.castShadow = false;
+  face.receiveShadow = false;
+  parent.add(face);
   bannerMeshes.set(sponsor.key, face);
   bannerTextures.set(sponsor.key, texture);
 }
@@ -223,8 +231,10 @@ function addSpeakerArray(parent, side) {
     metalness: 0.35
   });
 
-  for (let i = 0; i < 4; i++) {
-    const y = 15.2 - i * 2.25;
+  // Six compact touring line-array modules create a more believable
+  // flown speaker hang while staying inside the approved stage footprint.
+  for (let i = 0; i < 6; i++) {
+    const y = 20.2 - i * 2.0;
     const cabinet = addBox(
       parent,
       "festivalLineArray_" + side + "_" + i,
@@ -232,16 +242,52 @@ function addSpeakerArray(parent, side) {
       [sign * 24.5, y, -78.4],
       cabinetMat
     );
+    // Small progressive splay gives the flown array a realistic curved
+    // vertical coverage profile rather than one flat stack of boxes.
+    const splay = (i - 2.5) * 0.022;
+    cabinet.rotation.x = splay;
     cabinet.rotation.z = sign * 0.035;
 
-    addBox(
+    const grille = addBox(
       parent,
       "festivalLineArrayGrille_" + side + "_" + i,
       [2.35, 1.72, 0.08],
       [sign * 24.5, y, -77.52],
       grilleMat
     );
+    grille.rotation.x = splay;
   }
+
+  // Visible flybar and paired suspension links connect each array to the
+  // existing front truss, making the hang read as real touring hardware.
+  const riggingMat = new THREE.MeshStandardMaterial({
+    color: 0x17191d,
+    metalness: 0.86,
+    roughness: 0.34
+  });
+  addBox(
+    parent,
+    "festivalLineArrayFlybar_" + side,
+    [3.0, 0.22, 0.26],
+    [sign * 24.5, 21.38, -78.4],
+    riggingMat
+  );
+  [-0.92, 0.92].forEach((offset, index) => {
+    addBox(
+      parent,
+      "festivalLineArraySuspension_" + side + "_" + index,
+      [0.055, 2.55, 0.055],
+      [sign * 24.5 + offset, 22.83, -78.4],
+      riggingMat
+    );
+    addBox(
+      parent,
+      "festivalLineArrayHoist_" + side + "_" + index,
+      [0.22, 0.20, 0.22],
+      [sign * 24.5 + offset, 24.18, -78.4],
+      riggingMat
+    );
+  });
 }
 
 function addStageTruss(parent) {
