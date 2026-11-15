@@ -5,22 +5,22 @@
 // of the audience barrier. Collision checks prevent walking through barriers.
 
 const CROWD_PERSONAS = [
-  { id: "crowd-01", name: "Maya", role: "dancer", personality: "joyful, expressive", traits: ["welcoming", "music-loving"], energy: 1.0, speed: 1.05, roam: 1.25, pause: 3.2 },
-  { id: "crowd-02", name: "Jordan", role: "phone", personality: "social, curious", traits: ["observant", "connected"], energy: 0.9, speed: 0.82, roam: 1.05, pause: 4.8 },
-  { id: "crowd-03", name: "Kai", role: "cheerer", personality: "outgoing, encouraging", traits: ["supportive", "high-energy"], energy: 1.1, speed: 0.95, roam: 1.2, pause: 3.8 },
-  { id: "crowd-04", name: "Amara", role: "dancer", personality: "confident, upbeat", traits: ["rhythmic", "friendly"], energy: 1.05, speed: 1.12, roam: 1.3, pause: 2.8 },
-  { id: "crowd-05", name: "Leo", role: "spectator", personality: "calm, observant", traits: ["thoughtful", "attentive"], energy: 0.72, speed: 0.62, roam: 0.75, pause: 7.0 },
-  { id: "crowd-06", name: "Nia", role: "dancer", personality: "playful, spontaneous", traits: ["expressive", "warm"], energy: 1.08, speed: 1.08, roam: 1.25, pause: 3.0 },
-  { id: "crowd-07", name: "Miles", role: "phone", personality: "enthusiastic, social", traits: ["documentarian", "curious"], energy: 0.95, speed: 0.88, roam: 1.1, pause: 4.4 },
-  { id: "crowd-08", name: "Zara", role: "cheerer", personality: "bold, uplifting", traits: ["encouraging", "spirited"], energy: 1.12, speed: 0.98, roam: 1.2, pause: 3.4 },
-  { id: "crowd-09", name: "Eli", role: "spectator", personality: "laid-back, attentive", traits: ["relaxed", "observant"], energy: 0.68, speed: 0.58, roam: 0.7, pause: 7.5 },
-  { id: "crowd-10", name: "Sienna", role: "dancer", personality: "vibrant, confident", traits: ["rhythmic", "outgoing"], energy: 1.12, speed: 1.15, roam: 1.3, pause: 2.7 },
-  { id: "crowd-11", name: "Noah", role: "phone", personality: "friendly, curious", traits: ["social", "observant"], energy: 0.88, speed: 0.8, roam: 1.0, pause: 5.0 },
-  { id: "crowd-12", name: "Imani", role: "cheerer", personality: "spirited, generous", traits: ["supportive", "expressive"], energy: 1.08, speed: 0.96, roam: 1.18, pause: 3.6 },
-  { id: "crowd-13", name: "Luca", role: "spectator", personality: "easygoing, thoughtful", traits: ["patient", "attentive"], energy: 0.7, speed: 0.6, roam: 0.72, pause: 7.2 },
-  { id: "crowd-14", name: "Avery", role: "dancer", personality: "warm, energetic", traits: ["playful", "music-loving"], energy: 0.98, speed: 1.02, roam: 1.2, pause: 3.5 },
-  { id: "crowd-15", name: "Jalen", role: "phone", personality: "outgoing, upbeat", traits: ["connected", "enthusiastic"], energy: 0.92, speed: 0.86, roam: 1.08, pause: 4.6 },
-  { id: "crowd-16", name: "Skye", role: "cheerer", personality: "expressive, positive", traits: ["welcoming", "spirited"], energy: 1.05, speed: 0.94, roam: 1.15, pause: 3.8 }
+  { id: "crowd-01", name: "Maya", role: "dancer", personality: "joyful, expressive", traits: ["welcoming", "music-loving"], energy: 1.0, speed: 1.55, roam: 2.55, pause: 1.8 },
+  { id: "crowd-02", name: "Jordan", role: "phone", personality: "social, curious", traits: ["observant", "connected"], energy: 0.9, speed: 1.35, roam: 2.35, pause: 2.5 },
+  { id: "crowd-03", name: "Kai", role: "cheerer", personality: "outgoing, encouraging", traits: ["supportive", "high-energy"], energy: 1.1, speed: 1.45, roam: 2.5, pause: 2.0 },
+  { id: "crowd-04", name: "Amara", role: "dancer", personality: "confident, upbeat", traits: ["rhythmic", "friendly"], energy: 1.05, speed: 1.65, roam: 2.65, pause: 1.5 },
+  { id: "crowd-05", name: "Leo", role: "spectator", personality: "calm, observant", traits: ["thoughtful", "attentive"], energy: 0.72, speed: 1.15, roam: 2.0, pause: 3.0 },
+  { id: "crowd-06", name: "Nia", role: "dancer", personality: "playful, spontaneous", traits: ["expressive", "warm"], energy: 1.08, speed: 1.6, roam: 2.55, pause: 1.7 },
+  { id: "crowd-07", name: "Miles", role: "phone", personality: "enthusiastic, social", traits: ["documentarian", "curious"], energy: 0.95, speed: 1.4, roam: 2.4, pause: 2.4 },
+  { id: "crowd-08", name: "Zara", role: "cheerer", personality: "bold, uplifting", traits: ["encouraging", "spirited"], energy: 1.12, speed: 1.48, roam: 2.5, pause: 1.9 },
+  { id: "crowd-09", name: "Eli", role: "spectator", personality: "laid-back, attentive", traits: ["relaxed", "observant"], energy: 0.68, speed: 1.1, roam: 1.95, pause: 3.2 },
+  { id: "crowd-10", name: "Sienna", role: "dancer", personality: "vibrant, confident", traits: ["rhythmic", "outgoing"], energy: 1.12, speed: 1.7, roam: 2.65, pause: 1.4 },
+  { id: "crowd-11", name: "Noah", role: "phone", personality: "friendly, curious", traits: ["social", "observant"], energy: 0.88, speed: 1.32, roam: 2.3, pause: 2.6 },
+  { id: "crowd-12", name: "Imani", role: "cheerer", personality: "spirited, generous", traits: ["supportive", "expressive"], energy: 1.08, speed: 1.48, roam: 2.45, pause: 2.0 },
+  { id: "crowd-13", name: "Luca", role: "spectator", personality: "easygoing, thoughtful", traits: ["patient", "attentive"], energy: 0.7, speed: 1.12, roam: 1.95, pause: 3.1 },
+  { id: "crowd-14", name: "Avery", role: "dancer", personality: "warm, energetic", traits: ["playful", "music-loving"], energy: 0.98, speed: 1.5, roam: 2.45, pause: 1.9 },
+  { id: "crowd-15", name: "Jalen", role: "phone", personality: "outgoing, upbeat", traits: ["connected", "enthusiastic"], energy: 0.92, speed: 1.38, roam: 2.35, pause: 2.5 },
+  { id: "crowd-16", name: "Skye", role: "cheerer", personality: "expressive, positive", traits: ["welcoming", "spirited"], energy: 1.05, speed: 1.45, roam: 2.4, pause: 2.0 }
 ];
 
 let characters = [];
@@ -43,15 +43,21 @@ function chooseWanderTarget(character, context) {
   const { profile, homeX, homeZ, phase, mesh } = character;
   const angleBase = elapsed * 0.19 + phase * 2.7;
   const sideOfBarrier = homeZ > -57.4 ? "audience" : "stage";
-  const minZ = sideOfBarrier === "audience" ? Math.max(homeZ - profile.roam, -56.65) : homeZ - profile.roam;
-  const maxZ = sideOfBarrier === "stage" ? Math.min(homeZ + profile.roam, -58.15) : homeZ + profile.roam;
+  const minZ = sideOfBarrier === "audience"
+    ? Math.max(homeZ - profile.roam, -56.65)
+    : Math.max(homeZ - profile.roam, -64.35);
+  const maxZ = sideOfBarrier === "stage"
+    ? Math.min(homeZ + profile.roam, -58.15)
+    : Math.min(homeZ + profile.roam, -46.2);
 
-  for (let attempt = 0; attempt < 8; attempt++) {
+  for (let attempt = 0; attempt < 12; attempt++) {
     const angle = angleBase + attempt * 2.399963;
-    const radius = profile.roam * (0.42 + ((attempt % 3) * 0.16));
+    // Longer destinations make walking clearly visible instead of a tiny shuffle.
+    const radius = profile.roam * (0.72 + ((attempt % 3) * 0.10));
     const x = Math.max(homeX - profile.roam, Math.min(homeX + profile.roam, homeX + Math.cos(angle) * radius));
-    const z = Math.max(minZ, Math.min(maxZ, homeZ + Math.sin(angle) * radius * 0.62));
-    if (Math.hypot(x - mesh.position.x, z - mesh.position.z) < 0.55) continue;
+    const z = Math.max(minZ, Math.min(maxZ, homeZ + Math.sin(angle) * radius * 0.72));
+    if (Math.hypot(x - mesh.position.x, z - mesh.position.z) < 1.0) continue;
+    if (character.neighbors.some(other => Math.hypot(other.mesh.position.x - x, other.mesh.position.z - z) < 0.95)) continue;
     if (!isWalkBlocked(x, z, context)) return { x, z };
   }
   return null;
@@ -66,6 +72,7 @@ function updateWalking(character, delta, context, musicBoost) {
     if (target) {
       character.target = target;
       character.state = "walking";
+      character.stateTimer = 8;
     } else {
       character.stateTimer = 1.2 + (phase % 1.4);
     }
@@ -100,12 +107,12 @@ function updateWalking(character, delta, context, musicBoost) {
     }
   }
 
-  const gait = elapsed * (walking ? 7.2 : 1.25) + phase;
-  const stride = walking ? Math.sin(gait) * 0.58 : Math.sin(gait) * 0.035;
+  const gait = elapsed * (walking ? 8.6 : 1.25) + phase;
+  const stride = walking ? Math.sin(gait) * 0.78 : Math.sin(gait) * 0.035;
   leftLeg.rotation.x = stride;
   rightLeg.rotation.x = -stride;
   if (walking) {
-    const armSwing = Math.sin(gait) * 0.32;
+    const armSwing = Math.sin(gait) * 0.42;
     if (profile.role !== "phone") {
       leftArm.rotation.x = armSwing;
       rightArm.rotation.x = -armSwing;
