@@ -444,3 +444,62 @@ Prepare a measured top-down parcel and circulation plan with:
 
 Only after that plan is source-checked and presented for owner review should any `cityMap.js`, terrain, road, building, collision, or navigation implementation begin. This approval authorizes continued planning and documentation only; it does not authorize construction or production deployment.
 
+## Topology and protected-waterfront audit — 2026-11-15
+
+This audit reconciles the owner-approved district program with the current feature-branch source. It is a planning-only update. It does not authorize or implement new terrain, roads, buildings, collision, or navigation.
+
+### Confirmed existing geometry relevant to the district
+
+| Element | Source-backed geometry / behavior | Planning consequence |
+|---|---|---|
+| Marina boardwalk road | Center (0,46), X=-45..45, Z=42..50; pedestrian-priority with service / emergency access only | Preserve its role and geometry; do not convert it into an ordinary vehicle street |
+| Boardwalk sidewalks | Centerlines Z=39.5 and Z=52.5; nominal Z=37..42 and 50..55 | Keep pedestrian circulation continuous and separate from any new vehicle route |
+| Store-side overlook | West end deck extends X=-45 to -58; wood deck, rails, lanterns and palms | This is an existing endpoint feature, not a free road junction; preserve its deck and edge treatment |
+| HQ-side overlook | Its builder exists, but current `init()` intentionally does not call it; the east boardwalk end remains open | Do not assume a completed east-end plaza or overlook exists |
+| Storefront row | Centers X=-20, -32, -44; building boxes 10×8×12; detail module places front thresholds around Z=38.05–38.48 | Storefront entries and pedestrian frontage must remain clear |
+| Existing shore plates | West plate X=-65..-21 and east plate X=21..65, both Z=10..45 | The center corridor is intentionally open around the central dock; do not bridge it at the wrong elevation or block dock access |
+| Current district connector | X=-70..-16, Z=45..64; joins west shore land to district pad | Existing district access is west/store-side only |
+| Current district ground pad | X=-70..-16, Z=64..126 | Current land support does not reach the HQ-side shore plate |
+| Interim access road | X center -37, width 8, from Z=46 to Z=80 | This is a single approach, not a completed loop or a two-turn route |
+| Records HQ | Center (28,22); protected footprint and elevator approach are already registered | Return route must meet the HQ-side public approach without crossing the dock spur or changing the HQ |
+| Stage ground | 130×55 centered (0,-72), approximate bounds X=-65..65, Z=-99.5..-44.5 | This is oceanward / stage-side geography and remains protected |
+| Stage platform | 44×18 centered (0,-74), approximate bounds X=-22..22, Z=-83..-65 | No district road, land pad, or construction is to be placed here |
+
+### Critical route and land-continuity finding
+
+The present district connector and pad occupy the west side of the map (X=-70..-16). The existing HQ-side shore plate begins at X=+21 and ends at Z=45. The 37-unit X gap between those land plates is not currently a verified continuous district-side land corridor. The interim access road only runs north from the boardwalk at X=-37; it does not return toward Records HQ.
+
+A return leg cannot be drawn responsibly by simply extending the existing road or copying the provisional square-boulevard dimensions. The top-down plan must first establish a land-support footprint on the permitted inland / district side, then route the road and pedestrian paths over that footprint. It must preserve the central dock, its rails and spur opening, the HQ elevator threshold, and all existing boardwalk/storefront geometry.
+
+### Route-orientation check
+
+The owner's route instruction is: leave the boardwalk, make a left, continue, make another left, and return near Records HQ. The source establishes two boardwalk endpoints with different treatments: a completed west/store-side overlook and an intentionally open east/HQ-side end. The source does not yet establish which endpoint and approach heading the owner is describing as the first turn.
+
+Therefore, the route is recorded as an owner-approved two-left-turn sequence, but its turn coordinates and exact approach heading remain unassigned until the plan overlays the existing player approach and fixed landmarks. This avoids reversing the route or accidentally routing it toward the protected stage/Jumbotron side.
+
+### Protected geography overlay
+
+Treat the following as fixed / no-build for this district plan:
+- Existing marina boardwalk road, sidewalks, overlooks, and all three storefronts.
+- Central dock, dock ramp, HQ spur, rail opening, and elevator threshold.
+- Records HQ and its current entrance / elevator approach.
+- Grand Stage ground, stage platform, stage back wall, screen, towers, and stage access.
+- The Jumbotron-facing / oceanward side of the boardwalk: no new streets, buildings, terrain pads, or district extensions.
+- Existing yachts, marina objects, roundabout, and other approved world landmarks until their exact bounds are surveyed.
+
+### Updated measured-plan requirements
+
+The next parcel drawing must show, on one consistent top-down coordinate plane:
+1. The existing west/store-side district entrance and the open east/HQ-side boardwalk endpoint.
+2. The owner's two-left-turn route with direction arrows, exact turn nodes, and a return endpoint near the HQ public approach.
+3. The complete district-side land footprint that supports every road and pedestrian path; identify every land seam and overlap.
+4. The Convention Center centerpiece and its public arrival plaza.
+5. The central basketball court and skate park, with safe pedestrian links and clear separation from vehicle circulation.
+6. Retail / dining / entertainment frontage along the connected district street.
+7. Outer apartment / villa parcels, setbacks, building access, and sightline controls.
+8. A distinct no-build overlay for the entire oceanward / Jumbotron-facing side.
+9. Dock, HQ spur, elevator, storefront, boardwalk and stage keep-out / access envelopes.
+10. A route and parcel schedule with widths, endpoints, elevations, and collision requirements.
+
+No new world coordinates are approved by this audit. The old boulevard dimensions remain superseded provisional notes and must not be used as implementation coordinates. The next deliverable is a measured site plan for owner review; code implementation remains gated on that review.
+
