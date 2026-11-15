@@ -54,7 +54,7 @@ function createPhotographer(scene, index) {
   camera.add(body);
   const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.105, 0.105, 0.2, 12), lens);
   barrel.rotation.x = Math.PI / 2;
-  barrel.position.z = -0.18;
+  barrel.position.z = 0.18;
   camera.add(barrel);
   const flashUnit = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.09, 0.12), flash);
   flashUnit.position.set(0.16, 0.2, 0);
