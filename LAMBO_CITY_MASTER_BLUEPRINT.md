@@ -740,3 +740,9 @@ The route direction is now documented as a confirmed design input; only the junc
 **Construction coordinate plan: not yet certified.** A safe final coordinate plan requires an in-engine survey of the land seam, route heading, HQ return tie-in, and visible fixed-object envelopes. No new coordinates should be fabricated to make the document appear more complete.
 
 **Implementation status: unchanged.** This record does not change `cityMap.js`, terrain, roads, buildings, collision, player navigation, or production. The interim district remains interim until a separately reviewed implementation replaces or integrates it as one complete square-loop district.
+
+## Owner implementation authorization — 2026-11-15
+
+The owner has explicitly approved moving forward with the complete four-sided, closed square-loop district arrangement and its three additional left turns after the boardwalk-side entry. This authorizes measured-site surveying and implementation of the approved district program on the existing feature branch, including new district land, streets, sidewalks, buildings, public spaces, and matching district-local collision / navigation. The entry connector is not counted as one of the four loop sides; the final side must reconnect to close the loop.
+
+This authorization does not permit guessed coordinates or construction over unverified water. Survey the rendered land, elevations, shoreline, existing sidewalks, dock, HQ approach, roundabout, and all protected clearances first. Derive the final coordinates from that survey and keep the existing boardwalk, dock, HQ, stage, Jumbotron-facing no-build area, and working navigation intact. Do not merge to `main` or deploy to production without separate release approval. The 300-home apartment backend remains a separate integration phase requiring confirmation of the actual authentication and database provider.
