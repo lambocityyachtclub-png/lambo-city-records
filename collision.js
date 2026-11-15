@@ -36,7 +36,7 @@ const colliders = [];
 //
 // This is movement-only collision. It does not add or move geometry.
 // A small inset keeps the full character radius on the walking surface.
-function isOutsideSafeWaterfrontSurface(x, z, radius) {
+export function isOutsideSafeWaterfrontSurface(x, z, radius) {
   const onLeftShore =
     x - radius >= -65 &&
     x + radius <= -21 &&
@@ -62,6 +62,16 @@ function isOutsideSafeWaterfrontSurface(x, z, radius) {
     x + radius <= 20.7 &&
     Math.abs(z - 13.75) + radius <= 1.2;
 
+  // The dock ends at z=35 and the existing marina street/sidewalk
+  // complex begins at z=37. The existing land plate fills this short
+  // visual transition, so allow a narrow central walking corridor here.
+  // This joins the two existing surfaces without changing geometry or
+  // opening the surrounding water edges.
+  const onDockBoardwalkConnector =
+    Math.abs(x) + radius <= 6.2 &&
+    z - radius >= 34.4 &&
+    z + radius <= 38.2;
+
   const atHQElevatorThreshold =
     x - radius >= 19.5 &&
     x + radius <= 25.3 &&
@@ -78,6 +88,7 @@ function isOutsideSafeWaterfrontSurface(x, z, radius) {
     onRightShore ||
     onCircularPier ||
     onMainDock ||
+    onDockBoardwalkConnector ||
     onHQDockSpur ||
     atHQElevatorThreshold ||
     onStreetWalkway;
