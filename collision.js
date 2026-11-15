@@ -272,6 +272,37 @@ export default {
       }
     );
 
+    // ========================================================
+    // GRAND STAGE AUDIENCE-ZONE PHYSICAL BARRIERS
+    // ========================================================
+    // Match the visible modular barricades in festivalAudienceZone.js.
+    // Keep the center openings clear so players can enter the audience
+    // zone and continue along the existing central dock/security route.
+    // These are low, walk-blocking barriers, not a new area boundary.
+
+    [
+      { name: "grandStageAudienceFrontBarrierLeft", x: -14.1, z: -57.4, width: 14.2, depth: 0.24 },
+      { name: "grandStageAudienceFrontBarrierRight", x: 14.1, z: -57.4, width: 14.2, depth: 0.24 },
+      { name: "grandStageAudienceRearBarrierLeft", x: -14.1, z: -45.4, width: 14.2, depth: 0.24 },
+      { name: "grandStageAudienceRearBarrierRight", x: 14.1, z: -45.4, width: 14.2, depth: 0.24 },
+      { name: "grandStageAudienceSideBarrierLeft", x: -21.0, z: -52.3, width: 0.24, depth: 7.2 },
+      { name: "grandStageAudienceSideBarrierRight", x: 21.0, z: -52.3, width: 0.24, depth: 7.2 },
+      { name: "grandStageSecurityGateFrontLeft", x: -7.15, z: -57.4, width: 0.24, depth: 0.24 },
+      { name: "grandStageSecurityGateFrontRight", x: 7.15, z: -57.4, width: 0.24, depth: 0.24 },
+      { name: "grandStageSecurityGateRearLeft", x: -7.15, z: -45.4, width: 0.24, depth: 0.24 },
+      { name: "grandStageSecurityGateRearRight", x: 7.15, z: -45.4, width: 0.24, depth: 0.24 }
+    ].forEach(barrier => {
+      this.registerBox(barrier.name, {
+        x: barrier.x,
+        z: barrier.z,
+        width: barrier.width,
+        depth: barrier.depth,
+        minY: 0,
+        maxY: 2.4,
+        level: "grand-stage-audience"
+      });
+    });
+
 
     // ========================================================
     // RECORDS HQ
