@@ -2,6 +2,7 @@ import Engine from "./engine.js";
 import Scene from "./scene.js";
 import Camera from "./camera.js";
 import Renderer from "./renderer.js";
+import VisualEngine from "./visualEngine.js";
 import World from "./world.js";
 import FestivalStageUpgrade from "./festivalStageUpgrade.js";
 import FestivalStageArchitecture from "./festivalStageArchitecture.js";
@@ -70,6 +71,7 @@ engine.registerSystems({
   scene: Scene,
   camera: Camera,
   renderer: Renderer,
+  visualEngine: VisualEngine,
   world: World,
   festivalStageUpgrade: FestivalStageUpgrade,
   festivalStageArchitecture: FestivalStageArchitecture,
