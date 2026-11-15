@@ -33,6 +33,8 @@ export default class Engine {
     this.systems.characterSystem?.init?.(this.scene, this.context);
     this.systems.heroPerformance?.init?.(this.scene);
     this.systems.heroPostPerformance?.init?.(this.scene);
+    this.systems.heroSecurityDetail?.init?.(this.scene, this.context);
+    this.systems.festivalPaparazzi?.init?.(this.scene, this.context);
     this.systems.cinematicFlow?.init?.(this.scene);
     this.systems.worldSkin?.init?.(this.scene);
     this.systems.dockCore?.init?.(this.scene);
