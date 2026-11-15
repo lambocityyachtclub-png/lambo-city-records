@@ -41,12 +41,12 @@ function makeBannerTexture(title, brand) {
   ctx.shadowColor = "#a855f7";
   ctx.shadowBlur = 20;
   ctx.fillStyle = "#e8c86a";
-  ctx.font = "bold 36px Arial, sans-serif";
+  ctx.font = "bold 40px Arial, sans-serif";
   ctx.fillText(String(title || "").toUpperCase().slice(0, 36), 512, 76);
 
   ctx.shadowBlur = 8;
   ctx.fillStyle = "#ffffff";
-  ctx.font = "bold 72px Arial, sans-serif";
+  ctx.font = "bold 78px Arial, sans-serif";
   ctx.fillText(String(brand || "").toUpperCase().slice(0, 24), 512, 166);
 
   ctx.shadowBlur = 0;
@@ -84,8 +84,8 @@ function addSponsorPanel(parent, sponsor, x, width) {
   addBox(
     parent,
     "festivalSponsorFrame_" + sponsor.key,
-    [width + 0.28, 1.9, 0.34],
-    [x, 1.28, -62.82],
+    [width + 0.32, 2.28, 0.38],
+    [x, 1.36, -62.82],
     frameMat
   );
 
@@ -94,14 +94,16 @@ function addSponsorPanel(parent, sponsor, x, width) {
   material.map = texture;
   material.emissive = new THREE.Color(0x171018);
   material.emissiveMap = texture;
-  material.emissiveIntensity = 0.42;
+  material.emissiveIntensity = 0.58;
   material.needsUpdate = true;
 
   const face = addBox(
     parent,
     "festivalSponsorBanner_" + sponsor.key,
-    [width, 1.62, 0.06],
-    [x, 1.30, -62.60],
+    // The three front-facing sponsor panels form a dedicated, unobstructed
+    // sponsor-visibility band across the audience-facing stage fascia.
+    [width, 1.98, 0.06],
+    [x, 1.36, -62.60],
     material
   );
   bannerMeshes.set(sponsor.key, face);
@@ -223,8 +225,10 @@ function addSpeakerArray(parent, side) {
     metalness: 0.35
   });
 
-  for (let i = 0; i < 4; i++) {
-    const y = 15.2 - i * 2.25;
+  // Six compact touring line-array modules create a more believable
+  // flown speaker hang while staying inside the approved stage footprint.
+  for (let i = 0; i < 6; i++) {
+    const y = 20.2 - i * 2.0;
     const cabinet = addBox(
       parent,
       "festivalLineArray_" + side + "_" + i,
@@ -240,6 +244,37 @@ function addSpeakerArray(parent, side) {
       [2.35, 1.72, 0.08],
       [sign * 24.5, y, -77.52],
       grilleMat
+    );
+  }
+
+  // Visible flybar and paired suspension links connect each array to the
+  // existing front truss, making the hang read as real touring hardware.
+  const riggingMat = new THREE.MeshStandardMaterial({
+    color: 0x17191d,
+    metalness: 0.86,
+    roughness: 0.34
+  });
+  addBox(
+    parent,
+    "festivalLineArrayFlybar_" + side,
+    [3.0, 0.22, 0.26],
+    [sign * 24.5, 21.38, -78.4],
+    riggingMat
+  );
+  [-0.92, 0.92].forEach((offset, index) => {
+    addBox(
+      parent,
+      "festivalLineArraySuspension_" + side + "_" + index,
+      [0.055, 2.55, 0.055],
+      [sign * 24.5 + offset, 22.83, -78.4],
+      riggingMat
+    );
+    addBox(
+      parent,
+      "festivalLineArrayHoist_" + side + "_" + index,
+      [0.22, 0.20, 0.22],
+      [sign * 24.5 + offset, 24.18, -78.4],
+      riggingMat
     );
   }
 }
