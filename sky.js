@@ -1,6 +1,9 @@
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 
 let cloudMaterials = [];
+let cloudMeshes = [];
+let cloudDriftEnabled = false;
+let cloudDriftSpeed = 0.12;
 let starMaterial = null;
 let moonMaterial = null;
 let haloMaterial = null;
@@ -8,8 +11,10 @@ let skyBaseline = null;
 
 function getSkyStatus() {
   return {
-    cloudCount: cloudMaterials.length,
+    cloudCount: cloudMeshes.length,
     cloudOpacity: cloudMaterials[0]?.opacity ?? null,
+    cloudDriftEnabled,
+    cloudDriftSpeed,
     starOpacity: starMaterial?.opacity ?? null,
     moonOpacity: moonMaterial?.opacity ?? null,
     haloOpacity: haloMaterial?.opacity ?? null
@@ -24,6 +29,18 @@ const skyControls = {
     if (!Number.isFinite(opacity)) return { success: false, error: "Cloud opacity must be a number." };
     const safe = Math.max(0, Math.min(0.3, opacity));
     cloudMaterials.forEach(material => { material.opacity = safe; });
+    return { success: true, status: getSkyStatus() };
+  },
+
+  setCloudDrift(enabled, speed) {
+    cloudDriftEnabled = Boolean(enabled);
+    if (speed !== undefined) {
+      const number = Number(speed);
+      if (!Number.isFinite(number)) {
+        return { success: false, error: "Cloud drift speed must be a finite number." };
+      }
+      cloudDriftSpeed = Math.max(0.02, Math.min(0.8, number));
+    }
     return { success: true, status: getSkyStatus() };
   },
 
@@ -46,6 +63,11 @@ const skyControls = {
   restoreBaseline() {
     if (!skyBaseline) return { success: false, error: "Sky baseline is unavailable." };
     cloudMaterials.forEach(material => { material.opacity = skyBaseline.cloudOpacity; });
+    cloudMeshes.forEach((cloud, index) => {
+      const position = skyBaseline.cloudPositions[index];
+      if (position) cloud.position.copy(position);
+    });
+    cloudDriftEnabled = false;
     starMaterial.opacity = skyBaseline.starOpacity;
     moonMaterial.opacity = skyBaseline.moonOpacity;
     haloMaterial.opacity = skyBaseline.haloOpacity;
@@ -78,10 +100,13 @@ export default {
 
     // CLOUDS — layered planes
     cloudMaterials = [];
+    cloudMeshes = [];
+    cloudDriftEnabled = false;
     const cloudMat = new THREE.MeshBasicMaterial({
       color: 0xff6633, transparent: true, opacity: 0.08,
       side: THREE.DoubleSide
     });
+    cloudMaterials.push(cloudMat);
     for (let i = 0; i < 8; i++) {
       const cloud = new THREE.Mesh(
         new THREE.PlaneGeometry(120 + Math.random()*80, 20 + Math.random()*15),
@@ -94,7 +119,7 @@ export default {
       );
       cloud.rotation.x = -0.1;
       scene.add(cloud);
-      cloudMaterials.push(cloudMat);
+      cloudMeshes.push(cloud);
     }
 
     // STARS
@@ -129,11 +154,20 @@ export default {
 
     skyBaseline = {
       cloudOpacity: cloudMat.opacity,
+      cloudPositions: cloudMeshes.map(cloud => cloud.position.clone()),
       starOpacity: starMaterial.opacity,
       moonOpacity: moonMaterial.opacity,
       haloOpacity: haloMaterial.opacity
     };
     window.__lamboCitySkyVisuals = skyControls;
   },
-  update() {}
+  update(delta) {
+    if (!cloudDriftEnabled || !cloudMeshes.length) return;
+    const safeDelta = Math.max(0, Math.min(Number(delta) || 0, 0.05));
+    const movement = safeDelta * cloudDriftSpeed;
+    cloudMeshes.forEach(cloud => {
+      cloud.position.x += movement;
+      if (cloud.position.x > 220) cloud.position.x = -220;
+    });
+  }
 };
