@@ -29,8 +29,9 @@ const CITY_MAP = Object.freeze({
     recordsHQ: Object.freeze({ id: "records-hq", centerX: 28, centerZ: 22, protected: true }),
     grandStage: Object.freeze({ id: "grand-stage", centerX: 0, centerZ: -74, protected: true }),
 
-    // Existing implementation coordinates retained for compatibility
-    // until the coordinated Arena District replacement is built.
+    // Historical implementation coordinates retained only for source
+    // reference. They are superseded by the owner's final square-loop
+    // arrangement and MUST NOT be used as construction coordinates.
     conferenceCenter: Object.freeze({
       id: "conference-center",
       status: "interim-existing-structure",
@@ -46,7 +47,7 @@ const CITY_MAP = Object.freeze({
 
     arenaDistrict: Object.freeze({
       id: "lambo-city-arena-district",
-      status: "approved-master-plan-provisional-coordinates",
+      status: "historical-provisional-coordinates-superseded-not-for-construction",
       origin: Object.freeze({ x: -43, z: 97 }),
       bounds: Object.freeze({ minX: -105, maxX: 19, minZ: 48, maxZ: 158 }),
       ground: Object.freeze({ centerX: -43, centerZ: 103, width: 124, depth: 110, topY: 0.65 }),
@@ -90,14 +91,16 @@ const CITY_MAP = Object.freeze({
         "Do not build roads or foundations over water",
         "Do not create a partial loop; all four boulevard sides and corners must connect",
         "Villa parcels must remain outside the boulevard and preserve the arena sightline",
-        "Coordinates are provisional until full geometry and collision audit"
+        "All dimensions and coordinates in this historical block are superseded and are not approved for construction",
+        "Use the latest owner-approved square-loop district brief and measured site plan, not this historical geometry",
+        "No new district construction may cross to the opposite Jumbotron-facing side of the boardwalk"
       ])
     }),
 
     futureVillas: Object.freeze({
       id: "lambo-city-villas",
       type: "low-rise-coastal-residential",
-      status: "planned-parcels",
+      status: "historical-concept-only-not-for-construction",
       designIntent: "premium Santa Monica / Dana Point coastal apartments with ocean-view orientation",
       rule: "place on surveyed outer streets around the arena district; preserve the landmark's primary approach and waterfront sightlines"
     })
