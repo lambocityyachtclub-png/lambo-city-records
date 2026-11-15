@@ -25,7 +25,8 @@ function inspectScene() {
     lightTypes: {},
     textureTypes: {},
     textureSlots: {},
-    textureColorSpaces: {}
+    textureColorSpaces: {},
+    namedObjects: []
   };
 
   const geometries = new Set();
@@ -36,6 +37,21 @@ function inspectScene() {
 
   scene.traverse(object => {
     report.objects++;
+
+    if (object.name && report.namedObjects.length < 150) {
+      report.namedObjects.push({
+        name: object.name,
+        type: object.type,
+        visible: object.visible,
+        castShadow: Boolean(object.castShadow),
+        receiveShadow: Boolean(object.receiveShadow),
+        position: object.position ? {
+          x: Number(object.position.x.toFixed(2)),
+          y: Number(object.position.y.toFixed(2)),
+          z: Number(object.position.z.toFixed(2))
+        } : null
+      });
+    }
 
     if (object.isMesh) report.meshes++;
     if (object.isInstancedMesh) report.instancedMeshes++;
