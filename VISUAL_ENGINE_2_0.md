@@ -56,7 +56,7 @@ Evolve the existing Three.js 0.160.0 renderer into a modular, performance-aware 
 
 - visualEngine.js: centralized performance / balanced / high pixel-ratio profiles; opt-in adaptive resolution; resize handling; WebGL context-loss/restoration handling; status and reset controls.
 - visualEngineDiagnostics.js: on-demand read-only scene and renderer report, exposed as window.__lamboCityVisualDiagnostics.getReport().
-- visualEngineMaterials.js: opt-in texture anisotropy controls, exposed as window.__lamboCityVisualMaterials.setTextureAnisotropy(level); default texture settings remain untouched.
+- visualEngineMaterials.js: opt-in texture anisotropy controls plus reversible per-material polished/satin/matte/chrome presets; default texture and material settings remain untouched.
 - visualEngineAtmosphere.js: reversible fog presets, exposed as window.__lamboCityAtmosphere.setPreset(name); the current scene fog is captured as the baseline and restored with the baseline preset.
 - visualEngineColor.js: reversible renderer tone-mapping and exposure controls, exposed as window.__lamboCityVisualColor; existing ACES / exposure values are captured and left unchanged by default.
 - visualEngineShadows.js: opt-in directional shadow pipeline. Shadows remain disabled unless meshes are explicitly registered as casters/receivers and a directional light is registered; point-light shadows are excluded.
