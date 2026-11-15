@@ -56,7 +56,7 @@ const waterVisualControls = {
   getStatus: getWaterVisualStatus,
 
   setPreset(name) {
-    if (name === "baseline") return this.restoreBaseline();
+    if (name === "baseline") return waterVisualControls.restoreBaseline();
     const preset = WATER_VISUAL_PRESETS[name];
     if (!preset) {
       return {
@@ -65,9 +65,9 @@ const waterVisualControls = {
       };
     }
 
-    const surfaceResult = this.setSurface(preset.surface);
+    const surfaceResult = waterVisualControls.setSurface(preset.surface);
     if (!surfaceResult.success) return surfaceResult;
-    return this.setReflectionLayers(preset.layers);
+    return waterVisualControls.setReflectionLayers(preset.layers);
   },
 
   setSurface(settings = {}) {
