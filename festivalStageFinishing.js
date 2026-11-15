@@ -283,8 +283,8 @@ function buildSpeakerCabinetHardware(parent, steel, goldMetal) {
   const handles = [];
 
   STAGE.speakerX.forEach(x => {
-    for (let cabinet = 0; cabinet < 4; cabinet++) {
-      const y = 15.2 - cabinet * 2.25;
+    for (let cabinet = 0; cabinet < 6; cabinet++) {
+      const y = 20.2 - cabinet * 2.0;
       [-0.92, 0.92].forEach(dx => {
         [-0.66, 0.66].forEach(dy => {
           bolts.push([x + dx, y + dy, -77.425, Math.PI / 2, 0, 0]);
