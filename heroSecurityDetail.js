@@ -6,7 +6,6 @@
 
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 
-const GROUND_Y = 1.3;
 const STAGE_Y = 1.8;
 const LEFT_STAGE_POST = new THREE.Vector3(-18.8, STAGE_Y, -78.2);
 const RIGHT_STAIR_POST = new THREE.Vector3(31.4, 0.67, -75.1);
@@ -15,7 +14,6 @@ const EXIT_FOLLOW_SPEED = 6.8;
 
 let guards = [];
 let scene = null;
-let lastPerformanceState = "IDLE";
 let rightGuardReleased = false;
 
 function makeGuard(name, accentColor) {
@@ -101,11 +99,31 @@ function moveToward(guard, target, delta, speed, context = null) {
   const distance = Math.hypot(dx, dz);
   if (distance > 0.035) {
     const step = Math.min(distance, speed * delta);
-    const nextX = root.position.x + (dx / distance) * step;
-    const nextZ = root.position.z + (dz / distance) * step;
-    // When following HERO around the wider world, guards respect the same
-    // safe-surface and obstacle checks instead of cutting across water.
-    if (context?.systems?.collision?.isBlocked?.(nextX, nextZ, 0.42, root.position.y)) return;
+    const collision = context?.systems?.collision;
+    const blocked = (x, z) => collision?.isBlocked?.(x, z, 0.42, root.position.y) || false;
+    const fullX = root.position.x + (dx / distance) * step;
+    const fullZ = root.position.z + (dz / distance) * step;
+    let nextX = fullX;
+    let nextZ = fullZ;
+
+    // Prefer the direct step. If an obstacle blocks it, slide along the
+    // obstacle on one axis at a time. This lets the detail follow connected
+    // pedestrian routes without cutting across water or becoming stuck on
+    // the corner of a barrier.
+    if (blocked(nextX, nextZ)) {
+      const xOnly = { x: fullX, z: root.position.z };
+      const zOnly = { x: root.position.x, z: fullZ };
+      const options = [xOnly, zOnly]
+        .filter(point => !blocked(point.x, point.z))
+        .sort((a, b) =>
+          Math.hypot(target.x - a.x, target.z - a.z) -
+          Math.hypot(target.x - b.x, target.z - b.z)
+        );
+      if (!options.length) return;
+      nextX = options[0].x;
+      nextZ = options[0].z;
+    }
+
     root.position.x = nextX;
     root.position.z = nextZ;
     root.rotation.y = THREE.MathUtils.damp(root.rotation.y, Math.atan2(dx, dz), 7, delta);
@@ -130,10 +148,20 @@ function followTarget(hero, guard) {
   const forwardZ = Math.cos(yaw);
   const rightX = Math.cos(yaw);
   const rightZ = -Math.sin(yaw);
+
+  // The HQ dock spur narrows to a single-file walkway. Keep both guards
+  // centered there and stagger them behind HERO instead of pushing them
+  // beyond the timber edges.
+  const onNarrowHQSpur =
+    hero.position.x >= 4.5 &&
+    hero.position.x <= 20.7 &&
+    Math.abs(hero.position.z - 13.75) <= 2.0;
+  const sideOffset = onNarrowHQSpur ? 0 : guard.homeOffset.side;
+
   return {
-    x: hero.position.x - forwardX * guard.homeOffset.back + rightX * guard.homeOffset.side,
+    x: hero.position.x - forwardX * guard.homeOffset.back + rightX * sideOffset,
     y: hero.position.y,
-    z: hero.position.z - forwardZ * guard.homeOffset.back + rightZ * guard.homeOffset.side
+    z: hero.position.z - forwardZ * guard.homeOffset.back + rightZ * sideOffset
   };
 }
 
@@ -145,7 +173,6 @@ export default {
   init(scene_) {
     scene = scene_;
     guards = [];
-    lastPerformanceState = "IDLE";
     rightGuardReleased = false;
     guards.push(makeGuard("heroSecurityGuardLeft", 0xc49b43));
     guards.push(makeGuard("heroSecurityGuardRight", 0x9ca6b1));
@@ -196,7 +223,6 @@ export default {
       moveToward(right, followTarget(hero, right), delta, GUARD_SPEED, context);
     }
 
-    lastPerformanceState = state;
   },
 
   getGuards() {
