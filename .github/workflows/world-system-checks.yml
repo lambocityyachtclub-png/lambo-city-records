@@ -10,6 +10,9 @@ on:
       - "heroSecurityDetail.js"
       - "festivalPaparazzi.js"
       - "scripts/test-hero-security-and-paparazzi.mjs"
+      - "heroSecurityDetail.js"
+      - "festivalPaparazzi.js"
+      - "scripts/test-hero-security-and-paparazzi.mjs"
       - "scripts/test-character-system.mjs"
       - "input.js"
       - "player.js"
@@ -30,6 +33,9 @@ on:
       - "engine.js"
       - "npc.js"
       - "characterSystem.js"
+      - "heroSecurityDetail.js"
+      - "festivalPaparazzi.js"
+      - "scripts/test-hero-security-and-paparazzi.mjs"
       - "scripts/test-character-system.mjs"
       - "input.js"
       - "player.js"
@@ -87,3 +93,6 @@ jobs:
 
       - name: Test LAMBO CITY character identities and crowd behavior
         run: node --experimental-default-type=module scripts/test-character-system.mjs
+
+      - name: Test HERO security detail and festival paparazzi
+        run: node --experimental-default-type=module scripts/test-hero-security-and-paparazzi.mjs
