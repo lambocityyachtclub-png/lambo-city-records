@@ -391,27 +391,32 @@ No new streets, buildings, district extensions, terrain pads, or construction ar
 The following is a relationship diagram only; it is deliberately not to scale and does not assign world coordinates:
 
 ```text
-                    OUTER RESIDENTIAL PERIMETER
-             [Apartments / Villas around district edge]
+FIXED EXISTING APPROACH
+[Storefronts] — [Existing Boardwalk] — [Records HQ side]
+                         |
+                  District entry
+                         |
+                    LEFT TURN 1
+                         |
+        +-----------------------------------+
+        | OUTER APARTMENTS / VILLAS         |
+        |                                   |
+        |  Basketball Court   Skate Park    |
+        |       CENTRAL RECREATION          |
+        |                                   |
+        |       CONVENTION CENTER           |
+        |           CENTERPIECE             |
+        |                                   |
+        | Retail / dining / entertainment   |
+        +-----------------------------------+
+                         |
+                    LEFT TURN 2
+                         |
+              Return leg toward HQ
+                         |
+             [Records HQ approach]
 
-       ┌───────────────────────────────────────────────┐
-       │                                               │
-       │   [Basketball Court]   [Skate Park]            │
-       │            CENTRAL RECREATION                  │
-       │                                               │
-       │             [CONVENTION CENTER]                │
-       │                 CENTERPIECE                    │
-       │                                               │
-       │  Retail / dining / entertainment frontages    │
-       └───────┐                               ┌───────┘
-               │  District street             │
-               │  first left → onward        │
-               └───────────────┐               │
-                               └───────────────┘
-                      return leg toward Records HQ
-
-   Existing boardwalk / storefronts / Records HQ remain fixed.
-   Jumbotron-facing opposite side: PROTECTED — NO CONSTRUCTION.
+Jumbotron-facing opposite side: PROTECTED — NO CONSTRUCTION.
 ```
 
 The diagram communicates adjacency and program only. Its drawn corners do not define the actual route geometry. The route must be drafted as a continuous centerline with connected junctions and safe pedestrian crossings; no dead ends or floating pavement.
