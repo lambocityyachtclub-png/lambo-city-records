@@ -61,6 +61,19 @@ const CITY_MAP = Object.freeze({
         targetHeight: "monumental-arena-scale",
         materialDirection: "dark architectural structure, glass curtain walls, champagne-gold metal detailing, large integrated digital displays"
       }),
+      routeIntent: Object.freeze({
+        status: "directional-intent-confirmed-exact-junction-coordinates-unassigned",
+        approach: "travel westbound along the existing boardwalk toward the west/store-side district entrance",
+        firstTurn: "left / inland / +Z, toward the Convention Center",
+        firstStraight: "continue inland along the district approach",
+        secondTurn: "left / east / +X, toward the Records HQ side",
+        return: "continue the approved loop toward the HQ-side return connection; survey and close the remaining loop legs without routing normal traffic along the pedestrian boardwalk",
+        restrictions: Object.freeze([
+          "The existing boardwalk remains pedestrian-priority and service/emergency access only",
+          "Do not build on the opposite Jumbotron-facing side",
+          "Directional intent does not approve exact coordinates, road widths, land extensions, or collision geometry"
+        ])
+      }),
       boulevard: Object.freeze({
         id: "arena-square-boulevard",
         type: "closed-four-sided-two-way-loop",
