@@ -100,8 +100,7 @@ function disablePlanarReflection() {
   planarNextRefreshAt = 0;
   if (planarReflector && waterScene) {
     waterScene.remove(planarReflector);
-    planarReflector.getRenderTarget?.()?.dispose?.();
-    planarReflector.material?.dispose?.();
+    planarReflector.dispose?.();
     planarReflector.geometry?.dispose?.();
   }
   planarReflector = null;
@@ -143,16 +142,27 @@ const waterVisualControls = {
             clipBias: 0.003,
             textureWidth: size,
             textureHeight: size,
+            multisample: 0,
             color: 0x777777
           }
         );
         planarReflector.name = "lamboCityPlanarWaterReflection";
         planarReflector.rotation.x = -Math.PI / 2;
         planarReflector.position.y = 0.34;
-        planarReflector.material.transparent = true;
-        planarReflector.material.opacity = opacity;
-        planarReflector.material.depthWrite = false;
-        planarReflector.material.needsUpdate = true;
+        const reflectionMaterial = planarReflector.material;
+        const reflectionShader = reflectionMaterial.fragmentShader;
+        const alphaOutput = "gl_FragColor = vec4( blendOverlay( base.rgb, color ), 1.0 );";
+        if (!reflectionShader.includes(alphaOutput)) {
+          throw new Error("Reflector shader does not match the expected Three.js 0.160.0 output.");
+        }
+        reflectionMaterial.fragmentShader = reflectionShader
+          .replace("uniform vec3 color;", "uniform vec3 color;\\nuniform float opacity;")
+          .replace(alphaOutput, "gl_FragColor = vec4( blendOverlay( base.rgb, color ), opacity );");
+        reflectionMaterial.uniforms.opacity = { value: opacity };
+        reflectionMaterial.transparent = true;
+        reflectionMaterial.opacity = opacity;
+        reflectionMaterial.depthWrite = false;
+        reflectionMaterial.needsUpdate = true;
 
         const renderReflection = planarReflector.onBeforeRender.bind(planarReflector);
         planarReflector.onBeforeRender = (activeRenderer, activeScene, activeCamera) => {
@@ -189,6 +199,9 @@ const waterVisualControls = {
     planarReflectionIntervalSeconds = interval;
     planarReflectionOpacity = opacity;
     planarReflector.material.opacity = opacity;
+    if (planarReflector.material.uniforms?.opacity) {
+      planarReflector.material.uniforms.opacity.value = opacity;
+    }
     planarReflectionEnabled = true;
     planarNextRefreshAt = 0;
     return { success: true, status: getWaterVisualStatus() };
