@@ -66,6 +66,35 @@ Evolve the existing Three.js 0.160.0 renderer into a modular, performance-aware 
 - performanceMonitor.js: existing optional ?perf=1 overlay and renderer metrics.
 - engine.js / main.js: register and initialize the Visual Engine modules without changing the existing scene feature modules.
 
+## Development inspection controls
+
+Open the development preview with `?perf=1` to show the existing performance overlay.
+
+Browser-console inspection commands:
+
+```js
+window.__lamboCityVisualEngine.getStatus()
+window.__lamboCityVisualDiagnostics.getReport()
+window.__lamboCityVisualMaterials.getReport()
+window.__lamboCityAtmosphere.getStatus()
+window.__lamboCityVisualColor.getStatus()
+window.__lamboCityWaterVisuals.getStatus()
+window.__lamboCitySkyVisuals.getStatus()
+window.__lamboCityVisualShadows.getStatus()
+```
+
+Quality profile controls (deliberate test actions only):
+
+```js
+window.__lamboCityVisualEngine.setQuality("performance")
+window.__lamboCityVisualEngine.setQuality("balanced")
+window.__lamboCityVisualEngine.setQuality("high")
+window.__lamboCityVisualEngine.setAdaptiveEnabled(true)
+window.__lamboCityVisualEngine.reset()
+```
+
+Do not enable shadows or change material, water, sky, fog, or tone-mapping presets for production use until the preview has been compared against the established baseline on iPad Safari and desktop.
+
 ## Acceptance checklist before calling 2.0 complete
 
 - Module imports and startup succeed on the development branch.
