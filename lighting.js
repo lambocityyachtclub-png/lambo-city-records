@@ -7,6 +7,8 @@ export default {
     const sun = new THREE.DirectionalLight(0xff7722, 3.5);
     sun.position.set(120, 55, -20);
     scene.add(sun);
+    // Register the existing sun for the opt-in shadow system; shadows stay OFF by default.
+    window.__lamboCityVisualShadows?.registerDirectionalLight?.(sun, { mapSize: 512 });
     // COOL PURPLE FILL — sky bounce
     const fill = new THREE.DirectionalLight(0x441166, 0.8);
     fill.position.set(-80, 50, 30);

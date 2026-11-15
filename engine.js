@@ -15,13 +15,17 @@ export default class Engine {
     this.context.camera   = this.camera;
     this.context.renderer = this.renderer;
     this.context.systems  = this.systems;
+    // Centralized quality controls initialize before world systems are created.
+    this.systems.visualEngine?.init?.(this.scene, this.context);
+    this.systems.visualEngineShadows?.init?.(this.scene, this.context);
+    this.systems.visualEnginePostProcessing?.init?.(this.scene, this.context);
     this.systems.performanceMonitor?.init?.(this.renderer, this.context);
     this.systems.world?.init?.(this.scene);
     this.systems.festivalStageUpgrade?.init?.(this.scene, this.context);
     this.systems.festivalStageArchitecture?.init?.(this.scene, this.context);
     this.systems.festivalStageFinishing?.init?.(this.scene, this.context);
     this.systems.festivalAudienceZone?.init?.(this.scene, this.context);
-    this.systems.water?.init?.(this.scene);
+    this.systems.water?.init?.(this.scene, this.context);
     this.systems.dock?.init?.(this.scene);
     this.systems.dockPath?.init?.(this.scene);
     this.systems.sky?.init?.(this.scene);
@@ -107,6 +111,14 @@ this.systems.boardwalkOverlooks?.init?.(this.scene);
     this.systems.input?.init?.();
     this.systems.player?.init?.(this.scene);
     this.systems.hud?.init?.();
+    // Discover only meshes that existing scene modules explicitly tagged for shadows.
+    // The shadow map remains disabled until a deliberate enable() call.
+    this.systems.visualEngineShadows?.registerTaggedObject?.(this.scene);
+    // Diagnostics attach after the complete initial scene has been assembled.
+    this.systems.visualEngineDiagnostics?.init?.(this.scene, this.context);
+    this.systems.visualEngineMaterials?.init?.(this.scene, this.context);
+    this.systems.visualEngineAtmosphere?.init?.(this.scene, this.context);
+    this.systems.visualEngineColor?.init?.(this.scene, this.context);
     this.loop();
   }
   loop = (time = 0) => {
@@ -127,6 +139,7 @@ this.systems.boardwalkOverlooks?.init?.(this.scene);
   }
   render() {
     if (!this.scene || !this.camera || !this.renderer) return;
+    if (this.systems.visualEnginePostProcessing?.render?.()) return;
     this.renderer.render(
       this.scene,
       this.camera

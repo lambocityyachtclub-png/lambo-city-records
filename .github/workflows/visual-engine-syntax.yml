@@ -1,0 +1,31 @@
+name: Visual Engine syntax checks
+
+on:
+  push:
+    branches:
+      - feature/lambo-city-visual-engine-foundation
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  module-syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Parse Visual Engine modules
+        shell: bash
+        run: |
+          set -euo pipefail
+          for file in engine.js main.js water.js sky.js lighting.js visualEngine*.js; do
+            test -f "$file"
+            echo "Checking $file"
+            node --input-type=module --check < "$file"
+          done
