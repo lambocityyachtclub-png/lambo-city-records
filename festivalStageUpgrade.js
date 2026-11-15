@@ -99,9 +99,9 @@ function addSponsorPanel(parent, sponsor, x, width) {
   material.emissiveIntensity = 0.58;
   material.needsUpdate = true;
 
-  // Use a single front-facing display plane instead of a shallow box.
-  // This avoids texture-UV distortion on the fascia and places the complete
-  // sponsor artwork cleanly in front of the mounting frame.
+  // This dedicated sponsor-visibility band uses a single front-facing
+  // display plane instead of a shallow box, avoiding fascia UV distortion
+  // and keeping the complete sponsor artwork cleanly visible.
   const face = new THREE.Mesh(
     new THREE.PlaneGeometry(width, 1.98),
     material
