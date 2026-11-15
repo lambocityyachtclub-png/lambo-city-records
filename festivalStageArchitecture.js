@@ -206,6 +206,10 @@ function buildSpeakerHardware(parent) {
     helper.rotation.x = Math.PI / 2;
     helper.updateMatrix();
     coneInstances.setMatrixAt(index, helper.matrix);
+
+    // TorusGeometry already faces +Z; keep its plane perpendicular to the speaker axis.
+    helper.rotation.set(0, 0, 0);
+    helper.updateMatrix();
     ringInstances.setMatrixAt(index, helper.matrix);
   });
 
