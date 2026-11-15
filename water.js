@@ -31,6 +31,12 @@ let reflectionElapsed = 0;
 let reflectionIntervalSeconds = 3;
 let reflectionBusy = false;
 let environmentReflectionIntensity = 0.45;
+let planarReflector = null;
+let planarReflectionEnabled = false;
+let planarReflectionIntervalSeconds = 3;
+let planarReflectionOpacity = 0.18;
+let planarReflectionClock = 0;
+let planarNextRefreshAt = 0;
 
 function getWaterVisualStatus() {
   return {
@@ -48,6 +54,13 @@ function getWaterVisualStatus() {
       resolution: reflectionTarget?.width ?? null,
       refreshIntervalSeconds: reflectionIntervalSeconds,
       intensity: environmentReflectionIntensity
+    },
+    planarReflection: {
+      enabled: planarReflectionEnabled,
+      ready: Boolean(planarReflector),
+      resolution: planarReflector?.getRenderTarget?.()?.width ?? null,
+      refreshIntervalSeconds: planarReflectionIntervalSeconds,
+      opacity: planarReflectionOpacity
     }
   };
 }
@@ -82,8 +95,101 @@ function disableEnvironmentReflection() {
   reflectionTarget = null;
 }
 
+function disablePlanarReflection() {
+  planarReflectionEnabled = false;
+  planarNextRefreshAt = 0;
+  if (planarReflector && waterScene) {
+    waterScene.remove(planarReflector);
+    planarReflector.getRenderTarget?.()?.dispose?.();
+    planarReflector.material?.dispose?.();
+    planarReflector.geometry?.dispose?.();
+  }
+  planarReflector = null;
+}
+
 const waterVisualControls = {
   getStatus: getWaterVisualStatus,
+
+  async setPlanarReflection(enabled, options = {}) {
+    if (!enabled) {
+      disablePlanarReflection();
+      return { success: true, status: getWaterVisualStatus() };
+    }
+    if (!waterScene || !waterRenderer || !waterMesh?.material) {
+      return { success: false, error: "Scene, renderer, or water material is unavailable." };
+    }
+
+    disableEnvironmentReflection();
+    const requestedSize = Number(options.resolution) || 128;
+    const size = Math.max(64, Math.min(256, Math.round(requestedSize)));
+    const requestedInterval = Number(options.refreshIntervalSeconds) || 3;
+    const interval = Math.max(2, Math.min(10, requestedInterval));
+    const requestedOpacity = Number(options.opacity);
+    const opacity = Number.isFinite(requestedOpacity)
+      ? Math.max(0.05, Math.min(0.4, requestedOpacity))
+      : 0.18;
+
+    if (!planarReflector || planarReflector.getRenderTarget?.()?.width !== size) {
+      disablePlanarReflection();
+      try {
+        const [THREE_MODULE, reflectorModule] = await Promise.all([
+          import("https://esm.sh/three@0.160.0"),
+          import("https://esm.sh/three@0.160.0/examples/jsm/objects/Reflector.js")
+        ]);
+        const Reflector = reflectorModule.Reflector;
+        planarReflector = new Reflector(
+          new THREE_MODULE.PlaneGeometry(800, 800),
+          {
+            clipBias: 0.003,
+            textureWidth: size,
+            textureHeight: size,
+            color: 0x777777
+          }
+        );
+        planarReflector.name = "lamboCityPlanarWaterReflection";
+        planarReflector.rotation.x = -Math.PI / 2;
+        planarReflector.position.y = 0.34;
+        planarReflector.material.transparent = true;
+        planarReflector.material.opacity = opacity;
+        planarReflector.material.depthWrite = false;
+
+        const renderReflection = planarReflector.onBeforeRender.bind(planarReflector);
+        planarReflector.onBeforeRender = (activeRenderer, activeScene, activeCamera) => {
+          if (!planarReflectionEnabled || planarReflectionClock < planarNextRefreshAt) return;
+          planarNextRefreshAt = planarReflectionClock + planarReflectionIntervalSeconds;
+          const visibility = [waterMesh.visible, shimmerMesh.visible, reflectionMesh.visible];
+          try {
+            waterMesh.visible = false;
+            shimmerMesh.visible = false;
+            reflectionMesh.visible = false;
+            renderReflection(activeRenderer, activeScene, activeCamera);
+          } catch (error) {
+            console.warn("[LAMBO CITY Water] Planar reflection refresh failed.", error);
+            disablePlanarReflection();
+          } finally {
+            waterMesh.visible = visibility[0];
+            shimmerMesh.visible = visibility[1];
+            reflectionMesh.visible = visibility[2];
+          }
+        };
+        waterScene.add(planarReflector);
+      } catch (error) {
+        disablePlanarReflection();
+        console.warn("[LAMBO CITY Water] Planar reflection modules could not be loaded.", error);
+        return {
+          success: false,
+          error: "Planar reflection module could not be loaded; the normal water renderer remains active."
+        };
+      }
+    }
+
+    planarReflectionIntervalSeconds = interval;
+    planarReflectionOpacity = opacity;
+    planarReflector.material.opacity = opacity;
+    planarReflectionEnabled = true;
+    planarNextRefreshAt = 0;
+    return { success: true, status: getWaterVisualStatus() };
+  },
 
   setEnvironmentReflection(enabled, options = {}) {
     if (!enabled) {
@@ -94,6 +200,7 @@ const waterVisualControls = {
       return { success: false, error: "Scene, renderer, or water material is unavailable." };
     }
 
+    disablePlanarReflection();
     const requestedSize = Number(options.resolution) || 128;
     const size = Math.max(64, Math.min(256, Math.round(requestedSize)));
     const requestedInterval = Number(options.refreshIntervalSeconds) || 3;
@@ -192,6 +299,11 @@ const waterVisualControls = {
     }
 
     disableEnvironmentReflection();
+    disablePlanarReflection();
+    reflectionIntervalSeconds = 3;
+    environmentReflectionIntensity = 0.45;
+    planarReflectionIntervalSeconds = 3;
+    planarReflectionOpacity = 0.18;
     Object.assign(waterMesh.material, visualBaseline.surface);
     waterMesh.material.needsUpdate = true;
     shimmerOpacityOverride = null;
@@ -356,6 +468,9 @@ export default {
 
 
     frame++;
+    if (planarReflectionEnabled) {
+      planarReflectionClock += Math.max(0, Math.min(Number(delta) || 0, 0.05));
+    }
 
     // Optional, low-resolution cube-map reflections. This is deliberately
     // disabled by default and refreshed infrequently to protect mobile GPUs.
