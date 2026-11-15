@@ -6,6 +6,7 @@
 // Point-light shadows are intentionally excluded for mobile GPU safety.
 
 let renderer = null;
+let scene = null;
 let enabled = false;
 let baselineShadowMap = null;
 const meshRecords = new Map();
@@ -99,6 +100,26 @@ const controls = {
     return { success: true, status: getStatus() };
   },
 
+  registerObject(root, settings = {}) {
+    if (!root || typeof root.traverse !== "function") {
+      return { success: false, error: "registerObject expects a Three.js object or group." };
+    }
+    let registered = 0;
+    root.traverse(object => {
+      if (object.isMesh && applyMesh(object, {
+        castShadow: Boolean(settings.castShadow),
+        receiveShadow: Boolean(settings.receiveShadow)
+      })) registered++;
+    });
+    return { success: registered > 0, registeredMeshes: registered, status: getStatus() };
+  },
+
+  registerNamedObject(name, settings = {}) {
+    const root = scene?.getObjectByName?.(name);
+    if (!root) return { success: false, error: "No scene object found with that name." };
+    return this.registerObject(root, settings);
+  },
+
   registerDirectionalLight(light, options = {}) {
     return applyLight(light, options);
   },
@@ -149,7 +170,8 @@ const controls = {
 };
 
 export default {
-  init(scene, context = {}) {
+  init(scene_, context = {}) {
+    scene = scene_ || null;
     renderer = context.renderer || null;
     baselineShadowMap = renderer?.shadowMap ? {
       enabled: renderer.shadowMap.enabled,
