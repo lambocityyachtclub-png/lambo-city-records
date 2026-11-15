@@ -56,7 +56,7 @@ Evolve the existing Three.js 0.160.0 renderer into a modular, performance-aware 
 
 - visualEngine.js: centralized performance / balanced / high pixel-ratio profiles; opt-in adaptive resolution; resize handling; WebGL context-loss/restoration handling; status and reset controls.
 - visualEngineDiagnostics.js: on-demand read-only scene and renderer report, exposed as window.__lamboCityVisualDiagnostics.getReport().
-- visualEngineMaterials.js: opt-in texture anisotropy controls plus reversible per-material polished/satin/matte/chrome presets; default texture and material settings remain untouched.
+- visualEngineMaterials.js: opt-in texture anisotropy controls with baseline restoration, reversible per-material polished/satin/matte/chrome presets, and explicit object/group batch apply/restore helpers; default texture and material settings remain untouched.
 - visualEngineAtmosphere.js: reversible fog presets plus smooth, delta-time-based transitions through window.__lamboCityAtmosphere.transitionTo(name, seconds); the current scene fog is captured as the baseline, and transitions are idle unless explicitly requested.
 - visualEngineColor.js: reversible renderer tone-mapping and exposure controls, exposed as window.__lamboCityVisualColor; existing ACES / exposure values are captured and left unchanged by default.
 - visualEngineShadows.js: opt-in directional shadow pipeline. At scene initialization it discovers only meshes already explicitly tagged with castShadow/receiveShadow by their feature modules; shadows remain disabled until deliberately enabled. Enabling requires at least one caster, receiver, and directional light, defaults to a maximum of 24 active casters (hard cap 64), supports explicit per-mesh priority, and restores the original mesh, light-shadow, and renderer settings when disabled. Groups/named objects can also be registered manually; point-light shadows are excluded.
@@ -76,6 +76,8 @@ Browser-console inspection commands:
 window.__lamboCityVisualEngine.getStatus()
 window.__lamboCityVisualDiagnostics.getReport()
 window.__lamboCityVisualMaterials.getReport()
+window.__lamboCityVisualMaterials.setTextureAnisotropy(4)
+window.__lamboCityVisualMaterials.restoreTextureAnisotropy()
 window.__lamboCityAtmosphere.getStatus()
 window.__lamboCityAtmosphere.transitionTo("sunsetHaze", 4)
 window.__lamboCityAtmosphere.transitionTo("baseline", 3)
@@ -121,4 +123,4 @@ Do not enable shadows or change material, water, sky, fog, or tone-mapping prese
 
 ## Status
 
-The quality-management, diagnostics, opt-in texture filtering, reversible atmosphere controls, renderer color controls, opt-in water appearance presets, reversible sky controls, and explicit-registration shadow framework are implemented. Targeted world caster/receiver tagging, measured shadow quality, physically based water reflections, broader material improvements, and optional post-processing remain in development. This document is the scope and verification contract for the branch; it is not a claim that those later layers are already finished.
+The quality-management, diagnostics, reversible texture filtering/material helpers, reversible atmosphere controls and transitions, renderer color controls, opt-in water appearance presets and low-resolution cube-map reflections, reversible sky controls, and budgeted directional-shadow framework are implemented on the feature branch. Targeted world caster/receiver tuning, measured shadow/reflection quality, planar water reflections, broader asset-specific material improvements, and optional post-processing remain in development. This document is the scope and verification contract for the branch; it is not a claim that those later layers are already finished.
