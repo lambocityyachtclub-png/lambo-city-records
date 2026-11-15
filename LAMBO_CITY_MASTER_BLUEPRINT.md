@@ -705,6 +705,18 @@ The owner's future Yacht Club Towers direction is recorded and reserved. The cur
 
 The diagram expresses only the owner's approved relationships: recreation toward the front, Convention Center farther back, residential buildings outside the outer sidewalks, and retail integrated along the district street. The final surveyed plan must refine the exact parcel arrangement while retaining those relationships.
 
+### Candidate inland land-continuity corridor — survey hypothesis only
+
+A source-boundary comparison identifies one plausible way to connect the west-side district land to the existing HQ-side shore without crossing the central dock or building toward the Jumbotron:
+
+- The existing west-side district connector occupies X=-70..-16 and Z=45..64.
+- The existing HQ-side shore plate occupies X=21..65 and Z=10..45.
+- The intervening inland-side gap is therefore between the west connector's east edge (X=-16) and the HQ-side shore's west edge (X=21), above the boardwalk land edge.
+- A future land-continuity study may evaluate an inland-side extension that joins those source-verified boundaries, with any vehicle alignment kept north of the existing boardwalk sidewalk and any southbound HQ tie-in routed around the sidewalk's east endpoint rather than through the pedestrian boardwalk.
+- The central dock footprint ends at Z=35, so this inland-side study area is north of the dock's verified end. The Jumbotron / stage area is oceanward at negative Z and remains excluded.
+
+This is a **feasibility hypothesis, not a surveyed or approved footprint**. The exact land shape, elevation, retaining edges, water boundary, boardwalk clearances, route centerline, and collision behavior must be inspected in the rendered scene before any geometry is committed. Do not turn this envelope into a road or slab by assumption.
+
 ### Route and land survey items deliberately left unassigned
 
 The owner-confirmed approach direction is now resolved: travel westbound along the existing boardwalk toward the west/store-side district entrance; turn left inland (+Z) toward the Convention Center; continue straight; then turn left east (+X) toward the Records HQ side. This fixes the directional meaning of the first two left turns without guessing the player's heading. The current source still does not provide a verified continuous land corridor joining the west-side interim district pad to the HQ-side public approach. In addition, the current east boardwalk overlook builder is not called by its initializer. Accordingly, the following remain unassigned:
