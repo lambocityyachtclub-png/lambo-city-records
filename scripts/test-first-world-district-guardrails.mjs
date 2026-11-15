@@ -32,13 +32,15 @@ const arena = CITY_MAP.districts.arenaDistrict;
 const route = CITY_MAP.districts.arenaDistrict.routeIntent;
 assert.equal(
   route.status,
-  "directional-intent-confirmed-exact-junction-coordinates-unassigned",
-  "The route direction must be recorded without implying that coordinates are certified"
+  "four-sided-square-loop-approved-route-topology-coordinates-unassigned",
+  "The complete square-loop topology must be approved without implying that coordinates are certified"
 );
 assert.match(route.approach, /westbound/);
-assert.match(route.firstTurn, /left.*\+Z/);
-assert.match(route.secondTurn, /left.*\+X/);
-assert.match(route.return, /HQ-side return connection/);
+assert.match(route.entry, /turn left inland.*\+Z/);
+assert.match(route.loopShape, /closed four-sided square street loop/);
+assert.match(route.turnSequence, /three additional left turns/);
+assert.equal(route.sideSequence.length, 7, "The route must document four sides and three intervening left turns");
+assert.match(route.closure, /all four sides and four corners/);
 
 assert.equal(
   arena.status,
@@ -62,7 +64,9 @@ const requiredBlueprintStatements = [
   "outside the outer sidewalks",
   "at least 300 separately assignable private apartments",
   "opposite / Jumbotron-facing side",
-  "Exact first-left and second-left junction coordinates and curb-return geometry",
+  "Exact boardwalk-side entry connector and first-left junction coordinates and curb-return geometry",
+  "three additional left turns at the next three corners",
+  "fourth and final side until it reconnects to the entry approach",
   "No new world coordinates are approved by this audit",
   "Candidate inland land-continuity corridor — survey hypothesis only",
   "This is a **feasibility hypothesis, not a surveyed or approved footprint**",
