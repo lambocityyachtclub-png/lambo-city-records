@@ -63,7 +63,9 @@ const requiredBlueprintStatements = [
   "at least 300 separately assignable private apartments",
   "opposite / Jumbotron-facing side",
   "Exact first-left and second-left junction coordinates and curb-return geometry",
-  "No new world coordinates are approved by this audit"
+  "No new world coordinates are approved by this audit",
+  "Candidate inland land-continuity corridor — survey hypothesis only",
+  "This is a **feasibility hypothesis, not a surveyed or approved footprint**"
 ];
 
 for (const statement of requiredBlueprintStatements) {
