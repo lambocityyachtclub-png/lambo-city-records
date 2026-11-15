@@ -20,9 +20,14 @@ assert.match(collision, /"stagePlatform"[\s\S]*width:\s*44/, "Stage collision fo
 assert.match(stage, /addStaircase\(root, "left"\)/, "Left staircase geometry must be created");
 assert.match(stage, /addStaircase\(root, "right"\)/, "Right staircase geometry must be created");
 assert.match(stage, /PRESENTING PARTNER/, "Sponsor-ready front banners must be present");
+assert.match(stage, /sponsor-visibility band/, "The audience-facing fascia must provide a dedicated sponsor visibility zone");
+assert.match(stage, /\[width, 1\.98, 0\.06\]/, "Front sponsor panels must be enlarged enough to remain readable from the audience");
 assert.match(stage, /setSponsorBranding/, "Sponsor artwork must be replaceable without rebuilding geometry");
 assert.match(stage, /festivalSideScreen_/, "Festival side LED screens must be created");
 assert.match(stage, /festivalMainTruss/, "Main overhead production truss must be created");
+assert.match(stage, /i < 6/, "Each flown speaker array must contain six touring cabinets");
+assert.match(stage, /festivalLineArrayFlybar_/, "Speaker arrays must include a visible suspension flybar");
+assert.match(stage, /festivalLineArraySuspension_/, "Speaker arrays must include paired suspension links");
 assert.match(performance, /StageMusic\.hasEnded\(\)/, "HERO exit must follow the actual song-ended event");
 assert.match(performance, /STAIR_BOTTOM_X/, "HERO exit must route down the right staircase");
 assert.match(performance, /STAIR_TOP_Y = 1\.68/, "HERO exit must begin at the top stair elevation");
@@ -59,6 +64,7 @@ assert.match(finishing, /grandStageRiggingChainMotors/, "Overhead rigging must r
 assert.match(finishing, /grandStageRiggingHoistChains/, "Overhead rigging must include visible chain detail");
 assert.match(finishing, /grandStageTowerBaseAnchorBolts/, "Truss tower feet must receive structural anchor hardware");
 assert.match(finishing, /grandStageSpeakerCabinetFasteners/, "Speaker cabinets must receive fabricated hardware");
+assert.match(finishing, /cabinet < 6/, "Speaker cabinet fasteners must cover the expanded six-cabinet arrays");
 assert.match(finishing, /grandStageLedCabinetModuleSeams/, "LED screens must show modular cabinet construction");
 assert.match(finishing, /InstancedMesh/, "Repeated finishing details must use instancing");
 assert.doesNotMatch(finishing, /new THREE\.PointLight/, "Finishing layer must not add real-time lights");
@@ -67,6 +73,10 @@ assert.match(finishing, /halfWidth: 22/, "Finishing layer must preserve the appr
 assert.match(finishing, /halfDepth: 9/, "Finishing layer must preserve the approved stage depth");
 assert.match(architecture, /grandStageTrussLattice/, "Realistic overhead truss lattice must be built");
 assert.match(architecture, /grandStageSpeakerCones/, "Line-array speaker cabinets must receive visible hardware detail");
+assert.match(architecture, /speakerConeInstances\.setMatrixAt/, "Speaker cones must animate during live music playback");
+assert.match(architecture, /music\?\.isPlaying/, "Speaker vibration must follow the existing stage-music playback state");
+assert.match(architecture, /speakerPulseTime/, "Speaker vibration must use a continuous beat-synced animation phase");
+assert.match(architecture, /cabinet < 6/, "Speaker cone details must cover all six cabinets per side");
 assert.match(architecture, /grandStageFasciaStructuralRibs/, "Stage fascia must have structural depth and support ribs");
 assert.match(architecture, /InstancedMesh/, "Repeated architectural detail must use instancing for performance");
 assert.doesNotMatch(architecture, /new THREE\.PointLight/, "Stage realism layer must not add expensive real-time lights");
