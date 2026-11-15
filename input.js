@@ -23,6 +23,8 @@ export default {
     }
 
     this._initialized = true;
+    // Expose the live input state to existing world interaction systems.
+    window.__lamboCityInput = this;
 
 
     /*
@@ -52,6 +54,9 @@ export default {
           codeKeys[e.code] || (e.key || "").toLowerCase();
 
         if (!key) return;
+        if (key === "w" || key === "a" || key === "s" || key === "d") {
+          e.preventDefault();
+        }
         this.keys[key] = true;
 
         if (
@@ -85,6 +90,9 @@ export default {
           codeKeys[e.code] || (e.key || "").toLowerCase();
 
         if (!key) return;
+        if (key === "w" || key === "a" || key === "s" || key === "d") {
+          e.preventDefault();
+        }
         this.keys[key] = false;
 
       }
@@ -95,6 +103,14 @@ export default {
       Make sure keys don't remain stuck
       if the browser/window loses focus.
     */
+
+    const clearMovementKeys = () => {
+      this.keys.w = false;
+      this.keys.a = false;
+      this.keys.s = false;
+      this.keys.d = false;
+      this.keys.shift = false;
+    };
 
     window.addEventListener(
       "blur",
@@ -108,6 +124,10 @@ export default {
 
       }
     );
+
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) clearMovementKeys();
+    });
 
 
     this._buildJoystick();
