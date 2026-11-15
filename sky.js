@@ -2,8 +2,9 @@ import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 
 let cloudMaterials = [];
 let cloudMeshes = [];
+const DEFAULT_CLOUD_DRIFT_SPEED = 0.12;
 let cloudDriftEnabled = false;
-let cloudDriftSpeed = 0.12;
+let cloudDriftSpeed = DEFAULT_CLOUD_DRIFT_SPEED;
 let starMaterial = null;
 let moonMaterial = null;
 let haloMaterial = null;
@@ -33,14 +34,16 @@ const skyControls = {
   },
 
   setCloudDrift(enabled, speed) {
-    cloudDriftEnabled = Boolean(enabled);
+    let nextSpeed = cloudDriftSpeed;
     if (speed !== undefined) {
       const number = Number(speed);
       if (!Number.isFinite(number)) {
         return { success: false, error: "Cloud drift speed must be a finite number." };
       }
-      cloudDriftSpeed = Math.max(0.02, Math.min(0.8, number));
+      nextSpeed = Math.max(0.02, Math.min(0.8, number));
     }
+    cloudDriftSpeed = nextSpeed;
+    cloudDriftEnabled = Boolean(enabled);
     return { success: true, status: getSkyStatus() };
   },
 
@@ -68,6 +71,7 @@ const skyControls = {
       if (position) cloud.position.copy(position);
     });
     cloudDriftEnabled = false;
+    cloudDriftSpeed = DEFAULT_CLOUD_DRIFT_SPEED;
     starMaterial.opacity = skyBaseline.starOpacity;
     moonMaterial.opacity = skyBaseline.moonOpacity;
     haloMaterial.opacity = skyBaseline.haloOpacity;
@@ -102,6 +106,7 @@ export default {
     cloudMaterials = [];
     cloudMeshes = [];
     cloudDriftEnabled = false;
+    cloudDriftSpeed = DEFAULT_CLOUD_DRIFT_SPEED;
     const cloudMat = new THREE.MeshBasicMaterial({
       color: 0xff6633, transparent: true, opacity: 0.08,
       side: THREE.DoubleSide
