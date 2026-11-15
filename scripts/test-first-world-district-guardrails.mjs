@@ -8,6 +8,17 @@ const blueprint = await readFile(
 );
 
 const arena = CITY_MAP.districts.arenaDistrict;
+const route = CITY_MAP.districts.arenaDistrict.routeIntent;
+assert.equal(
+  route.status,
+  "directional-intent-confirmed-exact-junction-coordinates-unassigned",
+  "The route direction must be recorded without implying that coordinates are certified"
+);
+assert.match(route.approach, /westbound/);
+assert.match(route.firstTurn, /left.*\+Z/);
+assert.match(route.secondTurn, /left.*\+X/);
+assert.match(route.return, /HQ-side return connection/);
+
 assert.equal(
   arena.status,
   "historical-provisional-coordinates-superseded-not-for-construction",
