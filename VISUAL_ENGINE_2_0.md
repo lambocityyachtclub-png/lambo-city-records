@@ -56,6 +56,7 @@ Evolve the existing Three.js 0.160.0 renderer into a modular, performance-aware 
 
 - visualEngine.js: centralized performance / balanced / high pixel-ratio profiles; opt-in adaptive resolution; resize handling; WebGL context-loss/restoration handling; status and reset controls.
 - visualEngineDiagnostics.js: on-demand read-only scene and renderer report, exposed as window.__lamboCityVisualDiagnostics.getReport().
+- visualEngineMaterials.js: opt-in texture anisotropy controls, exposed as window.__lamboCityVisualMaterials.setTextureAnisotropy(level); default texture settings remain untouched.
 - performanceMonitor.js: existing optional ?perf=1 overlay and renderer metrics.
 - engine.js / main.js: register and initialize the Visual Engine modules without changing the existing scene feature modules.
 
