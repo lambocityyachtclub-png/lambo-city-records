@@ -10,6 +10,8 @@ on:
       - "scripts/test-character-system.mjs"
       - "input.js"
       - "player.js"
+      - "collision.js"
+      - "scripts/test-waterfront-walkway-continuity.mjs"
       - "marina.js"
       - "waterfrontStorefrontDetails.js"
       - "world.js"
@@ -30,6 +32,8 @@ on:
       - "scripts/test-character-system.mjs"
       - "input.js"
       - "player.js"
+      - "collision.js"
+      - "scripts/test-waterfront-walkway-continuity.mjs"
       - "marina.js"
       - "waterfrontStorefrontDetails.js"
       - "world.js"
@@ -71,13 +75,17 @@ jobs:
             cityMap.js \
             conferenceCenterDistrict.js \
             dock.js \
-            water.js
+            water.js \
+            collision.js
           do
             node --experimental-default-type=module --check "$file"
           done
 
       - name: Test protected player controller directions and movement
         run: node --experimental-default-type=module scripts/test-player-controller.mjs
+
+      - name: Test dock-to-boardwalk walking continuity
+        run: node --experimental-default-type=module scripts/test-waterfront-walkway-continuity.mjs
 
       - name: Test additive waterfront storefront integration
         run: node --experimental-default-type=module scripts/test-waterfront-storefront-details.mjs
