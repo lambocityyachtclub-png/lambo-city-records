@@ -94,15 +94,20 @@ function makeGuard(name, accentColor) {
   };
 }
 
-function moveToward(guard, target, delta, speed) {
+function moveToward(guard, target, delta, speed, context = null) {
   const root = guard.root;
   const dx = target.x - root.position.x;
   const dz = target.z - root.position.z;
   const distance = Math.hypot(dx, dz);
   if (distance > 0.035) {
     const step = Math.min(distance, speed * delta);
-    root.position.x += (dx / distance) * step;
-    root.position.z += (dz / distance) * step;
+    const nextX = root.position.x + (dx / distance) * step;
+    const nextZ = root.position.z + (dz / distance) * step;
+    // When following HERO around the wider world, guards respect the same
+    // safe-surface and obstacle checks instead of cutting across water.
+    if (context?.systems?.collision?.isBlocked?.(nextX, nextZ, 0.42, root.position.y)) return;
+    root.position.x = nextX;
+    root.position.z = nextZ;
     root.rotation.y = THREE.MathUtils.damp(root.rotation.y, Math.atan2(dx, dz), 7, delta);
     const gait = performance.now() * 0.009 + guard.phase;
     const stride = Math.sin(gait) * Math.min(0.48, step * 2.6);
@@ -159,8 +164,7 @@ export default {
       left.mode = "STAGE_POST";
       right.mode = "STAIR_POST";
       rightGuardReleased = false;
-      moveToward(left, LEFT_STAGE_POST, delta, GUARD_SPEED * 1.7);
-      left.root.position.y = STAGE_Y;
+      left.root.position.copy(LEFT_STAGE_POST);
       faceStage(left, -7, -74);
       right.root.position.set(RIGHT_STAIR_POST.x, RIGHT_STAIR_POST.y, RIGHT_STAIR_POST.z);
       faceStage(right, 29.55, -74);
@@ -180,16 +184,16 @@ export default {
         rightGuardReleased = true;
         right.mode = "FOLLOWING";
       }
-      moveToward(left, followTarget(hero, left), delta, GUARD_SPEED);
+      moveToward(left, followTarget(hero, left), delta, GUARD_SPEED, context);
       if (rightGuardReleased) {
-        moveToward(right, followTarget(hero, right), delta, GUARD_SPEED);
+        moveToward(right, followTarget(hero, right), delta, GUARD_SPEED, context);
       }
     } else {
       rightGuardReleased = false;
       left.mode = "FOLLOWING";
       right.mode = "FOLLOWING";
-      moveToward(left, followTarget(hero, left), delta, GUARD_SPEED);
-      moveToward(right, followTarget(hero, right), delta, GUARD_SPEED);
+      moveToward(left, followTarget(hero, left), delta, GUARD_SPEED, context);
+      moveToward(right, followTarget(hero, right), delta, GUARD_SPEED, context);
     }
 
     lastPerformanceState = state;
