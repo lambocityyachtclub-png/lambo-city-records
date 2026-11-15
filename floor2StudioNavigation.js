@@ -41,9 +41,9 @@ export default {
       return;
     }
 
-    // The main monitor and physical Vocal Booth are direct entry points
-    // into the same DAW session. The booth route opens the existing
-    // VOCAL BOOTH panel; it does not create a second recorder or session.
+    // Every physical production station enters its matching panel in the
+    // same Studio application and shared song session. Instrument/recording
+    // engines remain owned by their existing modules.
     this.targets = [
       {
         object: studio.getObjectByName("floor2SongEditorDisplay"),
@@ -51,9 +51,29 @@ export default {
         title: "LAMBO CITY STUDIO MONITOR"
       },
       {
+        object: studio.getObjectByName("floor2MPCClickable"),
+        view: "mpc",
+        title: "LAMBO CITY MPC"
+      },
+      {
+        object: studio.getObjectByName("floor2InstrumentStation"),
+        view: "piano",
+        title: "LAMBO CITY PIANO / CITY SYNTH"
+      },
+      {
         object: studio.getObjectByName("floor2RecordingBooth"),
         view: "vocals",
         title: "LAMBO CITY VOCAL BOOTH"
+      },
+      {
+        object: studio.getObjectByName("floor2MixMasterControls"),
+        view: "mix",
+        title: "LAMBO CITY MIX & MASTER"
+      },
+      {
+        object: studio.getObjectByName("floor2DrumStation"),
+        view: "drums",
+        title: "LAMBO CITY LIVE DRUMMER"
       }
     ].filter(item => item.object);
 

@@ -706,7 +706,10 @@ const StudioDAWApp = {
           const appHeader = root.querySelector(":scope > header");
           if (appHeader) appHeader.style.display = viewId === "edit" ? "none" : "flex";
           if (viewId === "mix") this.mixPanel?.refresh?.();
-          if (viewId === "mpc" && !MPCInterface.isOpen()) {
+          // On a direct physical MPC entry, workspace.mount fires before
+          // the performance panel is created. Wait for the panel to exist;
+          // setPanel("mpc") will then trigger this callback again.
+          if (viewId === "mpc" && this.mpcPanel && !MPCInterface.isOpen()) {
             MPCInterface.open({
               beatLab: Floor2StudioApp,
               performancePanel: this.mpcPanel,
