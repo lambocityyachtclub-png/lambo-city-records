@@ -53,3 +53,48 @@ assert.ok(engine.indexOf("this.systems.npc?.init") < engine.indexOf("this.system
 assert.match(engine, /characterSystem\?\.init\?\.\(this\.scene, this\.context\)/, "Engine must pass initialized systems context to the character system");
 
 console.log("LAMBO CITY Character System checks passed: 16 stable personas, four behavior styles, preserved crowd positions, bounded animation, and ordered integration.");
+
+
+// Runtime movement regression: exercise the actual module with lightweight
+// character rigs and a permissive collision surface, not source-text checks alone.
+const characterModule = await import("../characterSystem.js");
+const fakeCrowd = Array.from({ length: 16 }, (_, index) => {
+  const angle = Math.PI * (index / 15);
+  const x = Math.cos(angle) * 10;
+  const z = -55 - Math.sin(angle) * 8;
+  return {
+    mesh: {
+      position: { x, y: 1.3, z },
+      rotation: { y: Math.PI },
+      userData: {}
+    },
+    leftLeg: { rotation: { x: 0 } },
+    rightLeg: { rotation: { x: 0 } },
+    leftArm: { rotation: { x: 0, z: 0 } },
+    rightArm: { rotation: { x: 0, z: 0 } },
+    body: { rotation: { x: 0, z: 0 } },
+    headPivot: { rotation: { x: 0, y: 0 } },
+    phone: { visible: false },
+    homeX: x,
+    homeZ: z
+  };
+});
+const runtimeContext = {
+  systems: {
+    npc: { getCrowdCharacters: () => fakeCrowd },
+    collision: { isBlocked: () => false },
+    stageMusic: { isPlaying: () => false }
+  }
+};
+characterModule.default.init({}, runtimeContext);
+const startingPositions = fakeCrowd.map(character => ({ x: character.mesh.position.x, z: character.mesh.position.z }));
+for (let frame = 0; frame < 1200; frame++) {
+  characterModule.default.update(1 / 60, runtimeContext);
+}
+const traveled = fakeCrowd.map((character, index) =>
+  Math.hypot(character.mesh.position.x - startingPositions[index].x, character.mesh.position.z - startingPositions[index].z)
+);
+assert.ok(traveled.some(distance => distance > 1.0), "Runtime crowd simulation must produce clearly visible root movement");
+assert.ok(traveled.filter(distance => distance > 0.75).length >= 8, "Most of the crowd must visibly travel, not remain cheering in place");
+assert.ok(fakeCrowd.some(character => Math.abs(character.leftLeg.rotation.x) > 0.2), "Runtime walking must produce a readable leg stride");
+console.log("LAMBO CITY runtime crowd movement simulation passed.");
