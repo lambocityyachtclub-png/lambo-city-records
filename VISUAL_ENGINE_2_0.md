@@ -57,7 +57,7 @@ Evolve the existing Three.js 0.160.0 renderer into a modular, performance-aware 
 - visualEngine.js: centralized performance / balanced / high pixel-ratio profiles; opt-in adaptive resolution; resize handling; WebGL context-loss/restoration handling; status and reset controls.
 - visualEngineDiagnostics.js: on-demand read-only scene and renderer report, exposed as window.__lamboCityVisualDiagnostics.getReport().
 - visualEngineMaterials.js: opt-in texture anisotropy controls plus reversible per-material polished/satin/matte/chrome presets; default texture and material settings remain untouched.
-- visualEngineAtmosphere.js: reversible fog presets, exposed as window.__lamboCityAtmosphere.setPreset(name); the current scene fog is captured as the baseline and restored with the baseline preset.
+- visualEngineAtmosphere.js: reversible fog presets plus smooth, delta-time-based transitions through window.__lamboCityAtmosphere.transitionTo(name, seconds); the current scene fog is captured as the baseline, and transitions are idle unless explicitly requested.
 - visualEngineColor.js: reversible renderer tone-mapping and exposure controls, exposed as window.__lamboCityVisualColor; existing ACES / exposure values are captured and left unchanged by default.
 - visualEngineShadows.js: opt-in directional shadow pipeline. At scene initialization it discovers only meshes already explicitly tagged with castShadow/receiveShadow by their feature modules; shadows remain disabled until deliberately enabled. Groups/named objects can also be registered manually; point-light shadows are excluded.
 - lighting.js: registers the existing sun with the shadow controller without enabling shadows or changing the default lighting.
@@ -77,6 +77,8 @@ window.__lamboCityVisualEngine.getStatus()
 window.__lamboCityVisualDiagnostics.getReport()
 window.__lamboCityVisualMaterials.getReport()
 window.__lamboCityAtmosphere.getStatus()
+window.__lamboCityAtmosphere.transitionTo("sunsetHaze", 4)
+window.__lamboCityAtmosphere.transitionTo("baseline", 3)
 window.__lamboCityVisualColor.getStatus()
 window.__lamboCityWaterVisuals.getStatus()
 window.__lamboCityWaterVisuals.setEnvironmentReflection(true, {
@@ -106,6 +108,7 @@ Do not enable shadows or change material, water, sky, fog, or tone-mapping prese
 - Module imports and startup succeed on the development branch.
 - iPad Safari and desktop both render without black screens or console errors.
 - Orientation changes preserve viewport sizing and active quality profile.
+- Fog preset transitions complete smoothly, remain idle by default, and can be interrupted or returned to baseline.
 - Default profile preserves current baseline appearance.
 - Adaptive resolution remains disabled unless deliberately enabled.
 - No regression in camera, navigation, collisions, Floor 2 Studio, stage performance, HERO sequence, or lazy-loaded HQ floors.
