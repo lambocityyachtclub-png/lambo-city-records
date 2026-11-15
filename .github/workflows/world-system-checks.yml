@@ -5,6 +5,9 @@ on:
     paths:
       - "main.js"
       - "engine.js"
+      - "npc.js"
+      - "characterSystem.js"
+      - "scripts/test-character-system.mjs"
       - "input.js"
       - "player.js"
       - "marina.js"
@@ -22,6 +25,9 @@ on:
     paths:
       - "main.js"
       - "engine.js"
+      - "npc.js"
+      - "characterSystem.js"
+      - "scripts/test-character-system.mjs"
       - "input.js"
       - "player.js"
       - "marina.js"
@@ -55,6 +61,8 @@ jobs:
           for file in \
             main.js \
             engine.js \
+            npc.js \
+            characterSystem.js \
             input.js \
             player.js \
             marina.js \
@@ -73,3 +81,6 @@ jobs:
 
       - name: Test additive waterfront storefront integration
         run: node --experimental-default-type=module scripts/test-waterfront-storefront-details.mjs
+
+      - name: Test LAMBO CITY character identities and crowd behavior
+        run: node --experimental-default-type=module scripts/test-character-system.mjs

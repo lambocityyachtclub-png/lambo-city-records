@@ -22,27 +22,78 @@ export default {
     // The opening welcome is intentionally not shown at game startup.
     // Progression can call showWelcome() when the player reaches the right moment.
     welcomeShown = false;
-       const colors = [0xff2200,0x0044ff,0x00aa44,0xffaa00,0xaa00ff,0xff0088,0x00ffcc,0xffffff];
+
+    crowdNPCs = [];
+    const colors = [0xff2200,0x0044ff,0x00aa44,0xffaa00,0xaa00ff,0xff0088,0x00ffcc,0xffffff];
+    const legMaterial = new THREE.MeshStandardMaterial({color:0x17191d,roughness:0.82});
+    const shoeMaterial = new THREE.MeshStandardMaterial({color:0x090a0c,roughness:0.72});
     for (let i = 0; i < 16; i++) {
       const npc = new THREE.Group();
-      const b = new THREE.Mesh(new THREE.BoxGeometry(0.9,1.5,0.5),new THREE.MeshStandardMaterial({color:colors[i%colors.length]}));
-      b.position.y=1.5; npc.add(b);
-      const h = new THREE.Mesh(new THREE.BoxGeometry(0.7,0.7,0.7),sm);
-      h.position.y=2.65; npc.add(h);
-      // Arc across the flat ground in front of the stage stairs (which
-      // start at z:-65.5), not a full circle — keeps every NPC on open
-      // ground instead of overlapping the stairs/stage platform.
+      npc.name = "lamboCityCrowdCharacter_" + String(i + 1).padStart(2, "0");
+      const bodyMaterial = new THREE.MeshStandardMaterial({color:colors[i%colors.length]});
+      const body = new THREE.Mesh(new THREE.BoxGeometry(0.9,1.5,0.5),bodyMaterial);
+      body.position.y=1.5;
+      npc.add(body);
+
+      const headPivot = new THREE.Group();
+      headPivot.position.y = 2.65;
+      const head = new THREE.Mesh(new THREE.BoxGeometry(0.7,0.7,0.7),sm);
+      head.position.y = 0;
+      headPivot.add(head);
+      npc.add(headPivot);
+
+      // Simple shoulder pivots let the character system animate gestures
+      // without changing the approved crowd positions or body proportions.
+      const leftArm = createCrowdArm(-0.52, 2.02, bodyMaterial);
+      const rightArm = createCrowdArm(0.52, 2.02, bodyMaterial);
+      npc.add(leftArm);
+      npc.add(rightArm);
+
+      // Articulated hip pivots give every existing crowd rig a readable walk cycle.
+      const leftLeg = createCrowdLeg(-0.23, 0.84, legMaterial, shoeMaterial);
+      const rightLeg = createCrowdLeg(0.23, 0.84, legMaterial, shoeMaterial);
+      npc.add(leftLeg);
+      npc.add(rightLeg);
+
+      // A small phone prop makes the phone-recording persona readable.
+      const phone = new THREE.Mesh(
+        new THREE.BoxGeometry(0.16,0.27,0.045),
+        new THREE.MeshStandardMaterial({color:0x17191d,metalness:0.45,roughness:0.32})
+      );
+      phone.position.set(0,-0.72,0.13);
+      phone.rotation.x = -0.12;
+      rightArm.add(phone);
+
+      // Preserve the existing arc and all established character positions.
       const angle = Math.PI * (i/15);
       const x = Math.cos(angle) * 10;
       const z = -55 - Math.sin(angle) * 8;
       npc.position.set(x,1.3,z);
-      npc.rotation.y = Math.PI + (Math.random()-0.5)*0.6; // facing the stage, slight variance
+      const baseRotationY = Math.PI + (Math.random()-0.5)*0.6;
+      npc.rotation.y = baseRotationY;
       scene.add(npc);
-      crowdNPCs.push({mesh:npc,offset:Math.random()*Math.PI*2});
+      crowdNPCs.push({
+        id: "crowd-" + String(i + 1).padStart(2, "0"),
+        mesh: npc,
+        offset: Math.random()*Math.PI*2,
+        baseRotationY,
+        body,
+        headPivot,
+        leftArm,
+        rightArm,
+        leftLeg,
+        rightLeg,
+        phone,
+        homeX: x,
+        homeZ: z
+      });
     }
   },
 getHero() {
   return heroMesh;
+},
+getCrowdCharacters() {
+  return crowdNPCs;
 },
 showWelcome() {
   if (welcomeShown) return false;
@@ -55,17 +106,16 @@ getCameraTargets() {
 },
  setPerformanceMode(active) {
   performanceMode = !!active;
-}, 
+},
   update(delta, context) {
     time += delta;
     if (heroMesh && !performanceMode) {
-  heroMesh.position.y = 1.3+Math.sin(time*1.2)*0.05;
-  heroMesh.rotation.y = Math.sin(time*0.4)*0.15;
-}
-    crowdNPCs.forEach(c => {
-      c.mesh.position.y = 1.3+Math.sin(time*3+c.offset)*0.12;
-      c.mesh.rotation.y += delta*0.4;
-    });
+      heroMesh.position.y = 1.3+Math.sin(time*1.2)*0.05;
+      heroMesh.rotation.y = Math.sin(time*0.4)*0.15;
+    }
+    // The dedicated characterSystem owns all crowd movement and animation.
+    // Keeping a second per-frame crowd pose writer here would compete with
+    // walking gait, facing direction, and root movement.
     if (!giftGiven && context.player) {
       const dx = context.player.position.x-2.5;
       const dz = context.player.position.z-6;
@@ -73,6 +123,28 @@ getCameraTargets() {
     }
   }
 };
+
+function createCrowdLeg(x, y, legMaterial, shoeMaterial) {
+  const pivot = new THREE.Group();
+  pivot.position.set(x, y, 0);
+  const leg = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.82, 0.30), legMaterial);
+  leg.position.y = -0.39;
+  pivot.add(leg);
+  const shoe = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.17, 0.48), shoeMaterial);
+  shoe.position.set(0, -0.79, 0.09);
+  pivot.add(shoe);
+  return pivot;
+}
+
+function createCrowdArm(x, y, material) {
+  const pivot = new THREE.Group();
+  pivot.position.set(x,y,0);
+  const arm = new THREE.Mesh(new THREE.BoxGeometry(0.22,0.88,0.22),material);
+  arm.position.y = -0.42;
+  pivot.add(arm);
+  return pivot;
+}
+
 function showHeroDialogue() {
   const box = document.createElement('div');
   box.style.cssText = `position:fixed;bottom:130px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.88);border:1px solid rgba(255,215,0,0.4);border-radius:12px;padding:18px 28px;color:white;font-family:Arial,sans-serif;max-width:460px;width:90%;z-index:200;box-shadow:0 0 30px rgba(153,0,255,0.3);text-align:center;pointer-events:all;`;
