@@ -192,7 +192,8 @@ function buildSpeakerHardware(parent) {
     for (let cabinet = 0; cabinet < 6; cabinet++) {
       const y = 20.2 - cabinet * 2.0;
       [-0.48, 0.48].forEach(offset => {
-        const position = [sign * 24.5, y + offset, -77.40];
+        const splay = (cabinet - 2.5) * 0.022;
+        const position = [sign * 24.5, y + offset, -77.40, splay];
         cones.push(position);
         rings.push(position);
       });
@@ -209,12 +210,12 @@ function buildSpeakerHardware(parent) {
   const helper = new THREE.Object3D();
   cones.forEach((position, index) => {
     helper.position.set(...position);
-    helper.rotation.x = Math.PI / 2;
+    helper.rotation.x = Math.PI / 2 + (position[3] || 0);
     helper.updateMatrix();
     coneInstances.setMatrixAt(index, helper.matrix);
 
-    // TorusGeometry already faces +Z; keep its plane perpendicular to the speaker axis.
-    helper.rotation.set(0, 0, 0);
+    // TorusGeometry already faces +Z; match the cabinet's subtle splay.
+    helper.rotation.set(position[3] || 0, 0, 0);
     helper.updateMatrix();
     ringInstances.setMatrixAt(index, helper.matrix);
   });
@@ -335,7 +336,7 @@ export default {
 
     speakerConeBasePositions.forEach((position, index) => {
       helper.position.set(position[0], position[1], position[2] + excursion);
-      helper.rotation.x = Math.PI / 2;
+      helper.rotation.x = Math.PI / 2 + (position[3] || 0);
       helper.updateMatrix();
       speakerConeInstances.setMatrixAt(index, helper.matrix);
     });
