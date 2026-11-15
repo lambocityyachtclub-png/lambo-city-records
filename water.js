@@ -76,6 +76,7 @@ function disableEnvironmentReflection() {
     waterMesh.material.envMapIntensity = visualBaseline.environment.envMapIntensity;
     waterMesh.material.needsUpdate = true;
   }
+  if (reflectionCamera && waterScene) waterScene.remove(reflectionCamera);
   reflectionCamera = null;
   if (reflectionTarget) reflectionTarget.dispose();
   reflectionTarget = null;
@@ -110,6 +111,7 @@ const waterVisualControls = {
       });
       reflectionCamera = new THREE.CubeCamera(0.1, 500, reflectionTarget);
       reflectionCamera.position.set(0, 1.2, 0);
+      waterScene.add(reflectionCamera);
     }
 
     reflectionIntervalSeconds = interval;
