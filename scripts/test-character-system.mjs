@@ -17,8 +17,9 @@ assert.equal(new Set(personaIds).size, 16, "Every crowd character must have a st
 assert.equal(personaNames.length, 16, "Every crowd character must have a display name");
 assert.equal(new Set(personaNames).size, 16, "Every crowd character must have a distinct name");
 assert.equal(roles.length, 16, "Every crowd character must have a defined behavior role");
-for (const role of ["dancer", "phone", "cheerer", "spectator"]) {
-  assert.equal(roles.filter(value => value === role).length, 4, "Expected four " + role + " personas");
+const expectedRoleCounts = { dancer: 5, phone: 4, cheerer: 4, spectator: 3 };
+for (const [role, expected] of Object.entries(expectedRoleCounts)) {
+  assert.equal(roles.filter(value => value === role).length, expected, "Expected " + expected + " " + role + " personas");
 }
 
 assert.match(npc, /getCrowdCharacters\(\)/, "NPC module must expose existing crowd rigs to the reusable character system");
