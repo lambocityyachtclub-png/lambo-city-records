@@ -5,6 +5,8 @@ on:
     paths:
       - "main.js"
       - "engine.js"
+      - "input.js"
+      - "player.js"
       - "marina.js"
       - "waterfrontStorefrontDetails.js"
       - "world.js"
@@ -12,6 +14,7 @@ on:
       - "conferenceCenterDistrict.js"
       - "dock.js"
       - "water.js"
+      - "scripts/test-player-controller.mjs"
       - "scripts/test-waterfront-storefront-details.mjs"
       - ".github/workflows/world-system-checks.yml"
 
@@ -19,6 +22,8 @@ on:
     paths:
       - "main.js"
       - "engine.js"
+      - "input.js"
+      - "player.js"
       - "marina.js"
       - "waterfrontStorefrontDetails.js"
       - "world.js"
@@ -26,6 +31,7 @@ on:
       - "conferenceCenterDistrict.js"
       - "dock.js"
       - "water.js"
+      - "scripts/test-player-controller.mjs"
       - "scripts/test-waterfront-storefront-details.mjs"
       - ".github/workflows/world-system-checks.yml"
 
@@ -49,6 +55,8 @@ jobs:
           for file in \
             main.js \
             engine.js \
+            input.js \
+            player.js \
             marina.js \
             waterfrontStorefrontDetails.js \
             world.js \
@@ -59,6 +67,9 @@ jobs:
           do
             node --experimental-default-type=module --check "$file"
           done
+
+      - name: Test protected player controller directions and movement
+        run: node --experimental-default-type=module scripts/test-player-controller.mjs
 
       - name: Test additive waterfront storefront integration
         run: node --experimental-default-type=module scripts/test-waterfront-storefront-details.mjs
