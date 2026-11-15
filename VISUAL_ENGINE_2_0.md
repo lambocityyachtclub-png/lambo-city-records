@@ -79,4 +79,4 @@ Evolve the existing Three.js 0.160.0 renderer into a modular, performance-aware 
 
 ## Status
 
-The quality-management, diagnostics, opt-in texture filtering, reversible atmosphere controls, renderer color controls, and opt-in water appearance presets are implemented. Broader material, lighting/shadow, physically based water reflections, sky, and optional post-processing layers remain in development. This document is the scope and verification contract for the branch; it is not a claim that those later layers are already finished.
+The quality-management, diagnostics, opt-in texture filtering, reversible atmosphere controls, renderer color controls, opt-in water appearance presets, reversible sky controls, and explicit-registration shadow framework are implemented. Targeted world caster/receiver tagging, measured shadow quality, physically based water reflections, broader material improvements, and optional post-processing remain in development. This document is the scope and verification contract for the branch; it is not a claim that those later layers are already finished.
