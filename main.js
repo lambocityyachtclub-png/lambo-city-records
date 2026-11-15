@@ -5,6 +5,7 @@ import Renderer from "./renderer.js";
 import World from "./world.js";
 import FestivalStageUpgrade from "./festivalStageUpgrade.js";
 import FestivalStageArchitecture from "./festivalStageArchitecture.js";
+import FestivalStageFinishing from "./festivalStageFinishing.js";
 import Dock from "./dock.js";
 import DockPath from "./dockPath.js";
 import Water from "./water.js";
@@ -70,6 +71,7 @@ engine.registerSystems({
   world: World,
   festivalStageUpgrade: FestivalStageUpgrade,
   festivalStageArchitecture: FestivalStageArchitecture,
+  festivalStageFinishing: FestivalStageFinishing,
   water: Water,
   dock: Dock,
   dockPath: DockPath,
