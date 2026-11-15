@@ -293,3 +293,38 @@ The shared `cityMap.js` registry and `conferenceCenterDistrict.js` agree on the 
 - [ ] Inspect all conference access-road collision and confirm that the pedestrian route is open end-to-end.
 - [ ] Inspect the arena ground and boulevard concept against current world meshes and collision before construction.
 - [ ] Verify the full boardwalk-to-conference pedestrian route in a live preview on iPad and desktop.
+
+
+## Owner-confirmed Convention / Arena District program — 2026-11-15
+
+This section records the owner's clarified spatial hierarchy and circulation. It refines the earlier provisional Arena District concept; it does not authorize scene implementation.
+
+### Fixed district hierarchy
+
+1. **Convention Center / Arena — centerpiece.** The arena-scale Convention Center is the dominant architectural and social landmark of the district. It must not sit in the middle of a street or be treated as a traffic island. Streets, plazas, and pedestrian routes are arranged around the building.
+2. **Central recreation zone — near the Convention Center.** Reserve the central public-realm area adjacent to the Convention Center for:
+   - A LAMBO CITY-branded basketball court, with future 1v1, 3v3, and 5v5 play.
+   - A high-quality skate park with a coherent, playable layout and varied skate features.
+   - Connected pedestrian gathering space so these amenities feel like part of the arena destination, not isolated objects.
+3. **Outer residential perimeter — apartments / villas.** Place the LAMBO CITY Villa Apartments on the outside perimeter of the district street loop, with outward-facing balconies and coastal views. Residential parcels frame the district; they do not displace the Convention Center or the central recreation zone.
+4. **Other previously requested program.** Preserve planning capacity for the Sports & Motors concept, including the Long Beach-style Grand Prix circuit and golf practice range. Their final placement must be coordinated with the district circulation and land survey; do not invent coordinates at this stage.
+
+### Confirmed street circulation
+
+The district is reached from the existing **store-side end of the marina boardwalk**. Following the owner's described route, the street turns left off the boardwalk, continues around the Convention Center / recreation / residential district, makes the next left, and returns toward LAMBO CITY Records HQ. The final design must read as one coherent, continuous outlet-style shopping and entertainment loop, with connected road geometry, sidewalks, crossings, and pedestrian links.
+
+- Treat the loop as one connected district circulation system, not a separate street added on the opposite side of the boardwalk.
+- Preserve the existing boardwalk, stores, dock, HQ, and all approved landmarks.
+- Keep the Records HQ approach and elevator access clear.
+- The existing boardwalk remains pedestrian-priority; do not route ordinary through-traffic along it.
+- The exact route centerline, corners, road class, and junction coordinates remain subject to a source and runtime survey before geometry is approved.
+
+### Explicit geographic exclusion
+
+The **opposite side of the boardwalk toward the Jumbotron is out of scope** for this district plan. Do not add, extend, or relocate streets, buildings, plazas, sports facilities, or other district construction into that area. Preserve its current geography and all existing content.
+
+### Implementation status and evidence
+
+As of this source review, the current feature-branch `cityMap.js` contains the provisional Conference Center / Arena footprint, boulevard concept, and outer villa-parcel intent. The current `conferenceCenterDistrict.js` is still the interim Conference Center structure and its single store-side access road. The inspected source does **not** yet register or build the basketball court or skate park. Those amenities are owner-approved planning requirements, not existing implemented scene objects.
+
+This is a documentation-only planning update. No coordinates, scene meshes, collision, navigation, or production behavior are changed by this section. Before implementation, survey the actual land, water edge, storefront entrances, Records HQ approach, and all protected landmarks; then publish a complete, dimensioned district layout for owner review.
