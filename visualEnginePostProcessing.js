@@ -9,6 +9,7 @@ let camera = null;
 let renderer = null;
 let composer = null;
 let bloomPass = null;
+let outputPass = null;
 let resizeHandler = null;
 let lastPixelRatio = 0;
 let loading = false;
@@ -56,9 +57,11 @@ function disposeComposer() {
     resizeHandler = null;
   }
   bloomPass?.dispose?.();
+  outputPass?.dispose?.();
   composer?.dispose?.();
   composer = null;
   bloomPass = null;
+  outputPass = null;
   lastPixelRatio = 0;
 }
 
@@ -78,16 +81,18 @@ const controls = {
 
     loading = true;
     try {
-      const [THREE, composerModule, renderPassModule, bloomModule] = await Promise.all([
+      const [THREE, composerModule, renderPassModule, bloomModule, outputModule] = await Promise.all([
         import("https://esm.sh/three@0.160.0"),
         import("https://esm.sh/three@0.160.0/examples/jsm/postprocessing/EffectComposer.js"),
         import("https://esm.sh/three@0.160.0/examples/jsm/postprocessing/RenderPass.js"),
-        import("https://esm.sh/three@0.160.0/examples/jsm/postprocessing/UnrealBloomPass.js")
+        import("https://esm.sh/three@0.160.0/examples/jsm/postprocessing/UnrealBloomPass.js"),
+        import("https://esm.sh/three@0.160.0/examples/jsm/postprocessing/OutputPass.js")
       ]);
 
       const EffectComposer = composerModule.EffectComposer;
       const RenderPass = renderPassModule.RenderPass;
       const UnrealBloomPass = bloomModule.UnrealBloomPass;
+      const OutputPass = outputModule.OutputPass;
 
       composer = new EffectComposer(renderer);
       composer.addPass(new RenderPass(scene, camera));
@@ -98,6 +103,8 @@ const controls = {
         clamp(options.threshold, 0, 1, DEFAULTS.threshold)
       );
       composer.addPass(bloomPass);
+      outputPass = new OutputPass();
+      composer.addPass(outputPass);
       resizeComposer();
 
       resizeHandler = resizeComposer;
