@@ -28,6 +28,7 @@ assert.match(stage, /festivalMainTruss/, "Main overhead production truss must be
 assert.match(stage, /i < 6/, "Each flown speaker array must contain six touring cabinets");
 assert.match(stage, /festivalLineArrayFlybar_/, "Speaker arrays must include a visible suspension flybar");
 assert.match(stage, /festivalLineArraySuspension_/, "Speaker arrays must include paired suspension links");
+assert.match(stage, /const splay = \(i - 2\.5\) \* 0\.022/, "Speaker cabinets must have progressive line-array splay");
 assert.match(performance, /StageMusic\.hasEnded\(\)/, "HERO exit must follow the actual song-ended event");
 assert.match(performance, /STAIR_BOTTOM_X/, "HERO exit must route down the right staircase");
 assert.match(performance, /STAIR_TOP_Y = 1\.68/, "HERO exit must begin at the top stair elevation");
