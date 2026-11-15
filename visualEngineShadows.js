@@ -100,6 +100,21 @@ const controls = {
     return { success: true, status: getStatus() };
   },
 
+  registerTaggedObject(root) {
+    if (!root || typeof root.traverse !== "function") {
+      return { success: false, error: "registerTaggedObject expects a Three.js object or group." };
+    }
+    let registered = 0;
+    root.traverse(object => {
+      if (!object.isMesh || (!object.castShadow && !object.receiveShadow)) return;
+      if (applyMesh(object, {
+        castShadow: Boolean(object.castShadow),
+        receiveShadow: Boolean(object.receiveShadow)
+      })) registered++;
+    });
+    return { success: true, registeredMeshes: registered, status: getStatus() };
+  },
+
   registerObject(root, settings = {}) {
     if (!root || typeof root.traverse !== "function") {
       return { success: false, error: "registerObject expects a Three.js object or group." };
