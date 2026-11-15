@@ -21,22 +21,22 @@ let initialized = false;
 
 function makeBannerTexture(title, brand) {
   const canvas = document.createElement("canvas");
-  // Match the 13.2 x 1.98 sponsor panel's 6.67:1 aspect ratio so
+  // Match the 13.2 x 2.64 sponsor panel's 5:1 aspect ratio so
   // sponsor artwork is not stretched or visually cropped on the fascia.
   canvas.width = 1600;
-  canvas.height = 240;
+  canvas.height = 320;
   const ctx = canvas.getContext("2d");
 
-  const gradient = ctx.createLinearGradient(0, 0, 1600, 240);
+  const gradient = ctx.createLinearGradient(0, 0, 1600, 320);
   gradient.addColorStop(0, "#09090d");
   gradient.addColorStop(0.5, "#17121e");
   gradient.addColorStop(1, "#07070a");
   ctx.fillStyle = gradient;
-  ctx.fillRect(0, 0, 1600, 240);
+  ctx.fillRect(0, 0, 1600, 320);
 
   ctx.strokeStyle = "#c79b2d";
   ctx.lineWidth = 8;
-  ctx.strokeRect(10, 10, 1580, 220);
+  ctx.strokeRect(10, 10, 1580, 300);
 
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
@@ -44,12 +44,12 @@ function makeBannerTexture(title, brand) {
   ctx.shadowBlur = 20;
   ctx.fillStyle = "#e8c86a";
   ctx.font = "bold 40px Arial, sans-serif";
-  ctx.fillText(String(title || "").toUpperCase().slice(0, 36), 800, 70, 1450);
+  ctx.fillText(String(title || "").toUpperCase().slice(0, 36), 800, 94, 1450);
 
   ctx.shadowBlur = 8;
   ctx.fillStyle = "#ffffff";
   ctx.font = "bold 78px Arial, sans-serif";
-  ctx.fillText(String(brand || "").toUpperCase().slice(0, 24), 800, 158, 1450);
+  ctx.fillText(String(brand || "").toUpperCase().slice(0, 24), 800, 232, 1450);
 
   ctx.shadowBlur = 0;
   const texture = new THREE.CanvasTexture(canvas);
@@ -86,8 +86,8 @@ function addSponsorPanel(parent, sponsor, x, width) {
   addBox(
     parent,
     "festivalSponsorFrame_" + sponsor.key,
-    [width + 0.32, 2.28, 0.38],
-    [x, 1.36, -62.82],
+    [width + 0.32, 2.94, 0.38],
+    [x, 1.55, -62.82],
     frameMat
   );
 
@@ -103,11 +103,11 @@ function addSponsorPanel(parent, sponsor, x, width) {
   // display plane instead of a shallow box, avoiding fascia UV distortion
   // and keeping the complete sponsor artwork cleanly visible.
   const face = new THREE.Mesh(
-    new THREE.PlaneGeometry(width, 1.98),
+    new THREE.PlaneGeometry(width, 2.64),
     material
   );
   face.name = "festivalSponsorBanner_" + sponsor.key;
-  face.position.set(x, 1.36, -62.58);
+  face.position.set(x, 1.55, -62.58);
   face.renderOrder = 2;
   face.castShadow = false;
   face.receiveShadow = false;
