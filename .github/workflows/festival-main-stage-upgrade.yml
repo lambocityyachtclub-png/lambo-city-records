@@ -8,6 +8,7 @@ on:
       - "festivalStageUpgrade.js"
       - "festivalStageArchitecture.js"
       - "festivalStageFinishing.js"
+      - "festivalAudienceZone.js"
       - "heroPerformance.js"
       - "heroPostPerformance.js"
       - "npc.js"
@@ -31,7 +32,7 @@ jobs:
           node-version: 22
       - name: Check JavaScript syntax
         run: |
-          for file in world.js collision.js festivalStageUpgrade.js festivalStageArchitecture.js festivalStageFinishing.js heroPerformance.js heroPostPerformance.js npc.js stageMusic.js main.js engine.js scripts/test-festival-stage-upgrade.mjs
+          for file in world.js collision.js festivalStageUpgrade.js festivalStageArchitecture.js festivalStageFinishing.js festivalAudienceZone.js heroPerformance.js heroPostPerformance.js npc.js stageMusic.js main.js engine.js scripts/test-festival-stage-upgrade.mjs
           do
             node --experimental-default-type=module --check "$file"
           done
