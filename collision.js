@@ -69,7 +69,7 @@ export function isOutsideSafeWaterfrontSurface(x, z, radius) {
   // opening the surrounding water edges.
   const onDockBoardwalkConnector =
     Math.abs(x) + radius <= 6.2 &&
-    z - radius >= 34.4 &&
+    z - radius >= 33.8 &&
     z + radius <= 38.2;
 
   const atHQElevatorThreshold =
