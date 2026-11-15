@@ -1,8 +1,6 @@
 // characterSystem.js
-// LAMBO CITY — reusable character identity and lightweight crowd behavior.
-// Phase 1 connects the existing 16 stage crowd members to persistent persona
-// profiles and low-cost gestures. It does not add autonomous pathfinding,
-// dialogue, network calls, or extra lights.
+// LAMBO CITY — reusable character identity and visible, lightweight crowd behavior.
+// Existing crowd positions and stage geography are preserved.
 
 const CROWD_PERSONAS = [
   { id: "crowd-01", name: "Maya", role: "dancer", personality: "joyful, expressive", traits: ["welcoming", "music-loving"], energy: 1.0 },
@@ -26,8 +24,8 @@ const CROWD_PERSONAS = [
 let characters = [];
 let elapsed = 0;
 
-function smoothBeat(time, phase) {
-  return Math.sin(time * 2.6 + phase);
+function wave(time, phase, speed = 1) {
+  return Math.sin(time * speed + phase);
 }
 
 export default {
@@ -46,48 +44,51 @@ export default {
       if (character.phone) character.phone.visible = profile.role === "phone";
       return { ...character, profile, phase: index * 0.83 };
     });
+    console.info("[LAMBO CITY] Character system initialized:", characters.length, "stage characters");
   },
 
   update(delta, context) {
-    elapsed += delta;
+    elapsed += Math.min(delta || 0, 0.05);
     const musicPlaying = !!context?.systems?.stageMusic?.isPlaying?.();
-    const energyScale = musicPlaying ? 1 : 0.34;
+    const musicBoost = musicPlaying ? 1.18 : 1;
 
     characters.forEach(character => {
-      const { profile, phase, leftArm, rightArm, headPivot, body, mesh } = character;
-      const beat = smoothBeat(elapsed, phase);
-      const gentle = Math.sin(elapsed * 1.15 + phase);
-      const energy = profile.energy * energyScale;
+      const { profile, phase, leftArm, rightArm, headPivot, body, mesh, baseRotationY } = character;
+      const beat = wave(elapsed, phase, musicPlaying ? 3.4 : 1.65);
+      const sway = wave(elapsed, phase + 0.7, 1.25);
+      const energy = profile.energy * musicBoost;
 
       if (profile.role === "dancer") {
-        leftArm.rotation.z = -0.18 - beat * 0.38 * energy;
-        rightArm.rotation.z = 0.18 + Math.sin(elapsed * 2.6 + phase + 1.4) * 0.38 * energy;
-        body.rotation.z = gentle * 0.075 * energy;
-        headPivot.rotation.x = Math.sin(elapsed * 2.1 + phase) * 0.055 * energy;
+        leftArm.rotation.z = -0.12 - beat * 0.78 * energy;
+        rightArm.rotation.z = 0.12 + wave(elapsed, phase + 1.4, 2.5) * 0.72 * energy;
+        body.rotation.z = sway * 0.15 * energy;
+        body.rotation.y = wave(elapsed, phase, 1.1) * 0.10;
+        headPivot.rotation.x = wave(elapsed, phase, 2.0) * 0.12;
       } else if (profile.role === "cheerer") {
         const lift = (0.5 + 0.5 * beat) * energy;
-        leftArm.rotation.z = -0.12 - lift * 0.95;
-        rightArm.rotation.z = 0.12 + lift * 0.95;
-        body.rotation.z = gentle * 0.035 * energy;
-        headPivot.rotation.x = -0.08 - lift * 0.12;
+        leftArm.rotation.z = -0.10 - lift * 1.55;
+        rightArm.rotation.z = 0.10 + lift * 1.55;
+        body.rotation.z = sway * 0.09;
+        headPivot.rotation.x = -0.12 - lift * 0.18;
       } else if (profile.role === "phone") {
-        leftArm.rotation.z = -0.08 + gentle * 0.08;
-        rightArm.rotation.z = 0.78 + Math.sin(elapsed * 1.7 + phase) * 0.055;
-        headPivot.rotation.x = 0.1 + Math.sin(elapsed * 1.4 + phase) * 0.035;
-        body.rotation.z = gentle * 0.025;
+        leftArm.rotation.z = -0.08 + sway * 0.12;
+        rightArm.rotation.z = 0.95 + wave(elapsed, phase, 1.8) * 0.18;
+        headPivot.rotation.x = 0.16 + wave(elapsed, phase, 1.35) * 0.07;
+        headPivot.rotation.y = wave(elapsed, phase + 1, 0.8) * 0.09;
+        body.rotation.z = sway * 0.055;
       } else {
-        leftArm.rotation.z = -0.06 + gentle * 0.035;
-        rightArm.rotation.z = 0.06 - gentle * 0.035;
-        headPivot.rotation.x = Math.sin(elapsed * 1.55 + phase) * 0.09;
-        headPivot.rotation.y = Math.sin(elapsed * 0.7 + phase) * 0.06;
-        body.rotation.z = gentle * 0.018;
+        leftArm.rotation.z = -0.06 + sway * 0.06;
+        rightArm.rotation.z = 0.06 - sway * 0.06;
+        headPivot.rotation.x = wave(elapsed, phase, 1.45) * 0.16;
+        headPivot.rotation.y = wave(elapsed, phase + 1, 0.75) * 0.16;
+        body.rotation.z = sway * 0.035;
       }
 
-      // A subtle shared beat response makes the crowd feel connected without
-      // moving anyone from their approved stage-front positions or accumulating
-      // vertical drift over time.
-      mesh.position.y = 1.3 + Math.sin(elapsed * 3 + phase) * 0.035 +
-        (musicPlaying && profile.role !== "phone" ? Math.max(0, beat) * 0.025 * profile.energy : 0);
+      // Larger, clearly readable body motion while keeping every character's
+      // original X/Z location fixed. Music adds energy but is not required.
+      const bounce = profile.role === "spectator" ? 0.018 : 0.065;
+      mesh.position.y = 1.3 + Math.abs(beat) * bounce * energy;
+      mesh.rotation.y = baseRotationY + sway * (profile.role === "spectator" ? 0.045 : 0.12);
     });
   },
 
