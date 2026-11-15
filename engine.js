@@ -110,6 +110,9 @@ this.systems.boardwalkOverlooks?.init?.(this.scene);
     this.systems.input?.init?.();
     this.systems.player?.init?.(this.scene);
     this.systems.hud?.init?.();
+    // Discover only meshes that existing scene modules explicitly tagged for shadows.
+    // The shadow map remains disabled until a deliberate enable() call.
+    this.systems.visualEngineShadows?.registerTaggedObject?.(this.scene);
     // Diagnostics attach after the complete initial scene has been assembled.
     this.systems.visualEngineDiagnostics?.init?.(this.scene, this.context);
     this.systems.visualEngineMaterials?.init?.(this.scene, this.context);
