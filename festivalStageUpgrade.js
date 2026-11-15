@@ -236,15 +236,20 @@ function addSpeakerArray(parent, side) {
       [sign * 24.5, y, -78.4],
       cabinetMat
     );
+    // Small progressive splay gives the flown array a realistic curved
+    // vertical coverage profile rather than one flat stack of boxes.
+    const splay = (i - 2.5) * 0.022;
+    cabinet.rotation.x = splay;
     cabinet.rotation.z = sign * 0.035;
 
-    addBox(
+    const grille = addBox(
       parent,
       "festivalLineArrayGrille_" + side + "_" + i,
       [2.35, 1.72, 0.08],
       [sign * 24.5, y, -77.52],
       grilleMat
     );
+    grille.rotation.x = splay;
   }
 
   // Visible flybar and paired suspension links connect each array to the
