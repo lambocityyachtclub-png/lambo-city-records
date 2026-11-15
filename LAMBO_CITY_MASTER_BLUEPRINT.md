@@ -225,3 +225,71 @@ Every district module must declare:
 ## Change log
 
 - **2026-11-15:** Added a source-verified spatial baseline and current module inventory to the existing master blueprint. Preserved the prior Arena District plan and marked all unverified geometry as survey work. Documentation only; no scene code or production files changed.
+
+
+## Detailed source survey — waterfront and Conference Center
+
+These additional measurements were checked against `cityMap.js`, `world.js`, `dock.js`, `dockPath.js`, `marina.js`, `boardwalkOverlooks.js`, and `conferenceCenterDistrict.js`.
+
+### Shared surface elevations
+
+| Surface | Y / height | Source |
+|---|---:|---|
+| Water surface | Y=0.3 | `cityMap.js` |
+| Existing land top | Y=0.65 | `cityMap.js` |
+| Road top | Y=0.77 | `cityMap.js` |
+| Boardwalk deck top | Y=1.0 | `cityMap.js` |
+| Timber dock base center | Y=1.0; base thickness 0.4 | `dock.js` |
+| HQ dock spur surface | Y=1.36 | `dockPath.js` |
+
+### Marina / boardwalk geometry
+
+- Existing north waterfront land is formed by two slabs, each 44 × 35, centered at (-43, 27.5) and (+43, 27.5), giving land bounds X -65..-21 and +21..+65, Z 10..45.
+- The marina road is centered at (0, 46), length 90, width 8; bounds X -45..45, Z 42..50.
+- Sidewalks are each 90 × 5, centered at Z=39.5 and Z=52.5. Their nominal bounds are Z=37..42 and Z=50..55.
+- The waterfront street is pedestrian-priority; ordinary cars are restricted, with service/emergency access only per `cityMap.js`.
+- The two boardwalk overlooks extend 13 units beyond the road ends. Their deck centers are approximately X=-51.5 and X=+51.5, with Z span 37..55. The entrance edge meets the existing street; the other three sides are railed.
+- Existing waterfront stores are centered along the west/store side at X=-20, -32, and -44. The source shows 10 × 8 × 12 building meshes; their exact Z center and door threshold should be verified from the remaining `marina.js` lines before adding a route node.
+
+### Central dock and HQ spur
+
+- Main dock visible base: 14 wide × 76 long, from Z=-41 to Z=35, centered at Z=-3. Its safe collision envelope is narrower (X ±6.2) to account for player clearance.
+- Dock ramp: five steps centered at X=0; step Z positions 31, 32.5, 34, 35.5, and 37. The step geometry should be compared with the dock-to-boardwalk connector in runtime.
+- Timber spur to the HQ elevator: X from 5.25 to 20.10; center Z=13.75; width 2.4; surface Y=1.36.
+- The dock spur module deliberately opens a 4.4-unit gap in the right-hand dock rail to provide a physical path opening. The rail is split into two retained segments; do not restore the original uninterrupted rail.
+- Bollards line both sides of the spur at X=9, 12, 15, and 18, with Z=11.8 and 16.5.
+
+### Conference Center district — current interim implementation
+
+The shared `cityMap.js` registry and `conferenceCenterDistrict.js` agree on the current interim location:
+- Building center: (-43, 97).
+- District ground pad: center (-43, 95), size 54 × 62; nominal bounds X -70..-16, Z 64..126.
+- Land connector: size 54 × 19, center (-43, 54.5); nominal bounds X -70..-16, Z 45..64. It overlaps the existing north land by 0.5 units at Z=45..45.5 to avoid a ground seam.
+- Store-side access road: X=-37, width 8, running from Z=46 to Z=80. It connects to the existing marina street at Z=46 and continues onto the new district land.
+- Sidewalks: two 2.8-wide × 30-long runs centered at X=-44.5 and X=-29.5, Z=65.
+- Arrival plaza: 34 × 16, centered (-43, 84); entry walk 8 × 7, centered (-43, 78.5).
+- Interim Conference Center foundation / roof: 28 × 24, centered (-43, 97). Main wall runs define an approximately 26 × 22 enclosure, with a deliberate south-facing central entrance.
+- Architectural collision is registered on the four walls and split front facade wings; the central south entrance remains open.
+
+**Planning note:** The prior Arena District concept is intended to coordinate a later arena-scale replacement of this interim Conference Center. Do not stack a second arena on top of the existing interim building. Treat the current Conference Center as the existing implementation to be replaced only as one approved, coordinated district change after the full road, land, and collision audit.
+
+### Current source files and responsibilities
+
+| File | Responsibility |
+|---|---|
+| `cityMap.js` | Shared coordinate registry, surface elevations, protected landmarks, interim Conference Center coordinates, provisional Arena District envelope, and road rules |
+| `world.js` | Existing waterfront land slabs, stage ground/platform, and background skyline |
+| `marina.js` | Boardwalk road, sidewalks, streetlights, stores, palms, and waterfront glass |
+| `dock.js` | Main timber dock, planks, rails, posts, and lanterns |
+| `dockPath.js` | Timber HQ spur, bollards, and dock-rail opening |
+| `boardwalkOverlooks.js` | West and east end overlook decks, rails, and associated collision |
+| `conferenceCenterDistrict.js` | District land pad, land connector, access road, sidewalks, plaza, interim building, and wall collision |
+| `collision.js` | Safe movement envelopes, architectural colliders, and player boundary checks |
+
+### Remaining survey items
+
+- [ ] Inspect the complete storefront positions, entrances, and collision in `marina.js` and `waterfrontStorefrontDetails.js`.
+- [ ] Inspect yacht, villa, roundabout, and Jumbotron exact positions and dimensions.
+- [ ] Inspect all conference access-road collision and confirm that the pedestrian route is open end-to-end.
+- [ ] Inspect the arena ground and boulevard concept against current world meshes and collision before construction.
+- [ ] Verify the full boardwalk-to-conference pedestrian route in a live preview on iPad and desktop.
