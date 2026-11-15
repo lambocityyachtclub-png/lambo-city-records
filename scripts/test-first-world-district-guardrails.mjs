@@ -65,7 +65,9 @@ const requiredBlueprintStatements = [
   "Exact first-left and second-left junction coordinates and curb-return geometry",
   "No new world coordinates are approved by this audit",
   "Candidate inland land-continuity corridor — survey hypothesis only",
-  "This is a **feasibility hypothesis, not a surveyed or approved footprint**"
+  "This is a **feasibility hypothesis, not a surveyed or approved footprint**",
+  "X=-16..65 and Z=45..64",
+  "This is a bounding envelope, not a final parcel or road footprint"
 ];
 
 for (const statement of requiredBlueprintStatements) {
