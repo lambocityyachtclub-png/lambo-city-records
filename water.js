@@ -19,6 +19,82 @@ let reflectionMesh;
 let time = 0;
 let frame = 0;
 
+let visualBaseline = null;
+
+function getWaterVisualStatus() {
+  return {
+    surface: waterMesh?.material ? {
+      roughness: waterMesh.material.roughness,
+      metalness: waterMesh.material.metalness,
+      opacity: waterMesh.material.opacity
+    } : null,
+    shimmerOpacity: shimmerMesh?.material?.opacity ?? null,
+    reflectionOpacity: reflectionMesh?.material?.opacity ?? null,
+    baselineCaptured: Boolean(visualBaseline)
+  };
+}
+
+const waterVisualControls = {
+  getStatus: getWaterVisualStatus,
+
+  setSurface(settings = {}) {
+    if (!waterMesh?.material) {
+      return { success: false, error: "Water surface is not initialized." };
+    }
+
+    const ranges = {
+      roughness: [0, 1],
+      metalness: [0, 1],
+      opacity: [0.5, 1]
+    };
+
+    for (const [key, value] of Object.entries(settings)) {
+      if (!ranges[key]) continue;
+      const number = Number(value);
+      if (!Number.isFinite(number)) {
+        return { success: false, error: key + " must be a finite number." };
+      }
+      const [min, max] = ranges[key];
+      waterMesh.material[key] = Math.max(min, Math.min(max, number));
+    }
+
+    waterMesh.material.needsUpdate = true;
+    return { success: true, status: getWaterVisualStatus() };
+  },
+
+  setReflectionLayers(settings = {}) {
+    const values = {
+      shimmer: shimmerMesh?.material,
+      reflection: reflectionMesh?.material
+    };
+
+    for (const [key, value] of Object.entries(settings)) {
+      const material = values[key];
+      if (!material) continue;
+      const number = Number(value);
+      if (!Number.isFinite(number)) {
+        return { success: false, error: key + " opacity must be a finite number." };
+      }
+      material.opacity = Math.max(0, Math.min(0.3, number));
+    }
+
+    return { success: true, status: getWaterVisualStatus() };
+  },
+
+  restoreBaseline() {
+    if (!visualBaseline || !waterMesh?.material) {
+      return { success: false, error: "Water visual baseline is unavailable." };
+    }
+
+    Object.assign(waterMesh.material, visualBaseline.surface);
+    waterMesh.material.needsUpdate = true;
+    shimmerMesh.material.opacity = visualBaseline.shimmerOpacity;
+    reflectionMesh.material.opacity = visualBaseline.reflectionOpacity;
+
+    return { success: true, status: getWaterVisualStatus() };
+  }
+};
+
 
 export default {
 
@@ -141,6 +217,18 @@ export default {
 
 
     scene.add(reflectionMesh);
+
+    // Capture the established water appearance. Visual presets remain opt-in.
+    visualBaseline = {
+      surface: {
+        roughness: waterMesh.material.roughness,
+        metalness: waterMesh.material.metalness,
+        opacity: waterMesh.material.opacity
+      },
+      shimmerOpacity: shimmerMesh.material.opacity,
+      reflectionOpacity: reflectionMesh.material.opacity
+    };
+    window.__lamboCityWaterVisuals = waterVisualControls;
 
 
 
