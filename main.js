@@ -6,6 +6,7 @@ import VisualEngine from "./visualEngine.js";
 import VisualEngineDiagnostics from "./visualEngineDiagnostics.js";
 import VisualEngineMaterials from "./visualEngineMaterials.js";
 import VisualEngineAtmosphere from "./visualEngineAtmosphere.js";
+import VisualEngineColor from "./visualEngineColor.js";
 import World from "./world.js";
 import FestivalStageUpgrade from "./festivalStageUpgrade.js";
 import FestivalStageArchitecture from "./festivalStageArchitecture.js";
@@ -78,6 +79,7 @@ engine.registerSystems({
   visualEngineDiagnostics: VisualEngineDiagnostics,
   visualEngineMaterials: VisualEngineMaterials,
   visualEngineAtmosphere: VisualEngineAtmosphere,
+  visualEngineColor: VisualEngineColor,
   world: World,
   festivalStageUpgrade: FestivalStageUpgrade,
   festivalStageArchitecture: FestivalStageArchitecture,
