@@ -84,10 +84,10 @@ export default {
       }
 
       // A subtle shared beat response makes the crowd feel connected without
-      // moving anyone from their approved stage-front positions.
-      if (musicPlaying && profile.role !== "phone") {
-        mesh.position.y += Math.max(0, beat) * 0.0025 * profile.energy;
-      }
+      // moving anyone from their approved stage-front positions or accumulating
+      // vertical drift over time.
+      mesh.position.y = 1.3 + Math.sin(elapsed * 3 + phase) * 0.035 +
+        (musicPlaying && profile.role !== "phone" ? Math.max(0, beat) * 0.025 * profile.energy : 0);
     });
   },
 
