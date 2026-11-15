@@ -25,6 +25,9 @@ on:
     paths:
       - "main.js"
       - "engine.js"
+      - "npc.js"
+      - "characterSystem.js"
+      - "scripts/test-character-system.mjs"
       - "input.js"
       - "player.js"
       - "marina.js"
