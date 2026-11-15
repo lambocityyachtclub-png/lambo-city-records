@@ -62,7 +62,7 @@ Evolve the existing Three.js 0.160.0 renderer into a modular, performance-aware 
 - visualEnginePostProcessing.js: optional Unreal Bloom post-processing. The composer and Three.js example modules are dynamically loaded only after an explicit enableBloom() request; the default render path remains the direct renderer path. Bloom can be tuned or disabled to return to the standard renderer.
 - visualEngineShadows.js: opt-in directional shadow pipeline. At scene initialization it discovers only meshes already explicitly tagged with castShadow/receiveShadow by their feature modules; shadows remain disabled until deliberately enabled. Enabling requires at least one caster, receiver, and directional light, defaults to a maximum of 24 active casters (hard cap 64), supports explicit per-mesh priority, and restores the original mesh, light-shadow, and renderer settings when disabled. Groups/named objects can also be registered manually; point-light shadows are excluded.
 - lighting.js: registers the existing sun with the shadow controller without enabling shadows or changing the default lighting.
-- water.js: reversible water surface and shimmer/reflection-layer presets plus an explicitly opt-in, low-resolution cube-map environment reflection mode. The reflection mode uses the existing MeshStandardMaterial, defaults to 128px per cube face with a 3-second refresh interval, clamps resolution to 64–256px and refresh interval to 2–10 seconds, and performs no extra render passes unless deliberately enabled. It is an environment reflection, not a planar mirror/reflection pass; the established water look and wave animation remain the default.
+- water.js: reversible water surface and shimmer/reflection-layer presets plus two explicitly opt-in reflection paths: low-resolution cube-map environment reflections on the existing MeshStandardMaterial, and a throttled planar Reflector layer. Both remain disabled by default; cube-map reflections default to 128px per face / 3 seconds, while planar reflections default to 128px / 3 seconds / 0.18 opacity. Both clamp their quality settings, and either path disables the other to avoid stacking reflection costs.
 - sky.js: reversible cloud, star, and moon-glow controls plus optional slow cloud drift, exposed as window.__lamboCitySkyVisuals; cloud drift is disabled by default, and baseline restoration returns clouds to their original positions.
 - performanceMonitor.js: existing optional ?perf=1 overlay and renderer metrics.
 - engine.js / main.js: register and initialize the Visual Engine modules without changing the existing scene feature modules.
@@ -102,6 +102,12 @@ window.__lamboCityWaterVisuals.setEnvironmentReflection(true, {
   intensity: 0.45
 })
 window.__lamboCityWaterVisuals.setEnvironmentReflection(false)
+await window.__lamboCityWaterVisuals.setPlanarReflection(true, {
+  resolution: 128,
+  refreshIntervalSeconds: 3,
+  opacity: 0.18
+})
+await window.__lamboCityWaterVisuals.setPlanarReflection(false)
 window.__lamboCitySkyVisuals.getStatus()
 window.__lamboCitySkyVisuals.setCloudDrift(true, 0.12)
 window.__lamboCitySkyVisuals.setCloudDrift(false)
@@ -133,7 +139,7 @@ Do not enable shadows or change material, water, sky, fog, or tone-mapping prese
 - Default profile preserves current baseline appearance.
 - Adaptive resolution remains disabled unless deliberately enabled.
 - No regression in camera, navigation, collisions, Floor 2 Studio, stage performance, HERO sequence, or lazy-loaded HQ floors.
-- Optional cube-map water reflections are tested at 64px, 128px, and 256px on iPad Safari and desktop; compare frame rate and visual artifacts, and confirm disabling restores the exact baseline material settings.
+- Optional cube-map and planar water reflections are compared at low/medium resolutions on iPad Safari and desktop; measure frame rate, visual artifacts, and ensure disabling either path returns to the baseline.
 - Optional shadows are tested with a 24-caster budget first; inspect activeCasters/skippedCasters and compare performance before considering a higher budget.
 - Optional bloom is tested on both device classes, and its dynamic imports, render path, resize handling, and fallback to direct rendering are verified.
 - Any new shadows, reflections, atmosphere, or post-processing are measured with ?perf=1.
@@ -145,4 +151,4 @@ The owner authorized completion of this Visual Engine 2.0 feature-branch scope. 
 
 ## Status
 
-The quality-management, diagnostics, reversible texture filtering/material helpers, reversible atmosphere controls and transitions, renderer color controls, opt-in water appearance presets and low-resolution cube-map reflections, reversible sky controls, budgeted directional-shadow framework, and optional dynamically loaded bloom path are implemented on the feature branch. Targeted world caster/receiver tuning, measured shadow/reflection/bloom quality, planar water reflections, and broader asset-specific material improvements remain in development. This document is the scope and verification contract for the branch; it is not a claim that those later layers are already finished.
+The quality-management, diagnostics, reversible texture filtering/material helpers, reversible atmosphere controls and transitions, renderer color controls, opt-in water appearance presets with cube-map and planar reflection paths, reversible sky controls, budgeted directional-shadow framework, and optional dynamically loaded bloom path are implemented on the feature branch. Targeted world caster/receiver tuning, measured shadow/reflection/bloom quality, and broader asset-specific material improvements remain in development. This document is the scope and verification contract for the branch; it is not a claim that those later layers are already finished.
