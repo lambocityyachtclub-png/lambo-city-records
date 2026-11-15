@@ -113,10 +113,9 @@ getCameraTargets() {
       heroMesh.position.y = 1.3+Math.sin(time*1.2)*0.05;
       heroMesh.rotation.y = Math.sin(time*0.4)*0.15;
     }
-    crowdNPCs.forEach(c => {
-      c.mesh.position.y = 1.3+Math.sin(time*3+c.offset)*0.035;
-      c.mesh.rotation.y = c.baseRotationY + Math.sin(time*0.55+c.offset)*0.035;
-    });
+    // The dedicated characterSystem owns all crowd movement and animation.
+    // Keeping a second per-frame crowd pose writer here would compete with
+    // walking gait, facing direction, and root movement.
     if (!giftGiven && context.player) {
       const dx = context.player.position.x-2.5;
       const dz = context.player.position.z-6;
