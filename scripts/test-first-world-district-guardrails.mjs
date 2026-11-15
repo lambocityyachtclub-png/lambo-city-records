@@ -62,7 +62,7 @@ const requiredBlueprintStatements = [
   "outside the outer sidewalks",
   "at least 300 separately assignable private apartments",
   "opposite / Jumbotron-facing side",
-  "Exact first-left and second-left junction nodes",
+  "Exact first-left and second-left junction coordinates and curb-return geometry",
   "No new world coordinates are approved by this audit"
 ];
 
