@@ -62,16 +62,26 @@ const CITY_MAP = Object.freeze({
         materialDirection: "dark architectural structure, glass curtain walls, champagne-gold metal detailing, large integrated digital displays"
       }),
       routeIntent: Object.freeze({
-        status: "directional-intent-confirmed-exact-junction-coordinates-unassigned",
-        approach: "travel westbound along the existing boardwalk toward the west/store-side district entrance",
-        firstTurn: "left / inland / +Z, toward the Convention Center",
-        firstStraight: "continue inland along the district approach",
-        secondTurn: "left / east / +X, toward the Records HQ side",
-        return: "continue the approved loop toward the HQ-side return connection; survey and close the remaining loop legs without routing normal traffic along the pedestrian boardwalk",
+        status: "four-sided-square-loop-approved-route-topology-coordinates-unassigned",
+        approach: "travel westbound along the existing boardwalk toward the west/store-side district entrance; the boardwalk approach is a connector, not one of the four square-loop sides",
+        entry: "enter the district at the boardwalk-side approach and turn left inland / +Z toward the Convention Center",
+        loopShape: "one complete closed four-sided square street loop, like a Monopoly board, with four connected corners and four continuous drivable sides",
+        turnSequence: "after entering the square, make three additional left turns at the next three corners; continue along the fourth side to the entry connection to close the loop",
+        sideSequence: Object.freeze([
+          "Side 1: from the boardwalk-side entry, travel inland toward the Convention Center",
+          "Corner 1: turn left",
+          "Side 2: continue along the second side of the square",
+          "Corner 2: turn left",
+          "Side 3: continue along the third side of the square",
+          "Corner 3: turn left",
+          "Side 4: continue along the final side and reconnect to the entry approach, completing the closed loop"
+        ]),
+        closure: "all four sides and four corners must connect continuously; the boardwalk itself is not used as an ordinary vehicle leg",
         restrictions: Object.freeze([
           "The existing boardwalk remains pedestrian-priority and service/emergency access only",
           "Do not build on the opposite Jumbotron-facing side",
-          "Directional intent does not approve exact coordinates, road widths, land extensions, or collision geometry"
+          "Do not count the entry connector as a square-loop side or omit any of the four sides",
+          "Exact junction coordinates, road widths, land extensions, elevations, and collision geometry remain unassigned until measured in the rendered scene"
         ])
       }),
       boulevard: Object.freeze({
