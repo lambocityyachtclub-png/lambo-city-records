@@ -1337,6 +1337,12 @@ const StudioDAWApp = {
         onTransportRecord: mode => this.armSessionRecording(mode),
         onTransportDisarm: mode => this.disarmSessionRecording(mode)
       });
+      window.dispatchEvent(new CustomEvent("lc-session-midi-recording-state", {
+        detail: {
+          active: this.sessionMidiRecordingActive,
+          armed: this.recordArmed && this.recordingMode === "midi"
+        }
+      }));
       applyCitySynthVisual(this.pianoPanel);
       this.workspace.setPanel("mix", this.mixPanel);
       this.workspace.setPanel("piano", this.pianoPanel);
