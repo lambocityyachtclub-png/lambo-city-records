@@ -493,7 +493,7 @@ const StudioMultitrackWorkspace = {
   setTrackInputSource(trackId, source = "mic") {
     const track = this.tracks.find(item => item.id === trackId);
     if (!track || track.type !== "audio") throw new Error("Choose an audio track before assigning its input source.");
-    if (!["mic", "beatlab", "mpc"].includes(source)) throw new Error("Unsupported recording input source.");
+    if (!["mic", "beatlab", "mpc", "drums"].includes(source)) throw new Error("Unsupported recording input source.");
     if (this.isTrackRecording() || this.pendingRecording) throw new Error("Stop recording before changing an input source.");
     track.inputSource = source;
     this.scheduleProjectAutosave();
@@ -918,7 +918,7 @@ const StudioMultitrackWorkspace = {
         type: TRACK_TYPES.includes(track.type) ? track.type : "audio",
         volume: Math.max(0, Math.min(100, Number(track.volume) || 0)),
         pan: Math.max(-1, Math.min(1, Number(track.pan) || 0)),
-        inputSource: ["mic", "beatlab", "mpc"].includes(track.inputSource) ? track.inputSource : "mic",
+        inputSource: ["mic", "beatlab", "mpc", "drums"].includes(track.inputSource) ? track.inputSource : "mic",
         inputDeviceId: String(track.inputDeviceId || "").slice(0, 256),
         inputChannel: Number.isInteger(track.inputChannel) && track.inputChannel >= 0 && track.inputChannel < 32 ? track.inputChannel : null,
         inputLatencyMs: Math.max(0, Math.min(500, Number(track.inputLatencyMs) || 0)),
@@ -1035,7 +1035,7 @@ const StudioMultitrackWorkspace = {
       type: TRACK_TYPES.includes(savedTrack.type) ? savedTrack.type : "audio",
       volume: Math.max(0, Math.min(100, Number(savedTrack.volume) || 0)),
       pan: Math.max(-1, Math.min(1, Number(savedTrack.pan) || 0)),
-      inputSource: ["mic", "beatlab", "mpc"].includes(savedTrack.inputSource) ? savedTrack.inputSource : "mic",
+      inputSource: ["mic", "beatlab", "mpc", "drums"].includes(savedTrack.inputSource) ? savedTrack.inputSource : "mic",
       inputDeviceId: String(savedTrack.inputDeviceId || "").slice(0, 256),
       inputChannel: Number.isInteger(savedTrack.inputChannel) && savedTrack.inputChannel >= 0 && savedTrack.inputChannel < 32 ? savedTrack.inputChannel : null,
       inputLatencyMs: Math.max(0, Math.min(500, Number(savedTrack.inputLatencyMs) || 0)),
@@ -1636,7 +1636,9 @@ const StudioMultitrackWorkspace = {
             ? StudioAudioExport.getOutput(audio)
             : track.inputSource === "mpc"
               ? StudioMPCSampler.ensureOutput(audio)
-              : null;
+              : track.inputSource === "drums"
+                ? StudioAudioEngine.getDrumOutput(audio)
+                : null;
           const pitchCorrectionNode = track.inputSource === "mic" && /vocal/i.test(track.name) && track.effects?.pitchCorrection?.enabled
             ? await createStudioPitchCorrectionNode(audio, track.effects.pitchCorrection)
             : null;
