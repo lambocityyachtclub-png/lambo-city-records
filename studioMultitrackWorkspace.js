@@ -72,6 +72,7 @@ const StudioMultitrackWorkspace = {
   tempo: 100,
   beatLabPattern: null,
   beatLabSoundProfile: "beatLab",
+  beatLabPlaybackEnabled: false,
   timeSignature: "4/4",
   tempoChanges: [],
   timeSignatureChanges: [],
@@ -132,6 +133,7 @@ const StudioMultitrackWorkspace = {
     return {
       beatLabPattern: this.beatLabPattern ? JSON.parse(JSON.stringify(this.beatLabPattern)) : null,
       beatLabSoundProfile: this.beatLabSoundProfile === "mpc" ? "mpc" : "beatLab",
+      beatLabPlaybackEnabled: Boolean(this.beatLabPlaybackEnabled),
       tracks: this.tracks.map(track => ({
         ...track,
         eq: { ...(track.eq || {}) },
@@ -168,8 +170,9 @@ const StudioMultitrackWorkspace = {
       ? JSON.parse(JSON.stringify(snapshot.beatLabPattern))
       : null;
     this.beatLabSoundProfile = snapshot.beatLabSoundProfile === "mpc" ? "mpc" : "beatLab";
+    this.beatLabPlaybackEnabled = Boolean(snapshot.beatLabPlaybackEnabled);
     window.dispatchEvent(new CustomEvent("lc-session-beatlab-pattern-restore", {
-      detail: { pattern: this.beatLabPattern, soundProfile: this.beatLabSoundProfile }
+      detail: { pattern: this.beatLabPattern, soundProfile: this.beatLabSoundProfile, playbackEnabled: this.beatLabPlaybackEnabled }
     }));
     this.tracks = snapshot.tracks.map(track => ({
       ...track,
@@ -645,6 +648,7 @@ const StudioMultitrackWorkspace = {
       metronomeSettings: { ...(this.metronomeSettings || { enabled: false, volume: 0.16, accent: true }) },
       beatLabPattern: this.beatLabPattern ? JSON.parse(JSON.stringify(this.beatLabPattern)) : null,
       beatLabSoundProfile: this.beatLabSoundProfile === "mpc" ? "mpc" : "beatLab",
+      beatLabPlaybackEnabled: Boolean(this.beatLabPlaybackEnabled),
       templateId: this.sessionTemplateId,
       templateName: this.sessionTemplateName,
       deletedItems: this.deletedItems,
@@ -731,8 +735,9 @@ const StudioMultitrackWorkspace = {
     this.metronomeSettings = { enabled: Boolean(session.metronomeSettings?.enabled), volume: Math.max(0, Math.min(0.4, Number(session.metronomeSettings?.volume ?? 0.16))), accent: session.metronomeSettings?.accent !== false };
     this.beatLabPattern = session.beatLabPattern?.steps ? JSON.parse(JSON.stringify(session.beatLabPattern)) : null;
     this.beatLabSoundProfile = session.beatLabSoundProfile === "mpc" ? "mpc" : "beatLab";
+    this.beatLabPlaybackEnabled = Boolean(session.beatLabPlaybackEnabled);
     window.dispatchEvent(new CustomEvent("lc-session-beatlab-pattern-restore", {
-      detail: { pattern: this.beatLabPattern, soundProfile: this.beatLabSoundProfile }
+      detail: { pattern: this.beatLabPattern, soundProfile: this.beatLabSoundProfile, playbackEnabled: this.beatLabPlaybackEnabled }
     }));
     StudioAudioEngine.setMasterVolume(this.masterSettings.volume / 100);
     StudioAudioEngine.setStereoWidth(this.masterSettings.stereoWidth);
@@ -763,6 +768,7 @@ const StudioMultitrackWorkspace = {
 
   validateSessionData(session) {
     if (!session || session.format !== "lambo-city-daw-session" || session.version !== 1 || !Array.isArray(session.tracks) || session.tracks.length > 64) return false;
+    if (session.beatLabPlaybackEnabled !== undefined && typeof session.beatLabPlaybackEnabled !== "boolean") return false;
     if (session.beatLabPattern !== undefined && session.beatLabPattern !== null) {
       const pattern = session.beatLabPattern;
       if (!pattern || !pattern.steps ||
@@ -835,6 +841,7 @@ const StudioMultitrackWorkspace = {
     this.stopAll();
     this.beatLabPattern = null;
     this.beatLabSoundProfile = "beatLab";
+    this.beatLabPlaybackEnabled = false;
     this.tempo = Math.max(60, Math.min(180, Number(tempo) || 100));
     this.timeSignature = "4/4"; this.tempoChanges = []; this.timeSignatureChanges = []; this.markers = []; this.loopRange = { enabled: false, startBar: 1, endBar: 9 }; this.masterSettings = { volume: 100, stereoWidth: 100, compressionRatio: 3, limiterEnabled: true, limiterCeilingDb: -1 }; StudioAudioEngine.setMasterVolume(1); StudioAudioEngine.setStereoWidth(100); StudioAudioEngine.setMasterCompressionRatio(3); StudioAudioEngine.setMasterLimiter(true, -1); this.followPlayhead = true; this.selectedRegionIds = []; this.multiSelectMode = false;
     this.sessionTemplateId = null;
@@ -964,6 +971,7 @@ const StudioMultitrackWorkspace = {
       projectName: this.activeProjectName || "Untitled Song",
       beatLabPattern: this.beatLabPattern ? JSON.parse(JSON.stringify(this.beatLabPattern)) : null,
       beatLabSoundProfile: this.beatLabSoundProfile === "mpc" ? "mpc" : "beatLab",
+      beatLabPlaybackEnabled: Boolean(this.beatLabPlaybackEnabled),
       tempo: this.tempo,
       timeSignature: this.timeSignature,
       tempoChanges: this.tempoChanges.map(point=>({...point})),
