@@ -550,6 +550,9 @@ const MPCInterface = {
   root: null,
   onClose: null,
   onNext: null,
+  onTransportPlay: null,
+  onTransportStop: null,
+  onTransportRecord: null,
   performancePanel: null,
   performanceView: null,
   performanceToggleHandler: null,
@@ -580,6 +583,9 @@ const MPCInterface = {
 
     this.onClose = typeof options.onClose === "function" ? options.onClose : null;
     this.onNext = typeof options.onNext === "function" ? options.onNext : null;
+    this.onTransportPlay = typeof options.onTransportPlay === "function" ? options.onTransportPlay : null;
+    this.onTransportStop = typeof options.onTransportStop === "function" ? options.onTransportStop : null;
+    this.onTransportRecord = typeof options.onTransportRecord === "function" ? options.onTransportRecord : null;
     this.performancePanel = options.performancePanel instanceof HTMLElement
       ? options.performancePanel
       : null;
@@ -1379,38 +1385,36 @@ const MPCInterface = {
         const audio = await StudioAudioEngine.resume();
         this.beatLab.audio = audio;
         const songWasPlaying = Boolean(this.beatLab.playing);
-        if (!songWasPlaying) await this.beatLab.start();
+        this.onTransportRecord?.("mpc");
         if (action === "record") this.take = { events: [], duration: 0 };
         this.recording = true;
-        this.overdubOffset = songWasPlaying
-          ? this.getSongPosition(audio)
-          : 0;
+        this.overdubOffset = songWasPlaying ? this.getSongPosition(audio) : 0;
         this.recordingStartedAt = audio.currentTime;
         this.root?.querySelector('[data-placeholder="REC"]')?.classList.add("lit");
-        this.setStatus(action === "overdub" ? "OVERDUB ARMED · PLAY PADS OVER YOUR SONG" : "PAD RECORDING ARMED · PLAY PADS OVER YOUR SONG");
+        this.setStatus(action === "overdub" ? "OVERDUB ARMED · PRESS SPACEBAR TO START THE SESSION" : "PAD RECORDING ARMED · PRESS SPACEBAR TO START THE SESSION");
         return;
       }
       if (action === "stop") {
         this.finishRecording();
         this.stopPerformancePlayback();
-        this.beatLab.stop();
-        this.setStatus("MPC AND SONG PLAYBACK STOPPED.");
+        if (this.onTransportStop) await this.onTransportStop();
+        this.setStatus("MPC AND SESSION TRANSPORT STOPPED.");
         return;
       }
       if (action === "play" || action === "play-start") {
-        if (this.recording) this.finishRecording();
+        const wasRecording = this.recording;
         const songWasPlaying = Boolean(this.beatLab.playing);
-        if (action === "play-start" && songWasPlaying) this.beatLab.stop();
-        if (!this.beatLab.playing) {
+        if (!songWasPlaying && this.onTransportPlay) await this.onTransportPlay();
+        if (wasRecording && songWasPlaying) this.finishRecording();
+        if (!wasRecording) {
           const projectId = this.beatLab?.currentProject?.id || "unsaved";
           const take = this.beatLab?.currentProject?.mpcPerformance ||
       (this.beatLab?.currentProject?.id ? StudioMPCLibrary.loadTake(projectId) : { events: [], duration: 0 });
           const audio = await this.getAudioContext();
           await StudioMPCSampler.preload((take.events || []).map(event => event.sampleId), audio);
-          await this.beatLab.start();
+          await this.playSavedPerformance(action === "play-start" || !songWasPlaying);
         }
-        await this.playSavedPerformance(action === "play-start" || !songWasPlaying);
-        this.setStatus("SONG PLAYING · MPC PERFORMANCE PLAYING");
+        this.setStatus(wasRecording ? "MPC PAD RECORDING · SESSION TRANSPORT RUNNING" : "SONG PLAYING · MPC PERFORMANCE PLAYING");
       }
     } catch (error) { this.setStatus("MPC CONTROL ERROR: " + (error?.message || error)); }
   },
