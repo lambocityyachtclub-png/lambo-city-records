@@ -233,9 +233,16 @@ const StudioDAWWorkspace = {
         padding:12px 20px;border-bottom:1px solid var(--lc-border);background:#0e0f14;touch-action:pan-y;
       }
       #lambo-city-daw-workspace .lc-daw-step-arrow {
-        flex:0 0 48px;width:48px;min-height:44px;border:1px solid #80643a;
-        border-radius:9px;background:#201c16;color:var(--lc-gold-light);
-        font-size:25px;font-weight:700;cursor:pointer;touch-action:manipulation;
+        flex:0 0 52px;width:52px;min-height:48px;border:2px solid #d9ad62;
+        border-radius:10px;background:linear-gradient(145deg,#3a2d1b,#17130d);
+        color:#ffe2a8;font-size:29px;font-weight:900;cursor:pointer;
+        touch-action:manipulation;box-shadow:0 0 0 1px rgba(217,173,98,.14),0 4px 12px rgba(0,0,0,.35);
+      }
+      #lambo-city-daw-workspace .lc-daw-step-arrow:focus-visible {
+        outline:3px solid #f1d49c;outline-offset:3px;
+      }
+      #lambo-city-daw-workspace .lc-daw-step-arrow:active {
+        transform:translateY(1px);background:linear-gradient(145deg,#60451f,#251b10);
       }
       #lambo-city-daw-workspace .lc-daw-step-arrow:disabled { opacity:.28;cursor:default; }
       #lambo-city-daw-workspace .lc-daw-current-view {
@@ -380,7 +387,7 @@ const StudioDAWWorkspace = {
         }
 
         #lambo-city-daw-workspace .lc-daw-navigation { gap:10px; padding:10px 12px; }
-        #lambo-city-daw-workspace .lc-daw-step-arrow { flex-basis:44px; width:44px; }
+        #lambo-city-daw-workspace .lc-daw-step-arrow { flex-basis:52px; width:52px; min-height:48px; }
       }
     `;
 

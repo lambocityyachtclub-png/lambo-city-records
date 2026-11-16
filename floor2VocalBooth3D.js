@@ -14,7 +14,7 @@ function formatTime(ms) {
   return String(Math.floor(seconds / 60)).padStart(2,"0") + ":" + String(seconds % 60).padStart(2,"0");
 }
 
-export function createVocalBoothPanel({ beatLab } = {}) {
+export function createVocalBoothPanel({ beatLab, onTransportPlay, onTransportStop, onTransportRecord } = {}) {
   const root = document.createElement("section");
   root.className = "lc-vocal-booth";
   root.style.cssText = "display:grid;gap:14px;min-height:calc(100vh - 150px);padding:clamp(12px,2vw,24px);border-radius:14px;background:radial-gradient(ellipse at 50% 15%,#4c285f,#24142f 62%,#100d19);color:#f5eef8;font-family:Arial,sans-serif;box-sizing:border-box";
@@ -95,72 +95,48 @@ export function createVocalBoothPanel({ beatLab } = {}) {
     window.removeEventListener("lc-talkback-error",onTalkbackError);
   },{once:true});
   const showTake=(name,format)=>{root.querySelector("[data-vocal-take-name]").textContent=name;root.querySelector("[data-vocal-take-format]").textContent=format||"Original audio take";};
+  const onSessionRecordingState=event=>{
+    const detail=event.detail||{};
+    recordingActive=Boolean(detail.recording);
+    const noteStart=root.querySelector('[data-vocal-action="quick-note-start"]');
+    const noteStop=root.querySelector('[data-vocal-action="quick-note-stop"]');
+    if(detail.mode==="notes"){if(noteStart)noteStart.disabled=recordingActive;if(noteStop)noteStop.disabled=!recordingActive;}
+    if(recordingActive){recordingStartedAt=performance.now();status(detail.mode==="notes"?"Voice Note recording · session transport running.":"Vocal recording · session transport running.");}
+    else if(detail.name){if(noteStart)noteStart.disabled=false;if(noteStop)noteStop.disabled=true;showTake(detail.name,detail.format);status("Recording saved to the shared song timeline.");voiceStatus("Saved to the shared song timeline.");}
+  };
+  window.addEventListener("lc-vocal-recording-state",onSessionRecordingState);
+  root.addEventListener("lc-vocal-booth-dispose",()=>window.removeEventListener("lc-vocal-recording-state",onSessionRecordingState),{once:true});
   root.addEventListener("click",async event=>{
     const button=event.target.closest("[data-vocal-action]");
     if(!button||!beatLab)return;
     try{
       switch(button.dataset.vocalAction){
         case "start-beat":
-          await beatLab.start();
-          status("Beat session playing.");
+          if (onTransportPlay) await onTransportPlay();
+          else status("Use the shared Studio transport to play this session.");
+          status("Shared song session playing.");
           break;
         case "stop-beat":
-          beatLab.stop();
-          status("Beat session stopped.");
+          if (onTransportStop) await onTransportStop();
+          else status("Use the shared Studio transport to stop this session.");
+          status("Shared song session stopped.");
           break;
         case "record":
-          await beatLab.startRecording();
-          recordingStartedAt=performance.now();
-          recordingActive=true;
-          status("Recording vocals and session stems.");
-          window.dispatchEvent(new CustomEvent("lc-vocal-recording-state",{detail:{recording:true,mode:"vocal"}}));
+          if (onTransportRecord) onTransportRecord("vocal");
+          status("Vocal recording armed · press Spacebar or PLAY SESSION to begin.");
           break;
         case "stop-recording":
-          await beatLab.stopRecording();
-          recordingActive=false;
-          takeCount+=1;
-          const format=beatLab.lastRecordedTake?.recordingFormat||"Session recording";
-          showTake("Vocal Take "+String(takeCount).padStart(2,"0"),format);
+          if (onTransportStop) await onTransportStop();
           status("Vocal take saved to the shared session.");
-          window.dispatchEvent(new CustomEvent("lc-vocal-recording-state",{detail:{recording:false,name:"Vocal Take "+String(takeCount).padStart(2,"0")}}));
           break;
-        case "quick-note-start":{
-          if(StudioRecordingEngine.activeTake||StudioRecordingEngine.activeTrackTake)throw new Error("Finish the current recording before starting a Voice Note.");
-          const audio=await StudioAudioEngine.resume();
-          if(!audio||audio.state!=="running")throw new Error("Studio audio could not start.");
-          let track=StudioMultitrackWorkspace.tracks.find(item=>item.type==="audio"&&item.name==="Voice Notes");
-          if(!track){StudioMultitrackWorkspace.recordHistory("Create Voice Notes track");track=StudioMultitrackWorkspace.createTrack("audio","Voice Notes");}
-          await StudioRecordingEngine.startTrackRecording({audio,trackId:track.id});
-          root.dataset.voiceNoteTrackId=track.id;
-          recordingStartedAt=performance.now();
-          recordingActive=true;
-          button.disabled=true;
-          root.querySelector('[data-vocal-action="quick-note-stop"]').disabled=false;
-          voiceStatus("Recording your idea…");
-          window.dispatchEvent(new CustomEvent("lc-vocal-recording-state",{detail:{recording:true,mode:"voice-note"}}));
+        case "quick-note-start":
+          if (onTransportRecord) onTransportRecord("notes");
+          voiceStatus("Voice Note armed · press Spacebar or PLAY SESSION to begin.");
           break;
-        }
-        case "quick-note-stop":{
-          const trackId=root.dataset.voiceNoteTrackId;
-          if(!trackId)return;
-          const take=await StudioRecordingEngine.stopTrackRecording(trackId);
-          const track=StudioMultitrackWorkspace.tracks.find(item=>item.id===trackId);
-          const date=new Date();
-          const name="Voice Note · "+date.toLocaleString();
-          const clip={id:take.id,name,blob:take.blob,recordingFormat:take.recordingFormat,durationMs:take.durationMs,createdAt:date.toISOString(),startBar:Math.max(1,Number(StudioMultitrackWorkspace.playheadBar)||1),lengthBars:Math.max(.25,(take.durationMs/1000)/(240/Math.max(20,Number(StudioMultitrackWorkspace.getTempoAtBar(StudioMultitrackWorkspace.playheadBar))||100))),objectUrl:take.blob?.size?URL.createObjectURL(take.blob):null};
-          track.clips.push(clip);
-          StudioMultitrackWorkspace.render();
-          StudioMultitrackWorkspace.scheduleProjectAutosave();
-          recordingActive=false;
-          button.disabled=false;
-          root.querySelector('[data-vocal-action="quick-note-start"]').disabled=false;
-          root.querySelector('[data-vocal-action="quick-note-stop"]').disabled=true;
-          voiceStatus("Saved to the shared song timeline.");
-          showTake(name,take.recordingFormat);
-          window.dispatchEvent(new CustomEvent("lc-vocal-recording-state",{detail:{recording:false,name,format:take.recordingFormat}}));
-          delete root.dataset.voiceNoteTrackId;
+        case "quick-note-stop":
+          if (onTransportStop) await onTransportStop();
+          voiceStatus("Voice Note saved to the shared song timeline.");
           break;
-        }
         case "export-vocals":
           if(!beatLab.lastRecordedTake?.vocal?.size){status("Record a vocal take before exporting.");return;}
           beatLab.exportRecordingTrack("vocal");status("Vocal export requested.");

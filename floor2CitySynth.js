@@ -21,7 +21,7 @@ const WHITE_KEYS = SEMITONES.filter(note => note.white);
 let activePanel = null;
 let activeSynth = null;
 
-export function createCitySynthPanel({ session = StudioMultitrackWorkspace } = {}) {
+export function createCitySynthPanel({ session = StudioMultitrackWorkspace, onTransportRecord, onTransportDisarm } = {}) {
   const root = document.createElement("section");
   root.className = "lc-city-synth";
   root.style.cssText = "display:grid;gap:14px;padding:clamp(12px,2vw,24px);min-height:calc(100vh - 150px);border-radius:14px;background:linear-gradient(145deg,#c8a75f,#8e6b32 38%,#d6b86e);color:#191711;font-family:Arial,sans-serif;box-sizing:border-box";
@@ -91,7 +91,9 @@ export function createCitySynthPanel({ session = StudioMultitrackWorkspace } = {
           captureStartBar = Math.max(1, Number(session.playheadBar) || 1);
         }
         const bpm = Math.max(20, Number(session.getTempoAtBar(captureStartBar)) || 100);
-        const startBar = captureStartBar + (audio.currentTime - captureStartedAt) / (240 / bpm);
+        const startBar = session.isPlaying()
+          ? Math.max(1, Number(session.playheadBar) || captureStartBar)
+          : captureStartBar + (audio.currentTime - captureStartedAt) / (240 / bpm);
         record.midi = { id:"city-synth-" + Date.now() + "-" + note.pitch, pitch:note.pitch + settings.octave * 12, startBar, lengthBars:0.125, velocity:0.8 };
         track.midiNotes = Array.isArray(track.midiNotes) ? track.midiNotes : [];
         track.midiNotes.push(record.midi);
@@ -151,11 +153,27 @@ export function createCitySynthPanel({ session = StudioMultitrackWorkspace } = {
     button.addEventListener("pointerleave",release);
     keys.appendChild(button);
   });
+  const syncMidiArm = active => {
+    midiArmed = Boolean(active);
+    armButton.textContent = midiArmed ? "■ STOP MIDI RECORD" : "● ARM MIDI RECORD";
+    midiStatus.textContent = midiArmed ? "MIDI ARMED · SESSION TRANSPORT READY" : "MIDI CAPTURE OFF";
+    if (!midiArmed) { session.scheduleProjectAutosave(); session.render?.(); }
+  };
   armButton.addEventListener("click",()=>{
-    midiArmed=!midiArmed;
-    if(midiArmed){ensureMidiTrack();captureStartedAt=0;captureStartBar=Math.max(1,Number(session.playheadBar)||1);armButton.textContent="■ STOP MIDI RECORD";midiStatus.textContent="MIDI ARMED";}
-    else{armButton.textContent="● ARM MIDI RECORD";midiStatus.textContent="MIDI CAPTURE OFF";session.scheduleProjectAutosave();session.render?.();}
+    if (!midiArmed) {
+      ensureMidiTrack();
+      captureStartedAt=0;
+      captureStartBar=Math.max(1,Number(session.playheadBar)||1);
+      syncMidiArm(true);
+      onTransportRecord?.("midi");
+    } else {
+      syncMidiArm(false);
+      onTransportDisarm?.("midi");
+    }
   });
+  const onMidiTransportState = event => syncMidiArm(Boolean(event.detail?.active));
+  window.addEventListener("lc-session-midi-recording-state", onMidiTransportState);
+  root.addEventListener("lc-city-synth-dispose", () => window.removeEventListener("lc-session-midi-recording-state", onMidiTransportState), { once: true });
   root.querySelector("[data-synth-waveform]").addEventListener("change",event=>{settings.waveform=event.target.value;status.textContent="Oscillator waveform: "+settings.waveform.toUpperCase();});
   root.querySelector("[data-synth-volume]").addEventListener("input",event=>{settings.volume=Number(event.target.value)/100;activeNotes.forEach(note=>note.envelope.gain.setTargetAtTime(settings.volume,note.audio.currentTime,.015));});
   root.querySelector("[data-synth-filter]").addEventListener("input",event=>{settings.filter=Number(event.target.value);activeNotes.forEach(note=>note.filter.frequency.setTargetAtTime(settings.filter,note.audio.currentTime,.02));});
