@@ -1346,6 +1346,10 @@ StudioSoundKit.play(
     this.soundProfile = "beatLab";
     this.lastRecordedTake = null;
     this.audio = this.audio || null;
+    this.vocalEffectSettings = { delay: 0, reverb: 0 };
+    this.pitchCorrectionSettings = { enabled: false, root: 0, scale: "major", amount: 100, speedMs: 25 };
+    this.vocalEffects?.setDelayMix?.(0);
+    this.vocalEffects?.setReverbMix?.(0);
     this.notifyPatternChanged(false);
     return true;
   },
