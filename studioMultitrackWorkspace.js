@@ -203,6 +203,7 @@ const StudioMultitrackWorkspace = {
     this.deletedItems = (snapshot.deletedItems || []).map(entry => ({ ...entry }));
     this.render();
     this.onTransportChange?.();
+    window.dispatchEvent(new CustomEvent("lc-session-loaded"));
   },
 
   undo() {
@@ -776,6 +777,7 @@ const StudioMultitrackWorkspace = {
     this.selectedRegionIds = [];
     this.render();
     this.onTransportChange?.();
+    window.dispatchEvent(new CustomEvent("lc-session-loaded"));
     this.dirty = false;
     this.saveState = "saved";
     if (!sessionOverride) await StudioDAWSessionStore.clearRecovery(projectId);
@@ -882,6 +884,7 @@ const StudioMultitrackWorkspace = {
     this.createTrack("audio", "Beats");
     this.render();
     this.onTransportChange?.();
+    window.dispatchEvent(new CustomEvent("lc-session-loaded"));
     this.status("New song session ready.");
   },
 
