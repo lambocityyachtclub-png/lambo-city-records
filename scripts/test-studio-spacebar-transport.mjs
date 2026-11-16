@@ -20,7 +20,7 @@ assert.match(app, /workspace\.playheadBar = 1/, "Return-to-Start must return the
 assert.match(playback, /hasUpcomingArrangementContent/, "Empty sessions must keep the song clock moving.");
 assert.match(playback, /: 129;/, "An empty session without a loop must continue to the end of the song timeline.");
 assert.match(app, /await beatLab\.start\(\{ startAtTime:/);
-assert.match(beatLab, /async start\(\{ startAtTime = null \} = \{\}\)/);
+assert.match(beatLab, /async start\(\{\s*startAtTime = null,\s*startAtStep = 0\s*\} = \{\}\)/);
 assert.match(beatLab, /getTempoAtBar\(sessionBar\)/);
 assert.match(beatLab, /getTimeSignatureAtBar\(sessionBar\)/);
 assert.match(app, /Floor2StudioApp\.stop\(\)/);
