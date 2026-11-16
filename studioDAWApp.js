@@ -625,7 +625,12 @@ const StudioDAWApp = {
         );
         if (recordedBeatTrack) beatLab.stop();
         else if (this.beatLabPlaybackEnabled) {
-          await beatLab.start({ startAtTime: multitrack.arrangementPlayback?.playbackStartTime });
+          const playhead = Math.max(1, Number(multitrack.playheadBar) || 1);
+          const startAtStep = Math.max(0, Math.min(15, Math.floor((playhead - Math.floor(playhead)) * 16)));
+          await beatLab.start({
+            startAtTime: multitrack.arrangementPlayback?.playbackStartTime,
+            startAtStep
+          });
         } else {
           // An empty song or a Voice Notes session must stay silent unless
           // the producer explicitly starts the Beat Lab sequencer.
