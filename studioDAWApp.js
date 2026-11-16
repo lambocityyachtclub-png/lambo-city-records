@@ -759,6 +759,7 @@ const StudioDAWApp = {
     this.recordStartPending = false;
     if (!started) {
       this.recordArmed = true;
+      this.monitorInputEnabled = false;
       this.activeRecordingStartBar = null;
       this.activeRecordingEndBar = null;
       this.syncTransportControls();
@@ -769,6 +770,7 @@ const StudioDAWApp = {
     if (!playing) {
       await workspace.stopArmedRecording();
       this.recordArmed = false;
+      this.monitorInputEnabled = false;
       this.syncTransportControls();
       window.dispatchEvent(new CustomEvent("lc-vocal-recording-state", { detail: { recording: false, name: "Recording stopped", format: "Shared Studio audio" } }));
       return false;
