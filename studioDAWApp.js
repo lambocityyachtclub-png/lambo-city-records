@@ -675,6 +675,7 @@ const StudioDAWApp = {
         }
         const recordedBeatTrack = multitrack.tracks.find(track =>
           ["beats", "beat lab"].includes(String(track.name || "").trim().toLowerCase()) &&
+          track.inputSource === "beatlab" &&
           (track.clips || []).some(clip => clip.blob?.size > 0)
         );
         if (recordedBeatTrack) beatLab.stop();
