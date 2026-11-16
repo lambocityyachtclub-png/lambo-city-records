@@ -45,7 +45,7 @@ function createButton(label, action, className) {
   return button;
 }
 
-export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext, onTransportPlay, onTransportStop } = {}) {
+export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext, onTransportPlay, onTransportStop, onTransportRecord } = {}) {
   return {
     root: null,
     inputMeterFrame: null,
@@ -55,6 +55,7 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext,
     onNext,
     onTransportPlay,
     onTransportStop,
+    onTransportRecord,
 
     mount() {
       if (this.root && this.root.isConnected) return this.root;
@@ -424,10 +425,13 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext,
           } else if (action === "session-menu") {
             root.querySelector("[data-session-menu]").classList.toggle("open");
           } else if (action === "record") {
-            await workspace.startArmedRecording({ vocalEffects: this.beatLab && this.beatLab.vocalEffects, countInBars: Number(root.querySelector("[data-count-in]")?.value || 0), punchInBar: root.querySelector("[data-punch-in]")?.value || null, punchOutBar: root.querySelector("[data-punch-out]")?.value || null, monitorInput: Boolean(root.querySelector("[data-input-monitor]")?.checked) });
-            await this.refreshInputDevices();
-            if (workspace.isTrackRecording()) this.startInputMeter();
-            if (!workspace.pendingRecording && !workspace.isTrackRecording()) this.status("Recording did not start. Arm exactly one AUDIO track using its R button, then press RECORD again.");
+            if (this.onTransportRecord) this.onTransportRecord();
+            else {
+              await workspace.startArmedRecording({ vocalEffects: this.beatLab && this.beatLab.vocalEffects, countInBars: Number(root.querySelector("[data-count-in]")?.value || 0), punchInBar: root.querySelector("[data-punch-in]")?.value || null, punchOutBar: root.querySelector("[data-punch-out]")?.value || null, monitorInput: Boolean(root.querySelector("[data-input-monitor]")?.checked) });
+              await this.refreshInputDevices();
+              if (workspace.isTrackRecording()) this.startInputMeter();
+              if (!workspace.pendingRecording && !workspace.isTrackRecording()) this.status("Recording did not start. Arm an AUDIO track, then press RECORD again.");
+            }
           } else if (action === "play") {
             if (this.onTransportPlay) await this.onTransportPlay();
             else await workspace.playAll();
@@ -436,10 +440,12 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext,
             workspace.toggleMetronome();
             this.renderHeader();
           } else if (action === "stop") {
-            if (this.onTransportStop) this.onTransportStop();
-            else workspace.stopAll();
-            if (workspace.pendingRecording) workspace.cancelScheduledRecording();
-            if (workspace.isTrackRecording()) await workspace.stopArmedRecording();
+            if (this.onTransportStop) await this.onTransportStop();
+            else {
+              workspace.stopAll();
+              if (workspace.pendingRecording) workspace.cancelScheduledRecording();
+              if (workspace.isTrackRecording()) await workspace.stopArmedRecording();
+            }
             this.stopInputMeter();
             await this.refreshInputDevices();
             this.status("Playback / recording stopped.");
