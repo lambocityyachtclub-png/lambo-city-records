@@ -499,6 +499,8 @@ const StudioDAWApp = {
   recordArmed: false,
   recordStartPending: false,
   recordingMode: "mic",
+  sessionMidiRecordingActive: false,
+  sessionRecordTimer: null,
   recordingBars: 8,
   activeRecordingStartBar: null,
   activeRecordingEndBar: null,
@@ -506,6 +508,22 @@ const StudioDAWApp = {
   armSessionRecording(mode = null) {
     const workspace = StudioMultitrackWorkspace;
     if (!workspace || workspace.isTrackRecording() || workspace.pendingRecording) return false;
+    if (mode === "midi") {
+      let midiTrack = workspace.tracks.find(item => item.type === "midi" && /city synth|piano performance/i.test(item.name));
+      if (!midiTrack) {
+        workspace.recordHistory("Create City Synth MIDI track");
+        midiTrack = workspace.createTrack("midi", "City Synth Performance");
+        midiTrack.midiNotes = [];
+      }
+      this.recordingMode = "midi";
+      this.recordArmed = true;
+      workspace.scheduleProjectAutosave();
+      workspace.render();
+      this.syncTransportControls();
+      this.editScreen?.status("MIDI recording armed · press Spacebar or PLAY SESSION to begin.");
+      if (workspace.isPlaying() || Floor2StudioApp?.playing) void this.startSessionRecording();
+      return true;
+    }
     const mpcMode = mode === "mpc";
     const boothNotes = this.vocalsPanel?.querySelector('[data-booth-mode="notes"]');
     const voiceNotesMode = mode === "notes" || (!mode && this.workspace?.activeView === "vocals" && Boolean(boothNotes && !boothNotes.hidden));
@@ -542,6 +560,16 @@ const StudioDAWApp = {
     this.editScreen?.status("Recording armed · press Spacebar or PLAY SESSION to begin.");
     if (workspace.isPlaying() || Floor2StudioApp?.playing) void this.startSessionRecording();
     return true;
+  },
+
+  disarmSessionRecording(mode = null) {
+    if (this.recordArmed && (!mode || this.recordingMode === mode)) {
+      this.recordArmed = false;
+      this.syncTransportControls();
+      this.editScreen?.status("Recording disarmed.");
+      return true;
+    }
+    return false;
   },
 
   async startSessionPlayback() {
@@ -590,6 +618,27 @@ const StudioDAWApp = {
     this.activeRecordingEndBar = endBar;
     this.recordArmed = false;
     workspace.setLoopRange(boundedStartBar, endBar, false);
+    if (this.recordingMode === "midi") {
+      const alreadyPlaying = Boolean(workspace.isPlaying() || Floor2StudioApp?.playing);
+      const playing = alreadyPlaying || await this.startSessionPlayback();
+      this.recordStartPending = false;
+      if (!playing) {
+        this.recordArmed = true;
+        this.activeRecordingStartBar = null;
+        this.activeRecordingEndBar = null;
+        this.syncTransportControls();
+        return false;
+      }
+      this.sessionMidiRecordingActive = true;
+      const durationMs = Math.max(250, (workspace.getSecondsAtBar(endBar) - workspace.getSecondsAtBar(boundedStartBar)) * 1000);
+      this.sessionRecordTimer = setTimeout(() => {
+        this.sessionRecordTimer = null;
+        void this.stopSessionPlayback();
+      }, durationMs);
+      this.syncTransportControls();
+      window.dispatchEvent(new CustomEvent("lc-session-midi-recording-state", { detail: { active: true } }));
+      return true;
+    }
     const started = await workspace.startArmedRecording({
       vocalEffects: Floor2StudioApp?.vocalEffects,
       punchInBar: boundedStartBar,
@@ -623,11 +672,23 @@ const StudioDAWApp = {
     const workspace = StudioMultitrackWorkspace;
     workspace?.stopAll();
     if (Floor2StudioApp?.playing) Floor2StudioApp.stop();
+    if (this.sessionRecordTimer) clearTimeout(this.sessionRecordTimer);
+    this.sessionRecordTimer = null;
+    if (this.sessionMidiRecordingActive) {
+      if (this.activeRecordingStartBar && this.activeRecordingEndBar) {
+        workspace?.setLoopRange(this.activeRecordingStartBar, this.activeRecordingEndBar, true);
+      }
+      this.sessionMidiRecordingActive = false;
+      this.activeRecordingStartBar = null;
+      this.activeRecordingEndBar = null;
+      window.dispatchEvent(new CustomEvent("lc-session-midi-recording-state", { detail: { active: false } }));
+    }
     if (workspace?.pendingRecording) workspace.cancelScheduledRecording();
     if (workspace?.isTrackRecording()) await workspace.stopArmedRecording();
     if (MPCInterface.recording) MPCInterface.finishRecording();
     MPCInterface.stopPerformancePlayback();
     this.recordArmed = false;
+    if (this.recordingMode !== "midi") this.recordingMode = "mic";
     this.syncTransportControls();
     window.dispatchEvent(new CustomEvent("lc-vocal-recording-state", { detail: { recording: false, name: "Session Recording", format: "Shared Studio audio" } }));
     return true;
@@ -658,7 +719,7 @@ const StudioDAWApp = {
       button.setAttribute("aria-pressed", String(playing));
     });
     this.root?.querySelectorAll('[data-global-transport="record"]').forEach(button => {
-      const recording = Boolean(StudioMultitrackWorkspace.isTrackRecording() || StudioMultitrackWorkspace.pendingRecording);
+      const recording = Boolean(StudioMultitrackWorkspace.isTrackRecording() || StudioMultitrackWorkspace.pendingRecording || this.sessionMidiRecordingActive);
       button.textContent = recording ? "● RECORDING" : this.recordArmed ? "● RECORD ARMED" : "● RECORD";
       button.setAttribute("aria-pressed", String(recording || this.recordArmed));
     });
@@ -928,7 +989,11 @@ const StudioDAWApp = {
         onTransportRecord: mode => this.armSessionRecording(mode)
       });
       applyVocalBoothVisual(this.vocalsPanel);
-      this.pianoPanel = createCitySynthPanel({ session: StudioMultitrackWorkspace });
+      this.pianoPanel = createCitySynthPanel({
+        session: StudioMultitrackWorkspace,
+        onTransportRecord: mode => this.armSessionRecording(mode),
+        onTransportDisarm: mode => this.disarmSessionRecording(mode)
+      });
       applyCitySynthVisual(this.pianoPanel);
       this.workspace.setPanel("mix", this.mixPanel);
       this.workspace.setPanel("piano", this.pianoPanel);
