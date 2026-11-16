@@ -120,6 +120,7 @@ async function renderStudioSessionToAudioBuffer({
 
   const recordedBeatLabTrack = tracks.some(track =>
     ["beats", "beat lab"].includes(String(track.name || "").trim().toLowerCase()) &&
+    track.inputSource === "beatlab" &&
     (track.clips || []).some(clip =>
       (clip.blob instanceof Blob && clip.blob.size > 0) || Boolean(clip.audioAssetId || clip.data)
     )
