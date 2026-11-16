@@ -17,7 +17,9 @@
  */
 
 export function createStudioDAWBeatLabPanel({
-  beatLab
+  beatLab,
+  onTransportPlay,
+  onTransportStop
 } = {}) {
   if (!beatLab) {
     throw new Error(
@@ -30,7 +32,10 @@ export function createStudioDAWBeatLabPanel({
     container: null,
     mounted: false,
     handleClose: null,
+    handleTransportControl: null,
     onSwitchToEdit: null,
+    onTransportPlay,
+    onTransportStop,
 
     mount(container) {
       if (!container) {
@@ -108,31 +113,32 @@ export function createStudioDAWBeatLabPanel({
 
       // The existing CLOSE control returns to the
       // normal Floor 2 experience through beatLab.close().
-      this.handleClose = (event) => {
+      this.handleClose = event => {
         const target = event.target;
-
         if (!(target instanceof Element)) return;
-
-        const closeButton = target.closest(
-          '[data-action="close"]'
-        );
-
+        const closeButton = target.closest('[data-action="close"]');
         if (!closeButton) return;
-
         event.preventDefault();
         event.stopPropagation();
         event.stopImmediatePropagation();
-
-        this.unmount({
-          closeBeatLab: true
-        });
+        this.unmount({ closeBeatLab: true });
       };
 
-      existingUI.addEventListener(
-        "click",
-        this.handleClose,
-        true
-      );
+      this.handleTransportControl = event => {
+        const target = event.target;
+        if (!(target instanceof Element)) return;
+        const playButton = target.closest('[data-action="play"]');
+        const stopButton = target.closest('[data-action="stop"]');
+        if (!playButton && !stopButton) return;
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+        if (playButton) void this.onTransportPlay?.();
+        else void this.onTransportStop?.();
+      };
+
+      existingUI.addEventListener("click", this.handleTransportControl, true);
+      existingUI.addEventListener("click", this.handleClose, true);
 
       container.appendChild(host);
 
@@ -149,13 +155,8 @@ export function createStudioDAWBeatLabPanel({
       if (this.root) {
         const existingUI = beatLab.ui;
 
-        if (existingUI && this.handleClose) {
-          existingUI.removeEventListener(
-            "click",
-            this.handleClose,
-            true
-          );
-        }
+        if (existingUI && this.handleClose) existingUI.removeEventListener("click", this.handleClose, true);
+        if (existingUI && this.handleTransportControl) existingUI.removeEventListener("click", this.handleTransportControl, true);
 
         // Close through the original application
         // so its playback and keyboard cleanup run.
@@ -180,6 +181,7 @@ export function createStudioDAWBeatLabPanel({
       this.root = null;
       this.container = null;
       this.handleClose = null;
+      this.handleTransportControl = null;
       this.mounted = false;
     },
 
