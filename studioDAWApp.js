@@ -1098,6 +1098,7 @@ const StudioDAWApp = {
     window.addEventListener("lc-vocal-effect-settings-change", this.handleVocalEffectSettingsChange);
     this.handleSessionLoaded = () => this.syncVocalTrackSettings();
     window.addEventListener("lc-session-loaded", this.handleSessionLoaded);
+    StudioMultitrackWorkspace.onLoopBoundary = () => this.handleSessionLoopBoundary();
     StudioMultitrackWorkspace.onTransportChange = () => {
       if (!StudioMultitrackWorkspace.isPlaying() && Floor2StudioApp?.playing && !this.transportActionPending) {
         Floor2StudioApp.stop();
@@ -1424,6 +1425,7 @@ const StudioDAWApp = {
     this.recordStartPending = false;
     StudioMultitrackWorkspace.onRecordingComplete = null;
     if (StudioMultitrackWorkspace.onTransportChange) StudioMultitrackWorkspace.onTransportChange = null;
+    StudioMultitrackWorkspace.onLoopBoundary = null;
     if (this.globalTransportHandlers) {
       this.root?.querySelector("header")?.removeEventListener("click", this.globalTransportHandlers);
       this.globalTransportHandlers = null;
