@@ -15,6 +15,9 @@ export default class Engine {
     this.context.camera   = this.camera;
     this.context.renderer = this.renderer;
     this.context.systems  = this.systems;
+
+    // Register keyboard and touch input before heavier world initialization.
+    this.systems.input?.init?.();
     this.systems.performanceMonitor?.init?.(this.renderer, this.context);
     this.systems.world?.init?.(this.scene);
     this.systems.festivalStageUpgrade?.init?.(this.scene, this.context);
@@ -104,7 +107,6 @@ this.systems.floor2VocalBooth3D?.init?.(this.scene, this.context);
 this.systems.floor2CitySynth?.init?.(this.scene, this.context);
 
 this.systems.boardwalkOverlooks?.init?.(this.scene);
-    this.systems.input?.init?.();
     this.systems.player?.init?.(this.scene);
     this.systems.hud?.init?.();
     this.loop();
