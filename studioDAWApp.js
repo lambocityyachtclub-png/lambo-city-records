@@ -551,9 +551,10 @@ const StudioDAWApp = {
       workspace.scheduleProjectAutosave();
     }
     const boothNotes = this.vocalsPanel?.querySelector('[data-booth-mode="notes"]');
-    const voiceNotesMode = mode === "notes" || (!mode && this.workspace?.activeView === "vocals" && Boolean(boothNotes && !boothNotes.hidden));
-    const vocalMode = mode === "vocal" || (!mode && this.workspace?.activeView === "vocals" && !voiceNotesMode);
-    const dedicatedMode = mpcMode || beatLabMode || drumsMode || voiceNotesMode || vocalMode;
+    const activeView = this.workspace?.activeView;
+    const voiceNotesMode = mode === "notes" || (!mode && activeView === "vocals" && Boolean(boothNotes && !boothNotes.hidden));
+    const explicitVocalMode = mode === "vocal" || (!mode && activeView === "vocals" && !voiceNotesMode);
+    const dedicatedMode = mpcMode || beatLabMode || drumsMode || voiceNotesMode || explicitVocalMode;
     const targetName = mpcMode ? "MPC Performance" : beatLabMode ? "Beats" : drumsMode ? "Live Drummer Performance" : voiceNotesMode ? "Voice Notes" : "Vocals";
     let track = dedicatedMode
       ? workspace.tracks.find(item => item.type === "audio" && item.name === targetName)
@@ -576,6 +577,7 @@ const StudioDAWApp = {
     } else if (!workspace.tracks.some(item => item.type === "audio" && item.armed)) {
       track.armed = true;
     }
+    const vocalMode = explicitVocalMode || (!voiceNotesMode && /vocal/i.test(track?.name || ""));
     if (vocalMode) {
       const pitchSettings = Floor2StudioApp?.pitchCorrectionSettings || {
         enabled: false, root: 0, scale: "major", amount: 100, speedMs: 25
