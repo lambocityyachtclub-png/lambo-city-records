@@ -77,7 +77,7 @@ assert.doesNotMatch(navigation,/object:\s*stations\.(?:drumStation|instrumentSta
 
 const app = source["studioDAWApp.js"];
 assert.match(app,/data-global-transport="play"/,"The shared transport must be rendered by the Studio shell.");
-assert.match(app,/appHeader\.style\.display = "flex"/,"The shared transport header must remain visible across workspaces.");
+assert.match(app,/appHeader\.style\.display = viewId === "edit" \? "none" : "flex"/,"Edit must use its original transport while other workspaces use the shared shell transport.");
 const editScreen = source["studioDAWEditScreen.js"];
 assert.doesNotMatch(editScreen,/\.lc-transport\{display:none!important\}/,"The approved Edit transport must remain visible.");
 assert.match(editScreen,/<div class=\\?"lc-transport\\?"/,"The original Edit transport must remain in the Edit screen.");
