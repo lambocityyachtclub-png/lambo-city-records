@@ -611,6 +611,10 @@ const StudioDAWApp = {
   },
 
   disarmSessionRecording(mode = null) {
+    if (mode === "midi" && this.sessionMidiRecordingActive) {
+      void this.stopSessionPlayback();
+      return true;
+    }
     if (this.recordArmed && (!mode || this.recordingMode === mode)) {
       this.recordArmed = false;
       if (mode === "midi" || this.recordingMode === "midi") {
