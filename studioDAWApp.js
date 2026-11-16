@@ -604,7 +604,8 @@ const StudioDAWApp = {
       this.syncTransportControls();
       return false;
     }
-    const playing = await this.startSessionPlayback();
+    const alreadyPlaying = Boolean(workspace.isPlaying() || Floor2StudioApp?.playing);
+    const playing = alreadyPlaying || await this.startSessionPlayback();
     if (!playing) {
       await workspace.stopArmedRecording();
       this.recordArmed = false;
