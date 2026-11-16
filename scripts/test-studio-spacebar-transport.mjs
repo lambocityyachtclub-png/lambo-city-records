@@ -30,7 +30,7 @@ assert.match(app, /punchOutBar: bounds\.endBar/);
 assert.match(multitrack, /const takeGroupId = track\.id \+ "-takes-" \+ this\.recordingStartBar/);
 assert.match(multitrack, /takeNumber: track\.clips\.filter\(clip => clip\.takeGroupId === takeGroupId\)\.length \+ 1/);
 assert.match(multitrack, /compSelectedTake\(\)/, "The Edit timeline must retain non-destructive take comping.");
-assert.match(app, /await beatLab\.start\(\{ startAtTime:/);
+assert.match(app, /await beatLab\.start\(\{\s*startAtTime:/);
 assert.match(beatLab, /async start\(\{\s*startAtTime = null,\s*startAtStep = 0\s*\} = \{\}\)/);
 assert.match(beatLab, /getTempoAtBar\(sessionBar\)/);
 assert.match(beatLab, /getTimeSignatureAtBar\(sessionBar\)/);
