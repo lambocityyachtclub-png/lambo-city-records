@@ -159,7 +159,7 @@ export function createVocalBoothPanel({ beatLab, onTransportPlay, onTransportSto
     }));
     const enabled=beatLab.pitchCorrectionSettings.enabled;
     pitchStatus(enabled
-      ? "Pitch correction ON · " + ["C","C♯","D","D♯","E","F","F♯","G","G♯","A","A♯","B"][beatLab.pitchCorrectionSettings.root] + " " + beatLab.pitchCorrectionSettings.scale.toUpperCase() + " · Applies to new vocal takes."
+      ? "Pitch correction ON · " + ["C","C♯","D","D♯","E","F","F♯","G","G♯","A","A♯","B"][beatLab.pitchCorrectionSettings.root] + " " + beatLab.pitchCorrectionSettings.scale.toUpperCase() + " · Saved to this vocal track for playback/export."
       : "Pitch correction bypassed · Original vocal tone is preserved.");
   };
   root.addEventListener("change",event=>{
