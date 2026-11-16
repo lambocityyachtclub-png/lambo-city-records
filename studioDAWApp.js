@@ -497,6 +497,7 @@ const StudioDAWApp = {
   transportActionPending: false,
   globalTransportHandlers: null,
   recordArmed: false,
+  recordStartPending: false,
   recordingBars: 8,
   activeRecordingStartBar: null,
   activeRecordingEndBar: null,
@@ -565,23 +566,33 @@ const StudioDAWApp = {
 
   async startSessionRecording() {
     const workspace = StudioMultitrackWorkspace;
-    if (!workspace || this.transportActionPending) return false;
-    if (!this.recordArmed && !this.armSessionRecording()) return false;
-    const bars = Math.max(1, Math.min(32, Number(this.recordingBars) || 8));
-    const startBar = Math.min(128 - bars, Math.max(1, Number(workspace.playheadBar) || 1));
-    const endBar = startBar + bars;
-    this.activeRecordingStartBar = startBar;
+    if (!workspace || this.transportActionPending || this.recordStartPending) return false;
+    this.recordStartPending = true;
+    if (!this.recordArmed && !this.armSessionRecording()) {
+      this.recordStartPending = false;
+      return false;
+    }
+    const startBar = Math.min(127, Math.max(1, Number(workspace.playheadBar) || 1));
+    const punchOutValue = Number(this.editScreen?.root?.querySelector("[data-punch-out]")?.value);
+    const selectedBars = punchOutValue > startBar ? punchOutValue - startBar : this.recordingBars;
+    const bars = Math.max(1, Math.min(32, Number(selectedBars) || 8));
+    const boundedStartBar = Math.min(128 - bars, startBar);
+    const endBar = boundedStartBar + bars;
+    this.activeRecordingStartBar = boundedStartBar;
     this.activeRecordingEndBar = endBar;
     this.recordArmed = false;
-    workspace.setLoopRange(startBar, endBar, false);
+    workspace.setLoopRange(boundedStartBar, endBar, false);
     const started = await workspace.startArmedRecording({
       vocalEffects: Floor2StudioApp?.vocalEffects,
-      punchInBar: startBar,
+      punchInBar: boundedStartBar,
       punchOutBar: endBar,
       monitorInput: false
     });
+    this.recordStartPending = false;
     if (!started) {
       this.recordArmed = true;
+      this.activeRecordingStartBar = null;
+      this.activeRecordingEndBar = null;
       this.syncTransportControls();
       return false;
     }
@@ -593,7 +604,7 @@ const StudioDAWApp = {
       return false;
     }
     this.syncTransportControls();
-    this.editScreen?.status("Recording · " + bars + " bars · " + Math.round(workspace.getTempoAtBar(startBar)) + " BPM.");
+    this.editScreen?.status("Recording · " + bars + " bars · " + Math.round(workspace.getTempoAtBar(boundedStartBar)) + " BPM.");
     return true;
   },
 
@@ -609,6 +620,7 @@ const StudioDAWApp = {
   },
 
   async toggleSessionPlayback() {
+    if (this.recordStartPending) return false;
     if (this.transportActionPending || StudioMultitrackWorkspace.isPlaying() || Floor2StudioApp?.playing) {
       await this.stopSessionPlayback();
       return false;
@@ -636,6 +648,8 @@ const StudioDAWApp = {
       button.textContent = recording ? "● RECORDING" : this.recordArmed ? "● RECORD ARMED" : "● RECORD";
       button.setAttribute("aria-pressed", String(recording || this.recordArmed));
     });
+    const editRecord = this.editScreen?.root?.querySelector('[data-action="record"]');
+    if (editRecord) editRecord.textContent = this.recordArmed ? "● RECORD ARMED" : "● RECORD";
     const globalTempo = this.root?.querySelector("[data-global-tempo]");
     if (globalTempo) globalTempo.value = String(StudioMultitrackWorkspace.tempo || 100);
     const globalBars = this.root?.querySelector("[data-global-record-bars]");
@@ -953,6 +967,7 @@ const StudioDAWApp = {
     }
     this.transportActionPending = false;
     this.recordArmed = false;
+    this.recordStartPending = false;
     StudioMultitrackWorkspace.onRecordingComplete = null;
     if (StudioMultitrackWorkspace.onTransportChange) StudioMultitrackWorkspace.onTransportChange = null;
     if (this.globalTransportHandlers) {
