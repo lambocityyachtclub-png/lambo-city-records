@@ -59,6 +59,7 @@ Edit is the session command center. Instrument and recording workspaces are focu
 - No duplicate DAWs, audio engines, sequencers, project stores, or transport clocks.
 - Prefer small, dependency-aware modules and lazy loading.
 - No new feature is complete until it has source review, build/deployment validation, and a focused iPad workflow check.
+- Regression tests that protect these shared workflows must run on pull requests as well as branch pushes.
 
 ## Completion checklist
 
