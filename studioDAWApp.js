@@ -823,6 +823,13 @@ const StudioDAWApp = {
     if (cycleToggle) cycleToggle.checked = this.cycleRecordingEnabled;
     const position = this.root?.querySelector("[data-global-position]");
     if (position) position.textContent = "BAR " + String(Math.floor(StudioMultitrackWorkspace.playheadBar || 1)).padStart(2, "0");
+    const loopLabel = this.root?.querySelector("[data-global-loop]");
+    if (loopLabel) {
+      const loop = StudioMultitrackWorkspace.loopRange || { enabled: false, startBar: 1, endBar: 9 };
+      loopLabel.textContent = loop.enabled
+        ? "LOOP " + String(loop.startBar) + "–" + String(loop.endBar)
+        : "LOOP OFF";
+    }
     this.root?.querySelectorAll('[data-global-transport="click"]').forEach(button => {
       button.textContent = clickOn ? "CLICK ON" : "CLICK OFF";
       button.setAttribute("aria-pressed", String(clickOn));
@@ -896,6 +903,7 @@ const StudioDAWApp = {
           <button type="button" data-global-transport="return" title="Stop and return the playhead to bar 1" style="min-height:42px;padding:10px 13px;border:1px solid #9aa8c0;border-radius:7px;background:linear-gradient(#e4e8ef,#929baa);color:#17213a;font-weight:900">↤ RETURN</button>
           <button type="button" data-global-transport="record" style="min-height:42px;padding:10px 14px;border:2px solid #ff8585;border-radius:7px;background:linear-gradient(#ff7777,#b91f2a);color:#fff;font-weight:900">● RECORD</button>
           <span data-global-position style="min-width:74px;padding:9px 10px;border:1px solid #52617a;border-radius:6px;background:#080e1b;color:#c5efff;font:900 12px monospace;text-align:center">BAR 01</span>
+          <span data-global-loop style="min-width:82px;padding:9px 10px;border:1px solid #52617a;border-radius:6px;background:#080e1b;color:#c5efff;font:900 11px monospace;text-align:center">LOOP OFF</span>
           <label style="display:flex;align-items:center;gap:6px;padding:7px 9px;border:1px solid #52617a;border-radius:6px;color:#c5efff;font-size:10px;font-weight:800">TEMPO <input data-global-tempo type="number" min="60" max="180" step="1" value="100" style="width:58px;min-height:28px;background:#080e1b;color:#fff;border:1px solid #52617a;border-radius:4px;padding:4px"></label>
           <label style="display:flex;align-items:center;gap:6px;padding:7px 9px;border:1px solid #52617a;border-radius:6px;color:#c5efff;font-size:10px;font-weight:800"><input data-global-cycle-record type="checkbox" checked style="accent-color:#e6bb69"> CYCLE TAKES</label>
           <button type="button" data-global-transport="click" aria-pressed="false" style="min-height:42px;min-width:112px;padding:10px 13px;border:2px solid #e6bb69;border-radius:7px;background:linear-gradient(#e4e8ef,#929baa);color:#17213a;font-weight:900;letter-spacing:1px">CLICK OFF</button>
