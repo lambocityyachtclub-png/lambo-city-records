@@ -562,6 +562,7 @@ root.addEventListener("input", (event) => {
 
         this.pattern.steps[track][step] =
           !this.pattern.steps[track][step];
+        this.notifyPatternChanged();
 
         stepButton.classList.toggle("on", this.pattern.steps[track][step]);
         stepButton.setAttribute(
@@ -637,6 +638,7 @@ root.addEventListener("input", (event) => {
           this.stop();
           TRACKS.forEach(({ id }) => this.pattern.steps[id].fill(false));
           this.renderGrid();
+          this.notifyPatternChanged();
           this.status("Pattern cleared.");
           break;
       }
@@ -649,6 +651,7 @@ root.addEventListener("input", (event) => {
       StudioMultitrackWorkspace.setTempo(this.pattern.bpm);
       root.querySelector("[data-bpm-label]").textContent =
         `${this.pattern.bpm} BPM`;
+      this.notifyPatternChanged();
     });
 
     root.querySelector("[data-sound-profile]").value = this.soundProfile;
@@ -662,6 +665,7 @@ root.addEventListener("input", (event) => {
             ? "Vintage MPC sound selected."
             : "Digital sound selected."
         );
+        this.notifyPatternChanged();
       }
     );
   },
@@ -685,6 +689,16 @@ root.addEventListener("input", (event) => {
         `).join("")}
       </div>
     `).join("");
+  },
+
+  notifyPatternChanged() {
+    if (!this.pattern?.steps) return;
+    window.dispatchEvent(new CustomEvent("lc-beatlab-pattern-change", {
+      detail: {
+        pattern: JSON.parse(JSON.stringify(this.pattern)),
+        soundProfile: this.soundProfile === "mpc" ? "mpc" : "beatLab"
+      }
+    }));
   },
 
   status(message) {
@@ -1268,6 +1282,7 @@ StudioSoundKit.play(
       if (bpmLabel) bpmLabel.textContent = `${this.pattern.bpm} BPM`;
 
       this.renderGrid();
+      this.notifyPatternChanged();
       this.status("Saved beat loaded.");
     } catch (error) {
       console.error("LAMBO CITY beat load error:", error);
@@ -1322,6 +1337,7 @@ StudioSoundKit.play(
     this.soundProfile = "beatLab";
     this.lastRecordedTake = null;
     this.audio = this.audio || null;
+    this.notifyPatternChanged();
     return true;
   },
 
