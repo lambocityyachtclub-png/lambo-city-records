@@ -70,6 +70,7 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext,
         '#lc-premium-daw-edit-screen button,#lc-premium-daw-edit-screen input{font:inherit}',
         '#lc-premium-daw-edit-screen button{cursor:pointer;touch-action:manipulation}',
         '#lc-premium-daw-edit-screen .lc-transport{flex:0 0 auto;min-height:78px;border:1px solid #eef0f4;border-radius:13px;background:linear-gradient(180deg,#e4e7ec,#929aa8 48%,#c9cdd4);box-shadow:inset 0 2px 3px #fff,0 5px 14px #0008;color:#101a34;display:flex;align-items:center;gap:9px;padding:8px 12px 8px 92px;position:relative}',
+        '#lc-premium-daw-edit-screen .lc-transport{display:none!important}',
         '#lc-premium-daw-edit-screen .lc-logo{position:absolute;left:7px;top:-8px;width:84px;height:84px;border-radius:50%;border:4px solid var(--gold);background:radial-gradient(circle at 35% 28%,#3157a2,#07143a 68%);box-shadow:0 4px 12px #000b,inset 0 0 0 3px #e1d9b5;display:grid;place-items:center;text-align:center;color:#fff;font-size:8px;font-weight:900;letter-spacing:1px;line-height:1.2}',
         '#lc-premium-daw-edit-screen .lc-logo:before{content:"🏎️";display:block;font-size:27px;line-height:1.1}',
         '#lc-premium-daw-edit-screen .lc-logo span{display:block}',
@@ -188,7 +189,7 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext,
         '<aside class="lc-inspector"><div class="lc-section-label">▸ TRACK / MIXER</div><div class="lc-strips" data-mixer-strips></div></aside>',
         '<section class="lc-workarea">',
         '<div class="lc-edit-tools">',
-        '<button type="button" disabled>t</button><button type="button" data-action="edit-menu">Edit ▾</button><button type="button" data-action="functions-menu">Functions ▾</button><button type="button" data-action="view-menu">View ▾</button>',
+        '<button type="button" data-action="session-menu">SESSION ▾</button><button type="button" data-action="edit-menu">Edit ▾</button><button type="button" data-action="functions-menu">Functions ▾</button><button type="button" data-action="view-menu">View ▾</button>',
         '<button type="button" data-action="undo" title="Undo">↶</button><button type="button" data-action="redo" title="Redo">↷</button><button type="button" data-action="split" title="Split at playhead">✂</button><button type="button" data-action="duplicate" title="Duplicate selected region">▣</button><button type="button" data-action="delete-clip" title="Delete selected region">⌫</button><button type="button" data-action="comp-take" title="Place selected take section into the non-destructive comp lane">COMP TAKE</button>',
         '<button type="button" data-action="zoom-out">−</button><input data-zoom type="range" min="24" max="288" step="6" value="72" aria-label="Timeline zoom" style="width:75px;accent-color:#c9a24a"><button type="button" data-action="zoom-in">＋</button><select data-snap aria-label="Timeline snap" style="max-width:105px;background:#101d3d;color:#e8edf8;border:1px solid #7184a8;border-radius:5px;padding:5px"><option value="bars">BAR</option><option value="beats">BEAT</option><option value="subdivisions">1/16</option><option value="seconds">SEC</option><option value="off">FREE</option></select><button type="button" data-action="slip-mode" title="Toggle slip editing">SLIP OFF</button>',
         '<span class="lc-spacer"></span>',
@@ -238,27 +239,83 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext,
       return root;
     },
 
-    showSongNamePrompt() {
+    async showSongNamePrompt() {
       if (!this.root || this.root.querySelector("[data-song-name-overlay]")) return;
       const overlay = document.createElement("div");
       overlay.dataset.songNameOverlay = "";
-      overlay.style.cssText = "position:absolute;inset:0;z-index:40;display:grid;place-items:center;padding:20px;background:rgba(3,8,24,.78);backdrop-filter:blur(8px)";
-      overlay.innerHTML = '<section style="width:min(440px,100%);padding:26px;border:1px solid #C9A24A;border-radius:14px;background:linear-gradient(145deg,#172b63,#08132f);box-shadow:0 18px 50px #000b;color:#fff"><div style="color:#18D8FF;font-size:10px;font-weight:900;letter-spacing:2px">LAMBO CITY RECORDS · NEW SESSION</div><h2 style="margin:10px 0 6px;font-size:22px">Name your song or beat</h2><p style="margin:0 0 18px;color:#b8c8e4;font-size:12px;line-height:1.5">Give this session a name. You can change it later from SESSION.</p><input data-song-name-input type="text" maxlength="80" value="" placeholder="Enter song name" style="width:100%;min-height:46px;padding:11px;border:1px solid #6682b2;border-radius:7px;background:#06132d;color:#fff;font-size:16px"><div style="display:flex;justify-content:flex-end;gap:8px;margin-top:15px"><button type="button" data-song-name-skip style="min-height:40px;padding:9px 13px;border:1px solid #68799b;border-radius:7px;background:#17264a;color:#d9e4f7">SKIP</button><button type="button" data-song-name-start style="min-height:40px;padding:9px 15px;border:1px solid #e7c36d;border-radius:7px;background:linear-gradient(#e7c36d,#9b702b);color:#111a31;font-weight:900">START SESSION</button></div></section>';
+      overlay.style.cssText = "position:absolute;inset:0;z-index:40;display:grid;place-items:center;padding:18px;background:rgba(3,8,24,.82);backdrop-filter:blur(8px);overflow:auto";
+      overlay.innerHTML = '<section style="width:min(760px,100%);padding:clamp(18px,3vw,28px);border:1px solid #C9A24A;border-radius:14px;background:linear-gradient(145deg,#172b63,#08132f);box-shadow:0 18px 50px #000b;color:#fff"><div style="color:#18D8FF;font-size:10px;font-weight:900;letter-spacing:2px">LAMBO CITY RECORDS · SESSION</div><h2 style="margin:10px 0 6px;font-size:24px">What are we working on?</h2><p style="margin:0 0 18px;color:#b8c8e4;font-size:12px;line-height:1.5">Start a new song or continue a recent session. Nothing opens automatically.</p><div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px"><section style="padding:15px;border:1px solid rgba(201,162,74,.45);border-radius:10px;background:rgba(4,13,34,.58)"><strong style="display:block;color:#e7c36d;font-size:11px;letter-spacing:1.4px">NEW SESSION</strong><label style="display:grid;gap:6px;margin-top:12px;color:#cbd8ee;font-size:10px">SONG NAME<input data-song-name-input type="text" maxlength="80" value="" placeholder="Untitled Song" style="width:100%;min-height:42px;padding:10px;border:1px solid #6682b2;border-radius:7px;background:#06132d;color:#fff;font-size:15px"></label><div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:10px"><label style="display:grid;gap:6px;color:#cbd8ee;font-size:10px">TEMPO<input data-session-tempo type="number" min="60" max="180" value="100" style="width:100%;min-height:38px;padding:8px;border:1px solid #6682b2;border-radius:7px;background:#06132d;color:#fff"></label><label style="display:grid;gap:6px;color:#cbd8ee;font-size:10px">TIME SIGNATURE<select data-session-meter style="width:100%;min-height:38px;padding:8px;border:1px solid #6682b2;border-radius:7px;background:#06132d;color:#fff"><option>4/4</option><option>3/4</option><option>2/4</option><option>5/4</option><option>6/4</option><option>7/4</option><option>6/8</option><option>9/8</option><option>12/8</option></select></label></div><button type="button" data-song-name-start style="width:100%;min-height:44px;margin-top:14px;padding:10px 15px;border:1px solid #e7c36d;border-radius:7px;background:linear-gradient(#e7c36d,#9b702b);color:#111a31;font-weight:900">CREATE &amp; SAVE SESSION</button></section><section style="padding:15px;border:1px solid rgba(104,130,178,.45);border-radius:10px;background:rgba(4,13,34,.58)"><strong style="display:block;color:#cbd8ee;font-size:11px;letter-spacing:1.4px">OPEN RECENT</strong><div data-recent-sessions style="display:grid;gap:8px;margin-top:12px"><div style="color:#91a6c8;font-size:12px">Loading saved sessions…</div></div></section></div></section>';
       const input = overlay.querySelector("[data-song-name-input]");
-      const finish = useName => {
-        const name = useName ? input.value.trim() : "";
-        StudioMultitrackWorkspace.activeProjectName = (name || "Untitled Song").slice(0, 80);
-        StudioMultitrackWorkspace.scheduleProjectAutosave();
-        overlay.remove();
-        this.renderHeader();
-        this.status("Session ready · " + StudioMultitrackWorkspace.activeProjectName);
+      const finishNew = async () => {
+        const createButton = overlay.querySelector("[data-song-name-start]");
+        if (createButton.disabled) return;
+        createButton.disabled = true;
+        const name = input.value.trim() || "Untitled Song";
+        const tempo = Math.max(60, Math.min(180, Number(overlay.querySelector("[data-session-tempo]")?.value) || 100));
+        const meter = overlay.querySelector("[data-session-meter]")?.value || "4/4";
+        const projectId = "lc-daw-" + (globalThis.crypto?.randomUUID ? globalThis.crypto.randomUUID() : Date.now());
+        StudioMultitrackWorkspace.activeProjectName = name.slice(0, 80);
+        StudioMultitrackWorkspace.setTempo(tempo);
+        StudioMultitrackWorkspace.timeSignature = meter;
+        try {
+          await StudioMultitrackWorkspace.saveSession(projectId, name.slice(0, 80));
+          overlay.remove();
+          this.renderHeader();
+          this.status("New session saved · " + StudioMultitrackWorkspace.activeProjectName + " · " + tempo + " BPM · " + meter);
+        } catch (error) {
+          createButton.disabled = false;
+          this.status("Could not create session: " + (error?.message || error));
+        }
       };
-      overlay.querySelector("[data-song-name-start]").addEventListener("click", () => finish(true));
-      overlay.querySelector("[data-song-name-skip]").addEventListener("click", () => finish(false));
+      overlay.querySelector("[data-song-name-start]").addEventListener("click", () => { void finishNew(); });
       input.addEventListener("keydown", event => {
-        if (event.key === "Enter") finish(true);
+        if (event.key === "Enter") void finishNew();
       });
       this.root.appendChild(overlay);
+      const recent = overlay.querySelector("[data-recent-sessions]");
+      try {
+        const projects = await StudioMultitrackWorkspace.listSavedSessions();
+        if (!overlay.isConnected) return;
+        recent.replaceChildren();
+        if (!projects.length) {
+          const empty = document.createElement("div");
+          empty.style.cssText = "padding:12px;color:#91a6c8;font-size:12px;line-height:1.5";
+          empty.textContent = "No saved sessions yet. Your first song will appear here.";
+          recent.appendChild(empty);
+        } else {
+          projects.slice(0, 7).forEach(project => {
+            const button = document.createElement("button");
+            button.type = "button";
+            button.dataset.projectId = project.projectId;
+            button.style.cssText = "display:grid;gap:4px;width:100%;padding:11px;text-align:left;border:1px solid #344c76;border-radius:8px;background:#0b1938;color:#f4f1eb";
+            const title = document.createElement("strong");
+            title.style.cssText = "font-size:12px;color:#f1d49c";
+            title.textContent = project.projectName || "Untitled Song";
+            const meta = document.createElement("span");
+            meta.style.cssText = "font-size:10px;color:#91a6c8";
+            const updated = project.updatedAt ? new Date(project.updatedAt).toLocaleDateString() : "Saved session";
+            meta.textContent = updated + " · " + (project.trackCount || 0) + " tracks";
+            button.append(title, meta);
+            button.addEventListener("click", async () => {
+              button.disabled = true;
+              try {
+                await StudioMultitrackWorkspace.loadSession(project.projectId);
+                if (this.beatLab) this.beatLab.currentProject = null;
+                overlay.remove();
+                this.render();
+                this.renderHeader();
+                this.status("Opened " + StudioMultitrackWorkspace.activeProjectName + ".");
+              } catch (error) {
+                button.disabled = false;
+                this.status("Could not open session: " + (error?.message || error));
+              }
+            });
+            recent.appendChild(button);
+          });
+        }
+      } catch (error) {
+        recent.textContent = "Saved sessions are unavailable right now · " + (error?.message || error);
+      }
       input.focus();
     },
 
@@ -498,6 +555,9 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext,
           } else if (action === "save-session") {
             const name = workspace.activeProjectName || window.prompt("Song name:", "Untitled Song") || "Untitled Song";
             const id = workspace.activeProjectId || ("lc-daw-" + (globalThis.crypto && globalThis.crypto.randomUUID ? globalThis.crypto.randomUUID() : Date.now()));
+            if (this.beatLab?.pattern?.steps) workspace.beatLabPattern = JSON.parse(JSON.stringify(this.beatLab.pattern));
+            workspace.beatLabSoundProfile = this.beatLab?.soundProfile === "mpc" ? "mpc" : "beatLab";
+            workspace.beatLabPlaybackEnabled = Boolean(workspace.beatLabPlaybackEnabled);
             await workspace.saveSession(id, name);
             this.status("Saved session: " + name);
             root.querySelector("[data-session-menu]").classList.remove("open");
@@ -513,6 +573,7 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext,
             const choice = Number(window.prompt("Enter the session number to open:\n" + options, "1"));
             if (!Number.isInteger(choice) || choice < 1 || choice > projects.length) return;
             await workspace.loadSession(projects[choice - 1].projectId);
+            if (this.beatLab) this.beatLab.currentProject = null;
             this.render();
             this.status("Opened " + workspace.activeProjectName + ".");
           } else if (action === "new-session") {
@@ -522,19 +583,40 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext,
             workspace.undoStack = [];
             workspace.redoStack = [];
             workspace.resetSession();
+            this.beatLab?.startNewSession?.();
             this.render();
             this.showSongNamePrompt();
           } else if (action === "export-wav") {
             button.disabled = true;
             try {
-              const wav = await renderStudioSessionToWav({ tracks: workspace.tracks, tempo: workspace.tempo, timeSignature: workspace.timeSignature, tempoChanges: workspace.tempoChanges, timeSignatureChanges: workspace.timeSignatureChanges, masterSettings: workspace.masterSettings });
+              const wav = await renderStudioSessionToWav({
+                tracks: workspace.tracks,
+                tempo: workspace.tempo,
+                timeSignature: workspace.timeSignature,
+                tempoChanges: workspace.tempoChanges,
+                timeSignatureChanges: workspace.timeSignatureChanges,
+                masterSettings: workspace.masterSettings,
+                beatLabPattern: this.beatLab?.pattern,
+                beatLabSoundProfile: this.beatLab?.soundProfile,
+                beatLabPlaybackEnabled: workspace.beatLabPlaybackEnabled
+              });
               downloadStudioWav(wav, workspace.activeProjectName || "lambo-city-song");
               this.status("WAV master exported.");
             } finally { button.disabled = false; }
           } else if (action === "export-mp3") {
             button.disabled = true;
             try {
-              const mp3 = await renderStudioSessionToMp3({ tracks: workspace.tracks, tempo: workspace.tempo, timeSignature: workspace.timeSignature, tempoChanges: workspace.tempoChanges, timeSignatureChanges: workspace.timeSignatureChanges });
+              const mp3 = await renderStudioSessionToMp3({
+                tracks: workspace.tracks,
+                tempo: workspace.tempo,
+                timeSignature: workspace.timeSignature,
+                tempoChanges: workspace.tempoChanges,
+                timeSignatureChanges: workspace.timeSignatureChanges,
+                masterSettings: workspace.masterSettings,
+                beatLabPattern: this.beatLab?.pattern,
+                beatLabSoundProfile: this.beatLab?.soundProfile,
+                beatLabPlaybackEnabled: workspace.beatLabPlaybackEnabled
+              });
               downloadStudioMp3(mp3, workspace.activeProjectName || "lambo-city-song");
               this.status("MP3 master exported at 192 kbps.");
             } finally { button.disabled = false; }
@@ -547,10 +629,13 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext,
             if (!Number.isInteger(choice) || choice < 1 || choice > versions.length) return;
             if (!await this.confirmReplaceUnsaved(workspace, "restore a previous version")) return;
             await workspace.restoreSessionVersion(versions[choice - 1].versionId);
+            if (this.beatLab) this.beatLab.currentProject = null;
             this.render();
           } else if (action === "export-session") {
             button.disabled = true;
             try {
+              if (this.beatLab?.pattern?.steps) workspace.beatLabPattern = JSON.parse(JSON.stringify(this.beatLab.pattern));
+              workspace.beatLabSoundProfile = this.beatLab?.soundProfile === "mpc" ? "mpc" : "beatLab";
               const dawSession = await workspace.exportSession();
               const activePattern = this.beatLab?.pattern;
               let project = this.beatLab?.currentProject?.schemaVersion === 1
@@ -772,6 +857,7 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext,
             const firstPattern = project.patterns?.[0];
             if (firstPattern) this.beatLab.pattern = JSON.parse(JSON.stringify(firstPattern));
             this.beatLab.soundProfile = project.settings?.soundProfile === "mpc" ? "mpc" : "beatLab";
+            this.beatLab.notifyPatternChanged?.(Boolean(workspace.beatLabPlaybackEnabled));
             const bpmInput = this.beatLab.ui?.querySelector?.("[data-bpm]");
             const bpmLabel = this.beatLab.ui?.querySelector?.("[data-bpm-label]");
             const soundSelect = this.beatLab.ui?.querySelector?.("[data-sound-profile]");

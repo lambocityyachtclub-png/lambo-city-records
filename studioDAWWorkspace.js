@@ -323,7 +323,7 @@ const StudioDAWWorkspace = {
       }
 
       #lambo-city-daw-workspace.lc-daw-edit-mode {
-        height:100dvh;min-height:0;display:flex;flex-direction:column;overflow:hidden;
+        height:100%;min-height:0;display:flex;flex-direction:column;overflow:hidden;
       }
       #lambo-city-daw-workspace.lc-daw-edit-mode .lc-daw-header,
       #lambo-city-daw-workspace.lc-daw-edit-mode .lc-daw-panel-heading,

@@ -7,6 +7,7 @@ const files = [
   "floor2InstrumentApp.js",
   "engine.js",
   "studioDAWApp.js",
+  "studioDAWEditScreen.js",
   "studioDAWWorkspace.js",
   "floor2StudioNavigation.js",
   "studioMixMasterConsole3D.js",
@@ -43,7 +44,6 @@ const workspace = source["studioDAWWorkspace.js"];
 const orderedSteps = [
   /id:\s*"edit",\s*label:\s*"EDITING"/,
   /id:\s*"mpc",\s*label:\s*"MPC"/,
-  /id:\s*"drums",\s*label:\s*"LIVE DRUMMER"/,
   /id:\s*"piano",\s*label:\s*"PIANO \/ CITY SYNTH"/,
   /id:\s*"vocals",\s*label:\s*"VOCAL BOOTH"/,
   /id:\s*"beatlab",\s*label:\s*"BEAT LAB"/,
@@ -56,7 +56,7 @@ for (const pattern of orderedSteps) {
   last = index;
 }
 assert.match(workspace,/const ALL_VIEWS = \[\.\.\.VIEWS, \.\.\.SECONDARY_VIEWS\]/);
-assert.match(workspace,/const SECONDARY_VIEWS = \[\];/,"Live Drummer must be a first-class navigable destination.");
+assert.match(workspace,/const SECONDARY_VIEWS = \[\s*\{ id: "drums", label: "LIVE DRUMMER" \}\s*\]/,"Live Drummer must remain available as a secondary physical-station view, outside the six-workspace workflow.");
 assert.match(workspace,/data-daw-navigation-label/);
 assert.match(workspace,/aria-label="Studio workspace navigation"/);
 assert.match(workspace,/data-daw-step="-1"/);
@@ -76,6 +76,9 @@ assert.match(navigation,/StudioDAWApp\.open\(station\.view\s*\|\|\s*"edit"\)/,"P
 assert.doesNotMatch(navigation,/object:\s*stations\.(?:drumStation|instrumentStation|controlRoom)/);
 
 const app = source["studioDAWApp.js"];
+assert.match(app,/data-global-transport="play"/,"The shared transport must be rendered by the Studio shell.");
+assert.match(app,/appHeader\.style\.display = "flex"/,"The shared transport header must remain visible across workspaces.");
+assert.match(source["studioDAWEditScreen.js"],/\.lc-transport\{display:none!important\}/,"Edit must not show a duplicate local transport.");
 assert.match(source["hud.js"],/lc-live-drummer-score/);
 assert.match(source["hud.js"],/lc-live-drummer-state/);
 assert.match(app,/lc-live-drummer-state/);
@@ -92,8 +95,8 @@ const drummer = source["floor2LiveDrummer.js"];
 assert.match(drummer,/data-drum-mode-toggle/,"Live Drummer must switch modes inside the same interface.");
 assert.match(drummer,/SAMPLE PADS/);
 assert.match(drummer,/LIVE PERFORMANCE/);
-assert.match(app,/createCitySynthPanel\(\{ session: StudioMultitrackWorkspace \}\)/);
-assert.match(app,/createVocalBoothPanel\(\{ beatLab: Floor2StudioApp \}\)/);
+assert.match(app,/createCitySynthPanel\(\{\s*session: StudioMultitrackWorkspace,\s*onTransportRecord: mode => this\.armSessionRecording\(mode\),\s*onTransportDisarm: mode => this\.disarmSessionRecording\(mode\)\s*\}\)/,"City Synth must arm and disarm through the shared session transport.");
+assert.match(app,/createVocalBoothPanel\(\{\s*beatLab: Floor2StudioApp,\s*onTransportPlay: \(\) => this\.playSession\(\),\s*onTransportStop: \(\) => this\.stopSessionPlayback\(\),\s*onTransportRecord: mode => this\.armSessionRecording\(mode\)\s*\}\)/,"Vocal Booth and Voice Notes must use the shared session transport.");
 const vocalBooth = source["floor2VocalBooth3D.js"];
 assert.match(vocalBooth,/data-booth-mode-switch="vocal"/,"Vocal Booth must have a one-tap return to full recording mode.");
 assert.match(vocalBooth,/data-booth-mode-switch="notes"/,"Vocal Booth must have a one-tap Voice Notes mode.");
@@ -101,9 +104,11 @@ assert.match(vocalBooth,/data-booth-mode="notes" hidden/,"Voice Notes must be a 
 assert.match(vocalBooth,/data-booth-mode="vocal"/,"Full vocal recording controls must be scoped to Vocal Booth mode.");
 assert.match(vocalBooth,/data-vocal-talkback/,"The dedicated Talkback control must remain available in the booth.");
 assert.match(vocalBooth,/StudioTalkback\.bindControl/,"Talkback must use the shared Talkback service.");
-assert.match(vocalBooth,/startTrackRecording\(\{audio,trackId:track\.id\}\)/,"Voice Notes must record into the shared multitrack session.");
-assert.match(vocalBooth,/stopTrackRecording\(trackId\)/,"Voice Notes must save a take into the shared session.");
-assert.match(vocalBooth,/scheduleProjectAutosave\(\)/,"Voice Notes must autosave after saving a clip.");
+assert.match(vocalBooth,/Use the shared Studio RECORD control/,"Voice Notes must use the shared transport rather than a separate recorder.");
+assert.match(app,/mode === "notes"/,"Voice Notes must select its own recording mode.");
+assert.match(app,/targetName = .*"Voice Notes"/,"Voice Notes must record to its dedicated session track.");
+assert.match(app,/workspace\.startArmedRecording\(/,"Audio recording must use the shared multitrack recording engine.");
+assert.match(app,/workspace\.scheduleProjectAutosave\(\)/,"Shared audio takes must autosave into the session.");
 assert.match(vocalBooth,/Finish and save the active recording before switching modes/,"Mode switching must not strand an active recording.");
 assert.match(app,/styleMixMasterPanel\(createStudioMixMasterApp/);
 assert.match(app,/onNext:\s*\(\)\s*=>\s*this\.workspace\?\.setView\("piano"\)/);

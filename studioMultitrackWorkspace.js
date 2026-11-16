@@ -70,6 +70,10 @@ const StudioMultitrackWorkspace = {
   root: null,
   onRender: null,
   tempo: 100,
+  beatLabPattern: null,
+  beatLabSoundProfile: "beatLab",
+  beatLabPlaybackEnabled: false,
+  cycleTakesEnabled: true,
   timeSignature: "4/4",
   tempoChanges: [],
   timeSignatureChanges: [],
@@ -128,6 +132,10 @@ const StudioMultitrackWorkspace = {
 
   captureSnapshot() {
     return {
+      beatLabPattern: this.beatLabPattern ? JSON.parse(JSON.stringify(this.beatLabPattern)) : null,
+      beatLabSoundProfile: this.beatLabSoundProfile === "mpc" ? "mpc" : "beatLab",
+      beatLabPlaybackEnabled: Boolean(this.beatLabPlaybackEnabled),
+      cycleTakesEnabled: this.cycleTakesEnabled !== false,
       tracks: this.tracks.map(track => ({
         ...track,
         eq: { ...(track.eq || {}) },
@@ -160,6 +168,15 @@ const StudioMultitrackWorkspace = {
 
   restoreSnapshot(snapshot) {
     this.stopAll();
+    this.beatLabPattern = snapshot.beatLabPattern?.steps
+      ? JSON.parse(JSON.stringify(snapshot.beatLabPattern))
+      : null;
+    this.beatLabSoundProfile = snapshot.beatLabSoundProfile === "mpc" ? "mpc" : "beatLab";
+    this.beatLabPlaybackEnabled = Boolean(snapshot.beatLabPlaybackEnabled);
+    this.cycleTakesEnabled = snapshot.cycleTakesEnabled !== false;
+    window.dispatchEvent(new CustomEvent("lc-session-beatlab-pattern-restore", {
+      detail: { pattern: this.beatLabPattern, soundProfile: this.beatLabSoundProfile, playbackEnabled: this.beatLabPlaybackEnabled }
+    }));
     this.tracks = snapshot.tracks.map(track => ({
       ...track,
       eq: { ...(track.eq || {}) },
@@ -185,6 +202,8 @@ const StudioMultitrackWorkspace = {
     StudioAudioEngine.setMasterLimiter(this.masterSettings.limiterEnabled, this.masterSettings.limiterCeilingDb);
     this.deletedItems = (snapshot.deletedItems || []).map(entry => ({ ...entry }));
     this.render();
+    this.onTransportChange?.();
+    window.dispatchEvent(new CustomEvent("lc-session-loaded"));
   },
 
   undo() {
@@ -242,7 +261,16 @@ const StudioMultitrackWorkspace = {
   addMarker(name,bar=this.playheadBar) { const label=String(name||"").trim().slice(0,32);if(!label)return false;this.recordHistory("Add song marker");const marker={id:"lc-marker-"+Date.now(),name:label,bar:Math.max(1,Math.min(128,Number(bar)||1))};this.markers.push(marker);this.markers.sort((a,b)=>a.bar-b.bar);this.scheduleProjectAutosave();this.render();this.status("Marker "+label+" added at bar "+marker.bar+".");return marker; },
   addTempoChange(bar,bpm) { const at=Math.max(1,Math.min(128,Math.round(Number(bar)||1))),value=Math.max(20,Math.min(300,Number(bpm)||this.tempo));this.recordHistory("Add tempo change");this.tempoChanges=this.tempoChanges.filter(point=>point.bar!==at);this.tempoChanges.push({bar:at,bpm:value});this.tempoChanges.sort((a,b)=>a.bar-b.bar);this.scheduleProjectAutosave();this.render();this.status("Tempo change · "+value+" BPM at bar "+at+".");return true; },
   addTimeSignatureChange(bar,signature) { const match=/^(2|3|4|5|6|7|8|9|12)\/(2|4|8|16)$/.exec(String(signature||""));if(!match)return false;const at=Math.max(1,Math.min(128,Math.round(Number(bar)||1)));this.recordHistory("Add time signature change");this.timeSignatureChanges=this.timeSignatureChanges.filter(point=>point.bar!==at);this.timeSignatureChanges.push({bar:at,numerator:Number(match[1]),denominator:Number(match[2])});this.timeSignatureChanges.sort((a,b)=>a.bar-b.bar);this.scheduleProjectAutosave();this.render();this.status("Time signature "+signature+" begins at bar "+at+".");return true; },
-  setLoopRange(startBar,endBar,enabled=true) { const start=Math.max(1,Math.min(127,Number(startBar)||1)),end=Math.max(start+.25,Math.min(129,Number(endBar)||start+8));this.recordHistory("Set cycle range");this.loopRange={enabled:Boolean(enabled),startBar:start,endBar:end};this.scheduleProjectAutosave();this.render();this.status((enabled?"Cycle enabled · ":"Cycle range set · ")+"bar "+start+" to "+end+"."); },
+  setLoopRange(startBar,endBar,enabled=true) {
+    const start=Math.max(1,Math.min(127,Number(startBar)||1));
+    const end=Math.max(start+.25,Math.min(129,Number(endBar)||start+8));
+    this.recordHistory("Set cycle range");
+    this.loopRange={enabled:Boolean(enabled),startBar:start,endBar:end};
+    this.scheduleProjectAutosave();
+    this.render();
+    this.onTransportChange?.();
+    this.status((enabled?"Cycle enabled · ":"Cycle range set · ")+"bar "+start+" to "+end+".");
+  },
   assignTrackGroup(trackId,name) { const track=this.tracks.find(item=>item.id===trackId),label=String(name||"").trim().slice(0,32);if(!track||!label)return false;this.recordHistory("Assign track group");const groupId="lc-group-"+label.toLowerCase().replace(/[^a-z0-9]+/g,"-");track.groupId=groupId;track.groupName=label;track.groupCollapsed=false;this.tracks.filter(item=>item.groupId===groupId).forEach(item=>{item.groupName=label;item.groupCollapsed=false;});this.scheduleProjectAutosave();this.render();this.status(track.name+" assigned to "+label+".");return true; },
   toggleTrackGroup(trackId) { const track=this.tracks.find(item=>item.id===trackId);if(!track?.groupId)return false;const members=this.tracks.filter(item=>item.groupId===track.groupId),collapsed=!members.every(item=>item.groupCollapsed);this.recordHistory("Toggle track folder");members.forEach(item=>item.groupCollapsed=collapsed);this.render();this.scheduleProjectAutosave();return true; },
   toggleFollowPlayhead() { this.followPlayhead=!this.followPlayhead;this.scheduleProjectAutosave();this.status("Follow playhead "+(this.followPlayhead?"on.":"off."));return this.followPlayhead; },
@@ -479,7 +507,7 @@ const StudioMultitrackWorkspace = {
   setTrackInputSource(trackId, source = "mic") {
     const track = this.tracks.find(item => item.id === trackId);
     if (!track || track.type !== "audio") throw new Error("Choose an audio track before assigning its input source.");
-    if (!["mic", "beatlab", "mpc"].includes(source)) throw new Error("Unsupported recording input source.");
+    if (!["mic", "beatlab", "mpc", "drums"].includes(source)) throw new Error("Unsupported recording input source.");
     if (this.isTrackRecording() || this.pendingRecording) throw new Error("Stop recording before changing an input source.");
     track.inputSource = source;
     this.scheduleProjectAutosave();
@@ -522,6 +550,7 @@ const StudioMultitrackWorkspace = {
     if (next !== this.tempo) this.recordHistory("Change tempo");
     this.tempo = next;
     this.scheduleProjectAutosave();
+    this.onTransportChange?.();
   },
 
   getArrangementPlayback() {
@@ -632,6 +661,10 @@ const StudioMultitrackWorkspace = {
       inputLatencyByDevice: { ...(this.inputLatencyByDevice || {}) },
       masterSettings: { ...(this.masterSettings || { volume: 100, stereoWidth: 100, compressionRatio: 3, limiterEnabled: true, limiterCeilingDb: -1 }) },
       metronomeSettings: { ...(this.metronomeSettings || { enabled: false, volume: 0.16, accent: true }) },
+      beatLabPattern: this.beatLabPattern ? JSON.parse(JSON.stringify(this.beatLabPattern)) : null,
+      beatLabSoundProfile: this.beatLabSoundProfile === "mpc" ? "mpc" : "beatLab",
+      beatLabPlaybackEnabled: Boolean(this.beatLabPlaybackEnabled),
+      cycleTakesEnabled: this.cycleTakesEnabled !== false,
       templateId: this.sessionTemplateId,
       templateName: this.sessionTemplateName,
       deletedItems: this.deletedItems,
@@ -716,6 +749,13 @@ const StudioMultitrackWorkspace = {
     this.inputLatencyByDevice = session.inputLatencyByDevice && typeof session.inputLatencyByDevice === "object" ? { ...session.inputLatencyByDevice } : {};
     this.masterSettings = { volume: Math.max(0, Math.min(100, Number(session.masterSettings?.volume ?? 100))), stereoWidth: Math.max(0, Math.min(200, Number(session.masterSettings?.stereoWidth ?? 100))), compressionRatio: Math.max(1, Math.min(8, Number(session.masterSettings?.compressionRatio ?? 3))), limiterEnabled: session.masterSettings?.limiterEnabled !== false, limiterCeilingDb: Math.max(-6, Math.min(0, Number(session.masterSettings?.limiterCeilingDb ?? -1))) };
     this.metronomeSettings = { enabled: Boolean(session.metronomeSettings?.enabled), volume: Math.max(0, Math.min(0.4, Number(session.metronomeSettings?.volume ?? 0.16))), accent: session.metronomeSettings?.accent !== false };
+    this.beatLabPattern = session.beatLabPattern?.steps ? JSON.parse(JSON.stringify(session.beatLabPattern)) : null;
+    this.beatLabSoundProfile = session.beatLabSoundProfile === "mpc" ? "mpc" : "beatLab";
+    this.beatLabPlaybackEnabled = Boolean(session.beatLabPlaybackEnabled);
+    this.cycleTakesEnabled = session.cycleTakesEnabled !== false;
+    window.dispatchEvent(new CustomEvent("lc-session-beatlab-pattern-restore", {
+      detail: { pattern: this.beatLabPattern, soundProfile: this.beatLabSoundProfile, playbackEnabled: this.beatLabPlaybackEnabled }
+    }));
     StudioAudioEngine.setMasterVolume(this.masterSettings.volume / 100);
     StudioAudioEngine.setStereoWidth(this.masterSettings.stereoWidth);
     StudioAudioEngine.setMasterCompressionRatio(this.masterSettings.compressionRatio);
@@ -736,6 +776,8 @@ const StudioMultitrackWorkspace = {
     this.selectedClipId = null;
     this.selectedRegionIds = [];
     this.render();
+    this.onTransportChange?.();
+    window.dispatchEvent(new CustomEvent("lc-session-loaded"));
     this.dirty = false;
     this.saveState = "saved";
     if (!sessionOverride) await StudioDAWSessionStore.clearRecovery(projectId);
@@ -745,6 +787,18 @@ const StudioMultitrackWorkspace = {
 
   validateSessionData(session) {
     if (!session || session.format !== "lambo-city-daw-session" || session.version !== 1 || !Array.isArray(session.tracks) || session.tracks.length > 64) return false;
+    if (session.beatLabPlaybackEnabled !== undefined && typeof session.beatLabPlaybackEnabled !== "boolean") return false;
+    if (session.cycleTakesEnabled !== undefined && typeof session.cycleTakesEnabled !== "boolean") return false;
+    if (session.beatLabPattern !== undefined && session.beatLabPattern !== null) {
+      const pattern = session.beatLabPattern;
+      if (!pattern || !pattern.steps ||
+          !["kick", "snare", "hat"].every(id =>
+            Array.isArray(pattern.steps[id]) &&
+            pattern.steps[id].length === 16 &&
+            pattern.steps[id].every(step => typeof step === "boolean")
+          )) return false;
+      if (pattern.bpm !== undefined && (!Number.isFinite(Number(pattern.bpm)) || Number(pattern.bpm) < 60 || Number(pattern.bpm) > 180)) return false;
+    }
     const trackIds = new Set();
     const clipIds = new Set();
     for (const track of session.tracks) {
@@ -805,6 +859,10 @@ const StudioMultitrackWorkspace = {
       throw new Error("Stop the active track recording before starting a new song session.");
     }
     this.stopAll();
+    this.beatLabPattern = null;
+    this.beatLabSoundProfile = "beatLab";
+    this.beatLabPlaybackEnabled = false;
+    this.cycleTakesEnabled = true;
     this.tempo = Math.max(60, Math.min(180, Number(tempo) || 100));
     this.timeSignature = "4/4"; this.tempoChanges = []; this.timeSignatureChanges = []; this.markers = []; this.loopRange = { enabled: false, startBar: 1, endBar: 9 }; this.masterSettings = { volume: 100, stereoWidth: 100, compressionRatio: 3, limiterEnabled: true, limiterCeilingDb: -1 }; StudioAudioEngine.setMasterVolume(1); StudioAudioEngine.setStereoWidth(100); StudioAudioEngine.setMasterCompressionRatio(3); StudioAudioEngine.setMasterLimiter(true, -1); this.followPlayhead = true; this.selectedRegionIds = []; this.multiSelectMode = false;
     this.sessionTemplateId = null;
@@ -825,6 +883,8 @@ const StudioMultitrackWorkspace = {
     this.createTrack("instrument", "Instruments");
     this.createTrack("audio", "Beats");
     this.render();
+    this.onTransportChange?.();
+    window.dispatchEvent(new CustomEvent("lc-session-loaded"));
     this.status("New song session ready.");
   },
 
@@ -881,7 +941,7 @@ const StudioMultitrackWorkspace = {
         type: TRACK_TYPES.includes(track.type) ? track.type : "audio",
         volume: Math.max(0, Math.min(100, Number(track.volume) || 0)),
         pan: Math.max(-1, Math.min(1, Number(track.pan) || 0)),
-        inputSource: ["mic", "beatlab", "mpc"].includes(track.inputSource) ? track.inputSource : "mic",
+        inputSource: ["mic", "beatlab", "mpc", "drums"].includes(track.inputSource) ? track.inputSource : "mic",
         inputDeviceId: String(track.inputDeviceId || "").slice(0, 256),
         inputChannel: Number.isInteger(track.inputChannel) && track.inputChannel >= 0 && track.inputChannel < 32 ? track.inputChannel : null,
         inputLatencyMs: Math.max(0, Math.min(500, Number(track.inputLatencyMs) || 0)),
@@ -932,6 +992,10 @@ const StudioMultitrackWorkspace = {
       format: "lambo-city-daw-session",
       version: 1,
       projectName: this.activeProjectName || "Untitled Song",
+      beatLabPattern: this.beatLabPattern ? JSON.parse(JSON.stringify(this.beatLabPattern)) : null,
+      beatLabSoundProfile: this.beatLabSoundProfile === "mpc" ? "mpc" : "beatLab",
+      beatLabPlaybackEnabled: Boolean(this.beatLabPlaybackEnabled),
+      cycleTakesEnabled: this.cycleTakesEnabled !== false,
       tempo: this.tempo,
       timeSignature: this.timeSignature,
       tempoChanges: this.tempoChanges.map(point=>({...point})),
@@ -982,6 +1046,13 @@ const StudioMultitrackWorkspace = {
     this.sessionTemplateId = session.templateId || null;
     this.sessionTemplateName = session.templateName || null;
     this.deletedItems = [];
+    this.beatLabPattern = session.beatLabPattern?.steps ? JSON.parse(JSON.stringify(session.beatLabPattern)) : null;
+    this.beatLabSoundProfile = session.beatLabSoundProfile === "mpc" ? "mpc" : "beatLab";
+    this.beatLabPlaybackEnabled = Boolean(session.beatLabPlaybackEnabled);
+    this.cycleTakesEnabled = session.cycleTakesEnabled !== false;
+    window.dispatchEvent(new CustomEvent("lc-session-beatlab-pattern-restore", {
+      detail: { pattern: this.beatLabPattern, soundProfile: this.beatLabSoundProfile, playbackEnabled: this.beatLabPlaybackEnabled }
+    }));
     const importedAudioAssets = new Map();
     this.tracks = session.tracks.map((savedTrack, index) => ({
       id: savedTrack.id || `lc-track-import-${index + 1}`,
@@ -989,7 +1060,7 @@ const StudioMultitrackWorkspace = {
       type: TRACK_TYPES.includes(savedTrack.type) ? savedTrack.type : "audio",
       volume: Math.max(0, Math.min(100, Number(savedTrack.volume) || 0)),
       pan: Math.max(-1, Math.min(1, Number(savedTrack.pan) || 0)),
-      inputSource: ["mic", "beatlab", "mpc"].includes(savedTrack.inputSource) ? savedTrack.inputSource : "mic",
+      inputSource: ["mic", "beatlab", "mpc", "drums"].includes(savedTrack.inputSource) ? savedTrack.inputSource : "mic",
       inputDeviceId: String(savedTrack.inputDeviceId || "").slice(0, 256),
       inputChannel: Number.isInteger(savedTrack.inputChannel) && savedTrack.inputChannel >= 0 && savedTrack.inputChannel < 32 ? savedTrack.inputChannel : null,
       inputLatencyMs: Math.max(0, Math.min(500, Number(savedTrack.inputLatencyMs) || 0)),
@@ -1059,6 +1130,8 @@ const StudioMultitrackWorkspace = {
     const ids = this.tracks.map(track => Number(track.id.match(/(\d+)$/)?.[1]) || 0);
     this.nextTrackId = Math.max(0, ...ids) + 1;
     this.render();
+    this.onTransportChange?.();
+    window.dispatchEvent(new CustomEvent("lc-session-loaded"));
     this.status("Portable session loaded with " + this.tracks.length + " track(s).");
     return true;
   },
@@ -1590,8 +1663,10 @@ const StudioMultitrackWorkspace = {
             ? StudioAudioExport.getOutput(audio)
             : track.inputSource === "mpc"
               ? StudioMPCSampler.ensureOutput(audio)
-              : null;
-          const pitchCorrectionNode = track.inputSource === "mic" && /vocal/i.test(track.name) && track.effects?.pitchCorrection?.enabled
+              : track.inputSource === "drums"
+                ? StudioAudioEngine.getDrumOutput(audio)
+                : null;
+          const pitchCorrectionNode = monitorInput && track.inputSource === "mic" && /vocal/i.test(track.name) && track.effects?.pitchCorrection?.enabled
             ? await createStudioPitchCorrectionNode(audio, track.effects.pitchCorrection)
             : null;
           await StudioRecordingEngine.startTrackRecording({
@@ -1637,7 +1712,9 @@ const StudioMultitrackWorkspace = {
         ? "MPC"
         : track.inputSource === "beatlab"
           ? "Beat Lab"
-          : "MIC";
+          : track.inputSource === "drums"
+            ? "LIVE DRUMMER"
+            : "MIC";
       this.status("Recording " + armedTracks.map(track => sourceLabel(track) + " → " + track.name).join(" · ") + " · bar " + startBar + (endBar !== null ? " → " + endBar : "") + ".");
       return true;
     } catch (error) {

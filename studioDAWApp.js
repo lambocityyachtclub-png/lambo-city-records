@@ -132,7 +132,6 @@ function createMPCPanel({ beatLab, workspace, onOpenBeatLab, onTransportPlay, on
   };
 
   root.querySelector("[data-mpc-play]").addEventListener("click", () => {
-    if (beatLab) beatLab.soundProfile = "mpc";
     if (typeof onTransportPlay === "function") void onTransportPlay();
     else status("Use the shared Studio transport to play this session.");
   });
@@ -143,6 +142,9 @@ function createMPCPanel({ beatLab, workspace, onOpenBeatLab, onTransportPlay, on
   root.querySelector("[data-mpc-tempo]").addEventListener("input", event => {
     const bpm = Number(event.target.value);
     if (beatLab?.pattern) beatLab.pattern.bpm = bpm;
+    StudioMultitrackWorkspace.setTempo(bpm);
+    StudioMultitrackWorkspace.onTransportChange?.();
+    beatLab?.notifyPatternChanged?.(Boolean(StudioMultitrackWorkspace.beatLabPlaybackEnabled));
     root.querySelector("[data-mpc-tempo-label]").textContent = bpm + " BPM";
   });
   root.querySelector("[data-mpc-save]").addEventListener("click", () => {
@@ -154,7 +156,6 @@ function createMPCPanel({ beatLab, workspace, onOpenBeatLab, onTransportPlay, on
     else workspace?.setView("beatlab");
   });
 
-  if (beatLab) beatLab.soundProfile = "mpc";
   root.refreshPattern = renderPads;
   renderPads();
   return root;
@@ -487,6 +488,11 @@ const StudioDAWApp = {
   editScreen: null,
   panelHost: null,
   handleOverlayClick: null,
+  handleBeatLabPatternChange: null,
+  handleSessionPatternRestore: null,
+  handleVocalPitchSettingsChange: null,
+  handleVocalEffectSettingsChange: null,
+  handleSessionLoaded: null,
   mixPanel: null,
   pianoPanel: null,
   mpcPanel: null,
@@ -504,6 +510,7 @@ const StudioDAWApp = {
   recordingBars: 8,
   cycleRecordingEnabled: true,
   cycleRecordingActive: false,
+  beatLabPlaybackEnabled: false,
   sessionLoopBounds: null,
   cycleRestartTimer: null,
   activeRecordingStartBar: null,
@@ -511,29 +518,52 @@ const StudioDAWApp = {
 
   armSessionRecording(mode = null) {
     const workspace = StudioMultitrackWorkspace;
+    if (!mode) {
+      const activeView = this.workspace?.activeView;
+      if (activeView === "mpc") mode = "mpc";
+      else if (activeView === "piano") mode = "midi";
+      else if (activeView === "beatlab") mode = "beatlab";
+      else if (activeView === "drums") mode = "drums";
+      else if (activeView === "edit" && workspace.tracks.some(item => item.armed && (item.type === "midi" || item.type === "instrument"))) mode = "midi";
+    }
     if (!workspace || workspace.isTrackRecording() || workspace.pendingRecording || this.sessionMidiRecordingActive) return false;
     if (mode === "midi") {
-      let midiTrack = workspace.tracks.find(item => item.type === "midi" && /city synth|piano performance/i.test(item.name));
+      let midiTrack = workspace.tracks.find(item => item.type === "midi" && item.armed) ||
+        workspace.tracks.find(item => item.type === "midi" && /city synth|piano performance/i.test(item.name));
       if (!midiTrack) {
         workspace.recordHistory("Create City Synth MIDI track");
         midiTrack = workspace.createTrack("midi", "City Synth Performance");
         midiTrack.midiNotes = [];
       }
+      workspace.tracks.forEach(item => {
+        if (item.type === "midi") item.armed = item.id === midiTrack.id;
+      });
       this.recordingMode = "midi";
       this.recordArmed = true;
       workspace.scheduleProjectAutosave();
       workspace.render();
       this.syncTransportControls();
+      window.dispatchEvent(new CustomEvent("lc-session-midi-recording-state", {
+        detail: { active: false, armed: true }
+      }));
       this.editScreen?.status("MIDI recording armed · press Spacebar or PLAY SESSION to begin.");
       if (workspace.isPlaying() || Floor2StudioApp?.playing) void this.startSessionRecording();
       return true;
     }
     const mpcMode = mode === "mpc";
+    const beatLabMode = mode === "beatlab";
+    const drumsMode = mode === "drums";
+    if (beatLabMode) {
+      this.beatLabPlaybackEnabled = true;
+      workspace.beatLabPlaybackEnabled = true;
+      workspace.scheduleProjectAutosave();
+    }
     const boothNotes = this.vocalsPanel?.querySelector('[data-booth-mode="notes"]');
-    const voiceNotesMode = mode === "notes" || (!mode && this.workspace?.activeView === "vocals" && Boolean(boothNotes && !boothNotes.hidden));
-    const vocalMode = mode === "vocal" || (!mode && this.workspace?.activeView === "vocals" && !voiceNotesMode);
-    const dedicatedMode = mpcMode || voiceNotesMode || vocalMode;
-    const targetName = mpcMode ? "MPC Performance" : voiceNotesMode ? "Voice Notes" : "Vocals";
+    const activeView = this.workspace?.activeView;
+    const voiceNotesMode = mode === "notes" || (!mode && activeView === "vocals" && Boolean(boothNotes && !boothNotes.hidden));
+    const explicitVocalMode = mode === "vocal" || (!mode && activeView === "vocals" && !voiceNotesMode);
+    const dedicatedMode = mpcMode || beatLabMode || drumsMode || voiceNotesMode || explicitVocalMode;
+    const targetName = mpcMode ? "MPC Performance" : beatLabMode ? "Beats" : drumsMode ? "Live Drummer Performance" : voiceNotesMode ? "Voice Notes" : "Vocals";
     let track = dedicatedMode
       ? workspace.tracks.find(item => item.type === "audio" && item.name === targetName)
       : workspace.tracks.find(item => item.type === "audio" && item.armed);
@@ -555,8 +585,24 @@ const StudioDAWApp = {
     } else if (!workspace.tracks.some(item => item.type === "audio" && item.armed)) {
       track.armed = true;
     }
-    track.inputSource = mpcMode ? "mpc" : "mic";
-    this.recordingMode = mpcMode ? "mpc" : voiceNotesMode ? "notes" : "mic";
+    const vocalMode = explicitVocalMode || (!voiceNotesMode && /vocal/i.test(track?.name || ""));
+    if (vocalMode) {
+      const pitchSettings = Floor2StudioApp?.pitchCorrectionSettings || {
+        enabled: false, root: 0, scale: "major", amount: 100, speedMs: 25
+      };
+      const vocalSettings = Floor2StudioApp?.vocalEffectSettings || {};
+      track.effects = {
+        ...(track.effects || {}),
+        delayTime: Math.max(0.05, Math.min(1.5, Number(track.effects?.delayTime) || 0.28)),
+        delayFeedback: Math.max(0, Math.min(0.75, Number(track.effects?.delayFeedback) || 0.25)),
+        delayMix: Math.max(0, Math.min(1, Number(vocalSettings.delay) || 0)),
+        reverbMix: Math.max(0, Math.min(1, Number(vocalSettings.reverb) || 0)),
+        reverbDecay: Math.max(0.3, Math.min(6, Number(track.effects?.reverbDecay) || 2.2)),
+        pitchCorrection: { ...pitchSettings }
+      };
+    }
+    track.inputSource = mpcMode ? "mpc" : beatLabMode ? "beatlab" : drumsMode ? "drums" : "mic";
+    this.recordingMode = mpcMode ? "mpc" : beatLabMode ? "beatlab" : drumsMode ? "drums" : voiceNotesMode ? "notes" : "mic";
     this.recordArmed = true;
     workspace.scheduleProjectAutosave();
     workspace.render();
@@ -567,9 +613,19 @@ const StudioDAWApp = {
   },
 
   disarmSessionRecording(mode = null) {
+    if (mode === "midi" && this.sessionMidiRecordingActive) {
+      void this.stopSessionPlayback();
+      return true;
+    }
     if (this.recordArmed && (!mode || this.recordingMode === mode)) {
       this.recordArmed = false;
-      if (mode === "midi") this.recordingMode = "mic";
+      if (mode === "midi" || this.recordingMode === "midi") {
+        StudioMultitrackWorkspace.tracks.forEach(track => { if (track.type === "midi") track.armed = false; });
+        this.recordingMode = "mic";
+        window.dispatchEvent(new CustomEvent("lc-session-midi-recording-state", {
+          detail: { active: false, armed: false }
+        }));
+      }
       this.syncTransportControls();
       this.editScreen?.status("Recording disarmed.");
       return true;
@@ -588,13 +644,27 @@ const StudioDAWApp = {
       const started = await multitrack.playAll();
       if (started) {
         const sessionTempo = multitrack.getTempoAtBar(multitrack.playheadBar);
-        if (beatLab.pattern) beatLab.pattern.bpm = sessionTempo;
+        if (beatLab.pattern) {
+          beatLab.pattern.bpm = sessionTempo;
+          beatLab.notifyPatternChanged?.(Boolean(this.beatLabPlaybackEnabled));
+        }
         const recordedBeatTrack = multitrack.tracks.find(track =>
           ["beats", "beat lab"].includes(String(track.name || "").trim().toLowerCase()) &&
           (track.clips || []).some(clip => clip.blob?.size > 0)
         );
         if (recordedBeatTrack) beatLab.stop();
-        else await beatLab.start({ startAtTime: multitrack.arrangementPlayback?.playbackStartTime });
+        else if (this.beatLabPlaybackEnabled) {
+          const playhead = Math.max(1, Number(multitrack.playheadBar) || 1);
+          const startAtStep = Math.max(0, Math.min(15, Math.floor((playhead - Math.floor(playhead)) * 16)));
+          await beatLab.start({
+            startAtTime: multitrack.arrangementPlayback?.playbackStartTime,
+            startAtStep
+          });
+        } else {
+          // An empty song or a Voice Notes session must stay silent unless
+          // the producer explicitly starts the Beat Lab sequencer.
+          beatLab.stop();
+        }
         if (!multitrack.isPlaying() && beatLab.playing) beatLab.stop();
       }
       this.syncTransportControls();
@@ -649,14 +719,16 @@ const StudioDAWApp = {
       }
       this.sessionMidiRecordingActive = true;
       this.syncTransportControls();
-      window.dispatchEvent(new CustomEvent("lc-session-midi-recording-state", { detail: { active: true } }));
+      window.dispatchEvent(new CustomEvent("lc-session-midi-recording-state", {
+        detail: { active: true, armed: false }
+      }));
       return true;
     }
     const started = await workspace.startArmedRecording({
       vocalEffects: Floor2StudioApp?.vocalEffects,
       punchInBar: boundedStartBar,
       punchOutBar: endBar,
-      monitorInput: false
+      monitorInput: Boolean(this.editScreen?.root?.querySelector("[data-input-monitor]")?.checked)
     });
     this.recordStartPending = false;
     if (!started) {
@@ -683,19 +755,22 @@ const StudioDAWApp = {
 
   async stopSessionPlayback() {
     const workspace = StudioMultitrackWorkspace;
-    workspace?.stopAll();
+    StudioMultitrackWorkspace?.stopAll();
     if (Floor2StudioApp?.playing) Floor2StudioApp.stop();
     if (this.sessionRecordTimer) clearTimeout(this.sessionRecordTimer);
     this.sessionRecordTimer = null;
-    if (this.sessionMidiRecordingActive) {
-      if (this.activeRecordingStartBar && this.activeRecordingEndBar) {
+    if (this.sessionMidiRecordingActive || this.recordingMode === "midi") {
+      if (this.sessionMidiRecordingActive && this.activeRecordingStartBar && this.activeRecordingEndBar) {
         workspace?.setLoopRange(this.activeRecordingStartBar, this.activeRecordingEndBar, true);
       }
       this.sessionMidiRecordingActive = false;
+      workspace?.tracks?.forEach(track => { if (track.type === "midi") track.armed = false; });
       this.recordingMode = "mic";
       this.activeRecordingStartBar = null;
       this.activeRecordingEndBar = null;
-      window.dispatchEvent(new CustomEvent("lc-session-midi-recording-state", { detail: { active: false } }));
+      window.dispatchEvent(new CustomEvent("lc-session-midi-recording-state", {
+        detail: { active: false, armed: false }
+      }));
     }
     this.cycleRecordingActive = false;
     this.sessionLoopBounds = null;
@@ -709,6 +784,61 @@ const StudioDAWApp = {
     if (this.recordingMode !== "midi") this.recordingMode = "mic";
     this.syncTransportControls();
     window.dispatchEvent(new CustomEvent("lc-vocal-recording-state", { detail: { recording: false, name: "Session Recording", format: "Shared Studio audio" } }));
+    return true;
+  },
+
+  syncVocalTrackSettings() {
+    const vocalTrack = StudioMultitrackWorkspace.tracks.find(track => track.name === "Vocals");
+    const pitchDefaults = { enabled: false, root: 0, scale: "major", amount: 100, speedMs: 25 };
+    const pitchSettings = { ...pitchDefaults, ...(vocalTrack?.effects?.pitchCorrection || {}) };
+    const vocalSettings = {
+      delay: Math.max(0, Math.min(1, Number(vocalTrack?.effects?.delayMix) || 0)),
+      reverb: Math.max(0, Math.min(1, Number(vocalTrack?.effects?.reverbMix) || 0))
+    };
+    Floor2StudioApp.pitchCorrectionSettings = pitchSettings;
+    Floor2StudioApp.vocalEffectSettings = vocalSettings;
+    Floor2StudioApp.vocalEffects?.setDelayMix?.(vocalSettings.delay);
+    Floor2StudioApp.vocalEffects?.setReverbMix?.(vocalSettings.reverb);
+    this.vocalsPanel?.querySelectorAll("[data-vocal-pitch]").forEach(control => {
+      const key = control.dataset.vocalPitch;
+      if (key === "enabled") control.checked = Boolean(pitchSettings.enabled);
+      else if (pitchSettings[key] !== undefined) control.value = String(pitchSettings[key]);
+    });
+    this.vocalsPanel?.querySelectorAll("[data-vocal-effect]").forEach(control => {
+      const key = control.dataset.vocalEffect;
+      if (vocalSettings[key] !== undefined) control.value = String(vocalSettings[key]);
+    });
+  },
+
+  async playSession() {
+    if (this.recordStartPending || this.transportActionPending ||
+        StudioMultitrackWorkspace.isPlaying() || Floor2StudioApp?.playing) return true;
+    if (this.recordArmed) return this.startSessionRecording();
+    return this.startSessionPlayback();
+  },
+
+  async startBeatLabPlayback() {
+    this.beatLabPlaybackEnabled = true;
+    StudioMultitrackWorkspace.beatLabPlaybackEnabled = true;
+    StudioMultitrackWorkspace.scheduleProjectAutosave();
+    if (StudioMultitrackWorkspace.isPlaying()) {
+      if (Floor2StudioApp?.playing) return true;
+      const playhead = Math.max(1, Number(StudioMultitrackWorkspace.playheadBar) || 1);
+      const fractionalBar = playhead - Math.floor(playhead);
+      const startAtStep = Math.max(0, Math.min(15, Math.floor(fractionalBar * 16)));
+      return Floor2StudioApp.start({ startAtStep });
+    }
+    return this.playSession();
+  },
+
+  async returnSessionToStart() {
+    await this.stopSessionPlayback();
+    const workspace = StudioMultitrackWorkspace;
+    if (!workspace) return false;
+    workspace.playheadBar = 1;
+    workspace.render();
+    this.syncTransportControls();
+    this.editScreen?.status("Playhead returned to bar 1 · session stopped.");
     return true;
   },
 
@@ -745,10 +875,18 @@ const StudioDAWApp = {
     if (editRecord) editRecord.textContent = this.recordArmed ? "● RECORD ARMED" : "● RECORD";
     const globalTempo = this.root?.querySelector("[data-global-tempo]");
     if (globalTempo) globalTempo.value = String(StudioMultitrackWorkspace.tempo || 100);
+    this.cycleRecordingEnabled = StudioMultitrackWorkspace.cycleTakesEnabled !== false;
     const cycleToggle = this.root?.querySelector("[data-global-cycle-record]");
-    if (cycleToggle) cycleToggle.checked = Boolean(this.cycleRecordingEnabled);
+    if (cycleToggle) cycleToggle.checked = this.cycleRecordingEnabled;
     const position = this.root?.querySelector("[data-global-position]");
     if (position) position.textContent = "BAR " + String(Math.floor(StudioMultitrackWorkspace.playheadBar || 1)).padStart(2, "0");
+    const loopLabel = this.root?.querySelector("[data-global-loop]");
+    if (loopLabel) {
+      const loop = StudioMultitrackWorkspace.loopRange || { enabled: false, startBar: 1, endBar: 9 };
+      loopLabel.textContent = loop.enabled
+        ? "LOOP " + String(loop.startBar) + "–" + String(loop.endBar)
+        : "LOOP OFF";
+    }
     this.root?.querySelectorAll('[data-global-transport="click"]').forEach(button => {
       button.textContent = clickOn ? "CLICK ON" : "CLICK OFF";
       button.setAttribute("aria-pressed", String(clickOn));
@@ -769,6 +907,7 @@ const StudioDAWApp = {
     if (options.startNewSession !== false) {
       StudioMultitrackWorkspace.resetSession();
       Floor2StudioApp.startNewSession?.();
+      this.beatLabPlaybackEnabled = false;
     }
 
     // Main application overlay.
@@ -780,7 +919,9 @@ const StudioDAWApp = {
       position:fixed;
       inset:0;
       z-index:20000;
-      overflow:auto;
+      display:flex;
+      flex-direction:column;
+      overflow:hidden;
       background:#090a0e;
       color:#f4f1eb;
       font-family:Arial,sans-serif;
@@ -795,6 +936,10 @@ const StudioDAWApp = {
       justify-content:space-between;
       gap:12px;
       padding:12px 18px;
+      position:sticky;
+      top:0;
+      z-index:100;
+      flex-wrap:wrap;
       border-bottom:1px solid #30313a;
       background:#101117;
     `;
@@ -812,12 +957,13 @@ const StudioDAWApp = {
         <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-right:auto;margin-left:16px">
           <button type="button" data-global-transport="play" style="min-height:42px;padding:10px 13px;border:1px solid #9be0b3;border-radius:7px;background:linear-gradient(#dff9e9,#71b98b);color:#082b17;font-weight:900">▶ PLAY SESSION</button>
           <button type="button" data-global-transport="stop" style="min-height:42px;padding:10px 13px;border:1px solid #f3b9b9;border-radius:7px;background:linear-gradient(#f5e1e1,#bd777b);color:#3c080c;font-weight:900">■ STOP</button>
+          <button type="button" data-global-transport="return" title="Stop and return the playhead to bar 1" style="min-height:42px;padding:10px 13px;border:1px solid #9aa8c0;border-radius:7px;background:linear-gradient(#e4e8ef,#929baa);color:#17213a;font-weight:900">↤ RETURN</button>
           <button type="button" data-global-transport="record" style="min-height:42px;padding:10px 14px;border:2px solid #ff8585;border-radius:7px;background:linear-gradient(#ff7777,#b91f2a);color:#fff;font-weight:900">● RECORD</button>
           <span data-global-position style="min-width:74px;padding:9px 10px;border:1px solid #52617a;border-radius:6px;background:#080e1b;color:#c5efff;font:900 12px monospace;text-align:center">BAR 01</span>
+          <span data-global-loop style="min-width:82px;padding:9px 10px;border:1px solid #52617a;border-radius:6px;background:#080e1b;color:#c5efff;font:900 11px monospace;text-align:center">LOOP OFF</span>
           <label style="display:flex;align-items:center;gap:6px;padding:7px 9px;border:1px solid #52617a;border-radius:6px;color:#c5efff;font-size:10px;font-weight:800">TEMPO <input data-global-tempo type="number" min="60" max="180" step="1" value="100" style="width:58px;min-height:28px;background:#080e1b;color:#fff;border:1px solid #52617a;border-radius:4px;padding:4px"></label>
           <label style="display:flex;align-items:center;gap:6px;padding:7px 9px;border:1px solid #52617a;border-radius:6px;color:#c5efff;font-size:10px;font-weight:800"><input data-global-cycle-record type="checkbox" checked style="accent-color:#e6bb69"> CYCLE TAKES</label>
           <button type="button" data-global-transport="click" aria-pressed="false" style="min-height:42px;min-width:112px;padding:10px 13px;border:2px solid #e6bb69;border-radius:7px;background:linear-gradient(#e4e8ef,#929baa);color:#17213a;font-weight:900;letter-spacing:1px">CLICK OFF</button>
-          <button type="button" data-global-talkback style="min-height:42px;padding:10px 13px;border:1px solid #b58b4e;border-radius:7px;background:linear-gradient(#3a3022,#19150f);color:#fff0d1;font-weight:900">TALKBACK</button>
         </div>
         <button type="button" data-daw-return style="min-height:42px;padding:10px 13px;border:1px solid #665438;border-radius:7px;background:#171923;color:#f1d49c;font-weight:bold">${this.standalone ? "BACK TO LAMBO CITY" : "RETURN TO ROOM"}</button>
         ${this.standalone ? "" : '<button type="button" data-daw-end style="min-height:42px;padding:10px 13px;border:1px solid #80643a;border-radius:7px;background:#201c16;color:#f1d49c;font-weight:bold">END SESSION</button>'}
@@ -827,6 +973,7 @@ const StudioDAWApp = {
     const workspaceMount = document.createElement("div");
 
     workspaceMount.id = "lc-daw-workspace-mount";
+    workspaceMount.style.cssText = "flex:1;min-height:0;overflow:hidden";
 
     // This container becomes the MPC workspace panel.
     this.panelHost = document.createElement("div");
@@ -838,7 +985,53 @@ const StudioDAWApp = {
     document.body.appendChild(root);
 
     this.root = root;
-    StudioTalkback.bindControl(header.querySelector("[data-global-talkback]"), { beatLab: Floor2StudioApp });
+    this.handleBeatLabPatternChange = event => {
+      const detail = event.detail || {};
+      if (!detail.pattern?.steps) return;
+      StudioMultitrackWorkspace.beatLabPattern = JSON.parse(JSON.stringify(detail.pattern));
+      StudioMultitrackWorkspace.beatLabSoundProfile = detail.soundProfile === "mpc" ? "mpc" : "beatLab";
+      this.beatLabPlaybackEnabled = Boolean(detail.enablePlayback);
+      StudioMultitrackWorkspace.beatLabPlaybackEnabled = this.beatLabPlaybackEnabled;
+      StudioMultitrackWorkspace.scheduleProjectAutosave();
+    };
+    this.handleSessionPatternRestore = event => {
+      const detail = event.detail || {};
+      if (detail.pattern?.steps) {
+        Floor2StudioApp.pattern = JSON.parse(JSON.stringify(detail.pattern));
+        Floor2StudioApp.soundProfile = detail.soundProfile === "mpc" ? "mpc" : "beatLab";
+        Floor2StudioApp.renderGrid?.();
+      } else {
+        Floor2StudioApp.startNewSession?.();
+      }
+      this.beatLabPlaybackEnabled = Boolean(detail.playbackEnabled);
+      StudioMultitrackWorkspace.beatLabPlaybackEnabled = this.beatLabPlaybackEnabled;
+    };
+    window.addEventListener("lc-beatlab-pattern-change", this.handleBeatLabPatternChange);
+    window.addEventListener("lc-session-beatlab-pattern-restore", this.handleSessionPatternRestore);
+    this.handleVocalPitchSettingsChange = event => {
+      const settings = event.detail?.settings;
+      const vocalTrack = StudioMultitrackWorkspace.tracks.find(track => track.name === "Vocals");
+      if (!settings || !vocalTrack) return;
+      vocalTrack.effects = { ...(vocalTrack.effects || {}), pitchCorrection: { ...settings } };
+      StudioMultitrackWorkspace.scheduleProjectAutosave();
+      StudioMultitrackWorkspace.render();
+    };
+    this.handleVocalEffectSettingsChange = event => {
+      const settings = event.detail?.settings || {};
+      const vocalTrack = StudioMultitrackWorkspace.tracks.find(track => track.name === "Vocals");
+      if (!vocalTrack) return;
+      vocalTrack.effects = {
+        ...(vocalTrack.effects || {}),
+        delayMix: Math.max(0, Math.min(1, Number(settings.delay) || 0)),
+        reverbMix: Math.max(0, Math.min(1, Number(settings.reverb) || 0))
+      };
+      StudioMultitrackWorkspace.scheduleProjectAutosave();
+      StudioMultitrackWorkspace.render();
+    };
+    window.addEventListener("lc-vocal-pitch-settings-change", this.handleVocalPitchSettingsChange);
+    window.addEventListener("lc-vocal-effect-settings-change", this.handleVocalEffectSettingsChange);
+    this.handleSessionLoaded = () => this.syncVocalTrackSettings();
+    window.addEventListener("lc-session-loaded", this.handleSessionLoaded);
     StudioMultitrackWorkspace.onTransportChange = () => {
       if (!StudioMultitrackWorkspace.isPlaying() && Floor2StudioApp?.playing && !this.transportActionPending) {
         Floor2StudioApp.stop();
@@ -883,13 +1076,28 @@ const StudioDAWApp = {
       if (!button || !root.contains(button)) return;
       event.preventDefault();
       const action = button.dataset.globalTransport;
-      if (action === "play") void this.toggleSessionPlayback();
+      if (action === "play") {
+        if (this.workspace?.activeView === "beatlab") void this.startBeatLabPlayback();
+        else void this.playSession();
+      }
       else if (action === "stop") void this.stopSessionPlayback();
+      else if (action === "return") void this.returnSessionToStart();
       else if (action === "record") {
-        if (StudioMultitrackWorkspace.isTrackRecording() || this.sessionMidiRecordingActive) {
+        if (StudioMultitrackWorkspace.isTrackRecording() || this.sessionMidiRecordingActive || MPCInterface.recording) {
           void this.stopSessionPlayback();
+        } else if (this.workspace?.activeView === "mpc" && MPCInterface.isOpen()) {
+          void MPCInterface.handleAction("record");
         } else if (this.recordArmed) {
           this.recordArmed = false;
+          if (this.recordingMode === "midi") {
+            StudioMultitrackWorkspace.tracks.forEach(track => { if (track.type === "midi") track.armed = false; });
+            this.recordingMode = "mic";
+            window.dispatchEvent(new CustomEvent("lc-session-midi-recording-state", {
+              detail: { active: false, armed: false }
+            }));
+          } else {
+            StudioMultitrackWorkspace.tracks.forEach(track => { if (track.type === "audio") track.armed = false; });
+          }
           this.syncTransportControls();
           this.editScreen?.status("Recording disarmed.");
         } else this.armSessionRecording();
@@ -902,6 +1110,8 @@ const StudioDAWApp = {
         const bpm = Math.max(60, Math.min(180, Number(event.target.value) || 100));
         StudioMultitrackWorkspace.setTempo(bpm);
         if (Floor2StudioApp?.pattern) Floor2StudioApp.pattern.bpm = bpm;
+        Floor2StudioApp?.notifyPatternChanged?.(Boolean(this.beatLabPlaybackEnabled));
+        MPCInterface.refreshProjectHeader?.();
         const bpmInput = Floor2StudioApp?.ui?.querySelector("[data-bpm]");
         const bpmLabel = Floor2StudioApp?.ui?.querySelector("[data-bpm-label]");
         if (bpmInput) bpmInput.value = String(bpm);
@@ -910,6 +1120,8 @@ const StudioDAWApp = {
       }
       if (event.target.matches("[data-global-cycle-record]")) {
         this.cycleRecordingEnabled = Boolean(event.target.checked);
+        StudioMultitrackWorkspace.cycleTakesEnabled = this.cycleRecordingEnabled;
+        StudioMultitrackWorkspace.scheduleProjectAutosave();
       }
     });
 
@@ -959,7 +1171,7 @@ const StudioDAWApp = {
         onViewChange: viewId => {
           window.dispatchEvent(new CustomEvent("lc-live-drummer-state", { detail: { active: viewId === "drums" } }));
           const appHeader = root.querySelector(":scope > header");
-          if (appHeader) appHeader.style.display = viewId === "edit" ? "none" : "flex";
+          if (appHeader) appHeader.style.display = "flex";
           if (viewId === "mix") this.mixPanel?.refresh?.();
           // On a direct physical MPC entry, workspace.mount fires before
           // the performance panel is created. Wait for the panel to exist;
@@ -968,7 +1180,7 @@ const StudioDAWApp = {
             MPCInterface.open({
               beatLab: Floor2StudioApp,
               performancePanel: this.mpcPanel,
-              onTransportPlay: () => this.toggleSessionPlayback(),
+              onTransportPlay: () => this.playSession(),
               onTransportStop: () => this.stopSessionPlayback(),
               onTransportRecord: mode => this.armSessionRecording(mode),
               // MPC Performance is an internal MPC tool, never a workflow
@@ -980,11 +1192,29 @@ const StudioDAWApp = {
         }
       });
 
+      if (options.startNewSession !== false) {
+        StudioMultitrackWorkspace.beatLabPattern = Floor2StudioApp?.pattern?.steps
+          ? JSON.parse(JSON.stringify(Floor2StudioApp.pattern))
+          : null;
+        StudioMultitrackWorkspace.beatLabSoundProfile = Floor2StudioApp?.soundProfile === "mpc" ? "mpc" : "beatLab";
+        StudioMultitrackWorkspace.beatLabPlaybackEnabled = false;
+        this.beatLabPlaybackEnabled = false;
+      } else {
+        this.handleSessionPatternRestore?.({
+          detail: {
+            pattern: StudioMultitrackWorkspace.beatLabPattern,
+            soundProfile: StudioMultitrackWorkspace.beatLabSoundProfile,
+            playbackEnabled: StudioMultitrackWorkspace.beatLabPlaybackEnabled
+          }
+        });
+      }
+      this.syncTransportControls();
+
       // Dedicated MPC performance surface and a separate Digital Beat Lab.
       this.mpcPanel = createMPCPanel({
         beatLab: Floor2StudioApp,
         workspace: this.workspace,
-        onTransportPlay: () => this.toggleSessionPlayback(),
+        onTransportPlay: () => this.playSession(),
         onTransportStop: () => this.stopSessionPlayback(),
         onOpenBeatLab: () => {
           MPCInterface.close();
@@ -995,7 +1225,7 @@ const StudioDAWApp = {
 
       this.beatLabPanel = createStudioDAWBeatLabPanel({
         beatLab: Floor2StudioApp,
-        onTransportPlay: () => this.toggleSessionPlayback(),
+        onTransportPlay: () => this.startBeatLabPlayback(),
         onTransportStop: () => this.stopSessionPlayback()
       });
       this.beatLabPanel.onReturn = () => this.workspace?.setView("mpc");
@@ -1015,7 +1245,7 @@ const StudioDAWApp = {
         onExit: () => this.workspace?.setView("beatlab"),
         onPrevious: null,
         onNext: () => this.workspace?.setView("mpc"),
-        onTransportPlay: () => this.toggleSessionPlayback(),
+        onTransportPlay: () => this.playSession(),
         onTransportStop: () => this.stopSessionPlayback(),
         onTransportRecord: () => this.armSessionRecording()
       });
@@ -1027,7 +1257,7 @@ const StudioDAWApp = {
       }));
       this.vocalsPanel = createVocalBoothPanel({
         beatLab: Floor2StudioApp,
-        onTransportPlay: () => this.toggleSessionPlayback(),
+        onTransportPlay: () => this.playSession(),
         onTransportStop: () => this.stopSessionPlayback(),
         onTransportRecord: mode => this.armSessionRecording(mode)
       });
@@ -1041,6 +1271,7 @@ const StudioDAWApp = {
       this.workspace.setPanel("mix", this.mixPanel);
       this.workspace.setPanel("piano", this.pianoPanel);
       this.workspace.setPanel("vocals", this.vocalsPanel);
+      this.syncVocalTrackSettings();
       this.syncTransportControls();
 
       // One shared Spacebar transport for every Studio workspace.
@@ -1056,6 +1287,12 @@ const StudioDAWApp = {
         }
 
         event.preventDefault();
+        if (this.workspace?.activeView === "beatlab" &&
+            !StudioMultitrackWorkspace.isPlaying() && !Floor2StudioApp?.playing) {
+          this.beatLabPlaybackEnabled = true;
+          StudioMultitrackWorkspace.beatLabPlaybackEnabled = true;
+          StudioMultitrackWorkspace.scheduleProjectAutosave();
+        }
         if (this.transportActionPending) {
           this.stopSessionPlayback();
           return;
@@ -1095,6 +1332,26 @@ const StudioDAWApp = {
     if (this.handleStudioKeydown) {
       document.removeEventListener("keydown", this.handleStudioKeydown);
       this.handleStudioKeydown = null;
+    }
+    if (this.handleBeatLabPatternChange) {
+      window.removeEventListener("lc-beatlab-pattern-change", this.handleBeatLabPatternChange);
+      this.handleBeatLabPatternChange = null;
+    }
+    if (this.handleSessionPatternRestore) {
+      window.removeEventListener("lc-session-beatlab-pattern-restore", this.handleSessionPatternRestore);
+      this.handleSessionPatternRestore = null;
+    }
+    if (this.handleVocalPitchSettingsChange) {
+      window.removeEventListener("lc-vocal-pitch-settings-change", this.handleVocalPitchSettingsChange);
+      this.handleVocalPitchSettingsChange = null;
+    }
+    if (this.handleVocalEffectSettingsChange) {
+      window.removeEventListener("lc-vocal-effect-settings-change", this.handleVocalEffectSettingsChange);
+      this.handleVocalEffectSettingsChange = null;
+    }
+    if (this.handleSessionLoaded) {
+      window.removeEventListener("lc-session-loaded", this.handleSessionLoaded);
+      this.handleSessionLoaded = null;
     }
     this.transportActionPending = false;
     this.recordArmed = false;

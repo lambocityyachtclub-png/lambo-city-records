@@ -48,12 +48,14 @@ export function createCitySynthPanel({ session = StudioMultitrackWorkspace, onTr
   const waveform = root.querySelector("[data-synth-wave]");
   const settings = { waveform:"triangle", volume:0.18, filter:9000, detune:0, attack:0.018, release:0.18, resonance:0.8, octave:0 };
   let midiArmed = false;
+  let midiRecordingActive = false;
   let midiTrack = null;
   let captureStartedAt = 0;
   let captureStartBar = 1;
   const activeNotes = new Map();
   const ensureMidiTrack = () => {
-    midiTrack = session.tracks.find(track => track.type === "midi" && /city synth|piano performance/i.test(track.name));
+    midiTrack = session.tracks.find(track => track.type === "midi" && track.armed) ||
+      session.tracks.find(track => track.type === "midi" && /city synth|piano performance/i.test(track.name));
     if (!midiTrack) {
       session.recordHistory("Create City Synth MIDI track");
       midiTrack = session.createTrack("midi", "City Synth Performance");
@@ -84,7 +86,7 @@ export function createCitySynthPanel({ session = StudioMultitrackWorkspace, onTr
       activeNotes.set(note.pitch, record);
       button.classList.add("active");
       window.dispatchEvent(new CustomEvent("lc-city-synth-note", { detail:{ pitch:note.pitch, active:true } }));
-      if (midiArmed) {
+      if (midiArmed && midiRecordingActive) {
         const track = ensureMidiTrack();
         if (!captureStartedAt) {
           captureStartedAt = audio.currentTime;
@@ -153,10 +155,15 @@ export function createCitySynthPanel({ session = StudioMultitrackWorkspace, onTr
     button.addEventListener("pointerleave",release);
     keys.appendChild(button);
   });
-  const syncMidiArm = active => {
-    midiArmed = Boolean(active);
-    armButton.textContent = midiArmed ? "■ STOP MIDI RECORD" : "● ARM MIDI RECORD";
-    midiStatus.textContent = midiArmed ? "MIDI ARMED · SESSION TRANSPORT READY" : "MIDI CAPTURE OFF";
+  const syncMidiArm = state => {
+    const active = Boolean(state?.active);
+    const armed = Boolean(state?.armed || active);
+    midiArmed = armed;
+    midiRecordingActive = active;
+    if (armed) ensureMidiTrack().armed = true;
+    else if (midiTrack) midiTrack.armed = false;
+    armButton.textContent = active ? "■ STOP MIDI RECORD" : armed ? "● MIDI ARMED" : "● ARM MIDI RECORD";
+    midiStatus.textContent = active ? "MIDI RECORDING · SESSION RUNNING" : armed ? "MIDI ARMED · PRESS PLAY" : "MIDI CAPTURE OFF";
     if (!midiArmed) { session.scheduleProjectAutosave(); session.render?.(); }
   };
   armButton.addEventListener("click",()=>{
@@ -164,14 +171,14 @@ export function createCitySynthPanel({ session = StudioMultitrackWorkspace, onTr
       ensureMidiTrack();
       captureStartedAt=0;
       captureStartBar=Math.max(1,Number(session.playheadBar)||1);
-      syncMidiArm(true);
+      syncMidiArm({ armed: true, active: false });
       onTransportRecord?.("midi");
     } else {
       syncMidiArm(false);
       onTransportDisarm?.("midi");
     }
   });
-  const onMidiTransportState = event => syncMidiArm(Boolean(event.detail?.active));
+  const onMidiTransportState = event => syncMidiArm(event.detail || {});
   window.addEventListener("lc-session-midi-recording-state", onMidiTransportState);
   root.addEventListener("lc-city-synth-dispose", () => window.removeEventListener("lc-session-midi-recording-state", onMidiTransportState), { once: true });
   root.querySelector("[data-synth-waveform]").addEventListener("change",event=>{settings.waveform=event.target.value;status.textContent="Oscillator waveform: "+settings.waveform.toUpperCase();});

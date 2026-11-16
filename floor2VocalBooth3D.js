@@ -25,7 +25,7 @@ export function createVocalBoothPanel({ beatLab, onTransportPlay, onTransportSto
     '<div style="display:grid;grid-template-columns:minmax(0,1.15fr) minmax(220px,.85fr);gap:12px">' +
       '<section style="padding:14px;border:1px solid rgba(223,156,245,.45);border-radius:12px;background:linear-gradient(145deg,rgba(29,18,39,.95),rgba(12,12,22,.95));box-shadow:inset 0 0 28px rgba(174,62,211,.08)">' +
         '<div style="font-size:10px;letter-spacing:2px;color:#d6a3ec">LAMBO CITY · LIVE INPUT</div><canvas data-vocal-wave width="720" height="170" style="width:100%;height:150px;display:block;margin:10px 0"></canvas>' +
-        '<div style="display:flex;gap:9px;flex-wrap:wrap"><button type="button" data-vocal-action="start-beat">▶ PLAY BEAT</button><button type="button" data-vocal-action="stop-beat">■ STOP BEAT</button><button type="button" data-vocal-action="record">● RECORD</button><button type="button" data-vocal-action="stop-recording">■ STOP & SAVE</button></div>' +
+        '<div style="padding:10px 12px;border:1px solid rgba(223,156,245,.28);border-radius:8px;background:rgba(0,0,0,.2);color:#d9c3e4;font-size:11px;line-height:1.5">Use the shared Studio transport above: RECORD to arm this vocal track, then PLAY or Spacebar to begin. STOP saves the take.</div>' +
         '<div data-vocal-status role="status" aria-live="polite" style="min-height:20px;margin-top:10px;color:#e5b7f2;font-size:11px">Microphone ready · Permission is requested when recording starts.</div>' +
       '</section>' +
       '<section style="display:grid;align-content:center;gap:10px;padding:14px;border:1px solid rgba(223,156,245,.4);border-radius:12px;background:linear-gradient(145deg,#24152f,#100e18)">' +
@@ -45,14 +45,14 @@ export function createVocalBoothPanel({ beatLab, onTransportPlay, onTransportSto
       '</div>' +
       '<label style="display:grid;gap:6px;color:#d8c7a7;font-size:10px">CORRECTION AMOUNT <input data-vocal-pitch="amount" type="range" min="0" max="100" step="1" value="' + (beatLab?.pitchCorrectionSettings?.amount ?? 100) + '" style="width:100%;accent-color:#e6bb69"></label>' +
       '<label style="display:grid;gap:6px;color:#d8c7a7;font-size:10px">RETUNE SPEED <input data-vocal-pitch="speedMs" type="range" min="0" max="120" step="1" value="' + (beatLab?.pitchCorrectionSettings?.speedMs ?? 25) + '" style="width:100%;accent-color:#e6bb69"></label>' +
-      '<div data-pitch-status role="status" aria-live="polite" style="color:#c9b58d;font-size:11px">Set the song key and scale. Correction is printed into new vocal takes when enabled.</div>' +
+      '<div data-pitch-status role="status" aria-live="polite" style="color:#c9b58d;font-size:11px">Set the song key and scale. Non-destructive correction is saved with this vocal track and applied during playback and export.</div>' +
     '</section>' +
     '</section>' +
     '<section data-booth-mode="notes" hidden style="display:grid;align-content:start;gap:16px;padding:clamp(16px,3vw,28px);border:1px solid rgba(168,237,112,.38);border-radius:14px;background:linear-gradient(145deg,#18231a,#10131a)">' +
       '<div style="font-size:10px;letter-spacing:2px;color:#b7e99b">LAMBO CITY RECORDS · QUICK CAPTURE</div>' +
       '<h3 style="margin:0;color:#f1f4ed;font-size:clamp(22px,3vw,30px)">VOICE NOTES</h3>' +
       '<p style="margin:0;max-width:620px;color:#c6d2c3;font-size:13px;line-height:1.65">Capture a melody, hook, lyric, verse or production idea without opening the full vocal recording workflow. Your note is saved as an audio clip in the current song session.</p>' +
-      '<div style="display:flex;gap:10px;flex-wrap:wrap"><button type="button" data-vocal-action="quick-note-start" style="min-height:50px;padding:13px 18px;background:linear-gradient(#a8ed70,#4d963e);color:#11200e;border:1px solid #c5ff9a">● RECORD VOICE NOTE</button><button type="button" data-vocal-action="quick-note-stop" disabled>■ SAVE VOICE NOTE</button></div>' +
+      '<div style="padding:12px;border:1px solid rgba(168,237,112,.28);border-radius:8px;background:rgba(0,0,0,.18);color:#c6d2c3;font-size:12px;line-height:1.6">Use the shared Studio RECORD control, then press Spacebar or PLAY to capture your idea. STOP saves the Voice Note directly into this song.</div>' +
       '<div data-voice-note-status role="status" aria-live="polite" style="min-height:22px;color:#b7e99b;font-size:12px">Ready to capture an idea into this song session.</div>' +
       '<div style="padding:14px;border:1px solid rgba(255,255,255,.14);border-radius:10px;background:rgba(0,0,0,.18)"><div style="font-size:10px;letter-spacing:1.5px;color:#b7e99b">LATEST TAKE</div><div data-vocal-take-name style="margin-top:7px;color:#f5e4ff;font-size:13px">No take recorded yet</div><div data-vocal-take-format style="margin-top:4px;color:#aa94b8;font-size:10px">—</div></div>' +
     '</section>' +
@@ -65,7 +65,7 @@ export function createVocalBoothPanel({ beatLab, onTransportPlay, onTransportSto
       '</div>' +
       '<div data-talkback-status role="status" aria-live="polite" style="color:#cbb7d5;font-size:11px">Tap TALKBACK to toggle, or press and hold to talk. Use headphones to prevent speaker feedback. Talkback is isolated from recorded takes.</div>' +
     '</section>' +
-    '<div data-booth-mode="vocal" style="display:flex;gap:9px;flex-wrap:wrap"><button type="button" data-vocal-action="export-vocals">EXPORT VOCALS</button><button type="button" data-vocal-action="export-mix">EXPORT MASTER MIX</button></div>';
+    '';
   const style=document.createElement("style");
   style.textContent=".lc-vocal-booth [data-booth-mode][hidden]{display:none!important}.lc-vocal-booth [data-booth-mode-switch]{min-height:46px;border:1px solid rgba(223,156,245,.45);border-radius:8px;background:#171320;color:#d8c7e3;font-weight:900;letter-spacing:1px}.lc-vocal-booth [data-booth-mode-switch][aria-pressed=true]{background:linear-gradient(#e6c58b,#9d6c36);border-color:#f1d49c;color:#17130d}.lc-vocal-booth button{min-height:42px;padding:10px 13px;border:1px solid rgba(218,163,239,.55);border-radius:8px;background:linear-gradient(145deg,#39234a,#171320);color:#f5e8fb;font-size:11px;font-weight:800;letter-spacing:.5px;touch-action:manipulation}.lc-vocal-booth button:disabled{opacity:.45}.lc-vocal-booth [data-vocal-action=record]{background:linear-gradient(#ec777e,#8d263b);border-color:#ffb2b8}.lc-vocal-booth [data-vocal-action=quick-note-start]{background:linear-gradient(#a8ed70,#4d963e);color:#11200e;border-color:#c5ff9a}@media(max-width:640px){.lc-vocal-booth>div:nth-of-type(1){grid-template-columns:1fr!important}.lc-vocal-booth section[style*=grid-template-columns]{grid-template-columns:1fr!important}}";
   root.prepend(style);
@@ -154,9 +154,12 @@ export function createVocalBoothPanel({ beatLab, onTransportPlay, onTransportSto
     beatLab.pitchCorrectionSettings=beatLab.pitchCorrectionSettings||{enabled:false,root:0,scale:"major",amount:100,speedMs:25};
     const key=control.dataset.vocalPitch;
     beatLab.pitchCorrectionSettings[key]=key==="enabled"?Boolean(control.checked):(key==="scale"?control.value:Number(control.value));
+    window.dispatchEvent(new CustomEvent("lc-vocal-pitch-settings-change", {
+      detail: { settings: { ...beatLab.pitchCorrectionSettings } }
+    }));
     const enabled=beatLab.pitchCorrectionSettings.enabled;
     pitchStatus(enabled
-      ? "Pitch correction ON · " + ["C","C♯","D","D♯","E","F","F♯","G","G♯","A","A♯","B"][beatLab.pitchCorrectionSettings.root] + " " + beatLab.pitchCorrectionSettings.scale.toUpperCase() + " · Applies to new vocal takes."
+      ? "Pitch correction ON · " + ["C","C♯","D","D♯","E","F","F♯","G","G♯","A","A♯","B"][beatLab.pitchCorrectionSettings.root] + " " + beatLab.pitchCorrectionSettings.scale.toUpperCase() + " · Saved to this vocal track for playback/export."
       : "Pitch correction bypassed · Original vocal tone is preserved.");
   };
   root.addEventListener("change",event=>{

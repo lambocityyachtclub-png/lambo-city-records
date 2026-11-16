@@ -270,6 +270,22 @@ function validateProject(project) {
         session.tracks.length > 64) {
       throw new Error("DAW session settings are invalid.");
     }
+    if ((session.beatLabPlaybackEnabled !== undefined && typeof session.beatLabPlaybackEnabled !== "boolean") ||
+        (session.cycleTakesEnabled !== undefined && typeof session.cycleTakesEnabled !== "boolean")) {
+      throw new Error("DAW session recording preferences are invalid.");
+    }
+    if (session.beatLabPattern !== undefined && session.beatLabPattern !== null) {
+      const pattern = session.beatLabPattern;
+      if (!pattern?.steps ||
+          !REQUIRED_TRACKS.every(track =>
+            Array.isArray(pattern.steps[track]) &&
+            pattern.steps[track].length === 16 &&
+            pattern.steps[track].every(step => typeof step === "boolean")
+          ) ||
+          (pattern.bpm !== undefined && (!Number.isFinite(Number(pattern.bpm)) || Number(pattern.bpm) < 60 || Number(pattern.bpm) > 180))) {
+        throw new Error("DAW Beat Lab pattern data is invalid.");
+      }
+    }
     const trackIds = new Set();
     const clipIds = new Set();
     let totalAudioBytes = 0;
@@ -280,7 +296,7 @@ function validateProject(project) {
       if (trackIds.has(track.id) || !["audio", "midi", "instrument", "bus"].includes(track.type) ||
           !Number.isFinite(Number(track.volume)) || Number(track.volume) < 0 || Number(track.volume) > 100 ||
           !Number.isFinite(Number(track.pan)) || Number(track.pan) < -1 || Number(track.pan) > 1 ||
-          (track.inputSource !== undefined && !["mic", "beatlab", "mpc"].includes(track.inputSource)) ||
+          (track.inputSource !== undefined && !["mic", "beatlab", "mpc", "drums"].includes(track.inputSource)) ||
           (track.inputDeviceId !== undefined && (typeof track.inputDeviceId !== "string" || track.inputDeviceId.length > 256)) ||
           (track.inputChannel !== undefined && track.inputChannel !== null && (!Number.isInteger(track.inputChannel) || track.inputChannel < 0 || track.inputChannel > 31)) ||
           (track.inputLatencyMs !== undefined && (!Number.isFinite(Number(track.inputLatencyMs)) || Number(track.inputLatencyMs) < 0 || Number(track.inputLatencyMs) > 500)) ||

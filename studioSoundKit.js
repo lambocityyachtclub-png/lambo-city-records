@@ -8,7 +8,7 @@ import StudioAudioExport from "./studioAudioExport.js";
 
 const StudioSoundKit = {
   play(audio, profile, sound, time, noiseBuffer, destinationOverride = null) {
-    if (!audio || audio.state !== "running") return;
+    if (!audio || (audio.state !== "running" && typeof audio.startRendering !== "function")) return;
 
     // Use the supplied mixer channel when a performance surface provides one.
     const destination = destinationOverride || StudioAudioExport.getOutput(audio);

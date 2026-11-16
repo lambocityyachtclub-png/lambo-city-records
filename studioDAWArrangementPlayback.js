@@ -400,9 +400,15 @@ export function createStudioDAWArrangementPlayback({
         }));
         this.playbackContext = context;
         this.playbackStartBar = actualStartBar;
+        // An empty session is still a real transport: keep its song clock
+        // moving to the end of the timeline instead of stopping at bar 1.
+        // The same applies when the playhead is already beyond all content.
+        const hasUpcomingArrangementContent = contentEndBar > actualStartBar + 0.001;
         this.playbackEndBar = activeLoop
           ? activeLoop.endBar
-          : Math.min(129, Math.max(actualStartBar, contentEndBar));
+          : hasUpcomingArrangementContent
+            ? Math.min(129, contentEndBar)
+            : 129;
         this.lastPositionBar = actualStartBar;
         tracks.forEach(track => this.scheduleVolumeAutomation(track, startTime, actualStartBar));
         decoded.forEach(({ track, clip, buffer }) => {

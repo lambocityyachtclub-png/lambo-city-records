@@ -154,29 +154,30 @@ const StudioRecordingEngine = {
         monitorGain.gain.value = 0.65;
         monitorGain.connect(audio.destination);
       }
-      if (!inputNode && pitchCorrectionNode) {
-        recordingSource.connect(pitchCorrectionNode);
-        if (vocalEffects) {
+      // Keep the captured take dry and non-destructive. Pitch correction and
+      // vocal effects are stored on the session track and applied in playback/export.
+      recordingSource.connect(destination);
+      if (!inputNode && monitorGain) {
+        if (pitchCorrectionNode) {
+          recordingSource.connect(pitchCorrectionNode);
+          if (vocalEffects) {
+            if (!vocalEffects.input || !vocalEffects.output) {
+              throw new Error("The vocal effects audio connection is incomplete.");
+            }
+            pitchCorrectionNode.connect(vocalEffects.input);
+            vocalEffects.output.connect(monitorGain);
+          } else {
+            pitchCorrectionNode.connect(monitorGain);
+          }
+        } else if (vocalEffects) {
           if (!vocalEffects.input || !vocalEffects.output) {
             throw new Error("The vocal effects audio connection is incomplete.");
           }
-          pitchCorrectionNode.connect(vocalEffects.input);
-          vocalEffects.output.connect(destination);
-          if (monitorGain) vocalEffects.output.connect(monitorGain);
+          recordingSource.connect(vocalEffects.input);
+          vocalEffects.output.connect(monitorGain);
         } else {
-          pitchCorrectionNode.connect(destination);
-          if (monitorGain) pitchCorrectionNode.connect(monitorGain);
+          recordingSource.connect(monitorGain);
         }
-      } else if (vocalEffects && !inputNode) {
-        if (!vocalEffects.input || !vocalEffects.output) {
-          throw new Error("The vocal effects audio connection is incomplete.");
-        }
-        recordingSource.connect(vocalEffects.input);
-        vocalEffects.output.connect(destination);
-        if (monitorGain) vocalEffects.output.connect(monitorGain);
-      } else {
-        recordingSource.connect(destination);
-        if (monitorGain) recordingSource.connect(monitorGain);
       }
       const recorder = pcmRecorder || createRecorder(destination.stream);
       if (recorder.recorder) recorder.recorder.start();

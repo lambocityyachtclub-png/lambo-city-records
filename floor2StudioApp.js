@@ -535,6 +535,9 @@ root.addEventListener("input", (event) => {
 
   const value = Number(control.value);
   this.vocalEffectSettings[effectName] = value;
+  window.dispatchEvent(new CustomEvent("lc-vocal-effect-settings-change", {
+    detail: { settings: { ...this.vocalEffectSettings } }
+  }));
 
   if (!this.vocalEffects) return;
 
@@ -560,8 +563,10 @@ root.addEventListener("input", (event) => {
           step >= STEP_COUNT
         ) return;
 
+        StudioMultitrackWorkspace.recordHistory("Edit Beat Lab pattern");
         this.pattern.steps[track][step] =
           !this.pattern.steps[track][step];
+        this.notifyPatternChanged(true);
 
         stepButton.classList.toggle("on", this.pattern.steps[track][step]);
         stepButton.setAttribute(
@@ -635,8 +640,10 @@ root.addEventListener("input", (event) => {
         case "clear":
 
           this.stop();
+          StudioMultitrackWorkspace.recordHistory("Clear Beat Lab pattern");
           TRACKS.forEach(({ id }) => this.pattern.steps[id].fill(false));
           this.renderGrid();
+          this.notifyPatternChanged(true);
           this.status("Pattern cleared.");
           break;
       }
@@ -645,16 +652,20 @@ root.addEventListener("input", (event) => {
     root.querySelector("[data-bpm]").addEventListener("input", (event) => {
       const bpm = Number(event.target.value);
       if (!Number.isFinite(bpm)) return;
+      StudioMultitrackWorkspace.recordHistory("Change Beat Lab tempo");
       this.pattern.bpm = Math.max(MIN_BPM, Math.min(MAX_BPM, bpm));
       StudioMultitrackWorkspace.setTempo(this.pattern.bpm);
+      StudioMultitrackWorkspace.onTransportChange?.();
       root.querySelector("[data-bpm-label]").textContent =
         `${this.pattern.bpm} BPM`;
+      this.notifyPatternChanged(true);
     });
 
     root.querySelector("[data-sound-profile]").value = this.soundProfile;
     root.querySelector("[data-sound-profile]").addEventListener(
       "change",
       (event) => {
+        StudioMultitrackWorkspace.recordHistory("Change Beat Lab sound profile");
         this.soundProfile =
           event.target.value === "mpc" ? "mpc" : "beatLab";
         this.status(
@@ -662,6 +673,7 @@ root.addEventListener("input", (event) => {
             ? "Vintage MPC sound selected."
             : "Digital sound selected."
         );
+        this.notifyPatternChanged(true);
       }
     );
   },
@@ -685,6 +697,17 @@ root.addEventListener("input", (event) => {
         `).join("")}
       </div>
     `).join("");
+  },
+
+  notifyPatternChanged(enablePlayback = false) {
+    if (!this.pattern?.steps) return;
+    window.dispatchEvent(new CustomEvent("lc-beatlab-pattern-change", {
+      detail: {
+        pattern: JSON.parse(JSON.stringify(this.pattern)),
+        soundProfile: this.soundProfile === "mpc" ? "mpc" : "beatLab",
+        enablePlayback: Boolean(enablePlayback)
+      }
+    }));
   },
 
   status(message) {
@@ -1016,7 +1039,7 @@ root.addEventListener("input", (event) => {
     }
   },
 
-  async start({ startAtTime = null } = {}) {
+  async start({ startAtTime = null, startAtStep = 0 } = {}) {
     if (this.playing) {
       this.status("Beat already playing.");
       return;
@@ -1037,7 +1060,7 @@ if (!this.audio || this.audio.state !== "running") {
       if (!this.noiseBuffer) this.noiseBuffer = this.createNoiseBuffer();
 
       this.playing = true;
-      this.currentStep = 0;
+      this.currentStep = Math.max(0, Math.min(STEP_COUNT - 1, Math.floor(Number(startAtStep) || 0)));
       const earliestStart = this.audio.currentTime + 0.05;
       this.nextStepTime = Number.isFinite(Number(startAtTime))
         ? Math.max(earliestStart, Number(startAtTime))
@@ -1268,6 +1291,7 @@ StudioSoundKit.play(
       if (bpmLabel) bpmLabel.textContent = `${this.pattern.bpm} BPM`;
 
       this.renderGrid();
+      this.notifyPatternChanged(true);
       this.status("Saved beat loaded.");
     } catch (error) {
       console.error("LAMBO CITY beat load error:", error);
@@ -1322,6 +1346,11 @@ StudioSoundKit.play(
     this.soundProfile = "beatLab";
     this.lastRecordedTake = null;
     this.audio = this.audio || null;
+    this.vocalEffectSettings = { delay: 0, reverb: 0 };
+    this.pitchCorrectionSettings = { enabled: false, root: 0, scale: "major", amount: 100, speedMs: 25 };
+    this.vocalEffects?.setDelayMix?.(0);
+    this.vocalEffects?.setReverbMix?.(0);
+    this.notifyPatternChanged(false);
     return true;
   },
 
