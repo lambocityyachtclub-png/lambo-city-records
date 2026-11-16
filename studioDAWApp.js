@@ -512,6 +512,12 @@ const StudioDAWApp = {
 
   armSessionRecording(mode = null) {
     const workspace = StudioMultitrackWorkspace;
+    if (!mode) {
+      const activeView = this.workspace?.activeView;
+      if (activeView === "mpc") mode = "mpc";
+      else if (activeView === "piano") mode = "midi";
+      else if (activeView === "beatlab") mode = "beatlab";
+    }
     if (!workspace || workspace.isTrackRecording() || workspace.pendingRecording || this.sessionMidiRecordingActive) return false;
     if (mode === "midi") {
       let midiTrack = workspace.tracks.find(item => item.type === "midi" && /city synth|piano performance/i.test(item.name));
@@ -530,11 +536,13 @@ const StudioDAWApp = {
       return true;
     }
     const mpcMode = mode === "mpc";
+    const beatLabMode = mode === "beatlab";
+    if (beatLabMode) this.beatLabPlaybackEnabled = true;
     const boothNotes = this.vocalsPanel?.querySelector('[data-booth-mode="notes"]');
     const voiceNotesMode = mode === "notes" || (!mode && this.workspace?.activeView === "vocals" && Boolean(boothNotes && !boothNotes.hidden));
     const vocalMode = mode === "vocal" || (!mode && this.workspace?.activeView === "vocals" && !voiceNotesMode);
-    const dedicatedMode = mpcMode || voiceNotesMode || vocalMode;
-    const targetName = mpcMode ? "MPC Performance" : voiceNotesMode ? "Voice Notes" : "Vocals";
+    const dedicatedMode = mpcMode || beatLabMode || voiceNotesMode || vocalMode;
+    const targetName = mpcMode ? "MPC Performance" : beatLabMode ? "Beat Lab" : voiceNotesMode ? "Voice Notes" : "Vocals";
     let track = dedicatedMode
       ? workspace.tracks.find(item => item.type === "audio" && item.name === targetName)
       : workspace.tracks.find(item => item.type === "audio" && item.armed);
@@ -556,8 +564,8 @@ const StudioDAWApp = {
     } else if (!workspace.tracks.some(item => item.type === "audio" && item.armed)) {
       track.armed = true;
     }
-    track.inputSource = mpcMode ? "mpc" : "mic";
-    this.recordingMode = mpcMode ? "mpc" : voiceNotesMode ? "notes" : "mic";
+    track.inputSource = mpcMode ? "mpc" : beatLabMode ? "beatlab" : "mic";
+    this.recordingMode = mpcMode ? "mpc" : beatLabMode ? "beatlab" : voiceNotesMode ? "notes" : "mic";
     this.recordArmed = true;
     workspace.scheduleProjectAutosave();
     workspace.render();
