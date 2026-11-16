@@ -560,6 +560,7 @@ root.addEventListener("input", (event) => {
           step >= STEP_COUNT
         ) return;
 
+        StudioMultitrackWorkspace.recordHistory("Edit Beat Lab pattern");
         this.pattern.steps[track][step] =
           !this.pattern.steps[track][step];
         this.notifyPatternChanged(true);
@@ -636,6 +637,7 @@ root.addEventListener("input", (event) => {
         case "clear":
 
           this.stop();
+          StudioMultitrackWorkspace.recordHistory("Clear Beat Lab pattern");
           TRACKS.forEach(({ id }) => this.pattern.steps[id].fill(false));
           this.renderGrid();
           this.notifyPatternChanged(true);
@@ -647,6 +649,7 @@ root.addEventListener("input", (event) => {
     root.querySelector("[data-bpm]").addEventListener("input", (event) => {
       const bpm = Number(event.target.value);
       if (!Number.isFinite(bpm)) return;
+      StudioMultitrackWorkspace.recordHistory("Change Beat Lab tempo");
       this.pattern.bpm = Math.max(MIN_BPM, Math.min(MAX_BPM, bpm));
       StudioMultitrackWorkspace.setTempo(this.pattern.bpm);
       root.querySelector("[data-bpm-label]").textContent =
@@ -658,6 +661,7 @@ root.addEventListener("input", (event) => {
     root.querySelector("[data-sound-profile]").addEventListener(
       "change",
       (event) => {
+        StudioMultitrackWorkspace.recordHistory("Change Beat Lab sound profile");
         this.soundProfile =
           event.target.value === "mpc" ? "mpc" : "beatLab";
         this.status(
