@@ -252,7 +252,7 @@ jobs:
       - name: Test shared Studio Spacebar transport
         run: node --experimental-default-type=module scripts/test-studio-spacebar-transport.mjs
 
-      - name: Test approved five-step music interface workflow
+      - name: Test approved six-workspace music interface workflow
         run: node --experimental-default-type=module scripts/test-studio-interface-workflow.mjs
 
       - name: Test Floor 2 Studio station registration and navigation
