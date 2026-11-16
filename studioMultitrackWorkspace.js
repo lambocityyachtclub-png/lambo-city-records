@@ -260,7 +260,16 @@ const StudioMultitrackWorkspace = {
   addMarker(name,bar=this.playheadBar) { const label=String(name||"").trim().slice(0,32);if(!label)return false;this.recordHistory("Add song marker");const marker={id:"lc-marker-"+Date.now(),name:label,bar:Math.max(1,Math.min(128,Number(bar)||1))};this.markers.push(marker);this.markers.sort((a,b)=>a.bar-b.bar);this.scheduleProjectAutosave();this.render();this.status("Marker "+label+" added at bar "+marker.bar+".");return marker; },
   addTempoChange(bar,bpm) { const at=Math.max(1,Math.min(128,Math.round(Number(bar)||1))),value=Math.max(20,Math.min(300,Number(bpm)||this.tempo));this.recordHistory("Add tempo change");this.tempoChanges=this.tempoChanges.filter(point=>point.bar!==at);this.tempoChanges.push({bar:at,bpm:value});this.tempoChanges.sort((a,b)=>a.bar-b.bar);this.scheduleProjectAutosave();this.render();this.status("Tempo change · "+value+" BPM at bar "+at+".");return true; },
   addTimeSignatureChange(bar,signature) { const match=/^(2|3|4|5|6|7|8|9|12)\/(2|4|8|16)$/.exec(String(signature||""));if(!match)return false;const at=Math.max(1,Math.min(128,Math.round(Number(bar)||1)));this.recordHistory("Add time signature change");this.timeSignatureChanges=this.timeSignatureChanges.filter(point=>point.bar!==at);this.timeSignatureChanges.push({bar:at,numerator:Number(match[1]),denominator:Number(match[2])});this.timeSignatureChanges.sort((a,b)=>a.bar-b.bar);this.scheduleProjectAutosave();this.render();this.status("Time signature "+signature+" begins at bar "+at+".");return true; },
-  setLoopRange(startBar,endBar,enabled=true) { const start=Math.max(1,Math.min(127,Number(startBar)||1)),end=Math.max(start+.25,Math.min(129,Number(endBar)||start+8));this.recordHistory("Set cycle range");this.loopRange={enabled:Boolean(enabled),startBar:start,endBar:end};this.scheduleProjectAutosave();this.render();this.status((enabled?"Cycle enabled · ":"Cycle range set · ")+"bar "+start+" to "+end+"."); },
+  setLoopRange(startBar,endBar,enabled=true) {
+    const start=Math.max(1,Math.min(127,Number(startBar)||1));
+    const end=Math.max(start+.25,Math.min(129,Number(endBar)||start+8));
+    this.recordHistory("Set cycle range");
+    this.loopRange={enabled:Boolean(enabled),startBar:start,endBar:end};
+    this.scheduleProjectAutosave();
+    this.render();
+    this.onTransportChange?.();
+    this.status((enabled?"Cycle enabled · ":"Cycle range set · ")+"bar "+start+" to "+end+".");
+  },
   assignTrackGroup(trackId,name) { const track=this.tracks.find(item=>item.id===trackId),label=String(name||"").trim().slice(0,32);if(!track||!label)return false;this.recordHistory("Assign track group");const groupId="lc-group-"+label.toLowerCase().replace(/[^a-z0-9]+/g,"-");track.groupId=groupId;track.groupName=label;track.groupCollapsed=false;this.tracks.filter(item=>item.groupId===groupId).forEach(item=>{item.groupName=label;item.groupCollapsed=false;});this.scheduleProjectAutosave();this.render();this.status(track.name+" assigned to "+label+".");return true; },
   toggleTrackGroup(trackId) { const track=this.tracks.find(item=>item.id===trackId);if(!track?.groupId)return false;const members=this.tracks.filter(item=>item.groupId===track.groupId),collapsed=!members.every(item=>item.groupCollapsed);this.recordHistory("Toggle track folder");members.forEach(item=>item.groupCollapsed=collapsed);this.render();this.scheduleProjectAutosave();return true; },
   toggleFollowPlayhead() { this.followPlayhead=!this.followPlayhead;this.scheduleProjectAutosave();this.status("Follow playhead "+(this.followPlayhead?"on.":"off."));return this.followPlayhead; },
@@ -540,6 +549,7 @@ const StudioMultitrackWorkspace = {
     if (next !== this.tempo) this.recordHistory("Change tempo");
     this.tempo = next;
     this.scheduleProjectAutosave();
+    this.onTransportChange?.();
   },
 
   getArrangementPlayback() {
