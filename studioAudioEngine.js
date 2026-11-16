@@ -28,6 +28,7 @@ const StudioAudioEngine = {
   limiterEnabledValue: true,
   limiterCeilingDb: -1,
   channels: null,
+  drumBus: null,
   trackVolumes: { kick: 1, snare: 1, hat: 1, instrument: 1 },
   talkbackDuck: 1,
   initializing: null,
@@ -133,6 +134,8 @@ const StudioAudioEngine = {
       hat: context.createGain(),
       instrument: context.createGain()
     };
+    const drumBus = context.createGain();
+    drumBus.gain.value = 1;
     this.trackVolumes = { kick: 1, snare: 1, hat: 1, instrument: 1 };
     this.talkbackDuck = 1;
 
@@ -145,9 +148,10 @@ const StudioAudioEngine = {
         channel.connect(instrumentAnalyser);
         instrumentAnalyser.connect(master);
       } else {
-        channel.connect(master);
+        channel.connect(drumBus);
       }
     });
+    drumBus.connect(master);
 
     const splitter = context.createChannelSplitter(2);
     const merger = context.createChannelMerger(2);
@@ -191,6 +195,7 @@ const StudioAudioEngine = {
     this.limiterBypass = limiterBypass;
     this.masterAnalyser = masterAnalyser;
     this.instrumentAnalyser = instrumentAnalyser;
+    this.drumBus = drumBus;
     this.stereoWidth = sideWidth;
     this.stereoWidthNode = { splitter, merger, mid, side, sideInvert, sideLeft, sideRight, leftOut, rightOut };
     this.channels = channels;
@@ -222,6 +227,13 @@ const StudioAudioEngine = {
       sum += samples[i] * samples[i];
     }
     return { peak: Math.min(1, peak), rms: Math.min(1, Math.sqrt(sum / samples.length)) };
+  },
+
+  getDrumOutput(audio = this.context) {
+    if (!audio || audio !== this.context || !this.drumBus) {
+      throw new Error("Live Drummer audio bus is not ready.");
+    }
+    return this.drumBus;
   },
 
   getTrackGain(trackName) {
