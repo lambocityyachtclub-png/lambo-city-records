@@ -54,7 +54,8 @@ export function createCitySynthPanel({ session = StudioMultitrackWorkspace, onTr
   let captureStartBar = 1;
   const activeNotes = new Map();
   const ensureMidiTrack = () => {
-    midiTrack = session.tracks.find(track => track.type === "midi" && /city synth|piano performance/i.test(track.name));
+    midiTrack = session.tracks.find(track => track.type === "midi" && track.armed) ||
+      session.tracks.find(track => track.type === "midi" && /city synth|piano performance/i.test(track.name));
     if (!midiTrack) {
       session.recordHistory("Create City Synth MIDI track");
       midiTrack = session.createTrack("midi", "City Synth Performance");
