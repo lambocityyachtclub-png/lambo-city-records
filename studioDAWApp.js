@@ -507,7 +507,7 @@ const StudioDAWApp = {
 
   armSessionRecording(mode = null) {
     const workspace = StudioMultitrackWorkspace;
-    if (!workspace || workspace.isTrackRecording() || workspace.pendingRecording) return false;
+    if (!workspace || workspace.isTrackRecording() || workspace.pendingRecording || this.sessionMidiRecordingActive) return false;
     if (mode === "midi") {
       let midiTrack = workspace.tracks.find(item => item.type === "midi" && /city synth|piano performance/i.test(item.name));
       if (!midiTrack) {
@@ -847,7 +847,9 @@ const StudioDAWApp = {
       if (action === "play") void this.toggleSessionPlayback();
       else if (action === "stop") void this.stopSessionPlayback();
       else if (action === "record") {
-        if (this.recordArmed) {
+        if (StudioMultitrackWorkspace.isTrackRecording() || this.sessionMidiRecordingActive) {
+          void this.stopSessionPlayback();
+        } else if (this.recordArmed) {
           this.recordArmed = false;
           this.syncTransportControls();
           this.editScreen?.status("Recording disarmed.");
