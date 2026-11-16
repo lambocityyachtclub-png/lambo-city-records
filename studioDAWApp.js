@@ -745,6 +745,27 @@ const StudioDAWApp = {
     return true;
   },
 
+  async playSession() {
+    if (this.recordStartPending || this.transportActionPending ||
+        StudioMultitrackWorkspace.isPlaying() || Floor2StudioApp?.playing) return true;
+    if (this.recordArmed) return this.startSessionRecording();
+    return this.startSessionPlayback();
+  },
+
+  async startBeatLabPlayback() {
+    this.beatLabPlaybackEnabled = true;
+    StudioMultitrackWorkspace.beatLabPlaybackEnabled = true;
+    StudioMultitrackWorkspace.scheduleProjectAutosave();
+    if (StudioMultitrackWorkspace.isPlaying()) {
+      if (Floor2StudioApp?.playing) return true;
+      const playhead = Math.max(1, Number(StudioMultitrackWorkspace.playheadBar) || 1);
+      const fractionalBar = playhead - Math.floor(playhead);
+      const startAtStep = Math.max(0, Math.min(15, Math.floor(fractionalBar * 16)));
+      return Floor2StudioApp.start({ startAtStep });
+    }
+    return this.playSession();
+  },
+
   async toggleSessionPlayback() {
     if (this.recordStartPending) return false;
     if (this.transportActionPending || StudioMultitrackWorkspace.isPlaying() || Floor2StudioApp?.playing) {
@@ -947,12 +968,8 @@ const StudioDAWApp = {
       event.preventDefault();
       const action = button.dataset.globalTransport;
       if (action === "play") {
-        if (this.workspace?.activeView === "beatlab") {
-          this.beatLabPlaybackEnabled = true;
-          StudioMultitrackWorkspace.beatLabPlaybackEnabled = true;
-          StudioMultitrackWorkspace.scheduleProjectAutosave();
-        }
-        void this.toggleSessionPlayback();
+        if (this.workspace?.activeView === "beatlab") void this.startBeatLabPlayback();
+        else void this.playSession();
       }
       else if (action === "stop") void this.stopSessionPlayback();
       else if (action === "record") {
@@ -1044,7 +1061,7 @@ const StudioDAWApp = {
             MPCInterface.open({
               beatLab: Floor2StudioApp,
               performancePanel: this.mpcPanel,
-              onTransportPlay: () => this.toggleSessionPlayback(),
+              onTransportPlay: () => this.playSession(),
               onTransportStop: () => this.stopSessionPlayback(),
               onTransportRecord: mode => this.armSessionRecording(mode),
               // MPC Performance is an internal MPC tool, never a workflow
@@ -1066,7 +1083,7 @@ const StudioDAWApp = {
       this.mpcPanel = createMPCPanel({
         beatLab: Floor2StudioApp,
         workspace: this.workspace,
-        onTransportPlay: () => this.toggleSessionPlayback(),
+        onTransportPlay: () => this.playSession(),
         onTransportStop: () => this.stopSessionPlayback(),
         onOpenBeatLab: () => {
           MPCInterface.close();
@@ -1077,12 +1094,7 @@ const StudioDAWApp = {
 
       this.beatLabPanel = createStudioDAWBeatLabPanel({
         beatLab: Floor2StudioApp,
-        onTransportPlay: () => {
-          this.beatLabPlaybackEnabled = true;
-          StudioMultitrackWorkspace.beatLabPlaybackEnabled = true;
-          StudioMultitrackWorkspace.scheduleProjectAutosave();
-          return this.toggleSessionPlayback();
-        },
+        onTransportPlay: () => this.startBeatLabPlayback(),
         onTransportStop: () => this.stopSessionPlayback()
       });
       this.beatLabPanel.onReturn = () => this.workspace?.setView("mpc");
@@ -1102,7 +1114,7 @@ const StudioDAWApp = {
         onExit: () => this.workspace?.setView("beatlab"),
         onPrevious: null,
         onNext: () => this.workspace?.setView("mpc"),
-        onTransportPlay: () => this.toggleSessionPlayback(),
+        onTransportPlay: () => this.playSession(),
         onTransportStop: () => this.stopSessionPlayback(),
         onTransportRecord: () => this.armSessionRecording()
       });
