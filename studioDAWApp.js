@@ -1050,6 +1050,7 @@ const StudioDAWApp = {
     StudioTalkback.stop();
     StudioTalkback.unbindAll();
     this.vocalsPanel?.dispatchEvent(new CustomEvent("lc-vocal-booth-dispose"));
+    this.pianoPanel?.dispatchEvent(new CustomEvent("lc-city-synth-dispose"));
     window.dispatchEvent(new CustomEvent("lc-live-drummer-state", { detail: { active: false } }));
     this.stopSessionPlayback();
     if (this.handleStudioKeydown) {
