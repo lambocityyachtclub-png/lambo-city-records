@@ -498,20 +498,23 @@ const StudioDAWApp = {
   globalTransportHandlers: null,
   recordArmed: false,
   recordStartPending: false,
+  recordingMode: "mic",
   recordingBars: 8,
   activeRecordingStartBar: null,
   activeRecordingEndBar: null,
 
-  armSessionRecording() {
+  armSessionRecording(mode = null) {
     const workspace = StudioMultitrackWorkspace;
     if (!workspace || workspace.isTrackRecording() || workspace.pendingRecording) return false;
-    const voiceNotesMode = this.workspace?.activeView === "vocals";
-    let track = voiceNotesMode
-      ? workspace.tracks.find(item => item.type === "audio" && item.name === "Voice Notes")
+    const mpcMode = mode === "mpc";
+    const voiceNotesMode = mode === "notes" || (!mode && this.workspace?.activeView === "vocals");
+    const targetName = mpcMode ? "MPC Performance" : voiceNotesMode ? "Voice Notes" : "Vocals";
+    let track = (mpcMode || voiceNotesMode)
+      ? workspace.tracks.find(item => item.type === "audio" && item.name === targetName)
       : workspace.tracks.find(item => item.type === "audio" && item.armed);
-    if (!track && voiceNotesMode) {
-      workspace.recordHistory("Create Voice Notes track");
-      track = workspace.createTrack("audio", "Voice Notes");
+    if (!track && (mpcMode || voiceNotesMode)) {
+      workspace.recordHistory("Create " + targetName + " track");
+      track = workspace.createTrack("audio", targetName);
       workspace.render();
     }
     if (!track) track = workspace.tracks.find(item => item.type === "audio" && item.armed);
@@ -519,20 +522,22 @@ const StudioDAWApp = {
     if (!track) track = workspace.tracks.find(item => item.type === "audio");
     if (!track) {
       workspace.recordHistory("Create recording track");
-      track = workspace.createTrack("audio", voiceNotesMode ? "Voice Notes" : "Vocals");
+      track = workspace.createTrack("audio", targetName);
       workspace.render();
     }
-    if (voiceNotesMode) {
+    if (mpcMode || voiceNotesMode) {
       workspace.tracks.forEach(item => { if (item.type === "audio") item.armed = item.id === track.id; });
     } else if (!workspace.tracks.some(item => item.type === "audio" && item.armed)) {
       track.armed = true;
     }
-    track.inputSource = "mic";
+    track.inputSource = mpcMode ? "mpc" : "mic";
+    this.recordingMode = mpcMode ? "mpc" : voiceNotesMode ? "notes" : "mic";
     this.recordArmed = true;
     workspace.scheduleProjectAutosave();
     workspace.render();
     this.syncTransportControls();
     this.editScreen?.status("Recording armed · press Spacebar or PLAY SESSION to begin.");
+    if (workspace.isPlaying() || Floor2StudioApp?.playing) void this.startSessionRecording();
     return true;
   },
 
@@ -604,6 +609,7 @@ const StudioDAWApp = {
       return false;
     }
     this.syncTransportControls();
+    window.dispatchEvent(new CustomEvent("lc-vocal-recording-state", { detail: { recording: true, mode: this.recordingMode } }));
     this.editScreen?.status("Recording · " + bars + " bars · " + Math.round(workspace.getTempoAtBar(boundedStartBar)) + " BPM.");
     return true;
   },
@@ -614,8 +620,10 @@ const StudioDAWApp = {
     if (Floor2StudioApp?.playing) Floor2StudioApp.stop();
     if (workspace?.pendingRecording) workspace.cancelScheduledRecording();
     if (workspace?.isTrackRecording()) await workspace.stopArmedRecording();
+    if (MPCInterface.recording) MPCInterface.finishRecording();
     this.recordArmed = false;
     this.syncTransportControls();
+    window.dispatchEvent(new CustomEvent("lc-vocal-recording-state", { detail: { recording: false, name: "Session Recording", format: "Shared Studio audio" } }));
     return true;
   },
 
@@ -850,6 +858,9 @@ const StudioDAWApp = {
             MPCInterface.open({
               beatLab: Floor2StudioApp,
               performancePanel: this.mpcPanel,
+              onTransportPlay: () => this.toggleSessionPlayback(),
+              onTransportStop: () => this.stopSessionPlayback(),
+              onTransportRecord: mode => this.armSessionRecording(mode),
               // MPC Performance is an internal MPC tool, never a workflow
               // destination. Exiting the hardware returns to the Editing home.
               onClose: () => this.workspace?.setView("edit"),
@@ -904,7 +915,12 @@ const StudioDAWApp = {
         beatLab: Floor2StudioApp,
         workspace: this.workspace
       }));
-      this.vocalsPanel = createVocalBoothPanel({ beatLab: Floor2StudioApp });
+      this.vocalsPanel = createVocalBoothPanel({
+        beatLab: Floor2StudioApp,
+        onTransportPlay: () => this.toggleSessionPlayback(),
+        onTransportStop: () => this.stopSessionPlayback(),
+        onTransportRecord: mode => this.armSessionRecording(mode)
+      });
       applyVocalBoothVisual(this.vocalsPanel);
       this.pianoPanel = createCitySynthPanel({ session: StudioMultitrackWorkspace });
       applyCitySynthVisual(this.pianoPanel);
