@@ -122,9 +122,13 @@ async function renderStudioSessionToAudioBuffer({
     ["beats", "beat lab"].includes(String(track.name || "").trim().toLowerCase()) &&
     (track.clips || []).some(clip => clip.blob instanceof Blob && clip.blob.size > 0)
   );
+  const hasBeatLabSteps = ["kick", "snare", "hat"].some(sound =>
+    Array.isArray(beatLabPattern?.steps?.[sound]) &&
+    beatLabPattern.steps[sound].some(Boolean)
+  );
   const useBeatLabPattern = Boolean(
     beatLabPlaybackEnabled &&
-    beatLabPattern?.steps &&
+    hasBeatLabSteps &&
     !recordedBeatLabTrack
   );
   const beatLabTrack = tracks.find(track =>
