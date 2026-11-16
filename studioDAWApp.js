@@ -788,7 +788,9 @@ const StudioDAWApp = {
       position:fixed;
       inset:0;
       z-index:20000;
-      overflow:auto;
+      display:flex;
+      flex-direction:column;
+      overflow:hidden;
       background:#090a0e;
       color:#f4f1eb;
       font-family:Arial,sans-serif;
@@ -838,6 +840,7 @@ const StudioDAWApp = {
     const workspaceMount = document.createElement("div");
 
     workspaceMount.id = "lc-daw-workspace-mount";
+    workspaceMount.style.cssText = "flex:1;min-height:0;overflow:hidden";
 
     // This container becomes the MPC workspace panel.
     this.panelHost = document.createElement("div");
