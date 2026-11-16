@@ -652,6 +652,7 @@ root.addEventListener("input", (event) => {
       StudioMultitrackWorkspace.recordHistory("Change Beat Lab tempo");
       this.pattern.bpm = Math.max(MIN_BPM, Math.min(MAX_BPM, bpm));
       StudioMultitrackWorkspace.setTempo(this.pattern.bpm);
+      StudioMultitrackWorkspace.onTransportChange?.();
       root.querySelector("[data-bpm-label]").textContent =
         `${this.pattern.bpm} BPM`;
       this.notifyPatternChanged(true);
