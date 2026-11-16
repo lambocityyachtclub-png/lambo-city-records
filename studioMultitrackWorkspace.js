@@ -1024,8 +1024,9 @@ const StudioMultitrackWorkspace = {
     this.deletedItems = [];
     this.beatLabPattern = session.beatLabPattern?.steps ? JSON.parse(JSON.stringify(session.beatLabPattern)) : null;
     this.beatLabSoundProfile = session.beatLabSoundProfile === "mpc" ? "mpc" : "beatLab";
+    this.beatLabPlaybackEnabled = Boolean(session.beatLabPlaybackEnabled);
     window.dispatchEvent(new CustomEvent("lc-session-beatlab-pattern-restore", {
-      detail: { pattern: this.beatLabPattern, soundProfile: this.beatLabSoundProfile }
+      detail: { pattern: this.beatLabPattern, soundProfile: this.beatLabSoundProfile, playbackEnabled: this.beatLabPlaybackEnabled }
     }));
     const importedAudioAssets = new Map();
     this.tracks = session.tracks.map((savedTrack, index) => ({
