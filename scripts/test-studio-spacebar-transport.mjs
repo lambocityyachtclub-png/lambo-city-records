@@ -17,6 +17,9 @@ assert.match(app, /data-global-transport="return"/, "The shared transport must e
 assert.match(app, /action === "return"/, "Return-to-Start must be wired to the shared transport handler.");
 assert.match(app, /returnSessionToStart\(\)/, "Return-to-Start must use one shared session action.");
 assert.match(app, /workspace\.playheadBar = 1/, "Return-to-Start must return the shared playhead to bar 1.");
+assert.match(app, /cycleRecordingEnabled: true/, "Cycle Takes must be enabled by default.");
+assert.match(app, /StudioMultitrackWorkspace\.cycleTakesEnabled = this\.cycleRecordingEnabled/, "Cycle Takes must be stored on the shared session.");
+assert.match(app, /this\.cycleRecordingEnabled = StudioMultitrackWorkspace\.cycleTakesEnabled !== false/, "Cycle Takes must restore from the shared session.");
 assert.match(playback, /hasUpcomingArrangementContent/, "Empty sessions must keep the song clock moving.");
 assert.match(playback, /: 129;/, "An empty session without a loop must continue to the end of the song timeline.");
 assert.match(app, /await beatLab\.start\(\{ startAtTime:/);
