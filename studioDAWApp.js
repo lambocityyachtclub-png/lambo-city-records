@@ -1139,7 +1139,7 @@ const StudioDAWApp = {
       }));
       this.vocalsPanel = createVocalBoothPanel({
         beatLab: Floor2StudioApp,
-        onTransportPlay: () => this.toggleSessionPlayback(),
+        onTransportPlay: () => this.playSession(),
         onTransportStop: () => this.stopSessionPlayback(),
         onTransportRecord: mode => this.armSessionRecording(mode)
       });
