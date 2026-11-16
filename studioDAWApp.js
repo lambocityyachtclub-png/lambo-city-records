@@ -716,7 +716,7 @@ const StudioDAWApp = {
 
   async stopSessionPlayback() {
     const workspace = StudioMultitrackWorkspace;
-    workspace?.stopAll();
+    StudioMultitrackWorkspace?.stopAll();
     if (Floor2StudioApp?.playing) Floor2StudioApp.stop();
     if (this.sessionRecordTimer) clearTimeout(this.sessionRecordTimer);
     this.sessionRecordTimer = null;
