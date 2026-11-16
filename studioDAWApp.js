@@ -877,6 +877,13 @@ const StudioDAWApp = {
       const key = control.dataset.vocalEffect;
       if (vocalSettings[key] !== undefined) control.value = String(vocalSettings[key]);
     });
+    const pitchStatus = this.vocalsPanel?.querySelector("[data-pitch-status]");
+    if (pitchStatus) {
+      const rootNames = ["C","C♯","D","D♯","E","F","F♯","G","G♯","A","A♯","B"];
+      pitchStatus.textContent = pitchSettings.enabled
+        ? "Pitch correction ON · " + rootNames[Math.max(0, Math.min(11, Number(pitchSettings.root) || 0))] + " " + String(pitchSettings.scale || "major").toUpperCase() + " · Saved to this vocal track for playback/export."
+        : "Pitch correction bypassed · Original vocal tone is preserved.";
+    }
   },
 
   async playSession() {
