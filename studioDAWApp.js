@@ -502,6 +502,10 @@ const StudioDAWApp = {
   sessionMidiRecordingActive: false,
   sessionRecordTimer: null,
   recordingBars: 8,
+  cycleRecordingEnabled: true,
+  cycleRecordingActive: false,
+  sessionLoopBounds: null,
+  cycleRestartTimer: null,
   activeRecordingStartBar: null,
   activeRecordingEndBar: null,
 
@@ -609,16 +613,22 @@ const StudioDAWApp = {
       this.recordStartPending = false;
       return false;
     }
-    const startBar = Math.min(127, Math.max(1, Number(workspace.playheadBar) || 1));
-    const punchOutValue = Number(this.editScreen?.root?.querySelector("[data-punch-out]")?.value);
-    const selectedBars = punchOutValue > startBar ? punchOutValue - startBar : this.recordingBars;
-    const bars = Math.max(1, Math.min(32, Number(selectedBars) || 8));
-    const boundedStartBar = Math.min(128 - bars, startBar);
-    const endBar = boundedStartBar + bars;
+    const currentLoop = workspace.loopRange || { startBar: 1, endBar: 9, enabled: false };
+    const cursorBar = Math.min(127, Math.max(1, Number(workspace.playheadBar) || 1));
+    const loopIsSet = Number(currentLoop.endBar) > Number(currentLoop.startBar);
+    const boundedStartBar = loopIsSet && currentLoop.enabled
+      ? Math.max(1, Number(currentLoop.startBar))
+      : cursorBar;
+    const endBar = loopIsSet && currentLoop.enabled
+      ? Math.min(128, Number(currentLoop.endBar))
+      : Math.min(128, boundedStartBar + 8);
+    const bars = Math.max(1, endBar - boundedStartBar);
     this.activeRecordingStartBar = boundedStartBar;
     this.activeRecordingEndBar = endBar;
     this.recordArmed = false;
-    workspace.setLoopRange(boundedStartBar, endBar, false);
+    this.sessionLoopBounds = { startBar: boundedStartBar, endBar };
+    this.cycleRecordingActive = Boolean(this.cycleRecordingEnabled);
+    workspace.setLoopRange(boundedStartBar, endBar, true);
     if (this.recordingMode === "midi") {
       const alreadyPlaying = Boolean(workspace.isPlaying() || Floor2StudioApp?.playing);
       const playing = alreadyPlaying || await this.startSessionPlayback();
@@ -631,11 +641,6 @@ const StudioDAWApp = {
         return false;
       }
       this.sessionMidiRecordingActive = true;
-      const durationMs = Math.max(250, (workspace.getSecondsAtBar(endBar) - workspace.getSecondsAtBar(boundedStartBar)) * 1000);
-      this.sessionRecordTimer = setTimeout(() => {
-        this.sessionRecordTimer = null;
-        void this.stopSessionPlayback();
-      }, durationMs);
       this.syncTransportControls();
       window.dispatchEvent(new CustomEvent("lc-session-midi-recording-state", { detail: { active: true } }));
       return true;
@@ -685,6 +690,10 @@ const StudioDAWApp = {
       this.activeRecordingEndBar = null;
       window.dispatchEvent(new CustomEvent("lc-session-midi-recording-state", { detail: { active: false } }));
     }
+    this.cycleRecordingActive = false;
+    this.sessionLoopBounds = null;
+    if (this.cycleRestartTimer) clearTimeout(this.cycleRestartTimer);
+    this.cycleRestartTimer = null;
     if (workspace?.pendingRecording) workspace.cancelScheduledRecording();
     if (workspace?.isTrackRecording()) await workspace.stopArmedRecording();
     if (MPCInterface.recording) MPCInterface.finishRecording();
@@ -729,8 +738,8 @@ const StudioDAWApp = {
     if (editRecord) editRecord.textContent = this.recordArmed ? "● RECORD ARMED" : "● RECORD";
     const globalTempo = this.root?.querySelector("[data-global-tempo]");
     if (globalTempo) globalTempo.value = String(StudioMultitrackWorkspace.tempo || 100);
-    const globalBars = this.root?.querySelector("[data-global-record-bars]");
-    if (globalBars) globalBars.value = String(this.recordingBars || 8);
+    const cycleToggle = this.root?.querySelector("[data-global-cycle-record]");
+    if (cycleToggle) cycleToggle.checked = Boolean(this.cycleRecordingEnabled);
     const position = this.root?.querySelector("[data-global-position]");
     if (position) position.textContent = "BAR " + String(Math.floor(StudioMultitrackWorkspace.playheadBar || 1)).padStart(2, "0");
     this.root?.querySelectorAll('[data-global-transport="click"]').forEach(button => {
@@ -799,7 +808,7 @@ const StudioDAWApp = {
           <button type="button" data-global-transport="record" style="min-height:42px;padding:10px 14px;border:2px solid #ff8585;border-radius:7px;background:linear-gradient(#ff7777,#b91f2a);color:#fff;font-weight:900">● RECORD</button>
           <span data-global-position style="min-width:74px;padding:9px 10px;border:1px solid #52617a;border-radius:6px;background:#080e1b;color:#c5efff;font:900 12px monospace;text-align:center">BAR 01</span>
           <label style="display:flex;align-items:center;gap:6px;padding:7px 9px;border:1px solid #52617a;border-radius:6px;color:#c5efff;font-size:10px;font-weight:800">TEMPO <input data-global-tempo type="number" min="60" max="180" step="1" value="100" style="width:58px;min-height:28px;background:#080e1b;color:#fff;border:1px solid #52617a;border-radius:4px;padding:4px"></label>
-          <label style="display:flex;align-items:center;gap:6px;padding:7px 9px;border:1px solid #52617a;border-radius:6px;color:#c5efff;font-size:10px;font-weight:800">TAKE BARS <select data-global-record-bars style="min-height:28px;background:#080e1b;color:#fff;border:1px solid #52617a;border-radius:4px;padding:4px"><option value="4">4</option><option value="8" selected>8</option><option value="16">16</option><option value="32">32</option></select></label>
+          <label style="display:flex;align-items:center;gap:6px;padding:7px 9px;border:1px solid #52617a;border-radius:6px;color:#c5efff;font-size:10px;font-weight:800"><input data-global-cycle-record type="checkbox" checked style="accent-color:#e6bb69"> CYCLE TAKES</label>
           <button type="button" data-global-transport="click" aria-pressed="false" style="min-height:42px;min-width:112px;padding:10px 13px;border:2px solid #e6bb69;border-radius:7px;background:linear-gradient(#e4e8ef,#929baa);color:#17213a;font-weight:900;letter-spacing:1px">CLICK OFF</button>
           <button type="button" data-global-talkback style="min-height:42px;padding:10px 13px;border:1px solid #b58b4e;border-radius:7px;background:linear-gradient(#3a3022,#19150f);color:#fff0d1;font-weight:900">TALKBACK</button>
         </div>
@@ -830,12 +839,35 @@ const StudioDAWApp = {
       this.syncTransportControls();
     };
     StudioMultitrackWorkspace.onRecordingComplete = () => {
-      if (this.activeRecordingStartBar && this.activeRecordingEndBar) {
-        StudioMultitrackWorkspace.setLoopRange(this.activeRecordingStartBar, this.activeRecordingEndBar, true);
+      const bounds = this.sessionLoopBounds;
+      this.recordArmed = false;
+      if (this.cycleRecordingActive && bounds && (StudioMultitrackWorkspace.isPlaying() || Floor2StudioApp?.playing)) {
+        // Each loop pass is finalized as its own take. Re-arm at the same loop
+        // boundary while the master arrangement continues cycling.
+        this.cycleRestartTimer = setTimeout(async () => {
+          this.cycleRestartTimer = null;
+          if (!this.cycleRecordingActive || !this.root?.isConnected) return;
+          StudioMultitrackWorkspace.playheadBar = bounds.startBar;
+          const restarted = await StudioMultitrackWorkspace.startArmedRecording({
+            vocalEffects: Floor2StudioApp?.vocalEffects,
+            punchInBar: bounds.startBar,
+            punchOutBar: bounds.endBar,
+            monitorInput: false
+          });
+          if (!restarted) {
+            this.cycleRecordingActive = false;
+            this.editScreen?.status("Cycle recording paused · unable to start the next take.");
+          }
+          this.syncTransportControls();
+        }, 80);
+        this.syncTransportControls();
+        return;
       }
+      if (bounds) StudioMultitrackWorkspace.setLoopRange(bounds.startBar, bounds.endBar, true);
       this.activeRecordingStartBar = null;
       this.activeRecordingEndBar = null;
-      this.recordArmed = false;
+      this.cycleRecordingActive = false;
+      this.sessionLoopBounds = null;
       if (StudioMultitrackWorkspace.isPlaying() || Floor2StudioApp?.playing) void this.stopSessionPlayback();
       else this.syncTransportControls();
     };
@@ -869,8 +901,8 @@ const StudioDAWApp = {
         if (bpmLabel) bpmLabel.textContent = bpm + " BPM";
         this.editScreen?.renderHeader?.();
       }
-      if (event.target.matches("[data-global-record-bars]")) {
-        this.recordingBars = Math.max(1, Math.min(32, Number(event.target.value) || 8));
+      if (event.target.matches("[data-global-cycle-record]")) {
+        this.cycleRecordingEnabled = Boolean(event.target.checked);
       }
     });
 
