@@ -579,14 +579,34 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext,
           } else if (action === "export-wav") {
             button.disabled = true;
             try {
-              const wav = await renderStudioSessionToWav({ tracks: workspace.tracks, tempo: workspace.tempo, timeSignature: workspace.timeSignature, tempoChanges: workspace.tempoChanges, timeSignatureChanges: workspace.timeSignatureChanges, masterSettings: workspace.masterSettings });
+              const wav = await renderStudioSessionToWav({
+                tracks: workspace.tracks,
+                tempo: workspace.tempo,
+                timeSignature: workspace.timeSignature,
+                tempoChanges: workspace.tempoChanges,
+                timeSignatureChanges: workspace.timeSignatureChanges,
+                masterSettings: workspace.masterSettings,
+                beatLabPattern: this.beatLab?.pattern,
+                beatLabSoundProfile: this.beatLab?.soundProfile,
+                beatLabPlaybackEnabled: workspace.beatLabPlaybackEnabled
+              });
               downloadStudioWav(wav, workspace.activeProjectName || "lambo-city-song");
               this.status("WAV master exported.");
             } finally { button.disabled = false; }
           } else if (action === "export-mp3") {
             button.disabled = true;
             try {
-              const mp3 = await renderStudioSessionToMp3({ tracks: workspace.tracks, tempo: workspace.tempo, timeSignature: workspace.timeSignature, tempoChanges: workspace.tempoChanges, timeSignatureChanges: workspace.timeSignatureChanges });
+              const mp3 = await renderStudioSessionToMp3({
+                tracks: workspace.tracks,
+                tempo: workspace.tempo,
+                timeSignature: workspace.timeSignature,
+                tempoChanges: workspace.tempoChanges,
+                timeSignatureChanges: workspace.timeSignatureChanges,
+                masterSettings: workspace.masterSettings,
+                beatLabPattern: this.beatLab?.pattern,
+                beatLabSoundProfile: this.beatLab?.soundProfile,
+                beatLabPlaybackEnabled: workspace.beatLabPlaybackEnabled
+              });
               downloadStudioMp3(mp3, workspace.activeProjectName || "lambo-city-song");
               this.status("MP3 master exported at 192 kbps.");
             } finally { button.disabled = false; }
