@@ -73,6 +73,7 @@ const StudioMultitrackWorkspace = {
   beatLabPattern: null,
   beatLabSoundProfile: "beatLab",
   beatLabPlaybackEnabled: false,
+  cycleTakesEnabled: true,
   timeSignature: "4/4",
   tempoChanges: [],
   timeSignatureChanges: [],
@@ -134,6 +135,7 @@ const StudioMultitrackWorkspace = {
       beatLabPattern: this.beatLabPattern ? JSON.parse(JSON.stringify(this.beatLabPattern)) : null,
       beatLabSoundProfile: this.beatLabSoundProfile === "mpc" ? "mpc" : "beatLab",
       beatLabPlaybackEnabled: Boolean(this.beatLabPlaybackEnabled),
+      cycleTakesEnabled: this.cycleTakesEnabled !== false,
       tracks: this.tracks.map(track => ({
         ...track,
         eq: { ...(track.eq || {}) },
@@ -171,6 +173,7 @@ const StudioMultitrackWorkspace = {
       : null;
     this.beatLabSoundProfile = snapshot.beatLabSoundProfile === "mpc" ? "mpc" : "beatLab";
     this.beatLabPlaybackEnabled = Boolean(snapshot.beatLabPlaybackEnabled);
+    this.cycleTakesEnabled = snapshot.cycleTakesEnabled !== false;
     window.dispatchEvent(new CustomEvent("lc-session-beatlab-pattern-restore", {
       detail: { pattern: this.beatLabPattern, soundProfile: this.beatLabSoundProfile, playbackEnabled: this.beatLabPlaybackEnabled }
     }));
@@ -199,6 +202,7 @@ const StudioMultitrackWorkspace = {
     StudioAudioEngine.setMasterLimiter(this.masterSettings.limiterEnabled, this.masterSettings.limiterCeilingDb);
     this.deletedItems = (snapshot.deletedItems || []).map(entry => ({ ...entry }));
     this.render();
+    this.onTransportChange?.();
   },
 
   undo() {
@@ -649,6 +653,7 @@ const StudioMultitrackWorkspace = {
       beatLabPattern: this.beatLabPattern ? JSON.parse(JSON.stringify(this.beatLabPattern)) : null,
       beatLabSoundProfile: this.beatLabSoundProfile === "mpc" ? "mpc" : "beatLab",
       beatLabPlaybackEnabled: Boolean(this.beatLabPlaybackEnabled),
+      cycleTakesEnabled: this.cycleTakesEnabled !== false,
       templateId: this.sessionTemplateId,
       templateName: this.sessionTemplateName,
       deletedItems: this.deletedItems,
@@ -736,6 +741,7 @@ const StudioMultitrackWorkspace = {
     this.beatLabPattern = session.beatLabPattern?.steps ? JSON.parse(JSON.stringify(session.beatLabPattern)) : null;
     this.beatLabSoundProfile = session.beatLabSoundProfile === "mpc" ? "mpc" : "beatLab";
     this.beatLabPlaybackEnabled = Boolean(session.beatLabPlaybackEnabled);
+    this.cycleTakesEnabled = session.cycleTakesEnabled !== false;
     window.dispatchEvent(new CustomEvent("lc-session-beatlab-pattern-restore", {
       detail: { pattern: this.beatLabPattern, soundProfile: this.beatLabSoundProfile, playbackEnabled: this.beatLabPlaybackEnabled }
     }));
@@ -759,6 +765,7 @@ const StudioMultitrackWorkspace = {
     this.selectedClipId = null;
     this.selectedRegionIds = [];
     this.render();
+    this.onTransportChange?.();
     this.dirty = false;
     this.saveState = "saved";
     if (!sessionOverride) await StudioDAWSessionStore.clearRecovery(projectId);
@@ -769,6 +776,7 @@ const StudioMultitrackWorkspace = {
   validateSessionData(session) {
     if (!session || session.format !== "lambo-city-daw-session" || session.version !== 1 || !Array.isArray(session.tracks) || session.tracks.length > 64) return false;
     if (session.beatLabPlaybackEnabled !== undefined && typeof session.beatLabPlaybackEnabled !== "boolean") return false;
+    if (session.cycleTakesEnabled !== undefined && typeof session.cycleTakesEnabled !== "boolean") return false;
     if (session.beatLabPattern !== undefined && session.beatLabPattern !== null) {
       const pattern = session.beatLabPattern;
       if (!pattern || !pattern.steps ||
@@ -842,6 +850,7 @@ const StudioMultitrackWorkspace = {
     this.beatLabPattern = null;
     this.beatLabSoundProfile = "beatLab";
     this.beatLabPlaybackEnabled = false;
+    this.cycleTakesEnabled = true;
     this.tempo = Math.max(60, Math.min(180, Number(tempo) || 100));
     this.timeSignature = "4/4"; this.tempoChanges = []; this.timeSignatureChanges = []; this.markers = []; this.loopRange = { enabled: false, startBar: 1, endBar: 9 }; this.masterSettings = { volume: 100, stereoWidth: 100, compressionRatio: 3, limiterEnabled: true, limiterCeilingDb: -1 }; StudioAudioEngine.setMasterVolume(1); StudioAudioEngine.setStereoWidth(100); StudioAudioEngine.setMasterCompressionRatio(3); StudioAudioEngine.setMasterLimiter(true, -1); this.followPlayhead = true; this.selectedRegionIds = []; this.multiSelectMode = false;
     this.sessionTemplateId = null;
@@ -972,6 +981,7 @@ const StudioMultitrackWorkspace = {
       beatLabPattern: this.beatLabPattern ? JSON.parse(JSON.stringify(this.beatLabPattern)) : null,
       beatLabSoundProfile: this.beatLabSoundProfile === "mpc" ? "mpc" : "beatLab",
       beatLabPlaybackEnabled: Boolean(this.beatLabPlaybackEnabled),
+      cycleTakesEnabled: this.cycleTakesEnabled !== false,
       tempo: this.tempo,
       timeSignature: this.timeSignature,
       tempoChanges: this.tempoChanges.map(point=>({...point})),
@@ -1025,6 +1035,7 @@ const StudioMultitrackWorkspace = {
     this.beatLabPattern = session.beatLabPattern?.steps ? JSON.parse(JSON.stringify(session.beatLabPattern)) : null;
     this.beatLabSoundProfile = session.beatLabSoundProfile === "mpc" ? "mpc" : "beatLab";
     this.beatLabPlaybackEnabled = Boolean(session.beatLabPlaybackEnabled);
+    this.cycleTakesEnabled = session.cycleTakesEnabled !== false;
     window.dispatchEvent(new CustomEvent("lc-session-beatlab-pattern-restore", {
       detail: { pattern: this.beatLabPattern, soundProfile: this.beatLabSoundProfile, playbackEnabled: this.beatLabPlaybackEnabled }
     }));
@@ -1105,6 +1116,7 @@ const StudioMultitrackWorkspace = {
     const ids = this.tracks.map(track => Number(track.id.match(/(\d+)$/)?.[1]) || 0);
     this.nextTrackId = Math.max(0, ...ids) + 1;
     this.render();
+    this.onTransportChange?.();
     this.status("Portable session loaded with " + this.tracks.length + " track(s).");
     return true;
   },
