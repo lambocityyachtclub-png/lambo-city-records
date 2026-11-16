@@ -565,6 +565,7 @@ const StudioDAWApp = {
   disarmSessionRecording(mode = null) {
     if (this.recordArmed && (!mode || this.recordingMode === mode)) {
       this.recordArmed = false;
+      if (mode === "midi") this.recordingMode = "mic";
       this.syncTransportControls();
       this.editScreen?.status("Recording disarmed.");
       return true;
@@ -679,6 +680,7 @@ const StudioDAWApp = {
         workspace?.setLoopRange(this.activeRecordingStartBar, this.activeRecordingEndBar, true);
       }
       this.sessionMidiRecordingActive = false;
+      this.recordingMode = "mic";
       this.activeRecordingStartBar = null;
       this.activeRecordingEndBar = null;
       window.dispatchEvent(new CustomEvent("lc-session-midi-recording-state", { detail: { active: false } }));
