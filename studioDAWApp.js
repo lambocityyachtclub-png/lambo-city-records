@@ -490,6 +490,8 @@ const StudioDAWApp = {
   handleOverlayClick: null,
   handleBeatLabPatternChange: null,
   handleSessionPatternRestore: null,
+  handleVocalPitchSettingsChange: null,
+  handleVocalEffectSettingsChange: null,
   mixPanel: null,
   pianoPanel: null,
   mpcPanel: null,
@@ -957,6 +959,28 @@ const StudioDAWApp = {
     };
     window.addEventListener("lc-beatlab-pattern-change", this.handleBeatLabPatternChange);
     window.addEventListener("lc-session-beatlab-pattern-restore", this.handleSessionPatternRestore);
+    this.handleVocalPitchSettingsChange = event => {
+      const settings = event.detail?.settings;
+      const vocalTrack = StudioMultitrackWorkspace.tracks.find(track => track.name === "Vocals");
+      if (!settings || !vocalTrack) return;
+      vocalTrack.effects = { ...(vocalTrack.effects || {}), pitchCorrection: { ...settings } };
+      StudioMultitrackWorkspace.scheduleProjectAutosave();
+      StudioMultitrackWorkspace.render();
+    };
+    this.handleVocalEffectSettingsChange = event => {
+      const settings = event.detail?.settings || {};
+      const vocalTrack = StudioMultitrackWorkspace.tracks.find(track => track.name === "Vocals");
+      if (!vocalTrack) return;
+      vocalTrack.effects = {
+        ...(vocalTrack.effects || {}),
+        delayMix: Math.max(0, Math.min(1, Number(settings.delay) || 0)),
+        reverbMix: Math.max(0, Math.min(1, Number(settings.reverb) || 0))
+      };
+      StudioMultitrackWorkspace.scheduleProjectAutosave();
+      StudioMultitrackWorkspace.render();
+    };
+    window.addEventListener("lc-vocal-pitch-settings-change", this.handleVocalPitchSettingsChange);
+    window.addEventListener("lc-vocal-effect-settings-change", this.handleVocalEffectSettingsChange);
     StudioMultitrackWorkspace.onTransportChange = () => {
       if (!StudioMultitrackWorkspace.isPlaying() && Floor2StudioApp?.playing && !this.transportActionPending) {
         Floor2StudioApp.stop();
@@ -1255,6 +1279,14 @@ const StudioDAWApp = {
     if (this.handleSessionPatternRestore) {
       window.removeEventListener("lc-session-beatlab-pattern-restore", this.handleSessionPatternRestore);
       this.handleSessionPatternRestore = null;
+    }
+    if (this.handleVocalPitchSettingsChange) {
+      window.removeEventListener("lc-vocal-pitch-settings-change", this.handleVocalPitchSettingsChange);
+      this.handleVocalPitchSettingsChange = null;
+    }
+    if (this.handleVocalEffectSettingsChange) {
+      window.removeEventListener("lc-vocal-effect-settings-change", this.handleVocalEffectSettingsChange);
+      this.handleVocalEffectSettingsChange = null;
     }
     this.transportActionPending = false;
     this.recordArmed = false;
