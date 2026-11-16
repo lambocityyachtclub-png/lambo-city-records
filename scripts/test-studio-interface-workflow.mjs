@@ -7,6 +7,7 @@ const files = [
   "floor2InstrumentApp.js",
   "engine.js",
   "studioDAWApp.js",
+  "studioDAWEditScreen.js",
   "studioDAWWorkspace.js",
   "floor2StudioNavigation.js",
   "studioMixMasterConsole3D.js",
@@ -75,6 +76,9 @@ assert.match(navigation,/StudioDAWApp\.open\(station\.view\s*\|\|\s*"edit"\)/,"P
 assert.doesNotMatch(navigation,/object:\s*stations\.(?:drumStation|instrumentStation|controlRoom)/);
 
 const app = source["studioDAWApp.js"];
+assert.match(app,/data-global-transport="play"/,"The shared transport must be rendered by the Studio shell.");
+assert.match(app,/appHeader\.style\.display = "flex"/,"The shared transport header must remain visible across workspaces.");
+assert.match(source["studioDAWEditScreen.js"],/\.lc-transport\{display:none!important\}/,"Edit must not show a duplicate local transport.");
 assert.match(source["hud.js"],/lc-live-drummer-score/);
 assert.match(source["hud.js"],/lc-live-drummer-state/);
 assert.match(app,/lc-live-drummer-state/);
