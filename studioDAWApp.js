@@ -955,8 +955,10 @@ const StudioDAWApp = {
       }
       else if (action === "stop") void this.stopSessionPlayback();
       else if (action === "record") {
-        if (StudioMultitrackWorkspace.isTrackRecording() || this.sessionMidiRecordingActive) {
+        if (StudioMultitrackWorkspace.isTrackRecording() || this.sessionMidiRecordingActive || MPCInterface.recording) {
           void this.stopSessionPlayback();
+        } else if (this.workspace?.activeView === "mpc" && MPCInterface.isOpen()) {
+          void MPCInterface.handleAction("record");
         } else if (this.recordArmed) {
           this.recordArmed = false;
           this.syncTransportControls();
