@@ -1,11 +1,12 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
-const [app, beatLab, edit, playback] = await Promise.all([
+const [app, beatLab, edit, playback, multitrack] = await Promise.all([
   readFile(new URL("../studioDAWApp.js", import.meta.url), "utf8"),
   readFile(new URL("../floor2StudioApp.js", import.meta.url), "utf8"),
   readFile(new URL("../studioDAWEditScreen.js", import.meta.url), "utf8"),
-  readFile(new URL("../studioDAWArrangementPlayback.js", import.meta.url), "utf8")
+  readFile(new URL("../studioDAWArrangementPlayback.js", import.meta.url), "utf8"),
+  readFile(new URL("../studioMultitrackWorkspace.js", import.meta.url), "utf8")
 ]);
 
 assert.match(app, /One shared Spacebar transport for every Studio workspace/);
@@ -22,6 +23,13 @@ assert.match(app, /StudioMultitrackWorkspace\.cycleTakesEnabled = this\.cycleRec
 assert.match(app, /this\.cycleRecordingEnabled = StudioMultitrackWorkspace\.cycleTakesEnabled !== false/, "Cycle Takes must restore from the shared session.");
 assert.match(playback, /hasUpcomingArrangementContent/, "Empty sessions must keep the song clock moving.");
 assert.match(playback, /: 129;/, "An empty session without a loop must continue to the end of the song timeline.");
+assert.match(app, /this\.cycleRecordingActive && bounds/, "Cycle Takes must remain active across completed loop passes.");
+assert.match(app, /this\.cycleRestartTimer = setTimeout/, "Each completed pass must schedule the next take.");
+assert.match(app, /punchInBar: bounds\.startBar/);
+assert.match(app, /punchOutBar: bounds\.endBar/);
+assert.match(multitrack, /const takeGroupId = track\.id \+ "-takes-" \+ this\.recordingStartBar/);
+assert.match(multitrack, /takeNumber: track\.clips\.filter\(clip => clip\.takeGroupId === takeGroupId\)\.length \+ 1/);
+assert.match(multitrack, /compSelectedTake\(\)/, "The Edit timeline must retain non-destructive take comping.");
 assert.match(app, /await beatLab\.start\(\{ startAtTime:/);
 assert.match(beatLab, /async start\(\{\s*startAtTime = null,\s*startAtStep = 0\s*\} = \{\}\)/);
 assert.match(beatLab, /getTempoAtBar\(sessionBar\)/);
