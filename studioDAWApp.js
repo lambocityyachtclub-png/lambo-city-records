@@ -973,6 +973,8 @@ const StudioDAWApp = {
         const bpm = Math.max(60, Math.min(180, Number(event.target.value) || 100));
         StudioMultitrackWorkspace.setTempo(bpm);
         if (Floor2StudioApp?.pattern) Floor2StudioApp.pattern.bpm = bpm;
+        Floor2StudioApp?.notifyPatternChanged?.(Boolean(this.beatLabPlaybackEnabled));
+        MPCInterface.refreshProjectHeader?.();
         const bpmInput = Floor2StudioApp?.ui?.querySelector("[data-bpm]");
         const bpmLabel = Floor2StudioApp?.ui?.querySelector("[data-bpm-label]");
         if (bpmInput) bpmInput.value = String(bpm);
