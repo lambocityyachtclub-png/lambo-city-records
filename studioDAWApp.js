@@ -528,7 +528,8 @@ const StudioDAWApp = {
     }
     if (!workspace || workspace.isTrackRecording() || workspace.pendingRecording || this.sessionMidiRecordingActive) return false;
     if (mode === "midi") {
-      let midiTrack = workspace.tracks.find(item => item.type === "midi" && /city synth|piano performance/i.test(item.name));
+      let midiTrack = workspace.tracks.find(item => item.type === "midi" && item.armed) ||
+        workspace.tracks.find(item => item.type === "midi" && /city synth|piano performance/i.test(item.name));
       if (!midiTrack) {
         workspace.recordHistory("Create City Synth MIDI track");
         midiTrack = workspace.createTrack("midi", "City Synth Performance");
