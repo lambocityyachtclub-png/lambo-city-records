@@ -270,6 +270,22 @@ function validateProject(project) {
         session.tracks.length > 64) {
       throw new Error("DAW session settings are invalid.");
     }
+    if ((session.beatLabPlaybackEnabled !== undefined && typeof session.beatLabPlaybackEnabled !== "boolean") ||
+        (session.cycleTakesEnabled !== undefined && typeof session.cycleTakesEnabled !== "boolean")) {
+      throw new Error("DAW session recording preferences are invalid.");
+    }
+    if (session.beatLabPattern !== undefined && session.beatLabPattern !== null) {
+      const pattern = session.beatLabPattern;
+      if (!pattern?.steps ||
+          !REQUIRED_TRACKS.every(track =>
+            Array.isArray(pattern.steps[track]) &&
+            pattern.steps[track].length === 16 &&
+            pattern.steps[track].every(step => typeof step === "boolean")
+          ) ||
+          (pattern.bpm !== undefined && (!Number.isFinite(Number(pattern.bpm)) || Number(pattern.bpm) < 60 || Number(pattern.bpm) > 180))) {
+        throw new Error("DAW Beat Lab pattern data is invalid.");
+      }
+    }
     const trackIds = new Set();
     const clipIds = new Set();
     let totalAudioBytes = 0;
