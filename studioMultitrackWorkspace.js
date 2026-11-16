@@ -1685,7 +1685,9 @@ const StudioMultitrackWorkspace = {
         ? "MPC"
         : track.inputSource === "beatlab"
           ? "Beat Lab"
-          : "MIC";
+          : track.inputSource === "drums"
+            ? "LIVE DRUMMER"
+            : "MIC";
       this.status("Recording " + armedTracks.map(track => sourceLabel(track) + " → " + track.name).join(" · ") + " · bar " + startBar + (endBar !== null ? " → " + endBar : "") + ".");
       return true;
     } catch (error) {
