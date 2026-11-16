@@ -778,8 +778,9 @@ const StudioDAWApp = {
     if (editRecord) editRecord.textContent = this.recordArmed ? "● RECORD ARMED" : "● RECORD";
     const globalTempo = this.root?.querySelector("[data-global-tempo]");
     if (globalTempo) globalTempo.value = String(StudioMultitrackWorkspace.tempo || 100);
+    this.cycleRecordingEnabled = StudioMultitrackWorkspace.cycleTakesEnabled !== false;
     const cycleToggle = this.root?.querySelector("[data-global-cycle-record]");
-    if (cycleToggle) cycleToggle.checked = Boolean(this.cycleRecordingEnabled);
+    if (cycleToggle) cycleToggle.checked = this.cycleRecordingEnabled;
     const position = this.root?.querySelector("[data-global-position]");
     if (position) position.textContent = "BAR " + String(Math.floor(StudioMultitrackWorkspace.playheadBar || 1)).padStart(2, "0");
     this.root?.querySelectorAll('[data-global-transport="click"]').forEach(button => {
@@ -983,6 +984,8 @@ const StudioDAWApp = {
       }
       if (event.target.matches("[data-global-cycle-record]")) {
         this.cycleRecordingEnabled = Boolean(event.target.checked);
+        StudioMultitrackWorkspace.cycleTakesEnabled = this.cycleRecordingEnabled;
+        StudioMultitrackWorkspace.scheduleProjectAutosave();
       }
     });
 
