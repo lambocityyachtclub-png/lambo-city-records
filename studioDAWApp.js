@@ -487,6 +487,8 @@ const StudioDAWApp = {
   editScreen: null,
   panelHost: null,
   handleOverlayClick: null,
+  handleBeatLabPatternChange: null,
+  handleSessionPatternRestore: null,
   mixPanel: null,
   pianoPanel: null,
   mpcPanel: null,
@@ -537,7 +539,11 @@ const StudioDAWApp = {
     }
     const mpcMode = mode === "mpc";
     const beatLabMode = mode === "beatlab";
-    if (beatLabMode) this.beatLabPlaybackEnabled = true;
+    if (beatLabMode) {
+      this.beatLabPlaybackEnabled = true;
+      workspace.beatLabPlaybackEnabled = true;
+      workspace.scheduleProjectAutosave();
+    }
     const boothNotes = this.vocalsPanel?.querySelector('[data-booth-mode="notes"]');
     const voiceNotesMode = mode === "notes" || (!mode && this.workspace?.activeView === "vocals" && Boolean(boothNotes && !boothNotes.hidden));
     const vocalMode = mode === "vocal" || (!mode && this.workspace?.activeView === "vocals" && !voiceNotesMode);
@@ -869,6 +875,29 @@ const StudioDAWApp = {
     document.body.appendChild(root);
 
     this.root = root;
+    this.handleBeatLabPatternChange = event => {
+      const detail = event.detail || {};
+      if (!detail.pattern?.steps) return;
+      StudioMultitrackWorkspace.beatLabPattern = JSON.parse(JSON.stringify(detail.pattern));
+      StudioMultitrackWorkspace.beatLabSoundProfile = detail.soundProfile === "mpc" ? "mpc" : "beatLab";
+      this.beatLabPlaybackEnabled = Boolean(detail.enablePlayback);
+      StudioMultitrackWorkspace.beatLabPlaybackEnabled = this.beatLabPlaybackEnabled;
+      StudioMultitrackWorkspace.scheduleProjectAutosave();
+    };
+    this.handleSessionPatternRestore = event => {
+      const detail = event.detail || {};
+      if (detail.pattern?.steps) {
+        Floor2StudioApp.pattern = JSON.parse(JSON.stringify(detail.pattern));
+        Floor2StudioApp.soundProfile = detail.soundProfile === "mpc" ? "mpc" : "beatLab";
+        Floor2StudioApp.renderGrid?.();
+      } else {
+        Floor2StudioApp.startNewSession?.();
+      }
+      this.beatLabPlaybackEnabled = Boolean(detail.playbackEnabled);
+      StudioMultitrackWorkspace.beatLabPlaybackEnabled = this.beatLabPlaybackEnabled;
+    };
+    window.addEventListener("lc-beatlab-pattern-change", this.handleBeatLabPatternChange);
+    window.addEventListener("lc-session-beatlab-pattern-restore", this.handleSessionPatternRestore);
     StudioMultitrackWorkspace.onTransportChange = () => {
       if (!StudioMultitrackWorkspace.isPlaying() && Floor2StudioApp?.playing && !this.transportActionPending) {
         Floor2StudioApp.stop();
@@ -914,7 +943,11 @@ const StudioDAWApp = {
       event.preventDefault();
       const action = button.dataset.globalTransport;
       if (action === "play") {
-        if (this.workspace?.activeView === "beatlab") this.beatLabPlaybackEnabled = true;
+        if (this.workspace?.activeView === "beatlab") {
+          this.beatLabPlaybackEnabled = true;
+          StudioMultitrackWorkspace.beatLabPlaybackEnabled = true;
+          StudioMultitrackWorkspace.scheduleProjectAutosave();
+        }
         void this.toggleSessionPlayback();
       }
       else if (action === "stop") void this.stopSessionPlayback();
@@ -1013,6 +1046,12 @@ const StudioDAWApp = {
         }
       });
 
+      StudioMultitrackWorkspace.beatLabPattern = Floor2StudioApp?.pattern?.steps
+        ? JSON.parse(JSON.stringify(Floor2StudioApp.pattern))
+        : null;
+      StudioMultitrackWorkspace.beatLabSoundProfile = Floor2StudioApp?.soundProfile === "mpc" ? "mpc" : "beatLab";
+      StudioMultitrackWorkspace.beatLabPlaybackEnabled = Boolean(this.beatLabPlaybackEnabled);
+
       // Dedicated MPC performance surface and a separate Digital Beat Lab.
       this.mpcPanel = createMPCPanel({
         beatLab: Floor2StudioApp,
@@ -1030,6 +1069,8 @@ const StudioDAWApp = {
         beatLab: Floor2StudioApp,
         onTransportPlay: () => {
           this.beatLabPlaybackEnabled = true;
+          StudioMultitrackWorkspace.beatLabPlaybackEnabled = true;
+          StudioMultitrackWorkspace.scheduleProjectAutosave();
           return this.toggleSessionPlayback();
         },
         onTransportStop: () => this.stopSessionPlayback()
@@ -1095,6 +1136,8 @@ const StudioDAWApp = {
         if (this.workspace?.activeView === "beatlab" &&
             !StudioMultitrackWorkspace.isPlaying() && !Floor2StudioApp?.playing) {
           this.beatLabPlaybackEnabled = true;
+          StudioMultitrackWorkspace.beatLabPlaybackEnabled = true;
+          StudioMultitrackWorkspace.scheduleProjectAutosave();
         }
         if (this.transportActionPending) {
           this.stopSessionPlayback();
@@ -1135,6 +1178,14 @@ const StudioDAWApp = {
     if (this.handleStudioKeydown) {
       document.removeEventListener("keydown", this.handleStudioKeydown);
       this.handleStudioKeydown = null;
+    }
+    if (this.handleBeatLabPatternChange) {
+      window.removeEventListener("lc-beatlab-pattern-change", this.handleBeatLabPatternChange);
+      this.handleBeatLabPatternChange = null;
+    }
+    if (this.handleSessionPatternRestore) {
+      window.removeEventListener("lc-session-beatlab-pattern-restore", this.handleSessionPatternRestore);
+      this.handleSessionPatternRestore = null;
     }
     this.transportActionPending = false;
     this.recordArmed = false;
