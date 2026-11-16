@@ -613,7 +613,13 @@ const StudioDAWApp = {
   disarmSessionRecording(mode = null) {
     if (this.recordArmed && (!mode || this.recordingMode === mode)) {
       this.recordArmed = false;
-      if (mode === "midi") this.recordingMode = "mic";
+      if (mode === "midi" || this.recordingMode === "midi") {
+        StudioMultitrackWorkspace.tracks.forEach(track => { if (track.type === "midi") track.armed = false; });
+        this.recordingMode = "mic";
+        window.dispatchEvent(new CustomEvent("lc-session-midi-recording-state", {
+          detail: { active: false, armed: false }
+        }));
+      }
       this.syncTransportControls();
       this.editScreen?.status("Recording disarmed.");
       return true;
