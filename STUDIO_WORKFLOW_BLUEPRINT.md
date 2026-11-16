@@ -39,7 +39,7 @@ Edit is the session command center. Instrument and recording workspaces are focu
 - Stop ends the recording and saves the take into the current session.
 - The Edit loop range determines the cycle-recording pass length.
 - If no loop is enabled, use an eight-bar loop beginning at the current playhead.
-- Cycle Takes is enabled by default. Each completed pass is preserved as a distinct take; the next pass begins at loop-in until Stop is pressed.
+- Cycle Takes is enabled by default. Each completed audio pass is preserved in the track's take lanes; each MIDI pass is preserved as a separate selectable take track. The next pass begins at loop-in until Stop is pressed.
 - Turning Cycle Takes off records one pass.
 - Original takes remain protected from destructive comping; selected sections can be placed into a non-destructive comp lane.
 - Voice Notes records without requiring a beat or Beat Lab playback.
@@ -69,7 +69,7 @@ Edit is the session command center. Instrument and recording workspaces are focu
 
 - [ ] One persistent transport on all workspaces.
 - [ ] No unexpected Beat Lab playback in empty sessions or Voice Notes.
-- [ ] Loop-based cycle recording saves separate audio takes and stops cleanly.
+- [ ] Loop-based cycle recording saves separate audio and MIDI takes and stops cleanly.
 - [ ] Voice Notes works without a beat.
 - [ ] MPC, City Synth, Beat Lab, and Live Drummer record into the shared session.
 - [ ] Track mixer and Mix & Master affect the same session audio.
