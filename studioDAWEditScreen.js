@@ -292,6 +292,7 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext,
               button.disabled = true;
               try {
                 await StudioMultitrackWorkspace.loadSession(project.projectId);
+                if (this.beatLab) this.beatLab.currentProject = null;
                 overlay.remove();
                 this.render();
                 this.renderHeader();
@@ -564,6 +565,7 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext,
             const choice = Number(window.prompt("Enter the session number to open:\n" + options, "1"));
             if (!Number.isInteger(choice) || choice < 1 || choice > projects.length) return;
             await workspace.loadSession(projects[choice - 1].projectId);
+            if (this.beatLab) this.beatLab.currentProject = null;
             this.render();
             this.status("Opened " + workspace.activeProjectName + ".");
           } else if (action === "new-session") {
@@ -619,6 +621,7 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext,
             if (!Number.isInteger(choice) || choice < 1 || choice > versions.length) return;
             if (!await this.confirmReplaceUnsaved(workspace, "restore a previous version")) return;
             await workspace.restoreSessionVersion(versions[choice - 1].versionId);
+            if (this.beatLab) this.beatLab.currentProject = null;
             this.render();
           } else if (action === "export-session") {
             button.disabled = true;
