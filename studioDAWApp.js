@@ -615,7 +615,10 @@ const StudioDAWApp = {
       const started = await multitrack.playAll();
       if (started) {
         const sessionTempo = multitrack.getTempoAtBar(multitrack.playheadBar);
-        if (beatLab.pattern) beatLab.pattern.bpm = sessionTempo;
+        if (beatLab.pattern) {
+          beatLab.pattern.bpm = sessionTempo;
+          beatLab.notifyPatternChanged?.(Boolean(this.beatLabPlaybackEnabled));
+        }
         const recordedBeatTrack = multitrack.tracks.find(track =>
           ["beats", "beat lab"].includes(String(track.name || "").trim().toLowerCase()) &&
           (track.clips || []).some(clip => clip.blob?.size > 0)
