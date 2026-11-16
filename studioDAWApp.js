@@ -1094,11 +1094,23 @@ const StudioDAWApp = {
         }
       });
 
-      StudioMultitrackWorkspace.beatLabPattern = Floor2StudioApp?.pattern?.steps
-        ? JSON.parse(JSON.stringify(Floor2StudioApp.pattern))
-        : null;
-      StudioMultitrackWorkspace.beatLabSoundProfile = Floor2StudioApp?.soundProfile === "mpc" ? "mpc" : "beatLab";
-      StudioMultitrackWorkspace.beatLabPlaybackEnabled = Boolean(this.beatLabPlaybackEnabled);
+      if (options.startNewSession !== false) {
+        StudioMultitrackWorkspace.beatLabPattern = Floor2StudioApp?.pattern?.steps
+          ? JSON.parse(JSON.stringify(Floor2StudioApp.pattern))
+          : null;
+        StudioMultitrackWorkspace.beatLabSoundProfile = Floor2StudioApp?.soundProfile === "mpc" ? "mpc" : "beatLab";
+        StudioMultitrackWorkspace.beatLabPlaybackEnabled = false;
+        this.beatLabPlaybackEnabled = false;
+      } else {
+        this.handleSessionPatternRestore?.({
+          detail: {
+            pattern: StudioMultitrackWorkspace.beatLabPattern,
+            soundProfile: StudioMultitrackWorkspace.beatLabSoundProfile,
+            playbackEnabled: StudioMultitrackWorkspace.beatLabPlaybackEnabled
+          }
+        });
+      }
+      this.syncTransportControls();
 
       // Dedicated MPC performance surface and a separate Digital Beat Lab.
       this.mpcPanel = createMPCPanel({
