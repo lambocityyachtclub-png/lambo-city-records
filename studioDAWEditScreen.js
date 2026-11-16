@@ -499,6 +499,9 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext,
           } else if (action === "save-session") {
             const name = workspace.activeProjectName || window.prompt("Song name:", "Untitled Song") || "Untitled Song";
             const id = workspace.activeProjectId || ("lc-daw-" + (globalThis.crypto && globalThis.crypto.randomUUID ? globalThis.crypto.randomUUID() : Date.now()));
+            if (this.beatLab?.pattern?.steps) workspace.beatLabPattern = JSON.parse(JSON.stringify(this.beatLab.pattern));
+            workspace.beatLabSoundProfile = this.beatLab?.soundProfile === "mpc" ? "mpc" : "beatLab";
+            workspace.beatLabPlaybackEnabled = Boolean(workspace.beatLabPlaybackEnabled);
             await workspace.saveSession(id, name);
             this.status("Saved session: " + name);
             root.querySelector("[data-session-menu]").classList.remove("open");
@@ -523,6 +526,7 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext,
             workspace.undoStack = [];
             workspace.redoStack = [];
             workspace.resetSession();
+            this.beatLab?.startNewSession?.();
             this.render();
             this.showSongNamePrompt();
           } else if (action === "export-wav") {
@@ -552,6 +556,8 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext,
           } else if (action === "export-session") {
             button.disabled = true;
             try {
+              if (this.beatLab?.pattern?.steps) workspace.beatLabPattern = JSON.parse(JSON.stringify(this.beatLab.pattern));
+              workspace.beatLabSoundProfile = this.beatLab?.soundProfile === "mpc" ? "mpc" : "beatLab";
               const dawSession = await workspace.exportSession();
               const activePattern = this.beatLab?.pattern;
               let project = this.beatLab?.currentProject?.schemaVersion === 1
@@ -773,6 +779,7 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext,
             const firstPattern = project.patterns?.[0];
             if (firstPattern) this.beatLab.pattern = JSON.parse(JSON.stringify(firstPattern));
             this.beatLab.soundProfile = project.settings?.soundProfile === "mpc" ? "mpc" : "beatLab";
+            this.beatLab.notifyPatternChanged?.(Boolean(workspace.beatLabPlaybackEnabled));
             const bpmInput = this.beatLab.ui?.querySelector?.("[data-bpm]");
             const bpmLabel = this.beatLab.ui?.querySelector?.("[data-bpm-label]");
             const soundSelect = this.beatLab.ui?.querySelector?.("[data-sound-profile]");
