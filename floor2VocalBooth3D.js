@@ -45,7 +45,7 @@ export function createVocalBoothPanel({ beatLab, onTransportPlay, onTransportSto
       '</div>' +
       '<label style="display:grid;gap:6px;color:#d8c7a7;font-size:10px">CORRECTION AMOUNT <input data-vocal-pitch="amount" type="range" min="0" max="100" step="1" value="' + (beatLab?.pitchCorrectionSettings?.amount ?? 100) + '" style="width:100%;accent-color:#e6bb69"></label>' +
       '<label style="display:grid;gap:6px;color:#d8c7a7;font-size:10px">RETUNE SPEED <input data-vocal-pitch="speedMs" type="range" min="0" max="120" step="1" value="' + (beatLab?.pitchCorrectionSettings?.speedMs ?? 25) + '" style="width:100%;accent-color:#e6bb69"></label>' +
-      '<div data-pitch-status role="status" aria-live="polite" style="color:#c9b58d;font-size:11px">Set the song key and scale. Correction is printed into new vocal takes when enabled.</div>' +
+      '<div data-pitch-status role="status" aria-live="polite" style="color:#c9b58d;font-size:11px">Set the song key and scale. Non-destructive correction is saved with this vocal track and applied during playback and export.</div>' +
     '</section>' +
     '</section>' +
     '<section data-booth-mode="notes" hidden style="display:grid;align-content:start;gap:16px;padding:clamp(16px,3vw,28px);border:1px solid rgba(168,237,112,.38);border-radius:14px;background:linear-gradient(145deg,#18231a,#10131a)">' +
@@ -154,6 +154,9 @@ export function createVocalBoothPanel({ beatLab, onTransportPlay, onTransportSto
     beatLab.pitchCorrectionSettings=beatLab.pitchCorrectionSettings||{enabled:false,root:0,scale:"major",amount:100,speedMs:25};
     const key=control.dataset.vocalPitch;
     beatLab.pitchCorrectionSettings[key]=key==="enabled"?Boolean(control.checked):(key==="scale"?control.value:Number(control.value));
+    window.dispatchEvent(new CustomEvent("lc-vocal-pitch-settings-change", {
+      detail: { settings: { ...beatLab.pitchCorrectionSettings } }
+    }));
     const enabled=beatLab.pitchCorrectionSettings.enabled;
     pitchStatus(enabled
       ? "Pitch correction ON · " + ["C","C♯","D","D♯","E","F","F♯","G","G♯","A","A♯","B"][beatLab.pitchCorrectionSettings.root] + " " + beatLab.pitchCorrectionSettings.scale.toUpperCase() + " · Applies to new vocal takes."
