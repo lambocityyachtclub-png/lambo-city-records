@@ -658,6 +658,9 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext,
         if (slider.hasAttribute("data-track-volume")) {
           track.volume = Number(slider.value);
           workspace.arrangementPlayback && workspace.arrangementPlayback.setTrackVolume(track.id, track.volume);
+          if (["beats", "beat lab"].includes(String(track.name || "").trim().toLowerCase())) {
+            workspace.syncBeatLabMixerState();
+          }
         } else {
           track.pan = Number(slider.value) / 100;
           workspace.arrangementPlayback && workspace.arrangementPlayback.setTrackPan(track.id, track.pan);
