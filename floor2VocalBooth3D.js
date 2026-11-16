@@ -98,8 +98,11 @@ export function createVocalBoothPanel({ beatLab, onTransportPlay, onTransportSto
   const onSessionRecordingState=event=>{
     const detail=event.detail||{};
     recordingActive=Boolean(detail.recording);
-    if(recordingActive){recordingStartedAt=performance.now();status(detail.mode==="notes"?"Voice Note armed · press Spacebar or PLAY SESSION to begin.":"Vocal recording armed · press Spacebar or PLAY SESSION to begin.");}
-    else if(detail.name){showTake(detail.name,detail.format);status("Recording saved to the shared song timeline.");voiceStatus("Saved to the shared song timeline.");}
+    const noteStart=root.querySelector('[data-vocal-action="quick-note-start"]');
+    const noteStop=root.querySelector('[data-vocal-action="quick-note-stop"]');
+    if(detail.mode==="notes"){if(noteStart)noteStart.disabled=recordingActive;if(noteStop)noteStop.disabled=!recordingActive;}
+    if(recordingActive){recordingStartedAt=performance.now();status(detail.mode==="notes"?"Voice Note recording · session transport running.":"Vocal recording · session transport running.");}
+    else if(detail.name){if(noteStart)noteStart.disabled=false;if(noteStop)noteStop.disabled=true;showTake(detail.name,detail.format);status("Recording saved to the shared song timeline.");voiceStatus("Saved to the shared song timeline.");}
   };
   window.addEventListener("lc-vocal-recording-state",onSessionRecordingState);
   root.addEventListener("lc-vocal-booth-dispose",()=>window.removeEventListener("lc-vocal-recording-state",onSessionRecordingState),{once:true});
