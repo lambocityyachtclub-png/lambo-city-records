@@ -524,6 +524,7 @@ const StudioDAWApp = {
       else if (activeView === "piano") mode = "midi";
       else if (activeView === "beatlab") mode = "beatlab";
       else if (activeView === "drums") mode = "drums";
+      else if (activeView === "edit" && workspace.tracks.some(item => item.armed && (item.type === "midi" || item.type === "instrument"))) mode = "midi";
     }
     if (!workspace || workspace.isTrackRecording() || workspace.pendingRecording || this.sessionMidiRecordingActive) return false;
     if (mode === "midi") {
