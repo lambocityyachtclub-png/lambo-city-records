@@ -564,6 +564,15 @@ const StudioDAWApp = {
     } else if (!workspace.tracks.some(item => item.type === "audio" && item.armed)) {
       track.armed = true;
     }
+    if (vocalMode) {
+      const pitchSettings = Floor2StudioApp?.pitchCorrectionSettings || {
+        enabled: false, root: 0, scale: "major", amount: 100, speedMs: 25
+      };
+      track.effects = {
+        ...(track.effects || {}),
+        pitchCorrection: { ...pitchSettings }
+      };
+    }
     track.inputSource = mpcMode ? "mpc" : beatLabMode ? "beatlab" : "mic";
     this.recordingMode = mpcMode ? "mpc" : beatLabMode ? "beatlab" : voiceNotesMode ? "notes" : "mic";
     this.recordArmed = true;
