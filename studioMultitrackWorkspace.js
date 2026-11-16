@@ -574,7 +574,11 @@ const StudioMultitrackWorkspace = {
           onPosition: bar => {
             const previousLoopBar = this.lastLoopPositionBar;
             this.playheadBar = bar;
-            if (this.loopRange?.enabled && previousLoopBar !== null && previousLoopBar > bar + 0.5) {
+            const activeLoop = this.loopRange?.enabled ? this.loopRange : null;
+            if (activeLoop && previousLoopBar !== null &&
+                previousLoopBar >= Number(activeLoop.endBar) - 0.25 &&
+                bar <= Number(activeLoop.startBar) + 0.25 &&
+                bar < previousLoopBar - 0.0625) {
               this.onLoopBoundary?.(bar, previousLoopBar);
             }
             this.lastLoopPositionBar = bar;
