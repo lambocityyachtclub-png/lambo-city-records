@@ -1237,6 +1237,7 @@ const StudioDAWApp = {
       this.workspace.setPanel("mix", this.mixPanel);
       this.workspace.setPanel("piano", this.pianoPanel);
       this.workspace.setPanel("vocals", this.vocalsPanel);
+      this.syncVocalTrackSettings();
       this.syncTransportControls();
 
       // One shared Spacebar transport for every Studio workspace.
