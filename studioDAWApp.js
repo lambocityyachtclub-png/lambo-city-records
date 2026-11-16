@@ -515,6 +515,9 @@ const StudioDAWApp = {
   cycleRestartTimer: null,
   activeRecordingStartBar: null,
   activeRecordingEndBar: null,
+  midiTakeGroupId: null,
+  midiTakeBaseName: null,
+  midiTakeNumber: 0,
 
   armSessionRecording(mode = null) {
     const workspace = StudioMultitrackWorkspace;
@@ -534,6 +537,24 @@ const StudioDAWApp = {
         workspace.recordHistory("Create City Synth MIDI track");
         midiTrack = workspace.createTrack("midi", "City Synth Performance");
         midiTrack.midiNotes = [];
+      }
+      const baseName = String(midiTrack.takeBaseName || midiTrack.name || "City Synth Performance").replace(/\s*· TAKE \d+$/i, "");
+      if (this.cycleRecordingEnabled) {
+        if (Array.isArray(midiTrack.midiNotes) && midiTrack.midiNotes.length) {
+          midiTrack = workspace.createTrack("midi", baseName + " · TAKE 1");
+          midiTrack.midiNotes = [];
+        }
+        this.midiTakeBaseName = baseName;
+        this.midiTakeGroupId = "midi-takes-" + midiTrack.id + "-" + Date.now();
+        this.midiTakeNumber = 1;
+        midiTrack.takeBaseName = baseName;
+        midiTrack.takeGroupId = this.midiTakeGroupId;
+        midiTrack.takeNumber = 1;
+        midiTrack.name = baseName + " · TAKE 1";
+      } else {
+        this.midiTakeBaseName = baseName;
+        this.midiTakeGroupId = null;
+        this.midiTakeNumber = 0;
       }
       workspace.tracks.forEach(item => {
         if (item.type === "midi") item.armed = item.id === midiTrack.id;
@@ -765,6 +786,9 @@ const StudioDAWApp = {
       }
       this.sessionMidiRecordingActive = false;
       workspace?.tracks?.forEach(track => { if (track.type === "midi") track.armed = false; });
+      this.midiTakeGroupId = null;
+      this.midiTakeBaseName = null;
+      this.midiTakeNumber = 0;
       this.recordingMode = "mic";
       this.activeRecordingStartBar = null;
       this.activeRecordingEndBar = null;
@@ -785,6 +809,48 @@ const StudioDAWApp = {
     this.syncTransportControls();
     window.dispatchEvent(new CustomEvent("lc-vocal-recording-state", { detail: { recording: false, name: "Session Recording", format: "Shared Studio audio" } }));
     return true;
+  },
+
+  handleSessionLoopBoundary() {
+    if (!this.sessionMidiRecordingActive) return;
+    window.dispatchEvent(new CustomEvent("lc-session-midi-loop-boundary"));
+    if (!this.cycleRecordingEnabled) {
+      void this.stopSessionPlayback();
+      return;
+    }
+    const workspace = StudioMultitrackWorkspace;
+    const current = workspace.tracks.find(track => track.type === "midi" && track.armed);
+    if (!current) return;
+    const baseName = this.midiTakeBaseName ||
+      current.takeBaseName ||
+      String(current.name || "City Synth Performance").replace(/\s*· TAKE \d+$/i, "");
+    if (!this.midiTakeGroupId) {
+      this.midiTakeBaseName = baseName;
+      this.midiTakeGroupId = "midi-takes-" + current.id + "-" + Date.now();
+      this.midiTakeNumber = Math.max(1, Number(current.takeNumber) || 1);
+      current.takeBaseName = baseName;
+      current.takeGroupId = this.midiTakeGroupId;
+      current.takeNumber = this.midiTakeNumber;
+      current.name = baseName + " · TAKE " + this.midiTakeNumber;
+    }
+    const nextNumber = this.midiTakeNumber + 1;
+    current.armed = false;
+    current.muted = true;
+    const next = workspace.createTrack("midi", baseName + " · TAKE " + nextNumber);
+    next.midiNotes = [];
+    next.takeBaseName = baseName;
+    next.takeGroupId = this.midiTakeGroupId;
+    next.takeNumber = nextNumber;
+    next.armed = true;
+    next.muted = false;
+    this.midiTakeNumber = nextNumber;
+    workspace.scheduleProjectAutosave();
+    workspace.render();
+    this.syncTransportControls();
+    window.dispatchEvent(new CustomEvent("lc-session-midi-recording-state", {
+      detail: { active: true, armed: true, takeNumber: nextNumber }
+    }));
+    this.editScreen?.status("MIDI cycle · TAKE " + nextNumber + " started.");
   },
 
   syncVocalTrackSettings() {
