@@ -871,6 +871,7 @@ const StudioMultitrackWorkspace = {
     this.createTrack("instrument", "Instruments");
     this.createTrack("audio", "Beats");
     this.render();
+    this.onTransportChange?.();
     this.status("New song session ready.");
   },
 
