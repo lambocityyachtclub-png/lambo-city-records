@@ -1,6 +1,8 @@
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
+import DeviceGraphics from "./deviceGraphics.js";
 
 let renderer;
+let resizeHandler;
 let currentPixelRatio = 1;
 let maxPixelRatio = 1.5;
 let minPixelRatio = 1;
@@ -20,30 +22,23 @@ function applyPixelRatio(nextRatio) {
   renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
-function chooseDevicePixelRatio() {
-  const dpr = Number(window.devicePixelRatio) || 1;
-  const memory = Number(navigator.deviceMemory) || 0;
-  const threads = Number(navigator.hardwareConcurrency) || 0;
-
-  // Keep the existing 1.5 ceiling on capable devices. Use a conservative
-  // 1.0 ceiling when the browser exposes low-memory/low-core hardware hints.
-  const lowCapability = (memory > 0 && memory <= 4) ||
-    (threads > 0 && threads <= 4);
-  maxPixelRatio = Math.min(dpr, lowCapability ? 1.0 : 1.5);
-  minPixelRatio = Math.min(1.0, maxPixelRatio);
-  return maxPixelRatio;
+function syncDeviceProfile(preserveCurrent = false) {
+  const applied = DeviceGraphics.applyRendererProfile(renderer, { preserveCurrent });
+  currentPixelRatio = applied.currentPixelRatio;
+  maxPixelRatio = applied.effectiveMaxPixelRatio;
+  minPixelRatio = applied.effectiveMinPixelRatio;
+  return applied;
 }
 
 export default {
   init() {
+    const graphics = DeviceGraphics.getProfile();
     renderer = new THREE.WebGLRenderer({
-      antialias: true,
+      antialias: graphics.antialias,
       powerPreference: "high-performance"
     });
 
-    currentPixelRatio = chooseDevicePixelRatio();
-    renderer.setPixelRatio(currentPixelRatio);
-    renderer.setSize(window.innerWidth, window.innerHeight);
+    syncDeviceProfile();
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.1;
 
@@ -51,15 +46,19 @@ export default {
     document.body.style.overflow = "hidden";
     document.body.appendChild(renderer.domElement);
 
-    window.addEventListener("resize", () => {
-      renderer.setSize(window.innerWidth, window.innerHeight);
-    });
+    if (resizeHandler) window.removeEventListener("resize", resizeHandler);
+    resizeHandler = () => syncDeviceProfile(true);
+    window.addEventListener("resize", resizeHandler, { passive: true });
+
+    sampleElapsed = 0;
+    sampleFrameTime = 0;
+    sampleFrames = 0;
+    lastQualityChange = performance.now();
 
     return renderer;
   },
 
-  // Engine calls system updates every frame. Adjust resolution only after
-  // sustained frame-time samples, with a cooldown to avoid quality oscillation.
+  // Preserve the existing sustained-frame-time adaptation inside the selected device tier.
   update(delta) {
     if (!renderer || !Number.isFinite(delta) || delta <= 0) return;
 
