@@ -541,8 +541,11 @@ const StudioDAWApp = {
       const baseName = String(midiTrack.takeBaseName || midiTrack.name || "City Synth Performance").replace(/\s*· TAKE \d+$/i, "");
       if (this.cycleRecordingEnabled) {
         if (Array.isArray(midiTrack.midiNotes) && midiTrack.midiNotes.length) {
+          const previousTake = midiTrack;
           midiTrack = workspace.createTrack("midi", baseName + " · TAKE 1");
           midiTrack.midiNotes = [];
+          previousTake.armed = false;
+          previousTake.muted = true;
         }
         this.midiTakeBaseName = baseName;
         this.midiTakeGroupId = "midi-takes-" + midiTrack.id + "-" + Date.now();
