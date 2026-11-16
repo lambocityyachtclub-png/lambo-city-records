@@ -1,4 +1,5 @@
 import StudioAudioEngine from "./studioAudioEngine.js";
+import StudioSoundKit from "./studioSoundKit.js";
 import StudioVocalEffects from "./studioVocalEffects.js";
 import { createStudioPitchCorrectionNode } from "./studioPitchCorrection.js";
 
@@ -66,6 +67,9 @@ async function renderStudioSessionToAudioBuffer({
   timeSignatureChanges = [],
   masterVolume = StudioAudioEngine.master?.gain?.value ?? 1,
   masterSettings = {},
+  beatLabPattern = null,
+  beatLabSoundProfile = "beatLab",
+  beatLabPlaybackEnabled = false,
   sampleRate = SAMPLE_RATE
 } = {}) {
   const bpm = Number(tempo);
@@ -114,11 +118,37 @@ async function renderStudioSessionToAudioBuffer({
     }
   }
 
-  if (!decoded.length && !midiTracks.length) throw new Error("There are no audio clips or MIDI notes to export.");
+  const recordedBeatLabTrack = tracks.some(track =>
+    ["beats", "beat lab"].includes(String(track.name || "").trim().toLowerCase()) &&
+    (track.clips || []).some(clip => clip.blob instanceof Blob && clip.blob.size > 0)
+  );
+  const useBeatLabPattern = Boolean(
+    beatLabPlaybackEnabled &&
+    beatLabPattern?.steps &&
+    !recordedBeatLabTrack
+  );
+  const beatLabTrack = tracks.find(track =>
+    ["beats", "beat lab"].includes(String(track.name || "").trim().toLowerCase())
+  ) || {
+    id: "lc-export-beatlab",
+    name: "Beat Lab",
+    type: "audio",
+    volume: 80,
+    pan: 0,
+    muted: false,
+    solo: false,
+    eq: {},
+    compression: {},
+    effects: {},
+    automation: { volume: [] },
+    sends: []
+  };
+  if (useBeatLabPattern) renderDuration = Math.max(renderDuration, getSecondsAtBar(9));
+  if (!decoded.length && !midiTracks.length && !useBeatLabPattern) throw new Error("There are no audio clips, MIDI notes, or active Beat Lab pattern to export.");
   if (renderDuration > MAX_RENDER_SECONDS || decoded.some(item => item.start >= MAX_RENDER_SECONDS)) {
     throw new Error("The arrangement extends beyond the 15-minute WAV export limit.");
   }
-  const reverbTail = Math.max(0.1, ...[...decoded.map(({ track }) => track), ...midiTracks].map(track => Number(track.effects?.reverbDecay) || 0.1));
+  const reverbTail = Math.max(0.1, ...[...decoded.map(({ track }) => track), ...midiTracks, ...(useBeatLabPattern ? [beatLabTrack] : [])].map(track => Number(track.effects?.reverbDecay) || 0.1));
   renderDuration = Math.max(0.1, renderDuration + reverbTail + 0.1);
 
   const OfflineContext = window.OfflineAudioContext || window.webkitOfflineAudioContext;
@@ -161,7 +191,7 @@ async function renderStudioSessionToAudioBuffer({
 
   const channels = new Map();
   const effectsOutputs = new Map();
-  const mixTracks = [...new Map([...decoded.map(item => item.track), ...midiTracks, ...tracks.filter(track => track.type === "bus")].map(track => [track.id, track])).values()]
+  const mixTracks = [...new Map([...decoded.map(item => item.track), ...midiTracks, ...(useBeatLabPattern ? [beatLabTrack] : []), ...tracks.filter(track => track.type === "bus")].map(track => [track.id, track])).values()]
     .filter(track => track.type === "bus" || (!track.muted && (!anySolo || track.solo) && !( !anySolo && hasSeparateStems && track.name === "Master Mix")))
     .sort((a, b) => (a.type === "bus" ? 0 : 1) - (b.type === "bus" ? 0 : 1));
   for (const track of mixTracks) {
@@ -283,6 +313,31 @@ async function renderStudioSessionToAudioBuffer({
     });
   });
 
+  if (useBeatLabPattern) {
+    const beatLabChannel = channels.get(beatLabTrack.id);
+    if (beatLabChannel) {
+      const noiseBuffer = offline.createBuffer(1, Math.ceil(outputSampleRate * 1.5), outputSampleRate);
+      const noise = noiseBuffer.getChannelData(0);
+      for (let index = 0; index < noise.length; index += 1) noise[index] = Math.random() * 2 - 1;
+      const profile = beatLabSoundProfile === "mpc" ? "mpc" : "beatLab";
+      for (let bar = 1; bar <= 128; bar += 1) {
+        const barStart = getSecondsAtBar(bar);
+        if (barStart >= renderDuration) break;
+        const barEnd = getSecondsAtBar(bar + 1);
+        const barDuration = Math.max(0, barEnd - barStart);
+        for (const sound of ["kick", "snare", "hat"]) {
+          const steps = beatLabPattern.steps[sound];
+          if (!Array.isArray(steps)) continue;
+          for (let step = 0; step < 16; step += 1) {
+            if (!steps[step]) continue;
+            const at = barStart + barDuration * (step / 16);
+            if (at < renderDuration) StudioSoundKit.play(offline, profile, sound, at, noiseBuffer, beatLabChannel);
+          }
+        }
+      }
+    }
+  }
+
   const rendered = await offline.startRendering();
   return rendered;
 }
@@ -322,9 +377,12 @@ export async function renderStudioSessionToMp3({
   tempoChanges = [],
   timeSignatureChanges = [],
   masterVolume,
-  masterSettings = {}
+  masterSettings = {},
+  beatLabPattern = null,
+  beatLabSoundProfile = "beatLab",
+  beatLabPlaybackEnabled = false
 } = {}) {
-  const audioBuffer = await renderStudioSessionToAudioBuffer({ tracks, tempo, timeSignature, tempoChanges, timeSignatureChanges, masterVolume, masterSettings });
+  const audioBuffer = await renderStudioSessionToAudioBuffer({ tracks, tempo, timeSignature, tempoChanges, timeSignatureChanges, masterVolume, masterSettings, beatLabPattern, beatLabSoundProfile, beatLabPlaybackEnabled });
   const lamejs = await loadMp3EncoderLibrary();
   const encoder = new lamejs.Mp3Encoder(2, SAMPLE_RATE, 192);
   const left = audioBuffer.getChannelData(0);
