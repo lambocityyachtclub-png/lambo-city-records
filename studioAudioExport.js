@@ -10,6 +10,10 @@
 const StudioAudioExport = {
   context: null,
   output: null,
+  beatLabContext: null,
+  beatLabOutput: null,
+  beatLabMuted: false,
+  beatLabVolume: 1,
   streamDestination: null,
   recorder: null,
   chunks: [],
@@ -27,9 +31,44 @@ const StudioAudioExport = {
 
       // Keep sounds audible while allowing recording.
       this.output.connect(audio.destination);
+      this.beatLabContext = null;
+      this.beatLabOutput = null;
     }
 
     return this.output;
+  },
+
+  // Beat Lab has its own controllable bus inside the shared audio output.
+  // This lets the Edit mixer control the live sequencer without muting MPC
+  // pad auditioning or other studio audio.
+  getBeatLabOutput(audio) {
+    const output = this.getOutput(audio);
+    if (this.beatLabContext !== audio || !this.beatLabOutput) {
+      this.beatLabContext = audio;
+      this.beatLabOutput = audio.createGain();
+      this.beatLabOutput.gain.value = this.beatLabMuted ? 0 : this.beatLabVolume;
+      this.beatLabOutput.connect(output);
+    }
+    return this.beatLabOutput;
+  },
+
+  setBeatLabMuted(muted) {
+    this.beatLabMuted = Boolean(muted);
+    if (this.beatLabOutput && this.beatLabContext) {
+      const value = this.beatLabMuted ? 0 : this.beatLabVolume;
+      this.beatLabOutput.gain.setTargetAtTime(value, this.beatLabContext.currentTime, 0.02);
+    }
+    return this.beatLabMuted;
+  },
+
+  setBeatLabVolume(volume) {
+    const value = Number(volume);
+    if (!Number.isFinite(value)) return this.beatLabVolume;
+    this.beatLabVolume = Math.max(0, Math.min(1, value));
+    if (this.beatLabOutput && this.beatLabContext) {
+      this.beatLabOutput.gain.setTargetAtTime(this.beatLabMuted ? 0 : this.beatLabVolume, this.beatLabContext.currentTime, 0.02);
+    }
+    return this.beatLabVolume;
   },
 
   start(audio) {
