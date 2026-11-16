@@ -78,7 +78,10 @@ assert.doesNotMatch(navigation,/object:\s*stations\.(?:drumStation|instrumentSta
 const app = source["studioDAWApp.js"];
 assert.match(app,/data-global-transport="play"/,"The shared transport must be rendered by the Studio shell.");
 assert.match(app,/appHeader\.style\.display = "flex"/,"The shared transport header must remain visible across workspaces.");
-assert.match(source["studioDAWEditScreen.js"],/\.lc-transport\{display:none!important\}/,"Edit must not show a duplicate local transport.");
+const editScreen = source["studioDAWEditScreen.js"];
+assert.doesNotMatch(editScreen,/\.lc-transport\{display:none!important\}/,"The approved Edit transport must remain visible.");
+assert.match(editScreen,/<div class=\\?"lc-transport\\?"/,"The original Edit transport must remain in the Edit screen.");
+assert.doesNotMatch(editScreen,/data-action=\\?"session-menu\\?"[^>]*>SESSION ▾/,"Do not add a second SESSION control to the Edit toolbar.");
 assert.match(source["hud.js"],/lc-live-drummer-score/);
 assert.match(source["hud.js"],/lc-live-drummer-state/);
 assert.match(app,/lc-live-drummer-state/);
