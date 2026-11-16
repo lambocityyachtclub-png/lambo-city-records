@@ -1131,6 +1131,7 @@ const StudioMultitrackWorkspace = {
     this.nextTrackId = Math.max(0, ...ids) + 1;
     this.render();
     this.onTransportChange?.();
+    window.dispatchEvent(new CustomEvent("lc-session-loaded"));
     this.status("Portable session loaded with " + this.tracks.length + " track(s).");
     return true;
   },
