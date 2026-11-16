@@ -766,6 +766,17 @@ const StudioDAWApp = {
     return this.playSession();
   },
 
+  async returnSessionToStart() {
+    await this.stopSessionPlayback();
+    const workspace = StudioMultitrackWorkspace;
+    if (!workspace) return false;
+    workspace.playheadBar = 1;
+    workspace.render();
+    this.syncTransportControls();
+    this.editScreen?.status("Playhead returned to bar 1 · session stopped.");
+    return true;
+  },
+
   async toggleSessionPlayback() {
     if (this.recordStartPending) return false;
     if (this.transportActionPending || StudioMultitrackWorkspace.isPlaying() || Floor2StudioApp?.playing) {
@@ -874,6 +885,7 @@ const StudioDAWApp = {
         <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-right:auto;margin-left:16px">
           <button type="button" data-global-transport="play" style="min-height:42px;padding:10px 13px;border:1px solid #9be0b3;border-radius:7px;background:linear-gradient(#dff9e9,#71b98b);color:#082b17;font-weight:900">▶ PLAY SESSION</button>
           <button type="button" data-global-transport="stop" style="min-height:42px;padding:10px 13px;border:1px solid #f3b9b9;border-radius:7px;background:linear-gradient(#f5e1e1,#bd777b);color:#3c080c;font-weight:900">■ STOP</button>
+          <button type="button" data-global-transport="return" title="Stop and return the playhead to bar 1" style="min-height:42px;padding:10px 13px;border:1px solid #9aa8c0;border-radius:7px;background:linear-gradient(#e4e8ef,#929baa);color:#17213a;font-weight:900">↤ RETURN</button>
           <button type="button" data-global-transport="record" style="min-height:42px;padding:10px 14px;border:2px solid #ff8585;border-radius:7px;background:linear-gradient(#ff7777,#b91f2a);color:#fff;font-weight:900">● RECORD</button>
           <span data-global-position style="min-width:74px;padding:9px 10px;border:1px solid #52617a;border-radius:6px;background:#080e1b;color:#c5efff;font:900 12px monospace;text-align:center">BAR 01</span>
           <label style="display:flex;align-items:center;gap:6px;padding:7px 9px;border:1px solid #52617a;border-radius:6px;color:#c5efff;font-size:10px;font-weight:800">TEMPO <input data-global-tempo type="number" min="60" max="180" step="1" value="100" style="width:58px;min-height:28px;background:#080e1b;color:#fff;border:1px solid #52617a;border-radius:4px;padding:4px"></label>
@@ -972,6 +984,7 @@ const StudioDAWApp = {
         else void this.playSession();
       }
       else if (action === "stop") void this.stopSessionPlayback();
+      else if (action === "return") void this.returnSessionToStart();
       else if (action === "record") {
         if (StudioMultitrackWorkspace.isTrackRecording() || this.sessionMidiRecordingActive || MPCInterface.recording) {
           void this.stopSessionPlayback();
