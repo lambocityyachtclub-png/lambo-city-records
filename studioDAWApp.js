@@ -533,11 +533,17 @@ const StudioDAWApp = {
         midiTrack = workspace.createTrack("midi", "City Synth Performance");
         midiTrack.midiNotes = [];
       }
+      workspace.tracks.forEach(item => {
+        if (item.type === "midi") item.armed = item.id === midiTrack.id;
+      });
       this.recordingMode = "midi";
       this.recordArmed = true;
       workspace.scheduleProjectAutosave();
       workspace.render();
       this.syncTransportControls();
+      window.dispatchEvent(new CustomEvent("lc-session-midi-recording-state", {
+        detail: { active: false, armed: true }
+      }));
       this.editScreen?.status("MIDI recording armed · press Spacebar or PLAY SESSION to begin.");
       if (workspace.isPlaying() || Floor2StudioApp?.playing) void this.startSessionRecording();
       return true;
@@ -701,7 +707,9 @@ const StudioDAWApp = {
       }
       this.sessionMidiRecordingActive = true;
       this.syncTransportControls();
-      window.dispatchEvent(new CustomEvent("lc-session-midi-recording-state", { detail: { active: true } }));
+      window.dispatchEvent(new CustomEvent("lc-session-midi-recording-state", {
+        detail: { active: true, armed: false }
+      }));
       return true;
     }
     const started = await workspace.startArmedRecording({
