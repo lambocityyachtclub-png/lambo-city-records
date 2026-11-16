@@ -518,6 +518,7 @@ const StudioDAWApp = {
   midiTakeGroupId: null,
   midiTakeBaseName: null,
   midiTakeNumber: 0,
+  monitorInputEnabled: false,
 
   armSessionRecording(mode = null) {
     const workspace = StudioMultitrackWorkspace;
@@ -748,11 +749,12 @@ const StudioDAWApp = {
       }));
       return true;
     }
+    this.monitorInputEnabled = Boolean(this.editScreen?.root?.querySelector("[data-input-monitor]")?.checked);
     const started = await workspace.startArmedRecording({
       vocalEffects: Floor2StudioApp?.vocalEffects,
       punchInBar: boundedStartBar,
       punchOutBar: endBar,
-      monitorInput: Boolean(this.editScreen?.root?.querySelector("[data-input-monitor]")?.checked)
+      monitorInput: this.monitorInputEnabled
     });
     this.recordStartPending = false;
     if (!started) {
@@ -800,6 +802,7 @@ const StudioDAWApp = {
       }));
     }
     this.cycleRecordingActive = false;
+    this.monitorInputEnabled = false;
     this.sessionLoopBounds = null;
     if (this.cycleRestartTimer) clearTimeout(this.cycleRestartTimer);
     this.cycleRestartTimer = null;
@@ -1118,7 +1121,7 @@ const StudioDAWApp = {
     StudioMultitrackWorkspace.onRecordingComplete = () => {
       const bounds = this.sessionLoopBounds;
       this.recordArmed = false;
-      if (this.cycleRecordingActive && bounds && (StudioMultitrackWorkspace.isPlaying() || Floor2StudioApp?.playing)) {
+      if (this.cycleRecordingActive && this.cycleRecordingEnabled && bounds && (StudioMultitrackWorkspace.isPlaying() || Floor2StudioApp?.playing)) {
         // Each loop pass is finalized as its own take. Re-arm at the same loop
         // boundary while the master arrangement continues cycling.
         this.cycleRestartTimer = setTimeout(async () => {
@@ -1129,7 +1132,7 @@ const StudioDAWApp = {
             vocalEffects: Floor2StudioApp?.vocalEffects,
             punchInBar: bounds.startBar,
             punchOutBar: bounds.endBar,
-            monitorInput: false
+            monitorInput: this.monitorInputEnabled
           });
           if (!restarted) {
             this.cycleRecordingActive = false;
