@@ -82,6 +82,7 @@ const StudioMultitrackWorkspace = {
   sessionTemplateName: null,
   arrangementPlayback: null,
   onTransportChange: null,
+  onRecordingComplete: null,
   selectedClipId: null,
   selectedTrackId: null,
   zoomBarWidth: 72,
@@ -1707,6 +1708,7 @@ const StudioMultitrackWorkspace = {
       this.scheduleProjectAutosave();
       this.render();
       this.status(saved.length + " track(s) recorded and saved at bar " + this.recordingStartBar + " · " + saved.join(", ") + ".");
+      this.onRecordingComplete?.();
       return true;
     } catch (error) {
       this.status("RECORDING SAVE ERROR: " + (error?.message || error));
