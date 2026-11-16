@@ -747,15 +747,18 @@ const StudioDAWApp = {
     if (Floor2StudioApp?.playing) Floor2StudioApp.stop();
     if (this.sessionRecordTimer) clearTimeout(this.sessionRecordTimer);
     this.sessionRecordTimer = null;
-    if (this.sessionMidiRecordingActive) {
-      if (this.activeRecordingStartBar && this.activeRecordingEndBar) {
+    if (this.sessionMidiRecordingActive || this.recordingMode === "midi") {
+      if (this.sessionMidiRecordingActive && this.activeRecordingStartBar && this.activeRecordingEndBar) {
         workspace?.setLoopRange(this.activeRecordingStartBar, this.activeRecordingEndBar, true);
       }
       this.sessionMidiRecordingActive = false;
+      workspace?.tracks?.forEach(track => { if (track.type === "midi") track.armed = false; });
       this.recordingMode = "mic";
       this.activeRecordingStartBar = null;
       this.activeRecordingEndBar = null;
-      window.dispatchEvent(new CustomEvent("lc-session-midi-recording-state", { detail: { active: false } }));
+      window.dispatchEvent(new CustomEvent("lc-session-midi-recording-state", {
+        detail: { active: false, armed: false }
+      }));
     }
     this.cycleRecordingActive = false;
     this.sessionLoopBounds = null;
@@ -1074,6 +1077,15 @@ const StudioDAWApp = {
           void MPCInterface.handleAction("record");
         } else if (this.recordArmed) {
           this.recordArmed = false;
+          if (this.recordingMode === "midi") {
+            StudioMultitrackWorkspace.tracks.forEach(track => { if (track.type === "midi") track.armed = false; });
+            this.recordingMode = "mic";
+            window.dispatchEvent(new CustomEvent("lc-session-midi-recording-state", {
+              detail: { active: false, armed: false }
+            }));
+          } else {
+            StudioMultitrackWorkspace.tracks.forEach(track => { if (track.type === "audio") track.armed = false; });
+          }
           this.syncTransportControls();
           this.editScreen?.status("Recording disarmed.");
         } else this.armSessionRecording();
