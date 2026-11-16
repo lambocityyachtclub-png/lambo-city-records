@@ -507,12 +507,15 @@ const StudioDAWApp = {
     const workspace = StudioMultitrackWorkspace;
     if (!workspace || workspace.isTrackRecording() || workspace.pendingRecording) return false;
     const mpcMode = mode === "mpc";
-    const voiceNotesMode = mode === "notes" || (!mode && this.workspace?.activeView === "vocals");
+    const boothNotes = this.vocalsPanel?.querySelector('[data-booth-mode="notes"]');
+    const voiceNotesMode = mode === "notes" || (!mode && this.workspace?.activeView === "vocals" && Boolean(boothNotes && !boothNotes.hidden));
+    const vocalMode = mode === "vocal" || (!mode && this.workspace?.activeView === "vocals" && !voiceNotesMode);
+    const dedicatedMode = mpcMode || voiceNotesMode || vocalMode;
     const targetName = mpcMode ? "MPC Performance" : voiceNotesMode ? "Voice Notes" : "Vocals";
-    let track = (mpcMode || voiceNotesMode)
+    let track = dedicatedMode
       ? workspace.tracks.find(item => item.type === "audio" && item.name === targetName)
       : workspace.tracks.find(item => item.type === "audio" && item.armed);
-    if (!track && (mpcMode || voiceNotesMode)) {
+    if (!track && dedicatedMode) {
       workspace.recordHistory("Create " + targetName + " track");
       track = workspace.createTrack("audio", targetName);
       workspace.render();
@@ -525,7 +528,7 @@ const StudioDAWApp = {
       track = workspace.createTrack("audio", targetName);
       workspace.render();
     }
-    if (mpcMode || voiceNotesMode) {
+    if (dedicatedMode) {
       workspace.tracks.forEach(item => { if (item.type === "audio") item.armed = item.id === track.id; });
     } else if (!workspace.tracks.some(item => item.type === "audio" && item.armed)) {
       track.armed = true;
@@ -606,6 +609,7 @@ const StudioDAWApp = {
       await workspace.stopArmedRecording();
       this.recordArmed = false;
       this.syncTransportControls();
+      window.dispatchEvent(new CustomEvent("lc-vocal-recording-state", { detail: { recording: false, name: "Recording stopped", format: "Shared Studio audio" } }));
       return false;
     }
     this.syncTransportControls();
@@ -621,6 +625,7 @@ const StudioDAWApp = {
     if (workspace?.pendingRecording) workspace.cancelScheduledRecording();
     if (workspace?.isTrackRecording()) await workspace.stopArmedRecording();
     if (MPCInterface.recording) MPCInterface.finishRecording();
+    MPCInterface.stopPerformancePlayback();
     this.recordArmed = false;
     this.syncTransportControls();
     window.dispatchEvent(new CustomEvent("lc-vocal-recording-state", { detail: { recording: false, name: "Session Recording", format: "Shared Studio audio" } }));
