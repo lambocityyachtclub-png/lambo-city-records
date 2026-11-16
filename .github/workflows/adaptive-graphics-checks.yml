@@ -1,0 +1,35 @@
+name: Adaptive Graphics Checks
+
+on:
+  pull_request:
+    paths:
+      - "deviceGraphics.js"
+      - "renderer.js"
+      - "performanceMonitor.js"
+      - "scripts/test-device-graphics.mjs"
+      - ".github/workflows/adaptive-graphics-checks.yml"
+  push:
+    paths:
+      - "deviceGraphics.js"
+      - "renderer.js"
+      - "performanceMonitor.js"
+      - "scripts/test-device-graphics.mjs"
+      - ".github/workflows/adaptive-graphics-checks.yml"
+
+jobs:
+  graphics:
+    name: Validate adaptive graphics profiles
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check renderer modules
+        run: |
+          node --experimental-default-type=module --check deviceGraphics.js
+          node --experimental-default-type=module --check renderer.js
+          node --experimental-default-type=module --check performanceMonitor.js
+          node --check scripts/test-device-graphics.mjs
+      - name: Test graphics tier selection and integration
+        run: node --experimental-default-type=module scripts/test-device-graphics.mjs
