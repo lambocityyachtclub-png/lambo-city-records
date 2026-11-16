@@ -783,6 +783,7 @@ const StudioDAWApp = {
 
   async stopSessionPlayback() {
     const workspace = StudioMultitrackWorkspace;
+    window.dispatchEvent(new CustomEvent("lc-session-midi-loop-boundary"));
     StudioMultitrackWorkspace?.stopAll();
     if (Floor2StudioApp?.playing) Floor2StudioApp.stop();
     if (this.sessionRecordTimer) clearTimeout(this.sessionRecordTimer);
