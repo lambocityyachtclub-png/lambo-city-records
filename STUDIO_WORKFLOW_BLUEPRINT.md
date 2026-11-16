@@ -10,7 +10,7 @@ Edit is the session command center. Instrument and recording workspaces are focu
 
 ## Producer workflow
 
-1. **Session** — create, open, save, rename, recover, import, and export a song project.
+1. **Session** — a clear New Session / Open Recent start screen; new sessions are saved immediately, then autosaved as work continues.
 2. **Edit** — central timeline, tracks, regions, take lanes, comping, loop range, markers, tempo, mixer, undo/redo.
 3. **Create** — MPC, Piano / City Synth, Beat Lab, and Live Drummer. Their performances become tracks or patterns in the same session.
 4. **Record** — Vocal Booth and Voice Notes are two modes of the same recording area. Both write to the current session.
@@ -26,7 +26,11 @@ Edit is the session command center. Instrument and recording workspaces are focu
 - Opening an instrument never changes the session, playhead, loop, tempo, or armed recording target.
 - No instrument or sequencer starts unexpectedly. Beat Lab plays only after the producer explicitly starts its sequencer or enables it for the current session.
 - Track mute, solo, volume, pan, and master controls affect the corresponding shared-session audio.
-- Session files use the shared .lcp project package; instrument patterns and performance data must be persisted as session content rather than hidden, unrelated local projects.
+- Session files use the shared .lcp project package; instrument patterns and performance data are persisted as session content rather than hidden, unrelated local projects.
+- Beat Lab pattern, sound profile, and playback intent are saved with the DAW session and included in .lcp projects.
+- An active Beat Lab pattern is rendered into WAV/MP3 exports unless a recorded Beats track already contains the printed performance; this prevents double playback.
+- Live Drummer kick, snare, and hat outputs pass through a dedicated capture bus so a performance can be recorded directly into the current session.
+- Vocal takes are recorded dry. Pitch correction and vocal effects are stored non-destructively on the Vocals track and applied during playback/export; optional input monitoring uses the processed signal.
 
 ## Recording behavior
 
@@ -69,7 +73,7 @@ Edit is the session command center. Instrument and recording workspaces are focu
 - [ ] Voice Notes works without a beat.
 - [ ] MPC, City Synth, Beat Lab, and Live Drummer record into the shared session.
 - [ ] Track mixer and Mix & Master affect the same session audio.
-- [ ] Pitch correction and vocal effects are applied predictably to new vocal takes.
+- [ ] Pitch correction and vocal effects are saved non-destructively with the vocal track and behave consistently in monitoring, playback, and export.
 - [ ] Session save/reopen preserves tracks, audio, MIDI, patterns, tempo, loop and take metadata.
-- [ ] Export produces a complete final song.
+- [ ] WAV/MP3 export includes active Beat Lab pattern, MIDI, audio tracks, track processing, and master processing without doubling printed beats.
 - [ ] Final iPad test passes without unrelated behavior or regressions.
