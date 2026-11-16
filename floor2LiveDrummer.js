@@ -160,7 +160,9 @@ export function createLiveDrummerPanel({ beatLab } = {}) {
   root.querySelector("[data-drum-tempo]").addEventListener("input", event => {
     const value = Number(event.target.value);
     StudioMultitrackWorkspace.setTempo(value);
+    StudioMultitrackWorkspace.onTransportChange?.();
     if (beatLab?.pattern) beatLab.pattern.bpm = value;
+    beatLab?.notifyPatternChanged?.(Boolean(StudioMultitrackWorkspace.beatLabPlaybackEnabled));
     root.querySelector("[data-drum-bpm]").textContent = String(value);
     status.textContent = "Session tempo set to " + value + " BPM.";
   });
