@@ -504,6 +504,7 @@ const StudioDAWApp = {
   recordingBars: 8,
   cycleRecordingEnabled: true,
   cycleRecordingActive: false,
+  beatLabPlaybackEnabled: false,
   sessionLoopBounds: null,
   cycleRestartTimer: null,
   activeRecordingStartBar: null,
@@ -594,7 +595,13 @@ const StudioDAWApp = {
           (track.clips || []).some(clip => clip.blob?.size > 0)
         );
         if (recordedBeatTrack) beatLab.stop();
-        else await beatLab.start({ startAtTime: multitrack.arrangementPlayback?.playbackStartTime });
+        else if (this.beatLabPlaybackEnabled) {
+          await beatLab.start({ startAtTime: multitrack.arrangementPlayback?.playbackStartTime });
+        } else {
+          // An empty song or a Voice Notes session must stay silent unless
+          // the producer explicitly starts the Beat Lab sequencer.
+          beatLab.stop();
+        }
         if (!multitrack.isPlaying() && beatLab.playing) beatLab.stop();
       }
       this.syncTransportControls();
@@ -769,6 +776,7 @@ const StudioDAWApp = {
     if (options.startNewSession !== false) {
       StudioMultitrackWorkspace.resetSession();
       Floor2StudioApp.startNewSession?.();
+      this.beatLabPlaybackEnabled = false;
     }
 
     // Main application overlay.
@@ -795,6 +803,10 @@ const StudioDAWApp = {
       justify-content:space-between;
       gap:12px;
       padding:12px 18px;
+      position:sticky;
+      top:0;
+      z-index:100;
+      flex-wrap:wrap;
       border-bottom:1px solid #30313a;
       background:#101117;
     `;
@@ -817,7 +829,6 @@ const StudioDAWApp = {
           <label style="display:flex;align-items:center;gap:6px;padding:7px 9px;border:1px solid #52617a;border-radius:6px;color:#c5efff;font-size:10px;font-weight:800">TEMPO <input data-global-tempo type="number" min="60" max="180" step="1" value="100" style="width:58px;min-height:28px;background:#080e1b;color:#fff;border:1px solid #52617a;border-radius:4px;padding:4px"></label>
           <label style="display:flex;align-items:center;gap:6px;padding:7px 9px;border:1px solid #52617a;border-radius:6px;color:#c5efff;font-size:10px;font-weight:800"><input data-global-cycle-record type="checkbox" checked style="accent-color:#e6bb69"> CYCLE TAKES</label>
           <button type="button" data-global-transport="click" aria-pressed="false" style="min-height:42px;min-width:112px;padding:10px 13px;border:2px solid #e6bb69;border-radius:7px;background:linear-gradient(#e4e8ef,#929baa);color:#17213a;font-weight:900;letter-spacing:1px">CLICK OFF</button>
-          <button type="button" data-global-talkback style="min-height:42px;padding:10px 13px;border:1px solid #b58b4e;border-radius:7px;background:linear-gradient(#3a3022,#19150f);color:#fff0d1;font-weight:900">TALKBACK</button>
         </div>
         <button type="button" data-daw-return style="min-height:42px;padding:10px 13px;border:1px solid #665438;border-radius:7px;background:#171923;color:#f1d49c;font-weight:bold">${this.standalone ? "BACK TO LAMBO CITY" : "RETURN TO ROOM"}</button>
         ${this.standalone ? "" : '<button type="button" data-daw-end style="min-height:42px;padding:10px 13px;border:1px solid #80643a;border-radius:7px;background:#201c16;color:#f1d49c;font-weight:bold">END SESSION</button>'}
@@ -838,7 +849,6 @@ const StudioDAWApp = {
     document.body.appendChild(root);
 
     this.root = root;
-    StudioTalkback.bindControl(header.querySelector("[data-global-talkback]"), { beatLab: Floor2StudioApp });
     StudioMultitrackWorkspace.onTransportChange = () => {
       if (!StudioMultitrackWorkspace.isPlaying() && Floor2StudioApp?.playing && !this.transportActionPending) {
         Floor2StudioApp.stop();
@@ -883,7 +893,10 @@ const StudioDAWApp = {
       if (!button || !root.contains(button)) return;
       event.preventDefault();
       const action = button.dataset.globalTransport;
-      if (action === "play") void this.toggleSessionPlayback();
+      if (action === "play") {
+        if (this.workspace?.activeView === "beatlab") this.beatLabPlaybackEnabled = true;
+        void this.toggleSessionPlayback();
+      }
       else if (action === "stop") void this.stopSessionPlayback();
       else if (action === "record") {
         if (StudioMultitrackWorkspace.isTrackRecording() || this.sessionMidiRecordingActive) {
@@ -959,7 +972,7 @@ const StudioDAWApp = {
         onViewChange: viewId => {
           window.dispatchEvent(new CustomEvent("lc-live-drummer-state", { detail: { active: viewId === "drums" } }));
           const appHeader = root.querySelector(":scope > header");
-          if (appHeader) appHeader.style.display = viewId === "edit" ? "none" : "flex";
+          if (appHeader) appHeader.style.display = "flex";
           if (viewId === "mix") this.mixPanel?.refresh?.();
           // On a direct physical MPC entry, workspace.mount fires before
           // the performance panel is created. Wait for the panel to exist;
@@ -995,7 +1008,10 @@ const StudioDAWApp = {
 
       this.beatLabPanel = createStudioDAWBeatLabPanel({
         beatLab: Floor2StudioApp,
-        onTransportPlay: () => this.toggleSessionPlayback(),
+        onTransportPlay: () => {
+          this.beatLabPlaybackEnabled = true;
+          return this.toggleSessionPlayback();
+        },
         onTransportStop: () => this.stopSessionPlayback()
       });
       this.beatLabPanel.onReturn = () => this.workspace?.setView("mpc");
@@ -1056,6 +1072,10 @@ const StudioDAWApp = {
         }
 
         event.preventDefault();
+        if (this.workspace?.activeView === "beatlab" &&
+            !StudioMultitrackWorkspace.isPlaying() && !Floor2StudioApp?.playing) {
+          this.beatLabPlaybackEnabled = true;
+        }
         if (this.transportActionPending) {
           this.stopSessionPlayback();
           return;
