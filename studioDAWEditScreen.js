@@ -378,7 +378,10 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext,
           StudioMultitrackWorkspace.recordHistory("Track " + key);
           const linked = track.groupId ? StudioMultitrackWorkspace.tracks.filter(item => item.groupId === track.groupId) : [track];
           linked.forEach(item => { item[key] = !track[key]; });
-          if (key !== "armed" && StudioMultitrackWorkspace.arrangementPlayback) StudioMultitrackWorkspace.arrangementPlayback.syncTrackState(StudioMultitrackWorkspace.tracks);
+          if (key !== "armed") {
+            StudioMultitrackWorkspace.syncBeatLabMixerState();
+            StudioMultitrackWorkspace.getArrangementPlayback().syncTrackState(StudioMultitrackWorkspace.tracks);
+          }
           this.render();
           this.status(track.name + " " + key + (track[key] ? " on." : " off."));
           return;
