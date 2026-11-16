@@ -551,7 +551,7 @@ const StudioDAWApp = {
     const voiceNotesMode = mode === "notes" || (!mode && this.workspace?.activeView === "vocals" && Boolean(boothNotes && !boothNotes.hidden));
     const vocalMode = mode === "vocal" || (!mode && this.workspace?.activeView === "vocals" && !voiceNotesMode);
     const dedicatedMode = mpcMode || beatLabMode || drumsMode || voiceNotesMode || vocalMode;
-    const targetName = mpcMode ? "MPC Performance" : beatLabMode ? "Beat Lab" : drumsMode ? "Live Drummer Performance" : voiceNotesMode ? "Voice Notes" : "Vocals";
+    const targetName = mpcMode ? "MPC Performance" : beatLabMode ? "Beats" : drumsMode ? "Live Drummer Performance" : voiceNotesMode ? "Voice Notes" : "Vocals";
     let track = dedicatedMode
       ? workspace.tracks.find(item => item.type === "audio" && item.name === targetName)
       : workspace.tracks.find(item => item.type === "audio" && item.armed);
