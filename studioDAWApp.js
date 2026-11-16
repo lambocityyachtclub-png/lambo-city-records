@@ -492,6 +492,7 @@ const StudioDAWApp = {
   handleSessionPatternRestore: null,
   handleVocalPitchSettingsChange: null,
   handleVocalEffectSettingsChange: null,
+  handleSessionLoaded: null,
   mixPanel: null,
   pianoPanel: null,
   mpcPanel: null,
@@ -761,6 +762,29 @@ const StudioDAWApp = {
     return true;
   },
 
+  syncVocalTrackSettings() {
+    const vocalTrack = StudioMultitrackWorkspace.tracks.find(track => track.name === "Vocals");
+    const pitchDefaults = { enabled: false, root: 0, scale: "major", amount: 100, speedMs: 25 };
+    const pitchSettings = { ...pitchDefaults, ...(vocalTrack?.effects?.pitchCorrection || {}) };
+    const vocalSettings = {
+      delay: Math.max(0, Math.min(1, Number(vocalTrack?.effects?.delayMix) || 0)),
+      reverb: Math.max(0, Math.min(1, Number(vocalTrack?.effects?.reverbMix) || 0))
+    };
+    Floor2StudioApp.pitchCorrectionSettings = pitchSettings;
+    Floor2StudioApp.vocalEffectSettings = vocalSettings;
+    Floor2StudioApp.vocalEffects?.setDelayMix?.(vocalSettings.delay);
+    Floor2StudioApp.vocalEffects?.setReverbMix?.(vocalSettings.reverb);
+    this.vocalsPanel?.querySelectorAll("[data-vocal-pitch]").forEach(control => {
+      const key = control.dataset.vocalPitch;
+      if (key === "enabled") control.checked = Boolean(pitchSettings.enabled);
+      else if (pitchSettings[key] !== undefined) control.value = String(pitchSettings[key]);
+    });
+    this.vocalsPanel?.querySelectorAll("[data-vocal-effect]").forEach(control => {
+      const key = control.dataset.vocalEffect;
+      if (vocalSettings[key] !== undefined) control.value = String(vocalSettings[key]);
+    });
+  },
+
   async playSession() {
     if (this.recordStartPending || this.transportActionPending ||
         StudioMultitrackWorkspace.isPlaying() || Floor2StudioApp?.playing) return true;
@@ -981,6 +1005,8 @@ const StudioDAWApp = {
     };
     window.addEventListener("lc-vocal-pitch-settings-change", this.handleVocalPitchSettingsChange);
     window.addEventListener("lc-vocal-effect-settings-change", this.handleVocalEffectSettingsChange);
+    this.handleSessionLoaded = () => this.syncVocalTrackSettings();
+    window.addEventListener("lc-session-loaded", this.handleSessionLoaded);
     StudioMultitrackWorkspace.onTransportChange = () => {
       if (!StudioMultitrackWorkspace.isPlaying() && Floor2StudioApp?.playing && !this.transportActionPending) {
         Floor2StudioApp.stop();
@@ -1287,6 +1313,10 @@ const StudioDAWApp = {
     if (this.handleVocalEffectSettingsChange) {
       window.removeEventListener("lc-vocal-effect-settings-change", this.handleVocalEffectSettingsChange);
       this.handleVocalEffectSettingsChange = null;
+    }
+    if (this.handleSessionLoaded) {
+      window.removeEventListener("lc-session-loaded", this.handleSessionLoaded);
+      this.handleSessionLoaded = null;
     }
     this.transportActionPending = false;
     this.recordArmed = false;
