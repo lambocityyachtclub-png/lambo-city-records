@@ -239,27 +239,74 @@ export function createStudioDAWEditScreen({ beatLab, onExit, onPrevious, onNext,
       return root;
     },
 
-    showSongNamePrompt() {
+    async showSongNamePrompt() {
       if (!this.root || this.root.querySelector("[data-song-name-overlay]")) return;
       const overlay = document.createElement("div");
       overlay.dataset.songNameOverlay = "";
-      overlay.style.cssText = "position:absolute;inset:0;z-index:40;display:grid;place-items:center;padding:20px;background:rgba(3,8,24,.78);backdrop-filter:blur(8px)";
-      overlay.innerHTML = '<section style="width:min(440px,100%);padding:26px;border:1px solid #C9A24A;border-radius:14px;background:linear-gradient(145deg,#172b63,#08132f);box-shadow:0 18px 50px #000b;color:#fff"><div style="color:#18D8FF;font-size:10px;font-weight:900;letter-spacing:2px">LAMBO CITY RECORDS · NEW SESSION</div><h2 style="margin:10px 0 6px;font-size:22px">Name your song or beat</h2><p style="margin:0 0 18px;color:#b8c8e4;font-size:12px;line-height:1.5">Give this session a name. You can change it later from SESSION.</p><input data-song-name-input type="text" maxlength="80" value="" placeholder="Enter song name" style="width:100%;min-height:46px;padding:11px;border:1px solid #6682b2;border-radius:7px;background:#06132d;color:#fff;font-size:16px"><div style="display:flex;justify-content:flex-end;gap:8px;margin-top:15px"><button type="button" data-song-name-skip style="min-height:40px;padding:9px 13px;border:1px solid #68799b;border-radius:7px;background:#17264a;color:#d9e4f7">SKIP</button><button type="button" data-song-name-start style="min-height:40px;padding:9px 15px;border:1px solid #e7c36d;border-radius:7px;background:linear-gradient(#e7c36d,#9b702b);color:#111a31;font-weight:900">START SESSION</button></div></section>';
+      overlay.style.cssText = "position:absolute;inset:0;z-index:40;display:grid;place-items:center;padding:18px;background:rgba(3,8,24,.82);backdrop-filter:blur(8px);overflow:auto";
+      overlay.innerHTML = '<section style="width:min(760px,100%);padding:clamp(18px,3vw,28px);border:1px solid #C9A24A;border-radius:14px;background:linear-gradient(145deg,#172b63,#08132f);box-shadow:0 18px 50px #000b;color:#fff"><div style="color:#18D8FF;font-size:10px;font-weight:900;letter-spacing:2px">LAMBO CITY RECORDS · SESSION</div><h2 style="margin:10px 0 6px;font-size:24px">What are we working on?</h2><p style="margin:0 0 18px;color:#b8c8e4;font-size:12px;line-height:1.5">Start a new song or continue a recent session. Nothing opens automatically.</p><div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px"><section style="padding:15px;border:1px solid rgba(201,162,74,.45);border-radius:10px;background:rgba(4,13,34,.58)"><strong style="display:block;color:#e7c36d;font-size:11px;letter-spacing:1.4px">NEW SESSION</strong><label style="display:grid;gap:6px;margin-top:12px;color:#cbd8ee;font-size:10px">SONG NAME<input data-song-name-input type="text" maxlength="80" value="" placeholder="Untitled Song" style="width:100%;min-height:42px;padding:10px;border:1px solid #6682b2;border-radius:7px;background:#06132d;color:#fff;font-size:15px"></label><div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:10px"><label style="display:grid;gap:6px;color:#cbd8ee;font-size:10px">TEMPO<input data-session-tempo type="number" min="60" max="180" value="100" style="width:100%;min-height:38px;padding:8px;border:1px solid #6682b2;border-radius:7px;background:#06132d;color:#fff"></label><label style="display:grid;gap:6px;color:#cbd8ee;font-size:10px">TIME SIGNATURE<select data-session-meter style="width:100%;min-height:38px;padding:8px;border:1px solid #6682b2;border-radius:7px;background:#06132d;color:#fff"><option>4/4</option><option>3/4</option><option>2/4</option><option>5/4</option><option>6/4</option><option>7/4</option><option>6/8</option><option>9/8</option><option>12/8</option></select></label></div><button type="button" data-song-name-start style="width:100%;min-height:44px;margin-top:14px;padding:10px 15px;border:1px solid #e7c36d;border-radius:7px;background:linear-gradient(#e7c36d,#9b702b);color:#111a31;font-weight:900">CREATE SESSION</button></section><section style="padding:15px;border:1px solid rgba(104,130,178,.45);border-radius:10px;background:rgba(4,13,34,.58)"><strong style="display:block;color:#cbd8ee;font-size:11px;letter-spacing:1.4px">OPEN RECENT</strong><div data-recent-sessions style="display:grid;gap:8px;margin-top:12px"><div style="color:#91a6c8;font-size:12px">Loading saved sessions…</div></div></section></div></section>';
       const input = overlay.querySelector("[data-song-name-input]");
-      const finish = useName => {
-        const name = useName ? input.value.trim() : "";
-        StudioMultitrackWorkspace.activeProjectName = (name || "Untitled Song").slice(0, 80);
+      const finishNew = () => {
+        const name = input.value.trim() || "Untitled Song";
+        const tempo = Math.max(60, Math.min(180, Number(overlay.querySelector("[data-session-tempo]")?.value) || 100));
+        const meter = overlay.querySelector("[data-session-meter]")?.value || "4/4";
+        StudioMultitrackWorkspace.activeProjectId = null;
+        StudioMultitrackWorkspace.activeProjectName = name.slice(0, 80);
+        StudioMultitrackWorkspace.setTempo(tempo);
+        StudioMultitrackWorkspace.timeSignature = meter;
         StudioMultitrackWorkspace.scheduleProjectAutosave();
         overlay.remove();
         this.renderHeader();
-        this.status("Session ready · " + StudioMultitrackWorkspace.activeProjectName);
+        this.status("New session ready · " + StudioMultitrackWorkspace.activeProjectName + " · " + tempo + " BPM · " + meter);
       };
-      overlay.querySelector("[data-song-name-start]").addEventListener("click", () => finish(true));
-      overlay.querySelector("[data-song-name-skip]").addEventListener("click", () => finish(false));
+      overlay.querySelector("[data-song-name-start]").addEventListener("click", finishNew);
       input.addEventListener("keydown", event => {
-        if (event.key === "Enter") finish(true);
+        if (event.key === "Enter") finishNew();
       });
       this.root.appendChild(overlay);
+      const recent = overlay.querySelector("[data-recent-sessions]");
+      try {
+        const projects = await StudioMultitrackWorkspace.listSavedSessions();
+        if (!overlay.isConnected) return;
+        recent.replaceChildren();
+        if (!projects.length) {
+          const empty = document.createElement("div");
+          empty.style.cssText = "padding:12px;color:#91a6c8;font-size:12px;line-height:1.5";
+          empty.textContent = "No saved sessions yet. Your first song will appear here.";
+          recent.appendChild(empty);
+        } else {
+          projects.slice(0, 7).forEach(project => {
+            const button = document.createElement("button");
+            button.type = "button";
+            button.dataset.projectId = project.projectId;
+            button.style.cssText = "display:grid;gap:4px;width:100%;padding:11px;text-align:left;border:1px solid #344c76;border-radius:8px;background:#0b1938;color:#f4f1eb";
+            const title = document.createElement("strong");
+            title.style.cssText = "font-size:12px;color:#f1d49c";
+            title.textContent = project.projectName || "Untitled Song";
+            const meta = document.createElement("span");
+            meta.style.cssText = "font-size:10px;color:#91a6c8";
+            const updated = project.updatedAt ? new Date(project.updatedAt).toLocaleDateString() : "Saved session";
+            meta.textContent = updated + " · " + (project.trackCount || 0) + " tracks";
+            button.append(title, meta);
+            button.addEventListener("click", async () => {
+              button.disabled = true;
+              try {
+                await StudioMultitrackWorkspace.loadSession(project.projectId);
+                overlay.remove();
+                this.render();
+                this.renderHeader();
+                this.status("Opened " + StudioMultitrackWorkspace.activeProjectName + ".");
+              } catch (error) {
+                button.disabled = false;
+                this.status("Could not open session: " + (error?.message || error));
+              }
+            });
+            recent.appendChild(button);
+          });
+        }
+      } catch (error) {
+        recent.textContent = "Saved sessions are unavailable right now · " + (error?.message || error);
+      }
       input.focus();
     },
 
