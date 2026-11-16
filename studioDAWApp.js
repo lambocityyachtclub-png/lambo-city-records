@@ -132,7 +132,6 @@ function createMPCPanel({ beatLab, workspace, onOpenBeatLab, onTransportPlay, on
   };
 
   root.querySelector("[data-mpc-play]").addEventListener("click", () => {
-    if (beatLab) beatLab.soundProfile = "mpc";
     if (typeof onTransportPlay === "function") void onTransportPlay();
     else status("Use the shared Studio transport to play this session.");
   });
@@ -143,6 +142,9 @@ function createMPCPanel({ beatLab, workspace, onOpenBeatLab, onTransportPlay, on
   root.querySelector("[data-mpc-tempo]").addEventListener("input", event => {
     const bpm = Number(event.target.value);
     if (beatLab?.pattern) beatLab.pattern.bpm = bpm;
+    StudioMultitrackWorkspace.setTempo(bpm);
+    StudioMultitrackWorkspace.onTransportChange?.();
+    beatLab?.notifyPatternChanged?.(Boolean(StudioMultitrackWorkspace.beatLabPlaybackEnabled));
     root.querySelector("[data-mpc-tempo-label]").textContent = bpm + " BPM";
   });
   root.querySelector("[data-mpc-save]").addEventListener("click", () => {
@@ -154,7 +156,6 @@ function createMPCPanel({ beatLab, workspace, onOpenBeatLab, onTransportPlay, on
     else workspace?.setView("beatlab");
   });
 
-  if (beatLab) beatLab.soundProfile = "mpc";
   root.refreshPattern = renderPads;
   renderPads();
   return root;
