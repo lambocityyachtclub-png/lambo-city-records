@@ -510,7 +510,17 @@ const StudioDAWApp = {
       if (started) {
         const sessionTempo = multitrack.getTempoAtBar(multitrack.playheadBar);
         if (beatLab.pattern) beatLab.pattern.bpm = sessionTempo;
-        await beatLab.start({ startAtTime: multitrack.arrangementPlayback?.playbackStartTime });
+        const recordedBeatTrack = multitrack.tracks.find(track =>
+          ["beats", "beat lab"].includes(String(track.name || "").trim().toLowerCase()) &&
+          (track.clips || []).some(clip => clip.blob?.size > 0)
+        );
+        if (recordedBeatTrack) {
+          // The Beat Lab take is already in the shared Edit arrangement.
+          // Do not layer the live sequencer over its recorded audio.
+          beatLab.stop();
+        } else {
+          await beatLab.start({ startAtTime: multitrack.arrangementPlayback?.playbackStartTime });
+        }
         if (!multitrack.isPlaying() && beatLab.playing) beatLab.stop();
       }
       this.syncTransportControls();

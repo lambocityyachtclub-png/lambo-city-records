@@ -112,6 +112,19 @@ const StudioMultitrackWorkspace = {
   recordingMetronomeStartTime: 0,
   recordingMetronomeEndBar: 129,
 
+  syncBeatLabMixerState() {
+    const beatTrack = this.tracks.find(track =>
+      ["beats", "beat lab"].includes(String(track.name || "").trim().toLowerCase())
+    );
+    const anySolo = this.tracks.some(track => track.solo && track.type !== "bus");
+    const muted = beatTrack
+      ? Boolean(beatTrack.muted || (anySolo && !beatTrack.solo))
+      : anySolo;
+    StudioAudioExport.setBeatLabMuted(muted);
+    if (beatTrack) StudioAudioExport.setBeatLabVolume((Number(beatTrack.volume ?? 80) || 0) / 100);
+    return { muted, volume: beatTrack ? Number(beatTrack.volume ?? 80) : 100 };
+  },
+
   captureSnapshot() {
     return {
       tracks: this.tracks.map(track => ({
@@ -1404,6 +1417,7 @@ const StudioMultitrackWorkspace = {
       if (control === "mute") {
         this.recordHistory("Toggle mute");
         track.muted = !track.muted;
+        this.syncBeatLabMixerState();
         this.arrangementPlayback?.syncTrackState(this.tracks);
         this.render();
         this.status(`${track.name} mute ${track.muted ? "on" : "off"}.`);
@@ -1412,6 +1426,7 @@ const StudioMultitrackWorkspace = {
       if (control === "solo") {
         this.recordHistory("Toggle solo");
         track.solo = !track.solo;
+        this.syncBeatLabMixerState();
         this.arrangementPlayback?.syncTrackState(this.tracks);
         this.render();
         this.status(`${track.name} solo ${track.solo ? "on" : "off"}.`);
@@ -1453,6 +1468,9 @@ const StudioMultitrackWorkspace = {
         track.volume = Number(event.target.value);
         row.querySelector("[data-volume-label]").textContent = `${track.volume}%`;
         this.arrangementPlayback?.setTrackVolume(track.id, track.volume);
+        if (["beats", "beat lab"].includes(String(track.name || "").trim().toLowerCase())) {
+          StudioAudioExport.setBeatLabVolume(track.volume / 100);
+        }
       } else {
         if (event.type === "input" && !event.target.dataset.historyStarted) {
           this.recordHistory("Track pan");
@@ -1945,6 +1963,7 @@ const StudioMultitrackWorkspace = {
     }
   },
   render() {
+    this.syncBeatLabMixerState();
     if (!this.root) return;
 
     const list = this.root.querySelector("[data-track-list]");
