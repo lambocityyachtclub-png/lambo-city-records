@@ -1662,7 +1662,7 @@ const StudioMultitrackWorkspace = {
               : track.inputSource === "drums"
                 ? StudioAudioEngine.getDrumOutput(audio)
                 : null;
-          const pitchCorrectionNode = track.inputSource === "mic" && /vocal/i.test(track.name) && track.effects?.pitchCorrection?.enabled
+          const pitchCorrectionNode = monitorInput && track.inputSource === "mic" && /vocal/i.test(track.name) && track.effects?.pitchCorrection?.enabled
             ? await createStudioPitchCorrectionNode(audio, track.effects.pitchCorrection)
             : null;
           await StudioRecordingEngine.startTrackRecording({
