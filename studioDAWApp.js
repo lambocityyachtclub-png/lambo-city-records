@@ -837,9 +837,9 @@ const StudioDAWApp = {
       current.name = baseName + " · TAKE " + this.midiTakeNumber;
     }
     const nextNumber = this.midiTakeNumber + 1;
+    const next = workspace.createTrack("midi", baseName + " · TAKE " + nextNumber);
     current.armed = false;
     current.muted = true;
-    const next = workspace.createTrack("midi", baseName + " · TAKE " + nextNumber);
     next.midiNotes = [];
     next.takeBaseName = baseName;
     next.takeGroupId = this.midiTakeGroupId;
