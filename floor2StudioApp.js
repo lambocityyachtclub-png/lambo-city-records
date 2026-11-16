@@ -1223,7 +1223,8 @@ StudioSoundKit.play(
   this.soundProfile,
   id,
   time,
-  this.noiseBuffer
+  this.noiseBuffer,
+  StudioAudioExport.getBeatLabOutput(this.audio)
 );
 
       }
