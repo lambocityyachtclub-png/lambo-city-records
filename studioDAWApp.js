@@ -577,8 +577,14 @@ const StudioDAWApp = {
       const pitchSettings = Floor2StudioApp?.pitchCorrectionSettings || {
         enabled: false, root: 0, scale: "major", amount: 100, speedMs: 25
       };
+      const vocalSettings = Floor2StudioApp?.vocalEffectSettings || {};
       track.effects = {
         ...(track.effects || {}),
+        delayTime: Math.max(0.05, Math.min(1.5, Number(track.effects?.delayTime) || 0.28)),
+        delayFeedback: Math.max(0, Math.min(0.75, Number(track.effects?.delayFeedback) || 0.25)),
+        delayMix: Math.max(0, Math.min(1, Number(vocalSettings.delay) || 0)),
+        reverbMix: Math.max(0, Math.min(1, Number(vocalSettings.reverb) || 0)),
+        reverbDecay: Math.max(0.3, Math.min(6, Number(track.effects?.reverbDecay) || 2.2)),
         pitchCorrection: { ...pitchSettings }
       };
     }
@@ -697,7 +703,7 @@ const StudioDAWApp = {
       vocalEffects: Floor2StudioApp?.vocalEffects,
       punchInBar: boundedStartBar,
       punchOutBar: endBar,
-      monitorInput: false
+      monitorInput: Boolean(this.editScreen?.root?.querySelector("[data-input-monitor]")?.checked)
     });
     this.recordStartPending = false;
     if (!started) {
