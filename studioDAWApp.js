@@ -629,6 +629,13 @@ const StudioDAWApp = {
     this.sessionLoopBounds = { startBar: boundedStartBar, endBar };
     this.cycleRecordingActive = Boolean(this.cycleRecordingEnabled);
     workspace.setLoopRange(boundedStartBar, endBar, true);
+    // A cycle take always begins exactly at the selected loop-in point.
+    // Restart the shared transport there if it was already running elsewhere.
+    if (workspace.isPlaying() || Floor2StudioApp?.playing) {
+      workspace.stopAll();
+      if (Floor2StudioApp?.playing) Floor2StudioApp.stop();
+    }
+    workspace.playheadBar = boundedStartBar;
     if (this.recordingMode === "midi") {
       const alreadyPlaying = Boolean(workspace.isPlaying() || Floor2StudioApp?.playing);
       const playing = alreadyPlaying || await this.startSessionPlayback();
