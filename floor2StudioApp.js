@@ -535,6 +535,9 @@ root.addEventListener("input", (event) => {
 
   const value = Number(control.value);
   this.vocalEffectSettings[effectName] = value;
+  window.dispatchEvent(new CustomEvent("lc-vocal-effect-settings-change", {
+    detail: { settings: { ...this.vocalEffectSettings } }
+  }));
 
   if (!this.vocalEffects) return;
 
