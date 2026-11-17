@@ -65,6 +65,7 @@ import RecordsHQElevator from "./recordsHQElevator.js";
 import Elevator from "./elevator.js";
 import BoardwalkOverlooks from "./boardwalkOverlooks.js";
 import PerformanceMonitor from "./performanceMonitor.js";
+import PlayerAccounts from "./playerAccounts.js";
 const engine = new Engine();
 engine.registerSystems({
   scene: Scene,
@@ -132,6 +133,7 @@ engine.registerSystems({
   boardwalkOverlooks: BoardwalkOverlooks,
   hud: HUD,
   performanceMonitor: PerformanceMonitor,
+  playerAccounts: PlayerAccounts,
 });
 
 // Load upper floors only when selected in the elevator.
