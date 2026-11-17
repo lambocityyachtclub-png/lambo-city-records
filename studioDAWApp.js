@@ -515,6 +515,10 @@ const StudioDAWApp = {
   cycleRestartTimer: null,
   activeRecordingStartBar: null,
   activeRecordingEndBar: null,
+  midiTakeGroupId: null,
+  midiTakeBaseName: null,
+  midiTakeNumber: 0,
+  monitorInputEnabled: false,
 
   armSessionRecording(mode = null) {
     const workspace = StudioMultitrackWorkspace;
@@ -534,6 +538,27 @@ const StudioDAWApp = {
         workspace.recordHistory("Create City Synth MIDI track");
         midiTrack = workspace.createTrack("midi", "City Synth Performance");
         midiTrack.midiNotes = [];
+      }
+      const baseName = String(midiTrack.takeBaseName || midiTrack.name || "City Synth Performance").replace(/\s*· TAKE \d+$/i, "");
+      if (this.cycleRecordingEnabled) {
+        if (Array.isArray(midiTrack.midiNotes) && midiTrack.midiNotes.length) {
+          const previousTake = midiTrack;
+          midiTrack = workspace.createTrack("midi", baseName + " · TAKE 1");
+          midiTrack.midiNotes = [];
+          previousTake.armed = false;
+          previousTake.muted = true;
+        }
+        this.midiTakeBaseName = baseName;
+        this.midiTakeGroupId = "midi-takes-" + midiTrack.id + "-" + Date.now();
+        this.midiTakeNumber = 1;
+        midiTrack.takeBaseName = baseName;
+        midiTrack.takeGroupId = this.midiTakeGroupId;
+        midiTrack.takeNumber = 1;
+        midiTrack.name = baseName + " · TAKE 1";
+      } else {
+        this.midiTakeBaseName = baseName;
+        this.midiTakeGroupId = null;
+        this.midiTakeNumber = 0;
       }
       workspace.tracks.forEach(item => {
         if (item.type === "midi") item.armed = item.id === midiTrack.id;
@@ -650,6 +675,7 @@ const StudioDAWApp = {
         }
         const recordedBeatTrack = multitrack.tracks.find(track =>
           ["beats", "beat lab"].includes(String(track.name || "").trim().toLowerCase()) &&
+          track.inputSource === "beatlab" &&
           (track.clips || []).some(clip => clip.blob?.size > 0)
         );
         if (recordedBeatTrack) beatLab.stop();
@@ -724,15 +750,17 @@ const StudioDAWApp = {
       }));
       return true;
     }
+    this.monitorInputEnabled = Boolean(this.editScreen?.root?.querySelector("[data-input-monitor]")?.checked);
     const started = await workspace.startArmedRecording({
       vocalEffects: Floor2StudioApp?.vocalEffects,
       punchInBar: boundedStartBar,
       punchOutBar: endBar,
-      monitorInput: Boolean(this.editScreen?.root?.querySelector("[data-input-monitor]")?.checked)
+      monitorInput: this.monitorInputEnabled
     });
     this.recordStartPending = false;
     if (!started) {
       this.recordArmed = true;
+      this.monitorInputEnabled = false;
       this.activeRecordingStartBar = null;
       this.activeRecordingEndBar = null;
       this.syncTransportControls();
@@ -743,6 +771,7 @@ const StudioDAWApp = {
     if (!playing) {
       await workspace.stopArmedRecording();
       this.recordArmed = false;
+      this.monitorInputEnabled = false;
       this.syncTransportControls();
       window.dispatchEvent(new CustomEvent("lc-vocal-recording-state", { detail: { recording: false, name: "Recording stopped", format: "Shared Studio audio" } }));
       return false;
@@ -755,6 +784,7 @@ const StudioDAWApp = {
 
   async stopSessionPlayback() {
     const workspace = StudioMultitrackWorkspace;
+    window.dispatchEvent(new CustomEvent("lc-session-midi-loop-boundary"));
     StudioMultitrackWorkspace?.stopAll();
     if (Floor2StudioApp?.playing) Floor2StudioApp.stop();
     if (this.sessionRecordTimer) clearTimeout(this.sessionRecordTimer);
@@ -765,6 +795,9 @@ const StudioDAWApp = {
       }
       this.sessionMidiRecordingActive = false;
       workspace?.tracks?.forEach(track => { if (track.type === "midi") track.armed = false; });
+      this.midiTakeGroupId = null;
+      this.midiTakeBaseName = null;
+      this.midiTakeNumber = 0;
       this.recordingMode = "mic";
       this.activeRecordingStartBar = null;
       this.activeRecordingEndBar = null;
@@ -773,6 +806,7 @@ const StudioDAWApp = {
       }));
     }
     this.cycleRecordingActive = false;
+    this.monitorInputEnabled = false;
     this.sessionLoopBounds = null;
     if (this.cycleRestartTimer) clearTimeout(this.cycleRestartTimer);
     this.cycleRestartTimer = null;
@@ -785,6 +819,48 @@ const StudioDAWApp = {
     this.syncTransportControls();
     window.dispatchEvent(new CustomEvent("lc-vocal-recording-state", { detail: { recording: false, name: "Session Recording", format: "Shared Studio audio" } }));
     return true;
+  },
+
+  handleSessionLoopBoundary() {
+    if (!this.sessionMidiRecordingActive) return;
+    window.dispatchEvent(new CustomEvent("lc-session-midi-loop-boundary"));
+    if (!this.cycleRecordingEnabled) {
+      void this.stopSessionPlayback();
+      return;
+    }
+    const workspace = StudioMultitrackWorkspace;
+    const current = workspace.tracks.find(track => track.type === "midi" && track.armed);
+    if (!current) return;
+    const baseName = this.midiTakeBaseName ||
+      current.takeBaseName ||
+      String(current.name || "City Synth Performance").replace(/\s*· TAKE \d+$/i, "");
+    if (!this.midiTakeGroupId) {
+      this.midiTakeBaseName = baseName;
+      this.midiTakeGroupId = "midi-takes-" + current.id + "-" + Date.now();
+      this.midiTakeNumber = Math.max(1, Number(current.takeNumber) || 1);
+      current.takeBaseName = baseName;
+      current.takeGroupId = this.midiTakeGroupId;
+      current.takeNumber = this.midiTakeNumber;
+      current.name = baseName + " · TAKE " + this.midiTakeNumber;
+    }
+    const nextNumber = this.midiTakeNumber + 1;
+    const next = workspace.createTrack("midi", baseName + " · TAKE " + nextNumber);
+    current.armed = false;
+    current.muted = true;
+    next.midiNotes = [];
+    next.takeBaseName = baseName;
+    next.takeGroupId = this.midiTakeGroupId;
+    next.takeNumber = nextNumber;
+    next.armed = true;
+    next.muted = false;
+    this.midiTakeNumber = nextNumber;
+    workspace.scheduleProjectAutosave();
+    workspace.render();
+    this.syncTransportControls();
+    window.dispatchEvent(new CustomEvent("lc-session-midi-recording-state", {
+      detail: { active: true, armed: true, takeNumber: nextNumber }
+    }));
+    this.editScreen?.status("MIDI cycle · TAKE " + nextNumber + " started.");
   },
 
   syncVocalTrackSettings() {
@@ -808,6 +884,13 @@ const StudioDAWApp = {
       const key = control.dataset.vocalEffect;
       if (vocalSettings[key] !== undefined) control.value = String(vocalSettings[key]);
     });
+    const pitchStatus = this.vocalsPanel?.querySelector("[data-pitch-status]");
+    if (pitchStatus) {
+      const rootNames = ["C","C♯","D","D♯","E","F","F♯","G","G♯","A","A♯","B"];
+      pitchStatus.textContent = pitchSettings.enabled
+        ? "Pitch correction ON · " + rootNames[Math.max(0, Math.min(11, Number(pitchSettings.root) || 0))] + " " + String(pitchSettings.scale || "major").toUpperCase() + " · Saved to this vocal track for playback/export."
+        : "Pitch correction bypassed · Original vocal tone is preserved.";
+    }
   },
 
   async playSession() {
@@ -1032,6 +1115,7 @@ const StudioDAWApp = {
     window.addEventListener("lc-vocal-effect-settings-change", this.handleVocalEffectSettingsChange);
     this.handleSessionLoaded = () => this.syncVocalTrackSettings();
     window.addEventListener("lc-session-loaded", this.handleSessionLoaded);
+    StudioMultitrackWorkspace.onLoopBoundary = () => this.handleSessionLoopBoundary();
     StudioMultitrackWorkspace.onTransportChange = () => {
       if (!StudioMultitrackWorkspace.isPlaying() && Floor2StudioApp?.playing && !this.transportActionPending) {
         Floor2StudioApp.stop();
@@ -1041,7 +1125,7 @@ const StudioDAWApp = {
     StudioMultitrackWorkspace.onRecordingComplete = () => {
       const bounds = this.sessionLoopBounds;
       this.recordArmed = false;
-      if (this.cycleRecordingActive && bounds && (StudioMultitrackWorkspace.isPlaying() || Floor2StudioApp?.playing)) {
+      if (this.cycleRecordingActive && this.cycleRecordingEnabled && bounds && (StudioMultitrackWorkspace.isPlaying() || Floor2StudioApp?.playing)) {
         // Each loop pass is finalized as its own take. Re-arm at the same loop
         // boundary while the master arrangement continues cycling.
         this.cycleRestartTimer = setTimeout(async () => {
@@ -1052,7 +1136,7 @@ const StudioDAWApp = {
             vocalEffects: Floor2StudioApp?.vocalEffects,
             punchInBar: bounds.startBar,
             punchOutBar: bounds.endBar,
-            monitorInput: false
+            monitorInput: this.monitorInputEnabled
           });
           if (!restarted) {
             this.cycleRecordingActive = false;
@@ -1171,7 +1255,7 @@ const StudioDAWApp = {
         onViewChange: viewId => {
           window.dispatchEvent(new CustomEvent("lc-live-drummer-state", { detail: { active: viewId === "drums" } }));
           const appHeader = root.querySelector(":scope > header");
-          if (appHeader) appHeader.style.display = "flex";
+          if (appHeader) appHeader.style.display = viewId === "edit" ? "none" : "flex";
           if (viewId === "mix") this.mixPanel?.refresh?.();
           // On a direct physical MPC entry, workspace.mount fires before
           // the performance panel is created. Wait for the panel to exist;
@@ -1267,6 +1351,12 @@ const StudioDAWApp = {
         onTransportRecord: mode => this.armSessionRecording(mode),
         onTransportDisarm: mode => this.disarmSessionRecording(mode)
       });
+      window.dispatchEvent(new CustomEvent("lc-session-midi-recording-state", {
+        detail: {
+          active: this.sessionMidiRecordingActive,
+          armed: this.recordArmed && this.recordingMode === "midi"
+        }
+      }));
       applyCitySynthVisual(this.pianoPanel);
       this.workspace.setPanel("mix", this.mixPanel);
       this.workspace.setPanel("piano", this.pianoPanel);
@@ -1358,6 +1448,7 @@ const StudioDAWApp = {
     this.recordStartPending = false;
     StudioMultitrackWorkspace.onRecordingComplete = null;
     if (StudioMultitrackWorkspace.onTransportChange) StudioMultitrackWorkspace.onTransportChange = null;
+    StudioMultitrackWorkspace.onLoopBoundary = null;
     if (this.globalTransportHandlers) {
       this.root?.querySelector("header")?.removeEventListener("click", this.globalTransportHandlers);
       this.globalTransportHandlers = null;

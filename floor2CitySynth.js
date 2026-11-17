@@ -82,7 +82,7 @@ export function createCitySynthPanel({ session = StudioMultitrackWorkspace, onTr
       filter.connect(envelope);
       envelope.connect(StudioAudioEngine.getTrackGain("instrument"));
       oscillator.start(audio.currentTime);
-      const record = { oscillator, filter, envelope, audio, startedAt:audio.currentTime, midi:null };
+      const record = { oscillator, filter, envelope, audio, startedAt:audio.currentTime, midi:null, note, button };
       activeNotes.set(note.pitch, record);
       button.classList.add("active");
       window.dispatchEvent(new CustomEvent("lc-city-synth-note", { detail:{ pitch:note.pitch, active:true } }));
@@ -179,8 +179,17 @@ export function createCitySynthPanel({ session = StudioMultitrackWorkspace, onTr
     }
   });
   const onMidiTransportState = event => syncMidiArm(event.detail || {});
+  const onMidiLoopBoundary = () => {
+    [...activeNotes.values()].forEach(record => {
+      if (record.note && record.button) stopNote(record.note, record.button);
+    });
+  };
   window.addEventListener("lc-session-midi-recording-state", onMidiTransportState);
-  root.addEventListener("lc-city-synth-dispose", () => window.removeEventListener("lc-session-midi-recording-state", onMidiTransportState), { once: true });
+  window.addEventListener("lc-session-midi-loop-boundary", onMidiLoopBoundary);
+  root.addEventListener("lc-city-synth-dispose", () => {
+    window.removeEventListener("lc-session-midi-recording-state", onMidiTransportState);
+    window.removeEventListener("lc-session-midi-loop-boundary", onMidiLoopBoundary);
+  }, { once: true });
   root.querySelector("[data-synth-waveform]").addEventListener("change",event=>{settings.waveform=event.target.value;status.textContent="Oscillator waveform: "+settings.waveform.toUpperCase();});
   root.querySelector("[data-synth-volume]").addEventListener("input",event=>{settings.volume=Number(event.target.value)/100;activeNotes.forEach(note=>note.envelope.gain.setTargetAtTime(settings.volume,note.audio.currentTime,.015));});
   root.querySelector("[data-synth-filter]").addEventListener("input",event=>{settings.filter=Number(event.target.value);activeNotes.forEach(note=>note.filter.frequency.setTargetAtTime(settings.filter,note.audio.currentTime,.02));});
