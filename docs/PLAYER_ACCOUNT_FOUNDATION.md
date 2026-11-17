@@ -13,6 +13,8 @@
 - Neon branch: `player-accounts-dev`
 - Vercel environment variables `DATABASE_URL` and `BETTER_AUTH_SECRET` are scoped only to preview deployments for this Git branch.
 
+The account integration is intentionally independent of HERO's existing scripted/NPC behavior. The future ALIVE personal identity and avatar connection will be built as a separate owner-controlled layer.
+
 ## Current implementation
 
 This clean integration keeps player account authentication separate from HERO's NPC invitation behavior. The founder's personal ALIVE identity/avatar is a separate owner-controlled layer; this account module does not create or control HERO.
