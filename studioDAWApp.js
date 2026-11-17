@@ -1255,7 +1255,7 @@ const StudioDAWApp = {
         onViewChange: viewId => {
           window.dispatchEvent(new CustomEvent("lc-live-drummer-state", { detail: { active: viewId === "drums" } }));
           const appHeader = root.querySelector(":scope > header");
-          if (appHeader) appHeader.style.display = "flex";
+          if (appHeader) appHeader.style.display = viewId === "edit" ? "none" : "flex";
           if (viewId === "mix") this.mixPanel?.refresh?.();
           // On a direct physical MPC entry, workspace.mount fires before
           // the performance panel is created. Wait for the panel to exist;
