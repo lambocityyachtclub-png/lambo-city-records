@@ -88,6 +88,7 @@ test("delegated editor and viewer grants cannot replace personal ownership", () 
   assert.equal(canAccessIdentity(identity, "viewer", "viewer"), true);
   assert.equal(canAccessIdentity(identity, "viewer", "editor"), false);
   assert.equal(canAccessIdentity(identity, "editor", "owner"), false);
+  assert.equal(canAccessIdentity(identity, "editor", "administrator"), false);
   assert.equal(identity.grants.some(grant => grant.subjectId === "owner"), false);
   assert.equal(validatePersonalIdentity(identity).length, 0);
 });
@@ -139,6 +140,15 @@ test("assisted and autonomous modes remain explicit and do not gain owner author
     assert.equal(policy.requireOwnerApprovalForExternalActions, true);
     assert.deepEqual(validateCompanionPolicy(policy), []);
   }
+});
+
+test("companion policy construction safely defaults for malformed input", () => {
+  const policy = createCompanionPolicy(null);
+  assert.equal(policy.mode, "owner-directed");
+  assert.equal(policy.identityId, "");
+  assert.deepEqual(validateCompanionPolicy(policy).filter(error => /identity/.test(error)), [
+    "Companion policy must reference a personal identity."
+  ]);
 });
 
 test("companion policy validator rejects permission escalation and punitive care", () => {
