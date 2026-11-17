@@ -44,6 +44,22 @@ function requireRepository(repository) {
   return repository;
 }
 
+function rebuild(current, overrides, timestamp) {
+  return createPersonalIdentity({
+    ...current,
+    ...overrides,
+    characterForm: overrides.characterForm ?? current.character.form,
+    modelRef: overrides.modelRef ?? current.character.modelRef,
+    appearanceProfile: overrides.appearanceProfile ?? current.character.appearanceProfile,
+    personality: overrides.personality ?? current.personality,
+    privacy: current.privacy,
+    memoryPolicy: current.memoryPolicy,
+    grants: overrides.grants ?? current.grants,
+    createdAt: current.createdAt,
+    updatedAt: timestamp
+  });
+}
+
 /**
  * Creates an owner-scoped service around a persistence adapter.
  *
@@ -107,30 +123,36 @@ export function createIdentityService({ repository, now = () => new Date().toISO
     async update({ actorId, identityId, changes = {} } = {}) {
       const subjectId = requireActor(actorId);
       const id = cleanId(identityId);
+      if (!id) {
+        const error = new Error("A stable identity ID is required.");
+        error.code = "ALIVE_IDENTITY_ID_REQUIRED";
+        throw error;
+      }
       if (!changes || typeof changes !== "object" || Array.isArray(changes)) {
         throw new TypeError("Identity changes must be an object.");
       }
       return requireValid(await store.update(id, current => {
         requireValid(current);
         requireOwner(current, subjectId);
-        const next = createPersonalIdentity({
-          ...current,
+        return rebuild(current, {
           displayName: changes.displayName ?? current.displayName,
           characterForm: changes.characterForm ?? current.character.form,
           modelRef: changes.modelRef ?? current.character.modelRef,
           appearanceProfile: changes.appearanceProfile ?? current.character.appearanceProfile,
-          personality: changes.personality ?? current.personality,
-          grants: current.grants,
-          createdAt: current.createdAt,
-          updatedAt: now()
-        });
-        return next;
+          personality: changes.personality ?? current.personality
+        }, now());
       }));
     },
 
     async grantAccess({ actorId, identityId, subjectId, role = "viewer", permissions = [] } = {}) {
       const ownerId = requireActor(actorId);
       const granteeId = cleanId(subjectId);
+      const id = cleanId(identityId);
+      if (!id) {
+        const error = new Error("A stable identity ID is required.");
+        error.code = "ALIVE_IDENTITY_ID_REQUIRED";
+        throw error;
+      }
       if (!granteeId || granteeId === ownerId) {
         const error = new Error("A delegated grant requires a different personal account.");
         error.code = "ALIVE_IDENTITY_GRANT_INVALID";
@@ -141,38 +163,30 @@ export function createIdentityService({ repository, now = () => new Date().toISO
         error.code = "ALIVE_IDENTITY_ROLE_INVALID";
         throw error;
       }
-      return requireValid(await store.update(cleanId(identityId), current => {
+      return requireValid(await store.update(id, current => {
         requireValid(current);
         requireOwner(current, ownerId);
         const grants = current.grants.filter(grant => grant.subjectId !== granteeId);
         grants.push({ subjectId: granteeId, role, permissions });
-        return createPersonalIdentity({
-          ...current,
-          characterForm: current.character.form,
-          modelRef: current.character.modelRef,
-          appearanceProfile: current.character.appearanceProfile,
-          grants,
-          createdAt: current.createdAt,
-          updatedAt: now()
-        });
+        return rebuild(current, { grants }, now());
       }));
     },
 
     async revokeAccess({ actorId, identityId, subjectId } = {}) {
       const ownerId = requireActor(actorId);
       const granteeId = cleanId(subjectId);
-      return requireValid(await store.update(cleanId(identityId), current => {
+      const id = cleanId(identityId);
+      if (!id) {
+        const error = new Error("A stable identity ID is required.");
+        error.code = "ALIVE_IDENTITY_ID_REQUIRED";
+        throw error;
+      }
+      return requireValid(await store.update(id, current => {
         requireValid(current);
         requireOwner(current, ownerId);
-        return createPersonalIdentity({
-          ...current,
-          characterForm: current.character.form,
-          modelRef: current.character.modelRef,
-          appearanceProfile: current.character.appearanceProfile,
-          grants: current.grants.filter(grant => grant.subjectId !== granteeId),
-          createdAt: current.createdAt,
-          updatedAt: now()
-        });
+        return rebuild(current, {
+          grants: current.grants.filter(grant => grant.subjectId !== granteeId)
+        }, now());
       }));
     }
   });
