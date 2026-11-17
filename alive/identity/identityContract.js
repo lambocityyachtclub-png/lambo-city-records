@@ -124,6 +124,7 @@ export function isIdentityOwner(identity, subjectId) {
 
 export function canAccessIdentity(identity, subjectId, requiredRole = "viewer") {
   if (!identity || !subjectId) return false;
+  if (!["owner", "editor", "viewer"].includes(requiredRole)) return false;
   if (isIdentityOwner(identity, subjectId)) return true;
   if (requiredRole === "owner") return false;
   const grant = (identity.grants || []).find(item => item.subjectId === subjectId);
@@ -142,6 +143,7 @@ export function assertIdentityOwner(identity, subjectId) {
 }
 
 export function createCompanionPolicy(input = {}) {
+  if (!input || typeof input !== "object" || Array.isArray(input)) input = {};
   const mode = COMPANION_MODES.includes(input.mode) ? input.mode : "owner-directed";
   const capabilities = listOfText(input.capabilities, 16, 48);
   return Object.freeze({
