@@ -44,7 +44,7 @@ test("ALIVE status exposes configuration state but never secrets", async () => {
       OPENAI_API_KEY: secret,
       ALIVE_AI_ENABLED: "true",
       ALIVE_SANDBOX_ENABLED: "false",
-      ALIVE_ALLOWED_PATHS: "[\\"water.js\\"]"
+      ALIVE_ALLOWED_PATHS: '["water.js"]'
     },
     withSystem: async () => { throw new Error("must not run"); }
   });

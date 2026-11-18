@@ -39,7 +39,7 @@ export function createPostgresDevelopmentStorage(options = {}) {
 
   async function assertSchemaReady() {
     const result = await pool.query(
-      \`SELECT
+      `SELECT
          to_regclass('public.lambo_alive_task_state') IS NOT NULL AS task_table_ready,
          to_regclass('public.lambo_alive_reviews') IS NOT NULL AS review_table_ready,
          (
@@ -47,7 +47,7 @@ export function createPostgresDevelopmentStorage(options = {}) {
            FROM pg_constraint
            WHERE conrelid = to_regclass('public.lambo_alive_reviews')
              AND conname = 'lambo_alive_reviews_status_check'
-         ) AS review_status_constraint\`
+         ) AS review_status_constraint`
     );
     const row = result.rows?.[0] || {};
     if (!row.task_table_ready || !row.review_table_ready) {
@@ -73,10 +73,10 @@ export function createPostgresDevelopmentStorage(options = {}) {
   async function save(tasks) {
     if (!Array.isArray(tasks)) throw new Error("Development tasks must be an array.");
     await pool.query(
-      \`INSERT INTO lambo_alive_task_state (state_key, tasks, updated_at)
+      `INSERT INTO lambo_alive_task_state (state_key, tasks, updated_at)
        VALUES ($1, $2::jsonb, NOW())
        ON CONFLICT (state_key) DO UPDATE
-       SET tasks = EXCLUDED.tasks, updated_at = NOW()\`,
+       SET tasks = EXCLUDED.tasks, updated_at = NOW()`,
       ["primary", JSON.stringify(clone(tasks))]
     );
   }
@@ -104,8 +104,8 @@ export function createPostgresDevelopmentStorage(options = {}) {
         decision: null
       };
       await pool.query(
-        \`INSERT INTO lambo_alive_reviews (id, task_id, status, review, created_at, updated_at)
-         VALUES ($1, $2, $3, $4::jsonb, $5, $5)\`,
+        `INSERT INTO lambo_alive_reviews (id, task_id, status, review, created_at, updated_at)
+         VALUES ($1, $2, $3, $4::jsonb, $5, $5)`,
         [review.id, taskId, review.status, JSON.stringify(review), now]
       );
       return clone(review);
