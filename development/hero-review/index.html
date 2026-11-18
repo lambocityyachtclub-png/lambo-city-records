@@ -225,7 +225,6 @@
     const requestId = ++loadSequence;
     const objectUrl = URL.createObjectURL(file);
     setStatus("loadStatus", "Loading " + file.name + " locally…", "warn");
-    clearInspection();
     try {
       const loader = new GLTFLoader();
       const gltf = await loader.loadAsync(objectUrl);
@@ -235,6 +234,7 @@
         return;
       }
       clearCurrentModel();
+      clearInspection();
       currentRoot = gltf.scene;
       scene.add(currentRoot);
       clips = gltf.animations || [];
@@ -247,8 +247,12 @@
     } catch (error) {
       URL.revokeObjectURL(objectUrl);
       if (requestId !== loadSequence) return;
-      setStatus("loadStatus", "Could not load GLB: " + error.message, "bad");
-      setStatus("technicalStatus", "No technical result; file could not be loaded.", "bad");
+      if (currentRoot) {
+        setStatus("loadStatus", "Could not load " + file.name + ": " + error.message + " The previous model remains displayed with its existing inspection.", "bad");
+      } else {
+        setStatus("loadStatus", "Could not load GLB: " + error.message, "bad");
+        setStatus("technicalStatus", "No technical result; file could not be loaded.", "bad");
+      }
     }
   });
 
