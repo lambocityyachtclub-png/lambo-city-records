@@ -63,10 +63,18 @@ export function createDevelopmentWorker(options = {}) {
       // Continue round-robin passes until a full pass finds no work or
       // the explicit per-run task ceiling has been reached.
       while (processed < taskLimit) {
-        if (!isEnabled) {\n          stopped = true;\n          break;\n        }\n        let progressThisPass = false;
+        if (!isEnabled) {
+          stopped = true;
+          break;
+        }
+        let progressThisPass = false;
 
         for (const runnerId of normalizedRunnerIds) {
-          if (!isEnabled) {\n            stopped = true;\n            break;\n          }\n          if (processed >= taskLimit) break;
+          if (!isEnabled) {
+            stopped = true;
+            break;
+          }
+          if (processed >= taskLimit) break;
 
           const result = await executor.executeNextTask({
             runnerId,
