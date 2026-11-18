@@ -20,7 +20,7 @@ test("owner token is kept in memory and sent only as a bearer header", () => {
 });
 
 test("owner console escapes returned task and proposal content before rendering", () => {
-  assert.match(script, /function escapeHTML/);
+  assert.match(script, /const escapeHTML=/);
   assert.match(script, /escapeHTML\(file\.content/);
   assert.match(script, /escapeHTML\(task\.title/);
 });
