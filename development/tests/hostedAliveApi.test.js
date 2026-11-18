@@ -25,8 +25,6 @@ test("ALIVE hosted API rejects missing or incorrect owner authentication", async
   let calls = 0;
   const handler = createAliveApiHandler({
     authenticateOwner: async () => null,
-    env: {},
-    authenticateOwner: async () => ({ email: "owner@example.com", emailVerified: true }),
     withSystem: async () => { calls += 1; }
   });
   const response = makeResponse();
@@ -39,6 +37,7 @@ test("ALIVE hosted API rejects missing or incorrect owner authentication", async
 test("ALIVE status exposes configuration state but never secrets", async () => {
   const secret = "private-openai-key-value";
   const handler = createAliveApiHandler({
+    authenticateOwner: async () => ({ email: "owner@example.com", emailVerified: true }),
     env: {
       DATABASE_URL: "postgres://not-returned",
       OPENAI_API_KEY: secret,
@@ -97,7 +96,6 @@ test("ALIVE task intake refuses non-world executor requests", async () => {
 });
 
 test("ALIVE run endpoint does not start paid execution unless both switches and a key are present", async () => {
-  const token = "owner-secret-".padEnd(40, "x");
   let calls = 0;
   const handler = createAliveApiHandler({
     env: { ALIVE_AI_ENABLED: "true", ALIVE_SANDBOX_ENABLED: "false", OPENAI_API_KEY: "key" },
@@ -175,7 +173,7 @@ test("ALIVE owner can approve a protected task before the one-shot worker claims
   const token = "owner-secret-".padEnd(40, "x");
   let approved = null;
   const handler = createAliveApiHandler({
-    env: { ALIVE_REVIEW_TOKEN: token },
+    env: {},
     withSystem: async (options, callback) => callback({
       system: {
         director: {
