@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createIdentityService } from "../..//alive/identity/identityService.js";
+import { createIdentityService } from "../../alive/identity/identityService.js";
 import { createCompanionPolicy } from "../../alive/identity/identityContract.js";
 import { createIdentityRuntimeAdapter } from "../../alive/runtime/identityRuntimeAdapter.js";
 
