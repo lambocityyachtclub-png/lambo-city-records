@@ -20,12 +20,19 @@
       <p class="intro">Direct the work. Review every proposed change. Keep the final say.</p>
     </section>
     <section class="panel auth-panel" id="auth-panel">
-      <div><p class="eyebrow">OWNER ACCESS</p><h2>Connect your private console</h2><p class="muted">Enter the owner access token configured for the ALIVE Preview environment. It stays in this page's memory and is cleared when you leave or reload.</p></div>
+      <div><p class="eyebrow">OWNER ACCESS</p><h2>Sign in to ALIVE</h2><p class="muted">Use your private owner email and password, or sign in with a passkey saved on your device. New owner enrollment is restricted to the verified email configured for ALIVE.</p></div>
       <form id="auth-form" class="auth-form">
-        <label for="owner-token">Owner access token</label>
-        <input id="owner-token" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" required minlength="32" placeholder="Paste your private token">
-        <button class="primary" type="submit">Connect securely</button>
+        <label for="owner-email">Owner email</label>
+        <input id="owner-email" type="email" autocomplete="username" autocapitalize="off" required placeholder="Your verified owner email">
+        <label for="owner-password">Password</label>
+        <input id="owner-password" type="password" autocomplete="current-password" minlength="12" required placeholder="Your private password">
+        <button class="primary" type="submit">Sign in with password</button>
       </form>
+      <div class="auth-form">
+        <button class="quiet" id="passkey-button" type="button">Sign in with passkey</button>
+        <button class="quiet" id="reset-button" type="button">Send password reset email</button>
+        <button class="quiet" id="signup-button" type="button">Create my owner account</button>
+      </div>
     </section>
     <section id="workspace" hidden>
       <div class="status-strip panel">
