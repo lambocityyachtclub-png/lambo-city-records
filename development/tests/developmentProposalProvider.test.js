@@ -1,5 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import fs from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
 
 import {
   createDevelopmentProposalProvider,
@@ -8,6 +11,7 @@ import {
   DEVELOPMENT_PROPOSAL_LIMITS
 } from "../providers/developmentProposalProvider.js";
 import { createDevelopmentSystem } from "../engine/developmentSystem.js";
+import { createIsolatedWorkspaceAdapter } from "../execution/isolatedWorkspaceAdapter.js";
 
 const allowedPaths = ["development/example"];
 
@@ -222,4 +226,71 @@ test("Development System can run an explicitly injected proposal provider throug
   assert.equal(applied[0].path, "development/example/generated-world.js");
   assert.equal(system.getSnapshot().proposalProvider.enabled, true);
   assert.equal(submitted.task.status, "queued");
+});
+
+
+test("Development System automatically bridges the isolated filesystem adapter when a trusted test runner is injected", async t => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), "alive-system-bridge-"));
+  const projectRoot = path.join(root, "project");
+  const workspaceRoot = path.join(root, "workspaces");
+  await fs.mkdir(path.join(projectRoot, "development", "example"), { recursive: true });
+  await fs.writeFile(path.join(projectRoot, "development", "example", "base.js"), "export const base = true;\\n");
+  t.after(async () => fs.rm(root, { recursive: true, force: true }));
+
+  const isolatedWorkspace = createIsolatedWorkspaceAdapter({
+    projectRoot,
+    workspaceRoot,
+    allowedPaths
+  });
+  let runnerInput;
+  const system = await createDevelopmentSystem({
+    worldExecution: {
+      allowedPaths,
+      workspaceAdapter: isolatedWorkspace,
+      proposalProvider: {
+        async generateProposal() {
+          return {
+            summary: "Create a generated world module.",
+            files: [{
+              path: "development/example/generated-world.js",
+              content: "export const generated = true;\\n"
+            }]
+          };
+        }
+      },
+      testRunner: async input => {
+        runnerInput = input;
+        const generated = await fs.readFile(
+          path.join(input.workspaceDirectory, "development", "example", "generated-world.js"),
+          "utf8"
+        );
+        return { passed: generated.includes("generated = true"), total: 1, failed: 0 };
+      },
+      reviewStore: {
+        async createReview(review) {
+          return { ...review, id: "review-real-isolated-bridge" };
+        }
+      }
+    }
+  });
+
+  await system.submitWorldFinding({
+    title: "Build an isolated world improvement",
+    description: "Use the automatically connected proposal workspace bridge.",
+    area: "water"
+  });
+  const result = await system.executeNextWorldTask();
+
+  assert.equal(result.status, "review");
+  assert.equal(result.review.id, "review-real-isolated-bridge");
+  assert.equal(result.productionChangesMade, false);
+  assert.equal(runnerInput.workspaceId, result.workspaceId);
+  assert.equal(runnerInput.allowedPaths[0], "development/example");
+
+  const liveFileExists = await fs.access(
+    path.join(projectRoot, "development", "example", "generated-world.js")
+  ).then(() => true).catch(() => false);
+  assert.equal(liveFileExists, false);
+
+  await isolatedWorkspace.destroyWorkspace(result.workspaceId);
 });

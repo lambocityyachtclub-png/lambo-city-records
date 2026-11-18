@@ -30,6 +30,10 @@ import {
 } from "../providers/developmentProposalProvider.js";
 
 import {
+  createIsolatedProposalWorkspaceAdapter
+} from "../execution/isolatedProposalWorkspaceAdapter.js";
+
+import {
   createDevelopmentRegistry,
   MODULE_TYPES
 } from "./developmentRegistry.js";
@@ -89,9 +93,21 @@ export async function createDevelopmentSystem(options = {}) {
   // Execution is opt-in and requires explicit isolated workspace,
   // review storage, and path allowlist adapters from the host. A provider
   // is optional and must be explicitly injected by the host.
+  const proposalWorkspaceAdapter = worldExecution?.proposalProvider
+    ? (
+        typeof worldExecution.testRunner === "function"
+          ? createIsolatedProposalWorkspaceAdapter({
+              workspaceAdapter: worldExecution.workspaceAdapter,
+              testRunner: worldExecution.testRunner,
+              allowedPaths: worldExecution.allowedPaths
+            })
+          : worldExecution.workspaceAdapter
+      )
+    : null;
+
   const configuredWorkspaceAdapter = worldExecution?.proposalProvider
     ? createProposalWorkspaceAdapter({
-        workspaceAdapter: worldExecution.workspaceAdapter,
+        workspaceAdapter: proposalWorkspaceAdapter,
         proposalProvider: createDevelopmentProposalProvider({
           provider: worldExecution.proposalProvider,
           allowedPaths: worldExecution.allowedPaths
