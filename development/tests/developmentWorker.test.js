@@ -66,3 +66,27 @@ test("worker resets running state after an executor error", async () => {
   await assert.rejects(() => worker.runOnce(), /simulated failure/);
   assert.equal(worker.getSnapshot().running, false);
 });
+
+
+test("worker stops starting new tasks after it is disabled during a run", async () => {
+  let worker;
+  let calls = 0;
+  worker = createDevelopmentWorker({
+    executor: {
+      async executeNextTask() {
+        calls++;
+        worker.setEnabled(false);
+        return { executed: true, status: "review", taskId: "first-task" };
+      }
+    },
+    runnerIds: ["studio", "world"],
+    maxTasksPerRun: 5,
+    enabled: true
+  });
+
+  const result = await worker.runOnce();
+  assert.equal(result.processed, 1);
+  assert.equal(result.stopped, true);
+  assert.match(result.stopReason, /disabled before the next task/);
+  assert.equal(calls, 1);
+});
