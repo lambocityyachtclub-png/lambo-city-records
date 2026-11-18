@@ -106,7 +106,9 @@ export function createIsolatedProposalWorkspaceAdapter(options = {}) {
   async function applyProposedFiles(input = {}) {
     const workspaceId = requireText(input.workspaceId, "Workspace ID");
     if (!Array.isArray(input.files) || input.files.length === 0) throw new Error("At least one proposed file is required.");
+    if (input.files.length > 20) throw new Error("Proposal exceeds the 20-file workspace limit.");
     const seen = new Set();
+    let totalBytes = 0;
     for (const file of input.files) {
       const filePath = validateRelativePath(file?.path);
       if (!isAllowed(filePath, allowedPaths)) throw new Error(`Proposed file is outside allowed paths: ${filePath}`);
@@ -115,9 +117,13 @@ export function createIsolatedProposalWorkspaceAdapter(options = {}) {
       if (typeof file.content !== "string" || file.content.includes("\0")) {
         throw new Error(`Proposal must contain text content: ${filePath}`);
       }
+      const size = byteLength(file.content);
+      if (size > 128 * 1024) throw new Error(`Proposed file exceeds the 128 KB limit: ${filePath}`);
+      totalBytes += size;
+      if (totalBytes > 512 * 1024) throw new Error("Proposal exceeds the 512 KB workspace limit.");
       await workspaceAdapter.writeFile({ workspaceId, filePath, content: file.content });
     }
-    return { applied: true, files: [...seen] };
+    return { applied: true, files: [...seen], totalBytes };
   }
 
   async function runTests(input = {}) {
