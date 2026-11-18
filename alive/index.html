@@ -33,6 +33,12 @@
         <input id="owner-new-password" type="password" autocomplete="new-password" minlength="12" required placeholder="New password (12+ characters)">
         <button class="primary" id="reset-save-button" type="button">Save new password</button>
       </div>
+      <div id="two-factor-challenge" class="auth-form" hidden>
+        <p class="muted">Password sign-in needs a second step because owner recovery is enabled. Enter one unused backup code.</p>
+        <label for="backup-code-input">One-time backup code</label>
+        <input id="backup-code-input" autocomplete="one-time-code" maxlength="32" placeholder="Enter an unused recovery code">
+        <button class="primary" id="verify-backup-code-button" type="button">Verify backup code</button>
+      </div>
       <div class="auth-form">
         <button class="quiet" id="passkey-button" type="button">Sign in with passkey</button>
         <button class="quiet" id="reset-button" type="button">Send password reset email</button>
@@ -45,6 +51,26 @@
         <div class="status-actions"><span id="status-pill" class="pill neutral">NOT CONNECTED</span><button class="quiet" id="register-passkey-button" type="button">Add passkey</button><button class="quiet" id="refresh-button" type="button">Refresh</button><button class="quiet" id="disconnect-button" type="button">Sign out</button></div>
         <div class="status-grid" id="status-grid"></div>
       </div>
+      <section class="panel">
+        <div class="section-heading"><div><p class="eyebrow">OWNER ACCOUNT SECURITY</p><h2>Protect account recovery</h2><p class="muted">Set up an authenticator and generate one-time backup codes. Store the codes offline; each code can be used once.</p></div></div>
+        <div class="auth-form">
+          <label for="recovery-password">Confirm owner password</label>
+          <input id="recovery-password" type="password" autocomplete="current-password" minlength="12" placeholder="Owner password">
+          <button class="primary" id="enable-recovery-button" type="button">Set up authenticator and backup codes</button>
+          <p id="recovery-enabled" class="notice" role="status">Recovery setup is not yet confirmed.</p>
+        </div>
+        <div id="recovery-setup" class="auth-form" hidden>
+          <p class="muted">Add this authenticator setup URI to your authenticator app, then enter the current six-digit code below.</p>
+          <code id="recovery-uri"></code>
+          <label for="totp-code">Authenticator verification code</label>
+          <input id="totp-code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="6-digit code">
+          <button class="primary" id="verify-recovery-button" type="button">Verify and enable recovery</button>
+          <label>One-time backup codes — shown now</label>
+          <pre id="recovery-codes"></pre>
+          <button class="quiet" id="copy-recovery-codes" type="button">Copy backup codes</button>
+          <p class="muted">Keep these in two secure offline locations. Do not email them or store them in the project repository.</p>
+        </div>
+      </section>
       <section class="panel">
         <div class="section-heading"><div><p class="eyebrow">01 / DIRECTION</p><h2>Give ALIVE a task</h2><p class="muted">The first hosted pilot accepts world-development tasks only. Submitting a task does not execute it.</p></div></div>
         <form id="task-form" class="task-form">
