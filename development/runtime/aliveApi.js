@@ -95,6 +95,9 @@ export function createAliveApiHandler(options = {}) {
       let body;
       try { body = readBody(req); }
       catch (error) { return send(res, 413, { error: error.message }); }
+      if (!body.action && body.runner && body.runner !== "world") {
+        return send(res, 400, { error: "The first hosted executor pilot supports world tasks only." });
+      }
       try {
         const result = await withSystem({ execution: false }, async ({ system }) => {
           if (body.action === "approve") {
@@ -102,9 +105,6 @@ export function createAliveApiHandler(options = {}) {
           }
           if (body.action === "reject") {
             return { task: await system.director.rejectTask(body.taskId, body.reason), approval: "rejected" };
-          }
-          if (body.runner && body.runner !== "world") {
-            throw new Error("The first hosted executor pilot supports world tasks only.");
           }
           return system.submitWorldFinding({
             title: body.title,

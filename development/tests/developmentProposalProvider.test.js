@@ -292,5 +292,12 @@ test("Development System automatically bridges the isolated filesystem adapter w
   ).then(() => true).catch(() => false);
   assert.equal(liveFileExists, false);
 
-  await isolatedWorkspace.destroyWorkspace(result.workspaceId);
+  assert.deepEqual(result.review.proposalFiles, [{
+    path: "development/example/generated-world.js",
+    content: "export const generated = true;\\n"
+  }]);
+  const workspaceStillExists = await fs.access(runnerInput.workspaceDirectory)
+    .then(() => true)
+    .catch(() => false);
+  assert.equal(workspaceStillExists, false);
 });
