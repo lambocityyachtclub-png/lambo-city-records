@@ -45,6 +45,7 @@ test("ALIVE status exposes configuration state but never secrets", async () => {
       ALIVE_SANDBOX_ENABLED: "false",
       ALIVE_ALLOWED_PATHS: '["water.js"]'
     },
+    authenticateOwner: async () => ({ email: "owner@example.com", emailVerified: true }),
     withSystem: async () => { throw new Error("must not run"); }
   });
   const response = makeResponse();
@@ -59,6 +60,7 @@ test("ALIVE task intake creates a queued world task without executing it", async
   let submitted = null;
   const handler = createAliveApiHandler({
     env: {},
+    authenticateOwner: async () => ({ email: "owner@example.com", emailVerified: true }),
     withSystem: async (options, callback) => callback({
       system: {
         async submitWorldFinding(input) {
@@ -83,6 +85,7 @@ test("ALIVE task intake refuses non-world executor requests", async () => {
   let calls = 0;
   const handler = createAliveApiHandler({
     env: {},
+    authenticateOwner: async () => ({ email: "owner@example.com", emailVerified: true }),
     withSystem: async () => { calls += 1; }
   });
   const response = makeResponse();
@@ -99,6 +102,7 @@ test("ALIVE run endpoint does not start paid execution unless both switches and 
   let calls = 0;
   const handler = createAliveApiHandler({
     env: { ALIVE_AI_ENABLED: "true", ALIVE_SANDBOX_ENABLED: "false", OPENAI_API_KEY: "key" },
+    authenticateOwner: async () => ({ email: "owner@example.com", emailVerified: true }),
     withSystem: async () => { calls += 1; }
   });
   const response = makeResponse();
@@ -108,7 +112,6 @@ test("ALIVE run endpoint does not start paid execution unless both switches and 
 });
 
 test("ALIVE review endpoint records PERFECT or CHANGE through the owner feedback service", async () => {
-  const token = "owner-secret-".padEnd(40, "x");
   const tasks = [{
     id: "task-1",
     status: "review",
@@ -133,6 +136,7 @@ test("ALIVE review endpoint records PERFECT or CHANGE through the owner feedback
   };
   const handler = createAliveApiHandler({
     env: {},
+    authenticateOwner: async () => ({ email: "owner@example.com", emailVerified: true }),
     withSystem: async (options, callback) => callback({
       system: {
         director: {
@@ -174,6 +178,7 @@ test("ALIVE owner can approve a protected task before the one-shot worker claims
   let approved = null;
   const handler = createAliveApiHandler({
     env: {},
+    authenticateOwner: async () => ({ email: "owner@example.com", emailVerified: true }),
     withSystem: async (options, callback) => callback({
       system: {
         director: {
