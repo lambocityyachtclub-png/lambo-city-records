@@ -25,10 +25,19 @@ function makeHeroGltf(overrides = {}) {
     },
     scene: 0,
     scenes: [{ nodes: [0] }],
-    nodes: [{ name: "HERO_Root", children: [1] }, { name: "HERO_Mesh", mesh: 0, skin: 0 }],
+    nodes: [
+      { name: "HERO_Root", children: Array.from({ length: 18 }, (_, index) => index + 1) },
+      ...Array.from({ length: 17 }, (_, index) => ({ name: "HERO_Joint_" + index })),
+      { name: "HERO_Mesh", mesh: 0, skin: 0 }
+    ],
     meshes: [{ primitives: [{ attributes: { POSITION: 0 } }] }],
-    skins: [{ joints: Array.from({ length: 18 }, (_, index) => index) }],
-    animations: [{ name: "Idle", samplers: [], channels: [] }],
+    accessors: [{ componentType: 5126, count: 1, type: "VEC3" }, { componentType: 5126, count: 1, type: "VEC4" }],
+    skins: [{ joints: Array.from({ length: 17 }, (_, index) => index + 1) }],
+    animations: [{
+      name: "Idle",
+      samplers: [{ input: 0, output: 1, interpolation: "LINEAR" }],
+      channels: [{ sampler: 0, target: { node: 1, path: "rotation" } }]
+    }],
     ...overrides
   };
 }
@@ -123,6 +132,23 @@ test("rejects wrong height, ground/origin, incomplete body, props, and missing v
   ]) {
     assert.ok(codes.includes(expected), "Expected " + expected);
   }
+});
+
+test("rejects invalid joint references, POSITION accessors, and empty animation channels", () => {
+  const invalidJoints = makeHeroGltf({
+    skins: [{ joints: [999, ...Array.from({ length: 16 }, (_, index) => index + 1)] }]
+  });
+  assert.ok(validateHeroGlbJson(invalidJoints).some(issue => issue.code === "HUMANOID_SKIN_MISSING"));
+
+  const invalidPosition = makeHeroGltf({
+    meshes: [{ primitives: [{ attributes: { POSITION: 99 } }] }]
+  });
+  assert.ok(validateHeroGlbJson(invalidPosition).some(issue => issue.code === "POSITION_ACCESSOR_INVALID"));
+
+  const emptyAnimation = makeHeroGltf({
+    animations: [{ name: "Idle", samplers: [], channels: [] }]
+  });
+  assert.ok(validateHeroGlbJson(emptyAnimation).some(issue => issue.code === "ANIMATION_CHANNELS_INVALID"));
 });
 
 test("does not silently accept missing or malformed HERO acceptance metadata", () => {
