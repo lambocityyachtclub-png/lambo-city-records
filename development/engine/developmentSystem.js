@@ -17,6 +17,10 @@ import {
 } from "./developmentDirector.js";
 
 import {
+  createControlledDevelopmentExecutor
+} from "../execution/controlledDevelopmentExecutor.js";
+
+import {
   createDevelopmentRegistry,
   MODULE_TYPES
 } from "./developmentRegistry.js";
@@ -47,7 +51,8 @@ export const DEVELOPMENT_SYSTEM_STATUS = Object.freeze({
 export async function createDevelopmentSystem(options = {}) {
   const {
     storage = null,
-    clock
+    clock,
+    worldExecution = null
   } = options;
 
   const registry = createDevelopmentRegistry();
@@ -71,6 +76,17 @@ export async function createDevelopmentSystem(options = {}) {
   const worldRunner = createWorldDevelopmentRunner({
     developmentDirector: director
   });
+
+  // Execution is opt-in and requires explicit isolated workspace,
+  // review storage, and path allowlist adapters from the host.
+  const worldExecutor = worldExecution
+    ? createControlledDevelopmentExecutor({
+        developmentDirector: director,
+        workspaceAdapter: worldExecution.workspaceAdapter,
+        reviewStore: worldExecution.reviewStore,
+        allowedPaths: worldExecution.allowedPaths
+      })
+    : null;
 
   const policy = getDevelopmentPolicy();
 
@@ -155,6 +171,9 @@ export async function createDevelopmentSystem(options = {}) {
       director: director.getSnapshot(),
       studioRunner: studioRunner.getProfile(),
       worldRunner: worldRunner.getProfile(),
+      worldExecutor: worldExecutor
+        ? { enabled: true, allowedPaths: worldExecutor.getAllowedPaths() }
+        : { enabled: false, reason: "Explicit execution adapters are not configured." },
       policy
     };
   }
@@ -171,6 +190,19 @@ export async function createDevelopmentSystem(options = {}) {
     studioRunner.setEnabled(true);
     worldRunner.setEnabled(true);
     return getStatus();
+  }
+
+  async function executeNextWorldTask(input = {}) {
+    if (status !== DEVELOPMENT_SYSTEM_STATUS.READY) {
+      throw new Error("The development system is disabled.");
+    }
+    if (!worldExecutor) {
+      throw new Error("World execution is not configured. Supply an isolated workspace adapter, review store, and explicit allowed paths.");
+    }
+    return worldExecutor.executeNextTask({
+      ...input,
+      runnerId: WORLD_RUNNER_ID
+    });
   }
 
   function submitStudioFinding(finding) {
@@ -212,6 +244,7 @@ export async function createDevelopmentSystem(options = {}) {
     director,
     studioRunner,
     worldRunner,
+    worldExecutor,
     getStatus,
     getSnapshot,
     enable,
@@ -219,6 +252,7 @@ export async function createDevelopmentSystem(options = {}) {
     submitStudioFinding,
     submitStudioFindings,
     submitWorldFinding,
-    submitWorldFindings
+    submitWorldFindings,
+    executeNextWorldTask
   });
 }

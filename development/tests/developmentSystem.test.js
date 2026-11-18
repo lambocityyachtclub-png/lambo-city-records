@@ -417,3 +417,75 @@ test("Development System restores tasks after a restart", async () => {
     });
   }
 });
+
+
+test("Development System keeps world execution disabled without explicit adapters", async () => {
+  const system = await createDevelopmentSystem();
+
+  assert.equal(system.getSnapshot().worldExecutor.enabled, false);
+
+  await assert.rejects(
+    () => system.executeNextWorldTask(),
+    /World execution is not configured/
+  );
+});
+
+test("Development System executes one world task through isolated adapters and queues owner review", async () => {
+  const reviews = [];
+  const calls = { create: 0, prepare: 0, tests: 0 };
+
+  const system = await createDevelopmentSystem({
+    worldExecution: {
+      allowedPaths: ["development/example"],
+      workspaceAdapter: {
+        async createWorkspace() {
+          calls.create += 1;
+          return { workspaceId: "world-isolated-test" };
+        },
+        async prepareChanges() {
+          calls.prepare += 1;
+          return {
+            changedFiles: ["development/example/water.js"],
+            changes: "Prepared isolated water improvement."
+          };
+        },
+        async runTests() {
+          calls.tests += 1;
+          return { passed: true, total: 4, failed: 0 };
+        }
+      },
+      reviewStore: {
+        async createReview(review) {
+          const saved = { id: "world-review-001", ...review };
+          reviews.push(saved);
+          return saved;
+        }
+      }
+    }
+  });
+
+  const submitted = await system.submitWorldFinding({
+    title: "Improve marina water",
+    description: "Improve water reflections while preserving marina layout.",
+    area: "water",
+    acceptanceCriteria: [
+      "Preserve approved marina geography.",
+      "Do not change camera or navigation."
+    ]
+  });
+
+  assert.equal(submitted.task.status, TASK_STATUS.QUEUED);
+
+  const result = await system.executeNextWorldTask();
+
+  assert.equal(result.status, TASK_STATUS.REVIEW);
+  assert.equal(result.productionChangesMade, false);
+  assert.deepEqual(result.changedFiles, ["development/example/water.js"]);
+  assert.equal(reviews.length, 1);
+  assert.equal(reviews[0].status, "awaiting_owner_review");
+  assert.deepEqual(calls, { create: 1, prepare: 1, tests: 1 });
+  assert.equal(
+    system.director.getTask(submitted.task.id).status,
+    TASK_STATUS.REVIEW
+  );
+});
