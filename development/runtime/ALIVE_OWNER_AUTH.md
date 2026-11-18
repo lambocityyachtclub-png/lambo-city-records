@@ -6,6 +6,8 @@ Replace the temporary bearer-token dashboard gate with a dedicated, single-owner
 ## Authentication
 - Email/password is enabled with Better Auth's password hashing and mandatory email verification.
 - Passkeys are supported as the preferred sign-in method and require user verification.
+- Optional authenticator-based two-factor authentication protects password sign-in.
+- Enabling two-factor authentication generates ten one-time backup codes; codes are consumed when used and are shown to the owner during setup for offline storage.
 - Password reset and email verification use Resend through server-side environment variables.
 - Only the exact normalized email in ALIVE_OWNER_EMAIL may create the owner account.
 - The API checks the authenticated, verified session and the same owner email on every protected action.
@@ -27,8 +29,9 @@ Do not place passwords, API keys, or generated secrets in GitHub files or ChatGP
 3. Add the required Preview-only environment variables.
 4. Open the Preview /alive/ page, enroll using the exact ALIVE_OWNER_EMAIL, and verify the email.
 5. Set a unique owner password and register at least one passkey.
-6. Test sign-in, sign-out, session restoration after reload, password reset, and denial of a different email.
-7. Only after successful tests, remove the legacy ALIVE_REVIEW_TOKEN configuration from the Preview environment.
+6. In the owner console, enable authenticator-based two-factor authentication, add the displayed URI to an authenticator app, verify a current code, and save all ten one-time backup codes in two secure offline locations.
+7. Test password + authenticator sign-in, password + backup-code sign-in (confirm a code cannot be reused), passkey sign-in, sign-out, session restoration after reload, password reset, and denial of a different email.
+8. Only after successful tests, remove the legacy ALIVE_REVIEW_TOKEN configuration from the Preview environment.
 
 ## Not yet included
-This PR does not apply the database migration, configure Vercel secrets, configure Resend, create the owner's account, or register a passkey. One-time owner backup codes are a follow-on recovery task. Independent encrypted offsite backups and a tested restore remain a separate required milestone. No code is merged or deployed to production.
+This PR does not apply the database migration, configure Vercel secrets, configure Resend, create the owner's account, or register a passkey. Authenticator-based two-factor authentication and one-time backup-code issuance are implemented in this branch but still require owner enrollment and end-to-end verification. Independent encrypted offsite backups and a tested restore remain a separate required milestone. No code is merged or deployed to production.
