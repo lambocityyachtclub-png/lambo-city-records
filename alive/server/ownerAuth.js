@@ -71,11 +71,6 @@ export function getAliveOwnerAuth() {
     ],
     database: pool,
     user: { modelName: "alive_owner_user" },
-    session: {
-      modelName: "alive_owner_session",
-      expiresIn: 60 * 60 * 24 * 14,
-      updateAge: 60 * 60 * 12
-    },
     account: { modelName: "alive_owner_account" },
     verification: { modelName: "alive_owner_verification" },
     emailAndPassword: {
