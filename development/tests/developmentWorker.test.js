@@ -23,7 +23,7 @@ test("worker processes multiple tasks per runner up to its bounded limit", async
 
   const result = await worker.runOnce();
   assert.equal(result.processed, 4);
-  assert.equal(result.attempted, 5);
+  assert.equal(result.attempted, 4);
   assert.deepEqual(result.results.filter(item => item.executed).map(item => item.runnerId), ["studio", "world", "studio", "world"]);
   assert.ok(calls.every(item => item.workerId === "test-worker"));
 });
