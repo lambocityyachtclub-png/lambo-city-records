@@ -49,7 +49,7 @@ test("ALIVE status exposes configuration state but never secrets", async () => {
     withSystem: async () => { throw new Error("must not run"); }
   });
   const response = makeResponse();
-  await handler(makeRequest({ token }), response);
+  await handler(makeRequest(), response);
   assert.equal(response.statusCode, 200);
   assert.equal(response.body.openAIConfigured, true);
   assert.equal(response.body.executionConfigured, false);
@@ -81,7 +81,6 @@ test("ALIVE task intake creates a queued world task without executing it", async
 });
 
 test("ALIVE task intake refuses non-world executor requests", async () => {
-  const token = "owner-secret-".padEnd(40, "x");
   let calls = 0;
   const handler = createAliveApiHandler({
     env: {},
@@ -105,7 +104,7 @@ test("ALIVE run endpoint does not start paid execution unless both switches and 
     withSystem: async () => { calls += 1; }
   });
   const response = makeResponse();
-  await handler(makeRequest({ method: "POST", action: "run", token }), response);
+  await handler(makeRequest({ method: "POST", action: "run" }), response);
   assert.equal(response.statusCode, 503);
   assert.equal(calls, 0);
 });
@@ -135,7 +134,7 @@ test("ALIVE review endpoint records PERFECT or CHANGE through the owner feedback
     }
   };
   const handler = createAliveApiHandler({
-    env: { ALIVE_REVIEW_TOKEN: token },
+    env: {},
     withSystem: async (options, callback) => callback({
       system: {
         director: {
@@ -163,7 +162,7 @@ test("ALIVE review endpoint records PERFECT or CHANGE through the owner feedback
   review.status = "awaiting_owner_review";
   const change = makeResponse();
   await handler(makeRequest({
-    method: "POST", action: "reviews", token,
+    method: "POST", action: "reviews",
     body: { taskId: "task-1", reviewId: "review-1", decision: "change", ownerNote: "Reduce the intensity." }
   }), change);
   assert.equal(change.statusCode, 200);
@@ -192,7 +191,6 @@ test("ALIVE owner can approve a protected task before the one-shot worker claims
   await handler(makeRequest({
     method: "POST",
     action: "tasks",
-    token,
     body: { action: "approve", taskId: "protected-task-1" }
   }), response);
   assert.equal(response.statusCode, 200);
