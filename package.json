@@ -1,0 +1,9 @@
+{
+  "name": "lambo-city-records",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@vercel/sandbox": "4.0.0",
+    "pg": "8.16.3"
+  }
+}
