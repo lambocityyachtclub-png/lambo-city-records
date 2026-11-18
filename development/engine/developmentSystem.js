@@ -141,14 +141,14 @@ export async function createDevelopmentSystem(options = {}) {
   function disable() {
     status = DEVELOPMENT_SYSTEM_STATUS.DISABLED;
     studioRunner.setEnabled(false);
-    if (worker) worker.setEnabled(false);
+    if (worker) {\n      worker.setEnabled(false);\n      registry.setModuleEnabled("development-worker", false);\n    }
     return getStatus();
   }
 
   function enable() {
     status = DEVELOPMENT_SYSTEM_STATUS.READY;
     studioRunner.setEnabled(true);
-    if (worker) worker.setEnabled(workerEnabled);
+    if (worker) {\n      worker.setEnabled(workerEnabled);\n      registry.setModuleEnabled("development-worker", workerEnabled);\n    }
     return getStatus();
   }
 
