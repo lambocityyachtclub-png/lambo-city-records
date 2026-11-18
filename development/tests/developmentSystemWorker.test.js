@@ -72,3 +72,70 @@ test("development system runs a bounded worker only when explicitly enabled", as
   system.enable();
   assert.equal(system.getSnapshot().worker.enabled, true);
 });
+
+
+test("development system composes the controlled executor from explicit adapters", async () => {
+  const reviews = [];
+  let destroyed = 0;
+  const workspaceAdapter = {
+    async createWorkspace() {
+      return { workspaceId: "system-integration-workspace" };
+    },
+    async prepareChanges() {
+      return {
+        changedFiles: ["development/safe/worker-output.js"],
+        changes: { summary: "A tested isolated proposal." }
+      };
+    },
+    async runTests() {
+      return { passed: true, total: 1, failed: 0 };
+    },
+    async destroyWorkspace() {
+      destroyed++;
+    }
+  };
+  const reviewStore = {
+    async createReview(review) {
+      const saved = { id: "review-system-integration", ...review };
+      reviews.push(saved);
+      return saved;
+    }
+  };
+
+  const system = await createDevelopmentSystem({
+    workspaceAdapter,
+    reviewStore,
+    allowedPaths: ["development/safe"],
+    workerRunnerIds: [STUDIO_RUNNER_ID],
+    workerEnabled: true,
+    maxTasksPerRun: 1
+  });
+
+  await system.director.createTask({
+    title: "Run through the controlled execution path",
+    area: "development-system",
+    runner: STUDIO_RUNNER_ID
+  });
+
+  const result = await system.runWorkerOnce();
+  assert.equal(result.processed, 1);
+  assert.equal(result.results[0].status, TASK_STATUS.REVIEW);
+  assert.equal(result.results[0].productionChangesMade, false);
+  assert.equal(reviews.length, 1);
+  assert.equal(reviews[0].status, "awaiting_owner_review");
+  assert.equal(destroyed, 1);
+  assert.equal(system.getSnapshot().worker.enabled, true);
+});
+
+test("development system rejects partially configured controlled execution", async () => {
+  await assert.rejects(
+    () => createDevelopmentSystem({
+      workspaceAdapter: {
+        createWorkspace() {},
+        prepareChanges() {},
+        runTests() {}
+      }
+    }),
+    /requires workspaceAdapter, reviewStore, and a non-empty allowedPaths/
+  );
+});
