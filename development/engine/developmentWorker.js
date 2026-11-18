@@ -57,15 +57,16 @@ export function createDevelopmentWorker(options = {}) {
     running = true;
     const results = [];
     let processed = 0;
+    let stopped = false;
 
     try {
       // Continue round-robin passes until a full pass finds no work or
       // the explicit per-run task ceiling has been reached.
       while (processed < taskLimit) {
-        let progressThisPass = false;
+        if (!isEnabled) {\n          stopped = true;\n          break;\n        }\n        let progressThisPass = false;
 
         for (const runnerId of normalizedRunnerIds) {
-          if (processed >= taskLimit) break;
+          if (!isEnabled) {\n            stopped = true;\n            break;\n          }\n          if (processed >= taskLimit) break;
 
           const result = await executor.executeNextTask({
             runnerId,
@@ -93,6 +94,8 @@ export function createDevelopmentWorker(options = {}) {
         workerId: normalizedWorkerId,
         processed,
         attempted: results.length,
+        stopped,
+        stopReason: stopped ? "Worker disabled before the next task could start." : null,
         results
       };
     } finally {
