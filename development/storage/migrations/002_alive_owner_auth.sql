@@ -63,3 +63,17 @@ CREATE TABLE IF NOT EXISTS alive_owner_passkey (
   aaguid text
 );
 CREATE INDEX IF NOT EXISTS alive_owner_passkey_user_idx ON alive_owner_passkey("userId");
+
+-- Better Auth two-factor support and one-time backup codes.
+ALTER TABLE alive_owner_user
+  ADD COLUMN IF NOT EXISTS "twoFactorEnabled" boolean NOT NULL DEFAULT false;
+
+CREATE TABLE IF NOT EXISTS alive_owner_two_factor (
+  id text PRIMARY KEY,
+  "userId" text NOT NULL UNIQUE REFERENCES alive_owner_user(id) ON DELETE CASCADE,
+  secret text NOT NULL,
+  "backupCodes" text NOT NULL,
+  verified boolean NOT NULL DEFAULT false,
+  "failedVerificationCount" integer NOT NULL DEFAULT 0,
+  "lockedUntil" timestamptz
+);
