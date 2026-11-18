@@ -6,8 +6,9 @@ owner review.
 
 ## API
 
-All endpoints require an owner bearer token in the Authorization header.
-The token is compared in constant time and is never returned by the API.
+All endpoints require a verified ALIVE owner session cookie issued by Better Auth.
+The session is checked server-side against the single ALIVE_OWNER_EMAIL allowlist.
+Player accounts and the ALIVE owner identity use separate database tables.
 
 - GET /api/alive/status — reports configuration booleans only.
 - GET /api/alive/tasks — lists durable task records.
@@ -27,7 +28,10 @@ Configure these only for the intended Preview branch first:
 
 - DATABASE_URL — pooled connection string for the existing lambo-city-alive
   Neon development branch (database neondb).
-- ALIVE_REVIEW_TOKEN — random owner-only bearer secret, at least 32 characters.
+- ALIVE_OWNER_EMAIL — the one verified email address permitted to enroll as the ALIVE owner.
+- ALIVE_OWNER_AUTH_SECRET — unique random Better Auth secret, at least 32 characters.
+- ALIVE_OWNER_AUTH_URL — exact HTTPS origin for the Preview deployment being tested.
+- RESEND_API_KEY and EMAIL_FROM — Resend credentials and verified sender for owner verification and password reset.
 - OPENAI_API_KEY — secret OpenAI Platform API key. This is separate from a
   ChatGPT subscription and API calls are billed separately.
 - OPENAI_MODEL — optional; defaults to gpt-6-astra.
@@ -53,7 +57,7 @@ to run if the migration is missing. No migration is run automatically.
 
 ## Safety and execution
 
-- API requests require the owner bearer token.
+- API requests require a verified owner session cookie; the legacy bearer-token flow is removed by the owner-authentication change.
 - Task intake and review actions are serialized with a PostgreSQL advisory lock
   so the snapshot-based task director cannot race across function instances.
 - The OpenAI key stays on the server.
