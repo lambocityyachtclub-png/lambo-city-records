@@ -64,13 +64,13 @@ export function createOpenAIProposalProvider(options = {}) {
     options.model ?? (typeof process !== "undefined" ? process.env?.OPENAI_MODEL : "") ?? DEFAULT_MODEL,
     "OpenAI model"
   );
-  const endpoint = options.endpoint ?? DEFAULT_ENDPOINT;
+  const endpoint = DEFAULT_ENDPOINT;
   const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const maxOutputTokens = options.maxOutputTokens ?? DEFAULT_MAX_OUTPUT_TOKENS;
   const fetchImpl = options.fetchImpl ?? globalThis.fetch;
 
   if (typeof fetchImpl !== "function") throw new Error("A server-side fetch implementation is required.");
-  if (typeof endpoint !== "string" || !endpoint.startsWith("https://")) throw new Error("The OpenAI API endpoint must use HTTPS.");
+  if (typeof window !== "undefined") throw new Error("The OpenAI proposal provider can only run on the server.");
   if (!Number.isInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > 180_000) {
     throw new Error("timeoutMs must be an integer between 1 and 180000.");
   }
