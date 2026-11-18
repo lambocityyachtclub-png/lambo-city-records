@@ -37,7 +37,6 @@ test("ALIVE hosted API rejects missing or incorrect owner authentication", async
 test("ALIVE status exposes configuration state but never secrets", async () => {
   const secret = "private-openai-key-value";
   const handler = createAliveApiHandler({
-    authenticateOwner: async () => ({ email: "owner@example.com", emailVerified: true }),
     env: {
       DATABASE_URL: "postgres://not-returned",
       OPENAI_API_KEY: secret,
@@ -174,7 +173,6 @@ test("ALIVE review endpoint records PERFECT or CHANGE through the owner feedback
 
 
 test("ALIVE owner can approve a protected task before the one-shot worker claims it", async () => {
-  const token = "owner-secret-".padEnd(40, "x");
   let approved = null;
   const handler = createAliveApiHandler({
     env: {},
