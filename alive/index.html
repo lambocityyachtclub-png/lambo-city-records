@@ -28,6 +28,10 @@
         <input id="owner-password" type="password" autocomplete="current-password" minlength="12" required placeholder="Your private password">
         <button class="primary" type="submit">Sign in with password</button>
       </form>
+      <div id="reset-password-panel" class="auth-form" hidden>
+        <label for="owner-password">Choose a new owner password</label>
+        <button class="primary" id="reset-save-button" type="button">Save new password</button>
+      </div>
       <div class="auth-form">
         <button class="quiet" id="passkey-button" type="button">Sign in with passkey</button>
         <button class="quiet" id="reset-button" type="button">Send password reset email</button>
