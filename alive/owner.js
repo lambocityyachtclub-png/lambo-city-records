@@ -1,6 +1,7 @@
 const API="/api/alive/";
 let ownerAuthenticated=false;
 let authClientPromise;
+let resetToken="";
 function getAuthClient(){if(!authClientPromise){authClientPromise=Promise.all([import("https://esm.sh/better-auth@1.7.23/client"),import("https://esm.sh/@better-auth/passkey@1.7.23/client")]).then(([core,passkeys])=>core.createAuthClient({baseURL:window.location.origin+"/api/alive/auth",plugins:[passkeys.passkeyClient()]}));}return authClientPromise;}
 let statusSnapshot=null;
 let toastTimer=null;
@@ -25,5 +26,11 @@ $("disconnect-button").addEventListener("click",async()=>{try{const auth=await g
 $("task-form").addEventListener("submit",async event=>{event.preventDefault();const form=event.currentTarget;const data=new FormData(form);const button=form.querySelector('button[type="submit"]');button.disabled=true;$("task-message").textContent="Submitting direction…";try{const criteria=String(data.get("acceptanceCriteria")||"").split(/\r?\n/).map(line=>line.trim()).filter(Boolean);const result=await request("tasks",{method:"POST",body:{title:String(data.get("title")||"").trim(),area:data.get("area"),description:String(data.get("description")||"").trim(),acceptanceCriteria:criteria,requiresApproval:data.get("requiresApproval")==="on",runner:"world"}});$("task-message").textContent="Task received: "+(result.task?.id||"queued")+". It has not been executed.";form.reset();form.elements.requiresApproval.checked=true;await refreshAll()}catch(error){$("task-message").textContent=error.message}finally{button.disabled=false}});
 $("run-button").addEventListener("click",async()=>{if(!statusSnapshot?.executionConfigured){notify("Execution is not configured.");return}const accepted=window.confirm("Run the next approved ALIVE world task now? This will send a proposal request to OpenAI and start an isolated Vercel Sandbox test. API and sandbox usage may incur charges. No production deployment will occur.");if(!accepted)return;const button=$("run-button");button.disabled=true;$("run-message").textContent="ALIVE is attempting one task. Keep this page open.";try{const result=await request("run",{method:"POST",body:{}});$("run-message").textContent=result.productionChangesMade===false?"Run finished. No production changes were made. Check owner review below.":"Run returned; inspect the result before proceeding.";notify("One-shot ALIVE run returned.");await refreshAll()}catch(error){$("run-message").textContent=error.message;notify(error.message)}finally{button.disabled=!statusSnapshot?.executionConfigured}});
 $("register-passkey-button").addEventListener("click",async()=>{try{const auth=await getAuthClient();const result=await auth.passkey.addPasskey({name:"ALIVE Owner Passkey"});if(result.error)throw new Error(result.error.message||"Passkey registration failed.");notify("Passkey registered on this device.")}catch(error){notify(error.message)}});
-getAuthClient().then(auth=>auth.getSession()).then(result=>{if(result.data?.user)enterOwnerConsole()}).catch(()=>{});
-window.addEventListener("pagehide",()=>{ownerAuthenticated=false});
+const resetParams=new URLSearchParams(window.location.search);
+resetToken=resetParams.get("token")||"";
+const resetError=resetParams.get("error");
+if(resetToken){$("auth-form").hidden=true;$("reset-password-panel").hidden=false;history.replaceState(null,"",window.location.pathname)}
+else if(resetError){notify("That password reset link is invalid or expired. Request a new one.");history.replaceState(null,"",window.location.pathname)}
+getAuthClient().then(auth=>auth.getSession()).then(result=>{if(result.data?.user&&!resetToken)enterOwnerConsole()}).catch(()=>{});
+$("reset-save-button").addEventListener("click",async()=>{const newPassword=$("owner-password").value;if(!resetToken||newPassword.length<12){notify("Enter a new password with at least 12 characters.");return}try{const auth=await getAuthClient();const result=await auth.resetPassword({token:resetToken,newPassword});if(result.error)throw new Error(result.error.message||"Password reset failed.");resetToken="";$("reset-password-panel").hidden=true;$("auth-form").hidden=false;$("owner-password").value="";notify("Password reset successfully. Sign in with your new password.")}catch(error){notify(error.message)}});
+window.addEventListener("pagehide",()=>{ownerAuthenticated=false;resetToken=""});
