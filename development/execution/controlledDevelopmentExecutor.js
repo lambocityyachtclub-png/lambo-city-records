@@ -283,6 +283,10 @@ export function createControlledDevelopmentExecutor(options = {}) {
         )
       ];
 
+      if (changedFiles.length === 0) {
+        throw new Error("No changed files were produced; an empty proposal cannot enter owner review.");
+      }
+
       // STEP 4: Run tests in the isolated workspace.
       const testResults = await workspaceAdapter.runTests({
         workspaceId,
@@ -365,6 +369,14 @@ export function createControlledDevelopmentExecutor(options = {}) {
         reason: error.message,
         taskUpdated: blocked.updated
       };
+    } finally {
+      if (workspaceId && typeof workspaceAdapter.destroyWorkspace === "function") {
+        try {
+          await workspaceAdapter.destroyWorkspace(workspaceId);
+        } catch {
+          // Cleanup failure must not conceal the task outcome.
+        }
+      }
     }
   }
 
