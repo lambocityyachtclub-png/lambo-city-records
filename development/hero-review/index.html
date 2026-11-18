@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>LAMBO CITY — HERO GLB Review</title>
+  <style>
+    :root { color-scheme: dark; font-family: Inter, ui-sans-serif, system-ui, sans-serif; background:#101216; color:#f4f4f5; }
+    * { box-sizing:border-box; }
+    body { margin:0; padding:20px; }
+    header { max-width:1180px; margin:0 auto 18px; }
+    h1 { margin:0 0 6px; letter-spacing:.12em; font-size:clamp(22px,4vw,34px); }
+    header p { color:#b9bdc6; margin:0; line-height:1.5; }
+    main { max-width:1180px; margin:auto; display:grid; grid-template-columns:minmax(0,1.5fr) minmax(280px,1fr); gap:16px; }
+    section { background:#1a1d23; border:1px solid #343943; border-radius:12px; padding:16px; min-width:0; }
+    #viewport { height:min(68vh,680px); min-height:380px; background:#0b0d11; border-radius:8px; overflow:hidden; }
+    .toolbar { display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin:12px 0; }
+    button,label.file { background:#252a33; color:#f4f4f5; border:1px solid #535b69; border-radius:7px; padding:9px 12px; cursor:pointer; }
+    button:hover,label.file:hover { border-color:#e8b63f; }
+    input[type=file] { max-width:100%; }
+    .metrics { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:12px 0; }
+    .metric { padding:10px; background:#11141a; border-radius:8px; }
+    .metric small { display:block; color:#aeb5c0; margin-bottom:4px; }
+    .metric strong { font-size:17px; overflow-wrap:anywhere; }
+    ul { padding-left:20px; color:#c8cbd1; line-height:1.55; }
+    .status { border-radius:8px; padding:11px; margin:10px 0; background:#282b32; color:#e6e7ea; }
+    .status.good { border:1px solid #36845b; }
+    .status.bad { border:1px solid #a54b4b; }
+    .status.warn { border:1px solid #a47a32; }
+    .check { display:flex; gap:9px; align-items:flex-start; padding:7px 0; color:#d6d8dd; }
+    .check input { margin-top:4px; accent-color:#e8b63f; }
+    .muted { color:#aeb5c0; font-size:13px; line-height:1.5; }
+    #details { white-space:pre-wrap; overflow-wrap:anywhere; color:#d2d5dc; font:12px ui-monospace,monospace; }
+    @media(max-width:800px) { body{padding:12px} main{grid-template-columns:1fr} #viewport{height:55vh;min-height:340px} }
+  </style>
+  <script type="importmap">
+    { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js" } }
+  </script>
+</head>
+<body>
+<header>
+  <h1>HERO — 3D MODEL REVIEW</h1>
+  <p>Private, local-browser inspection tool for the owner-approved HERO reference. The selected GLB stays in this browser tab; it is not uploaded.</p>
+</header>
+<main>
+  <section>
+    <div class="toolbar">
+      <label class="file">Choose HERO .glb <input id="file" type="file" accept=".glb,model/gltf-binary" hidden></label>
+      <button id="reset" type="button">Reset view</button>
+      <button id="wire" type="button">Toggle wireframe</button>
+      <button id="play" type="button" disabled>Play animation</button>
+    </div>
+    <div id="viewport" aria-label="3D HERO model preview"></div>
+    <p class="muted">Drag to orbit. Scroll or pinch to zoom. This page uses Three.js 0.160.0. It does not modify the game or upload selected files.</p>
+    <div id="loadStatus" class="status warn">Choose a GLB file to begin review.</div>
+  </section>
+  <section>
+    <h2>Technical inspection</h2>
+    <div class="metrics">
+      <div class="metric"><small>Height (target 4.00)</small><strong id="height">—</strong></div>
+      <div class="metric"><small>Feet Y (target 0.00)</small><strong id="feet">—</strong></div>
+      <div class="metric"><small>Center X (target 0.00)</small><strong id="centerX">—</strong></div>
+      <div class="metric"><small>Center Z (target 0.00)</small><strong id="centerZ">—</strong></div>
+      <div class="metric"><small>Skinned meshes</small><strong id="skins">—</strong></div>
+      <div class="metric"><small>Animation clips</small><strong id="clips">—</strong></div>
+    </div>
+    <div id="technicalStatus" class="status warn">No model inspected yet.</div>
+    <h3>Owner visual review</h3>
+    <p class="muted">Check each item against the saved HERO reference boards. Technical measurements cannot judge likeness or artistic accuracy.</p>
+    <label class="check"><input type="checkbox" class="visual">Blue cap with gold H mark</label>
+    <label class="check"><input type="checkbox" class="visual">White LAMBO / HERO sunglasses</label>
+    <label class="check"><input type="checkbox" class="visual">Long dark locs, front, side and rear</label>
+    <label class="check"><input type="checkbox" class="visual">Orange-red hoodie and white shirt</label>
+    <label class="check"><input type="checkbox" class="visual">Dark blue jeans and white sneakers</label>
+    <label class="check"><input type="checkbox" class="visual">Gold chain and LAMBO CITY Records shield pendant</label>
+    <label class="check"><input type="checkbox" class="visual">Full body, unobstructed hands, no skateboard or trophy</label>
+    <div id="visualStatus" class="status warn">Visual review is not complete.</div>
+    <h3>Inspection details</h3>
+    <div id="details">Waiting for a GLB file.</div>
+  </section>
+</main>
+<script type="module">
+  import * as THREE from "three";
+  import { GLTFLoader } from "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js";
+  import { OrbitControls } from "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js";
+
+  const target = document.getElementById("viewport");
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75));
+  renderer.setSize(target.clientWidth, target.clientHeight);
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  target.appendChild(renderer.domElement);
+
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x0b0d11);
+  const camera = new THREE.PerspectiveCamera(34, target.clientWidth / target.clientHeight, 0.01, 100);
+  camera.position.set(5, 3.2, 7);
+  const controls = new OrbitControls(camera, renderer.domElement);
+  controls.target.set(0, 2, 0);
+  controls.enableDamping = true;
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x30384a, 2.1));
+  const key = new THREE.DirectionalLight(0xffffff, 2.2);
+  key.position.set(4, 7, 5);
+  scene.add(key);
+  const fill = new THREE.DirectionalLight(0xffffff, 0.75);
+  fill.position.set(-4, 3, -4);
+  scene.add(fill);
+  const grid = new THREE.GridHelper(10, 20, 0x626a78, 0x303642);
+  grid.position.y = 0;
+  scene.add(grid);
+  const axes = new THREE.AxesHelper(1);
+  scene.add(axes);
+
+  let currentRoot = null;
+  let mixer = null;
+  let clips = [];
+  let playing = false;
+  let wireframe = false;
+  let currentUrl = null;
+  const clock = new THREE.Clock();
+  const $ = id => document.getElementById(id);
+  const fmt = n => Number.isFinite(n) ? n.toFixed(3) + " units" : "—";
+  const setStatus = (id, text, kind) => { $(id).textContent = text; $(id).className = "status " + kind; };
+
+  function resetView(box) {
+    const size = box.getSize(new THREE.Vector3());
+    const center = box.getCenter(new THREE.Vector3());
+    const maxDim = Math.max(size.x, size.y, size.z, 1);
+    camera.position.set(center.x + maxDim * 1.25, center.y + maxDim * 0.7, center.z + maxDim * 1.8);
+    camera.near = Math.max(0.01, maxDim / 1000);
+    camera.far = maxDim * 100;
+    camera.updateProjectionMatrix();
+    controls.target.copy(center);
+    controls.update();
+  }
+
+  function inspect(root, gltf) {
+    root.updateMatrixWorld(true);
+    const box = new THREE.Box3().setFromObject(root);
+    const size = box.getSize(new THREE.Vector3());
+    const center = box.getCenter(new THREE.Vector3());
+    const skinned = [];
+    root.traverse(obj => { if (obj.isSkinnedMesh) skinned.push(obj); });
+    const issues = [];
+    if (Math.abs(size.y - 4) > 0.02) issues.push("Height outside 4.00 ± 0.02 units.");
+    if (Math.abs(box.min.y) > 0.02) issues.push("Feet are not at ground Y=0.");
+    if (Math.abs(center.x) > 0.02 || Math.abs(center.z) > 0.02) issues.push("Model is not centered at X=0, Z=0.");
+    if (!skinned.length) issues.push("No skinned mesh found.");
+    if (!gltf.animations.length) issues.push("No animation clips found.");
+    $("height").textContent = fmt(size.y);
+    $("feet").textContent = fmt(box.min.y);
+    $("centerX").textContent = fmt(center.x);
+    $("centerZ").textContent = fmt(center.z);
+    $("skins").textContent = String(skinned.length);
+    $("clips").textContent = String(gltf.animations.length);
+    $("details").textContent = [
+      "Bounds min: " + box.min.toArray().map(n => n.toFixed(4)).join(", "),
+      "Bounds max: " + box.max.toArray().map(n => n.toFixed(4)).join(", "),
+      "Dimensions: " + size.toArray().map(n => n.toFixed(4)).join(" × "),
+      "Skinned mesh count: " + skinned.length,
+      "Animation clips: " + (gltf.animations.map(c => c.name || "(unnamed)").join(", ") || "none"),
+      "Materials: " + (() => { const names = new Set(); root.traverse(o => { for (const m of (Array.isArray(o.material) ? o.material : o.material ? [o.material] : [])) names.add(m.name || "(unnamed)"); }); return [...names].join(", ") || "none"; })()
+    ].join("\n");
+    if (issues.length) setStatus("technicalStatus", "TECHNICAL REVIEW FAILED\n" + issues.join("\n"), "bad");
+    else setStatus("technicalStatus", "TECHNICAL GEOMETRY CHECK PASSED. Visual likeness, topology quality, full-body proportions, rig quality and iPad performance still require review.", "good");
+    resetView(box);
+  }
+
+  $("file").addEventListener("change", async event => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setStatus("loadStatus", "Loading " + file.name + " locally…", "warn");
+    if (currentUrl) URL.revokeObjectURL(currentUrl);
+    currentUrl = URL.createObjectURL(file);
+    try {
+      const loader = new GLTFLoader();
+      const gltf = await loader.loadAsync(currentUrl);
+      if (currentRoot) scene.remove(currentRoot);
+      currentRoot = gltf.scene;
+      scene.add(currentRoot);
+      clips = gltf.animations || [];
+      mixer = clips.length ? new THREE.AnimationMixer(currentRoot) : null;
+      playing = false;
+      $("play").disabled = !mixer;
+      $("play").textContent = "Play animation";
+      inspect(currentRoot, gltf);
+      setStatus("loadStatus", "Loaded " + file.name + " (" + (file.size / 1048576).toFixed(2) + " MB). File remains local to this browser tab.", "good");
+    } catch (error) {
+      setStatus("loadStatus", "Could not load GLB: " + error.message, "bad");
+      setStatus("technicalStatus", "No technical result; file could not be loaded.", "bad");
+    }
+  });
+
+  $("reset").addEventListener("click", () => { if (currentRoot) resetView(new THREE.Box3().setFromObject(currentRoot)); });
+  $("wire").addEventListener("click", () => {
+    wireframe = !wireframe;
+    if (currentRoot) currentRoot.traverse(o => {
+      for (const m of (Array.isArray(o.material) ? o.material : o.material ? [o.material] : [])) {
+        if ("wireframe" in m) m.wireframe = wireframe;
+      }
+    });
+  });
+  $("play").addEventListener("click", () => {
+    if (!mixer || !clips.length) return;
+    if (playing) { mixer.stopAllAction(); playing = false; $("play").textContent = "Play animation"; }
+    else { mixer.clipAction(clips[0]).reset().play(); playing = true; $("play").textContent = "Stop animation"; }
+  });
+  document.querySelectorAll(".visual").forEach(input => input.addEventListener("change", () => {
+    const total = document.querySelectorAll(".visual").length;
+    const checked = document.querySelectorAll(".visual:checked").length;
+    if (checked === total) setStatus("visualStatus", "All visual checklist items marked reviewed. Owner approval is still a separate decision.", "good");
+    else setStatus("visualStatus", checked + " of " + total + " visual checklist items reviewed.", "warn");
+  }));
+
+  const resize = new ResizeObserver(() => {
+    const width = target.clientWidth, height = target.clientHeight;
+    camera.aspect = width / height;
+    camera.updateProjectionMatrix();
+    renderer.setSize(width, height);
+  });
+  resize.observe(target);
+  renderer.setAnimationLoop(() => {
+    const delta = Math.min(clock.getDelta(), 0.05);
+    if (mixer && playing) mixer.update(delta);
+    controls.update();
+    renderer.render(scene, camera);
+  });
+</script>
+</body>
+</html>
