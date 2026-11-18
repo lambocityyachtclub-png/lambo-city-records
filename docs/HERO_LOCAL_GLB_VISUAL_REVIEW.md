@@ -36,3 +36,5 @@ Do not replace the existing procedural HERO until the actual asset passes the au
 ## Resource and load safety
 
 When a new candidate replaces the currently displayed model, the review page stops and uncaches its animation mixer and disposes the previous model's unique geometries, materials, textures, and skeletons. Concurrent file selections are guarded so a slower earlier load cannot replace a newer selection; stale completed loads are disposed. Starting a new review clears prior measurements and visual checklist marks so results cannot be accidentally carried over between candidates.
+
+A replacement candidate is only committed to the preview after it loads successfully. If loading fails, the last valid model and its inspection remain visible; the failed candidate is reported separately so the screen never implies that the prior model was replaced.
