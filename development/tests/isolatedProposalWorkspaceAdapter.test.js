@@ -81,3 +81,13 @@ test("proposal bridge rejects writes outside the explicit allowlist", async t =>
   }), /outside allowed paths/);
   await adapter.destroyWorkspace(workspace.workspaceId);
 });
+
+test("proposal bridge enforces file and total proposal write limits", async t => {
+  const { adapter } = await fixture(t);
+  const workspace = await adapter.createWorkspace({ taskId: "bridge-size-guard" });
+  await assert.rejects(adapter.applyProposedFiles({
+    workspaceId: workspace.workspaceId,
+    files: [{ path: "development/example/large.js", content: "x".repeat(128 * 1024 + 1) }]
+  }), /128 KB limit/);
+  await adapter.destroyWorkspace(workspace.workspaceId);
+});
