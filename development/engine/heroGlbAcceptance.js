@@ -72,11 +72,54 @@ export function validateHeroGlbJson(gltf) {
       !gltf.meshes.some(mesh => Array.isArray(mesh.primitives) && mesh.primitives.length > 0)) {
     issues.push(fail("MESH_MISSING", "The asset must contain at least one mesh primitive."));
   }
-  if (!Array.isArray(gltf.skins) || !gltf.skins.some(skin => Array.isArray(skin.joints) && skin.joints.length >= 15)) {
-    issues.push(fail("HUMANOID_SKIN_MISSING", "The asset must contain a humanoid skin with at least 15 joints."));
+  const accessors = Array.isArray(gltf.accessors) ? gltf.accessors : [];
+  const nodes = Array.isArray(gltf.nodes) ? gltf.nodes : [];
+  const validAccessor = index => Number.isInteger(index) && index >= 0 && index < accessors.length;
+  const validNode = index => Number.isInteger(index) && index >= 0 && index < nodes.length;
+
+  for (let nodeIndex = 0; nodeIndex < nodes.length; nodeIndex += 1) {
+    const children = nodes[nodeIndex]?.children;
+    if (children !== undefined && (!Array.isArray(children) ||
+        children.some(child => !validNode(child) || child === nodeIndex))) {
+      issues.push(fail("NODE_HIERARCHY_INVALID", "Every node child reference must point to a different existing node."));
+      break;
+    }
   }
+
+  const hasValidSkin = Array.isArray(gltf.skins) && gltf.skins.some(skin => {
+    if (!Array.isArray(skin.joints) || skin.joints.length < 15) return false;
+    if (new Set(skin.joints).size !== skin.joints.length) return false;
+    return skin.joints.every(validNode);
+  });
+  if (!hasValidSkin) {
+    issues.push(fail("HUMANOID_SKIN_MISSING", "The asset must contain a skin with at least 15 unique joint references to existing nodes."));
+  }
+
+  const hasPositionAccessor = Array.isArray(gltf.meshes) &&
+    gltf.meshes.some(mesh => Array.isArray(mesh.primitives) &&
+      mesh.primitives.some(primitive => validAccessor(primitive?.attributes?.POSITION)));
+  if (!hasPositionAccessor) {
+    issues.push(fail("POSITION_ACCESSOR_INVALID", "At least one mesh primitive must reference an existing POSITION accessor."));
+  }
+
   if (!Array.isArray(gltf.animations) || gltf.animations.length === 0) {
     issues.push(fail("ANIMATIONS_MISSING", "The asset must include at least one animation clip."));
+  } else {
+    const hasUsableAnimation = gltf.animations.some(animation =>
+      Array.isArray(animation.samplers) && animation.samplers.length > 0 &&
+      Array.isArray(animation.channels) && animation.channels.length > 0 &&
+      animation.channels.every(channel => {
+        const sampler = animation.samplers[channel?.sampler];
+        const target = channel?.target;
+        return Number.isInteger(channel?.sampler) && !!sampler &&
+          validAccessor(sampler.input) && validAccessor(sampler.output) &&
+          validNode(target?.node) &&
+          ["translation", "rotation", "scale", "weights"].includes(target?.path);
+      })
+    );
+    if (!hasUsableAnimation) {
+      issues.push(fail("ANIMATION_CHANNELS_INVALID", "At least one animation must contain valid samplers, accessors, target nodes, and supported animation paths."));
+    }
   }
 
   const metadata = gltf.asset?.extras?.lamboCityHero;
