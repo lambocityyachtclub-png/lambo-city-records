@@ -29,16 +29,16 @@ const PROPOSAL_SCHEMA = Object.freeze({
 });
 
 function requireText(value, label) {
-  if (typeof value !== "string" || !value.trim()) throw new Error(\`\${label} is required.\`);
+  if (typeof value !== "string" || !value.trim()) throw new Error(label + " is required.");
   return value.trim();
 }
 
 function safeJson(value, label) {
   let serialized;
   try { serialized = JSON.stringify(value); }
-  catch { throw new Error(\`\${label} must be JSON-serializable.\`); }
+  catch { throw new Error(label + " must be JSON-serializable."); }
   if (typeof serialized !== "string" || serialized.length > MAX_INPUT_CHARACTERS) {
-    throw new Error(\`\${label} exceeds the provider input size limit.\`);
+    throw new Error(label + " exceeds the provider input size limit.");
   }
   return serialized;
 }
@@ -52,7 +52,7 @@ function extractOutputText(response) {
     }
   }
   if (text.length === 0) throw new Error("OpenAI returned no structured proposal text.");
-  return text.join("\\n");
+  return text.join("\n");
 }
 
 export function createOpenAIProposalProvider(options = {}) {
@@ -70,13 +70,13 @@ export function createOpenAIProposalProvider(options = {}) {
   const fetchImpl = options.fetchImpl ?? globalThis.fetch;
 
   if (typeof fetchImpl !== "function") throw new Error("A server-side fetch implementation is required.");
-  if (typeof window !== "undefined") throw new Error("The OpenAI proposal provider can only run on the server.");
   if (!Number.isInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > 180_000) {
     throw new Error("timeoutMs must be an integer between 1 and 180000.");
   }
   if (!Number.isInteger(maxOutputTokens) || maxOutputTokens < 256 || maxOutputTokens > 32_000) {
     throw new Error("maxOutputTokens must be an integer between 256 and 32000.");
   }
+  if (typeof window !== "undefined") throw new Error("The OpenAI proposal provider can only run on the server.");
 
   async function generateProposal(input = {}) {
     if (!input.task || typeof input.task !== "object" || Array.isArray(input.task)) {
@@ -98,10 +98,10 @@ export function createOpenAIProposalProvider(options = {}) {
     try {
       response = await fetchImpl(endpoint, {
         method: "POST",
-        headers: { Authorization: \`Bearer \${apiKey}\`, "Content-Type": "application/json" },
+        headers: { Authorization: "Bearer " + apiKey, "Content-Type": "application/json" },
         signal: controller.signal,
         body: JSON.stringify({
-          model,
+          model: model,
           store: false,
           max_output_tokens: maxOutputTokens,
           instructions: [
@@ -117,7 +117,7 @@ export function createOpenAIProposalProvider(options = {}) {
           ].join(" "),
           input: [{
             role: "user",
-            content: [{ type: "input_text", text: \`Create a development proposal from this JSON input:\\n\${requestContext}\` }]
+            content: [{ type: "input_text", text: "Create a development proposal from this JSON input:\n" + requestContext }]
           }],
           text: {
             format: {
@@ -131,7 +131,7 @@ export function createOpenAIProposalProvider(options = {}) {
       });
     } catch (error) {
       if (error?.name === "AbortError") throw new Error("OpenAI proposal request timed out.");
-      throw new Error(\`OpenAI proposal request failed: \${error?.message || "network error"}\`);
+      throw new Error("OpenAI proposal request failed: " + (error?.message || "network error"));
     } finally {
       clearTimeout(timeout);
     }
@@ -144,8 +144,8 @@ export function createOpenAIProposalProvider(options = {}) {
         detail = typeof payload?.error?.message === "string" ? payload.error.message.slice(0, 500) : "";
         requestId = requestId || payload?.request_id || "";
       } catch { /* Never echo arbitrary response bodies into application errors. */ }
-      const suffix = requestId ? \` (request \${requestId})\` : "";
-      throw new Error(\`OpenAI API returned HTTP \${response.status}\${detail ? \`: \${detail}\` : ""}\${suffix}\`);
+      const suffix = requestId ? " (request " + requestId + ")" : "";
+      throw new Error("OpenAI API returned HTTP " + response.status + (detail ? ": " + detail : "") + suffix);
     }
 
     let payload;
@@ -156,7 +156,7 @@ export function createOpenAIProposalProvider(options = {}) {
       throw new Error("OpenAI proposal response was incomplete; increase the output limit or simplify the task.");
     }
     if (payload.status && payload.status !== "completed") {
-      throw new Error(\`OpenAI proposal response did not complete (status: \${payload.status}).\`);
+      throw new Error("OpenAI proposal response did not complete (status: " + payload.status + ").");
     }
     if (payload.error) throw new Error("OpenAI reported an error while generating the proposal.");
 
