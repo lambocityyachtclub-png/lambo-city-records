@@ -32,7 +32,11 @@ Configure these only for the intended Preview branch first:
   ChatGPT subscription and API calls are billed separately.
 - OPENAI_MODEL — optional; defaults to gpt-6-astra.
 - ALIVE_ALLOWED_PATHS — JSON array of narrowly scoped repository-relative
-  paths, for example ["water.js"] for a first, tightly scoped pilot.
+  paths. The first pilot must include ["development"] so the sandbox can run
+  ALIVE's complete automated test suite. This keeps the first pilot inside
+  ALIVE's development subsystem; it does not make game-world or Studio runtime
+  source files writable. Add additional source paths only when matching tests
+  are included and reviewed.
 - ALIVE_AI_ENABLED — keep false until model usage is explicitly approved.
 - ALIVE_SANDBOX_ENABLED — keep false until sandbox usage is explicitly approved.
 
@@ -53,6 +57,8 @@ to run if the migration is missing. No migration is run automatically.
 - Task intake and review actions are serialized with a PostgreSQL advisory lock
   so the snapshot-based task director cannot race across function instances.
 - The OpenAI key stays on the server.
+- Vercel Sandbox uses the deployment's Vercel OIDC identity when available; enable
+  Vercel OIDC for the project before turning on ALIVE_SANDBOX_ENABLED.
 - OpenAI proposals are validated against an explicit path allowlist and written
   only into a disposable workspace.
 - Tests run in a fresh Vercel Sandbox with outbound networking denied.

@@ -26,7 +26,11 @@ function readAllowedPaths(value) {
   if (!Array.isArray(paths) || paths.length === 0 || paths.some(item => typeof item !== "string" || !item.trim())) {
     throw new Error("ALIVE_ALLOWED_PATHS must be a non-empty JSON array of paths.");
   }
-  return [...new Set(paths.map(item => item.trim()))];
+  const normalized = [...new Set(paths.map(item => item.trim()))];
+  if (!normalized.includes("development")) {
+    throw new Error("The first hosted pilot must include the development folder so the complete ALIVE automated test suite is available inside the sandbox.");
+  }
+  return normalized;
 }
 
 export function createHostedAliveControlPlane(options = {}) {

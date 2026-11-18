@@ -113,7 +113,6 @@ export function createAliveApiHandler(options = {}) {
             type: body.type,
             severity: body.severity,
             acceptanceCriteria: body.acceptanceCriteria,
-            filePaths: body.filePaths,
             protectedActions: body.protectedActions,
             requiresApproval: body.requiresApproval === true
           });
