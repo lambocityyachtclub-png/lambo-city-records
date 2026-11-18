@@ -26,6 +26,12 @@ import {
 } from "../policies/developmentPolicy.js";
 
 import {
+  createWorldDevelopmentRunner,
+  WORLD_RUNNER_ID,
+  WORLD_RUNNER_VERSION
+} from "../runners/world/worldDevelopmentRunner.js";
+
+import {
   createStudioDevelopmentRunner,
   STUDIO_RUNNER_ID,
   STUDIO_RUNNER_VERSION
@@ -59,6 +65,10 @@ export async function createDevelopmentSystem(options = {}) {
   await director.initialize();
 
   const studioRunner = createStudioDevelopmentRunner({
+    developmentDirector: director
+  });
+
+  const worldRunner = createWorldDevelopmentRunner({
     developmentDirector: director
   });
 
@@ -113,6 +123,24 @@ export async function createDevelopmentSystem(options = {}) {
       "Organizes development findings for LAMBO CITY Studio."
   });
 
+  registry.registerModule({
+    id: WORLD_RUNNER_ID,
+    name: "World Development Runner",
+    type: MODULE_TYPES.RUNNER,
+    version: WORLD_RUNNER_VERSION,
+    path: "development/runners/world/worldDevelopmentRunner.js",
+    enabled: true,
+    capabilities: [
+      "world_environment_improvements",
+      "water_and_marina_improvements",
+      "architecture_and_landscaping",
+      "world_performance_improvements",
+      "preserve_approved_world_layout"
+    ],
+    description:
+      "Organizes LAMBO CITY world improvements while preserving approved geography and working systems."
+  });
+
   let status = DEVELOPMENT_SYSTEM_STATUS.READY;
 
   function getStatus() {
@@ -126,6 +154,7 @@ export async function createDevelopmentSystem(options = {}) {
       registry: registry.getSnapshot(),
       director: director.getSnapshot(),
       studioRunner: studioRunner.getProfile(),
+      worldRunner: worldRunner.getProfile(),
       policy
     };
   }
@@ -133,12 +162,14 @@ export async function createDevelopmentSystem(options = {}) {
   function disable() {
     status = DEVELOPMENT_SYSTEM_STATUS.DISABLED;
     studioRunner.setEnabled(false);
+    worldRunner.setEnabled(false);
     return getStatus();
   }
 
   function enable() {
     status = DEVELOPMENT_SYSTEM_STATUS.READY;
     studioRunner.setEnabled(true);
+    worldRunner.setEnabled(true);
     return getStatus();
   }
 
@@ -150,6 +181,20 @@ export async function createDevelopmentSystem(options = {}) {
     }
 
     return studioRunner.submitFinding(finding);
+  }
+
+  function submitWorldFinding(finding) {
+    if (status !== DEVELOPMENT_SYSTEM_STATUS.READY) {
+      throw new Error("The development system is disabled.");
+    }
+    return worldRunner.submitFinding(finding);
+  }
+
+  function submitWorldFindings(findings) {
+    if (status !== DEVELOPMENT_SYSTEM_STATUS.READY) {
+      throw new Error("The development system is disabled.");
+    }
+    return worldRunner.submitFindings(findings);
   }
 
   function submitStudioFindings(findings) {
@@ -166,11 +211,14 @@ export async function createDevelopmentSystem(options = {}) {
     registry,
     director,
     studioRunner,
+    worldRunner,
     getStatus,
     getSnapshot,
     enable,
     disable,
     submitStudioFinding,
-    submitStudioFindings
+    submitStudioFindings,
+    submitWorldFinding,
+    submitWorldFindings
   });
 }

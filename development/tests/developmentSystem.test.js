@@ -23,6 +23,10 @@ import {
 } from "../runners/studio/studioDevelopmentRunner.js";
 
 import {
+  createWorldDevelopmentRunner
+} from "../runners/world/worldDevelopmentRunner.js";
+
+import {
   createDevelopmentSystem,
   DEVELOPMENT_SYSTEM_STATUS
 } from "../engine/developmentSystem.js";
@@ -197,6 +201,81 @@ test("Studio Runner rejects unsupported development areas", async () => {
 });
 
 
+test("World Runner submits protected-layout-aware development tasks", async () => {
+  const director = createDevelopmentDirector();
+  await director.initialize();
+
+  const runner = createWorldDevelopmentRunner({
+    developmentDirector: director
+  });
+
+  const result = await runner.submitFinding({
+    title: "Improve marina water realism",
+    description: "Improve reflections, material detail, and water movement while preserving approved marina geography, docks, camera, and navigation.",
+    area: "water",
+    type: "improvement",
+    severity: "high",
+    acceptanceCriteria: [
+      "Approved marina layout and object positions remain unchanged.",
+      "Existing camera and navigation continue working.",
+      "Water detail improves without excessive real-time lights."
+    ]
+  });
+
+  assert.equal(result.runnerId, "world");
+  assert.equal(result.task.runner, "world");
+  assert.equal(result.task.area, "water");
+  assert.equal(result.task.status, TASK_STATUS.QUEUED);
+  assert.ok(runner.getProfile().preservationRules.length >= 4);
+});
+
+test("World Runner requires owner approval for protected landmarks", async () => {
+  const director = createDevelopmentDirector();
+  await director.initialize();
+
+  const runner = createWorldDevelopmentRunner({
+    developmentDirector: director
+  });
+
+  const result = await runner.submitFinding({
+    title: "Relocate protected marina landmark",
+    description: "Test protected landmark handling.",
+    area: "marina",
+    protectedActions: ["protected_landmarks"]
+  });
+
+  assert.equal(result.policyDecision.requiresApproval, true);
+  assert.equal(result.task.status, TASK_STATUS.PENDING_APPROVAL);
+});
+
+test("World Runner rejects unsupported areas and can be disabled", async () => {
+  const director = createDevelopmentDirector();
+  await director.initialize();
+
+  const runner = createWorldDevelopmentRunner({
+    developmentDirector: director
+  });
+
+  await assert.rejects(
+    () => runner.submitFinding({
+      title: "Unsupported task",
+      description: "This should be rejected.",
+      area: "unsupported_area"
+    }),
+    /Unsupported World area/
+  );
+
+  runner.setEnabled(false);
+  await assert.rejects(
+    () => runner.submitFinding({
+      title: "Disabled task",
+      description: "This should be rejected.",
+      area: "water"
+    }),
+    /disabled/
+  );
+});
+
 test("Development System initializes all modules", async () => {
   const system = await createDevelopmentSystem();
 
@@ -207,9 +286,23 @@ test("Development System initializes all modules", async () => {
     DEVELOPMENT_SYSTEM_STATUS.READY
   );
 
-  assert.equal(snapshot.registry.totalModules, 3);
-  assert.equal(snapshot.registry.enabledModules, 3);
+  assert.equal(snapshot.registry.totalModules, 4);
+  assert.equal(snapshot.registry.enabledModules, 4);
   assert.equal(snapshot.studioRunner.id, "studio");
+  assert.equal(snapshot.worldRunner.id, "world");
+});
+
+
+test("Development System submits world tasks through the world specialist", async () => {
+  const system = await createDevelopmentSystem();
+  const result = await system.submitWorldFinding({
+    title: "Improve waterfront atmosphere",
+    description: "Improve environmental detail while preserving approved positions.",
+    area: "water"
+  });
+  assert.equal(result.runnerId, "world");
+  assert.equal(result.task.runner, "world");
+  assert.equal(result.task.status, TASK_STATUS.QUEUED);
 });
 
 
