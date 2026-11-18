@@ -7,6 +7,7 @@ import {
   validateDevelopmentProposal,
   DEVELOPMENT_PROPOSAL_LIMITS
 } from "../providers/developmentProposalProvider.js";
+import { createDevelopmentSystem } from "../engine/developmentSystem.js";
 
 const allowedPaths = ["development/example"];
 
@@ -167,4 +168,58 @@ test("proposal workspace adapter refuses to run without isolated workspace metho
     }),
     /workspaceAdapter.createWorkspace/
   );
+});
+
+test("Development System can run an explicitly injected proposal provider through isolated workspace review", async () => {
+  const applied = [];
+  const system = await createDevelopmentSystem({
+    worldExecution: {
+      allowedPaths,
+      proposalProvider: {
+        async generateProposal({ task }) {
+          return {
+            summary: `Implement: ${task.title}`,
+            files: [{
+              path: "development/example/generated-world.js",
+              content: "export const generated = true;"
+            }]
+          };
+        }
+      },
+      workspaceAdapter: {
+        async createWorkspace() {
+          return { workspaceId: "system-isolated-1" };
+        },
+        async readWorkspaceContext() {
+          return { files: [] };
+        },
+        async applyProposedFiles(input) {
+          applied.push(...input.files);
+        },
+        async runTests() {
+          return { passed: true, total: 1, failed: 0 };
+        }
+      },
+      reviewStore: {
+        async createReview(input) {
+          return { ...input, id: "review-provider-integration" };
+        }
+      }
+    }
+  });
+
+  const submitted = await system.submitWorldFinding({
+    title: "Generate a scoped world improvement",
+    description: "Create a proposal inside the isolated workspace.",
+    area: "water"
+  });
+  const execution = await system.executeNextWorldTask();
+
+  assert.equal(execution.status, "review");
+  assert.equal(execution.review.id, "review-provider-integration");
+  assert.equal(execution.productionChangesMade, false);
+  assert.equal(applied.length, 1);
+  assert.equal(applied[0].path, "development/example/generated-world.js");
+  assert.equal(system.getSnapshot().proposalProvider.enabled, true);
+  assert.equal(submitted.task.status, "queued");
 });
