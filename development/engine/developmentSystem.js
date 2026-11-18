@@ -18,6 +18,7 @@ import {
   createDevelopmentWorker,
   DEVELOPMENT_WORKER_VERSION
 } from "./developmentWorker.js";
+import { createControlledDevelopmentExecutor } from "../execution/controlledDevelopmentExecutor.js";
 
 export const DEVELOPMENT_SYSTEM_VERSION = "1.1.0";
 
@@ -34,7 +35,10 @@ export async function createDevelopmentSystem(options = {}) {
     workerRunnerIds = [STUDIO_RUNNER_ID],
     workerId = "lambo-city-development-worker",
     maxTasksPerRun = 3,
-    workerEnabled = false
+    workerEnabled = false,
+    workspaceAdapter = null,
+    reviewStore = null,
+    allowedPaths = null
   } = options;
 
   const registry = createDevelopmentRegistry();
@@ -49,9 +53,26 @@ export async function createDevelopmentSystem(options = {}) {
   });
   const policy = getDevelopmentPolicy();
 
-  const worker = workerExecutor
+  const hasExecutionAdapters = workspaceAdapter !== null || reviewStore !== null || allowedPaths !== null;
+  if (workerExecutor && hasExecutionAdapters) {
+    throw new Error("Provide either workerExecutor or workspaceAdapter, reviewStore, and allowedPaths; not both.");
+  }
+  if (hasExecutionAdapters && (!workspaceAdapter || !reviewStore || !Array.isArray(allowedPaths) || allowedPaths.length === 0)) {
+    throw new Error("Controlled execution requires workspaceAdapter, reviewStore, and a non-empty allowedPaths array.");
+  }
+
+  const controlledExecutor = workerExecutor || (hasExecutionAdapters
+    ? createControlledDevelopmentExecutor({
+        developmentDirector: director,
+        workspaceAdapter,
+        reviewStore,
+        allowedPaths
+      })
+    : null);
+
+  const worker = controlledExecutor
     ? createDevelopmentWorker({
-        executor: workerExecutor,
+        executor: controlledExecutor,
         runnerIds: workerRunnerIds,
         workerId,
         maxTasksPerRun,
