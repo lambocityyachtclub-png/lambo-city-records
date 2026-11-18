@@ -7,7 +7,7 @@ export const config = {
 
 export default async function handler(req, res) {
   try {
-    return toNodeHandler(getAliveOwnerAuth().handler)(req, res);
+    return await toNodeHandler(getAliveOwnerAuth().handler)(req, res);
   } catch (error) {
     res.statusCode = 503;
     res.setHeader("Content-Type", "application/json; charset=utf-8");
