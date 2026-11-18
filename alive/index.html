@@ -41,6 +41,17 @@
         <p class="notice">If you lose access to this iPad, use your private owner email to request a fresh one-time sign-in link. Keep that email account protected with its own strong password and two-factor security.</p>
       </section>
       <section class="panel">
+        <div class="section-heading"><div><p class="eyebrow">01 / DIRECTION</p><h2>Give ALIVE a task</h2><p class="muted">The first hosted pilot accepts world-development tasks only. Submitting a task does not execute it.</p></div></div>
+        <form id="task-form" class="task-form">
+          <label>Task title<input name="title" maxlength="120" required placeholder="Example: Improve marina water reflections"></label>
+          <label>World area<select name="area" required><option value="water">Water / Marina</option><option value="stage">Stage / Festival</option><option value="docks">Docks / Boardwalk</option><option value="records_hq">Records HQ</option><option value="world">General world</option></select></label>
+          <label class="full">What should ALIVE do?<textarea name="description" rows="4" maxlength="5000" required placeholder="Describe the result you want. Include what must stay unchanged."></textarea></label>
+          <label class="full">How will we know it is right? (optional)<textarea name="acceptanceCriteria" rows="2" maxlength="2000" placeholder="Visual or functional acceptance criteria"></textarea></label>
+          <div class="form-footer"><label class="checkline"><input name="requiresApproval" type="checkbox" checked> Require owner approval before execution</label><button class="primary" type="submit">Submit direction</button></div>
+        </form>
+        <p class="notice" id="task-message" role="status" aria-live="polite"></p>
+      </section>
+      <section class="panel">
         <div class="section-heading"><div><p class="eyebrow">02 / DEVELOPMENT QUEUE</p><h2>Task activity</h2><p class="muted">Review the current state of submitted work. A run uses OpenAI and an isolated sandbox and may incur charges.</p></div><button class="primary" id="run-button" type="button" disabled>Run next approved task</button></div><p class="notice" id="run-message" role="status" aria-live="polite">Execution is unavailable until all required Preview services are configured and enabled.</p>
         <div id="tasks-list" class="stack"><p class="muted">Connect to load tasks.</p></div>
       </section>
