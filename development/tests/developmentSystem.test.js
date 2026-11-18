@@ -489,3 +489,101 @@ test("Development System executes one world task through isolated adapters and q
     TASK_STATUS.REVIEW
   );
 });
+
+
+test("Owner PERFECT records an approved reference without publishing production", async () => {
+  const { mkdtemp, rm } = await import("node:fs/promises");
+  const os = await import("node:os");
+  const path = await import("node:path");
+  const { createDevelopmentReviewStorage } = await import("../storage/developmentReviewStorage.js");
+  const directory = await mkdtemp(path.join(os.tmpdir(), "alive-perfect-review-"));
+
+  try {
+    const reviewStore = createDevelopmentReviewStorage({ storageDirectory: directory });
+    const system = await createDevelopmentSystem({
+      worldExecution: {
+        allowedPaths: ["development/example"],
+        workspaceAdapter: {
+          async createWorkspace() { return { workspaceId: "perfect-workspace" }; },
+          async prepareChanges() {
+            return { changedFiles: ["development/example/world.js"], changes: "Approved world detail." };
+          },
+          async runTests() { return { passed: true, total: 3, failed: 0 }; }
+        },
+        reviewStore
+      }
+    });
+
+    const submitted = await system.submitWorldFinding({
+      title: "Improve waterfront detail",
+      description: "Improve detail without moving approved objects.",
+      area: "water"
+    });
+    const execution = await system.executeNextWorldTask();
+    const result = await system.markWorldReviewPerfect({
+      taskId: submitted.task.id,
+      reviewId: execution.review.id,
+      ownerNote: "PERFECT — preserve this visual standard."
+    });
+
+    assert.equal(result.feedback, "perfect");
+    assert.equal(result.task.status, TASK_STATUS.COMPLETED);
+    assert.equal(result.review.status, "approved");
+    assert.equal(result.productionChangesMade, false);
+    assert.equal(result.task.result.ownerFeedback.type, "perfect");
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("Owner CHANGE records revision instructions and safely requeues the task", async () => {
+  const { mkdtemp, rm } = await import("node:fs/promises");
+  const os = await import("node:os");
+  const path = await import("node:path");
+  const { createDevelopmentReviewStorage } = await import("../storage/developmentReviewStorage.js");
+  const directory = await mkdtemp(path.join(os.tmpdir(), "alive-change-review-"));
+
+  try {
+    const reviewStore = createDevelopmentReviewStorage({ storageDirectory: directory });
+    const system = await createDevelopmentSystem({
+      worldExecution: {
+        allowedPaths: ["development/example"],
+        workspaceAdapter: {
+          async createWorkspace() { return { workspaceId: "change-workspace" }; },
+          async prepareChanges() {
+            return { changedFiles: ["development/example/world.js"], changes: "First proposal." };
+          },
+          async runTests() { return { passed: true, total: 3, failed: 0 }; }
+        },
+        reviewStore
+      }
+    });
+
+    const submitted = await system.submitWorldFinding({
+      title: "Improve marina reflections",
+      description: "Improve reflections while preserving marina layout.",
+      area: "water"
+    });
+    const execution = await system.executeNextWorldTask();
+    const result = await system.requestWorldReviewChanges({
+      taskId: submitted.task.id,
+      reviewId: execution.review.id,
+      ownerNote: "CHANGE — reduce the reflection intensity and preserve the existing horizon."
+    });
+
+    assert.equal(result.feedback, "change");
+    assert.equal(result.task.status, TASK_STATUS.QUEUED);
+    assert.equal(result.review.status, "revision_requested");
+    assert.equal(result.task.result.ownerFeedback.type, "change");
+    assert.equal(result.productionChangesMade, false);
+    await assert.rejects(
+      () => system.markWorldReviewPerfect({
+        taskId: submitted.task.id,
+        reviewId: execution.review.id
+      }),
+      /Only tasks awaiting owner review/
+    );
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
