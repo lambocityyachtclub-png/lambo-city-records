@@ -210,14 +210,19 @@ export function createProposalWorkspaceAdapter(options = {}) {
     return {
       changedFiles: validated.files.map(file => file.path),
       changes: validated.summary,
-      proposalBytes: validated.totalBytes
+      proposalBytes: validated.totalBytes,
+      proposalFiles: validated.files.map(file => ({
+        path: file.path,
+        content: file.content
+      }))
     };
   }
 
   return Object.freeze({
     createWorkspace: input => workspaceAdapter.createWorkspace(input),
     prepareChanges,
-    runTests: input => workspaceAdapter.runTests(input)
+    runTests: input => workspaceAdapter.runTests(input),
+    destroyWorkspace: workspaceId => workspaceAdapter.destroyWorkspace?.(workspaceId)
   });
 }
 

@@ -317,6 +317,7 @@ export function createControlledDevelopmentExecutor(options = {}) {
         workspaceId,
         changedFiles,
         changes: proposal.changes || null,
+        proposalFiles: Array.isArray(proposal.proposalFiles) ? proposal.proposalFiles : [],
         testResults,
         status: "awaiting_owner_review",
         productionChangesMade: false,
@@ -365,6 +366,15 @@ export function createControlledDevelopmentExecutor(options = {}) {
         reason: error.message,
         taskUpdated: blocked.updated
       };
+    } finally {
+      if (workspaceId && typeof workspaceAdapter.destroyWorkspace === "function") {
+        try {
+          await workspaceAdapter.destroyWorkspace(workspaceId);
+        } catch (cleanupError) {
+          // Preserve the task/review outcome; report cleanup failure in server logs.
+          console.error("ALIVE isolated workspace cleanup failed:", cleanupError?.message || "unknown error");
+        }
+      }
     }
   }
 

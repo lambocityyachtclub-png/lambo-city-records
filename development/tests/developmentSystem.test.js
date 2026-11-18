@@ -432,7 +432,7 @@ test("Development System keeps world execution disabled without explicit adapter
 
 test("Development System executes one world task through isolated adapters and queues owner review", async () => {
   const reviews = [];
-  const calls = { create: 0, prepare: 0, tests: 0 };
+  const calls = { create: 0, prepare: 0, tests: 0, destroy: 0 };
 
   const system = await createDevelopmentSystem({
     worldExecution: {
@@ -452,6 +452,10 @@ test("Development System executes one world task through isolated adapters and q
         async runTests() {
           calls.tests += 1;
           return { passed: true, total: 4, failed: 0 };
+        },
+        async destroyWorkspace() {
+          calls.destroy += 1;
+          return { destroyed: true };
         }
       },
       reviewStore: {
@@ -483,7 +487,7 @@ test("Development System executes one world task through isolated adapters and q
   assert.deepEqual(result.changedFiles, ["development/example/water.js"]);
   assert.equal(reviews.length, 1);
   assert.equal(reviews[0].status, "awaiting_owner_review");
-  assert.deepEqual(calls, { create: 1, prepare: 1, tests: 1 });
+  assert.deepEqual(calls, { create: 1, prepare: 1, tests: 1, destroy: 1 });
   assert.equal(
     system.director.getTask(submitted.task.id).status,
     TASK_STATUS.REVIEW
