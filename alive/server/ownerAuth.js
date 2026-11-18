@@ -64,6 +64,7 @@ export function getAliveOwnerAuth() {
   auth = betterAuth({
     appName: "LAMBO CITY ALIVE Owner",
     baseURL,
+    basePath: "/api/alive/auth",
     secret,
     trustedOrigins: [
       baseURL,
