@@ -37,3 +37,20 @@ test("owner task intake sends acceptance criteria as a list", () => {
   assert.match(script, /split\(\/\\r\?\\n\//);
   assert.match(script, /acceptanceCriteria:criteria/);
 });
+
+test("owner recovery uses authenticator verification and one-time backup codes", () => {
+  assert.match(script, /twoFactorClient/);
+  assert.match(script, /twoFactor\.enable/);
+  assert.match(script, /verifyTotp/);
+  assert.match(script, /verifyBackupCode/);
+  assert.match(script, /copy-recovery-codes/);
+  assert.match(html, /One-time backup code/);
+  assert.match(html, /Set up authenticator and backup codes/);
+});
+
+test("owner recovery schema is isolated from player account tables", async () => {
+  const migration = await fs.readFile(new URL("../storage/migrations/002_alive_owner_auth.sql", import.meta.url), "utf8");
+  assert.match(migration, /alive_owner_two_factor/);
+  assert.match(migration, /alive_owner_user/);
+  assert.doesNotMatch(migration, /CREATE TABLE IF NOT EXISTS player_/);
+});
