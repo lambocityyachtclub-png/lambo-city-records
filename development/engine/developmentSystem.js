@@ -21,6 +21,10 @@ import {
 } from "../execution/controlledDevelopmentExecutor.js";
 
 import {
+  createOwnerReviewFeedback
+} from "./ownerReviewFeedback.js";
+
+import {
   createDevelopmentRegistry,
   MODULE_TYPES
 } from "./developmentRegistry.js";
@@ -85,6 +89,13 @@ export async function createDevelopmentSystem(options = {}) {
         workspaceAdapter: worldExecution.workspaceAdapter,
         reviewStore: worldExecution.reviewStore,
         allowedPaths: worldExecution.allowedPaths
+      })
+    : null;
+
+  const ownerReviewFeedback = worldExecution?.reviewStore?.requestRevision
+    ? createOwnerReviewFeedback({
+        developmentDirector: director,
+        reviewStore: worldExecution.reviewStore
       })
     : null;
 
@@ -205,6 +216,20 @@ export async function createDevelopmentSystem(options = {}) {
     });
   }
 
+  async function markWorldReviewPerfect(input = {}) {
+    if (!ownerReviewFeedback) {
+      throw new Error("Owner review feedback is not configured with a persistent review store.");
+    }
+    return ownerReviewFeedback.markPerfect(input);
+  }
+
+  async function requestWorldReviewChanges(input = {}) {
+    if (!ownerReviewFeedback) {
+      throw new Error("Owner review feedback is not configured with a persistent review store.");
+    }
+    return ownerReviewFeedback.requestChange(input);
+  }
+
   function submitStudioFinding(finding) {
     if (status !== DEVELOPMENT_SYSTEM_STATUS.READY) {
       throw new Error(
@@ -253,6 +278,8 @@ export async function createDevelopmentSystem(options = {}) {
     submitStudioFindings,
     submitWorldFinding,
     submitWorldFindings,
-    executeNextWorldTask
+    executeNextWorldTask,
+    markWorldReviewPerfect,
+    requestWorldReviewChanges
   });
 }
