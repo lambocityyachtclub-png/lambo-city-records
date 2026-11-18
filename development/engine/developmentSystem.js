@@ -62,7 +62,7 @@ export async function createDevelopmentSystem(options = {}) {
     developmentDirector: director
   });
 
-  const policy = getDevelopmentPolicy();
+  const policy = getDevelopmentPolicy();\n\n  const worker = workerExecutor\n    ? createDevelopmentWorker({\n        executor: workerExecutor,\n        runnerIds: workerRunnerIds,\n        workerId,\n        maxTasksPerRun,\n        enabled: workerEnabled\n      })\n    : null;
 
   registry.registerModule({
     id: "development-policy",
@@ -113,7 +113,7 @@ export async function createDevelopmentSystem(options = {}) {
       "Organizes development findings for LAMBO CITY Studio."
   });
 
-  let status = DEVELOPMENT_SYSTEM_STATUS.READY;
+  if (worker) {\n    registry.registerModule({\n      id: "development-worker",\n      name: "Development Worker",\n      type: MODULE_TYPES.SERVICE,\n      version: DEVELOPMENT_WORKER_VERSION,\n      path: "development/engine/developmentWorker.js",\n      enabled: workerEnabled,\n      capabilities: ["bounded-task-processing", "specialist-runner-dispatch", "one-shot-invocation"],\n      description: "Processes a bounded batch only through an explicitly injected controlled executor."\n    });\n  }\n\n  let status = DEVELOPMENT_SYSTEM_STATUS.READY;
 
   function getStatus() {
     return status;
@@ -142,7 +142,7 @@ export async function createDevelopmentSystem(options = {}) {
     return getStatus();
   }
 
-  function submitStudioFinding(finding) {
+  async function runWorkerOnce() {\n    if (status !== DEVELOPMENT_SYSTEM_STATUS.READY) {\n      return { started: false, reason: "Development system is disabled.", processed: 0, results: [] };\n    }\n    if (!worker) {\n      return { started: false, reason: "No controlled development executor is configured.", processed: 0, results: [] };\n    }\n    return worker.runOnce();\n  }\n\n  function submitStudioFinding(finding) {
     if (status !== DEVELOPMENT_SYSTEM_STATUS.READY) {
       throw new Error(
         "The development system is disabled."
