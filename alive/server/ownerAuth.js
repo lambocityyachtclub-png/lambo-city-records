@@ -1,5 +1,6 @@
 import { betterAuth } from "better-auth";
 import { passkey } from "@better-auth/passkey";
+import { twoFactor } from "better-auth/plugins";
 import { Pool } from "pg";
 
 let pool;
@@ -107,6 +108,11 @@ export function getAliveOwnerAuth() {
       }
     },
     plugins: [
+      twoFactor({
+        issuer: "LAMBO CITY ALIVE",
+        twoFactorTable: "alive_owner_two_factor",
+        backupCodeOptions: { amount: 10, length: 12 }
+      }),
       passkey({
         rpID,
         rpName: "LAMBO CITY ALIVE Owner",
