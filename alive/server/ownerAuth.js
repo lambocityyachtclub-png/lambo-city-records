@@ -75,6 +75,8 @@ export function getAliveOwnerAuth() {
     verification: { modelName: "alive_owner_verification" },
     emailAndPassword: {
       enabled: true,
+      minPasswordLength: 12,
+      maxPasswordLength: 128,
       requireEmailVerification: true,
       revokeSessionsOnPasswordReset: true,
       sendResetPassword: async ({ user, url }) => sendOwnerEmail({
