@@ -25,6 +25,11 @@ import {
 } from "./ownerReviewFeedback.js";
 
 import {
+  createDevelopmentProposalProvider,
+  createProposalWorkspaceAdapter
+} from "../providers/developmentProposalProvider.js";
+
+import {
   createDevelopmentRegistry,
   MODULE_TYPES
 } from "./developmentRegistry.js";
@@ -82,11 +87,23 @@ export async function createDevelopmentSystem(options = {}) {
   });
 
   // Execution is opt-in and requires explicit isolated workspace,
-  // review storage, and path allowlist adapters from the host.
+  // review storage, and path allowlist adapters from the host. A provider
+  // is optional and must be explicitly injected by the host.
+  const configuredWorkspaceAdapter = worldExecution?.proposalProvider
+    ? createProposalWorkspaceAdapter({
+        workspaceAdapter: worldExecution.workspaceAdapter,
+        proposalProvider: createDevelopmentProposalProvider({
+          provider: worldExecution.proposalProvider,
+          allowedPaths: worldExecution.allowedPaths
+        }),
+        allowedPaths: worldExecution.allowedPaths
+      })
+    : worldExecution?.workspaceAdapter || null;
+
   const worldExecutor = worldExecution
     ? createControlledDevelopmentExecutor({
         developmentDirector: director,
-        workspaceAdapter: worldExecution.workspaceAdapter,
+        workspaceAdapter: configuredWorkspaceAdapter,
         reviewStore: worldExecution.reviewStore,
         allowedPaths: worldExecution.allowedPaths
       })
@@ -185,6 +202,9 @@ export async function createDevelopmentSystem(options = {}) {
       worldExecutor: worldExecutor
         ? { enabled: true, allowedPaths: worldExecutor.getAllowedPaths() }
         : { enabled: false, reason: "Explicit execution adapters are not configured." },
+      proposalProvider: worldExecution?.proposalProvider
+        ? { enabled: true, mode: "injected_vendor_neutral_adapter" }
+        : { enabled: false, reason: "No proposal provider has been explicitly configured." },
       policy
     };
   }
