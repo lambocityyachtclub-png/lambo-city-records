@@ -31,4 +31,4 @@ Do not place passwords, API keys, or generated secrets in GitHub files or ChatGP
 7. Only after successful tests, remove the legacy ALIVE_REVIEW_TOKEN configuration from the Preview environment.
 
 ## Not yet included
-This PR does not apply the database migration, configure Vercel secrets, configure Resend, create the owner's account, merge code, or deploy production. Independent encrypted offsite backups and a tested restore remain a separate required milestone.
+This PR does not apply the database migration, configure Vercel secrets, configure Resend, create the owner's account, or register a passkey. One-time owner backup codes are a follow-on recovery task. Independent encrypted offsite backups and a tested restore remain a separate required milestone. No code is merged or deployed to production.
