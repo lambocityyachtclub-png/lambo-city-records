@@ -116,11 +116,64 @@
   let clips = [];
   let playing = false;
   let wireframe = false;
-  let currentUrl = null;
+  let loadSequence = 0;
   const clock = new THREE.Clock();
   const $ = id => document.getElementById(id);
   const fmt = n => Number.isFinite(n) ? n.toFixed(3) + " units" : "—";
   const setStatus = (id, text, kind) => { $(id).textContent = text; $(id).className = "status " + kind; };
+
+  function disposeModel(root) {
+    if (!root) return;
+    const geometries = new Set();
+    const materials = new Set();
+    const textures = new Set();
+    const skeletons = new Set();
+    root.traverse(object => {
+      if (object.geometry) geometries.add(object.geometry);
+      if (object.skeleton) skeletons.add(object.skeleton);
+      const list = Array.isArray(object.material) ? object.material : object.material ? [object.material] : [];
+      for (const material of list) {
+        materials.add(material);
+        for (const value of Object.values(material)) {
+          if (value && value.isTexture) textures.add(value);
+        }
+        if (material.uniforms) {
+          for (const uniform of Object.values(material.uniforms)) {
+            const value = uniform?.value;
+            if (value?.isTexture) textures.add(value);
+            else if (Array.isArray(value)) value.forEach(item => { if (item?.isTexture) textures.add(item); });
+          }
+        }
+      }
+    });
+    for (const texture of textures) texture.dispose();
+    for (const material of materials) material.dispose();
+    for (const geometry of geometries) geometry.dispose();
+    for (const skeleton of skeletons) skeleton.dispose();
+    root.removeFromParent();
+  }
+
+  function clearCurrentModel() {
+    if (mixer && currentRoot) {
+      mixer.stopAllAction();
+      mixer.uncacheRoot(currentRoot);
+    }
+    mixer = null;
+    clips = [];
+    playing = false;
+    $("play").disabled = true;
+    $("play").textContent = "Play animation";
+    if (currentRoot) disposeModel(currentRoot);
+    currentRoot = null;
+  }
+
+  function clearInspection() {
+    for (const id of ["height", "feet", "centerX", "centerZ", "skins", "clips"]) $(id).textContent = "—";
+    $("details").textContent = "Waiting for a GLB file.";
+    setStatus("technicalStatus", "No model inspected yet.", "warn");
+    setStatus("visualStatus", "Visual review is not complete.", "warn");
+    document.querySelectorAll(".visual").forEach(input => { input.checked = false; });
+  }
 
   function resetView(box) {
     const size = box.getSize(new THREE.Vector3());
@@ -169,13 +222,19 @@
   $("file").addEventListener("change", async event => {
     const file = event.target.files?.[0];
     if (!file) return;
+    const requestId = ++loadSequence;
+    const objectUrl = URL.createObjectURL(file);
     setStatus("loadStatus", "Loading " + file.name + " locally…", "warn");
-    if (currentUrl) URL.revokeObjectURL(currentUrl);
-    currentUrl = URL.createObjectURL(file);
+    clearInspection();
     try {
       const loader = new GLTFLoader();
-      const gltf = await loader.loadAsync(currentUrl);
-      if (currentRoot) scene.remove(currentRoot);
+      const gltf = await loader.loadAsync(objectUrl);
+      URL.revokeObjectURL(objectUrl);
+      if (requestId !== loadSequence) {
+        disposeModel(gltf.scene);
+        return;
+      }
+      clearCurrentModel();
       currentRoot = gltf.scene;
       scene.add(currentRoot);
       clips = gltf.animations || [];
@@ -186,6 +245,8 @@
       inspect(currentRoot, gltf);
       setStatus("loadStatus", "Loaded " + file.name + " (" + (file.size / 1048576).toFixed(2) + " MB). File remains local to this browser tab.", "good");
     } catch (error) {
+      URL.revokeObjectURL(objectUrl);
+      if (requestId !== loadSequence) return;
       setStatus("loadStatus", "Could not load GLB: " + error.message, "bad");
       setStatus("technicalStatus", "No technical result; file could not be loaded.", "bad");
     }
