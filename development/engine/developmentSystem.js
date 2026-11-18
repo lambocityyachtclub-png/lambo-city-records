@@ -196,7 +196,6 @@ export async function createDevelopmentSystem(options = {}) {
     registry,
     director,
     studioRunner,
-    worker,
     getStatus,
     getSnapshot,
     enable,
