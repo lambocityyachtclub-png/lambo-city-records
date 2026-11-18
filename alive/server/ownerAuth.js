@@ -1,6 +1,6 @@
 import { betterAuth } from "better-auth";
 import { passkey } from "@better-auth/passkey";
-import { twoFactor } from "better-auth/plugins";
+import { magicLink } from "better-auth/plugins";
 import { Pool } from "pg";
 
 let pool;
@@ -75,29 +75,6 @@ export function getAliveOwnerAuth() {
     user: { modelName: "alive_owner_user" },
     account: { modelName: "alive_owner_account" },
     verification: { modelName: "alive_owner_verification" },
-    emailAndPassword: {
-      enabled: true,
-      minPasswordLength: 12,
-      maxPasswordLength: 128,
-      requireEmailVerification: true,
-      revokeSessionsOnPasswordReset: true,
-      sendResetPassword: async ({ user, url }) => sendOwnerEmail({
-        to: user.email,
-        subject: "Reset your ALIVE owner password",
-        heading: "Reset your owner password",
-        url
-      })
-    },
-    emailVerification: {
-      sendVerificationEmail: async ({ user, url }) => sendOwnerEmail({
-        to: user.email,
-        subject: "Verify your ALIVE owner account",
-        heading: "Verify your owner email",
-        url
-      }),
-      sendOnSignUp: true,
-      autoSignInAfterVerification: true
-    },
     databaseHooks: {
       user: {
         create: {
@@ -109,10 +86,20 @@ export function getAliveOwnerAuth() {
       }
     },
     plugins: [
-      twoFactor({
-        issuer: "LAMBO CITY ALIVE",
-        twoFactorTable: "alive_owner_two_factor",
-        backupCodeOptions: { amount: 10, length: 12 }
+      magicLink({
+        expiresIn: 600,
+        storeToken: "hashed",
+        sendMagicLink: async ({ email, url }) => {
+          if (String(email || "").trim().toLowerCase() !== ownerEmail) {
+            throw new Error("This email is not authorized for ALIVE owner access.");
+          }
+          await sendOwnerEmail({
+            to: ownerEmail,
+            subject: "Your secure ALIVE owner sign-in link",
+            heading: "Continue to your ALIVE owner console",
+            url
+          });
+        }
       }),
       passkey({
         rpID,
