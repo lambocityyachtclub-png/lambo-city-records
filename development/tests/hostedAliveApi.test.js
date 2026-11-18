@@ -52,7 +52,7 @@ test("ALIVE status exposes configuration state but never secrets", async () => {
   await handler(makeRequest({ token }), response);
   assert.equal(response.statusCode, 200);
   assert.equal(response.body.openAIConfigured, true);
-  assert.equal(response.body.worldExecutionReady, false);
+  assert.equal(response.body.executionConfigured, false);
   assert.doesNotMatch(JSON.stringify(response.body), /private-openai-key-value|postgres:\/\/|owner-secret/);
 });
 
@@ -172,4 +172,33 @@ test("ALIVE review endpoint records PERFECT or CHANGE through the owner feedback
   assert.equal(change.statusCode, 200);
   assert.equal(change.body.result.feedback, "change");
   assert.deepEqual(decisions.map(item => item.type), ["perfect", "change"]);
+});
+
+
+test("ALIVE owner can approve a protected task before the one-shot worker claims it", async () => {
+  const token = "owner-secret-".padEnd(40, "x");
+  let approved = null;
+  const handler = createAliveApiHandler({
+    env: { ALIVE_REVIEW_TOKEN: token },
+    withSystem: async (options, callback) => callback({
+      system: {
+        director: {
+          async approveTask(taskId, approvedBy) {
+            approved = { taskId, approvedBy };
+            return { id: taskId, status: "queued" };
+          }
+        }
+      }
+    })
+  });
+  const response = makeResponse();
+  await handler(makeRequest({
+    method: "POST",
+    action: "tasks",
+    token,
+    body: { action: "approve", taskId: "protected-task-1" }
+  }), response);
+  assert.equal(response.statusCode, 200);
+  assert.deepEqual(approved, { taskId: "protected-task-1", approvedBy: "owner" });
+  assert.equal(response.body.task.status, "queued");
 });

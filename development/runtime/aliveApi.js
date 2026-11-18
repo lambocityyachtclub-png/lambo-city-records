@@ -96,11 +96,17 @@ export function createAliveApiHandler(options = {}) {
       try { body = readBody(req); }
       catch (error) { return send(res, 413, { error: error.message }); }
       try {
-        if (body.runner && body.runner !== "world") {
-          return send(res, 400, { error: "The first hosted executor pilot supports world tasks only." });
-        }
-        const result = await withSystem({ execution: false }, async ({ system }) =>
-          system.submitWorldFinding({
+        const result = await withSystem({ execution: false }, async ({ system }) => {
+          if (body.action === "approve") {
+            return { task: await system.director.approveTask(body.taskId, "owner"), approval: "approved" };
+          }
+          if (body.action === "reject") {
+            return { task: await system.director.rejectTask(body.taskId, body.reason), approval: "rejected" };
+          }
+          if (body.runner && body.runner !== "world") {
+            throw new Error("The first hosted executor pilot supports world tasks only.");
+          }
+          return system.submitWorldFinding({
             title: body.title,
             description: body.description,
             area: body.area,
@@ -110,9 +116,13 @@ export function createAliveApiHandler(options = {}) {
             filePaths: body.filePaths,
             protectedActions: body.protectedActions,
             requiresApproval: body.requiresApproval === true
-          })
-        );
-        return send(res, 201, { task: result.task, policyDecision: result.policyDecision });
+          });
+        });
+        return send(res, result.approval ? 200 : 201, {
+          task: result.task,
+          policyDecision: result.policyDecision,
+          approval: result.approval || null
+        });
       } catch (error) {
         return send(res, validationStatus(error), { error: error.message || "Unable to create ALIVE task." });
       }

@@ -11,7 +11,7 @@ The token is compared in constant time and is never returned by the API.
 
 - GET /api/alive/status — reports configuration booleans only.
 - GET /api/alive/tasks — lists durable task records.
-- POST /api/alive/tasks — creates a world-development task; it does not execute it.
+- POST /api/alive/tasks — creates a world-development task; it does not execute it. The same endpoint accepts action `approve` or `reject` for protected tasks.
 - POST /api/alive/run — attempts one queued world task.
 - GET /api/alive/reviews — lists owner reviews.
 - POST /api/alive/reviews — records decision "perfect" or "change".
