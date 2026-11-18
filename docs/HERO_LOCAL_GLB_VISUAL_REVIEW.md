@@ -32,3 +32,7 @@ This is a review aid, not a complete certification:
 - iPad-class performance, memory use, animation playback, and in-game regression still need hands-on testing.
 
 Do not replace the existing procedural HERO until the actual asset passes the automated checks, owner visual review, animation review, and desktop/iPad runtime tests.
+
+## Resource and load safety
+
+When a new candidate replaces the currently displayed model, the review page stops and uncaches its animation mixer and disposes the previous model's unique geometries, materials, textures, and skeletons. Concurrent file selections are guarded so a slower earlier load cannot replace a newer selection; stale completed loads are disposed. Starting a new review clears prior measurements and visual checklist marks so results cannot be accidentally carried over between candidates.
