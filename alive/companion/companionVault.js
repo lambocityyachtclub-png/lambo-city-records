@@ -2,6 +2,8 @@ import { randomUUID } from "node:crypto";
 
 const MEMORY_CONTENT_LIMIT = 4000;
 const MEMORY_TAG_LIMIT = 12;
+const MEMORY_COLLECTION_LIMIT = 500;
+const PREFERENCE_COLLECTION_LIMIT = 200;
 const PREFERENCE_VALUE_LIMIT = 4096;
 const ID_LIMIT = 128;
 
@@ -113,7 +115,10 @@ function validateMemoryRecord(record, ownerId, identityId) {
       typeof record.category !== "string" || !/^[a-z][a-z0-9-]{0,31}$/.test(record.category) ||
       typeof record.content !== "string" || !record.content.trim() ||
       record.content.length > MEMORY_CONTENT_LIMIT ||
-      !Array.isArray(record.tags) ||
+      !Array.isArray(record.tags) || record.tags.length > MEMORY_TAG_LIMIT ||
+      record.tags.some(tag => typeof tag !== "string" || !tag.trim() || tag.length > 48) ||
+      typeof record.createdAt !== "string" || !record.createdAt ||
+      typeof record.updatedAt !== "string" || !record.updatedAt ||
       record.privacy?.visibility !== "private" ||
       record.privacy?.trainingUse !== false ||
       record.privacy?.crossWorldSharing !== false) {
@@ -141,7 +146,10 @@ function validatePreferenceRecord(record, ownerId, identityId) {
   if (!record || typeof record !== "object" || Array.isArray(record) ||
       record.ownerId !== ownerId || record.identityId !== identityId ||
       typeof record.key !== "string" || !/^[a-z][a-z0-9._-]{0,63}$/i.test(record.key) ||
-      typeof record.updatedAt !== "string") {
+      typeof record.updatedAt !== "string" || !record.updatedAt ||
+      record.privacy?.visibility !== "private" ||
+      record.privacy?.trainingUse !== false ||
+      record.privacy?.crossWorldSharing !== false) {
     throw vaultError("The stored preference did not satisfy the owner-private record contract.", "ALIVE_VAULT_RECORD_INVALID");
   }
   const value = cloneJson(record.value, PREFERENCE_VALUE_LIMIT, "Preference value");
@@ -188,6 +196,9 @@ export function createCompanionVault({
 } = {}) {
   const identities = requireIdentityService(identityService);
   const store = requireRepository(repository);
+  if (typeof now !== "function" || typeof createId !== "function") {
+    throw new TypeError("Companion vault now() and createId() must be functions.");
+  }
 
   async function authorize(actorValue, identityValue) {
     const actorId = requireActor(actorValue);
@@ -234,8 +245,8 @@ export function createCompanionVault({
         identityId: owner.identityId,
         ownerId: owner.actorId
       });
-      if (!Array.isArray(records)) {
-        throw vaultError("The memory repository returned an invalid collection.", "ALIVE_VAULT_RECORD_INVALID");
+      if (!Array.isArray(records) || records.length > MEMORY_COLLECTION_LIMIT) {
+        throw vaultError("The memory repository returned an invalid or oversized collection.", "ALIVE_VAULT_RECORD_INVALID");
       }
       const memories = records.map(record => validateMemoryRecord(record, owner.actorId, owner.identityId));
       const ids = new Set();
@@ -290,8 +301,8 @@ export function createCompanionVault({
         identityId: owner.identityId,
         ownerId: owner.actorId
       });
-      if (!Array.isArray(records)) {
-        throw vaultError("The preference repository returned an invalid collection.", "ALIVE_VAULT_RECORD_INVALID");
+      if (!Array.isArray(records) || records.length > PREFERENCE_COLLECTION_LIMIT) {
+        throw vaultError("The preference repository returned an invalid or oversized collection.", "ALIVE_VAULT_RECORD_INVALID");
       }
       const preferences = records.map(record => validatePreferenceRecord(record, owner.actorId, owner.identityId));
       const keys = new Set();
