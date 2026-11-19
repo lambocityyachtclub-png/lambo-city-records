@@ -368,3 +368,79 @@ test("vault requires a complete persistence adapter", () => {
     /must implement listMemories/
   );
 });
+
+
+test("vault rejects oversized collections and duplicate repository identities", async () => {
+  const { vault, repository } = await setup();
+  repository.listMemories = async () => Array.from({ length: 501 }, () => null);
+  await assert.rejects(
+    vault.listMemories({ actorId: OWNER_ID, identityId: IDENTITY_ID }),
+    error => error.code === "ALIVE_VAULT_RECORD_INVALID"
+  );
+
+  repository.listPreferences = async () => Array.from({ length: 201 }, () => null);
+  await assert.rejects(
+    vault.getPreferences({ actorId: OWNER_ID, identityId: IDENTITY_ID }),
+    error => error.code === "ALIVE_VAULT_RECORD_INVALID"
+  );
+
+  repository.listMemories = async () => [
+    {
+      memoryId: "duplicate",
+      identityId: IDENTITY_ID,
+      ownerId: OWNER_ID,
+      createdBy: OWNER_ID,
+      category: "note",
+      content: "One",
+      tags: [],
+      createdAt: "2026-11-19T00:00:00.000Z",
+      updatedAt: "2026-11-19T00:00:00.000Z",
+      privacy: { visibility: "private", trainingUse: false, crossWorldSharing: false }
+    },
+    {
+      memoryId: "duplicate",
+      identityId: IDENTITY_ID,
+      ownerId: OWNER_ID,
+      createdBy: OWNER_ID,
+      category: "note",
+      content: "Two",
+      tags: [],
+      createdAt: "2026-11-19T00:00:00.000Z",
+      updatedAt: "2026-11-19T00:00:00.000Z",
+      privacy: { visibility: "private", trainingUse: false, crossWorldSharing: false }
+    }
+  ];
+  await assert.rejects(
+    vault.listMemories({ actorId: OWNER_ID, identityId: IDENTITY_ID }),
+    error => error.code === "ALIVE_VAULT_REPOSITORY_CONFLICT"
+  );
+});
+
+test("vault rejects preference rows that weaken private data guarantees", async () => {
+  const { vault, repository } = await setup();
+  repository.listPreferences = async () => [{
+    identityId: IDENTITY_ID,
+    ownerId: OWNER_ID,
+    key: "theme",
+    value: "dark",
+    updatedAt: "2026-11-19T00:00:00.000Z",
+    privacy: { visibility: "public", trainingUse: true, crossWorldSharing: true }
+  }];
+  await assert.rejects(
+    vault.getPreferences({ actorId: OWNER_ID, identityId: IDENTITY_ID }),
+    error => error.code === "ALIVE_VAULT_RECORD_INVALID"
+  );
+});
+
+test("vault requires deterministic ID and clock adapters to be callable", () => {
+  const identityService = { get() {} };
+  const repository = makeVaultRepository();
+  assert.throws(
+    () => createCompanionVault({ identityService, repository, now: "not-a-function" }),
+    /must be functions/
+  );
+  assert.throws(
+    () => createCompanionVault({ identityService, repository, createId: null }),
+    /must be functions/
+  );
+});
