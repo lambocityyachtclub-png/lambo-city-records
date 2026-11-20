@@ -7,3 +7,5 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.shell{width:min
 @media(max-width:680px){.shell{width:min(100% - 24px,1040px)}.topbar{height:60px}.topbar-right{font-size:8px}.hero{padding:34px 0 22px}.panel{padding:17px;border-radius:13px}.auth-panel{grid-template-columns:1fr}.task-form{grid-template-columns:1fr}.task-form .full,.form-footer{grid-column:1}.status-strip{grid-template-columns:1fr}.status-actions{grid-row:2}.status-grid{grid-template-columns:repeat(2,1fr)}.form-footer{align-items:stretch}.form-footer .primary{width:100%}}
 
 .totp-qr{width:220px;height:220px;max-width:100%;background:#fff;padding:10px;border-radius:12px;display:block;margin:12px 0;object-fit:contain}
+
+.task-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}.task-actions button{min-width:110px}
