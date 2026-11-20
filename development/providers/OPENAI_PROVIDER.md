@@ -57,3 +57,7 @@ each task; do not copy it blindly into production.
 Tests use mocked HTTP responses. They verify request shape, structured
 output parsing, missing credentials, refusal/incomplete responses, API
 errors, and input-size bounds. No billable OpenAI request is made.
+
+## Model and cost control
+
+The default model is `gpt-6.1-sol` for a more economical balance on routine development proposals. The owner may set `OPENAI_MODEL` to a stronger model such as `gpt-6-astra` for unusually difficult tasks, after reviewing current API pricing. Keep `ALIVE_AI_ENABLED=false` until the owner has configured API budgets and explicitly approved usage. The provider never stores Responses (`store:false`) and does not run until the server-side API key and execution switches are configured.
