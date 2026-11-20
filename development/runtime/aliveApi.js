@@ -131,7 +131,7 @@ export function createAliveApiHandler(options = {}) {
         return send(res, 503, { error: "OpenAI and isolated sandbox execution are not enabled. No task was run." });
       }
       try {
-        const result = await withSystem({ execution: true }, async ({ system }) =>
+        const result = await withSystem({ execution: true, owner }, async ({ system }) =>
           system.executeNextWorldTask()
         );
         return send(res, 200, { result, productionChangesMade: false });
