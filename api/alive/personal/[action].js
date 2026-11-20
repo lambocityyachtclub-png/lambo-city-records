@@ -98,7 +98,8 @@ export default async function alivePersonalAction(req, res) {
         memory: {
           category: body.category,
           content: body.content,
-          tags: body.tags
+          tags: body.tags,
+          privacy: { shareWithDevelopment: body.shareWithDevelopment === true }
         }
       });
       return send(res, 201, { memory });
