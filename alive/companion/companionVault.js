@@ -137,7 +137,8 @@ function validateMemoryRecord(record, ownerId, identityId) {
     privacy: {
       visibility: "private",
       trainingUse: false,
-      crossWorldSharing: false
+      crossWorldSharing: false,
+      shareWithDevelopment: record.privacy?.shareWithDevelopment === true
     }
   });
 }
@@ -233,7 +234,8 @@ export function createCompanionVault({
         privacy: {
           visibility: "private",
           trainingUse: false,
-          crossWorldSharing: false
+          crossWorldSharing: false,
+          shareWithDevelopment: memory.privacy?.shareWithDevelopment === true
         }
       };
       return validateMemoryRecord(await store.insertMemory(record), owner.actorId, owner.identityId);
