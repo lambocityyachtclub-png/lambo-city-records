@@ -23,12 +23,30 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Check owner backup configuration
+        id: readiness
+        env:
+          DATABASE_URL: ${{ secrets.ALIVE_BACKUP_DATABASE_URL }}
+          AGE_RECIPIENT: ${{ secrets.ALIVE_BACKUP_AGE_RECIPIENT }}
+          AWS_ROLE_ARN: ${{ secrets.ALIVE_BACKUP_AWS_ROLE_ARN }}
+          AWS_REGION: ${{ vars.ALIVE_BACKUP_AWS_REGION }}
+          BUCKET: ${{ vars.ALIVE_BACKUP_S3_BUCKET }}
+        run: |
+          if [[ -z "$DATABASE_URL" || -z "$AGE_RECIPIENT" || -z "$AWS_ROLE_ARN" || -z "$AWS_REGION" || -z "$BUCKET" ]]; then
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::ALIVE offsite backup is dormant until the owner configures the documented secrets and variables."
+          else
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Install backup utilities
+        if: steps.readiness.outputs.configured == 'true'
         run: |
           sudo apt-get update
           sudo apt-get install --yes age postgresql-client
 
       - name: Create encrypted source and database backup
+        if: steps.readiness.outputs.configured == 'true'
         env:
           DATABASE_URL: ${{ secrets.ALIVE_BACKUP_DATABASE_URL }}
           AGE_RECIPIENT: ${{ secrets.ALIVE_BACKUP_AGE_RECIPIENT }}
@@ -53,12 +71,14 @@ jobs:
           rm -rf backup-work alive-backup.tar.gz
 
       - name: Configure independent backup storage access
+        if: steps.readiness.outputs.configured == 'true'
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.ALIVE_BACKUP_AWS_ROLE_ARN }}
           aws-region: ${{ vars.ALIVE_BACKUP_AWS_REGION }}
 
       - name: Upload immutable encrypted backup
+        if: steps.readiness.outputs.configured == 'true'
         env:
           BUCKET: ${{ vars.ALIVE_BACKUP_S3_BUCKET }}
         run: |
