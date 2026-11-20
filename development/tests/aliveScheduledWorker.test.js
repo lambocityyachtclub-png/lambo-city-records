@@ -114,3 +114,16 @@ test("scheduled worker does not reveal internal execution errors", async () => {
   assert.equal(res.statusCode, 503);
   assert.doesNotMatch(JSON.stringify(res.body), /private database credential details/);
 });
+
+test("scheduled worker is a harmless no-op when disabled, even before owner secrets exist", async () => {
+  let calls = 0;
+  const handler = createAliveScheduledWorkerHandler({
+    env: { ALIVE_SCHEDULER_ENABLED: "false" },
+    withSystem: async () => { calls++; }
+  });
+  const res = response();
+  await handler(request(""), res);
+  assert.equal(res.statusCode, 200);
+  assert.equal(res.body.reason, "scheduler_disabled");
+  assert.equal(calls, 0);
+});
