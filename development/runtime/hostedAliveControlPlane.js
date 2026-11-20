@@ -16,7 +16,8 @@ import { createPostgresDevelopmentStorage } from "../storage/postgresDevelopment
 import { createIsolatedWorkspaceAdapter } from "../execution/isolatedWorkspaceAdapter.js";
 import { createVercelSandboxTestRunner } from "../execution/vercelSandboxTestRunner.js";
 
-const LOCK_KEY = 1280068941;\nlet projectContextPromise;
+const LOCK_KEY = 1280068941;
+let projectContextPromise;
 
 function required(value, label) {
   if (typeof value !== "string" || !value.trim()) throw new Error(label + " is required.");
@@ -105,7 +106,9 @@ export function createHostedAliveControlPlane(options = {}) {
       timeoutMs: 25_000,
       sandboxFactory
     });
-    const projectContext = await getProjectContext();\n\n    const testRunner = input => sandboxRunner.runTests({
+    const projectContext = await getProjectContext();
+
+    const testRunner = input => sandboxRunner.runTests({
       workspace: {
         isolated: true,
         directory: input.workspaceDirectory,
