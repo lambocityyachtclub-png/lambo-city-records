@@ -24,7 +24,8 @@ function readBody(req) {
 
 function statusFor(error) {
   if (error?.code === "ALIVE_AUTHENTICATION_REQUIRED") return 401;
-  if (["ALIVE_IDENTITY_ACCESS_DENIED", "ALIVE_IDENTITY_OWNER_REQUIRED", "ALIVE_VAULT_OWNER_REQUIRED"].includes(error?.code)) return 403;
+  if (["ALIVE_IDENTITY_ACCESS_DENIED", "ALIVE_IDENTITY_OWNER_REQUIRED", "ALIVE_VAULT_OWNER_REQUIRED", "ALIVE_MEMORY_REVIEW_OWNER_REQUIRED", "ALIVE_MEMORY_REVIEW_POLICY_INVALID"].includes(error?.code)) return 403;
+  if (error?.code === "ALIVE_MEMORY_REVIEW_INPUT_INVALID") return 400;
   if (["ALIVE_IDENTITY_NOT_FOUND"].includes(error?.code)) return 404;
   if (String(error?.message || "").includes("required") || error?.code?.includes("INVALID")) return 400;
   return 503;
@@ -60,7 +61,7 @@ export default async function alivePersonalAction(req, res) {
 
   const action = readAction(req);
   try {
-    const { identityService, companionVault } = await getAlivePersonalServices();
+    const { identityService, companionVault, companionMemoryReview } = await getAlivePersonalServices();
     const identity = await getOrCreateOwnerIdentity(owner.id);
 
     if (action === "identity" && method === "GET") {
@@ -113,6 +114,26 @@ export default async function alivePersonalAction(req, res) {
         memoryId: body.memoryId
       });
       return send(res, 200, { deleted });
+    }
+
+    if (action === "memory-proposals" && method === "GET") {
+      const proposals = await companionMemoryReview.listPending({ actorId: owner.id, identityId: identity.identityId });
+      return send(res, 200, { identityId: identity.identityId, proposals });
+    }
+
+    if (action === "memory-proposals" && method === "POST") {
+      const body = readBody(req);
+      if (body.action === "approve") {
+        const proposal = await companionMemoryReview.approve({ actorId: owner.id, identityId: identity.identityId, memoryId: body.memoryId });
+        if (!proposal) return send(res, 409, { error: "This Companion suggestion is no longer pending." });
+        return send(res, 200, { proposal });
+      }
+      if (body.action === "archive") {
+        const archived = await companionMemoryReview.archive({ actorId: owner.id, identityId: identity.identityId, memoryId: body.memoryId });
+        if (!archived) return send(res, 409, { error: "This Companion suggestion is no longer pending." });
+        return send(res, 200, { archived: true });
+      }
+      return send(res, 400, { error: "Choose approve or archive for a pending Companion suggestion." });
     }
 
     if (action === "preferences" && method === "GET") {

@@ -3,6 +3,8 @@ import { createIdentityService } from "../identity/identityService.js";
 import { createPostgresIdentityRepository } from "../identity/postgresIdentityRepository.js";
 import { createCompanionVault } from "../companion/companionVault.js";
 import { createPostgresCompanionVaultRepository } from "../companion/postgresCompanionVaultRepository.js";
+import { createCompanionMemoryReviewService } from "../companion/memoryApprovalService.js";
+import { createPostgresCompanionMemoryReviewRepository } from "../companion/postgresCompanionMemoryReviewRepository.js";
 
 let services;
 
@@ -33,7 +35,11 @@ export async function getAlivePersonalServices(options = {}) {
     identityService,
     repository: createPostgresCompanionVaultRepository(pool)
   });
-  services = Object.freeze({ pool, identityService, companionVault });
+  const companionMemoryReview = createCompanionMemoryReviewService({
+    identityService,
+    repository: createPostgresCompanionMemoryReviewRepository(pool)
+  });
+  services = Object.freeze({ pool, identityService, companionVault, companionMemoryReview });
   return services;
 }
 
