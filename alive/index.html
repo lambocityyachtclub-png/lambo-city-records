@@ -84,11 +84,11 @@
         <div class="section-heading"><div><p class="eyebrow">PERSONAL IDENTITY AND MEMORY</p><h2>Your private ALIVE context</h2><p class="muted">This information is private to your owner identity. Nothing is collected from chats automatically. Memories are private by default; only memories you explicitly share may be included in ALIVE development task context.</p></div></div>
         <form id="identity-form" class="auth-form">
           <label for="identity-display-name">Identity display name</label>
-          <input id="identity-display-name" maxlength="80" required>
+          <input id="identity-display-name" maxlength="40" required>
           <button class="quiet" type="submit">Save identity</button>
         </form>
         <form id="memory-form" class="task-form">
-          <label>Memory category<select name="category"><option value="note">Note</option><option value="preference">Preference</option><option value="project">Project context</option><option value="workflow">Workflow</option><option value="creative">Creative direction</option><option value="world">World context</option></select></label>
+          <label>Memory category<select name="category"><option value="fact">Fact / note</option><option value="preference">Preference</option><option value="goal">Goal / workflow</option><option value="relationship">Relationship</option><option value="project">Project context</option><option value="experience">Experience / world context</option></select></label>
           <label>Tags (optional)<input name="tags" maxlength="200" placeholder="comma, separated, tags"></label>
           <label class="check-row"><input type="checkbox" name="shareWithDevelopment"> Allow ALIVE development to use this memory (may be included in AI task context).</label>
           <label class="full">Private memory<textarea name="content" rows="3" maxlength="4000" required placeholder="Add something ALIVE should retain for your personal identity."></textarea></label>
