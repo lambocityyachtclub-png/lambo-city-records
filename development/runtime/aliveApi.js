@@ -20,6 +20,16 @@ function readBody(req) {
   return body;
 }
 
+function isSameOrigin(req, env) {
+  const expected = new URL(
+    env.ALIVE_OWNER_AUTH_URL ||
+    (env.VERCEL_URL ? "https://" + env.VERCEL_URL : "https://lambocityrecords.com")
+  ).origin;
+  const origin = req.headers?.origin || req.headers?.Origin || "";
+  const fetchSite = req.headers?.["sec-fetch-site"] || req.headers?.["Sec-Fetch-Site"];
+  return origin === expected && (!fetchSite || fetchSite === "same-origin");
+}
+
 function validationStatus(error) {
   const message = String(error?.message || "");
   if (/not found/i.test(message)) return 404;
@@ -48,6 +58,9 @@ export function createAliveApiHandler(options = {}) {
 
     const action = readAction(req);
     const method = String(req.method || "GET").toUpperCase();
+    if (method !== "GET" && !isSameOrigin(req, env)) {
+      return send(res, 403, { error: "A same-origin owner request is required." });
+    }
 
     if (action === "status" && method === "GET") {
       const aiEnabled = env.ALIVE_AI_ENABLED === "true";
