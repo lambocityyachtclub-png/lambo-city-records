@@ -213,7 +213,7 @@ export async function createDevelopmentSystem(options = {}) {
       worldRunner: worldRunner.getProfile(),
       worker: workerSnapshot,
       worldExecutor: {
-        enabled: !!controlledExecutor && workerSnapshot.runnerIds?.includes(WORLD_RUNNER_ID) === true,
+        enabled: !!controlledExecutor,
         allowedPaths: controlledExecutor?.getAllowedPaths?.() || []
       },
       proposalProvider: worldExecution?.proposalProvider
@@ -259,16 +259,13 @@ export async function createDevelopmentSystem(options = {}) {
     if (status !== DEVELOPMENT_SYSTEM_STATUS.READY) {
       throw new Error("The development system is disabled.");
     }
-    if (!worker || !worker.getSnapshot().runnerIds.includes(WORLD_RUNNER_ID)) {
-      throw new Error("World execution is not configured with the bounded worker.");
+    if (!controlledExecutor) {
+      throw new Error("World execution is not configured. Supply an isolated workspace adapter, review store, and explicit allowed paths.");
     }
-    const run = await worker.runOnce();
-    const executed = run.results.find(item => item.executed === true);
-    return executed || {
-      executed: false,
-      reason: run.reason || "No eligible queued World task was found.",
-      processed: run.processed || 0
-    };
+    return controlledExecutor.executeNextTask({
+      ...input,
+      runnerId: WORLD_RUNNER_ID
+    });
   }
 
   function submitStudioFinding(finding) {
@@ -303,6 +300,7 @@ export async function createDevelopmentSystem(options = {}) {
     studioRunner,
     worldRunner,
     worker,
+    worldExecutor: controlledExecutor,
     getStatus: () => status,
     getSnapshot,
     enable,
