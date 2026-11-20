@@ -6,7 +6,7 @@
  */
 import os from "node:os";
 import path from "node:path";
-import { createDevelopmentSystem } from "../engine/developmentSystem.js";
+import { createDevelopmentSystem } from "../engine/developmentSystem.js";\nimport { WORLD_RUNNER_ID } from "../runners/world/worldDevelopmentRunner.js";
 import { createOpenAIProposalProvider } from "../providers/openAIProposalProvider.js";
 import { createPostgresDevelopmentStorage } from "../storage/postgresDevelopmentStorage.js";
 import { createIsolatedWorkspaceAdapter } from "../execution/isolatedWorkspaceAdapter.js";
@@ -102,7 +102,11 @@ export function createHostedAliveControlPlane(options = {}) {
         testRunner,
         reviewStore: storage,
         allowedPaths
-      }
+      },
+      workerRunnerIds: [WORLD_RUNNER_ID],
+      workerId: "alive-hosted-world-worker",
+      maxTasksPerRun: 1,
+      workerEnabled: true
     });
   }
 
