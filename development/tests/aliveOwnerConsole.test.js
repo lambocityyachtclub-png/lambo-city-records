@@ -25,6 +25,9 @@ test("owner authentication uses secure same-origin sessions, not browser bearer-
   assert.match(script, /deleteMemory/);
   assert.match(html, /identity-form/);
   assert.match(html, /memory-form/);
+  assert.match(html, /shareWithDevelopment/);
+  assert.match(script, /shareWithDevelopment/);
+  assert.match(script, /Shared with ALIVE development/);
   assert.doesNotThrow(() => new vm.Script(script));
   assert.match(script, /signIn\.passkey/);
   assert.doesNotMatch(script, /localStorage|sessionStorage|document\.cookie|Authorization/);
