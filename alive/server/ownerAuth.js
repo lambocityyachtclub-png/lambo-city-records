@@ -2,6 +2,7 @@ import { betterAuth } from "better-auth";
 import { passkey } from "@better-auth/passkey";
 import { twoFactor } from "better-auth/plugins";
 import { Pool } from "pg";
+import { getAliveOwnerOriginConfig } from "./originPolicy.js";
 
 let pool;
 let auth;
@@ -47,10 +48,7 @@ export function getAliveOwnerAuth() {
   const databaseUrl = required("DATABASE_URL");
   const secret = required("ALIVE_OWNER_AUTH_SECRET", 32);
   const ownerEmail = required("ALIVE_OWNER_EMAIL").trim().toLowerCase();
-  const baseURL = new URL(
-    process.env.ALIVE_OWNER_AUTH_URL ||
-    (process.env.VERCEL_URL ? "https://" + process.env.VERCEL_URL : "https://lambocityrecords.com")
-  ).origin;
+  const { baseURL, trustedOrigins } = getAliveOwnerOriginConfig();
   const rpID = new URL(baseURL).hostname;
 
   pool = new Pool({
@@ -66,11 +64,7 @@ export function getAliveOwnerAuth() {
     baseURL,
     basePath: "/api/alive/auth",
     secret,
-    trustedOrigins: [
-      baseURL,
-      "https://lambocityrecords.com",
-      "https://www.lambocityrecords.com"
-    ],
+    trustedOrigins,
     database: pool,
     user: { modelName: "alive_owner_user" },
     account: { modelName: "alive_owner_account" },

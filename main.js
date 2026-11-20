@@ -205,3 +205,54 @@ window.__lamboCityPrepareFloor = floor => {
 };
 
 engine.init();
+
+// ALIVE connects to the existing HERO only after an explicit owner action
+// from the private owner console. Normal visitor startup performs no ALIVE
+// request and does not load the adapter.
+async function connectAliveHeroIdentity() {
+  const showStatus = (message, state = "info") => {
+    let panel = document.getElementById("alive-connection-status");
+    if (!panel) {
+      panel = document.createElement("div");
+      panel.id = "alive-connection-status";
+      panel.style.cssText = "position:fixed;top:18px;left:50%;transform:translateX(-50%);z-index:10000;max-width:min(560px,92vw);padding:12px 18px;border:1px solid rgba(212,168,42,.65);border-radius:10px;background:rgba(8,10,12,.94);color:#f5f0e6;font:600 12px/1.5 Arial,sans-serif;letter-spacing:.04em;text-align:center;box-shadow:0 8px 28px rgba(0,0,0,.35);";
+      document.body.appendChild(panel);
+    }
+    panel.textContent = message;
+    panel.dataset.state = state;
+  };
+
+  try {
+    showStatus("CONNECTING ALIVE TO YOUR EXISTING HERO CHARACTER…");
+    const response = await fetch("/api/alive/personal/identity", {
+      method: "POST",
+      credentials: "same-origin",
+      cache: "no-store",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ modelRef: "existing:hero-model" })
+    });
+    let payload = {};
+    try { payload = await response.json(); } catch {}
+    if (response.status === 401) {
+      throw new Error("Sign in to ALIVE Control first, then open the HERO connection link again.");
+    }
+    if (!response.ok || !payload.identity) {
+      throw new Error(payload.error || "The owner identity could not be connected.");
+    }
+
+    const { connectLamboCityHeroIdentity } = await import("./alive/runtime/lamboCityHeroHostAdapter.js");
+    const binding = await connectLamboCityHeroIdentity({
+      identity: payload.identity,
+      npcSystem: NPC
+    });
+    window.__lamboCityAliveIdentityBinding = binding;
+    showStatus("ALIVE IDENTITY CONNECTED — EXISTING HERO INSTANCE PRESERVED.", "success");
+    history.replaceState(null, "", window.location.pathname);
+  } catch (error) {
+    showStatus("ALIVE CONNECTION NOT COMPLETED: " + String(error?.message || error), "error");
+  }
+}
+
+if (new URLSearchParams(window.location.search).get("alive") === "connect") {
+  void connectAliveHeroIdentity();
+}
