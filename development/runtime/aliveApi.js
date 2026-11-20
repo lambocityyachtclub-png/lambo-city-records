@@ -121,7 +121,7 @@ export function createAliveApiHandler(options = {}) {
           approval: result.approval || null
         });
       } catch (error) {
-        return send(res, validationStatus(error), { error: error.message || "Unable to create ALIVE task." });
+        const status = validationStatus(error);\n        return send(res, status, { error: status >= 500 ? "ALIVE task storage is unavailable. Check the private migration and server configuration." : error.message || "Unable to create ALIVE task." });
       }
     }
 
@@ -154,7 +154,7 @@ export function createAliveApiHandler(options = {}) {
         }));
         return send(res, 200, result);
       } catch (error) {
-        return send(res, validationStatus(error), { error: error.message || "Unable to list ALIVE reviews." });
+        const status = validationStatus(error);\n        return send(res, status, { error: status >= 500 ? "ALIVE review storage is unavailable. Check the private migration and server configuration." : error.message || "Unable to list ALIVE reviews." });
       }
     }
 
@@ -179,7 +179,7 @@ export function createAliveApiHandler(options = {}) {
         });
         return send(res, 200, { result, productionChangesMade: false });
       } catch (error) {
-        return send(res, validationStatus(error), { error: error.message || "Unable to record owner review." });
+        const status = validationStatus(error);\n        return send(res, status, { error: status >= 500 ? "ALIVE review storage is unavailable. Check the private migration and server configuration." : error.message || "Unable to record owner review." });
       }
     }
 
