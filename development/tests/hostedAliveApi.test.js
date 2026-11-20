@@ -216,3 +216,37 @@ test("ALIVE hosted API rejects cross-origin state changes", async () => {
   assert.equal(response.statusCode, 403);
   assert.equal(calls, 0);
 });
+
+test("ALIVE owner API approves and rejects pending tasks only through owner actions", async () => {
+  const decisions = [];
+  const handler = createAliveApiHandler({
+    env: {},
+    authenticateOwner: async () => ({ email: "owner@example.com", emailVerified: true }),
+    withSystem: async (options, callback) => callback({
+      system: {
+        director: {
+          async approveTask(taskId, actor) {
+            decisions.push({ action: "approve", taskId, actor });
+            return { id: taskId, status: "queued" };
+          },
+          async rejectTask(taskId, reason) {
+            decisions.push({ action: "reject", taskId, reason });
+            return { id: taskId, status: "rejected" };
+          }
+        }
+      }
+    })
+  });
+  const approved = makeResponse();
+  await handler(makeRequest({ method: "POST", action: "tasks", body: { action: "approve", taskId: "task-1" } }), approved);
+  assert.equal(approved.statusCode, 200);
+  assert.equal(approved.body.approval, "approved");
+  const rejected = makeResponse();
+  await handler(makeRequest({ method: "POST", action: "tasks", body: { action: "reject", taskId: "task-2", reason: "Not approved." } }), rejected);
+  assert.equal(rejected.statusCode, 200);
+  assert.equal(rejected.body.approval, "rejected");
+  assert.deepEqual(decisions, [
+    { action: "approve", taskId: "task-1", actor: "owner" },
+    { action: "reject", taskId: "task-2", reason: "Not approved." }
+  ]);
+});
