@@ -86,7 +86,10 @@ export function createCompanionMemoryReviewService({ identityService, repository
   return Object.freeze({
     async listPending({ actorId, identityId } = {}) {
       const scope = await authorize(actorId, identityId);
-      const records = await store.listPendingMemoryProposals(scope);
+      const records = await store.listPendingMemoryProposals({
+        ownerId: scope.actorId,
+        identityId: scope.identityId
+      });
       if (!Array.isArray(records) || records.length > 100) {
         throw reviewError("The proposal repository returned an invalid collection.", "ALIVE_MEMORY_REVIEW_RECORD_INVALID");
       }
@@ -102,7 +105,11 @@ export function createCompanionMemoryReviewService({ identityService, repository
     async approve({ actorId, identityId, memoryId } = {}) {
       const scope = await authorize(actorId, identityId);
       const id = required(memoryId, "Memory ID");
-      const result = await store.approveMemoryProposal({ ...scope, memoryId: id });
+      const result = await store.approveMemoryProposal({
+        ownerId: scope.actorId,
+        identityId: scope.identityId,
+        memoryId: id
+      });
       if (!result) return null;
       return validateApproved(result, scope.actorId, scope.identityId);
     },
@@ -110,7 +117,11 @@ export function createCompanionMemoryReviewService({ identityService, repository
     async archive({ actorId, identityId, memoryId } = {}) {
       const scope = await authorize(actorId, identityId);
       const id = required(memoryId, "Memory ID");
-      return (await store.archiveMemoryProposal({ ...scope, memoryId: id })) === true;
+      return (await store.archiveMemoryProposal({
+        ownerId: scope.actorId,
+        identityId: scope.identityId,
+        memoryId: id
+      })) === true;
     }
   });
 }
