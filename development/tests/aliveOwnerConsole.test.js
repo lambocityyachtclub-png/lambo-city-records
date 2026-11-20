@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import fs from "node:fs/promises";\nimport vm from "node:vm";
+import fs from "node:fs/promises";
+import vm from "node:vm";
 
 const html = await fs.readFile(new URL("../../alive/index.html", import.meta.url), "utf8");
 const script = await fs.readFile(new URL("../../alive/owner.js", import.meta.url), "utf8");
@@ -43,7 +44,11 @@ test("owner recovery uses authenticator verification and one-time backup codes",
   assert.match(script, /twoFactor\.enable/);
   assert.match(script, /verifyTotp/);
   assert.match(script, /verifyBackupCode/);
-  assert.match(script, /copy-recovery-codes/);\n  assert.match(script, /qrcode@1\\.5\\.4/);\n  assert.match(script, /copy-totp-uri/);\n  assert.match(script, /onTwoFactorRedirect/);\n  assert.match(html, /totp-qr/);
+  assert.match(script, /copy-recovery-codes/);
+  assert.match(script, /qrcode@1\.5\.4/);
+  assert.match(script, /copy-totp-uri/);
+  assert.match(script, /onTwoFactorRedirect/);
+  assert.match(html, /totp-qr/);
   assert.match(html, /One-time backup code/);
   assert.match(html, /Set up authenticator and backup codes/);
 });
