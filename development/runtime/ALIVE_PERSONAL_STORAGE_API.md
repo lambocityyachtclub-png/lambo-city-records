@@ -46,3 +46,5 @@ No migration is applied, owner account is not created, and no secret is configur
 ## Development-context sharing
 
 Companion memories are private by default. The owner console exposes an explicit per-memory `shareWithDevelopment` checkbox. The hosted development worker loads only memories with that flag set, caps the context to 20 entries and 2,000 characters per memory, and passes them as owner preferences—not as instructions that can override policy or allowlists. Unchecked memories are never included in code-proposal context.
+
+The hosted worker resolves the authenticated owner for manual runs (or the verified configured owner for scheduled runs) and loads this consented context immediately before a one-task execution. It does not cache memory content between tasks.
