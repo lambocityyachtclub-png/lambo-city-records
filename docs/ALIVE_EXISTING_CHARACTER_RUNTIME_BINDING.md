@@ -48,4 +48,13 @@ The focused tests cover:
 
 ## Current hosted integration status
 
-The personal identity contract, owner-scoped identity service, PostgreSQL persistence, and private Companion vault are now integrated behind the verified owner-session API. The live host resolver remains intentionally separate: the adapter in `alive/runtime/identityRuntimeAdapter.js` is tested, but it is not yet wired to the existing HERO runtime object. That final host binding must preserve the existing HERO instance and all approved world, camera, stage, and access behavior.
+The personal identity contract, owner-scoped identity service, PostgreSQL persistence, and private Companion vault are now integrated behind the verified owner-session API. The live host resolver is now wired through `alive/runtime/lamboCityHeroHostAdapter.js`. The owner explicitly starts the connection from the private ALIVE owner console; the game then authenticates the owner through the personal identity API and binds the returned identity to the exact object returned by the existing `NPC.getHero()` method. Normal visitor startup does not load the adapter or call the ALIVE API. The binding is a read-only reference and leaves the HERO model, world, camera, stage, and access behavior unchanged.
+
+
+## Explicit owner connection flow
+
+1. The owner signs in to the private ALIVE Control page.
+2. The owner selects “Connect existing HERO in LAMBO CITY”.
+3. The game makes a same-origin, verified-session POST that assigns the fixed model reference `existing:hero-model` to the owner identity.
+4. The lazy host adapter resolves the already-live HERO object from the registered NPC system and returns an owner-directed Companion policy descriptor.
+5. No visual or gameplay behavior changes. This is identity/runtime binding only; AI conversation, speech, autonomous behavior, and live memory proposal generation remain separate capabilities and are not enabled by this connection.

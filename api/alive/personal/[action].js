@@ -70,6 +70,9 @@ export default async function alivePersonalAction(req, res) {
 
     if (action === "identity" && method === "POST") {
       const body = readBody(req);
+      if (body.modelRef !== undefined && body.modelRef !== "existing:hero-model") {
+        return send(res, 400, { error: "Only the existing LAMBO CITY HERO model can be connected in this release." });
+      }
       const updated = await identityService.update({
         actorId: owner.id,
         identityId: identity.identityId,
@@ -77,7 +80,8 @@ export default async function alivePersonalAction(req, res) {
           displayName: body.displayName,
           characterForm: body.characterForm,
           appearanceProfile: body.appearanceProfile,
-          personality: body.personality
+          personality: body.personality,
+          modelRef: body.modelRef
         }
       });
       return send(res, 200, { identity: updated });
