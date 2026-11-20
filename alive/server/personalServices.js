@@ -7,18 +7,18 @@ import { createPostgresCompanionVaultRepository } from "../companion/postgresCom
 
 let services;
 
-function requiredDatabaseUrl() {
-  const value = process.env.DATABASE_URL;
+function requiredDatabaseUrl(env = process.env) {
+  const value = env.DATABASE_URL;
   if (typeof value !== "string" || !value.trim()) {
     throw new Error("DATABASE_URL is required for ALIVE personal storage.");
   }
   return value.trim();
 }
 
-export function getAlivePersonalServices() {
+export function getAlivePersonalServices(options = {}) {
   if (services) return services;
-  const pool = new Pool({
-    connectionString: requiredDatabaseUrl(),
+  const pool = options.pool || new Pool({
+    connectionString: requiredDatabaseUrl(options.env),
     max: 2,
     idleTimeoutMillis: 10000,
     connectionTimeoutMillis: 10000
