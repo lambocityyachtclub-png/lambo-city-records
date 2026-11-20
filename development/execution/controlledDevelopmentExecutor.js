@@ -283,6 +283,11 @@ export function createControlledDevelopmentExecutor(options = {}) {
         )
       ];
 
+      // An empty proposal is not a change and must never enter owner review.
+      if (changedFiles.length === 0) {
+        throw new Error("No changed files were produced; an empty proposal cannot enter owner review.");
+      }
+
       // STEP 4: Run tests in the isolated workspace.
       const testResults = await workspaceAdapter.runTests({
         workspaceId,
