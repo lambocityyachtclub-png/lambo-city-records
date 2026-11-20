@@ -7,7 +7,7 @@ import path from "node:path";
 import { createIsolatedWorkspaceAdapter } from "../execution/isolatedWorkspaceAdapter.js";
 import { createIsolatedProposalWorkspaceAdapter } from "../execution/isolatedProposalWorkspaceAdapter.js";
 
-async function fixture(t, testRunner = async () => ({ passed: true, total: 1, failed: 0 })) {
+async function fixture(t, testRunner = async () => ({ passed: true, total: 1, failed: 0 }), projectContext = null) {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), "alive-proposal-workspace-"));
   const projectRoot = path.join(root, "project");
   const workspaceRoot = path.join(root, "workspaces");
@@ -89,5 +89,19 @@ test("proposal bridge enforces file and total proposal write limits", async t =>
     workspaceId: workspace.workspaceId,
     files: [{ path: "development/example/large.js", content: "x".repeat(128 * 1024 + 1) }]
   }), /128 KB limit/);
+  await adapter.destroyWorkspace(workspace.workspaceId);
+});
+
+test("proposal bridge adds compact read-only project context without exposing raw inventory", async t => {
+  const projectContext = {
+    status: "discovery-only",
+    ownerApproved: false,
+    dependencyGraph: { rootEntrypoints: ["index.html"], reachableFiles: ["main.js"] }
+  };
+  const { adapter } = await fixture(t, undefined, projectContext);
+  const workspace = await adapter.createWorkspace({ taskId: "bridge-project-context" });
+  const context = await adapter.readWorkspaceContext({ workspaceId: workspace.workspaceId });
+  assert.deepEqual(context.projectBlueprint, projectContext);
+  assert.equal(context.projectBlueprint.ownerApproved, false);
   await adapter.destroyWorkspace(workspace.workspaceId);
 });
