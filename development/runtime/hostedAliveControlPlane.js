@@ -7,13 +7,16 @@
 import os from "node:os";
 import path from "node:path";
 import { createDevelopmentSystem } from "../engine/developmentSystem.js";
+import fs from "node:fs/promises";
+import { discoverBlueprints } from "../blueprints/discoverBlueprints.mjs";
+import { createProposalProjectContext } from "../blueprints/projectContext.mjs";
 import { WORLD_RUNNER_ID } from "../runners/world/worldDevelopmentRunner.js";
 import { createOpenAIProposalProvider } from "../providers/openAIProposalProvider.js";
 import { createPostgresDevelopmentStorage } from "../storage/postgresDevelopmentStorage.js";
 import { createIsolatedWorkspaceAdapter } from "../execution/isolatedWorkspaceAdapter.js";
 import { createVercelSandboxTestRunner } from "../execution/vercelSandboxTestRunner.js";
 
-const LOCK_KEY = 1280068941;
+const LOCK_KEY = 1280068941;\nlet projectContextPromise;
 
 function required(value, label) {
   if (typeof value !== "string" || !value.trim()) throw new Error(label + " is required.");
@@ -39,6 +42,22 @@ export function createHostedAliveControlPlane(options = {}) {
   const env = options.env || process.env;
   if (!pool || typeof pool.connect !== "function" || typeof pool.query !== "function") {
     throw new Error("A PostgreSQL pool is required for the hosted ALIVE control plane.");
+  }
+
+  async function getProjectContext() {
+    if (!projectContextPromise) {
+      projectContextPromise = (async () => {
+        const rootDir = options.projectRoot || process.cwd();
+        const catalogPath = path.join(rootDir, "development/blueprints/departmentCatalog.json");
+        const catalog = JSON.parse(await fs.readFile(catalogPath, "utf8"));
+        const report = await discoverBlueprints({ rootDir, catalog });
+        return createProposalProjectContext(report);
+      })().catch(() => {
+        projectContextPromise = null;
+        return createProposalProjectContext(null);
+      });
+    }
+    return projectContextPromise;
   }
 
   async function withAdvisoryLock(operation) {
@@ -86,7 +105,7 @@ export function createHostedAliveControlPlane(options = {}) {
       timeoutMs: 25_000,
       sandboxFactory
     });
-    const testRunner = input => sandboxRunner.runTests({
+    const projectContext = await getProjectContext();\n\n    const testRunner = input => sandboxRunner.runTests({
       workspace: {
         isolated: true,
         directory: input.workspaceDirectory,
@@ -102,7 +121,8 @@ export function createHostedAliveControlPlane(options = {}) {
         workspaceAdapter,
         testRunner,
         reviewStore: storage,
-        allowedPaths
+        allowedPaths,
+        projectContext
       },
       workerRunnerIds: [WORLD_RUNNER_ID],
       workerId: "alive-hosted-world-worker",
