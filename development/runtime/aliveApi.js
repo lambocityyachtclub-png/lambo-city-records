@@ -45,6 +45,12 @@ export function createAliveApiHandler(options = {}) {
   if (typeof withSystem !== "function") throw new Error("withSystem callback is required.");
 
   return async function aliveApiHandler(req, res) {
+    const action = readAction(req);
+    const method = String(req.method || "GET").toUpperCase();
+    if (action === "auth-readiness" && method === "GET") {
+      const emailConfigured = typeof env.RESEND_API_KEY === "string" && env.RESEND_API_KEY.length > 0 && typeof env.EMAIL_FROM === "string" && env.EMAIL_FROM.length > 0;
+      return send(res, 200, { emailConfigured });
+    }
     if (typeof authenticateOwner !== "function") {
       return send(res, 503, { error: "ALIVE owner session authentication is not configured." });
     }
@@ -56,8 +62,6 @@ export function createAliveApiHandler(options = {}) {
     }
     if (!owner) return send(res, 401, { error: "A verified ALIVE owner session is required." });
 
-    const action = readAction(req);
-    const method = String(req.method || "GET").toUpperCase();
     if (method !== "GET" && !isSameOrigin(req, env)) {
       return send(res, 403, { error: "A same-origin owner request is required." });
     }
