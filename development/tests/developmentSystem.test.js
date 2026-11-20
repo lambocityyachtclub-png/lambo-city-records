@@ -207,9 +207,9 @@ test("Development System initializes all modules", async () => {
     DEVELOPMENT_SYSTEM_STATUS.READY
   );
 
-  assert.equal(snapshot.registry.totalModules, 3);
-  assert.equal(snapshot.registry.enabledModules, 3);
-  assert.equal(snapshot.studioRunner.id, "studio");
+  assert.equal(snapshot.registry.totalModules, 4);
+  assert.equal(snapshot.registry.enabledModules, 4);
+  assert.equal(snapshot.studioRunner.id, "studio");\n  assert.equal(snapshot.worldRunner.id, "world");
 });
 
 
