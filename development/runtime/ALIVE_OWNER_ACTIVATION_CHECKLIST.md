@@ -1,12 +1,11 @@
 # ALIVE Owner Activation Checklist
 
-This checklist is intentionally deferred until the code release candidate passes its Preview build. Do not paste secrets, passwords, recovery codes, database URLs, or private keys into ChatGPT or GitHub files. Enter them directly in the appropriate provider settings.
+This checklist records the remaining owner-controlled activation gates. The current ALIVE Preview candidate now builds successfully and its automated Development Engine tests pass; physical browser acceptance and owner activation are still required. Do not paste secrets, passwords, recovery codes, database URLs, or private keys into ChatGPT or GitHub files. Enter them directly in the appropriate provider settings.
 
 ## 1. Resolve the Preview gate
 
 - The current release candidate has passing automated tests and the authorized-file-scope check.
-- Vercel is currently refusing a Preview build because of the account's build-rate limit.
-- Wait for the build allowance to reset, or explicitly approve a Vercel plan upgrade if the owner decides the faster validation is worth the cost.
+- A current branch Preview has reached READY. Re-check the latest exact-head Preview before owner activation; a READY deployment alone does not replace browser acceptance.
 - Do not merge the release candidate until a Preview for the exact current commit builds and is inspected.
 
 ## 2. Protect the repository and invention
@@ -31,9 +30,10 @@ The hosted control plane uses transaction-scoped PostgreSQL advisory locks. A Ne
 Configure the following server-side values in Vercel. Start with Preview environment values only; add Production values only after Preview validation.
 
 - `DATABASE_URL` — dedicated ALIVE database connection string.
-- `BETTER_AUTH_SECRET` — a newly generated secret of at least 32 characters.
+- `ALIVE_OWNER_AUTH_SECRET` — a newly generated secret of at least 32 characters.
 - `ALIVE_OWNER_EMAIL` — the one email address permitted to create the owner account.
-- `ALIVE_OWNER_AUTH_URL` — canonical site origin, for example `https://lambocityrecords.com` (origin only, no API path).
+- `VERCEL_BRANCH_URL` — supplied automatically by Vercel for the active Preview branch; ALIVE uses this origin for Preview auth.
+- `ALIVE_OWNER_AUTH_URL` — optional explicit HTTPS origin override (origin only, no API path).
 - `RESEND_API_KEY` — transactional email provider key.
 - `EMAIL_FROM` — verified sender identity for owner verification and password recovery.
 - `OPENAI_API_KEY` — server-side proposal-provider key.
@@ -101,5 +101,7 @@ The public experience must be a separate interface and server-side API boundary.
 ## 10. Patent preparation
 
 The code and architecture are now documented as a technical foundation, but no patent application has been filed and patentability is not established. Prepare a separate private invention disclosure and draft claims, perform a prior-art search, and have a qualified patent attorney review disclosure timing and filing strategy before any filing or public launch.
+
+Passkeys are tied to their website origin. A passkey registered on a Vercel Preview is for Preview testing; register a separate passkey after the canonical production domain is activated.
 
 All owner steps above remain manual and owner-controlled. This pull request does not change repository visibility, apply migrations, create credentials, enable paid execution, turn on the scheduler, or deploy to production.

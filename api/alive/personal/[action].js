@@ -1,4 +1,5 @@
 import { authenticateAliveOwner } from "../../../alive/server/ownerAuth.js";
+import { isSameOriginRequest } from "../../../alive/server/originPolicy.js";
 import {
   getAlivePersonalServices,
   getOrCreateOwnerIdentity
@@ -31,16 +32,6 @@ function statusFor(error) {
   return 503;
 }
 
-function isSameOrigin(req) {
-  const expected = new URL(
-    process.env.ALIVE_OWNER_AUTH_URL ||
-    (process.env.VERCEL_URL ? "https://" + process.env.VERCEL_URL : "https://lambocityrecords.com")
-  ).origin;
-  const origin = req.headers?.origin || req.headers?.Origin || "";
-  const fetchSite = req.headers?.["sec-fetch-site"] || req.headers?.["Sec-Fetch-Site"];
-  return origin === expected && (!fetchSite || fetchSite === "same-origin");
-}
-
 export default async function alivePersonalAction(req, res) {
   const method = String(req.method || "GET").toUpperCase();
   if (!["GET", "POST", "DELETE"].includes(method)) {
@@ -55,7 +46,7 @@ export default async function alivePersonalAction(req, res) {
     return send(res, 503, { error: "ALIVE owner authentication is unavailable." });
   }
   if (!owner) return send(res, 401, { error: "A verified ALIVE owner session is required." });
-  if (method !== "GET" && !isSameOrigin(req)) {
+  if (method !== "GET" && !isSameOriginRequest(req)) {
     return send(res, 403, { error: "A same-origin owner request is required." });
   }
 
