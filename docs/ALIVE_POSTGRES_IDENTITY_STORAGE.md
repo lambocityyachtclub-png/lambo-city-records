@@ -31,3 +31,7 @@ Before connecting it to a real database:
 5. Keep private memory content in a separate consent-governed storage layer; this table stores identity/profile contract data, not conversation history.
 
 This is a persistence implementation, not yet a live identity product or companion runtime.
+
+## Current hosted integration
+
+The identity table and Companion tables are consolidated in `development/storage/migrations/003_alive_identity_companion.sql`. The hosted adapter is composed in `alive/server/personalServices.js` and used by the owner-authenticated personal API. The migration remains unapplied until the owner performs the final isolated-database setup. Do not use the earlier standalone `migrations/002_alive_personal_identities.sql` path for this integrated branch.
