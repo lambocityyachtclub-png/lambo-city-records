@@ -92,7 +92,18 @@ export function createHostedAliveControlPlane(options = {}) {
     return withPostgresAdvisoryLock(pool, operation, LOCK_KEY);
   }
 
-  async function createSystem({ execution = false, storage }) {
+  async function getConfiguredOwner() {
+    const ownerEmail = required(env.ALIVE_OWNER_EMAIL, "ALIVE_OWNER_EMAIL");
+    const result = await pool.query(
+      'SELECT id, email FROM alive_owner_user WHERE lower(email) = lower($1) AND "emailVerified" = true LIMIT 1',
+      [ownerEmail]
+    );
+    const row = result.rows?.[0];
+    if (!row) throw new Error("A verified ALIVE owner account is required before scheduled execution.");
+    return { id: String(row.id), email: String(row.email), emailVerified: true };
+  }
+
+  async function createSystem({ execution = false, storage, owner = null }) {
     if (!execution) return createDevelopmentSystem({ storage });
 
     if (env.ALIVE_AI_ENABLED !== "true") {
@@ -124,7 +135,11 @@ export function createHostedAliveControlPlane(options = {}) {
       timeoutMs: 25_000,
       sandboxFactory
     });
-    const projectContext = await getProjectContext();
+    const baseProjectContext = await getProjectContext();
+    const resolvedOwner = owner || await getConfiguredOwner();
+    const { getOwnerDevelopmentContext } = await import("../../alive/server/personalServices.js");
+    const ownerContext = await getOwnerDevelopmentContext(resolvedOwner.id, { pool, env });
+    const projectContext = Object.freeze({ ...baseProjectContext, ownerContext });
 
     const testRunner = input => sandboxRunner.runTests({
       workspace: {
@@ -157,11 +172,13 @@ export function createHostedAliveControlPlane(options = {}) {
     return withAdvisoryLock(async () => {
       const storage = createPostgresDevelopmentStorage({ pool });
       await storage.assertSchemaReady();
+      const owner = options.owner || (options.execution === true ? await getConfiguredOwner() : null);
       const system = await createSystem({
         execution: options.execution === true,
-        storage
+        storage,
+        owner
       });
-      return callback({ system, storage });
+      return callback({ system, storage, owner });
     });
   }
 
