@@ -24,3 +24,10 @@ The repository's `Development Engine Tests` workflow must pass on the exact pull
 
 ## Owner-scope regression correction
 The review service passes the authenticated actor as the repository's immutable owner scope explicitly. The exact-head CI workflow validates this after the follow-up commit.
+
+
+## Owner API and console wiring
+
+The authenticated personal API exposes pending Companion suggestions through the memory-proposals action. It derives the identity from the verified owner session, enforces same-origin state changes, and supports explicit approve or archive actions only. The owner console displays escaped proposal content and requires confirmation before either action. Approved suggestions remain private and are not shared with ALIVE development. No proposal producer is added here; an empty queue is the expected state until a separately trusted producer exists.
+
+The wiring is covered by development/tests/aliveCompanionMemoryReviewWiring.test.js.

@@ -27,7 +27,31 @@ function renderPersonal(identity,memories,error){
   }).join("");
   root.querySelectorAll(".memory-delete").forEach(button=>button.addEventListener("click",()=>deleteMemory(button)));
 }
-async function refreshPersonal(){try{const [identityResult,memoryResult]=await Promise.all([request("personal/identity"),request("personal/memories")]);renderPersonal(identityResult.identity,memoryResult.memories||"")}catch(error){renderPersonal(null,[],error.message)}}
+function renderMemoryProposals(proposals,error){
+  const root=$("memory-proposal-list");
+  if(error){root.innerHTML='<p class="muted">'+escapeHTML(error)+'</p>';return}
+  if(!Array.isArray(proposals)||!proposals.length){root.innerHTML='<p class="muted">No Companion suggestions are waiting for approval.</p>';return}
+  root.innerHTML=proposals.map(proposal=>{
+    const id=escapeHTML(proposal.memoryId||"");
+    const tags=Array.isArray(proposal.tags)&&proposal.tags.length?'<div class="meta">'+escapeHTML(proposal.tags.join(", "))+'</div>':"";
+    return '<article class="item"><div class="item-head"><div><h3>'+escapeHTML(proposal.category||"suggested memory")+'</h3><div class="meta">'+escapeHTML(proposal.createdAt||"")+' · Suggested by Companion</div></div><span class="pill warn">AWAITING YOUR APPROVAL</span></div><p>'+escapeHTML(proposal.content||"")+'</p>'+tags+'<div class="task-actions"><button class="primary memory-proposal-approve" data-memory="'+id+'">APPROVE MEMORY</button><button class="quiet memory-proposal-archive" data-memory="'+id+'">ARCHIVE</button></div></article>';
+  }).join("");
+  root.querySelectorAll(".memory-proposal-approve").forEach(button=>button.addEventListener("click",()=>decideMemoryProposal(button,"approve")));
+  root.querySelectorAll(".memory-proposal-archive").forEach(button=>button.addEventListener("click",()=>decideMemoryProposal(button,"archive")));
+}
+async function decideMemoryProposal(button,action){
+  const prompt=action==="approve"?"Add this Companion suggestion to your approved personal memories? It will remain private and will not be shared with ALIVE development.":"Archive this Companion suggestion without adding it to your memories?";
+  if(!window.confirm(prompt))return;
+  button.disabled=true;
+  try{await request("personal/memory-proposals",{method:"POST",body:{action,memoryId:button.dataset.memory}});notify(action==="approve"?"Companion memory approved and kept private.":"Companion suggestion archived.");await refreshPersonal()}
+  catch(error){notify(error.message)}finally{button.disabled=false}
+}
+async function refreshPersonal(){
+  const results=await Promise.allSettled([request("personal/identity"),request("personal/memories"),request("personal/memory-proposals")]);
+  if(results[0].status==="fulfilled"&&results[1].status==="fulfilled")renderPersonal(results[0].value.identity,results[1].value.memories||"");
+  else renderPersonal(null,[],results[0].status==="rejected"?results[0].reason.message:results[1].reason.message);
+  renderMemoryProposals(results[2].status==="fulfilled"?(results[2].value.proposals||[]):[],results[2].status==="rejected"?results[2].reason.message:"");
+}
 async function deleteMemory(button){if(!window.confirm("Delete this private memory permanently?"))return;button.disabled=true;try{await request("personal/memories",{method:"DELETE",body:{memoryId:button.dataset.memory}});notify("Private memory deleted.");await refreshPersonal()}catch(error){notify(error.message)}finally{button.disabled=false}}
 async function refreshAll(){if(!ownerAuthenticated)return;const status=await request("status");renderStatus(status);const [tasksResult,reviewsResult]=await Promise.allSettled([request("tasks"),request("reviews")]);const tasks=tasksResult.status==="fulfilled"?(tasksResult.value.tasks||[]):[];renderTasks(tasks,tasksResult.status==="rejected"?tasksResult.reason.message:"");renderReviews(reviewsResult.status==="fulfilled"?(reviewsResult.value.reviews||[]):[],reviewsResult.status==="fulfilled"?(reviewsResult.value.tasks||tasks):tasks,reviewsResult.status==="rejected"?reviewsResult.reason.message:"");await refreshPersonal()}
 function disconnect(){ownerAuthenticated=false;statusSnapshot=null;$("workspace").hidden=true;$("auth-panel").hidden=false;$("status-pill").textContent="NOT CONNECTED";$("status-pill").className="pill neutral";$("run-button").disabled=true}
