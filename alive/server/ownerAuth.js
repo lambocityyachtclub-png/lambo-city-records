@@ -1,6 +1,6 @@
 import { betterAuth } from "better-auth";
 import { passkey } from "@better-auth/passkey";
-import { magicLink } from "better-auth/plugins";
+import { twoFactor } from "better-auth/plugins";
 import { Pool } from "pg";
 
 let pool;
@@ -56,7 +56,7 @@ export function getAliveOwnerAuth() {
   pool = new Pool({
     connectionString: databaseUrl,
     ssl: { rejectUnauthorized: false },
-    max: 3,
+    max: 2,
     idleTimeoutMillis: 10000,
     connectionTimeoutMillis: 10000
   });
@@ -75,6 +75,41 @@ export function getAliveOwnerAuth() {
     user: { modelName: "alive_owner_user" },
     account: { modelName: "alive_owner_account" },
     verification: { modelName: "alive_owner_verification" },
+    emailAndPassword: {
+      enabled: true,
+      disableSignUp: false,
+      requireEmailVerification: true,
+      minPasswordLength: 12,
+      maxPasswordLength: 128,
+      revokeSessionsOnPasswordReset: true,
+      sendResetPassword: async ({ user, url }) => {
+        if (String(user.email || "").trim().toLowerCase() !== ownerEmail) {
+          throw new Error("This email is not authorized for ALIVE owner access.");
+        }
+        await sendOwnerEmail({
+          to: ownerEmail,
+          subject: "Reset your ALIVE owner password",
+          heading: "Reset your ALIVE owner password",
+          url
+        });
+      }
+    },
+    emailVerification: {
+      sendOnSignUp: true,
+      sendOnSignIn: true,
+      autoSignInAfterVerification: false,
+      sendVerificationEmail: async ({ user, url }) => {
+        if (String(user.email || "").trim().toLowerCase() !== ownerEmail) {
+          throw new Error("This email is not authorized for ALIVE owner access.");
+        }
+        await sendOwnerEmail({
+          to: ownerEmail,
+          subject: "Verify your ALIVE owner email",
+          heading: "Verify your ALIVE owner email",
+          url
+        });
+      }
+    },
     databaseHooks: {
       user: {
         create: {
@@ -86,21 +121,6 @@ export function getAliveOwnerAuth() {
       }
     },
     plugins: [
-      magicLink({
-        expiresIn: 600,
-        storeToken: "hashed",
-        sendMagicLink: async ({ email, url }) => {
-          if (String(email || "").trim().toLowerCase() !== ownerEmail) {
-            throw new Error("This email is not authorized for ALIVE owner access.");
-          }
-          await sendOwnerEmail({
-            to: ownerEmail,
-            subject: "Your secure ALIVE owner sign-in link",
-            heading: "Continue to your ALIVE owner console",
-            url
-          });
-        }
-      }),
       passkey({
         rpID,
         rpName: "LAMBO CITY ALIVE Owner",
@@ -111,6 +131,11 @@ export function getAliveOwnerAuth() {
         authenticatorSelection: {
           userVerification: "required"
         }
+      }),
+      twoFactor({
+        twoFactorTable: "alive_owner_two_factor",
+        issuer: "LAMBO CITY ALIVE",
+        backupCodeOptions: { amount: 10, length: 10 }
       })
     ],
     session: {

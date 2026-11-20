@@ -54,3 +54,18 @@ test("owner recovery schema is isolated from player account tables", async () =>
   assert.match(migration, /alive_owner_user/);
   assert.doesNotMatch(migration, /CREATE TABLE IF NOT EXISTS player_/);
 });
+
+test("owner server enables verified password sign-in, password recovery, passkeys, and one-time backup codes", async () => {
+  const auth = await fs.readFile(new URL("../../alive/server/ownerAuth.js", import.meta.url), "utf8");
+  assert.match(auth, /emailAndPassword:\s*\{/);
+  assert.match(auth, /enabled:\s*true/);
+  assert.match(auth, /requireEmailVerification:\s*true/);
+  assert.match(auth, /minPasswordLength:\s*12/);
+  assert.match(auth, /sendResetPassword:/);
+  assert.match(auth, /emailVerification:\s*\{/);
+  assert.match(auth, /twoFactor\(/);
+  assert.match(auth, /twoFactorTable:\s*"alive_owner_two_factor"/);
+  assert.match(auth, /backupCodeOptions:\s*\{\s*amount:\s*10,\s*length:\s*10\s*\}/);
+  assert.match(auth, /userVerification:\s*"required"/);
+  assert.doesNotMatch(auth, /magicLink\(/);
+});
