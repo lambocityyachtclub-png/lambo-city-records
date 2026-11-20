@@ -21,7 +21,8 @@ async function fixture(t, testRunner = async () => ({ passed: true, total: 1, fa
   const adapter = createIsolatedProposalWorkspaceAdapter({
     workspaceAdapter: isolated,
     allowedPaths: ["development/example"],
-    testRunner
+    testRunner,
+    projectContext
   });
   t.after(async () => fs.rm(root, { recursive: true, force: true }));
   return { projectRoot, adapter };
