@@ -5,7 +5,7 @@
  * Never import this module into browser/game client code.
  */
 const DEFAULT_ENDPOINT = "https://api.openai.com/v1/responses";
-const DEFAULT_MODEL = "gpt-6-astra";
+const DEFAULT_MODEL = "gpt-6.1-sol";
 const DEFAULT_TIMEOUT_MS = 60_000;
 const DEFAULT_MAX_OUTPUT_TOKENS = 12_000;
 const MAX_INPUT_CHARACTERS = 700_000;
