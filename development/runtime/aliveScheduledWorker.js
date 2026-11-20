@@ -25,16 +25,18 @@ export function createAliveScheduledWorkerHandler({ env = process.env, withSyste
       return send(res, 405, { error: "Method not allowed." });
     }
 
+    // A disabled schedule is a harmless no-op; do not require credentials
+    // or initialize any service until the owner explicitly enables it.
+    if (env.ALIVE_SCHEDULER_ENABLED !== "true") {
+      return send(res, 200, { scheduled: false, reason: "scheduler_disabled" });
+    }
+
     const cronSecret = typeof env.CRON_SECRET === "string" ? env.CRON_SECRET : "";
     if (cronSecret.length < 32) {
       return send(res, 503, { error: "The scheduled worker is not configured." });
     }
     if (!isAuthorized(req, cronSecret)) {
       return send(res, 401, { error: "Unauthorized scheduled worker request." });
-    }
-
-    if (env.ALIVE_SCHEDULER_ENABLED !== "true") {
-      return send(res, 200, { scheduled: false, reason: "scheduler_disabled" });
     }
 
     if (
