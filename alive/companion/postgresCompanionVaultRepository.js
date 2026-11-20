@@ -1,6 +1,12 @@
-function parseRecord(value) {
-  if (typeof value === "string") return JSON.parse(value);
-  return value;
+function parseJson(value, fallback) {
+  if (typeof value === "string") {
+    try { return JSON.parse(value); } catch { return fallback; }
+  }
+  return value ?? fallback;
+}
+
+function iso(value) {
+  return value instanceof Date ? value.toISOString() : new Date(value || Date.now()).toISOString();
 }
 
 function requireScope(value, name) {
@@ -12,8 +18,7 @@ function requireScope(value, name) {
 
 function requireRecord(record, expectedOwnerId, expectedIdentityId) {
   if (!record || typeof record !== "object" || Array.isArray(record) ||
-      record.ownerId !== expectedOwnerId ||
-      record.identityId !== expectedIdentityId) {
+      record.ownerId !== expectedOwnerId || record.identityId !== expectedIdentityId) {
     const error = new Error("Companion record scope does not match its owner and identity.");
     error.code = "ALIVE_VAULT_SCOPE_MISMATCH";
     throw error;
@@ -21,10 +26,30 @@ function requireRecord(record, expectedOwnerId, expectedIdentityId) {
   return record;
 }
 
+function fromMemoryRow(row) {
+  const createdAt = iso(row.created_at);
+  return {
+    memoryId: row.memory_id,
+    identityId: row.identity_id,
+    ownerId: row.owner_id,
+    createdBy: row.owner_id,
+    category: row.category,
+    content: row.content,
+    tags: parseJson(row.tags, []),
+    createdAt,
+    updatedAt: createdAt,
+    privacy: {
+      visibility: "private",
+      trainingUse: row.training_use === true,
+      crossWorldSharing: false,
+      shareWithDevelopment: row.share_with_development === true
+    }
+  };
+}
+
 /**
- * PostgreSQL adapter for the owner-private Companion vault.
- * Every query scopes both owner_id and identity_id; the schema adds a
- * composite foreign key so records cannot be attached to another owner.
+ * PostgreSQL adapter for the approved alive_memory_entry table and private
+ * companion preferences. Memory removal is an owner-scoped archive operation.
  */
 export function createPostgresCompanionVaultRepository(pool) {
   if (!pool || typeof pool.query !== "function") {
@@ -37,27 +62,35 @@ export function createPostgresCompanionVaultRepository(pool) {
       const identityId = requireScope(record?.identityId, "Identity ID");
       requireRecord(record, ownerId, identityId);
       const result = await pool.query(
-        `INSERT INTO alive_companion_memories
-          (memory_id, identity_id, owner_id, record, created_at, updated_at)
-         VALUES ($1, $2, $3, $4::jsonb, $5::timestamptz, $6::timestamptz)
-         RETURNING record`,
-        [record.memoryId, identityId, ownerId, JSON.stringify(record), record.createdAt, record.updatedAt]
+        `INSERT INTO alive_memory_entry
+          (memory_id, identity_id, owner_id, category, content, tags, state,
+           visibility, training_use, source, share_with_development, created_at,
+           approved_at, approved_by)
+         VALUES ($1, $2, $3, $4, $5, $6::jsonb, 'approved',
+                 'owner-only', false, 'owner-stated', $7, $8::timestamptz,
+                 $8::timestamptz, $3)
+         RETURNING memory_id, identity_id, owner_id, category, content, tags,
+                   state, visibility, training_use, source, share_with_development, created_at`,
+        [record.memoryId, identityId, ownerId, record.category, record.content,
+          JSON.stringify(record.tags), record.privacy?.shareWithDevelopment === true, record.createdAt]
       );
       if (!result.rows?.[0]) throw new Error("Companion memory could not be stored.");
-      return parseRecord(result.rows[0].record);
+      return fromMemoryRow(result.rows[0]);
     },
 
     async listMemories({ ownerId: ownerValue, identityId: identityValue } = {}) {
       const ownerId = requireScope(ownerValue, "Owner ID");
       const identityId = requireScope(identityValue, "Identity ID");
       const result = await pool.query(
-        `SELECT record FROM alive_companion_memories
-          WHERE owner_id = $1 AND identity_id = $2
+        `SELECT memory_id, identity_id, owner_id, category, content, tags, state,
+                visibility, training_use, source, share_with_development, created_at
+           FROM alive_memory_entry
+          WHERE owner_id = $1 AND identity_id = $2 AND state = 'approved'
           ORDER BY created_at DESC, memory_id ASC
           LIMIT 500`,
         [ownerId, identityId]
       );
-      return (result.rows || []).map(row => parseRecord(row.record));
+      return (result.rows || []).map(fromMemoryRow);
     },
 
     async deleteMemory({ ownerId: ownerValue, identityId: identityValue, memoryId } = {}) {
@@ -65,8 +98,9 @@ export function createPostgresCompanionVaultRepository(pool) {
       const identityId = requireScope(identityValue, "Identity ID");
       const id = requireScope(memoryId, "Memory ID");
       const result = await pool.query(
-        `DELETE FROM alive_companion_memories
-          WHERE owner_id = $1 AND identity_id = $2 AND memory_id = $3
+        `UPDATE alive_memory_entry
+            SET state = 'archived', archived_at = now()
+          WHERE owner_id = $1 AND identity_id = $2 AND memory_id = $3 AND state <> 'archived'
           RETURNING memory_id`,
         [ownerId, identityId, id]
       );
@@ -88,7 +122,7 @@ export function createPostgresCompanionVaultRepository(pool) {
         [ownerId, identityId, key, JSON.stringify(record), record.updatedAt]
       );
       if (!result.rows?.[0]) throw new Error("Companion preference could not be stored.");
-      return parseRecord(result.rows[0].record);
+      return parseJson(result.rows[0].record, result.rows[0].record);
     },
 
     async listPreferences({ ownerId: ownerValue, identityId: identityValue } = {}) {
@@ -101,7 +135,7 @@ export function createPostgresCompanionVaultRepository(pool) {
           LIMIT 200`,
         [ownerId, identityId]
       );
-      return (result.rows || []).map(row => parseRecord(row.record));
+      return (result.rows || []).map(row => parseJson(row.record, row.record));
     },
 
     async deletePreference({ ownerId: ownerValue, identityId: identityValue, key: keyValue } = {}) {
