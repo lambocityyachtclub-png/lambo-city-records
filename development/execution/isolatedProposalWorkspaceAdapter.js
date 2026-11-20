@@ -39,7 +39,7 @@ function byteLength(value) {
 }
 
 export function createIsolatedProposalWorkspaceAdapter(options = {}) {
-  const { workspaceAdapter, testRunner } = options;
+  const { workspaceAdapter, testRunner, projectContext } = options;
   const allowedPaths = Array.isArray(options.allowedPaths)
     ? [...new Set(options.allowedPaths.map(validateRelativePath))]
     : [];
@@ -100,7 +100,18 @@ export function createIsolatedProposalWorkspaceAdapter(options = {}) {
       }
     }
 
-    return Object.freeze({ files: Object.freeze(files), totalBytes });
+    const context = { files: Object.freeze(files), totalBytes };
+    const projectMap = typeof projectContext === "function"
+      ? await projectContext({ task: input.task ?? null, allowedPaths: [...allowedPaths] })
+      : projectContext;
+    if (projectMap && typeof projectMap === "object") {
+      const serialized = JSON.stringify(projectMap);
+      if (typeof serialized !== "string" || serialized.length > 160_000) {
+        throw new Error("Project discovery context exceeds the 160 KB safety limit.");
+      }
+      context.projectBlueprint = projectMap;
+    }
+    return Object.freeze(context);
   }
 
   async function applyProposedFiles(input = {}) {
