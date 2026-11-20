@@ -35,3 +35,5 @@ Do not place passwords, API keys, or generated secrets in GitHub files or ChatGP
 
 ## Not yet included
 This PR does not apply the database migration, configure Vercel secrets, configure Resend, create the owner's account, or register a passkey. Authenticator-based two-factor authentication and one-time backup-code issuance are implemented in this branch but still require owner enrollment and end-to-end verification. Independent encrypted offsite backups and a tested restore remain a separate required milestone. No code is merged or deployed to production.
+
+Enter all owner credentials and mail-provider secrets directly in Vercel Environment Variables. Never paste passwords, `BETTER_AUTH_SECRET`, Resend keys, database URLs, or recovery codes into chat, source files, or Git commits.
