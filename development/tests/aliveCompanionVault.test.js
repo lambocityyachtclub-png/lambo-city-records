@@ -114,7 +114,7 @@ test("owner can create and retrieve private Companion memories for the existing 
     actorId: OWNER_ID,
     identityId: IDENTITY_ID,
     memory: {
-      category: "milestone",
+      category: "experience",
       content: "The owner approved the first Studio session.",
       tags: ["studio", "approved", "studio"]
     }
@@ -128,7 +128,8 @@ test("owner can create and retrieve private Companion memories for the existing 
   assert.deepEqual(created.privacy, {
     visibility: "private",
     trainingUse: false,
-    crossWorldSharing: false
+    crossWorldSharing: false,
+    shareWithDevelopment: false
   });
   assert.equal(Object.isFrozen(created), true);
 
