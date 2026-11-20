@@ -250,3 +250,26 @@ test("ALIVE owner API approves and rejects pending tasks only through owner acti
     { action: "reject", taskId: "task-2", reason: "Not approved." }
   ]);
 });
+
+test("manual ALIVE execution passes the authenticated owner into private development context", async () => {
+  let receivedOptions;
+  const handler = createAliveApiHandler({
+    env: {
+      ALIVE_AI_ENABLED: "true",
+      ALIVE_SANDBOX_ENABLED: "true",
+      OPENAI_API_KEY: "test-key",
+      DATABASE_URL: "postgres://test",
+      ALIVE_ALLOWED_PATHS: '["development"]'
+    },
+    authenticateOwner: async () => ({ id: "owner-123", email: "owner@example.com", emailVerified: true }),
+    withSystem: async (options, callback) => {
+      receivedOptions = options;
+      return callback({ system: { executeNextWorldTask: async () => ({ executed: false, reason: "No queued task." }) } });
+    }
+  });
+  const response = makeResponse();
+  await handler(makeRequest({ method: "POST", action: "run", body: {} }), response);
+  assert.equal(response.statusCode, 200);
+  assert.equal(receivedOptions.owner.id, "owner-123");
+  assert.equal(receivedOptions.execution, true);
+});
