@@ -10,7 +10,7 @@ Every proposed memory is a concise statement linked to one ALIVE identity and it
 
 A memory begins in the `proposed` state. A companion may suggest that something is worth remembering, but suggestion is not approval. Only the authenticated personal owner may approve a proposed memory. Approval records the owner and timestamp. The owner may archive a memory; archive state preserves its approval audit metadata when it was previously approved.
 
-The companion must use approved memories only as persistent personal context. Proposed memories are not approved long-term knowledge. Archived memories are no longer active memory context.
+The companion must use approved memories only as persistent personal context. Proposed memories are not approved long-term knowledge. Archived memories are no longer active memory context. The companion-context eligibility rule is explicit in code: only an approved memory for the matching identity can be used. Proposed and archived entries are excluded.
 
 ## Privacy and ownership
 
