@@ -30,6 +30,39 @@ function isSameOrigin(req, env) {
   return origin === expected && (!fetchSite || fetchSite === "same-origin");
 }
 
+async function checkOwnerEmailDelivery(env) {
+  if (typeof env.RESEND_API_KEY !== "string" || !env.RESEND_API_KEY ||
+      typeof env.EMAIL_FROM !== "string" || !env.EMAIL_FROM) {
+    return { emailConfigured: false, emailDeliveryStatus: "missing_configuration" };
+  }
+  const senderMatch = env.EMAIL_FROM.match(/<([^>]+)>/);
+  const sender = senderMatch ? senderMatch[1] : env.EMAIL_FROM;
+  const domain = String(sender).trim().toLowerCase().split("@").pop();
+  if (!domain || !domain.includes(".")) {
+    return { emailConfigured: false, emailDeliveryStatus: "invalid_sender" };
+  }
+  try {
+    const response = await fetch("https://api.resend.com/domains", {
+      headers: { Authorization: "Bearer " + env.RESEND_API_KEY }
+    });
+    if (response.status === 401 || response.status === 403) {
+      return { emailConfigured: false, emailDeliveryStatus: "provider_credentials_rejected" };
+    }
+    if (!response.ok) {
+      return { emailConfigured: false, emailDeliveryStatus: "provider_unavailable" };
+    }
+    const payload = await response.json();
+    const domains = Array.isArray(payload.data) ? payload.data : [];
+    const match = domains.find(item => String(item.name || "").toLowerCase() === domain);
+    if (!match) return { emailConfigured: false, emailDeliveryStatus: "sender_domain_not_found" };
+    if (String(match.status || "").toLowerCase() !== "verified") {
+      return { emailConfigured: false, emailDeliveryStatus: "sender_domain_not_verified" };
+    }
+    return { emailConfigured: true, emailDeliveryStatus: "verified" };
+  } catch {
+    return { emailConfigured: false, emailDeliveryStatus: "provider_check_failed" };
+  }
+}
 function validationStatus(error) {
   const message = String(error?.message || "");
   if (/not found/i.test(message)) return 404;
@@ -48,8 +81,8 @@ export function createAliveApiHandler(options = {}) {
     const action = readAction(req);
     const method = String(req.method || "GET").toUpperCase();
     if (action === "auth-readiness" && method === "GET") {
-      const emailConfigured = typeof env.RESEND_API_KEY === "string" && env.RESEND_API_KEY.length > 0 && typeof env.EMAIL_FROM === "string" && env.EMAIL_FROM.length > 0;
-      return send(res, 200, { emailConfigured });
+      const emailDelivery = await checkOwnerEmailDelivery(env);
+      return send(res, 200, emailDelivery);
     }
     if (typeof authenticateOwner !== "function") {
       return send(res, 503, { error: "ALIVE owner session authentication is not configured." });
@@ -70,13 +103,13 @@ export function createAliveApiHandler(options = {}) {
       const aiEnabled = env.ALIVE_AI_ENABLED === "true";
       const sandboxEnabled = env.ALIVE_SANDBOX_ENABLED === "true";
       const openAIConfigured = typeof env.OPENAI_API_KEY === "string" && env.OPENAI_API_KEY.length > 0;
-      const emailConfigured = typeof env.RESEND_API_KEY === "string" && env.RESEND_API_KEY.length > 0 && typeof env.EMAIL_FROM === "string" && env.EMAIL_FROM.length > 0;
+      const emailDelivery = await checkOwnerEmailDelivery(env);
       return send(res, 200, {
         service: "lambo-city-alive",
         mode: "owner-controlled",
         owner: { email: owner.email },
         databaseConfigured: Boolean(env.DATABASE_URL),
-        emailConfigured,
+        ...emailDelivery,
         openAIConfigured,
         aiEnabled,
         sandboxEnabled,
