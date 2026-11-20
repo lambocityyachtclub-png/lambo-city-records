@@ -34,13 +34,13 @@ export function getAlivePersonalServices() {
   return services;
 }
 
-export async function getOrCreateOwnerIdentity(ownerId) {
+export async function getOrCreateOwnerIdentity(ownerId, options = {}) {
   if (typeof ownerId !== "string" || !ownerId.trim()) {
     throw new TypeError("An authenticated ALIVE owner ID is required.");
   }
   const actorId = ownerId.trim();
   const identityId = "owner-" + createHash("sha256").update(actorId).digest("hex").slice(0, 32);
-  const { identityService } = getAlivePersonalServices();
+  const { identityService } = getAlivePersonalServices(options);
 
   try {
     return await identityService.get({
@@ -70,4 +70,34 @@ export async function getOrCreateOwnerIdentity(ownerId) {
     if (error?.code !== "ALIVE_IDENTITY_DUPLICATE" && error?.code !== "23505") throw error;
     return identityService.get({ actorId, identityId, requiredRole: "owner" });
   }
+}
+
+export function selectDevelopmentMemories(memories) {
+  if (!Array.isArray(memories)) return [];
+  return memories
+    .filter(memory => memory?.privacy?.shareWithDevelopment === true)
+    .slice(0, 20)
+    .map(memory => ({
+      category: String(memory.category || "note").slice(0, 32),
+      content: String(memory.content || "").slice(0, 2000),
+      tags: Array.isArray(memory.tags)
+        ? memory.tags.filter(tag => typeof tag === "string").slice(0, 12)
+        : []
+    }))
+    .filter(memory => memory.content.length > 0);
+}
+
+export async function getOwnerDevelopmentContext(ownerId, options = {}) {
+  const identity = await getOrCreateOwnerIdentity(ownerId, options);
+  const { companionVault } = getAlivePersonalServices(options);
+  const memories = await companionVault.listMemories({
+    actorId: ownerId,
+    identityId: identity.identityId,
+    requiredRole: "owner"
+  });
+  const sharedMemories = selectDevelopmentMemories(memories);
+  return Object.freeze({
+    status: sharedMemories.length ? "owner-shared" : "no-shared-memories",
+    memories: Object.freeze(sharedMemories)
+  });
 }
