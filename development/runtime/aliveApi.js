@@ -66,11 +66,13 @@ export function createAliveApiHandler(options = {}) {
       const aiEnabled = env.ALIVE_AI_ENABLED === "true";
       const sandboxEnabled = env.ALIVE_SANDBOX_ENABLED === "true";
       const openAIConfigured = typeof env.OPENAI_API_KEY === "string" && env.OPENAI_API_KEY.length > 0;
+      const emailConfigured = typeof env.RESEND_API_KEY === "string" && env.RESEND_API_KEY.length > 0 && typeof env.EMAIL_FROM === "string" && env.EMAIL_FROM.length > 0;
       return send(res, 200, {
         service: "lambo-city-alive",
         mode: "owner-controlled",
         owner: { email: owner.email },
         databaseConfigured: Boolean(env.DATABASE_URL),
+        emailConfigured,
         openAIConfigured,
         aiEnabled,
         sandboxEnabled,
