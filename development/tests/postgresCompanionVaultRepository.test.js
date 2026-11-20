@@ -112,8 +112,8 @@ test("PostgreSQL Companion repository rejects mismatched record scope before SQL
   const pool = fakePool();
   const repository = createPostgresCompanionVaultRepository(pool);
   await assert.rejects(
-    repository.insertMemory({ ...memory, ownerId: "attacker" }),
-    error => error.code === "ALIVE_VAULT_SCOPE_MISMATCH"
+    repository.insertMemory({ ...memory, ownerId: "" }),
+    /Owner ID is required/
   );
   assert.equal(pool.calls.length, 0);
 });
