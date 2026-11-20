@@ -6,7 +6,8 @@
  */
 import os from "node:os";
 import path from "node:path";
-import { createDevelopmentSystem } from "../engine/developmentSystem.js";\nimport { WORLD_RUNNER_ID } from "../runners/world/worldDevelopmentRunner.js";
+import { createDevelopmentSystem } from "../engine/developmentSystem.js";
+import { WORLD_RUNNER_ID } from "../runners/world/worldDevelopmentRunner.js";
 import { createOpenAIProposalProvider } from "../providers/openAIProposalProvider.js";
 import { createPostgresDevelopmentStorage } from "../storage/postgresDevelopmentStorage.js";
 import { createIsolatedWorkspaceAdapter } from "../execution/isolatedWorkspaceAdapter.js";
