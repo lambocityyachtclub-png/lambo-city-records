@@ -11,12 +11,12 @@ function makeResponse() {
   };
 }
 
-function makeRequest({ method = "GET", action = "status", body = {}, url } = {}) {
+function makeRequest({ method = "GET", action = "status", body = {}, url, origin = "https://lambocityrecords.com" } = {}) {
   return {
     method,
     url: url || "/api/alive/" + action,
     query: { action },
-    headers: { cookie: "alive_owner_session=test" },
+    headers: { cookie: "alive_owner_session=test", origin, "sec-fetch-site": "same-origin" },
     body
   };
 }
@@ -197,4 +197,22 @@ test("ALIVE owner can approve a protected task before the one-shot worker claims
   assert.equal(response.statusCode, 200);
   assert.deepEqual(approved, { taskId: "protected-task-1", approvedBy: "owner" });
   assert.equal(response.body.task.status, "queued");
+});
+
+test("ALIVE hosted API rejects cross-origin state changes", async () => {
+  let calls = 0;
+  const handler = createAliveApiHandler({
+    env: {},
+    authenticateOwner: async () => ({ email: "owner@example.com", emailVerified: true }),
+    withSystem: async () => { calls += 1; }
+  });
+  const response = makeResponse();
+  await handler(makeRequest({
+    method: "POST",
+    action: "tasks",
+    origin: "https://attacker.example",
+    body: { title: "Cross-site request", description: "Must be blocked.", area: "water" }
+  }), response);
+  assert.equal(response.statusCode, 403);
+  assert.equal(calls, 0);
 });
