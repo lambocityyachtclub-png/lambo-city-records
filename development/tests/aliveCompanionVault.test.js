@@ -114,7 +114,7 @@ test("owner can create and retrieve private Companion memories for the existing 
     actorId: OWNER_ID,
     identityId: IDENTITY_ID,
     memory: {
-      category: "milestone",
+      category: "experience",
       content: "The owner approved the first Studio session.",
       tags: ["studio", "approved", "studio"]
     }
@@ -128,7 +128,8 @@ test("owner can create and retrieve private Companion memories for the existing 
   assert.deepEqual(created.privacy, {
     visibility: "private",
     trainingUse: false,
-    crossWorldSharing: false
+    crossWorldSharing: false,
+    shareWithDevelopment: false
   });
   assert.equal(Object.isFrozen(created), true);
 
@@ -137,12 +138,30 @@ test("owner can create and retrieve private Companion memories for the existing 
   assert.equal(memories[0].content, "The owner approved the first Studio session.");
 });
 
+test("owner can explicitly share one selected memory with ALIVE development without changing its private defaults", async () => {
+  const { vault } = await setup();
+  const created = await vault.createMemory({
+    actorId: OWNER_ID,
+    identityId: IDENTITY_ID,
+    memory: {
+      category: "project",
+      content: "The owner explicitly shared this project note with ALIVE development.",
+      privacy: { shareWithDevelopment: true }
+    }
+  });
+
+  assert.equal(created.privacy.shareWithDevelopment, true);
+  assert.equal(created.privacy.visibility, "private");
+  assert.equal(created.privacy.trainingUse, false);
+  assert.equal(created.privacy.crossWorldSharing, false);
+});
+
 test("delegated editors, viewers, and unrelated people cannot read or write Companion memories", async () => {
   const { vault } = await setup();
   await vault.createMemory({
     actorId: OWNER_ID,
     identityId: IDENTITY_ID,
-    memory: { category: "note", content: "Private owner memory." }
+    memory: { category: "fact", content: "Private owner memory." }
   });
 
   for (const actorId of ["person-editor-001", "person-viewer-001", "stranger-001"]) {
@@ -154,7 +173,7 @@ test("delegated editors, viewers, and unrelated people cannot read or write Comp
       vault.createMemory({
         actorId,
         identityId: IDENTITY_ID,
-        memory: { category: "note", content: "Unauthorized write." }
+        memory: { category: "fact", content: "Unauthorized write." }
       }),
       error => error.code === "ALIVE_IDENTITY_ACCESS_DENIED"
     );
@@ -228,7 +247,7 @@ test("owner can delete individual memories and preferences without affecting ide
   await vault.createMemory({
     actorId: OWNER_ID,
     identityId: IDENTITY_ID,
-    memory: { category: "note", content: "Delete me." }
+    memory: { category: "fact", content: "Delete me." }
   });
   await vault.setPreference({
     actorId: OWNER_ID,
@@ -264,19 +283,19 @@ test("owner can delete individual memories and preferences without affecting ide
 test("vault rejects malformed and oversized memory and preference input", async () => {
   const { vault } = await setup();
   await assert.rejects(
-    vault.createMemory({ actorId: OWNER_ID, identityId: IDENTITY_ID, memory: { category: "Bad Category", content: "x" } }),
+    vault.createMemory({ actorId: OWNER_ID, identityId: IDENTITY_ID, memory: { category: "note", content: "x" } }),
     error => error.code === "ALIVE_VAULT_INPUT_INVALID"
   );
   await assert.rejects(
-    vault.createMemory({ actorId: OWNER_ID, identityId: IDENTITY_ID, memory: { category: "note", content: " " } }),
+    vault.createMemory({ actorId: OWNER_ID, identityId: IDENTITY_ID, memory: { category: "fact", content: " " } }),
     error => error.code === "ALIVE_VAULT_INPUT_INVALID"
   );
   await assert.rejects(
-    vault.createMemory({ actorId: OWNER_ID, identityId: IDENTITY_ID, memory: { category: "note", content: "x".repeat(4001) } }),
+    vault.createMemory({ actorId: OWNER_ID, identityId: IDENTITY_ID, memory: { category: "fact", content: "x".repeat(2001) } }),
     error => error.code === "ALIVE_VAULT_INPUT_INVALID"
   );
   await assert.rejects(
-    vault.createMemory({ actorId: OWNER_ID, identityId: IDENTITY_ID, memory: { category: "note", content: "x", tags: Array(13).fill("tag") } }),
+    vault.createMemory({ actorId: OWNER_ID, identityId: IDENTITY_ID, memory: { category: "fact", content: "x", tags: Array(13).fill("tag") } }),
     error => error.code === "ALIVE_VAULT_INPUT_INVALID"
   );
 
@@ -345,7 +364,7 @@ test("vault rejects repository rows belonging to another owner or identity", asy
     identityId: "another-identity",
     ownerId: "another-owner",
     createdBy: "another-owner",
-    category: "note",
+    category: "fact",
     content: "Must not leak.",
     tags: [],
     createdAt: "2026-11-19T00:00:00.000Z",
@@ -390,7 +409,7 @@ test("vault rejects oversized collections and duplicate repository identities", 
       identityId: IDENTITY_ID,
       ownerId: OWNER_ID,
       createdBy: OWNER_ID,
-      category: "note",
+      category: "fact",
       content: "One",
       tags: [],
       createdAt: "2026-11-19T00:00:00.000Z",
@@ -402,7 +421,7 @@ test("vault rejects oversized collections and duplicate repository identities", 
       identityId: IDENTITY_ID,
       ownerId: OWNER_ID,
       createdBy: OWNER_ID,
-      category: "note",
+      category: "fact",
       content: "Two",
       tags: [],
       createdAt: "2026-11-19T00:00:00.000Z",
