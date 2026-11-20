@@ -22,6 +22,7 @@
     <section class="panel auth-panel" id="auth-panel">
       <div><p class="eyebrow">OWNER ACCESS</p><h2>Passkey-first owner access</h2><p class="muted">Once your owner account is verified and a passkey is registered, use Face ID / passkey for everyday sign-in. First-time setup requires one verified owner-email enrollment, then register your passkey immediately.</p></div>
       <div class="auth-form"><button class="primary" id="passkey-button" type="button">Continue with Face ID / passkey</button><p class="muted">First time here? Create and verify the owner account below, then register your passkey.</p></div>
+      <p class="notice warn" id="email-readiness" role="status" aria-live="polite">Checking owner email verification setup…</p>
       <form id="auth-form" class="auth-form">
         <label for="owner-email">Owner email</label>
         <input id="owner-email" type="email" autocomplete="username" autocapitalize="off" required placeholder="Your verified owner email">
