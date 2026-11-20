@@ -35,4 +35,12 @@ test("origin parsing rejects malformed and non-HTTPS configured origins", () => 
   assert.equal(config.baseURL, "https://lambocityrecords.com");
   assert.ok(!config.trustedOrigins.includes("http://evil.example"));
 });
-\ntest("personal and owner task APIs share the same Preview-aware origin policy", async () => {\n  const personalApi = await fs.readFile(new URL("../../api/alive/personal/[action].js", import.meta.url), "utf8");\n  const ownerApi = await fs.readFile(new URL("../../development/runtime/aliveApi.js", import.meta.url), "utf8");\n  assert.match(personalApi, /isSameOriginRequest\\(req\\)/);\n  assert.match(ownerApi, /isSameOriginRequest\\(req, env\\)/);\n  assert.match(ownerApi, /originPolicy\\.js/);\n});\n
+
+
+test("personal and owner task APIs share the same Preview-aware origin policy", async () => {
+  const personalApi = await fs.readFile(new URL("../../api/alive/personal/[action].js", import.meta.url), "utf8");
+  const ownerApi = await fs.readFile(new URL("../../development/runtime/aliveApi.js", import.meta.url), "utf8");
+  assert.match(personalApi, /isSameOriginRequest\(req\)/);
+  assert.match(ownerApi, /isSameOriginRequest\(req, env\)/);
+  assert.match(ownerApi, /originPolicy\.js/);
+});
