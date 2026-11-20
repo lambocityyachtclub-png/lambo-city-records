@@ -121,7 +121,8 @@ export function createAliveApiHandler(options = {}) {
           approval: result.approval || null
         });
       } catch (error) {
-        const status = validationStatus(error);\n        return send(res, status, { error: status >= 500 ? "ALIVE task storage is unavailable. Check the private migration and server configuration." : error.message || "Unable to create ALIVE task." });
+        const status = validationStatus(error);
+        return send(res, status, { error: status >= 500 ? "ALIVE task storage is unavailable. Check the private migration and server configuration." : error.message || "Unable to create ALIVE task." });
       }
     }
 
