@@ -18,6 +18,33 @@ import { createVercelSandboxTestRunner } from "../execution/vercelSandboxTestRun
 
 const LOCK_KEY = 1280068941;
 
+export async function withPostgresAdvisoryLock(pool, operation, lockKey = LOCK_KEY) {
+  const client = await pool.connect();
+  let transactionOpen = false;
+  let operationError = null;
+  try {
+    await client.query("BEGIN");
+    transactionOpen = true;
+    await client.query("SELECT pg_advisory_xact_lock($1::bigint)", [lockKey]);
+    return await operation();
+  } catch (error) {
+    operationError = error;
+    throw error;
+  } finally {
+    try {
+      if (transactionOpen) {
+        try {
+          await client.query(operationError ? "ROLLBACK" : "COMMIT");
+        } catch (releaseError) {
+          if (!operationError) throw releaseError;
+        }
+      }
+    } finally {
+      client.release();
+    }
+  }
+}
+
 function required(value, label) {
   if (typeof value !== "string" || !value.trim()) throw new Error(label + " is required.");
   return value.trim();
@@ -62,16 +89,7 @@ export function createHostedAliveControlPlane(options = {}) {
   }
 
   async function withAdvisoryLock(operation) {
-    const client = await pool.connect();
-    let locked = false;
-    try {
-      await client.query("SELECT pg_advisory_lock($1)", [LOCK_KEY]);
-      locked = true;
-      return await operation();
-    } finally {
-      if (locked) await client.query("SELECT pg_advisory_unlock($1)", [LOCK_KEY]).catch(() => {});
-      client.release();
-    }
+    return withPostgresAdvisoryLock(pool, operation, LOCK_KEY);
   }
 
   async function createSystem({ execution = false, storage }) {
