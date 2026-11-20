@@ -146,8 +146,11 @@ export default async function alivePersonalAction(req, res) {
     res.setHeader("Allow", "GET, POST, DELETE");
     return send(res, 404, { error: "Unknown ALIVE personal action or unsupported method." });
   } catch (error) {
-    return send(res, statusFor(error), {
-      error: error?.message || "ALIVE personal storage is unavailable."
+    const status = statusFor(error);
+    return send(res, status, {
+      error: status >= 500
+        ? "ALIVE personal storage is unavailable. Check the private migration and server configuration."
+        : error?.message || "ALIVE personal request is invalid."
     });
   }
 }
