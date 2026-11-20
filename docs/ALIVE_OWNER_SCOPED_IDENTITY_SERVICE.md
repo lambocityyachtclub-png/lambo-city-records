@@ -46,3 +46,7 @@ Run the Development Engine test suite, including:
 - Only the owner can grant or revoke access.
 - Owner ID, private memory policy, and training-use defaults remain protected.
 - Invalid identity and role inputs fail closed.
+
+## Current hosted integration
+
+The service is now composed with the PostgreSQL identity repository in `alive/server/personalServices.js` and exposed through the verified owner-session API at `/api/alive/personal/identity`. The first owner identity is initialized lazily after a verified owner session. The schema is part of `development/storage/migrations/003_alive_identity_companion.sql`; it must still be reviewed and manually applied to the isolated ALIVE development database before use.
