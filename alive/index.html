@@ -81,6 +81,21 @@
         </div>
       </section>
       <section class="panel">
+        <div class="section-heading"><div><p class="eyebrow">PERSONAL IDENTITY AND MEMORY</p><h2>Your private ALIVE context</h2><p class="muted">This information is private to your owner identity. Nothing is collected from chats automatically, and Companion memories are not used for model training.</p></div></div>
+        <form id="identity-form" class="auth-form">
+          <label for="identity-display-name">Identity display name</label>
+          <input id="identity-display-name" maxlength="80" required>
+          <button class="quiet" type="submit">Save identity</button>
+        </form>
+        <form id="memory-form" class="task-form">
+          <label>Memory category<select name="category"><option value="note">Note</option><option value="preference">Preference</option><option value="project">Project context</option><option value="workflow">Workflow</option><option value="creative">Creative direction</option><option value="world">World context</option></select></label>
+          <label>Tags (optional)<input name="tags" maxlength="200" placeholder="comma, separated, tags"></label>
+          <label class="full">Private memory<textarea name="content" rows="3" maxlength="8000" required placeholder="Add something ALIVE should retain for your personal identity."></textarea></label>
+          <div class="form-footer"><span class="muted">You control each memory.</span><button class="primary" type="submit">Save private memory</button></div>
+        </form>
+        <div id="memory-list" class="stack"><p class="muted">Connect to load private memories.</p></div>
+      </section>
+      <section class="panel">
         <div class="section-heading"><div><p class="eyebrow">01 / DIRECTION</p><h2>Give ALIVE a task</h2><p class="muted">The first hosted pilot accepts world-development tasks only. Submitting a task does not execute it.</p></div></div>
         <form id="task-form" class="task-form">
           <label>Task title<input name="title" maxlength="120" required placeholder="Example: Improve marina water reflections"></label>
