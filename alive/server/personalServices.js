@@ -1,5 +1,4 @@
 import { createHash } from "node:crypto";
-import { Pool } from "pg";
 import { createIdentityService } from "../identity/identityService.js";
 import { createPostgresIdentityRepository } from "../identity/postgresIdentityRepository.js";
 import { createCompanionVault } from "../companion/companionVault.js";
@@ -15,14 +14,18 @@ function requiredDatabaseUrl(env = process.env) {
   return value.trim();
 }
 
-export function getAlivePersonalServices(options = {}) {
+export async function getAlivePersonalServices(options = {}) {
   if (services) return services;
-  const pool = options.pool || new Pool({
-    connectionString: requiredDatabaseUrl(options.env),
-    max: 2,
-    idleTimeoutMillis: 10000,
-    connectionTimeoutMillis: 10000
-  });
+  let pool = options.pool;
+  if (!pool) {
+    const { Pool } = await import("pg");
+    pool = new Pool({
+      connectionString: requiredDatabaseUrl(options.env),
+      max: 2,
+      idleTimeoutMillis: 10000,
+      connectionTimeoutMillis: 10000
+    });
+  }
   const identityService = createIdentityService({
     repository: createPostgresIdentityRepository(pool)
   });
@@ -40,7 +43,7 @@ export async function getOrCreateOwnerIdentity(ownerId, options = {}) {
   }
   const actorId = ownerId.trim();
   const identityId = "owner-" + createHash("sha256").update(actorId).digest("hex").slice(0, 32);
-  const { identityService } = getAlivePersonalServices(options);
+  const { identityService } = await getAlivePersonalServices(options);
 
   try {
     return await identityService.get({
@@ -89,7 +92,7 @@ export function selectDevelopmentMemories(memories) {
 
 export async function getOwnerDevelopmentContext(ownerId, options = {}) {
   const identity = await getOrCreateOwnerIdentity(ownerId, options);
-  const { companionVault } = getAlivePersonalServices(options);
+  const { companionVault } = await getAlivePersonalServices(options);
   const memories = await companionVault.listMemories({
     actorId: ownerId,
     identityId: identity.identityId,
