@@ -13,7 +13,7 @@ const proposal = {
 };
 
 function setup() {
-  const rows = [proposal];
+  const rows = [{ ...proposal, tags: [...proposal.tags] }];
   const identityService = {
     async get({ actorId, identityId: requested, requiredRole }) {
       if (actorId !== ownerId || requested !== identityId || requiredRole !== "owner") {
