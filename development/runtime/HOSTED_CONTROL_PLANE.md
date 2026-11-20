@@ -72,3 +72,7 @@ to run if the migration is missing. No migration is run automatically.
 - The Vercel Function has a 60-second invocation limit; this is a small one-task
   pilot, not the long-running worker. Durable background orchestration and a
   hardened release/publish process remain future milestones.
+
+## Mainline worker and whole-project context integration
+
+The hosted control plane uses the current mainline `DevelopmentWorker` and registers the World specialist as its only runner for the first hosted pilot. A hosted invocation is bounded to one task. The proposal workspace receives a compact read-only project blueprint generated from `development/blueprints/departmentCatalog.json` and the static dependency graph. That context contains project/department paths, entrypoints, dependency summaries, and discovery warnings; it deliberately excludes the raw repository inventory and source contents. The actual source contents sent to the provider remain limited to the isolated `ALIVE_ALLOWED_PATHS` workspace. Discovery is marked `discovery-only`, not owner-approved.
