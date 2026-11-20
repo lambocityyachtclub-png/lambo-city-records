@@ -101,3 +101,5 @@ The public experience must be a separate interface and server-side API boundary.
 ## 10. Patent preparation
 
 The code and architecture are now documented as a technical foundation, but no patent application has been filed and patentability is not established. Prepare a separate private invention disclosure and draft claims, perform a prior-art search, and have a qualified patent attorney review disclosure timing and filing strategy before any filing or public launch.
+
+All owner steps above remain manual and owner-controlled. This pull request does not change repository visibility, apply migrations, create credentials, enable paid execution, turn on the scheduler, or deploy to production.
