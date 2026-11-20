@@ -155,7 +155,8 @@ export function createAliveApiHandler(options = {}) {
         }));
         return send(res, 200, result);
       } catch (error) {
-        const status = validationStatus(error);\n        return send(res, status, { error: status >= 500 ? "ALIVE review storage is unavailable. Check the private migration and server configuration." : error.message || "Unable to list ALIVE reviews." });
+        const status = validationStatus(error);
+        return send(res, status, { error: status >= 500 ? "ALIVE review storage is unavailable. Check the private migration and server configuration." : error.message || "Unable to list ALIVE reviews." });
       }
     }
 
