@@ -175,7 +175,7 @@ Build in small, testable, modular stages. Engine and Companion advance side-by-s
 3. **Durable identity storage:** reviewed PostgreSQL adapter and migrations in an isolated development environment; verify atomic updates, access boundaries, and recovery before production use.
 4. **Owner account and identity experience:** secure onboarding, username/display name, consent, identity dashboard, privacy and permission controls.
 5. **Appearance pipeline:** guided multi-angle reference capture, secure asset handling, generation-provider abstraction, candidate review, correction, approval, and stable model references.
-6. **Companion foundation:** owner-approved profile and memory, persistent conversation continuity, policy-controlled capabilities, auditability, and explicit behavior modes.
+6. **Memory and Companion foundation:** owner-approved profile, the separate memory lifecycle contract (proposed → owner-approved → archived), persistent conversation continuity, policy-controlled capabilities, auditability, and explicit behavior modes. Memory persistence and model access remain blocked until server-side owner authorization and storage safeguards are implemented and tested.
 7. **Cross-device companion access:** establish the first owner-facing access surface and a secure continuity layer for resuming conversations and reviewing authorized task progress. Add further devices and service integrations through explicit adapters and permission grants.
 8. **HERO connection:** bind the existing HERO model to the verified founder identity; preserve existing runtime behavior and Records HQ access.
 9. **LAMBO CITY live integration:** server-authoritative identity resolution, multiplayer visibility, and permission-aware interactions.
@@ -203,6 +203,7 @@ LAMBO CITY is the first proof of the platform—not the limit of what ALIVE can 
 
 This master product blueprint sits above and does not replace:
 - `docs/ALIVE_PERSONAL_IDENTITY_CONTRACT.md` — domain-level identity and companion policy contract.
+- `docs/ALIVE_MEMORY_CONTRACT.md` — owner-controlled memory lifecycle, explicit approval, privacy, and archive rules.
 - `docs/ALIVE_OWNER_SCOPED_IDENTITY_SERVICE.md` — owner-scoped service boundary, when present.
 - `docs/LAMBO_CITY_ALIVE_BLUEPRINT_DISCOVERY.md` — read-only discovery process for LAMBO CITY's wider department blueprints.
 - Existing LAMBO CITY North Star, Master Blueprint, Studio blueprint, and other owner-authored specifications.
