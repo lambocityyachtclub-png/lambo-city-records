@@ -143,7 +143,7 @@ test("delegated editors, viewers, and unrelated people cannot read or write Comp
   await vault.createMemory({
     actorId: OWNER_ID,
     identityId: IDENTITY_ID,
-    memory: { category: "note", content: "Private owner memory." }
+    memory: { category: "fact", content: "Private owner memory." }
   });
 
   for (const actorId of ["person-editor-001", "person-viewer-001", "stranger-001"]) {
@@ -155,7 +155,7 @@ test("delegated editors, viewers, and unrelated people cannot read or write Comp
       vault.createMemory({
         actorId,
         identityId: IDENTITY_ID,
-        memory: { category: "note", content: "Unauthorized write." }
+        memory: { category: "fact", content: "Unauthorized write." }
       }),
       error => error.code === "ALIVE_IDENTITY_ACCESS_DENIED"
     );
@@ -229,7 +229,7 @@ test("owner can delete individual memories and preferences without affecting ide
   await vault.createMemory({
     actorId: OWNER_ID,
     identityId: IDENTITY_ID,
-    memory: { category: "note", content: "Delete me." }
+    memory: { category: "fact", content: "Delete me." }
   });
   await vault.setPreference({
     actorId: OWNER_ID,
@@ -269,15 +269,15 @@ test("vault rejects malformed and oversized memory and preference input", async 
     error => error.code === "ALIVE_VAULT_INPUT_INVALID"
   );
   await assert.rejects(
-    vault.createMemory({ actorId: OWNER_ID, identityId: IDENTITY_ID, memory: { category: "note", content: " " } }),
+    vault.createMemory({ actorId: OWNER_ID, identityId: IDENTITY_ID, memory: { category: "fact", content: " " } }),
     error => error.code === "ALIVE_VAULT_INPUT_INVALID"
   );
   await assert.rejects(
-    vault.createMemory({ actorId: OWNER_ID, identityId: IDENTITY_ID, memory: { category: "note", content: "x".repeat(4001) } }),
+    vault.createMemory({ actorId: OWNER_ID, identityId: IDENTITY_ID, memory: { category: "fact", content: "x".repeat(4001) } }),
     error => error.code === "ALIVE_VAULT_INPUT_INVALID"
   );
   await assert.rejects(
-    vault.createMemory({ actorId: OWNER_ID, identityId: IDENTITY_ID, memory: { category: "note", content: "x", tags: Array(13).fill("tag") } }),
+    vault.createMemory({ actorId: OWNER_ID, identityId: IDENTITY_ID, memory: { category: "fact", content: "x", tags: Array(13).fill("tag") } }),
     error => error.code === "ALIVE_VAULT_INPUT_INVALID"
   );
 
@@ -346,7 +346,7 @@ test("vault rejects repository rows belonging to another owner or identity", asy
     identityId: "another-identity",
     ownerId: "another-owner",
     createdBy: "another-owner",
-    category: "note",
+    category: "fact",
     content: "Must not leak.",
     tags: [],
     createdAt: "2026-11-19T00:00:00.000Z",
@@ -391,7 +391,7 @@ test("vault rejects oversized collections and duplicate repository identities", 
       identityId: IDENTITY_ID,
       ownerId: OWNER_ID,
       createdBy: OWNER_ID,
-      category: "note",
+      category: "fact",
       content: "One",
       tags: [],
       createdAt: "2026-11-19T00:00:00.000Z",
@@ -403,7 +403,7 @@ test("vault rejects oversized collections and duplicate repository identities", 
       identityId: IDENTITY_ID,
       ownerId: OWNER_ID,
       createdBy: OWNER_ID,
-      category: "note",
+      category: "fact",
       content: "Two",
       tags: [],
       createdAt: "2026-11-19T00:00:00.000Z",
