@@ -88,8 +88,11 @@ export function validateMemoryEntry(entry) {
   if (entry.state === "approved" && (!entry.approvedBy || !entry.approvedAt)) {
     errors.push("Approved memory must record the owner's approval.");
   }
-  if (entry.state !== "approved" && (entry.approvedBy || entry.approvedAt)) {
-    errors.push("Unapproved memory cannot carry approval metadata.");
+  if ((entry.approvedBy && !entry.approvedAt) || (!entry.approvedBy && entry.approvedAt)) {
+    errors.push("Memory approval metadata must be complete.");
+  }
+  if (entry.state === "proposed" && (entry.approvedBy || entry.approvedAt)) {
+    errors.push("Proposed memory cannot carry approval metadata.");
   }
   if (entry.state === "archived" && !entry.archivedAt) {
     errors.push("Archived memory must record its archive time.");
