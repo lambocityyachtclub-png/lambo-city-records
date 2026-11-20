@@ -60,7 +60,7 @@ export default async function alivePersonalAction(req, res) {
 
   const action = readAction(req);
   try {
-    const { identityService, companionVault } = getAlivePersonalServices();
+    const { identityService, companionVault } = await getAlivePersonalServices();
     const identity = await getOrCreateOwnerIdentity(owner.id);
 
     if (action === "identity" && method === "GET") {
