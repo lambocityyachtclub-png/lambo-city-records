@@ -360,7 +360,7 @@ test("World Development Runner sends protected landmark changes to owner approva
 test("World Development Runner is disabled with the Development System", async () => {
   const system = await createDevelopmentSystem();
   system.disable();
-  await assert.rejects(
+  assert.throws(
     () => system.submitWorldFinding({
       title: "Disabled world task",
       description: "This should not be submitted.",
