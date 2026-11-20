@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 
-const MEMORY_CONTENT_LIMIT = 4000;
+const MEMORY_CONTENT_LIMIT = 2000;
+const MEMORY_CATEGORIES = new Set(["fact", "preference", "goal", "relationship", "project", "experience"]);
 const MEMORY_TAG_LIMIT = 12;
 const MEMORY_COLLECTION_LIMIT = 500;
 const PREFERENCE_COLLECTION_LIMIT = 200;
@@ -215,8 +216,8 @@ export function createCompanionVault({
         throw vaultError("Memory input must be an object.", "ALIVE_VAULT_INPUT_INVALID");
       }
       const category = cleanText(memory.category, "Memory category", 32);
-      if (!/^[a-z][a-z0-9-]{0,31}$/.test(category)) {
-        throw vaultError("Memory category must use lowercase letters, numbers, and hyphens.", "ALIVE_VAULT_INPUT_INVALID");
+      if (!MEMORY_CATEGORIES.has(category)) {
+        throw vaultError("Memory category must be fact, preference, goal, relationship, project, or experience.", "ALIVE_VAULT_INPUT_INVALID");
       }
       const content = cleanText(memory.content, "Memory content", MEMORY_CONTENT_LIMIT);
       const timestamp = cleanText(now(), "Memory timestamp", 40);
