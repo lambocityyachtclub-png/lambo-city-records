@@ -5,7 +5,7 @@ Date: 2026-11-19
 
 ## 1. Product definition
 
-ALIVE is an independently capable, reusable digital-identity and intelligent-companion platform. It creates and maintains a person's persistent digital identity: their chosen representation, appearance, personality, owner-approved memories, preferences, permissions, and relationship with their companion.
+ALIVE is an independently capable, reusable digital-identity and intelligent-companion platform. It creates and maintains a person's persistent digital identity and personal digital counterpart: their chosen representation, appearance, personality, owner-approved memories, preferences, permissions, and an ongoing relationship with their companion. The companion is intended to remain accessible across the owner's supported devices and connected services, so conversations, approved context, and authorized work can continue beyond any single app or game.
 
 LAMBO CITY is ALIVE's first environment and first major showcase. It is not ALIVE's owner, technical boundary, or only destination.
 
@@ -27,9 +27,11 @@ The reusable platform foundation. It owns:
 The Engine is platform-neutral. It must not depend on LAMBO CITY scene code, Three.js, or a particular world's runtime.
 
 ### ALIVE Companion
-The intelligence and interaction layer attached to an ALIVE identity. It:
-- Communicates with the owner and, when authorized, other people.
-- Uses owner-approved personality, preferences, and memory.
+The intelligence and interaction layer attached to an ALIVE identity. It is the owner's persistent digital counterpart—not merely an in-game avatar or a chatbot limited to isolated sessions. It should be reachable through supported access surfaces such as the ALIVE app or website, devices, and authorized integrations. It:
+- Communicates naturally with the owner across supported access surfaces and, when authorized, with other people.
+- Maintains continuity across conversations and sessions, using owner-approved personality, preferences, and memory.
+- Can receive goals or tasks, make bounded progress between conversations when explicitly authorized, and report what it did, what remains, and where owner input is needed.
+- Can help organize projects, research information, prepare materials, and coordinate supported workflows through approved tools.
 - Operates only through explicitly granted capabilities.
 - Supports owner-directed, assisted, and opt-in autonomous modes.
 - Requests owner approval for external actions and never silently elevates its permissions.
@@ -120,7 +122,7 @@ An ALIVE identity is more than a one-time avatar export. Over time, and only wit
 
 Memory is private and owner-controlled by default. The owner must be able to inspect, correct, export, restrict, and delete supported stored information. A companion may suggest a memory; it must not silently turn sensitive or unapproved conversation into permanent shared knowledge.
 
-Identity continuity must survive leaving one world or connecting to another. A world-specific character instance is a presentation of the ALIVE identity, not a replacement for it.
+Identity continuity must survive leaving one world or connecting to another. A world-specific character instance is a presentation of the ALIVE identity, not a replacement for it. The companion relationship must also persist across supported devices and access surfaces: the owner should be able to resume a conversation, review approved memories, assign authorized work, and receive progress without starting over in each application. Device availability depends on supported integrations; the blueprint does not imply that every device or service is already connected.
 
 ## 5. Companion behavior and permissions
 
@@ -135,6 +137,8 @@ In every mode:
 - External actions require owner approval.
 - The owner can review and revoke permissions.
 - Autonomous capabilities must be scoped, visible, and revocable.
+- Work performed between owner interactions must stay within explicit task, tool, time, and data boundaries; meaningful actions and outcomes must be reviewable.
+- The companion must distinguish completed actions from suggestions, drafts, and actions awaiting approval.
 - Wellbeing is supportive and reversible, never punitive.
 
 ## 6. LAMBO CITY as the first integration
@@ -171,11 +175,12 @@ Build in small, testable, modular stages. Engine and Companion advance side-by-s
 3. **Durable identity storage:** reviewed PostgreSQL adapter and migrations in an isolated development environment; verify atomic updates, access boundaries, and recovery before production use.
 4. **Owner account and identity experience:** secure onboarding, username/display name, consent, identity dashboard, privacy and permission controls.
 5. **Appearance pipeline:** guided multi-angle reference capture, secure asset handling, generation-provider abstraction, candidate review, correction, approval, and stable model references.
-6. **Companion foundation:** owner-approved profile and memory, conversation, policy-controlled capabilities, auditability, and explicit behavior modes.
-7. **HERO connection:** bind the existing HERO model to the verified founder identity; preserve existing runtime behavior and Records HQ access.
-8. **LAMBO CITY live integration:** server-authoritative identity resolution, multiplayer visibility, and permission-aware interactions.
-9. **Portability and expansion:** add a second environment adapter to prove ALIVE identity continuity outside LAMBO CITY before broad platform claims.
-10. **Independent ALIVE product:** refine its own owner-facing experience, companion access surfaces, integrations, and business model without making LAMBO CITY a technical dependency.
+6. **Companion foundation:** owner-approved profile and memory, persistent conversation continuity, policy-controlled capabilities, auditability, and explicit behavior modes.
+7. **Cross-device companion access:** establish the first owner-facing access surface and a secure continuity layer for resuming conversations and reviewing authorized task progress. Add further devices and service integrations through explicit adapters and permission grants.
+8. **HERO connection:** bind the existing HERO model to the verified founder identity; preserve existing runtime behavior and Records HQ access.
+9. **LAMBO CITY live integration:** server-authoritative identity resolution, multiplayer visibility, and permission-aware interactions.
+10. **Portability and expansion:** add a second environment adapter to prove ALIVE identity continuity outside LAMBO CITY before broad platform claims.
+11. **Independent ALIVE product:** refine its own owner-facing experience, companion access surfaces, integrations, and business model without making LAMBO CITY a technical dependency.
 
 Every stage needs focused automated tests, scope checks, and preview verification. A passing unit test or preview does not by itself mean a production feature is live.
 
@@ -190,7 +195,7 @@ Every stage needs focused automated tests, scope checks, and preview verificatio
 
 ## 10. Definition of success
 
-ALIVE succeeds when a person can create and own a persistent digital identity, approve a recognizable character, control its private information and permissions, interact with an intelligent companion within chosen boundaries, and use that same identity in LAMBO CITY and other supported environments without starting over.
+ALIVE succeeds when a person can create and own a persistent digital identity, approve a recognizable character, control its private information and permissions, and maintain an ongoing relationship with an intelligent companion across supported devices and services. The companion can retain approved context, continue authorized work within clear boundaries, and present the same identity in LAMBO CITY and other supported environments without starting over.
 
 LAMBO CITY is the first proof of the platform—not the limit of what ALIVE can become.
 
