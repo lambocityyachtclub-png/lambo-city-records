@@ -20,7 +20,7 @@
       <p class="intro">Direct the work. Review every proposed change. Keep the final say.</p>
     </section>
     <section class="panel auth-panel" id="auth-panel">
-      <div><p class="eyebrow">OWNER ACCESS</p><h2>Sign in to ALIVE</h2><p class="muted">Enter your private owner email and ALIVE will send a one-time secure sign-in link. The link expires after 10 minutes. After your first sign-in, add a passkey and use Face ID on this iPad.</p></div>
+      <div><p class="eyebrow">OWNER ACCESS</p><h2>Sign in to ALIVE</h2><p class="muted">Use your verified owner email and password. After account verification, add a passkey for Face ID and set up your authenticator plus one-time backup codes.</p></div>
       <form id="auth-form" class="auth-form">
         <label for="owner-email">Owner email</label>
         <input id="owner-email" type="email" autocomplete="username" autocapitalize="off" required placeholder="Your verified owner email">
@@ -66,8 +66,10 @@
           <button class="quiet" id="enable-two-factor-button" type="button">Set up authenticator and backup codes</button>
         </div>
         <div id="two-factor-setup" hidden>
-          <p class="notice">Add this authenticator URI in your authenticator app. Treat it as private.</p>
+          <p class="notice">Scan this QR code in your authenticator app. The setup URI below is also private; copy it only to a trusted device.</p>
+          <img id="totp-qr" class="totp-qr" alt="Private authenticator setup QR code">
           <pre id="totp-uri" class="file-block"></pre>
+          <button class="quiet" id="copy-totp-uri" type="button">Copy private setup URI</button>
           <label for="setup-totp-code">Enter the current authenticator code</label>
           <input id="setup-totp-code" inputmode="numeric" autocomplete="one-time-code">
           <button class="primary" id="verify-two-factor-setup" type="button">Verify authenticator</button>
