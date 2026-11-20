@@ -21,7 +21,7 @@ test("owner identity API accepts only the approved existing HERO reference under
 });
 
 test("owner console offers an explicit connection action and preserves the existing HERO visual", () => {
-  assert.match(html, /href="\/?alive=connect"/);
+  assert.match(html, /href="\/\?alive=connect"/);
   assert.match(html, /Connect existing HERO in LAMBO CITY/);
   assert.match(html, /without creating, cloning, or visually changing the model/);
 });
