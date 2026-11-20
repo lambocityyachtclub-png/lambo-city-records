@@ -117,3 +117,15 @@ test("PostgreSQL Companion repository rejects mismatched record scope before SQL
   );
   assert.equal(pool.calls.length, 0);
 });
+
+test("ALIVE personal migration enforces owner/identity composite scope and private memory defaults", async () => {
+  const fs = await import("node:fs/promises");
+  const migration = await fs.readFile(new URL("../storage/migrations/003_alive_identity_companion.sql", import.meta.url), "utf8");
+  assert.match(migration, /alive_personal_identities/);
+  assert.match(migration, /alive_companion_memories/);
+  assert.match(migration, /alive_companion_preferences/);
+  assert.match(migration, /FOREIGN KEY \(identity_id, owner_id\)/);
+  assert.match(migration, /trainingUse/);
+  assert.match(migration, /crossWorldSharing/);
+  assert.match(migration, /ON DELETE CASCADE/);
+});
