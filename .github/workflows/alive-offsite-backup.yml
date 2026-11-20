@@ -1,0 +1,70 @@
+name: ALIVE encrypted offsite backup
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "23 9 * * *"
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: alive-offsite-backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out complete repository history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install backup utilities
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes age postgresql-client
+
+      - name: Create encrypted source and database backup
+        env:
+          DATABASE_URL: ${{ secrets.ALIVE_BACKUP_DATABASE_URL }}
+          AGE_RECIPIENT: ${{ secrets.ALIVE_BACKUP_AGE_RECIPIENT }}
+        run: |
+          set -euo pipefail
+          test -n "$DATABASE_URL"
+          test -n "$AGE_RECIPIENT"
+          mkdir -p backup-work
+          git bundle create backup-work/lambocity-source.bundle --all
+          pg_dump --no-owner --no-acl --format=custom "$DATABASE_URL" --file=backup-work/alive-database.dump
+          cat > backup-work/manifest.txt <<EOF
+          backup_created_utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          repository=$GITHUB_REPOSITORY
+          commit=$GITHUB_SHA
+          database_dump_format=postgresql-custom
+          source_format=git-bundle-all-refs
+          encryption=age-public-key
+          EOF
+          tar -C backup-work -czf alive-backup.tar.gz .
+          age --encrypt --recipient "$AGE_RECIPIENT" --output alive-backup.tar.gz.age alive-backup.tar.gz
+          sha256sum alive-backup.tar.gz.age > alive-backup.tar.gz.age.sha256
+          rm -rf backup-work alive-backup.tar.gz
+
+      - name: Configure independent backup storage access
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.ALIVE_BACKUP_AWS_ROLE_ARN }}
+          aws-region: ${{ vars.ALIVE_BACKUP_AWS_REGION }}
+
+      - name: Upload immutable encrypted backup
+        env:
+          BUCKET: ${{ vars.ALIVE_BACKUP_S3_BUCKET }}
+        run: |
+          set -euo pipefail
+          test -n "$BUCKET"
+          KEY="alive/$(date -u +%Y/%m/%d)/${GITHUB_SHA}-${GITHUB_RUN_ID}.tar.gz.age"
+          aws s3 cp alive-backup.tar.gz.age "s3://$BUCKET/$KEY" --sse AES256 --only-show-errors
+          aws s3 cp alive-backup.tar.gz.age.sha256 "s3://$BUCKET/$KEY.sha256" --sse AES256 --only-show-errors
+          echo "Encrypted backup uploaded: s3://$BUCKET/$KEY"

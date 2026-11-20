@@ -7,26 +7,6 @@ function send(res, status, payload) {
   res.end(JSON.stringify(payload));
 }
 
-function safeTokenMatch(expected, supplied) {
-  if (typeof expected !== "string" || expected.length < 32 || typeof supplied !== "string") return false;
-  const left = Buffer.from(expected, "utf8");
-  const right = Buffer.from(supplied, "utf8");
-  return left.length === right.length && requireTimingSafeEqual(left, right);
-}
-
-function requireTimingSafeEqual(left, right) {
-  // Imported lazily from Node's built-in crypto module at module initialization.
-  return timingSafeEqual(left, right);
-}
-
-import { timingSafeEqual } from "node:crypto";
-
-function readBearer(req) {
-  const value = req.headers?.authorization || req.headers?.Authorization || "";
-  const match = /^Bearer\s+(.+)$/i.exec(value);
-  return match ? match[1] : "";
-}
-
 function readAction(req) {
   if (typeof req.query?.action === "string") return req.query.action;
   const pathname = new URL(req.url || "/", "https://alive.internal").pathname;
@@ -51,16 +31,20 @@ function validationStatus(error) {
 export function createAliveApiHandler(options = {}) {
   const env = options.env || process.env;
   const withSystem = options.withSystem;
+  const authenticateOwner = options.authenticateOwner;
   if (typeof withSystem !== "function") throw new Error("withSystem callback is required.");
 
   return async function aliveApiHandler(req, res) {
-    const token = env.ALIVE_REVIEW_TOKEN;
-    if (!token || token.length < 32) {
-      return send(res, 503, { error: "ALIVE owner API authentication is not configured." });
+    if (typeof authenticateOwner !== "function") {
+      return send(res, 503, { error: "ALIVE owner session authentication is not configured." });
     }
-    if (!safeTokenMatch(token, readBearer(req))) {
-      return send(res, 401, { error: "Owner authentication required." });
+    let owner;
+    try {
+      owner = await authenticateOwner(req);
+    } catch {
+      return send(res, 503, { error: "ALIVE owner authentication is unavailable." });
     }
+    if (!owner) return send(res, 401, { error: "A verified ALIVE owner session is required." });
 
     const action = readAction(req);
     const method = String(req.method || "GET").toUpperCase();
@@ -72,6 +56,7 @@ export function createAliveApiHandler(options = {}) {
       return send(res, 200, {
         service: "lambo-city-alive",
         mode: "owner-controlled",
+        owner: { email: owner.email },
         databaseConfigured: Boolean(env.DATABASE_URL),
         openAIConfigured,
         aiEnabled,

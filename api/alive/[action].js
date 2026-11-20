@@ -1,5 +1,6 @@
 import { createAliveApiHandler } from "../../development/runtime/aliveApi.js";
 import { createHostedAliveControlPlane } from "../../development/runtime/hostedAliveControlPlane.js";
+import { authenticateAliveOwner } from "../../alive/server/ownerAuth.js";
 
 let controlPlanePromise;
 let handler;
@@ -28,6 +29,7 @@ function getHandler() {
   if (!handler) {
     handler = createAliveApiHandler({
       env: process.env,
+      authenticateOwner: authenticateAliveOwner,
       withSystem: async (options, callback) => {
         const controlPlane = await getControlPlane();
         return controlPlane.withSystem(options, callback);

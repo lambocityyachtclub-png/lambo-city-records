@@ -11,12 +11,12 @@ function makeResponse() {
   };
 }
 
-function makeRequest({ method = "GET", action = "status", token = "x".repeat(40), body = {}, url } = {}) {
+function makeRequest({ method = "GET", action = "status", body = {}, url } = {}) {
   return {
     method,
     url: url || "/api/alive/" + action,
     query: { action },
-    headers: { authorization: "Bearer " + token },
+    headers: { cookie: "alive_owner_session=test" },
     body
   };
 }
@@ -24,32 +24,31 @@ function makeRequest({ method = "GET", action = "status", token = "x".repeat(40)
 test("ALIVE hosted API rejects missing or incorrect owner authentication", async () => {
   let calls = 0;
   const handler = createAliveApiHandler({
-    env: { ALIVE_REVIEW_TOKEN: "owner-secret-".padEnd(40, "x") },
+    authenticateOwner: async () => null,
     withSystem: async () => { calls += 1; }
   });
   const response = makeResponse();
-  await handler(makeRequest({ token: "wrong-token" }), response);
+  await handler(makeRequest(), response);
   assert.equal(response.statusCode, 401);
-  assert.equal(response.body.error, "Owner authentication required.");
+  assert.equal(response.body.error, "A verified ALIVE owner session is required.");
   assert.equal(calls, 0);
 });
 
 test("ALIVE status exposes configuration state but never secrets", async () => {
   const secret = "private-openai-key-value";
-  const token = "owner-secret-".padEnd(40, "x");
   const handler = createAliveApiHandler({
     env: {
-      ALIVE_REVIEW_TOKEN: token,
       DATABASE_URL: "postgres://not-returned",
       OPENAI_API_KEY: secret,
       ALIVE_AI_ENABLED: "true",
       ALIVE_SANDBOX_ENABLED: "false",
       ALIVE_ALLOWED_PATHS: '["water.js"]'
     },
+    authenticateOwner: async () => ({ email: "owner@example.com", emailVerified: true }),
     withSystem: async () => { throw new Error("must not run"); }
   });
   const response = makeResponse();
-  await handler(makeRequest({ token }), response);
+  await handler(makeRequest(), response);
   assert.equal(response.statusCode, 200);
   assert.equal(response.body.openAIConfigured, true);
   assert.equal(response.body.executionConfigured, false);
@@ -57,10 +56,10 @@ test("ALIVE status exposes configuration state but never secrets", async () => {
 });
 
 test("ALIVE task intake creates a queued world task without executing it", async () => {
-  const token = "owner-secret-".padEnd(40, "x");
   let submitted = null;
   const handler = createAliveApiHandler({
-    env: { ALIVE_REVIEW_TOKEN: token },
+    env: {},
+    authenticateOwner: async () => ({ email: "owner@example.com", emailVerified: true }),
     withSystem: async (options, callback) => callback({
       system: {
         async submitWorldFinding(input) {
@@ -74,7 +73,6 @@ test("ALIVE task intake creates a queued world task without executing it", async
   await handler(makeRequest({
     method: "POST",
     action: "tasks",
-    token,
     body: { title: "Improve marina water", description: "Improve reflections.", area: "water", severity: "normal" }
   }), response);
   assert.equal(response.statusCode, 201);
@@ -83,17 +81,16 @@ test("ALIVE task intake creates a queued world task without executing it", async
 });
 
 test("ALIVE task intake refuses non-world executor requests", async () => {
-  const token = "owner-secret-".padEnd(40, "x");
   let calls = 0;
   const handler = createAliveApiHandler({
-    env: { ALIVE_REVIEW_TOKEN: token },
+    env: {},
+    authenticateOwner: async () => ({ email: "owner@example.com", emailVerified: true }),
     withSystem: async () => { calls += 1; }
   });
   const response = makeResponse();
   await handler(makeRequest({
     method: "POST",
     action: "tasks",
-    token,
     body: { runner: "studio", title: "Record vocals", description: "Test", area: "vocal_booth" }
   }), response);
   assert.equal(response.statusCode, 400);
@@ -101,20 +98,19 @@ test("ALIVE task intake refuses non-world executor requests", async () => {
 });
 
 test("ALIVE run endpoint does not start paid execution unless both switches and a key are present", async () => {
-  const token = "owner-secret-".padEnd(40, "x");
   let calls = 0;
   const handler = createAliveApiHandler({
-    env: { ALIVE_REVIEW_TOKEN: token, ALIVE_AI_ENABLED: "true", ALIVE_SANDBOX_ENABLED: "false", OPENAI_API_KEY: "key" },
+    env: { ALIVE_AI_ENABLED: "true", ALIVE_SANDBOX_ENABLED: "false", OPENAI_API_KEY: "key" },
+    authenticateOwner: async () => ({ email: "owner@example.com", emailVerified: true }),
     withSystem: async () => { calls += 1; }
   });
   const response = makeResponse();
-  await handler(makeRequest({ method: "POST", action: "run", token }), response);
+  await handler(makeRequest({ method: "POST", action: "run" }), response);
   assert.equal(response.statusCode, 503);
   assert.equal(calls, 0);
 });
 
 test("ALIVE review endpoint records PERFECT or CHANGE through the owner feedback service", async () => {
-  const token = "owner-secret-".padEnd(40, "x");
   const tasks = [{
     id: "task-1",
     status: "review",
@@ -138,7 +134,8 @@ test("ALIVE review endpoint records PERFECT or CHANGE through the owner feedback
     }
   };
   const handler = createAliveApiHandler({
-    env: { ALIVE_REVIEW_TOKEN: token },
+    env: {},
+    authenticateOwner: async () => ({ email: "owner@example.com", emailVerified: true }),
     withSystem: async (options, callback) => callback({
       system: {
         director: {
@@ -155,7 +152,7 @@ test("ALIVE review endpoint records PERFECT or CHANGE through the owner feedback
 
   const perfect = makeResponse();
   await handler(makeRequest({
-    method: "POST", action: "reviews", token,
+    method: "POST", action: "reviews",
     body: { taskId: "task-1", reviewId: "review-1", decision: "perfect", ownerNote: "PERFECT" }
   }), perfect);
   assert.equal(perfect.statusCode, 200);
@@ -166,7 +163,7 @@ test("ALIVE review endpoint records PERFECT or CHANGE through the owner feedback
   review.status = "awaiting_owner_review";
   const change = makeResponse();
   await handler(makeRequest({
-    method: "POST", action: "reviews", token,
+    method: "POST", action: "reviews",
     body: { taskId: "task-1", reviewId: "review-1", decision: "change", ownerNote: "Reduce the intensity." }
   }), change);
   assert.equal(change.statusCode, 200);
@@ -176,10 +173,10 @@ test("ALIVE review endpoint records PERFECT or CHANGE through the owner feedback
 
 
 test("ALIVE owner can approve a protected task before the one-shot worker claims it", async () => {
-  const token = "owner-secret-".padEnd(40, "x");
   let approved = null;
   const handler = createAliveApiHandler({
-    env: { ALIVE_REVIEW_TOKEN: token },
+    env: {},
+    authenticateOwner: async () => ({ email: "owner@example.com", emailVerified: true }),
     withSystem: async (options, callback) => callback({
       system: {
         director: {
@@ -195,7 +192,6 @@ test("ALIVE owner can approve a protected task before the one-shot worker claims
   await handler(makeRequest({
     method: "POST",
     action: "tasks",
-    token,
     body: { action: "approve", taskId: "protected-task-1" }
   }), response);
   assert.equal(response.statusCode, 200);
