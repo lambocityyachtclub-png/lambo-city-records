@@ -15,12 +15,17 @@ import {
   STUDIO_RUNNER_VERSION
 } from "../runners/studio/studioDevelopmentRunner.js";
 import {
+  createWorldDevelopmentRunner,
+  WORLD_RUNNER_ID,
+  WORLD_RUNNER_VERSION
+} from "../runners/world/worldDevelopmentRunner.js";
+import {
   createDevelopmentWorker,
   DEVELOPMENT_WORKER_VERSION
 } from "./developmentWorker.js";
 import { createControlledDevelopmentExecutor } from "../execution/controlledDevelopmentExecutor.js";
 
-export const DEVELOPMENT_SYSTEM_VERSION = "1.1.0";
+export const DEVELOPMENT_SYSTEM_VERSION = "1.2.0";
 
 export const DEVELOPMENT_SYSTEM_STATUS = Object.freeze({
   READY: "ready",
@@ -32,7 +37,7 @@ export async function createDevelopmentSystem(options = {}) {
     storage = null,
     clock,
     workerExecutor = null,
-    workerRunnerIds = [STUDIO_RUNNER_ID],
+    workerRunnerIds = [STUDIO_RUNNER_ID, WORLD_RUNNER_ID],
     workerId = "lambo-city-development-worker",
     maxTasksPerRun = 3,
     workerEnabled = false,
@@ -49,6 +54,9 @@ export async function createDevelopmentSystem(options = {}) {
   await director.initialize();
 
   const studioRunner = createStudioDevelopmentRunner({
+    developmentDirector: director
+  });
+  const worldRunner = createWorldDevelopmentRunner({
     developmentDirector: director
   });
   const policy = getDevelopmentPolicy();
@@ -118,6 +126,23 @@ export async function createDevelopmentSystem(options = {}) {
     description: "Organizes development findings for LAMBO CITY Studio."
   });
 
+  registry.registerModule({
+    id: WORLD_RUNNER_ID,
+    name: "World Development Runner",
+    type: MODULE_TYPES.RUNNER,
+    version: WORLD_RUNNER_VERSION,
+    path: "development/runners/world/worldDevelopmentRunner.js",
+    enabled: true,
+    capabilities: [
+      "world_environment_improvements",
+      "water_and_marina_improvements",
+      "architecture_and_landscaping",
+      "world_performance_improvements",
+      "preserve_approved_world_layout"
+    ],
+    description: "Organizes LAMBO CITY world improvements while preserving approved geography and working systems."
+  });
+
   if (worker) {
     registry.registerModule({
       id: "development-worker",
@@ -148,6 +173,7 @@ export async function createDevelopmentSystem(options = {}) {
       registry: registry.getSnapshot(),
       director: director.getSnapshot(),
       studioRunner: studioRunner.getProfile(),
+      worldRunner: worldRunner.getProfile(),
       worker: worker
         ? worker.getSnapshot()
         : {
@@ -162,6 +188,7 @@ export async function createDevelopmentSystem(options = {}) {
   function disable() {
     status = DEVELOPMENT_SYSTEM_STATUS.DISABLED;
     studioRunner.setEnabled(false);
+    worldRunner.setEnabled(false);
     if (worker) {
       worker.setEnabled(false);
       registry.setModuleEnabled("development-worker", false);
@@ -172,6 +199,7 @@ export async function createDevelopmentSystem(options = {}) {
   function enable() {
     status = DEVELOPMENT_SYSTEM_STATUS.READY;
     studioRunner.setEnabled(true);
+    worldRunner.setEnabled(true);
     if (worker) {
       worker.setEnabled(workerEnabled);
       registry.setModuleEnabled("development-worker", workerEnabled);
@@ -199,6 +227,20 @@ export async function createDevelopmentSystem(options = {}) {
     return worker.runOnce();
   }
 
+  async function submitWorldFinding(finding) {
+    if (status !== DEVELOPMENT_SYSTEM_STATUS.READY) {
+      throw new Error("The development system is disabled.");
+    }
+    return worldRunner.submitFinding(finding);
+  }
+
+  async function submitWorldFindings(findings) {
+    if (status !== DEVELOPMENT_SYSTEM_STATUS.READY) {
+      throw new Error("The development system is disabled.");
+    }
+    return worldRunner.submitFindings(findings);
+  }
+
   function submitStudioFinding(finding) {
     if (status !== DEVELOPMENT_SYSTEM_STATUS.READY) {
       throw new Error("The development system is disabled.");
@@ -217,12 +259,15 @@ export async function createDevelopmentSystem(options = {}) {
     registry,
     director,
     studioRunner,
+    worldRunner,
     getStatus,
     getSnapshot,
     enable,
     disable,
     runWorkerOnce,
     submitStudioFinding,
-    submitStudioFindings
+    submitStudioFindings,
+    submitWorldFinding,
+    submitWorldFindings
   });
 }
