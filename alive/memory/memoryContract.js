@@ -85,8 +85,8 @@ export function validateMemoryEntry(entry) {
   if (!MEMORY_STATES.includes(entry.state)) errors.push("Memory state is unsupported.");
   if (entry.visibility !== "owner-only") errors.push("Memory must remain owner-only.");
   if (entry.trainingUse !== false) errors.push("Memory cannot be used for model training by default.");
-  if (entry.state === "approved" && (!entry.approvedBy || !entry.approvedAt)) {
-    errors.push("Approved memory must record the owner's approval.");
+  if (entry.state === "approved" && (!entry.approvedBy || entry.approvedBy !== entry.ownerId || !entry.approvedAt)) {
+    errors.push("Approved memory must record approval by its personal owner.");
   }
   if ((entry.approvedBy && !entry.approvedAt) || (!entry.approvedBy && entry.approvedAt)) {
     errors.push("Memory approval metadata must be complete.");
@@ -105,6 +105,13 @@ export function canReadMemoryEntry(entry, subjectId) {
     && entry.ownerId === subjectId;
 }
 
+export function canUseMemoryAsCompanionContext(entry, identityId) {
+  return !!entry && entry.state === "approved"
+    && entry.identityId === identityId
+    && entry.visibility === "owner-only"
+    && entry.trainingUse === false;
+}
+
 export function approveMemoryEntry(entry, actingOwnerId, approvedAt) {
   requireOwner(entry, actingOwnerId);
   if (entry.state !== "proposed") {
@@ -118,7 +125,7 @@ export function approveMemoryEntry(entry, actingOwnerId, approvedAt) {
     ...entry,
     state: "approved",
     approvedBy: actingOwnerId,
-    approvedAt
+    approvedAt: timestamp
   });
 }
 
