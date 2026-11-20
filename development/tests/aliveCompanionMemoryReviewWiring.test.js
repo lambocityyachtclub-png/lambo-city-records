@@ -9,7 +9,7 @@ const script = await fs.readFile(new URL("../../alive/owner.js", import.meta.url
 
 test("Companion memory review is connected to the authenticated personal API", () => {
   assert.match(api, /authenticateAliveOwner\(req\)/);
-  assert.match(api, /method !== "GET" && !isSameOrigin\(req\)/);
+  assert.match(api, /method !== "GET" && !isSameOriginRequest\(req\)/);
   assert.match(api, /action === "memory-proposals" && method === "GET"/);
   assert.match(api, /action === "memory-proposals" && method === "POST"/);
   assert.match(api, /companionMemoryReview\.listPending/);
