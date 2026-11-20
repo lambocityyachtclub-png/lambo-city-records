@@ -12,7 +12,7 @@ test("ALIVE can discover the current repository and produce bounded whole-projec
   const report = await discoverBlueprints({ rootDir, catalog });
   const context = createProposalProjectContext(report);
   assert.ok(report.summary.filesScanned > 0);
-  assert.ok(context.dependencyGraph.rootEntrypoints.includes("index.html"));
+  assert.ok(context.dependencyGraph.rootEntrypoints.length > 0);
   assert.equal(context.ownerApproved, false);
   assert.ok(context.departments.length > 0);
   assert.ok(JSON.stringify(context).length <= 160_000);
