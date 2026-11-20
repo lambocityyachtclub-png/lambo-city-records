@@ -75,7 +75,8 @@ export async function createDevelopmentSystem(options = {}) {
             ? createIsolatedProposalWorkspaceAdapter({
                 workspaceAdapter: worldExecution.workspaceAdapter,
                 testRunner: worldExecution.testRunner,
-                allowedPaths: worldExecution.allowedPaths
+                allowedPaths: worldExecution.allowedPaths,
+                projectContext: worldExecution.projectContext
               })
             : worldExecution.workspaceAdapter
         )
