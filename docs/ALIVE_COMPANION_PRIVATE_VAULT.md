@@ -62,3 +62,7 @@ Other players' access to the character remains governed by invitation and role p
 The focused test suite covers owner access, editor/viewer denial, private defaults, preference snapshot immutability, deletion, malformed/oversized input, identity-policy mismatch, and cross-owner repository leakage.
 
 This is a service-layer foundation, not a complete memory product. Remaining work includes a reviewed persistent repository/schema, authenticated API integration, owner-facing export/retention controls, backup/restore coverage, and an explicit owner-approved memory capture workflow. No production data is read or written by this module.
+
+## Current persistent integration
+
+The PostgreSQL adapter is implemented in `alive/companion/postgresCompanionVaultRepository.js`. Its queries scope every read, write, and delete by both `owner_id` and `identity_id`; the database schema enforces a composite foreign key and record-scope checks. The adapter is composed with the identity service in `alive/server/personalServices.js` and exposed through `/api/alive/personal/memories` and `/api/alive/personal/preferences` after verified owner sign-in. Apply `development/storage/migrations/003_alive_identity_companion.sql` manually to the isolated ALIVE development database before use. No automatic conversation ingestion or AI memory extraction is enabled.
