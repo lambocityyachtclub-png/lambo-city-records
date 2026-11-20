@@ -19,7 +19,7 @@ Replace the temporary bearer-token dashboard gate with a dedicated, single-owner
 - ALIVE_OWNER_EMAIL: the one owner email address allowed to enroll.
 - ALIVE_OWNER_AUTH_SECRET: a unique random secret of at least 32 characters.
 - VERCEL_BRANCH_URL: supplied automatically by Vercel for the active Preview; ALIVE uses this branch origin for Preview auth and WebAuthn RP ID.
-- ALIVE_OWNER_AUTH_URL: optional explicit HTTPS origin override when intentionally pinning a deployment origin.
+- ALIVE_OWNER_AUTH_URL: optional explicit HTTPS origin override. On Preview, VERCEL_BRANCH_URL takes precedence when available; this setting is the fallback. On Production, this setting selects the canonical auth origin.
 - RESEND_API_KEY and EMAIL_FROM: verified sender configuration for verification and password-reset email.
 
 Do not place passwords, API keys, or generated secrets in GitHub files or ChatGPT messages. The owner enters credentials directly in the trusted provider UI.
