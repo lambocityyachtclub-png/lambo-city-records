@@ -42,3 +42,7 @@ Composite foreign keys and record/column consistency checks prevent memory or pr
 ## Owner activation
 
 No migration is applied, owner account is not created, and no secret is configured by this code change. These steps remain deferred until the Preview and owner setup checklist is ready.
+
+## Development-context sharing
+
+Companion memories are private by default. The owner console exposes an explicit per-memory `shareWithDevelopment` checkbox. The hosted development worker loads only memories with that flag set, caps the context to 20 entries and 2,000 characters per memory, and passes them as owner preferences—not as instructions that can override policy or allowlists. Unchecked memories are never included in code-proposal context.
