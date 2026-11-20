@@ -45,3 +45,7 @@ The focused tests cover:
 - Only the owner can select a non-default Companion policy.
 - Companion identity binding and policy safety rules fail closed.
 - Missing or unresolved model references are rejected.
+
+## Current hosted integration status
+
+The personal identity contract, owner-scoped identity service, PostgreSQL persistence, and private Companion vault are now integrated behind the verified owner-session API. The live host resolver remains intentionally separate: the adapter in `alive/runtime/identityRuntimeAdapter.js` is tested, but it is not yet wired to the existing HERO runtime object. That final host binding must preserve the existing HERO instance and all approved world, camera, stage, and access behavior.
