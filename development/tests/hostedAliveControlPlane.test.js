@@ -46,3 +46,24 @@ test("hosted ALIVE rolls back and releases the advisory lock after an operation 
   ]);
   assert.equal(pool.released, true);
 });
+
+test("scheduled ALIVE resolves only the verified configured owner account", async () => {
+  let query;
+  const owner = await (await import("../runtime/hostedAliveControlPlane.js")).getVerifiedAliveOwner({
+    async query(sql, values) {
+      query = { sql, values };
+      return { rows: [{ id: "owner-123", email: "owner@example.com" }] };
+    }
+  }, "OWNER@example.com");
+  assert.deepEqual(owner, { id: "owner-123", email: "owner@example.com", emailVerified: true });
+  assert.match(query.sql, /"emailVerified" = true/);
+  assert.deepEqual(query.values, ["OWNER@example.com"]);
+});
+
+test("scheduled ALIVE refuses to run without a verified owner account", async () => {
+  const module = await import("../runtime/hostedAliveControlPlane.js");
+  await assert.rejects(
+    module.getVerifiedAliveOwner({ async query() { return { rows: [] }; } }, "owner@example.com"),
+    /verified ALIVE owner account/
+  );
+});
