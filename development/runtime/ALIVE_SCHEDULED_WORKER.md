@@ -36,3 +36,5 @@ The code refuses to run without the cron secret and the explicit scheduler, AI, 
 Automated tests verify authentication, disabled-by-default behavior, the paid-service switches, the one-shot World executor boundary, method restrictions, and sanitized failures.
 
 This code is not considered active until the owner configures the secrets and switches, a Production deployment registers the schedule, and a real scheduled invocation is observed. It is not a long-running worker. A higher-frequency schedule or durable multi-step workflow can be enabled later after usage limits and costs are reviewed.
+
+A disabled scheduled route returns a harmless HTTP 200 no-op before checking `CRON_SECRET` or initializing the database, so it stays dormant without producing avoidable failed cron runs. Once the owner enables it, the route requires the configured secret and performs at most one bounded World task.
