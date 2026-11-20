@@ -21,3 +21,6 @@ This is an isolated development addition. It does not apply migrations, change c
 
 ## Verification
 The repository's `Development Engine Tests` workflow must pass on the exact pull-request head. No test result is claimed until GitHub Actions reports it.
+
+## Owner-scope regression correction
+The review service passes the authenticated actor as the repository's immutable owner scope explicitly. The exact-head CI workflow validates this after the follow-up commit.
