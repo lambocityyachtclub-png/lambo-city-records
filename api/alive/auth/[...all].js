@@ -9,7 +9,7 @@ export default async function handler(req, res) {
   try {
     return await toNodeHandler(getAliveOwnerAuth().handler)(req, res);
   } catch (error) {
-    const message = String(error?.message || "").replace(/(?:postgres(?:ql)?:\\/\\/)[^\\s\"']+/gi, "[redacted]").replace(/Bearer\\s+\\S+/gi, "Bearer [redacted]").slice(0, 240);
+    const message = String(error?.message || "").replace(/postgres(?:ql)?:\/\/\S+/gi, "[redacted]").replace(/Bearer\s+\S+/gi, "Bearer [redacted]").slice(0, 240);
     console.error("ALIVE_OWNER_AUTH_INIT_FAILED", {
       name: error?.name || "Error",
       code: error?.code || null,
