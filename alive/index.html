@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#090b0a">
+  <meta name="robots" content="noindex,nofollow">
+  <title>ALIVE Owner Console | LAMBO CITY</title>
+  <link rel="stylesheet" href="./owner.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="LAMBO CITY home">LAMBO CITY <span>RECORDS</span></a>
+      <div class="topbar-right"><span class="live-dot"></span><span>ALIVE OWNER CONSOLE</span></div>
+    </header>
+    <section class="hero">
+      <p class="eyebrow">PRIVATE DEVELOPMENT CONTROL</p>
+      <h1>ALIVE <em>Control</em></h1>
+      <p class="intro">Direct the work. Review every proposed change. Keep the final say.</p>
+    </section>
+    <section class="panel auth-panel" id="auth-panel">
+      <div><p class="eyebrow">OWNER ACCESS</p><h2>Sign in to ALIVE</h2><p class="muted">Enter your private owner email and ALIVE will send a one-time secure sign-in link. The link expires after 10 minutes. After your first sign-in, add a passkey and use Face ID on this iPad.</p></div>
+      <form id="auth-form" class="auth-form">
+        <label for="owner-email">Owner email</label>
+        <input id="owner-email" type="email" autocomplete="username" autocapitalize="off" required placeholder="Your verified owner email">
+        <label for="owner-password">Owner password</label>
+        <input id="owner-password" type="password" autocomplete="current-password" required minlength="12" maxlength="128" placeholder="At least 12 characters">
+        <button class="primary" type="submit">Sign in securely</button>
+        <button class="quiet" id="create-owner-account-button" type="button">Create owner account</button>
+        <button class="quiet" id="forgot-password-button" type="button">Email me a password reset link</button>
+      </form>
+      <div class="auth-form">
+        <button class="quiet" id="passkey-button" type="button">Sign in with Face ID / passkey</button>
+      </div>
+      <section class="panel" id="two-factor-panel" hidden>
+        <p class="eyebrow">SECOND FACTOR</p><h2>Verify owner access</h2>
+        <form id="two-factor-form" class="auth-form">
+          <label for="two-factor-method">Verification method</label>
+          <select id="two-factor-method"><option value="totp">Authenticator app</option><option value="backup">One-time backup code</option></select>
+          <label for="two-factor-code">Verification code</label>
+          <input id="two-factor-code" inputmode="numeric" autocomplete="one-time-code" required>
+          <button class="primary" type="submit">Verify and continue</button>
+        </form>
+      </section>
+      <section class="panel" id="reset-password-panel" hidden>
+        <p class="eyebrow">ACCOUNT RECOVERY</p><h2>Choose a new owner password</h2>
+        <form id="reset-password-form" class="auth-form">
+          <label for="new-owner-password">New password</label>
+          <input id="new-owner-password" type="password" autocomplete="new-password" minlength="12" maxlength="128" required>
+          <button class="primary" type="submit">Update password</button>
+        </form>
+      </section>
+    </section>
+    <section id="workspace" hidden>
+      <div class="status-strip panel">
+        <div><p class="eyebrow">SYSTEM STATUS</p><h2 id="system-mode">Checking ALIVE…</h2><p class="muted" id="system-summary">Waiting for a secure connection.</p></div>
+        <div class="status-actions"><span id="status-pill" class="pill neutral">NOT CONNECTED</span><button class="quiet" id="register-passkey-button" type="button">Set up Face ID</button><button class="quiet" id="refresh-button" type="button">Refresh</button><button class="quiet" id="disconnect-button" type="button">Sign out</button></div>
+        <div class="status-grid" id="status-grid"></div>
+      </div>
+      <section class="panel">
+        <div class="section-heading"><div><p class="eyebrow">OWNER ACCOUNT SECURITY</p><h2>Face ID and recovery</h2><p class="muted">Add a passkey on this iPad to use Face ID for everyday owner access. Set up an authenticator and save your one-time backup codes before relying on this account.</p></div></div>
+        <div class="auth-form">
+          <label for="two-factor-password">Confirm owner password to set up two-factor security</label>
+          <input id="two-factor-password" type="password" autocomplete="current-password" minlength="12" maxlength="128">
+          <button class="quiet" id="enable-two-factor-button" type="button">Set up authenticator and backup codes</button>
+        </div>
+        <div id="two-factor-setup" hidden>
+          <p class="notice">Add this authenticator URI in your authenticator app. Treat it as private.</p>
+          <pre id="totp-uri" class="file-block"></pre>
+          <label for="setup-totp-code">Enter the current authenticator code</label>
+          <input id="setup-totp-code" inputmode="numeric" autocomplete="one-time-code">
+          <button class="primary" id="verify-two-factor-setup" type="button">Verify authenticator</button>
+        </div>
+        <div id="recovery-codes-panel" hidden>
+          <p class="notice">One-time backup code list. Each code can be used once. Store these offline; they will not be shown again.</p>
+          <pre id="recovery-codes" class="file-block"></pre>
+          <button class="quiet" id="copy-recovery-codes" type="button">Copy recovery codes</button>
+        </div>
+      </section>
+      <section class="panel">
+        <div class="section-heading"><div><p class="eyebrow">01 / DIRECTION</p><h2>Give ALIVE a task</h2><p class="muted">The first hosted pilot accepts world-development tasks only. Submitting a task does not execute it.</p></div></div>
+        <form id="task-form" class="task-form">
+          <label>Task title<input name="title" maxlength="120" required placeholder="Example: Improve marina water reflections"></label>
+          <label>World area<select name="area" required><option value="water">Water / Marina</option><option value="stage">Stage / Festival</option><option value="docks">Docks / Boardwalk</option><option value="records_hq">Records HQ</option><option value="world">General world</option></select></label>
+          <label class="full">What should ALIVE do?<textarea name="description" rows="4" maxlength="5000" required placeholder="Describe the result you want. Include what must stay unchanged."></textarea></label>
+          <label class="full">How will we know it is right? (optional)<textarea name="acceptanceCriteria" rows="2" maxlength="2000" placeholder="Visual or functional acceptance criteria"></textarea></label>
+          <div class="form-footer"><label class="checkline"><input name="requiresApproval" type="checkbox" checked> Require owner approval before execution</label><button class="primary" type="submit">Submit direction</button></div>
+        </form>
+        <p class="notice" id="task-message" role="status" aria-live="polite"></p>
+      </section>
+      <section class="panel">
+        <div class="section-heading"><div><p class="eyebrow">02 / DEVELOPMENT QUEUE</p><h2>Task activity</h2><p class="muted">Review the current state of submitted work. A run uses OpenAI and an isolated sandbox and may incur charges.</p></div><button class="primary" id="run-button" type="button" disabled>Run next approved task</button></div><p class="notice" id="run-message" role="status" aria-live="polite">Execution is unavailable until all required Preview services are configured and enabled.</p>
+        <div id="tasks-list" class="stack"><p class="muted">Connect to load tasks.</p></div>
+      </section>
+      <section class="panel">
+        <div class="section-heading"><div><p class="eyebrow">03 / OWNER REVIEW</p><h2>Proposed changes</h2><p class="muted">Inspect the saved proposal files and tests before giving feedback.</p></div></div>
+        <div id="reviews-list" class="stack"><p class="muted">Connect to load reviews.</p></div>
+      </section>
+      <footer class="footer-note">OWNER CONTROL IS ACTIVE BY DESIGN. ALIVE does not publish, merge, or deploy code from this console.</footer>
+    </section>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  </main>
+  <script type="module" src="./owner.js"></script>
+</body>
+</html>
