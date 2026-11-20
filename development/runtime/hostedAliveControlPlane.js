@@ -17,7 +17,6 @@ import { createIsolatedWorkspaceAdapter } from "../execution/isolatedWorkspaceAd
 import { createVercelSandboxTestRunner } from "../execution/vercelSandboxTestRunner.js";
 
 const LOCK_KEY = 1280068941;
-let projectContextPromise;
 
 function required(value, label) {
   if (typeof value !== "string" || !value.trim()) throw new Error(label + " is required.");
@@ -41,6 +40,7 @@ function readAllowedPaths(value) {
 export function createHostedAliveControlPlane(options = {}) {
   const pool = options.pool;
   const env = options.env || process.env;
+  let projectContextPromise;
   if (!pool || typeof pool.connect !== "function" || typeof pool.query !== "function") {
     throw new Error("A PostgreSQL pool is required for the hosted ALIVE control plane.");
   }
