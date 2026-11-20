@@ -4,6 +4,7 @@ import {
   createMemoryEntry,
   validateMemoryEntry,
   canReadMemoryEntry,
+  canUseMemoryAsCompanionContext,
   approveMemoryEntry,
   archiveMemoryEntry
 } from "../../alive/memory/memoryContract.js";
@@ -26,6 +27,7 @@ test("new memories are proposals, not permanent approved memories", () => {
   assert.equal(entry.trainingUse, false);
   assert.equal(entry.approvedBy, null);
   assert.equal(entry.approvedAt, null);
+  assert.equal(canUseMemoryAsCompanionContext(entry, "identity-001"), false);
   assert.deepEqual(entry.tags, ["communication", "work"]);
   assert.deepEqual(validateMemoryEntry(entry), []);
 });
@@ -53,6 +55,8 @@ test("owner approval is explicit, recorded, and immutable", () => {
   assert.equal(approved.state, "approved");
   assert.equal(approved.approvedBy, "owner-001");
   assert.equal(approved.approvedAt, "2026-11-19T19:10:00-08:00");
+  assert.equal(canUseMemoryAsCompanionContext(approved, "identity-001"), true);
+  assert.equal(canUseMemoryAsCompanionContext(approved, "another-identity"), false);
   assert.equal(entry.state, "proposed");
   assert.equal(Object.isFrozen(approved), true);
   assert.deepEqual(validateMemoryEntry(approved), []);
@@ -84,6 +88,7 @@ test("owner can archive a memory and the archive is auditable", () => {
   assert.equal(archived.state, "archived");
   assert.equal(archived.archivedAt, "2026-11-19T19:20:00Z");
   assert.equal(archived.approvedBy, "owner-001");
+  assert.equal(canUseMemoryAsCompanionContext(archived, "identity-001"), false);
   assert.deepEqual(validateMemoryEntry(archived), []);
 });
 
@@ -101,4 +106,12 @@ test("validator rejects public memory and model-training use", () => {
 test("validator rejects approval metadata that has no matching approval", () => {
   const invalid = { ...proposedMemory(), approvedBy: "owner-001" };
   assert.ok(validateMemoryEntry(invalid).some(error => /approval metadata/.test(error)));
+});
+
+test("validator rejects approval attributed to someone other than the owner", () => {
+  const invalid = {
+    ...approveMemoryEntry(proposedMemory(), "owner-001", "2026-11-19T19:10:00Z"),
+    approvedBy: "companion-service"
+  };
+  assert.ok(validateMemoryEntry(invalid).some(error => /personal owner/.test(error)));
 });
