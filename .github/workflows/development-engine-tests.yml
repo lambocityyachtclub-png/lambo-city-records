@@ -29,7 +29,7 @@ jobs:
           node-version: 22
 
       - name: Run development engine and blueprint discovery tests
-        run: node --experimental-default-type=module --test development/tests/*.test.js
+        run: node --experimental-default-type=module --test development/tests/*.test.js development/tests/*.test.mjs
 
       - name: Generate read-only ALIVE blueprint discovery report
         run: node development/blueprints/discoverBlueprints.mjs
