@@ -45,6 +45,17 @@ export async function withPostgresAdvisoryLock(pool, operation, lockKey = LOCK_K
   }
 }
 
+export async function getVerifiedAliveOwner(pool, ownerEmail) {
+  const email = required(ownerEmail, "ALIVE_OWNER_EMAIL");
+  const result = await pool.query(
+    'SELECT id, email FROM alive_owner_user WHERE lower(email) = lower($1) AND "emailVerified" = true LIMIT 1',
+    [email]
+  );
+  const row = result.rows?.[0];
+  if (!row) throw new Error("A verified ALIVE owner account is required before scheduled execution.");
+  return { id: String(row.id), email: String(row.email), emailVerified: true };
+}
+
 function required(value, label) {
   if (typeof value !== "string" || !value.trim()) throw new Error(label + " is required.");
   return value.trim();
@@ -93,14 +104,7 @@ export function createHostedAliveControlPlane(options = {}) {
   }
 
   async function getConfiguredOwner() {
-    const ownerEmail = required(env.ALIVE_OWNER_EMAIL, "ALIVE_OWNER_EMAIL");
-    const result = await pool.query(
-      'SELECT id, email FROM alive_owner_user WHERE lower(email) = lower($1) AND "emailVerified" = true LIMIT 1',
-      [ownerEmail]
-    );
-    const row = result.rows?.[0];
-    if (!row) throw new Error("A verified ALIVE owner account is required before scheduled execution.");
-    return { id: String(row.id), email: String(row.email), emailVerified: true };
+    return getVerifiedAliveOwner(pool, env.ALIVE_OWNER_EMAIL);
   }
 
   async function createSystem({ execution = false, storage, owner = null }) {
