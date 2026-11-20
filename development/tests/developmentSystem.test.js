@@ -324,3 +324,55 @@ test("Development System restores tasks after a restart", async () => {
     });
   }
 });
+
+
+test("World Development Runner submits a protected-layout-aware task", async () => {
+  const system = await createDevelopmentSystem();
+  const result = await system.submitWorldFinding({
+    title: "Improve marina water realism",
+    description: "Improve water reflections and materials while preserving approved marina geography, docks, camera, and navigation.",
+    area: "water",
+    severity: "high",
+    acceptanceCriteria: [
+      "Approved marina layout and object positions remain unchanged.",
+      "Existing camera and navigation continue working."
+    ]
+  });
+  assert.equal(result.runnerId, "world");
+  assert.equal(result.task.runner, "world");
+  assert.equal(result.task.area, "water");
+  assert.equal(result.task.status, TASK_STATUS.QUEUED);
+  assert.ok(system.worldRunner.getProfile().preservationRules.length >= 4);
+});
+
+test("World Development Runner sends protected landmark changes to owner approval", async () => {
+  const system = await createDevelopmentSystem();
+  const result = await system.submitWorldFinding({
+    title: "Relocate protected marina landmark",
+    description: "This must not enter autonomous execution.",
+    area: "marina",
+    protectedActions: ["protected_landmarks"]
+  });
+  assert.equal(result.policyDecision.requiresApproval, true);
+  assert.equal(result.task.status, TASK_STATUS.PENDING_APPROVAL);
+});
+
+test("World Development Runner is disabled with the Development System", async () => {
+  const system = await createDevelopmentSystem();
+  system.disable();
+  await assert.rejects(
+    () => system.submitWorldFinding({
+      title: "Disabled world task",
+      description: "This should not be submitted.",
+      area: "water"
+    }),
+    /development system is disabled/
+  );
+  system.enable();
+  const result = await system.submitWorldFinding({
+    title: "World task after re-enable",
+    description: "The runner becomes available again.",
+    area: "water"
+  });
+  assert.equal(result.runnerId, "world");
+});
