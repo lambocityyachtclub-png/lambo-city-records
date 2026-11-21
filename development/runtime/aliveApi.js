@@ -1,5 +1,8 @@
+import path from "node:path";
 import { createOwnerReviewFeedback } from "../../development/engine/ownerReviewFeedback.js";
 import { isSameOriginRequest } from "../../alive/server/originPolicy.js";
+
+const BLOCKED_ALLOWLIST_SEGMENTS = new Set([".git", ".vercel", "node_modules", "dist", "build"]);
 
 function send(res, status, payload) {
   res.statusCode = status;
@@ -25,6 +28,25 @@ function hasConfiguredValue(value) {
   return typeof value === "string" && value.trim().length > 0;
 }
 
+function isSafeAllowlistPath(value) {
+  if (
+    typeof value !== "string" ||
+    !value.trim() ||
+    value.includes("\\") ||
+    value.includes("\0") ||
+    path.isAbsolute(value)
+  ) {
+    return false;
+  }
+  const segments = value.split("/");
+  return !segments.some(segment =>
+    !segment ||
+    segment === "." ||
+    segment === ".." ||
+    BLOCKED_ALLOWLIST_SEGMENTS.has(segment)
+  );
+}
+
 function hasDevelopmentAllowlist(value) {
   let paths;
   try {
@@ -32,10 +54,10 @@ function hasDevelopmentAllowlist(value) {
   } catch {
     return false;
   }
-  return Array.isArray(paths) &&
-    paths.length > 0 &&
-    paths.every(item => typeof item === "string" && item.trim().length > 0) &&
-    paths.some(item => item.trim() === "development");
+  if (!Array.isArray(paths) || paths.length === 0 || !paths.every(isSafeAllowlistPath)) {
+    return false;
+  }
+  return paths.map(item => item.trim()).includes("development");
 }
 
 function validationStatus(error) {
@@ -148,7 +170,7 @@ export function createAliveApiHandler(options = {}) {
         return send(res, 503, { error: "The ALIVE development database is not configured. No task was run." });
       }
       if (!hasDevelopmentAllowlist(env.ALIVE_ALLOWED_PATHS)) {
-        return send(res, 503, { error: "ALIVE_ALLOWED_PATHS must be a valid JSON array containing development. No task was run." });
+        return send(res, 503, { error: "ALIVE_ALLOWED_PATHS must be a valid safe JSON path array containing development. No task was run." });
       }
       if (env.ALIVE_AI_ENABLED !== "true" || env.ALIVE_SANDBOX_ENABLED !== "true" || !hasConfiguredValue(env.OPENAI_API_KEY)) {
         return send(res, 503, { error: "OpenAI and isolated sandbox execution are not enabled. No task was run." });
