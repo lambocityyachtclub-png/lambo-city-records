@@ -36,7 +36,8 @@ function setup() {
       if (!row) return null;
       row.state = "approved";
       row.approvedBy = requestedOwner;
-      row.approvedAt = "2026-11-20T00:01:00.000Z";\n      row.shareWithDevelopment = false;
+      row.approvedAt = "2026-11-20T00:01:00.000Z";
+      row.shareWithDevelopment = false;
       return { ...row };
     },
     async archiveMemoryProposal({ ownerId: requestedOwner, identityId: requestedIdentity, memoryId }) {
