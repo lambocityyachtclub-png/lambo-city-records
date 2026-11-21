@@ -65,6 +65,15 @@ Edit is the session command center. Instrument and recording workspaces are focu
 - No new feature is complete until it has source review, build/deployment validation, and a focused iPad workflow check.
 - Regression tests that protect these shared workflows must run on pull requests as well as branch pushes.
 
+## Release evidence gates
+
+Automated source checks are necessary but do not prove that microphone permissions, audio-device routing, touch controls, or long-running playback behave correctly on a real device.
+
+- **Automated:** run the Floor 2 Studio workflow suite, including shared transport, workspace order, MIDI/audio cycle takes, vocal/piano integration, session persistence, and project export checks.
+- **Preview:** confirm the standalone Studio route and the Floor 2 Studio entry load from the exact pull-request deployment; inspect browser console and runtime errors where available.
+- **Device acceptance:** on iPad, create a fresh session, record a vocal take, enable pitch correction, record at least two loop passes, switch between Edit and Vocal Booth, save, close, reopen, and export. Confirm that the original takes remain selectable and that no duplicate transport or unexpected playback appears.
+- **Release decision:** keep the pull request unmerged until automated checks pass and the device acceptance evidence is recorded. A successful build or HTTP 200 response alone is not a Studio release sign-off.
+
 ## Completion checklist
 
 - [ ] One persistent transport on all workspaces.
