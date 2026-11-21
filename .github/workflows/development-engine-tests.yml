@@ -5,11 +5,23 @@ on:
   push:
     paths:
       - "development/**"
+      - "alive/identity/**"
+      - "alive/studio/**"
+      - "api/alive/public/**"
+      - "server/publicCompanion.js"
+      - "server/alivePublicServices.js"
+      - "migrations/002_alive_public_companions.sql"
       - ".github/workflows/development-engine-tests.yml"
 
   pull_request:
     paths:
       - "development/**"
+      - "alive/identity/**"
+      - "alive/studio/**"
+      - "api/alive/public/**"
+      - "server/publicCompanion.js"
+      - "server/alivePublicServices.js"
+      - "migrations/002_alive_public_companions.sql"
       - ".github/workflows/development-engine-tests.yml"
 
   workflow_dispatch:
@@ -28,6 +40,14 @@ jobs:
         with:
           node-version: 22
 
+      - name: Parse public ALIVE Companion modules
+        run: |
+          node --check server/publicCompanion.js
+          node --check server/alivePublicServices.js
+          node --check api/alive/public/companion.js
+          node --check api/alive/public/readiness.js
+          node --check alive/studio/studio.js
+
       - name: Run development engine and blueprint discovery tests
         run: node --experimental-default-type=module --test development/tests/*.test.js
 
@@ -41,3 +61,34 @@ jobs:
           path: development/planning/blueprint-discovery/
           if-no-files-found: error
           retention-days: 7
+
+  public-alive-schema:
+    name: Test public ALIVE schema on ephemeral PostgreSQL
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: lambo_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d lambo_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install pinned dependencies
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Apply migration to ephemeral test database and verify ownership
+        run: node development/tests/publicAliveMigration.integration.mjs
+        env:
+          TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/lambo_test

@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#09090d">
+  <meta name="robots" content="noindex, nofollow">
+  <title>ALIVE Studio | LAMBO CITY</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600&display=swap" rel="stylesheet">
+  <style>
+    :root{color-scheme:dark;--bg:#09090d;--panel:#111117;--line:rgba(220,190,125,.22);--gold:#d9b978;--muted:#a8a4ad;--text:#f5f1e8}
+    *{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 50% -20%,#26202a 0,#09090d 55%);color:var(--text);font-family:"DM Sans",Arial,sans-serif;min-height:100vh}
+    a{color:inherit;text-decoration:none}.top{height:72px;display:flex;align-items:center;justify-content:space-between;padding:0 clamp(18px,5vw,64px);border-bottom:1px solid rgba(255,255,255,.08)}
+    .brand{font-size:10px;letter-spacing:3px;color:var(--gold);font-weight:700}.top-tag{font-size:10px;letter-spacing:2px;color:#d5d0c6}
+    main{width:min(1120px,100%);margin:0 auto;padding:clamp(26px,6vw,70px) clamp(18px,4vw,44px) 56px}
+    .eyebrow{font-size:10px;letter-spacing:3px;color:var(--gold);font-weight:700}.hero{max-width:760px;margin:0 auto 34px;text-align:center}
+    h1{font:500 clamp(36px,6vw,66px)/1.05 "Playfair Display",Georgia,serif;margin:18px 0 14px;letter-spacing:-1px}
+    .lead{color:#c5c0c8;font-size:15px;line-height:1.75;max-width:650px;margin:0 auto}
+    .panel{background:linear-gradient(145deg,rgba(25,24,31,.97),rgba(13,13,19,.98));border:1px solid var(--line);border-radius:22px;box-shadow:0 24px 80px rgba(0,0,0,.34);padding:clamp(20px,4vw,34px)}
+    .auth-panel{max-width:520px;margin:30px auto 0}.section-title{font:500 27px "Playfair Display",Georgia,serif;margin:0 0 8px}.sub{color:var(--muted);font-size:13px;line-height:1.65;margin:0 0 22px}
+    label{display:block;color:#d8d2c7;font-size:11px;letter-spacing:.6px;margin:15px 0 7px}input,select,textarea{width:100%;min-height:46px;border:1px solid rgba(255,255,255,.13);border-radius:10px;background:#0b0b11;color:#fff;padding:12px 13px;font:14px "DM Sans",Arial,sans-serif;outline:none}input:focus,select:focus,textarea:focus{border-color:var(--gold)}
+    button{min-height:46px;border:1px solid rgba(220,190,125,.65);border-radius:10px;background:linear-gradient(135deg,#8f6d35,#d9b978);color:#111;font:700 10px "DM Sans",Arial,sans-serif;letter-spacing:1.4px;padding:12px 18px;cursor:pointer;touch-action:manipulation}
+    button.secondary{background:rgba(255,255,255,.045);border-color:rgba(255,255,255,.16);color:#eee}button:disabled{opacity:.5;cursor:wait}.full{width:100%;margin-top:16px}
+    .status{min-height:22px;margin:14px 0 0;color:var(--gold);font-size:12px;line-height:1.5}.status.error{color:#ff9f9f}.auth-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+    .studio{display:none}.studio-head{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;margin:0 0 22px}.studio-head h2{font:500 32px "Playfair Display",Georgia,serif;margin:7px 0 0}.studio-grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(270px,.9fr);gap:20px}
+    .field-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}.traits{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}.trait{display:flex;align-items:center;gap:7px;border:1px solid rgba(255,255,255,.13);border-radius:999px;padding:9px 11px;color:#ddd;font-size:11px}.trait input{width:14px;min-height:14px;accent-color:var(--gold)}
+    .preview-panel{display:flex;flex-direction:column;align-items:center;text-align:center;min-height:470px}.preview-label{align-self:flex-start;color:var(--gold);font-size:9px;letter-spacing:2px}.avatar{position:relative;width:210px;height:260px;margin:30px auto 18px;display:flex;align-items:center;justify-content:center}
+    .aura{position:absolute;width:210px;height:210px;border-radius:50%;background:radial-gradient(circle,rgba(215,185,120,.24),rgba(115,94,155,.08) 56%,transparent 72%)}
+    .body{position:absolute;bottom:0;width:164px;height:112px;border-radius:82px 82px 25px 25px;background:linear-gradient(135deg,#39323e,#17151c);border:1px solid rgba(220,190,125,.2)}
+    .neck{position:absolute;top:145px;width:34px;height:38px;background:#b98162;border-radius:8px;z-index:2}.face{position:absolute;top:64px;width:112px;height:132px;border-radius:48% 48% 45% 45%;background:#c58d6b;z-index:3;box-shadow:inset -10px -5px 0 rgba(65,35,28,.12)}
+    .hair{position:absolute;top:47px;width:122px;height:73px;border-radius:60% 60% 22% 20%;background:#201c20;z-index:4}.eyes{position:absolute;top:120px;left:calc(50% - 28px);width:56px;height:8px;border-top:2px solid rgba(44,28,25,.8);border-radius:50%;z-index:5}.mouth{position:absolute;top:158px;width:20px;height:7px;border-bottom:2px solid rgba(78,37,37,.65);border-radius:50%;z-index:5}
+    .avatar[data-tone="porcelain"] .face,.avatar[data-tone="porcelain"] .neck{background:#f0c9ad}.avatar[data-tone="light"] .face,.avatar[data-tone="light"] .neck{background:#dfad8b}.avatar[data-tone="medium"] .face,.avatar[data-tone="medium"] .neck{background:#c58d6b}.avatar[data-tone="tan"] .face,.avatar[data-tone="tan"] .neck{background:#a96e50}.avatar[data-tone="deep"] .face,.avatar[data-tone="deep"] .neck{background:#714936}
+    .avatar[data-hair="blonde"] .hair{background:#b79a61}.avatar[data-hair="brown"] .hair{background:#54382b}.avatar[data-hair="auburn"] .hair{background:#743b2d}.avatar[data-hair="silver"] .hair{background:#a7a5a5}.avatar[data-style="stylized"] .face{border-radius:42% 42% 48% 48%;box-shadow:inset -8px -4px 0 rgba(65,35,28,.13),0 0 0 3px rgba(220,190,125,.22)}
+    .preview-name{font:500 25px "Playfair Display",Georgia,serif;margin:0 0 5px}.preview-meta{color:var(--muted);font-size:11px}.privacy-note{width:100%;margin-top:auto;padding:15px;border:1px solid rgba(220,190,125,.18);border-radius:12px;background:rgba(255,255,255,.025);color:#c8c2b9;font-size:11px;line-height:1.7;text-align:left}
+    .capability-note{color:#9f9ba5;font-size:11px;line-height:1.6;margin:14px 0 0}.footer{margin:26px 0 0;text-align:center;color:#77737c;font-size:10px;line-height:1.6}
+    .avatar[data-hair-style="curly"] .hair{border-radius:50%;height:86px;top:43px}
+    .avatar[data-hair-style="long"] .hair{height:124px;top:42px;border-radius:60% 60% 35% 35%}
+    .avatar[data-hair-style="braids"] .hair{height:105px;top:42px;border-radius:55% 55% 24% 24%}
+    .avatar[data-hair-style="buzz"] .hair{height:38px;top:59px;border-radius:60% 60% 35% 35%}
+    .avatar[data-hair-style="none"] .hair{opacity:0}
+    .avatar[data-accent="blue"] .aura{background:radial-gradient(circle,rgba(90,145,225,.28),rgba(70,90,160,.08) 56%,transparent 72%)}
+    .avatar[data-accent="violet"] .aura{background:radial-gradient(circle,rgba(160,115,220,.28),rgba(100,75,150,.08) 56%,transparent 72%)}
+    .avatar[data-accent="silver"] .aura{background:radial-gradient(circle,rgba(190,195,205,.24),rgba(120,125,140,.08) 56%,transparent 72%)}
+    .avatar[data-outfit="classic"] .body{background:linear-gradient(135deg,#4c4744,#1b191a)}
+    .avatar[data-outfit="minimal"] .body{background:linear-gradient(135deg,#55545a,#242329)}
+    .avatar[data-outfit="creative"] .body{background:linear-gradient(135deg,#453d56,#1d1828)}
+    .avatar[data-eye="blue"] .eyes{border-color:#648ec4}.avatar[data-eye="green"] .eyes{border-color:#668a68}.avatar[data-eye="hazel"] .eyes{border-color:#a58a58}.avatar[data-eye="gray"] .eyes{border-color:#9298a3}
+    @media(max-width:760px){.studio-grid{grid-template-columns:1fr}.preview-panel{min-height:430px}.studio-head{align-items:flex-start;flex-direction:column}.auth-actions{grid-template-columns:1fr}.top{height:62px}}
+  </style>
+</head>
+<body>
+  <header class="top"><a class="brand" href="/">LAMBO CITY RECORDS</a><div class="top-tag">ALIVE COMPANION STUDIO</div></header>
+  <main>
+    <section class="hero"><div class="eyebrow">A PERSONAL WORLD, BUILT AROUND YOU</div><h1>Meet your ALIVE Companion.</h1><p class="lead">Create a personal character that belongs to your account. Shape its look and personality, save it, and return to the same identity whenever you sign in.</p></section>
+    <section id="auth-panel" class="panel auth-panel">
+      <div class="eyebrow">YOUR PRIVATE ALIVE SPACE</div><h2 class="section-title">Start with your account</h2><p class="sub">Verify your email before saving a Companion. Your identity stays private by default. A passkey can be added on supported devices.</p>
+      <label for="account-name">LAMBO CITY username</label><input id="account-name" maxlength="20" autocomplete="username" placeholder="3–20 letters, numbers or underscores">
+      <label for="account-email">Email address</label><input id="account-email" type="email" autocomplete="email" placeholder="you@example.com">
+      <button id="send-code" class="full">SEND SECURE EMAIL CODE</button>
+      <div id="code-area" hidden><label for="email-code">Six-digit email code</label><input id="email-code" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="000000"><button id="verify-code" class="full">VERIFY & CONTINUE</button></div>
+      <div class="auth-actions"><button id="passkey-login" class="secondary">SIGN IN WITH PASSKEY</button><button id="signout-auth" class="secondary" hidden>SIGN OUT</button></div>
+      <button id="continue-account" class="full" hidden>CONTINUE TO ALIVE STUDIO</button>
+      <div id="auth-status" class="status" role="status" aria-live="polite"></div>
+    </section>
+    <section id="studio" class="studio">
+      <div class="studio-head"><div><div class="eyebrow">YOUR COMPANION PROFILE</div><h2>Shape who they are.</h2></div><button id="signout-studio" class="secondary">SIGN OUT</button></div>
+      <div class="studio-grid">
+        <section class="panel">
+          <div class="eyebrow">01 / IDENTITY</div>
+          <label for="companion-name">Companion name</label><input id="companion-name" maxlength="40" placeholder="Give your Companion a name">
+          <div class="field-grid">
+            <div><label for="character-form">Character form</label><select id="character-form"><option value="digital-human">Digital human</option><option value="stylized">Stylized character</option></select></div>
+            <div><label for="skin-tone">Skin tone</label><select id="skin-tone"><option value="porcelain">Porcelain</option><option value="light">Light</option><option value="medium" selected>Medium</option><option value="tan">Tan</option><option value="deep">Deep</option></select></div>
+            <div><label for="hair-style">Hair style</label><select id="hair-style"><option value="short">Short</option><option value="curly">Curly</option><option value="long">Long</option><option value="braids">Braids</option><option value="buzz">Buzz</option><option value="none">None</option></select></div>
+            <div><label for="hair-color">Hair color</label><select id="hair-color"><option value="black">Black</option><option value="brown">Brown</option><option value="blonde">Blonde</option><option value="auburn">Auburn</option><option value="silver">Silver</option></select></div>
+            <div><label for="eye-color">Eye color</label><select id="eye-color"><option value="brown">Brown</option><option value="blue">Blue</option><option value="green">Green</option><option value="hazel">Hazel</option><option value="gray">Gray</option></select></div>
+            <div><label for="outfit">Style direction</label><select id="outfit"><option value="streetwear">Streetwear</option><option value="classic">Classic</option><option value="minimal">Minimal</option><option value="creative">Creative</option></select></div>
+          </div>
+          <label for="accent-color">Accent color</label><select id="accent-color"><option value="gold">Gold</option><option value="blue">Blue</option><option value="violet">Violet</option><option value="silver">Silver</option></select>
+          <div class="eyebrow" style="margin-top:26px">02 / PERSONALITY</div>
+          <label>Choose up to five traits</label><div class="traits">
+            <label class="trait"><input type="checkbox" value="curious"> Curious</label><label class="trait"><input type="checkbox" value="creative"> Creative</label><label class="trait"><input type="checkbox" value="thoughtful"> Thoughtful</label><label class="trait"><input type="checkbox" value="playful"> Playful</label><label class="trait"><input type="checkbox" value="calm"> Calm</label><label class="trait"><input type="checkbox" value="confident"> Confident</label><label class="trait"><input type="checkbox" value="supportive"> Supportive</label><label class="trait"><input type="checkbox" value="adventurous"> Adventurous</label><label class="trait"><input type="checkbox" value="witty"> Witty</label><label class="trait"><input type="checkbox" value="focused"> Focused</label>
+          </div>
+          <label for="personality-summary">A few words about their character (optional)</label><textarea id="personality-summary" rows="3" maxlength="240" placeholder="Warm, thoughtful, curious about the world..."></textarea>
+          <button id="save-companion" class="full">SAVE MY COMPANION</button><div id="studio-status" class="status" role="status" aria-live="polite"></div>
+        </section>
+        <aside class="panel preview-panel">
+          <div class="preview-label">LIVE 2D STYLE PREVIEW</div>
+          <div id="avatar-preview" class="avatar" data-tone="medium" data-hair="black" data-style="digital-human"><div class="aura"></div><div class="body"></div><div class="neck"></div><div class="face"></div><div class="hair"></div><div class="eyes"></div><div class="mouth"></div></div>
+          <h3 id="preview-name" class="preview-name">Your Companion</h3><div id="preview-meta" class="preview-meta">Digital human · Private identity</div>
+          <p class="capability-note">This first preview is a simple 2D character guide. Advanced 3D appearance, voice options, and live conversation will be added only when those capabilities are ready.</p>
+          <div class="privacy-note"><strong style="color:var(--gold)">PRIVATE BY DEFAULT</strong><br>Your Companion profile belongs to your verified account and stays private. Any future memory features will be owner-controlled and private by default. Nothing is shared across worlds or used for training. Microphone access and autonomous actions are not enabled here.</div>
+        </aside>
+      </div>
+    </section>
+    <p class="footer">ALIVE is a personal Companion platform. LAMBO CITY is its first home.<br>Public Companion Studio · Private Owner Console remains separate.</p>
+  </main>
+  <script type="module" src="/alive/studio/studio.js"></script>
+</body>
+</html>
