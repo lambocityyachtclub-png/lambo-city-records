@@ -129,6 +129,10 @@ function updatePreview() {
   const avatar = $("avatar-preview");
   avatar.dataset.tone = $("skin-tone").value;
   avatar.dataset.hair = $("hair-color").value;
+  avatar.dataset.hairStyle = $("hair-style").value;
+  avatar.dataset.eye = $("eye-color").value;
+  avatar.dataset.outfit = $("outfit").value;
+  avatar.dataset.accent = $("accent-color").value;
   avatar.dataset.style = $("character-form").value;
   $("preview-name").textContent = $("companion-name").value.trim() || "Your Companion";
   const form = $("character-form").value === "stylized" ? "Stylized character" : "Digital human";
