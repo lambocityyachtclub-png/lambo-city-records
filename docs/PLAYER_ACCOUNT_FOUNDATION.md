@@ -26,6 +26,10 @@ This clean integration keeps player account authentication separate from HERO's 
 - Passwords are disabled; the intended login path is passkey.
 - Profile API supports a username, bio, and up to three HTTPS image URLs. Upload UI/storage is a follow-on task.
 
+## Authentication origin handling
+
+Preview authentication prefers Vercel stable branch URL over a one-off deployment URL and uses the same host for Better Auth and WebAuthn passkey relying-party configuration. Production defaults to the canonical LAMBO CITY domain unless BETTER_AUTH_URL explicitly overrides it.
+
 ## External activation still required
 The account email code sender uses Resend. Live code delivery requires:
 - `RESEND_API_KEY` in the preview environment.
