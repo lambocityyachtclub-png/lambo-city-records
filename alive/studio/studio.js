@@ -59,7 +59,7 @@ async function finishAccount(user) {
 async function sendEmailCode() {
   const email = $("account-email").value.trim().toLowerCase();
   const username = usernameValue();
-  if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) return setStatus("auth-status", "Enter a valid email address.", true);
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return setStatus("auth-status", "Enter a valid email address.", true);
   if (!validUsername(username)) return setStatus("auth-status", "Choose a username with 3–20 letters, numbers, or underscores.", true);
   $("send-code").disabled = true;
   try {
@@ -76,7 +76,7 @@ async function sendEmailCode() {
 async function verifyEmailCode() {
   const email = $("account-email").value.trim().toLowerCase();
   const otp = $("email-code").value.trim();
-  if (!/^\\d{6}$/.test(otp)) return setStatus("auth-status", "Enter the six-digit code from your email.", true);
+  if (!/^\d{6}$/.test(otp)) return setStatus("auth-status", "Enter the six-digit code from your email.", true);
   $("verify-code").disabled = true;
   try {
     const auth = await authClient();
