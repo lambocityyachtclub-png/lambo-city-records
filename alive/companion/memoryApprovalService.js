@@ -21,7 +21,7 @@ function validateProposal(record, ownerId, identityId) {
       record.content.length > CONTENT_LIMIT ||
       !["fact", "preference", "goal", "relationship", "project", "experience"].includes(record.category) ||
       record.state !== "proposed" || record.source !== "companion-suggested" ||
-      record.visibility !== "owner-only" || record.trainingUse !== false ||
+      record.visibility !== "owner-only" || record.shareWithDevelopment !== false || record.trainingUse !== false ||
       record.crossWorldSharing !== false) {
     throw reviewError("The pending memory does not satisfy the private proposal contract.", "ALIVE_MEMORY_REVIEW_RECORD_INVALID");
   }
@@ -129,7 +129,7 @@ export function createCompanionMemoryReviewService({ identityService, repository
 function validateApproved(record, ownerId, identityId) {
   if (!record || record.ownerId !== ownerId || record.identityId !== identityId ||
       record.state !== "approved" || record.approvedBy !== ownerId ||
-      record.source !== "companion-suggested" || record.trainingUse !== false ||
+      record.source !== "companion-suggested" || record.shareWithDevelopment !== false || record.trainingUse !== false ||
       record.visibility !== "owner-only") {
     throw reviewError("The approved memory did not satisfy the owner approval contract.", "ALIVE_MEMORY_REVIEW_RECORD_INVALID");
   }
