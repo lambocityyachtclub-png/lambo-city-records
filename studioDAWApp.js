@@ -233,6 +233,18 @@ function createVocalsPanel({ beatLab } = {}) {
     '<strong style="color:#e6bb69;font-size:11px;letter-spacing:2px">VOCAL EFFECTS</strong>',
     '<label style="display:grid;gap:7px;color:#c9c7c1;font-size:12px">DELAY MIX <input data-vocal-effect="delay" type="range" min="0" max="1" step="0.01" value="' + (beatLab?.vocalEffectSettings?.delay ?? 0) + '" style="width:100%;accent-color:#e6bb69"></label>',
     '<label style="display:grid;gap:7px;color:#c9c7c1;font-size:12px">REVERB MIX <input data-vocal-effect="reverb" type="range" min="0" max="1" step="0.01" value="' + (beatLab?.vocalEffectSettings?.reverb ?? 0) + '" style="width:100%;accent-color:#e6bb69"></label></section>',
+    '<details style="display:grid;gap:12px;padding:14px;border:1px solid #80643a;border-radius:12px;background:linear-gradient(145deg,#1b1a18,#10131a)">',
+    '<summary style="cursor:pointer;color:#e6bb69;font-size:11px;font-weight:800;letter-spacing:2px">PITCH CORRECTION · VOCALS</summary>',
+    '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px">',
+    '<label style="display:flex;align-items:center;gap:9px;color:#f4f1eb;font-size:12px"><input type="checkbox" data-vocal-pitch="enabled" style="accent-color:#e6bb69"> ENABLE PITCH CORRECTION</label>',
+    '<label style="display:grid;gap:6px;color:#c9c7c1;font-size:11px">KEY <select data-vocal-pitch="root" style="min-height:38px;padding:8px;border:1px solid #454958;border-radius:7px;background:#222631;color:white"><option value="0">C</option><option value="1">C♯ / D♭</option><option value="2">D</option><option value="3">D♯ / E♭</option><option value="4">E</option><option value="5">F</option><option value="6">F♯ / G♭</option><option value="7">G</option><option value="8">G♯ / A♭</option><option value="9">A</option><option value="10">A♯ / B♭</option><option value="11">B</option></select></label>',
+    '<label style="display:grid;gap:6px;color:#c9c7c1;font-size:11px">SCALE <select data-vocal-pitch="scale" style="min-height:38px;padding:8px;border:1px solid #454958;border-radius:7px;background:#222631;color:white"><option value="major">MAJOR</option><option value="minor">MINOR</option><option value="chromatic">CHROMATIC</option></select></label>',
+    '<label style="display:grid;gap:6px;color:#c9c7c1;font-size:11px">CORRECTION AMOUNT <span data-pitch-amount-value style="color:#e6bb69">100%</span><input data-vocal-pitch="amount" type="range" min="0" max="100" step="1" value="100" style="width:100%;accent-color:#e6bb69"></label>',
+    '<label style="display:grid;gap:6px;color:#c9c7c1;font-size:11px">RETUNE SPEED <span data-pitch-speed-value style="color:#e6bb69">25 ms</span><input data-vocal-pitch="speedMs" type="range" min="0" max="120" step="1" value="25" style="width:100%;accent-color:#e6bb69"></label>',
+    '</div>',
+    '<div data-pitch-status role="status" aria-live="polite" style="color:#e6bb69;font-size:11px">Pitch correction bypassed · Original vocal tone is preserved.</div>',
+    '<p style="margin:0;color:#a8a8b1;font-size:11px;line-height:1.5">Non-destructive correction: your original take stays dry. The selected key and scale are applied during playback and export. Enable Input Monitor in Edit to hear the corrected signal while recording.</p>',
+    '</details>',
     '<div style="display:flex;flex-wrap:wrap;gap:10px">',
     '<button type="button" data-vocal-action="export-vocals" style="min-height:42px;padding:10px 13px;border:1px solid #665438;border-radius:8px;background:#222631;color:white;font-weight:bold">EXPORT VOCALS</button>',
     '<button type="button" data-vocal-action="export-mix" style="min-height:42px;padding:10px 13px;border:1px solid #665438;border-radius:8px;background:#222631;color:white;font-weight:bold">EXPORT MASTER MIX</button></div>',
@@ -339,7 +351,30 @@ function createVocalsPanel({ beatLab } = {}) {
     }
   });
 
+  const updatePitchSettings = () => {
+    const settings = {
+      enabled: Boolean(root.querySelector('[data-vocal-pitch="enabled"]')?.checked),
+      root: Math.max(0, Math.min(11, Math.round(Number(root.querySelector('[data-vocal-pitch="root"]')?.value) || 0))),
+      scale: ["major", "minor", "chromatic"].includes(root.querySelector('[data-vocal-pitch="scale"]')?.value)
+        ? root.querySelector('[data-vocal-pitch="scale"]').value
+        : "major",
+      amount: Math.max(0, Math.min(100, Number(root.querySelector('[data-vocal-pitch="amount"]')?.value ?? 100))),
+      speedMs: Math.max(0, Math.min(120, Number(root.querySelector('[data-vocal-pitch="speedMs"]')?.value ?? 25)))
+    };
+    beatLab.pitchCorrectionSettings = { ...settings };
+    window.dispatchEvent(new CustomEvent("lc-vocal-pitch-settings-change", { detail: { settings } }));
+    const rootNames = ["C","C♯","D","D♯","E","F","F♯","G","G♯","A","A♯","B"];
+    const pitchStatus = root.querySelector("[data-pitch-status]");
+    const amountValue = root.querySelector("[data-pitch-amount-value]");
+    const speedValue = root.querySelector("[data-pitch-speed-value]");
+    if (amountValue) amountValue.textContent = settings.amount + "%";
+    if (speedValue) speedValue.textContent = settings.speedMs + " ms";
+    if (pitchStatus) pitchStatus.textContent = settings.enabled
+      ? "Pitch correction ON · " + rootNames[settings.root] + " " + settings.scale.toUpperCase() + " · Saved to this vocal track for playback/export."
+      : "Pitch correction bypassed · Original vocal tone is preserved.";
+  };
   root.addEventListener("input", event => {
+    if (event.target.closest("[data-vocal-pitch]") && beatLab) updatePitchSettings();
     const slider = event.target.closest("[data-vocal-effect]");
     if (!slider || !beatLab) return;
     const effect = slider.dataset.vocalEffect;
@@ -350,6 +385,9 @@ function createVocalsPanel({ beatLab } = {}) {
       if (effect === "reverb") beatLab.vocalEffects.setReverbMix(value);
     }
     status(effect.toUpperCase() + " mix updated.");
+  });
+  root.addEventListener("change", event => {
+    if (event.target.closest("[data-vocal-pitch]") && beatLab) updatePitchSettings();
   });
   return root;
 }
@@ -885,6 +923,10 @@ const StudioDAWApp = {
       if (vocalSettings[key] !== undefined) control.value = String(vocalSettings[key]);
     });
     const pitchStatus = this.vocalsPanel?.querySelector("[data-pitch-status]");
+    const pitchAmountValue = this.vocalsPanel?.querySelector("[data-pitch-amount-value]");
+    const pitchSpeedValue = this.vocalsPanel?.querySelector("[data-pitch-speed-value]");
+    if (pitchAmountValue) pitchAmountValue.textContent = Math.round(pitchSettings.amount) + "%";
+    if (pitchSpeedValue) pitchSpeedValue.textContent = Math.round(pitchSettings.speedMs) + " ms";
     if (pitchStatus) {
       const rootNames = ["C","C♯","D","D♯","E","F","F♯","G","G♯","A","A♯","B"];
       pitchStatus.textContent = pitchSettings.enabled
