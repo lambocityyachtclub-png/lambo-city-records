@@ -479,7 +479,8 @@ const requiresApproval = policyDecision.requiresApproval;
       TASK_STATUS.QUEUED
     ],
     [TASK_STATUS.REVIEW]: [
-      TASK_STATUS.COMPLETED
+      TASK_STATUS.COMPLETED,
+      TASK_STATUS.QUEUED
     ],
     [TASK_STATUS.PENDING_APPROVAL]: [],
     [TASK_STATUS.COMPLETED]: [],
