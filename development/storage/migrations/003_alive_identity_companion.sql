@@ -10,6 +10,26 @@ ALTER TABLE public.alive_personal_identity
 ALTER TABLE public.alive_memory_entry
   ADD COLUMN IF NOT EXISTS share_with_development BOOLEAN NOT NULL DEFAULT false;
 
+-- Companion-suggested memories must remain private until the owner approves them.
+-- Explicit development sharing is a separate owner action and cannot be smuggled
+-- into a pending proposal.
+DO $alive_proposal_privacy$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+     WHERE conname = 'alive_memory_entry_companion_proposal_private'
+       AND conrelid = 'public.alive_memory_entry'::regclass
+  ) THEN
+    ALTER TABLE public.alive_memory_entry
+      ADD CONSTRAINT alive_memory_entry_companion_proposal_private
+      CHECK (
+        state <> 'proposed'
+        OR source <> 'companion-suggested'
+        OR share_with_development = false
+      );
+  END IF;
+END $alive_proposal_privacy$;
+
 CREATE TABLE IF NOT EXISTS public.alive_companion_preferences (
   owner_id TEXT NOT NULL,
   identity_id TEXT NOT NULL,
