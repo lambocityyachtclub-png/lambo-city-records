@@ -251,6 +251,28 @@ function createVocalsPanel({ beatLab } = {}) {
     '<div data-vocal-status role="status" aria-live="polite" style="min-height:22px;color:#e6bb69;font-size:12px">Microphone workspace ready. Your browser will ask for microphone permission when you record.</div>'
   ].join("");
 
+  const initialPitchSettings = {
+    enabled: Boolean(beatLab?.pitchCorrectionSettings?.enabled),
+    root: Math.max(0, Math.min(11, Math.round(Number(beatLab?.pitchCorrectionSettings?.root) || 0))),
+    scale: ["major", "minor", "chromatic"].includes(beatLab?.pitchCorrectionSettings?.scale) ? beatLab.pitchCorrectionSettings.scale : "major",
+    amount: Math.max(0, Math.min(100, Number(beatLab?.pitchCorrectionSettings?.amount ?? 100))),
+    speedMs: Math.max(0, Math.min(120, Number(beatLab?.pitchCorrectionSettings?.speedMs ?? 25)))
+  };
+  root.querySelector('[data-vocal-pitch="enabled"]').checked = initialPitchSettings.enabled;
+  root.querySelector('[data-vocal-pitch="root"]').value = String(initialPitchSettings.root);
+  root.querySelector('[data-vocal-pitch="scale"]').value = initialPitchSettings.scale;
+  root.querySelector('[data-vocal-pitch="amount"]').value = String(initialPitchSettings.amount);
+  root.querySelector('[data-vocal-pitch="speedMs"]').value = String(initialPitchSettings.speedMs);
+  root.querySelector("[data-pitch-amount-value]").textContent = initialPitchSettings.amount + "%";
+  root.querySelector("[data-pitch-speed-value]").textContent = initialPitchSettings.speedMs + " ms";
+  const initialPitchStatus = root.querySelector("[data-pitch-status]");
+  if (initialPitchStatus) {
+    const rootNames = ["C","C♯","D","D♯","E","F","F♯","G","G♯","A","A♯","B"];
+    initialPitchStatus.textContent = initialPitchSettings.enabled
+      ? "Pitch correction ON · " + rootNames[initialPitchSettings.root] + " " + initialPitchSettings.scale.toUpperCase() + " · Saved to this vocal track for playback/export."
+      : "Pitch correction bypassed · Original vocal tone is preserved.";
+  }
+
   let quickNoteTrack = null;
   let quickNoteActive = false;
   const voiceNoteStatus = message => {
