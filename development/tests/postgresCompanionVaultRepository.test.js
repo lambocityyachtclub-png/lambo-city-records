@@ -139,3 +139,13 @@ test("ALIVE alignment migration extends the approved tables without creating com
   assert.match(migration, /ON DELETE CASCADE/);
   assert.doesNotMatch(migration, /CREATE TABLE IF NOT EXISTS public\.alive_personal_identities/);
 });
+
+
+test("ALIVE alignment migration forbids development sharing on pending Companion suggestions", async () => {
+  const fs = await import("node:fs/promises");
+  const migration = await fs.readFile(new URL("../storage/migrations/003_alive_identity_companion.sql", import.meta.url), "utf8");
+  assert.match(migration, /alive_memory_entry_companion_proposal_private/);
+  assert.match(migration, /state <> 'proposed'/);
+  assert.match(migration, /source <> 'companion-suggested'/);
+  assert.match(migration, /share_with_development = false/);
+});
