@@ -19,7 +19,7 @@ test("Production defaults to the canonical LAMBO CITY domain", () => {
 });
 
 test("An explicit configured origin is respected", () => {
-  const config = getPlayerAuthOriginConfig({ VERCEL_ENV: "preview", BETTER_AUTH_URL: "https://accounts.example.com/path", VERCEL_BRANCH_URL: "branch.example.vercel.app" });
+  const config = getPlayerAuthOriginConfig({ VERCEL_ENV: "preview", BETTER_AUTH_URL: "https://accounts.example.com/path" });
   assert.equal(config.baseURL, "https://accounts.example.com");
   assert.equal(config.rpID, "accounts.example.com");
   assert.equal(config.trustedOrigins[0], "https://accounts.example.com");
