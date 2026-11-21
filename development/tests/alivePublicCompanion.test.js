@@ -42,7 +42,7 @@ test("public Companion view never returns owner IDs, grants, or internal model r
   assert.equal("ownerId" in view, false);
   assert.equal("identityId" in view, false);
   assert.equal("grants" in view, false);
-  assert.equal("modelRef" in view.character, false);
+  assert.equal("modelRef" in view, false);
 });
 
 test("public Companion API derives account ownership from verified session and protects writes", async () => {
