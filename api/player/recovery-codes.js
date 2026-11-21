@@ -1,3 +1,4 @@
+import { isSameOriginRequest } from "../../server/origin.js";
 import { randomBytes } from "node:crypto";
 import { auth, pool } from "../../server/auth.js";
 import { toWebHeaders } from "../../server/http.js";
@@ -10,6 +11,8 @@ export default async function handler(req, res) {
   }
 
   let connection;
+  if (!isSameOriginRequest(req)) return res.status(403).json({ error: "A same-origin account request is required." });
+
   try {
     const session = await auth.api.getSession({ headers: toWebHeaders(req.headers) });
     if (!session?.user?.id) {
