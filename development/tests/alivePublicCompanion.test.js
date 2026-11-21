@@ -78,3 +78,11 @@ test("the shared identity service blocks one public account from another account
   await assert.rejects(service.update({ actorId: "account-b", identityId: "companion-a", changes: { displayName: "Stolen" } }), error => error.code === "ALIVE_IDENTITY_OWNER_REQUIRED");
   assert.equal((await service.get({ actorId: "account-a", identityId: "companion-a", requiredRole: "owner" })).displayName, "Nova");
 });
+
+test("public readiness endpoint reports only safe configuration booleans", async () => {
+  const source = await fs.readFile(new URL("../../api/alive/public/readiness.js", import.meta.url), "utf8");
+  assert.match(source, /databaseConfigured = Boolean\(process\.env\.DATABASE_URL\)/);
+  assert.match(source, /authSecretConfigured = Boolean\(process\.env\.BETTER_AUTH_SECRET\)/);
+  assert.match(source, /emailDeliveryConfigured = Boolean\(process\.env\.RESEND_API_KEY && process\.env\.EMAIL_FROM\)/);
+  assert.doesNotMatch(source, /process\.env\.(DATABASE_URL|BETTER_AUTH_SECRET|RESEND_API_KEY)\s*[,;)]/);
+});
