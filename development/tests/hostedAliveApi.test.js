@@ -51,8 +51,58 @@ test("ALIVE status exposes configuration state but never secrets", async () => {
   await handler(makeRequest(), response);
   assert.equal(response.statusCode, 200);
   assert.equal(response.body.openAIConfigured, true);
+  assert.equal(response.body.allowedPathsConfigured, false);
   assert.equal(response.body.executionConfigured, false);
   assert.doesNotMatch(JSON.stringify(response.body), /private-openai-key-value|postgres:\/\/|owner-secret/);
+});
+
+test("ALIVE status rejects malformed, empty, or non-development allowlists without exposing their values", async () => {
+  const invalidAllowlists = [
+    "not-json",
+    "[]",
+    '["world.js"]',
+    '["development", 7]',
+    '["", "development"]'
+  ];
+  for (const allowedPaths of invalidAllowlists) {
+    const handler = createAliveApiHandler({
+      env: {
+        DATABASE_URL: "postgres://configured",
+        OPENAI_API_KEY: "configured-key",
+        ALIVE_AI_ENABLED: "true",
+        ALIVE_SANDBOX_ENABLED: "true",
+        ALIVE_ALLOWED_PATHS: allowedPaths
+      },
+      authenticateOwner: async () => ({ email: "owner@example.com", emailVerified: true }),
+      withSystem: async () => { throw new Error("must not run"); }
+    });
+    const response = makeResponse();
+    await handler(makeRequest(), response);
+    assert.equal(response.statusCode, 200);
+    assert.equal(response.body.allowedPathsConfigured, false, allowedPaths);
+    assert.equal(response.body.executionConfigured, false, allowedPaths);
+    assert.doesNotMatch(JSON.stringify(response.body), /configured-key|postgres:\/\//);
+  }
+});
+
+test("ALIVE status reports execution readiness only for a valid development allowlist", async () => {
+  const handler = createAliveApiHandler({
+    env: {
+      DATABASE_URL: "postgres://configured",
+      OPENAI_API_KEY: "configured-key",
+      ALIVE_AI_ENABLED: "true",
+      ALIVE_SANDBOX_ENABLED: "true",
+      ALIVE_ALLOWED_PATHS: '["development"]'
+    },
+    authenticateOwner: async () => ({ email: "owner@example.com", emailVerified: true }),
+    withSystem: async () => { throw new Error("must not run"); }
+  });
+  const response = makeResponse();
+  await handler(makeRequest(), response);
+  assert.equal(response.statusCode, 200);
+  assert.equal(response.body.allowedPathsConfigured, true);
+  assert.equal(response.body.executionConfigured, true);
+  assert.doesNotMatch(JSON.stringify(response.body), /configured-key|postgres:\/\//);
 });
 
 test("ALIVE task intake creates a queued world task without executing it", async () => {
@@ -107,6 +157,27 @@ test("ALIVE run endpoint does not start paid execution unless both switches and 
   const response = makeResponse();
   await handler(makeRequest({ method: "POST", action: "run" }), response);
   assert.equal(response.statusCode, 503);
+  assert.equal(calls, 0);
+});
+
+test("ALIVE run endpoint refuses an invalid allowlist before opening the hosted executor", async () => {
+  let calls = 0;
+  const handler = createAliveApiHandler({
+    env: {
+      DATABASE_URL: "postgres://configured",
+      OPENAI_API_KEY: "configured-key",
+      ALIVE_AI_ENABLED: "true",
+      ALIVE_SANDBOX_ENABLED: "true",
+      ALIVE_ALLOWED_PATHS: '["world.js"]'
+    },
+    authenticateOwner: async () => ({ id: "owner-123", email: "owner@example.com", emailVerified: true }),
+    withSystem: async () => { calls += 1; }
+  });
+  const response = makeResponse();
+  await handler(makeRequest({ method: "POST", action: "run" }), response);
+  assert.equal(response.statusCode, 503);
+  assert.match(response.body.error, /ALIVE_ALLOWED_PATHS/);
+  assert.match(response.body.error, /No task was run/);
   assert.equal(calls, 0);
 });
 
@@ -170,7 +241,6 @@ test("ALIVE review endpoint records PERFECT or CHANGE through the owner feedback
   assert.equal(change.body.result.feedback, "change");
   assert.deepEqual(decisions.map(item => item.type), ["perfect", "change"]);
 });
-
 
 test("ALIVE owner can approve a protected task before the one-shot worker claims it", async () => {
   let approved = null;
