@@ -16,7 +16,7 @@ export function getPlayerAuthOriginConfig(env = process.env) {
   const production = env.VERCEL_ENV === "production";
   const canonical = "https://lambocityrecords.com";
   const www = "https://www.lambocityrecords.com";
-  const baseURL = production ? (configured || canonical) : (configured || branch || deployment || "http://localhost:3000");
+  const baseURL = production ? (configured || canonical) : (branch || configured || deployment || "http://localhost:3000");
   const trustedOrigins = production
     ? [...new Set([baseURL, configured, canonical, www].filter(Boolean))]
     : [...new Set([baseURL, branch, deployment].filter(Boolean))];
