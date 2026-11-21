@@ -84,5 +84,6 @@ test("public readiness endpoint reports only safe configuration booleans", async
   assert.match(source, /databaseConfigured = Boolean\(process\.env\.DATABASE_URL\)/);
   assert.match(source, /authSecretConfigured = Boolean\(process\.env\.BETTER_AUTH_SECRET\)/);
   assert.match(source, /emailDeliveryConfigured = Boolean\(process\.env\.RESEND_API_KEY && process\.env\.EMAIL_FROM\)/);
-  assert.doesNotMatch(source, /\.json\(\{[\s\S]*process\.env\./);
+  const responseSection = source.slice(source.indexOf("const ready ="));
+  assert.doesNotMatch(responseSection, /process\.env\./);
 });
