@@ -11,7 +11,7 @@ test("public Companion identity IDs are stable and account-specific", () => {
 });
 
 test("public Companion input accepts only the shared supported identity forms", () => {
-  assert.throws(() => normalizePublicCompanionInput({ displayName: "A", characterForm: "unknown" }), /digital-human or stylized/);
+  assert.throws(() => normalizePublicCompanionInput({ displayName: "Nova", characterForm: "unknown" }), /digital-human or stylized/);
   assert.throws(() => normalizePublicCompanionInput({ displayName: "", characterForm: "stylized" }), /2–40 characters/);
 });
 
