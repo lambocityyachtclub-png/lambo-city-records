@@ -28,6 +28,13 @@ jobs:
         with:
           node-version: 22
 
+      - name: Parse public ALIVE Companion modules
+        run: |
+          node --check server/publicCompanion.js
+          node --check server/alivePublicServices.js
+          node --check api/alive/public/companion.js
+          node --check alive/studio/studio.js
+
       - name: Run development engine and blueprint discovery tests
         run: node --experimental-default-type=module --test development/tests/*.test.js
 
