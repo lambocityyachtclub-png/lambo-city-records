@@ -1,3 +1,4 @@
+import { isSameOriginRequest } from "../../server/origin.js";
 import { pool } from "../../server/auth.js";
 import { createRecoveryContext, hashRecoveryCode, hashRecoveryIdentity } from "../../server/recovery.js";
 
@@ -6,6 +7,8 @@ export default async function handler(req, res) {
     res.setHeader("Allow", "POST");
     return res.status(405).json({ error: "Method not allowed" });
   }
+
+  if (!isSameOriginRequest(req)) return res.status(403).json({ error: "A same-origin account request is required." });
 
   try {
     const email = String(req.body?.email || "").trim().toLowerCase();
