@@ -1,5 +1,8 @@
+import path from "node:path";
 import { createOwnerReviewFeedback } from "../../development/engine/ownerReviewFeedback.js";
 import { isSameOriginRequest } from "../../alive/server/originPolicy.js";
+
+const BLOCKED_ALLOWLIST_SEGMENTS = new Set([".git", ".vercel", "node_modules", "dist", "build"]);
 
 function send(res, status, payload) {
   res.statusCode = status;
@@ -19,6 +22,42 @@ function readBody(req) {
   const serialized = JSON.stringify(body);
   if (serialized.length > 32 * 1024) throw new Error("Request body exceeds the 32 KB limit.");
   return body;
+}
+
+function hasConfiguredValue(value) {
+  return typeof value === "string" && value.trim().length > 0;
+}
+
+function isSafeAllowlistPath(value) {
+  if (
+    typeof value !== "string" ||
+    !value.trim() ||
+    value.includes("\\") ||
+    value.includes("\0") ||
+    path.isAbsolute(value)
+  ) {
+    return false;
+  }
+  const segments = value.split("/");
+  return !segments.some(segment =>
+    !segment ||
+    segment === "." ||
+    segment === ".." ||
+    BLOCKED_ALLOWLIST_SEGMENTS.has(segment)
+  );
+}
+
+function hasDevelopmentAllowlist(value) {
+  let paths;
+  try {
+    paths = JSON.parse(typeof value === "string" ? value : "");
+  } catch {
+    return false;
+  }
+  if (!Array.isArray(paths) || paths.length === 0 || !paths.every(isSafeAllowlistPath)) {
+    return false;
+  }
+  return paths.map(item => item.trim()).includes("development");
 }
 
 function validationStatus(error) {
@@ -56,16 +95,25 @@ export function createAliveApiHandler(options = {}) {
     if (action === "status" && method === "GET") {
       const aiEnabled = env.ALIVE_AI_ENABLED === "true";
       const sandboxEnabled = env.ALIVE_SANDBOX_ENABLED === "true";
-      const openAIConfigured = typeof env.OPENAI_API_KEY === "string" && env.OPENAI_API_KEY.length > 0;
+      const databaseConfigured = hasConfiguredValue(env.DATABASE_URL);
+      const openAIConfigured = hasConfiguredValue(env.OPENAI_API_KEY);
+      const allowedPathsConfigured = hasDevelopmentAllowlist(env.ALIVE_ALLOWED_PATHS);
       return send(res, 200, {
         service: "lambo-city-alive",
         mode: "owner-controlled",
         owner: { email: owner.email },
-        databaseConfigured: Boolean(env.DATABASE_URL),
+        databaseConfigured,
         openAIConfigured,
+        allowedPathsConfigured,
         aiEnabled,
         sandboxEnabled,
-        executionConfigured: Boolean(env.DATABASE_URL && openAIConfigured && aiEnabled && sandboxEnabled && env.ALIVE_ALLOWED_PATHS)
+        executionConfigured: Boolean(
+          databaseConfigured &&
+          openAIConfigured &&
+          allowedPathsConfigured &&
+          aiEnabled &&
+          sandboxEnabled
+        )
       });
     }
 
@@ -118,7 +166,13 @@ export function createAliveApiHandler(options = {}) {
     }
 
     if (action === "run" && method === "POST") {
-      if (env.ALIVE_AI_ENABLED !== "true" || env.ALIVE_SANDBOX_ENABLED !== "true" || !env.OPENAI_API_KEY) {
+      if (!hasConfiguredValue(env.DATABASE_URL)) {
+        return send(res, 503, { error: "The ALIVE development database is not configured. No task was run." });
+      }
+      if (!hasDevelopmentAllowlist(env.ALIVE_ALLOWED_PATHS)) {
+        return send(res, 503, { error: "ALIVE_ALLOWED_PATHS must be a valid safe JSON path array containing development. No task was run." });
+      }
+      if (env.ALIVE_AI_ENABLED !== "true" || env.ALIVE_SANDBOX_ENABLED !== "true" || !hasConfiguredValue(env.OPENAI_API_KEY)) {
         return send(res, 503, { error: "OpenAI and isolated sandbox execution are not enabled. No task was run." });
       }
       try {
