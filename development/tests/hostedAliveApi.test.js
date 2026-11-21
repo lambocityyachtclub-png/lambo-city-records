@@ -56,13 +56,17 @@ test("ALIVE status exposes configuration state but never secrets", async () => {
   assert.doesNotMatch(JSON.stringify(response.body), /private-openai-key-value|postgres:\/\/|owner-secret/);
 });
 
-test("ALIVE status rejects malformed, empty, or non-development allowlists without exposing their values", async () => {
+test("ALIVE status rejects malformed, empty, unsafe, or non-development allowlists without exposing their values", async () => {
   const invalidAllowlists = [
     "not-json",
     "[]",
     '["world.js"]',
     '["development", 7]',
-    '["", "development"]'
+    '["", "development"]',
+    '["development", "../secret"]',
+    '["development", "/tmp"]',
+    '["development", "node_modules"]',
+    '["development", "bad\\\\path"]'
   ];
   for (const allowedPaths of invalidAllowlists) {
     const handler = createAliveApiHandler({
