@@ -8,7 +8,7 @@ function fakePool() {
     memory_id: "proposal-1", owner_id: "owner-1", identity_id: "identity-1",
     category: "fact", content: "A suggested memory.", tags: ["tag"],
     state: "proposed", source: "companion-suggested", visibility: "owner-only",
-    training_use: false, created_at: new Date("2026-11-20T00:00:00.000Z"),
+    training_use: false, share_with_development: false, created_at: new Date("2026-11-20T00:00:00.000Z"),
     approved_at: null, approved_by: null
   }];
   return {
@@ -20,7 +20,7 @@ function fakePool() {
         const row = rows.find(item => item.memory_id === values[2] && item.owner_id === values[0] &&
           item.identity_id === values[1] && item.state === "proposed");
         if (!row) return { rows: [] };
-        row.state = "approved"; row.approved_by = values[0];
+        row.state = "approved"; row.approved_by = values[0]; row.share_with_development = false;
         row.approved_at = new Date("2026-11-20T00:01:00.000Z");
         return { rows: [{ ...row }] };
       }
@@ -53,7 +53,7 @@ test("approval is an atomic conditional state transition attributed to the owner
     ownerId: "owner-1", identityId: "identity-1", memoryId: "proposal-1"
   });
   assert.equal(approved.state, "approved");
-  assert.equal(approved.approvedBy, "owner-1");
+  assert.equal(approved.approvedBy, "owner-1");\n  assert.equal(approved.shareWithDevelopment, false);
   assert.match(pool.calls[0].sql, /state = 'proposed' AND source = 'companion-suggested'/);
   assert.match(pool.calls[0].sql, /approved_by = \$1/);
 });
