@@ -74,7 +74,7 @@ export const auth = betterAuth({
     passkey({
       rpID: authOrigin.rpID,
       rpName: "LAMBO CITY",
-      origin: authOrigin.trustedOrigins,
+      origin: authOrigin.passkeyOrigins,
       registration: {
         requireSession: false,
         resolveUser: async ({ context }) => {
