@@ -86,6 +86,8 @@ const StudioMultitrackWorkspace = {
   sessionTemplateName: null,
   arrangementPlayback: null,
   onTransportChange: null,
+  onLoopBoundary: null,
+  lastLoopPositionBar: null,
   onRecordingComplete: null,
   selectedClipId: null,
   selectedTrackId: null,
@@ -570,7 +572,16 @@ const StudioMultitrackWorkspace = {
           getMetronomeSettings: () => this.metronomeSettings,
           getBarAtSeconds: seconds => this.getBarAtSeconds(seconds),
           onPosition: bar => {
+            const previousLoopBar = this.lastLoopPositionBar;
             this.playheadBar = bar;
+            const activeLoop = this.loopRange?.enabled ? this.loopRange : null;
+            if (activeLoop && previousLoopBar !== null &&
+                previousLoopBar >= Number(activeLoop.endBar) - 0.25 &&
+                bar <= Number(activeLoop.startBar) + 0.25 &&
+                bar < previousLoopBar - 0.0625) {
+              this.onLoopBoundary?.(bar, previousLoopBar);
+            }
+            this.lastLoopPositionBar = bar;
             this.onTransportChange?.();
             const x = (bar - 1) * this.zoomBarWidth;
             this.root?.querySelectorAll(".lc-arrangement-playhead").forEach(line => { line.style.left = x + "px"; });
@@ -2009,6 +2020,7 @@ const StudioMultitrackWorkspace = {
 
   async playAll() {
     this.stopAll();
+    this.lastLoopPositionBar = null;
     const loop = this.loopRange?.enabled ? this.loopRange : null;
     const started = await this.getArrangementPlayback().play(this.tracks, this.playheadBar, loop);
     if (started) this.status("Song session playing · " + Math.round(this.getTempoAtBar(this.playheadBar)) + " BPM.");
@@ -2017,6 +2029,7 @@ const StudioMultitrackWorkspace = {
   },
 
   stopAll() {
+    this.lastLoopPositionBar = null;
     if (this.arrangementPlayback) {
       this.arrangementPlayback.stop();
     }

@@ -23,7 +23,7 @@ assert.match(app, /StudioMultitrackWorkspace\.cycleTakesEnabled = this\.cycleRec
 assert.match(app, /this\.cycleRecordingEnabled = StudioMultitrackWorkspace\.cycleTakesEnabled !== false/, "Cycle Takes must restore from the shared session.");
 assert.match(playback, /hasUpcomingArrangementContent/, "Empty sessions must keep the song clock moving.");
 assert.match(playback, /: 129;/, "An empty session without a loop must continue to the end of the song timeline.");
-assert.match(app, /this\.cycleRecordingActive && bounds/, "Cycle Takes must remain active across completed loop passes.");
+assert.match(app, /this\.cycleRecordingActive && this\.cycleRecordingEnabled && bounds/, "Cycle Takes must remain active across completed loop passes only while Cycle Takes is enabled and loop bounds remain available.");
 assert.match(app, /this\.cycleRestartTimer = setTimeout/, "Each completed pass must schedule the next take.");
 assert.match(app, /punchInBar: bounds\.startBar/);
 assert.match(app, /punchOutBar: bounds\.endBar/);

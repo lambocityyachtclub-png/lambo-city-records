@@ -233,11 +233,45 @@ function createVocalsPanel({ beatLab } = {}) {
     '<strong style="color:#e6bb69;font-size:11px;letter-spacing:2px">VOCAL EFFECTS</strong>',
     '<label style="display:grid;gap:7px;color:#c9c7c1;font-size:12px">DELAY MIX <input data-vocal-effect="delay" type="range" min="0" max="1" step="0.01" value="' + (beatLab?.vocalEffectSettings?.delay ?? 0) + '" style="width:100%;accent-color:#e6bb69"></label>',
     '<label style="display:grid;gap:7px;color:#c9c7c1;font-size:12px">REVERB MIX <input data-vocal-effect="reverb" type="range" min="0" max="1" step="0.01" value="' + (beatLab?.vocalEffectSettings?.reverb ?? 0) + '" style="width:100%;accent-color:#e6bb69"></label></section>',
+    '<details style="display:grid;gap:12px;padding:14px;border:1px solid #80643a;border-radius:12px;background:linear-gradient(145deg,#1b1a18,#10131a)">',
+    '<summary style="cursor:pointer;color:#e6bb69;font-size:11px;font-weight:800;letter-spacing:2px">PITCH CORRECTION · VOCALS</summary>',
+    '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px">',
+    '<label style="display:flex;align-items:center;gap:9px;color:#f4f1eb;font-size:12px"><input type="checkbox" data-vocal-pitch="enabled" style="accent-color:#e6bb69"> ENABLE PITCH CORRECTION</label>',
+    '<label style="display:grid;gap:6px;color:#c9c7c1;font-size:11px">KEY <select data-vocal-pitch="root" style="min-height:38px;padding:8px;border:1px solid #454958;border-radius:7px;background:#222631;color:white"><option value="0">C</option><option value="1">C♯ / D♭</option><option value="2">D</option><option value="3">D♯ / E♭</option><option value="4">E</option><option value="5">F</option><option value="6">F♯ / G♭</option><option value="7">G</option><option value="8">G♯ / A♭</option><option value="9">A</option><option value="10">A♯ / B♭</option><option value="11">B</option></select></label>',
+    '<label style="display:grid;gap:6px;color:#c9c7c1;font-size:11px">SCALE <select data-vocal-pitch="scale" style="min-height:38px;padding:8px;border:1px solid #454958;border-radius:7px;background:#222631;color:white"><option value="major">MAJOR</option><option value="minor">MINOR</option><option value="chromatic">CHROMATIC</option></select></label>',
+    '<label style="display:grid;gap:6px;color:#c9c7c1;font-size:11px">CORRECTION AMOUNT <span data-pitch-amount-value style="color:#e6bb69">100%</span><input data-vocal-pitch="amount" type="range" min="0" max="100" step="1" value="100" style="width:100%;accent-color:#e6bb69"></label>',
+    '<label style="display:grid;gap:6px;color:#c9c7c1;font-size:11px">RETUNE SPEED <span data-pitch-speed-value style="color:#e6bb69">25 ms</span><input data-vocal-pitch="speedMs" type="range" min="0" max="120" step="1" value="25" style="width:100%;accent-color:#e6bb69"></label>',
+    '</div>',
+    '<div data-pitch-status role="status" aria-live="polite" style="color:#e6bb69;font-size:11px">Pitch correction bypassed · Original vocal tone is preserved.</div>',
+    '<p style="margin:0;color:#a8a8b1;font-size:11px;line-height:1.5">Non-destructive correction: your original take stays dry. The selected key and scale are applied during playback and export. Enable Input Monitor in Edit to hear the corrected signal while recording.</p>',
+    '</details>',
     '<div style="display:flex;flex-wrap:wrap;gap:10px">',
     '<button type="button" data-vocal-action="export-vocals" style="min-height:42px;padding:10px 13px;border:1px solid #665438;border-radius:8px;background:#222631;color:white;font-weight:bold">EXPORT VOCALS</button>',
     '<button type="button" data-vocal-action="export-mix" style="min-height:42px;padding:10px 13px;border:1px solid #665438;border-radius:8px;background:#222631;color:white;font-weight:bold">EXPORT MASTER MIX</button></div>',
     '<div data-vocal-status role="status" aria-live="polite" style="min-height:22px;color:#e6bb69;font-size:12px">Microphone workspace ready. Your browser will ask for microphone permission when you record.</div>'
   ].join("");
+
+  const initialPitchSettings = {
+    enabled: Boolean(beatLab?.pitchCorrectionSettings?.enabled),
+    root: Math.max(0, Math.min(11, Math.round(Number(beatLab?.pitchCorrectionSettings?.root) || 0))),
+    scale: ["major", "minor", "chromatic"].includes(beatLab?.pitchCorrectionSettings?.scale) ? beatLab.pitchCorrectionSettings.scale : "major",
+    amount: Math.max(0, Math.min(100, Number(beatLab?.pitchCorrectionSettings?.amount ?? 100))),
+    speedMs: Math.max(0, Math.min(120, Number(beatLab?.pitchCorrectionSettings?.speedMs ?? 25)))
+  };
+  root.querySelector('[data-vocal-pitch="enabled"]').checked = initialPitchSettings.enabled;
+  root.querySelector('[data-vocal-pitch="root"]').value = String(initialPitchSettings.root);
+  root.querySelector('[data-vocal-pitch="scale"]').value = initialPitchSettings.scale;
+  root.querySelector('[data-vocal-pitch="amount"]').value = String(initialPitchSettings.amount);
+  root.querySelector('[data-vocal-pitch="speedMs"]').value = String(initialPitchSettings.speedMs);
+  root.querySelector("[data-pitch-amount-value]").textContent = initialPitchSettings.amount + "%";
+  root.querySelector("[data-pitch-speed-value]").textContent = initialPitchSettings.speedMs + " ms";
+  const initialPitchStatus = root.querySelector("[data-pitch-status]");
+  if (initialPitchStatus) {
+    const rootNames = ["C","C♯","D","D♯","E","F","F♯","G","G♯","A","A♯","B"];
+    initialPitchStatus.textContent = initialPitchSettings.enabled
+      ? "Pitch correction ON · " + rootNames[initialPitchSettings.root] + " " + initialPitchSettings.scale.toUpperCase() + " · Saved to this vocal track for playback/export."
+      : "Pitch correction bypassed · Original vocal tone is preserved.";
+  }
 
   let quickNoteTrack = null;
   let quickNoteActive = false;
@@ -339,7 +373,30 @@ function createVocalsPanel({ beatLab } = {}) {
     }
   });
 
+  const updatePitchSettings = () => {
+    const settings = {
+      enabled: Boolean(root.querySelector('[data-vocal-pitch="enabled"]')?.checked),
+      root: Math.max(0, Math.min(11, Math.round(Number(root.querySelector('[data-vocal-pitch="root"]')?.value) || 0))),
+      scale: ["major", "minor", "chromatic"].includes(root.querySelector('[data-vocal-pitch="scale"]')?.value)
+        ? root.querySelector('[data-vocal-pitch="scale"]').value
+        : "major",
+      amount: Math.max(0, Math.min(100, Number(root.querySelector('[data-vocal-pitch="amount"]')?.value ?? 100))),
+      speedMs: Math.max(0, Math.min(120, Number(root.querySelector('[data-vocal-pitch="speedMs"]')?.value ?? 25)))
+    };
+    beatLab.pitchCorrectionSettings = { ...settings };
+    window.dispatchEvent(new CustomEvent("lc-vocal-pitch-settings-change", { detail: { settings } }));
+    const rootNames = ["C","C♯","D","D♯","E","F","F♯","G","G♯","A","A♯","B"];
+    const pitchStatus = root.querySelector("[data-pitch-status]");
+    const amountValue = root.querySelector("[data-pitch-amount-value]");
+    const speedValue = root.querySelector("[data-pitch-speed-value]");
+    if (amountValue) amountValue.textContent = settings.amount + "%";
+    if (speedValue) speedValue.textContent = settings.speedMs + " ms";
+    if (pitchStatus) pitchStatus.textContent = settings.enabled
+      ? "Pitch correction ON · " + rootNames[settings.root] + " " + settings.scale.toUpperCase() + " · Saved to this vocal track for playback/export."
+      : "Pitch correction bypassed · Original vocal tone is preserved.";
+  };
   root.addEventListener("input", event => {
+    if (event.target.closest("[data-vocal-pitch]") && beatLab) updatePitchSettings();
     const slider = event.target.closest("[data-vocal-effect]");
     if (!slider || !beatLab) return;
     const effect = slider.dataset.vocalEffect;
@@ -350,6 +407,9 @@ function createVocalsPanel({ beatLab } = {}) {
       if (effect === "reverb") beatLab.vocalEffects.setReverbMix(value);
     }
     status(effect.toUpperCase() + " mix updated.");
+  });
+  root.addEventListener("change", event => {
+    if (event.target.closest("[data-vocal-pitch]") && beatLab) updatePitchSettings();
   });
   return root;
 }
@@ -515,6 +575,10 @@ const StudioDAWApp = {
   cycleRestartTimer: null,
   activeRecordingStartBar: null,
   activeRecordingEndBar: null,
+  midiTakeGroupId: null,
+  midiTakeBaseName: null,
+  midiTakeNumber: 0,
+  monitorInputEnabled: false,
 
   armSessionRecording(mode = null) {
     const workspace = StudioMultitrackWorkspace;
@@ -534,6 +598,27 @@ const StudioDAWApp = {
         workspace.recordHistory("Create City Synth MIDI track");
         midiTrack = workspace.createTrack("midi", "City Synth Performance");
         midiTrack.midiNotes = [];
+      }
+      const baseName = String(midiTrack.takeBaseName || midiTrack.name || "City Synth Performance").replace(/\s*· TAKE \d+$/i, "");
+      if (this.cycleRecordingEnabled) {
+        if (Array.isArray(midiTrack.midiNotes) && midiTrack.midiNotes.length) {
+          const previousTake = midiTrack;
+          midiTrack = workspace.createTrack("midi", baseName + " · TAKE 1");
+          midiTrack.midiNotes = [];
+          previousTake.armed = false;
+          previousTake.muted = true;
+        }
+        this.midiTakeBaseName = baseName;
+        this.midiTakeGroupId = "midi-takes-" + midiTrack.id + "-" + Date.now();
+        this.midiTakeNumber = 1;
+        midiTrack.takeBaseName = baseName;
+        midiTrack.takeGroupId = this.midiTakeGroupId;
+        midiTrack.takeNumber = 1;
+        midiTrack.name = baseName + " · TAKE 1";
+      } else {
+        this.midiTakeBaseName = baseName;
+        this.midiTakeGroupId = null;
+        this.midiTakeNumber = 0;
       }
       workspace.tracks.forEach(item => {
         if (item.type === "midi") item.armed = item.id === midiTrack.id;
@@ -650,6 +735,7 @@ const StudioDAWApp = {
         }
         const recordedBeatTrack = multitrack.tracks.find(track =>
           ["beats", "beat lab"].includes(String(track.name || "").trim().toLowerCase()) &&
+          track.inputSource === "beatlab" &&
           (track.clips || []).some(clip => clip.blob?.size > 0)
         );
         if (recordedBeatTrack) beatLab.stop();
@@ -724,15 +810,17 @@ const StudioDAWApp = {
       }));
       return true;
     }
+    this.monitorInputEnabled = Boolean(this.editScreen?.root?.querySelector("[data-input-monitor]")?.checked);
     const started = await workspace.startArmedRecording({
       vocalEffects: Floor2StudioApp?.vocalEffects,
       punchInBar: boundedStartBar,
       punchOutBar: endBar,
-      monitorInput: Boolean(this.editScreen?.root?.querySelector("[data-input-monitor]")?.checked)
+      monitorInput: this.monitorInputEnabled
     });
     this.recordStartPending = false;
     if (!started) {
       this.recordArmed = true;
+      this.monitorInputEnabled = false;
       this.activeRecordingStartBar = null;
       this.activeRecordingEndBar = null;
       this.syncTransportControls();
@@ -743,6 +831,7 @@ const StudioDAWApp = {
     if (!playing) {
       await workspace.stopArmedRecording();
       this.recordArmed = false;
+      this.monitorInputEnabled = false;
       this.syncTransportControls();
       window.dispatchEvent(new CustomEvent("lc-vocal-recording-state", { detail: { recording: false, name: "Recording stopped", format: "Shared Studio audio" } }));
       return false;
@@ -755,6 +844,7 @@ const StudioDAWApp = {
 
   async stopSessionPlayback() {
     const workspace = StudioMultitrackWorkspace;
+    window.dispatchEvent(new CustomEvent("lc-session-midi-loop-boundary"));
     StudioMultitrackWorkspace?.stopAll();
     if (Floor2StudioApp?.playing) Floor2StudioApp.stop();
     if (this.sessionRecordTimer) clearTimeout(this.sessionRecordTimer);
@@ -765,6 +855,9 @@ const StudioDAWApp = {
       }
       this.sessionMidiRecordingActive = false;
       workspace?.tracks?.forEach(track => { if (track.type === "midi") track.armed = false; });
+      this.midiTakeGroupId = null;
+      this.midiTakeBaseName = null;
+      this.midiTakeNumber = 0;
       this.recordingMode = "mic";
       this.activeRecordingStartBar = null;
       this.activeRecordingEndBar = null;
@@ -773,6 +866,7 @@ const StudioDAWApp = {
       }));
     }
     this.cycleRecordingActive = false;
+    this.monitorInputEnabled = false;
     this.sessionLoopBounds = null;
     if (this.cycleRestartTimer) clearTimeout(this.cycleRestartTimer);
     this.cycleRestartTimer = null;
@@ -785,6 +879,48 @@ const StudioDAWApp = {
     this.syncTransportControls();
     window.dispatchEvent(new CustomEvent("lc-vocal-recording-state", { detail: { recording: false, name: "Session Recording", format: "Shared Studio audio" } }));
     return true;
+  },
+
+  handleSessionLoopBoundary() {
+    if (!this.sessionMidiRecordingActive) return;
+    window.dispatchEvent(new CustomEvent("lc-session-midi-loop-boundary"));
+    if (!this.cycleRecordingEnabled) {
+      void this.stopSessionPlayback();
+      return;
+    }
+    const workspace = StudioMultitrackWorkspace;
+    const current = workspace.tracks.find(track => track.type === "midi" && track.armed);
+    if (!current) return;
+    const baseName = this.midiTakeBaseName ||
+      current.takeBaseName ||
+      String(current.name || "City Synth Performance").replace(/\s*· TAKE \d+$/i, "");
+    if (!this.midiTakeGroupId) {
+      this.midiTakeBaseName = baseName;
+      this.midiTakeGroupId = "midi-takes-" + current.id + "-" + Date.now();
+      this.midiTakeNumber = Math.max(1, Number(current.takeNumber) || 1);
+      current.takeBaseName = baseName;
+      current.takeGroupId = this.midiTakeGroupId;
+      current.takeNumber = this.midiTakeNumber;
+      current.name = baseName + " · TAKE " + this.midiTakeNumber;
+    }
+    const nextNumber = this.midiTakeNumber + 1;
+    const next = workspace.createTrack("midi", baseName + " · TAKE " + nextNumber);
+    current.armed = false;
+    current.muted = true;
+    next.midiNotes = [];
+    next.takeBaseName = baseName;
+    next.takeGroupId = this.midiTakeGroupId;
+    next.takeNumber = nextNumber;
+    next.armed = true;
+    next.muted = false;
+    this.midiTakeNumber = nextNumber;
+    workspace.scheduleProjectAutosave();
+    workspace.render();
+    this.syncTransportControls();
+    window.dispatchEvent(new CustomEvent("lc-session-midi-recording-state", {
+      detail: { active: true, armed: true, takeNumber: nextNumber }
+    }));
+    this.editScreen?.status("MIDI cycle · TAKE " + nextNumber + " started.");
   },
 
   syncVocalTrackSettings() {
@@ -808,6 +944,17 @@ const StudioDAWApp = {
       const key = control.dataset.vocalEffect;
       if (vocalSettings[key] !== undefined) control.value = String(vocalSettings[key]);
     });
+    const pitchStatus = this.vocalsPanel?.querySelector("[data-pitch-status]");
+    const pitchAmountValue = this.vocalsPanel?.querySelector("[data-pitch-amount-value]");
+    const pitchSpeedValue = this.vocalsPanel?.querySelector("[data-pitch-speed-value]");
+    if (pitchAmountValue) pitchAmountValue.textContent = Math.round(pitchSettings.amount) + "%";
+    if (pitchSpeedValue) pitchSpeedValue.textContent = Math.round(pitchSettings.speedMs) + " ms";
+    if (pitchStatus) {
+      const rootNames = ["C","C♯","D","D♯","E","F","F♯","G","G♯","A","A♯","B"];
+      pitchStatus.textContent = pitchSettings.enabled
+        ? "Pitch correction ON · " + rootNames[Math.max(0, Math.min(11, Number(pitchSettings.root) || 0))] + " " + String(pitchSettings.scale || "major").toUpperCase() + " · Saved to this vocal track for playback/export."
+        : "Pitch correction bypassed · Original vocal tone is preserved.";
+    }
   },
 
   async playSession() {
@@ -1032,6 +1179,7 @@ const StudioDAWApp = {
     window.addEventListener("lc-vocal-effect-settings-change", this.handleVocalEffectSettingsChange);
     this.handleSessionLoaded = () => this.syncVocalTrackSettings();
     window.addEventListener("lc-session-loaded", this.handleSessionLoaded);
+    StudioMultitrackWorkspace.onLoopBoundary = () => this.handleSessionLoopBoundary();
     StudioMultitrackWorkspace.onTransportChange = () => {
       if (!StudioMultitrackWorkspace.isPlaying() && Floor2StudioApp?.playing && !this.transportActionPending) {
         Floor2StudioApp.stop();
@@ -1041,7 +1189,7 @@ const StudioDAWApp = {
     StudioMultitrackWorkspace.onRecordingComplete = () => {
       const bounds = this.sessionLoopBounds;
       this.recordArmed = false;
-      if (this.cycleRecordingActive && bounds && (StudioMultitrackWorkspace.isPlaying() || Floor2StudioApp?.playing)) {
+      if (this.cycleRecordingActive && this.cycleRecordingEnabled && bounds && (StudioMultitrackWorkspace.isPlaying() || Floor2StudioApp?.playing)) {
         // Each loop pass is finalized as its own take. Re-arm at the same loop
         // boundary while the master arrangement continues cycling.
         this.cycleRestartTimer = setTimeout(async () => {
@@ -1052,7 +1200,7 @@ const StudioDAWApp = {
             vocalEffects: Floor2StudioApp?.vocalEffects,
             punchInBar: bounds.startBar,
             punchOutBar: bounds.endBar,
-            monitorInput: false
+            monitorInput: this.monitorInputEnabled
           });
           if (!restarted) {
             this.cycleRecordingActive = false;
@@ -1171,7 +1319,7 @@ const StudioDAWApp = {
         onViewChange: viewId => {
           window.dispatchEvent(new CustomEvent("lc-live-drummer-state", { detail: { active: viewId === "drums" } }));
           const appHeader = root.querySelector(":scope > header");
-          if (appHeader) appHeader.style.display = "flex";
+          if (appHeader) appHeader.style.display = viewId === "edit" ? "none" : "flex";
           if (viewId === "mix") this.mixPanel?.refresh?.();
           // On a direct physical MPC entry, workspace.mount fires before
           // the performance panel is created. Wait for the panel to exist;
@@ -1267,6 +1415,12 @@ const StudioDAWApp = {
         onTransportRecord: mode => this.armSessionRecording(mode),
         onTransportDisarm: mode => this.disarmSessionRecording(mode)
       });
+      window.dispatchEvent(new CustomEvent("lc-session-midi-recording-state", {
+        detail: {
+          active: this.sessionMidiRecordingActive,
+          armed: this.recordArmed && this.recordingMode === "midi"
+        }
+      }));
       applyCitySynthVisual(this.pianoPanel);
       this.workspace.setPanel("mix", this.mixPanel);
       this.workspace.setPanel("piano", this.pianoPanel);
@@ -1358,6 +1512,7 @@ const StudioDAWApp = {
     this.recordStartPending = false;
     StudioMultitrackWorkspace.onRecordingComplete = null;
     if (StudioMultitrackWorkspace.onTransportChange) StudioMultitrackWorkspace.onTransportChange = null;
+    StudioMultitrackWorkspace.onLoopBoundary = null;
     if (this.globalTransportHandlers) {
       this.root?.querySelector("header")?.removeEventListener("click", this.globalTransportHandlers);
       this.globalTransportHandlers = null;
