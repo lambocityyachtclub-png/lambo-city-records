@@ -5,11 +5,23 @@ on:
   push:
     paths:
       - "development/**"
+      - "alive/identity/**"
+      - "alive/studio/**"
+      - "api/alive/public/**"
+      - "server/publicCompanion.js"
+      - "server/alivePublicServices.js"
+      - "migrations/002_alive_public_companions.sql"
       - ".github/workflows/development-engine-tests.yml"
 
   pull_request:
     paths:
       - "development/**"
+      - "alive/identity/**"
+      - "alive/studio/**"
+      - "api/alive/public/**"
+      - "server/publicCompanion.js"
+      - "server/alivePublicServices.js"
+      - "migrations/002_alive_public_companions.sql"
       - ".github/workflows/development-engine-tests.yml"
 
   workflow_dispatch:
