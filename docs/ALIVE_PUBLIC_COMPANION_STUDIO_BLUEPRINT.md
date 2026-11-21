@@ -123,6 +123,6 @@ Do not activate paid AI usage, background autonomy, microphone access, or extern
 - `/api/alive/auth-readiness` returns `provider_credentials_rejected`; owner email verification is not ready.
 - Existing identity/Companion services and private owner routes are present in the ALIVE integration branch.
 - The public Studio route and public account-scoped identity API are not yet implemented in this integration branch.
-- The account client file `playerAccounts.js` exists, but its corresponding public server-side auth/profile implementation must be verified before reuse.
+- Confirmed code inspection: `playerAccounts.js` is a client-only Better Auth email-OTP/passkey UI and calls `/api/player/profile`, but this integration branch contains no `/api/player/*` server routes and no matching public Better Auth server configuration. It is therefore not a working registration system and must not be presented as one. The public account backend, database schema, email delivery, recovery, and session ownership must be implemented and tested before public signup is enabled.
 - The Companion identity migration is documented for manual review/application; do not apply migrations automatically.
 - No production deployment, PR merge, or production data change is included in this blueprint.
