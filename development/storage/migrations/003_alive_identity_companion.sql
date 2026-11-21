@@ -69,6 +69,39 @@ CREATE TABLE IF NOT EXISTS public.alive_companion_preferences (
   CONSTRAINT alive_companion_preference_no_cross_world CHECK (record->'privacy'->>'crossWorldSharing' = 'false')
 );
 
+-- Existing ALIVE development databases may already have a legacy
+-- alive_companion_preferences table whose composite FK points to the old
+-- alive_personal_identity table. Rebind it to the versioned identity table
+-- only when every existing preference already has a matching new identity.
+-- Never silently orphan legacy preferences during this migration.
+DO $
+DECLARE
+  orphaned_preferences BIGINT := 0;
+BEGIN
+  IF to_regclass('public.alive_companion_preferences') IS NOT NULL THEN
+    SELECT COUNT(*) INTO orphaned_preferences
+      FROM public.alive_companion_preferences preference
+      LEFT JOIN public.alive_personal_identities identity
+        ON identity.identity_id = preference.identity_id
+       AND identity.owner_id = preference.owner_id
+     WHERE identity.identity_id IS NULL;
+
+    IF orphaned_preferences > 0 THEN
+      RAISE EXCEPTION 'ALIVE preferences exist without matching versioned identities; reconcile legacy identity records before migration';
+    END IF;
+
+    ALTER TABLE public.alive_companion_preferences
+      DROP CONSTRAINT IF EXISTS alive_companion_preferences_identity_owner_fk;
+    ALTER TABLE public.alive_companion_preferences
+      DROP CONSTRAINT IF EXISTS alive_companion_preference_identity_owner_fk;
+    ALTER TABLE public.alive_companion_preferences
+      ADD CONSTRAINT alive_companion_preference_identity_owner_fk
+      FOREIGN KEY (identity_id, owner_id)
+      REFERENCES public.alive_personal_identities (identity_id, owner_id)
+      ON DELETE CASCADE;
+  END IF;
+END $;
+
 COMMENT ON TABLE public.alive_personal_identities IS
   'Portable personal ALIVE identities. A world or company does not own these records.';
 COMMENT ON TABLE public.alive_companion_memories IS
