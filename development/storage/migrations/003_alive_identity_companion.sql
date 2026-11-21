@@ -74,7 +74,7 @@ CREATE TABLE IF NOT EXISTS public.alive_companion_preferences (
 -- alive_personal_identity table. Rebind it to the versioned identity table
 -- only when every existing preference already has a matching new identity.
 -- Never silently orphan legacy preferences during this migration.
-DO $
+DO $alive_migration$
 DECLARE
   orphaned_preferences BIGINT := 0;
 BEGIN
@@ -100,7 +100,7 @@ BEGIN
       REFERENCES public.alive_personal_identities (identity_id, owner_id)
       ON DELETE CASCADE;
   END IF;
-END $;
+END $alive_migration$;
 
 COMMENT ON TABLE public.alive_personal_identities IS
   'Portable personal ALIVE identities. A world or company does not own these records.';
