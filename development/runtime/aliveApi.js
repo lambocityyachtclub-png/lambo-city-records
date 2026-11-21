@@ -21,6 +21,23 @@ function readBody(req) {
   return body;
 }
 
+function hasConfiguredValue(value) {
+  return typeof value === "string" && value.trim().length > 0;
+}
+
+function hasDevelopmentAllowlist(value) {
+  let paths;
+  try {
+    paths = JSON.parse(typeof value === "string" ? value : "");
+  } catch {
+    return false;
+  }
+  return Array.isArray(paths) &&
+    paths.length > 0 &&
+    paths.every(item => typeof item === "string" && item.trim().length > 0) &&
+    paths.some(item => item.trim() === "development");
+}
+
 function validationStatus(error) {
   const message = String(error?.message || "");
   if (/not found/i.test(message)) return 404;
@@ -56,16 +73,25 @@ export function createAliveApiHandler(options = {}) {
     if (action === "status" && method === "GET") {
       const aiEnabled = env.ALIVE_AI_ENABLED === "true";
       const sandboxEnabled = env.ALIVE_SANDBOX_ENABLED === "true";
-      const openAIConfigured = typeof env.OPENAI_API_KEY === "string" && env.OPENAI_API_KEY.length > 0;
+      const databaseConfigured = hasConfiguredValue(env.DATABASE_URL);
+      const openAIConfigured = hasConfiguredValue(env.OPENAI_API_KEY);
+      const allowedPathsConfigured = hasDevelopmentAllowlist(env.ALIVE_ALLOWED_PATHS);
       return send(res, 200, {
         service: "lambo-city-alive",
         mode: "owner-controlled",
         owner: { email: owner.email },
-        databaseConfigured: Boolean(env.DATABASE_URL),
+        databaseConfigured,
         openAIConfigured,
+        allowedPathsConfigured,
         aiEnabled,
         sandboxEnabled,
-        executionConfigured: Boolean(env.DATABASE_URL && openAIConfigured && aiEnabled && sandboxEnabled && env.ALIVE_ALLOWED_PATHS)
+        executionConfigured: Boolean(
+          databaseConfigured &&
+          openAIConfigured &&
+          allowedPathsConfigured &&
+          aiEnabled &&
+          sandboxEnabled
+        )
       });
     }
 
@@ -118,7 +144,13 @@ export function createAliveApiHandler(options = {}) {
     }
 
     if (action === "run" && method === "POST") {
-      if (env.ALIVE_AI_ENABLED !== "true" || env.ALIVE_SANDBOX_ENABLED !== "true" || !env.OPENAI_API_KEY) {
+      if (!hasConfiguredValue(env.DATABASE_URL)) {
+        return send(res, 503, { error: "The ALIVE development database is not configured. No task was run." });
+      }
+      if (!hasDevelopmentAllowlist(env.ALIVE_ALLOWED_PATHS)) {
+        return send(res, 503, { error: "ALIVE_ALLOWED_PATHS must be a valid JSON array containing development. No task was run." });
+      }
+      if (env.ALIVE_AI_ENABLED !== "true" || env.ALIVE_SANDBOX_ENABLED !== "true" || !hasConfiguredValue(env.OPENAI_API_KEY)) {
         return send(res, 503, { error: "OpenAI and isolated sandbox execution are not enabled. No task was run." });
       }
       try {
