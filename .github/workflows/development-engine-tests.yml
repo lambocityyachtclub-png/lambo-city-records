@@ -33,6 +33,7 @@ jobs:
           node --check server/publicCompanion.js
           node --check server/alivePublicServices.js
           node --check api/alive/public/companion.js
+          node --check api/alive/public/readiness.js
           node --check alive/studio/studio.js
 
       - name: Run development engine and blueprint discovery tests
