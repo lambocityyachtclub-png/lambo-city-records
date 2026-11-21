@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import { normalizePublicCompanionInput, publicCompanionIdentityId, toPublicCompanionView } from "../../server/publicCompanion.js";
+import { createIdentityService } from "../../alive/identity/identityService.js";
 
 test("public Companion identity IDs are stable and account-specific", () => {
   assert.equal(publicCompanionIdentityId("account-a"), publicCompanionIdentityId("account-a"));
@@ -61,4 +62,19 @@ test("public Companion migration links records to real public accounts and prese
   assert.match(migration, /alive_public_identity_private_memory/);
   assert.match(migration, /alive_public_identity_no_training/);
   assert.match(migration, /alive_public_identity_private_sharing/);
+});
+
+test("the shared identity service blocks one public account from another account Companion", async () => {
+  const records = new Map();
+  const repository = {
+    async insert(record) { records.set(record.identityId, record); return record; },
+    async getById(id) { return records.get(id) || null; },
+    async update(id, mutate) { const current = records.get(id); if (!current) { const error = new Error("Not found"); error.code = "ALIVE_IDENTITY_NOT_FOUND"; throw error; } const next = await mutate(current); records.set(id, next); return next; }
+  };
+  const service = createIdentityService({ repository });
+  const identity = await service.create({ actorId: "account-a", identity: { identityId: "companion-a", displayName: "Nova", characterForm: "stylized" } });
+  assert.equal(identity.ownerId, "account-a");
+  await assert.rejects(service.get({ actorId: "account-b", identityId: "companion-a", requiredRole: "owner" }), error => error.code === "ALIVE_IDENTITY_ACCESS_DENIED");
+  await assert.rejects(service.update({ actorId: "account-b", identityId: "companion-a", changes: { displayName: "Stolen" } }), error => error.code === "ALIVE_IDENTITY_OWNER_REQUIRED");
+  assert.equal((await service.get({ actorId: "account-a", identityId: "companion-a", requiredRole: "owner" })).displayName, "Nova");
 });
