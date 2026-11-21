@@ -8,7 +8,7 @@ const proposal = {
   memoryId: "proposal-1", ownerId, identityId, category: "preference",
   content: "The owner may prefer a concise session summary.",
   tags: ["studio"], state: "proposed", source: "companion-suggested",
-  visibility: "owner-only", trainingUse: false, crossWorldSharing: false,
+  visibility: "owner-only", trainingUse: false, crossWorldSharing: false, shareWithDevelopment: false,
   createdAt: "2026-11-20T00:00:00.000Z"
 };
 
@@ -36,7 +36,7 @@ function setup() {
       if (!row) return null;
       row.state = "approved";
       row.approvedBy = requestedOwner;
-      row.approvedAt = "2026-11-20T00:01:00.000Z";
+      row.approvedAt = "2026-11-20T00:01:00.000Z";\n      row.shareWithDevelopment = false;
       return { ...row };
     },
     async archiveMemoryProposal({ ownerId: requestedOwner, identityId: requestedIdentity, memoryId }) {
@@ -96,6 +96,16 @@ test("service rejects malformed, foreign, or non-proposal repository records", a
   repository.listPendingMemoryProposals = async () => [{
     ...proposal, source: "owner-stated"
   }];
+  await assert.rejects(
+    service.listPending({ actorId: ownerId, identityId }),
+    error => error.code === "ALIVE_MEMORY_REVIEW_RECORD_INVALID"
+  );
+});
+
+
+test("service rejects pending Companion suggestions already flagged for development sharing", async () => {
+  const { service, repository } = setup();
+  repository.listPendingMemoryProposals = async () => [{ ...proposal, shareWithDevelopment: true }];
   await assert.rejects(
     service.listPending({ actorId: ownerId, identityId }),
     error => error.code === "ALIVE_MEMORY_REVIEW_RECORD_INVALID"
