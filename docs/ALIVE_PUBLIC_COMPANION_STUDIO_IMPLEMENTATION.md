@@ -28,6 +28,13 @@ The migration creates `alive_personal_identities` linked to the Better Auth `use
 
 Do not apply this migration to production or the private ALIVE Owner Console database.
 
+## Preview configuration and migration validation
+
+- Preview-only `DATABASE_URL`, branch-specific `BETTER_AUTH_SECRET`, and `EMAIL_FROM` are configured for the player-account and public Studio branches. These values are not set for production.
+- The safe Preview readiness endpoint confirmed the isolated player-account database is reachable and the auth secret is present. Email delivery remains unavailable because no valid `RESEND_API_KEY` is configured; the previously inspected ALIVE Preview key was rejected and was not copied.
+- GitHub Actions now applies the public Companion migration to a disposable PostgreSQL 16 service and verifies identity persistence, owner isolation, foreign keys, and cascading deletion. This does not modify Neon.
+- The migration has not been applied to the actual `player-accounts-dev` Neon branch or production.
+
 ## External activation and acceptance gates
 
 - Verify the public account email provider can deliver OTP messages. The currently inspected Resend Preview credential was rejected; no bypass is implemented.
