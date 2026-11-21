@@ -7,6 +7,7 @@ test("Preview prefers the stable branch alias for Better Auth and passkeys", () 
   assert.equal(config.baseURL, "https://player-accounts-clean.example.vercel.app");
   assert.equal(config.rpID, "player-accounts-clean.example.vercel.app");
   assert.deepEqual(config.trustedOrigins, ["https://player-accounts-clean.example.vercel.app", "https://one-off-deployment.example.vercel.app"]);
+  assert.deepEqual(config.passkeyOrigins, ["https://player-accounts-clean.example.vercel.app"]);
 });
 
 test("Production defaults to the canonical LAMBO CITY domain", () => {
@@ -14,6 +15,7 @@ test("Production defaults to the canonical LAMBO CITY domain", () => {
   assert.equal(config.baseURL, "https://lambocityrecords.com");
   assert.equal(config.rpID, "lambocityrecords.com");
   assert.deepEqual(config.trustedOrigins, ["https://lambocityrecords.com", "https://www.lambocityrecords.com"]);
+  assert.deepEqual(config.passkeyOrigins, ["https://lambocityrecords.com", "https://www.lambocityrecords.com"]);
 });
 
 test("An explicit configured origin is respected", () => {
