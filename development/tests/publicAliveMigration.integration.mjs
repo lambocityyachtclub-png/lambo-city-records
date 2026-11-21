@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import { Pool } from "pg";
 import { createIdentityService } from "../../alive/identity/identityService.js";
+import { createPersonalIdentity } from "../../alive/identity/identityContract.js";
 import { createPostgresIdentityRepository } from "../../alive/identity/postgresIdentityRepository.js";
 
 const connectionString = process.env.TEST_DATABASE_URL;
@@ -31,7 +32,8 @@ try {
   await assert.rejects(service.get({ actorId: "account-b", identityId: "integration-companion-a", requiredRole: "owner" }), error => error.code === "ALIVE_IDENTITY_ACCESS_DENIED");
   await assert.rejects(service.update({ actorId: "account-b", identityId: "integration-companion-a", changes: { displayName: "Stolen" } }), error => error.code === "ALIVE_IDENTITY_OWNER_REQUIRED");
 
-  await assert.rejects(pool.query("INSERT INTO public.alive_personal_identities (identity_id, owner_id, record) VALUES ($1, $2, $3::jsonb)", ["orphan", "missing-account", "{}"]), error => error.code === "23503");
+  const orphan = createPersonalIdentity({ identityId: "orphan", ownerId: "missing-account", displayName: "Orphan", characterForm: "stylized" });
+  await assert.rejects(pool.query("INSERT INTO public.alive_personal_identities (identity_id, owner_id, record) VALUES ($1, $2, $3::jsonb)", ["orphan", "missing-account", JSON.stringify(orphan)]), error => error.code === "23503");
 
   await pool.query('INSERT INTO public.alive_public_api_rate_limits (owner_id, request_count) VALUES ($1, 1)', ["account-a"]);
   await pool.query('DELETE FROM public."user" WHERE id = $1', ["account-a"]);
