@@ -33,3 +33,10 @@ export function getPlayerAuthOriginConfig(env = process.env) {
     passkeyOrigins: Object.freeze(passkeyOrigins)
   });
 }
+
+export function isSameOriginRequest(req, env = process.env) {
+  const origin = req?.headers?.origin || req?.headers?.Origin || "";
+  const fetchSite = req?.headers?.["sec-fetch-site"] || req?.headers?.["Sec-Fetch-Site"];
+  const { trustedOrigins } = getPlayerAuthOriginConfig(env);
+  return trustedOrigins.includes(origin) && (!fetchSite || fetchSite === "same-origin");
+}
