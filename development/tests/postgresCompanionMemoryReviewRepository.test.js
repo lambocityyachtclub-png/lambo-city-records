@@ -53,7 +53,8 @@ test("approval is an atomic conditional state transition attributed to the owner
     ownerId: "owner-1", identityId: "identity-1", memoryId: "proposal-1"
   });
   assert.equal(approved.state, "approved");
-  assert.equal(approved.approvedBy, "owner-1");\n  assert.equal(approved.shareWithDevelopment, false);
+  assert.equal(approved.approvedBy, "owner-1");
+  assert.equal(approved.shareWithDevelopment, false);
   assert.match(pool.calls[0].sql, /state = 'proposed' AND source = 'companion-suggested'/);
   assert.match(pool.calls[0].sql, /approved_by = \$1/);
 });
