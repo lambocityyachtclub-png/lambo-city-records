@@ -20,5 +20,16 @@ export function getPlayerAuthOriginConfig(env = process.env) {
   const trustedOrigins = production
     ? [...new Set([baseURL, configured, canonical, www].filter(Boolean))]
     : [...new Set([baseURL, branch, deployment].filter(Boolean))];
-  return Object.freeze({ baseURL, rpID: new URL(baseURL).hostname, trustedOrigins: Object.freeze(trustedOrigins) });
+  // WebAuthn RP IDs must be valid suffixes of each browser origin. The
+  // one-off deployment hostname is trusted for normal auth requests, but is
+  // not a valid origin for a passkey bound to the stable branch alias.
+  const passkeyOrigins = production
+    ? [...new Set([baseURL, configured, canonical, www].filter(Boolean))]
+    : [baseURL];
+  return Object.freeze({
+    baseURL,
+    rpID: new URL(baseURL).hostname,
+    trustedOrigins: Object.freeze(trustedOrigins),
+    passkeyOrigins: Object.freeze(passkeyOrigins)
+  });
 }
