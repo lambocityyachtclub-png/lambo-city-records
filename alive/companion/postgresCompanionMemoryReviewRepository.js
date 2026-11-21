@@ -29,6 +29,7 @@ function fromRow(row) {
     visibility: row.visibility,
     trainingUse: row.training_use === true,
     crossWorldSharing: false,
+    shareWithDevelopment: row.share_with_development === true,
     createdAt: iso(row.created_at),
     approvedAt: row.approved_at ? iso(row.approved_at) : null,
     approvedBy: row.approved_by || null
@@ -64,11 +65,12 @@ export function createPostgresCompanionMemoryReviewRepository(pool) {
       const memoryId = scope(memoryValue, "Memory ID");
       const result = await pool.query(
         `UPDATE alive_memory_entry
-            SET state = 'approved', approved_at = now(), approved_by = $1,\n                share_with_development = false
+            SET state = 'approved', approved_at = now(), approved_by = $1,
+                share_with_development = false
           WHERE owner_id = $1 AND identity_id = $2 AND memory_id = $3
             AND state = 'proposed' AND source = 'companion-suggested'
           RETURNING memory_id, owner_id, identity_id, category, content, tags, state,
-                    source, visibility, training_use, created_at, approved_at, approved_by`,
+                    source, visibility, training_use, share_with_development, created_at, approved_at, approved_by`,
         [ownerId, identityId, memoryId]
       );
       return result.rows?.[0] ? fromRow(result.rows[0]) : null;
