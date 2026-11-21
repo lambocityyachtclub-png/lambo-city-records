@@ -3,19 +3,15 @@ import { emailOTP } from "better-auth/plugins";
 import { passkey } from "@better-auth/passkey";
 import { Pool } from "pg";
 import { verifyRecoveryContext } from "./recovery.js";
+import { getPlayerAuthOriginConfig } from "./origin.js";
 
 const databaseUrl = process.env.DATABASE_URL;
 if (!databaseUrl) {
   throw new Error("DATABASE_URL is required for LAMBO CITY player accounts.");
 }
 
-const appUrl = process.env.BETTER_AUTH_URL
-  ? new URL(process.env.BETTER_AUTH_URL).origin
-  : process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}`
-    : "http://localhost:3000";
-
-const appHost = new URL(appUrl).hostname;
+const authOrigin = getPlayerAuthOriginConfig();
+const appUrl = authOrigin.baseURL;
 
 export const pool = new Pool({
   connectionString: databaseUrl,
@@ -62,11 +58,7 @@ async function sendPlayerCode({ email, otp, type }) {
 export const auth = betterAuth({
   appName: "LAMBO CITY",
   baseURL: appUrl,
-  trustedOrigins: [
-    appUrl,
-    "https://lambocityrecords.com",
-    "https://www.lambocityrecords.com"
-  ],
+  trustedOrigins: authOrigin.trustedOrigins,
   database: pool,
   emailAndPassword: {
     enabled: false
@@ -80,9 +72,9 @@ export const auth = betterAuth({
       sendVerificationOTP: sendPlayerCode
     }),
     passkey({
-      rpID: appHost,
+      rpID: authOrigin.rpID,
       rpName: "LAMBO CITY",
-      origin: [appUrl],
+      origin: authOrigin.trustedOrigins,
       registration: {
         requireSession: false,
         resolveUser: async ({ context }) => {
