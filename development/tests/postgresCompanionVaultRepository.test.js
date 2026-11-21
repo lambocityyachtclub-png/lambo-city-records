@@ -129,3 +129,15 @@ test("ALIVE personal migration enforces owner/identity composite scope and priva
   assert.match(migration, /crossWorldSharing/);
   assert.match(migration, /ON DELETE CASCADE/);
 });
+
+
+test("ALIVE personal migration safely rebinds the legacy preferences foreign key", async () => {
+  const fs = await import("node:fs/promises");
+  const migration = await fs.readFile(new URL("../storage/migrations/003_alive_identity_companion.sql", import.meta.url), "utf8");
+  assert.match(migration, /LEFT JOIN public\.alive_personal_identities/);
+  assert.match(migration, /orphaned_preferences > 0/);
+  assert.match(migration, /RAISE EXCEPTION 'ALIVE preferences exist without matching versioned identities/);
+  assert.match(migration, /DROP CONSTRAINT IF EXISTS alive_companion_preferences_identity_owner_fk/);
+  assert.match(migration, /REFERENCES public\.alive_personal_identities \(identity_id, owner_id\)/);
+  assert.match(migration, /ON DELETE CASCADE/);
+});
