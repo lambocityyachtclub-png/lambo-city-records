@@ -99,6 +99,16 @@ assert.match(drummer,/data-drum-mode-toggle/,"Live Drummer must switch modes ins
 assert.match(drummer,/SAMPLE PADS/);
 assert.match(drummer,/LIVE PERFORMANCE/);
 assert.match(app,/createCitySynthPanel\(\{\s*session: StudioMultitrackWorkspace,\s*onTransportRecord: mode => this\.armSessionRecording\(mode\),\s*onTransportDisarm: mode => this\.disarmSessionRecording\(mode\)\s*\}\)/,"City Synth must arm and disarm through the shared session transport.");
+assert.match(app,/data-vocal-pitch="enabled"/,"The Vocal Booth must expose an enable/bypass control for pitch correction.");
+assert.match(app,/data-vocal-pitch="root"/,"The Vocal Booth must expose the song key for pitch correction.");
+assert.match(app,/data-vocal-pitch="scale"/,"The Vocal Booth must expose major, minor, and chromatic scale selection.");
+assert.match(app,/data-vocal-pitch="amount"/,"The Vocal Booth must expose correction amount.");
+assert.match(app,/data-vocal-pitch="speedMs"/,"The Vocal Booth must expose retune speed.");
+assert.match(app,/lc-vocal-pitch-settings-change/,"Pitch settings must update the shared vocal track and autosave.");
+assert.match(app,/data-pitch-status/,"The Vocal Booth must show pitch-correction state.");
+assert.match(app,/Non-destructive correction: your original take stays dry/,"Pitch correction must preserve the original recording.");
+assert.match(source["studioDAWArrangementPlayback.js"],/createStudioPitchCorrectionNode/,"Saved pitch correction must be applied during arrangement playback and export.");
+assert.match(source["studioMultitrackWorkspace.js"],/track\.effects\?\.pitchCorrection\?\.enabled/,"Vocal track pitch settings must be persisted in the session.");
 assert.match(app,/createVocalBoothPanel\(\{\s*beatLab: Floor2StudioApp,\s*onTransportPlay: \(\) => this\.playSession\(\),\s*onTransportStop: \(\) => this\.stopSessionPlayback\(\),\s*onTransportRecord: mode => this\.armSessionRecording\(mode\)\s*\}\)/,"Vocal Booth and Voice Notes must use the shared session transport.");
 const vocalBooth = source["floor2VocalBooth3D.js"];
 assert.match(vocalBooth,/data-booth-mode-switch="vocal"/,"Vocal Booth must have a one-tap return to full recording mode.");
