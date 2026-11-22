@@ -34,6 +34,7 @@ test("first-visit progression unlocks and persists the Studio invitation after H
     assert.equal(PlayerProgression.isStudioInvitationUnlocked(), true);
     assert.equal(PlayerProgression.getSnapshot().stage, "studio-invitation");
     assert.equal(globalThis.window.__lamboCityStudioInvitationUnlocked, true);
+    assert.equal(globalThis.window.__lamboCityProgressionState.heroPerformanceComplete, true);
     assert.ok(events.some(event => event.type === "lc-studio-invitation-unlocked"));
     assert.ok(storage.has("lambocity-player-progression-v1"));
 
