@@ -9,6 +9,6 @@
     "@better-auth/passkey": "1.7.23"
   },
   "engines": {
-    "node": ">=22.19.0"
+    "node": "24.x"
   }
 }
