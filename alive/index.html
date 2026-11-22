@@ -20,14 +20,14 @@
       <p class="intro">Direct the work. Review every proposed change. Keep the final say.</p>
     </section>
     <section class="panel auth-panel" id="auth-panel">
-      <div><p class="eyebrow">OWNER ACCESS</p><h2>Sign in to ALIVE</h2><p class="muted">Use your verified owner email and password. After account verification, add a passkey for Face ID and set up your authenticator plus one-time backup codes.</p></div>
+      <div><p class="eyebrow">OWNER ACCESS</p><h2>Sign in to ALIVE</h2><p class="muted">Sign in with your owner email and password. The first founder account can only be created from a private, time-limited Preview invitation. After setup, add a passkey for Face ID and save your one-time backup codes.</p></div>
       <form id="auth-form" class="auth-form">
         <label for="owner-email">Owner email</label>
         <input id="owner-email" type="email" autocomplete="username" autocapitalize="off" required placeholder="Your verified owner email">
         <label for="owner-password">Owner password</label>
         <input id="owner-password" type="password" autocomplete="current-password" required minlength="12" maxlength="128" placeholder="At least 12 characters">
         <button class="primary" type="submit">Sign in securely</button>
-        <button class="quiet" id="create-owner-account-button" type="button">Create owner account</button>
+        <button class="quiet" id="create-owner-account-button" type="button" hidden>Create founder account from invitation</button>
         <button class="quiet" id="forgot-password-button" type="button">Email me a password reset link</button>
       </form>
       <div class="auth-form">
