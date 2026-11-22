@@ -12,7 +12,7 @@ export function isOwnerSignupRequest(req) {
 
 export function isValidOwnerEnrollmentToken(req, env = process.env, now = Date.now()) {
   if (env.VERCEL_ENV !== "preview") return false;
-  const expected = env.ALIVE_OWNER_ENROLLMENT_TOKEN;
+  const expected = env.ALIVE_OWNER_ENROLLMENT_SECRET;
   const expiresAt = Number(env.ALIVE_OWNER_ENROLLMENT_EXPIRES_AT);
   if (typeof expected !== "string" || expected.length < 48) return false;
   if (!Number.isSafeInteger(expiresAt) || now >= expiresAt) return false;
