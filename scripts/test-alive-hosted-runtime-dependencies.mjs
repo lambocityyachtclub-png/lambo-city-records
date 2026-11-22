@@ -7,9 +7,10 @@ const manifest = JSON.parse(
 
 assert.equal(manifest.private, true);
 assert.equal(manifest.type, "module");
-assert.equal(manifest.engines?.node, ">=22.19.0");
+assert.equal(manifest.engines?.node, "24.x");
 assert.equal(manifest.dependencies?.["@vercel/sandbox"], "4.1.0");
 assert.equal(manifest.dependencies?.pg, "8.23.1");
+assert.equal(Number(process.versions.node.split(".")[0]), 24);
 
 const [sandboxModule, postgresModule] = await Promise.all([
   import("@vercel/sandbox"),
@@ -27,4 +28,4 @@ assert.equal(
   "node-postgres must expose Pool."
 );
 
-console.log("ALIVE hosted runtime dependencies are installed and importable.");
+console.log("ALIVE hosted runtime dependencies are installed and importable on Node 24.");
