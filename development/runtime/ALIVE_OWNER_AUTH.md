@@ -20,7 +20,7 @@ Replace the temporary bearer-token dashboard gate with a dedicated, single-owner
 - ALIVE_OWNER_AUTH_SECRET: a unique random secret of at least 32 characters.
 - VERCEL_BRANCH_URL: supplied automatically by Vercel for the active Preview; ALIVE uses this branch origin for Preview auth and WebAuthn RP ID.
 - ALIVE_OWNER_AUTH_URL: optional explicit HTTPS origin override. On Preview, VERCEL_BRANCH_URL takes precedence when available; this setting is the fallback. On Production, this setting selects the canonical auth origin.
-- ALIVE_OWNER_ENROLLMENT_TOKEN and ALIVE_OWNER_ENROLLMENT_EXPIRES_AT: a high-entropy, single-use, short-lived Preview-only founder invitation. Never configure these in Production. Remove the token after successful enrollment.
+- ALIVE_OWNER_ENROLLMENT_SECRET and ALIVE_OWNER_ENROLLMENT_EXPIRES_AT: a high-entropy, single-use, short-lived Preview-only founder invitation. Never configure these in Production. Remove the token after successful enrollment.
 - RESEND_API_KEY and EMAIL_FROM: verified sender configuration for password-reset email; not a blocker for initial founder enrollment.
 
 Do not place passwords, API keys, or generated secrets in GitHub files or ChatGPT messages. The owner enters credentials directly in the trusted provider UI.
@@ -32,7 +32,7 @@ Do not place passwords, API keys, or generated secrets in GitHub files or ChatGP
 4. Open the private invitation link on the exact Preview origin and create the founder account using the configured ALIVE_OWNER_EMAIL and a unique password. The invitation is accepted only on Preview and only while no owner account exists.
 5. Register at least one passkey on the iPad and confirm passkey sign-in.
 6. In the owner console, enable authenticator-based two-factor authentication, add the displayed URI to an authenticator app, verify a current code, and save all ten one-time backup codes in two secure offline locations.
-7. Remove ALIVE_OWNER_ENROLLMENT_TOKEN and ALIVE_OWNER_ENROLLMENT_EXPIRES_AT from the Preview environment after the owner account exists. Confirm further signup attempts are rejected even if a token is restored.
+7. Remove ALIVE_OWNER_ENROLLMENT_SECRET and ALIVE_OWNER_ENROLLMENT_EXPIRES_AT from the Preview environment after the owner account exists. Confirm further signup attempts are rejected even if a token is restored.
 8. Test password + authenticator sign-in, password + backup-code sign-in (confirm a code cannot be reused), passkey sign-in, sign-out, session restoration after reload, password reset once Resend is configured, and denial of a different email.
 9. Only after successful tests, remove the legacy ALIVE_REVIEW_TOKEN configuration from the Preview environment.
 10. Passkeys are origin-bound: use a Preview passkey for Preview testing, then register a new passkey after the canonical production domain is activated.
