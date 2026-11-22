@@ -40,6 +40,10 @@ jobs:
       - name: Check hosted ALIVE runtime syntax
         run: |
           node --check "api/alive/[action].js"
+          node --check "api/alive/auth/[...all].js"
+          node --check alive/server/ownerAuth.js
+          node --check alive/server/ownerEnrollment.js
+          node --check alive/owner.js
           node --check api/alive/worker.js
           node --check development/runtime/hostedAliveControlPlane.js
           node --check development/runtime/aliveScheduledWorker.js
