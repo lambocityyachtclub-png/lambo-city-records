@@ -98,6 +98,11 @@ function publish(force = false) {
   if (globalThis.window) {
     globalThis.window.__lamboCityProgressionSnapshot = snapshot;
     globalThis.window.__lamboCityStudioInvitationUnlocked = progress.studioInvitationUnlocked;
+    globalThis.window.__lamboCityProgressionState = Object.freeze({
+      version: progress.version,
+      heroPerformanceComplete: progress.heroPerformanceComplete,
+      studioInvitationUnlocked: progress.studioInvitationUnlocked
+    });
   }
   dispatch("lc-progression-update", snapshot);
   return snapshot;
