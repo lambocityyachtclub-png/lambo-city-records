@@ -1,0 +1,46 @@
+name: ALIVE Hosted Runtime Dependencies
+
+on:
+  push:
+    paths:
+      - "package.json"
+      - "scripts/test-alive-hosted-runtime-dependencies.mjs"
+      - ".github/workflows/alive-hosted-runtime-dependencies.yml"
+      - "api/alive/**"
+      - "development/runtime/**"
+      - "development/execution/**"
+  pull_request:
+    paths:
+      - "package.json"
+      - "scripts/test-alive-hosted-runtime-dependencies.mjs"
+      - ".github/workflows/alive-hosted-runtime-dependencies.yml"
+      - "api/alive/**"
+      - "development/runtime/**"
+      - "development/execution/**"
+
+jobs:
+  verify:
+    name: Verify hosted runtime dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.19.0"
+
+      - name: Install pinned server runtime dependencies
+        run: npm install --ignore-scripts --no-audit --no-fund --package-lock=false
+
+      - name: Verify runtime dependency imports
+        run: node scripts/test-alive-hosted-runtime-dependencies.mjs
+
+      - name: Check hosted ALIVE runtime syntax
+        run: |
+          node --check "api/alive/[action].js"
+          node --check api/alive/worker.js
+          node --check development/runtime/hostedAliveControlPlane.js
+          node --check development/runtime/aliveScheduledWorker.js
+          node --check development/execution/vercelSandboxTestRunner.js
