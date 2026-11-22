@@ -72,7 +72,7 @@ export function getAliveOwnerAuth() {
     emailAndPassword: {
       enabled: true,
       disableSignUp: false,
-      requireEmailVerification: true,
+      requireEmailVerification: false,
       minPasswordLength: 12,
       maxPasswordLength: 128,
       revokeSessionsOnPasswordReset: true,
@@ -89,8 +89,8 @@ export function getAliveOwnerAuth() {
       }
     },
     emailVerification: {
-      sendOnSignUp: true,
-      sendOnSignIn: true,
+      sendOnSignUp: false,
+      sendOnSignIn: false,
       autoSignInAfterVerification: false,
       sendVerificationEmail: async ({ user, url }) => {
         if (String(user.email || "").trim().toLowerCase() !== ownerEmail) {
@@ -109,7 +109,7 @@ export function getAliveOwnerAuth() {
         create: {
           before: async user => {
             if (String(user.email || "").trim().toLowerCase() !== ownerEmail) return false;
-            return { data: { ...user, email: ownerEmail } };
+            return { data: { ...user, email: ownerEmail, emailVerified: true } };
           }
         }
       }
@@ -159,4 +159,13 @@ export async function authenticateAliveOwner(req) {
     return null;
   }
   return user;
+}
+
+
+// The first founder account is created only through the Preview-only one-time enrollment gate.
+// Once any owner row exists, enrollment is permanently closed for this database.
+export async function isAliveOwnerEnrollmentOpen() {
+  getAliveOwnerAuth();
+  const result = await pool.query('SELECT EXISTS (SELECT 1 FROM alive_owner_user LIMIT 1) AS has_owner');
+  return result.rows?.[0]?.has_owner === false;
 }
