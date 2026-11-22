@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { isOwnerSignupRequest, isValidOwnerEnrollmentToken } from "../../alive/server/ownerEnrollment.js";
 
 const token = "a".repeat(64);
-const env = { VERCEL_ENV: "preview", ALIVE_OWNER_ENROLLMENT_TOKEN: token, ALIVE_OWNER_ENROLLMENT_EXPIRES_AT: "2000000000000" };
+const env = { VERCEL_ENV: "preview", ALIVE_OWNER_ENROLLMENT_SECRET: token, ALIVE_OWNER_ENROLLMENT_EXPIRES_AT: "2000000000000" };
 
 test("only POST signup endpoints are treated as owner enrollment", () => {
   assert.equal(isOwnerSignupRequest({ method: "POST", url: "/api/alive/auth/sign-up/email" }), true);
