@@ -78,7 +78,11 @@ test("owner server enables verified password sign-in, password recovery, passkey
   const auth = await fs.readFile(new URL("../../alive/server/ownerAuth.js", import.meta.url), "utf8");
   assert.match(auth, /emailAndPassword:\s*\{/);
   assert.match(auth, /enabled:\s*true/);
-  assert.match(auth, /requireEmailVerification:\s*true/);
+  assert.match(auth, /requireEmailVerification:\s*false/);
+  assert.match(auth, /sendOnSignUp:\s*false/);
+  assert.match(auth, /sendOnSignIn:\s*false/);
+  assert.match(auth, /emailVerified:\s*true/);
+  assert.match(auth, /isAliveOwnerEnrollmentOpen/);
   assert.match(auth, /minPasswordLength:\s*12/);
   assert.match(auth, /sendResetPassword:/);
   assert.match(auth, /emailVerification:\s*\{/);
