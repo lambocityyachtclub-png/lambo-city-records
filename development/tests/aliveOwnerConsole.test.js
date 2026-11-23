@@ -35,6 +35,28 @@ test("owner authentication uses secure same-origin sessions, not browser bearer-
   assert.match(script, /getSession/);
 });
 
+
+test("founder invitation is scrubbed from browser history immediately and its header is isolated to signup", () => {
+  const tokenRead = script.indexOf("let enrollmentToken=");
+  const scrub = script.indexOf('if(enrollmentToken)history.replaceState(null,"",window.location.pathname+window.location.search);');
+  assert.ok(tokenRead >= 0 && scrub > tokenRead, "founder invitation should be read and then removed from browser history");
+  const bootstrapEnd = script.indexOf("\nconst createOwnerButton", tokenRead);
+  assert.ok(bootstrapEnd > scrub, "founder invitation bootstrap should finish before owner UI setup");
+  const bootstrap = script.slice(tokenRead, bootstrapEnd);
+  let replacedUrl = null;
+  vm.runInNewContext(bootstrap, {
+    window: { location: { hash: "#enroll=private-invitation", pathname: "/alive/", search: "?mode=preview" } },
+    history: { replaceState(_state, _title, url) { replacedUrl = url; } },
+    URLSearchParams
+  });
+  assert.equal(replacedUrl, "/alive/?mode=preview");
+  assert.ok(script.includes("function getAuthClient(){if(!authClientPromise)authClientPromise=createAuthClient();return authClientPromise;}"));
+  assert.ok(script.includes('function getEnrollmentAuthClient(){if(!enrollmentToken)throw new Error("Founder setup requires the private one-time invitation.");if(!enrollmentAuthClientPromise)enrollmentAuthClientPromise=createAuthClient(true);return enrollmentAuthClientPromise;}'));
+  assert.ok(script.includes("const enrollmentAuth=await getEnrollmentAuthClient();const result=await enrollmentAuth.signUp.email"));
+  assert.doesNotMatch(script, /fetchOptions:\{headers:enrollmentToken\?/);
+});
+
+
 test("owner console escapes returned task and proposal content before rendering", () => {
   assert.match(script, /const escapeHTML=/);
   assert.match(script, /escapeHTML\(file\.content/);
