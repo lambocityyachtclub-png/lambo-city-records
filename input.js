@@ -841,6 +841,9 @@ export default {
       phone
     );
 
+    // The modular player-phone layer adds the live inbox without owning navigation.
+    window.__lamboCityPlayerPhone?.mount?.(phone);
+
     const navigateFromPhone = floor => {
       const navigate = window.__lamboCityNavigateToFloor;
       if (typeof navigate !== "function" || !navigate(floor)) return;
