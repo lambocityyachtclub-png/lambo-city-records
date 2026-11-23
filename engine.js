@@ -109,6 +109,7 @@ this.systems.floor2CitySynth?.init?.(this.scene, this.context);
 this.systems.boardwalkOverlooks?.init?.(this.scene);
     this.systems.player?.init?.(this.scene);
     this.systems.playerProgression?.init?.(this.scene, this.context);
+    this.systems.playerPhone?.init?.(this.scene, this.context);
     this.systems.hud?.init?.();
     this.loop();
   }
