@@ -137,6 +137,8 @@ const PlayerProgression = {
     lastPerformanceState = String(state).toUpperCase();
 
     const wasInvitationUnlocked = progress.studioInvitationUnlocked;
+    const wasPerformanceComplete = progress.heroPerformanceComplete;
+
     if (ACTIVE_PERFORMANCE_STATES.has(lastPerformanceState)) {
       progress.studioInvitationUnlocked = true;
     }
@@ -145,18 +147,20 @@ const PlayerProgression = {
       progress.studioInvitationUnlocked = true;
     }
 
-    if (!wasInvitationUnlocked && progress.studioInvitationUnlocked) {
+    if (
+      wasInvitationUnlocked !== progress.studioInvitationUnlocked ||
+      wasPerformanceComplete !== progress.heroPerformanceComplete
+    ) {
       saveProgress();
+    }
+
+    if (!wasInvitationUnlocked && progress.studioInvitationUnlocked) {
       dispatch("lc-studio-invitation-unlocked", Object.freeze({
         source: "hero-performance",
         milestone: "studio-invitation",
         triggerState: lastPerformanceState,
         version: 1
       }));
-    } else if (lastPerformanceState === "COMPLETE" && !wasInvitationUnlocked) {
-      saveProgress();
-    } else if (lastPerformanceState === "COMPLETE" && progress.heroPerformanceComplete) {
-      saveProgress();
     }
 
     publish();
