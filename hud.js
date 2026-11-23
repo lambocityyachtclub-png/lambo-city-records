@@ -465,7 +465,7 @@ export default {
       { key: 'E', label: 'INTERACT' },
       { key: 'M', label: 'MAP'      },
       { key: 'I', label: 'INVENTORY'},
-      { key: 'T', label: 'PHONE'    },
+      { key: 'F', label: 'PHONE'    },
       { key: 'P', label: 'SETTINGS' },
     ];
 
