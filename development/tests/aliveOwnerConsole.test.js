@@ -35,6 +35,23 @@ test("owner authentication uses secure same-origin sessions, not browser bearer-
   assert.match(script, /getSession/);
 });
 
+
+test("founder invitation is scrubbed from browser history immediately and its header is isolated to signup", () => {
+  const bootstrap = script.match(/let enrollmentToken=[^\\n]+\\nif\\(enrollmentToken\\)history\\.replaceState\\(null,\"\",window\\.location\\.pathname\\+window\\.location\\.search\\);/);
+  assert.ok(bootstrap, "founder invitation bootstrap should remove the fragment after reading it");
+  let replacedUrl = null;
+  vm.runInNewContext(bootstrap[0], {
+    window: { location: { hash: "#enroll=private-invitation", pathname: "/alive/", search: "?mode=preview" } },
+    history: { replaceState(_state, _title, url) { replacedUrl = url; } },
+    URLSearchParams
+  });
+  assert.equal(replacedUrl, "/alive/?mode=preview");
+  assert.match(script, /function getAuthClient\\(\\)\\{if\\(!authClientPromise\\)authClientPromise=createAuthClient\\(\\);/);
+  assert.match(script, /function getEnrollmentAuthClient\\(\\)\\{[^}]*createAuthClient\\(true\\)/);
+  assert.match(script, /const enrollmentAuth=await getEnrollmentAuthClient\\(\\);const result=await enrollmentAuth\\.signUp\\.email/);
+  assert.doesNotMatch(script, /fetchOptions:\\{headers:enrollmentToken\\?/);
+});
+
 test("owner console escapes returned task and proposal content before rendering", () => {
   assert.match(script, /const escapeHTML=/);
   assert.match(script, /escapeHTML\(file\.content/);
