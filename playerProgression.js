@@ -37,10 +37,23 @@ function saveProgress() {
 }
 
 function makeSnapshot() {
+  if (progress.studioInvitationUnlocked && !progress.heroPerformanceComplete) {
+    return Object.freeze({
+      version: 1,
+      stage: "studio-invitation",
+      studioInvitationUnlocked: true,
+      eyebrow: "NEW MESSAGE FROM HERO",
+      title: "CHECK YOUR CITY PHONE",
+      detail: "HERO has your Studio invitation. Open your in-game phone whenever you're ready.",
+      completed: false
+    });
+  }
+
   if (progress.studioInvitationUnlocked) {
     return Object.freeze({
       version: 1,
       stage: "studio-invitation",
+      studioInvitationUnlocked: true,
       eyebrow: "MILESTONE COMPLETE",
       title: "STUDIO INVITATION UNLOCKED",
       detail: "HERO's performance is complete. Visit Records HQ and take the elevator to Floor 2 to begin your music journey.",
@@ -52,9 +65,10 @@ function makeSnapshot() {
     return Object.freeze({
       version: 1,
       stage: "hero-performance",
+      studioInvitationUnlocked: false,
       eyebrow: "LIVE EVENT IN PROGRESS",
       title: "EXPERIENCE HERO'S PERFORMANCE",
-      detail: "Stay for the full performance. Your Studio invitation unlocks when the show concludes.",
+      detail: "Your invitation will arrive on your city phone once the performance begins.",
       completed: false
     });
   }
@@ -63,6 +77,7 @@ function makeSnapshot() {
     return Object.freeze({
       version: 1,
       stage: "hero-performance",
+      studioInvitationUnlocked: false,
       eyebrow: "YOUR FIRST MILESTONE",
       title: "HERO'S PERFORMANCE IS STARTING",
       detail: "Stay near the waterfront stage while the live performance begins.",
@@ -73,6 +88,7 @@ function makeSnapshot() {
   return Object.freeze({
     version: 1,
     stage: "reach-stage",
+    studioInvitationUnlocked: false,
     eyebrow: "YOUR FIRST MILESTONE",
     title: "HEAD TO THE MAIN STAGE",
     detail: "Explore the waterfront and walk toward the main stage. HERO's live performance is your first major city milestone.",
@@ -120,15 +136,27 @@ const PlayerProgression = {
     const state = context?.systems?.heroPerformance?.getState?.() || "IDLE";
     lastPerformanceState = String(state).toUpperCase();
 
-    if (!progress.heroPerformanceComplete && lastPerformanceState === "COMPLETE") {
+    const wasInvitationUnlocked = progress.studioInvitationUnlocked;
+    if (ACTIVE_PERFORMANCE_STATES.has(lastPerformanceState)) {
+      progress.studioInvitationUnlocked = true;
+    }
+    if (lastPerformanceState === "COMPLETE") {
       progress.heroPerformanceComplete = true;
       progress.studioInvitationUnlocked = true;
+    }
+
+    if (!wasInvitationUnlocked && progress.studioInvitationUnlocked) {
       saveProgress();
       dispatch("lc-studio-invitation-unlocked", Object.freeze({
         source: "hero-performance",
         milestone: "studio-invitation",
+        triggerState: lastPerformanceState,
         version: 1
       }));
+    } else if (lastPerformanceState === "COMPLETE" && !wasInvitationUnlocked) {
+      saveProgress();
+    } else if (lastPerformanceState === "COMPLETE" && progress.heroPerformanceComplete) {
+      saveProgress();
     }
 
     publish();
