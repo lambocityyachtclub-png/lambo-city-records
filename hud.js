@@ -314,55 +314,55 @@ export default {
     }, 300);
   },
 
-  // ── OBJECTIVES PANEL ────────────────────────────────
+  // ── FIRST-VISIT PROGRESSION ─────────────────────────
   _buildObjectives(hud) {
-    const obj = document.createElement('div');
+    if (this._progressionHandler) {
+      window.removeEventListener("lc-progression-update", this._progressionHandler);
+    }
+
+    const obj = document.createElement("div");
+    obj.id = "lc-progression-objectives";
     obj.style.cssText = `
       position:absolute;top:120px;right:16px;
-      background:rgba(0,0,0,0.72);
-      border:1px solid rgba(255,255,255,0.1);
+      background:rgba(0,0,0,0.76);
+      border:1px solid rgba(230,187,105,0.28);
       border-radius:10px;padding:12px 16px;
-      min-width:240px;
+      min-width:240px;max-width:290px;
       backdrop-filter:blur(6px);
       pointer-events:none;
     `;
 
-    const objectives = [
-      { text: 'GO TO THE YACHT CLUB',     color: '#9900ff', done: false },
-      { text: 'MEET HERO AT THE STAGE',   color: '#ffd700', done: false },
-      { text: 'COLLECT 10 LAMBO COINS',   color: '#ffd700', done: false, progress: '7/10' },
-      { text: 'WIN THE GRAND PRIX RACE',  color: '#aaa',    done: false },
-      { text: 'UNLOCK VIP ACCESS',        color: '#ff00aa', done: false, sub: 'LAMBO' },
-    ];
+    const heading = document.createElement("div");
+    heading.textContent = "LAMBO CITY · YOUR JOURNEY";
+    heading.style.cssText = "color:#e6bb69;font-size:10px;font-weight:bold;letter-spacing:1.6px;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,0.08);";
 
-    obj.innerHTML = `
-      <div style="
-        color:white;font-size:11px;font-weight:bold;
-        letter-spacing:2px;margin-bottom:10px;
-        border-bottom:1px solid rgba(255,255,255,0.08);
-        padding-bottom:8px;
-      ">OBJECTIVES</div>
-      ${objectives.map(o => `
-        <div style="
-          display:flex;align-items:center;gap:8px;
-          margin-bottom:8px;
-        ">
-          <div style="
-            width:6px;height:6px;border-radius:50%;
-            background:${o.color};
-            box-shadow:0 0 6px ${o.color};
-            flex-shrink:0;
-          "></div>
-          <div style="flex:1;">
-            <div style="color:white;font-size:10px;letter-spacing:0.5px;">
-              ${o.text}
-              ${o.progress ? `<span style="color:#aaa;"> ${o.progress}</span>` : ''}
-            </div>
-            ${o.sub ? `<div style="color:${o.color};font-size:9px;letter-spacing:1px;margin-top:1px;">${o.sub}</div>` : ''}
-          </div>
-        </div>
-      `).join('')}
-    `;
+    const eyebrow = document.createElement("div");
+    eyebrow.style.cssText = "color:#e6bb69;font-size:9px;font-weight:bold;letter-spacing:1.4px;margin-bottom:5px;";
+
+    const title = document.createElement("div");
+    title.style.cssText = "color:#fff;font-size:11px;font-weight:bold;letter-spacing:.5px;line-height:1.5;margin-bottom:5px;";
+
+    const detail = document.createElement("div");
+    detail.style.cssText = "color:#c2c2c8;font-size:10px;line-height:1.55;";
+
+    obj.append(heading, eyebrow, title, detail);
+
+    const render = snapshot => {
+      const current = snapshot || window.__lamboCityProgressionSnapshot || {
+        eyebrow: "YOUR FIRST MILESTONE",
+        title: "HEAD TO THE MAIN STAGE",
+        detail: "Explore the waterfront and walk toward the main stage. HERO's live performance is your first major city milestone.",
+        completed: false
+      };
+      eyebrow.textContent = current.eyebrow || "YOUR JOURNEY";
+      title.textContent = current.title || "CONTINUE YOUR JOURNEY";
+      detail.textContent = current.detail || "";
+      eyebrow.style.color = current.completed ? "#e6bb69" : "#d9c08e";
+    };
+
+    this._progressionHandler = event => render(event.detail);
+    window.addEventListener("lc-progression-update", this._progressionHandler);
+    render(window.__lamboCityProgressionSnapshot);
     hud.appendChild(obj);
   },
 
@@ -465,7 +465,7 @@ export default {
       { key: 'E', label: 'INTERACT' },
       { key: 'M', label: 'MAP'      },
       { key: 'I', label: 'INVENTORY'},
-      { key: 'T', label: 'PHONE'    },
+      { key: 'F', label: 'PHONE'    },
       { key: 'P', label: 'SETTINGS' },
     ];
 

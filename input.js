@@ -696,7 +696,8 @@ export default {
       z-index:400;
       pointer-events:all;
       box-shadow:0 0 60px rgba(153,0,255,0.4);
-      overflow:hidden;
+      max-height:calc(100vh - 24px);
+      overflow-y:auto;
       font-family:Arial,sans-serif;
     `;
 
@@ -840,6 +841,9 @@ export default {
     document.body.appendChild(
       phone
     );
+
+    // The modular player-phone layer adds the live inbox without owning navigation.
+    window.__lamboCityPlayerPhone?.mount?.(phone);
 
     const navigateFromPhone = floor => {
       const navigate = window.__lamboCityNavigateToFloor;

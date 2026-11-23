@@ -21,6 +21,8 @@ import NPC from "./npc.js";
 import CharacterSystem from "./characterSystem.js";
 import HeroPerformance from "./heroPerformance.js";
 import heroPostPerformance from "./heroPostPerformance.js";
+import PlayerProgression from "./playerProgression.js";
+import PlayerPhone from "./playerPhone.js";
 // Cars temporarily disabled.
 // The cars.js feature remains preserved for future use.
 import CinematicFlowSystem from "./cinematicFlowSystem.js";
@@ -87,6 +89,8 @@ engine.registerSystems({
   characterSystem: CharacterSystem,
   heroPerformance: HeroPerformance,
   heroPostPerformance,
+  playerProgression: PlayerProgression,
+  playerPhone: PlayerPhone,
   cinematicFlow: CinematicFlowSystem,
   worldSkin: CinematicWorldSkin,
   dockCore: CinematicDockCore,
