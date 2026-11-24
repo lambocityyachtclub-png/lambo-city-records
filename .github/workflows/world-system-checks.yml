@@ -16,6 +16,7 @@ on:
       - "scripts/test-dock-life.mjs"
       - "scripts/test-concert-audio-approach.mjs"
       - "scripts/test-song-clock-stage-reactions.mjs"
+      - "scripts/test-hero-song-choreography.mjs"
       - "scripts/test-character-system.mjs"
       - "input.js"
       - "player.js"
@@ -44,6 +45,7 @@ on:
       - "scripts/test-dock-life.mjs"
       - "scripts/test-concert-audio-approach.mjs"
       - "scripts/test-song-clock-stage-reactions.mjs"
+      - "scripts/test-hero-song-choreography.mjs"
       - "scripts/test-character-system.mjs"
       - "input.js"
       - "player.js"
@@ -81,6 +83,8 @@ jobs:
         run: node --experimental-default-type=module scripts/test-concert-audio-approach.mjs
       - name: Test song-clock stage reactions
         run: node --experimental-default-type=module scripts/test-song-clock-stage-reactions.mjs
+      - name: Test HERO song-driven choreography
+        run: node --experimental-default-type=module scripts/test-hero-song-choreography.mjs
       - name: Test protected player controller directions and movement
         run: node --experimental-default-type=module scripts/test-player-controller.mjs
       - name: Test additive waterfront storefront integration
