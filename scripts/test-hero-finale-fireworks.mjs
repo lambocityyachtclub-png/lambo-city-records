@@ -7,6 +7,7 @@ const engine = read("engine.js");
 assert.match(fireworks, /StageMusic\.hasEnded\(\)/);
 assert.match(fireworks, /PARTICLES_PER_BURST = 48/);
 assert.match(fireworks, /PointsMaterial/);
+assert.match(fireworks, /burst\.origin\[0\] \+ velocity\[0\] \* t/, "Particles must remain centered on the stage launch positions");
 assert.match(fireworks, /LIFETIME = 2\.8/);
 assert.match(fireworks, /material\.dispose/);
 assert.match(main, /import StageFireworks from "\.\/stageFireworks\.js"/);
