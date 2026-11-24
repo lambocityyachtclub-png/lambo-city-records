@@ -39,9 +39,9 @@ function isWalkBlocked(x, z, context) {
   return !!context?.systems?.collision?.isBlocked?.(x, z, 0.34, 1.3);
 }
 
-function chooseWanderTarget(character, context) {
+function chooseWanderTarget(character, context, animationTime) {
   const { profile, homeX, homeZ, phase, mesh } = character;
-  const angleBase = elapsed * 0.19 + phase * 2.7;
+  const angleBase = animationTime * 0.19 + phase * 2.7;
   const sideOfBarrier = homeZ > -57.4 ? "audience" : "stage";
   const minZ = sideOfBarrier === "audience"
     ? Math.max(homeZ - profile.roam, -56.65)
@@ -63,12 +63,12 @@ function chooseWanderTarget(character, context) {
   return null;
 }
 
-function updateWalking(character, delta, context, musicBoost) {
+function updateWalking(character, delta, context, musicBoost, animationTime) {
   const { mesh, profile, phase, leftLeg, rightLeg, leftArm, rightArm, body, headPivot } = character;
   character.stateTimer -= delta;
 
   if (character.state === "idle" && character.stateTimer <= 0) {
-    const target = chooseWanderTarget(character, context);
+    const target = chooseWanderTarget(character, context, animationTime);
     if (target) {
       character.target = target;
       character.state = "walking";
@@ -86,7 +86,7 @@ function updateWalking(character, delta, context, musicBoost) {
     if (distance < 0.12 || character.stateTimer <= -5) {
       character.state = "idle";
       character.target = null;
-      character.stateTimer = profile.pause * (0.72 + (0.28 * (0.5 + 0.5 * wave(elapsed, phase, 0.31))));
+      character.stateTimer = profile.pause * (0.72 + (0.28 * (0.5 + 0.5 * wave(animationTime, phase, 0.31))));
       walking = false;
     } else {
       const step = Math.min(distance, profile.speed * musicBoost * delta);
@@ -107,7 +107,7 @@ function updateWalking(character, delta, context, musicBoost) {
     }
   }
 
-  const gait = elapsed * (walking ? 8.6 : 1.25) + phase;
+  const gait = animationTime * (walking ? 8.6 : 1.25) + phase;
   const stride = walking ? Math.sin(gait) * 0.78 : Math.sin(gait) * 0.035;
   leftLeg.rotation.x = stride;
   rightLeg.rotation.x = -stride;
@@ -120,19 +120,19 @@ function updateWalking(character, delta, context, musicBoost) {
     body.rotation.x = Math.abs(Math.sin(gait)) * 0.035;
     mesh.position.y = 1.3 + Math.abs(Math.sin(gait * 2)) * 0.045;
   } else {
-    mesh.position.y = 1.3 + Math.abs(wave(elapsed, phase, 1.65)) * (profile.role === "spectator" ? 0.018 : 0.045) * profile.energy;
+    mesh.position.y = 1.3 + Math.abs(wave(animationTime, phase, 1.65)) * (profile.role === "spectator" ? 0.018 : 0.045) * profile.energy;
     body.rotation.x = 0;
   }
 
   // Personality-specific gestures remain visible during idle and walking.
-  const beat = wave(elapsed, phase, 1.65);
-  const sway = wave(elapsed, phase + 0.7, 1.25);
+  const beat = Math.sin(animationTime * (Math.PI * 2 / (60 / 126)) + phase);
+  const sway = Math.sin(animationTime * (Math.PI / (60 / 126)) + phase + 0.7);
   const energy = profile.energy * musicBoost;
   if (profile.role === "dancer") {
     leftArm.rotation.z = -0.12 - beat * (walking ? 0.16 : 0.62) * energy;
-    rightArm.rotation.z = 0.12 + wave(elapsed, phase + 1.4, 2.5) * (walking ? 0.16 : 0.58) * energy;
+    rightArm.rotation.z = 0.12 + wave(animationTime, phase + 1.4, 2.5) * (walking ? 0.16 : 0.58) * energy;
     body.rotation.z = sway * (walking ? 0.045 : 0.13) * energy;
-    headPivot.rotation.x = wave(elapsed, phase, 2.0) * 0.11;
+    headPivot.rotation.x = wave(animationTime, phase, 2.0) * 0.11;
   } else if (profile.role === "cheerer") {
     const lift = (0.5 + 0.5 * beat) * energy;
     leftArm.rotation.z = -0.10 - lift * (walking ? 0.42 : 1.25);
@@ -141,15 +141,15 @@ function updateWalking(character, delta, context, musicBoost) {
     headPivot.rotation.x = -0.10 - lift * 0.14;
   } else if (profile.role === "phone") {
     leftArm.rotation.z = -0.08 + sway * 0.12;
-    rightArm.rotation.z = 0.95 + wave(elapsed, phase, 1.8) * 0.16;
-    headPivot.rotation.x = 0.14 + wave(elapsed, phase, 1.35) * 0.07;
-    headPivot.rotation.y = wave(elapsed, phase + 1, 0.8) * 0.12;
+    rightArm.rotation.z = 0.95 + wave(animationTime, phase, 1.8) * 0.16;
+    headPivot.rotation.x = 0.14 + wave(animationTime, phase, 1.35) * 0.07;
+    headPivot.rotation.y = wave(animationTime, phase + 1, 0.8) * 0.12;
     body.rotation.z = sway * 0.05;
   } else {
     leftArm.rotation.z = -0.06 + sway * 0.06;
     rightArm.rotation.z = 0.06 - sway * 0.06;
-    headPivot.rotation.x = wave(elapsed, phase, 1.45) * 0.15;
-    headPivot.rotation.y = wave(elapsed, phase + 1, 0.75) * 0.16;
+    headPivot.rotation.x = wave(animationTime, phase, 1.45) * 0.15;
+    headPivot.rotation.y = wave(animationTime, phase + 1, 0.75) * 0.16;
     body.rotation.z = sway * 0.035;
   }
 
@@ -202,9 +202,11 @@ export default {
   update(delta, context) {
     const safeDelta = Math.min(Math.max(delta || 0, 0), 0.05);
     elapsed += safeDelta;
-    const musicPlaying = !!context?.systems?.stageMusic?.isPlaying?.();
+    const clock = context?.systems?.stageMusic?.getPlaybackClock?.();
+    const musicPlaying = !!clock?.playing;
+    const animationTime = musicPlaying ? clock.currentTime : elapsed;
     const musicBoost = musicPlaying ? 1.12 : 1;
-    characters.forEach(character => updateWalking(character, safeDelta, context, musicBoost));
+    characters.forEach(character => updateWalking(character, safeDelta, context, musicBoost, animationTime));
   },
 
   getCharacters() {
