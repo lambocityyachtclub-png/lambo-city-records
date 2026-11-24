@@ -41,6 +41,7 @@ import StageLasers from "./stageLasers.js";
 import StageSmoke from "./stageSmoke.js";
 import StageCrowdPulse from "./stageCrowdPulse.js";
 import StageLiveDrummer from "./stageLiveDrummer.js";
+import StageFireworks from "./stageFireworks.js";
 import YachtLuxuryDetails from "./yachtLuxuryDetails.js";
 import DockEntranceLuxury from "./dockEntranceLuxury.js";
 import DockLuxuryOverhaul from "./dockLuxuryOverhaul.js";
@@ -84,6 +85,7 @@ engine.registerSystems({
   collision: Collision, stageSpotlights: StageSpotlights, stageLasers: StageLasers,
   stageSmoke: StageSmoke, stageCrowdPulse: StageCrowdPulse,
   stageLiveDrummer: StageLiveDrummer,
+  stageFireworks: StageFireworks,
   grandStagePier: GrandStagePier, yachtLuxuryDetails: YachtLuxuryDetails,
   dockEntranceLuxury: DockEntranceLuxury, dockLuxuryOverhaul: DockLuxuryOverhaul,
   recordsHQ: RecordsHQ, recordsHQFoundation: RecordsHQFoundation,
