@@ -49,7 +49,7 @@ function createBurst(scene, config) {
   const points = new THREE.Points(geometry, material);
   points.name = "lamboCityHEROFinaleFireworks";
   scene.add(points);
-  activeBursts.push({ points, velocities, age: 0 });
+  activeBursts.push({ points, velocities, origin: [config.x, config.y, config.z], age: 0 });
 }
 
 function clearBursts(scene) {
@@ -85,9 +85,9 @@ export default {
       const position = burst.points.geometry.attributes.position;
       for (let i = 0; i < burst.velocities.length; i++) {
         const velocity = burst.velocities[i];
-        position.array[i * 3] = velocity[0] * t;
-        position.array[i * 3 + 1] = velocity[1] * t - 2.4 * t * t;
-        position.array[i * 3 + 2] = velocity[2] * t;
+        position.array[i * 3] = burst.origin[0] + velocity[0] * t;
+        position.array[i * 3 + 1] = burst.origin[1] + velocity[1] * t - 2.4 * t * t;
+        position.array[i * 3 + 2] = burst.origin[2] + velocity[2] * t;
       }
       position.needsUpdate = true;
       burst.points.material.opacity = Math.max(0, 0.95 * (1 - t / LIFETIME));
