@@ -1,0 +1,17 @@
+import assert from "node:assert/strict";
+import fs from "node:fs";
+const read = path => fs.readFileSync(new URL("../" + path, import.meta.url), "utf8");
+const drummer = read("stageLiveDrummer.js");
+const main = read("main.js");
+const engine = read("engine.js");
+assert.match(drummer, /getPlaybackClock/);
+assert.match(drummer, /const PROVISIONAL_BPM = 126/);
+assert.match(drummer, /stageKickDrum/);
+assert.match(drummer, /stageSnareDrum/);
+assert.match(drummer, /stageHiHat/);
+assert.match(drummer, /leftArm\.rotation/);
+assert.match(drummer, /rightArm\.rotation/);
+assert.match(main, /import StageLiveDrummer from "\.\/stageLiveDrummer\.js"/);
+assert.match(main, /stageLiveDrummer: StageLiveDrummer/);
+assert.match(engine, /this\.systems\.stageLiveDrummer\?\.init\?\.\(this\.scene\)/);
+console.log("Live stage drummer integration checks passed.");
