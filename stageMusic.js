@@ -1,10 +1,5 @@
 // stageMusic.js
-// LAMBO CITY GRAND STAGE MUSIC
-//
-// One audio element owns both the distant approach preview and HERO's
-// performance. The approach preview fades up with proximity; the actual
-// performance deliberately restarts at 0:00 when HERO takes the stage.
-
+// Single owner for HERO's approach audio and performance track.
 const TRACK = {
   title: "HERO - Lets Rage",
   artist: "HERO",
@@ -27,24 +22,15 @@ function clampVolume(value) {
 
 function attemptPlay() {
   if (!audio || !pendingPlay) return;
-
-  audio.play()
-    .then(() => {
-      pendingPlay = false;
-    })
-    .catch(() => {
-      // Safari/iOS may block playback until the next user interaction.
-    });
+  audio.play().then(() => { pendingPlay = false; }).catch(() => {});
 }
 
 function unlockAudio() {
-  if (!pendingPlay) return;
-  attemptPlay();
+  if (pendingPlay) attemptPlay();
 }
 
 function startApproach() {
   if (!audio || approachActive) return;
-
   audio.pause();
   audio.src = TRACK.url;
   audio.loop = true;
@@ -58,15 +44,12 @@ function startApproach() {
 
 function stopApproach() {
   if (!audio || !approachActive) return;
-
   approachActive = false;
   pendingPlay = false;
   audio.pause();
   audio.loop = false;
   audio.volume = 0.7;
-  try {
-    audio.currentTime = 0;
-  } catch (error) {}
+  try { audio.currentTime = 0; } catch (error) {}
 }
 
 export default {
@@ -75,14 +58,12 @@ export default {
     audio.preload = "auto";
     audio.loop = false;
     audio.volume = 0.7;
-
     audio.addEventListener("ended", () => {
       trackEnded = true;
       pendingPlay = false;
       audio.pause();
       audio.currentTime = 0;
     });
-
     window.addEventListener("pointerdown", unlockAudio);
     window.addEventListener("keydown", unlockAudio);
     window.addEventListener("touchstart", unlockAudio, { passive: true });
@@ -92,39 +73,28 @@ export default {
 
   updateApproach(distance) {
     if (!audio) return;
-
     if (distance > APPROACH_START_DISTANCE) {
       stopApproach();
       return;
     }
-
-    // The full performance takes ownership at the existing 22-unit trigger.
     if (distance <= APPROACH_END_DISTANCE) return;
-
     startApproach();
-
     const progress = clampVolume(
       (APPROACH_START_DISTANCE - distance) /
       (APPROACH_START_DISTANCE - APPROACH_END_DISTANCE)
     );
-
     audio.volume = APPROACH_MIN_VOLUME +
       (APPROACH_MAX_VOLUME - APPROACH_MIN_VOLUME) * progress;
   },
 
   playFromStart() {
     if (!audio) return;
-
     approachActive = false;
     trackEnded = false;
     audio.pause();
     audio.loop = false;
     audio.volume = 0.7;
-
-    try {
-      audio.currentTime = 0;
-    } catch (error) {}
-
+    try { audio.currentTime = 0; } catch (error) {}
     audio.src = TRACK.url;
     pendingPlay = true;
     attemptPlay();
@@ -132,22 +102,17 @@ export default {
 
   stop() {
     if (!audio) return;
-
     approachActive = false;
     trackEnded = false;
     pendingPlay = false;
     audio.pause();
     audio.loop = false;
     audio.volume = 0.7;
-
-    try {
-      audio.currentTime = 0;
-    } catch (error) {}
+    try { audio.currentTime = 0; } catch (error) {}
   },
 
   setVolume(value) {
-    if (!audio) return;
-    audio.volume = clampVolume(value);
+    if (audio) audio.volume = clampVolume(value);
   },
 
   isPlaying() {
@@ -156,6 +121,15 @@ export default {
 
   hasEnded() {
     return trackEnded;
+  },
+
+  // Visual systems read the actual media playback position rather than
+  // maintaining independent clocks that drift away from the song.
+  getPlaybackClock() {
+    return {
+      currentTime: audio && Number.isFinite(audio.currentTime) ? audio.currentTime : 0,
+      playing: !!audio && !audio.paused && !audio.ended,
+    };
   },
 
   getCurrentTrack() {
