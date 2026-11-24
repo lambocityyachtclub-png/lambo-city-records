@@ -7,6 +7,8 @@ on:
       - "engine.js"
       - "npc.js"
       - "characterSystem.js"
+      - "dockLife.js"
+      - "scripts/test-dock-life.mjs"
       - "scripts/test-character-system.mjs"
       - "input.js"
       - "player.js"
@@ -27,6 +29,8 @@ on:
       - "engine.js"
       - "npc.js"
       - "characterSystem.js"
+      - "dockLife.js"
+      - "scripts/test-dock-life.mjs"
       - "scripts/test-character-system.mjs"
       - "input.js"
       - "player.js"
@@ -63,6 +67,7 @@ jobs:
             engine.js \
             npc.js \
             characterSystem.js \
+            dockLife.js \
             input.js \
             player.js \
             marina.js \
@@ -75,6 +80,9 @@ jobs:
           do
             node --experimental-default-type=module --check "$file"
           done
+
+      - name: Test bounded dock visitors and ambient chatter
+        run: node --experimental-default-type=module scripts/test-dock-life.mjs
 
       - name: Test protected player controller directions and movement
         run: node --experimental-default-type=module scripts/test-player-controller.mjs
