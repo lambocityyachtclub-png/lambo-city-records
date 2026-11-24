@@ -8,15 +8,13 @@ export default class Engine {
     this.systems = systems;
   }
   init() {
-    this.scene    = this.systems.scene?.init?.();
-    this.camera   = this.systems.camera?.init?.();
+    this.scene = this.systems.scene?.init?.();
+    this.camera = this.systems.camera?.init?.();
     this.renderer = this.systems.renderer?.init?.();
-    this.context.scene    = this.scene;
-    this.context.camera   = this.camera;
+    this.context.scene = this.scene;
+    this.context.camera = this.camera;
     this.context.renderer = this.renderer;
-    this.context.systems  = this.systems;
-
-    // Register keyboard and touch input before heavier world initialization.
+    this.context.systems = this.systems;
     this.systems.input?.init?.();
     this.systems.performanceMonitor?.init?.(this.renderer, this.context);
     this.systems.world?.init?.(this.scene);
@@ -54,91 +52,56 @@ export default class Engine {
     this.systems.stageLasers?.init?.(this.scene);
     this.systems.stageSmoke?.init?.(this.scene);
     this.systems.stageCrowdPulse?.init?.(this.scene);
+    this.systems.stageLiveDrummer?.init?.(this.scene, this.context);
     this.systems.grandStagePier?.init?.(this.scene);
     this.systems.yachtLuxuryDetails?.init?.(this.scene);
     this.systems.villaLuxuryDetails?.init?.(this.scene);
-   this.systems.dockEntranceLuxury?.init?.(this.scene);
-this.systems.dockLuxuryOverhaul?.init?.(this.scene);
-
-this.systems.recordsHQ?.init?.(this.scene);
-this.systems.recordsHQFoundation?.init?.(this.scene);
-this.systems.elevator?.init?.(this.scene);
-this.systems.recordsHQFloor1?.init?.(this.scene);
-this.systems.recordsHQFloor2Studio?.init?.(this.scene);
-
-this.systems.floor2StudioApp?.init?.(
-  this.scene,
-  this.context
-);
-
-this.systems.floor2InstrumentApp?.init?.(
-  this.scene,
-  this.context
-);
-
-this.systems.floor2DrumStation?.init?.(
-  this.scene,
-  this.context
-);
-this.systems.floor2StudioNavigation?.init?.(
-  this.scene,
-  this.context
-);
-this.systems.recordsHQFloor3Executive?.init?.(this.scene);
-this.systems.recordsHQFloor3Details?.init?.(this.scene);
-this.systems.recordsHQFloor3Experience?.init?.(this.scene, this.context);
-this.systems.recordsHQRooftopVIP?.init?.(this.scene);
-this.systems.recordsHQEntranceThreshold?.init?.(this.scene);
-this.systems.recordsHQMediaDetails?.init?.(this.scene);
-this.systems.recordsHQMerchDetails?.init?.(this.scene);
-this.systems.heroCareerCenter?.init?.(this.scene, this.context);
-this.systems.recordsHQElevator?.init?.(this.scene);
-
-// Session controls need the initialized renderer and the elevator arrival hook.
-this.systems.floor2StudioSession?.init?.(
-  this.scene,
-  this.context
-);
-
-// The dedicated music-interface modules enhance the already-built stations.
-// Their Three.js imports are lazy so standalone Studio remains independent.
-this.systems.studioMixMasterConsole3D?.init?.(this.scene, this.context);
-this.systems.floor2LiveDrummer?.init?.(this.scene, this.context);
-this.systems.floor2VocalBooth3D?.init?.(this.scene, this.context);
-this.systems.floor2CitySynth?.init?.(this.scene, this.context);
-
-this.systems.boardwalkOverlooks?.init?.(this.scene);
+    this.systems.dockEntranceLuxury?.init?.(this.scene);
+    this.systems.dockLuxuryOverhaul?.init?.(this.scene);
+    this.systems.recordsHQ?.init?.(this.scene);
+    this.systems.recordsHQFoundation?.init?.(this.scene);
+    this.systems.elevator?.init?.(this.scene);
+    this.systems.recordsHQFloor1?.init?.(this.scene);
+    this.systems.recordsHQFloor2Studio?.init?.(this.scene);
+    this.systems.floor2StudioApp?.init?.(this.scene, this.context);
+    this.systems.floor2InstrumentApp?.init?.(this.scene, this.context);
+    this.systems.floor2DrumStation?.init?.(this.scene, this.context);
+    this.systems.floor2StudioNavigation?.init?.(this.scene, this.context);
+    this.systems.recordsHQFloor3Executive?.init?.(this.scene);
+    this.systems.recordsHQFloor3Details?.init?.(this.scene);
+    this.systems.recordsHQFloor3Experience?.init?.(this.scene, this.context);
+    this.systems.recordsHQRooftopVIP?.init?.(this.scene);
+    this.systems.recordsHQEntranceThreshold?.init?.(this.scene);
+    this.systems.recordsHQMediaDetails?.init?.(this.scene);
+    this.systems.recordsHQMerchDetails?.init?.(this.scene);
+    this.systems.heroCareerCenter?.init?.(this.scene, this.context);
+    this.systems.recordsHQElevator?.init?.(this.scene);
+    this.systems.floor2StudioSession?.init?.(this.scene, this.context);
+    this.systems.studioMixMasterConsole3D?.init?.(this.scene, this.context);
+    this.systems.floor2LiveDrummer?.init?.(this.scene, this.context);
+    this.systems.floor2VocalBooth3D?.init?.(this.scene, this.context);
+    this.systems.floor2CitySynth?.init?.(this.scene, this.context);
+    this.systems.boardwalkOverlooks?.init?.(this.scene);
     this.systems.player?.init?.(this.scene);
     this.systems.hud?.init?.();
     this.loop();
   }
   loop = (time = 0) => {
     requestAnimationFrame(this.loop);
-    const delta = Math.min(
-      (time - this.lastTime) / 1000,
-      0.033
-    );
+    const delta = Math.min((time - this.lastTime) / 1000, 0.033);
     this.lastTime = time;
     this.update(delta);
     this.render();
   };
   update(delta) {
     this.context.delta = delta;
-
-    // Iterate the live registry directly. This preserves registration order
-    // and includes systems added later, without allocating an array or
-    // callback on every animation frame.
     for (const name in this.systems) {
       if (!Object.prototype.hasOwnProperty.call(this.systems, name)) continue;
-      const system = this.systems[name];
-      system?.update?.(delta, this.context);
+      this.systems[name]?.update?.(delta, this.context);
     }
   }
   render() {
     if (!this.scene || !this.camera || !this.renderer) return;
-    this.renderer.render(
-      this.scene,
-      this.camera
-    );
+    this.renderer.render(this.scene, this.camera);
   }
 }
