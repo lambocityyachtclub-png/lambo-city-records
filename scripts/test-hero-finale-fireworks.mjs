@@ -1,0 +1,15 @@
+import assert from "node:assert/strict";
+import fs from "node:fs";
+const read = path => fs.readFileSync(new URL("../" + path, import.meta.url), "utf8");
+const fireworks = read("stageFireworks.js");
+const main = read("main.js");
+const engine = read("engine.js");
+assert.match(fireworks, /StageMusic\.hasEnded\(\)/);
+assert.match(fireworks, /PARTICLES_PER_BURST = 48/);
+assert.match(fireworks, /PointsMaterial/);
+assert.match(fireworks, /LIFETIME = 2\.8/);
+assert.match(fireworks, /material\.dispose/);
+assert.match(main, /import StageFireworks from "\.\/stageFireworks\.js"/);
+assert.match(main, /stageFireworks: StageFireworks/);
+assert.match(engine, /this\.systems\.stageFireworks\?\.init/);
+console.log("HERO finale fireworks checks passed.");
