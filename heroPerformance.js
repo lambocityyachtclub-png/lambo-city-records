@@ -14,6 +14,8 @@ const STAIR_BOTTOM_Y = 0.67;
 const STAGE_Z = -74;
 const ENTRY_DURATION = 3;
 const EXIT_DURATION = 4.2;
+const PROVISIONAL_BPM = 126;
+const BEAT_SECONDS = 60 / PROVISIONAL_BPM;
 
 let scene;
 let hero = null;
@@ -24,6 +26,7 @@ let exitStartX = 0;
 let exitStartY = 1.3;
 let exitStartZ = STAGE_Z;
 let approachAmbientPaused = false;
+let heroRig = null;
 
 function distanceToStage(player) {
   const dx = player.position.x - STAGE_CENTER.x;
@@ -40,12 +43,59 @@ function faceDirection(targetX, targetZ) {
   }
 }
 
+function collectHeroRig(root) {
+  const rig = {};
+  root.traverse(object => {
+    if (["torso", "head", "armL", "armR", "forearmL", "forearmR", "thighL", "thighR"].includes(object.name)) {
+      rig[object.name] = object;
+    }
+  });
+  return rig;
+}
+
+function animateHeroToSong(songTime) {
+  if (!hero || !heroRig) return;
+  const beat = songTime / BEAT_SECONDS;
+  const beatPhase = beat * Math.PI * 2;
+  const barPhase = beat * Math.PI / 2;
+
+  // Whole-body groove and head nod are locked to the actual audio playhead.
+  if (heroRig.torso) {
+    heroRig.torso.rotation.z = Math.sin(barPhase) * 0.075;
+    heroRig.torso.rotation.x = Math.sin(beatPhase * 0.5) * 0.035;
+  }
+  if (heroRig.head) {
+    heroRig.head.rotation.x = Math.sin(beatPhase + 0.5) * 0.045;
+    heroRig.head.rotation.z = Math.sin(barPhase + 0.7) * 0.035;
+  }
+  if (heroRig.armL) {
+    heroRig.armL.rotation.z = -0.18 + Math.sin(barPhase + 0.2) * 0.38;
+    heroRig.armL.rotation.x = Math.sin(beatPhase + 0.3) * 0.13;
+  }
+  if (heroRig.armR) {
+    heroRig.armR.rotation.z = 0.18 + Math.sin(barPhase + Math.PI) * 0.42;
+    heroRig.armR.rotation.x = Math.sin(beatPhase + Math.PI) * 0.13;
+  }
+  if (heroRig.forearmL) heroRig.forearmL.rotation.x = Math.max(0, Math.sin(beatPhase)) * 0.28;
+  if (heroRig.forearmR) heroRig.forearmR.rotation.x = Math.max(0, Math.sin(beatPhase + Math.PI)) * 0.28;
+  if (heroRig.thighL) heroRig.thighL.rotation.z = Math.sin(beatPhase) * 0.09;
+  if (heroRig.thighR) heroRig.thighR.rotation.z = Math.sin(beatPhase + Math.PI) * 0.09;
+}
+
+function resetHeroDance() {
+  if (!heroRig) return;
+  for (const name of ["torso", "head", "armL", "armR", "forearmL", "forearmR", "thighL", "thighR"]) {
+    if (heroRig[name]) heroRig[name].rotation.set(0, 0, 0);
+  }
+}
+
 function beginPerformance(context) {
   const npc = context.systems?.npc;
   if (!npc || !npc.getHero) return;
   hero = npc.getHero();
   if (!hero) return;
 
+  heroRig = collectHeroRig(hero);
   npc.setPerformanceMode?.(true);
   AmbientMusic.pause();
   approachAmbientPaused = false;
@@ -74,20 +124,24 @@ function updateEntering(delta) {
 }
 
 function updatePerformance(delta) {
-  performanceTime += delta;
-  const t = performanceTime;
-  const x = Math.sin(t * 0.65) * 12;
-  hero.position.x = x;
-  hero.position.y = STAGE_DECK_Y + Math.abs(Math.sin(t * 2.2)) * 0.08;
+  const clock = StageMusic.getPlaybackClock();
+  if (!clock.playing) return;
 
-  const direction = Math.cos(t * 0.65);
+  const songTime = clock.currentTime;
+  performanceTime = songTime;
+
+  // Stage travel and body choreography use the same playhead as lighting.
+  const groove = songTime * (Math.PI * 2 / 8.0);
+  hero.position.x = Math.sin(groove) * 12;
+  hero.position.y = STAGE_DECK_Y + Math.abs(Math.sin(songTime * Math.PI / BEAT_SECONDS)) * 0.11;
+  const direction = Math.cos(groove);
   if (Math.abs(direction) > 0.05) {
     hero.rotation.y = direction > 0 ? Math.PI / 2 : -Math.PI / 2;
   }
+  animateHeroToSong(songTime);
 
-  // The actual audio element's ended event—not a guessed duration—
-  // starts HERO's walk to the right-hand staircase.
   if (StageMusic.hasEnded()) {
+    resetHeroDance();
     exitStartX = hero.position.x;
     exitStartY = hero.position.y;
     exitStartZ = hero.position.z;
@@ -115,9 +169,7 @@ function updateExiting(delta, context) {
     hero.position.z = STAGE_Z;
   }
 
-  if (t >= approachEnd) {
-    hero.position.y += Math.abs(Math.sin(stateTime * 11)) * 0.012;
-  }
+  if (t >= approachEnd) hero.position.y += Math.abs(Math.sin(stateTime * 11)) * 0.012;
   faceDirection(STAIR_BOTTOM_X, STAGE_Z);
 
   if (t >= 1) {
@@ -129,6 +181,7 @@ function updateExiting(delta, context) {
     state = "COMPLETE";
     stateTime = 0;
     npc?.setPerformanceMode?.(false);
+    heroRig = null;
   }
 }
 
@@ -157,9 +210,7 @@ export default {
         approachAmbientPaused = false;
       }
 
-      if (distance <= TRIGGER_DISTANCE) {
-        beginPerformance(context);
-      }
+      if (distance <= TRIGGER_DISTANCE) beginPerformance(context);
       return;
     }
 
@@ -172,20 +223,15 @@ export default {
       stateTime = 0;
       return;
     }
-
     if (state === "ENTERING") {
       updateEntering(delta);
       return;
     }
-
     if (state === "PERFORMING") {
       updatePerformance(delta);
       return;
     }
-
-    if (state === "EXITING") {
-      updateExiting(delta, context);
-    }
+    if (state === "EXITING") updateExiting(delta, context);
   },
 
   getState() {
@@ -196,6 +242,7 @@ export default {
     StageMusic.stop();
     AmbientMusic.resume();
     approachAmbientPaused = false;
+    resetHeroDance();
     state = "IDLE";
     stateTime = 0;
     performanceTime = 0;
@@ -203,5 +250,6 @@ export default {
     exitStartY = 1.3;
     exitStartZ = STAGE_Z;
     hero = null;
+    heroRig = null;
   }
 };
