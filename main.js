@@ -22,8 +22,6 @@ import CharacterSystem from "./characterSystem.js";
 import DockLife from "./dockLife.js";
 import HeroPerformance from "./heroPerformance.js";
 import heroPostPerformance from "./heroPostPerformance.js";
-// Cars temporarily disabled.
-// The cars.js feature remains preserved for future use.
 import CinematicFlowSystem from "./cinematicFlowSystem.js";
 import CinematicWorldSkin from "./cinematicWorldSkin.js";
 import CinematicDockCore from "./cinematicDockCore.js";
@@ -42,6 +40,7 @@ import StageSpotlights from "./stageSpotlights.js";
 import StageLasers from "./stageLasers.js";
 import StageSmoke from "./stageSmoke.js";
 import StageCrowdPulse from "./stageCrowdPulse.js";
+import StageLiveDrummer from "./stageLiveDrummer.js";
 import YachtLuxuryDetails from "./yachtLuxuryDetails.js";
 import DockEntranceLuxury from "./dockEntranceLuxury.js";
 import DockLuxuryOverhaul from "./dockLuxuryOverhaul.js";
@@ -68,80 +67,40 @@ import BoardwalkOverlooks from "./boardwalkOverlooks.js";
 import PerformanceMonitor from "./performanceMonitor.js";
 const engine = new Engine();
 engine.registerSystems({
-  scene: Scene,
-  camera: Camera,
-  renderer: Renderer,
-  world: World,
+  scene: Scene, camera: Camera, renderer: Renderer, world: World,
   festivalStageUpgrade: FestivalStageUpgrade,
   festivalStageArchitecture: FestivalStageArchitecture,
   festivalStageFinishing: FestivalStageFinishing,
   festivalAudienceZone: FestivalAudienceZone,
-  water: Water,
-  dock: Dock,
-  dockPath: DockPath,
-  sky: Sky,
-  lighting: Lighting,
-  palms: Palms,
-  yacht: Yacht,
-  // cars: Cars,
-  npc: NPC,
-  characterSystem: CharacterSystem,
-  dockLife: DockLife,
-  heroPerformance: HeroPerformance,
-  heroPostPerformance,
-  cinematicFlow: CinematicFlowSystem,
-  worldSkin: CinematicWorldSkin,
-  dockCore: CinematicDockCore,
-  marina: Marina,
+  water: Water, dock: Dock, dockPath: DockPath, sky: Sky, lighting: Lighting,
+  palms: Palms, yacht: Yacht, npc: NPC, characterSystem: CharacterSystem,
+  dockLife: DockLife, heroPerformance: HeroPerformance, heroPostPerformance,
+  cinematicFlow: CinematicFlowSystem, worldSkin: CinematicWorldSkin,
+  dockCore: CinematicDockCore, marina: Marina,
   waterfrontStorefrontDetails: WaterfrontStorefrontDetails,
-  conferenceCenterDistrict: ConferenceCenterDistrict,
-  stageVideo: StageVideo,
-  stageScreenMedia: StageScreenMedia,
-  stageBanner: StageBanner,
-  ambientMusic: AmbientMusic,
-  stageMusic: StageMusic,
-  stageAudioZone: StageAudioZone,
-  collision: Collision,
-  stageSpotlights: StageSpotlights,
-  stageLasers: StageLasers,
-  stageSmoke: StageSmoke,
-  stageCrowdPulse: StageCrowdPulse,
-  grandStagePier: GrandStagePier,
-  yachtLuxuryDetails: YachtLuxuryDetails,
-  dockEntranceLuxury: DockEntranceLuxury,
-  dockLuxuryOverhaul: DockLuxuryOverhaul,
-  recordsHQ: RecordsHQ,
-  recordsHQFoundation: RecordsHQFoundation,
-  recordsHQFloor1: RecordsHQFloor1,
-  recordsHQFloor2Studio: RecordsHQFloor2Studio,
-  floor2StudioApp: Floor2StudioApp,
-  floor2InstrumentApp: Floor2InstrumentApp,
-  floor2DrumStation: Floor2DrumStation,
-  floor2StudioNavigation: Floor2StudioNavigation,
-  floor2StudioSession: Floor2StudioSession,
-  studioMixMasterConsole3D: StudioMixMasterConsole3D,
-  floor2LiveDrummer: Floor2LiveDrummer,
-  floor2VocalBooth3D: Floor2VocalBooth3D,
-  floor2CitySynth: Floor2CitySynth,
-  recordsHQEntranceThreshold: RecordsHQEntranceThreshold,
-  recordsHQMediaDetails: RecordsHQMediaDetails,
-  recordsHQMerchDetails: RecordsHQMerchDetails,
-  heroCareerCenter: HeroCareerCenter,
-  recordsHQElevator: RecordsHQElevator,
-  input: Input,
-  player: Player,
-  elevator: Elevator,
-  boardwalkOverlooks: BoardwalkOverlooks,
-  hud: HUD,
-  performanceMonitor: PerformanceMonitor,
+  conferenceCenterDistrict: ConferenceCenterDistrict, stageVideo: StageVideo,
+  stageScreenMedia: StageScreenMedia, stageBanner: StageBanner,
+  ambientMusic: AmbientMusic, stageMusic: StageMusic, stageAudioZone: StageAudioZone,
+  collision: Collision, stageSpotlights: StageSpotlights, stageLasers: StageLasers,
+  stageSmoke: StageSmoke, stageCrowdPulse: StageCrowdPulse,
+  stageLiveDrummer: StageLiveDrummer,
+  grandStagePier: GrandStagePier, yachtLuxuryDetails: YachtLuxuryDetails,
+  dockEntranceLuxury: DockEntranceLuxury, dockLuxuryOverhaul: DockLuxuryOverhaul,
+  recordsHQ: RecordsHQ, recordsHQFoundation: RecordsHQFoundation,
+  recordsHQFloor1: RecordsHQFloor1, recordsHQFloor2Studio: RecordsHQFloor2Studio,
+  floor2StudioApp: Floor2StudioApp, floor2InstrumentApp: Floor2InstrumentApp,
+  floor2DrumStation: Floor2DrumStation, floor2StudioNavigation: Floor2StudioNavigation,
+  floor2StudioSession: Floor2StudioSession, studioMixMasterConsole3D: StudioMixMasterConsole3D,
+  floor2LiveDrummer: Floor2LiveDrummer, floor2VocalBooth3D: Floor2VocalBooth3D,
+  floor2CitySynth: Floor2CitySynth, recordsHQEntranceThreshold: RecordsHQEntranceThreshold,
+  recordsHQMediaDetails: RecordsHQMediaDetails, recordsHQMerchDetails: RecordsHQMerchDetails,
+  heroCareerCenter: HeroCareerCenter, recordsHQElevator: RecordsHQElevator,
+  input: Input, player: Player, elevator: Elevator, boardwalkOverlooks: BoardwalkOverlooks,
+  hud: HUD, performanceMonitor: PerformanceMonitor,
 });
-
-// Load upper floors only when selected in the elevator.
-// Each destination is cached so returning to a floor never rebuilds it.
 const destinationLoads = new Map();
 window.__lamboCityPrepareFloor = floor => {
   if (floor !== 3 && floor !== 4) return Promise.resolve();
-
   if (!destinationLoads.has(floor)) {
     const load = (async () => {
       if (floor === 3) {
@@ -151,41 +110,21 @@ window.__lamboCityPrepareFloor = floor => {
           import("./recordsHQFloor3Details.js"),
           import("./recordsHQFloor3Experience.js")
         ]);
-
-        if (!engine.scene) {
-          throw new Error("The LAMBO CITY scene is not ready for Floor 3.");
-        }
-
+        if (!engine.scene) throw new Error("The LAMBO CITY scene is not ready for Floor 3.");
         const systems = {
           recordsHQFloor3Executive: executive.default,
           recordsHQFloor3Details: details.default,
           recordsHQFloor3Experience: experience.default
         };
-
         for (const [name, system] of Object.entries(systems)) {
-          if (!system || typeof system.init !== "function") {
-            throw new Error("Floor 3 module failed to initialize: " + name);
-          }
+          if (!system || typeof system.init !== "function") throw new Error("Floor 3 module failed to initialize: " + name);
         }
-
         Object.assign(engine.systems, systems);
         engine.context.systems = engine.systems;
-
-        // Initialize each visual layer only when its scene root is absent.
-        if (!engine.scene.getObjectByName("recordsHQFloor3Executive")) {
-          systems.recordsHQFloor3Executive.init(engine.scene);
-        }
-        if (!engine.scene.getObjectByName("floor3ExecutiveDetails")) {
-          systems.recordsHQFloor3Details.init(engine.scene);
-        }
+        if (!engine.scene.getObjectByName("recordsHQFloor3Executive")) systems.recordsHQFloor3Executive.init(engine.scene);
+        if (!engine.scene.getObjectByName("floor3ExecutiveDetails")) systems.recordsHQFloor3Details.init(engine.scene);
         systems.recordsHQFloor3Experience.init(engine.scene, engine.context);
-
-        // Do not let the elevator report a successful arrival until the
-        // actual Floor 3 architecture is present in the live scene.
-        if (
-          !engine.scene.getObjectByName("recordsHQFloor3Executive") ||
-          !engine.scene.getObjectByName("floor3ExecutiveDetails")
-        ) {
+        if (!engine.scene.getObjectByName("recordsHQFloor3Executive") || !engine.scene.getObjectByName("floor3ExecutiveDetails")) {
           throw new Error("Floor 3 scene layers did not attach to the live scene.");
         }
         window.__lamboCityFloor3Ready = true;
@@ -199,11 +138,8 @@ window.__lamboCityPrepareFloor = floor => {
       destinationLoads.delete(floor);
       throw error;
     });
-
     destinationLoads.set(floor, load);
   }
-
   return destinationLoads.get(floor);
 };
-
 engine.init();
