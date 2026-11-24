@@ -19,6 +19,7 @@ import Player from "./player.js";
 import HUD from "./hud.js";
 import NPC from "./npc.js";
 import CharacterSystem from "./characterSystem.js";
+import DockLife from "./dockLife.js";
 import HeroPerformance from "./heroPerformance.js";
 import heroPostPerformance from "./heroPostPerformance.js";
 // Cars temporarily disabled.
@@ -85,6 +86,7 @@ engine.registerSystems({
   // cars: Cars,
   npc: NPC,
   characterSystem: CharacterSystem,
+  dockLife: DockLife,
   heroPerformance: HeroPerformance,
   heroPostPerformance,
   cinematicFlow: CinematicFlowSystem,
