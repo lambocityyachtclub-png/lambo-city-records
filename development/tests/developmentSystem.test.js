@@ -496,7 +496,7 @@ test("Development System disables World task intake with the rest of the system"
   const system = await createDevelopmentSystem();
   system.disable();
 
-  await assert.rejects(
+  assert.throws(
     () => system.submitWorldFinding({
       title: "Disabled world task",
       description: "This must not be queued.",
