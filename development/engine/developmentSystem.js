@@ -2,8 +2,9 @@
  * LAMBO CITY — AUTONOMOUS DEVELOPMENT ENGINE
  * Development System Bootstrap
  *
- * Connects the Registry, Director, Policy, Studio Runner, and an optional
- * explicitly injected one-shot worker. No background process is started.
+ * Connects the Registry, Director, Policy, Studio and World specialists,
+ * and an optional explicitly injected one-shot worker. No background
+ * process is started.
  */
 
 import { createDevelopmentDirector } from "./developmentDirector.js";
@@ -15,12 +16,17 @@ import {
   STUDIO_RUNNER_VERSION
 } from "../runners/studio/studioDevelopmentRunner.js";
 import {
+  createWorldDevelopmentRunner,
+  WORLD_RUNNER_ID,
+  WORLD_RUNNER_VERSION
+} from "../runners/world/worldDevelopmentRunner.js";
+import {
   createDevelopmentWorker,
   DEVELOPMENT_WORKER_VERSION
 } from "./developmentWorker.js";
 import { createControlledDevelopmentExecutor } from "../execution/controlledDevelopmentExecutor.js";
 
-export const DEVELOPMENT_SYSTEM_VERSION = "1.1.0";
+export const DEVELOPMENT_SYSTEM_VERSION = "1.2.0";
 
 export const DEVELOPMENT_SYSTEM_STATUS = Object.freeze({
   READY: "ready",
@@ -51,6 +57,9 @@ export async function createDevelopmentSystem(options = {}) {
   const studioRunner = createStudioDevelopmentRunner({
     developmentDirector: director
   });
+  const worldRunner = createWorldDevelopmentRunner({
+    developmentDirector: director
+  });
   const policy = getDevelopmentPolicy();
 
   const hasExecutionAdapters = workspaceAdapter !== null || reviewStore !== null || allowedPaths !== null;
@@ -69,6 +78,11 @@ export async function createDevelopmentSystem(options = {}) {
         allowedPaths
       })
     : null);
+
+  // World execution is available only when the host explicitly supplies
+  // the isolated workspace, review store, and path allowlist adapters.
+  // A generic workerExecutor alone does not grant this specialist access.
+  const worldExecutor = hasExecutionAdapters ? controlledExecutor : null;
 
   const worker = controlledExecutor
     ? createDevelopmentWorker({
@@ -118,6 +132,23 @@ export async function createDevelopmentSystem(options = {}) {
     description: "Organizes development findings for LAMBO CITY Studio."
   });
 
+  registry.registerModule({
+    id: WORLD_RUNNER_ID,
+    name: "World Development Runner",
+    type: MODULE_TYPES.RUNNER,
+    version: WORLD_RUNNER_VERSION,
+    path: "development/runners/world/worldDevelopmentRunner.js",
+    enabled: true,
+    capabilities: [
+      "world_environment_improvements",
+      "water_and_marina_improvements",
+      "architecture_and_landscaping",
+      "world_performance_improvements",
+      "preserve_approved_world_layout"
+    ],
+    description: "Organizes LAMBO CITY world improvements while preserving approved geography and working systems."
+  });
+
   if (worker) {
     registry.registerModule({
       id: "development-worker",
@@ -148,6 +179,13 @@ export async function createDevelopmentSystem(options = {}) {
       registry: registry.getSnapshot(),
       director: director.getSnapshot(),
       studioRunner: studioRunner.getProfile(),
+      worldRunner: worldRunner.getProfile(),
+      worldExecutor: {
+        enabled: !!worldExecutor,
+        runnerId: WORLD_RUNNER_ID,
+        mode: "owner-triggered",
+        productionWrites: false
+      },
       worker: worker
         ? worker.getSnapshot()
         : {
@@ -162,6 +200,7 @@ export async function createDevelopmentSystem(options = {}) {
   function disable() {
     status = DEVELOPMENT_SYSTEM_STATUS.DISABLED;
     studioRunner.setEnabled(false);
+    worldRunner.setEnabled(false);
     if (worker) {
       worker.setEnabled(false);
       registry.setModuleEnabled("development-worker", false);
@@ -172,6 +211,7 @@ export async function createDevelopmentSystem(options = {}) {
   function enable() {
     status = DEVELOPMENT_SYSTEM_STATUS.READY;
     studioRunner.setEnabled(true);
+    worldRunner.setEnabled(true);
     if (worker) {
       worker.setEnabled(workerEnabled);
       registry.setModuleEnabled("development-worker", workerEnabled);
@@ -199,6 +239,19 @@ export async function createDevelopmentSystem(options = {}) {
     return worker.runOnce();
   }
 
+  async function executeNextWorldTask(input = {}) {
+    if (status !== DEVELOPMENT_SYSTEM_STATUS.READY) {
+      throw new Error("The development system is disabled.");
+    }
+    if (!worldExecutor) {
+      throw new Error("World execution is not configured. Supply an isolated workspace adapter, review store, and explicit allowed paths.");
+    }
+    return worldExecutor.executeNextTask({
+      ...input,
+      runnerId: WORLD_RUNNER_ID
+    });
+  }
+
   function submitStudioFinding(finding) {
     if (status !== DEVELOPMENT_SYSTEM_STATUS.READY) {
       throw new Error("The development system is disabled.");
@@ -213,16 +266,35 @@ export async function createDevelopmentSystem(options = {}) {
     return studioRunner.submitFindings(findings);
   }
 
+  function submitWorldFinding(finding) {
+    if (status !== DEVELOPMENT_SYSTEM_STATUS.READY) {
+      throw new Error("The development system is disabled.");
+    }
+    return worldRunner.submitFinding(finding);
+  }
+
+  function submitWorldFindings(findings) {
+    if (status !== DEVELOPMENT_SYSTEM_STATUS.READY) {
+      throw new Error("The development system is disabled.");
+    }
+    return worldRunner.submitFindings(findings);
+  }
+
   return Object.freeze({
     registry,
     director,
     studioRunner,
+    worldRunner,
+    worldExecutor,
     getStatus,
     getSnapshot,
     enable,
     disable,
     runWorkerOnce,
+    executeNextWorldTask,
     submitStudioFinding,
-    submitStudioFindings
+    submitStudioFindings,
+    submitWorldFinding,
+    submitWorldFindings
   });
 }
