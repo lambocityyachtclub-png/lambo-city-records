@@ -8,7 +8,10 @@ on:
       - "npc.js"
       - "characterSystem.js"
       - "dockLife.js"
+      - "stageMusic.js"
+      - "heroPerformance.js"
       - "scripts/test-dock-life.mjs"
+      - "scripts/test-concert-audio-approach.mjs"
       - "scripts/test-character-system.mjs"
       - "input.js"
       - "player.js"
@@ -30,7 +33,10 @@ on:
       - "npc.js"
       - "characterSystem.js"
       - "dockLife.js"
+      - "stageMusic.js"
+      - "heroPerformance.js"
       - "scripts/test-dock-life.mjs"
+      - "scripts/test-concert-audio-approach.mjs"
       - "scripts/test-character-system.mjs"
       - "input.js"
       - "player.js"
@@ -68,6 +74,8 @@ jobs:
             npc.js \
             characterSystem.js \
             dockLife.js \
+            stageMusic.js \
+            heroPerformance.js \
             input.js \
             player.js \
             marina.js \
@@ -83,6 +91,9 @@ jobs:
 
       - name: Test bounded dock visitors and ambient chatter
         run: node --experimental-default-type=module scripts/test-dock-life.mjs
+
+      - name: Test concert approach audio and HERO trigger
+        run: node --experimental-default-type=module scripts/test-concert-audio-approach.mjs
 
       - name: Test protected player controller directions and movement
         run: node --experimental-default-type=module scripts/test-player-controller.mjs
