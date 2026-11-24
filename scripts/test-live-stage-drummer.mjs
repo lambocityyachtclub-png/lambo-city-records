@@ -13,5 +13,5 @@ assert.match(drummer, /leftArm\.rotation/);
 assert.match(drummer, /rightArm\.rotation/);
 assert.match(main, /import StageLiveDrummer from "\.\/stageLiveDrummer\.js"/);
 assert.match(main, /stageLiveDrummer: StageLiveDrummer/);
-assert.match(engine, /this\.systems\.stageLiveDrummer\?\.init\?\.\(this\.scene\)/);
+assert.match(engine, /this\.systems\.stageLiveDrummer\?\.init\?\.\(this\.scene,\s*this\.context\)/);
 console.log("Live stage drummer integration checks passed.");
