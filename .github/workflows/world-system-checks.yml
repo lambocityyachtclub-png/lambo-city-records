@@ -9,9 +9,13 @@ on:
       - "characterSystem.js"
       - "dockLife.js"
       - "stageMusic.js"
+      - "stageCrowdPulse.js"
+      - "stageSpotlights.js"
+      - "stageLasers.js"
       - "heroPerformance.js"
       - "scripts/test-dock-life.mjs"
       - "scripts/test-concert-audio-approach.mjs"
+      - "scripts/test-song-clock-stage-reactions.mjs"
       - "scripts/test-character-system.mjs"
       - "input.js"
       - "player.js"
@@ -25,7 +29,6 @@ on:
       - "scripts/test-player-controller.mjs"
       - "scripts/test-waterfront-storefront-details.mjs"
       - ".github/workflows/world-system-checks.yml"
-
   pull_request:
     paths:
       - "main.js"
@@ -34,9 +37,13 @@ on:
       - "characterSystem.js"
       - "dockLife.js"
       - "stageMusic.js"
+      - "stageCrowdPulse.js"
+      - "stageSpotlights.js"
+      - "stageLasers.js"
       - "heroPerformance.js"
       - "scripts/test-dock-life.mjs"
       - "scripts/test-concert-audio-approach.mjs"
+      - "scripts/test-song-clock-stage-reactions.mjs"
       - "scripts/test-character-system.mjs"
       - "input.js"
       - "player.js"
@@ -50,9 +57,7 @@ on:
       - "scripts/test-player-controller.mjs"
       - "scripts/test-waterfront-storefront-details.mjs"
       - ".github/workflows/world-system-checks.yml"
-
   workflow_dispatch:
-
 jobs:
   world:
     name: Validate World Modules
@@ -60,46 +65,25 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
-
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
-
       - name: Check world module syntax
         run: |
-          for file in \
-            main.js \
-            engine.js \
-            npc.js \
-            characterSystem.js \
-            dockLife.js \
-            stageMusic.js \
-            heroPerformance.js \
-            input.js \
-            player.js \
-            marina.js \
-            waterfrontStorefrontDetails.js \
-            world.js \
-            cityMap.js \
-            conferenceCenterDistrict.js \
-            dock.js \
-            water.js
+          for file in main.js engine.js npc.js characterSystem.js dockLife.js stageMusic.js stageCrowdPulse.js stageSpotlights.js stageLasers.js heroPerformance.js input.js player.js marina.js waterfrontStorefrontDetails.js world.js cityMap.js conferenceCenterDistrict.js dock.js water.js
           do
             node --experimental-default-type=module --check "$file"
           done
-
       - name: Test bounded dock visitors and ambient chatter
         run: node --experimental-default-type=module scripts/test-dock-life.mjs
-
       - name: Test concert approach audio and HERO trigger
         run: node --experimental-default-type=module scripts/test-concert-audio-approach.mjs
-
+      - name: Test song-clock stage reactions
+        run: node --experimental-default-type=module scripts/test-song-clock-stage-reactions.mjs
       - name: Test protected player controller directions and movement
         run: node --experimental-default-type=module scripts/test-player-controller.mjs
-
       - name: Test additive waterfront storefront integration
         run: node --experimental-default-type=module scripts/test-waterfront-storefront-details.mjs
-
       - name: Test LAMBO CITY character identities and crowd behavior
         run: node --experimental-default-type=module scripts/test-character-system.mjs
