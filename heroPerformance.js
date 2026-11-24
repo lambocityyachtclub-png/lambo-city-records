@@ -5,6 +5,7 @@ import AmbientMusic from "./ambientMusic.js";
 const STAGE_DECK_Y = 1.8;
 const STAGE_CENTER = new THREE.Vector3(0, STAGE_DECK_Y, -74);
 const TRIGGER_DISTANCE = 22;
+const APPROACH_DISTANCE = 55;
 const STAGE_LEFT = new THREE.Vector3(-20.5, STAGE_DECK_Y, -74);
 const STAIR_TOP_X = 22.15;
 const STAIR_BOTTOM_X = 29.55;
@@ -22,6 +23,7 @@ let performanceTime = 0;
 let exitStartX = 0;
 let exitStartY = 1.3;
 let exitStartZ = STAGE_Z;
+let approachAmbientPaused = false;
 
 function distanceToStage(player) {
   const dx = player.position.x - STAGE_CENTER.x;
@@ -46,6 +48,7 @@ function beginPerformance(context) {
 
   npc.setPerformanceMode?.(true);
   AmbientMusic.pause();
+  approachAmbientPaused = false;
   StageMusic.playFromStart();
 
   hero.position.copy(STAGE_LEFT);
@@ -112,8 +115,6 @@ function updateExiting(delta, context) {
     hero.position.z = STAGE_Z;
   }
 
-  // Keep HERO aligned with the actual stair elevation as he descends.
-  // A very small footfall bounce adds life without lifting him off the treads.
   if (t >= approachEnd) {
     hero.position.y += Math.abs(Math.sin(stateTime * 11)) * 0.012;
   }
@@ -124,6 +125,7 @@ function updateExiting(delta, context) {
     hero.position.set(STAIR_BOTTOM_X, STAIR_BOTTOM_Y, STAGE_Z);
     StageMusic.stop();
     AmbientMusic.resume();
+    approachAmbientPaused = false;
     state = "COMPLETE";
     stateTime = 0;
     npc?.setPerformanceMode?.(false);
@@ -141,7 +143,21 @@ export default {
     if (state === "IDLE") {
       const player = context.player;
       if (!player) return;
-      if (distanceToStage(player) <= TRIGGER_DISTANCE) {
+
+      const distance = distanceToStage(player);
+      StageMusic.updateApproach(distance);
+
+      if (distance <= APPROACH_DISTANCE && distance > TRIGGER_DISTANCE) {
+        if (!approachAmbientPaused) {
+          AmbientMusic.pause();
+          approachAmbientPaused = true;
+        }
+      } else if (distance > APPROACH_DISTANCE && approachAmbientPaused) {
+        AmbientMusic.resume();
+        approachAmbientPaused = false;
+      }
+
+      if (distance <= TRIGGER_DISTANCE) {
         beginPerformance(context);
       }
       return;
@@ -179,6 +195,7 @@ export default {
   reset() {
     StageMusic.stop();
     AmbientMusic.resume();
+    approachAmbientPaused = false;
     state = "IDLE";
     stateTime = 0;
     performanceTime = 0;
