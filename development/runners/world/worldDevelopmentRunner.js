@@ -10,7 +10,7 @@
 import { evaluateDevelopmentTask } from "../../policies/developmentPolicy.js";
 
 export const WORLD_RUNNER_ID = "world";
-export const WORLD_RUNNER_VERSION = "1.0.0";
+export const WORLD_RUNNER_VERSION = "1.1.0";
 
 export const WORLD_DEVELOPMENT_AREAS = Object.freeze([
   "world_environment",
@@ -80,6 +80,7 @@ function normalizeFinding(input = {}) {
     severity,
     priority,
     acceptanceCriteria: normalizeList(input.acceptanceCriteria, "Acceptance criterion"),
+    dependencies: normalizeList(input.dependencies, "Dependency"),
     filePaths: normalizeList(input.filePaths, "File path"),
     protectedActions: normalizeList(input.protectedActions, "Protected action"),
     requiresApproval: input.requiresApproval === true
@@ -146,6 +147,7 @@ export function createWorldDevelopmentRunner(options = {}) {
       runner: WORLD_RUNNER_ID,
       priority: finding.priority,
       acceptanceCriteria: finding.acceptanceCriteria,
+      dependencies: finding.dependencies,
       protectedActions: finding.protectedActions,
       requiresApproval: policyDecision.requiresApproval,
       approvalReason: policyDecision.requiresApproval
