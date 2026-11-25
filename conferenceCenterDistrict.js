@@ -261,7 +261,7 @@ export default {
     // A pedestrian-only stone approach begins beyond the existing boardwalk
     // street edge. Its reduced footprint prevents the old slab from covering
     // the street or reading as a second road.
-    addBox(root, "arenaDistrictBoardwalkPromenade", [42, 0.14, 19], [originX, 0.72, 60.5], materials.stone);
+    addBox(root, "arenaDistrictBoardwalkPromenade", [42, 0.14, 15], [originX, 0.72, 62.5], materials.stone);
 
     // Three boulevard legs join the two ends of the existing boardwalk,
     // which completes the fourth side and closes the single square loop.
