@@ -214,12 +214,20 @@ export function createLocalGitWorkspaceAdapter(options = {}) {
         throw new Error(`Workspace contains a change outside allowed paths: ${safePath}`);
       }
     }
+    const reviewableFiles = [];
+    for (const filePath of changedFiles) {
+      reviewableFiles.push({
+        path: filePath,
+        content: await readFile(path.join(workspacePath, filePath), "utf8")
+      });
+    }
     return {
       changedFiles,
       changes: {
         summary: typeof proposal.summary === "string" ? proposal.summary : task.title,
         writtenFiles: written,
-        provider: proposal.provider || "injected-proposal-provider"
+        provider: proposal.provider || "injected-proposal-provider",
+        fileChanges: reviewableFiles
       }
     };
   }
