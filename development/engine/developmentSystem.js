@@ -232,6 +232,13 @@ export async function createDevelopmentSystem(options = {}) {
         executionEnabled: !!worldExecutor,
         executionMode: localExecutionOptions ? "local_git_worktree" : (worldExecutor ? "injected_adapter" : "disabled")
       },
+      approvedReviewPublisher: {
+        enabled: !!approvedReviewPublisher,
+        mode: approvedReviewPublisher ? "local_branch_only" : "disabled",
+        pushes: false,
+        merges: false,
+        deployments: false
+      },
       worldExecutor: {
         enabled: !!worldExecutor,
         runnerId: WORLD_RUNNER_ID,
@@ -304,6 +311,23 @@ export async function createDevelopmentSystem(options = {}) {
     });
   }
 
+  async function approveReview(input = {}) {
+    if (status !== DEVELOPMENT_SYSTEM_STATUS.READY) throw new Error("The development system is disabled.");
+    if (!resolvedReviewStore || typeof resolvedReviewStore.approveReview !== "function") throw new Error("Persistent owner review decisions are not configured.");
+    return resolvedReviewStore.approveReview(input.reviewId, { decidedBy: input.decidedBy });
+  }
+
+  async function rejectReview(input = {}) {
+    if (status !== DEVELOPMENT_SYSTEM_STATUS.READY) throw new Error("The development system is disabled.");
+    if (!resolvedReviewStore || typeof resolvedReviewStore.rejectReview !== "function") throw new Error("Persistent owner review decisions are not configured.");
+    return resolvedReviewStore.rejectReview(input.reviewId, { decidedBy: input.decidedBy, reason: input.reason });
+  }
+
+  async function publishApprovedReview(input = {}) {
+    if (status !== DEVELOPMENT_SYSTEM_STATUS.READY) throw new Error("The development system is disabled.");
+    if (!approvedReviewPublisher) throw new Error("Approved review publishing is not configured.");
+    return approvedReviewPublisher.publishApprovedReview({ reviewStore: resolvedReviewStore, ...input });
+  }
   async function executeNextWorldTask(input = {}) {
     if (status !== DEVELOPMENT_SYSTEM_STATUS.READY) {
       throw new Error("The development system is disabled.");
@@ -365,6 +389,9 @@ export async function createDevelopmentSystem(options = {}) {
     disable,
     runWorkerOnce,
     executeNextWorldTask,
+    approveReview,
+    rejectReview,
+    publishApprovedReview,
     submitStudioFinding,
     submitStudioFindings,
     submitWorldIntent,
