@@ -20,6 +20,7 @@ on:
       - "stageLiveDrummer.js"
       - "stageFireworks.js"
       - "heroPerformance.js"
+      - "scripts/test-hero-stage-presence.mjs"
       - "heroSecurityExperience.js"
       - "scripts/test-hero-security-scale.mjs"
       - "scripts/test-dock-life.mjs"
@@ -46,6 +47,7 @@ on:
       - "dockMaterialPalette.js"
       - "sidewalkSurface.js"
       - "scripts/test-world-material-cohesion.mjs"
+      - "scripts/test-street-sidewalk-clearance.mjs"
       - "water.js"
       - "scripts/test-player-controller.mjs"
       - "scripts/test-waterfront-storefront-details.mjs"
@@ -66,6 +68,7 @@ on:
       - "stageLasers.js"
       - "stageLiveDrummer.js"
       - "heroPerformance.js"
+      - "scripts/test-hero-stage-presence.mjs"
       - "heroSecurityExperience.js"
       - "scripts/test-hero-security-scale.mjs"
       - "scripts/test-dock-life.mjs"
@@ -90,6 +93,7 @@ on:
       - "dockMaterialPalette.js"
       - "sidewalkSurface.js"
       - "scripts/test-world-material-cohesion.mjs"
+      - "scripts/test-street-sidewalk-clearance.mjs"
       - "water.js"
       - "scripts/test-player-controller.mjs"
       - "scripts/test-waterfront-storefront-details.mjs"
@@ -126,6 +130,8 @@ jobs:
         run: node --experimental-default-type=module scripts/test-hero-song-choreography.mjs
       - name: Test HERO stage music one-shot lifecycle and iPad gesture retry
         run: node --experimental-default-type=module scripts/test-stage-music-lifecycle.mjs
+      - name: Test HERO stage visibility during audio startup
+        run: node --experimental-default-type=module scripts/test-hero-stage-presence.mjs
       - name: Test HERO security escort scale
         run: node --experimental-default-type=module scripts/test-hero-security-scale.mjs
       - name: Test live stage drummer
@@ -138,6 +144,8 @@ jobs:
         run: node --experimental-default-type=module scripts/test-waterfront-storefront-details.mjs
       - name: Test dock, pier, and sidewalk material cohesion
         run: node --experimental-default-type=module scripts/test-world-material-cohesion.mjs
+      - name: Test street sidewalk and curb roadway clearance
+        run: node --experimental-default-type=module scripts/test-street-sidewalk-clearance.mjs
       - name: Test LAMBO CITY character identities and crowd behavior
         run: node --experimental-default-type=module scripts/test-character-system.mjs
       - name: Test concert crowd song synchronization

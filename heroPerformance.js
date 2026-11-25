@@ -107,7 +107,10 @@ function beginPerformance(context) {
   StageMusic.playFromStart();
 
   hero.position.copy(STAGE_LEFT);
-  hero.visible = false;
+  // Keep HERO visible on the stage while iOS finishes confirming playback.
+  // The previous hidden-until-playing gate could leave the music audible
+  // while the performer remained invisible on some browser timing paths.
+  hero.visible = true;
   state = "WAITING_FOR_AUDIO";
   stateTime = 0;
   performanceTime = 0;
@@ -229,6 +232,9 @@ export default {
     if (!hero) return;
 
     if (state === "WAITING_FOR_AUDIO") {
+      // Visibility is independent of media readiness: never hide the
+      // performer just because the browser is still resolving playback.
+      hero.visible = true;
       if (!StageMusic.isPlaying()) return;
       setBusinessBowtieVisible(false);
       hero.visible = true;
