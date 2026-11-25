@@ -37,6 +37,6 @@ assert.ok(northCurbCenter - curbWidth / 2 > roadMax,
   "North curb's full width must remain outside the roadway");
 assert.match(marina, /depth: 8/);
 assert.match(marina, /depth: 5/);
-assert.match(district, /curbRoadClearance/,
+assert.match(district, /addSegmentedSidewalk/,
   "Convention Center sidewalks must use the same roadway clearance helper");
 console.log("Both-side street sidewalk clearance checks passed.");
