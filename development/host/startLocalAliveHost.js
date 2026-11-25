@@ -32,7 +32,7 @@ const allowedPaths = parseAllowedPaths(requiredEnv("ALIVE_ALLOWED_PATHS"));
 const port = process.env.ALIVE_PORT ? Number(process.env.ALIVE_PORT) : 4317;
 
 if (ownerToken.length < 32) throw new Error("ALIVE_OWNER_TOKEN must contain at least 32 characters.");
-if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error("ALIVE_PORT must be an integer from 1 to 65535.");
+if (!Number.isInteger(port) || port < 0 || port > 65535) throw new Error("ALIVE_PORT must be an integer from 1 to 65535.");
 
 const proposalProvider = createLocalProposalQueueProvider({
   directory: proposalDirectory,
