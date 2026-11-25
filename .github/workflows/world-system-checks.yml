@@ -107,11 +107,11 @@ jobs:
             node --experimental-default-type=module --check "$file"
           done
       - name: Test bounded dock visitors and ambient chatter
+        run: node --experimental-default-type=module scripts/test-dock-life.mjs
       - name: Test approved palm canopy placement and foliage
         run: node --experimental-default-type=module scripts/test-palm-canopy.mjs
       - name: Test dock lighting budget and preserved fixtures
         run: node --experimental-default-type=module scripts/test-dock-light-budget.mjs
-        run: node --experimental-default-type=module scripts/test-dock-life.mjs
       - name: Test concert approach audio and HERO trigger
         run: node --experimental-default-type=module scripts/test-concert-audio-approach.mjs
       - name: Test song-clock stage reactions
