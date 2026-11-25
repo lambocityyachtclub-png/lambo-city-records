@@ -117,26 +117,33 @@ export default {
       curb: new THREE.MeshStandardMaterial({ color: 0xb9b8b0, roughness: 0.92 })
     };
 
+    // Both sides of the boardwalk use one shared sidewalk profile and
+    // elevation. The north run meets the Convention Center's curved
+    // corner returns flush; the south run stays straight and continuous
+    // past Records HQ without changing the approved street footprint.
+    const boardwalkSidewalkProfile = {
+      depth: 5,
+      axis: "x",
+      baseMaterial: sidewalkMaterials.base,
+      paverMaterial: sidewalkMaterials.paver,
+      curbMaterial: sidewalkMaterials.curb,
+      baseThickness: 0.3,
+      paverThickness: 0.04,
+      curbHeight: 0.18,
+      curbWidth: 0.18
+    };
     [-1, 1].forEach(function(side) {
       const innerSquareSide = side > 0;
       addSegmentedSidewalk(scene, {
         name: "marinaBoardwalkSidewalk_" + (side < 0 ? "south" : "north"),
-        // The north sidewalk stops at the two side-street junctions.
-        // Curved returns in the square district connect these ends cleanly.
+        // Only the north run terminates at the square-street junctions.
+        // Its end curbs meet the four approved curved corner returns.
         width: innerSquareSide ? STREET_LEN - 24 : STREET_LEN,
-        depth: 5,
-        position: [innerSquareSide ? 0 : STREET_X_MID, 0.55, STREET_Z + side * 6.5],
-        axis: "x",
-        baseMaterial: sidewalkMaterials.base,
-        paverMaterial: sidewalkMaterials.paver,
-        curbMaterial: sidewalkMaterials.curb,
-        baseThickness: 0.3,
-        paverThickness: 0.04,
-        curbHeight: 0.12,
-        curbWidth: 0.18,
+        position: [innerSquareSide ? 0 : STREET_X_MID, 0.68, STREET_Z + side * 6.5],
         curbSide: side < 0 ? "positive-z" : "negative-z",
         curbStartInset: innerSquareSide ? -2.87 : 0,
-        curbEndInset: innerSquareSide ? -2.87 : 0
+        curbEndInset: innerSquareSide ? -2.87 : 0,
+        ...boardwalkSidewalkProfile
       });
     });
 
