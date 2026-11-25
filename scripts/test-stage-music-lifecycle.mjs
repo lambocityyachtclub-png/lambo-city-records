@@ -9,16 +9,19 @@ class FakeAudio {
     this.volume = 1;
     this.listeners = {};
     this.src = "";
+    this.loadCount = 0;
     FakeAudio.lastInstance = this;
   }
   addEventListener(name, callback) {
     (this.listeners[name] ||= []).push(callback);
   }
   play() {
+    if (FakeAudio.blockPlayback) return Promise.reject(new Error("NotAllowedError"));
     this.paused = false;
     this.ended = false;
     return Promise.resolve();
   }
+  load() { this.loadCount++; }
   pause() { this.paused = true; }
   emit(name) {
     for (const callback of this.listeners[name] || []) callback();
@@ -26,22 +29,40 @@ class FakeAudio {
 }
 
 globalThis.Audio = FakeAudio;
-globalThis.window = { addEventListener() {} };
+const windowListeners = {};
+globalThis.window = {
+  addEventListener(name, callback, capture) {
+    (windowListeners[name] ||= []).push({ callback, capture });
+  }
+};
 
 const { default: StageMusic } = await import("../stageMusic.js?lifecycle-test");
 StageMusic.init();
+const instance = FakeAudio.lastInstance;
+assert.ok(instance, "StageMusic should create one media element");
+assert.ok((windowListeners.pointerdown || []).some(item => item.capture === true),
+  "Stage music must observe the first iPad pointer gesture in capture phase");
+assert.ok((windowListeners.touchend || []).some(item => item.capture === true),
+  "Stage music must support iPad touch-end gesture unlocking");
+
+FakeAudio.blockPlayback = true;
 StageMusic.playFromStart();
 await Promise.resolve();
+assert.equal(StageMusic.isPlaying(), false,
+  "A browser playback-policy rejection must not be reported as playing");
+
+FakeAudio.blockPlayback = false;
+windowListeners.pointerdown[0].callback();
+await Promise.resolve();
+assert.equal(StageMusic.isPlaying(), true,
+  "A later user gesture must retry the queued performance track");
+assert.ok(instance.loadCount > 0,
+  "The selected media source must be loaded before playback retry");
 
 const audio = StageMusic.getCurrentTrack();
 assert.equal(audio.title, "HERO - Lets Rage");
 assert.equal(StageMusic.isPlaying(), true,
   "The one-shot performance track should start");
-const instance = (() => {
-  // The fake media element is exposed by the test constructor below.
-  return FakeAudio.lastInstance;
-})();
-assert.ok(instance, "StageMusic should create one media element");
 assert.equal(instance.loop, false,
   "The HERO performance track must not loop or restart automatically");
 
