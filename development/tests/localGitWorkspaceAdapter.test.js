@@ -442,7 +442,7 @@ test("Development System exposes owner approval and controlled local branch publ
           summary: "System-level approved proposal",
           fileChanges: [{
             path: "development/example/system-approved.js",
-            content: "export const systemApproved = true;\\n"
+            content: "export const systemApproved = true;\n"
           }]
         }),
         testCommands: [{ command: "node", args: ["--version"] }]
@@ -474,7 +474,7 @@ test("Development System exposes owner approval and controlled local branch publ
     assert.equal(published.productionChangesMade, false);
     assert.equal(system.getSnapshot().approvedReviewPublisher.mode, "local_branch_only");
     const { stdout: branchContent } = await execFile("git", ["-C", root, "show", "alive/test-system-owner-publish:development/example/system-approved.js"]);
-    assert.equal(branchContent, "export const systemApproved = true;\\n");
+    assert.equal(branchContent, "export const systemApproved = true;\n");
     assert.equal(system.director.getTask(submitted.task.id).status, "review");
   } finally {
     await rm(root, { recursive: true, force: true });
