@@ -6,7 +6,8 @@ import crypto from "node:crypto";
 const REVIEW_STATUSES = Object.freeze({
   PENDING: "awaiting_owner_review",
   APPROVED: "approved",
-  REJECTED: "rejected"
+  REJECTED: "rejected",
+  REVISION_REQUESTED: "revision_requested"
 });
 
 function requireText(value, name) {
@@ -282,11 +283,41 @@ export function createDevelopmentReviewStorage(options = {}) {
     });
   }
 
+  async function requestRevision(input = {}) {
+    return serialize(async () => {
+      const reviewId = requireText(input.reviewId, "Review ID");
+      const ownerNote = requireText(input.ownerNote, "Change request");
+      const data = await readData();
+      const review = data.reviews.find(item => item.id === reviewId);
+
+      if (!review) {
+        throw new Error(`Review not found: ${reviewId}`);
+      }
+      if (review.status !== REVIEW_STATUSES.PENDING) {
+        throw new Error("This review has already received a decision.");
+      }
+
+      review.status = REVIEW_STATUSES.REVISION_REQUESTED;
+      review.updatedAt = new Date().toISOString();
+      review.decision = {
+        status: REVIEW_STATUSES.REVISION_REQUESTED,
+        ownerNote,
+        decidedAt: review.updatedAt
+      };
+      // A revision request returns work to development; it never publishes.
+      review.productionChangesMade = false;
+
+      await writeData(data);
+      return clone(review);
+    });
+  }
+
   return Object.freeze({
     createReview,
     getReview,
     listReviews,
     decideReview,
+    requestRevision,
     getStorageFile() {
       return storageFile;
     },

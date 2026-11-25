@@ -1,0 +1,19 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "crons": [
+    {
+      "path": "/api/alive/worker",
+      "schedule": "0 17 * * *"
+    }
+  ],
+  "functions": {
+    "api/alive/[action].js": {
+      "includeFiles": "**/*",
+      "maxDuration": 60
+    },
+    "api/alive/worker.js": {
+      "includeFiles": "**/*",
+      "maxDuration": 60
+    }
+  }
+}
