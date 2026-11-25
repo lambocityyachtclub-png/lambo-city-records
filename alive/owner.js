@@ -74,43 +74,28 @@ function disconnect(){ownerAuthenticated=false;statusSnapshot=null;$("workspace"
 async function enterOwnerConsole(){ownerAuthenticated=true;$("auth-panel").hidden=true;$("workspace").hidden=false;try{await refreshAll();notify("Secure ALIVE owner session connected.")}catch(error){disconnect();notify(error.message)}}
 $("identity-form").addEventListener("submit",async event=>{event.preventDefault();const button=event.currentTarget.querySelector('button[type="submit"]');button.disabled=true;try{await request("personal/identity",{method:"POST",body:{displayName:$("identity-display-name").value.trim()}});notify("Personal identity updated.");await refreshPersonal()}catch(error){notify(error.message)}finally{button.disabled=false}});
 $("memory-form").addEventListener("submit",async event=>{event.preventDefault();const form=event.currentTarget;const data=new FormData(form);const button=form.querySelector('button[type="submit"]');button.disabled=true;try{const tags=String(data.get("tags")||"").split(",").map(tag=>tag.trim()).filter(Boolean).slice(0,12);await request("personal/memories",{method:"POST",body:{category:data.get("category"),content:String(data.get("content")||"").trim(),tags,shareWithDevelopment:data.get("shareWithDevelopment")==="on"}});form.reset();notify("Private memory saved to your ALIVE identity.");await refreshPersonal()}catch(error){notify(error.message)}finally{button.disabled=false}});
-// Owner access uses a password the owner chooses and can save in iPad Passwords.
-$("create-owner-account-button").addEventListener("click",async()=>{
-  const email=$("owner-email").value.trim().toLowerCase();
-  const password=$("owner-password").value;
-  const confirmation=$("owner-password-confirm").value;
-  if(!enrollmentToken){notify("Open your private ALIVE owner setup link to create the first account.");return}
-  if(!email){notify("Enter your configured owner email.");return}
-  if(password.length<12){notify("Choose a password with at least 12 characters.");return}
-  if(password!==confirmation){notify("The passwords do not match.");return}
-  const button=$("create-owner-account-button");button.disabled=true;
-  try{
-    const enrollmentAuth=await getEnrollmentAuthClient();
-    const result=await enrollmentAuth.signUp.email({email,password,name:"ALIVE Owner"});
-    if(result.error)throw new Error(result.error.message||"Owner account could not be created.");
-    enrollmentToken="";enrollmentAuthClientPromise=null;
-    const auth=await getAuthClient();
-    const session=await auth.getSession();
-    if(!session.data?.user)throw new Error("The account was created, but the sign-in session did not start. Use the password you just chose to sign in.");
-    $("owner-password").value="";$("owner-password-confirm").value="";
-    await enterOwnerConsole();
-    notify("ALIVE owner account created. Save the password in iPad Passwords when Safari offers.");
-  }catch(error){notify(error.message)}
-  finally{button.disabled=false}
-});
-$("password-signin-button").addEventListener("click",async()=>{
+// Native sign-in form lets Safari recognize and offer to save the owner's credentials.
+$("owner-auth-form").addEventListener("submit",async event=>{
+  event.preventDefault();
   const email=$("owner-email").value.trim().toLowerCase();
   const password=$("owner-password").value;
   if(!email||!password){notify("Enter your owner email and password.");return}
-  const button=$("password-signin-button");button.disabled=true;
+  const button=enrollmentToken?$("create-owner-account-button"):$("password-signin-button");
+  if(enrollmentToken&&password!==$("owner-password-confirm").value){notify("The passwords do not match.");return}
+  if(enrollmentToken&&password.length<12){notify("Choose a password with at least 12 characters.");return}
+  button.disabled=true;
   try{
-    const auth=await getAuthClient();
-    const result=await auth.signIn.email({email,password});
-    if(result.error)throw new Error(result.error.message||"Owner sign-in failed.");
-    const session=await auth.getSession();
-    if(!session.data?.user)throw new Error("The owner session could not be restored. Try signing in again.");
-    $("owner-password").value="";
+    const auth=enrollmentToken?await getEnrollmentAuthClient():await getAuthClient();
+    const result=enrollmentToken
+      ?await auth.signUp.email({email,password,name:"ALIVE Owner"})
+      :await auth.signIn.email({email,password});
+    if(result.error)throw new Error(result.error.message||(enrollmentToken?"Owner account could not be created.":"Owner sign-in failed."));
+    enrollmentToken="";enrollmentAuthClientPromise=null;
+    const session=await (await getAuthClient()).getSession();
+    if(!session.data?.user)throw new Error("Your ALIVE account was accepted, but the sign-in session did not start. Keep this page open and try signing in with the password you chose.");
+    $("owner-password").value="";$("owner-password-confirm").value="";
     await enterOwnerConsole();
+    if(button.id==="create-owner-account-button")notify("ALIVE owner account created. Save the password in iPad Passwords when Safari offers.");
   }catch(error){notify(error.message)}
   finally{button.disabled=false}
 });
