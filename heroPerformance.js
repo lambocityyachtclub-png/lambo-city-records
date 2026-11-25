@@ -82,6 +82,7 @@ function animateHeroToSong(songTime) {
   if (heroRig.thighR) heroRig.thighR.rotation.z = Math.sin(beatPhase + Math.PI) * 0.09;
 }
 
+// The business bowtie is part of HERO's off-stage identity; the show look is reserved for active performance.
 function setBusinessBowtieVisible(visible) {
   if (heroRig?.heroBusinessBowtie) heroRig.heroBusinessBowtie.visible = visible;
 }
