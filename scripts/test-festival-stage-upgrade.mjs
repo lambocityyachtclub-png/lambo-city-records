@@ -109,3 +109,8 @@ assert.match(architecture, /centerZ: -74/, "Stage detail layer must retain the a
 assert.match(architecture, /frontZ: -65/, "Stage detail layer must retain the approved stage front boundary");
 
 console.log("Festival stage geometry, sponsor slots, registration, and HERO exit-route checks passed.");
+
+assert.match(stage, /color: 0x3a3f46/, "Speaker cabinets must use a visible graphite finish rather than disappearing into black");
+assert.match(stage, /color: 0x1b1e23/, "Speaker grilles must retain a darker charcoal contrast");
+assert.match(architecture, /color: 0x15181d/, "Speaker drivers must remain deep charcoal");
+assert.match(architecture, /color: 0x858b94/, "Speaker surrounds must use visible brushed-steel detailing");

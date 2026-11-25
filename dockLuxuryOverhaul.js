@@ -24,6 +24,7 @@
 // - No expensive real-time shadow systems added here
 
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
+import { DOCK_MATERIALS } from "./dockMaterialPalette.js";
 
 const DOCK_X_LEFT  = -6.2;
 const DOCK_X_RIGHT =  6.2;
@@ -111,11 +112,7 @@ function createMaterials() {
       metalness: 0.02,
     }),
 
-    premiumWood: new THREE.MeshStandardMaterial({
-      color: 0x6d4327,
-      roughness: 0.72,
-      metalness: 0.02,
-    }),
+    premiumWood: DOCK_MATERIALS.plankWood,
 
     metal: new THREE.MeshStandardMaterial({
       color: 0x191919,

@@ -1,4 +1,5 @@
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
+import { addSegmentedSidewalk } from "./sidewalkSurface.js";
 
 // LAMBO CITY — Marina / Boardwalk
 // Original layout preserved.
@@ -110,25 +111,28 @@ export default {
     }
 
 
-    var sidewalkMat = new THREE.MeshStandardMaterial({
-      color: 0x888877,
-      roughness: 1
-    });
+    const sidewalkMaterials = {
+      base: new THREE.MeshStandardMaterial({ color: 0x747875, roughness: 0.98 }),
+      paver: new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.96 }),
+      curb: new THREE.MeshStandardMaterial({ color: 0xb9b8b0, roughness: 0.92 })
+    };
 
     [-1, 1].forEach(function(side) {
-
-      var sidewalk = new THREE.Mesh(
-        new THREE.BoxGeometry(STREET_LEN, 0.3, 5),
-        sidewalkMat
-      );
-
-      sidewalk.position.set(
-        STREET_X_MID,
-        0.55,
-        STREET_Z + side * 6.5
-      );
-
-      scene.add(sidewalk);
+      addSegmentedSidewalk(scene, {
+        name: "marinaBoardwalkSidewalk_" + (side < 0 ? "south" : "north"),
+        width: STREET_LEN,
+        depth: 5,
+        position: [STREET_X_MID, 0.55, STREET_Z + side * 6.5],
+        axis: "x",
+        baseMaterial: sidewalkMaterials.base,
+        paverMaterial: sidewalkMaterials.paver,
+        curbMaterial: sidewalkMaterials.curb,
+        baseThickness: 0.3,
+        paverThickness: 0.04,
+        curbHeight: 0.12,
+        curbWidth: 0.18,
+        curbSide: side < 0 ? "positive-z" : "negative-z"
+      });
     });
 
 
