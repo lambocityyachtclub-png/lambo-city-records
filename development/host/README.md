@@ -20,6 +20,30 @@ branch publisher through one authenticated local HTTP host.
   A proposal provider is injected explicitly; ALIVE does not silently choose
   or call an AI provider.
 
+## Relationship to the private ALIVE owner queue
+
+The project also has a separate hosted owner-task path. The private repository
+`lambocityyachtclub-png/lambo-city-alive-control` stores owner directions on
+`integration/lc-alive-agentic-worker-2026-11-10` under
+`development/queue/incoming/`. The public worker branch contains only a
+non-sensitive task pointer; the private vision/task body is retrieved by the
+hosted worker through the Vercel private-task endpoint after GitHub Actions
+OIDC identity and the exact commit pointer are verified.
+
+Keep the two queue types distinct:
+
+- **Private owner queue:** the source of owner directions and specialist task
+  records. Never copy raw owner vision or credentials into the public repo.
+- **Local proposal queue in this host:** task-ID-matched complete file patches
+  used as an explicitly supplied code proposal source. It does not read or
+  write the private owner queue and it does not generate code by itself.
+
+The local host is an optional desktop/local execution route. The existing
+hosted private queue remains the project’s owner-direction channel. The
+hosted workflow's code-generation provider is a separate choice; do not
+enable a paid AI provider or grant additional AI entitlements unless the
+owner explicitly chooses that route.
+
 ## Host integration
 
 The host is a Node.js process on the machine that has the LAMBO CITY Git
