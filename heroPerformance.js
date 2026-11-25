@@ -4,8 +4,7 @@ import AmbientMusic from "./ambientMusic.js";
 
 const STAGE_DECK_Y = 1.8;
 const STAGE_CENTER = new THREE.Vector3(0, STAGE_DECK_Y, -74);
-const TRIGGER_DISTANCE = 22;
-const APPROACH_DISTANCE = 55;
+const TRIGGER_DISTANCE = 55;
 const STAGE_LEFT = new THREE.Vector3(-20.5, STAGE_DECK_Y, -74);
 const STAIR_TOP_X = 22.15;
 const STAIR_BOTTOM_X = 29.55;
@@ -213,18 +212,6 @@ export default {
       if (!player) return;
 
       const distance = distanceToStage(player);
-      StageMusic.updateApproach(distance);
-
-      if (distance <= APPROACH_DISTANCE && distance > TRIGGER_DISTANCE) {
-        if (!approachAmbientPaused) {
-          AmbientMusic.pause();
-          approachAmbientPaused = true;
-        }
-      } else if (distance > APPROACH_DISTANCE && approachAmbientPaused) {
-        AmbientMusic.resume();
-        approachAmbientPaused = false;
-      }
-
       if (distance <= TRIGGER_DISTANCE) beginPerformance(context);
       return;
     }
