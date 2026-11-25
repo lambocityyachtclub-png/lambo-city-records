@@ -137,7 +137,7 @@ export function createLocalApprovedReviewPublisher(options = {}) {
     const parent = path.dirname(root);
     const worktree = path.join(parent, ".alive-approved-" + branch.replace(/[^a-zA-Z0-9_-]/g, "-"));
     const changed = [];
-    let added = false;
+    let added = false;\n    let committed = false;
     try {
       await git(root, ["worktree", "add", "-b", branch, worktree, baseRef]);
       added = true;
