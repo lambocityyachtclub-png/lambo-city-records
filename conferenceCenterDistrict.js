@@ -350,8 +350,11 @@ export default {
         quadrantZ: corner.sz,
         surfaceMaterial: materials.sidewalkPaver,
         curbMaterial: materials.curb,
-        surfaceY: 0.834,
-        curbCenterY: 0.74,
+        // Match the straight sidewalk elevation at each end of the return.
+        // South corners meet the existing lower boardwalk sidewalk; north
+        // corners meet the boulevard's segmented sidewalk profile.
+        surfaceY: corner.sz < 0 ? 0.702 : 0.832,
+        curbCenterY: corner.sz < 0 ? 0.64 : 0.76,
         curbRadius: curbHalfWidth
       });
     });

@@ -123,6 +123,30 @@ function buildWaterfrontPromenade(group) {
 
   group.add(promenade);
 
+  // ----------------------------------------------------------
+  // BOARDWALK-TO-HQ SIDEWALK CORNER CONNECTION
+  // ----------------------------------------------------------
+  // The existing boardwalk sidewalk remains untouched. This short stone
+  // transition starts flush with its north edge (world Z=42, top Y=0.702)
+  // and slopes gently down to the existing HQ promenade (world Z=49,
+  // top Y=0.19). It fills the visible step at the HQ-side junction.
+  const hqWalkJoinRise = 0.702 - 0.19;
+  const hqWalkJoinLength = 7;
+  const hqWalkJoinAngle = Math.atan(hqWalkJoinRise / hqWalkJoinLength);
+  const hqWalkJoinDepth = hqWalkJoinLength / Math.cos(hqWalkJoinAngle);
+  const hqWalkJoin = new THREE.Mesh(
+    new THREE.BoxGeometry(12, .12, hqWalkJoinDepth),
+    promenadeStone
+  );
+  hqWalkJoin.name = "recordsHQBoardwalkSidewalkCornerConnector";
+  hqWalkJoin.position.set(
+    -7,
+    (0.702 + 0.19) / 2 - 0.06 * Math.cos(hqWalkJoinAngle),
+    23.5
+  );
+  hqWalkJoin.rotation.x = hqWalkJoinAngle;
+  group.add(hqWalkJoin);
+
 
   // ----------------------------------------------------------
   // DARK OUTER BORDER

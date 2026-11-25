@@ -34,6 +34,18 @@ assert.equal((district.match(/name: "southWest"|name: "southEast"|name: "northWe
 assert.equal((district.match(/addSidewalkCornerReturn\(root/g) || []).length, 1,
   "One shared corner-return builder must create all four curved sidewalk corners");
 assert.match(district, /arenaCornerRoadApron_/);
+assert.match(district, /surfaceY: corner\.sz < 0 \? 0\.702 : 0\.832/);
+assert.match(district, /curbCenterY: corner\.sz < 0 \? 0\.64 : 0\.76/);
+
+// All four curved returns meet the unchanged straight sidewalk profiles.
+const boardwalkPaverTopY = 0.55 + 0.3 / 2 + 0.002;
+const boardwalkCurbCenterY = 0.55 + 0.3 / 2 - 0.12 / 2;
+const boulevardPaverTopY = 0.76 + 0.14 / 2 + 0.002;
+const boulevardCurbCenterY = 0.76 + 0.14 / 2 - 0.14 / 2;
+assert.equal(boardwalkPaverTopY, 0.702);
+assert.equal(boardwalkCurbCenterY, 0.64);
+assert.equal(boulevardPaverTopY, 0.832);
+assert.equal(boulevardCurbCenterY, 0.76);
 
 // Coordinate-level check: the curved curb endpoints meet the straight curb centerlines.
 const boardwalkStreetCenterZ = 46;
@@ -53,5 +65,21 @@ assert.equal(boardwalkStreetCenterZ, 46);
 // Road and sidewalk footprints remain anchored to the existing approved street geometry.
 assert.match(marina, /new THREE\.BoxGeometry\(STREET_LEN, 0\.3, 8\)/);
 assert.match(marina, /depth: 5/);
+
+// The HQ junction is a separate sloped connector; the approved sidewalk
+// geometry, width, material, and elevation remain unchanged.
+const hq = await read("recordsHQ.js");
+assert.match(hq, /recordsHQBoardwalkSidewalkCornerConnector/);
+assert.match(hq, /new THREE\.BoxGeometry\(12, \.12, hqWalkJoinDepth\)/);
+assert.match(hq, /hqWalkJoin\.rotation\.x = hqWalkJoinAngle/);
+const rise = 0.702 - 0.19;
+const run = 7;
+const angle = Math.atan(rise / run);
+const depth = run / Math.cos(angle);
+const centerY = (0.702 + 0.19) / 2 - 0.06 * Math.cos(angle);
+const topAtBoardwalk = centerY + 0.06 * Math.cos(angle) + (depth / 2) * Math.sin(angle);
+const topAtPromenade = centerY + 0.06 * Math.cos(angle) - (depth / 2) * Math.sin(angle);
+assert.ok(Math.abs(topAtBoardwalk - 0.702) < 1e-9);
+assert.ok(Math.abs(topAtPromenade - 0.19) < 1e-9);
 assert.match(district, /ROAD\.roadWidth/);
 console.log("Square street corner returns, curb tangencies, and boardwalk preservation checks passed.");
