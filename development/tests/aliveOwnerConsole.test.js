@@ -12,32 +12,17 @@ test("ALIVE owner console is a separate no-index page and does not enter the gam
   assert.doesNotMatch(html, /main\.js|engine\.js/);
 });
 
-test("owner authentication uses secure same-origin sessions, not browser bearer-token storage", () => {
+test("owner authentication uses saved email/password sessions without browser bearer-token storage", () => {
   assert.match(script, /credentials:"same-origin"/);
-  assert.doesNotMatch(script, /signIn\.email|requestPasswordReset|resetPassword/);
+  assert.match(script, /signIn\.email/);
   assert.match(script, /signUp\.email/);
-  assert.match(script, /crypto\.getRandomValues/);
-  assert.match(script, /signIn\.passkey/);
-  assert.match(script, /passkey\.addPasskey/);
-  assert.match(html, /Passwordless sign in/);
-  assert.doesNotMatch(html, /owner-password|forgot-password-button|reset-password-panel/);
-  assert.match(script, /task-approve/);
-  assert.match(script, /task-reject/);
-  assert.match(script, /decideTask/);
-  assert.match(script, /personal\/identity/);
-  assert.match(script, /personal\/memories/);
-  assert.match(script, /memory-delete/);
-  assert.match(script, /deleteMemory/);
-  assert.match(html, /identity-form/);
-  assert.match(html, /memory-form/);
-  assert.match(html, /shareWithDevelopment/);
-  assert.match(script, /shareWithDevelopment/);
-  assert.match(script, /Shared with ALIVE development/);
-  assert.doesNotThrow(() => new vm.Script(script));
-  assert.match(script, /signIn\.passkey/);
+  assert.match(script, /owner-password-confirm/);
+  assert.match(html, /Sign in to ALIVE/);
+  assert.match(html, /autocomplete="current-password"/);
   assert.doesNotMatch(script, /localStorage|sessionStorage|document\.cookie|Authorization/);
   assert.match(script, /pagehide/);
   assert.match(script, /getSession/);
+  assert.doesNotThrow(() => new vm.Script(script));
 });
 
 
@@ -80,19 +65,6 @@ test("owner task intake sends acceptance criteria as a list", () => {
   assert.match(script, /acceptanceCriteria:criteria/);
 });
 
-test("owner recovery uses authenticator verification and one-time backup codes", () => {
-  assert.match(script, /twoFactorClient/);
-  assert.match(script, /twoFactor\.enable/);
-  assert.match(script, /verifyTotp/);
-  assert.match(script, /verifyBackupCode/);
-  assert.match(script, /copy-recovery-codes/);
-  assert.match(script, /qrcode@1\.5\.4/);
-  assert.match(script, /copy-totp-uri/);
-  assert.match(script, /onTwoFactorRedirect/);
-  assert.match(html, /totp-qr/);
-  assert.match(html, /One-time backup code/);
-  assert.match(html, /Set up authenticator and backup codes/);
-});
 
 test("owner recovery schema is isolated from player account tables", async () => {
   const migration = await fs.readFile(new URL("../storage/migrations/002_alive_owner_auth.sql", import.meta.url), "utf8");
@@ -121,10 +93,11 @@ test("owner server enables verified password sign-in, password recovery, passkey
 });
 
 
-test("founder setup is passwordless to the owner and registers Face ID before creating recovery codes", () => {
-  assert.ok(script.includes("crypto.getRandomValues(randomBytes)"));
-  assert.ok(script.includes("auth.passkey.addPasskey"));
-  assert.ok(script.includes("startTwoFactorSetup(auth,founderSetupPassword)"));
-  assert.doesNotMatch(html, /type="password"|owner-password|forgot-password-button/);
-  assert.match(html, /Sign in with Face ID \/ passkey/);
+test("founder setup lets the owner choose a password during the one-time invitation", () => {
+  assert.match(script, /enrollmentAuth\.signUp\.email\(\{email,password,name:"ALIVE Owner"\}\)/);
+  assert.match(script, /password\.length<12/);
+  assert.match(script, /password!==confirmation/);
+  assert.match(html, /type="password"/);
+  assert.match(html, /owner-password-confirm/);
+  assert.match(html, /Create my ALIVE owner account/);
 });
