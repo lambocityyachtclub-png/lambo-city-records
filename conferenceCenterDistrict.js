@@ -406,6 +406,33 @@ export default {
       ...outerSidewalkOptions
     });
 
+    // Outside-street corner returns mirror the approved inside-corner shape.
+    // The four existing straight outer sidewalks remain untouched; these
+    // quarter-circle paver returns close only their exposed outside corners.
+    const outerCornerX = originX + halfRoadX;
+    const outerCornerSouthZ = originZ - halfRoadZ;
+    const outerCornerNorthZ = originZ + halfRoadZ;
+    const outerCornerRadius = 3;
+    const outerCornerReturns = [
+      { name: "southWest", x: originX - halfRoadX, z: outerCornerSouthZ, sx: -1, sz: -1 },
+      { name: "southEast", x: outerCornerX, z: outerCornerSouthZ, sx: 1, sz: -1 },
+      { name: "northWest", x: originX - halfRoadX, z: outerCornerNorthZ, sx: -1, sz: 1 },
+      { name: "northEast", x: outerCornerX, z: outerCornerNorthZ, sx: 1, sz: 1 }
+    ];
+    outerCornerReturns.forEach(corner => {
+      addSidewalkCornerReturn(root, {
+        name: "arenaOuterSidewalkReturn_" + corner.name,
+        centerX: corner.x,
+        centerZ: corner.z,
+        radiusX: outerCornerRadius,
+        radiusZ: outerCornerRadius,
+        quadrantX: corner.sx,
+        quadrantZ: corner.sz,
+        surfaceMaterial: materials.sidewalkPaver,
+        surfaceY: 0.807
+      });
+    });
+
     // Monumental arena: 54 x 44 footprint with a tall glass-and-stone facade.
     const bx = CENTER.centerX;
     const bz = CENTER.centerZ;
