@@ -99,11 +99,10 @@ export function addSegmentedSidewalk(parent, options) {
       : new THREE.BoxGeometry(curbWidth, curbHeight, depth);
     const curb = new THREE.Mesh(curbGeometry, curbMaterial);
     curb.name = name + "_roadsideCurb";
-    // Keep the complete curb footprint on the sidewalk side of the
-    // roadway boundary. The inset is small enough to read as a clean curb
-    // reveal, but prevents any curb geometry from projecting into traffic.
-    const curbRoadClearance = 0.04;
-    const edgeOffset = crossLength / 2 - curbWidth / 2 - curbRoadClearance;
+    // Align the curb's road-facing outer face exactly with the road edge.
+    // The complete curb remains inside the sidewalk footprint: no gap,
+    // no overlap with the roadway, and one continuous pedestrian boundary.
+    const edgeOffset = crossLength / 2 - curbWidth / 2;
     const crossOffset = curbSide.startsWith("positive") ? edgeOffset : -edgeOffset;
     curb.position.set(
       x + (axis === "x" ? 0 : crossOffset),
