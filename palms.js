@@ -21,9 +21,8 @@ function makeFrondGeometry(length, phase, droop) {
     const width = (0.035 + 0.48 * Math.pow(Math.sin(Math.PI * t), 0.82)) * (1 - 0.34 * t);
     for (let j = 0; j <= across; j++) {
       const side = (j / across) * 2 - 1;
-      const angle = phase;
-      const radialX = Math.cos(angle);
-      const radialZ = Math.sin(angle);
+      const radialX = Math.cos(phase);
+      const radialZ = Math.sin(phase);
       const sideX = -radialZ;
       const sideZ = radialX;
       positions.push(
@@ -47,27 +46,46 @@ function makeFrondGeometry(length, phase, droop) {
   return geometry;
 }
 
-function createCanopy(palm, crownY, leanOffset, materials) {
-  const canopy = new THREE.Group();
-  canopy.position.set(leanOffset, crownY, 0);
+function createCanopy(palm, crownY, leanOffset, material) {
+  const positions = [];
+  const indices = [];
+  const colors = [];
+  const shades = [0x28733a, 0x398849, 0x1d5d31];
   const frondCount = 11;
+
   for (let i = 0; i < frondCount; i++) {
     const angle = (i / frondCount) * Math.PI * 2 + 0.13 * (i % 2);
     const length = 3.65 + (i % 4) * 0.42;
     const droop = 1.05 + (i % 3) * 0.18;
-    const frond = new THREE.Mesh(
-      makeFrondGeometry(length, angle, droop),
-      materials[i % 3]
-    );
-    frond.position.y = 0.05 + (i % 3) * 0.035;
-    frond.castShadow = false;
-    frond.receiveShadow = true;
-    canopy.add(frond);
+    const geometry = makeFrondGeometry(length, angle, droop);
+    const vertexPositions = geometry.getAttribute("position").array;
+    const vertexCount = vertexPositions.length / 3;
+    const offset = positions.length / 3;
+    positions.push(...vertexPositions);
+    for (const index of geometry.index.array) indices.push(index + offset);
+    const color = new THREE.Color(shades[i % shades.length]);
+    for (let vertex = 0; vertex < vertexCount; vertex++) {
+      colors.push(color.r, color.g, color.b);
+    }
+    geometry.dispose();
   }
-  // A compact, layered crown hides the frond roots without oversized leaf blobs.
+
+  const merged = new THREE.BufferGeometry();
+  merged.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+  merged.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
+  merged.setIndex(indices);
+  merged.computeVertexNormals();
+
+  const canopy = new THREE.Group();
+  canopy.position.set(leanOffset, crownY, 0);
+  const fronds = new THREE.Mesh(merged, material);
+  fronds.castShadow = false;
+  fronds.receiveShadow = true;
+  canopy.add(fronds);
+
   const crown = new THREE.Mesh(
     new THREE.SphereGeometry(0.43, 8, 6),
-    materials[1]
+    new THREE.MeshStandardMaterial({color:0x398849,roughness:0.88})
   );
   crown.scale.set(1, 0.72, 1);
   crown.position.y = 0.13;
@@ -82,11 +100,12 @@ export default {
       roughness: 0.96,
       metalness: 0
     });
-    const leafMaterials = [
-      new THREE.MeshStandardMaterial({color:0x28733a,roughness:0.88,side:THREE.DoubleSide}),
-      new THREE.MeshStandardMaterial({color:0x398849,roughness:0.86,side:THREE.DoubleSide}),
-      new THREE.MeshStandardMaterial({color:0x1d5d31,roughness:0.92,side:THREE.DoubleSide})
-    ];
+    const leafMaterial = new THREE.MeshStandardMaterial({
+      color: 0xffffff,
+      vertexColors: true,
+      roughness: 0.88,
+      side: THREE.DoubleSide
+    });
 
     PALMS.forEach(p => {
       const palm = new THREE.Group();
@@ -101,7 +120,7 @@ export default {
       palm.add(trunk);
 
       const leanOffset = Math.sin(p.lean) * p.h * 0.5;
-      createCanopy(palm, p.h, leanOffset, leafMaterials);
+      createCanopy(palm, p.h, leanOffset, leafMaterial);
       palm.position.set(p.x, 0.5, p.z);
       scene.add(palm);
     });
