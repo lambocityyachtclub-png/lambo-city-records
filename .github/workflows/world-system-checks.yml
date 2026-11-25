@@ -45,6 +45,7 @@ on:
   pull_request:
     paths:
       - "main.js"
+      - "scripts/test-dock-light-budget.mjs"
       - "engine.js"
       - "npc.js"
       - "characterSystem.js"
