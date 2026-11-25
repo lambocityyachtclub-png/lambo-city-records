@@ -377,25 +377,25 @@ export default {
     root.add(facadeSign);
 
     // A broad arrival forecourt, shallow accessible steps, and formal planters.
-    addBox(root, "arenaArrivalPlaza", [42, 0.14, 7], [bx, 0.72, frontZ - 5.8], materials.stone);
+    addBox(root, "arenaArrivalPlaza", [42, 0.14, 6], [bx, 0.72, frontZ - 2.5], materials.stone);
     for (let n = 0; n < 3; n++) {
       addBox(root, "arenaEntryPavingBand_" + n, [24, 0.06, 0.42], [bx, 0.82, frontZ - 2.1 + n * 0.8], materials.sidewalk);
     }
     for (const side of [-1, 1]) {
-      addBox(root, "arenaEntryPlanter_" + side, [5.2, 0.75, 3.0], [bx + side * 18.5, 1.05, frontZ - 5.8], materials.planter);
+      addBox(root, "arenaEntryPlanter_" + side, [5.2, 0.75, 3.0], [bx + side * 18.5, 1.05, frontZ - 2.5], materials.planter);
       const shrub = new THREE.Mesh(new THREE.SphereGeometry(1.2, 8, 6), materials.shrub);
       shrub.name = "arenaEntryShrub_" + side;
-      shrub.position.set(bx + side * 18.5, 1.95, frontZ - 5.8);
+      shrub.position.set(bx + side * 18.5, 1.95, frontZ - 2.5);
       shrub.scale.set(1.45, 0.72, 0.95);
       root.add(shrub);
     }
 
     // Street furniture: restrained emissive fixtures avoid adding costly point lights.
     const lightPoints = [
-      [westRoadX, southRoadZ], [eastRoadX, southRoadZ],
-      [westRoadX, northRoadZ], [eastRoadX, northRoadZ],
-      [originX - 20, southRoadZ - 7], [originX + 20, southRoadZ - 7],
-      [originX - 20, northRoadZ + 7], [originX + 20, northRoadZ + 7]
+      [originX - halfRoadX - 1.5, southRoadZ], [originX + halfRoadX + 1.5, southRoadZ],
+      [originX - halfRoadX - 1.5, northRoadZ], [originX + halfRoadX + 1.5, northRoadZ],
+      [originX - 20, originZ - halfRoadZ - 1.5], [originX + 20, originZ - halfRoadZ - 1.5],
+      [originX - 20, originZ + halfRoadZ + 1.5], [originX + 20, originZ + halfRoadZ + 1.5]
     ];
     lightPoints.forEach((point, index) => addStreetLight(root, materials, "arenaBoulevardStreetLight_" + index, point[0], point[1], index % 2 ? Math.PI : 0));
 
