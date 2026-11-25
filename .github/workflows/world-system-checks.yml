@@ -19,6 +19,7 @@ on:
       - "scripts/test-concert-audio-approach.mjs"
       - "scripts/test-song-clock-stage-reactions.mjs"
       - "scripts/test-hero-song-choreography.mjs"
+      - "scripts/test-stage-music-lifecycle.mjs"
       - "scripts/test-live-stage-drummer.mjs"
       - "scripts/test-hero-finale-fireworks.mjs"
       - "scripts/test-character-system.mjs"
@@ -104,6 +105,8 @@ jobs:
         run: node --experimental-default-type=module scripts/test-song-clock-stage-reactions.mjs
       - name: Test HERO song-driven choreography
         run: node --experimental-default-type=module scripts/test-hero-song-choreography.mjs
+      - name: Test HERO stage music one-shot lifecycle
+        run: node --experimental-default-type=module scripts/test-stage-music-lifecycle.mjs
       - name: Test live stage drummer
         run: node --experimental-default-type=module scripts/test-live-stage-drummer.mjs
       - name: Test HERO finale fireworks
