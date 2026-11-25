@@ -18,7 +18,11 @@ assert.match(helper, /export function addSidewalkCornerReturn/);
 // The north boardwalk sidewalk stops before the perpendicular streets;
 // its straight curb extends only to the tangent points of the curved returns.
 assert.match(marina, /width: innerSquareSide \? STREET_LEN - 24 : STREET_LEN/);
-assert.match(marina, /position: \[innerSquareSide \? 0 : STREET_X_MID, 0\.55/);
+assert.match(marina, /position: \[innerSquareSide \? 0 : STREET_X_MID, 0\.68/);
+assert.match(marina, /const boardwalkSidewalkProfile = \{/);
+assert.match(marina, /curbHeight: 0\.18/);
+assert.match(marina, /\.\.\.boardwalkSidewalkProfile/);
+assert.match(marina, /width: innerSquareSide \? STREET_LEN - 24 : STREET_LEN/);
 assert.match(marina, /curbStartInset: innerSquareSide \? -2\.87 : 0/);
 assert.match(marina, /curbEndInset: innerSquareSide \? -2\.87 : 0/);
 assert.match(marina, /width: innerSquareSide \? STREET_LEN - 24 : STREET_LEN/);
@@ -53,5 +57,14 @@ assert.equal(boardwalkStreetCenterZ, 46);
 // Road and sidewalk footprints remain anchored to the existing approved street geometry.
 assert.match(marina, /new THREE\.BoxGeometry\(STREET_LEN, 0\.3, 8\)/);
 assert.match(marina, /depth: 5/);
+// Both boardwalk sides share the same surface and curb elevation.
+// The straight curb center (0.68 + 0.30/2 - 0.18/2) matches
+// the curved return centerline at 0.74, so the transition is flush.
+const straightCurbCenterY = 0.68 + 0.3 / 2 - 0.18 / 2;
+assert.equal(straightCurbCenterY, 0.74);
+const boardwalkPaverTopY = 0.68 + 0.3 / 2 + 0.002;
+assert.equal(boardwalkPaverTopY, 0.832);
+assert.ok(Math.abs(boardwalkPaverTopY - 0.834) <= 0.002,
+  "Boardwalk pavers must meet the Convention Center corner-return surface without a visible step");
 assert.match(district, /ROAD\.roadWidth/);
 console.log("Square street corner returns, curb tangencies, and boardwalk preservation checks passed.");
