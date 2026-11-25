@@ -42,6 +42,9 @@ function addBox(parent, name, size, material, position) {
 function makeGuard(index) {
   const root = new THREE.Group();
   root.name = "heroSecurityEscort" + (index + 1);
+  // HERO is normalized to 4 world units. A 2.1x security rig reads as
+  // visibly taller and broader without changing HERO or escort spacing.
+  root.scale.setScalar(2.1);
   const suit = makeMaterial(0x101318, { metalness: 0.18, roughness: 0.56 });
   const shirt = makeMaterial(0xddd9d0, { roughness: 0.85 });
   const skin = makeMaterial(index === 0 ? 0x81543b : 0x9a674b, { roughness: 0.92 });

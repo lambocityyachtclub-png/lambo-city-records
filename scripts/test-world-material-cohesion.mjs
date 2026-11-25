@@ -37,6 +37,12 @@ assert.match(district, /width: ROAD\.sidewalkWidth,[\s\S]*depth: verticalLength,
   "Convention Center inner sidewalk footprint and centerline must remain unchanged");
 assert.match(district, /position: \[originX, 0\.74, originZ \+ halfRoadZ \+ 1\.5\]/,
   "Convention Center outer sidewalk location must remain unchanged");
+assert.match(district, /arenaDistrictBoardwalkPromenade", \[42, 0\.14, 15\]/,
+  "The Convention Center pedestrian approach must stay narrow and must not cover the boardwalk street");
+assert.match(district, /arenaSideLawnWest[\s\S]*arenaSideLawnEast[\s\S]*arenaRearLawn/,
+  "The arena must have landscaped side and rear lawns while keeping its entrance paved");
+assert.doesNotMatch(district, /arenaBoulevardCornerCurb_/,
+  "Decorative corner blocks must not protrude into the boulevard lanes");
 assert.match(district, /outerWidth: 110|ROAD\.outerWidth/, "The square boulevard geometry must remain driven by the approved map");
 
 assert.match(stage, /color: 0x3a3f46/, "Speaker cabinets must have a visible graphite finish");

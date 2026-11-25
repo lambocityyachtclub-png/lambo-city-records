@@ -13,12 +13,15 @@ on:
       - "characterSystem.js"
       - "dockLife.js"
       - "stageMusic.js"
+      - "ambientMusic.js"
       - "stageCrowdPulse.js"
       - "stageSpotlights.js"
       - "stageLasers.js"
       - "stageLiveDrummer.js"
       - "stageFireworks.js"
       - "heroPerformance.js"
+      - "heroSecurityExperience.js"
+      - "scripts/test-hero-security-scale.mjs"
       - "scripts/test-dock-life.mjs"
       - "scripts/test-dock-light-budget.mjs"
       - "scripts/test-stage-music-lifecycle.mjs"
@@ -57,11 +60,14 @@ on:
       - "characterSystem.js"
       - "dockLife.js"
       - "stageMusic.js"
+      - "ambientMusic.js"
       - "stageCrowdPulse.js"
       - "stageSpotlights.js"
       - "stageLasers.js"
       - "stageLiveDrummer.js"
       - "heroPerformance.js"
+      - "heroSecurityExperience.js"
+      - "scripts/test-hero-security-scale.mjs"
       - "scripts/test-dock-life.mjs"
       - "scripts/test-dock-light-budget.mjs"
       - "scripts/test-stage-music-lifecycle.mjs"
@@ -102,7 +108,7 @@ jobs:
           node-version: 22
       - name: Check world module syntax
         run: |
-          for file in main.js palms.js engine.js npc.js characterSystem.js dockLife.js stageMusic.js stageCrowdPulse.js stageSpotlights.js stageLasers.js stageLiveDrummer.js stageFireworks.js heroPerformance.js input.js player.js marina.js waterfrontStorefrontDetails.js world.js cityMap.js conferenceCenterDistrict.js dock.js dockPath.js dockLuxuryOverhaul.js grandStagePier.js dockMaterialPalette.js sidewalkSurface.js water.js
+          for file in main.js palms.js engine.js npc.js characterSystem.js dockLife.js stageMusic.js ambientMusic.js stageCrowdPulse.js stageSpotlights.js stageLasers.js stageLiveDrummer.js stageFireworks.js heroPerformance.js heroSecurityExperience.js input.js player.js marina.js waterfrontStorefrontDetails.js world.js cityMap.js conferenceCenterDistrict.js dock.js dockPath.js dockLuxuryOverhaul.js grandStagePier.js dockMaterialPalette.js sidewalkSurface.js water.js
           do
             node --experimental-default-type=module --check "$file"
           done
@@ -118,8 +124,10 @@ jobs:
         run: node --experimental-default-type=module scripts/test-song-clock-stage-reactions.mjs
       - name: Test HERO song-driven choreography
         run: node --experimental-default-type=module scripts/test-hero-song-choreography.mjs
-      - name: Test HERO stage music one-shot lifecycle
+      - name: Test HERO stage music one-shot lifecycle and iPad gesture retry
         run: node --experimental-default-type=module scripts/test-stage-music-lifecycle.mjs
+      - name: Test HERO security escort scale
+        run: node --experimental-default-type=module scripts/test-hero-security-scale.mjs
       - name: Test live stage drummer
         run: node --experimental-default-type=module scripts/test-live-stage-drummer.mjs
       - name: Test HERO finale fireworks

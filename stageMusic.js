@@ -22,10 +22,25 @@ function clampVolume(value) {
 
 function attemptPlay() {
   if (!audio || !pendingPlay) return;
-  audio.play().then(() => { pendingPlay = false; }).catch(() => {});
+  try {
+    const request = audio.play();
+    Promise.resolve(request).then(() => {
+      pendingPlay = false;
+    }).catch(error => {
+      // Keep the request queued. iOS Safari may reject playback until a
+      // fresh user gesture; the capture-phase listeners below retry it.
+      pendingPlay = true;
+      console.warn("[LAMBO CITY] Stage audio is waiting for an allowed playback gesture.", error);
+    });
+  } catch (error) {
+    pendingPlay = true;
+    console.warn("[LAMBO CITY] Stage audio playback could not start yet.", error);
+  }
 }
 
 function unlockAudio() {
+  // Called synchronously from a real pointer, touch, or keyboard gesture.
+  // Do not require pendingPlay to have existed before the first gesture.
   if (pendingPlay) attemptPlay();
 }
 
@@ -36,6 +51,7 @@ function startApproach() {
   audio.loop = true;
   audio.currentTime = 0;
   audio.volume = APPROACH_MIN_VOLUME;
+  audio.load();
   trackEnded = false;
   approachActive = true;
   pendingPlay = true;
@@ -64,9 +80,13 @@ export default {
       audio.pause();
       audio.currentTime = 0;
     });
-    window.addEventListener("pointerdown", unlockAudio);
-    window.addEventListener("keydown", unlockAudio);
-    window.addEventListener("touchstart", unlockAudio, { passive: true });
+    audio.addEventListener("canplay", attemptPlay);
+    audio.addEventListener("loadeddata", attemptPlay);
+    // Capture phase sees the player's first interaction even when a HUD
+    // control stops bubbling. touchend is included for iPad Safari.
+    window.addEventListener("pointerdown", unlockAudio, true);
+    window.addEventListener("touchend", unlockAudio, true);
+    window.addEventListener("keydown", unlockAudio, true);
   },
 
   update() {},
@@ -96,6 +116,7 @@ export default {
     audio.volume = 0.7;
     try { audio.currentTime = 0; } catch (error) {}
     audio.src = TRACK.url;
+    audio.load();
     pendingPlay = true;
     attemptPlay();
   },
