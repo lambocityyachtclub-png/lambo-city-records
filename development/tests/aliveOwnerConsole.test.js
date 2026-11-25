@@ -119,3 +119,12 @@ test("owner server enables verified password sign-in, password recovery, passkey
   assert.match(auth, /userVerification:\s*"required"/);
   assert.doesNotMatch(auth, /magicLink\(/);
 });
+
+
+test("founder setup is passwordless to the owner and registers Face ID before creating recovery codes", () => {
+  assert.match(script, /crypto\\.getRandomValues\\(randomBytes\\)/);
+  assert.match(script, /auth\\.passkey\\.addPasskey/);
+  assert.match(script, /startTwoFactorSetup\\(auth,founderSetupPassword\\)/);
+  assert.doesNotMatch(html, /type="password"|owner-password|forgot-password-button/);
+  assert.match(html, /Sign in with Face ID \/ passkey/);
+});
