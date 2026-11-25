@@ -25,8 +25,9 @@ import {
   DEVELOPMENT_WORKER_VERSION
 } from "./developmentWorker.js";
 import { createControlledDevelopmentExecutor } from "../execution/controlledDevelopmentExecutor.js";
+import { createLivingContractEngine } from "../contracts/livingContractEngine.js";
 
-export const DEVELOPMENT_SYSTEM_VERSION = "1.2.0";
+export const DEVELOPMENT_SYSTEM_VERSION = "1.3.0";
 
 export const DEVELOPMENT_SYSTEM_STATUS = Object.freeze({
   READY: "ready",
@@ -60,6 +61,7 @@ export async function createDevelopmentSystem(options = {}) {
   const worldRunner = createWorldDevelopmentRunner({
     developmentDirector: director
   });
+  const contractEngine = createLivingContractEngine({ worldRunner });
   const policy = getDevelopmentPolicy();
 
   const hasExecutionAdapters = workspaceAdapter !== null || reviewStore !== null || allowedPaths !== null;
@@ -149,6 +151,17 @@ export async function createDevelopmentSystem(options = {}) {
     description: "Organizes LAMBO CITY world improvements while preserving approved geography and working systems."
   });
 
+  registry.registerModule({
+    id: "living-contract-engine",
+    name: "Living Contract Engine",
+    type: MODULE_TYPES.ENGINE,
+    version: "1.0.0",
+    path: "development/contracts/livingContractEngine.js",
+    enabled: true,
+    capabilities: ["deterministic-intent-resolution", "dependency-graph-planning", "coordinated-task-batches"],
+    description: "Resolves creator intent into dependency-aware World task batches without paid AI or sandbox services."
+  });
+
   if (worker) {
     registry.registerModule({
       id: "development-worker",
@@ -180,6 +193,12 @@ export async function createDevelopmentSystem(options = {}) {
       director: director.getSnapshot(),
       studioRunner: studioRunner.getProfile(),
       worldRunner: worldRunner.getProfile(),
+      contractEngine: {
+        status: "ready",
+        mode: "deterministic_no_paid_ai",
+        contracts: contractEngine.listContracts().length,
+        executionEnabled: false
+      },
       worldExecutor: {
         enabled: !!worldExecutor,
         runnerId: WORLD_RUNNER_ID,
@@ -266,6 +285,13 @@ export async function createDevelopmentSystem(options = {}) {
     return studioRunner.submitFindings(findings);
   }
 
+  function submitWorldIntent(intent) {
+    if (status !== DEVELOPMENT_SYSTEM_STATUS.READY) {
+      throw new Error("The development system is disabled.");
+    }
+    return contractEngine.submitIntent(intent);
+  }
+
   function submitWorldFinding(finding) {
     if (status !== DEVELOPMENT_SYSTEM_STATUS.READY) {
       throw new Error("The development system is disabled.");
@@ -285,6 +311,7 @@ export async function createDevelopmentSystem(options = {}) {
     director,
     studioRunner,
     worldRunner,
+    contractEngine,
     worldExecutor,
     getStatus,
     getSnapshot,
@@ -294,6 +321,7 @@ export async function createDevelopmentSystem(options = {}) {
     executeNextWorldTask,
     submitStudioFinding,
     submitStudioFindings,
+    submitWorldIntent,
     submitWorldFinding,
     submitWorldFindings
   });
