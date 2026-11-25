@@ -44,14 +44,19 @@ function authorized(request, expectedToken) {
 async function readJson(request) {
   let size = 0;
   const chunks = [];
+  let oversized = false;
   for await (const chunk of request) {
     size += chunk.length;
     if (size > MAX_BODY_BYTES) {
-      const error = new Error("Request body exceeds the 64 KiB limit.");
-      error.statusCode = 413;
-      throw error;
+      oversized = true;
+      continue;
     }
-    chunks.push(chunk);
+    if (!oversized) chunks.push(chunk);
+  }
+  if (oversized) {
+    const error = new Error("Request body exceeds the 64 KiB limit.");
+    error.statusCode = 413;
+    throw error;
   }
   if (size === 0) return {};
   try {
