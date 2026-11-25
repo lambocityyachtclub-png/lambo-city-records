@@ -1,6 +1,6 @@
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 import CITY_MAP from "./cityMap.js";
-import { addSegmentedSidewalk } from "./sidewalkSurface.js";
+import { addSegmentedSidewalk, addSidewalkCornerReturn } from "./sidewalkSurface.js";
 
 // LAMBO CITY — Arena / Conference Center District
 // Builds the approved landmark, unified square street loop, public realm,
@@ -273,6 +273,16 @@ export default {
     // footprints. Centerlines, widths, lengths, and street geometry stay fixed.
     const innerSidewalkOffsetX = halfRoadX - ROAD.roadWidth - ROAD.sidewalkWidth / 2;
     const innerSidewalkOffsetZ = halfRoadZ - ROAD.roadWidth - ROAD.sidewalkWidth / 2;
+    const innerCornerRadius = ROAD.sidewalkWidth;
+    const curbHalfWidth = 0.09;
+    const curbCenterlineRadius = innerCornerRadius - curbHalfWidth - 0.04;
+    const innerCornerWestX = originX - innerSidewalkOffsetX + ROAD.sidewalkWidth / 2;
+    const innerCornerEastX = originX + innerSidewalkOffsetX - ROAD.sidewalkWidth / 2;
+    const innerCornerSouthZ = southRoadZ + 7;
+    const innerCornerNorthZ = northRoadZ - ROAD.roadWidth / 2 - ROAD.sidewalkWidth;
+    const innerVerticalDepth = innerCornerNorthZ - innerCornerSouthZ;
+    const innerVerticalCenterZ = (innerCornerSouthZ + innerCornerNorthZ) / 2;
+    const innerNorthLength = innerCornerEastX - innerCornerWestX;
     const sidewalkOptions = {
       baseMaterial: materials.sidewalk,
       paverMaterial: materials.sidewalkPaver,
@@ -285,8 +295,8 @@ export default {
     addSegmentedSidewalk(root, {
       name: "arenaBoulevardInnerSidewalkWest",
       width: ROAD.sidewalkWidth,
-      depth: verticalLength,
-      position: [originX - innerSidewalkOffsetX, 0.76, originZ],
+      depth: innerVerticalDepth,
+      position: [originX - innerSidewalkOffsetX, 0.76, innerVerticalCenterZ],
       axis: "z",
       curbSide: "negative-x",
       ...sidewalkOptions
@@ -294,25 +304,57 @@ export default {
     addSegmentedSidewalk(root, {
       name: "arenaBoulevardInnerSidewalkEast",
       width: ROAD.sidewalkWidth,
-      depth: verticalLength,
-      position: [originX + innerSidewalkOffsetX, 0.76, originZ],
+      depth: innerVerticalDepth,
+      position: [originX + innerSidewalkOffsetX, 0.76, innerVerticalCenterZ],
       axis: "z",
       curbSide: "positive-x",
       ...sidewalkOptions
     });
     addSegmentedSidewalk(root, {
       name: "arenaBoulevardInnerSidewalkNorth",
-      width: horizontalLength,
+      width: innerNorthLength,
       depth: ROAD.sidewalkWidth,
       position: [originX, 0.76, originZ + innerSidewalkOffsetZ],
       axis: "x",
       curbSide: "positive-z",
+      curbStartInset: -curbCenterlineRadius,
+      curbEndInset: -curbCenterlineRadius,
       ...sidewalkOptions
     });
 
-    // The road legs already meet as one continuous loop. Do not place
-    // decorative corner blocks on the roadway edge; the sidewalk curbs
-    // provide the pedestrian/vehicle boundary without intruding into lanes.
+    // Each inside corner is a true pedestrian curb return: the straight
+    // sidewalk runs stop at tangent points, a curved curb joins them, and
+    // the road apron fills the outside of the turn. This avoids overlapping
+    // sidewalk slabs and keeps the existing boardwalk's straight run intact.
+    const innerCornerReturns = [
+      { name: "southWest", x: innerCornerWestX, z: innerCornerSouthZ, sx: -1, sz: -1 },
+      { name: "southEast", x: innerCornerEastX, z: innerCornerSouthZ, sx: 1, sz: -1 },
+      { name: "northWest", x: innerCornerWestX, z: innerCornerNorthZ, sx: -1, sz: 1 },
+      { name: "northEast", x: innerCornerEastX, z: innerCornerNorthZ, sx: 1, sz: 1 }
+    ];
+    innerCornerReturns.forEach(corner => {
+      addBox(
+        root,
+        "arenaCornerRoadApron_" + corner.name,
+        [innerCornerRadius, 0.02, innerCornerRadius],
+        [corner.x + corner.sx * innerCornerRadius / 2, 0.78, corner.z + corner.sz * innerCornerRadius / 2],
+        materials.road
+      );
+      addSidewalkCornerReturn(root, {
+        name: "arenaSidewalkReturn_" + corner.name,
+        centerX: corner.x,
+        centerZ: corner.z,
+        radiusX: innerCornerRadius - curbHalfWidth - 0.04,
+        radiusZ: innerCornerRadius - curbHalfWidth - 0.04,
+        quadrantX: corner.sx,
+        quadrantZ: corner.sz,
+        surfaceMaterial: materials.sidewalkPaver,
+        curbMaterial: materials.curb,
+        surfaceY: 0.834,
+        curbCenterY: 0.74,
+        curbRadius: curbHalfWidth
+      });
+    });
 
     // Dashed center lines, crosswalks, and stop bars.
     for (let n = 0; n < 9; n++) {
