@@ -31,7 +31,10 @@ test("Local adapter creates a disposable worktree, applies a proposal, and runs 
     repositoryRoot: root,
     baseRef: "HEAD",
     allowedPaths: ["development/example"],
-    proposalProvider: async () => ({
+    proposalProvider: async ({ readAllowedFile, workspacePath }) => {
+      assert.equal(workspacePath, undefined);
+      assert.equal(await readAllowedFile("development/example/base.js"), "export const base = true;\\n");
+      return {
       summary: "Add a bounded example change",
       provider: "test-fixture",
       fileChanges: [{
@@ -217,3 +220,20 @@ async function readFileSafe(filePath) {
     throw error;
   }
 }
+
+
+test("Local review store refuses to persist inside the project repository", async () => {
+  const root = await createGitFixture();
+  try {
+    const store = createLocalJsonReviewStore({
+      directory: path.join(root, "owner-reviews"),
+      repositoryRoot: root
+    });
+    await assert.rejects(
+      () => store.createReview({ taskId: "task-006" }),
+      /must be outside the Git repository/
+    );
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
