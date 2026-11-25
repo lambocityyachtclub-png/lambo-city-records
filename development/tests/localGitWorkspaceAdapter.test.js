@@ -238,3 +238,74 @@ test("Local review store refuses to persist inside the project repository", asyn
     await rm(root, { recursive: true, force: true });
   }
 });
+
+
+test("Local review store requires an explicit owner decision and only approves passing complete proposals", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "alive-review-decision-test-"));
+  try {
+    const store = createLocalJsonReviewStore({ directory });
+    const incomplete = await store.createReview({
+      taskId: "task-review-incomplete",
+      testResults: { passed: true },
+      changes: { fileChanges: [] }
+    });
+    await assert.rejects(
+      () => store.approveReview(incomplete.id, { decidedBy: "owner-1" }),
+      /complete proposed file contents/
+    );
+    assert.equal((await store.getReview(incomplete.id)).status, "awaiting_owner_review");
+
+    const failed = await store.createReview({
+      taskId: "task-review-failed",
+      testResults: { passed: false },
+      changes: { fileChanges: [{ path: "development/example/a.js", content: "x" }] }
+    });
+    await assert.rejects(
+      () => store.approveReview(failed.id, { decidedBy: "owner-1" }),
+      /tests passed/
+    );
+
+    const ready = await store.createReview({
+      taskId: "task-review-ready",
+      testResults: { passed: true },
+      changes: { fileChanges: [{ path: "development/example/a.js", content: "export const a = true;" }] }
+    });
+    await assert.rejects(
+      () => store.approveReview(ready.id, {}),
+      /verified owner identity/
+    );
+    const approved = await store.approveReview(ready.id, { decidedBy: "verified-owner-session" });
+    assert.equal(approved.status, "approved");
+    assert.equal(approved.decision.status, "approved");
+    assert.equal(approved.decision.decidedBy, "verified-owner-session");
+    assert.ok(approved.decision.decidedAt);
+    assert.equal(approved.productionChangesMade, false);
+    await assert.rejects(
+      () => store.rejectReview(ready.id, { decidedBy: "verified-owner-session", reason: "Changed my mind" }),
+      /Only reviews awaiting owner review/
+    );
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("Local review store records explicit rejection and requires a reason", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "alive-review-rejection-test-"));
+  try {
+    const store = createLocalJsonReviewStore({ directory });
+    const review = await store.createReview({ taskId: "task-review-reject" });
+    await assert.rejects(
+      () => store.rejectReview(review.id, { decidedBy: "verified-owner-session" }),
+      /reason is required/
+    );
+    const rejected = await store.rejectReview(review.id, {
+      decidedBy: "verified-owner-session",
+      reason: "The proposal does not preserve the approved layout."
+    });
+    assert.equal(rejected.status, "rejected");
+    assert.equal(rejected.decision.reason, "The proposal does not preserve the approved layout.");
+    assert.equal(rejected.productionChangesMade, false);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
