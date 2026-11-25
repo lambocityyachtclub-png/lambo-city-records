@@ -95,12 +95,12 @@ function makePhotographer(index) {
   addBox(root, "paparazziLegR", [0.2, 0.62, 0.22], black, [0.14, 0.47, 0]);
 
   const cameraRig = new THREE.Group();
-  cameraRig.position.set(0.05, 1.42, -0.28);
+  cameraRig.position.set(0.05, 1.42, 0.28);
   root.add(cameraRig);
   addBox(cameraRig, "cameraBody", [0.32, 0.22, 0.17], black, [0, 0, 0]);
   const cameraLens = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.075, 0.13, 12), lens);
   cameraLens.rotation.x = Math.PI / 2;
-  cameraLens.position.z = -0.12;
+  cameraLens.position.z = 0.12;
   cameraRig.add(cameraLens);
   const flashPanel = addBox(cameraRig, "cameraFlash", [0.11, 0.055, 0.035], flash, [0.1, 0.15, 0.02]);
 
