@@ -130,6 +130,20 @@ function updateEntering(delta) {
 
 function updatePerformance(delta) {
   const clock = StageMusic.getPlaybackClock();
+
+  // The media element is paused by its "ended" event. Check that terminal
+  // signal before the playing guard, or HERO can remain frozen on stage
+  // forever after the song finishes.
+  if (StageMusic.hasEnded()) {
+    resetHeroDance();
+    exitStartX = hero.position.x;
+    exitStartY = hero.position.y;
+    exitStartZ = hero.position.z;
+    state = "EXITING";
+    stateTime = 0;
+    return;
+  }
+
   if (!clock.playing) return;
 
   const songTime = clock.currentTime;
@@ -145,14 +159,6 @@ function updatePerformance(delta) {
   }
   animateHeroToSong(songTime);
 
-  if (StageMusic.hasEnded()) {
-    resetHeroDance();
-    exitStartX = hero.position.x;
-    exitStartY = hero.position.y;
-    exitStartZ = hero.position.z;
-    state = "EXITING";
-    stateTime = 0;
-  }
 }
 
 function updateExiting(delta, context) {

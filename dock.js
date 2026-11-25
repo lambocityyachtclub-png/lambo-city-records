@@ -189,8 +189,10 @@ export default {
 
         scene.add(lantern);
 
-        // Keep the existing lightweight lighting behavior.
-        if (idx % 3 === 0) {
+        // Keep the lantern fixtures and emissive glow at every position,
+        // but use real point lights at alternating fixture pairs.
+        // This reduces dynamic dock lights from six to four.
+        if (idx % 6 === 0) {
           const glow = new THREE.PointLight(
             0xffaa33,
             3.5,
