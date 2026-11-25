@@ -35,8 +35,8 @@ const STREET_Z_MIN  = STREET_Z - 9;              // 37 — south edge of street 
 const STREET_Z_MAX  = STREET_Z + 9;              // 55 — north (water-facing) edge
 const STREET_DEPTH  = STREET_Z_MAX - STREET_Z_MIN; // 18
 
-const WEST_EDGE = -45; // marina.js STREET_X_MIN
-const EAST_EDGE = 45;  // marina.js STREET_X_MAX
+const WEST_EDGE = -55; // marina.js STREET_X_MIN
+const EAST_EDGE = 55;  // marina.js STREET_X_MAX
 const DECK_LEN  = 13;  // how far each overlook extends past the street
 
 const DECK_TOP = 0.7;  // matches marina.js sidewalk top surface (0.55 + 0.3/2)
