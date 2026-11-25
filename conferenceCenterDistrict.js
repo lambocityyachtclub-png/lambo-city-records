@@ -302,7 +302,7 @@ export default {
       depth: ROAD.sidewalkWidth,
       position: [originX, 0.76, originZ + innerSidewalkOffsetZ],
       axis: "x",
-      curbSide: "negative-z",
+      curbSide: "positive-z",
       ...sidewalkOptions
     });
 
