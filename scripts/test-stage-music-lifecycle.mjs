@@ -64,4 +64,5 @@ assert.equal(StageMusic.hasEnded(), false,
 assert.equal(instance.loop, false,
   "A new performance must remain one-shot");
 
+// Confirms the one-shot track lifecycle without requiring a browser audio device.
 console.log("Stage music lifecycle checks passed: one-shot playback, ended signal, and explicit restart only.");
