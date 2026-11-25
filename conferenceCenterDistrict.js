@@ -1,5 +1,6 @@
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 import CITY_MAP from "./cityMap.js";
+import { addSegmentedSidewalk } from "./sidewalkSurface.js";
 
 // LAMBO CITY — Arena / Conference Center District
 // Builds the approved landmark, unified square street loop, public realm,
@@ -216,8 +217,9 @@ export default {
       ground: new THREE.MeshStandardMaterial({ color: 0x35322d, roughness: 0.98 }),
       road: new THREE.MeshStandardMaterial({ color: 0x15191e, roughness: 0.94 }),
       roadEdge: new THREE.MeshStandardMaterial({ color: 0x343a40, roughness: 0.82 }),
-      sidewalk: new THREE.MeshStandardMaterial({ color: 0xb7ad9b, roughness: 0.78 }),
-      curb: new THREE.MeshStandardMaterial({ color: 0xd0c6b4, roughness: 0.82 }),
+      sidewalk: new THREE.MeshStandardMaterial({ color: 0x77766f, roughness: 0.96 }),
+      sidewalkPaver: new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.94 }),
+      curb: new THREE.MeshStandardMaterial({ color: 0xc3beb2, roughness: 0.88 }),
       stone: new THREE.MeshStandardMaterial({ color: 0x9e988d, roughness: 0.74 }),
       darkMetal: new THREE.MeshStandardMaterial({ color: 0x10151b, roughness: 0.3, metalness: 0.72 }),
       gold: new THREE.MeshStandardMaterial({ color: 0xc6a45b, roughness: 0.27, metalness: 0.82, emissive: 0x38270b, emissiveIntensity: 0.22 }),
@@ -263,13 +265,46 @@ export default {
     addBox(root, "arenaBoulevardWest", [ROAD.roadWidth, 0.18, verticalLength], [westRoadX, 0.68, originZ], materials.road);
     addBox(root, "arenaBoulevardEast", [ROAD.roadWidth, 0.18, verticalLength], [eastRoadX, 0.68, originZ], materials.road);
 
-    // Continuous inner pedestrian promenades and raised curb edges.
+    // Segmented concrete paving is layered inside the original sidewalk
+    // footprints. Centerlines, widths, lengths, and street geometry stay fixed.
     const innerSidewalkOffsetX = halfRoadX - ROAD.roadWidth - ROAD.sidewalkWidth / 2;
     const innerSidewalkOffsetZ = halfRoadZ - ROAD.roadWidth - ROAD.sidewalkWidth / 2;
-    const sidewalkThickness = 0.14;
-    addBox(root, "arenaBoulevardInnerSidewalkWest", [ROAD.sidewalkWidth, sidewalkThickness, verticalLength], [originX - innerSidewalkOffsetX, 0.76, originZ], materials.sidewalk);
-    addBox(root, "arenaBoulevardInnerSidewalkEast", [ROAD.sidewalkWidth, sidewalkThickness, verticalLength], [originX + innerSidewalkOffsetX, 0.76, originZ], materials.sidewalk);
-    addBox(root, "arenaBoulevardInnerSidewalkNorth", [horizontalLength, sidewalkThickness, ROAD.sidewalkWidth], [originX, 0.76, originZ + innerSidewalkOffsetZ], materials.sidewalk);
+    const sidewalkOptions = {
+      baseMaterial: materials.sidewalk,
+      paverMaterial: materials.sidewalkPaver,
+      curbMaterial: materials.curb,
+      baseThickness: 0.14,
+      paverThickness: 0.04,
+      curbHeight: 0.14,
+      curbWidth: 0.18
+    };
+    addSegmentedSidewalk(root, {
+      name: "arenaBoulevardInnerSidewalkWest",
+      width: ROAD.sidewalkWidth,
+      depth: verticalLength,
+      position: [originX - innerSidewalkOffsetX, 0.76, originZ],
+      axis: "z",
+      curbSide: "negative-x",
+      ...sidewalkOptions
+    });
+    addSegmentedSidewalk(root, {
+      name: "arenaBoulevardInnerSidewalkEast",
+      width: ROAD.sidewalkWidth,
+      depth: verticalLength,
+      position: [originX + innerSidewalkOffsetX, 0.76, originZ],
+      axis: "z",
+      curbSide: "positive-x",
+      ...sidewalkOptions
+    });
+    addSegmentedSidewalk(root, {
+      name: "arenaBoulevardInnerSidewalkNorth",
+      width: horizontalLength,
+      depth: ROAD.sidewalkWidth,
+      position: [originX, 0.76, originZ + innerSidewalkOffsetZ],
+      axis: "x",
+      curbSide: "negative-z",
+      ...sidewalkOptions
+    });
 
     // Curb returns at all four corners make the loop read as a connected street, not four loose slabs.
     const cornerX = halfRoadX;
@@ -298,10 +333,37 @@ export default {
       addRoadMark(root, "arenaEastCrosswalk_" + n, 4.4, 0.62, eastRoadX, z, materials.crosswalk);
     }
 
-    // Outer sidewalk links and landscaped corner pockets.
-    addBox(root, "arenaOuterWalkWest", [3, 0.13, ROAD.outerDepth], [originX - halfRoadX - 1.5, 0.74, originZ], materials.sidewalk);
-    addBox(root, "arenaOuterWalkEast", [3, 0.13, ROAD.outerDepth], [originX + halfRoadX + 1.5, 0.74, originZ], materials.sidewalk);
-    addBox(root, "arenaOuterWalkNorth", [ROAD.outerWidth, 0.13, 3], [originX, 0.74, originZ + halfRoadZ + 1.5], materials.sidewalk);
+    // Outer sidewalk links keep their original extents and elevations.
+    const outerSidewalkOptions = {
+      baseMaterial: materials.sidewalk,
+      paverMaterial: materials.sidewalkPaver,
+      baseThickness: 0.13,
+      paverThickness: 0.04
+    };
+    addSegmentedSidewalk(root, {
+      name: "arenaOuterWalkWest",
+      width: 3,
+      depth: ROAD.outerDepth,
+      position: [originX - halfRoadX - 1.5, 0.74, originZ],
+      axis: "z",
+      ...outerSidewalkOptions
+    });
+    addSegmentedSidewalk(root, {
+      name: "arenaOuterWalkEast",
+      width: 3,
+      depth: ROAD.outerDepth,
+      position: [originX + halfRoadX + 1.5, 0.74, originZ],
+      axis: "z",
+      ...outerSidewalkOptions
+    });
+    addSegmentedSidewalk(root, {
+      name: "arenaOuterWalkNorth",
+      width: ROAD.outerWidth,
+      depth: 3,
+      position: [originX, 0.74, originZ + halfRoadZ + 1.5],
+      axis: "x",
+      ...outerSidewalkOptions
+    });
 
     // Monumental arena: 54 x 44 footprint with a tall glass-and-stone facade.
     const bx = CENTER.centerX;
