@@ -16,6 +16,7 @@ on:
       - "stageFireworks.js"
       - "heroPerformance.js"
       - "scripts/test-dock-life.mjs"
+      - "scripts/test-dock-light-budget.mjs"
       - "scripts/test-concert-audio-approach.mjs"
       - "scripts/test-song-clock-stage-reactions.mjs"
       - "scripts/test-hero-song-choreography.mjs"
@@ -98,6 +99,8 @@ jobs:
           done
       - name: Test bounded dock visitors and ambient chatter
         run: node --experimental-default-type=module scripts/test-dock-life.mjs
+      - name: Test dock lighting budget and preserved fixtures
+        run: node --experimental-default-type=module scripts/test-dock-light-budget.mjs
       - name: Test concert approach audio and HERO trigger
         run: node --experimental-default-type=module scripts/test-concert-audio-approach.mjs
       - name: Test song-clock stage reactions
