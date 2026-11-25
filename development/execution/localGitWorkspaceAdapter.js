@@ -165,10 +165,28 @@ export function createLocalGitWorkspaceAdapter(options = {}) {
 
   async function prepareChanges({ workspaceId, task }) {
     const { workspacePath } = getWorkspace(workspaceId);
+    async function readAllowedFile(filePath) {
+      const safePath = safeRelativePath(filePath);
+      if (!isAllowed(safePath, normalizedAllowedPaths)) {
+        throw new Error(`Read request is outside allowed paths: ${safePath}`);
+      }
+      await assertNoSymlinkParents(workspacePath, safePath);
+      const absolutePath = path.join(workspacePath, safePath);
+      try {
+        const stat = await lstat(absolutePath);
+        if (stat.isSymbolicLink() || !stat.isFile()) {
+          throw new Error(`Only regular files may be read: ${safePath}`);
+        }
+        return await readFile(absolutePath, "utf8");
+      } catch (error) {
+        if (error.code === "ENOENT") return null;
+        throw error;
+      }
+    }
     const proposal = await proposalProvider({
       task,
-      workspacePath,
-      allowedPaths: [...normalizedAllowedPaths]
+      allowedPaths: [...normalizedAllowedPaths],
+      readAllowedFile
     });
     if (!proposal || !Array.isArray(proposal.fileChanges) || proposal.fileChanges.length === 0) {
       throw new Error("proposalProvider must return a non-empty fileChanges array.");
