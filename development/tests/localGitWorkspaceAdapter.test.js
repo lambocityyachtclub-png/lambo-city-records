@@ -8,6 +8,7 @@ import { promisify } from "node:util";
 
 import { createLocalGitWorkspaceAdapter } from "../execution/localGitWorkspaceAdapter.js";
 import { createLocalJsonReviewStore } from "../execution/localJsonReviewStore.js";
+import { createLocalApprovedReviewPublisher } from "../execution/localApprovedReviewPublisher.js";
 import { createDevelopmentSystem } from "../engine/developmentSystem.js";
 
 const execFile = promisify(execFileCallback);
@@ -307,5 +308,121 @@ test("Local review store records explicit rejection and requires a reason", asyn
     assert.equal(rejected.productionChangesMade, false);
   } finally {
     await rm(directory, { recursive: true, force: true });
+  }
+});
+
+
+test("Approved review publisher creates a local branch and commit after fresh passing tests", async () => {
+  const root = await createGitFixture();
+  const reviewsDirectory = await mkdtemp(path.join(os.tmpdir(), "alive-approved-publish-review-"));
+  try {
+    const store = createLocalJsonReviewStore({ directory: reviewsDirectory });
+    const review = await store.createReview({
+      taskId: "task-approved-publish",
+      testResults: { passed: true },
+      changes: {
+        fileChanges: [{
+          path: "development/example/approved.js",
+          content: "export const ownerApproved = true;\\n"
+        }]
+      }
+    });
+    const approved = await store.approveReview(review.id, { decidedBy: "verified-owner-session" });
+    const publisher = createLocalApprovedReviewPublisher({
+      repositoryRoot: root,
+      baseRef: "HEAD",
+      allowedPaths: ["development/example"],
+      testCommands: [{ command: "node", args: ["--version"] }]
+    });
+    const result = await publisher.publishApprovedReview({
+      reviewStore: store,
+      reviewId: approved.id,
+      branchName: "alive/test-approved-publish"
+    });
+    assert.equal(result.published, true);
+    assert.equal(result.branch, "alive/test-approved-publish");
+    assert.ok(result.commitSha);
+    assert.equal(result.testResults.passed, true);
+    assert.equal(result.ownerDecision.decidedBy, "verified-owner-session");
+    assert.equal(result.productionChangesMade, false);
+    assert.equal(result.pushed, false);
+    assert.equal(result.merged, false);
+    assert.equal(result.deployed, false);
+
+    const { stdout: branchSha } = await execFile("git", ["-C", root, "rev-parse", "alive/test-approved-publish"]);
+    assert.equal(branchSha.trim(), result.commitSha);
+    const { stdout: baseContent } = await execFile("git", ["-C", root, "show", "HEAD:development/example/base.js"]);
+    assert.equal(baseContent, "export const base = true;\\n");
+    const { stdout: publishedContent } = await execFile("git", ["-C", root, "show", "alive/test-approved-publish:development/example/approved.js"]);
+    assert.equal(publishedContent, "export const ownerApproved = true;\\n");
+    const { stdout: status } = await execFile("git", ["-C", root, "status", "--porcelain"]);
+    assert.equal(status.trim(), "");
+    assert.equal((await store.getReview(review.id)).status, "approved");
+    assert.equal(publisher.getConfiguration().localBranchOnly, true);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+    await rm(reviewsDirectory, { recursive: true, force: true });
+  }
+});
+
+test("Approved review publisher rejects pending reviews and never creates a branch", async () => {
+  const root = await createGitFixture();
+  const reviewsDirectory = await mkdtemp(path.join(os.tmpdir(), "alive-approved-pending-review-"));
+  try {
+    const store = createLocalJsonReviewStore({ directory: reviewsDirectory });
+    const review = await store.createReview({ taskId: "task-still-pending" });
+    const publisher = createLocalApprovedReviewPublisher({
+      repositoryRoot: root,
+      allowedPaths: ["development/example"],
+      testCommands: [{ command: "node", args: ["--version"] }]
+    });
+    await assert.rejects(
+      () => publisher.publishApprovedReview({
+        reviewStore: store,
+        reviewId: review.id,
+        branchName: "alive/test-pending-must-not-publish"
+      }),
+      /Only a recorded owner-approved review/
+    );
+    await assert.rejects(
+      () => execFile("git", ["-C", root, "rev-parse", "--verify", "refs/heads/alive/test-pending-must-not-publish"])
+    );
+  } finally {
+    await rm(root, { recursive: true, force: true });
+    await rm(reviewsDirectory, { recursive: true, force: true });
+  }
+});
+
+test("Approved review publisher deletes the uncommitted branch when fresh verification fails", async () => {
+  const root = await createGitFixture();
+  const reviewsDirectory = await mkdtemp(path.join(os.tmpdir(), "alive-approved-failed-review-"));
+  try {
+    const store = createLocalJsonReviewStore({ directory: reviewsDirectory });
+    const review = await store.createReview({
+      taskId: "task-failed-fresh-test",
+      testResults: { passed: true },
+      changes: { fileChanges: [{ path: "development/example/fail.js", content: "export const fail = true;" }] }
+    });
+    await store.approveReview(review.id, { decidedBy: "verified-owner-session" });
+    const publisher = createLocalApprovedReviewPublisher({
+      repositoryRoot: root,
+      allowedPaths: ["development/example"],
+      testCommands: [{ command: "node", args: ["-e", "process.exit(9)"] }]
+    });
+    const result = await publisher.publishApprovedReview({
+      reviewStore: store,
+      reviewId: review.id,
+      branchName: "alive/test-failed-verification"
+    });
+    assert.equal(result.published, false);
+    assert.match(result.reason, /Fresh verification failed/);
+    await assert.rejects(
+      () => execFile("git", ["-C", root, "rev-parse", "--verify", "refs/heads/alive/test-failed-verification"])
+    );
+    const { stdout: status } = await execFile("git", ["-C", root, "status", "--porcelain"]);
+    assert.equal(status.trim(), "");
+  } finally {
+    await rm(root, { recursive: true, force: true });
+    await rm(reviewsDirectory, { recursive: true, force: true });
   }
 });
