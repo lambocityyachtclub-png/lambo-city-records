@@ -31,10 +31,14 @@ assert.match(sidewalks, /_foundation/, "Sidewalk must retain a continuous founda
 assert.match(sidewalks, /_paverPanels/, "Sidewalk must have individually jointed paver panels");
 assert.match(sidewalks, /_roadsideCurb/, "Road-facing sidewalk edges must receive curb detail");
 assert.doesNotMatch(sidewalks, /new THREE\.PointLight/, "Sidewalk details must not add dynamic lights");
-assert.match(marina, /width: STREET_LEN,[\s\S]*depth: 5,[\s\S]*position: \[STREET_X_MID, 0\.55, STREET_Z \+ side \* 6\.5\]/,
-  "Boardwalk sidewalk footprint and centerline must remain unchanged");
-assert.match(district, /width: ROAD\.sidewalkWidth,[\s\S]*depth: verticalLength,[\s\S]*position: \[originX - innerSidewalkOffsetX, 0\.76, originZ\]/,
-  "Convention Center inner sidewalk footprint and centerline must remain unchanged");
+assert.match(marina, /width: innerSquareSide \? STREET_LEN - 24 : STREET_LEN,[\s\S]*depth: 5/);
+assert.match(marina, /position: \[innerSquareSide \? 0 : STREET_X_MID, 0\.55, STREET_Z \+ side \* 6\.5\]/,
+  "Only the north boardwalk sidewalk ends may be shortened at the side-street junctions");
+assert.match(district, /width: ROAD\.sidewalkWidth,[\s\S]*depth: innerVerticalDepth,[\s\S]*position: \[originX - innerSidewalkOffsetX, 0\.76, innerVerticalCenterZ\]/);
+assert.match(district, /width: innerNorthLength/);
+assert.match(district, /innerCornerReturns = \[/);
+assert.match(district, /addSidewalkCornerReturn\(root/,
+  "All four inner corners must use connected curved sidewalk returns");
 assert.match(district, /position: \[originX, 0\.74, originZ \+ halfRoadZ \+ 1\.5\]/,
   "Convention Center outer sidewalk location must remain unchanged");
 assert.match(district, /arenaDistrictBoardwalkPromenade", \[42, 0\.14, 15\]/,
