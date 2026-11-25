@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { execFile as execFileCallback } from "node:child_process";
@@ -38,7 +38,7 @@ test("Local adapter creates a disposable worktree, applies a proposal, and runs 
         content: "export const added = true;\n"
       }]
     }),
-    testCommands: [{ command: process.execPath, args: ["--version"] }]
+    testCommands: [{ command: "node", args: ["--version"] }]
   });
 
   let workspace;
@@ -129,7 +129,7 @@ test("Local adapter never sends a failed test run to a passing result", async ()
     proposalProvider: async () => ({
       fileChanges: [{ path: "development/example/new.js", content: "export const x = 1;" }]
     }),
-    testCommands: [{ command: process.execPath, args: ["-e", "process.exit(7)"] }]
+    testCommands: [{ command: "node", args: ["-e", "process.exit(7)"] }]
   });
   let workspace;
   try {
