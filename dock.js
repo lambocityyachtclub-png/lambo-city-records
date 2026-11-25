@@ -1,30 +1,15 @@
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
+import { DOCK_MATERIALS } from "./dockMaterialPalette.js";
 
 let lanternLights = [];
 let time = 0;
 
 export default {
   init(scene) {
-    const woodMat = new THREE.MeshStandardMaterial({
-      color: 0x8b5e3c,
-      roughness: 0.9
-    });
-
-    const plankMat = new THREE.MeshStandardMaterial({
-      color: 0x6d4327,
-      roughness: 0.72,
-      metalness: 0.02
-    });
-
-    const postMat = new THREE.MeshStandardMaterial({
-      color: 0x5c3d1e,
-      roughness: 1
-    });
-
-    const railMat = new THREE.MeshStandardMaterial({
-      color: 0x3a2510,
-      roughness: 0.8
-    });
+    const woodMat = DOCK_MATERIALS.structuralWood;
+    const plankMat = DOCK_MATERIALS.plankWood;
+    const postMat = DOCK_MATERIALS.supportPostWood;
+    const railMat = DOCK_MATERIALS.railWood;
 
     const Y = 1.0;
 
