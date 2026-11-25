@@ -6,6 +6,10 @@ const start = source.indexOf("function beginPerformance(context)");
 const end = source.indexOf("function updateEntering", start);
 assert.ok(start >= 0 && end > start, "The existing stage performance entry must remain present");
 const begin = source.slice(start, end);
+assert.match(source, /const TRIGGER_DISTANCE = 55/,
+  "HERO must begin at the same 55-unit boundary where the stage music starts");
+assert.match(begin, /StageMusic\.playFromStart\(\)/,
+  "The performance track must start from the same trigger that begins HERO's entrance");
 assert.match(begin, /hero\.position\.copy\(STAGE_LEFT\)/,
   "HERO must still enter from the approved stage-left mark");
 assert.match(begin, /hero\.visible = true/,
