@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#090b0d">
+  <meta name="referrer" content="same-origin">
+  <meta name="robots" content="noindex,nofollow">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; base-uri 'none'; form-action 'none'; object-src 'none'">
+  <title>LAMBO CITY ALIVE — Local Owner Workspace</title>
+  <link rel="stylesheet" href="./alive.css">
+  <script type="module" src="./alive.js"></script>
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <a class="brand" href="./" aria-label="LAMBO CITY home">
+        <span class="brand-mark">LC</span>
+        <span><strong>LAMBO CITY</strong><small>RECORDS</small></span>
+      </a>
+      <span class="owner-tag">LOCAL DEVELOPMENT WORKSPACE</span>
+    </header>
+
+    <section class="hero">
+      <p class="eyebrow">THE DEVELOPMENT ENGINE</p>
+      <h1>LAMBO CITY <span>ALIVE</span></h1>
+      <p class="intro">Your direction. Your project. Your control.</p>
+      <p class="promise">A private-by-location planning workspace that stores directions, task records and review decisions in this browser only. No hosted AI, remote queue, cloud database or code execution is connected.</p>
+    </section>
+
+    <section class="privacy-note" aria-label="Local storage notice">
+      <strong>LOCAL STORAGE NOTICE</strong>
+      <p>This page does not have server sign-in. Its records stay in this browser profile on this device; they are not encrypted, synced or backed up. Anyone with access to this browser profile may be able to read them. Do not enter passwords, API keys, access tokens or other secrets.</p>
+      <p>Saving a direction does not create a task, contact a worker, modify source files, merge code or deploy anything.</p>
+    </section>
+
+    <section class="status-grid" aria-label="Workspace status">
+      <article class="status-card">
+        <span class="status-label">LOCAL CORE</span>
+        <strong id="workspace-status">Starting…</strong>
+      </article>
+      <article class="status-card">
+        <span class="status-label">REGISTERED MODULES</span>
+        <strong id="module-count">—</strong>
+      </article>
+      <article class="status-card">
+        <span class="status-label">SAVED DIRECTIONS</span>
+        <strong id="vision-count">—</strong>
+      </article>
+      <article class="status-card">
+        <span class="status-label">LOCAL TASKS / REVIEWS</span>
+        <strong id="task-review-count">—</strong>
+      </article>
+    </section>
+
+    <section class="panel vision-panel">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">01 / YOUR DIRECTION</p>
+          <h2>What should ALIVE work on next?</h2>
+        </div>
+        <span class="live-tag">OWNER CONTROLLED</span>
+      </div>
+      <p class="muted">Describe the outcome in your own words. You do not need to write technical tickets or choose a department.</p>
+      <form id="vision-form">
+        <label for="vision">Your direction</label>
+        <textarea id="vision" name="vision" rows="7" maxlength="8000" placeholder="Describe what you want LAMBO CITY to become, what should improve, or what you want completed next…" required></textarea>
+        <div class="form-footer">
+          <span class="muted">Up to 8,000 characters · saved locally first</span>
+          <button type="submit" class="primary" id="save-vision">Save direction locally</button>
+        </div>
+      </form>
+      <p id="vision-message" class="message" role="status" aria-live="polite"></p>
+    </section>
+
+    <section class="panel">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">02 / DIRECTION INBOX</p>
+          <h2>Your saved directions</h2>
+        </div>
+        <button id="refresh-workspace" class="secondary" type="button">Refresh</button>
+      </div>
+      <div id="visions-empty" class="empty-state">Your locally saved directions will appear here.</div>
+      <div id="visions-list" class="record-list"></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">03 / DEVELOPMENT RECORDS</p>
+          <h2>Tasks and owner reviews</h2>
+        </div>
+      </div>
+      <p class="muted">These are local records only. An approval records your decision; it does not merge, deploy or execute code.</p>
+      <div class="record-columns">
+        <div>
+          <h3>Development tasks</h3>
+          <div id="tasks-empty" class="empty-state compact">No local tasks have been recorded.</div>
+          <div id="tasks-list" class="record-list"></div>
+        </div>
+        <div>
+          <h3>Owner reviews</h3>
+          <div id="reviews-empty" class="empty-state compact">No local reviews have been recorded.</div>
+          <div id="reviews-list" class="record-list"></div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="workspace-footer">
+      <p>ALIVE is the planning and control layer. Existing LAMBO CITY world and Studio systems remain independent of this local workspace.</p>
+      <span>NO REMOTE WORKERS · NO AUTOMATIC DEPLOYMENTS</span>
+    </footer>
+    <footer class="site-footer">LAMBO CITY RECORDS LLC · LOCAL OWNER WORKSPACE</footer>
+  </main>
+</body>
+</html>

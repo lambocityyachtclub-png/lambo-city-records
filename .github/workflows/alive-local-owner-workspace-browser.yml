@@ -1,0 +1,44 @@
+name: ALIVE Local Owner Workspace Browser Checks
+
+on:
+  push:
+    paths:
+      - "alive.html"
+      - "alive.js"
+      - "alive.css"
+      - "development/runtime/**"
+      - "development/storage/indexedDbDevelopmentStorage.js"
+      - "development/tests/browser/localAliveWorkspace.browser.mjs"
+      - ".github/workflows/alive-local-owner-workspace-browser.yml"
+  pull_request:
+    paths:
+      - "alive.html"
+      - "alive.js"
+      - "alive.css"
+      - "development/runtime/**"
+      - "development/storage/indexedDbDevelopmentStorage.js"
+      - "development/tests/browser/localAliveWorkspace.browser.mjs"
+      - ".github/workflows/alive-local-owner-workspace-browser.yml"
+  workflow_dispatch:
+
+jobs:
+  browser:
+    name: Test local ALIVE in Chromium and WebKit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Playwright
+        run: npm install --no-save playwright
+
+      - name: Install Chromium and WebKit
+        run: npx playwright install --with-deps chromium webkit
+
+      - name: Verify local-only ALIVE workspace
+        run: node development/tests/browser/localAliveWorkspace.browser.mjs
