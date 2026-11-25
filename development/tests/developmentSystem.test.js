@@ -510,3 +510,21 @@ test("Development System disables World task intake with the rest of the system"
     /development system is disabled/
   );
 });
+
+
+test("A generic worker executor alone does not grant World execution", async () => {
+  const system = await createDevelopmentSystem({
+    workerExecutor: {
+      async executeNextTask() {
+        return { executed: false, reason: "No eligible Studio task." };
+      }
+    },
+    workerEnabled: true
+  });
+
+  assert.equal(system.getSnapshot().worldExecutor.enabled, false);
+  await assert.rejects(
+    () => system.executeNextWorldTask(),
+    /World execution is not configured/
+  );
+});
