@@ -221,6 +221,7 @@ export default {
       sidewalkPaver: new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.94 }),
       curb: new THREE.MeshStandardMaterial({ color: 0xc3beb2, roughness: 0.88 }),
       stone: new THREE.MeshStandardMaterial({ color: 0x9e988d, roughness: 0.74 }),
+      grass: new THREE.MeshStandardMaterial({ color: 0x46664a, roughness: 1.0 }),
       darkMetal: new THREE.MeshStandardMaterial({ color: 0x10151b, roughness: 0.3, metalness: 0.72 }),
       gold: new THREE.MeshStandardMaterial({ color: 0xc6a45b, roughness: 0.27, metalness: 0.82, emissive: 0x38270b, emissiveIntensity: 0.22 }),
       glass: new THREE.MeshStandardMaterial({ color: 0x79b8c8, roughness: 0.12, metalness: 0.32, transparent: true, opacity: 0.5, depthWrite: false }),
@@ -257,7 +258,10 @@ export default {
     // Convention Center entrance; do not build a second parallel south road.
     const land = PLAN.ground;
     addBox(root, "arenaDistrictGround", [land.width, 0.5, land.depth], [land.centerX, 0.4, land.centerZ], materials.ground);
-    addBox(root, "arenaDistrictBoardwalkPromenade", [54, 0.5, 30], [originX, 0.4, 60.5], materials.stone);
+    // A pedestrian-only stone approach begins beyond the existing boardwalk
+    // street edge. Its reduced footprint prevents the old slab from covering
+    // the street or reading as a second road.
+    addBox(root, "arenaDistrictBoardwalkPromenade", [42, 0.14, 19], [originX, 0.72, 60.5], materials.stone);
 
     // Three boulevard legs join the two ends of the existing boardwalk,
     // which completes the fourth side and closes the single square loop.
@@ -306,14 +310,9 @@ export default {
       ...sidewalkOptions
     });
 
-    // Curb returns at all four corners make the loop read as a connected street, not four loose slabs.
-    const cornerX = halfRoadX;
-    const cornerZ = halfRoadZ;
-    for (const sx of [-1, 1]) {
-      for (const sz of [-1, 1]) {
-        addBox(root, "arenaBoulevardCornerCurb_" + sx + "_" + sz, [0.36, 0.16, 0.36], [originX + sx * cornerX, 0.75, originZ + sz * cornerZ], materials.curb);
-      }
-    }
+    // The road legs already meet as one continuous loop. Do not place
+    // decorative corner blocks on the roadway edge; the sidewalk curbs
+    // provide the pedestrian/vehicle boundary without intruding into lanes.
 
     // Dashed center lines, crosswalks, and stop bars.
     for (let n = 0; n < 9; n++) {
@@ -444,6 +443,12 @@ export default {
       shrub.scale.set(1.45, 0.72, 0.95);
       root.add(shrub);
     }
+
+    // Low, continuous lawns soften the arena's side and rear elevations.
+    // The southern approach remains hard-paved and unobstructed for arrivals.
+    addBox(root, "arenaSideLawnWest", [14, 0.06, 42], [-35, 0.68, bz], materials.grass);
+    addBox(root, "arenaSideLawnEast", [14, 0.06, 42], [35, 0.68, bz], materials.grass);
+    addBox(root, "arenaRearLawn", [48, 0.06, 16], [bx, 0.68, rearZ + 10], materials.grass);
 
     // Street furniture: restrained emissive fixtures avoid adding costly point lights.
     const lightPoints = [
