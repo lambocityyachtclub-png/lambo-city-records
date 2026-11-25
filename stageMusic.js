@@ -71,20 +71,10 @@ export default {
 
   update() {},
 
-  updateApproach(distance) {
-    if (!audio) return;
-    if (distance > APPROACH_START_DISTANCE) {
-      stopApproach();
-      return;
-    }
-    if (distance <= APPROACH_END_DISTANCE) return;
-    startApproach();
-    const progress = clampVolume(
-      (APPROACH_START_DISTANCE - distance) /
-      (APPROACH_START_DISTANCE - APPROACH_END_DISTANCE)
-    );
-    audio.volume = APPROACH_MIN_VOLUME +
-      (APPROACH_MAX_VOLUME - APPROACH_MIN_VOLUME) * progress;
+  updateApproach() {
+    // Do not preview the performance track before the trigger. The song
+    // must begin exactly once, from the beginning, when HERO's entrance starts.
+    if (approachActive) stopApproach();
   },
 
   playFromStart() {
