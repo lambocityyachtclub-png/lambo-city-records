@@ -28,13 +28,13 @@ assert.match(npc, /createCrowdArm\(0\.52, 2\.02/, "Crowd characters must have a 
 assert.match(npc, /createCrowdLeg\(-0\.23, 0\.84/, "Crowd characters must have an articulated left leg");
 assert.match(npc, /createCrowdLeg\(0\.23, 0\.84/, "Crowd characters must have an articulated right leg");
 
-assert.match(npc, /new THREE\\.CapsuleGeometry\\(0\\.38,0\\.72,4,9\\)/, "Crowd torsos must use a softer human silhouette");
-assert.match(npc, /new THREE\\.SphereGeometry\\(0\\.34,12,10\\)/, "Crowd heads must use rounded human proportions");
-assert.match(npc, /const skinColors = \\[/, "Crowd characters must use varied skin tones");
-assert.match(npc, /const outfitColors = \\[/, "Crowd characters must use varied summer outfit colors");
-assert.match(npc, /const hairColors = \\[/, "Crowd characters must use varied hair colors");
-assert.match(npc, /createCrowdArm\\(-0\\.52, 2\\.02, skinMaterial\\)/, "Left arms must use the character's skin tone");
-assert.match(npc, /createCrowdArm\\(0\\.52, 2\\.02, skinMaterial\\)/, "Right arms must use the character's skin tone");
+assert.ok(npc.includes("new THREE.CapsuleGeometry(0.38,0.72,4,9)"), "Crowd torsos must use a softer human silhouette");
+assert.ok(npc.includes("new THREE.SphereGeometry(0.34,12,10)"), "Crowd heads must use rounded human proportions");
+assert.ok(npc.includes("const skinColors = ["), "Crowd characters must use varied skin tones");
+assert.ok(npc.includes("const outfitColors = ["), "Crowd characters must use varied summer outfit colors");
+assert.ok(npc.includes("const hairColors = ["), "Crowd characters must use varied hair colors");
+assert.ok(npc.includes("createCrowdArm(-0.52, 2.02, skinMaterial)"), "Left arms must use the character skin tone");
+assert.ok(npc.includes("createCrowdArm(0.52, 2.02, skinMaterial)"), "Right arms must use the character skin tone");
 
 assert.match(npc, /homeX: x/, "Every character must retain its approved home position");
 assert.match(npc, /const x = Math\.cos\(angle\) \* 10/, "Approved crowd x positions must remain unchanged");
