@@ -51,14 +51,16 @@ function start() {
 function unlockOnce() {
   start();
   if (started) {
-    window.removeEventListener("pointerdown", unlockOnce);
-    window.removeEventListener("keydown", unlockOnce);
+    window.removeEventListener("pointerdown", unlockOnce, true);
+    window.removeEventListener("touchend", unlockOnce, true);
+    window.removeEventListener("keydown", unlockOnce, true);
   }
 }
  
 export default {
   init() {
     audio = new Audio();
+    audio.preload = "auto";
     audio.volume = 0.6;
     audio.addEventListener("ended", () => {
       if (onStageTrack) {
@@ -72,8 +74,11 @@ export default {
     loadTrack(0);
     start();
  
-    window.addEventListener("pointerdown", unlockOnce);
-    window.addEventListener("keydown", unlockOnce);
+    // Capture-phase listeners reliably receive the first iPad touch even
+    // when the on-screen joystick or HUD stops event bubbling.
+    window.addEventListener("pointerdown", unlockOnce, true);
+    window.addEventListener("touchend", unlockOnce, true);
+    window.addEventListener("keydown", unlockOnce, true);
   },
   update() {},
  
