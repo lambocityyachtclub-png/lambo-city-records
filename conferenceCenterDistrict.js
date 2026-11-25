@@ -250,21 +250,18 @@ export default {
     const horizontalLength = ROAD.outerWidth - ROAD.roadWidth;
     const verticalLength = ROAD.outerDepth - ROAD.roadWidth;
 
-    // Continuous surveyed land pad and the short connector to the existing boardwalk.
+    // The existing marina boardwalk is the southern side of this square.
+    // Extend a broad pedestrian arrival promenade from that street to the
+    // Convention Center entrance; do not build a second parallel south road.
     const land = PLAN.ground;
     addBox(root, "arenaDistrictGround", [land.width, 0.5, land.depth], [land.centerX, 0.4, land.centerZ], materials.ground);
-    addBox(root, "arenaDistrictBoardwalkConnector", [54, 0.5, 15], [originX, 0.4, 52.5], materials.ground);
+    addBox(root, "arenaDistrictBoardwalkPromenade", [54, 0.5, 30], [originX, 0.4, 60.5], materials.stone);
 
-    // Four connected road legs overlap at their corners to form one complete loop.
-    addBox(root, "arenaBoulevardSouth", [horizontalLength, 0.18, ROAD.roadWidth], [originX, 0.68, southRoadZ], materials.road);
+    // Three boulevard legs join the two ends of the existing boardwalk,
+    // which completes the fourth side and closes the single square loop.
     addBox(root, "arenaBoulevardNorth", [horizontalLength, 0.18, ROAD.roadWidth], [originX, 0.68, northRoadZ], materials.road);
     addBox(root, "arenaBoulevardWest", [ROAD.roadWidth, 0.18, verticalLength], [westRoadX, 0.68, originZ], materials.road);
     addBox(root, "arenaBoulevardEast", [ROAD.roadWidth, 0.18, verticalLength], [eastRoadX, 0.68, originZ], materials.road);
-
-    // Store-side approach enters the south boulevard leg; it does not cross the arena footprint.
-    const approachStartZ = CITY_MAP.districts.conferenceCenter.accessRoadStartZ;
-    const approachEndZ = southRoadZ + ROAD.roadWidth / 2;
-    addBox(root, "arenaBoulevardStoreApproach", [8, 0.18, approachEndZ - approachStartZ], [-37, 0.68, (approachStartZ + approachEndZ) / 2], materials.road);
 
     // Continuous inner pedestrian promenades and raised curb edges.
     const innerSidewalkOffsetX = halfRoadX - ROAD.roadWidth - ROAD.sidewalkWidth / 2;
@@ -272,7 +269,6 @@ export default {
     const sidewalkThickness = 0.14;
     addBox(root, "arenaBoulevardInnerSidewalkWest", [ROAD.sidewalkWidth, sidewalkThickness, verticalLength], [originX - innerSidewalkOffsetX, 0.76, originZ], materials.sidewalk);
     addBox(root, "arenaBoulevardInnerSidewalkEast", [ROAD.sidewalkWidth, sidewalkThickness, verticalLength], [originX + innerSidewalkOffsetX, 0.76, originZ], materials.sidewalk);
-    addBox(root, "arenaBoulevardInnerSidewalkSouth", [horizontalLength, sidewalkThickness, ROAD.sidewalkWidth], [originX, 0.76, originZ - innerSidewalkOffsetZ], materials.sidewalk);
     addBox(root, "arenaBoulevardInnerSidewalkNorth", [horizontalLength, sidewalkThickness, ROAD.sidewalkWidth], [originX, 0.76, originZ + innerSidewalkOffsetZ], materials.sidewalk);
 
     // Curb returns at all four corners make the loop read as a connected street, not four loose slabs.
@@ -287,7 +283,6 @@ export default {
     // Dashed center lines, crosswalks, and stop bars.
     for (let n = 0; n < 9; n++) {
       const x = originX - 31 + n * 7.75;
-      addRoadMark(root, "arenaSouthLaneDash_" + n, 3.2, 0.2, x, southRoadZ, materials.lane);
       addRoadMark(root, "arenaNorthLaneDash_" + n, 3.2, 0.2, x, northRoadZ, materials.lane);
     }
     for (let n = 0; n < 7; n++) {
@@ -297,7 +292,6 @@ export default {
     }
     for (let n = 0; n < 6; n++) {
       const x = originX - 2.25 + n * 0.9;
-      addRoadMark(root, "arenaSouthCrosswalk_" + n, 0.62, 4.4, x, southRoadZ, materials.crosswalk);
       addRoadMark(root, "arenaNorthCrosswalk_" + n, 0.62, 4.4, x, northRoadZ, materials.crosswalk);
       const z = originZ - 2.25 + n * 0.9;
       addRoadMark(root, "arenaWestCrosswalk_" + n, 4.4, 0.62, westRoadX, z, materials.crosswalk);
@@ -307,7 +301,6 @@ export default {
     // Outer sidewalk links and landscaped corner pockets.
     addBox(root, "arenaOuterWalkWest", [3, 0.13, ROAD.outerDepth], [originX - halfRoadX - 1.5, 0.74, originZ], materials.sidewalk);
     addBox(root, "arenaOuterWalkEast", [3, 0.13, ROAD.outerDepth], [originX + halfRoadX + 1.5, 0.74, originZ], materials.sidewalk);
-    addBox(root, "arenaOuterWalkSouth", [ROAD.outerWidth, 0.13, 3], [originX, 0.74, originZ - halfRoadZ - 1.5], materials.sidewalk);
     addBox(root, "arenaOuterWalkNorth", [ROAD.outerWidth, 0.13, 3], [originX, 0.74, originZ + halfRoadZ + 1.5], materials.sidewalk);
 
     // Monumental arena: 54 x 44 footprint with a tall glass-and-stone facade.
@@ -392,7 +385,6 @@ export default {
 
     // Street furniture: restrained emissive fixtures avoid adding costly point lights.
     const lightPoints = [
-      [originX - halfRoadX - 1.5, southRoadZ], [originX + halfRoadX + 1.5, southRoadZ],
       [originX - halfRoadX - 1.5, northRoadZ], [originX + halfRoadX + 1.5, northRoadZ],
       [originX - 20, originZ - halfRoadZ - 1.5], [originX + 20, originZ - halfRoadZ - 1.5],
       [originX - 20, originZ + halfRoadZ + 1.5], [originX + 20, originZ + halfRoadZ + 1.5]
@@ -401,23 +393,23 @@ export default {
 
     // Coastal landscaping frames the streets and keeps villa parcels legible.
     const treePoints = [
-      [-88, 76, 0.95], [-88, 105, 1.0], [-88, 128, 0.9],
-      [2, 76, 0.95], [2, 105, 1.0], [2, 128, 0.9],
-      [-76, 141, 0.9], [-48, 141, 0.9], [-18, 141, 0.9]
+      [-70, 76, 0.95], [-70, 105, 1.0], [-70, 128, 0.9],
+      [70, 76, 0.95], [70, 105, 1.0], [70, 128, 0.9],
+      [-36, 160, 0.9], [-12, 160, 0.9], [12, 160, 0.9], [36, 160, 0.9]
     ];
     treePoints.forEach((point, index) => addTree(root, materials, "arenaDistrictTree_" + index, point[0], point[1], point[2]));
 
-    // Eight low-rise villas remain outside the boulevard on west, north and east parcels.
+    // Eight low-rise villas remain outside the enlarged boulevard on west, north and east parcels.
     const collision = context.systems && context.systems.collision;
     const villaSpecs = [
-      { x: -97, z: 78, facing: "west" },
-      { x: -97, z: 112, facing: "west" },
-      { x: 10, z: 78, facing: "east" },
-      { x: 10, z: 112, facing: "east" },
-      { x: -84, z: 148, facing: "north" },
-      { x: -56, z: 148, facing: "north" },
-      { x: -28, z: 148, facing: "north" },
-      { x: 0, z: 148, facing: "north" }
+      { x: -68, z: 78, facing: "west" },
+      { x: -68, z: 112, facing: "west" },
+      { x: 68, z: 78, facing: "east" },
+      { x: 68, z: 112, facing: "east" },
+      { x: -36, z: 164, facing: "north" },
+      { x: -12, z: 164, facing: "north" },
+      { x: 12, z: 164, facing: "north" },
+      { x: 36, z: 164, facing: "north" }
     ];
     villaSpecs.forEach((spec, index) => addVilla(root, materials, collision, spec, index));
 
