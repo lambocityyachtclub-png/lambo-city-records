@@ -8,6 +8,7 @@ import { promisify } from "node:util";
 
 import { createLocalGitWorkspaceAdapter } from "../execution/localGitWorkspaceAdapter.js";
 import { createLocalJsonReviewStore } from "../execution/localJsonReviewStore.js";
+import { createDevelopmentSystem } from "../engine/developmentSystem.js";
 
 const execFile = promisify(execFileCallback);
 
@@ -157,3 +158,61 @@ test("Local review store rejects malformed IDs and preserves review status", asy
     await rm(directory, { recursive: true, force: true });
   }
 });
+
+
+test("Development System runs a real local Git proposal through owner review", async () => {
+  const root = await createGitFixture();
+  const reviewsDirectory = await mkdtemp(path.join(os.tmpdir(), "alive-system-reviews-"));
+  let proposalCalls = 0;
+  try {
+    const system = await createDevelopmentSystem({
+      localExecutionOptions: {
+        repositoryRoot: root,
+        baseRef: "HEAD",
+        allowedPaths: ["development/example"],
+        reviewDirectory: reviewsDirectory,
+        proposalProvider: async ({ task }) => {
+          proposalCalls += 1;
+          return {
+            summary: task.title,
+            provider: "owner-configured-test-provider",
+            fileChanges: [{
+              path: "development/example/from-alive.js",
+              content: "export const createdByAlive = true;\\n"
+            }]
+          };
+        },
+        testCommands: [{ command: "node", args: ["--version"] }]
+      }
+    });
+
+    const submitted = await system.submitWorldFinding({
+      title: "Verify local Git execution",
+      description: "Exercise a local worktree and review package.",
+      area: "water"
+    });
+    const result = await system.executeNextWorldTask();
+    assert.equal(result.status, "review");
+    assert.equal(result.productionChangesMade, false);
+    assert.deepEqual(result.changedFiles, ["development/example/from-alive.js"]);
+    assert.equal(proposalCalls, 1);
+    assert.equal(result.review.status, "awaiting_owner_review");
+    assert.equal(system.director.getTask(submitted.task.id).status, "review");
+
+    const { stdout: status } = await execFile("git", ["-C", root, "status", "--porcelain"]);
+    assert.equal(status.trim(), "");
+    assert.equal((await readFileSafe(path.join(root, "development", "example", "from-alive.js"))), null);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+    await rm(reviewsDirectory, { recursive: true, force: true });
+  }
+});
+
+async function readFileSafe(filePath) {
+  try {
+    return await (await import("node:fs/promises")).readFile(filePath, "utf8");
+  } catch (error) {
+    if (error.code === "ENOENT") return null;
+    throw error;
+  }
+}
