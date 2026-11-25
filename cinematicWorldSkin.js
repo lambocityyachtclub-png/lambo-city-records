@@ -153,7 +153,7 @@ function drawBillboardArt(config) {
 
 export default {
   init(scene) {
-    // Keep the four existing billboard positions, rotations and support structures.
+    // Keep the four existing billboard positions, rotations and support structures.\n    // Artwork is generated locally so the temporary brand creative can be swapped later.
     const placements = [
       { x: -70, z: -15, rotY: 0.5, accent: 0xd9b66f },
       { x: 70, z: -15, rotY: -0.5, accent: 0xf2c66d },
