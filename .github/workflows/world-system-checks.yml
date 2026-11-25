@@ -1,5 +1,7 @@
 name: World System Checks
 
+# Keep release regression suites registered for both push and pull-request events.
+
 on:
   push:
     paths:
