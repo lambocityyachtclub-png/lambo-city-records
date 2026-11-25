@@ -90,7 +90,7 @@ function normalizeIntent(value) {
   if (typeof value !== "string" || !value.trim()) {
     throw new Error("A non-empty development intent is required.");
   }
-  return value.trim().toLowerCase().replace(/\\s+/g, " ");
+  return value.trim().toLowerCase().replace(/\s+/g, " ");
 }
 
 function matchesTrigger(intent, trigger) {
