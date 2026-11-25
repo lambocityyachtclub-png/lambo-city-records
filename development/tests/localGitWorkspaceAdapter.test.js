@@ -35,13 +35,14 @@ test("Local adapter creates a disposable worktree, applies a proposal, and runs 
       assert.equal(workspacePath, undefined);
       assert.equal(await readAllowedFile("development/example/base.js"), "export const base = true;\\n");
       return {
-      summary: "Add a bounded example change",
-      provider: "test-fixture",
-      fileChanges: [{
-        path: "development/example/new.js",
-        content: "export const added = true;\n"
-      }]
-    }),
+        summary: "Add a bounded example change",
+        provider: "test-fixture",
+        fileChanges: [{
+          path: "development/example/new.js",
+          content: "export const added = true;\\n"
+        }]
+      };
+    },
     testCommands: [{ command: "node", args: ["--version"] }]
   });
 
