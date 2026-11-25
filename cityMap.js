@@ -19,8 +19,8 @@ const CITY_MAP = Object.freeze({
     marinaBoardwalk: Object.freeze({
       id: "marina-boardwalk",
       type: "pedestrian-waterfront",
-      road: Object.freeze({ axis: "X", centerX: 0, centerZ: 46, length: 90, width: 8, minX: -45, maxX: 45, minZ: 42, maxZ: 50 }),
-      sidewalks: Object.freeze([{ centerZ: 39.5 }, { centerZ: 52.5 }]),
+      road: Object.freeze({ axis: "X", centerX: 0, centerZ: 46, length: 110, width: 8, minX: -55, maxX: 55, minZ: 42, maxZ: 50 }),
+      sidewalks: Object.freeze([{ centerZ: 39.5, minX: -55, maxX: 55 }, { centerZ: 52.5, minX: -55, maxX: 55 }]),
       existingLand: Object.freeze({ minX: -65, maxX: 65, minZ: 10, maxZ: 45 }),
       vehiclePolicy: "restricted; service/emergency access only",
       waterPolicy: "water begins outside surveyed land and dock footprints; never pave over open water"
@@ -34,25 +34,25 @@ const CITY_MAP = Object.freeze({
     conferenceCenter: Object.freeze({
       id: "conference-center",
       status: "interim-existing-structure",
-      centerX: -43,
+      centerX: 0,
       centerZ: 97,
       footprintWidth: 28,
       footprintDepth: 24,
-      accessRoadX: -37,
+      accessRoadX: 0,
       accessRoadStartZ: 46,
       accessRoadEndZ: 80,
-      districtGround: Object.freeze({ centerX: -43, centerZ: 95, width: 54, depth: 62, minZ: 64, maxZ: 126 })
+      districtGround: Object.freeze({ centerX: 0, centerZ: 103, width: 160, depth: 134, minZ: 36, maxZ: 170 })
     }),
 
     arenaDistrict: Object.freeze({
       id: "lambo-city-arena-district",
       status: "approved-master-plan-provisional-coordinates",
-      origin: Object.freeze({ x: -43, z: 97 }),
-      bounds: Object.freeze({ minX: -105, maxX: 19, minZ: 48, maxZ: 158 }),
-      ground: Object.freeze({ centerX: -43, centerZ: 103, width: 124, depth: 110, topY: 0.65 }),
+      origin: Object.freeze({ x: 0, z: 96.5 }),
+      bounds: Object.freeze({ minX: -80, maxX: 80, minZ: 36, maxZ: 170 }),
+      ground: Object.freeze({ centerX: 0, centerZ: 103, width: 160, depth: 134, topY: 0.65 }),
       arena: Object.freeze({
         id: "lambo-city-conference-center-arena",
-        centerX: -43,
+        centerX: 0,
         centerZ: 97,
         footprintWidth: 54,
         footprintDepth: 44,
@@ -63,14 +63,14 @@ const CITY_MAP = Object.freeze({
       boulevard: Object.freeze({
         id: "arena-square-boulevard",
         type: "closed-four-sided-two-way-loop",
-        centerX: -43,
-        centerZ: 97,
-        outerWidth: 84,
-        outerDepth: 74,
+        centerX: 0,
+        centerZ: 96.5,
+        outerWidth: 110,
+        outerDepth: 110,
         roadWidth: 9,
         sidewalkWidth: 3,
         corners: "all four corners must use connected curb-return geometry",
-        entryConnection: "store-side boardwalk approach connects to the south-west boulevard junction without routing ordinary traffic through the pedestrian boardwalk"
+        entryConnection: "the existing boardwalk street is the south side of the square loop; east and west boulevard legs meet its two ends, with no duplicate parallel south street"
       }),
       villaParcels: Object.freeze({
         id: "lambo-city-villas",
@@ -86,7 +86,7 @@ const CITY_MAP = Object.freeze({
         futureConnections: "reserve outer-street attachment points for separately named future districts"
       }),
       constraints: Object.freeze([
-        "Do not move or overlap Records HQ, Grand Stage, marina boardwalk, or central dock approach",
+        "Keep Records HQ, Grand Stage, marina boardwalk, and central dock approach fixed; extend the boardwalk street to meet the square loop",
         "Do not build roads or foundations over water",
         "Do not create a partial loop; all four boulevard sides and corners must connect",
         "Villa parcels must remain outside the boulevard and preserve the arena sightline",

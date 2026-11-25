@@ -6,8 +6,8 @@ import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 // of both brown waterfront land sections.
 
 const STREET_Z = 46;
-const STREET_X_MIN = -45;
-const STREET_X_MAX = 45;
+const STREET_X_MIN = -55;
+const STREET_X_MAX = 55;
 const STREET_LEN = STREET_X_MAX - STREET_X_MIN;
 const STREET_X_MID = (STREET_X_MIN + STREET_X_MAX) / 2;
 
