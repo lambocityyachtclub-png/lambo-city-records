@@ -143,16 +143,35 @@ function addVilla(parent, materials, collision, spec, index) {
     }
   }
 
-  // Ground-level entry is oriented toward the boulevard-facing side.
-  const doorZ = facing === "north" ? z - 5.08 : z - 5.08;
-  addBox(group, "villa_" + index + "_entry", [1.7, 3.0, 0.16], [x, 2.35, doorZ], materials.villaGlass);
-  addBox(group, "villa_" + index + "_entryCanopy", [3.0, 0.18, 1.3], [x, 4.05, z - 5.55], materials.gold);
+  // Entries face the boulevard; balconies and primary glazing face outward.
+  if (facing === "west") {
+    addBox(group, "villa_" + index + "_entry", [0.16, 3.0, 1.7], [x + 6.08, 2.35, z], materials.villaGlass);
+    addBox(group, "villa_" + index + "_entryCanopy", [1.3, 0.18, 3.0], [x + 5.55, 4.05, z], materials.gold);
+  } else if (facing === "east") {
+    addBox(group, "villa_" + index + "_entry", [0.16, 3.0, 1.7], [x - 6.08, 2.35, z], materials.villaGlass);
+    addBox(group, "villa_" + index + "_entryCanopy", [1.3, 0.18, 3.0], [x - 5.55, 4.05, z], materials.gold);
+  } else {
+    addBox(group, "villa_" + index + "_entry", [1.7, 3.0, 0.16], [x, 2.35, z - 5.08], materials.villaGlass);
+    addBox(group, "villa_" + index + "_entryCanopy", [3.0, 0.18, 1.3], [x, 4.05, z - 5.55], materials.gold);
+  }
 
   if (collision && typeof collision.registerBox === "function") {
-    collision.registerBox("arenaVilla_" + index + "_west", { x: x - 5.95, z, width: 0.2, depth: 10, minY: 0, maxY: height + 1, level: "arena-villas" });
-    collision.registerBox("arenaVilla_" + index + "_east", { x: x + 5.95, z, width: 0.2, depth: 10, minY: 0, maxY: height + 1, level: "arena-villas" });
-    collision.registerBox("arenaVilla_" + index + "_north", { x, z: z + 4.95, width: 12, depth: 0.2, minY: 0, maxY: height + 1, level: "arena-villas" });
-    collision.registerBox("arenaVilla_" + index + "_south", { x, z: z - 4.95, width: 12, depth: 0.2, minY: 0, maxY: height + 1, level: "arena-villas" });
+    const wallOptions = { minY: 0, maxY: height + 1, level: "arena-villas" };
+    collision.registerBox("arenaVilla_" + index + "_north", { x, z: z + 4.95, width: 12, depth: 0.2, ...wallOptions });
+    collision.registerBox("arenaVilla_" + index + "_southLeft", { x: x - 3.6, z: z - 4.95, width: 4.8, depth: 0.2, ...wallOptions });
+    collision.registerBox("arenaVilla_" + index + "_southRight", { x: x + 3.6, z: z - 4.95, width: 4.8, depth: 0.2, ...wallOptions });
+    if (facing === "west") {
+      collision.registerBox("arenaVilla_" + index + "_west", { x: x - 5.95, z, width: 0.2, depth: 10, ...wallOptions });
+      collision.registerBox("arenaVilla_" + index + "_eastFront", { x: x + 5.95, z: z - 3.1, width: 0.2, depth: 3.8, ...wallOptions });
+      collision.registerBox("arenaVilla_" + index + "_eastRear", { x: x + 5.95, z: z + 3.1, width: 0.2, depth: 3.8, ...wallOptions });
+    } else if (facing === "east") {
+      collision.registerBox("arenaVilla_" + index + "_east", { x: x + 5.95, z, width: 0.2, depth: 10, ...wallOptions });
+      collision.registerBox("arenaVilla_" + index + "_westFront", { x: x - 5.95, z: z - 3.1, width: 0.2, depth: 3.8, ...wallOptions });
+      collision.registerBox("arenaVilla_" + index + "_westRear", { x: x - 5.95, z: z + 3.1, width: 0.2, depth: 3.8, ...wallOptions });
+    } else {
+      collision.registerBox("arenaVilla_" + index + "_west", { x: x - 5.95, z, width: 0.2, depth: 10, ...wallOptions });
+      collision.registerBox("arenaVilla_" + index + "_east", { x: x + 5.95, z, width: 0.2, depth: 10, ...wallOptions });
+    }
   }
 }
 
