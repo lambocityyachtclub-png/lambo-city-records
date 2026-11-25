@@ -1,10 +1,14 @@
 name: World System Checks
 
+# Keep release regression suites registered for both push and pull-request events.
+
 on:
   push:
     paths:
       - "main.js"
       - "engine.js"
+      - "palms.js"
+      - "scripts/test-palm-canopy.mjs"
       - "npc.js"
       - "characterSystem.js"
       - "dockLife.js"
@@ -16,6 +20,8 @@ on:
       - "stageFireworks.js"
       - "heroPerformance.js"
       - "scripts/test-dock-life.mjs"
+      - "scripts/test-dock-light-budget.mjs"
+      - "scripts/test-stage-music-lifecycle.mjs"
       - "scripts/test-concert-audio-approach.mjs"
       - "scripts/test-song-clock-stage-reactions.mjs"
       - "scripts/test-hero-song-choreography.mjs"
@@ -44,6 +50,8 @@ on:
   pull_request:
     paths:
       - "main.js"
+      - "palms.js"
+      - "scripts/test-palm-canopy.mjs"
       - "engine.js"
       - "npc.js"
       - "characterSystem.js"
@@ -55,6 +63,8 @@ on:
       - "stageLiveDrummer.js"
       - "heroPerformance.js"
       - "scripts/test-dock-life.mjs"
+      - "scripts/test-dock-light-budget.mjs"
+      - "scripts/test-stage-music-lifecycle.mjs"
       - "scripts/test-concert-audio-approach.mjs"
       - "scripts/test-song-clock-stage-reactions.mjs"
       - "scripts/test-hero-song-choreography.mjs"
@@ -92,18 +102,24 @@ jobs:
           node-version: 22
       - name: Check world module syntax
         run: |
-          for file in main.js engine.js npc.js characterSystem.js dockLife.js stageMusic.js stageCrowdPulse.js stageSpotlights.js stageLasers.js stageLiveDrummer.js stageFireworks.js heroPerformance.js input.js player.js marina.js waterfrontStorefrontDetails.js world.js cityMap.js conferenceCenterDistrict.js dock.js dockPath.js dockLuxuryOverhaul.js grandStagePier.js dockMaterialPalette.js sidewalkSurface.js water.js
+          for file in main.js palms.js engine.js npc.js characterSystem.js dockLife.js stageMusic.js stageCrowdPulse.js stageSpotlights.js stageLasers.js stageLiveDrummer.js stageFireworks.js heroPerformance.js input.js player.js marina.js waterfrontStorefrontDetails.js world.js cityMap.js conferenceCenterDistrict.js dock.js dockPath.js dockLuxuryOverhaul.js grandStagePier.js dockMaterialPalette.js sidewalkSurface.js water.js
           do
             node --experimental-default-type=module --check "$file"
           done
       - name: Test bounded dock visitors and ambient chatter
         run: node --experimental-default-type=module scripts/test-dock-life.mjs
+      - name: Test approved palm canopy placement and foliage
+        run: node --experimental-default-type=module scripts/test-palm-canopy.mjs
+      - name: Test dock lighting budget and preserved fixtures
+        run: node --experimental-default-type=module scripts/test-dock-light-budget.mjs
       - name: Test concert approach audio and HERO trigger
         run: node --experimental-default-type=module scripts/test-concert-audio-approach.mjs
       - name: Test song-clock stage reactions
         run: node --experimental-default-type=module scripts/test-song-clock-stage-reactions.mjs
       - name: Test HERO song-driven choreography
         run: node --experimental-default-type=module scripts/test-hero-song-choreography.mjs
+      - name: Test HERO stage music one-shot lifecycle
+        run: node --experimental-default-type=module scripts/test-stage-music-lifecycle.mjs
       - name: Test live stage drummer
         run: node --experimental-default-type=module scripts/test-live-stage-drummer.mjs
       - name: Test HERO finale fireworks
