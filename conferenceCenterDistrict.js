@@ -276,11 +276,11 @@ export default {
     addBox(root, "arenaBoulevardInnerSidewalkNorth", [horizontalLength, sidewalkThickness, ROAD.sidewalkWidth], [originX, 0.76, originZ + innerSidewalkOffsetZ], materials.sidewalk);
 
     // Curb returns at all four corners make the loop read as a connected street, not four loose slabs.
-    const cornerX = halfRoadX - ROAD.roadWidth / 2;
-    const cornerZ = halfRoadZ - ROAD.roadWidth / 2;
+    const cornerX = halfRoadX;
+    const cornerZ = halfRoadZ;
     for (const sx of [-1, 1]) {
       for (const sz of [-1, 1]) {
-        addBox(root, "arenaBoulevardCornerCurb_" + sx + "_" + sz, [1.0, 0.22, 1.0], [originX + sx * cornerX, 0.79, originZ + sz * cornerZ], materials.curb);
+        addBox(root, "arenaBoulevardCornerCurb_" + sx + "_" + sz, [0.36, 0.16, 0.36], [originX + sx * cornerX, 0.75, originZ + sz * cornerZ], materials.curb);
       }
     }
 
@@ -320,14 +320,14 @@ export default {
     const leftX = bx - halfW;
     const rightX = bx + halfW;
     const wallHeight = 18.5;
-    addBox(root, "arenaFoundation", [CENTER.footprintWidth, 0.7, CENTER.footprintDepth], [bx, 1.0, bz], materials.darkMetal, { castShadow: true });
-    addBox(root, "arenaWestFacade", [1.0, wallHeight, CENTER.footprintDepth], [leftX + 0.5, 10.55, bz], materials.facade, { castShadow: true });
-    addBox(root, "arenaEastFacade", [1.0, wallHeight, CENTER.footprintDepth], [rightX - 0.5, 10.55, bz], materials.facade, { castShadow: true });
-    addBox(root, "arenaRearFacade", [CENTER.footprintWidth, wallHeight, 1.0], [bx, 10.55, rearZ - 0.5], materials.facade, { castShadow: true });
+    addBox(root, "arenaFoundation", [CENTER.footprintWidth, 0.1, CENTER.footprintDepth], [bx, 0.6, bz], materials.darkMetal, { castShadow: true });
+    addBox(root, "arenaWestFacade", [1.0, wallHeight, CENTER.footprintDepth], [leftX + 0.5, 9.9, bz], materials.facade, { castShadow: true });
+    addBox(root, "arenaEastFacade", [1.0, wallHeight, CENTER.footprintDepth], [rightX - 0.5, 9.9, bz], materials.facade, { castShadow: true });
+    addBox(root, "arenaRearFacade", [CENTER.footprintWidth, wallHeight, 1.0], [bx, 9.9, rearZ - 0.5], materials.facade, { castShadow: true });
 
     // South facade wings leave a generous, clearly readable public entrance.
-    addBox(root, "arenaSouthFacadeWest", [17, wallHeight, 1.0], [bx - 18.5, 10.55, frontZ + 0.5], materials.facade, { castShadow: true });
-    addBox(root, "arenaSouthFacadeEast", [17, wallHeight, 1.0], [bx + 18.5, 10.55, frontZ + 0.5], materials.facade, { castShadow: true });
+    addBox(root, "arenaSouthFacadeWest", [17, wallHeight, 1.0], [bx - 18.5, 9.9, frontZ + 0.5], materials.facade, { castShadow: true });
+    addBox(root, "arenaSouthFacadeEast", [17, wallHeight, 1.0], [bx + 18.5, 9.9, frontZ + 0.5], materials.facade, { castShadow: true });
     addBox(root, "arenaEntranceHeader", [20, 4.2, 1.2], [bx, 18.2, frontZ + 0.45], materials.darkMetal, { castShadow: true });
 
     // Large curtain-wall glass fields and champagne-metal vertical fins.
@@ -377,9 +377,9 @@ export default {
     root.add(facadeSign);
 
     // A broad arrival forecourt, shallow accessible steps, and formal planters.
-    addBox(root, "arenaArrivalPlaza", [42, 0.18, 7], [bx, 0.78, frontZ - 5.8], materials.stone);
+    addBox(root, "arenaArrivalPlaza", [42, 0.14, 7], [bx, 0.72, frontZ - 5.8], materials.stone);
     for (let n = 0; n < 3; n++) {
-      addBox(root, "arenaEntryStep_" + n, [24, 0.18, 0.9], [bx, 0.78 + n * 0.16, frontZ - 2.1 + n * 0.8], materials.sidewalk);
+      addBox(root, "arenaEntryPavingBand_" + n, [24, 0.06, 0.42], [bx, 0.82, frontZ - 2.1 + n * 0.8], materials.sidewalk);
     }
     for (const side of [-1, 1]) {
       addBox(root, "arenaEntryPlanter_" + side, [5.2, 0.75, 3.0], [bx + side * 18.5, 1.05, frontZ - 5.8], materials.planter);
