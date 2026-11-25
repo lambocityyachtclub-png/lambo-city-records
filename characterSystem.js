@@ -202,10 +202,12 @@ export default {
   update(delta, context) {
     const safeDelta = Math.min(Math.max(delta || 0, 0), 0.05);
     elapsed += safeDelta;
+    const musicPlaying = !!context?.systems?.stageMusic?.isPlaying?.();
     const clock = context?.systems?.stageMusic?.getPlaybackClock?.();
-    const musicPlaying = !!clock?.playing;
-    const animationTime = musicPlaying ? clock.currentTime : elapsed;
-    const musicBoost = musicPlaying ? 1.12 : 1;
+    const playbackClockPlaying = !!clock?.playing;
+    const musicActive = musicPlaying || playbackClockPlaying;
+    const animationTime = musicActive && playbackClockPlaying ? clock.currentTime : elapsed;
+    const musicBoost = musicActive ? 1.12 : 1;
     characters.forEach(character => updateWalking(character, safeDelta, context, musicBoost, animationTime));
   },
 
