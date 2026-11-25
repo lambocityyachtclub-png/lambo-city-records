@@ -2,8 +2,8 @@ import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 import CITY_MAP from "./cityMap.js";
 
 // LAMBO CITY — Arena / Conference Center District
-// Builds the approved landmark, complete four-sided boulevard, public realm,
-// and low-rise villa parcels. Protected waterfront and HQ coordinates are untouched.
+// Builds the approved landmark, unified square street loop, public realm,
+// and low-rise villa parcels. The existing boardwalk is the south street edge.
 
 const PLAN = CITY_MAP.districts.arenaDistrict;
 const CENTER = PLAN.arena;
