@@ -41,7 +41,7 @@ const proposalProvider = createLocalProposalQueueProvider({
 
 const testCommands = [{
   command: "node",
-  args: ["--experimental-default-type=module", "--test", "development/tests"]
+  args: ["--experimental-default-type=module", "--test", "development/tests/*.test.js"]
 }];
 
 const system = await createDevelopmentSystem({
