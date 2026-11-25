@@ -173,14 +173,14 @@ function buildStageFascia(parent, darkMetal, goldMetal) {
 
 function buildSpeakerHardware(parent) {
   const coneMat = new THREE.MeshStandardMaterial({
-    color: 0x09090b,
-    metalness: 0.28,
-    roughness: 0.82
+    color: 0x15181d,
+    metalness: 0.24,
+    roughness: 0.9
   });
   const surroundMat = new THREE.MeshStandardMaterial({
-    color: 0x5a5b60,
-    metalness: 0.78,
-    roughness: 0.34
+    color: 0x858b94,
+    metalness: 0.72,
+    roughness: 0.42
   });
 
   const coneGeometry = new THREE.CylinderGeometry(0.34, 0.34, 0.075, 20);
