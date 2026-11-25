@@ -2,13 +2,21 @@ const API="/api/alive/";
 let ownerAuthenticated=false;
 let authClientPromise;
 let enrollmentAuthClientPromise;
-let pendingBackupCodes=[];
-let founderSetupPassword="";
 let enrollmentToken=new URLSearchParams(window.location.hash.replace(/^#/,"")).get("enroll")||"";
 if(enrollmentToken)history.replaceState(null,"",window.location.pathname+window.location.search);
 const createOwnerButton=document.getElementById("create-owner-account-button");
 if(createOwnerButton)createOwnerButton.hidden=!enrollmentToken;
-function createAuthClient(includeEnrollmentToken=false){return Promise.all([import("https://esm.sh/better-auth@1.7.23/client"),import("https://esm.sh/@better-auth/passkey@1.7.23/client"),import("https://esm.sh/better-auth@1.7.23/client/plugins")]).then(([core,passkeys,plugins])=>core.createAuthClient({baseURL:window.location.origin+"/api/alive/auth",fetchOptions:{headers:includeEnrollmentToken&&enrollmentToken?{"x-alive-owner-enrollment-token":enrollmentToken}:{}},plugins:[passkeys.passkeyClient(),plugins.twoFactorClient({onTwoFactorRedirect:()=>{const panel=document.getElementById("two-factor-panel");if(panel)panel.hidden=false;}})]}));}
+const signInButton=document.getElementById("password-signin-button");
+if(signInButton)signInButton.hidden=!!enrollmentToken;
+const confirmWrap=document.getElementById("password-confirm-wrap");
+if(confirmWrap)confirmWrap.hidden=!enrollmentToken;
+const passwordInput=document.getElementById("owner-password");
+if(passwordInput)passwordInput.autocomplete=enrollmentToken?"new-password":"current-password";
+const authHeading=document.getElementById("auth-heading");
+if(authHeading)authHeading.textContent=enrollmentToken?"Create your ALIVE owner password":"Sign in to ALIVE";
+const authDescription=document.getElementById("auth-description");
+if(authDescription)authDescription.textContent=enrollmentToken?"Choose one password for ALIVE. Safari can save it in your iPad Passwords app. This does not change any other password.":"Use your owner email and password. Safari can save the password in your iPad Passwords app so you do not have to memorize it.";
+function createAuthClient(includeEnrollmentToken=false){return import("https://esm.sh/better-auth@1.7.23/client").then(core=>core.createAuthClient({baseURL:window.location.origin+"/api/alive/auth",fetchOptions:{headers:includeEnrollmentToken&&enrollmentToken?{"x-alive-owner-enrollment-token":enrollmentToken}:{}}}));}
 function getAuthClient(){if(!authClientPromise)authClientPromise=createAuthClient();return authClientPromise;}
 function getEnrollmentAuthClient(){if(!enrollmentToken)throw new Error("Founder setup requires the private one-time invitation.");if(!enrollmentAuthClientPromise)enrollmentAuthClientPromise=createAuthClient(true);return enrollmentAuthClientPromise;}
 let statusSnapshot=null;
@@ -66,22 +74,49 @@ function disconnect(){ownerAuthenticated=false;statusSnapshot=null;$("workspace"
 async function enterOwnerConsole(){ownerAuthenticated=true;$("auth-panel").hidden=true;$("workspace").hidden=false;try{await refreshAll();notify("Secure ALIVE owner session connected.")}catch(error){disconnect();notify(error.message)}}
 $("identity-form").addEventListener("submit",async event=>{event.preventDefault();const button=event.currentTarget.querySelector('button[type="submit"]');button.disabled=true;try{await request("personal/identity",{method:"POST",body:{displayName:$("identity-display-name").value.trim()}});notify("Personal identity updated.");await refreshPersonal()}catch(error){notify(error.message)}finally{button.disabled=false}});
 $("memory-form").addEventListener("submit",async event=>{event.preventDefault();const form=event.currentTarget;const data=new FormData(form);const button=form.querySelector('button[type="submit"]');button.disabled=true;try{const tags=String(data.get("tags")||"").split(",").map(tag=>tag.trim()).filter(Boolean).slice(0,12);await request("personal/memories",{method:"POST",body:{category:data.get("category"),content:String(data.get("content")||"").trim(),tags,shareWithDevelopment:data.get("shareWithDevelopment")==="on"}});form.reset();notify("Private memory saved to your ALIVE identity.");await refreshPersonal()}catch(error){notify(error.message)}finally{button.disabled=false}});
-// Owner sign-in is passkey-only. Password credentials are generated privately during first enrollment and are never shown or requested.
-$("create-owner-account-button").addEventListener("click",async()=>{const email=$("owner-email").value.trim().toLowerCase();if(!enrollmentToken){notify("Founder setup requires the private one-time invitation.");return}if(!email){notify("Enter your configured owner email to continue.");return}const button=$("create-owner-account-button");button.disabled=true;try{const randomBytes=new Uint8Array(32);crypto.getRandomValues(randomBytes);const password=Array.from(randomBytes,value=>value.toString(16).padStart(2,"0")).join("");founderSetupPassword=password;const enrollmentAuth=await getEnrollmentAuthClient();const result=await enrollmentAuth.signUp.email({email,password,name:"ALIVE Owner"});if(result.error)throw new Error(result.error.message||"Founder account could not be created.");enrollmentToken="";enrollmentAuthClientPromise=null;const auth=await getAuthClient();const session=await auth.getSession();if(!session.data?.user)throw new Error("The founder account was created, but its secure session could not be restored. Keep this page open and contact support before trying again.");await enterOwnerConsole();notify("Founder account created. Tap Set up Face ID now. No password is needed.")}catch(error){notify(error.message)}finally{button.disabled=false}});
-
-$("two-factor-form").addEventListener("submit",async event=>{event.preventDefault();const code=$("two-factor-code").value.trim();const method=$("two-factor-method").value;try{const auth=await getAuthClient();const result=method==="backup"?await auth.twoFactor.verifyBackupCode({code,trustDevice:true}):await auth.twoFactor.verifyTotp({code,trustDevice:true});if(result.error)throw new Error(result.error.message||"Verification failed.");$("two-factor-panel").hidden=true;const session=await auth.getSession();if(!session.data?.user)throw new Error("The verified owner session could not be restored.");await enterOwnerConsole();notify("Second factor verified. Owner session connected.")}catch(error){notify(error.message)}});
-async function startTwoFactorSetup(auth,password){const result=await auth.twoFactor.enable({password,method:"totp",issuer:"LAMBO CITY ALIVE"});if(result.error)throw new Error(result.error.message||"Authenticator setup could not start.");pendingBackupCodes=result.data?.backupCodes||[];const uri=result.data?.totpURI||"";$("totp-uri").textContent=uri;$("two-factor-setup").hidden=false;try{const qr=await import("https://esm.sh/qrcode@1.5.4");$("totp-qr").src=await qr.toDataURL(uri,{width:240,margin:1})}catch{$("totp-qr").removeAttribute("src")}notify("Scan the QR code in your authenticator app, then verify it to receive backup codes.")}
-$("enable-two-factor-button").addEventListener("click",async()=>{try{const auth=await getAuthClient();const password=founderSetupPassword||$("two-factor-password").value;if(!password)throw new Error("Authenticator recovery was already configured or this account needs owner recovery.");await startTwoFactorSetup(auth,password);founderSetupPassword="";$("two-factor-password").value=""}catch(error){notify(error.message)}});
-$("verify-two-factor-setup").addEventListener("click",async()=>{const code=$("setup-totp-code").value.trim();try{const auth=await getAuthClient();const result=await auth.twoFactor.verifyTotp({code,trustDevice:true});if(result.error)throw new Error(result.error.message||"Authenticator verification failed.");$("recovery-codes").textContent=pendingBackupCodes.join("\n");$("recovery-codes-panel").hidden=false;pendingBackupCodes=[];notify("Authenticator enabled. Save your one-time backup codes offline now.")}catch(error){notify(error.message)}});
-$("copy-totp-uri").addEventListener("click",async()=>{try{await navigator.clipboard.writeText($("totp-uri").textContent);notify("Authenticator setup URI copied. Treat it as a private secret.")}catch{notify("Copy was unavailable. Select and copy the URI manually.")}});
-$("copy-recovery-codes").addEventListener("click",async()=>{try{await navigator.clipboard.writeText($("recovery-codes").textContent);notify("Recovery codes copied. Store them somewhere private and offline.")}catch{notify("Copy was unavailable. Select and copy the codes manually.")}});
-$("passkey-button").addEventListener("click",async()=>{try{const auth=await getAuthClient();const result=await auth.signIn.passkey();if(result.error)throw new Error(result.error.message||"Passkey sign-in failed.");const session=await auth.getSession();if(!session.data?.user)throw new Error("The owner session could not be restored.");await enterOwnerConsole()}catch(error){notify(error.message)}});
+// Owner access uses a password the owner chooses and can save in iPad Passwords.
+$("create-owner-account-button").addEventListener("click",async()=>{
+  const email=$("owner-email").value.trim().toLowerCase();
+  const password=$("owner-password").value;
+  const confirmation=$("owner-password-confirm").value;
+  if(!enrollmentToken){notify("Open your private ALIVE owner setup link to create the first account.");return}
+  if(!email){notify("Enter your configured owner email.");return}
+  if(password.length<12){notify("Choose a password with at least 12 characters.");return}
+  if(password!==confirmation){notify("The passwords do not match.");return}
+  const button=$("create-owner-account-button");button.disabled=true;
+  try{
+    const enrollmentAuth=await getEnrollmentAuthClient();
+    const result=await enrollmentAuth.signUp.email({email,password,name:"ALIVE Owner"});
+    if(result.error)throw new Error(result.error.message||"Owner account could not be created.");
+    enrollmentToken="";enrollmentAuthClientPromise=null;
+    const auth=await getAuthClient();
+    const session=await auth.getSession();
+    if(!session.data?.user)throw new Error("The account was created, but the sign-in session did not start. Use the password you just chose to sign in.");
+    $("owner-password").value="";$("owner-password-confirm").value="";
+    await enterOwnerConsole();
+    notify("ALIVE owner account created. Save the password in iPad Passwords when Safari offers.");
+  }catch(error){notify(error.message)}
+  finally{button.disabled=false}
+});
+$("password-signin-button").addEventListener("click",async()=>{
+  const email=$("owner-email").value.trim().toLowerCase();
+  const password=$("owner-password").value;
+  if(!email||!password){notify("Enter your owner email and password.");return}
+  const button=$("password-signin-button");button.disabled=true;
+  try{
+    const auth=await getAuthClient();
+    const result=await auth.signIn.email({email,password});
+    if(result.error)throw new Error(result.error.message||"Owner sign-in failed.");
+    const session=await auth.getSession();
+    if(!session.data?.user)throw new Error("The owner session could not be restored. Try signing in again.");
+    $("owner-password").value="";
+    await enterOwnerConsole();
+  }catch(error){notify(error.message)}
+  finally{button.disabled=false}
+});
 $("refresh-button").addEventListener("click",async()=>{const button=$("refresh-button");button.disabled=true;try{await refreshAll();notify("ALIVE status refreshed.")}catch(error){notify(error.message)}finally{button.disabled=false}});
 $("disconnect-button").addEventListener("click",async()=>{try{const auth=await getAuthClient();await auth.signOut()}catch{}disconnect();notify("Owner session signed out.")});
 $("task-form").addEventListener("submit",async event=>{event.preventDefault();const form=event.currentTarget;const data=new FormData(form);const button=form.querySelector('button[type="submit"]');button.disabled=true;$("task-message").textContent="Submitting direction…";try{const criteria=String(data.get("acceptanceCriteria")||"").split(/\r?\n/).map(line=>line.trim()).filter(Boolean);const result=await request("tasks",{method:"POST",body:{title:String(data.get("title")||"").trim(),area:data.get("area"),description:String(data.get("description")||"").trim(),acceptanceCriteria:criteria,requiresApproval:data.get("requiresApproval")==="on",runner:"world"}});$("task-message").textContent="Task received: "+(result.task?.id||"queued")+". It has not been executed.";form.reset();form.elements.requiresApproval.checked=true;await refreshAll()}catch(error){$("task-message").textContent=error.message}finally{button.disabled=false}});
 $("run-button").addEventListener("click",async()=>{if(!statusSnapshot?.executionConfigured){notify("Execution is not configured.");return}const accepted=window.confirm("Run the next approved ALIVE world task now? This will send a proposal request to OpenAI and start an isolated Vercel Sandbox test. API and sandbox usage may incur charges. No production deployment will occur.");if(!accepted)return;const button=$("run-button");button.disabled=true;$("run-message").textContent="ALIVE is attempting one task. Keep this page open.";try{const result=await request("run",{method:"POST",body:{}});$("run-message").textContent=result.productionChangesMade===false?"Run finished. No production changes were made. Check owner review below.":"Run returned; inspect the result before proceeding.";notify("One-shot ALIVE run returned.");await refreshAll()}catch(error){$("run-message").textContent=error.message;notify(error.message)}finally{button.disabled=!statusSnapshot?.executionConfigured}});
-$("register-passkey-button").addEventListener("click",async()=>{const button=$("register-passkey-button");button.disabled=true;try{const auth=await getAuthClient();const result=await auth.passkey.addPasskey({name:"ALIVE Owner Passkey"});if(result.error)throw new Error(result.error.message||"Passkey registration failed.");notify("Face ID passkey registered on this device.");if(founderSetupPassword){try{await startTwoFactorSetup(auth,founderSetupPassword);founderSetupPassword="";$("two-factor-password").value=""}catch(error){notify("Face ID is ready. Recovery-code setup still needs attention: "+error.message)}}}catch(error){notify(error.message)}finally{button.disabled=false}});
-const authParams=new URLSearchParams(window.location.search);
-if(authParams.get("authError")){notify("That account link is invalid or expired. Request a new verification or password reset email.");history.replaceState(null,"",window.location.pathname)}
 getAuthClient().then(auth=>auth.getSession()).then(result=>{if(result.data?.user)enterOwnerConsole()}).catch(()=>{});
 window.addEventListener("pagehide",()=>{ownerAuthenticated=false});
