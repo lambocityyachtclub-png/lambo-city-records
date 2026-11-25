@@ -26,6 +26,8 @@ import {
 } from "./developmentWorker.js";
 import { createControlledDevelopmentExecutor } from "../execution/controlledDevelopmentExecutor.js";
 import { createLivingContractEngine } from "../contracts/livingContractEngine.js";
+import { createLocalGitWorkspaceAdapter } from "../execution/localGitWorkspaceAdapter.js";
+import { createLocalJsonReviewStore } from "../execution/localJsonReviewStore.js";
 
 export const DEVELOPMENT_SYSTEM_VERSION = "1.3.0";
 
@@ -45,7 +47,8 @@ export async function createDevelopmentSystem(options = {}) {
     workerEnabled = false,
     workspaceAdapter = null,
     reviewStore = null,
-    allowedPaths = null
+    allowedPaths = null,
+    localExecutionOptions = null
   } = options;
 
   const registry = createDevelopmentRegistry();
@@ -64,26 +67,44 @@ export async function createDevelopmentSystem(options = {}) {
   const contractEngine = createLivingContractEngine({ worldRunner });
   const policy = getDevelopmentPolicy();
 
-  const hasExecutionAdapters = workspaceAdapter !== null || reviewStore !== null || allowedPaths !== null;
-  if (workerExecutor && hasExecutionAdapters) {
-    throw new Error("Provide either workerExecutor or workspaceAdapter, reviewStore, and allowedPaths; not both.");
+  const hasInjectedAdapters = workspaceAdapter !== null || reviewStore !== null || allowedPaths !== null;
+  if (localExecutionOptions && hasInjectedAdapters) {
+    throw new Error("Provide localExecutionOptions or injected execution adapters, not both.");
   }
-  if (hasExecutionAdapters && (!workspaceAdapter || !reviewStore || !Array.isArray(allowedPaths) || allowedPaths.length === 0)) {
+  if (workerExecutor && (hasInjectedAdapters || localExecutionOptions)) {
+    throw new Error("Provide either workerExecutor or a controlled workspace configuration, not both.");
+  }
+  if (hasInjectedAdapters && (!workspaceAdapter || !reviewStore || !Array.isArray(allowedPaths) || allowedPaths.length === 0)) {
     throw new Error("Controlled execution requires workspaceAdapter, reviewStore, and a non-empty allowedPaths array.");
   }
 
+  let resolvedWorkspaceAdapter = workspaceAdapter;
+  let resolvedReviewStore = reviewStore;
+  let resolvedAllowedPaths = allowedPaths;
+  if (localExecutionOptions) {
+    if (typeof localExecutionOptions.reviewDirectory !== "string" || !localExecutionOptions.reviewDirectory.trim()) {
+      throw new Error("localExecutionOptions.reviewDirectory is required for persistent owner reviews.");
+    }
+    resolvedWorkspaceAdapter = createLocalGitWorkspaceAdapter(localExecutionOptions);
+    resolvedReviewStore = createLocalJsonReviewStore({
+      directory: localExecutionOptions.reviewDirectory
+    });
+    resolvedAllowedPaths = localExecutionOptions.allowedPaths;
+  }
+
+  const hasExecutionAdapters = hasInjectedAdapters || !!localExecutionOptions;
   const controlledExecutor = workerExecutor || (hasExecutionAdapters
     ? createControlledDevelopmentExecutor({
         developmentDirector: director,
-        workspaceAdapter,
-        reviewStore,
-        allowedPaths
+        workspaceAdapter: resolvedWorkspaceAdapter,
+        reviewStore: resolvedReviewStore,
+        allowedPaths: resolvedAllowedPaths
       })
     : null);
 
   // World execution is available only when the host explicitly supplies
-  // the isolated workspace, review store, and path allowlist adapters.
-  // A generic workerExecutor alone does not grant this specialist access.
+  // isolated local Git workspaces or all three controlled adapters.
+  // Neither mode commits, merges, deploys, or writes to production.
   const worldExecutor = hasExecutionAdapters ? controlledExecutor : null;
 
   const worker = controlledExecutor
