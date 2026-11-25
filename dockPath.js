@@ -4,6 +4,7 @@
 // cabin walkways in dockLuxuryOverhaul.js.
 
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
+import { DOCK_MATERIALS } from "./dockMaterialPalette.js";
 
 const PATH = {
   startX: 5.25,
@@ -128,16 +129,8 @@ export default {
     // Keep a darker structural edge beneath the timber boards.
     // Match the two timber tones used by dock.js:
     // warm structural wood beneath the same cross-planked dock boards.
-    const dockWood = new THREE.MeshStandardMaterial({
-      color: 0x8b5e3c,
-      roughness: 0.9
-    });
-
-    const premiumWood = new THREE.MeshStandardMaterial({
-      color: 0x6d4327,
-      roughness: 0.72,
-      metalness: 0.02
-    });
+    const dockWood = DOCK_MATERIALS.structuralWood;
+    const premiumWood = DOCK_MATERIALS.plankWood;
 
     const brass = new THREE.MeshStandardMaterial({
       color: 0xb78a42,
