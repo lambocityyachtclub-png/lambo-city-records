@@ -84,7 +84,7 @@ test("Local adapter rejects proposals outside its allowlist", async () => {
     proposalProvider: async () => ({
       fileChanges: [{ path: "src/main.js", content: "unsafe" }]
     }),
-    testCommands: [{ command: process.execPath, args: ["--version"] }]
+    testCommands: [{ command: "node", args: ["--version"] }]
   });
   let workspace;
   try {
@@ -107,7 +107,7 @@ test("Local adapter rejects path traversal before writing a file", async () => {
     proposalProvider: async () => ({
       fileChanges: [{ path: "development/example/../../src/main.js", content: "unsafe" }]
     }),
-    testCommands: [{ command: process.execPath, args: ["--version"] }]
+    testCommands: [{ command: "node", args: ["--version"] }]
   });
   let workspace;
   try {
@@ -197,6 +197,7 @@ test("Development System runs a real local Git proposal through owner review", a
     assert.deepEqual(result.changedFiles, ["development/example/from-alive.js"]);
     assert.equal(proposalCalls, 1);
     assert.equal(result.review.status, "awaiting_owner_review");
+    assert.equal(result.review.changes.fileChanges[0].content, "export const createdByAlive = true;\\n");
     assert.equal(system.director.getTask(submitted.task.id).status, "review");
 
     const { stdout: status } = await execFile("git", ["-C", root, "status", "--porcelain"]);
