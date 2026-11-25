@@ -14,8 +14,13 @@ test("ALIVE owner console is a separate no-index page and does not enter the gam
 
 test("owner authentication uses secure same-origin sessions, not browser bearer-token storage", () => {
   assert.match(script, /credentials:"same-origin"/);
-  assert.match(script, /signIn\.email/);
+  assert.doesNotMatch(script, /signIn\.email|requestPasswordReset|resetPassword/);
   assert.match(script, /signUp\.email/);
+  assert.match(script, /crypto\.getRandomValues/);
+  assert.match(script, /signIn\.passkey/);
+  assert.match(script, /passkey\.addPasskey/);
+  assert.match(html, /Passwordless sign in/);
+  assert.doesNotMatch(html, /owner-password|forgot-password-button|reset-password-panel/);
   assert.match(script, /task-approve/);
   assert.match(script, /task-reject/);
   assert.match(script, /decideTask/);
