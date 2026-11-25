@@ -19,6 +19,8 @@ test("owner authentication uses saved email/password sessions without browser be
   assert.match(script, /owner-password-confirm/);
   assert.match(html, /Sign in to ALIVE/);
   assert.match(html, /autocomplete="current-password"/);
+  assert.match(html, /<form class="auth-form" id="owner-auth-form">/);
+  assert.match(script, /owner-auth-form.*addEventListener\("submit"/s);
   assert.doesNotMatch(script, /localStorage|sessionStorage|document\.cookie|Authorization/);
   assert.match(script, /pagehide/);
   assert.match(script, /getSession/);
