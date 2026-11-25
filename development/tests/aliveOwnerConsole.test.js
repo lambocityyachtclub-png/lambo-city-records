@@ -96,9 +96,9 @@ test("owner server enables verified password sign-in, password recovery, passkey
 
 
 test("founder setup lets the owner choose a password during the one-time invitation", () => {
-  assert.match(script, /enrollmentAuth\.signUp\.email\(\{email,password,name:"ALIVE Owner"\}\)/);
+  assert.match(script, /auth\.signUp\.email\(\{email,password,name:"ALIVE Owner"\}\)/);
   assert.match(script, /password\.length<12/);
-  assert.match(script, /password!==confirmation/);
+  assert.match(script, /password!==\$\("owner-password-confirm"\)\.value/);
   assert.match(html, /type="password"/);
   assert.match(html, /owner-password-confirm/);
   assert.match(html, /Create my ALIVE owner account/);
