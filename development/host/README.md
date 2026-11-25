@@ -32,7 +32,6 @@ repository/review paths, allowed paths, and proposal provider with the values
 you have deliberately approved for that machine:
 
 ```js
-import { randomBytes } from "node:crypto";
 import { createDevelopmentSystem } from "../engine/developmentSystem.js";
 import { createLocalAliveHost } from "./localAliveHost.js";
 
