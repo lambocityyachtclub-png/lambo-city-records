@@ -99,10 +99,10 @@ export function addSegmentedSidewalk(parent, options) {
       : new THREE.BoxGeometry(curbWidth, curbHeight, depth);
     const curb = new THREE.Mesh(curbGeometry, curbMaterial);
     curb.name = name + "_roadsideCurb";
-    // Align the curb's road-facing outer face exactly with the road edge.
-    // The complete curb remains inside the sidewalk footprint: no gap,
-    // no overlap with the roadway, and one continuous pedestrian boundary.
-    const edgeOffset = crossLength / 2 - curbWidth / 2;
+    // Preserve the established small reveal between the curb and roadway.
+    // Corner-return geometry meets the straight curb centerlines separately.
+    const curbRoadClearance = 0.04;
+    const edgeOffset = crossLength / 2 - curbWidth / 2 - curbRoadClearance;
     const crossOffset = curbSide.startsWith("positive") ? edgeOffset : -edgeOffset;
     curb.position.set(
       x + (axis === "x" ? 0 : crossOffset),
@@ -114,4 +114,72 @@ export function addSegmentedSidewalk(parent, options) {
   }
 
   return { foundation: base, pavers };
+}
+
+/**
+ * Fills a sidewalk corner with a quarter-elliptical return and, optionally,
+ * a matching curved curb. Coordinates describe the center of the return;
+ * quadrant signs point into the pedestrian corner, away from the road.
+ */
+export function addSidewalkCornerReturn(parent, options) {
+  const {
+    name,
+    centerX,
+    centerZ,
+    radiusX,
+    radiusZ,
+    quadrantX,
+    quadrantZ,
+    surfaceMaterial,
+    curbMaterial = null,
+    surfaceY = 0.834,
+    curbCenterY = 0.74,
+    curbRadius = 0.09,
+    segments = 16
+  } = options;
+
+  if (!parent || !name || !surfaceMaterial ||
+      !(radiusX > 0) || !(radiusZ > 0) ||
+      ![-1, 1].includes(quadrantX) || ![-1, 1].includes(quadrantZ)) {
+    throw new TypeError("A valid sidewalk corner-return definition is required.");
+  }
+
+  const shape = new THREE.Shape();
+  shape.moveTo(centerX, -centerZ);
+  for (let i = 0; i <= segments; i++) {
+    const angle = (Math.PI / 2) * (i / segments);
+    const x = centerX + quadrantX * radiusX * Math.cos(angle);
+    const z = centerZ + quadrantZ * radiusZ * Math.sin(angle);
+    shape.lineTo(x, -z);
+  }
+  shape.closePath();
+
+  const surfaceGeometry = new THREE.ShapeGeometry(shape, segments);
+  surfaceGeometry.rotateX(-Math.PI / 2);
+  const surface = new THREE.Mesh(surfaceGeometry, surfaceMaterial);
+  surface.name = name + "_sidewalkSurface";
+  surface.position.y = surfaceY;
+  surface.receiveShadow = true;
+  parent.add(surface);
+
+  let curb = null;
+  if (curbMaterial) {
+    const points = [];
+    for (let i = 0; i <= segments; i++) {
+      const angle = (Math.PI / 2) * (i / segments);
+      points.push(new THREE.Vector3(
+        centerX + quadrantX * radiusX * Math.cos(angle),
+        curbCenterY,
+        centerZ + quadrantZ * radiusZ * Math.sin(angle)
+      ));
+    }
+    const curve = new THREE.CatmullRomCurve3(points, false, "centripetal");
+    const curbGeometry = new THREE.TubeGeometry(curve, segments, curbRadius, 6, false);
+    curb = new THREE.Mesh(curbGeometry, curbMaterial);
+    curb.name = name + "_curvedCurbReturn";
+    curb.receiveShadow = true;
+    parent.add(curb);
+  }
+
+  return { surface, curb };
 }
