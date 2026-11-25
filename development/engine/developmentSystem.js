@@ -298,19 +298,6 @@ export async function createDevelopmentSystem(options = {}) {
     return worker.runOnce();
   }
 
-  async function publishApprovedReview(input = {}) {
-    if (status !== DEVELOPMENT_SYSTEM_STATUS.READY) {
-      throw new Error("The development system is disabled.");
-    }
-    if (!approvedReviewPublisher) {
-      throw new Error("Approved review publishing is not configured.");
-    }
-    return approvedReviewPublisher.publishApprovedReview({
-      reviewStore: resolvedReviewStore,
-      ...input
-    });
-  }
-
   async function approveReview(input = {}) {
     if (status !== DEVELOPMENT_SYSTEM_STATUS.READY) throw new Error("The development system is disabled.");
     if (!resolvedReviewStore || typeof resolvedReviewStore.approveReview !== "function") throw new Error("Persistent owner review decisions are not configured.");
@@ -321,6 +308,13 @@ export async function createDevelopmentSystem(options = {}) {
     if (status !== DEVELOPMENT_SYSTEM_STATUS.READY) throw new Error("The development system is disabled.");
     if (!resolvedReviewStore || typeof resolvedReviewStore.rejectReview !== "function") throw new Error("Persistent owner review decisions are not configured.");
     return resolvedReviewStore.rejectReview(input.reviewId, { decidedBy: input.decidedBy, reason: input.reason });
+  }
+
+  async function listReviews() {
+    if (!resolvedReviewStore || typeof resolvedReviewStore.listReviews !== "function") {
+      throw new Error("Persistent owner review listing is not configured.");
+    }
+    return resolvedReviewStore.listReviews();
   }
 
   async function publishApprovedReview(input = {}) {
@@ -391,6 +385,7 @@ export async function createDevelopmentSystem(options = {}) {
     executeNextWorldTask,
     approveReview,
     rejectReview,
+    listReviews,
     publishApprovedReview,
     submitStudioFinding,
     submitStudioFindings,
