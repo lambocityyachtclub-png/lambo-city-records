@@ -13,6 +13,7 @@ on:
       - "characterSystem.js"
       - "dockLife.js"
       - "stageMusic.js"
+      - "ambientMusic.js"
       - "stageCrowdPulse.js"
       - "stageSpotlights.js"
       - "stageLasers.js"
@@ -59,6 +60,7 @@ on:
       - "characterSystem.js"
       - "dockLife.js"
       - "stageMusic.js"
+      - "ambientMusic.js"
       - "stageCrowdPulse.js"
       - "stageSpotlights.js"
       - "stageLasers.js"
@@ -106,7 +108,7 @@ jobs:
           node-version: 22
       - name: Check world module syntax
         run: |
-          for file in main.js palms.js engine.js npc.js characterSystem.js dockLife.js stageMusic.js stageCrowdPulse.js stageSpotlights.js stageLasers.js stageLiveDrummer.js stageFireworks.js heroPerformance.js heroSecurityExperience.js input.js player.js marina.js waterfrontStorefrontDetails.js world.js cityMap.js conferenceCenterDistrict.js dock.js dockPath.js dockLuxuryOverhaul.js grandStagePier.js dockMaterialPalette.js sidewalkSurface.js water.js
+          for file in main.js palms.js engine.js npc.js characterSystem.js dockLife.js stageMusic.js ambientMusic.js stageCrowdPulse.js stageSpotlights.js stageLasers.js stageLiveDrummer.js stageFireworks.js heroPerformance.js heroSecurityExperience.js input.js player.js marina.js waterfrontStorefrontDetails.js world.js cityMap.js conferenceCenterDistrict.js dock.js dockPath.js dockLuxuryOverhaul.js grandStagePier.js dockMaterialPalette.js sidewalkSurface.js water.js
           do
             node --experimental-default-type=module --check "$file"
           done
