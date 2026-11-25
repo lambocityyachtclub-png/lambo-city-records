@@ -55,7 +55,7 @@ const system = await createDevelopmentSystem({
       directory: process.env.ALIVE_PROPOSAL_DIRECTORY,
       repositoryRoot: process.env.ALIVE_REPOSITORY_ROOT
     }),
-    testCommands: [{ command: "node", args: ["--test", "development/tests"] }]
+    testCommands: [{ command: "node", args: ["--experimental-default-type=module", "--test", "development/tests/*.test.js"] }]
   },
   approvedReviewPublisherOptions: {
     repositoryRoot: process.env.ALIVE_REPOSITORY_ROOT,
