@@ -5,7 +5,7 @@
  * Review records are written atomically outside the Git worktree. This module
  * never approves, merges, commits, or deploys a proposal.
  */
-import { mkdir, readFile, readdir, rename, writeFile } from "node:fs/promises";
+import { mkdir, readFile, readdir, realpath, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 
@@ -25,9 +25,20 @@ function safeId(value) {
 
 export function createLocalJsonReviewStore(options = {}) {
   const directory = requireDirectory(options.directory);
+  const repositoryRoot = options.repositoryRoot ? path.resolve(options.repositoryRoot) : null;
 
   async function ensureDirectory() {
     await mkdir(directory, { recursive: true });
+    if (repositoryRoot) {
+      const [repoRealPath, reviewRealPath] = await Promise.all([
+        realpath(repositoryRoot),
+        realpath(directory)
+      ]);
+      const relative = path.relative(repoRealPath, reviewRealPath);
+      if (!relative || (!relative.startsWith("..") && !path.isAbsolute(relative))) {
+        throw new Error("The persistent review directory must be outside the Git repository.");
+      }
+    }
   }
 
   async function createReview(review) {
