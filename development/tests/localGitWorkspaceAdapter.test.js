@@ -323,7 +323,7 @@ test("Approved review publisher creates a local branch and commit after fresh pa
       changes: {
         fileChanges: [{
           path: "development/example/approved.js",
-          content: "export const ownerApproved = true;\\n"
+          content: "export const ownerApproved = true;\n"
         }]
       }
     });
@@ -352,9 +352,9 @@ test("Approved review publisher creates a local branch and commit after fresh pa
     const { stdout: branchSha } = await execFile("git", ["-C", root, "rev-parse", "alive/test-approved-publish"]);
     assert.equal(branchSha.trim(), result.commitSha);
     const { stdout: baseContent } = await execFile("git", ["-C", root, "show", "HEAD:development/example/base.js"]);
-    assert.equal(baseContent, "export const base = true;\\n");
+    assert.equal(baseContent, "export const base = true;\n");
     const { stdout: publishedContent } = await execFile("git", ["-C", root, "show", "alive/test-approved-publish:development/example/approved.js"]);
-    assert.equal(publishedContent, "export const ownerApproved = true;\\n");
+    assert.equal(publishedContent, "export const ownerApproved = true;\n");
     const { stdout: status } = await execFile("git", ["-C", root, "status", "--porcelain"]);
     assert.equal(status.trim(), "");
     assert.equal((await store.getReview(review.id)).status, "approved");
