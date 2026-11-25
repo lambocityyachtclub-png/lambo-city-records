@@ -35,7 +35,7 @@ export function createLocalJsonReviewStore(options = {}) {
         realpath(directory)
       ]);
       const relative = path.relative(repoRealPath, reviewRealPath);
-      if (!relative || relative === ".." || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative)) {
+      if (!relative || (relative !== ".." && !relative.startsWith(`..${path.sep}`) && !path.isAbsolute(relative))) {
         throw new Error("The persistent review directory must be outside the Git repository.");
       }
     }
