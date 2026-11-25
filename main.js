@@ -23,6 +23,7 @@ import DockLife from "./dockLife.js";
 import HeroPerformance from "./heroPerformance.js";
 import heroPostPerformance from "./heroPostPerformance.js";
 import HeroMentorInteraction from "./heroMentorInteraction.js";
+import HeroSecurityExperience from "./heroSecurityExperience.js";
 import CinematicFlowSystem from "./cinematicFlowSystem.js";
 import CinematicWorldSkin from "./cinematicWorldSkin.js";
 import CinematicDockCore from "./cinematicDockCore.js";
@@ -77,7 +78,7 @@ engine.registerSystems({
   water: Water, dock: Dock, dockPath: DockPath, sky: Sky, lighting: Lighting,
   palms: Palms, yacht: Yacht, npc: NPC, characterSystem: CharacterSystem,
   dockLife: DockLife, heroPerformance: HeroPerformance, heroPostPerformance,
-  heroMentorInteraction: HeroMentorInteraction,
+  heroMentorInteraction: HeroMentorInteraction, heroSecurityExperience: HeroSecurityExperience,
   cinematicFlow: CinematicFlowSystem, worldSkin: CinematicWorldSkin,
   dockCore: CinematicDockCore, marina: Marina,
   waterfrontStorefrontDetails: WaterfrontStorefrontDetails,
