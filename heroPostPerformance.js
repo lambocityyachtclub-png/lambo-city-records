@@ -307,6 +307,10 @@ export default {
   },
 
 
+  getState() {
+    return active ? "WALKING" : arrived ? "ARRIVED" : "IDLE";
+  },
+
   reset() {
 
     active = false;

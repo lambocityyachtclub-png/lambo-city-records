@@ -1,6 +1,6 @@
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 import { createHeroModel } from "./hero-model.js";
-let heroMesh, crowdNPCs = [], time = 0, giftGiven = false;
+let heroMesh, crowdNPCs = [], time = 0, giftGiven = false, heroPresenceRig = null;
 let performanceMode = false;
 let welcomeShown = false;
 export default {
@@ -12,6 +12,10 @@ export default {
     try {
       const heroVisual = createHeroModel(THREE);
       heroMesh.add(heroVisual);
+      heroPresenceRig = {};
+      heroVisual.traverse(object => {
+        if (["head", "torso", "armL", "armR"].includes(object.name)) heroPresenceRig[object.name] = object;
+      });
     } catch (error) {
       console.error("[LAMBO CITY] HERO model failed; using original HERO visual.", error);
       buildFallbackHero(THREE, heroMesh, dm, sm, gm);
@@ -110,8 +114,33 @@ getCameraTargets() {
   update(delta, context) {
     time += delta;
     if (heroMesh && !performanceMode) {
-      heroMesh.position.y = 1.3+Math.sin(time*1.2)*0.05;
-      heroMesh.rotation.y = Math.sin(time*0.4)*0.15;
+      const postPerformanceState = context.systems?.heroPostPerformance?.getState?.();
+      // The route controller owns HERO's root transform while he walks to HQ.
+      if (postPerformanceState !== "WALKING") {
+        heroMesh.position.y = 1.3 + Math.sin(time * 1.2) * 0.035;
+        if (postPerformanceState !== "ARRIVED") heroMesh.rotation.y = Math.sin(time * 0.4) * 0.15;
+      }
+
+      // Local offstage awareness: HERO notices a nearby player and offers a
+      // restrained greeting without moving the player or altering stage choreography.
+      const player = context.player;
+      if (player?.position && heroPresenceRig) {
+        const dx = player.position.x - heroMesh.position.x;
+        const dz = player.position.z - heroMesh.position.z;
+        const distance = Math.hypot(dx, dz);
+        const engaged = distance < 10;
+        const targetYaw = engaged ? Math.max(-0.72, Math.min(0.72, Math.atan2(dx, dz) - heroMesh.rotation.y)) : 0;
+        const ease = Math.min(1, Math.max(0, delta) * 3.2);
+        if (heroPresenceRig.head) {
+          heroPresenceRig.head.rotation.y += (targetYaw * 0.72 - heroPresenceRig.head.rotation.y) * ease;
+          heroPresenceRig.head.rotation.x += ((engaged ? -0.035 : 0) - heroPresenceRig.head.rotation.x) * ease;
+        }
+        if (heroPresenceRig.torso) heroPresenceRig.torso.rotation.y += (targetYaw * 0.2 - heroPresenceRig.torso.rotation.y) * ease;
+        if (heroPresenceRig.armL) {
+          const greeting = engaged && distance < 6 ? -0.28 - Math.max(0, Math.sin(time * 2.1)) * 0.13 : 0;
+          heroPresenceRig.armL.rotation.z += (greeting - heroPresenceRig.armL.rotation.z) * ease;
+        }
+      }
     }
     // The dedicated characterSystem owns all crowd movement and animation.
     // Keeping a second per-frame crowd pose writer here would compete with
