@@ -70,14 +70,15 @@ assert.match(marina, /depth: 5/);
 // geometry, width, material, and elevation remain unchanged.
 const hq = await read("recordsHQ.js");
 assert.match(hq, /recordsHQBoardwalkSidewalkCornerConnector/);
-assert.match(hq, /new THREE\.BoxGeometry\(12, \.12, hqWalkJoinLength\)/);
+assert.match(hq, /new THREE\.BoxGeometry\(12, \.12, hqWalkJoinDepth\)/);
 assert.match(hq, /hqWalkJoin\.rotation\.x = hqWalkJoinAngle/);
 const rise = 0.702 - 0.19;
 const run = 7;
 const angle = Math.atan(rise / run);
+const depth = run / Math.cos(angle);
 const centerY = (0.702 + 0.19) / 2 - 0.06 * Math.cos(angle);
-const topAtBoardwalk = centerY + 0.06 * Math.cos(angle) + (run / 2) * Math.sin(angle);
-const topAtPromenade = centerY + 0.06 * Math.cos(angle) - (run / 2) * Math.sin(angle);
+const topAtBoardwalk = centerY + 0.06 * Math.cos(angle) + (depth / 2) * Math.sin(angle);
+const topAtPromenade = centerY + 0.06 * Math.cos(angle) - (depth / 2) * Math.sin(angle);
 assert.ok(Math.abs(topAtBoardwalk - 0.702) < 1e-9);
 assert.ok(Math.abs(topAtPromenade - 0.19) < 1e-9);
 assert.match(district, /ROAD\.roadWidth/);
