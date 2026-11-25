@@ -426,3 +426,58 @@ test("Approved review publisher deletes the uncommitted branch when fresh verifi
     await rm(reviewsDirectory, { recursive: true, force: true });
   }
 });
+
+
+test("Development System exposes owner approval and controlled local branch publishing", async () => {
+  const root = await createGitFixture();
+  const reviewsDirectory = await mkdtemp(path.join(os.tmpdir(), "alive-system-publisher-reviews-"));
+  try {
+    const system = await createDevelopmentSystem({
+      localExecutionOptions: {
+        repositoryRoot: root,
+        baseRef: "HEAD",
+        allowedPaths: ["development/example"],
+        reviewDirectory: reviewsDirectory,
+        proposalProvider: async () => ({
+          summary: "System-level approved proposal",
+          fileChanges: [{
+            path: "development/example/system-approved.js",
+            content: "export const systemApproved = true;\\n"
+          }]
+        }),
+        testCommands: [{ command: "node", args: ["--version"] }]
+      },
+      approvedReviewPublisherOptions: {
+        repositoryRoot: root,
+        baseRef: "HEAD",
+        allowedPaths: ["development/example"],
+        testCommands: [{ command: "node", args: ["--version"] }]
+      }
+    });
+    const submitted = await system.submitWorldFinding({
+      title: "System owner publishing test",
+      description: "Verify review approval and isolated branch publishing.",
+      area: "water"
+    });
+    const execution = await system.executeNextWorldTask();
+    assert.equal(execution.status, "review");
+    const approved = await system.approveReview({
+      reviewId: execution.review.id,
+      decidedBy: "verified-owner-session"
+    });
+    assert.equal(approved.status, "approved");
+    const published = await system.publishApprovedReview({
+      reviewId: approved.id,
+      branchName: "alive/test-system-owner-publish"
+    });
+    assert.equal(published.published, true);
+    assert.equal(published.productionChangesMade, false);
+    assert.equal(system.getSnapshot().approvedReviewPublisher.mode, "local_branch_only");
+    const { stdout: branchContent } = await execFile("git", ["-C", root, "show", "alive/test-system-owner-publish:development/example/system-approved.js"]);
+    assert.equal(branchContent, "export const systemApproved = true;\\n");
+    assert.equal(system.director.getTask(submitted.task.id).status, "review");
+  } finally {
+    await rm(root, { recursive: true, force: true });
+    await rm(reviewsDirectory, { recursive: true, force: true });
+  }
+});
