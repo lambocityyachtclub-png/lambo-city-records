@@ -42,28 +42,6 @@
         <div class="status-grid" id="status-grid"></div>
       </div>
       <section class="panel">
-        <div class="section-heading"><div><p class="eyebrow">OWNER ACCOUNT SECURITY</p><h2>Face ID and recovery</h2><p class="muted">Register Face ID on this iPad. You can add another passkey from a second trusted device for redundancy. ALIVE will then offer one-time recovery codes.</p></div></div>
-        <div class="auth-form">
-          <input id="two-factor-password" type="hidden" autocomplete="off">
-          <button class="quiet" id="enable-two-factor-button" type="button">Set up authenticator and backup codes</button>
-          <p class="muted">After Face ID is registered, ALIVE creates one-time recovery codes. Save them somewhere private and offline.</p>
-        </div>
-        <div id="two-factor-setup" hidden>
-          <p class="notice">Scan this QR code in your authenticator app. The setup URI below is also private; copy it only to a trusted device.</p>
-          <img id="totp-qr" class="totp-qr" alt="Private authenticator setup QR code">
-          <pre id="totp-uri" class="file-block"></pre>
-          <button class="quiet" id="copy-totp-uri" type="button">Copy private setup URI</button>
-          <label for="setup-totp-code">Enter the current authenticator code</label>
-          <input id="setup-totp-code" inputmode="numeric" autocomplete="one-time-code">
-          <button class="primary" id="verify-two-factor-setup" type="button">Verify authenticator</button>
-        </div>
-        <div id="recovery-codes-panel" hidden>
-          <p class="notice">One-time backup code list. Each code can be used once. Store these offline; they will not be shown again.</p>
-          <pre id="recovery-codes" class="file-block"></pre>
-          <button class="quiet" id="copy-recovery-codes" type="button">Copy recovery codes</button>
-        </div>
-      </section>
-      <section class="panel">
         <div class="section-heading"><div><p class="eyebrow">PERSONAL IDENTITY AND MEMORY</p><h2>Your private ALIVE context</h2><p class="muted">This information is private to your owner identity. Nothing is collected from chats automatically. Memories are private by default; only memories you explicitly share may be included in ALIVE development task context.</p></div></div>
         <form id="identity-form" class="auth-form">
           <label for="identity-display-name">Identity display name</label>
