@@ -221,14 +221,14 @@ function addStaircase(parent, side) {
 function addSpeakerArray(parent, side) {
   const sign = side === "right" ? 1 : -1;
   const cabinetMat = new THREE.MeshStandardMaterial({
-    color: 0x080809,
-    roughness: 0.48,
-    metalness: 0.58
+    color: 0x3a3f46,
+    roughness: 0.56,
+    metalness: 0.62
   });
   const grilleMat = new THREE.MeshStandardMaterial({
-    color: 0x242428,
-    roughness: 0.8,
-    metalness: 0.35
+    color: 0x1b1e23,
+    roughness: 0.88,
+    metalness: 0.22
   });
 
   // Six compact touring line-array modules create a more believable
