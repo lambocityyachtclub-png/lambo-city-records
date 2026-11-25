@@ -20,18 +20,12 @@
       <p class="intro">Direct the work. Review every proposed change. Keep the final say.</p>
     </section>
     <section class="panel auth-panel" id="auth-panel">
-      <div><p class="eyebrow">OWNER ACCESS</p><h2>Sign in to ALIVE</h2><p class="muted">Sign in with your owner email and password. The first founder account can only be created from a private, time-limited Preview invitation. After setup, add a passkey for Face ID and save your one-time backup codes.</p></div>
-      <form id="auth-form" class="auth-form">
-        <label for="owner-email">Owner email</label>
-        <input id="owner-email" type="email" autocomplete="username" autocapitalize="off" required placeholder="Your verified owner email">
-        <label for="owner-password">Owner password</label>
-        <input id="owner-password" type="password" autocomplete="current-password" required minlength="12" maxlength="128" placeholder="At least 12 characters">
-        <button class="primary" type="submit">Sign in securely</button>
-        <button class="quiet" id="create-owner-account-button" type="button" hidden>Create founder account from invitation</button>
-        <button class="quiet" id="forgot-password-button" type="button">Email me a password reset link</button>
-      </form>
+      <div><p class="eyebrow">OWNER ACCESS</p><h2>Passwordless sign in</h2><p class="muted">Use Face ID / passkey to enter ALIVE. No owner password is requested or displayed. First-time setup is available only through your private, time-limited Preview invitation; it creates your account and registers Face ID on this device.</p></div>
       <div class="auth-form">
-        <button class="quiet" id="passkey-button" type="button">Sign in with Face ID / passkey</button>
+        <label for="owner-email">Owner email (first-time setup only)</label>
+        <input id="owner-email" type="email" autocomplete="username" autocapitalize="off" placeholder="Your verified owner email">
+        <button class="quiet" id="create-owner-account-button" type="button" hidden>Create owner account and set up Face ID</button>
+        <button class="primary" id="passkey-button" type="button">Sign in with Face ID / passkey</button>
       </div>
       <section class="panel" id="two-factor-panel" hidden>
         <p class="eyebrow">SECOND FACTOR</p><h2>Verify owner access</h2>
@@ -43,14 +37,6 @@
           <button class="primary" type="submit">Verify and continue</button>
         </form>
       </section>
-      <section class="panel" id="reset-password-panel" hidden>
-        <p class="eyebrow">ACCOUNT RECOVERY</p><h2>Choose a new owner password</h2>
-        <form id="reset-password-form" class="auth-form">
-          <label for="new-owner-password">New password</label>
-          <input id="new-owner-password" type="password" autocomplete="new-password" minlength="12" maxlength="128" required>
-          <button class="primary" type="submit">Update password</button>
-        </form>
-      </section>
     </section>
     <section id="workspace" hidden>
       <div class="status-strip panel">
@@ -59,11 +45,11 @@
         <div class="status-grid" id="status-grid"></div>
       </div>
       <section class="panel">
-        <div class="section-heading"><div><p class="eyebrow">OWNER ACCOUNT SECURITY</p><h2>Face ID and recovery</h2><p class="muted">Add a passkey on this iPad to use Face ID for everyday owner access. Set up an authenticator and save your one-time backup codes before relying on this account.</p></div></div>
+        <div class="section-heading"><div><p class="eyebrow">OWNER ACCOUNT SECURITY</p><h2>Face ID and recovery</h2><p class="muted">Register Face ID on this iPad. You can add another passkey from a second trusted device for redundancy. ALIVE will then offer one-time recovery codes.</p></div></div>
         <div class="auth-form">
-          <label for="two-factor-password">Confirm owner password to set up two-factor security</label>
-          <input id="two-factor-password" type="password" autocomplete="current-password" minlength="12" maxlength="128">
+          <input id="two-factor-password" type="hidden" autocomplete="off">
           <button class="quiet" id="enable-two-factor-button" type="button">Set up authenticator and backup codes</button>
+          <p class="muted">After Face ID is registered, ALIVE creates one-time recovery codes. Save them somewhere private and offline.</p>
         </div>
         <div id="two-factor-setup" hidden>
           <p class="notice">Scan this QR code in your authenticator app. The setup URI below is also private; copy it only to a trusted device.</p>
