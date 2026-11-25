@@ -1,4 +1,5 @@
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
+import { DOCK_MATERIALS } from "./dockMaterialPalette.js";
 
 export default {
   init(scene) {
@@ -26,25 +27,10 @@ export default {
     // Matched directly to the existing dock.js materials.
     // ============================================================
 
-    const woodMat = new THREE.MeshStandardMaterial({
-      color: 0x8b5e3c,
-      roughness: 0.9
-    });
-
-    const plankMat = new THREE.MeshStandardMaterial({
-      color: 0xa0693a,
-      roughness: 0.85
-    });
-
-    const postMat = new THREE.MeshStandardMaterial({
-      color: 0x5c3d1e,
-      roughness: 1.0
-    });
-
-    const railMat = new THREE.MeshStandardMaterial({
-      color: 0x3a2510,
-      roughness: 0.8
-    });
+    const woodMat = DOCK_MATERIALS.structuralWood;
+    const plankMat = DOCK_MATERIALS.plankWood;
+    const postMat = DOCK_MATERIALS.supportPostWood;
+    const railMat = DOCK_MATERIALS.railWood;
 
     // Dark metal accent from the luxury dock upgrade.
     const metalMat = new THREE.MeshStandardMaterial({
@@ -120,10 +106,7 @@ export default {
     // doesn't read as one giant flat disk.
     // ============================================================
 
-    const plankBandMaterial = new THREE.MeshStandardMaterial({
-      color: 0x8b5e3c,
-      roughness: 0.9
-    });
+    const plankBandMaterial = DOCK_MATERIALS.structuralWood;
 
     const bandRadii = [
       11,
