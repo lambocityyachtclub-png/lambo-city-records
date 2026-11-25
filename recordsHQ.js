@@ -133,8 +133,9 @@ function buildWaterfrontPromenade(group) {
   const hqWalkJoinRise = 0.702 - 0.19;
   const hqWalkJoinLength = 7;
   const hqWalkJoinAngle = Math.atan(hqWalkJoinRise / hqWalkJoinLength);
+  const hqWalkJoinDepth = hqWalkJoinLength / Math.cos(hqWalkJoinAngle);
   const hqWalkJoin = new THREE.Mesh(
-    new THREE.BoxGeometry(12, .12, hqWalkJoinLength),
+    new THREE.BoxGeometry(12, .12, hqWalkJoinDepth),
     promenadeStone
   );
   hqWalkJoin.name = "recordsHQBoardwalkSidewalkCornerConnector";
