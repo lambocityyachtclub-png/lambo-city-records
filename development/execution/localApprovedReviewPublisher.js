@@ -192,6 +192,7 @@ export function createLocalApprovedReviewPublisher(options = {}) {
       await git(worktree, ["-c", "user.name=" + textValue(commitName, "commitName"),
         "-c", "user.email=" + textValue(commitEmail, "commitEmail"),
         "commit", "-m", "ALIVE: publish owner-approved review " + id]);
+      committed = true;
       const { stdout: commitSha } = await git(worktree, ["rev-parse", "HEAD"]);
       return {
         published: true,
@@ -209,7 +210,11 @@ export function createLocalApprovedReviewPublisher(options = {}) {
     } finally {
       if (added) {
         try { await git(root, ["worktree", "remove", "--force", worktree]); }
-        catch { /* Leave the branch intact; cleanup can be retried by the host. */ }
+        catch { /* Leave the worktree registered if Git cannot safely remove it. */ }
+        if (!committed) {
+          try { await git(root, ["branch", "-D", branch]); }
+          catch { /* Cleanup failure does not hide the verification result. */ }
+        }
       }
     }
   }
