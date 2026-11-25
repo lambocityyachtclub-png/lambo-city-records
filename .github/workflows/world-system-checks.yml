@@ -59,6 +59,7 @@ on:
       - "scripts/test-concert-audio-approach.mjs"
       - "scripts/test-song-clock-stage-reactions.mjs"
       - "scripts/test-hero-song-choreography.mjs"
+      - "scripts/test-stage-music-lifecycle.mjs"
       - "scripts/test-live-stage-drummer.mjs"
       - "scripts/test-character-system.mjs"
       - "input.js"
