@@ -218,7 +218,8 @@ export async function createDevelopmentSystem(options = {}) {
         status: "ready",
         mode: "deterministic_no_paid_ai",
         contracts: contractEngine.listContracts().length,
-        executionEnabled: false
+        executionEnabled: !!worldExecutor,
+        mode: localExecutionOptions ? "local_git_worktree" : "injected_adapter"
       },
       worldExecutor: {
         enabled: !!worldExecutor,
