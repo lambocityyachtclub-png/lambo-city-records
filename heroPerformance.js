@@ -46,7 +46,7 @@ function faceDirection(targetX, targetZ) {
 function collectHeroRig(root) {
   const rig = {};
   root.traverse(object => {
-    if (["torso", "head", "armL", "armR", "forearmL", "forearmR", "thighL", "thighR"].includes(object.name)) {
+    if (["torso", "head", "armL", "armR", "forearmL", "forearmR", "thighL", "thighR", "heroBusinessBowtie"].includes(object.name)) {
       rig[object.name] = object;
     }
   });
@@ -82,6 +82,10 @@ function animateHeroToSong(songTime) {
   if (heroRig.thighR) heroRig.thighR.rotation.z = Math.sin(beatPhase + Math.PI) * 0.09;
 }
 
+function setBusinessBowtieVisible(visible) {
+  if (heroRig?.heroBusinessBowtie) heroRig.heroBusinessBowtie.visible = visible;
+}
+
 function resetHeroDance() {
   if (!heroRig) return;
   for (const name of ["torso", "head", "armL", "armR", "forearmL", "forearmR", "thighL", "thighR"]) {
@@ -96,6 +100,7 @@ function beginPerformance(context) {
   if (!hero) return;
 
   heroRig = collectHeroRig(hero);
+  setBusinessBowtieVisible(true);
   npc.setPerformanceMode?.(true);
   AmbientMusic.pause();
   approachAmbientPaused = false;
@@ -142,6 +147,7 @@ function updatePerformance(delta) {
 
   if (StageMusic.hasEnded()) {
     resetHeroDance();
+    setBusinessBowtieVisible(true);
     exitStartX = hero.position.x;
     exitStartY = hero.position.y;
     exitStartZ = hero.position.z;
@@ -218,6 +224,7 @@ export default {
 
     if (state === "WAITING_FOR_AUDIO") {
       if (!StageMusic.isPlaying()) return;
+      setBusinessBowtieVisible(false);
       hero.visible = true;
       state = "ENTERING";
       stateTime = 0;
@@ -243,6 +250,7 @@ export default {
     AmbientMusic.resume();
     approachAmbientPaused = false;
     resetHeroDance();
+    setBusinessBowtieVisible(true);
     state = "IDLE";
     stateTime = 0;
     performanceTime = 0;
