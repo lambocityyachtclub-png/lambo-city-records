@@ -33,13 +33,13 @@ test("Local adapter creates a disposable worktree, applies a proposal, and runs 
     allowedPaths: ["development/example"],
     proposalProvider: async ({ readAllowedFile, workspacePath }) => {
       assert.equal(workspacePath, undefined);
-      assert.equal(await readAllowedFile("development/example/base.js"), "export const base = true;\\n");
+      assert.equal(await readAllowedFile("development/example/base.js"), "export const base = true;\n");
       return {
         summary: "Add a bounded example change",
         provider: "test-fixture",
         fileChanges: [{
           path: "development/example/new.js",
-          content: "export const added = true;\\n"
+          content: "export const added = true;\n"
         }]
       };
     },
@@ -182,7 +182,7 @@ test("Development System runs a real local Git proposal through owner review", a
             provider: "owner-configured-test-provider",
             fileChanges: [{
               path: "development/example/from-alive.js",
-              content: "export const createdByAlive = true;\\n"
+              content: "export const createdByAlive = true;\n"
             }]
           };
         },
@@ -201,7 +201,7 @@ test("Development System runs a real local Git proposal through owner review", a
     assert.deepEqual(result.changedFiles, ["development/example/from-alive.js"]);
     assert.equal(proposalCalls, 1);
     assert.equal(result.review.status, "awaiting_owner_review");
-    assert.equal(result.review.changes.fileChanges[0].content, "export const createdByAlive = true;\\n");
+    assert.equal(result.review.changes.fileChanges[0].content, "export const createdByAlive = true;\n");
     assert.equal(system.director.getTask(submitted.task.id).status, "review");
 
     const { stdout: status } = await execFile("git", ["-C", root, "status", "--porcelain"]);
