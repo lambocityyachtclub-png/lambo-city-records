@@ -211,10 +211,13 @@ test("Development System initializes all modules", async () => {
     DEVELOPMENT_SYSTEM_STATUS.READY
   );
 
-  assert.equal(snapshot.registry.totalModules, 4);
+  assert.equal(snapshot.registry.totalModules, 5);
   assert.equal(snapshot.registry.enabledModules, 4);
   assert.equal(snapshot.studioRunner.id, "studio");
   assert.equal(snapshot.worldRunner.id, "world");
+  assert.equal(snapshot.contractEngine.status, "ready");
+  assert.equal(snapshot.contractEngine.mode, "deterministic_no_paid_ai");
+  assert.equal(snapshot.contractEngine.contracts, 5);
   assert.equal(snapshot.worldExecutor.enabled, false);
 });
 
