@@ -207,6 +207,25 @@ export function createHeroModel(THREE) {
   hood.rotation.x = -0.12;
   sphere(torso, orange, [0, 0.81, -0.29], [0.34, 0.12, 0.13], "hood_fold");
 
+  // HERO's non-performance business look: a formal black-and-white bowtie.
+  // It is attached to the torso so it follows his existing movement rig.
+  const businessBowtie = new THREE.Group();
+  businessBowtie.name = "heroBusinessBowtie";
+  businessBowtie.position.set(0, 0.98, 0.285);
+  const bowtieWhite = mat("#F7F5EF", 0.32, 0.04);
+  const bowtieBlack = mat("#08090B", 0.24, 0.08);
+  for (const side of [-1, 1]) {
+    const satinWing = sphere(businessBowtie, bowtieWhite,
+      [side * 0.105, 0, 0], [0.125, 0.082, 0.045], "bowtie_white_satin_edge", 12);
+    satinWing.rotation.z = side * -0.12;
+    const blackWing = sphere(businessBowtie, bowtieBlack,
+      [side * 0.105, 0, 0.035], [0.102, 0.061, 0.025], "bowtie_black_silk_face", 12);
+    blackWing.rotation.z = side * -0.12;
+  }
+  box(businessBowtie, bowtieWhite, [0, 0, 0.055], [0.075, 0.092, 0.035], "bowtie_white_center");
+  box(businessBowtie, bowtieBlack, [0, 0, 0.078], [0.038, 0.062, 0.018], "bowtie_black_knot");
+  torso.add(businessBowtie);
+
   // Hoodie ribbed hem at the hip line.
   box(torso, orange, [0, -0.19, 0], [0.98, 0.13, 0.49], "hoodie_waistband");
   // Small gold zipper pull.
