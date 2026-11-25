@@ -28,28 +28,45 @@ export default {
     welcomeShown = false;
 
     crowdNPCs = [];
-    const colors = [0xff2200,0x0044ff,0x00aa44,0xffaa00,0xaa00ff,0xff0088,0x00ffcc,0xffffff];
-    const legMaterial = new THREE.MeshStandardMaterial({color:0x17191d,roughness:0.82});
+    const outfitColors = [0xe85d3f,0x2878a8,0x4f8a57,0xe5b84b,0x7652a8,0xd45d8b,0x39a89b,0xf0eee6,0x29445f,0xd18a50,0x6f7d42,0xb64d3f,0x4b6f91,0x9b7b54,0x8a5572,0x3c7771];
+    const skinColors = [0x8d5524,0xc68642,0xe0ac69,0xf1c27d,0x6f4428,0x9b6543,0xd19a72,0x754c24];
+    const hairColors = [0x17120f,0x302018,0x6b4226,0x9a7448,0x211b28,0x4a3025,0x161616,0xb08a58];
+    const pantColors = [0x20252d,0xe9e5dc,0x25384a,0x34343a,0x7c766c,0x1e3032,0xd5c6ad,0x2a2a35];
+    const shoeMaterial = new THREE.MeshStandardMaterial({color:0x090a0c,roughness:0.72});
     const shoeMaterial = new THREE.MeshStandardMaterial({color:0x090a0c,roughness:0.72});
     for (let i = 0; i < 16; i++) {
       const npc = new THREE.Group();
       npc.name = "lamboCityCrowdCharacter_" + String(i + 1).padStart(2, "0");
-      const bodyMaterial = new THREE.MeshStandardMaterial({color:colors[i%colors.length]});
-      const body = new THREE.Mesh(new THREE.BoxGeometry(0.9,1.5,0.5),bodyMaterial);
-      body.position.y=1.5;
+      const bodyMaterial = new THREE.MeshStandardMaterial({color:outfitColors[i%outfitColors.length],roughness:0.78});
+      const skinMaterial = new THREE.MeshStandardMaterial({color:skinColors[i%skinColors.length],roughness:0.86});
+      const hairMaterial = new THREE.MeshStandardMaterial({color:hairColors[i%hairColors.length],roughness:0.9});
+      const legMaterial = new THREE.MeshStandardMaterial({color:pantColors[i%pantColors.length],roughness:0.84});
+      // Soft capsule silhouette replaces the old rectangular torso while keeping
+      // the same shoulder/hip rig anchors and overall character height.
+      const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.38,0.72,4,9),bodyMaterial);
+      body.position.y=1.55;
       npc.add(body);
 
       const headPivot = new THREE.Group();
       headPivot.position.y = 2.65;
-      const head = new THREE.Mesh(new THREE.BoxGeometry(0.7,0.7,0.7),sm);
+      const head = new THREE.Mesh(new THREE.SphereGeometry(0.34,12,10),skinMaterial);
+      head.scale.set(0.92,1.04,0.9);
       head.position.y = 0;
       headPivot.add(head);
+      // A low-profile hair cap adds a distinct head silhouette without
+      // changing camera framing or adding lights.
+      const hair = new THREE.Mesh(
+        new THREE.SphereGeometry(0.35,12,7,0,Math.PI*2,0,Math.PI*0.52),
+        hairMaterial
+      );
+      hair.position.y = 0.075;
+      headPivot.add(hair);
       npc.add(headPivot);
 
       // Simple shoulder pivots let the character system animate gestures
       // without changing the approved crowd positions or body proportions.
-      const leftArm = createCrowdArm(-0.52, 2.02, bodyMaterial);
-      const rightArm = createCrowdArm(0.52, 2.02, bodyMaterial);
+      const leftArm = createCrowdArm(-0.52, 2.02, skinMaterial);
+      const rightArm = createCrowdArm(0.52, 2.02, skinMaterial);
       npc.add(leftArm);
       npc.add(rightArm);
 
@@ -83,6 +100,8 @@ export default {
         baseRotationY,
         body,
         headPivot,
+        skinMaterial,
+        hairMaterial,
         leftArm,
         rightArm,
         leftLeg,
