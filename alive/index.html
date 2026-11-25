@@ -20,23 +20,20 @@
       <p class="intro">Direct the work. Review every proposed change. Keep the final say.</p>
     </section>
     <section class="panel auth-panel" id="auth-panel">
-      <div><p class="eyebrow">OWNER ACCESS</p><h2>Passwordless sign in</h2><p class="muted">Use Face ID / passkey to enter ALIVE. No owner password is requested or displayed. First-time setup is available only through your private, time-limited Preview invitation; it creates your account and registers Face ID on this device.</p></div>
+      <div><p class="eyebrow">OWNER ACCESS</p><h2 id="auth-heading">Sign in to ALIVE</h2><p class="muted" id="auth-description">Use your owner email and password. Safari can save the password in your iPad Passwords app so you do not have to memorize it.</p></div>
       <div class="auth-form">
-        <label for="owner-email">Owner email (first-time setup only)</label>
-        <input id="owner-email" type="email" autocomplete="username" autocapitalize="off" placeholder="Your verified owner email">
-        <button class="quiet" id="create-owner-account-button" type="button" hidden>Create owner account and set up Face ID</button>
-        <button class="primary" id="passkey-button" type="button">Sign in with Face ID / passkey</button>
+        <label for="owner-email">Owner email</label>
+        <input id="owner-email" type="email" autocomplete="username" autocapitalize="off" placeholder="Your owner email" required>
+        <label for="owner-password">Password</label>
+        <input id="owner-password" type="password" autocomplete="current-password" minlength="12" maxlength="128" placeholder="Your ALIVE owner password" required>
+        <div id="password-confirm-wrap" hidden>
+          <label for="owner-password-confirm">Confirm password</label>
+          <input id="owner-password-confirm" type="password" autocomplete="new-password" minlength="12" maxlength="128" placeholder="Enter the same password again">
+          <p class="muted">Choose at least 12 characters. This is a new ALIVE password; it does not change any other password you use.</p>
+        </div>
+        <button class="primary" id="password-signin-button" type="button">Sign in</button>
+        <button class="primary" id="create-owner-account-button" type="button" hidden>Create my ALIVE owner account</button>
       </div>
-      <section class="panel" id="two-factor-panel" hidden>
-        <p class="eyebrow">SECOND FACTOR</p><h2>Verify owner access</h2>
-        <form id="two-factor-form" class="auth-form">
-          <label for="two-factor-method">Verification method</label>
-          <select id="two-factor-method"><option value="totp">Authenticator app</option><option value="backup">One-time backup code</option></select>
-          <label for="two-factor-code">Verification code</label>
-          <input id="two-factor-code" inputmode="numeric" autocomplete="one-time-code" required>
-          <button class="primary" type="submit">Verify and continue</button>
-        </form>
-      </section>
     </section>
     <section id="workspace" hidden>
       <div class="status-strip panel">
