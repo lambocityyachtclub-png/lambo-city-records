@@ -31,13 +31,8 @@ assert.match(district, /width: innerNorthLength/);
 assert.match(district, /curbStartInset: -curbCenterlineRadius/);
 assert.match(district, /innerCornerReturns = \[/);
 assert.equal((district.match(/name: "southWest"|name: "southEast"|name: "northWest"|name: "northEast"/g) || []).length, 4);
-assert.equal((district.match(/addSidewalkCornerReturn\(root/g) || []).length, 2,
-  "The shared corner-return builder must create inside and outside sidewalk corners");
-assert.match(district, /outerCornerReturns = \[/);
-assert.equal((district.match(/name: "southWest"|name: "southEast"|name: "northWest"|name: "northEast"/g) || []).length, 8,
-  "Four inside and four outside sidewalk corners must be present");
-assert.match(district, /name: "arenaOuterSidewalkReturn_"/);
-assert.match(district, /surfaceY: 0\.807/);
+assert.equal((district.match(/addSidewalkCornerReturn\(root/g) || []).length, 1,
+  "One shared corner-return builder must create all four curved sidewalk corners");
 assert.match(district, /arenaCornerRoadApron_/);
 assert.match(district, /surfaceY: corner\.sz < 0 \? 0\.702 : 0\.832/);
 assert.match(district, /curbCenterY: corner\.sz < 0 \? 0\.64 : 0\.76/);
