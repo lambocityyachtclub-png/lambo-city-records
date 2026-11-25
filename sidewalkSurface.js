@@ -32,7 +32,9 @@ export function addSegmentedSidewalk(parent, options) {
     paverThickness = 0.04,
     curbHeight = 0.14,
     curbWidth = 0.18,
-    curbSide = null
+    curbSide = null,
+    curbStartInset = 0,
+    curbEndInset = 0
   } = options;
 
   if (!parent || !name || !Array.isArray(position) || position.length !== 3) {
@@ -94,9 +96,13 @@ export function addSegmentedSidewalk(parent, options) {
   parent.add(pavers);
 
   if (curbMaterial && curbSide) {
+    const curbAlongLength = alongLength - curbStartInset - curbEndInset;
+    if (!(curbAlongLength > 0)) {
+      throw new RangeError("Curb end insets exceed the sidewalk length.");
+    }
     const curbGeometry = axis === "x"
-      ? new THREE.BoxGeometry(width, curbHeight, curbWidth)
-      : new THREE.BoxGeometry(curbWidth, curbHeight, depth);
+      ? new THREE.BoxGeometry(curbAlongLength, curbHeight, curbWidth)
+      : new THREE.BoxGeometry(curbWidth, curbHeight, curbAlongLength);
     const curb = new THREE.Mesh(curbGeometry, curbMaterial);
     curb.name = name + "_roadsideCurb";
     // Preserve the established small reveal between the curb and roadway.
@@ -105,9 +111,9 @@ export function addSegmentedSidewalk(parent, options) {
     const edgeOffset = crossLength / 2 - curbWidth / 2 - curbRoadClearance;
     const crossOffset = curbSide.startsWith("positive") ? edgeOffset : -edgeOffset;
     curb.position.set(
-      x + (axis === "x" ? 0 : crossOffset),
+      x + (axis === "x" ? (curbStartInset - curbEndInset) / 2 : crossOffset),
       y + baseThickness / 2 - curbHeight / 2,
-      z + (axis === "z" ? 0 : crossOffset)
+      z + (axis === "z" ? (curbStartInset - curbEndInset) / 2 : 0)
     );
     curb.receiveShadow = true;
     parent.add(curb);
