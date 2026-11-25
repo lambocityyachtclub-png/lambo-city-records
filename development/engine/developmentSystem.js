@@ -28,6 +28,7 @@ import { createControlledDevelopmentExecutor } from "../execution/controlledDeve
 import { createLivingContractEngine } from "../contracts/livingContractEngine.js";
 import { createLocalGitWorkspaceAdapter } from "../execution/localGitWorkspaceAdapter.js";
 import { createLocalJsonReviewStore } from "../execution/localJsonReviewStore.js";
+import { createLocalApprovedReviewPublisher } from "../execution/localApprovedReviewPublisher.js";
 
 export const DEVELOPMENT_SYSTEM_VERSION = "1.3.0";
 
@@ -48,7 +49,8 @@ export async function createDevelopmentSystem(options = {}) {
     workspaceAdapter = null,
     reviewStore = null,
     allowedPaths = null,
-    localExecutionOptions = null
+    localExecutionOptions = null,
+    approvedReviewPublisherOptions = null
   } = options;
 
   const registry = createDevelopmentRegistry();
@@ -91,6 +93,14 @@ export async function createDevelopmentSystem(options = {}) {
       repositoryRoot: localExecutionOptions.repositoryRoot
     });
     resolvedAllowedPaths = localExecutionOptions.allowedPaths;
+  }
+
+  let approvedReviewPublisher = null;
+  if (approvedReviewPublisherOptions) {
+    if (!resolvedReviewStore) {
+      throw new Error("An approved review publisher requires a configured persistent reviewStore.");
+    }
+    approvedReviewPublisher = createLocalApprovedReviewPublisher(approvedReviewPublisherOptions);
   }
 
   const hasExecutionAdapters = hasInjectedAdapters || !!localExecutionOptions;
@@ -222,6 +232,13 @@ export async function createDevelopmentSystem(options = {}) {
         executionEnabled: !!worldExecutor,
         executionMode: localExecutionOptions ? "local_git_worktree" : (worldExecutor ? "injected_adapter" : "disabled")
       },
+      approvedReviewPublisher: {
+        enabled: !!approvedReviewPublisher,
+        mode: approvedReviewPublisher ? "local_branch_only" : "disabled",
+        pushes: false,
+        merges: false,
+        deployments: false
+      },
       worldExecutor: {
         enabled: !!worldExecutor,
         runnerId: WORLD_RUNNER_ID,
@@ -281,6 +298,36 @@ export async function createDevelopmentSystem(options = {}) {
     return worker.runOnce();
   }
 
+  async function publishApprovedReview(input = {}) {
+    if (status !== DEVELOPMENT_SYSTEM_STATUS.READY) {
+      throw new Error("The development system is disabled.");
+    }
+    if (!approvedReviewPublisher) {
+      throw new Error("Approved review publishing is not configured.");
+    }
+    return approvedReviewPublisher.publishApprovedReview({
+      reviewStore: resolvedReviewStore,
+      ...input
+    });
+  }
+
+  async function approveReview(input = {}) {
+    if (status !== DEVELOPMENT_SYSTEM_STATUS.READY) throw new Error("The development system is disabled.");
+    if (!resolvedReviewStore || typeof resolvedReviewStore.approveReview !== "function") throw new Error("Persistent owner review decisions are not configured.");
+    return resolvedReviewStore.approveReview(input.reviewId, { decidedBy: input.decidedBy });
+  }
+
+  async function rejectReview(input = {}) {
+    if (status !== DEVELOPMENT_SYSTEM_STATUS.READY) throw new Error("The development system is disabled.");
+    if (!resolvedReviewStore || typeof resolvedReviewStore.rejectReview !== "function") throw new Error("Persistent owner review decisions are not configured.");
+    return resolvedReviewStore.rejectReview(input.reviewId, { decidedBy: input.decidedBy, reason: input.reason });
+  }
+
+  async function publishApprovedReview(input = {}) {
+    if (status !== DEVELOPMENT_SYSTEM_STATUS.READY) throw new Error("The development system is disabled.");
+    if (!approvedReviewPublisher) throw new Error("Approved review publishing is not configured.");
+    return approvedReviewPublisher.publishApprovedReview({ reviewStore: resolvedReviewStore, ...input });
+  }
   async function executeNextWorldTask(input = {}) {
     if (status !== DEVELOPMENT_SYSTEM_STATUS.READY) {
       throw new Error("The development system is disabled.");
@@ -342,6 +389,9 @@ export async function createDevelopmentSystem(options = {}) {
     disable,
     runWorkerOnce,
     executeNextWorldTask,
+    approveReview,
+    rejectReview,
+    publishApprovedReview,
     submitStudioFinding,
     submitStudioFindings,
     submitWorldIntent,

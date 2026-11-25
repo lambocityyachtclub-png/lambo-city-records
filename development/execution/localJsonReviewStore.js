@@ -87,5 +87,42 @@ export function createLocalJsonReviewStore(options = {}) {
     return records;
   }
 
-  return Object.freeze({ createReview, getReview, listReviews });
+  async function decideReview(id, decision, metadata = {}) {
+    const reviewId = safeId(id);
+    const decidedBy = typeof metadata.decidedBy === "string" ? metadata.decidedBy.trim() : "";
+    if (!decidedBy) throw new Error("A verified owner identity (decidedBy) is required.");
+    if (decision !== "approved" && decision !== "rejected") throw new Error("Unsupported review decision.");
+    const reason = typeof metadata.reason === "string" ? metadata.reason.trim() : "";
+    if (decision === "rejected" && !reason) throw new Error("A reason is required when rejecting a review.");
+    await ensureDirectory();
+    const lockPath = path.join(directory, "." + reviewId + ".lock");
+    let lockHandle;
+    try { lockHandle = await (await import("node:fs/promises")).open(lockPath, "wx"); }
+    catch (error) { if (error.code === "EEXIST") throw new Error("This review is already being decided."); throw error; }
+    try {
+      const filePath = path.join(directory, reviewId + ".json");
+      let record;
+      try { record = JSON.parse(await readFile(filePath, "utf8")); }
+      catch (error) { if (error.code === "ENOENT") return null; throw error; }
+      if (record.status !== "awaiting_owner_review") throw new Error("Only reviews awaiting owner review can receive a decision.");
+      if (decision === "approved") {
+        if (record.testResults?.passed !== true) throw new Error("A review cannot be approved unless its recorded automated tests passed.");
+        if (!Array.isArray(record.changes?.fileChanges) || record.changes.fileChanges.length === 0) throw new Error("A review cannot be approved without its complete proposed file contents.");
+      }
+      const updated = { ...record, status: decision, decision: { status: decision, decidedBy, decidedAt: new Date().toISOString(), ...(reason ? { reason } : {}) }, productionChangesMade: false };
+      const temporary = path.join(directory, "." + reviewId + "." + randomUUID().slice(0, 8) + ".tmp");
+      await writeFile(temporary, JSON.stringify(updated, null, 2), { encoding: "utf8", flag: "wx" });
+      await rename(temporary, filePath);
+      return structuredClone(updated);
+    } finally {
+      await lockHandle.close();
+      const { rm } = await import("node:fs/promises");
+      await rm(lockPath, { force: true });
+    }
+  }
+
+  async function approveReview(id, metadata = {}) { return decideReview(id, "approved", metadata); }
+  async function rejectReview(id, metadata = {}) { return decideReview(id, "rejected", metadata); }
+
+  return Object.freeze({ createReview, getReview, listReviews, approveReview, rejectReview });
 }
