@@ -87,7 +87,8 @@ export async function createDevelopmentSystem(options = {}) {
     }
     resolvedWorkspaceAdapter = createLocalGitWorkspaceAdapter(localExecutionOptions);
     resolvedReviewStore = createLocalJsonReviewStore({
-      directory: localExecutionOptions.reviewDirectory
+      directory: localExecutionOptions.reviewDirectory,
+      repositoryRoot: localExecutionOptions.repositoryRoot
     });
     resolvedAllowedPaths = localExecutionOptions.allowedPaths;
   }
