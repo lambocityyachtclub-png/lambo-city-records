@@ -44,7 +44,7 @@ test("founder invitation is scrubbed from browser history immediately and its he
   assert.equal(replacedUrl, "/alive/?mode=preview");
   assert.ok(script.includes("function getAuthClient(){if(!authClientPromise)authClientPromise=createAuthClient();return authClientPromise;}"));
   assert.ok(script.includes('function getEnrollmentAuthClient(){if(!enrollmentToken)throw new Error("Founder setup requires the private one-time invitation.");if(!enrollmentAuthClientPromise)enrollmentAuthClientPromise=createAuthClient(true);return enrollmentAuthClientPromise;}'));
-  assert.match(script, /const enrollmentAuth=await getEnrollmentAuthClient\(\);\s*const result=await enrollmentAuth\.signUp\.email/);
+  assert.match(script, /const auth=enrollmentToken\?await getEnrollmentAuthClient\(\):await getAuthClient\(\);\s*const result=enrollmentToken\s*\?await auth\.signUp\.email/);
   assert.doesNotMatch(script, /fetchOptions:\{headers:enrollmentToken\?/);
 });
 
