@@ -33,7 +33,6 @@ export default {
     const hairColors = [0x17120f,0x302018,0x6b4226,0x9a7448,0x211b28,0x4a3025,0x161616,0xb08a58];
     const pantColors = [0x20252d,0xe9e5dc,0x25384a,0x34343a,0x7c766c,0x1e3032,0xd5c6ad,0x2a2a35];
     const shoeMaterial = new THREE.MeshStandardMaterial({color:0x090a0c,roughness:0.72});
-    const shoeMaterial = new THREE.MeshStandardMaterial({color:0x090a0c,roughness:0.72});
     for (let i = 0; i < 16; i++) {
       const npc = new THREE.Group();
       npc.name = "lamboCityCrowdCharacter_" + String(i + 1).padStart(2, "0");
