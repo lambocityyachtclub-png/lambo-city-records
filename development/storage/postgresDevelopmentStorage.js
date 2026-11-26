@@ -109,6 +109,12 @@ export function createPostgresDevelopmentStorage(options = {}) {
     return serialize(async () => {
       const taskId = requireText(input.taskId, "Task ID");
       const taskTitle = requireText(input.taskTitle, "Task title");
+      requireText(input.contractId, "ALIVE contract ID");
+      requireText(input.contractVersion, "ALIVE contract version");
+      requireText(input.autonomyLevel, "ALIVE autonomy level");
+      if (!input.resourceMetrics || typeof input.resourceMetrics !== "object" || Array.isArray(input.resourceMetrics)) {
+        throw new Error("Measured resource metrics are required for owner review.");
+      }
       if (!Array.isArray(input.changedFiles) || input.changedFiles.length === 0) {
         throw new Error("A review must contain at least one changed file.");
       }
