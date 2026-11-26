@@ -68,10 +68,7 @@ export function createHostedAliveControlPlane(options = {}) {
     return withPostgresAdvisoryLock(pool, async () => {
       const storage = createPostgresDevelopmentStorage({ pool });
       await storage.assertSchemaReady();
-      const system = await createDevelopmentSystem({
-        storage,
-        reviewStore: storage
-      });
+      const system = await createDevelopmentSystem({ storage });
       return callback({ system, storage });
     }, lockKey);
   }
