@@ -39,6 +39,7 @@ export function createAliveOwnerApiHandler(options = {}) {
   const authenticateOwner = options.authenticateOwner;
   const withSystem = options.withSystem;
   const isSameOrigin = options.isSameOrigin;
+  const getStatus = typeof options.getStatus === "function" ? options.getStatus : () => ({});
   if (typeof authenticateOwner !== "function") throw new Error("authenticateOwner callback is required.");
   if (typeof withSystem !== "function") throw new Error("withSystem callback is required.");
   if (typeof isSameOrigin !== "function") throw new Error("isSameOrigin callback is required.");
@@ -61,16 +62,33 @@ export function createAliveOwnerApiHandler(options = {}) {
 
     const action = readAction(req);
     if (action === "status" && method === "GET") {
+      let runtimeStatus = {};
+      try { runtimeStatus = getStatus() || {}; } catch {}
       return send(res, 200, {
         service: "lambo-city-alive",
         owner: { email: owner.email },
         databaseConfigured: Boolean(env.DATABASE_URL),
         persistentTaskStorage: true,
-        aiProviderConfigured: Boolean(env.OPENAI_API_KEY),
+        aiProviderConfigured: runtimeStatus.aiProposalProviderConfigured ?? Boolean(env.AI_GATEWAY_MODEL && (env.AI_GATEWAY_API_KEY || env.VERCEL_OIDC_TOKEN)),
+        aiProposalGenerationEnabled: runtimeStatus.aiProposalGenerationEnabled ?? (env.ALIVE_AI_ENABLED === "true" && env.ALIVE_AI_SPEND_APPROVED === "true"),
+        projectDiscoveryConfigured: runtimeStatus.projectDiscoveryConfigured === true,
+        isolatedWorkspaceConfigured: runtimeStatus.isolatedWorkspaceConfigured === true,
         aiExecutionEnabled: false,
-        isolatedSandboxEnabled: false,
+        isolatedSandboxEnabled: runtimeStatus.sandboxExecution === true,
+        resourceProfilerConfigured: runtimeStatus.resourceProfilerConfigured === true,
         autonomousProductionDeployment: false
       });
+    }
+
+    if (action === "discovery" && method === "GET") {
+      try {
+        const result = await withSystem({}, async ({ system }) => ({
+          report: await system.discoverProject()
+        }));
+        return send(res, 200, result);
+      } catch {
+        return send(res, 503, { error: "ALIVE read-only project discovery is unavailable." });
+      }
     }
 
     if (action === "tasks" && method === "GET") {
