@@ -19,8 +19,9 @@ import {
   DEVELOPMENT_WORKER_VERSION
 } from "./developmentWorker.js";
 import { createControlledDevelopmentExecutor } from "../execution/controlledDevelopmentExecutor.js";
+import { listProjectContracts, evaluateProjectAction } from "../../alive/contracts/projectContracts.js";
 
-export const DEVELOPMENT_SYSTEM_VERSION = "1.1.0";
+export const DEVELOPMENT_SYSTEM_VERSION = "1.2.0";
 
 export const DEVELOPMENT_SYSTEM_STATUS = Object.freeze({
   READY: "ready",
@@ -92,6 +93,17 @@ export async function createDevelopmentSystem(options = {}) {
   });
 
   registry.registerModule({
+    id: "alive-project-contracts",
+    name: "ALIVE Project Contract Registry",
+    type: MODULE_TYPES.POLICY,
+    version: "1.0.0",
+    path: "alive/contracts/projectContracts.js",
+    enabled: true,
+    capabilities: ["canonical-module-contracts", "bounded-autonomy", "release-evidence-gates"],
+    description: "Provides canonical project boundaries and evaluates authorized ALIVE actions."
+  });
+
+  registry.registerModule({
     id: "development-director",
     name: "Development Director",
     type: MODULE_TYPES.ENGINE,
@@ -155,8 +167,26 @@ export async function createDevelopmentSystem(options = {}) {
             enabled: false,
             reason: "No controlled executor was supplied."
           },
-      policy
+      policy,
+      contracts: listProjectContracts().map(contract => ({
+        id: contract.id,
+        name: contract.name,
+        version: contract.version,
+        autonomyLevel: contract.autonomyLevel,
+        productionDeployment: contract.productionDeployment
+      }))
     };
+  }
+
+  function evaluateAction(contractId, operation, evidence = {}) {
+    if (status !== DEVELOPMENT_SYSTEM_STATUS.READY) {
+      return Object.freeze({
+        authorized: false,
+        decision: "denied",
+        reason: "The ALIVE Development System is disabled."
+      });
+    }
+    return evaluateProjectAction(contractId, operation, evidence);
   }
 
   function disable() {
@@ -219,6 +249,7 @@ export async function createDevelopmentSystem(options = {}) {
     studioRunner,
     getStatus,
     getSnapshot,
+    evaluateAction,
     enable,
     disable,
     runWorkerOnce,
