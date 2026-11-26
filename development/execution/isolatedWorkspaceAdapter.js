@@ -62,12 +62,15 @@ function hashBuffer(buffer) {
 function countChangedLines(before, after) {
   const left = String(before || "").split(/\r?\n/);
   const right = String(after || "").split(/\r?\n/);
-  const length = Math.max(left.length, right.length);
-  let changed = 0;
-  for (let index = 0; index < length; index++) {
-    if (left[index] !== right[index]) changed++;
-  }
-  return changed;
+  let prefix = 0;
+  while (prefix < left.length && prefix < right.length && left[prefix] === right[prefix]) prefix++;
+  let suffix = 0;
+  while (
+    suffix < left.length - prefix &&
+    suffix < right.length - prefix &&
+    left[left.length - 1 - suffix] === right[right.length - 1 - suffix]
+  ) suffix++;
+  return (left.length - prefix - suffix) + (right.length - prefix - suffix);
 }
 
 function countRuntimeLights(source) {
