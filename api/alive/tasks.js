@@ -1,4 +1,4 @@
-import { getHostedAliveOwnerApiHandler } from "../../../development/runtime/hostedAliveApiRuntime.js";
+import { getHostedAliveOwnerApiHandler } from "../../development/runtime/hostedAliveApiRuntime.js";
 
 export const config = { maxDuration: 30 };
 
