@@ -233,9 +233,10 @@ test("Development System exposes read-only project discovery", async () => {
 
 test("Development System exposes deterministic Living Contract planning and submission", async () => {
   const system = await createDevelopmentSystem();
-  const plan = system.planIntent("Improve waterfront water and marina lighting");
+  const plan = system.planIntent("Improve dock entrance and waterfront storefront materials");
   assert.equal(plan.status, "planned");
-  assert.ok(plan.matchedContracts.includes("water-materials"));
+  assert.ok(plan.matchedContracts.includes("dock-entrance-materials"));
+  assert.ok(plan.matchedContracts.includes("waterfront-storefront-materials"));
   const result = await system.submitIntent("Improve Convention Center glass realism");
   assert.equal(result.status, "submitted");
   assert.equal(result.total, 1);
