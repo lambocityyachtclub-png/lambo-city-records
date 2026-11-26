@@ -14,11 +14,14 @@ test("ALIVE owner console is private, no-index, and uses the owner-authenticated
   assert.match(html, /register-passkey-button/);
   assert.match(html, /id="intent-form"/);
   assert.match(html, /id="reviews-list"/);
+  assert.match(html, /id="scan-project-button"/);
   assert.match(script, /credentials:\s*"same-origin"/);
   assert.match(script, /signUp\.email/);
   assert.match(script, /signIn\.passkey/);
   assert.match(script, /request\("tasks"/);
   assert.match(script, /request\("reviews"/);
+  assert.match(script, /request\("discovery"/);
+  assert.match(script, /function renderDiscovery/);
   assert.doesNotMatch(script, /localStorage|sessionStorage/);
   assert.doesNotMatch(script, /api\/alive\/personal/);
   assert.match(css, /@media \(max-width: 680px\)/);
