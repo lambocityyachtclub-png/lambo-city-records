@@ -25,7 +25,8 @@ export function getHostedAliveOwnerApiHandler() {
     env: process.env,
     authenticateOwner: authenticateAliveOwner,
     isSameOrigin: isSameOriginRequest,
-    withSystem: (options, callback) => controlPlane.withSystem(options, callback)
+    withSystem: (options, callback) => controlPlane.withSystem(options, callback),
+    getStatus: () => controlPlane.getSnapshot()
   });
   return handler;
 }
