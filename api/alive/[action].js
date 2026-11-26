@@ -74,17 +74,24 @@ export default async function aliveAction(req, res) {
 
   const action = getAction(req);
   if (action === "status" && method === "GET") {
-    return send(res, 200, {
-      service: "lambo-city-alive",
-      owner: { email: owner.email },
-      databaseConfigured: Boolean(process.env.DATABASE_URL),
-      persistentTaskStorage: true,
-      aiProviderConfigured: Boolean(process.env.OPENAI_API_KEY),
-      aiExecutionEnabled: false,
-      isolatedSandboxEnabled: false,
-      autonomousProductionDeployment: false,
-      nextMilestone: "Connect the approved AI proposal provider and isolated sandbox after API budget approval."
-    });
+    try {
+      const developmentSystem = await getControlPlane().withSystem({}, async ({ system }) => system.getSnapshot());
+      const aiCredentialConfigured = Boolean(process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN);
+      return send(res, 200, {
+        service: "lambo-city-alive",
+        owner: { email: owner.email },
+        databaseConfigured: Boolean(process.env.DATABASE_URL),
+        persistentTaskStorage: true,
+        developmentSystem,
+        aiProviderConfigured: aiCredentialConfigured && Boolean(process.env.AI_GATEWAY_MODEL),
+        aiExecutionEnabled: false,
+        isolatedSandboxEnabled: false,
+        autonomousProductionDeployment: false,
+        nextMilestone: "Connect the budget-approved Vercel AI Gateway provider and isolated sandbox."
+      });
+    } catch {
+      return send(res, 503, { error: "ALIVE development storage is unavailable or its schema is incomplete." });
+    }
   }
 
   let control;
