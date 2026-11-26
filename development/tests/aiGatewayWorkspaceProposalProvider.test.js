@@ -80,6 +80,33 @@ test("AI Gateway workspace bridge requires exact task source files", async () =>
   );
 });
 
+test("AI Gateway workspace bridge reads only task targets from a larger bounded workspace", async () => {
+  let received;
+  const bridge = createAIGatewayWorkspaceProposalProvider({
+    aiProvider: {
+      async generateProposal(input) {
+        received = input;
+        return { summary: "target-only", files: [] };
+      }
+    },
+    includeProjectContext: false
+  });
+
+  await bridge.proposeChanges({
+    task,
+    workspace: { allowedPaths: ["development", "conferenceCenterDistrict.js", "waterfrontStorefrontDetails.js"] },
+    async listFiles() {
+      return ["conferenceCenterDistrict.js", "waterfrontStorefrontDetails.js", "development/tests/projectContracts.test.js"];
+    },
+    async readFile(filePath) {
+      assert.equal(filePath, "conferenceCenterDistrict.js");
+      return "export const value = 1;";
+    }
+  });
+
+  assert.deepEqual(received.sourceFiles.map(file => file.path), ["conferenceCenterDistrict.js"]);
+});
+
 test("AI Gateway workspace bridge can omit project discovery context", async () => {
   let context;
   const bridge = createAIGatewayWorkspaceProposalProvider({

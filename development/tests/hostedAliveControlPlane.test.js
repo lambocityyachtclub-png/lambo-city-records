@@ -154,9 +154,55 @@ test("Hosted ALIVE control plane fails closed when execution is requested", asyn
   const controlPlane = createHostedAliveControlPlane({ pool });
   await assert.rejects(
     () => controlPlane.withSystem({ execution: true }, async () => true),
-    /code execution is not configured/
+    /ALIVE execution is disabled/
   );
   assert.equal(pool.state.releases, 0);
+});
+
+test("Hosted ALIVE worker remains disabled until every AI and sandbox gate is explicitly enabled", () => {
+  const pool = createFakePool();
+  const controlPlane = createHostedAliveControlPlane({
+    pool,
+    env: {
+      AI_GATEWAY_API_KEY: "test-key",
+      AI_GATEWAY_MODEL: "openai/gpt-6.2-sol",
+      ALIVE_AI_ENABLED: "true",
+      ALIVE_AI_SPEND_APPROVED: "false",
+      ALIVE_SANDBOX_ENABLED: "true",
+      ALIVE_WORKER_ENABLED: "true",
+      ALIVE_AUTO_RUN: "true"
+    }
+  });
+  const snapshot = controlPlane.getSnapshot();
+  assert.equal(snapshot.aiProviderConfigured, true);
+  assert.equal(snapshot.aiExecutionEnabled, false);
+  assert.equal(snapshot.workerEnabled, false);
+  assert.equal(snapshot.autoRunEnabled, false);
+  assert.equal(snapshot.productionDeployment, false);
+});
+
+test("Hosted ALIVE enables isolated task execution only after all explicit gates are enabled", () => {
+  const pool = createFakePool();
+  const controlPlane = createHostedAliveControlPlane({
+    pool,
+    env: {
+      AI_GATEWAY_API_KEY: "test-key",
+      AI_GATEWAY_MODEL: "openai/gpt-6.2-sol",
+      ALIVE_AI_ENABLED: "true",
+      ALIVE_AI_SPEND_APPROVED: "true",
+      ALIVE_SANDBOX_ENABLED: "true",
+      ALIVE_WORKER_ENABLED: "true",
+      ALIVE_AUTO_RUN: "true"
+    }
+  });
+  const snapshot = controlPlane.getSnapshot();
+  assert.equal(snapshot.aiProviderConfigured, true);
+  assert.equal(snapshot.aiExecutionEnabled, true);
+  assert.equal(snapshot.sandboxEnabled, true);
+  assert.equal(snapshot.workerEnabled, true);
+  assert.equal(snapshot.autoRunEnabled, true);
+  assert.equal(snapshot.sourceFileWrites, false);
+  assert.equal(snapshot.productionDeployment, false);
 });
 
 test("Postgres advisory lock uses a session lock and always releases", async () => {

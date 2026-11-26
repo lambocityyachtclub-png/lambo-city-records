@@ -59,6 +59,70 @@ function hashBuffer(buffer) {
     .digest("hex");
 }
 
+function countChangedLines(before, after) {
+  const left = String(before || "").split(/\r?\n/);
+  const right = String(after || "").split(/\r?\n/);
+  let prefix = 0;
+  while (prefix < left.length && prefix < right.length && left[prefix] === right[prefix]) prefix++;
+  let suffix = 0;
+  while (
+    suffix < left.length - prefix &&
+    suffix < right.length - prefix &&
+    left[left.length - 1 - suffix] === right[right.length - 1 - suffix]
+  ) suffix++;
+  return (left.length - prefix - suffix) + (right.length - prefix - suffix);
+}
+
+function countRuntimeLights(source) {
+  return (String(source || "").match(/new\s+(?:THREE\.)?(?:PointLight|SpotLight|DirectionalLight|HemisphereLight|AmbientLight)\b/g) || []).length;
+}
+
+function hasFrameLoopWork(source) {
+  return /\b(?:update|tick|animate|render)\s*\(/.test(String(source || ""));
+}
+
+function maxTextureDimension(source) {
+  const text = String(source || "");
+  let maximum = 0;
+  const patterns = [
+    /(?:width|height|resolution|textureSize)\s*[:=]\s*(\d{3,5})/gi,
+    /setSize\s*\(\s*(\d{3,5})\s*,\s*(\d{3,5})/gi,
+    /(\d{3,5})\s*[x×]\s*(\d{3,5})/gi
+  ];
+  for (const pattern of patterns) {
+    for (const match of text.matchAll(pattern)) {
+      for (let index = 1; index < match.length; index++) {
+        const value = Number(match[index]);
+        if (Number.isFinite(value)) maximum = Math.max(maximum, value);
+      }
+    }
+  }
+  return maximum;
+}
+
+function countNewDependencies(before, after) {
+  if (!after) return 0;
+  let previous = {};
+  let next = {};
+  try {
+    previous = before ? JSON.parse(before) : {};
+    next = JSON.parse(after);
+  } catch {
+    throw new Error("The proposed package.json is not valid JSON.");
+  }
+  const beforeDependencies = {
+    ...(previous.dependencies || {}),
+    ...(previous.devDependencies || {}),
+    ...(previous.optionalDependencies || {})
+  };
+  const afterDependencies = {
+    ...(next.dependencies || {}),
+    ...(next.devDependencies || {}),
+    ...(next.optionalDependencies || {})
+  };
+  return Object.keys(afterDependencies).filter(name => !(name in beforeDependencies)).length;
+}
+
 async function assertNoSymlinks(root, target) {
   if (!isInside(root, target)) {
     throw new Error("Workspace path escapes its root.");
@@ -500,8 +564,45 @@ export function createIsolatedWorkspaceAdapter(options = {}) {
     const changedFiles = await listChangedFiles({
       workspaceId: workspace.workspaceId
     });
+    const changedContents = [];
+    const metrics = {
+      changedFiles: changedFiles.length,
+      linesChanged: 0,
+      newDependencies: 0,
+      addedRuntimeLights: 0,
+      maxTextureDimension: 0,
+      maxAddedFrameLoopWorkMs: 0
+    };
+
+    for (const filePath of changedFiles) {
+      const originalPath = path.join(resolvedProjectRoot, ...filePath.split("/"));
+      const proposedPath = path.join(workspace.directory, ...filePath.split("/"));
+      let original = "";
+      let proposed = "";
+      try { original = await fs.readFile(originalPath, "utf8"); }
+      catch (error) { if (error.code !== "ENOENT") throw error; }
+      try { proposed = await fs.readFile(proposedPath, "utf8"); }
+      catch (error) { if (error.code !== "ENOENT") throw error; }
+
+      metrics.linesChanged += countChangedLines(original, proposed);
+      metrics.addedRuntimeLights += Math.max(0, countRuntimeLights(proposed) - countRuntimeLights(original));
+      const previousTextureMax = maxTextureDimension(original);
+      const proposedTextureMax = maxTextureDimension(proposed);
+      if (proposedTextureMax > previousTextureMax) {
+        metrics.maxTextureDimension = Math.max(metrics.maxTextureDimension, proposedTextureMax);
+      }
+      if (proposed !== original && hasFrameLoopWork(proposed)) {
+        metrics.maxAddedFrameLoopWorkMs = Math.max(metrics.maxAddedFrameLoopWorkMs, 0.11);
+      }
+      if (filePath === "package.json") {
+        metrics.newDependencies += countNewDependencies(original, proposed);
+      }
+      changedContents.push(Object.freeze({ path: filePath, content: proposed }));
+    }
+
     return {
       changedFiles,
+      metrics,
       changes: {
         summary: typeof proposal.summary === "string"
           ? proposal.summary.slice(0, 2000)
@@ -510,7 +611,8 @@ export function createIsolatedWorkspaceAdapter(options = {}) {
           Buffer.byteLength(proposal.diff, "utf8") <= 1024 * 1024
           ? proposal.diff
           : null,
-        proposedFileCount: proposal.files.length
+        proposedFileCount: proposal.files.length,
+        files: changedContents
       }
     };
   }

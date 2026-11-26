@@ -437,6 +437,16 @@ test("Workspace adapter prepares bounded proposals and runs only an injected tes
   });
   assert.deepEqual(proposal.changedFiles, ["development/example/sample.js"]);
   assert.equal(proposal.changes.summary, "Isolated proposal");
+  assert.equal(proposal.metrics.changedFiles, 1);
+  assert.equal(proposal.metrics.linesChanged, 2);
+  assert.equal(proposal.metrics.newDependencies, 0);
+  assert.equal(proposal.metrics.addedRuntimeLights, 0);
+  assert.equal(proposal.metrics.maxTextureDimension, 0);
+  assert.equal(proposal.metrics.maxAddedFrameLoopWorkMs, 0);
+  assert.deepEqual(proposal.changes.files, [{
+    path: "development/example/sample.js",
+    content: "export const value = 42;\n"
+  }]);
 
   const original = await fs.readFile(
     path.join(projectRoot, "development", "example", "sample.js"),
