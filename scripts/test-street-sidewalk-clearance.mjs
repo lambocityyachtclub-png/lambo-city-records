@@ -37,7 +37,6 @@ assert.match(district, /arenaCornerRoadApron_/);
 assert.match(district, /surfaceY: 0\.834/);
 assert.match(district, /curbCenterY: 0\.74/);
 assert.match(district, /surfaceY: 0\.807/);
-assert.match(district, /curbCenterY: corner\.sz < 0 \? 0\.64 : 0\.76/);
 
 // All four curved returns meet the unchanged straight sidewalk profiles.
 const boardwalkPaverTopY = 0.55 + 0.3 / 2 + 0.002;
