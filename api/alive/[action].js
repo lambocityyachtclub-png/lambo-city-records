@@ -2,9 +2,11 @@ import { Pool } from "pg";
 import { authenticateAliveOwner } from "../../alive/server/ownerAuth.js";
 import { isSameOriginRequest } from "../../alive/server/originPolicy.js";
 import { createHostedAliveControlPlane } from "../../development/runtime/hostedAliveControlPlane.js";
+import { createHostedAliveComponents } from "../../development/runtime/hostedAliveComponents.js";
 
 let pool;
 let controlPlane;
+let components;
 
 function send(res, status, payload) {
   res.statusCode = status;
@@ -12,6 +14,12 @@ function send(res, status, payload) {
   res.setHeader("Cache-Control", "no-store");
   res.setHeader("X-Content-Type-Options", "nosniff");
   res.end(JSON.stringify(payload));
+}
+
+function getComponents() {
+  if (components) return components;
+  components = createHostedAliveComponents({ projectRoot: process.cwd() });
+  return components;
 }
 
 function getControlPlane() {
@@ -26,7 +34,12 @@ function getControlPlane() {
     idleTimeoutMillis: 10000,
     connectionTimeoutMillis: 10000
   });
-  controlPlane = createHostedAliveControlPlane({ pool });
+  const aliveComponents = getComponents();
+  controlPlane = createHostedAliveControlPlane({
+    pool,
+    components: aliveComponents,
+    workerEnabled: false
+  });
   return controlPlane;
 }
 
@@ -74,17 +87,25 @@ export default async function aliveAction(req, res) {
 
   const action = getAction(req);
   if (action === "status" && method === "GET") {
+    let componentSnapshot = null;
+    try {
+      componentSnapshot = getComponents().getSnapshot();
+    } catch {
+      componentSnapshot = null;
+    }
     return send(res, 200, {
       service: "lambo-city-alive",
       owner: { email: owner.email },
       databaseConfigured: Boolean(process.env.DATABASE_URL),
-      persistentTaskStorage: true,
-      aiProposalProviderConfigured: Boolean(process.env.AI_GATEWAY_MODEL && (process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN)),
-      aiProposalGenerationEnabled: process.env.ALIVE_AI_ENABLED === "true" && process.env.ALIVE_AI_SPEND_APPROVED === "true",
+      persistentTaskStorage: Boolean(process.env.DATABASE_URL),
+      aiProposalProviderConfigured: componentSnapshot?.aiProvider?.configured === true,
+      aiProposalGenerationEnabled: componentSnapshot?.proposalGenerationEnabled === true,
       aiExecutionEnabled: false,
-      isolatedSandboxEnabled: false,
+      isolatedWorkspaceConfigured: componentSnapshot?.workspaceAdapter?.configured === true,
+      isolatedSandboxEnabled: componentSnapshot?.workspaceAdapter?.testRunnerConfigured === true,
+      resourceProfilerConfigured: componentSnapshot?.workspaceAdapter?.resourceProfilerConfigured === true,
       autonomousProductionDeployment: false,
-      nextMilestone: "Connect the approved AI proposal provider and isolated sandbox after API budget approval."
+      nextMilestone: "Connect the trusted isolated test runner and runtime profiler. AI proposals remain disabled until you explicitly enable generation and approve model spend."
     });
   }
 
