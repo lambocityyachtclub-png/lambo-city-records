@@ -117,7 +117,8 @@ export function createHostedAliveControlPlane(options = {}) {
       includeProjectContext: true
     });
     const testRunner = createVercelSandboxTestRunner({
-      enabled: runtime.sandboxEnabled
+      enabled: runtime.sandboxEnabled,
+      timeoutMs: 45000
     });
     const workspaceAdapter = createIsolatedWorkspaceAdapter({
       projectRoot,
