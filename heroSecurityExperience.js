@@ -4,9 +4,11 @@ import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 // This is a presentation/gameplay layer only. Server-side access controls
 // must remain authoritative for private spaces, voice, and player permissions.
 
+// A staggered front/rear escort keeps a clear personal-space corridor.
+ // Local +Z is HERO's forward direction.
 const GUARD_OFFSETS = [
-  new THREE.Vector3(-1.15, 0, 0.28),
-  new THREE.Vector3(1.15, 0, 0.28)
+  new THREE.Vector3(0.48, 0, 1.85),   // lead escort
+  new THREE.Vector3(-0.48, 0, -1.85)  // rear escort
 ];
 const PRESS_ANGLES = [-0.88, 0.88, Math.PI];
 const PRESS_RADIUS = 7.8;
@@ -60,10 +62,18 @@ function makeGuard(index) {
   head.castShadow = true;
   root.add(head);
   addBox(root, "securitySunglasses", [0.32, 0.07, 0.045], dark, [0, 1.86, -0.17]);
-  addBox(root, "securityLeftLeg", [0.22, 0.67, 0.25], suit, [-0.16, 0.48, 0]);
-  addBox(root, "securityRightLeg", [0.22, 0.67, 0.25], suit, [0.16, 0.48, 0]);
-  addBox(root, "securityLeftShoe", [0.24, 0.13, 0.39], dark, [-0.16, 0.12, -0.055]);
-  addBox(root, "securityRightShoe", [0.24, 0.13, 0.39], dark, [0.16, 0.12, -0.055]);
+  // Pivoted legs and shoes allow a restrained, believable walking gait.
+  const leftLeg = new THREE.Group();
+  leftLeg.position.set(-0.16, 0.82, 0);
+  addBox(leftLeg, "securityLeftLeg", [0.22, 0.67, 0.25], suit, [0, -0.34, 0]);
+  addBox(leftLeg, "securityLeftShoe", [0.24, 0.13, 0.39], dark, [0, -0.68, -0.055]);
+  root.add(leftLeg);
+
+  const rightLeg = new THREE.Group();
+  rightLeg.position.set(0.16, 0.82, 0);
+  addBox(rightLeg, "securityRightLeg", [0.22, 0.67, 0.25], suit, [0, -0.34, 0]);
+  addBox(rightLeg, "securityRightShoe", [0.24, 0.13, 0.39], dark, [0, -0.68, -0.055]);
+  root.add(rightLeg);
 
   const leftArm = addBox(root, "securityLeftArm", [0.19, 0.66, 0.22], suit, [-0.42, 1.22, 0]);
   const rightArm = addBox(root, "securityRightArm", [0.19, 0.66, 0.22], suit, [0.42, 1.22, 0]);
@@ -72,6 +82,9 @@ function makeGuard(index) {
   root.userData.walkPhase = index * Math.PI;
   root.userData.leftArm = leftArm;
   root.userData.rightArm = rightArm;
+  root.userData.leftLeg = leftLeg;
+  root.userData.rightLeg = rightLeg;
+  root.userData.head = head;
   root.visible = false;
   scene.add(root);
   return root;
@@ -127,15 +140,22 @@ function updateGuard(guard, hero, offset, delta, index) {
   const blend = Math.min(1, delta * 4.2);
   guard.position.lerp(target, blend);
   guard.position.y = hero.position.y;
+  // Both escorts travel in HERO's direction; the rear guard does not walk
+  // backwards. Their offset formation creates a moving protective corridor.
   guard.rotation.y += Math.atan2(
     Math.sin(hero.rotation.y - guard.rotation.y),
     Math.cos(hero.rotation.y - guard.rotation.y)
   ) * Math.min(1, delta * 5);
-  const gait = elapsed * 7.2 + guard.userData.walkPhase;
-  const swing = Math.sin(gait) * (lastState === "WALKING" ? 0.22 : 0.035);
+  const walking = lastState === "WALKING";
+  const gait = elapsed * 6.4 + guard.userData.walkPhase;
+  const swing = Math.sin(gait) * (walking ? 0.19 : 0.018);
   guard.userData.leftArm.rotation.x = swing;
   guard.userData.rightArm.rotation.x = -swing;
-  guard.position.y += lastState === "WALKING" ? Math.abs(Math.sin(gait * 2)) * 0.025 : 0;
+  guard.userData.leftLeg.rotation.x = -swing * 1.15;
+  guard.userData.rightLeg.rotation.x = swing * 1.15;
+  // Small head checks add awareness without exaggerated, robotic motion.
+  guard.userData.head.rotation.y = Math.sin(elapsed * 0.8 + index * 1.8) * 0.09;
+  guard.position.y += walking ? Math.abs(Math.sin(gait * 2)) * 0.018 : 0;
 }
 
 function updatePhotographer(person, hero, index, delta) {
