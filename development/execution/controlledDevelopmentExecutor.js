@@ -301,10 +301,16 @@ export function createControlledDevelopmentExecutor(options = {}) {
       }
 
       // STEP 3b: Enforce the canonical module contract as a second allowlist.
+      const resourceMetrics = proposal.metrics && typeof proposal.metrics === "object"
+        ? proposal.metrics
+        : {};
       const contractDecision = evaluateProjectAction(
         task.contractId,
         "prepare_isolated_change",
-        { changedPaths: changedFiles }
+        {
+          ...resourceMetrics,
+          changedPaths: changedFiles
+        }
       );
       if (!contractDecision.authorized) {
         throw new Error(`ALIVE contract blocked proposed changes: ${contractDecision.reason}`);
@@ -349,6 +355,7 @@ export function createControlledDevelopmentExecutor(options = {}) {
         workspaceId,
         changedFiles,
         changes: proposal.changes || null,
+        resourceMetrics,
         testResults,
         status: "awaiting_owner_review",
         productionChangesMade: false,
@@ -366,6 +373,7 @@ export function createControlledDevelopmentExecutor(options = {}) {
           success: true,
           workspaceId,
           changedFiles,
+          resourceMetrics,
           testResults,
           reviewId: savedReview?.id || null,
           status: "awaiting_owner_review"
@@ -378,6 +386,7 @@ export function createControlledDevelopmentExecutor(options = {}) {
         taskId: task.id,
         workspaceId,
         changedFiles,
+        resourceMetrics,
         testResults,
         review: savedReview || review,
         productionChangesMade: false
