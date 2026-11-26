@@ -40,7 +40,7 @@ test("Vercel Sandbox runner copies only approved paths and runs syntax plus test
   assert.equal(state.config.runtime, "node24");
   assert.equal(state.config.persistent, false);
   assert.equal(state.config.networkPolicy, "deny-all");
-  assert.ok(state.files.some(file => file.path === "src.js"));
+  assert.ok(state.files.some(file => file.path === "/vercel/sandbox/src.js"));
   assert.equal(state.commands.length, 2);
   assert.deepEqual(state.commands[0].args, ["--check", "src.js"]);
   assert.deepEqual(state.commands[1].args, ["--test", "development/tests/sample.test.js"]);
