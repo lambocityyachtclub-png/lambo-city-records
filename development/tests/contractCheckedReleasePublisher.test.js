@@ -102,7 +102,7 @@ test("Release gate never autonomously deploys medium-risk or out-of-contract cha
   });
 
   assert.equal(mediumRisk.status, "owner_approval_required");
-  assert.equal(outsideScope.status, "denied");
+  assert.equal(outsideScope.status, "blocked_missing_evidence");
   assert.equal(calls, 0);
 });
 
@@ -149,7 +149,7 @@ test("Release gate requires a rollback adapter and refuses contracts without low
     review: performanceReview,
     evidence: passingEvidence()
   });
-  assert.equal(result.status, "owner_approval_required");
+  assert.equal(result.status, "not_authorized");
 });
 
 test("Release gate rolls back a merged deployment that fails post-deploy smoke", async () => {
