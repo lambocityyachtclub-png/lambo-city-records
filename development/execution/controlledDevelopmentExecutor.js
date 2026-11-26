@@ -249,11 +249,25 @@ export function createControlledDevelopmentExecutor(options = {}) {
         throw new Error("Task ALIVE contract is missing or has changed since task creation.");
       }
 
-      // STEP 1: Create an isolated workspace.
+      if (!Array.isArray(task.relatedFiles) || task.relatedFiles.length === 0) {
+        throw new Error("Task has no exact approved source-file targets; execution is blocked.");
+      }
+      const taskTargets = [...new Set(task.relatedFiles.map(filePath => {
+        const safePath = validateRelativePath(filePath);
+        if (!isPathAllowed(safePath, normalizedAllowedPaths)) {
+          throw new Error(`Task target is outside the executor workspace allowlist: ${safePath}`);
+        }
+        if (!isPathAllowed(safePath, contract.allowedPaths)) {
+          throw new Error(`Task target is outside the canonical ALIVE contract allowlist: ${safePath}`);
+        }
+        return safePath;
+      }))];
+
+      // STEP 1: Create an isolated workspace containing only this task's exact targets.
       const workspace = await workspaceAdapter.createWorkspace({
         taskId: task.id,
         task,
-        allowedPaths: [...normalizedAllowedPaths]
+        allowedPaths: [...taskTargets]
       });
 
       workspaceId = requireText(
@@ -282,15 +296,11 @@ export function createControlledDevelopmentExecutor(options = {}) {
           proposal.changedFiles.map(filePath => {
             const safePath = validateRelativePath(filePath);
 
-            if (
-              !isPathAllowed(
-                safePath,
-                normalizedAllowedPaths
-              )
-            ) {
-              throw new Error(
-                `File is outside the authorized paths: ${safePath}`
-              );
+            if (!isPathAllowed(safePath, normalizedAllowedPaths)) {
+              throw new Error(`File is outside the authorized paths: ${safePath}`);
+            }
+            if (!taskTargets.includes(safePath)) {
+              throw new Error(`File is outside this task's exact approved targets: ${safePath}`);
             }
 
             return safePath;
