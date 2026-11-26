@@ -43,10 +43,10 @@ const boardwalkPaverTopY = 0.55 + 0.3 / 2 + 0.002;
 const boardwalkCurbCenterY = 0.55 + 0.3 / 2 - 0.12 / 2;
 const boulevardPaverTopY = 0.76 + 0.14 / 2 + 0.002;
 const boulevardCurbCenterY = 0.76 + 0.14 / 2 - 0.14 / 2;
-assert.equal(boardwalkPaverTopY, 0.702);
-assert.equal(boardwalkCurbCenterY, 0.64);
-assert.equal(boulevardPaverTopY, 0.832);
-assert.equal(boulevardCurbCenterY, 0.76);
+assert.ok(Math.abs(boardwalkPaverTopY - 0.702) < 1e-9);
+assert.ok(Math.abs(boardwalkCurbCenterY - 0.64) < 1e-9);
+assert.ok(Math.abs(boulevardPaverTopY - 0.832) < 1e-9);
+assert.ok(Math.abs(boulevardCurbCenterY - 0.76) < 1e-9);
 
 // Coordinate-level check: the curved curb endpoints meet the straight curb centerlines.
 const boardwalkStreetCenterZ = 46;
