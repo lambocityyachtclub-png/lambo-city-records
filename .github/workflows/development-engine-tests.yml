@@ -5,6 +5,10 @@ on:
   push:
     paths:
       - "development/**"
+      - "alive/server/**"
+      - "api/alive/**"
+      - "package.json"
+      - "vercel.json"
       - ".github/workflows/development-engine-tests.yml"
 
   pull_request:
@@ -26,7 +30,10 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
+
+      - name: Install pinned server dependencies
+        run: npm install --ignore-scripts --no-audit --no-fund
 
       - name: Run development engine and blueprint discovery tests
         run: node --experimental-default-type=module --test development/tests/*.test.js
