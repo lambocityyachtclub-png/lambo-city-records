@@ -1,13 +1,9 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "functions": {
-    "api/alive/[action].js": {
-      "includeFiles": "development/**/*,alive/server/**/*",
-      "maxDuration": 30
-    },
-    "api/alive/auth/[...all].js": {
-      "includeFiles": "alive/server/**/*",
-      "maxDuration": 30
-    }
+    "api/alive/status.js": { "maxDuration": 30 },
+    "api/alive/tasks.js": { "maxDuration": 30 },
+    "api/alive/reviews.js": { "maxDuration": 30 },
+    "api/alive/auth/[...all].js": { "maxDuration": 30 }
   }
 }
