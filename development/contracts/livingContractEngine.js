@@ -180,9 +180,10 @@ function validateContractTargets() {
     const projectContract = getProjectContract(contract.projectContractId);
     if (!projectContract) throw new Error(`Missing canonical project contract: ${contract.projectContractId}`);
     for (const filePath of contract.filePaths) {
-      const allowed = projectContract.allowedPaths.some(prefix =>
-        filePath === prefix || filePath.startsWith(`${prefix}/`)
-      );
+      const allowed = projectContract.allowedPaths.some(prefix => {
+        const normalizedPrefix = prefix.replace(/\/+$/, "");
+        return filePath === normalizedPrefix || filePath.startsWith(normalizedPrefix + "/");
+      });
       if (!allowed) {
         throw new Error(`Living Contract ${contract.id} references a file outside the canonical allowlist: ${filePath}`);
       }
