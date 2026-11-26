@@ -30,7 +30,7 @@ assert.match(district, /depth: innerVerticalDepth/);
 assert.match(district, /width: innerNorthLength/);
 assert.match(district, /curbStartInset: -curbCenterlineRadius/);
 assert.match(district, /innerCornerReturns = \[/);
-assert.equal((district.match(/name: "southWest"|name: "southEast"|name: "northWest"|name: "northEast"/g) || []).length, 4);
+assert.equal((district.match(/name: "southWest"|name: "southEast"|name: "northWest"|name: "northEast"/g) || []).length, 8);
 assert.equal((district.match(/addSidewalkCornerReturn\(root/g) || []).length, 1,
   "One shared corner-return builder must create all four curved sidewalk corners");
 assert.match(district, /arenaCornerRoadApron_/);
