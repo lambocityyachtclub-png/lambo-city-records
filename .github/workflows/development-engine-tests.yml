@@ -37,6 +37,9 @@ jobs:
       - name: Install pinned server-side dependencies
         run: npm install --ignore-scripts --no-audit --no-fund
 
+      - name: Check private ALIVE owner console JavaScript syntax
+        run: node --check alive/owner.js
+
       - name: Run development engine and blueprint discovery tests
         run: node --experimental-default-type=module --test development/tests/*.test.js
 
