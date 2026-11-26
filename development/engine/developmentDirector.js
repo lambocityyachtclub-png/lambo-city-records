@@ -17,6 +17,7 @@
 import {
   evaluateDevelopmentTask
 } from "../policies/developmentPolicy.js";
+import { getProjectContract } from "../../alive/contracts/projectContracts.js";
 export const TASK_STATUS = Object.freeze({
   PENDING_APPROVAL: "pending_approval",
   QUEUED: "queued",
@@ -257,6 +258,14 @@ export function createDevelopmentDirector(options = {}) {
     const title = requireText(input.title, "Task title");
     const area = requireText(input.area, "Task area");
     const runner = requireText(input.runner, "Runner");
+    const contractId = input.contractId == null
+      ? null
+      : requireText(input.contractId, "ALIVE contract ID");
+    const contract = contractId ? getProjectContract(contractId) : null;
+    if (contractId && !contract) {
+      throw new Error(`Unknown ALIVE contract: ${contractId}`);
+    }
+    const contractVersion = contract?.version || null;
 
     const description = input.description || "";
     const priority = input.priority || TASK_PRIORITY.NORMAL;
@@ -300,6 +309,8 @@ const requiresApproval = policyDecision.requiresApproval;
       description,
       area,
       runner,
+      contractId,
+      contractVersion,
       priority,
       status: requiresApproval
         ? TASK_STATUS.PENDING_APPROVAL
@@ -323,6 +334,8 @@ const requiresApproval = policyDecision.requiresApproval;
         details: {
           area,
           runner,
+          contractId,
+          contractVersion,
           priority,
           requiresApproval
         },
