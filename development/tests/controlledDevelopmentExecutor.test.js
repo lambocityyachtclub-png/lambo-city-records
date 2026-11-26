@@ -21,7 +21,8 @@ async function createTestSetup(options = {}) {
     description: "Verify isolated development execution.",
     area: "studio_audio",
     runner: "world",
-    contractId: options.contractId === null ? undefined : (options.contractId || "alive-development-core")
+    contractId: options.contractId === null ? undefined : (options.contractId || "alive-development-core"),
+    relatedFiles: options.relatedFiles || (options.contractId === "world-material-quality" ? ["conferenceCenterDistrict.js"] : options.contractId === "performance-quality" ? ["deviceGraphics.js"] : options.contractId === "studio-deferred" ? [] : ["development/engine/example.js"])
   });
 
   const calls = {
@@ -29,12 +30,14 @@ async function createTestSetup(options = {}) {
     prepare: 0,
     tests: 0,
     review: 0,
-    destroy: 0
+    destroy: 0,
+    workspacePaths: null
   };
 
   const workspaceAdapter = {
-    async createWorkspace() {
+    async createWorkspace(input) {
       calls.workspace++;
+      calls.workspacePaths = input?.allowedPaths || null;
 
       return {
         workspaceId: "isolated-test-workspace"
@@ -228,6 +231,7 @@ test("Executor sends successful changes to owner review", async () => {
   assert.equal(calls.tests, 1);
   assert.equal(calls.review, 1);
   assert.equal(calls.destroy, 1);
+  assert.deepEqual(calls.workspacePaths, ["development/engine/example.js"]);
 
   assert.equal(reviews.length, 1);
   assert.equal(
@@ -255,18 +259,19 @@ test("Executor blocks tasks without a pinned ALIVE contract before creating a wo
   assert.equal(director.getTask(task.id).status, TASK_STATUS.BLOCKED);
 });
 
-test("Executor enforces the contract allowlist even when the workspace allowlist is broader", async () => {
-  const { director, task, executor, calls, reviews } = await createTestSetup({
-    changedFiles: ["development/policies/developmentPolicy.js"],
-    allowedPaths: ["development"]
-  });
-  const result = await executor.executeNextTask({ runnerId: "world" });
-  assert.equal(result.status, TASK_STATUS.BLOCKED);
-  assert.match(result.reason, /ALIVE contract blocked/);
-  assert.equal(calls.tests, 0);
-  assert.equal(calls.review, 0);
-  assert.equal(reviews.length, 0);
-  assert.equal(director.getTask(task.id).status, TASK_STATUS.BLOCKED);
+test("Director rejects task targets outside the canonical contract before queueing", async () => {
+  const director = createDevelopmentDirector();
+  await director.initialize();
+  await assert.rejects(
+    () => director.createTask({
+      title: "Out-of-contract target",
+      description: "This target is not authorized by the ALIVE Development Core contract.",
+      runner: "world",
+      contractId: "alive-development-core",
+      relatedFiles: ["development/policies/developmentPolicy.js"]
+    }),
+    /outside the canonical ALIVE contract allowlist/
+  );
 });
 
 test("Observer-only Studio contract cannot prepare code changes", async () => {
@@ -275,7 +280,8 @@ test("Observer-only Studio contract cannot prepare code changes", async () => {
   });
   const result = await executor.executeNextTask({ runnerId: "world" });
   assert.equal(result.status, TASK_STATUS.BLOCKED);
-  assert.match(result.reason, /ALIVE contract blocked/);
+  assert.match(result.reason, /no exact approved source-file targets/i);
+  assert.equal(calls.workspace, 0);
   assert.equal(calls.tests, 0);
   assert.equal(director.getTask(task.id).status, TASK_STATUS.BLOCKED);
 });
@@ -412,7 +418,7 @@ test("Executor blocks changes outside the allowed paths", async () => {
   });
 
   assert.equal(result.status, TASK_STATUS.BLOCKED);
-  assert.match(result.reason, /outside the authorized paths/);
+  assert.match(result.reason, /outside the exact task targets/);
 
   assert.equal(calls.tests, 0);
   assert.equal(calls.review, 0);
@@ -510,7 +516,8 @@ test("Executor blocks a task when workspace creation fails", async () => {
     title: "Workspace failure test",
     area: "studio_audio",
     runner: "world",
-    contractId: "alive-development-core"
+    contractId: "alive-development-core",
+    relatedFiles: ["development/engine/example.js"]
   });
 
   const executor = createControlledDevelopmentExecutor({
