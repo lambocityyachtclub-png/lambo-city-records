@@ -2,11 +2,11 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "functions": {
     "api/alive/[action].js": {
-      "includeFiles": ["development/**/*", "alive/**/*", "**/*.js", "package.json"],
-      "maxDuration": 30
+      "includeFiles": "{development/**/*,alive/**/*,*.js,package.json}",
+      "maxDuration": 60
     },
     "api/alive/auth/[...all].js": {
-      "includeFiles": ["alive/server/**/*"],
+      "includeFiles": "alive/server/**/*",
       "maxDuration": 30
     }
   }
