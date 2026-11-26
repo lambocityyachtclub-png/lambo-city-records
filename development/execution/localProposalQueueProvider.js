@@ -5,11 +5,14 @@
  * generated proposals. One JSON file is matched to one queued task ID.
  * This module does not generate code, execute commands, or approve changes.
  */
-import { lstat, mkdir, readFile, realpath } from "node:fs/promises";
+import { constants as fsConstants } from "node:fs";
+import { lstat, mkdir, open, realpath } from "node:fs/promises";
 import path from "node:path";
 
 const MAX_PROPOSAL_BYTES = 5 * 1024 * 1024;
 const MAX_FILE_BYTES = 1024 * 1024;
+const INVALID_PROPOSAL_FILE =
+  "Proposal queue entry must be a regular JSON file no larger than 5 MiB.";
 
 function requiredText(value, label) {
   if (typeof value !== "string" || !value.trim()) {
@@ -37,6 +40,48 @@ function safeRelativePath(value) {
     throw new Error(`Unsafe or protected proposal path: ${filePath}`);
   }
   return filePath;
+}
+
+async function readBoundedProposalFile(proposalPath) {
+  let handle;
+  try {
+    // O_NOFOLLOW rejects a symlink at open time on platforms that support it.
+    // The post-open lstat/fstat identity check also protects the fallback path.
+    const flags = fsConstants.O_RDONLY | (fsConstants.O_NOFOLLOW || 0);
+    handle = await open(proposalPath, flags);
+    const openedStat = await handle.stat();
+    if (!openedStat.isFile() || openedStat.size > MAX_PROPOSAL_BYTES) {
+      throw new Error(INVALID_PROPOSAL_FILE);
+    }
+
+    const pathStat = await lstat(proposalPath);
+    if (
+      pathStat.isSymbolicLink() ||
+      !pathStat.isFile() ||
+      pathStat.dev !== openedStat.dev ||
+      pathStat.ino !== openedStat.ino
+    ) {
+      throw new Error(INVALID_PROPOSAL_FILE);
+    }
+
+    // Read at most MAX_PROPOSAL_BYTES + 1, even if the file grows after stat().
+    const buffer = Buffer.alloc(MAX_PROPOSAL_BYTES + 1);
+    let total = 0;
+    while (total < buffer.length) {
+      const { bytesRead } = await handle.read(buffer, total, buffer.length - total, total);
+      if (bytesRead === 0) break;
+      total += bytesRead;
+    }
+    if (total > MAX_PROPOSAL_BYTES) {
+      throw new Error(INVALID_PROPOSAL_FILE);
+    }
+    return buffer.subarray(0, total).toString("utf8");
+  } catch (error) {
+    if (error.code === "ELOOP") throw new Error(INVALID_PROPOSAL_FILE);
+    throw error;
+  } finally {
+    if (handle) await handle.close().catch(() => {});
+  }
 }
 
 export function createLocalProposalQueueProvider(options = {}) {
@@ -69,22 +114,21 @@ export function createLocalProposalQueueProvider(options = {}) {
     }
     const root = await initialize();
     const proposalPath = path.join(root, `${taskId}.json`);
-    let stat;
+
+    let rawProposal;
     try {
-      stat = await lstat(proposalPath);
+      rawProposal = await readBoundedProposalFile(proposalPath);
     } catch (error) {
       if (error.code === "ENOENT") {
         throw new Error(`No local proposal file is queued for task ${taskId}.`);
       }
-      throw error;
-    }
-    if (stat.isSymbolicLink() || !stat.isFile() || stat.size > MAX_PROPOSAL_BYTES) {
-      throw new Error("Proposal queue entry must be a regular JSON file no larger than 5 MiB.");
+      if (error.message === INVALID_PROPOSAL_FILE) throw error;
+      throw new Error("Unable to read the local proposal file safely.");
     }
 
     let proposal;
     try {
-      proposal = JSON.parse(await readFile(proposalPath, "utf8"));
+      proposal = JSON.parse(rawProposal);
     } catch {
       throw new Error("Proposal queue entry is not valid JSON.");
     }
