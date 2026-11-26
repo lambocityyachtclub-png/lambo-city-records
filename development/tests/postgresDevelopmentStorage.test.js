@@ -111,6 +111,8 @@ test("Postgres storage creates, lists, retrieves, and decides owner reviews", as
     runner: "world",
     contractId: "world-material-quality",
     contractVersion: "1.0.0",
+    autonomyLevel: "trusted_operator",
+    resourceMetrics: { changedFiles: 1, linesChanged: 24, newDependencies: 0, addedRuntimeLights: 0, maxTextureDimension: 1024 },
     changedFiles: ["conferenceCenterDistrict.js"],
     changes: { summary: "Material-only proposal." },
     testResults: { passed: true, total: 4, failed: 0 }
