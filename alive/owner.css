@@ -71,3 +71,7 @@ button:disabled { opacity:.55; cursor:wait; }
   .status-grid { grid-template-columns:1fr 1fr; }
   .item-head { flex-direction:column; }
 }
+
+.code-preview { margin-top:10px; border:1px solid var(--line); border-radius:8px; background:#080b09; }
+.code-preview summary { padding:10px 12px; color:var(--gold); font-size:12px; cursor:pointer; overflow-wrap:anywhere; }
+.code-preview pre { max-height:360px; overflow:auto; padding:12px; margin:0; border-top:1px solid var(--line); color:#d7dfd4; font:11px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace; white-space:pre; }
