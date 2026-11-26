@@ -20,7 +20,8 @@ async function createTestSetup(options = {}) {
     title: "Test controlled execution",
     description: "Verify isolated development execution.",
     area: "studio_audio",
-    runner: "studio"
+    runner: "world"
+    ,contractId: options.contractId === null ? undefined : (options.contractId || "alive-development-core")
   });
 
   const calls = {
@@ -45,7 +46,7 @@ async function createTestSetup(options = {}) {
 
       return {
         changedFiles: options.changedFiles || [
-          "development/example/test.js"
+          "development/engine/example.js"
         ],
         changes: "Test proposed changes."
       };
@@ -87,8 +88,8 @@ async function createTestSetup(options = {}) {
     developmentDirector: director,
     workspaceAdapter,
     reviewStore,
-    allowedPaths: [
-      "development/example"
+    allowedPaths: options.allowedPaths || [
+      "development/engine"
     ]
   });
 
@@ -106,7 +107,7 @@ test("Executor requires a Development Director", () => {
     () => createControlledDevelopmentExecutor({
       workspaceAdapter: {},
       reviewStore: {},
-      allowedPaths: ["development/example"]
+      allowedPaths: ["development/engine"]
     }),
     /Development Director is required/
   );
@@ -123,7 +124,7 @@ test("Executor requires an isolated workspace adapter", async () => {
       reviewStore: {
         createReview: async () => ({})
       },
-      allowedPaths: ["development/example"]
+      allowedPaths: ["development/engine"]
     }),
     /workspace adapter is required/
   );
@@ -205,7 +206,7 @@ test("Executor sends successful changes to owner review", async () => {
   } = await createTestSetup();
 
   const result = await executor.executeNextTask({
-    runnerId: "studio"
+    runnerId: "world"
   });
 
   assert.equal(result.executed, true);
@@ -227,7 +228,7 @@ test("Executor sends successful changes to owner review", async () => {
 
   assert.deepEqual(
     result.changedFiles,
-    ["development/example/test.js"]
+    ["development/engine/example.js"]
   );
 
   const updatedTask = director.getTask(task.id);
@@ -236,12 +237,46 @@ test("Executor sends successful changes to owner review", async () => {
   assert.equal(updatedTask.result.success, true);
 });
 
+test("Executor blocks tasks without a pinned ALIVE contract before creating a workspace", async () => {
+  const { director, task, executor, calls } = await createTestSetup({ contractId: null });
+  const result = await executor.executeNextTask({ runnerId: "world" });
+  assert.equal(result.status, TASK_STATUS.BLOCKED);
+  assert.match(result.reason, /no pinned ALIVE module contract/i);
+  assert.equal(calls.workspace, 0);
+  assert.equal(director.getTask(task.id).status, TASK_STATUS.BLOCKED);
+});
+
+test("Executor enforces the contract allowlist even when the workspace allowlist is broader", async () => {
+  const { director, task, executor, calls, reviews } = await createTestSetup({
+    changedFiles: ["development/policies/developmentPolicy.js"],
+    allowedPaths: ["development"]
+  });
+  const result = await executor.executeNextTask({ runnerId: "world" });
+  assert.equal(result.status, TASK_STATUS.BLOCKED);
+  assert.match(result.reason, /ALIVE contract blocked/);
+  assert.equal(calls.tests, 0);
+  assert.equal(calls.review, 0);
+  assert.equal(reviews.length, 0);
+  assert.equal(director.getTask(task.id).status, TASK_STATUS.BLOCKED);
+});
+
+test("Observer-only Studio contract cannot prepare code changes", async () => {
+  const { director, task, executor, calls } = await createTestSetup({
+    contractId: "studio-deferred"
+  });
+  const result = await executor.executeNextTask({ runnerId: "world" });
+  assert.equal(result.status, TASK_STATUS.BLOCKED);
+  assert.match(result.reason, /ALIVE contract blocked/);
+  assert.equal(calls.tests, 0);
+  assert.equal(director.getTask(task.id).status, TASK_STATUS.BLOCKED);
+});
+
 test("Executor blocks empty proposals before tests and owner review", async () => {
   const { director, task, executor, calls, reviews } = await createTestSetup({
     changedFiles: []
   });
 
-  const result = await executor.executeNextTask({ runnerId: "studio" });
+  const result = await executor.executeNextTask({ runnerId: "world" });
 
   assert.equal(result.status, TASK_STATUS.BLOCKED);
   assert.match(result.reason, /No changed files were produced/);
@@ -268,7 +303,7 @@ test("Executor blocks a task when automated tests fail", async () => {
   });
 
   const result = await executor.executeNextTask({
-    runnerId: "studio"
+    runnerId: "world"
   });
 
   assert.equal(result.status, TASK_STATUS.BLOCKED);
@@ -297,7 +332,7 @@ test("Executor blocks changes outside the allowed paths", async () => {
   });
 
   const result = await executor.executeNextTask({
-    runnerId: "studio"
+    runnerId: "world"
   });
 
   assert.equal(result.status, TASK_STATUS.BLOCKED);
@@ -321,12 +356,12 @@ test("Executor blocks directory traversal in proposed changes", async () => {
     reviews
   } = await createTestSetup({
     changedFiles: [
-      "development/example/../../src/main.js"
+      "development/engine/../../src/main.js"
     ]
   });
 
   const result = await executor.executeNextTask({
-    runnerId: "studio"
+    runnerId: "world"
   });
 
   assert.equal(result.status, TASK_STATUS.BLOCKED);
@@ -350,12 +385,12 @@ test("Executor blocks changes to protected directories", async () => {
     reviews
   } = await createTestSetup({
     changedFiles: [
-      "development/example/node_modules/test.js"
+      "development/engine/node_modules/test.js"
     ]
   });
 
   const result = await executor.executeNextTask({
-    runnerId: "studio"
+    runnerId: "world"
   });
 
   assert.equal(result.status, TASK_STATUS.BLOCKED);
@@ -379,14 +414,14 @@ test("Executor exposes a copy of its allowed paths", async () => {
 
   assert.deepEqual(
     paths,
-    ["development/example"]
+    ["development/engine"]
   );
 
   paths.push("src");
 
   assert.deepEqual(
     executor.getAllowedPaths(),
-    ["development/example"]
+    ["development/engine"]
   );
 });
 
@@ -398,7 +433,8 @@ test("Executor blocks a task when workspace creation fails", async () => {
   const task = await director.createTask({
     title: "Workspace failure test",
     area: "studio_audio",
-    runner: "studio"
+    runner: "world",
+    contractId: "alive-development-core"
   });
 
   const executor = createControlledDevelopmentExecutor({
@@ -429,12 +465,12 @@ test("Executor blocks a task when workspace creation fails", async () => {
     },
 
     allowedPaths: [
-      "development/example"
+      "development/engine"
     ]
   });
 
   const result = await executor.executeNextTask({
-    runnerId: "studio"
+    runnerId: "world"
   });
 
   assert.equal(result.status, TASK_STATUS.BLOCKED);
