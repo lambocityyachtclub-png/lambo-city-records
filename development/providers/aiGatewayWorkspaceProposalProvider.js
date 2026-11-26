@@ -25,11 +25,18 @@ function safeTargetPath(value) {
   return filePath;
 }
 
-function sameExactPaths(actual, expected) {
+function containsExactTargets(actual, expected) {
   if (!Array.isArray(actual)) return false;
-  const left = actual.map(safeTargetPath).sort();
-  const right = expected.map(safeTargetPath).sort();
-  return left.length === right.length && left.every((value, index) => value === right[index]);
+  const available = new Set(actual.map(safeTargetPath));
+  return expected.every(target => available.has(target));
+}
+
+function isCoveredByWorkspaceAllowlist(target, allowlist) {
+  if (!Array.isArray(allowlist)) return true;
+  return allowlist.some(value => {
+    const allowed = safeTargetPath(value);
+    return target === allowed || target.startsWith(allowed + "/");
+  });
 }
 
 export function createAIGatewayWorkspaceProposalProvider(options = {}) {
@@ -60,12 +67,11 @@ export function createAIGatewayWorkspaceProposalProvider(options = {}) {
     }
 
     const listedFiles = await input.listFiles();
-    if (!sameExactPaths(listedFiles, targets)) {
-      throw new Error("The isolated workspace file list does not exactly match the task's approved source-file targets.");
+    if (!containsExactTargets(listedFiles, targets)) {
+      throw new Error("The isolated workspace file list does not exactly match or contain every task-approved source-file target.");
     }
-    if (Array.isArray(input.workspace?.allowedPaths) &&
-        !sameExactPaths(input.workspace.allowedPaths, targets)) {
-      throw new Error("The isolated workspace allowlist does not exactly match the task's approved source-file targets.");
+    if (!targets.every(target => isCoveredByWorkspaceAllowlist(target, input.workspace?.allowedPaths))) {
+      throw new Error("The isolated workspace allowlist does not cover every task-approved source-file target.");
     }
 
     const sourceFiles = [];
