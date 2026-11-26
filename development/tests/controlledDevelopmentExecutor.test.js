@@ -231,7 +231,7 @@ test("Executor blocks tasks without a pinned ALIVE contract before creating a wo
   assert.equal(director.getTask(task.id).status, TASK_STATUS.BLOCKED);
 });
 
-test("Executor enforces the contract allowlist even when the workspace allowlist is broader", async () => {
+test("Executor blocks changes outside exact task targets even when the workspace allowlist is broader", async () => {
   const { director, task, executor, calls, reviews } = await createTestSetup({
     changedFiles: ["development/policies/developmentPolicy.js"],
     allowedPaths: ["development"]
@@ -251,7 +251,7 @@ test("Observer-only Studio contract cannot prepare code changes", async () => {
   });
   const result = await executor.executeNextTask({ runnerId: "world" });
   assert.equal(result.status, TASK_STATUS.BLOCKED);
-  assert.match(result.reason, /ALIVE contract blocked/);
+  assert.match(result.reason, /no exact approved source-file targets/i);
   assert.equal(calls.tests, 0);
   assert.equal(director.getTask(task.id).status, TASK_STATUS.BLOCKED);
 });
