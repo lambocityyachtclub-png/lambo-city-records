@@ -1,16 +1,18 @@
 /**
  * ALIVE — hosted Neon control-plane composition.
  *
- * Serializes task-state operations across serverless instances and creates a
- * fresh Development System from durable PostgreSQL state for each request.
- * Contract-aware proposal and workspace components may be attached, but no
- * worker is enabled by default and no source write, merge, or deployment occurs.
+ * Creates a fresh Development System from durable PostgreSQL state for each
+ * authenticated server-side request. A session advisory lock serializes
+ * control-plane operations across serverless instances.
+ *
+ * This layer does not enable AI proposals, code execution, source writes,
+ * GitHub commits, merges, or production deployment.
  */
 
 import { createDevelopmentSystem } from "../engine/developmentSystem.js";
 import { createPostgresDevelopmentStorage } from "../storage/postgresDevelopmentStorage.js";
 
-export const HOSTED_ALIVE_CONTROL_PLANE_VERSION = "1.1.0";
+export const HOSTED_ALIVE_CONTROL_PLANE_VERSION = "1.2.0";
 const DEFAULT_LOCK_KEY = 1280068941;
 
 export async function withPostgresAdvisoryLock(pool, operation, lockKey = DEFAULT_LOCK_KEY) {
@@ -25,22 +27,23 @@ export async function withPostgresAdvisoryLock(pool, operation, lockKey = DEFAUL
   }
 
   const client = await pool.connect();
-  let transactionOpen = false;
+  let lockAcquired = false;
   let operationError = null;
 
   try {
-    await client.query("BEGIN");
-    transactionOpen = true;
-    await client.query("SELECT pg_advisory_xact_lock($1::bigint)", [lockKey]);
+    await client.query("SELECT pg_advisory_lock($1::bigint)", [lockKey]);
+    lockAcquired = true;
     return await operation();
   } catch (error) {
     operationError = error;
     throw error;
   } finally {
     try {
-      if (transactionOpen) {
-        await client.query(operationError ? "ROLLBACK" : "COMMIT");
+      if (lockAcquired) {
+        await client.query("SELECT pg_advisory_unlock($1::bigint)", [lockKey]);
       }
+    } catch (unlockError) {
+      if (!operationError) throw unlockError;
     } finally {
       client.release();
     }
@@ -99,6 +102,7 @@ export function createHostedAliveControlPlane(options = {}) {
         workerEnabled,
         aiProposalExecution: false,
         sourceFileWrites: false,
+        gitCommitMerge: false,
         productionDeployment: false
       });
     }
