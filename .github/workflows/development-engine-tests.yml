@@ -14,6 +14,10 @@ on:
   pull_request:
     paths:
       - "development/**"
+      - "alive/**"
+      - "api/alive/**"
+      - "package.json"
+      - "vercel.json"
       - ".github/workflows/development-engine-tests.yml"
 
   workflow_dispatch:
