@@ -66,7 +66,7 @@ export async function createDevelopmentSystem(options = {}) {
   if (postgresStorage) await postgresStorage.assertSchemaReady();
 
   const storage = suppliedStorage || postgresStorage;
-  const reviewStore = suppliedReviewStore || postgresStorage;
+  const reviewStore = suppliedReviewStore || ((workerExecutor || workspaceAdapter) ? postgresStorage : null);
 
   const registry = createDevelopmentRegistry();
   const directorOptions = { storage };
