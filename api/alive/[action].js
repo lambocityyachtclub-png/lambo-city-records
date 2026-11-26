@@ -75,19 +75,24 @@ export default async function aliveAction(req, res) {
   const action = getAction(req);
   if (action === "status" && method === "GET") {
     try {
-      const developmentSystem = await getControlPlane().withSystem({}, async ({ system }) => system.getSnapshot());
-      const aiCredentialConfigured = Boolean(process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN);
+      const control = getControlPlane();
+      const controlPlane = control.getSnapshot();
+      const developmentSystem = await control.withSystem({}, async ({ system }) => system.getSnapshot());
       return send(res, 200, {
         service: "lambo-city-alive",
         owner: { email: owner.email },
         databaseConfigured: Boolean(process.env.DATABASE_URL),
         persistentTaskStorage: true,
         developmentSystem,
-        aiProviderConfigured: aiCredentialConfigured && Boolean(process.env.AI_GATEWAY_MODEL),
-        aiExecutionEnabled: false,
-        isolatedSandboxEnabled: false,
-        autonomousProductionDeployment: false,
-        nextMilestone: "Connect the budget-approved Vercel AI Gateway provider and isolated sandbox."
+        aiProviderConfigured: controlPlane.aiProviderConfigured,
+        aiExecutionEnabled: controlPlane.workerEnabled,
+        isolatedSandboxEnabled: controlPlane.sandboxEnabled,
+        autoRunEnabled: controlPlane.autoRunEnabled,
+        autonomousProductionDeployment: controlPlane.productionDeployment,
+        controlPlane,
+        nextMilestone: controlPlane.workerEnabled
+          ? "Complete the contract-checked release publisher before enabling low-risk automatic production deployment."
+          : "Approve the AI Gateway budget and enable the isolated sandbox when ready to let ALIVE prepare tested proposals."
       });
     } catch {
       return send(res, 503, { error: "ALIVE development storage is unavailable or its schema is incomplete." });
@@ -125,9 +130,25 @@ export default async function aliveAction(req, res) {
         if (plan.status !== "planned") return plan;
         return system.submitIntent(body.intent);
       });
-      return send(res, result.status === "submitted" ? 201 : 200, { result });
+      let execution = null;
+      if (result.status === "submitted" && control.getSnapshot().autoRunEnabled) {
+        execution = await control.withSystem({ execution: true }, async ({ system }) => system.runWorkerOnce());
+      }
+      return send(res, result.status === "submitted" ? 201 : 200, { result, execution });
     } catch (error) {
       return send(res, validationStatus(error), { error: error.message || "Unable to submit ALIVE intent." });
+    }
+  }
+
+  if (action === "run" && method === "POST") {
+    if (!control.getSnapshot().workerEnabled) {
+      return send(res, 409, { error: "ALIVE execution is disabled until all owner-approved AI and sandbox gates are enabled." });
+    }
+    try {
+      const execution = await control.withSystem({ execution: true }, async ({ system }) => system.runWorkerOnce());
+      return send(res, 200, { execution });
+    } catch (error) {
+      return send(res, validationStatus(error), { error: error.message || "ALIVE could not run the next task." });
     }
   }
 
