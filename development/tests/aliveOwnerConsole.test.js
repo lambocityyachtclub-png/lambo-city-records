@@ -95,12 +95,12 @@ test("owner server enables verified password sign-in, password recovery, passkey
 });
 
 
-test("founder setup creates a random credential during the one-time invitation", () => {
-  assert.match(script, /auth\.signUp\.email\(\{email,password,name:"ALIVE Owner"\}\)/);
-  assert.match(script, /password\.length<12/);
-  assert.match(script, /password!==\$\("owner-password-confirm"\)\.value/);
-  assert.match(html, /type="password"/);
-  assert.match(script, /if\(passwordInput\)passwordInput.hidden=!!enrollmentToken/);
+test("founder setup creates an automatic random credential during the one-time invitation", () => {
+  assert.match(script, /auth\\.signUp\\.email\\(\\{email,password,name:"ALIVE Owner"\\}\\)/);
+  assert.match(script, /crypto\\.getRandomValues/);
+  assert.match(script, /password=enrolling\\?createFounderCredential\\(\\)/);
+  assert.match(script, /if\\(passwordInput\\)passwordInput\\.hidden=!!enrollmentToken/);
   assert.match(html, /Activate my owner account/);
-  assert.doesNotMatch(html, /register-passkey-button|Set up Face ID/);
+  assert.doesNotMatch(script, /owner-password-confirm/);
+  assert.doesNotMatch(script, /localStorage|sessionStorage/);
 });
