@@ -1,5 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import fs from "node:fs/promises";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import {
   AUTONOMY,
   getProjectContract,
@@ -13,6 +16,21 @@ test("project contracts are registered, canonical, and valid", () => {
   assert.equal(contracts.length, 7);
   for (const contract of contracts) assert.deepEqual(validateProjectContract(contract), []);
   assert.equal(Object.isFrozen(contracts[0]), true);
+});
+
+test("every canonical allowed path exists inside the project repository", async () => {
+  const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
+  for (const contract of listProjectContracts()) {
+    for (const allowedPath of contract.allowedPaths) {
+      const resolved = path.resolve(projectRoot, allowedPath);
+      assert.ok(
+        resolved === projectRoot || resolved.startsWith(projectRoot + path.sep),
+        `${contract.id} path escapes project root: ${allowedPath}`
+      );
+      const stat = await fs.stat(resolved);
+      assert.ok(stat.isFile() || stat.isDirectory(), `${contract.id} path is not a file or directory: ${allowedPath}`);
+    }
+  }
 });
 
 test("unknown contracts and forged contract objects cannot grant authority", () => {
