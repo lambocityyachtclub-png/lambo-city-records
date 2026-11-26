@@ -40,7 +40,7 @@ jobs:
         run: npm install --ignore-scripts --no-audit --no-fund
 
       - name: Run development engine and blueprint discovery tests
-        run: node --experimental-default-type=module --test development/tests/*.test.js
+        run: node --test development/tests/*.test.js
 
       - name: Generate read-only ALIVE blueprint discovery report
         run: node development/blueprints/discoverBlueprints.mjs
