@@ -31,7 +31,7 @@ assert.match(district, /width: innerNorthLength/);
 assert.match(district, /curbStartInset: -curbCenterlineRadius/);
 assert.match(district, /innerCornerReturns = \[/);
 assert.equal((district.match(/name: "southWest"|name: "southEast"|name: "northWest"|name: "northEast"/g) || []).length, 8);
-assert.equal((district.match(/addSidewalkCornerReturn\(root/g) || []).length, 1,
+assert.equal((district.match(/addSidewalkCornerReturn\(root/g) || []).length, 2,
   "The shared corner-return builder must create inner and outer corner groups");
 assert.match(district, /arenaCornerRoadApron_/);
 assert.match(district, /surfaceY: corner\.sz < 0 \? 0\.702 : 0\.832/);
