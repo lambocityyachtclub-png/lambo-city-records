@@ -257,6 +257,69 @@ test("Development System initializes all modules", async () => {
 });
 
 
+test("Development System uses the Neon adapter for persistent task state", async () => {
+  let savedTasks = [];
+  const statements = [];
+  const pool = {
+    async query(sql, params = []) {
+      const normalized = sql.replace(/\\s+/g, " ").trim();
+      statements.push(normalized);
+      if (normalized.startsWith("SELECT to_regclass")) {
+        return { rows: [{
+          task_table_ready: true,
+          review_table_ready: true,
+          review_status_constraint: "CHECK (status IN ('awaiting_owner_review', 'approved', 'rejected'))"
+        }] };
+      }
+      if (normalized.startsWith("SELECT tasks FROM")) {
+        return { rows: [{ tasks: savedTasks }] };
+      }
+      if (normalized.startsWith("INSERT INTO public.lambo_alive_task_state")) {
+        savedTasks = JSON.parse(params[1]);
+        return { rows: [] };
+      }
+      throw new Error("Unexpected SQL in Neon integration test: " + normalized);
+    }
+  };
+
+  const system = await createDevelopmentSystem({ postgresPool: pool });
+  assert.equal(system.getStatus(), DEVELOPMENT_SYSTEM_STATUS.READY);
+  assert.equal(system.director.listTasks().length, 0);
+
+  const result = await system.submitWorldFinding({
+    title: "Review Convention Center glass realism",
+    description: "Check existing glass materials without changing the approved building footprint.",
+    area: "world_materials",
+    type: "improvement",
+    severity: "normal",
+    filePaths: ["conferenceCenterDistrict.js"],
+    acceptanceCriteria: ["Preserve the existing building footprint."]
+  });
+
+  assert.equal(result.task.status, TASK_STATUS.QUEUED);
+  assert.equal(savedTasks.length, 1);
+  assert.equal(savedTasks[0].title, "Review Convention Center glass realism");
+  assert.deepEqual(savedTasks[0].relatedFiles, ["conferenceCenterDistrict.js"]);
+  assert.ok(statements.some(sql => sql.startsWith("SELECT to_regclass")));
+  assert.ok(statements.some(sql => sql.startsWith("INSERT INTO public.lambo_alive_task_state")));
+});
+
+test("Development System refuses an incompatible Neon schema before starting", async () => {
+  const pool = {
+    async query() {
+      return { rows: [{
+        task_table_ready: true,
+        review_table_ready: true,
+        review_status_constraint: "CHECK (status IN ('awaiting_owner_review', 'approved'))"
+      }] };
+    }
+  };
+  await assert.rejects(
+    () => createDevelopmentSystem({ postgresPool: pool }),
+    /review status constraint is incompatible/
+  );
+});
+
 test("Development System exposes read-only project discovery", async () => {
   const system = await createDevelopmentSystem();
   const report = await system.discoverProject();
