@@ -88,14 +88,26 @@ async function activateFounder() {
   if (!session.data?.user) throw new Error("The account was created but the secure session did not start. Keep this page open and contact support.");
   await enterWorkspace();
   try {
-    const passkey = await (await getAuthClient()).passkey.addPasskey({
+    await registerPasskey();
+  } catch {
+    notify("Your owner account is active. Tap Secure this iPad to finish Face ID / Touch ID setup.");
+  }
+}
+
+async function registerPasskey() {
+  const button = $("register-passkey-button");
+  button.disabled = true;
+  try {
+    const result = await (await getAuthClient()).passkey.addPasskey({
       name: "ALIVE founder iPad",
       authenticatorAttachment: "platform"
     });
-    if (passkey.error) throw new Error(passkey.error.message);
-    notify("ALIVE is connected and this iPad is secured with a passkey.");
-  } catch {
-    notify("Your owner account is active. Tap Secure this iPad to finish Face ID / Touch ID setup.");
+    if (result.error) throw new Error(result.error.message || "Passkey registration failed.");
+    button.textContent = "Passkey secured";
+    button.disabled = true;
+    notify("This iPad is secured. If iCloud Keychain is enabled, your passkey may sync to your other Apple devices.");
+  } finally {
+    if (!button.textContent.includes("secured")) button.disabled = false;
   }
 }
 
@@ -187,6 +199,11 @@ $("owner-form").addEventListener("submit", async event => {
   } finally {
     button.disabled = false;
   }
+});
+
+$("register-passkey-button").addEventListener("click", async () => {
+  try { await registerPasskey(); }
+  catch (error) { notify(error.message); }
 });
 
 $("passkey-button").addEventListener("click", async () => {
