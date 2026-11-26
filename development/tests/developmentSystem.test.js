@@ -262,7 +262,7 @@ test("Development System uses the Neon adapter for persistent task state", async
   const statements = [];
   const pool = {
     async query(sql, params = []) {
-      const normalized = sql.replace(/\\s+/g, " ").trim();
+      const normalized = sql.replace(/\s+/g, " ").trim();
       statements.push(normalized);
       if (normalized.startsWith("SELECT to_regclass")) {
         return { rows: [{
