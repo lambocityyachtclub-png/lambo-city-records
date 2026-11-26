@@ -2,9 +2,11 @@ import { Pool } from "pg";
 import { authenticateAliveOwner } from "../../alive/server/ownerAuth.js";
 import { isSameOriginRequest } from "../../alive/server/originPolicy.js";
 import { createHostedAliveControlPlane } from "../../development/runtime/hostedAliveControlPlane.js";
+import { createHostedAliveComponents } from "../../development/runtime/hostedAliveComponents.js";
 
 let pool;
 let controlPlane;
+let components;
 
 function send(res, status, payload) {
   res.statusCode = status;
@@ -12,6 +14,12 @@ function send(res, status, payload) {
   res.setHeader("Cache-Control", "no-store");
   res.setHeader("X-Content-Type-Options", "nosniff");
   res.end(JSON.stringify(payload));
+}
+
+function getComponents() {
+  if (components) return components;
+  components = createHostedAliveComponents({ projectRoot: process.cwd() });
+  return components;
 }
 
 function getControlPlane() {
@@ -26,7 +34,12 @@ function getControlPlane() {
     idleTimeoutMillis: 10000,
     connectionTimeoutMillis: 10000
   });
-  controlPlane = createHostedAliveControlPlane({ pool });
+  const aliveComponents = getComponents();
+  controlPlane = createHostedAliveControlPlane({
+    pool,
+    components: aliveComponents,
+    workerEnabled: false
+  });
   return controlPlane;
 }
 
@@ -75,19 +88,24 @@ export default async function aliveAction(req, res) {
   const action = getAction(req);
   if (action === "status" && method === "GET") {
     try {
-      const developmentSystem = await getControlPlane().withSystem({}, async ({ system }) => system.getSnapshot());
-      const aiCredentialConfigured = Boolean(process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN);
+      const control = getControlPlane();
+      const developmentSystem = await control.withSystem({}, async ({ system }) => system.getSnapshot());
+      const runtime = control.getSnapshot();
       return send(res, 200, {
         service: "lambo-city-alive",
         owner: { email: owner.email },
         databaseConfigured: Boolean(process.env.DATABASE_URL),
         persistentTaskStorage: true,
         developmentSystem,
-        aiProviderConfigured: aiCredentialConfigured && Boolean(process.env.AI_GATEWAY_MODEL),
+        aiProviderConfigured: runtime.aiProposalProviderConfigured,
+        aiProposalGenerationEnabled: runtime.aiProposalGenerationEnabled,
+        projectDiscoveryConfigured: runtime.projectDiscoveryConfigured,
+        isolatedWorkspaceConfigured: runtime.isolatedWorkspaceConfigured,
         aiExecutionEnabled: false,
-        isolatedSandboxEnabled: false,
+        isolatedSandboxEnabled: runtime.sandboxExecution,
+        resourceProfilerConfigured: runtime.resourceProfilerConfigured,
         autonomousProductionDeployment: false,
-        nextMilestone: "Connect the budget-approved Vercel AI Gateway provider and isolated sandbox."
+        nextMilestone: "Connect a trusted isolated test runner and resource profiler. Model generation remains off until explicitly enabled and spend-approved."
       });
     } catch {
       return send(res, 503, { error: "ALIVE development storage is unavailable or its schema is incomplete." });
@@ -99,6 +117,17 @@ export default async function aliveAction(req, res) {
     control = getControlPlane();
   } catch {
     return send(res, 503, { error: "ALIVE hosted storage is not configured." });
+  }
+
+  if (action === "discovery" && method === "GET") {
+    try {
+      const result = await control.withSystem({}, async ({ system }) => ({
+        report: await system.discoverProject()
+      }));
+      return send(res, 200, result);
+    } catch {
+      return send(res, 503, { error: "ALIVE read-only project discovery is unavailable." });
+    }
   }
 
   if (action === "tasks" && method === "GET") {
