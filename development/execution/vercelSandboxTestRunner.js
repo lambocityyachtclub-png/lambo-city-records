@@ -124,6 +124,14 @@ export function createVercelSandboxTestRunner(options = {}) {
     let syntaxResults = [];
     let testResult = null;
     let failure = null;
+    let capturedStdout = "";
+    let capturedStderr = "";
+
+    async function captureOutput(result) {
+      if (!result) return;
+      capturedStdout = String(typeof result.stdout === "function" ? await result.stdout() : result.stdout || "");
+      capturedStderr = String(typeof result.stderr === "function" ? await result.stderr() : result.stderr || "");
+    }
     try {
       await sandbox.writeFiles(files);
       for (const filePath of changedFiles.filter(file => file.endsWith(".js") || file.endsWith(".mjs") || file.endsWith(".cjs"))) {
@@ -135,6 +143,7 @@ export function createVercelSandboxTestRunner(options = {}) {
         syntaxResults.push({ file: filePath, exitCode: result.exitCode });
         if (result.exitCode !== 0) {
           failure = result;
+          await captureOutput(result);
           break;
         }
       }
@@ -146,14 +155,12 @@ export function createVercelSandboxTestRunner(options = {}) {
           cwd: "/vercel/sandbox"
         });
         if (testResult.exitCode !== 0) failure = testResult;
+        await captureOutput(testResult);
       }
     } finally {
       await sandbox.stop();
     }
 
-    const output = failure || testResult || {};
-    const stdout = typeof output.stdout === "function" ? await output.stdout() : output.stdout;
-    const stderr = typeof output.stderr === "function" ? await output.stderr() : output.stderr;
     return Object.freeze({
       passed: !failure,
       runner: "vercel-sandbox-node24",
@@ -163,8 +170,8 @@ export function createVercelSandboxTestRunner(options = {}) {
       changedFiles: [...changedFiles],
       syntaxChecks: syntaxResults,
       testFiles,
-      stdout: String(stdout || "").slice(-20000),
-      stderr: String(stderr || "").slice(-12000),
+      stdout: capturedStdout.slice(-20000),
+      stderr: capturedStderr.slice(-12000),
       exitCode: failure?.exitCode ?? testResult?.exitCode ?? 0
     });
   }
