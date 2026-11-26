@@ -140,6 +140,10 @@ test("Postgres storage refuses reviews with failed tests or unsupported states",
   await assert.rejects(() => storage.createReview({
     taskId: "task-failed",
     taskTitle: "Failed proposal",
+    contractId: "alive-development-core",
+    contractVersion: "1.0.0",
+    autonomyLevel: "builder",
+    resourceMetrics: { changedFiles: 1, linesChanged: 24, newDependencies: 0 },
     changedFiles: ["development/example.js"],
     testResults: { passed: false }
   }), /passing tests/);
@@ -151,6 +155,10 @@ test("Postgres storage prevents a second owner decision", async () => {
   const review = await storage.createReview({
     taskId: "task-2",
     taskTitle: "Another proposal",
+    contractId: "alive-development-core",
+    contractVersion: "1.0.0",
+    autonomyLevel: "builder",
+    resourceMetrics: { changedFiles: 1, linesChanged: 24, newDependencies: 0 },
     changedFiles: ["development/example.js"],
     testResults: { passed: true }
   });
