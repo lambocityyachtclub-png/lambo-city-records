@@ -15,6 +15,7 @@ function createResponse() {
 function createHarness(options = {}) {
   const calls = { authenticate: 0, withSystem: 0, submitted: 0, decided: 0 };
   const system = {
+    getSnapshot: () => ({ ready: true }),
     director: { listTasks: () => [{ id: "task-1", title: "Review glass", status: "queued" }] },
     planIntent: intent => intent.includes("HERO")
       ? { status: "owner_approval_required", reason: "Protected system." }
