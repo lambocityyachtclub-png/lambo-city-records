@@ -39,6 +39,7 @@ export function createAliveOwnerApiHandler(options = {}) {
   const authenticateOwner = options.authenticateOwner;
   const withSystem = options.withSystem;
   const isSameOrigin = options.isSameOrigin;
+  const getStatus = typeof options.getStatus === "function" ? options.getStatus : () => ({});
   if (typeof authenticateOwner !== "function") throw new Error("authenticateOwner callback is required.");
   if (typeof withSystem !== "function") throw new Error("withSystem callback is required.");
   if (typeof isSameOrigin !== "function") throw new Error("isSameOrigin callback is required.");
@@ -61,16 +62,19 @@ export function createAliveOwnerApiHandler(options = {}) {
 
     const action = readAction(req);
     if (action === "status" && method === "GET") {
+      let runtimeStatus = {};
+      try { runtimeStatus = getStatus() || {}; } catch {}
       return send(res, 200, {
         service: "lambo-city-alive",
         owner: { email: owner.email },
         databaseConfigured: Boolean(env.DATABASE_URL),
         persistentTaskStorage: true,
-        aiProposalProviderConfigured: Boolean(env.AI_GATEWAY_MODEL && (env.AI_GATEWAY_API_KEY || env.VERCEL_OIDC_TOKEN)),
-        aiProposalGenerationEnabled: env.ALIVE_AI_ENABLED === "true" && env.ALIVE_AI_SPEND_APPROVED === "true",
+        aiProposalProviderConfigured: runtimeStatus.aiProposalProviderConfigured ?? Boolean(env.AI_GATEWAY_MODEL && (env.AI_GATEWAY_API_KEY || env.VERCEL_OIDC_TOKEN)),
+        aiProposalGenerationEnabled: runtimeStatus.aiProposalGenerationEnabled ?? (env.ALIVE_AI_ENABLED === "true" && env.ALIVE_AI_SPEND_APPROVED === "true"),
         aiExecutionEnabled: false,
-        isolatedWorkspaceConfigured: false,
-        isolatedSandboxEnabled: false,
+        isolatedWorkspaceConfigured: runtimeStatus.isolatedWorkspaceConfigured === true,
+        isolatedSandboxEnabled: runtimeStatus.sandboxExecution === true,
+        resourceProfilerConfigured: runtimeStatus.resourceProfilerConfigured === true,
         autonomousProductionDeployment: false
       });
     }
