@@ -122,7 +122,9 @@ test("Hosted ALIVE control plane persists owner reviews and decisions", async ()
       taskTitle: "Review a bounded world material proposal",
       contractId: "world-material-quality",
       contractVersion: "1.0.0",
+      autonomyLevel: "trusted-operator",
       changedFiles: ["conferenceCenterDistrict.js"],
+      resourceMetrics: { filesChanged: 1, linesAdded: 2, linesRemoved: 0 },
       testResults: { passed: true, total: 5, failed: 0 }
     });
   });
