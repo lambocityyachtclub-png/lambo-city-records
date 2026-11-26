@@ -77,7 +77,8 @@ export function createHostedAliveControlPlane(options = {}) {
         reviewStore: storage,
         workspaceAdapter,
         allowedPaths,
-        workerEnabled
+        workerEnabled,
+        projectDiscovery: components?.projectDiscovery || null
       });
       return callback({ system, storage, components });
     }, lockKey);
