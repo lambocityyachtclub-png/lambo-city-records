@@ -10,8 +10,8 @@ const GUARD_OFFSETS = [
   new THREE.Vector3(0.48, 0, 1.85),   // lead escort
   new THREE.Vector3(-0.48, 0, -1.85)  // rear escort
 ];
-const PRESS_ANGLES = [-0.88, 0.88, Math.PI];
-const PRESS_RADIUS = 7.8;
+const STAGE_PRESS_POSITIONS = [new THREE.Vector3(-15,1.3,-68),new THREE.Vector3(15,1.3,-68),new THREE.Vector3(0,1.3,-62)];
+const PAPARAZZI_TRAIL = [new THREE.Vector3(-1.35,0,-3.5),new THREE.Vector3(1.35,0,-4.15),new THREE.Vector3(0,0,-5.6)];
 const PERSONAL_SPACE_RADIUS = 5.7;
 
 let scene = null;
@@ -158,20 +158,13 @@ function updateGuard(guard, hero, offset, delta, index) {
   guard.position.y += walking ? Math.abs(Math.sin(gait * 2)) * 0.018 : 0;
 }
 
-function updatePhotographer(person, hero, index, delta) {
-  const angle = PRESS_ANGLES[index] + Math.sin(elapsed * 0.16 + index) * 0.1;
-  const radius = PRESS_RADIUS + Math.sin(elapsed * 0.23 + index * 1.7) * 0.22;
-  const target = new THREE.Vector3(
-    hero.position.x + Math.sin(angle) * radius,
-    hero.position.y,
-    hero.position.z + Math.cos(angle) * radius
-  );
-  person.position.lerp(target, Math.min(1, delta * 1.35));
-  person.rotation.y = Math.atan2(
-    hero.position.x - person.position.x,
-    hero.position.z - person.position.z
-  );
-
+function updatePhotographer(person, hero, index, delta, state) {
+  if (state === "PERFORMING" || state === "EXITING") {
+    person.position.lerp(STAGE_PRESS_POSITIONS[index], Math.min(1, delta * 2.2));
+  } else if (state === "WALKING") {
+    person.position.lerp(localToWorld(hero, PAPARAZZI_TRAIL[index]), Math.min(1, delta * 2));
+  }
+  person.rotation.y = Math.atan2(hero.position.x - person.position.x, hero.position.z - person.position.z);
   person.userData.flashTimer -= delta;
   if (person.userData.flashTimer <= 0 && person.userData.flashDuration <= 0) {
     person.userData.flashDuration = 0.13;
@@ -180,9 +173,7 @@ function updatePhotographer(person, hero, index, delta) {
   if (person.userData.flashDuration > 0) {
     person.userData.flashDuration -= delta;
     person.userData.flashMaterial.emissiveIntensity = 3.2;
-  } else {
-    person.userData.flashMaterial.emissiveIntensity = 0;
-  }
+  } else person.userData.flashMaterial.emissiveIntensity = 0;
 }
 
 function createPerimeter() {
@@ -208,7 +199,8 @@ export default {
     active = false;
     lastState = "IDLE";
     guards = [makeGuard(0), makeGuard(1)];
-    // HERO keeps his two intended escort guards. Extra paparazzi/secondary figures\n    // are disabled here so no small characters spawn around the HQ waterfront.\n    photographers = [];
+    // Separate paparazzi group; the two original bodyguards remain unchanged.
+    photographers = [makePhotographer(0), makePhotographer(1), makePhotographer(2)];
     createPerimeter();
   },
 
@@ -218,7 +210,9 @@ export default {
     const hero = context?.systems?.npc?.getHero?.();
     const state = context?.systems?.heroPostPerformance?.getState?.() || "IDLE";
     lastState = state;
-    const visible = !!hero && (state === "WALKING" || state === "ARRIVED");
+    const performanceState = context?.systems?.heroPerformance?.getState?.() || "IDLE";
+    const pressActive = ["PERFORMING", "EXITING"].includes(performanceState);
+    const visible = !!hero && (state === "WALKING" || state === "ARRIVED" || pressActive);
 
     if (!visible) {
       if (active) {
@@ -241,11 +235,11 @@ export default {
       perimeter.position.set(hero.position.x, 0.79, hero.position.z);
     }
 
-    // Photographers appear only after HERO reaches the HQ landing. They
-    // remain outside the visible personal-space ring and never block players.
+    // Gather at the stage, trail HERO along the boardwalk, then hold outside HQ.
+    const paparazziState = pressActive ? performanceState : state;
     photographers.forEach((person, index) => {
-      person.visible = state === "ARRIVED";
-      if (person.visible) updatePhotographer(person, hero, index, delta);
+      person.visible = ["PERFORMING", "EXITING", "WALKING", "ARRIVED"].includes(paparazziState);
+      if (person.visible) updatePhotographer(person, hero, index, delta, paparazziState);
     });
   }
 };
