@@ -91,6 +91,7 @@ test("Hosted ALIVE attaches isolated proposal components but keeps its worker di
   const systemSnapshot = await controlPlane.withSystem({}, async ({ system }) => system.getSnapshot());
   assert.equal(systemSnapshot.worker.configured, true);
   assert.equal(systemSnapshot.worker.enabled, false);
+  assert.equal(systemSnapshot.projectDiscovery.version, components.projectDiscovery.getSnapshot().version);
 });
 
 test("Hosted ALIVE control plane fails closed when execution is requested", async () => {
