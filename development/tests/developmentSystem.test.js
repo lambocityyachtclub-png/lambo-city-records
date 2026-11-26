@@ -207,14 +207,27 @@ test("Development System initializes all modules", async () => {
     DEVELOPMENT_SYSTEM_STATUS.READY
   );
 
-  assert.equal(snapshot.registry.totalModules, 5);
-  assert.equal(snapshot.registry.enabledModules, 5);
+  assert.equal(snapshot.registry.totalModules, 6);
+  assert.equal(snapshot.registry.enabledModules, 6);
   assert.equal(snapshot.studioRunner.id, "studio");
   assert.equal(snapshot.worldRunner.id, "world");
+  assert.equal(snapshot.projectDiscovery.configured, true);
+  assert.equal(snapshot.projectDiscovery.enabled, true);
   assert.equal(snapshot.contracts.length, 7);
   assert.ok(snapshot.contracts.some(contract => contract.id === "world-material-quality"));
 });
 
+
+test("Development System exposes read-only project discovery", async () => {
+  const system = await createDevelopmentSystem();
+  const report = await system.discoverProject();
+  assert.equal(report.status, "discovery-only");
+  assert.equal(report.summary.departmentCount, 10);
+  assert.equal(report.safety.readOnly, true);
+  assert.equal(report.safety.tasksCreated, false);
+  assert.equal(Object.hasOwn(report, "inventory"), false);
+  assert.equal(system.getProjectDiscoverySnapshot().lastScanStatus, "discovery-only");
+});
 
 test("Development System evaluates actions through canonical ALIVE contracts", async () => {
   const system = await createDevelopmentSystem();

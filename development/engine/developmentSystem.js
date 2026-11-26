@@ -25,8 +25,9 @@ import {
   WORLD_RUNNER_VERSION
 } from "../runners/world/worldDevelopmentRunner.js";
 import { listProjectContracts, evaluateProjectAction } from "../../alive/contracts/projectContracts.js";
+import { createProjectDiscoveryService, PROJECT_DISCOVERY_VERSION } from "../blueprints/projectDiscoveryService.js";
 
-export const DEVELOPMENT_SYSTEM_VERSION = "1.3.0";
+export const DEVELOPMENT_SYSTEM_VERSION = "1.4.0";
 
 export const DEVELOPMENT_SYSTEM_STATUS = Object.freeze({
   READY: "ready",
@@ -44,7 +45,9 @@ export async function createDevelopmentSystem(options = {}) {
     workerEnabled = false,
     workspaceAdapter = null,
     reviewStore = null,
-    allowedPaths = null
+    allowedPaths = null,
+    projectRoot = process.cwd(),
+    projectCatalogPath = "development/blueprints/departmentCatalog.json"
   } = options;
 
   const registry = createDevelopmentRegistry();
@@ -61,6 +64,10 @@ export async function createDevelopmentSystem(options = {}) {
     developmentDirector: director
   });
   const policy = getDevelopmentPolicy();
+  const projectDiscovery = createProjectDiscoveryService({
+    rootDir: projectRoot,
+    catalogPath: projectCatalogPath
+  });
 
   const hasExecutionAdapters = workspaceAdapter !== null || reviewStore !== null || allowedPaths !== null;
   if (workerExecutor && hasExecutionAdapters) {
@@ -139,6 +146,21 @@ export async function createDevelopmentSystem(options = {}) {
   });
 
   registry.registerModule({
+    id: "alive-project-discovery",
+    name: "ALIVE Project Discovery",
+    type: MODULE_TYPES.SERVICE,
+    version: PROJECT_DISCOVERY_VERSION,
+    path: "development/blueprints/projectDiscoveryService.js",
+    enabled: true,
+    capabilities: [
+      "read-only-repository-inventory",
+      "department-blueprint-discovery",
+      "static-dependency-mapping"
+    ],
+    description: "Scans project files on demand and returns a bounded, read-only discovery report."
+  });
+
+  registry.registerModule({
     id: WORLD_RUNNER_ID,
     name: "World Development Runner",
     type: MODULE_TYPES.RUNNER,
@@ -184,6 +206,7 @@ export async function createDevelopmentSystem(options = {}) {
       director: director.getSnapshot(),
       studioRunner: studioRunner.getProfile(),
       worldRunner: worldRunner.getProfile(),
+      projectDiscovery: projectDiscovery.getSnapshot(),
       worker: worker
         ? worker.getSnapshot()
         : {
@@ -217,6 +240,7 @@ export async function createDevelopmentSystem(options = {}) {
     status = DEVELOPMENT_SYSTEM_STATUS.DISABLED;
     studioRunner.setEnabled(false);
     worldRunner.setEnabled(false);
+    projectDiscovery.setEnabled(false);
     if (worker) {
       worker.setEnabled(false);
       registry.setModuleEnabled("development-worker", false);
@@ -228,6 +252,7 @@ export async function createDevelopmentSystem(options = {}) {
     status = DEVELOPMENT_SYSTEM_STATUS.READY;
     studioRunner.setEnabled(true);
     worldRunner.setEnabled(true);
+    projectDiscovery.setEnabled(true);
     if (worker) {
       worker.setEnabled(workerEnabled);
       registry.setModuleEnabled("development-worker", workerEnabled);
@@ -253,6 +278,17 @@ export async function createDevelopmentSystem(options = {}) {
       };
     }
     return worker.runOnce();
+  }
+
+  async function discoverProject() {
+    if (status !== DEVELOPMENT_SYSTEM_STATUS.READY) {
+      throw new Error("The development system is disabled.");
+    }
+    return projectDiscovery.scan();
+  }
+
+  function getProjectDiscoverySnapshot() {
+    return projectDiscovery.getSnapshot();
   }
 
   function submitWorldFinding(finding) {
@@ -288,9 +324,12 @@ export async function createDevelopmentSystem(options = {}) {
     director,
     studioRunner,
     worldRunner,
+    projectDiscovery,
     getStatus,
     getSnapshot,
     evaluateAction,
+    discoverProject,
+    getProjectDiscoverySnapshot,
     enable,
     disable,
     runWorkerOnce,
