@@ -342,6 +342,66 @@ function pathsAreAllowed(changedPaths, allowedPaths) {
   ));
 }
 
+const RESOURCE_METRIC_FIELDS = Object.freeze({
+  maxChangedFiles: "changedFiles",
+  maxLinesChanged: "linesChanged",
+  maxNewDependencies: "newDependencies",
+  maxAddedRuntimeLights: "addedRuntimeLights",
+  maxTextureDimension: "maxTextureDimension",
+  maxAddedFrameLoopWorkMs: "maxAddedFrameLoopWorkMs"
+});
+
+function evaluateResourceBudget(contract, evidence) {
+  const budget = contract.resourceBudget || {};
+  const missing = [];
+  const exceeded = [];
+
+  for (const [limitKey, limit] of Object.entries(budget)) {
+    const metricKey = RESOURCE_METRIC_FIELDS[limitKey];
+    if (!metricKey) continue;
+    const value = evidence[metricKey];
+    if (typeof value !== "number" || !Number.isFinite(value) || value < 0) {
+      missing.push(metricKey);
+      continue;
+    }
+    if (Number.isInteger(limit) && !Number.isInteger(value)) {
+      missing.push(metricKey);
+      continue;
+    }
+    if (value > limit) exceeded.push({ metric: metricKey, limit, actual: value });
+  }
+
+  if (missing.length) {
+    return Object.freeze({
+      authorized: false,
+      decision: "blocked_missing_evidence",
+      reason: "Required resource-budget measurements are missing or invalid.",
+      missingEvidence: missing
+    });
+  }
+
+  if (Number.isInteger(evidence.changedFiles) &&
+      Array.isArray(evidence.changedPaths) &&
+      evidence.changedFiles !== evidence.changedPaths.length) {
+    return Object.freeze({
+      authorized: false,
+      decision: "denied",
+      reason: "Changed-file count does not match the validated changed paths."
+    });
+  }
+
+  if (exceeded.length) {
+    return Object.freeze({
+      authorized: false,
+      decision: "owner_approval_required",
+      reason: "The proposed change exceeds its canonical resource budget.",
+      exceeded
+    });
+  }
+
+  return null;
+}
+
 export function evaluateProjectAction(contractId, operation, evidence = {}) {
   const contract = getProjectContract(contractId);
   if (!contract) return Object.freeze({ authorized: false, decision: "denied", reason: "Unknown contract." });
@@ -361,6 +421,8 @@ export function evaluateProjectAction(contractId, operation, evidence = {}) {
       !pathsAreAllowed(evidence.changedPaths, contract.allowedPaths)) {
       return Object.freeze({ authorized: false, decision: "denied", reason: "The contract does not authorize these changed paths." });
     }
+    const budgetDecision = evaluateResourceBudget(contract, evidence);
+    if (budgetDecision) return budgetDecision;
   }
   if (operation === "deploy_production_low_risk") {
     if (contract.productionDeployment !== "low-risk-preauthorized" ||
