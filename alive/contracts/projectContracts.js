@@ -382,10 +382,16 @@ export function evaluateProjectAction(contractId, operation, evidence = {}) {
     if (evidence.protectedScopeTouched === true) {
       return Object.freeze({ authorized: false, decision: "owner_approval_required", reason: "The change touches protected project scope." });
     }
-    if (evidence.changedFiles > contract.resourceBudget.maxChangedFiles ||
+    const metrics = ["changedFiles", "linesChanged", "newDependencies"];
+    const missingMetrics = metrics.filter(key => !Number.isInteger(evidence[key]) || evidence[key] < 0);
+    if (missingMetrics.length) {
+      return Object.freeze({ authorized: false, decision: "blocked_missing_evidence", reason: "Release metrics are missing or invalid.", missingEvidence: missingMetrics });
+    }
+    if (evidence.changedFiles !== evidence.changedPaths.length ||
+      evidence.changedFiles > contract.resourceBudget.maxChangedFiles ||
       evidence.linesChanged > contract.resourceBudget.maxLinesChanged ||
       evidence.newDependencies > contract.resourceBudget.maxNewDependencies) {
-      return Object.freeze({ authorized: false, decision: "owner_approval_required", reason: "The change exceeds its contract resource budget." });
+      return Object.freeze({ authorized: false, decision: "owner_approval_required", reason: "The change exceeds its contract resource budget or file-count evidence is inconsistent." });
     }
   }
   return Object.freeze({
