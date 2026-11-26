@@ -292,7 +292,7 @@ export function createDevelopmentDirector(options = {}) {
     if (contract) {
       for (const filePath of relatedFiles) {
         const allowed = contract.allowedPaths.some(prefix => {
-          const normalizedPrefix = prefix.replace(/\\/+$/, "");
+const normalizedPrefix = prefix.replace(/\/+$/, "");
           return filePath === normalizedPrefix || filePath.startsWith(`${normalizedPrefix}/`);
         });
         if (!allowed) {
