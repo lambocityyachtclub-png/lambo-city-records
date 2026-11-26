@@ -170,12 +170,25 @@ function renderReviews(reviews) {
     root.innerHTML = '<p class="muted">No proposals are awaiting owner review.</p>';
     return;
   }
-  root.innerHTML = reviews.map(review =>
-    '<article class="item"><div class="item-head"><div><h3>' + escapeHTML(review.taskTitle || "Development proposal") +
-    '</h3><div class="meta">' + escapeHTML(review.id) + '</div></div><span class="pill">' +
-    escapeHTML(review.status) + '</span></div><p>' + escapeHTML(review.changes?.summary || "A tested proposal is ready for inspection.") +
-    '</p></article>'
-  ).join("");
+  root.innerHTML = reviews.map(review => {
+    const files = Array.isArray(review.changes?.files) ? review.changes.files : [];
+    const filePreviews = files.map(file => {
+      const preview = String(file.content || "").split("\\n").slice(0, 18).join("\\n").slice(0, 2400);
+      return '<details class="code-preview"><summary>' + escapeHTML(file.path) +
+        '</summary><pre>' + escapeHTML(preview) + '</pre></details>';
+    }).join("");
+    const metrics = review.resourceMetrics
+      ? '<div class="meta">RESOURCE CHECK: ' + escapeHTML(JSON.stringify(review.resourceMetrics)) + '</div>'
+      : "";
+    const tests = review.testResults
+      ? '<div class="meta">SANDBOX TESTS: ' + (review.testResults.passed ? "PASSED" : "FAILED") + '</div>'
+      : "";
+    return '<article class="item"><div class="item-head"><div><h3>' + escapeHTML(review.taskTitle || "Development proposal") +
+      '</h3><div class="meta">' + escapeHTML(review.id) + '</div></div><span class="pill">' +
+      escapeHTML(review.status) + '</span></div><p>' + escapeHTML(review.changes?.summary || "A tested proposal is ready for inspection.") +
+      '</p>' + tests + metrics + (files.length ? '<div class="task-deps">CHANGED FILES: ' + files.map(file => escapeHTML(file.path)).join(" · ") + '</div>' + filePreviews : "") +
+      '</article>';
+  }).join("");
 }
 
 async function refreshAll() {
