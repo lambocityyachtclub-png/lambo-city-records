@@ -207,9 +207,10 @@ test("Development System initializes all modules", async () => {
     DEVELOPMENT_SYSTEM_STATUS.READY
   );
 
-  assert.equal(snapshot.registry.totalModules, 4);
-  assert.equal(snapshot.registry.enabledModules, 4);
+  assert.equal(snapshot.registry.totalModules, 5);
+  assert.equal(snapshot.registry.enabledModules, 5);
   assert.equal(snapshot.studioRunner.id, "studio");
+  assert.equal(snapshot.worldRunner.id, "world");
   assert.equal(snapshot.contracts.length, 7);
   assert.ok(snapshot.contracts.some(contract => contract.id === "world-material-quality"));
 });
@@ -229,6 +230,42 @@ test("Disabled Development System cannot authorize ALIVE actions", async () => {
   const decision = system.evaluateAction("world-material-quality", "inspect");
   assert.equal(decision.authorized, false);
   assert.equal(decision.decision, "denied");
+});
+
+test("World Runner submits a contract-pinned low-risk materials task", async () => {
+  const system = await createDevelopmentSystem();
+  const result = await system.submitWorldFinding({
+    title: "Review Convention Center glass realism",
+    description: "Evaluate material response and reflections without changing the building footprint or district layout.",
+    type: "improvement",
+    area: "world_materials",
+    severity: "high",
+    filePaths: ["conferenceCenterDistrict.js"],
+    acceptanceCriteria: [
+      "Preserve the existing Convention Center footprint.",
+      "Improve material realism without adding expensive real-time lights."
+    ]
+  });
+  assert.equal(result.runnerId, "world");
+  assert.equal(result.contractId, "world-material-quality");
+  assert.equal(result.task.runner, "world");
+  assert.equal(result.task.contractId, "world-material-quality");
+  assert.equal(result.task.status, TASK_STATUS.QUEUED);
+  assert.equal(result.task.requiresApproval, false);
+});
+
+test("World Runner routes protected layout findings to owner approval", async () => {
+  const system = await createDevelopmentSystem();
+  const result = await system.submitWorldFinding({
+    title: "Consider changing the boardwalk route",
+    description: "This is a protected layout proposal and must not be executed autonomously.",
+    area: "world_layout",
+    type: "opportunity"
+  });
+  assert.equal(result.contractId, "world-layout-navigation");
+  assert.equal(result.task.contractId, "world-layout-navigation");
+  assert.equal(result.task.status, TASK_STATUS.PENDING_APPROVAL);
+  assert.equal(result.policyDecision.requiresApproval, true);
 });
 
 test("Development System can be disabled and re-enabled", async () => {
@@ -261,6 +298,19 @@ test("Development System rejects submissions while disabled", async () => {
   );
 });
 
+
+test("Disabled Development System rejects World Runner findings", async () => {
+  const system = await createDevelopmentSystem();
+  system.disable();
+  assert.throws(
+    () => system.submitWorldFinding({
+      title: "Disabled world finding",
+      description: "This must not be accepted.",
+      area: "world_materials"
+    }),
+    /development system is disabled/
+  );
+});
 
 test("Development Policy exposes its version", () => {
   const policy = getDevelopmentPolicy();
