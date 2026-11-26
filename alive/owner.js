@@ -198,6 +198,34 @@ async function decideReview(button, decision) {
   }
 }
 
+function renderDiscovery(report) {
+  const root = $("discovery-result");
+  const summary = report.summary || {};
+  const graph = report.dependencyGraph || {};
+  const departments = Array.isArray(report.departments) ? report.departments : [];
+  const summaryHtml = Object.entries(summary).map(([key, value]) =>
+    '<div class="discovery-stat"><span>' + escapeHTML(key.replaceAll("_", " ")) +
+    '</span><strong>' + escapeHTML(typeof value === "object" ? JSON.stringify(value) : value) + '</strong></div>'
+  ).join("");
+  const departmentHtml = departments.map(department =>
+    '<article class="department-row"><div><strong>' + escapeHTML(department.title || department.id) +
+    '</strong><small>' + escapeHTML(department.id) + ' · ' + escapeHTML(department.status || "mapped") +
+    '</small></div><span>' + escapeHTML((department.sourceFiles || []).length) + ' source files</span>' +
+    '<span>' + escapeHTML((department.runtimeConnectedSourceFiles || []).length) + ' runtime-connected</span></article>'
+  ).join("");
+  root.innerHTML =
+    '<div class="discovery-head"><strong>' + escapeHTML(report.master?.title || "LAMBO CITY project map") +
+    '</strong><span>' + escapeHTML(report.generatedAt || "Just now") + '</span></div>' +
+    '<div class="discovery-stats">' + summaryHtml + '</div>' +
+    '<div class="discovery-graph"><strong>Dependency graph</strong><p>' +
+    escapeHTML(JSON.stringify(graph.summary || {})) + '</p><small>Root entrypoints: ' +
+    escapeHTML((graph.rootEntrypoints || []).join(", ") || "Not reported") +
+    '</small></div><div class="department-list">' + departmentHtml + '</div>' +
+    '<p class="muted">Read-only scan. ' + escapeHTML(departments.length) +
+    ' departments mapped. No source files were changed and no tasks were created by the scan.</p>';
+  root.hidden = false;
+}
+
 async function refreshAll() {
   if (!ownerAuthenticated) return;
   const [status, tasks, reviews] = await Promise.all([
@@ -331,6 +359,22 @@ $("intent-form").addEventListener("submit", async event => {
     await refreshAll();
   } catch (error) {
     $("intent-message").textContent = error.message;
+  } finally {
+    button.disabled = false;
+  }
+});
+
+$("scan-project-button").addEventListener("click", async () => {
+  const button = $("scan-project-button");
+  button.disabled = true;
+  $("discovery-message").textContent = "Scanning the project map in read-only mode…";
+  try {
+    const result = await request("discovery");
+    renderDiscovery(result.report || {});
+    $("discovery-message").textContent = "Project map refreshed. No code was changed.";
+    notify("ALIVE project discovery completed.");
+  } catch (error) {
+    $("discovery-message").textContent = error.message;
   } finally {
     button.disabled = false;
   }
