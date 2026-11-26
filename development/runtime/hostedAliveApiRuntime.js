@@ -2,6 +2,7 @@ import { Pool } from "pg";
 import { authenticateAliveOwner } from "../../alive/server/ownerAuth.js";
 import { isSameOriginRequest } from "../../alive/server/originPolicy.js";
 import { createHostedAliveControlPlane } from "./hostedAliveControlPlane.js";
+import { createHostedAliveComponents } from "./hostedAliveComponents.js";
 import { createAliveOwnerApiHandler } from "./aliveOwnerApi.js";
 
 let handler;
@@ -18,7 +19,8 @@ export function getHostedAliveOwnerApiHandler() {
     idleTimeoutMillis: 10000,
     connectionTimeoutMillis: 10000
   });
-  const controlPlane = createHostedAliveControlPlane({ pool });
+  const components = createHostedAliveComponents({ projectRoot: process.cwd() });
+  const controlPlane = createHostedAliveControlPlane({ pool, components, workerEnabled: false });
   handler = createAliveOwnerApiHandler({
     env: process.env,
     authenticateOwner: authenticateAliveOwner,
