@@ -97,10 +97,10 @@ function validateRelativePath(filePath) {
  * authorized path or folder.
  */
 function isPathAllowed(filePath, allowedPaths) {
-  return allowedPaths.some(prefix =>
-    filePath === prefix ||
-    filePath.startsWith(`${prefix}/`)
-  );
+  return allowedPaths.some(prefix => {
+    const normalizedPrefix = prefix.replace(/\/+$/, "");
+    return filePath === normalizedPrefix || filePath.startsWith(normalizedPrefix + "/");
+  });
 }
 
 /**
