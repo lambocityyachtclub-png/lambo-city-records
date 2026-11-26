@@ -116,7 +116,8 @@ test("development system composes the controlled executor from explicit adapters
     title: "Run through the controlled execution path",
     area: "development-system",
     runner: STUDIO_RUNNER_ID,
-    contractId: "alive-development-core"
+    contractId: "alive-development-core",
+    relatedFiles: ["development/engine/worker-output.js"]
   });
 
   const result = await system.runWorkerOnce();
