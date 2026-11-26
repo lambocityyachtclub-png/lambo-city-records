@@ -3,7 +3,7 @@
 **Status:** Approved product and architecture direction  
 **Version:** 0.1  
 **Host environment:** LAMBO CITY  
-**Implementation status:** Blueprint only; runtime capabilities are not yet implemented
+**Implementation status:** Blueprint approved; initial server-side contract registry, development-system integration, contract-aware isolated executor, and World Development Runner are implemented. ALIVE is not yet a continuously running agent and has no connected model-provider or production-deployment adapter.
 
 ## Product definition
 
@@ -117,8 +117,29 @@ Enable narrowly scoped, low-risk autonomous improvements only after their contra
 ### Phase 5 — Portable trusted technology
 Harden identity, signatures, audit verification, contract portability, and multi-environment support. Evaluate optional blockchain anchoring based on demonstrated need.
 
+## Implementation status — 2026-11-26
+
+The following development-side foundations are now present in the repository:
+
+- Seven canonical project contracts define autonomy, allowed paths and operations, protected invariants, required evidence, resource budgets, and rollback expectations.
+- The Development System registers the canonical contracts and exposes contract-action evaluation.
+- Development tasks can pin a canonical contract ID and version.
+- The controlled executor checks the pinned contract and its path permissions before tests and owner review.
+- The World Development Runner converts structured findings into contract-pinned tasks. Low-risk material/quality findings and protected layout/HERO/account/Studio findings are routed differently.
+- Automated Development Engine tests cover contract integrity, protected actions, executor path enforcement, and World Runner behavior.
+
+The following capabilities are **not yet connected or enabled**:
+
+- A hosted ALIVE agent/model provider that performs ongoing project analysis and generates proposals.
+- A live isolated workspace provider connected to the actual repository and a persistent task/review store.
+- An automated release/deployment adapter. The low-risk world-material contract defines a possible pre-authorized release path, but the current executor still stops at isolated tests and review.
+- Continuous background scheduling and proactive monitoring.
+- Full read-only runtime inventory and measured visual-quality reporting across all departments.
+
+The Development System remains separate from the live Three.js game. No worker or background process is enabled by default. No production credentials are exposed to the browser.
+
 ## First implementation milestone
 
-The first production milestone is not an autonomous builder. It is a trustworthy read-only ALIVE Core that can explain what exists, how it connects, what must not change, how the project is performing, and which improvements are safe to propose.
+The first production milestone is a trustworthy read-only ALIVE Core that can explain what exists, how it connects, what must not change, how the project is performing, and which improvements are safe to propose. The initial contract and runner foundations are in place; the next work is to connect project discovery, persistent isolated execution, and verified release infrastructure without weakening the contracts.
 
 **Success means faster development without sacrificing owner control, project stability, creative direction, or trust.**
