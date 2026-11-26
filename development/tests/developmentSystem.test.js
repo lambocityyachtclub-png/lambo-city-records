@@ -127,6 +127,43 @@ test("Development Director creates a queued task", async () => {
 });
 
 
+test("Development Director enforces canonical file allowlists on task targets", async () => {
+  const director = createDevelopmentDirector();
+  await director.initialize();
+
+  const task = await director.createTask({
+    title: "Review Convention Center glass",
+    description: "A bounded material-only task.",
+    area: "world_materials",
+    runner: "world",
+    contractId: "world-material-quality",
+    relatedFiles: ["conferenceCenterDistrict.js"]
+  });
+  assert.deepEqual(task.relatedFiles, ["conferenceCenterDistrict.js"]);
+
+  await assert.rejects(
+    () => director.createTask({
+      title: "Attempt an out-of-contract file",
+      area: "world_materials",
+      runner: "world",
+      contractId: "world-material-quality",
+      relatedFiles: ["main.js"]
+    }),
+    /outside the canonical ALIVE contract allowlist/
+  );
+
+  await assert.rejects(
+    () => director.createTask({
+      title: "Attempt a traversal path",
+      area: "world_materials",
+      runner: "world",
+      contractId: "world-material-quality",
+      relatedFiles: ["../main.js"]
+    }),
+    /Unsafe related file path/
+  );
+});
+
 test("Development Director requires approval for protected tasks", async () => {
   const director = createDevelopmentDirector();
 
