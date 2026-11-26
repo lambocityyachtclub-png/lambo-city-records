@@ -4,6 +4,7 @@ import {
   createHostedAliveControlPlane,
   withPostgresAdvisoryLock
 } from "../runtime/hostedAliveControlPlane.js";
+import { createHostedAliveComponents } from "../runtime/hostedAliveComponents.js";
 
 function createFakePool() {
   const state = {
@@ -147,6 +148,26 @@ test("Hosted ALIVE control plane persists owner reviews and decisions", async ()
   assert.equal(restored.reviews.length, 1);
   assert.equal(restored.reviews[0].id, review.id);
   assert.equal(controlPlane.getSnapshot().persistentOwnerReviewStorage, true);
+});
+
+test("Hosted ALIVE connects discovery and isolated workspaces while keeping the worker disabled", async () => {
+  const pool = createFakePool();
+  const components = createHostedAliveComponents({ env: {}, projectRoot: process.cwd() });
+  const controlPlane = createHostedAliveControlPlane({ pool, components, workerEnabled: false });
+  const status = controlPlane.getSnapshot();
+
+  assert.equal(status.projectDiscoveryConfigured, true);
+  assert.equal(status.isolatedWorkspaceConfigured, true);
+  assert.equal(status.aiProposalProviderConfigured, false);
+  assert.equal(status.aiProposalGenerationEnabled, false);
+  assert.equal(status.sandboxExecution, false);
+  assert.equal(status.workerEnabled, false);
+  assert.equal(status.productionDeployment, false);
+
+  const snapshot = await controlPlane.withSystem({}, async ({ system }) => system.getSnapshot());
+  assert.equal(snapshot.projectDiscovery.version, components.projectDiscovery.getSnapshot().version);
+  assert.equal(snapshot.worker.configured, true);
+  assert.equal(snapshot.worker.enabled, false);
 });
 
 test("Hosted ALIVE control plane fails closed when execution is requested", async () => {
