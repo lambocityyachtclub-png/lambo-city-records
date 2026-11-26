@@ -207,11 +207,29 @@ test("Development System initializes all modules", async () => {
     DEVELOPMENT_SYSTEM_STATUS.READY
   );
 
-  assert.equal(snapshot.registry.totalModules, 3);
-  assert.equal(snapshot.registry.enabledModules, 3);
+  assert.equal(snapshot.registry.totalModules, 4);
+  assert.equal(snapshot.registry.enabledModules, 4);
   assert.equal(snapshot.studioRunner.id, "studio");
+  assert.equal(snapshot.contracts.length, 7);
+  assert.ok(snapshot.contracts.some(contract => contract.id === "world-material-quality"));
 });
 
+
+test("Development System evaluates actions through canonical ALIVE contracts", async () => {
+  const system = await createDevelopmentSystem();
+  const allowed = system.evaluateAction("world-layout-navigation", "inspect");
+  const protectedAction = system.evaluateAction("world-layout-navigation", "change_camera_or_navigation");
+  assert.equal(allowed.authorized, true);
+  assert.equal(protectedAction.decision, "owner_approval_required");
+});
+
+test("Disabled Development System cannot authorize ALIVE actions", async () => {
+  const system = await createDevelopmentSystem();
+  system.disable();
+  const decision = system.evaluateAction("world-material-quality", "inspect");
+  assert.equal(decision.authorized, false);
+  assert.equal(decision.decision, "denied");
+});
 
 test("Development System can be disabled and re-enabled", async () => {
   const system = await createDevelopmentSystem();
