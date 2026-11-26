@@ -119,27 +119,29 @@ Harden identity, signatures, audit verification, contract portability, and multi
 
 ## Implementation status — 2026-11-26
 
-The following development-side foundations are now present in the repository:
+The following ALIVE development-side foundations are implemented in the repository:
 
-- Seven canonical project contracts define autonomy, allowed paths and operations, protected invariants, required evidence, resource budgets, and rollback expectations.
-- The Development System registers the canonical contracts and exposes contract-action evaluation.
-- Development tasks can pin a canonical contract ID and version.
-- The controlled executor checks the pinned contract and its path permissions before tests and owner review.
-- The World Development Runner converts structured findings into contract-pinned tasks. Low-risk material/quality findings and protected layout/HERO/account/Studio findings are routed differently.
-- Automated Development Engine tests cover contract integrity, protected actions, executor path enforcement, and World Runner behavior.
+- Seven canonical project contracts define autonomy, exact allowed paths and operations, protected invariants, required evidence, resource budgets, and rollback expectations.
+- Every canonical allowed path is now checked against the real repository. Living Contract targets are validated against the canonical allowlist before a task can be planned.
+- Development tasks pin a canonical contract ID and version. The controlled executor checks the pinned contract and changed paths before tests and owner review.
+- The World Development Runner and Living Contract Engine map clear owner intent to dependency-aware, contract-pinned tasks. Protected HERO, world layout/navigation, player identity/accounts, and deferred Studio intents are not placed into the autonomous queue.
+- The on-demand Project Discovery Service connects the existing repository scanner and static dependency mapper to the Development System. It returns bounded metadata only; it does not expose raw source contents, create tasks, or write files.
+- A PostgreSQL storage adapter and explicit migration are present for persistent task snapshots and owner reviews. The isolated `alive-dev` database branch already has the corresponding task/review tables and compatible base status constraint. The adapter has automated tests, but is not yet connected to a hosted API runtime.
+- Automated tests cover contract integrity, real path existence, protected actions, dependency ordering, read-only discovery, executor boundaries, and persistent storage behavior.
 
 The following capabilities are **not yet connected or enabled**:
 
-- A hosted ALIVE agent/model provider that performs ongoing project analysis and generates proposals.
-- A live isolated workspace provider connected to the actual repository and a persistent task/review store.
-- An automated release/deployment adapter. The low-risk world-material contract defines a possible pre-authorized release path, but the current executor still stops at isolated tests and review.
-- Continuous background scheduling and proactive monitoring.
-- Full read-only runtime inventory and measured visual-quality reporting across all departments.
+- A hosted ALIVE API/control plane wired to the authenticated owner console and the persistent Neon adapter.
+- An AI proposal provider. No model API has been called and no model spend has been enabled.
+- A live isolated workspace provider connected to the actual repository and the proposal generator.
+- A verified release/deployment adapter. The low-risk world-material contract defines the conditions for pre-authorized release, but the current executor does not deploy.
+- Continuous background scheduling and proactive runtime monitoring.
+- Full runtime visual-quality measurement across all departments.
 
-The Development System remains separate from the live Three.js game. No worker or background process is enabled by default. No production credentials are exposed to the browser.
+The Development System remains separate from the live Three.js game. No worker or background process is enabled by default. No production credentials are exposed to the browser. The current implementation can discover the repository, evaluate permissions, and plan bounded work; it cannot yet autonomously generate, execute, or deploy changes.
 
 ## First implementation milestone
 
-The first production milestone is a trustworthy read-only ALIVE Core that can explain what exists, how it connects, what must not change, how the project is performing, and which improvements are safe to propose. The initial contract and runner foundations are in place; the next work is to connect project discovery, persistent isolated execution, and verified release infrastructure without weakening the contracts.
+The first milestone is a trustworthy ALIVE Core that can understand the project structure, map dependencies, plan work through canonical contracts, and preserve a reviewable record. That foundation is now implemented. The next milestone is to connect authenticated hosted control, persistent task/review storage, a budget-governed model provider, and isolated execution—then verify release evidence before enabling any pre-authorized deployment.
 
 **Success means faster development without sacrificing owner control, project stability, creative direction, or trust.**
