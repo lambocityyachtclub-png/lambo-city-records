@@ -171,6 +171,7 @@ export function createWorldDevelopmentRunner(options = {}) {
       priority: finding.priority,
       acceptanceCriteria: finding.acceptanceCriteria,
       dependencies: finding.dependencies,
+      relatedFiles: finding.filePaths,
       protectedActions: finding.protectedActions,
       requiresApproval: policyDecision.requiresApproval,
       approvalReason: policyDecision.requiresApproval
