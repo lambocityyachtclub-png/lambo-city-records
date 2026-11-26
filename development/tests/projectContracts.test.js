@@ -45,15 +45,64 @@ test("read-only inspection is available within the approved contracts", () => {
   }
 });
 
-test("builder permissions require an isolated change within exact allowed paths", () => {
+test("builder permissions require an isolated change within exact allowed paths and resource budgets", () => {
+  const metrics = {
+    changedFiles: 1,
+    linesChanged: 40,
+    newDependencies: 0
+  };
   const good = evaluateProjectAction("alive-development-core", "prepare_isolated_change", {
+    ...metrics,
     changedPaths: ["development/engine/newSafeModule.js"]
   });
   const bad = evaluateProjectAction("alive-development-core", "prepare_isolated_change", {
+    ...metrics,
     changedPaths: ["main.js"]
   });
   assert.equal(good.authorized, true);
   assert.equal(bad.authorized, false);
+});
+
+test("isolated changes are blocked when resource evidence is missing", () => {
+  const result = evaluateProjectAction("alive-development-core", "prepare_isolated_change", {
+    changedPaths: ["development/engine/newSafeModule.js"]
+  });
+  assert.equal(result.decision, "blocked_missing_evidence");
+  assert.ok(result.missingEvidence.includes("linesChanged"));
+  assert.ok(result.missingEvidence.includes("newDependencies"));
+});
+
+test("world material resource budgets reject extra lights and oversized textures", () => {
+  const paths = ["conferenceCenterDistrict.js"];
+  const extraLight = evaluateProjectAction("world-material-quality", "prepare_isolated_change", {
+    changedPaths: paths,
+    changedFiles: 1,
+    linesChanged: 80,
+    newDependencies: 0,
+    addedRuntimeLights: 2,
+    maxTextureDimension: 1024
+  });
+  const oversizedTexture = evaluateProjectAction("world-material-quality", "prepare_isolated_change", {
+    changedPaths: paths,
+    changedFiles: 1,
+    linesChanged: 80,
+    newDependencies: 0,
+    addedRuntimeLights: 0,
+    maxTextureDimension: 4096
+  });
+  assert.equal(extraLight.decision, "owner_approval_required");
+  assert.equal(oversizedTexture.decision, "owner_approval_required");
+});
+
+test("performance changes require frame-loop measurement within the contract budget", () => {
+  const result = evaluateProjectAction("performance-quality", "prepare_isolated_change", {
+    changedPaths: ["deviceGraphics.js"],
+    changedFiles: 1,
+    linesChanged: 40,
+    newDependencies: 0,
+    maxAddedFrameLoopWorkMs: 0.5
+  });
+  assert.equal(result.decision, "owner_approval_required");
 });
 
 test("HERO, account security, world layout, and Studio remain protected", () => {
