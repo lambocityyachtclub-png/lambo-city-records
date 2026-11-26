@@ -45,15 +45,64 @@ test("read-only inspection is available within the approved contracts", () => {
   }
 });
 
-test("builder permissions require an isolated change within exact allowed paths", () => {
+test("builder permissions require an isolated change within exact allowed paths and resource budgets", () => {
+  const metrics = {
+    changedFiles: 1,
+    linesChanged: 40,
+    newDependencies: 0
+  };
   const good = evaluateProjectAction("alive-development-core", "prepare_isolated_change", {
+    ...metrics,
     changedPaths: ["development/engine/newSafeModule.js"]
   });
   const bad = evaluateProjectAction("alive-development-core", "prepare_isolated_change", {
+    ...metrics,
     changedPaths: ["main.js"]
   });
   assert.equal(good.authorized, true);
   assert.equal(bad.authorized, false);
+});
+
+test("isolated changes are blocked when resource evidence is missing", () => {
+  const result = evaluateProjectAction("alive-development-core", "prepare_isolated_change", {
+    changedPaths: ["development/engine/newSafeModule.js"]
+  });
+  assert.equal(result.decision, "blocked_missing_evidence");
+  assert.ok(result.missingEvidence.includes("linesChanged"));
+  assert.ok(result.missingEvidence.includes("newDependencies"));
+});
+
+test("world material resource budgets reject extra lights and oversized textures", () => {
+  const paths = ["conferenceCenterDistrict.js"];
+  const extraLight = evaluateProjectAction("world-material-quality", "prepare_isolated_change", {
+    changedPaths: paths,
+    changedFiles: 1,
+    linesChanged: 80,
+    newDependencies: 0,
+    addedRuntimeLights: 2,
+    maxTextureDimension: 1024
+  });
+  const oversizedTexture = evaluateProjectAction("world-material-quality", "prepare_isolated_change", {
+    changedPaths: paths,
+    changedFiles: 1,
+    linesChanged: 80,
+    newDependencies: 0,
+    addedRuntimeLights: 0,
+    maxTextureDimension: 4096
+  });
+  assert.equal(extraLight.decision, "owner_approval_required");
+  assert.equal(oversizedTexture.decision, "owner_approval_required");
+});
+
+test("performance changes require frame-loop measurement within the contract budget", () => {
+  const result = evaluateProjectAction("performance-quality", "prepare_isolated_change", {
+    changedPaths: ["deviceGraphics.js"],
+    changedFiles: 1,
+    linesChanged: 40,
+    newDependencies: 0,
+    maxAddedFrameLoopWorkMs: 0.5
+  });
+  assert.equal(result.decision, "owner_approval_required");
 });
 
 test("HERO, account security, world layout, and Studio remain protected", () => {
@@ -71,6 +120,8 @@ test("low-risk world material deployment is permitted only with complete evidenc
     changedFiles: 1,
     linesChanged: 80,
     newDependencies: 0,
+    addedRuntimeLights: 0,
+    maxTextureDimension: 1024,
     contract_version_match: true,
     changed_paths_within_allowlist: true,
     automated_tests_passed: true,
@@ -90,7 +141,9 @@ test("low-risk deployment is blocked when evidence is incomplete or risk is elev
     changedPaths: ["conferenceCenterDistrict.js"],
     changedFiles: 1,
     linesChanged: 80,
-    newDependencies: 0
+    newDependencies: 0,
+    addedRuntimeLights: 0,
+    maxTextureDimension: 1024
   });
   assert.equal(incomplete.decision, "blocked_missing_evidence");
 
@@ -100,6 +153,8 @@ test("low-risk deployment is blocked when evidence is incomplete or risk is elev
     changedFiles: 1,
     linesChanged: 80,
     newDependencies: 0,
+    addedRuntimeLights: 0,
+    maxTextureDimension: 1024,
     contract_version_match: true,
     changed_paths_within_allowlist: true,
     automated_tests_passed: true,
@@ -109,6 +164,28 @@ test("low-risk deployment is blocked when evidence is incomplete or risk is elev
     rollback_ready: true
   });
   assert.equal(elevated.decision, "owner_approval_required");
+});
+
+test("pre-authorized deployment cannot bypass a failed resource-budget metric", () => {
+  const evidence = {
+    risk: "low",
+    changedPaths: ["conferenceCenterDistrict.js"],
+    changedFiles: 1,
+    linesChanged: 80,
+    newDependencies: 0,
+    addedRuntimeLights: 2,
+    maxTextureDimension: 1024,
+    contract_version_match: true,
+    changed_paths_within_allowlist: true,
+    automated_tests_passed: true,
+    runtime_smoke_passed: true,
+    visual_quality_review_passed: true,
+    resource_budget_passed: true,
+    rollback_ready: true
+  };
+  const result = evaluateProjectAction("world-material-quality", "deploy_production_low_risk", evidence);
+  assert.equal(result.decision, "owner_approval_required");
+  assert.equal(result.exceeded[0].metric, "addedRuntimeLights");
 });
 
 test("no contract can change its own trust root or safety permissions", () => {

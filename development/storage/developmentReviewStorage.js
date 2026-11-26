@@ -134,6 +134,13 @@ export function createDevelopmentReviewStorage(options = {}) {
         input.taskTitle,
         "Task title"
       );
+      const contractId = requireText(input.contractId, "ALIVE contract ID");
+      const contractVersion = requireText(input.contractVersion, "ALIVE contract version");
+      const autonomyLevel = requireText(input.autonomyLevel, "ALIVE autonomy level");
+
+      if (!input.resourceMetrics || typeof input.resourceMetrics !== "object" || Array.isArray(input.resourceMetrics)) {
+        throw new Error("Measured resource metrics are required for owner review.");
+      }
 
       if (
         !Array.isArray(input.changedFiles)
@@ -158,6 +165,9 @@ export function createDevelopmentReviewStorage(options = {}) {
         id: createReviewId(),
         taskId,
         taskTitle,
+        contractId,
+        contractVersion,
+        autonomyLevel,
         area: input.area || null,
         runner: input.runner || null,
         workspaceId: input.workspaceId || null,
@@ -167,6 +177,7 @@ export function createDevelopmentReviewStorage(options = {}) {
           )
         )],
         changes: input.changes || null,
+        resourceMetrics: clone(input.resourceMetrics),
         testResults: clone(input.testResults),
         status: REVIEW_STATUSES.PENDING,
         productionChangesMade: false,

@@ -35,6 +35,10 @@ function validReview(overrides = {}) {
     area: "studio",
     runner: "studio-runner",
     workspaceId: "workspace-001",
+    contractId: "alive-development-core",
+    contractVersion: "1.0.0",
+    autonomyLevel: "builder",
+    resourceMetrics: { changedFiles: 1, linesChanged: 24, newDependencies: 0 },
     changedFiles: [
       "development/example.js"
     ],
@@ -71,6 +75,23 @@ test("creates and retrieves a pending review", async () => {
     );
 
     assert.deepEqual(retrieved, review);
+  } finally {
+    await temporary.cleanup();
+  }
+});
+
+test("preserves canonical contract and measured resource evidence in owner reviews", async () => {
+  const temporary = await createTemporaryStorage();
+  try {
+    const review = await temporary.storage.createReview(validReview());
+    assert.equal(review.contractId, "alive-development-core");
+    assert.equal(review.contractVersion, "1.0.0");
+    assert.equal(review.autonomyLevel, "builder");
+    assert.deepEqual(review.resourceMetrics, {
+      changedFiles: 1,
+      linesChanged: 24,
+      newDependencies: 0
+    });
   } finally {
     await temporary.cleanup();
   }

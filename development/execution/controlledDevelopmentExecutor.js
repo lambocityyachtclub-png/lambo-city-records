@@ -108,7 +108,7 @@ function isPathAllowed(filePath, allowedPaths) {
  *
  * Required workspaceAdapter methods:
  * - createWorkspace({ taskId, task, allowedPaths })
- * - prepareChanges({ workspaceId, task })
+ * - prepareChanges({ workspaceId, task }) returning changedFiles, changes, and independently measured resource metrics
  * - runTests({ workspaceId, task })
  *
  * Required reviewStore method:
@@ -116,7 +116,9 @@ function isPathAllowed(filePath, allowedPaths) {
  *
  * These adapters must be implemented separately.
  * They are responsible for enforcing isolated workspace
- * and review-storage behavior.
+ * behavior and measuring changed files, changed lines, dependency additions,
+ * runtime-light additions, texture dimensions, and frame-loop impact from the
+ * actual workspace diff and runtime measurements—not from model claims.
  */
 export function createControlledDevelopmentExecutor(options = {}) {
   const {
@@ -301,10 +303,16 @@ export function createControlledDevelopmentExecutor(options = {}) {
       }
 
       // STEP 3b: Enforce the canonical module contract as a second allowlist.
+      const resourceMetrics = proposal.metrics && typeof proposal.metrics === "object"
+        ? proposal.metrics
+        : {};
       const contractDecision = evaluateProjectAction(
         task.contractId,
         "prepare_isolated_change",
-        { changedPaths: changedFiles }
+        {
+          ...resourceMetrics,
+          changedPaths: changedFiles
+        }
       );
       if (!contractDecision.authorized) {
         throw new Error(`ALIVE contract blocked proposed changes: ${contractDecision.reason}`);
@@ -349,6 +357,7 @@ export function createControlledDevelopmentExecutor(options = {}) {
         workspaceId,
         changedFiles,
         changes: proposal.changes || null,
+        resourceMetrics,
         testResults,
         status: "awaiting_owner_review",
         productionChangesMade: false,
@@ -366,6 +375,7 @@ export function createControlledDevelopmentExecutor(options = {}) {
           success: true,
           workspaceId,
           changedFiles,
+          resourceMetrics,
           testResults,
           reviewId: savedReview?.id || null,
           status: "awaiting_owner_review"
@@ -378,6 +388,7 @@ export function createControlledDevelopmentExecutor(options = {}) {
         taskId: task.id,
         workspaceId,
         changedFiles,
+        resourceMetrics,
         testResults,
         review: savedReview || review,
         productionChangesMade: false

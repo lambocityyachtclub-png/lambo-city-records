@@ -84,6 +84,7 @@ test("development system composes the controlled executor from explicit adapters
     async prepareChanges() {
       return {
         changedFiles: ["development/engine/worker-output.js"],
+        metrics: { changedFiles: 1, linesChanged: 24, newDependencies: 0 },
         changes: { summary: "A tested isolated proposal." }
       };
     },
