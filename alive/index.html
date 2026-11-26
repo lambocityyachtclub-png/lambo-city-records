@@ -44,10 +44,13 @@
         <div class="status-actions">
           <span class="pill" id="status-pill">CONNECTED</span>
           <button class="quiet" id="register-passkey-button" type="button">Secure this iPad</button>
+          <button class="quiet" id="scan-project-button" type="button">Scan project</button>
           <button class="quiet" id="refresh-button" type="button">Refresh</button>
           <button class="quiet" id="signout-button" type="button">Sign out</button>
         </div>
         <div class="status-grid" id="status-grid"></div>
+        <p class="muted small" id="discovery-message">Project discovery is read-only. Scan to refresh ALIVE’s map of the project.</p>
+        <div id="discovery-result" class="discovery-result" hidden></div>
       </section>
 
       <section class="panel">
