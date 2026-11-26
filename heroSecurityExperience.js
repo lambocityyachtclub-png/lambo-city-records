@@ -4,12 +4,14 @@ import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 // This is a presentation/gameplay layer only. Server-side access controls
 // must remain authoritative for private spaces, voice, and player permissions.
 
+// A staggered front/rear escort keeps a clear personal-space corridor.
+ // Local +Z is HERO's forward direction.
 const GUARD_OFFSETS = [
-  new THREE.Vector3(-1.15, 0, 0.28),
-  new THREE.Vector3(1.15, 0, 0.28)
+  new THREE.Vector3(0.48, 0, 1.85),   // lead escort
+  new THREE.Vector3(-0.48, 0, -1.85)  // rear escort
 ];
-const PRESS_ANGLES = [-0.88, 0.88, Math.PI];
-const PRESS_RADIUS = 7.8;
+const STAGE_PRESS_POSITIONS = [new THREE.Vector3(-15,1.3,-68),new THREE.Vector3(15,1.3,-68),new THREE.Vector3(0,1.3,-62)];
+const PAPARAZZI_TRAIL = [new THREE.Vector3(-1.35,0,-3.5),new THREE.Vector3(1.35,0,-4.15),new THREE.Vector3(0,0,-5.6)];
 const PERSONAL_SPACE_RADIUS = 5.7;
 
 let scene = null;
@@ -60,10 +62,18 @@ function makeGuard(index) {
   head.castShadow = true;
   root.add(head);
   addBox(root, "securitySunglasses", [0.32, 0.07, 0.045], dark, [0, 1.86, -0.17]);
-  addBox(root, "securityLeftLeg", [0.22, 0.67, 0.25], suit, [-0.16, 0.48, 0]);
-  addBox(root, "securityRightLeg", [0.22, 0.67, 0.25], suit, [0.16, 0.48, 0]);
-  addBox(root, "securityLeftShoe", [0.24, 0.13, 0.39], dark, [-0.16, 0.12, -0.055]);
-  addBox(root, "securityRightShoe", [0.24, 0.13, 0.39], dark, [0.16, 0.12, -0.055]);
+  // Pivoted legs and shoes allow a restrained, believable walking gait.
+  const leftLeg = new THREE.Group();
+  leftLeg.position.set(-0.16, 0.82, 0);
+  addBox(leftLeg, "securityLeftLeg", [0.22, 0.67, 0.25], suit, [0, -0.34, 0]);
+  addBox(leftLeg, "securityLeftShoe", [0.24, 0.13, 0.39], dark, [0, -0.68, -0.055]);
+  root.add(leftLeg);
+
+  const rightLeg = new THREE.Group();
+  rightLeg.position.set(0.16, 0.82, 0);
+  addBox(rightLeg, "securityRightLeg", [0.22, 0.67, 0.25], suit, [0, -0.34, 0]);
+  addBox(rightLeg, "securityRightShoe", [0.24, 0.13, 0.39], dark, [0, -0.68, -0.055]);
+  root.add(rightLeg);
 
   const leftArm = addBox(root, "securityLeftArm", [0.19, 0.66, 0.22], suit, [-0.42, 1.22, 0]);
   const rightArm = addBox(root, "securityRightArm", [0.19, 0.66, 0.22], suit, [0.42, 1.22, 0]);
@@ -72,6 +82,9 @@ function makeGuard(index) {
   root.userData.walkPhase = index * Math.PI;
   root.userData.leftArm = leftArm;
   root.userData.rightArm = rightArm;
+  root.userData.leftLeg = leftLeg;
+  root.userData.rightLeg = rightLeg;
+  root.userData.head = head;
   root.visible = false;
   scene.add(root);
   return root;
@@ -127,31 +140,31 @@ function updateGuard(guard, hero, offset, delta, index) {
   const blend = Math.min(1, delta * 4.2);
   guard.position.lerp(target, blend);
   guard.position.y = hero.position.y;
+  // Both escorts travel in HERO's direction; the rear guard does not walk
+  // backwards. Their offset formation creates a moving protective corridor.
   guard.rotation.y += Math.atan2(
     Math.sin(hero.rotation.y - guard.rotation.y),
     Math.cos(hero.rotation.y - guard.rotation.y)
   ) * Math.min(1, delta * 5);
-  const gait = elapsed * 7.2 + guard.userData.walkPhase;
-  const swing = Math.sin(gait) * (lastState === "WALKING" ? 0.22 : 0.035);
+  const walking = lastState === "WALKING";
+  const gait = elapsed * 6.4 + guard.userData.walkPhase;
+  const swing = Math.sin(gait) * (walking ? 0.19 : 0.018);
   guard.userData.leftArm.rotation.x = swing;
   guard.userData.rightArm.rotation.x = -swing;
-  guard.position.y += lastState === "WALKING" ? Math.abs(Math.sin(gait * 2)) * 0.025 : 0;
+  guard.userData.leftLeg.rotation.x = -swing * 1.15;
+  guard.userData.rightLeg.rotation.x = swing * 1.15;
+  // Small head checks add awareness without exaggerated, robotic motion.
+  guard.userData.head.rotation.y = Math.sin(elapsed * 0.8 + index * 1.8) * 0.09;
+  guard.position.y += walking ? Math.abs(Math.sin(gait * 2)) * 0.018 : 0;
 }
 
-function updatePhotographer(person, hero, index, delta) {
-  const angle = PRESS_ANGLES[index] + Math.sin(elapsed * 0.16 + index) * 0.1;
-  const radius = PRESS_RADIUS + Math.sin(elapsed * 0.23 + index * 1.7) * 0.22;
-  const target = new THREE.Vector3(
-    hero.position.x + Math.sin(angle) * radius,
-    hero.position.y,
-    hero.position.z + Math.cos(angle) * radius
-  );
-  person.position.lerp(target, Math.min(1, delta * 1.35));
-  person.rotation.y = Math.atan2(
-    hero.position.x - person.position.x,
-    hero.position.z - person.position.z
-  );
-
+function updatePhotographer(person, hero, index, delta, state) {
+  if (state === "PERFORMING" || state === "EXITING") {
+    person.position.lerp(STAGE_PRESS_POSITIONS[index], Math.min(1, delta * 2.2));
+  } else if (state === "WALKING") {
+    person.position.lerp(localToWorld(hero, PAPARAZZI_TRAIL[index]), Math.min(1, delta * 2));
+  }
+  person.rotation.y = Math.atan2(hero.position.x - person.position.x, hero.position.z - person.position.z);
   person.userData.flashTimer -= delta;
   if (person.userData.flashTimer <= 0 && person.userData.flashDuration <= 0) {
     person.userData.flashDuration = 0.13;
@@ -160,9 +173,7 @@ function updatePhotographer(person, hero, index, delta) {
   if (person.userData.flashDuration > 0) {
     person.userData.flashDuration -= delta;
     person.userData.flashMaterial.emissiveIntensity = 3.2;
-  } else {
-    person.userData.flashMaterial.emissiveIntensity = 0;
-  }
+  } else person.userData.flashMaterial.emissiveIntensity = 0;
 }
 
 function createPerimeter() {
@@ -188,6 +199,7 @@ export default {
     active = false;
     lastState = "IDLE";
     guards = [makeGuard(0), makeGuard(1)];
+    // Separate paparazzi group; the two original bodyguards remain unchanged.
     photographers = [makePhotographer(0), makePhotographer(1), makePhotographer(2)];
     createPerimeter();
   },
@@ -198,7 +210,9 @@ export default {
     const hero = context?.systems?.npc?.getHero?.();
     const state = context?.systems?.heroPostPerformance?.getState?.() || "IDLE";
     lastState = state;
-    const visible = !!hero && (state === "WALKING" || state === "ARRIVED");
+    const performanceState = context?.systems?.heroPerformance?.getState?.() || "IDLE";
+    const pressActive = ["PERFORMING", "EXITING"].includes(performanceState);
+    const visible = !!hero && (state === "WALKING" || state === "ARRIVED" || pressActive);
 
     if (!visible) {
       if (active) {
@@ -221,11 +235,11 @@ export default {
       perimeter.position.set(hero.position.x, 0.79, hero.position.z);
     }
 
-    // Photographers appear only after HERO reaches the HQ landing. They
-    // remain outside the visible personal-space ring and never block players.
+    // Gather at the stage, trail HERO along the boardwalk, then hold outside HQ.
+    const paparazziState = pressActive ? performanceState : state;
     photographers.forEach((person, index) => {
-      person.visible = state === "ARRIVED";
-      if (person.visible) updatePhotographer(person, hero, index, delta);
+      person.visible = ["PERFORMING", "EXITING", "WALKING", "ARRIVED"].includes(paparazziState);
+      if (person.visible) updatePhotographer(person, hero, index, delta, paparazziState);
     });
   }
 };
