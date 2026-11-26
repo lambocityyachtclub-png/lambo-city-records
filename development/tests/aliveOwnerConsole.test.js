@@ -16,7 +16,7 @@ test("owner authentication uses saved email/password sessions without browser be
   assert.match(script, /credentials:"same-origin"/);
   assert.match(script, /signIn\.email/);
   assert.match(script, /signUp\.email/);
-  assert.match(script, /owner-password-confirm/);
+  assert.match(script, /createFounderCredential/);
   assert.match(html, /Sign in to ALIVE/);
   assert.match(html, /autocomplete="current-password"/);
   assert.match(html, /<form class="auth-form" id="owner-auth-form">/);
@@ -95,12 +95,12 @@ test("owner server enables verified password sign-in, password recovery, passkey
 });
 
 
-test("founder setup lets the owner choose a password during the one-time invitation", () => {
+test("founder setup creates a random credential during the one-time invitation", () => {
   assert.match(script, /auth\.signUp\.email\(\{email,password,name:"ALIVE Owner"\}\)/);
   assert.match(script, /password\.length<12/);
   assert.match(script, /password!==\$\("owner-password-confirm"\)\.value/);
   assert.match(html, /type="password"/);
-  assert.match(html, /owner-password-confirm/);
-  assert.match(html, /Create my ALIVE owner account/);
+  assert.match(script, /if\(passwordInput\)passwordInput.hidden=!!enrollmentToken/);
+  assert.match(html, /Activate my owner account/);
   assert.doesNotMatch(html, /register-passkey-button|Set up Face ID/);
 });
