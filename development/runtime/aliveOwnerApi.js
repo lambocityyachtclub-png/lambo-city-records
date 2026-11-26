@@ -71,7 +71,7 @@ export function createAliveOwnerApiHandler(options = {}) {
         persistentTaskStorage: true,
         aiProposalProviderConfigured: runtimeStatus.aiProposalProviderConfigured ?? Boolean(env.AI_GATEWAY_MODEL && (env.AI_GATEWAY_API_KEY || env.VERCEL_OIDC_TOKEN)),
         aiProposalGenerationEnabled: runtimeStatus.aiProposalGenerationEnabled ?? (env.ALIVE_AI_ENABLED === "true" && env.ALIVE_AI_SPEND_APPROVED === "true"),
-        projectDiscoveryConfigured: runtimeStatus.components?.projectDiscovery?.configured === true,
+        projectDiscoveryConfigured: runtimeStatus.projectDiscoveryConfigured === true,
         aiExecutionEnabled: false,
         isolatedWorkspaceConfigured: runtimeStatus.isolatedWorkspaceConfigured === true,
         isolatedSandboxEnabled: runtimeStatus.sandboxExecution === true,
