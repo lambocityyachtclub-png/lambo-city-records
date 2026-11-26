@@ -71,7 +71,6 @@ const CONTRACTS = [
       "waterfrontStorefrontDetails.js",
       "cinematicWorldSkin.js",
       "yachtLuxuryDetails.js",
-      "villaLuxuryDetails.js",
       "dockEntranceLuxury.js"
     ],
     allowedOperations: [

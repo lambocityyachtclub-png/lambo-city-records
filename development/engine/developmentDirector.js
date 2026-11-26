@@ -93,6 +93,24 @@ function normalizeList(value) {
   ))];
 }
 
+function normalizeRelatedFiles(value) {
+  return normalizeList(value).map(filePath => {
+    const segments = filePath.split("/");
+    if (
+      filePath.startsWith("/") ||
+      filePath.includes("\\") ||
+      filePath.includes(String.fromCharCode(0)) ||
+      segments.some(segment =>
+        !segment || segment === "." || segment === ".." ||
+        [".git", ".vercel", "node_modules", "dist", "build"].includes(segment)
+      )
+    ) {
+      throw new Error(`Unsafe related file path: ${filePath}`);
+    }
+    return filePath;
+  });
+}
+
 function clone(value) {
   return JSON.parse(JSON.stringify(value));
 }
@@ -266,6 +284,21 @@ export function createDevelopmentDirector(options = {}) {
       throw new Error(`Unknown ALIVE contract: ${contractId}`);
     }
     const contractVersion = contract?.version || null;
+    const relatedFiles = normalizeRelatedFiles(input.relatedFiles);
+
+    if (relatedFiles.length && !contract) {
+      throw new Error("Related files require a canonical ALIVE project contract.");
+    }
+    if (contract) {
+      for (const filePath of relatedFiles) {
+        const allowed = contract.allowedPaths.some(prefix =>
+          filePath === prefix || filePath.startsWith(`${prefix}/`)
+        );
+        if (!allowed) {
+          throw new Error(`Related file is outside the canonical ALIVE contract allowlist: ${filePath}`);
+        }
+      }
+    }
 
     const description = input.description || "";
     const priority = input.priority || TASK_PRIORITY.NORMAL;
@@ -321,6 +354,7 @@ const requiresApproval = policyDecision.requiresApproval;
 
       dependencies,
       acceptanceCriteria,
+      relatedFiles,
 
       assignedWorker: null,
       result: null,

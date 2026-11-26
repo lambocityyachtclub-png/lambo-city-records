@@ -127,6 +127,43 @@ test("Development Director creates a queued task", async () => {
 });
 
 
+test("Development Director enforces canonical file allowlists on task targets", async () => {
+  const director = createDevelopmentDirector();
+  await director.initialize();
+
+  const task = await director.createTask({
+    title: "Review Convention Center glass",
+    description: "A bounded material-only task.",
+    area: "world_materials",
+    runner: "world",
+    contractId: "world-material-quality",
+    relatedFiles: ["conferenceCenterDistrict.js"]
+  });
+  assert.deepEqual(task.relatedFiles, ["conferenceCenterDistrict.js"]);
+
+  await assert.rejects(
+    () => director.createTask({
+      title: "Attempt an out-of-contract file",
+      area: "world_materials",
+      runner: "world",
+      contractId: "world-material-quality",
+      relatedFiles: ["main.js"]
+    }),
+    /outside the canonical ALIVE contract allowlist/
+  );
+
+  await assert.rejects(
+    () => director.createTask({
+      title: "Attempt a traversal path",
+      area: "world_materials",
+      runner: "world",
+      contractId: "world-material-quality",
+      relatedFiles: ["../main.js"]
+    }),
+    /Unsafe related file path/
+  );
+});
+
 test("Development Director requires approval for protected tasks", async () => {
   const director = createDevelopmentDirector();
 
@@ -233,13 +270,16 @@ test("Development System exposes read-only project discovery", async () => {
 
 test("Development System exposes deterministic Living Contract planning and submission", async () => {
   const system = await createDevelopmentSystem();
-  const plan = system.planIntent("Improve waterfront water and marina lighting");
+  const plan = system.planIntent("Improve dock entrance and waterfront storefront materials");
   assert.equal(plan.status, "planned");
-  assert.ok(plan.matchedContracts.includes("water-materials"));
+  assert.ok(plan.matchedContracts.includes("dock-entrance-materials"));
+  assert.ok(plan.matchedContracts.includes("waterfront-storefront-materials"));
   const result = await system.submitIntent("Improve Convention Center glass realism");
   assert.equal(result.status, "submitted");
   assert.equal(result.total, 1);
   assert.equal(result.productionChangesMade, false);
+  assert.deepEqual(result.submitted[0].relatedFiles, ["conferenceCenterDistrict.js"]);
+  assert.deepEqual(system.director.listTasks()[0].relatedFiles, ["conferenceCenterDistrict.js"]);
   assert.equal(system.director.listTasks().length, 1);
 });
 

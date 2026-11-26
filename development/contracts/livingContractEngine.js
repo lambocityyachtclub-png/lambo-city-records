@@ -1,84 +1,14 @@
 /**
  * ALIVE — LIVING CONTRACT INTENT ENGINE
  *
- * Deterministically converts clear owner intent into a dependency-ordered
- * set of canonical project tasks. It plans and queues work only; it never
- * edits files, invokes a model, executes code, or deploys.
+ * Deterministically maps clear owner intent to canonical project contracts.
+ * It plans and queues work only; it never edits files, invokes a model,
+ * executes code, merges, or deploys.
  */
 
+import { getProjectContract } from "../../alive/contracts/projectContracts.js";
+
 const CONTRACTS = Object.freeze([
-  Object.freeze({
-    id: "water-materials",
-    projectContractId: "world-material-quality",
-    area: "world_materials",
-    title: "Review waterfront water realism",
-    triggers: ["water", "waterfront", "ocean", "waves", "reflection", "shoreline"],
-    dependsOn: [],
-    description: "Inspect and propose focused improvements to the existing water materials and reflections. Preserve approved shoreline, marina geography, docks, object positions, camera, navigation, and controls.",
-    acceptanceCriteria: [
-      "Improve the existing water system before considering replacement.",
-      "Preserve approved shoreline, marina geography, dock positions, camera, and navigation.",
-      "Keep reflections and water movement performant on iPad and desktop.",
-      "Use no new dependencies or unnecessary real-time lights."
-    ]
-  }),
-  Object.freeze({
-    id: "marina-transitions",
-    projectContractId: "world-material-quality",
-    area: "world_materials",
-    title: "Review marina and dock transitions",
-    triggers: ["marina", "dock", "docks", "pier", "yacht"],
-    dependsOn: ["water-materials"],
-    description: "Improve visual continuity between existing marina, docks, yachts, and water without moving approved assets or changing navigation.",
-    acceptanceCriteria: [
-      "Keep existing dock, marina, and yacht positions unchanged.",
-      "Improve water-to-shore and water-to-dock material transitions.",
-      "Preserve existing walking paths and collision behavior."
-    ]
-  }),
-  Object.freeze({
-    id: "environment-lighting",
-    projectContractId: "world-material-quality",
-    area: "world_materials",
-    title: "Review environmental lighting and reflections",
-    triggers: ["lighting", "light", "night", "reflections"],
-    dependsOn: ["water-materials"],
-    description: "Improve material response and existing environmental lighting coherently while respecting the current performance budget.",
-    acceptanceCriteria: [
-      "Preserve the approved lighting direction and visual identity.",
-      "Prefer emissive or baked detail over unnecessary real-time lights.",
-      "Keep the scene within the established device performance budget."
-    ]
-  }),
-  Object.freeze({
-    id: "waterfront-landscaping",
-    projectContractId: "world-material-quality",
-    area: "world_materials",
-    title: "Review waterfront landscaping transitions",
-    triggers: ["landscaping", "landscape", "plants", "trees", "planting"],
-    dependsOn: ["marina-transitions"],
-    description: "Polish existing landscaping and material transitions around the waterfront without moving planted landmarks, buildings, paths, or roads.",
-    acceptanceCriteria: [
-      "Preserve existing landscape asset positions.",
-      "Improve transitions between planting, paving, and shoreline.",
-      "Keep walkways and street clearances unobstructed."
-    ]
-  }),
-  Object.freeze({
-    id: "world-performance",
-    projectContractId: "performance-quality",
-    area: "performance_quality",
-    title: "Verify coordinated world performance",
-    triggers: ["performance", "optimization", "optimize", "frame rate", "memory"],
-    dependsOn: ["water-materials", "marina-transitions", "environment-lighting", "waterfront-landscaping"],
-    description: "Verify the coordinated visual improvements against loading, rendering, memory, and device performance without weakening approved visual quality.",
-    acceptanceCriteria: [
-      "Measure performance before and after proposed changes.",
-      "Preserve visual quality and existing device graphics fallbacks.",
-      "Avoid unnecessary runtime lights, geometry overload, and frame-loop work.",
-      "Report reproducible evidence for iPad and desktop profiles."
-    ]
-  }),
   Object.freeze({
     id: "convention-center-materials",
     projectContractId: "world-material-quality",
@@ -86,11 +16,99 @@ const CONTRACTS = Object.freeze([
     title: "Review Convention Center glass realism",
     triggers: ["convention center", "conference center", "glass facade", "glass exterior", "glass realism"],
     dependsOn: [],
-    description: "Improve glass material response, reflections, and surrounding visual finish while preserving the approved Convention Center footprint, roads, sidewalks, and district layout.",
+    filePaths: ["conferenceCenterDistrict.js"],
+    description: "Inspect and propose focused improvements to glass material response, reflections, and surrounding finish while preserving the approved Convention Center footprint, roads, sidewalks, and district layout.",
     acceptanceCriteria: [
       "Preserve the existing building footprint and approved district coordinates.",
       "Improve glass realism without excessive real-time lighting.",
-      "Keep surrounding sidewalks, roads, and access paths unchanged."
+      "Keep surrounding sidewalks, roads, and access paths unchanged.",
+      "Use no new dependencies and remain within the world-material contract budget."
+    ]
+  }),
+  Object.freeze({
+    id: "dock-entrance-materials",
+    projectContractId: "world-material-quality",
+    area: "world_materials",
+    title: "Review dock entrance luxury details",
+    triggers: ["waterfront", "dock entrance", "dock", "docks", "marina entrance", "marina"],
+    dependsOn: [],
+    filePaths: ["dockEntranceLuxury.js"],
+    description: "Improve the visual finish of the existing dock entrance using its approved additive detail module. Preserve marina geography, dock positions, walking paths, and access.",
+    acceptanceCriteria: [
+      "Preserve all existing dock and marina positions.",
+      "Improve material and detail quality without rebuilding the dock.",
+      "Keep walking paths, collision, and access unchanged.",
+      "Use no new dependencies or unnecessary real-time lights."
+    ]
+  }),
+  Object.freeze({
+    id: "waterfront-storefront-materials",
+    projectContractId: "world-material-quality",
+    area: "world_materials",
+    title: "Review waterfront storefront details",
+    triggers: ["waterfront", "storefront", "storefronts", "club vista", "music store", "producer store"],
+    dependsOn: [],
+    filePaths: ["waterfrontStorefrontDetails.js"],
+    description: "Polish the existing waterfront storefront presentation while preserving the three approved storefront positions, identities, street, sidewalks, and marina geometry.",
+    acceptanceCriteria: [
+      "Preserve the existing Club Vista and storefront identities.",
+      "Keep all storefront and street positions unchanged.",
+      "Improve material and presentation detail without adding interaction or collision changes.",
+      "Keep the module additive and performant."
+    ]
+  }),
+  Object.freeze({
+    id: "yacht-luxury-materials",
+    projectContractId: "world-material-quality",
+    area: "world_materials",
+    title: "Review yacht luxury materials and details",
+    triggers: ["yacht", "yachts", "helipad", "yacht deck", "yacht hull"],
+    dependsOn: [],
+    filePaths: ["yachtLuxuryDetails.js"],
+    description: "Improve existing yacht material response and luxury detail while preserving the yacht transform, dimensions, placement, and marina relationship.",
+    acceptanceCriteria: [
+      "Preserve the approved yacht placement and transform.",
+      "Improve existing detail before replacing assets.",
+      "Avoid excessive texture size and real-time lights.",
+      "Keep the yacht module isolated and performant."
+    ]
+  }),
+  Object.freeze({
+    id: "cinematic-branding",
+    projectContractId: "world-material-quality",
+    area: "world_materials",
+    title: "Review cinematic world branding",
+    triggers: ["billboard", "billboards", "branding", "city signage", "brand signs"],
+    dependsOn: [],
+    filePaths: ["cinematicWorldSkin.js"],
+    description: "Polish the existing LAMBO CITY cinematic billboard and brand presentation while preserving approved placements, identity, and world layout.",
+    acceptanceCriteria: [
+      "Preserve approved billboard placements and brand identity.",
+      "Improve existing artwork and material presentation rather than rebuilding the system.",
+      "Avoid expensive real-time effects and heavy frame-loop work.",
+      "Keep all world geography and navigation unchanged."
+    ]
+  }),
+  Object.freeze({
+    id: "world-performance",
+    projectContractId: "performance-quality",
+    area: "performance_quality",
+    title: "Review world performance and device quality",
+    triggers: ["performance", "optimization", "optimize", "frame rate", "memory", "loading"],
+    dependsOn: [
+      "convention-center-materials",
+      "dock-entrance-materials",
+      "waterfront-storefront-materials",
+      "yacht-luxury-materials",
+      "cinematic-branding"
+    ],
+    filePaths: ["deviceGraphics.js", "performanceMonitor.js"],
+    description: "Measure loading, rendering, memory, and device-aware quality while preserving approved visual quality and existing graphics fallbacks.",
+    acceptanceCriteria: [
+      "Measure performance before and after proposed changes.",
+      "Preserve cinematic visual quality and existing device graphics fallbacks.",
+      "Avoid unnecessary runtime lights, geometry overload, and frame-loop work.",
+      "Report reproducible evidence for iPad and desktop profiles."
     ]
   })
 ]);
@@ -131,6 +149,7 @@ function matchesTrigger(intent, trigger) {
 }
 
 function resolveOrder(selectedIds) {
+  const selected = new Set(selectedIds);
   const ordered = [];
   const visiting = new Set();
   const visited = new Set();
@@ -141,14 +160,34 @@ function resolveOrder(selectedIds) {
     const contract = CONTRACTS.find(item => item.id === id);
     if (!contract) throw new Error(`Unknown Living Contract dependency: ${id}`);
     visiting.add(id);
-    for (const dependencyId of contract.dependsOn) visit(dependencyId);
+    for (const dependencyId of contract.dependsOn) {
+      if (selected.has(dependencyId)) visit(dependencyId);
+    }
     visiting.delete(id);
     visited.add(id);
-    ordered.push(contract);
+    ordered.push({
+      ...contract,
+      dependsOn: contract.dependsOn.filter(dependencyId => selected.has(dependencyId))
+    });
   }
 
   for (const id of selectedIds) visit(id);
   return ordered;
+}
+
+function validateContractTargets() {
+  for (const contract of CONTRACTS) {
+    const projectContract = getProjectContract(contract.projectContractId);
+    if (!projectContract) throw new Error(`Missing canonical project contract: ${contract.projectContractId}`);
+    for (const filePath of contract.filePaths) {
+      const allowed = projectContract.allowedPaths.some(prefix =>
+        filePath === prefix || filePath.startsWith(`${prefix}/`)
+      );
+      if (!allowed) {
+        throw new Error(`Living Contract ${contract.id} references a file outside the canonical allowlist: ${filePath}`);
+      }
+    }
+  }
 }
 
 export function createLivingContractEngine(options = {}) {
@@ -157,6 +196,7 @@ export function createLivingContractEngine(options = {}) {
     throw new Error("A valid World Development Runner is required.");
   }
 
+  validateContractTargets();
   let enabled = true;
 
   function listContracts() {
@@ -164,6 +204,7 @@ export function createLivingContractEngine(options = {}) {
       ...contract,
       triggers: [...contract.triggers],
       dependsOn: [...contract.dependsOn],
+      filePaths: [...contract.filePaths],
       acceptanceCriteria: [...contract.acceptanceCriteria]
     }));
   }
@@ -213,6 +254,7 @@ export function createLivingContractEngine(options = {}) {
         title: contract.title,
         area: contract.area,
         dependsOn: [...contract.dependsOn],
+        filePaths: [...contract.filePaths],
         description: contract.description,
         acceptanceCriteria: [...contract.acceptanceCriteria]
       }))
@@ -238,6 +280,7 @@ export function createLivingContractEngine(options = {}) {
         type: "improvement",
         severity: "normal",
         dependencies,
+        filePaths: planned.filePaths,
         acceptanceCriteria: planned.acceptanceCriteria
       });
       if (result.contractId !== planned.projectContractId) {
@@ -250,6 +293,7 @@ export function createLivingContractEngine(options = {}) {
         taskId: result.task.id,
         status: result.task.status,
         dependencies,
+        relatedFiles: [...planned.filePaths],
         policyDecision: result.policyDecision
       }));
     }
@@ -274,7 +318,7 @@ export function createLivingContractEngine(options = {}) {
 
   function getSnapshot() {
     return Object.freeze({
-      version: "1.0.0",
+      version: "1.1.0",
       enabled,
       contractCount: CONTRACTS.length,
       protectedIntentCount: PROTECTED_INTENTS.length,
