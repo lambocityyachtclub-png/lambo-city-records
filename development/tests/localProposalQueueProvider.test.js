@@ -77,7 +77,15 @@ test("Local proposal queue rejects symlink entries and proposal directories insi
   });
 });
 
-test("Local proposal queue enforces file size and required text contents", async () => {
+test("Local proposal queue enforces the 5 MiB proposal read limit", async () => {
+  await fixture(async ({ repositoryRoot, queue }) => {
+    const provider = createLocalProposalQueueProvider({ directory: queue, repositoryRoot });
+    await writeFile(path.join(queue, "task_123.json"), Buffer.alloc(5 * 1024 * 1024 + 1, 0x20));
+    await assert.rejects(provider(context), /regular JSON file no larger than 5 MiB/);
+  });
+});
+
+test("Local proposal queue enforces per-file size and required text contents", async () => {
   await fixture(async ({ repositoryRoot, queue }) => {
     const provider = createLocalProposalQueueProvider({ directory: queue, repositoryRoot });
     await writeFile(path.join(queue, "task_123.json"), JSON.stringify({
