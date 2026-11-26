@@ -76,7 +76,7 @@ test("Hosted ALIVE control plane fails closed when execution is requested", asyn
   const controlPlane = createHostedAliveControlPlane({ pool });
   await assert.rejects(
     () => controlPlane.withSystem({ execution: true }, async () => true),
-    /code execution is not configured/
+    /code execution is not enabled/
   );
   assert.equal(pool.state.releases, 0);
 });
