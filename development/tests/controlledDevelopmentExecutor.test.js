@@ -43,11 +43,20 @@ async function createTestSetup(options = {}) {
 
     async prepareChanges() {
       calls.prepare++;
+      const changedFiles = options.changedFiles || [
+        "development/engine/example.js"
+      ];
+      const metrics = options.metrics === undefined
+        ? {
+            changedFiles: changedFiles.length,
+            linesChanged: 40,
+            newDependencies: 0
+          }
+        : options.metrics;
 
       return {
-        changedFiles: options.changedFiles || [
-          "development/engine/example.js"
-        ],
+        changedFiles,
+        metrics,
         changes: "Test proposed changes."
       };
     },
@@ -283,6 +292,73 @@ test("Executor blocks empty proposals before tests and owner review", async () =
   assert.equal(calls.tests, 0);
   assert.equal(calls.review, 0);
   assert.equal(calls.destroy, 1);
+  assert.equal(reviews.length, 0);
+  assert.equal(director.getTask(task.id).status, TASK_STATUS.BLOCKED);
+});
+
+test("Executor blocks proposals without resource metrics before tests and review", async () => {
+  const { director, task, executor, calls, reviews } = await createTestSetup({ metrics: null });
+  const result = await executor.executeNextTask({ runnerId: "world" });
+  assert.equal(result.status, TASK_STATUS.BLOCKED);
+  assert.match(result.reason, /resource-budget measurements are missing/i);
+  assert.equal(calls.tests, 0);
+  assert.equal(calls.review, 0);
+  assert.equal(reviews.length, 0);
+  assert.equal(director.getTask(task.id).status, TASK_STATUS.BLOCKED);
+});
+
+test("Executor blocks changes that exceed the ALIVE Development Core line budget", async () => {
+  const { director, task, executor, calls, reviews } = await createTestSetup({
+    metrics: { changedFiles: 1, linesChanged: 701, newDependencies: 0 }
+  });
+  const result = await executor.executeNextTask({ runnerId: "world" });
+  assert.equal(result.status, TASK_STATUS.BLOCKED);
+  assert.match(result.reason, /exceeds its canonical resource budget/i);
+  assert.equal(calls.tests, 0);
+  assert.equal(calls.review, 0);
+  assert.equal(reviews.length, 0);
+  assert.equal(director.getTask(task.id).status, TASK_STATUS.BLOCKED);
+});
+
+test("Executor blocks world material proposals that add too many runtime lights", async () => {
+  const { director, task, executor, calls, reviews } = await createTestSetup({
+    contractId: "world-material-quality",
+    changedFiles: ["conferenceCenterDistrict.js"],
+    allowedPaths: ["conferenceCenterDistrict.js"],
+    metrics: {
+      changedFiles: 1,
+      linesChanged: 80,
+      newDependencies: 0,
+      addedRuntimeLights: 2,
+      maxTextureDimension: 1024
+    }
+  });
+  const result = await executor.executeNextTask({ runnerId: "world" });
+  assert.equal(result.status, TASK_STATUS.BLOCKED);
+  assert.match(result.reason, /exceeds its canonical resource budget/i);
+  assert.equal(calls.tests, 0);
+  assert.equal(calls.review, 0);
+  assert.equal(reviews.length, 0);
+  assert.equal(director.getTask(task.id).status, TASK_STATUS.BLOCKED);
+});
+
+test("Executor blocks performance proposals that exceed the frame-loop budget", async () => {
+  const { director, task, executor, calls, reviews } = await createTestSetup({
+    contractId: "performance-quality",
+    changedFiles: ["deviceGraphics.js"],
+    allowedPaths: ["deviceGraphics.js"],
+    metrics: {
+      changedFiles: 1,
+      linesChanged: 40,
+      newDependencies: 0,
+      maxAddedFrameLoopWorkMs: 0.5
+    }
+  });
+  const result = await executor.executeNextTask({ runnerId: "world" });
+  assert.equal(result.status, TASK_STATUS.BLOCKED);
+  assert.match(result.reason, /exceeds its canonical resource budget/i);
+  assert.equal(calls.tests, 0);
+  assert.equal(calls.review, 0);
   assert.equal(reviews.length, 0);
   assert.equal(director.getTask(task.id).status, TASK_STATUS.BLOCKED);
 });
