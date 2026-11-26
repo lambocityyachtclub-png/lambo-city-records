@@ -116,6 +116,17 @@ export default async function aliveAction(req, res) {
     return send(res, 503, { error: "ALIVE hosted storage is not configured." });
   }
 
+  if (action === "discovery" && method === "GET") {
+    try {
+      const result = await control.withSystem({}, async ({ system }) => ({
+        report: await system.discoverProject()
+      }));
+      return send(res, 200, result);
+    } catch {
+      return send(res, 503, { error: "ALIVE read-only project discovery is unavailable." });
+    }
+  }
+
   if (action === "tasks" && method === "GET") {
     try {
       const result = await control.withSystem({}, async ({ system }) => ({
