@@ -165,6 +165,9 @@ export function createDevelopmentReviewStorage(options = {}) {
         id: createReviewId(),
         taskId,
         taskTitle,
+        contractId,
+        contractVersion,
+        autonomyLevel,
         area: input.area || null,
         runner: input.runner || null,
         workspaceId: input.workspaceId || null,
@@ -174,6 +177,7 @@ export function createDevelopmentReviewStorage(options = {}) {
           )
         )],
         changes: input.changes || null,
+        resourceMetrics: clone(input.resourceMetrics),
         testResults: clone(input.testResults),
         status: REVIEW_STATUSES.PENDING,
         productionChangesMade: false,
