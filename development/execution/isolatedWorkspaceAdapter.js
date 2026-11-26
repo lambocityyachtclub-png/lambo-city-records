@@ -176,7 +176,7 @@ export function createIsolatedWorkspaceAdapter(options = {}) {
     throw new Error("An explicit allowedPaths list is required.");
   }
 
-  const normalizedPaths = [...new Set(allowedPaths.map(validateRelativePath))];
+  const normalizedPaths = [...new Set(allowedPaths.map(value => validateRelativePath(value.replace(/\\/+$/, ""))))];
   if (!Number.isInteger(maxProposalFiles) || maxProposalFiles < 1 || maxProposalFiles > 200) {
     throw new Error("maxProposalFiles must be between 1 and 200.");
   }
