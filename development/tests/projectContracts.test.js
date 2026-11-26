@@ -94,6 +94,35 @@ test("world material resource budgets reject extra lights and oversized textures
   assert.equal(oversizedTexture.decision, "owner_approval_required");
 });
 
+test("world-material contracts require owner approval for frame-loop changes", () => {
+  const result = evaluateProjectAction("world-material-quality", "prepare_isolated_change", {
+    changedPaths: ["conferenceCenterDistrict.js"],
+    changedFiles: 1,
+    linesChanged: 40,
+    newDependencies: 0,
+    addedRuntimeLights: 0,
+    maxTextureDimension: 1024,
+    frameLoopTouched: true,
+    maxAddedFrameLoopWorkMs: 0
+  });
+  assert.equal(result.decision, "owner_approval_required");
+  assert.match(result.reason, /does not authorize frame-loop changes/);
+});
+
+test("performance contracts require owner approval for unbudgeted texture changes", () => {
+  const result = evaluateProjectAction("performance-quality", "prepare_isolated_change", {
+    changedPaths: ["deviceGraphics.js"],
+    changedFiles: 1,
+    linesChanged: 40,
+    newDependencies: 0,
+    maxAddedFrameLoopWorkMs: 0,
+    textureTouched: true,
+    maxTextureDimension: 1024
+  });
+  assert.equal(result.decision, "owner_approval_required");
+  assert.match(result.reason, /does not authorize texture changes/);
+});
+
 test("performance changes require frame-loop measurement within the contract budget", () => {
   const result = evaluateProjectAction("performance-quality", "prepare_isolated_change", {
     changedPaths: ["deviceGraphics.js"],
