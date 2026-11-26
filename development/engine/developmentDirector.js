@@ -99,7 +99,7 @@ function normalizeRelatedFiles(value) {
     if (
       filePath.startsWith("/") ||
       filePath.includes("\\") ||
-      filePath.includes("\\0") ||
+      filePath.includes(String.fromCharCode(0)) ||
       segments.some(segment =>
         !segment || segment === "." || segment === ".." ||
         [".git", ".vercel", "node_modules", "dist", "build"].includes(segment)
