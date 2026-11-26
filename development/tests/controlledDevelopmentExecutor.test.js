@@ -20,8 +20,8 @@ async function createTestSetup(options = {}) {
     title: "Test controlled execution",
     description: "Verify isolated development execution.",
     area: "studio_audio",
-    runner: "world"
-    ,contractId: options.contractId === null ? undefined : (options.contractId || "alive-development-core")
+    runner: "world",
+    contractId: options.contractId === null ? undefined : (options.contractId || "alive-development-core")
   });
 
   const calls = {
