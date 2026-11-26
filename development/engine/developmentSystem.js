@@ -50,7 +50,8 @@ export async function createDevelopmentSystem(options = {}) {
     reviewStore: suppliedReviewStore = null,
     allowedPaths = null,
     projectRoot = process.cwd(),
-    projectCatalogPath = "development/blueprints/departmentCatalog.json"
+    projectCatalogPath = "development/blueprints/departmentCatalog.json",
+    projectDiscovery: suppliedProjectDiscovery = null
   } = options;
 
   if (postgresPool && suppliedStorage) {
@@ -83,7 +84,7 @@ export async function createDevelopmentSystem(options = {}) {
   });
   const livingContractEngine = createLivingContractEngine({ worldRunner });
   const policy = getDevelopmentPolicy();
-  const projectDiscovery = createProjectDiscoveryService({
+  const projectDiscovery = suppliedProjectDiscovery || createProjectDiscoveryService({
     rootDir: projectRoot,
     catalogPath: projectCatalogPath
   });
