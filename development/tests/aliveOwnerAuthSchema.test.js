@@ -40,5 +40,5 @@ test("ALIVE owner authentication migration is repeat-safe and contains no destru
   assert.equal((sql.match(/CREATE TABLE IF NOT EXISTS/g) || []).length, 6);
   assert.equal((sql.match(/CREATE INDEX IF NOT EXISTS/g) || []).length, 4);
   assert.match(sql, /ADD COLUMN IF NOT EXISTS "twoFactorEnabled"/);
-  assert.doesNotMatch(sql, /\\b(DROP|TRUNCATE|DELETE FROM)\\b/i);
+  assert.doesNotMatch(sql, /\b(DROP|TRUNCATE|DELETE FROM)\b/i);
 });
