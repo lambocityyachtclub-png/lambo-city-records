@@ -181,7 +181,7 @@ function validateContractTargets() {
     if (!projectContract) throw new Error(`Missing canonical project contract: ${contract.projectContractId}`);
     for (const filePath of contract.filePaths) {
       const allowed = projectContract.allowedPaths.some(prefix => {
-        const normalizedPrefix = prefix.replace(/\\/+$/, "");
+const normalizedPrefix = prefix.replace(/\/+$/, "");
         return filePath === normalizedPrefix || filePath.startsWith(`${normalizedPrefix}/`);
       });
       if (!allowed) {
