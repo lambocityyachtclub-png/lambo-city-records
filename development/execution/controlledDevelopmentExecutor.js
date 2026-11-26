@@ -108,7 +108,7 @@ function isPathAllowed(filePath, allowedPaths) {
  *
  * Required workspaceAdapter methods:
  * - createWorkspace({ taskId, task, allowedPaths })
- * - prepareChanges({ workspaceId, task })
+ * - prepareChanges({ workspaceId, task }) returning changedFiles, changes, and independently measured resource metrics
  * - runTests({ workspaceId, task })
  *
  * Required reviewStore method:
@@ -116,7 +116,9 @@ function isPathAllowed(filePath, allowedPaths) {
  *
  * These adapters must be implemented separately.
  * They are responsible for enforcing isolated workspace
- * and review-storage behavior.
+ * behavior and measuring changed files, changed lines, dependency additions,
+ * runtime-light additions, texture dimensions, and frame-loop impact from the
+ * actual workspace diff and runtime measurements—not from model claims.
  */
 export function createControlledDevelopmentExecutor(options = {}) {
   const {
