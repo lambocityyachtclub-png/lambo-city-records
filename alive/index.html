@@ -31,14 +31,15 @@
           <input id="owner-password-confirm" type="password" autocomplete="new-password" minlength="12" maxlength="128" placeholder="Enter the same password again">
           <p class="muted">Choose at least 12 characters. This is a new ALIVE password; it does not change any other password you use.</p>
         </div>
-        <button class="primary" id="password-signin-button" type="submit">Sign in</button>
+        <button class="primary" id="password-signin-button" type="submit">Sign in with password</button>
+        <button class="quiet" id="passkey-signin-button" type="button" hidden>Sign in with this iPad passkey</button>
         <button class="primary" id="create-owner-account-button" type="submit" hidden>Activate my owner account</button>
       </form>
     </section>
     <section id="workspace" hidden>
       <div class="status-strip panel">
         <div><p class="eyebrow">SYSTEM STATUS</p><h2 id="system-mode">Checking ALIVE…</h2><p class="muted" id="system-summary">Waiting for a secure connection.</p></div>
-        <div class="status-actions"><span id="status-pill" class="pill neutral">NOT CONNECTED</span><button class="quiet" id="refresh-button" type="button">Refresh</button><button class="quiet" id="disconnect-button" type="button">Sign out</button></div>
+        <div class="status-actions"><span id="status-pill" class="pill neutral">NOT CONNECTED</span><button class="quiet" id="register-owner-passkey-button" type="button">Secure this iPad</button><button class="quiet" id="refresh-button" type="button">Refresh</button><button class="quiet" id="disconnect-button" type="button">Sign out</button></div>
         <div class="status-grid" id="status-grid"></div>
       </div>
       <section class="panel">
