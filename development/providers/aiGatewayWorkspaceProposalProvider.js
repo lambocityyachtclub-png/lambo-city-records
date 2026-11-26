@@ -1,5 +1,5 @@
 /**
- * ALIVE — exact-target AI Gateway workspace bridge.
+ * ALIVE — exact-target AI Gateway workspace bridge (version 1.0.0).
  *
  * Reads only the files explicitly attached to a task, optionally adds the
  * bounded read-only project-discovery report, and delegates proposal creation
