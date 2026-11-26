@@ -26,8 +26,9 @@ import {
 } from "../runners/world/worldDevelopmentRunner.js";
 import { listProjectContracts, evaluateProjectAction } from "../../alive/contracts/projectContracts.js";
 import { createProjectDiscoveryService, PROJECT_DISCOVERY_VERSION } from "../blueprints/projectDiscoveryService.js";
+import { createLivingContractEngine } from "../contracts/livingContractEngine.js";
 
-export const DEVELOPMENT_SYSTEM_VERSION = "1.4.0";
+export const DEVELOPMENT_SYSTEM_VERSION = "1.5.0";
 
 export const DEVELOPMENT_SYSTEM_STATUS = Object.freeze({
   READY: "ready",
@@ -63,6 +64,7 @@ export async function createDevelopmentSystem(options = {}) {
   const worldRunner = createWorldDevelopmentRunner({
     developmentDirector: director
   });
+  const livingContractEngine = createLivingContractEngine({ worldRunner });
   const policy = getDevelopmentPolicy();
   const projectDiscovery = createProjectDiscoveryService({
     rootDir: projectRoot,
@@ -146,6 +148,21 @@ export async function createDevelopmentSystem(options = {}) {
   });
 
   registry.registerModule({
+    id: "alive-living-contract-engine",
+    name: "ALIVE Living Contract Engine",
+    type: MODULE_TYPES.ENGINE,
+    version: "1.0.0",
+    path: "development/contracts/livingContractEngine.js",
+    enabled: true,
+    capabilities: [
+      "deterministic-intent-planning",
+      "dependency-ordered-task-batches",
+      "protected-intent-routing"
+    ],
+    description: "Maps owner intent to canonical project contracts and dependency-ordered development tasks."
+  });
+
+  registry.registerModule({
     id: "alive-project-discovery",
     name: "ALIVE Project Discovery",
     type: MODULE_TYPES.SERVICE,
@@ -207,6 +224,7 @@ export async function createDevelopmentSystem(options = {}) {
       studioRunner: studioRunner.getProfile(),
       worldRunner: worldRunner.getProfile(),
       projectDiscovery: projectDiscovery.getSnapshot(),
+      livingContractEngine: livingContractEngine.getSnapshot(),
       worker: worker
         ? worker.getSnapshot()
         : {
@@ -241,6 +259,7 @@ export async function createDevelopmentSystem(options = {}) {
     studioRunner.setEnabled(false);
     worldRunner.setEnabled(false);
     projectDiscovery.setEnabled(false);
+    livingContractEngine.setEnabled(false);
     if (worker) {
       worker.setEnabled(false);
       registry.setModuleEnabled("development-worker", false);
@@ -253,6 +272,7 @@ export async function createDevelopmentSystem(options = {}) {
     studioRunner.setEnabled(true);
     worldRunner.setEnabled(true);
     projectDiscovery.setEnabled(true);
+    livingContractEngine.setEnabled(true);
     if (worker) {
       worker.setEnabled(workerEnabled);
       registry.setModuleEnabled("development-worker", workerEnabled);
@@ -278,6 +298,20 @@ export async function createDevelopmentSystem(options = {}) {
       };
     }
     return worker.runOnce();
+  }
+
+  function planIntent(intent) {
+    if (status !== DEVELOPMENT_SYSTEM_STATUS.READY) {
+      throw new Error("The development system is disabled.");
+    }
+    return livingContractEngine.planIntent(intent);
+  }
+
+  async function submitIntent(intent) {
+    if (status !== DEVELOPMENT_SYSTEM_STATUS.READY) {
+      throw new Error("The development system is disabled.");
+    }
+    return livingContractEngine.submitIntent(intent);
   }
 
   async function discoverProject() {
@@ -325,11 +359,14 @@ export async function createDevelopmentSystem(options = {}) {
     studioRunner,
     worldRunner,
     projectDiscovery,
+    livingContractEngine,
     getStatus,
     getSnapshot,
     evaluateAction,
     discoverProject,
     getProjectDiscoverySnapshot,
+    planIntent,
+    submitIntent,
     enable,
     disable,
     runWorkerOnce,
