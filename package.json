@@ -5,7 +5,8 @@
   "dependencies": {
     "better-auth": "1.7.23",
     "@better-auth/passkey": "1.7.23",
-    "pg": "8.23.1"
+    "pg": "8.23.1",
+    "@vercel/sandbox": "4.1.0"
   },
   "engines": {
     "node": "24.x"
