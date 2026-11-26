@@ -66,14 +66,27 @@ export function createAliveOwnerApiHandler(options = {}) {
         owner: { email: owner.email },
         databaseConfigured: Boolean(env.DATABASE_URL),
         persistentTaskStorage: true,
-        aiProviderConfigured: Boolean(env.OPENAI_API_KEY),
+        aiProposalProviderConfigured: Boolean(env.AI_GATEWAY_MODEL && (env.AI_GATEWAY_API_KEY || env.VERCEL_OIDC_TOKEN)),
+        aiProposalGenerationEnabled: env.ALIVE_AI_ENABLED === "true" && env.ALIVE_AI_SPEND_APPROVED === "true",
         aiExecutionEnabled: false,
+        isolatedWorkspaceConfigured: false,
         isolatedSandboxEnabled: false,
         autonomousProductionDeployment: false
       });
     }
 
-    if (action === "tasks" && method === "GET") {
+    if (action === "discovery" && method === "GET") {
+    try {
+      const result = await control.withSystem({}, async ({ system }) => ({
+        report: await system.discoverProject()
+      }));
+      return send(res, 200, result);
+    } catch {
+      return send(res, 503, { error: "ALIVE read-only project discovery is unavailable." });
+    }
+  }
+
+  if (action === "tasks" && method === "GET") {
       try {
         const result = await withSystem({}, async ({ system }) => ({
           tasks: system.director.listTasks()
