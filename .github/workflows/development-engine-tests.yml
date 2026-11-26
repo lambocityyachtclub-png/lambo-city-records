@@ -5,7 +5,7 @@ on:
   push:
     paths:
       - "development/**"
-      - "alive/server/**"
+      - "alive/**"
       - "api/alive/**"
       - "package.json"
       - "vercel.json"
