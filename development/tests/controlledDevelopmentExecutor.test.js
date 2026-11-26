@@ -13,62 +13,53 @@ import {
 
 async function createTestSetup(options = {}) {
   const director = createDevelopmentDirector();
-
   await director.initialize();
 
-  const task = await director.createTask({
+  const contractId = options.contractId === null
+    ? undefined
+    : (options.contractId || "alive-development-core");
+  const taskInput = {
     title: "Test controlled execution",
     description: "Verify isolated development execution.",
     area: "studio_audio",
     runner: "world",
-    contractId: options.contractId === null ? undefined : (options.contractId || "alive-development-core")
-  });
+    contractId
+  };
+  if (contractId) {
+    taskInput.relatedFiles = options.relatedFiles === undefined
+      ? (contractId === "studio-deferred" ? [] : ["development/engine/example.js"])
+      : options.relatedFiles;
+  }
+  const task = await director.createTask(taskInput);
 
   const calls = {
     workspace: 0,
     prepare: 0,
     tests: 0,
     review: 0,
-    destroy: 0
+    destroy: 0,
+    workspaceTargets: []
   };
 
   const workspaceAdapter = {
-    async createWorkspace() {
+    async createWorkspace(input) {
       calls.workspace++;
-
-      return {
-        workspaceId: "isolated-test-workspace"
-      };
+      calls.workspaceTargets = input.allowedPaths;
+      return { workspaceId: "isolated-test-workspace" };
     },
 
     async prepareChanges() {
       calls.prepare++;
-      const changedFiles = options.changedFiles || [
-        "development/engine/example.js"
-      ];
+      const changedFiles = options.changedFiles || ["development/engine/example.js"];
       const metrics = options.metrics === undefined
-        ? {
-            changedFiles: changedFiles.length,
-            linesChanged: 40,
-            newDependencies: 0
-          }
+        ? { changedFiles: changedFiles.length, linesChanged: 40, newDependencies: 0 }
         : options.metrics;
-
-      return {
-        changedFiles,
-        metrics,
-        changes: "Test proposed changes."
-      };
+      return { changedFiles, metrics, changes: "Test proposed changes." };
     },
 
     async runTests() {
       calls.tests++;
-
-      return options.testResults || {
-        passed: true,
-        total: 5,
-        failed: 0
-      };
+      return options.testResults || { passed: true, total: 5, failed: 0 };
     },
 
     async destroyWorkspace() {
@@ -77,18 +68,11 @@ async function createTestSetup(options = {}) {
   };
 
   const reviews = [];
-
   const reviewStore = {
     async createReview(review) {
       calls.review++;
-
-      const savedReview = {
-        id: "review_test_001",
-        ...review
-      };
-
+      const savedReview = { id: "review_test_001", ...review };
       reviews.push(savedReview);
-
       return savedReview;
     }
   };
@@ -97,18 +81,10 @@ async function createTestSetup(options = {}) {
     developmentDirector: director,
     workspaceAdapter,
     reviewStore,
-    allowedPaths: options.allowedPaths || [
-      "development/engine"
-    ]
+    allowedPaths: options.allowedPaths || ["development/engine"]
   });
 
-  return {
-    director,
-    task,
-    executor,
-    calls,
-    reviews
-  };
+  return { director, task, executor, calls, reviews };
 }
 
 test("Executor requires a Development Director", () => {
@@ -262,7 +238,7 @@ test("Executor enforces the contract allowlist even when the workspace allowlist
   });
   const result = await executor.executeNextTask({ runnerId: "world" });
   assert.equal(result.status, TASK_STATUS.BLOCKED);
-  assert.match(result.reason, /ALIVE contract blocked/);
+  assert.match(result.reason, /exact approved targets/);
   assert.equal(calls.tests, 0);
   assert.equal(calls.review, 0);
   assert.equal(reviews.length, 0);
@@ -296,6 +272,32 @@ test("Executor blocks empty proposals before tests and owner review", async () =
   assert.equal(director.getTask(task.id).status, TASK_STATUS.BLOCKED);
 });
 
+test("Executor refuses a task with no exact source-file targets", async () => {
+  const { director, task, executor, calls } = await createTestSetup({ relatedFiles: [] });
+  const result = await executor.executeNextTask({ runnerId: "world" });
+  assert.equal(result.status, TASK_STATUS.BLOCKED);
+  assert.match(result.reason, /no exact approved source-file targets/i);
+  assert.equal(calls.workspace, 0);
+  assert.equal(director.getTask(task.id).status, TASK_STATUS.BLOCKED);
+});
+
+test("Executor refuses task targets outside the workspace allowlist before creating a workspace", async () => {
+  const { director, task, executor, calls } = await createTestSetup({
+    allowedPaths: ["development/tests"]
+  });
+  const result = await executor.executeNextTask({ runnerId: "world" });
+  assert.equal(result.status, TASK_STATUS.BLOCKED);
+  assert.match(result.reason, /outside the executor workspace allowlist/i);
+  assert.equal(calls.workspace, 0);
+  assert.equal(director.getTask(task.id).status, TASK_STATUS.BLOCKED);
+});
+
+test("Executor exposes only exact task targets to the isolated workspace", async () => {
+  const { executor, calls } = await createTestSetup();
+  await executor.executeNextTask({ runnerId: "world" });
+  assert.deepEqual(calls.workspaceTargets, ["development/engine/example.js"]);
+});
+
 test("Executor blocks proposals without resource metrics before tests and review", async () => {
   const { director, task, executor, calls, reviews } = await createTestSetup({ metrics: null });
   const result = await executor.executeNextTask({ runnerId: "world" });
@@ -324,6 +326,7 @@ test("Executor blocks world material proposals that add too many runtime lights"
   const { director, task, executor, calls, reviews } = await createTestSetup({
     contractId: "world-material-quality",
     changedFiles: ["conferenceCenterDistrict.js"],
+    relatedFiles: ["conferenceCenterDistrict.js"],
     allowedPaths: ["conferenceCenterDistrict.js"],
     metrics: {
       changedFiles: 1,
@@ -346,6 +349,7 @@ test("Executor blocks performance proposals that exceed the frame-loop budget", 
   const { director, task, executor, calls, reviews } = await createTestSetup({
     contractId: "performance-quality",
     changedFiles: ["deviceGraphics.js"],
+    relatedFiles: ["deviceGraphics.js"],
     allowedPaths: ["deviceGraphics.js"],
     metrics: {
       changedFiles: 1,
@@ -412,7 +416,7 @@ test("Executor blocks changes outside the allowed paths", async () => {
   });
 
   assert.equal(result.status, TASK_STATUS.BLOCKED);
-  assert.match(result.reason, /outside the authorized paths/);
+  assert.match(result.reason, /exact approved targets/);
 
   assert.equal(calls.tests, 0);
   assert.equal(calls.review, 0);
