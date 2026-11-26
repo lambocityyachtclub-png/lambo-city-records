@@ -87,6 +87,7 @@ function renderStatus(data) {
     ["TASK STORAGE", data.persistentTaskStorage ? "PERSISTENT" : "NOT READY"],
     ["AI GATEWAY", data.aiProposalProviderConfigured ? "CONFIGURED" : "NOT CONFIGURED"],
     ["AI SPEND", data.aiProposalGenerationEnabled ? "OWNER ENABLED" : "DISABLED"],
+    ["ISOLATED WORKSPACE", data.isolatedWorkspaceConfigured ? "READY" : "NOT READY"],
     ["CODE EXECUTION", data.aiExecutionEnabled ? "ENABLED" : "DISABLED"],
     ["ISOLATED SANDBOX", data.isolatedSandboxEnabled ? "ENABLED" : "NOT CONNECTED"],
     ["PRODUCTION DEPLOY", data.autonomousProductionDeployment ? "ENABLED" : "DISABLED"]
