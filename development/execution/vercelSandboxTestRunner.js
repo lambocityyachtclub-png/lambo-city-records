@@ -116,6 +116,7 @@ export function createVercelSandboxTestRunner(options = {}) {
     const startedAt = Date.now();
     const sandbox = await sandboxFactory({
       runtime: "node24",
+      persistent: false,
       timeout: timeoutMs,
       networkPolicy: "deny-all"
     });
