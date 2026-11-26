@@ -27,6 +27,7 @@ import {
 import { listProjectContracts, evaluateProjectAction } from "../../alive/contracts/projectContracts.js";
 import { createProjectDiscoveryService, PROJECT_DISCOVERY_VERSION } from "../blueprints/projectDiscoveryService.js";
 import { createLivingContractEngine } from "../contracts/livingContractEngine.js";
+import { createPostgresDevelopmentStorage } from "../storage/postgresDevelopmentStorage.js";
 
 export const DEVELOPMENT_SYSTEM_VERSION = "1.5.0";
 
@@ -37,7 +38,8 @@ export const DEVELOPMENT_SYSTEM_STATUS = Object.freeze({
 
 export async function createDevelopmentSystem(options = {}) {
   const {
-    storage = null,
+    storage: suppliedStorage = null,
+    postgresPool = null,
     clock,
     workerExecutor = null,
     workerRunnerIds = [WORLD_RUNNER_ID],
@@ -45,11 +47,26 @@ export async function createDevelopmentSystem(options = {}) {
     maxTasksPerRun = 3,
     workerEnabled = false,
     workspaceAdapter = null,
-    reviewStore = null,
+    reviewStore: suppliedReviewStore = null,
     allowedPaths = null,
     projectRoot = process.cwd(),
     projectCatalogPath = "development/blueprints/departmentCatalog.json"
   } = options;
+
+  if (postgresPool && suppliedStorage) {
+    throw new Error("Provide either postgresPool or a custom storage adapter, not both.");
+  }
+  if (postgresPool && suppliedReviewStore) {
+    throw new Error("When postgresPool is provided, its persistent adapter supplies the review store.");
+  }
+
+  const postgresStorage = postgresPool
+    ? createPostgresDevelopmentStorage({ pool: postgresPool })
+    : null;
+  if (postgresStorage) await postgresStorage.assertSchemaReady();
+
+  const storage = suppliedStorage || postgresStorage;
+  const reviewStore = suppliedReviewStore || postgresStorage;
 
   const registry = createDevelopmentRegistry();
   const directorOptions = { storage };
