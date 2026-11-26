@@ -120,6 +120,8 @@ test("low-risk world material deployment is permitted only with complete evidenc
     changedFiles: 1,
     linesChanged: 80,
     newDependencies: 0,
+    addedRuntimeLights: 0,
+    maxTextureDimension: 1024,
     contract_version_match: true,
     changed_paths_within_allowlist: true,
     automated_tests_passed: true,
@@ -139,7 +141,9 @@ test("low-risk deployment is blocked when evidence is incomplete or risk is elev
     changedPaths: ["conferenceCenterDistrict.js"],
     changedFiles: 1,
     linesChanged: 80,
-    newDependencies: 0
+    newDependencies: 0,
+    addedRuntimeLights: 0,
+    maxTextureDimension: 1024
   });
   assert.equal(incomplete.decision, "blocked_missing_evidence");
 
@@ -149,6 +153,8 @@ test("low-risk deployment is blocked when evidence is incomplete or risk is elev
     changedFiles: 1,
     linesChanged: 80,
     newDependencies: 0,
+    addedRuntimeLights: 0,
+    maxTextureDimension: 1024,
     contract_version_match: true,
     changed_paths_within_allowlist: true,
     automated_tests_passed: true,
@@ -158,6 +164,28 @@ test("low-risk deployment is blocked when evidence is incomplete or risk is elev
     rollback_ready: true
   });
   assert.equal(elevated.decision, "owner_approval_required");
+});
+
+test("pre-authorized deployment cannot bypass a failed resource-budget metric", () => {
+  const evidence = {
+    risk: "low",
+    changedPaths: ["conferenceCenterDistrict.js"],
+    changedFiles: 1,
+    linesChanged: 80,
+    newDependencies: 0,
+    addedRuntimeLights: 2,
+    maxTextureDimension: 1024,
+    contract_version_match: true,
+    changed_paths_within_allowlist: true,
+    automated_tests_passed: true,
+    runtime_smoke_passed: true,
+    visual_quality_review_passed: true,
+    resource_budget_passed: true,
+    rollback_ready: true
+  };
+  const result = evaluateProjectAction("world-material-quality", "deploy_production_low_risk", evidence);
+  assert.equal(result.decision, "owner_approval_required");
+  assert.equal(result.exceeded[0].metric, "addedRuntimeLights");
 });
 
 test("no contract can change its own trust root or safety permissions", () => {
