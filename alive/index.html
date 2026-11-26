@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#090b0a">
+  <meta name="robots" content="noindex,nofollow">
+  <title>ALIVE Owner Console | LAMBO CITY</title>
+  <link rel="stylesheet" href="./owner.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="LAMBO CITY home">LAMBO CITY <span>RECORDS</span></a>
+      <div class="topbar-right"><span class="live-dot"></span> PRIVATE ALIVE OWNER CONSOLE</div>
+    </header>
+
+    <section class="hero">
+      <p class="eyebrow">PRIVATE DEVELOPMENT CONTROL</p>
+      <h1>ALIVE <em>Control</em></h1>
+      <p class="intro">Give direction. Let ALIVE understand the project. Keep authority over what changes.</p>
+    </section>
+
+    <section class="panel auth-panel" id="auth-panel">
+      <div>
+        <p class="eyebrow">OWNER ACCESS</p>
+        <h2 id="auth-heading">Sign in to ALIVE</h2>
+        <p class="muted" id="auth-description">Use your private ALIVE owner account. Safari can save your password in the iPad Passwords app.</p>
+      </div>
+      <form class="auth-form" id="owner-auth-form">
+        <label for="owner-email">Owner email</label>
+        <input id="owner-email" type="email" autocomplete="username" autocapitalize="off" required placeholder="Your owner email">
+        <div id="password-wrap">
+          <label for="owner-password">Password</label>
+          <input id="owner-password" type="password" autocomplete="current-password" minlength="12" maxlength="128" required placeholder="Your ALIVE owner password">
+        </div>
+        <div id="password-confirm-wrap" hidden>
+          <label for="owner-password-confirm">Confirm password</label>
+          <input id="owner-password-confirm" type="password" autocomplete="new-password" minlength="12" maxlength="128" placeholder="Enter the same password again">
+        </div>
+        <div id="enrollment-token-wrap" hidden>
+          <label for="owner-enrollment-token">Private one-time founder invitation</label>
+          <input id="owner-enrollment-token" type="password" autocomplete="off" autocapitalize="off" placeholder="Paste the private Preview invitation token">
+          <p class="muted">Founder enrollment is accepted only on the private Vercel Preview and closes after the first owner account is created.</p>
+        </div>
+        <button class="primary" id="password-signin-button" type="submit">Sign in</button>
+        <button class="primary" id="create-owner-account-button" type="submit" hidden>Activate owner account</button>
+        <button class="quiet" id="passkey-signin-button" type="button">Sign in with this iPad passkey</button>
+        <button class="text-button" id="toggle-enrollment-button" type="button">First-time owner activation</button>
+        <button class="text-button" id="cancel-enrollment-button" type="button" hidden>Back to sign in</button>
+        <p class="notice" id="auth-message" role="status" aria-live="polite"></p>
+      </form>
+    </section>
+
+    <section id="workspace" hidden>
+      <section class="panel status-panel">
+        <div class="status-head">
+          <div>
+            <p class="eyebrow">SYSTEM STATUS</p>
+            <h2 id="system-mode">Checking ALIVE…</h2>
+            <p class="muted" id="system-summary">Waiting for a secure owner session.</p>
+          </div>
+          <div class="status-actions">
+            <button class="quiet" id="register-passkey-button" type="button">Secure this iPad</button>
+            <button class="quiet" id="refresh-button" type="button">Refresh</button>
+            <button class="quiet" id="signout-button" type="button">Sign out</button>
+          </div>
+        </div>
+        <div class="status-grid" id="status-grid"></div>
+        <p class="notice" id="system-next-step"></p>
+      </section>
+
+      <section class="panel">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">01 / DIRECTION</p>
+            <h2>Tell ALIVE what to improve</h2>
+            <p class="muted">ALIVE maps your instruction to the approved project contracts and exact source files. Submitting direction does not execute or deploy code.</p>
+          </div>
+        </div>
+        <form id="intent-form" class="task-form">
+          <label class="full" for="intent">Your direction</label>
+          <textarea id="intent" rows="4" maxlength="4000" required placeholder="Example: Improve the Convention Center glass realism while preserving its existing footprint, roads, sidewalks, and layout."></textarea>
+          <div class="form-footer">
+            <span class="muted">Clear instructions produce safer, more focused work.</span>
+            <button class="primary" id="submit-intent-button" type="submit">Submit direction</button>
+          </div>
+        </form>
+        <p class="notice" id="intent-message" role="status" aria-live="polite"></p>
+        <div id="plan-result" class="plan-result" hidden></div>
+      </section>
+
+      <section class="panel">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">02 / DEVELOPMENT QUEUE</p>
+            <h2>ALIVE task activity</h2>
+            <p class="muted">See what ALIVE understood, which contract applies, and which source files are in scope.</p>
+          </div>
+        </div>
+        <div id="tasks-list" class="stack"><p class="muted">Loading tasks…</p></div>
+      </section>
+
+      <section class="panel">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">03 / OWNER REVIEW</p>
+            <h2>Proposed changes</h2>
+            <p class="muted">Review packages appear here after an isolated proposal and trusted tests are connected. Approval records your decision; it does not automatically publish code.</p>
+          </div>
+        </div>
+        <div id="reviews-list" class="stack"><p class="muted">Loading reviews…</p></div>
+      </section>
+
+      <section class="panel autonomy-panel">
+        <p class="eyebrow">04 / AUTONOMY BOUNDARIES</p>
+        <h2>What ALIVE can do right now</h2>
+        <div class="autonomy-list">
+          <div><span class="state-dot good"></span><strong>Discover and plan</strong><p>Read-only project discovery and contract-based task planning.</p></div>
+          <div><span class="state-dot good"></span><strong>Prepare isolated proposals</strong><p>Exact-target workspace and AI provider are built, but model usage remains disabled until you explicitly approve it.</p></div>
+          <div><span class="state-dot warn"></span><strong>Run tests and measure visual quality</strong><p>A trusted sandbox test runner and runtime profiler still need to be connected.</p></div>
+          <div><span class="state-dot neutral"></span><strong>Deploy qualifying improvements</strong><p>The contract release gate exists. The production release adapter is not enabled.</p></div>
+        </div>
+      </section>
+
+      <footer class="footer-note">OWNER AUTHORITY IS ACTIVE BY DESIGN. ALIVE CANNOT GRANT ITSELF MORE PERMISSION.</footer>
+    </section>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  </main>
+  <script type="module" src="./owner.js"></script>
+</body>
+</html>
