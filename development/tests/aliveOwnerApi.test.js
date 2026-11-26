@@ -13,9 +13,10 @@ function createResponse() {
 }
 
 function createHarness(options = {}) {
-  const calls = { authenticate: 0, withSystem: 0, submitted: 0, decided: 0 };
+  const calls = { authenticate: 0, withSystem: 0, submitted: 0, decided: 0, discovered: 0 };
   const system = {
     getSnapshot: () => ({ ready: true }),
+    discoverProject: async () => { calls.discovered += 1; return { status: "discovery-only", summary: { departmentCount: 10 }, departments: [] }; },
     director: { listTasks: () => [{ id: "task-1", title: "Review glass", status: "queued" }] },
     planIntent: intent => intent.includes("HERO")
       ? { status: "owner_approval_required", reason: "Protected system." }
@@ -33,12 +34,13 @@ function createHarness(options = {}) {
     }
   };
   const handler = createAliveOwnerApiHandler({
-    env: { DATABASE_URL: "configured", OPENAI_API_KEY: "", ...options.env },
+    env: { DATABASE_URL: "configured", AI_GATEWAY_MODEL: "", AI_GATEWAY_API_KEY: "", ...options.env },
     authenticateOwner: async () => {
       calls.authenticate += 1;
       return options.owner === false ? null : { email: "owner@example.test" };
     },
     isSameOrigin: () => options.sameOrigin !== false,
+    getStatus: () => options.runtimeStatus || { projectDiscoveryConfigured: true, isolatedWorkspaceConfigured: true },
     withSystem: async (systemOptions, callback) => {
       calls.withSystem += 1;
       return callback({ system, storage });
@@ -81,9 +83,21 @@ test("ALIVE owner API exposes only configuration status, not secrets", async () 
   assert.equal(response.body.owner.email, "owner@example.test");
   assert.equal(response.body.databaseConfigured, true);
   assert.equal(response.body.aiProviderConfigured, false);
+  assert.equal(response.body.aiProposalGenerationEnabled, false);
+  assert.equal(response.body.projectDiscoveryConfigured, true);
+  assert.equal(response.body.isolatedWorkspaceConfigured, true);
   assert.equal(response.body.aiExecutionEnabled, false);
   assert.equal(response.body.autonomousProductionDeployment, false);
   assert.equal(Object.hasOwn(response.body, "DATABASE_URL"), false);
+});
+
+test("ALIVE owner API exposes a read-only project discovery report", async () => {
+  const { handler, calls } = createHarness();
+  const response = await invoke(handler, { action: "discovery" });
+  assert.equal(response.statusCode, 200);
+  assert.equal(response.body.report.status, "discovery-only");
+  assert.equal(response.body.report.summary.departmentCount, 10);
+  assert.equal(calls.discovered, 1);
 });
 
 test("ALIVE owner API lists durable tasks and pending reviews", async () => {
