@@ -93,6 +93,24 @@ function normalizeList(value) {
   ))];
 }
 
+function normalizeRelatedFiles(value) {
+  return normalizeList(value).map(filePath => {
+    const segments = filePath.split("/");
+    if (
+      filePath.startsWith("/") ||
+      filePath.includes("\\") ||
+      filePath.includes("\\0") ||
+      segments.some(segment =>
+        !segment || segment === "." || segment === ".." ||
+        [".git", ".vercel", "node_modules", "dist", "build"].includes(segment)
+      )
+    ) {
+      throw new Error(`Unsafe related file path: ${filePath}`);
+    }
+    return filePath;
+  });
+}
+
 function clone(value) {
   return JSON.parse(JSON.stringify(value));
 }
