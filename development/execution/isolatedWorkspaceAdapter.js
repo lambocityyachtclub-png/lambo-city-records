@@ -77,8 +77,8 @@ function countRuntimeLights(source) {
   return (String(source || "").match(/new\s+(?:THREE\.)?(?:PointLight|SpotLight|DirectionalLight|HemisphereLight|AmbientLight)\b/g) || []).length;
 }
 
-function countFrameLoopCalls(source) {
-  return (String(source || "").match(/\b(?:update|tick|animate|render)\s*\(/g) || []).length;
+function hasFrameLoopWork(source) {
+  return /\b(?:update|tick|animate|render)\s*\(/.test(String(source || ""));
 }
 
 function maxTextureDimension(source) {
@@ -591,7 +591,7 @@ export function createIsolatedWorkspaceAdapter(options = {}) {
       if (proposedTextureMax > previousTextureMax) {
         metrics.maxTextureDimension = Math.max(metrics.maxTextureDimension, proposedTextureMax);
       }
-      if (countFrameLoopCalls(proposed) > countFrameLoopCalls(original)) {
+      if (proposed !== original && hasFrameLoopWork(proposed)) {
         metrics.maxAddedFrameLoopWorkMs = Math.max(metrics.maxAddedFrameLoopWorkMs, 0.11);
       }
       if (filePath === "package.json") {
