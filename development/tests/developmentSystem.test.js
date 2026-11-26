@@ -240,6 +240,8 @@ test("Development System exposes deterministic Living Contract planning and subm
   assert.equal(result.status, "submitted");
   assert.equal(result.total, 1);
   assert.equal(result.productionChangesMade, false);
+  assert.deepEqual(result.submitted[0].relatedFiles, ["conferenceCenterDistrict.js"]);
+  assert.deepEqual(system.director.listTasks()[0].relatedFiles, ["conferenceCenterDistrict.js"]);
   assert.equal(system.director.listTasks().length, 1);
 });
 
