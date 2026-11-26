@@ -649,12 +649,13 @@ export default {
 
     // Collision follows only real architectural walls. Road surfaces and public plazas remain walkable.
     if (collision && typeof collision.registerBox === "function") {
-      const wall = { minY: 0, maxY: 19.5, level: "arena-district" };
-      collision.registerBox("arenaWestFacadeCollision", { x: leftX + 0.5, z: bz, width: 1.0, depth: CENTER.footprintDepth, ...wall });
-      collision.registerBox("arenaEastFacadeCollision", { x: rightX - 0.5, z: bz, width: 1.0, depth: CENTER.footprintDepth, ...wall });
-      collision.registerBox("arenaRearFacadeCollision", { x: bx, z: rearZ - 0.5, width: CENTER.footprintWidth, depth: 1.0, ...wall });
-      collision.registerBox("arenaSouthFacadeWestCollision", { x: bx - 18.5, z: frontZ + 0.5, width: 17, depth: 1.0, ...wall });
-      collision.registerBox("arenaSouthFacadeEastCollision", { x: bx + 18.5, z: frontZ + 0.5, width: 17, depth: 1.0, ...wall });
+      const wall = { minY: 0, maxY: 32, level: "arena-district" };
+      collision.registerBox("arenaWestFacadeCollision", { x: leftX, z: bz, width: 0.5, depth: CENTER.footprintDepth, ...wall });
+      collision.registerBox("arenaEastFacadeCollision", { x: rightX, z: bz, width: 0.5, depth: CENTER.footprintDepth, ...wall });
+      collision.registerBox("arenaRearFacadeCollision", { x: bx, z: rearZ, width: CENTER.footprintWidth, depth: 0.5, ...wall });
+      // Keep the central south entrance physically open.
+      collision.registerBox("arenaSouthFacadeWestCollision", { x: bx - 23.5, z: frontZ, width: 19, depth: 0.5, ...wall });
+      collision.registerBox("arenaSouthFacadeEastCollision", { x: bx + 23.5, z: frontZ, width: 19, depth: 0.5, ...wall });
     }
 
     this._root = root;
