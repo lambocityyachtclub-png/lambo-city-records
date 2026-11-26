@@ -291,9 +291,10 @@ export function createDevelopmentDirector(options = {}) {
     }
     if (contract) {
       for (const filePath of relatedFiles) {
-        const allowed = contract.allowedPaths.some(prefix =>
-          filePath === prefix || filePath.startsWith(`${prefix}/`)
-        );
+        const allowed = contract.allowedPaths.some(prefix => {
+          const normalizedPrefix = prefix.replace(/\\/+$/, "");
+          return filePath === normalizedPrefix || filePath.startsWith(`${normalizedPrefix}/`);
+        });
         if (!allowed) {
           throw new Error(`Related file is outside the canonical ALIVE contract allowlist: ${filePath}`);
         }
