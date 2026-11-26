@@ -170,7 +170,8 @@ export function createHostedAliveControlPlane(options = {}) {
         sandboxEnabled: runtime.sandboxEnabled,
         workerEnabled: runtime.workerEnabled,
         autoRunEnabled: runtime.autoRunEnabled,
-        sourceFileWrites: runtime.workerEnabled,
+        isolatedWorkspaceWrites: runtime.workerEnabled,
+        sourceFileWrites: false,
         gitCommitMerge: false,
         productionDeployment: false,
         allowedPaths: [...allowedPaths]
