@@ -100,6 +100,7 @@ export default async function aliveAction(req, res) {
       persistentTaskStorage: Boolean(process.env.DATABASE_URL),
       aiProposalProviderConfigured: componentSnapshot?.aiProvider?.configured === true,
       aiProposalGenerationEnabled: componentSnapshot?.proposalGenerationEnabled === true,
+      projectDiscoveryConfigured: componentSnapshot?.projectDiscovery?.configured === true,
       aiExecutionEnabled: false,
       isolatedWorkspaceConfigured: componentSnapshot?.workspaceAdapter?.configured === true,
       isolatedSandboxEnabled: componentSnapshot?.workspaceAdapter?.testRunnerConfigured === true,
