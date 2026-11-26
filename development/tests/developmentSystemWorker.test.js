@@ -83,7 +83,7 @@ test("development system composes the controlled executor from explicit adapters
     },
     async prepareChanges() {
       return {
-        changedFiles: ["development/safe/worker-output.js"],
+        changedFiles: ["development/engine/worker-output.js"],
         changes: { summary: "A tested isolated proposal." }
       };
     },
@@ -105,7 +105,7 @@ test("development system composes the controlled executor from explicit adapters
   const system = await createDevelopmentSystem({
     workspaceAdapter,
     reviewStore,
-    allowedPaths: ["development/safe"],
+    allowedPaths: ["development/engine"],
     workerRunnerIds: [STUDIO_RUNNER_ID],
     workerEnabled: true,
     maxTasksPerRun: 1
@@ -114,7 +114,8 @@ test("development system composes the controlled executor from explicit adapters
   await system.director.createTask({
     title: "Run through the controlled execution path",
     area: "development-system",
-    runner: STUDIO_RUNNER_ID
+    runner: STUDIO_RUNNER_ID,
+    contractId: "alive-development-core"
   });
 
   const result = await system.runWorkerOnce();
