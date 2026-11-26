@@ -15,6 +15,8 @@ test("ALIVE owner console is a separate no-index page and does not enter the gam
 test("owner authentication uses saved email/password sessions without browser bearer-token storage", () => {
   assert.match(script, /credentials:"same-origin"/);
   assert.match(script, /signIn\.email/);
+  assert.match(script, /signIn\.passkey/);
+  assert.match(script, /passkeyClient\(\)/);
   assert.match(script, /signUp\.email/);
   assert.match(script, /createFounderCredential/);
   assert.match(html, /Sign in to ALIVE/);
