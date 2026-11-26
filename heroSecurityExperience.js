@@ -188,7 +188,7 @@ export default {
     active = false;
     lastState = "IDLE";
     guards = [makeGuard(0), makeGuard(1)];
-    photographers = [makePhotographer(0), makePhotographer(1), makePhotographer(2)];
+    // HERO keeps his two intended escort guards. Extra paparazzi/secondary figures\n    // are disabled here so no small characters spawn around the HQ waterfront.\n    photographers = [];
     createPerimeter();
   },
 
