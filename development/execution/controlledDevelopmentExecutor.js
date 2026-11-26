@@ -23,6 +23,10 @@
 import {
   TASK_STATUS
 } from "../engine/developmentDirector.js";
+import {
+  getProjectContract,
+  evaluateProjectAction
+} from "../../alive/contracts/projectContracts.js";
 
 const DEFAULT_WORKER_ID = "controlled-development-executor";
 
@@ -234,6 +238,15 @@ export function createControlledDevelopmentExecutor(options = {}) {
     let workspaceId = null;
 
     try {
+      // STEP 0: Resolve the canonical contract pinned to this task.
+      if (!task.contractId || !task.contractVersion) {
+        throw new Error("Task has no pinned ALIVE module contract; execution is blocked.");
+      }
+      const contract = getProjectContract(task.contractId);
+      if (!contract || contract.version !== task.contractVersion) {
+        throw new Error("Task ALIVE contract is missing or has changed since task creation.");
+      }
+
       // STEP 1: Create an isolated workspace.
       const workspace = await workspaceAdapter.createWorkspace({
         taskId: task.id,
@@ -287,6 +300,16 @@ export function createControlledDevelopmentExecutor(options = {}) {
         throw new Error("No changed files were produced; an empty proposal cannot enter owner review.");
       }
 
+      // STEP 3b: Enforce the canonical module contract as a second allowlist.
+      const contractDecision = evaluateProjectAction(
+        task.contractId,
+        "prepare_isolated_change",
+        { changedPaths: changedFiles }
+      );
+      if (!contractDecision.authorized) {
+        throw new Error(`ALIVE contract blocked proposed changes: ${contractDecision.reason}`);
+      }
+
       // STEP 4: Run tests in the isolated workspace.
       const testResults = await workspaceAdapter.runTests({
         workspaceId,
@@ -306,6 +329,8 @@ export function createControlledDevelopmentExecutor(options = {}) {
           status: TASK_STATUS.BLOCKED,
           taskId: task.id,
           workspaceId,
+          contractId: task.contractId,
+          contractVersion: task.contractVersion,
           changedFiles,
           testResults,
           reason
@@ -318,6 +343,9 @@ export function createControlledDevelopmentExecutor(options = {}) {
         taskTitle: task.title,
         area: task.area,
         runner: task.runner,
+        contractId: task.contractId,
+        contractVersion: task.contractVersion,
+        autonomyLevel: contract.autonomyLevel,
         workspaceId,
         changedFiles,
         changes: proposal.changes || null,
