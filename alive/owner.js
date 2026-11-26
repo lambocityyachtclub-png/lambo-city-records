@@ -85,6 +85,7 @@ function renderStatus(data) {
   const values = [
     ["DATABASE", data.databaseConfigured ? "CONNECTED" : "NOT CONFIGURED"],
     ["TASK STORAGE", data.persistentTaskStorage ? "PERSISTENT" : "NOT READY"],
+    ["PROJECT DISCOVERY", data.projectDiscoveryConfigured ? "READY" : "NOT READY"],
     ["AI GATEWAY", data.aiProposalProviderConfigured ? "CONFIGURED" : "NOT CONFIGURED"],
     ["AI SPEND", data.aiProposalGenerationEnabled ? "OWNER ENABLED" : "DISABLED"],
     ["ISOLATED WORKSPACE", data.isolatedWorkspaceConfigured ? "READY" : "NOT READY"],
