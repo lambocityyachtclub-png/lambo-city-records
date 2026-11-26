@@ -54,8 +54,8 @@ const CITY_MAP = Object.freeze({
         id: "lambo-city-conference-center-arena",
         centerX: 0,
         centerZ: 97,
-        footprintWidth: 54,
-        footprintDepth: 44,
+        footprintWidth: 66,
+        footprintDepth: 52,
         entranceSide: "south",
         targetHeight: "monumental-arena-scale",
         materialDirection: "dark architectural structure, glass curtain walls, champagne-gold metal detailing, large integrated digital displays"

@@ -30,22 +30,23 @@ assert.match(district, /depth: innerVerticalDepth/);
 assert.match(district, /width: innerNorthLength/);
 assert.match(district, /curbStartInset: -curbCenterlineRadius/);
 assert.match(district, /innerCornerReturns = \[/);
-assert.equal((district.match(/name: "southWest"|name: "southEast"|name: "northWest"|name: "northEast"/g) || []).length, 4);
-assert.equal((district.match(/addSidewalkCornerReturn\(root/g) || []).length, 1,
-  "One shared corner-return builder must create all four curved sidewalk corners");
+assert.equal((district.match(/name: "southWest"|name: "southEast"|name: "northWest"|name: "northEast"/g) || []).length, 8);
+assert.equal((district.match(/addSidewalkCornerReturn\(root/g) || []).length, 2,
+  "The shared corner-return builder must create inner and outer corner groups");
 assert.match(district, /arenaCornerRoadApron_/);
-assert.match(district, /surfaceY: corner\.sz < 0 \? 0\.702 : 0\.832/);
-assert.match(district, /curbCenterY: corner\.sz < 0 \? 0\.64 : 0\.76/);
+assert.match(district, /surfaceY: 0\.834/);
+assert.match(district, /curbCenterY: 0\.74/);
+assert.match(district, /surfaceY: 0\.807/);
 
 // All four curved returns meet the unchanged straight sidewalk profiles.
 const boardwalkPaverTopY = 0.55 + 0.3 / 2 + 0.002;
 const boardwalkCurbCenterY = 0.55 + 0.3 / 2 - 0.12 / 2;
 const boulevardPaverTopY = 0.76 + 0.14 / 2 + 0.002;
 const boulevardCurbCenterY = 0.76 + 0.14 / 2 - 0.14 / 2;
-assert.equal(boardwalkPaverTopY, 0.702);
-assert.equal(boardwalkCurbCenterY, 0.64);
-assert.equal(boulevardPaverTopY, 0.832);
-assert.equal(boulevardCurbCenterY, 0.76);
+assert.ok(Math.abs(boardwalkPaverTopY - 0.702) < 1e-9);
+assert.ok(Math.abs(boardwalkCurbCenterY - 0.64) < 1e-9);
+assert.ok(Math.abs(boulevardPaverTopY - 0.832) < 1e-9);
+assert.ok(Math.abs(boulevardCurbCenterY - 0.76) < 1e-9);
 
 // Coordinate-level check: the curved curb endpoints meet the straight curb centerlines.
 const boardwalkStreetCenterZ = 46;

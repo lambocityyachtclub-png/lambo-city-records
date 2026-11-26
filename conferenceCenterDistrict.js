@@ -433,7 +433,9 @@ export default {
       });
     });
 
-    // Monumental arena: 54 x 44 footprint with a tall glass-and-stone facade.
+    // LAMBO CITY SIGNATURE CONVENTION CENTER
+    // Enlarged within the existing boulevard parcel; roads, HQ, boardwalk,
+    // stage, villa parcels, and district coordinates remain unchanged.
     const bx = CENTER.centerX;
     const bz = CENTER.centerZ;
     const halfW = CENTER.footprintWidth / 2;
@@ -442,74 +444,170 @@ export default {
     const rearZ = bz + halfD;
     const leftX = bx - halfW;
     const rightX = bx + halfW;
-    const wallHeight = 18.5;
-    addBox(root, "arenaFoundation", [CENTER.footprintWidth, 0.1, CENTER.footprintDepth], [bx, 0.6, bz], materials.darkMetal, { castShadow: true });
-    addBox(root, "arenaWestFacade", [1.0, wallHeight, CENTER.footprintDepth], [leftX + 0.5, 9.9, bz], materials.facade, { castShadow: true });
-    addBox(root, "arenaEastFacade", [1.0, wallHeight, CENTER.footprintDepth], [rightX - 0.5, 9.9, bz], materials.facade, { castShadow: true });
-    addBox(root, "arenaRearFacade", [CENTER.footprintWidth, wallHeight, 1.0], [bx, 9.9, rearZ - 0.5], materials.facade, { castShadow: true });
+    const wallHeight = 27.5;
+    const glassShell = new THREE.MeshPhysicalMaterial({
+      color: 0xa9d8e6, roughness: 0.12, metalness: 0.12,
+      transmission: 0.18, transparent: true, opacity: 0.34,
+      thickness: 0.18, ior: 1.45, depthWrite: false, side: THREE.DoubleSide
+    });
+    const darkGlass = new THREE.MeshStandardMaterial({
+      color: 0x14232d, roughness: 0.2, metalness: 0.38,
+      transparent: true, opacity: 0.58, depthWrite: false, side: THREE.DoubleSide
+    });
+    const interiorStone = new THREE.MeshStandardMaterial({ color: 0xbab5aa, roughness: 0.68, metalness: 0.08 });
+    const interiorFloor = new THREE.MeshStandardMaterial({ color: 0x555a5b, roughness: 0.36, metalness: 0.24 });
+    const warmGlow = new THREE.MeshStandardMaterial({
+      color: 0xffe0a0, emissive: 0xffbd62, emissiveIntensity: 1.25, roughness: 0.28
+    });
+    const screenMaterial = new THREE.MeshStandardMaterial({
+      map: makeDisplayTexture("EXHIBITION HALL"), emissive: 0x182b35,
+      emissiveIntensity: 0.55, roughness: 0.28, metalness: 0.22
+    });
 
-    // South facade wings leave a generous, clearly readable public entrance.
-    addBox(root, "arenaSouthFacadeWest", [17, wallHeight, 1.0], [bx - 18.5, 9.9, frontZ + 0.5], materials.facade, { castShadow: true });
-    addBox(root, "arenaSouthFacadeEast", [17, wallHeight, 1.0], [bx + 18.5, 9.9, frontZ + 0.5], materials.facade, { castShadow: true });
-    addBox(root, "arenaEntranceHeader", [20, 4.2, 1.2], [bx, 18.2, frontZ + 0.45], materials.darkMetal, { castShadow: true });
+    // Raised stone podium and dark metal base plinth.
+    addBox(root, "arenaFoundation", [CENTER.footprintWidth + 2, 0.85, CENTER.footprintDepth + 2],
+      [bx, 0.95, bz], materials.darkMetal, { castShadow: true });
+    addBox(root, "arenaPodiumStone", [CENTER.footprintWidth, 0.48, CENTER.footprintDepth],
+      [bx, 1.52, bz], interiorStone);
 
-    // Large curtain-wall glass fields and champagne-metal vertical fins.
+    // Transparent curtain-wall elevations. The main shell is genuinely open
+    // visually; no solid wall sits behind the glass.
+    addBox(root, "arenaWestGlassCurtain", [0.22, wallHeight, CENTER.footprintDepth],
+      [leftX, 15.35, bz], glassShell);
+    addBox(root, "arenaEastGlassCurtain", [0.22, wallHeight, CENTER.footprintDepth],
+      [rightX, 15.35, bz], glassShell);
+    addBox(root, "arenaRearGlassCurtain", [CENTER.footprintWidth, wallHeight, 0.22],
+      [bx, 15.35, rearZ], glassShell);
+    addBox(root, "arenaSouthGlassWingWest", [19, wallHeight, 0.22],
+      [bx - 23.5, 15.35, frontZ], glassShell);
+    addBox(root, "arenaSouthGlassWingEast", [19, wallHeight, 0.22],
+      [bx + 23.5, 15.35, frontZ], glassShell);
+
+    // Four monumental corner piers and champagne-gold vertical fins.
+    for (const sx of [-1, 1]) {
+      for (const sz of [-1, 1]) {
+        addBox(root, "arenaCornerPier_" + sx + "_" + sz, [1.35, 29.5, 1.35],
+          [bx + sx * (halfW - 0.7), 15.9, bz + sz * (halfD - 0.7)], materials.darkMetal, { castShadow: true });
+      }
+    }
+    for (let n = 0; n <= 10; n++) {
+      const x = leftX + n * (CENTER.footprintWidth / 10);
+      addBox(root, "arenaFrontMullion_" + n, [0.16, 27.5, 0.28],
+        [x, 15.35, frontZ + 0.12], materials.gold);
+      addBox(root, "arenaRearMullion_" + n, [0.16, 27.5, 0.28],
+        [x, 15.35, rearZ - 0.12], materials.gold);
+    }
+    for (let n = 0; n <= 8; n++) {
+      const z = frontZ + n * (CENTER.footprintDepth / 8);
+      addBox(root, "arenaWestMullion_" + n, [0.28, 27.5, 0.16],
+        [leftX + 0.12, 15.35, z], materials.gold);
+      addBox(root, "arenaEastMullion_" + n, [0.28, 27.5, 0.16],
+        [rightX - 0.12, 15.35, z], materials.gold);
+    }
+
+    // Visible interior: polished public concourse, upper gallery, exhibition
+    // floor, central feature stair, reception island, and presentation wall.
+    addBox(root, "arenaInteriorGroundFloor", [CENTER.footprintWidth - 2, 0.28, CENTER.footprintDepth - 2],
+      [bx, 2.05, bz], interiorFloor);
+    addBox(root, "arenaInteriorUpperGallery", [CENTER.footprintWidth - 8, 0.32, 12],
+      [bx, 12.2, bz + 7], interiorStone);
+    addBox(root, "arenaGalleryFrontBalcony", [CENTER.footprintWidth - 10, 0.18, 0.24],
+      [bx, 12.55, bz + 0.9], materials.glassRail);
+    addBox(root, "arenaGalleryRearBalcony", [CENTER.footprintWidth - 10, 0.18, 0.24],
+      [bx, 12.55, bz + 13], materials.glassRail);
+    addBox(root, "arenaReceptionIsland", [10, 1.35, 2.4],
+      [bx, 2.95, frontZ + 8], materials.darkMetal);
+    addBox(root, "arenaReceptionGlowLine", [9.6, 0.12, 2.05],
+      [bx, 3.68, frontZ + 8], warmGlow);
+    addBox(root, "arenaExhibitionFeatureStage", [22, 0.72, 8],
+      [bx, 2.58, bz + 8], materials.facade);
+    addBox(root, "arenaExhibitionDisplayWall", [24, 8.5, 0.48],
+      [bx, 7.1, rearZ - 3.2], screenMaterial);
+    addBox(root, "arenaPresentationHallScreen", [18, 7.0, 0.35],
+      [bx, 10.2, bz - 5], screenMaterial);
     for (let n = 0; n < 6; n++) {
-      const x = leftX + 5 + n * 8.8;
-      addBox(root, "arenaRearGlass_" + n, [6.2, 11.5, 0.12], [x, 10.2, rearZ - 1.02], materials.glass);
-      addBox(root, "arenaFrontGlass_" + n, [6.2, 10.8, 0.12], [x, 9.5, frontZ + 1.05], materials.glass);
-      addBox(root, "arenaRearFin_" + n, [0.18, 16.5, 0.2], [x + 3.25, 10.0, rearZ - 1.18], materials.gold);
+      addBox(root, "arenaInteriorColumn_" + n, [0.48, 24, 0.48],
+        [bx - 22 + n * 8.8, 14.2, bz + 1], materials.gold);
     }
+    // Sculptural twin stair flights are simple low-poly runs to stay efficient.
+    for (let n = 0; n < 10; n++) {
+      addBox(root, "arenaGrandStairLeft_" + n, [5.4, 0.24, 0.8],
+        [bx - 3.1, 3.0 + n * 0.78, frontZ + 13 + n * 0.72], interiorStone);
+      addBox(root, "arenaGrandStairRight_" + n, [5.4, 0.24, 0.8],
+        [bx + 3.1, 3.0 + n * 0.78, frontZ + 13 + n * 0.72], interiorStone);
+    }
+
+    // Grand south entrance: tall clear portal, broad canopy, and gold reveals.
+    addBox(root, "arenaEntranceHeader", [28, 4.8, 1.4],
+      [bx, 27.1, frontZ + 0.4], materials.darkMetal, { castShadow: true });
+    addBox(root, "arenaEntryGlassLeft", [11, 10.5, 0.12],
+      [bx - 5.8, 7.0, frontZ - 0.08], glassShell);
+    addBox(root, "arenaEntryGlassRight", [11, 10.5, 0.12],
+      [bx + 5.8, 7.0, frontZ - 0.08], glassShell);
+    addBox(root, "arenaEntryDoorMullion", [0.18, 10.5, 0.2],
+      [bx, 7.0, frontZ - 0.16], materials.gold);
+    addBox(root, "arenaSouthCanopy", [38, 0.72, 9],
+      [bx, 25.2, frontZ - 4.1], materials.darkMetal, { castShadow: true });
+    addBox(root, "arenaSouthCanopyGoldReveal", [38.4, 0.16, 9.4],
+      [bx, 24.78, frontZ - 4.1], materials.gold);
     for (let n = 0; n < 5; n++) {
-      const z = frontZ + 5 + n * 8.5;
-      addBox(root, "arenaWestGlass_" + n, [0.12, 11.5, 6.0], [leftX + 1.02, 10.2, z], materials.glass);
-      addBox(root, "arenaEastGlass_" + n, [0.12, 11.5, 6.0], [rightX - 1.02, 10.2, z], materials.glass);
-      addBox(root, "arenaWestFin_" + n, [0.2, 16.5, 0.18], [leftX + 1.18, 10.0, z + 3.1], materials.gold);
-      addBox(root, "arenaEastFin_" + n, [0.2, 16.5, 0.18], [rightX - 1.18, 10.0, z + 3.1], materials.gold);
+      addBox(root, "arenaEntryColumn_" + n, [0.62, 20, 0.72],
+        [bx - 12 + n * 6, 11.4, frontZ - 0.55], materials.gold);
     }
 
-    // Deep roof canopy and layered crown establish the landmark silhouette.
-    addBox(root, "arenaRoofCrown", [56, 1.2, 46], [bx, 20.3, bz], materials.darkMetal, { castShadow: true });
-    addBox(root, "arenaRoofGoldReveal", [56.4, 0.16, 46.4], [bx, 19.58, bz], materials.gold);
-    addBox(root, "arenaRoofUpperCap", [49, 0.55, 40], [bx, 21.05, bz], materials.facadeLight);
-    addBox(root, "arenaSouthCanopy", [26, 0.55, 5.5], [bx, 17.1, frontZ - 2.2], materials.darkMetal, { castShadow: true });
-    for (let n = 0; n < 4; n++) {
-      addBox(root, "arenaEntryColumn_" + n, [0.7, 15.2, 0.9], [bx - 9 + n * 6, 8.6, frontZ - 0.35], materials.gold);
-    }
-
-    // Tall lobby glazing and framed entrance doors.
-    addBox(root, "arenaEntryGlassLeft", [8.5, 9.0, 0.18], [bx - 5.0, 5.4, frontZ + 0.12], materials.glass);
-    addBox(root, "arenaEntryGlassRight", [8.5, 9.0, 0.18], [bx + 5.0, 5.4, frontZ + 0.12], materials.glass);
-    addBox(root, "arenaEntryDoorMullion", [0.16, 9.0, 0.24], [bx, 5.4, frontZ + 0.02], materials.gold);
-
-    // Large integrated digital display faces on the arena's west and east elevations.
-    const displayMaterialWest = new THREE.MeshStandardMaterial({ map: makeDisplayTexture("CONFERENCE"), emissive: 0x25313a, emissiveIntensity: 0.45, roughness: 0.36, metalness: 0.28 });
-    const displayMaterialEast = new THREE.MeshStandardMaterial({ map: makeDisplayTexture("LAMBO CITY"), emissive: 0x25313a, emissiveIntensity: 0.45, roughness: 0.36, metalness: 0.28 });
-    addBox(root, "arenaWestDigitalDisplay", [0.24, 7.5, 17], [leftX - 0.18, 12.0, bz], displayMaterialWest);
-    addBox(root, "arenaEastDigitalDisplay", [0.24, 7.5, 17], [rightX + 0.18, 12.0, bz], displayMaterialEast);
-
-    const facadeSign = new THREE.Mesh(boxGeometry(25, 3.4, 0.35), new THREE.MeshStandardMaterial({
-      map: makeSignTexture("LAMBO CITY", "CONFERENCE CENTER"),
-      emissive: 0x35280f,
-      emissiveIntensity: 0.38,
-      roughness: 0.38,
-      metalness: 0.3
+    // Layered crown, cantilevered roof wings, and a replaceable sponsor band.
+    addBox(root, "arenaRoofCrownLower", [CENTER.footprintWidth + 8, 1.25, CENTER.footprintDepth + 7],
+      [bx, 29.6, bz], materials.darkMetal, { castShadow: true });
+    addBox(root, "arenaRoofGoldReveal", [CENTER.footprintWidth + 8.5, 0.18, CENTER.footprintDepth + 7.5],
+      [bx, 28.88, bz], materials.gold);
+    addBox(root, "arenaRoofUpperCap", [CENTER.footprintWidth - 2, 0.78, CENTER.footprintDepth - 3],
+      [bx, 30.55, bz], materials.facadeLight);
+    addBox(root, "arenaRoofCrownHalo", [CENTER.footprintWidth + 2, 0.2, 0.5],
+      [bx, 31.08, frontZ + 4], warmGlow);
+    addBox(root, "arenaSponsorSignageBand", [28, 2.2, 0.32],
+      [bx, 30.2, frontZ - 0.12], materials.darkMetal);
+    const facadeSign = new THREE.Mesh(boxGeometry(25, 2.5, 0.24), new THREE.MeshStandardMaterial({
+      map: makeSignTexture("LAMBO CITY", "CONVENTION CENTER"),
+      emissive: 0x35280f, emissiveIntensity: 0.42, roughness: 0.34, metalness: 0.38
     }));
     facadeSign.name = "arenaConferenceCenterSign";
-    facadeSign.position.set(bx, 18.4, frontZ - 0.62);
+    facadeSign.position.set(bx, 30.2, frontZ - 0.32);
     root.add(facadeSign);
 
-    // A broad arrival forecourt, shallow accessible steps, and formal planters.
-    addBox(root, "arenaArrivalPlaza", [42, 0.14, 6], [bx, 0.72, frontZ - 2.5], materials.stone);
-    for (let n = 0; n < 3; n++) {
-      addBox(root, "arenaEntryPavingBand_" + n, [24, 0.06, 0.42], [bx, 0.82, frontZ - 2.1 + n * 0.8], materials.sidewalk);
+    // Four low-cost luminous reveal strips articulate the glass at night.
+    for (let n = 0; n < 4; n++) {
+      addBox(root, "arenaFacadeLightReveal_" + n, [CENTER.footprintWidth + 0.5, 0.09, 0.09],
+        [bx, 2.8 + n * 7.1, n % 2 === 0 ? frontZ - 0.16 : rearZ + 0.16], warmGlow);
+    }
+
+    // Large integrated digital display faces on both side elevations.
+    const displayMaterialWest = new THREE.MeshStandardMaterial({
+      map: makeDisplayTexture("LAMBO CITY"), emissive: 0x25313a, emissiveIntensity: 0.5,
+      roughness: 0.34, metalness: 0.28
+    });
+    const displayMaterialEast = new THREE.MeshStandardMaterial({
+      map: makeDisplayTexture("LIVE EXPERIENCES"), emissive: 0x25313a, emissiveIntensity: 0.5,
+      roughness: 0.34, metalness: 0.28
+    });
+    addBox(root, "arenaWestDigitalDisplay", [0.24, 9, 19],
+      [leftX - 0.22, 15.4, bz], displayMaterialWest);
+    addBox(root, "arenaEastDigitalDisplay", [0.24, 9, 19],
+      [rightX + 0.22, 15.4, bz], displayMaterialEast);
+
+    // A broad arrival forecourt aligns with the existing boardwalk promenade.
+    addBox(root, "arenaArrivalPlaza", [48, 0.16, 7],
+      [bx, 0.76, frontZ - 3.2], materials.stone);
+    for (let n = 0; n < 4; n++) {
+      addBox(root, "arenaEntryPavingBand_" + n, [34, 0.06, 0.38],
+        [bx, 0.88, frontZ - 5.6 + n * 1.1], materials.sidewalk);
     }
     for (const side of [-1, 1]) {
-      addBox(root, "arenaEntryPlanter_" + side, [5.2, 0.75, 3.0], [bx + side * 18.5, 1.05, frontZ - 2.5], materials.planter);
-      const shrub = new THREE.Mesh(new THREE.SphereGeometry(1.2, 8, 6), materials.shrub);
+      addBox(root, "arenaEntryPlanter_" + side, [6.2, 0.82, 3.4],
+        [bx + side * 22, 1.15, frontZ - 3.2], materials.planter);
+      const shrub = new THREE.Mesh(new THREE.SphereGeometry(1.25, 8, 6), materials.shrub);
       shrub.name = "arenaEntryShrub_" + side;
-      shrub.position.set(bx + side * 18.5, 1.95, frontZ - 2.5);
-      shrub.scale.set(1.45, 0.72, 0.95);
+      shrub.position.set(bx + side * 22, 2.0, frontZ - 3.2);
+      shrub.scale.set(1.55, 0.72, 0.95);
       root.add(shrub);
     }
 
@@ -551,12 +649,13 @@ export default {
 
     // Collision follows only real architectural walls. Road surfaces and public plazas remain walkable.
     if (collision && typeof collision.registerBox === "function") {
-      const wall = { minY: 0, maxY: 19.5, level: "arena-district" };
-      collision.registerBox("arenaWestFacadeCollision", { x: leftX + 0.5, z: bz, width: 1.0, depth: CENTER.footprintDepth, ...wall });
-      collision.registerBox("arenaEastFacadeCollision", { x: rightX - 0.5, z: bz, width: 1.0, depth: CENTER.footprintDepth, ...wall });
-      collision.registerBox("arenaRearFacadeCollision", { x: bx, z: rearZ - 0.5, width: CENTER.footprintWidth, depth: 1.0, ...wall });
-      collision.registerBox("arenaSouthFacadeWestCollision", { x: bx - 18.5, z: frontZ + 0.5, width: 17, depth: 1.0, ...wall });
-      collision.registerBox("arenaSouthFacadeEastCollision", { x: bx + 18.5, z: frontZ + 0.5, width: 17, depth: 1.0, ...wall });
+      const wall = { minY: 0, maxY: 32, level: "arena-district" };
+      collision.registerBox("arenaWestFacadeCollision", { x: leftX, z: bz, width: 0.5, depth: CENTER.footprintDepth, ...wall });
+      collision.registerBox("arenaEastFacadeCollision", { x: rightX, z: bz, width: 0.5, depth: CENTER.footprintDepth, ...wall });
+      collision.registerBox("arenaRearFacadeCollision", { x: bx, z: rearZ, width: CENTER.footprintWidth, depth: 0.5, ...wall });
+      // Keep the central south entrance physically open.
+      collision.registerBox("arenaSouthFacadeWestCollision", { x: bx - 23.5, z: frontZ, width: 19, depth: 0.5, ...wall });
+      collision.registerBox("arenaSouthFacadeEastCollision", { x: bx + 23.5, z: frontZ, width: 19, depth: 0.5, ...wall });
     }
 
     this._root = root;
