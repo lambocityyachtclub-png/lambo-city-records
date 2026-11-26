@@ -102,4 +102,5 @@ test("founder setup lets the owner choose a password during the one-time invitat
   assert.match(html, /type="password"/);
   assert.match(html, /owner-password-confirm/);
   assert.match(html, /Create my ALIVE owner account/);
+  assert.doesNotMatch(html, /register-passkey-button|Set up Face ID/);
 });
