@@ -111,6 +111,7 @@ function normalizeFinding(input = {}) {
     protectedActions,
     acceptanceCriteria,
     filePaths,
+    dependencies: normalizeList(input.dependencies, "Dependency task ID"),
     contractId: areaPolicy.contractId,
     requiresApproval: areaPolicy.requiresApproval || input.requiresApproval === true
   };
@@ -169,6 +170,7 @@ export function createWorldDevelopmentRunner(options = {}) {
       contractId: finding.contractId,
       priority: finding.priority,
       acceptanceCriteria: finding.acceptanceCriteria,
+      dependencies: finding.dependencies,
       protectedActions: finding.protectedActions,
       requiresApproval: policyDecision.requiresApproval,
       approvalReason: policyDecision.requiresApproval

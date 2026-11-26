@@ -207,12 +207,14 @@ test("Development System initializes all modules", async () => {
     DEVELOPMENT_SYSTEM_STATUS.READY
   );
 
-  assert.equal(snapshot.registry.totalModules, 6);
-  assert.equal(snapshot.registry.enabledModules, 6);
+  assert.equal(snapshot.registry.totalModules, 7);
+  assert.equal(snapshot.registry.enabledModules, 7);
   assert.equal(snapshot.studioRunner.id, "studio");
   assert.equal(snapshot.worldRunner.id, "world");
   assert.equal(snapshot.projectDiscovery.configured, true);
   assert.equal(snapshot.projectDiscovery.enabled, true);
+  assert.equal(snapshot.livingContractEngine.enabled, true);
+  assert.equal(snapshot.livingContractEngine.executionEnabled, false);
   assert.equal(snapshot.contracts.length, 7);
   assert.ok(snapshot.contracts.some(contract => contract.id === "world-material-quality"));
 });
@@ -227,6 +229,25 @@ test("Development System exposes read-only project discovery", async () => {
   assert.equal(report.safety.tasksCreated, false);
   assert.equal(Object.hasOwn(report, "inventory"), false);
   assert.equal(system.getProjectDiscoverySnapshot().lastScanStatus, "discovery-only");
+});
+
+test("Development System exposes deterministic Living Contract planning and submission", async () => {
+  const system = await createDevelopmentSystem();
+  const plan = system.planIntent("Improve waterfront water and marina lighting");
+  assert.equal(plan.status, "planned");
+  assert.ok(plan.matchedContracts.includes("water-materials"));
+  const result = await system.submitIntent("Improve Convention Center glass realism");
+  assert.equal(result.status, "submitted");
+  assert.equal(result.total, 1);
+  assert.equal(result.productionChangesMade, false);
+  assert.equal(system.director.listTasks().length, 1);
+});
+
+test("Development System refuses protected intent before creating tasks", async () => {
+  const system = await createDevelopmentSystem();
+  const result = await system.submitIntent("Change HERO performance choreography");
+  assert.equal(result.status, "owner_approval_required");
+  assert.equal(system.director.listTasks().length, 0);
 });
 
 test("Development System evaluates actions through canonical ALIVE contracts", async () => {
