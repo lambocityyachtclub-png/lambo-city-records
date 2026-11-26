@@ -84,6 +84,7 @@ test("Hosted ALIVE attaches isolated proposal components but keeps its worker di
   assert.equal(snapshot.isolatedWorkspaceConfigured, true);
   assert.equal(snapshot.aiProposalProviderConfigured, false);
   assert.equal(snapshot.aiProposalGenerationEnabled, false);
+  assert.equal(snapshot.projectDiscoveryConfigured, true);
   assert.equal(snapshot.sandboxExecution, false);
   assert.equal(snapshot.workerEnabled, false);
   assert.equal(snapshot.productionDeployment, false);
