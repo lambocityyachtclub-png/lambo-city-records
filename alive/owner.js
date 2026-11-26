@@ -8,6 +8,8 @@ const createOwnerButton=document.getElementById("create-owner-account-button");
 if(createOwnerButton)createOwnerButton.hidden=!enrollmentToken;
 const signInButton=document.getElementById("password-signin-button");
 if(signInButton)signInButton.hidden=!!enrollmentToken;
+const passkeySignInButton=document.getElementById("passkey-signin-button");
+if(passkeySignInButton)passkeySignInButton.hidden=!!enrollmentToken;
 const confirmWrap=document.getElementById("password-confirm-wrap");
 if(confirmWrap)confirmWrap.hidden=true;
 const passwordLabel=document.getElementById("owner-password-label");
@@ -19,7 +21,7 @@ const authHeading=document.getElementById("auth-heading");
 if(authHeading)authHeading.textContent=enrollmentToken?"Activate your ALIVE owner account":"Sign in to ALIVE";
 const authDescription=document.getElementById("auth-description");
 if(authDescription)authDescription.textContent=enrollmentToken?"Your private invitation verifies this is your founder account. Tap once to activate it; ALIVE creates secure sign-in credentials automatically.":"Use your owner email and password.";
-function createAuthClient(includeEnrollmentToken=false){return import("https://esm.sh/better-auth@1.7.23/client").then(core=>core.createAuthClient({baseURL:window.location.origin+"/api/alive/auth",fetchOptions:{headers:includeEnrollmentToken&&enrollmentToken?{"x-alive-owner-enrollment-token":enrollmentToken}:{}}}));}
+function createAuthClient(includeEnrollmentToken=false){return Promise.all([import("https://esm.sh/better-auth@1.7.23/client"),import("https://esm.sh/@better-auth/passkey@1.7.23/client")]).then(([core,passkeys])=>core.createAuthClient({baseURL:window.location.origin+"/api/alive/auth",plugins:[passkeys.passkeyClient()],fetchOptions:{headers:includeEnrollmentToken&&enrollmentToken?{"x-alive-owner-enrollment-token":enrollmentToken}:{}}}));}
 function getAuthClient(){if(!authClientPromise)authClientPromise=createAuthClient();return authClientPromise;}
 function getEnrollmentAuthClient(){if(!enrollmentToken)throw new Error("Founder setup requires the private one-time invitation.");if(!enrollmentAuthClientPromise)enrollmentAuthClientPromise=createAuthClient(true);return enrollmentAuthClientPromise;}
 let statusSnapshot=null;
@@ -100,6 +102,16 @@ $("owner-auth-form").addEventListener("submit",async event=>{
     if(enrolling)notify("Your ALIVE founder account is active on this iPad. Keep this browser session available; a new device will need a fresh private invitation.");
   }catch(error){notify(error.message)}
   finally{button.disabled=false}
+});
+$("passkey-signin-button").addEventListener("click",async()=>{
+  const button=$("passkey-signin-button");button.disabled=true;
+  try{const auth=await getAuthClient();const result=await auth.signIn.passkey();if(result.error)throw new Error(result.error.message||"Passkey sign-in failed.");const session=await auth.getSession();if(!session.data?.user)throw new Error("Passkey sign-in did not create a session.");await enterOwnerConsole()}
+  catch(error){notify(error.message)}finally{button.disabled=false}
+});
+$("register-owner-passkey-button").addEventListener("click",async()=>{
+  const button=$("register-owner-passkey-button");button.disabled=true;
+  try{const auth=await getAuthClient();const result=await auth.passkey.addPasskey({name:"ALIVE founder iPad",authenticatorAttachment:"platform"});if(result.error)throw new Error(result.error.message||"This iPad could not save the passkey.");notify("This iPad is now registered for password-free ALIVE sign-in. If iCloud Keychain sync is enabled, your passkey can also be available on your other Apple devices.")}
+  catch(error){notify(error.message)}finally{button.disabled=false}
 });
 $("refresh-button").addEventListener("click",async()=>{const button=$("refresh-button");button.disabled=true;try{await refreshAll();notify("ALIVE status refreshed.")}catch(error){notify(error.message)}finally{button.disabled=false}});
 $("disconnect-button").addEventListener("click",async()=>{try{const auth=await getAuthClient();await auth.signOut()}catch{}disconnect();notify("Owner session signed out.")});
