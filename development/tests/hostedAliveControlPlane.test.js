@@ -14,7 +14,7 @@ function createFakePool() {
   };
 
   async function query(sql, params = []) {
-    const normalized = sql.replace(/\\s+/g, " ").trim();
+    const normalized = sql.replace(/\s+/g, " ").trim();
     state.statements.push(normalized);
 
     if (normalized.startsWith("SELECT to_regclass")) {
