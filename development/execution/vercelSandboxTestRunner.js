@@ -133,7 +133,10 @@ export function createVercelSandboxTestRunner(options = {}) {
       capturedStderr = String(typeof result.stderr === "function" ? await result.stderr() : result.stderr || "");
     }
     try {
-      await sandbox.writeFiles(files);
+      await sandbox.writeFiles(files.map(file => ({
+        path: path.posix.join("/vercel/sandbox", file.path),
+        content: file.content
+      })));
       for (const filePath of changedFiles.filter(file => file.endsWith(".js") || file.endsWith(".mjs") || file.endsWith(".cjs"))) {
         const result = await sandbox.runCommand({
           cmd: "node",
