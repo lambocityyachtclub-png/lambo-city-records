@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#090b0a">
+  <meta name="robots" content="noindex,nofollow">
+  <title>ALIVE Control | LAMBO CITY Records</title>
+  <link rel="stylesheet" href="./owner.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <a class="brand" href="/">LAMBO CITY <span>RECORDS</span></a>
+      <span class="eyebrow">PRIVATE OWNER CONSOLE</span>
+    </header>
+
+    <section class="hero">
+      <p class="eyebrow">THE LIVING DEVELOPMENT SYSTEM</p>
+      <h1>ALIVE <em>Control</em></h1>
+      <p>Direct the work. Let ALIVE understand the blueprint. Keep the authority you choose.</p>
+    </section>
+
+    <section class="panel" id="auth-panel">
+      <p class="eyebrow">OWNER ACCESS</p>
+      <h2 id="auth-title">Connect to ALIVE</h2>
+      <p class="muted" id="auth-description">Use your private founder invitation to activate this iPad, then secure it with Face ID or Touch ID.</p>
+      <form id="owner-form" class="stack">
+        <label for="owner-email">Owner email</label>
+        <input id="owner-email" type="email" autocomplete="username" autocapitalize="off" required placeholder="Your owner email">
+        <button class="primary" id="activate-button" type="submit" hidden>Activate my owner access</button>
+      </form>
+      <button class="primary" id="passkey-button" type="button" hidden>Sign in with Face ID / Touch ID</button>
+      <p class="muted small" id="auth-note">This is a private ALIVE owner account, separate from LAMBO CITY player accounts.</p>
+    </section>
+
+    <section id="workspace" hidden>
+      <section class="panel status-panel">
+        <div>
+          <p class="eyebrow">SYSTEM STATUS</p>
+          <h2 id="system-title">ALIVE connected</h2>
+          <p class="muted" id="system-description">Loading project connection…</p>
+        </div>
+        <div class="status-actions">
+          <span class="pill" id="status-pill">CONNECTED</span>
+          <button class="quiet" id="register-passkey-button" type="button">Secure this iPad</button>
+          <button class="quiet" id="refresh-button" type="button">Refresh</button>
+          <button class="quiet" id="signout-button" type="button">Sign out</button>
+        </div>
+        <div class="status-grid" id="status-grid"></div>
+      </section>
+
+      <section class="panel">
+        <p class="eyebrow">01 / GIVE ALIVE DIRECTION</p>
+        <h2>What should ALIVE improve?</h2>
+        <p class="muted">ALIVE matches your instruction to the project's existing Living Contracts. Protected systems and unclear requests are stopped before they enter the task queue.</p>
+        <form id="intent-form" class="stack">
+          <label for="intent">Your direction</label>
+          <textarea id="intent" rows="4" maxlength="4000" required placeholder="Example: Improve Convention Center glass realism while preserving its approved layout."></textarea>
+          <button class="primary" id="submit-intent" type="submit">Send direction to ALIVE</button>
+        </form>
+        <p class="muted small" id="intent-feedback">Submitting a direction creates contract-checked tasks. It does not yet generate or deploy code.</p>
+      </section>
+
+      <section class="panel">
+        <div class="section-heading">
+          <div><p class="eyebrow">02 / DEVELOPMENT QUEUE</p><h2>ALIVE's work</h2></div>
+          <span class="pill" id="task-count">0 TASKS</span>
+        </div>
+        <div id="tasks-list" class="stack"><p class="muted">No tasks yet.</p></div>
+      </section>
+
+      <section class="panel">
+        <p class="eyebrow">03 / OWNER REVIEW</p>
+        <h2>Changes awaiting your review</h2>
+        <p class="muted">Proposed code changes will appear here only after isolated preparation and passing tests. Approving a review records your decision; it does not silently deploy code.</p>
+        <div id="reviews-list" class="stack"><p class="muted">No proposals are awaiting review.</p></div>
+      </section>
+
+      <section class="panel note-panel">
+        <p class="eyebrow">AUTONOMY</p>
+        <h2>Build trust in stages</h2>
+        <p>ALIVE's current hosted connection can understand directions and persist contract-checked tasks. AI code generation, isolated sandbox testing, and the low-risk release pipeline are the next technical connections. The intended end state is autonomous deployment inside the authority you granted, with higher-risk changes still protected.</p>
+      </section>
+    </section>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  </main>
+  <script type="module" src="./owner.js"></script>
+</body>
+</html>
