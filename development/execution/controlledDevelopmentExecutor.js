@@ -179,7 +179,7 @@ export function createControlledDevelopmentExecutor(options = {}) {
 
   const normalizedAllowedPaths = [
     ...new Set(
-      allowedPaths.map(validateRelativePath)
+      allowedPaths.map(value => validateRelativePath(value.replace(/\\/+$/, "")))
     )
   ];
 
