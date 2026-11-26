@@ -34,9 +34,9 @@ assert.equal((district.match(/name: "southWest"|name: "southEast"|name: "northWe
 assert.equal((district.match(/addSidewalkCornerReturn\(root/g) || []).length, 2,
   "The shared corner-return builder must create inner and outer corner groups");
 assert.match(district, /arenaCornerRoadApron_/);
-assert.match(district, /surfaceY: 0\\.834/);
+assert.match(district, /surfaceY: 0\.834/);
 assert.match(district, /curbCenterY: 0\\.74/);
-assert.match(district, /surfaceY: 0\\.807/);
+assert.match(district, /surfaceY: 0\.807/);
 assert.match(district, /curbCenterY: corner\.sz < 0 \? 0\.64 : 0\.76/);
 
 // All four curved returns meet the unchanged straight sidewalk profiles.
