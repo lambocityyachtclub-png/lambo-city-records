@@ -97,6 +97,7 @@ export function createHostedAliveControlPlane(options = {}) {
         serializedOperations: true,
         aiProposalProviderConfigured: componentSnapshot?.aiProvider?.configured === true,
         aiProposalGenerationEnabled: componentSnapshot?.proposalGenerationEnabled === true,
+        projectDiscoveryConfigured: componentSnapshot?.projectDiscovery?.configured === true,
         isolatedWorkspaceConfigured: Boolean(workspaceAdapter),
         sandboxExecution: componentSnapshot?.workspaceAdapter?.testRunnerConfigured === true,
         resourceProfilerConfigured: componentSnapshot?.workspaceAdapter?.resourceProfilerConfigured === true,
