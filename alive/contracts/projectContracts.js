@@ -380,6 +380,21 @@ function evaluateResourceBudget(contract, evidence) {
     });
   }
 
+  if (evidence.textureTouched === true && !Object.hasOwn(budget, "maxTextureDimension")) {
+    return Object.freeze({
+      authorized: false,
+      decision: "owner_approval_required",
+      reason: "This contract does not authorize texture changes."
+    });
+  }
+  if (evidence.frameLoopTouched === true && !Object.hasOwn(budget, "maxAddedFrameLoopWorkMs")) {
+    return Object.freeze({
+      authorized: false,
+      decision: "owner_approval_required",
+      reason: "This contract does not authorize frame-loop changes."
+    });
+  }
+
   if (Number.isInteger(evidence.changedFiles) &&
       Array.isArray(evidence.changedPaths) &&
       evidence.changedFiles !== evidence.changedPaths.length) {
