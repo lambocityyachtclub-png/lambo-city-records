@@ -12,7 +12,7 @@ export function createHostedAliveComponents(options = {}) {
   const contracts = listProjectContracts();
   const allowedPaths = [...new Set(
     contracts
-      .filter(contract => ["builder", "trusted_operator", "adaptive_operator"].includes(contract.autonomyLevel))
+      .filter(contract => ["builder", "trusted-operator"].includes(contract.autonomyLevel))
       .flatMap(contract => contract.allowedPaths || [])
       .map(filePath => filePath.replace(/\/+$/, ""))
   )];
