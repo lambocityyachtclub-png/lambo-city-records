@@ -85,7 +85,6 @@ async function createVercelSandbox(options) {
 export function createVercelSandboxTestRunner(options = {}) {
   const enabled = options.enabled ?? process.env.ALIVE_SANDBOX_ENABLED === "true";
   const sandboxFactory = options.sandboxFactory || createVercelSandbox;
-  const image = options.image || "vercel/sandbox/node:24";
   const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const maxFiles = options.maxFiles ?? DEFAULT_MAX_FILES;
   const maxFileBytes = options.maxFileBytes ?? DEFAULT_MAX_FILE_BYTES;
@@ -117,10 +116,8 @@ export function createVercelSandboxTestRunner(options = {}) {
     const startedAt = Date.now();
     const sandbox = await sandboxFactory({
       runtime: "node24",
-      image,
       timeout: timeoutMs,
-      networkPolicy: "deny-all",
-      resources: { vcpus: 2, memory: 4096 }
+      networkPolicy: "deny-all"
     });
 
     let syntaxResults = [];
@@ -154,6 +151,8 @@ export function createVercelSandboxTestRunner(options = {}) {
     }
 
     const output = failure || testResult || {};
+    const stdout = typeof output.stdout === "function" ? await output.stdout() : output.stdout;
+    const stderr = typeof output.stderr === "function" ? await output.stderr() : output.stderr;
     return Object.freeze({
       passed: !failure,
       runner: "vercel-sandbox-node24",
@@ -163,8 +162,8 @@ export function createVercelSandboxTestRunner(options = {}) {
       changedFiles: [...changedFiles],
       syntaxChecks: syntaxResults,
       testFiles,
-      stdout: String(output.stdout || "").slice(-20000),
-      stderr: String(output.stderr || "").slice(-12000),
+      stdout: String(stdout || "").slice(-20000),
+      stderr: String(stderr || "").slice(-12000),
       exitCode: failure?.exitCode ?? testResult?.exitCode ?? 0
     });
   }
