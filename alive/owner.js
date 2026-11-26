@@ -130,12 +130,14 @@ function renderStatus(data) {
     ["AI PROVIDER", data.aiProviderConfigured ? "KEY PRESENT" : "NOT CONNECTED"],
     ["AI EXECUTION", data.aiExecutionEnabled ? "ENABLED" : "NOT ENABLED"],
     ["SANDBOX", data.isolatedSandboxEnabled ? "ENABLED" : "NOT ENABLED"],
+    ["AUTO RUN", data.autoRunEnabled ? "ON" : "OFF"],
     ["AUTO DEPLOY", data.autonomousProductionDeployment ? "ENABLED" : "NOT ENABLED"]
   ];
   $("status-grid").innerHTML = cells.map(([label, value]) =>
     '<div class="status-cell"><span>' + escapeHTML(label) + '</span><strong>' + escapeHTML(value) + '</strong></div>'
   ).join("");
   $("status-pill").textContent = data.persistentTaskStorage ? "CONNECTED" : "CHECK SETUP";
+  $("run-alive-button").hidden = !data.aiExecutionEnabled || data.autoRunEnabled;
   $("intent-feedback").textContent = data.aiExecutionEnabled
     ? "ALIVE can prepare isolated proposals. Every release still follows its Living Contract and evidence gates."
     : "The task queue is connected. AI proposal generation and isolated execution are the next connection; no source code or production deployment is changed by this console yet.";
@@ -211,6 +213,20 @@ $("passkey-button").addEventListener("click", async () => {
   button.disabled = true;
   try {
     await signInWithPasskey();
+  } catch (error) {
+    notify(error.message);
+  } finally {
+    button.disabled = false;
+  }
+});
+
+$("run-alive-button").addEventListener("click", async () => {
+  const button = $("run-alive-button");
+  button.disabled = true;
+  try {
+    const response = await request("run", { method: "POST", body: {} });
+    notify(response.execution?.status || "ALIVE completed one worker cycle.");
+    await refreshAll();
   } catch (error) {
     notify(error.message);
   } finally {
