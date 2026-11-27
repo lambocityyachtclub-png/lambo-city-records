@@ -198,6 +198,13 @@ test("no canonical contract or operation can authorize production deployment aut
   }
 });
 
+test("legacy low-risk preauthorization is rejected by canonical contract validation", () => {
+  const world = getProjectContract("world-material-quality");
+  const legacyContract = { ...world, productionDeployment: "low-risk-preauthorized" };
+  const errors = validateProjectContract(legacyContract);
+  assert.ok(errors.some(error => /Production deployment must require explicit owner approval/.test(error)));
+});
+
 test("no contract can change its own trust root or safety permissions", () => {
   for (const contract of listProjectContracts()) {
     assert.ok(contract.forbiddenOperations.includes("change_owner_authority"));
