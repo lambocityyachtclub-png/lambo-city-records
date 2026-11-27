@@ -5,6 +5,7 @@ import {
   validateAIProposal,
   AI_GATEWAY_CHAT_COMPLETIONS_URL
 } from "../providers/aiGatewayProposalProvider.js";
+import { getProjectContract } from "../../alive/contracts/projectContracts.js";
 
 const task = {
   id: "task-convention-center",
@@ -12,7 +13,7 @@ const task = {
   description: "Improve glass material response without changing the building footprint.",
   area: "world_materials",
   contractId: "world-material-quality",
-  contractVersion: "1.0.0",
+  contractVersion: getProjectContract("world-material-quality").version,
   relatedFiles: ["conferenceCenterDistrict.js"],
   acceptanceCriteria: ["Preserve the existing footprint."]
 };
