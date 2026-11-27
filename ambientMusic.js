@@ -12,16 +12,17 @@
 // folded into PLAYLIST so it can come up in normal rotation afterward too.
  
 // ---- PLAYLIST: add more songs here later, same shape ----
+// HERO's "Everybody Get Up" is the opening track visitors hear first.
 const PLAYLIST = [
-  {
-    title: "Bounce To The Oz",
-    artist: "Hero",
-    url: "https://res.cloudinary.com/z99sdnqv/video/upload/v1788849538/Bounce_To_The_Oz_3_dyjluf.mp3",
-  },
   {
     title: "Everybody Get Up",
     artist: "H.E.R.O",
     url: "https://res.cloudinary.com/z99sdnqv/video/upload/v1788849476/H.E.R.O_Everybody_Get_Up_zn8li0.mp3",
+  },
+  {
+    title: "Bounce To The Oz",
+    artist: "Hero",
+    url: "https://res.cloudinary.com/z99sdnqv/video/upload/v1788849538/Bounce_To_The_Oz_3_dyjluf.mp3",
   },
   // { title: "Next Song", artist: "Hero", url: "https://..." },
 ];
