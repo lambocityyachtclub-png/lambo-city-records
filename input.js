@@ -33,70 +33,66 @@ export default {
       ------------------------------------------------
     */
 
-    window.addEventListener(
-      "keydown",
-      e => {
+    // Resolve both modern physical-key events and legacy keyboard events.
+    // Safari/iPadOS keyboards can report an empty or "Unidentified" e.code;
+    // keyCode/which keeps the original WASD controls working in that case.
+    const resolveKey = event => {
+      const codeKeys = {
+        KeyW: "w",
+        KeyA: "a",
+        KeyS: "s",
+        KeyD: "d",
+        KeyE: "e",
+        KeyF: "f",
+        ShiftLeft: "shift",
+        ShiftRight: "shift"
+      };
+      const legacyKeys = {
+        87: "w",
+        65: "a",
+        83: "s",
+        68: "d",
+        69: "e",
+        70: "f",
+        16: "shift"
+      };
+      const codeKey = codeKeys[event.code];
+      if (codeKey) return codeKey;
 
-        // Prefer physical key codes for movement keys. Some browser/device
-        // combinations report an inconsistent e.key value, while e.code
-        // still identifies the physical WASD key reliably.
-        const codeKeys = {
-          KeyW: "w",
-          KeyA: "a",
-          KeyS: "s",
-          KeyD: "d",
-          KeyE: "e",
-          KeyF: "f",
-          ShiftLeft: "shift",
-          ShiftRight: "shift"
-        };
-        const key =
-          codeKeys[e.code] || (e.key || "").toLowerCase();
+      const legacyCode = event.keyCode || event.which;
+      if (legacyKeys[legacyCode]) return legacyKeys[legacyCode];
 
-        if (!key) return;
-        if (key === "w" || key === "a" || key === "s" || key === "d") {
-          e.preventDefault();
-        }
-        this.keys[key] = true;
+      return (event.key || "").toLowerCase();
+    };
 
-        if (
-          key === "f" &&
-          !e.repeat
-        ) {
+    const handleKeyDown = event => {
+      const key = resolveKey(event);
+      if (!key) return;
 
-          this._togglePhone();
-
-        }
-
+      if (key === "w" || key === "a" || key === "s" || key === "d") {
+        event.preventDefault();
       }
-    , true);
 
+      this.keys[key] = true;
 
-    window.addEventListener(
-      "keyup",
-      e => {
-
-        const codeKeys = {
-          KeyW: "w",
-          KeyA: "a",
-          KeyS: "s",
-          KeyD: "d",
-          KeyE: "e",
-          KeyF: "f",
-          ShiftLeft: "shift",
-          ShiftRight: "shift"
-        };
-        const key =
-          codeKeys[e.code] || (e.key || "").toLowerCase();
-
-        if (!key) return;
-        if (key === "w" || key === "a" || key === "s" || key === "d") {
-          e.preventDefault();
-        }
-        this.keys[key] = false;
-
+      if (key === "f" && !event.repeat) {
+        this._togglePhone();
       }
-    , true);
+    };
+
+    const handleKeyUp = event => {
+      const key = resolveKey(event);
+      if (!key) return;
+
+      if (key === "w" || key === "a" || key === "s" || key === "d") {
+        event.preventDefault();
+      }
+
+      this.keys[key] = false;
+    };
+
+    window.addEventListener("keydown", handleKeyDown, true);
+    window.addEventListener("keyup", handleKeyUp, true);
 
 
     /*
