@@ -1,6 +1,15 @@
 export const FOUNDERS_WELCOME_STORAGE_KEY = "lambo-city.founders-welcome.v1";
 
-export function hasCompletedFoundersWelcome(storage = globalThis.localStorage) {
+function getBrowserStorage() {
+  try {
+    return globalThis.localStorage;
+  } catch {
+    return null;
+  }
+}
+
+export function hasCompletedFoundersWelcome(storage) {
+  if (storage === undefined) storage = getBrowserStorage();
   try {
     return storage?.getItem(FOUNDERS_WELCOME_STORAGE_KEY) === "complete";
   } catch {
@@ -8,7 +17,8 @@ export function hasCompletedFoundersWelcome(storage = globalThis.localStorage) {
   }
 }
 
-export function markFoundersWelcomeComplete(storage = globalThis.localStorage) {
+export function markFoundersWelcomeComplete(storage) {
+  if (storage === undefined) storage = getBrowserStorage();
   try {
     storage?.setItem(FOUNDERS_WELCOME_STORAGE_KEY, "complete");
     return true;
@@ -25,7 +35,8 @@ function makeText(documentRef, tag, value, className) {
 }
 
 export default {
-  init({ documentRef = globalThis.document, storage = globalThis.localStorage } = {}) {
+  init({ documentRef = globalThis.document, storage } = {}) {
+    if (storage === undefined) storage = getBrowserStorage();
     if (!documentRef?.body || hasCompletedFoundersWelcome(storage)) return null;
     const existing = documentRef.getElementById("lc-founders-welcome");
     if (existing) return existing;
