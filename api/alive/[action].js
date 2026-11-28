@@ -2,6 +2,7 @@ import { Pool } from "pg";
 import { authenticateAliveOwner } from "../../alive/server/ownerAuth.js";
 import { isSameOriginRequest } from "../../alive/server/originPolicy.js";
 import { createHostedAliveControlPlane } from "../../development/runtime/hostedAliveControlPlane.js";
+import { getAliveDatabaseUrl } from "../../server/databaseTargets.js";
 
 let pool;
 let controlPlane;
@@ -16,11 +17,10 @@ function send(res, status, payload) {
 
 function getControlPlane() {
   if (controlPlane) return controlPlane;
-  if (typeof process.env.DATABASE_URL !== "string" || !process.env.DATABASE_URL.trim()) {
-    throw new Error("DATABASE_URL is not configured.");
-  }
+  const databaseUrl = getAliveDatabaseUrl();
+  if (!databaseUrl) throw new Error("ALIVE_DATABASE_URL is not configured.");
   pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
+    connectionString: databaseUrl,
     ssl: { rejectUnauthorized: false },
     max: 3,
     idleTimeoutMillis: 10000,
@@ -81,7 +81,7 @@ export default async function aliveAction(req, res) {
       return send(res, 200, {
         service: "lambo-city-alive",
         owner: { email: owner.email },
-        databaseConfigured: Boolean(process.env.DATABASE_URL),
+        databaseConfigured: Boolean(getAliveDatabaseUrl()),
         persistentTaskStorage: true,
         developmentSystem,
         aiProviderConfigured: controlPlane.aiProviderConfigured,
