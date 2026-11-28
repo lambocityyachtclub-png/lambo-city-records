@@ -90,3 +90,22 @@ Reproduce what the supplied images represent as faithfully as technically possib
 - If a detail cannot be reproduced confidently from the supplied references, flag it for review rather than inventing a substitute.
 
 The images are the design specification. No new concept image or alternate visual interpretation is requested.
+
+## Next-step execution — reuse the existing acceptance tools
+
+The repository already has a separate, previously developed GLB acceptance chain:
+- PR #104 adds GLB container, humanoid skeleton, animation-clip, and reference-metadata validation.
+- PR #105 adds a local Three.js 0.160.0 viewer with orbit/zoom, wireframe, animation playback, transformed world-space measurements, and a human visual checklist.
+- PR #106 hardens that viewer's resource cleanup and protects the last valid model when a candidate fails to load.
+
+Do not rebuild these tools in this PR or create a duplicate viewer. Once a candidate GLB exists, use this existing acceptance chain in dependency order, then integrate only after the candidate passes the technical checks and founder visual review. These older PRs are currently open and stacked on one another; they are not merged into production, so their code must be integrated and revalidated before it can be used as a production capability.
+
+## Reference source handling
+
+The original saved HERO reference boards remain authoritative:
+- HERO 3D Character Reference Portrait.jpeg
+- HERO 3D Model Reference Landscape.jpeg
+- Hero 3D Model Reference Sheet.png
+- Lambo City Hero 3D Specification Guide.png
+
+The seven-image HERO_reference_pack.zip is a convenience crop set derived from the saved boards, not a replacement for them. Use the original boards as the primary reference input whenever the generation tool supports multi-view references. Do not generate a new concept image, redraw the character, or use a text-only reinterpretation as a substitute for the supplied visual references.
