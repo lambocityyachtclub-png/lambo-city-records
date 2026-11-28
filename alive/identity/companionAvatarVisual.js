@@ -21,6 +21,14 @@ export function resolveCompanionAvatarDesign(companion) {
   });
 }
 
+function disposeTree(root) {
+  root.traverse(item => {
+    item.geometry?.dispose?.();
+    if (Array.isArray(item.material)) item.material.forEach(entry => entry.dispose?.());
+    else item.material?.dispose?.();
+  });
+}
+
 function material(THREE, color, roughness = 0.72, metalness = 0) {
   return new THREE.MeshStandardMaterial({ color, roughness, metalness });
 }
@@ -148,12 +156,13 @@ export function createCompanionAvatar(THREE, playerRoot, originalParts, initialC
   const pendant = mesh(THREE, new THREE.BoxGeometry(0.16, 0.2, 0.045), trimMat, group, [0, 1.91, 0.43]);
   const hoodie = mesh(THREE, new THREE.SphereGeometry(0.08, 8, 6), trimMat, torso, [0, 0.42, -0.32]);
   hoodie.visible = false;
+  let hoodieActive = false;
 
   const originals = Object.values(originalParts).flat().filter(Boolean);
   const originalVisibility = originals.map(part => part.visible);
   const apply = companion => {
     const design = resolveCompanionAvatarDesign(companion);
-    bodyMat.color.setHex(design.outfit);
+    bodyMat.color.setHex(hoodieActive ? 0x1a0040 : design.outfit);
     trimMat.color.setHex(design.accent);
     trimMat.emissive?.setHex(design.accent);
     metalMat.color.setHex(design.accent);
@@ -163,6 +172,7 @@ export function createCompanionAvatar(THREE, playerRoot, originalParts, initialC
         if (child.material === bodyMat) child.material = bodyMat;
       });
     }
+    disposeTree(head);
     head.clear();
     const nextHead = createHead(THREE, group, design);
     nextHead.position.copy(head.position);
@@ -199,8 +209,9 @@ export function createCompanionAvatar(THREE, playerRoot, originalParts, initialC
     apply,
     sync,
     setHoodie(active) {
-      hoodie.visible = Boolean(active);
-      if (active) bodyMat.color.setHex(0x1a0040);
+      hoodieActive = Boolean(active);
+      hoodie.visible = hoodieActive;
+      bodyMat.color.setHex(hoodieActive ? 0x1a0040 : resolveCompanionAvatarDesign(initialCompanion).outfit);
     },
     restoreOriginals() {
       originals.forEach((part, index) => { part.visible = originalVisibility[index]; });
