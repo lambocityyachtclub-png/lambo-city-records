@@ -194,6 +194,8 @@ export default {
 
     player.add(this.legR);
 
+    this._studioShoes = [];
+
     [-0.35, 0.35].forEach(x => {
 
       const shoe =
@@ -215,6 +217,7 @@ export default {
       );
 
       player.add(shoe);
+      this._studioShoes.push(shoe);
 
     });
 
@@ -257,17 +260,34 @@ export default {
     window.__lamboCityApplyCompanionAppearance = companion =>
       this.applyCompanionAppearance(companion);
 
-    import("./alive/identity/companionAppearance.js")
-      .then(({ resolveCompanionMaterials }) => {
-        this._resolveCompanionMaterials = resolveCompanionMaterials;
-        return import("./alive/identity/guestIdentity.js");
-      })
-      .then(({ loadGuestIdentity }) => {
-        const savedCompanion = loadGuestIdentity()?.companion;
-        if (savedCompanion) this.applyCompanionAppearance(savedCompanion);
+    Promise.all([
+      import("./alive/identity/companionAppearance.js"),
+      import("./alive/identity/companionAvatarVisual.js"),
+      import("./alive/identity/guestIdentity.js")
+    ])
+      .then(([appearanceModule, avatarModule, identityModule]) => {
+        this._resolveCompanionMaterials = appearanceModule.resolveCompanionMaterials;
+        this._companionAvatar = avatarModule.createCompanionAvatar(
+          THREE,
+          player,
+          {
+            body: this._studioBody,
+            head: this._studioHead,
+            cap: this._studioCap,
+            brim: this._studioBrim,
+            arms: [this.armL, this.armR],
+            legs: [this.legL, this.legR],
+            logo: this._studioLogo,
+            chain: this._studioChain,
+            shoes: this._studioShoes
+          }
+        );
+        const savedCompanion = identityModule.loadGuestIdentity()?.companion;
+        const companion = savedCompanion || this._pendingCompanionAppearance;
+        if (companion) this.applyCompanionAppearance(companion);
       })
       .catch(error => {
-        console.warn("[ALIVE] Companion appearance could not be restored:", error);
+        console.warn("[ALIVE] Companion visual layer could not be initialized:", error);
       });
 
     player.position.set(
@@ -311,6 +331,7 @@ export default {
   },
 
   applyCompanionAppearance(companion) {
+    this._pendingCompanionAppearance = companion;
     if (!this._companionParts || typeof this._resolveCompanionMaterials !== "function") {
       return false;
     }
@@ -324,6 +345,8 @@ export default {
     this._companionParts.logo.emissive.setHex(palette.accent);
     this._companionParts.chain.color.setHex(palette.accent);
     this._companionParts.chain.emissive.setHex(palette.accent);
+    this._companionAvatar?.apply(companion);
+    this._companionAvatar?.sync();
     return true;
   },
 
@@ -394,6 +417,7 @@ export default {
       this.legL.rotation.x = -Math.PI / 2;
       this.legR.rotation.x = -Math.PI / 2;
       this._studioPoseActive = true;
+      this._companionAvatar?.sync();
       return;
     }
 
@@ -414,6 +438,7 @@ export default {
     this.legL.rotation.set(0, 0, 0);
     this.legR.rotation.set(0, 0, 0);
     this._studioPoseActive = false;
+    this._companionAvatar?.sync();
   },
 
   equipHoodie() {
@@ -431,6 +456,7 @@ export default {
 
       this._bodyMat.emissiveIntensity =
         0.2;
+      this._companionAvatar?.setHoodie(true);
 
     }
 
@@ -467,6 +493,7 @@ export default {
         this.legL.rotation.x = -swing * 0.6;
         this.legR.rotation.x = swing * 0.6;
       }
+      this._companionAvatar?.sync();
 
       return;
     }
@@ -783,6 +810,7 @@ export default {
 
     context.player =
       player;
+    this._companionAvatar?.sync();
 
   }
 
