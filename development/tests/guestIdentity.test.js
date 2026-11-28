@@ -1,0 +1,8 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import {GUEST_IDENTITY_STORAGE_KEY,createGuestIdentity,loadGuestIdentity,saveGuestIdentity,saveGuestCompanion,clearGuestIdentity} from "../../alive/identity/guestIdentity.js";
+function memoryStorage(){const values=new Map();return{getItem:key=>values.get(key)??null,setItem:(key,value)=>values.set(key,String(value)),removeItem:key=>values.delete(key)};}
+test("guest identity starts without an account or companion",()=>{const identity=createGuestIdentity({id:"guest-test",now:()=>"2026-11-27T00:00:00.000Z"});assert.equal(identity.guestId,"guest-test");assert.equal(identity.companion,null);});
+test("guest companion saves and restores locally without an account",()=>{const storage=memoryStorage();const saved=saveGuestCompanion({displayName:"Nova",characterForm:"stylized",appearanceProfile:{hairColor:"silver"},personality:{traits:["curious","playful"]}},{storage,now:()=>"2026-11-27T00:00:00.000Z"});const restored=loadGuestIdentity(storage);assert.equal(restored.guestId,saved.guestId);assert.equal(restored.companion.displayName,"Nova");assert.equal(restored.companion.appearanceProfile.hairColor,"silver");assert.equal(restored.companion.personality.traits.length,2);});
+test("guest storage rejects invalid identities and invalid companion names",()=>{const storage=memoryStorage();assert.throws(()=>saveGuestIdentity({schema:"wrong",schemaVersion:1,guestId:"x"},storage));assert.throws(()=>saveGuestCompanion({displayName:" "},{storage}));});
+test("guest identity can be cleared from the device",()=>{const storage=memoryStorage();saveGuestIdentity(createGuestIdentity({id:"guest-clear"}),storage);clearGuestIdentity(storage);assert.equal(storage.getItem(GUEST_IDENTITY_STORAGE_KEY),null);});
