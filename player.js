@@ -194,6 +194,8 @@ export default {
 
     player.add(this.legR);
 
+    this._studioShoes = [];
+
     [-0.35, 0.35].forEach(x => {
 
       const shoe =
@@ -215,6 +217,7 @@ export default {
       );
 
       player.add(shoe);
+      this._studioShoes.push(shoe);
 
     });
 
@@ -246,6 +249,46 @@ export default {
 
     player.add(chain);
     this._studioChain = chain;
+
+    this._companionParts = {
+      body: bm,
+      head: head.material,
+      arms: [this.armL.material, this.armR.material],
+      logo: logo.material,
+      chain: chain.material
+    };
+    window.__lamboCityApplyCompanionAppearance = companion =>
+      this.applyCompanionAppearance(companion);
+
+    Promise.all([
+      import("./alive/identity/companionAppearance.js"),
+      import("./alive/identity/companionAvatarVisual.js"),
+      import("./alive/identity/guestIdentity.js")
+    ])
+      .then(([appearanceModule, avatarModule, identityModule]) => {
+        this._resolveCompanionMaterials = appearanceModule.resolveCompanionMaterials;
+        this._companionAvatar = avatarModule.createCompanionAvatar(
+          THREE,
+          player,
+          {
+            body: this._studioBody,
+            head: this._studioHead,
+            cap: this._studioCap,
+            brim: this._studioBrim,
+            arms: [this.armL, this.armR],
+            legs: [this.legL, this.legR],
+            logo: this._studioLogo,
+            chain: this._studioChain,
+            shoes: this._studioShoes
+          }
+        );
+        const savedCompanion = identityModule.loadGuestIdentity()?.companion;
+        const companion = savedCompanion || this._pendingCompanionAppearance;
+        if (companion) this.applyCompanionAppearance(companion);
+      })
+      .catch(error => {
+        console.warn("[ALIVE] Companion visual layer could not be initialized:", error);
+      });
 
     player.position.set(
       0,
@@ -285,6 +328,33 @@ export default {
     this._elevatorY = null;
 
     return player;
+  },
+
+  applyCompanionAppearance(companion) {
+    this._pendingCompanionAppearance = companion;
+    if (!this._companionParts || typeof this._resolveCompanionMaterials !== "function") {
+      return false;
+    }
+    const palette = this._resolveCompanionMaterials(companion);
+    if (!palette) return false;
+
+    this._companionParts.head.color.setHex(palette.skinTone);
+    this._companionParts.body.color.setHex(palette.outfit);
+    this._companionParts.arms.forEach(material => material.color.setHex(palette.outfit));
+    this._companionParts.logo.color.setHex(palette.accent);
+    this._companionParts.logo.emissive.setHex(palette.accent);
+    this._companionParts.chain.color.setHex(palette.accent);
+    this._companionParts.chain.emissive.setHex(palette.accent);
+    try {
+      this._companionAvatar?.apply(companion);
+      this._companionAvatar?.sync();
+    } catch (error) {
+      this._companionAvatar?.restoreOriginals?.();
+      this._companionAvatar = null;
+      console.warn("[ALIVE] Companion appearance update failed; restored the original player visual:", error);
+      return false;
+    }
+    return true;
   },
 
   setFacing(angle = 0) {
@@ -354,6 +424,7 @@ export default {
       this.legL.rotation.x = -Math.PI / 2;
       this.legR.rotation.x = -Math.PI / 2;
       this._studioPoseActive = true;
+      this._companionAvatar?.sync();
       return;
     }
 
@@ -374,6 +445,7 @@ export default {
     this.legL.rotation.set(0, 0, 0);
     this.legR.rotation.set(0, 0, 0);
     this._studioPoseActive = false;
+    this._companionAvatar?.sync();
   },
 
   equipHoodie() {
@@ -391,6 +463,7 @@ export default {
 
       this._bodyMat.emissiveIntensity =
         0.2;
+      this._companionAvatar?.setHoodie(true);
 
     }
 
@@ -427,6 +500,7 @@ export default {
         this.legL.rotation.x = -swing * 0.6;
         this.legR.rotation.x = swing * 0.6;
       }
+      this._companionAvatar?.sync();
 
       return;
     }
@@ -743,6 +817,7 @@ export default {
 
     context.player =
       player;
+    this._companionAvatar?.sync();
 
   }
 

@@ -53,6 +53,7 @@ export default {
         const key =
           codeKeys[e.code] || (e.key || "").toLowerCase();
 
+        if (window.__aliveCompanionPanelOpen) return;
         if (!key) return;
         if (key === "w" || key === "a" || key === "s" || key === "d") {
           e.preventDefault();
@@ -89,6 +90,7 @@ export default {
         const key =
           codeKeys[e.code] || (e.key || "").toLowerCase();
 
+        if (window.__aliveCompanionPanelOpen) return;
         if (!key) return;
         if (key === "w" || key === "a" || key === "s" || key === "d") {
           e.preventDefault();
@@ -702,6 +704,7 @@ export default {
 
 
     const apps = [
+      "✨ ALIVE",
       "🎵 MUSIC",
       "🏠 REAL ESTATE",
       "💎 NFT STUDIO",
@@ -789,7 +792,7 @@ export default {
         gap:10px;
       ">
         ${apps.map(a => `
-          <div style="
+          <div data-app="${a === "✨ ALIVE" ? "alive" : "placeholder"}" role="${a === "✨ ALIVE" ? "button" : "presentation"}" tabindex="${a === "✨ ALIVE" ? "0" : "-1"}" style="
             background:rgba(255,255,255,0.04);
             border:1px solid rgba(255,255,255,0.08);
             border-radius:14px;
@@ -840,6 +843,25 @@ export default {
     document.body.appendChild(
       phone
     );
+
+    const aliveApp = phone.querySelector('[data-app="alive"]');
+    const openAliveCompanion = async () => {
+      phone.remove();
+      this._phoneOpen = false;
+      try {
+        const module = await import("./aliveWorldCompanion.js");
+        module.default.open();
+      } catch (error) {
+        console.error("ALIVE Companion could not be opened:", error);
+      }
+    };
+    aliveApp?.addEventListener("click", openAliveCompanion);
+    aliveApp?.addEventListener("keydown", event => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        openAliveCompanion();
+      }
+    });
 
     const navigateFromPhone = floor => {
       const navigate = window.__lamboCityNavigateToFloor;

@@ -2,6 +2,7 @@ import { Pool } from "pg";
 import { authenticateAliveOwner } from "../../alive/server/ownerAuth.js";
 import { isSameOriginRequest } from "../../alive/server/originPolicy.js";
 import { createHostedAliveControlPlane } from "../../development/runtime/hostedAliveControlPlane.js";
+import { getAliveDatabaseUrl } from "../../server/databaseTargets.js";
 
 let pool;
 let controlPlane;
@@ -16,11 +17,10 @@ function send(res, status, payload) {
 
 function getControlPlane() {
   if (controlPlane) return controlPlane;
-  if (typeof process.env.DATABASE_URL !== "string" || !process.env.DATABASE_URL.trim()) {
-    throw new Error("DATABASE_URL is not configured.");
-  }
+  const databaseUrl = getAliveDatabaseUrl();
+  if (!databaseUrl) throw new Error("ALIVE_DATABASE_URL is not configured.");
   pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
+    connectionString: databaseUrl,
     ssl: { rejectUnauthorized: false },
     max: 3,
     idleTimeoutMillis: 10000,
@@ -81,7 +81,7 @@ export default async function aliveAction(req, res) {
       return send(res, 200, {
         service: "lambo-city-alive",
         owner: { email: owner.email },
-        databaseConfigured: Boolean(process.env.DATABASE_URL),
+        databaseConfigured: Boolean(getAliveDatabaseUrl()),
         persistentTaskStorage: true,
         developmentSystem,
         aiProviderConfigured: controlPlane.aiProviderConfigured,
@@ -91,8 +91,8 @@ export default async function aliveAction(req, res) {
         autonomousProductionDeployment: controlPlane.productionDeployment,
         controlPlane,
         nextMilestone: controlPlane.workerEnabled
-          ? "Complete the contract-checked release publisher before enabling low-risk automatic production deployment."
-          : "Approve the AI Gateway budget and enable the isolated sandbox when ready to let ALIVE prepare tested proposals."
+          ? "Keep every proposal behind contract checks and explicit owner review; production deployment remains owner-controlled."
+          : "Continue local, deterministic planning and owner-reviewed development. External AI Gateway, hosted sandbox, background workers, and autonomous production deployment remain disabled unless the owner separately changes that policy."
       });
     } catch {
       return send(res, 503, { error: "ALIVE development storage is unavailable or its schema is incomplete." });

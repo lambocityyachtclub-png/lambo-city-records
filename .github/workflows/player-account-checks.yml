@@ -1,0 +1,77 @@
+name: Player Account and ALIVE Identity Checks
+
+on:
+  pull_request:
+    paths:
+      - "package.json"
+      - "playerAccounts.js"
+      - "server/**"
+      - "api/auth/**"
+      - "api/player/**"
+      - "api/alive/**"
+      - "alive/server/**"
+      - "development/runtime/**"
+      - "development/tests/**"
+      - "migrations/**"
+      - "vercel.json"
+      - "alive/identity/identityContract.js"
+      - ".github/workflows/player-account-checks.yml"
+  push:
+    branches:
+      - alive/guest-first-companion-current-main
+    paths:
+      - "package.json"
+      - "playerAccounts.js"
+      - "server/**"
+      - "api/auth/**"
+      - "api/player/**"
+      - "api/alive/**"
+      - "alive/server/**"
+      - "development/runtime/**"
+      - "development/tests/**"
+      - "migrations/**"
+      - "vercel.json"
+      - "alive/identity/identityContract.js"
+      - ".github/workflows/player-account-checks.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  player-account:
+    name: Validate passwordless account and ALIVE identity APIs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install pinned dependencies
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Parse server and API modules
+        run: |
+          for file in \
+            playerAccounts.js \
+            server/auth.js \
+            server/origin.js \
+            server/http.js \
+            server/aliveIdentityApi.js \
+            server/databaseTargets.js \
+            alive/server/ownerAuth.js \
+            alive/server/ownerEnrollment.js \
+            development/runtime/hostedAliveApiRuntime.js \
+            development/runtime/aliveOwnerApi.js \
+            'api/alive/[action].js' \
+            'api/alive/auth/[...all].js' \
+            'api/auth/[...all].js' \
+            api/player/profile.js \
+            api/alive/identity.js
+          do
+            node --check "$file"
+          done
+      - name: Test authentication origins and owner-scoped identity sync
+        run: node --test development/tests/playerAuthOrigin.test.js development/tests/aliveIdentityApi.test.js development/tests/databaseTargets.test.js development/tests/ownerEnrollment.test.js development/tests/authCookieIsolation.test.js
+      - name: Verify dependency tree
+        run: npm ls --depth=0

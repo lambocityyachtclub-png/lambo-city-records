@@ -5,6 +5,8 @@
  * It does not generate code, execute code, publish changes, or deploy.
  */
 
+import { getAliveDatabaseUrl } from "../../server/databaseTargets.js";
+
 function send(res, status, payload) {
   res.statusCode = status;
   res.setHeader("Content-Type", "application/json; charset=utf-8");
@@ -64,7 +66,7 @@ export function createAliveOwnerApiHandler(options = {}) {
       return send(res, 200, {
         service: "lambo-city-alive",
         owner: { email: owner.email },
-        databaseConfigured: Boolean(env.DATABASE_URL),
+        databaseConfigured: Boolean(getAliveDatabaseUrl(env)),
         persistentTaskStorage: true,
         aiProviderConfigured: Boolean(env.OPENAI_API_KEY),
         aiExecutionEnabled: false,

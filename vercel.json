@@ -2,11 +2,23 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "functions": {
     "api/alive/[action].js": {
-      "includeFiles": "{development/**/*,alive/**/*,*.js,package.json}",
+      "includeFiles": "{development/**/*,alive/**/*,server/**/*,*.js,package.json}",
       "maxDuration": 60
     },
     "api/alive/auth/[...all].js": {
-      "includeFiles": "alive/server/**/*",
+      "includeFiles": "{alive/server/**/*,server/**/*}",
+      "maxDuration": 30
+    },
+    "api/auth/[...all].js": {
+      "includeFiles": "server/**/*",
+      "maxDuration": 30
+    },
+    "api/player/profile.js": {
+      "includeFiles": "server/**/*",
+      "maxDuration": 30
+    },
+    "api/alive/identity.js": {
+      "includeFiles": "{server/**/*,alive/identity/**/*}",
       "maxDuration": 30
     }
   }

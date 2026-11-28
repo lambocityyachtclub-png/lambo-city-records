@@ -1,5 +1,5 @@
 const AUTH_CLIENT_URL = "https://esm.sh/better-auth@1.7.23/client";
-const PASSKEY_CLIENT_URL = "https://esm.sh/@better-auth/passkey@1.7.22/client";
+const PASSKEY_CLIENT_URL = "https://esm.sh/@better-auth/passkey@1.7.23/client";
 const EMAIL_OTP_CLIENT_URL = "https://esm.sh/better-auth@1.7.23/client/plugins";
 
 let authClientPromise;
@@ -97,12 +97,17 @@ async function showSignedIn(user) {
       const client = await getAuthClient();
       await client.signOut();
       activeUser = null;
+      window.__aliveAccountConnected = false;
+      window.__aliveCloudSyncStatus = "Saved on this device. Connect your account to sync across devices.";
+      window.dispatchEvent(new Event("lc-player-account-disconnected"));
       renderSignIn();
     } catch (error) {
       setStatus(error.message, true);
     }
   });
   panel.append(heading, identity, email, description, signOut);
+  window.__aliveAccountConnected = true;
+  window.dispatchEvent(new CustomEvent("lc-player-account-connected", { detail: { userId: user.id || null } }));
   setStatus("ACCOUNT CONNECTED");
 }
 
@@ -175,12 +180,21 @@ function renderSignIn() {
         throw new Error(passkeyResult.error.message || "Passkey setup was not completed.");
       }
 
-      await api("/api/player/profile", {
-        method: "PUT",
-        body: JSON.stringify({ username: cleanName, avatarImages: [], bio: "" })
-      });
+      const existingProfile = await api("/api/player/profile").catch(() => null);
+      let profileError = null;
+      if (!existingProfile?.profile) {
+        try {
+          await api("/api/player/profile", {
+            method: "PUT",
+            body: JSON.stringify({ username: cleanName, avatarImages: [], bio: "" })
+          });
+        } catch (error) {
+          profileError = error;
+        }
+      }
       const session = await client.getSession();
       await showSignedIn(session.data?.user || result.data?.user || { name: cleanName, email: cleanEmail });
+      if (profileError) setStatus(profileError.message, true);
     } catch (error) {
       setStatus(error.message, true);
     }
