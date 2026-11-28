@@ -91,8 +91,8 @@ export default async function aliveAction(req, res) {
         autonomousProductionDeployment: controlPlane.productionDeployment,
         controlPlane,
         nextMilestone: controlPlane.workerEnabled
-          ? "Complete the contract-checked release publisher before enabling low-risk automatic production deployment."
-          : "Approve the AI Gateway budget and enable the isolated sandbox when ready to let ALIVE prepare tested proposals."
+          ? "Keep every proposal behind contract checks and explicit owner review; production deployment remains owner-controlled."
+          : "Continue local, deterministic planning and owner-reviewed development. External AI Gateway, hosted sandbox, background workers, and autonomous production deployment remain disabled unless the owner separately changes that policy."
       });
     } catch {
       return send(res, 503, { error: "ALIVE development storage is unavailable or its schema is incomplete." });
