@@ -1,8 +1,92 @@
-import { loadGuestIdentity, saveGuestCompanion, exportGuestIdentity, importGuestIdentity } from "./alive/identity/guestIdentity.js";
+import { loadGuestIdentity, saveGuestIdentity, saveGuestCompanion, exportGuestIdentity, importGuestIdentity } from "./alive/identity/guestIdentity.js";
 
 let panel = null;
 let keyHandler = null;
 let restorePreview = null;
+let accountModuleInitialized = false;
+let accountConnectedHandler = null;
+let accountDisconnectedHandler = null;
+
+async function syncCompanionIdentity(identity) {
+  if (!identity?.companion) return false;
+  const companion = identity.companion;
+  const response = await fetch("/api/alive/identity", {
+    method: "PUT",
+    credentials: "same-origin",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      identityId: identity.guestId,
+      displayName: companion.displayName,
+      characterForm: companion.characterForm,
+      appearanceProfile: companion.appearanceProfile,
+      personality: companion.personality
+    })
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (response.status === 401) return false;
+  if (!response.ok) throw new Error(payload.error || "Your Companion could not be synced.");
+  window.__aliveCloudSyncStatus = "Your Companion is backed up to your LAMBO CITY account.";
+  return true;
+}
+
+async function reconcileCloudIdentity(statusNode) {
+  const response = await fetch("/api/alive/identity", {
+    credentials: "same-origin",
+    headers: { Accept: "application/json" }
+  });
+  if (response.status === 401) {
+    window.__aliveAccountConnected = false;
+    return;
+  }
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(payload.error || "Your saved Companion could not be restored.");
+  window.__aliveAccountConnected = true;
+  const cloud = payload.identity;
+  const local = loadGuestIdentity();
+  if (cloud?.record) {
+    const record = cloud.record;
+    const cloudTime = new Date(cloud.updatedAt || record.updatedAt || 0).getTime();
+    const localTime = new Date(local?.updatedAt || 0).getTime();
+    if (local?.companion && Number.isFinite(localTime) && localTime > cloudTime) {
+      const claimed = { ...local, guestId: cloud.identityId, updatedAt: local.updatedAt };
+      const normalized = saveGuestIdentity(claimed);
+      await syncCompanionIdentity(normalized);
+      window.__lamboCityApplyCompanionAppearance?.(normalized.companion);
+    } else {
+      const companion = {
+        displayName: record.displayName,
+        characterForm: record.character?.form || "digital-human",
+        appearanceProfile: record.character?.appearanceProfile || {},
+        personality: record.personality || { summary: "", traits: [] }
+      };
+      const restored = saveGuestIdentity({
+        schema: "alive-guest-identity",
+        schemaVersion: 1,
+        guestId: cloud.identityId,
+        createdAt: record.createdAt || local?.createdAt || new Date().toISOString(),
+        updatedAt: cloud.updatedAt || record.updatedAt || new Date().toISOString(),
+        companion
+      });
+      window.__lamboCityApplyCompanionAppearance?.(restored.companion);
+      window.__aliveCloudSyncStatus = "Your Companion has been restored from your account.";
+    }
+  } else if (local?.companion) {
+    await syncCompanionIdentity(local);
+  }
+  if (statusNode && window.__aliveCloudSyncStatus) {
+    statusNode.textContent = window.__aliveCloudSyncStatus;
+    statusNode.style.color = "#c8d9ae";
+  }
+}
+
+async function openPlayerAccount() {
+  const module = await import("./playerAccounts.js");
+  if (!accountModuleInitialized) {
+    module.default.init();
+    accountModuleInitialized = true;
+  }
+  window.dispatchEvent(new Event("lc-open-player-account"));
+}
 
 const TRAITS = ["curious","creative","thoughtful","playful","calm","confident","supportive","adventurous","witty","focused"];
 
@@ -31,6 +115,10 @@ function close({ restore = true } = {}) {
   window.__aliveCompanionPanelOpen = false;
   if (keyHandler) window.removeEventListener("keydown", keyHandler, true);
   keyHandler = null;
+  if (accountConnectedHandler) window.removeEventListener("lc-player-account-connected", accountConnectedHandler);
+  if (accountDisconnectedHandler) window.removeEventListener("lc-player-account-disconnected", accountDisconnectedHandler);
+  accountConnectedHandler = null;
+  accountDisconnectedHandler = null;
 }
 
 function addField(parent, labelText, id, options, selected) {
@@ -154,10 +242,22 @@ function open() {
     updateTraitButton(trait, button);
   }
 
-  const status = make("p", "Saved on this device. Export a backup to move your profile manually; automatic cloud sync is not connected yet.", card);
+  const status = make("p", window.__aliveCloudSyncStatus || "Saved on this device. Connect an account whenever you want secure cross-device Companion sync.", card);
   status.setAttribute("role", "status");
   status.setAttribute("aria-live", "polite");
   status.style.cssText = "margin:16px 0;color:#c8b98f;font-size:11px;line-height:1.55;";
+
+  const connectAccount = make("button", "CONNECT ACCOUNT  /  SYNC COMPANION", card);
+  connectAccount.type = "button";
+  connectAccount.style.cssText = "width:100%;min-height:42px;margin:0 0 10px;border:1px solid rgba(220,190,125,.55);border-radius:999px;background:rgba(216,180,117,.12);color:#f0d6a2;font-size:10px;font-weight:700;letter-spacing:.9px;cursor:pointer;";
+  connectAccount.addEventListener("click", async () => {
+    try {
+      await openPlayerAccount();
+    } catch (error) {
+      status.textContent = error.message || "The account panel could not be opened.";
+      status.style.color = "#ffaaaa";
+    }
+  });
 
   const backupRow = make("div", null, card);
   backupRow.style.cssText = "display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:8px 0 4px;";
@@ -257,6 +357,11 @@ function open() {
       status.textContent = "Your Companion is saved and its supported appearance is applied to your character.";
       status.style.color = "#c8d9ae";
       save.textContent = "SAVE COMPANION CHANGES";
+      if (window.__aliveAccountConnected) {
+        syncCompanionIdentity(identity).catch(error => {
+          window.__aliveCloudSyncStatus = "Saved on this device. Account sync needs another try: " + (error.message || "connection unavailable");
+        });
+      }
       close({ restore: false });
     } catch (error) {
       status.textContent = error.message || "Your Companion could not be saved in this browser.";
@@ -266,6 +371,24 @@ function open() {
 
   panel.addEventListener("click", event => {
     if (event.target === panel) close();
+  });
+
+  accountConnectedHandler = () => {
+    reconcileCloudIdentity(status).catch(error => {
+      status.textContent = error.message || "Your Companion could not be synced.";
+      status.style.color = "#ffaaaa";
+    });
+  };
+  accountDisconnectedHandler = () => {
+    window.__aliveAccountConnected = false;
+    status.textContent = "Your Companion remains saved on this device. Connect your account to sync it again.";
+    status.style.color = "#c8b98f";
+  };
+  window.addEventListener("lc-player-account-connected", accountConnectedHandler);
+  window.addEventListener("lc-player-account-disconnected", accountDisconnectedHandler);
+  reconcileCloudIdentity(status).catch(error => {
+    status.textContent = error.message || "Account sync is temporarily unavailable.";
+    status.style.color = "#ffaaaa";
   });
 
   window.__aliveCompanionPanelOpen = true;
