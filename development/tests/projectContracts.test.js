@@ -213,3 +213,13 @@ test("no contract can change its own trust root or safety permissions", () => {
   }
   assert.equal(evaluateProjectAction("alive-development-core", "change_contract_permissions").decision, "denied");
 });
+
+test("unrecognized production deployment variants fail closed for every canonical contract",()=>{
+  for(const contract of listProjectContracts()){
+    for(const operation of ["deploy_production_emergency","deploy_production_canary","deploy_production_"]){
+      const result=evaluateProjectAction(contract.id,operation,{risk:"low"});
+      assert.equal(result.authorized,false,contract.id+" "+operation);
+      assert.equal(result.decision,"owner_approval_required",contract.id+" "+operation);
+    }
+  }
+});
