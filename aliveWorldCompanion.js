@@ -29,7 +29,7 @@ async function syncCompanionIdentity(identity) {
   return true;
 }
 
-async function reconcileCloudIdentity(statusNode) {
+async function reconcileCloudIdentity(statusNode, onRestore) {
   const response = await fetch("/api/alive/identity", {
     credentials: "same-origin",
     headers: { Accept: "application/json" }
@@ -52,6 +52,7 @@ async function reconcileCloudIdentity(statusNode) {
       const normalized = saveGuestIdentity(claimed);
       await syncCompanionIdentity(normalized);
       window.__lamboCityApplyCompanionAppearance?.(normalized.companion);
+      onRestore?.(normalized.companion);
     } else {
       const companion = {
         displayName: record.displayName,
@@ -68,6 +69,7 @@ async function reconcileCloudIdentity(statusNode) {
         companion
       });
       window.__lamboCityApplyCompanionAppearance?.(restored.companion);
+      onRestore?.(restored.companion);
       window.__aliveCloudSyncStatus = "Your Companion has been restored from your account.";
     }
   } else if (local?.companion) {
@@ -146,7 +148,10 @@ function open() {
     appearanceProfile: { skinTone: "medium", hairStyle: "short", hairColor: "black", eyeColor: "brown", outfit: "streetwear", accentColor: "gold" },
     personality: { summary: "", traits: [] }
   };
-  restorePreview = () => window.__lamboCityApplyCompanionAppearance?.(baseline);
+  restorePreview = () => {
+    const current = loadGuestIdentity()?.companion || baseline;
+    window.__lamboCityApplyCompanionAppearance?.(current);
+  };
 
   panel = make("div", null, document.body);
   panel.id = "alive-companion-panel";
@@ -173,6 +178,8 @@ function open() {
   intro.style.cssText = "margin:0 0 16px;color:#c5c0c8;font-size:13px;line-height:1.6;";
 
   const form = make("form", null, card);
+  let formTouched = false;
+  form.addEventListener("input", () => { formTouched = true; }, { once: true });
   const nameLabel = make("label", "COMPANION NAME", form);
   nameLabel.htmlFor = "alive-companion-name";
   nameLabel.style.cssText = "display:block;margin:12px 0 6px;color:#d9d2c5;font-size:10px;letter-spacing:1px;";
@@ -251,6 +258,11 @@ function open() {
   connectAccount.type = "button";
   connectAccount.style.cssText = "width:100%;min-height:42px;margin:0 0 10px;border:1px solid rgba(220,190,125,.55);border-radius:999px;background:rgba(216,180,117,.12);color:#f0d6a2;font-size:10px;font-weight:700;letter-spacing:.9px;cursor:pointer;";
   connectAccount.addEventListener("click", async () => {
+    if (formTouched) {
+      status.textContent = "Save or close your Companion edits before connecting your account.";
+      status.style.color = "#e6c98f";
+      return;
+    }
     try {
       await openPlayerAccount();
     } catch (error) {
@@ -373,8 +385,23 @@ function open() {
     if (event.target === panel) close();
   });
 
+  const applyRestoredCompanion = companion => {
+    if (formTouched) return;
+    name.value = companion.displayName;
+    characterForm.value = companion.characterForm;
+    skinTone.value = companion.appearanceProfile?.skinTone || "medium";
+    hairStyle.value = companion.appearanceProfile?.hairStyle || "short";
+    hairColor.value = companion.appearanceProfile?.hairColor || "black";
+    eyeColor.value = companion.appearanceProfile?.eyeColor || "brown";
+    outfit.value = companion.appearanceProfile?.outfit || "streetwear";
+    accentColor.value = companion.appearanceProfile?.accentColor || "gold";
+    personality.value = companion.personality?.summary || "";
+    selectedTraits.clear();
+    for (const trait of companion.personality?.traits || []) selectedTraits.add(trait);
+    for (const [trait, button] of traitButtons) updateTraitButton(trait, button);
+  };
   accountConnectedHandler = () => {
-    reconcileCloudIdentity(status).catch(error => {
+    reconcileCloudIdentity(status, applyRestoredCompanion).catch(error => {
       status.textContent = error.message || "Your Companion could not be synced.";
       status.style.color = "#ffaaaa";
     });
@@ -386,10 +413,6 @@ function open() {
   };
   window.addEventListener("lc-player-account-connected", accountConnectedHandler);
   window.addEventListener("lc-player-account-disconnected", accountDisconnectedHandler);
-  reconcileCloudIdentity(status).catch(error => {
-    status.textContent = error.message || "Account sync is temporarily unavailable.";
-    status.style.color = "#ffaaaa";
-  });
 
   window.__aliveCompanionPanelOpen = true;
   const input = window.__lamboCityInput;
