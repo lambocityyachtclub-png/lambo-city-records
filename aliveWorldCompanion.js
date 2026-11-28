@@ -122,7 +122,7 @@ function open() {
   form.addEventListener("submit", event => {
     event.preventDefault();
     try {
-      saveGuestCompanion({
+      const identity = saveGuestCompanion({
         displayName: name.value,
         characterForm: characterForm.value,
         appearanceProfile: {
@@ -135,7 +135,8 @@ function open() {
         },
         personality: { summary: personality.value, traits: saved?.personality?.traits || [] }
       });
-      status.textContent = "Your Companion is saved on this device and is now part of your ALIVE profile.";
+      window.__lamboCityApplyCompanionAppearance?.(identity.companion);
+      status.textContent = "Your Companion is saved and its supported appearance is applied to your character.";
       status.style.color = "#c8d9ae";
       save.textContent = "SAVE COMPANION CHANGES";
       close();
