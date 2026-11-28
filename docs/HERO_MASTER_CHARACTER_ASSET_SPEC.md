@@ -77,13 +77,16 @@ The asset must be tested in neutral stance, walking, turning, greeting, and the 
 This specification does not claim that the high-fidelity GLB has been generated, rigged, imported, or tested. A reference image is not itself a game-ready 3D mesh. The actual GLB must be created from the supplied turnaround and inspected before the code can display the exact target appearance.
 
 
-## Approved animation and rendering direction (founder clarification)
+## Founder correction — exact reference only
 
-The supplied HERO reference images remain the exact visual source of truth. Do not generate a replacement concept image, redesign the face, change the outfit, or reinterpret the character.
+The founder has explicitly confirmed that the supplied HERO reference boards are the complete and exact design direction. Do not introduce any alternate style direction, anime influence, cartoon treatment, stylization, reinterpretation, or redesign.
 
-The requested presentation is a realistic 3D character with Dragon Ball Z-inspired animation energy, not a cartoon redesign:
-- Preserve the exact recognizable HERO appearance and reference silhouette.
-- Use realistic 3D skin, hair, fabric, denim, footwear, jewelry, and physically plausible materials.
-- Animation may use expressive poses, energetic movement, dramatic timing, and fluid transitions inspired by high-energy anime action.
-- Keep the character itself grounded and detailed; do not convert the model into a 2D anime drawing or exaggerated cartoon proportions.
-- Any future style exploration must be applied to animation/rendering treatment only and must not replace the supplied reference images as the character design authority.
+Reproduce what the supplied images represent as faithfully as technically possible:
+- Match the face, facial hair, skin tone, head shape, dreadlocks, cap, sunglasses, outfit, jewelry, pendant, jeans, sneakers, colors, silhouette, proportions, and visible details.
+- The front, side, and rear views are authoritative. Close-up panels govern the head and accessory details.
+- Preserve the reference's realistic 3D character presentation and game-ready humanoid construction.
+- Do not add, remove, or change design elements. The reference explicitly excludes skateboard and trophy from the base model; optional props remain separate and are not attached by default.
+- Animation must support the approved character in the game; it must not alter the character's appearance or design.
+- If a detail cannot be reproduced confidently from the supplied references, flag it for review rather than inventing a substitute.
+
+The images are the design specification. No new concept image or alternate visual interpretation is requested.
