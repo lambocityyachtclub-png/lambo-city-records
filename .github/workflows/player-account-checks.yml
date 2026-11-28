@@ -52,6 +52,8 @@ jobs:
             server/origin.js \
             server/http.js \
             server/aliveIdentityApi.js \
+            server/databaseTargets.js \
+            alive/server/ownerAuth.js \
             'api/auth/[...all].js' \
             api/player/profile.js \
             api/alive/identity.js
@@ -59,6 +61,6 @@ jobs:
             node --check "$file"
           done
       - name: Test authentication origins and owner-scoped identity sync
-        run: node --test development/tests/playerAuthOrigin.test.js development/tests/aliveIdentityApi.test.js
+        run: node --test development/tests/playerAuthOrigin.test.js development/tests/aliveIdentityApi.test.js development/tests/databaseTargets.test.js
       - name: Verify dependency tree
         run: npm ls --depth=0
