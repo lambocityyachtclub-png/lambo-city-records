@@ -86,6 +86,8 @@ function createHead(THREE, parent, design) {
   const eyeWhite = material(THREE, 0xf1eee8, 0.38);
   const iris = material(THREE, design.eyes, 0.32);
   const dark = material(THREE, 0x211b19, 0.78);
+  const lip = material(THREE, 0x754b43, 0.82);
+  const highlight = material(THREE, 0xffffff, 0.22);
   const stylized = design.form === "stylized";
   mesh(THREE, new THREE.SphereGeometry(0.42, 24, 20), skin, head, [0, 0, 0],
     stylized ? [1.04, 1.08, 0.98] : [0.94, 1.08, 0.92]);
@@ -94,11 +96,14 @@ function createHead(THREE, parent, design) {
     mesh(THREE, new THREE.SphereGeometry(stylized ? 0.075 : 0.055, 12, 10), eyeWhite, head, [side * 0.16, 0.045, 0.365]);
     mesh(THREE, new THREE.SphereGeometry(0.035, 10, 8), iris, head, [side * 0.16, 0.045, 0.412]);
     mesh(THREE, new THREE.SphereGeometry(0.017, 8, 6), dark, head, [side * 0.16, 0.045, 0.43]);
+    mesh(THREE, new THREE.SphereGeometry(0.012, 7, 6), highlight, head, [side * 0.175, 0.065, 0.444]);
     const brow = mesh(THREE, new THREE.BoxGeometry(0.14, 0.025, 0.035), dark, head, [side * 0.16, 0.14, 0.37]);
     brow.rotation.z = side * -0.08;
   }
   mesh(THREE, new THREE.SphereGeometry(0.065, 10, 8), skin, head, [0, -0.075, 0.385], [0.72, 0.9, 0.75]);
-  mesh(THREE, new THREE.BoxGeometry(0.14, 0.018, 0.025), dark, head, [0, -0.22, 0.365]);
+  mesh(THREE, new THREE.SphereGeometry(0.018, 8, 6), dark, head, [-0.025, -0.095, 0.443]);
+  mesh(THREE, new THREE.SphereGeometry(0.018, 8, 6), dark, head, [0.025, -0.095, 0.443]);
+  mesh(THREE, new THREE.BoxGeometry(0.14, 0.018, 0.025), lip, head, [0, -0.22, 0.365]);
   addHair(THREE, head, design.hair, design.hairStyle);
   return head;
 }
@@ -110,6 +115,8 @@ export function createCompanionAvatar(THREE, playerRoot, originalParts, initialC
 
   const bodyMat = material(THREE, OUTFITS.streetwear, 0.68);
   const trimMat = material(THREE, ACCENTS.gold, 0.32, 0.45);
+  const shirtMat = material(THREE, 0xe9e5dc, 0.82);
+  const seamMat = material(THREE, 0x111318, 0.86);
   const skinMat = material(THREE, SKIN.medium, 0.82);
   const shoeMat = material(THREE, 0xf4f2ed, 0.62);
   const pantMat = material(THREE, 0x202126, 0.82);
@@ -120,8 +127,12 @@ export function createCompanionAvatar(THREE, playerRoot, originalParts, initialC
   mesh(THREE, new THREE.CylinderGeometry(0.37, 0.49, 1.45, 16, 1), bodyMat, torso, [0, 0, 0]);
   mesh(THREE, new THREE.SphereGeometry(0.43, 16, 12), bodyMat, torso, [0, 0.48, 0], [1.02, 0.58, 0.86]);
   mesh(THREE, new THREE.CylinderGeometry(0.32, 0.37, 0.28, 14), pantMat, torso, [0, -0.78, 0]);
+  mesh(THREE, new THREE.BoxGeometry(0.34, 0.82, 0.035), shirtMat, torso, [0, 0.08, 0.372]);
   for (const side of [-1, 1]) {
     mesh(THREE, new THREE.BoxGeometry(0.035, 0.95, 0.018), trimMat, torso, [side * 0.29, 0.02, 0.355]);
+    const lapel = mesh(THREE, new THREE.BoxGeometry(0.16, 0.48, 0.045), trimMat, torso, [side * 0.13, 0.38, 0.4]);
+    lapel.rotation.z = side * -0.22;
+    mesh(THREE, new THREE.BoxGeometry(0.23, 0.025, 0.025), seamMat, torso, [side * 0.22, -0.42, 0.39]);
   }
   mesh(THREE, new THREE.BoxGeometry(0.16, 0.22, 0.035), trimMat, torso, [0, -0.08, 0.39]);
 
@@ -137,6 +148,7 @@ export function createCompanionAvatar(THREE, playerRoot, originalParts, initialC
     mesh(THREE, new THREE.SphereGeometry(0.19, 12, 10), bodyMat, pivot, [0, 0.52, 0]);
     mesh(THREE, new THREE.CylinderGeometry(0.135, 0.115, 0.78, 12), bodyMat, pivot, [0, 0, 0]);
     mesh(THREE, new THREE.SphereGeometry(0.125, 10, 8), skinMat, pivot, [0, -0.48, 0]);
+    mesh(THREE, new THREE.TorusGeometry(0.12, 0.025, 6, 12), trimMat, pivot, [0, -0.39, 0]);
     arms.push(pivot);
   }
 
@@ -148,6 +160,10 @@ export function createCompanionAvatar(THREE, playerRoot, originalParts, initialC
     mesh(THREE, new THREE.CylinderGeometry(0.19, 0.15, 1.3, 12), pantMat, pivot, [0, 0, 0]);
     mesh(THREE, new THREE.SphereGeometry(0.17, 10, 8), shoeMat, pivot, [0, -0.67, 0.18], [1, 0.58, 1.55]);
     mesh(THREE, new THREE.BoxGeometry(0.28, 0.035, 0.46), shoeMat, pivot, [0, -0.76, 0.18]);
+    mesh(THREE, new THREE.BoxGeometry(0.29, 0.055, 0.47), seamMat, pivot, [0, -0.79, 0.18]);
+    for (let lace = 0; lace < 3; lace++) {
+      mesh(THREE, new THREE.BoxGeometry(0.11, 0.012, 0.018), trimMat, pivot, [0, -0.61 + lace * 0.045, 0.34]);
+    }
     legs.push(pivot);
   }
 
@@ -203,8 +219,14 @@ export function createCompanionAvatar(THREE, playerRoot, originalParts, initialC
   };
 
   originals.forEach(part => { part.visible = false; });
-  apply(initialCompanion);
-  sync();
+  try {
+    apply(initialCompanion);
+    sync();
+  } catch (error) {
+    originals.forEach((part, index) => { part.visible = originalVisibility[index]; });
+    group.removeFromParent();
+    throw error;
+  }
 
   return {
     group,
