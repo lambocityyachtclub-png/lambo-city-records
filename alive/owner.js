@@ -127,10 +127,10 @@ function renderStatus(data) {
   const cells = [
     ["DATABASE", data.databaseConfigured ? "CONNECTED" : "NOT CONFIGURED"],
     ["TASK STORAGE", data.persistentTaskStorage ? "PERSISTENT" : "NOT READY"],
-    ["AI PROVIDER", data.aiProviderConfigured ? "KEY PRESENT" : "NOT CONNECTED"],
-    ["AI EXECUTION", data.aiExecutionEnabled ? "ENABLED" : "NOT ENABLED"],
-    ["SANDBOX", data.isolatedSandboxEnabled ? "ENABLED" : "NOT ENABLED"],
-    ["AUTO RUN", data.autoRunEnabled ? "ON" : "OFF"],
+    ["EXTERNAL AI", data.aiProviderConfigured ? "AVAILABLE / GATED" : "OFF BY DESIGN"],
+    ["AUTOMATION", data.aiExecutionEnabled ? "ENABLED" : "OFF"],
+    ["HOSTED SANDBOX", data.isolatedSandboxEnabled ? "ENABLED" : "OFF BY DESIGN"],
+    ["BACKGROUND RUN", data.autoRunEnabled ? "ON" : "OFF"],
     ["AUTO DEPLOY", data.autonomousProductionDeployment ? "ENABLED" : "NOT ENABLED"]
   ];
   $("status-grid").innerHTML = cells.map(([label, value]) =>
@@ -140,7 +140,7 @@ function renderStatus(data) {
   $("run-alive-button").hidden = !data.aiExecutionEnabled || data.autoRunEnabled;
   $("intent-feedback").textContent = data.aiExecutionEnabled
     ? "ALIVE can prepare isolated proposals. Every release still follows its Living Contract and evidence gates."
-    : "The task queue is connected. AI proposal generation and isolated execution are the next connection; no source code or production deployment is changed by this console yet.";
+    : "ALIVE is connected in local, owner-controlled planning mode. Paid AI, hosted sandbox execution, background automation, and production deployment remain off. Tasks can be queued and reviewed without activating those services.";
 }
 
 function renderTasks(tasks) {
