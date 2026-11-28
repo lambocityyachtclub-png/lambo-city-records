@@ -21,6 +21,7 @@ test("avatar design resolves all saved visual choices", () => {
     eyes: 0x4f8766,
     hairStyle: "braids",
     outfit: 0x253b55,
+    outfitStyle: "creative",
     accent: 0x9565c9
   });
 });
@@ -33,6 +34,7 @@ test("unknown or missing visual choices resolve to stable defaults", () => {
     eyes: 0x59331f,
     hairStyle: "short",
     outfit: 0x1b1b1f,
+    outfitStyle: "streetwear",
     accent: 0xffd700
   });
   assert.equal(resolveCompanionAvatarDesign({ appearanceProfile: { hairStyle: "invented" } }).hairStyle, "short");
