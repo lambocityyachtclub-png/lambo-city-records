@@ -9,7 +9,15 @@ ALIVE is the personal identity and Companion layer: the person, their creations,
 HERO is the creative host and record-making guide inside the LAMBO CITY experience.
 
 ## Permanent creative reference pillars
-The private creative direction is informed by three qualities: high-performance automotive design and precision; exceptional luxury craftsmanship and architectural presentation; and expressive contemporary art, character, and imagination. These are inspiration principles, not partnerships or permissions. The product, public copy, symbols, characters, clothing, artwork, and visual assets must remain original to LAMBO CITY and ALIVE. No external company, artist, or brand is represented as an endorser, sponsor, or affiliate. Public-facing materials must not name or imply a relationship with an inspiration source.
+The private creative direction explicitly studies three reference points:
+
+1. **Lamborghini — performance, precision, and presence.** Use the reference to guide dramatic original silhouettes, engineering-led proportions, responsive movement, acceleration, material precision, deep reflections, and the feeling of power. The target is not merely a luxury appearance; performance must be felt in the way the world moves and responds.
+2. **Louis Vuitton — luxury craftsmanship and experience.** Use the reference to guide exceptional finish, architectural presentation, fashion-minded curation, exclusivity, consistency, tactile detail, and the sense that every interaction belongs to a considered premium experience.
+3. **Takashi Murakami — expressive art and imagination.** Use the reference to guide the selective use of bold color, playful original character design, expressive clothing and accessories, collectible artistic treatments, and curated visual moments. This expression should be strongest in Companions, fashion, skins, stage packages, and selected digital media—not across the entire world.
+
+The intended synthesis is a photorealistic luxury universe with the performance and precision associated with Lamborghini, the crafted experience associated with Louis Vuitton, and carefully placed original artistic expression informed by Takashi Murakami. Luxury remains the foundation; art is the expression; performance is the engine; ALIVE connects everything.
+
+These are internal creative references and inspiration principles—not partnerships, permissions, sponsorships, or endorsements. They belong in internal planning, design briefs, and project documentation so the team understands the ambition. Public-facing website copy, advertising, product branding, and promotional materials must not use these names or imply any relationship unless separately authorized. All shipped product identity, logos, symbols, characters, clothing, patterns, artwork, and assets must remain original or properly licensed. Do not reproduce third-party logos, monograms, signature motifs, trade dress, protected artwork, or recognizable characters.
 
 ## The central design philosophy
 **Luxury is the foundation. Art is the expression. Performance is the engine. ALIVE connects everything.**
