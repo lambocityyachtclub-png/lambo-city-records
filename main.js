@@ -27,12 +27,12 @@ engine.init();
 const startupStages = [
   [
     ["world", () => import("./world.js")],
-    ["festivalStageUpgrade", () => import("./festivalStageUpgrade.js")],
-    ["festivalStageArchitecture", () => import("./festivalStageArchitecture.js")],
-    ["festivalStageFinishing", () => import("./festivalStageFinishing.js")]
+    ["festivalStageUpgrade", () => import("./festivalStageUpgrade.js"), "sceneContext"],
+    ["festivalStageArchitecture", () => import("./festivalStageArchitecture.js"), "sceneContext"],
+    ["festivalStageFinishing", () => import("./festivalStageFinishing.js"), "sceneContext"]
   ],
   [
-    ["festivalAudienceZone", () => import("./festivalAudienceZone.js")],
+    ["festivalAudienceZone", () => import("./festivalAudienceZone.js"), "sceneContext"],
     ["water", () => import("./water.js")],
     ["dock", () => import("./dock.js")],
     ["dockPath", () => import("./dockPath.js")]
@@ -45,31 +45,31 @@ const startupStages = [
   ],
   [
     ["npc", () => import("./npc.js")],
-    ["characterSystem", () => import("./characterSystem.js")],
-    ["dockLife", () => import("./dockLife.js")],
+    ["characterSystem", () => import("./characterSystem.js"), "sceneContext"],
+    ["dockLife", () => import("./dockLife.js"), "sceneContext"],
     ["heroPerformance", () => import("./heroPerformance.js")]
   ],
   [
     ["heroPostPerformance", () => import("./heroPostPerformance.js")],
-    ["heroMentorInteraction", () => import("./heroMentorInteraction.js"), false],
-    ["heroSecurityExperience", () => import("./heroSecurityExperience.js")],
+    ["heroMentorInteraction", () => import("./heroMentorInteraction.js"), null],
+    ["heroSecurityExperience", () => import("./heroSecurityExperience.js"), "sceneContext"],
     ["cinematicFlow", () => import("./cinematicFlowSystem.js")],
     ["worldSkin", () => import("./cinematicWorldSkin.js")]
   ],
   [
     ["dockCore", () => import("./cinematicDockCore.js")],
     ["marina", () => import("./marina.js")],
-    ["waterfrontStorefrontDetails", () => import("./waterfrontStorefrontDetails.js")],
-    ["conferenceCenterDistrict", () => import("./conferenceCenterDistrict.js")]
+    ["waterfrontStorefrontDetails", () => import("./waterfrontStorefrontDetails.js"), "sceneContext"],
+    ["conferenceCenterDistrict", () => import("./conferenceCenterDistrict.js"), "sceneContext"]
   ],
   [
     ["stageVideo", () => import("./stageVideo.js")],
     ["stageScreenMedia", () => import("./stageScreenMedia.js")],
     ["stageBanner", () => import("./stageBanner.js")],
-    ["ambientMusic", () => import("./ambientMusic.js")]
+    ["ambientMusic", () => import("./ambientMusic.js"), "none"]
   ],
   [
-    ["stageMusic", () => import("./stageMusic.js")],
+    ["stageMusic", () => import("./stageMusic.js"), "none"],
     ["stageAudioZone", () => import("./stageAudioZone.js")],
     ["stageSpotlights", () => import("./stageSpotlights.js")],
     ["stageLasers", () => import("./stageLasers.js")]
@@ -77,8 +77,8 @@ const startupStages = [
   [
     ["stageSmoke", () => import("./stageSmoke.js")],
     ["stageCrowdPulse", () => import("./stageCrowdPulse.js")],
-    ["stageLiveDrummer", () => import("./stageLiveDrummer.js")],
-    ["stageFireworks", () => import("./stageFireworks.js")]
+    ["stageLiveDrummer", () => import("./stageLiveDrummer.js"), "sceneContext"],
+    ["stageFireworks", () => import("./stageFireworks.js"), "sceneContext"]
   ],
   [
     ["grandStagePier", () => import("./grandStagePier.js")],
@@ -94,30 +94,30 @@ const startupStages = [
   ],
   [
     ["recordsHQFloor2Studio", () => import("./recordsHQFloor2Studio.js")],
-    ["floor2StudioApp", () => import("./floor2StudioApp.js")],
-    ["floor2InstrumentApp", () => import("./floor2InstrumentApp.js")],
-    ["floor2DrumStation", () => import("./floor2DrumStation.js")]
+    ["floor2StudioApp", () => import("./floor2StudioApp.js"), "sceneContext"],
+    ["floor2InstrumentApp", () => import("./floor2InstrumentApp.js"), "sceneContext"],
+    ["floor2DrumStation", () => import("./floor2DrumStation.js"), "sceneContext"]
   ],
   [
-    ["floor2StudioNavigation", () => import("./floor2StudioNavigation.js")],
+    ["floor2StudioNavigation", () => import("./floor2StudioNavigation.js"), "sceneContext"],
     ["recordsHQEntranceThreshold", () => import("./recordsHQEntranceThreshold.js")],
     ["recordsHQMediaDetails", () => import("./recordsHQMediaDetails.js")],
     ["recordsHQMerchDetails", () => import("./recordsHQMerchDetails.js")]
   ],
   [
-    ["heroCareerCenter", () => import("./heroCareerCenter.js")],
+    ["heroCareerCenter", () => import("./heroCareerCenter.js"), "sceneContext"],
     ["recordsHQElevator", () => import("./recordsHQElevator.js")],
-    ["floor2StudioSession", () => import("./floor2StudioSession.js")],
-    ["studioMixMasterConsole3D", () => import("./studioMixMasterConsole3D.js")]
+    ["floor2StudioSession", () => import("./floor2StudioSession.js"), "sceneContext"],
+    ["studioMixMasterConsole3D", () => import("./studioMixMasterConsole3D.js"), "sceneContext"]
   ],
   [
-    ["floor2LiveDrummer", () => import("./floor2LiveDrummer.js")],
-    ["floor2VocalBooth3D", () => import("./floor2VocalBooth3D.js")],
-    ["floor2CitySynth", () => import("./floor2CitySynth.js")],
+    ["floor2LiveDrummer", () => import("./floor2LiveDrummer.js"), "sceneContext"],
+    ["floor2VocalBooth3D", () => import("./floor2VocalBooth3D.js"), "sceneContext"],
+    ["floor2CitySynth", () => import("./floor2CitySynth.js"), "sceneContext"],
     ["boardwalkOverlooks", () => import("./boardwalkOverlooks.js")]
   ],
   [
-    ["hud", () => import("./hud.js")]
+    ["hud", () => import("./hud.js"), "none"]
   ]
 ];
 
@@ -128,11 +128,11 @@ async function loadWorldInStages() {
   for (let stageIndex = 0; stageIndex < startupStages.length; stageIndex++) {
     const stage = startupStages[stageIndex];
     const loaded = await Promise.all(
-      stage.map(async ([name, load, initialize = true]) => [name, (await load()).default, initialize])
+      stage.map(async ([name, load, initMode = "scene"]) => [name, (await load()).default, initMode])
     );
 
     for (const [name, system, initialize] of loaded) {
-      if (!system || (initialize !== false && typeof system.init !== "function")) {
+      if (!system || (initMode !== null && typeof system.init !== "function")) {
         throw new Error("LAMBO CITY startup module is invalid: " + name);
       }
       engine.systems[name] = system;
@@ -140,8 +140,10 @@ async function loadWorldInStages() {
 
     // Preserve the original module initialization order. Yield between
     // modules so the browser can render and process keyboard input.
-    for (const [name, system, initialize] of loaded) {
-      if (initialize !== false) system.init(engine.scene, engine.context);
+    for (const [name, system, initMode] of loaded) {
+      if (initMode === "sceneContext") system.init(engine.scene, engine.context);
+      else if (initMode === "none") system.init();
+      else if (initMode !== null) system.init(engine.scene);
       await yieldToRender();
     }
   }
