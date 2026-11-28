@@ -54,6 +54,8 @@ jobs:
             server/aliveIdentityApi.js \
             server/databaseTargets.js \
             alive/server/ownerAuth.js \
+            development/runtime/hostedAliveApiRuntime.js \
+            'api/alive/[action].js' \
             'api/auth/[...all].js' \
             api/player/profile.js \
             api/alive/identity.js
