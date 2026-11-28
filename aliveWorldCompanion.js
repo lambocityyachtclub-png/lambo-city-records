@@ -138,6 +138,7 @@ function open() {
       status.textContent = "Your Companion is saved on this device and is now part of your ALIVE profile.";
       status.style.color = "#c8d9ae";
       save.textContent = "SAVE COMPANION CHANGES";
+      close();
     } catch (error) {
       status.textContent = error.message || "Your Companion could not be saved in this browser.";
       status.style.color = "#ffaaaa";
