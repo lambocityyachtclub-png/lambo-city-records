@@ -1,5 +1,5 @@
 # ALIVE + LAMBO CITY — Brand and Experience System
-Version 1.0 · Preview foundation · 27 November 2026
+Version 1.1 · Preview foundation · 27 November 2026
 
 ## Brand ambition
 Create a luxury digital universe with the emotional impact of a supercar reveal, the craftsmanship of a maison, and the cultural energy of a contemporary art studio. The work must feel authored, collectible, cinematic, and unmistakably original.
@@ -7,6 +7,27 @@ Create a luxury digital universe with the emotional impact of a supercar reveal,
 LAMBO CITY is the destination: a living entertainment, culture, and creative world.
 ALIVE is the personal identity and Companion layer: the person, their creations, their history, and the tools that travel with them.
 Hiro is the creative host and record-making guide inside the LAMBO CITY experience.
+
+## Permanent creative reference pillars
+These three named creative influences are part of the standing LAMBO CITY / ALIVE blueprint. They are sources of inspiration for principles and experience quality—not permission to reproduce protected marks, designs, characters, artwork, or trade dress. LAMBO CITY remains its own original intellectual property.
+
+### 1. Lamborghini — Automotive identity
+**Reference qualities:** dramatic silhouettes, precision, bold proportions, performance, and unmistakable presence.
+
+**Our translation:** original vehicle forms, cinematic reveals, precise geometry, confident movement, performance-led environments, and a consistent sense of scale. Preserve approved world geography and vehicle placement while improving detail and realism.
+
+### 2. Louis Vuitton — Luxury experience
+**Reference qualities:** craftsmanship, architectural presentation, exclusivity, cultural experiences, and premium details that reward discovery.
+
+**Our translation:** distinctive destinations, crafted materials, considered hospitality, collectible experiences, member-first access, and spaces where fashion, architecture, art, music, and entertainment meet.
+
+### 3. Takashi Murakami — Art and imagination
+**Reference qualities:** vibrant original art, expressive characters, confident color, and playful moments that make a world feel alive.
+
+**Our translation:** original LAMBO CITY characters, art direction, collectible visual stories, bold but curated color moments, and joyful surprises. All characters and artwork must be independently designed for this universe.
+
+### Partnership integrity
+These references do not imply endorsement, sponsorship, licensing, or affiliation. Do not use partner logos or present any company or artist as a sponsor without a formal agreement. A future Lamborghini or Louis Vuitton partnership is an ambition to earn through an original, functioning, professionally presented experience.
 
 ## Design principles
 1. **Iconic silhouette before decoration.** Every major interface or building needs one memorable shape or composition that reads at a distance.
