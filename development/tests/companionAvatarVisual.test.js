@@ -139,3 +139,23 @@ test("avatar layer hides placeholders, follows player limb poses, and restores f
   assert.ok(Object.values(original).flat().every(part => part.visible === true));
   assert.equal(root.children.includes(avatar.group), false);
 });
+
+test("Companion wardrobe styles build distinct garment details", async () => {
+  const { createCompanionAvatar } = await import("../../alive/identity/companionAvatarVisual.js");
+  const root = new FakeObject3D();
+  const original = {
+    body: originalPart(0, 1.8, 0), head: originalPart(0, 3.15, 0),
+    arms: [originalPart(-0.8, 1.8, 0), originalPart(0.8, 1.8, 0)],
+    legs: [originalPart(-0.35, 0.6, 0), originalPart(0.35, 0.6, 0)]
+  };
+  const avatar = createCompanionAvatar(fakeTHREE, root, original, null);
+  const torso = avatar.group.children[0];
+  const wardrobe = torso.children.find(child => child.name === "companionWardrobe");
+  const counts = [];
+  for (const outfit of ["streetwear", "classic", "minimal", "creative"]) {
+    avatar.apply({ displayName: "Nova", appearanceProfile: { outfit } });
+    counts.push(wardrobe.children.length);
+  }
+  assert.equal(new Set(counts).size, 4, "each outfit has its own garment detail layout");
+  avatar.restoreOriginals();
+});
