@@ -1,5 +1,23 @@
 import { createPersonalIdentity, validatePersonalIdentity } from "../alive/identity/identityContract.js";
 
+const APPEARANCE_OPTIONS = Object.freeze({
+  skinTone: ["porcelain", "light", "medium", "tan", "deep"],
+  hairStyle: ["short", "curly", "long", "braids", "buzz", "none"],
+  hairColor: ["black", "brown", "blonde", "auburn", "silver"],
+  eyeColor: ["brown", "blue", "green", "hazel", "gray"],
+  outfit: ["streetwear", "classic", "minimal", "creative"],
+  accentColor: ["gold", "blue", "violet", "silver"]
+});
+const PERSONALITY_TRAITS = new Set(["curious", "creative", "thoughtful", "playful", "calm", "confident", "supportive", "adventurous", "witty", "focused"]);
+
+function normalizeAppearance(value) {
+  const source = value && typeof value === "object" && !Array.isArray(value) ? value : {};
+  return Object.fromEntries(Object.entries(APPEARANCE_OPTIONS).map(([key, allowed]) => [
+    key,
+    allowed.includes(source[key]) ? source[key] : allowed[0]
+  ]));
+}
+
 function send(res, status, payload) {
   res.setHeader("Cache-Control", "no-store");
   res.setHeader("Content-Type", "application/json; charset=utf-8");
@@ -36,15 +54,24 @@ export function createAliveIdentityApiHandler({ getSession, query, isSameOrigin 
       }
 
       const body = req.body && typeof req.body === "object" && !Array.isArray(req.body) ? req.body : {};
-      const identityId = typeof body.identityId === "string" ? body.identityId.trim().slice(0, 128) : "";
-      if (!identityId) return send(res, 400, { error: "A stable Companion identity ID is required." });
+      if (JSON.stringify(body).length > 16 * 1024) return send(res, 413, { error: "Companion identity data exceeds the 16 KB limit." });
+      const identityId = typeof body.identityId === "string" ? body.identityId.trim() : "";
+      if (!/^[A-Za-z0-9_-]{1,128}$/.test(identityId)) {
+        return send(res, 400, { error: "A valid stable Companion identity ID is required." });
+      }
+      const personalitySource = body.personality && typeof body.personality === "object" && !Array.isArray(body.personality)
+        ? body.personality
+        : {};
+      const traits = Array.isArray(personalitySource.traits)
+        ? [...new Set(personalitySource.traits.filter(trait => typeof trait === "string" && PERSONALITY_TRAITS.has(trait)))].slice(0, 5)
+        : [];
       const identity = createPersonalIdentity({
         identityId,
         ownerId,
         displayName: body.displayName,
         characterForm: body.characterForm,
-        appearanceProfile: body.appearanceProfile,
-        personality: body.personality,
+        appearanceProfile: normalizeAppearance(body.appearanceProfile),
+        personality: { summary: typeof personalitySource.summary === "string" ? personalitySource.summary.slice(0, 240) : "", traits },
         privacy: { discoverability: "private" },
         memoryPolicy: { allowCrossWorldSharing: false },
         grants: [],
