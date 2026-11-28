@@ -217,16 +217,7 @@ async function loadWorldInStages() {
   window.__lamboCityWorldReady = true;
 }
 
-loadWorldInStages().then(async () => {
-  // The first-visit welcome is optional UI and loads only after the full world is ready.
-  // It never delays playable startup or changes world, player, camera, HERO, or audio systems.
-  try {
-    const foundersRoom = await import("./foundersRoom.js");
-    foundersRoom.default?.init?.();
-  } catch (error) {
-    console.warn("LAMBO CITY first-visit guide could not load:", error);
-  }
-}).catch(error => {
+loadWorldInStages().catch(error => {
   window.__lamboCityStartupError = String(error?.message || error);
   console.error("LAMBO CITY staged startup stopped:", error);
 });
