@@ -51,6 +51,7 @@ const startupStages = [
   ],
   [
     ["heroPostPerformance", () => import("./heroPostPerformance.js")],
+    ["heroMentorInteraction", () => import("./heroMentorInteraction.js"), false],
     ["heroSecurityExperience", () => import("./heroSecurityExperience.js")],
     ["cinematicFlow", () => import("./cinematicFlowSystem.js")],
     ["worldSkin", () => import("./cinematicWorldSkin.js")]
@@ -127,11 +128,11 @@ async function loadWorldInStages() {
   for (let stageIndex = 0; stageIndex < startupStages.length; stageIndex++) {
     const stage = startupStages[stageIndex];
     const loaded = await Promise.all(
-      stage.map(async ([name, load]) => [name, (await load()).default])
+      stage.map(async ([name, load, initialize = true]) => [name, (await load()).default, initialize])
     );
 
     for (const [name, system] of loaded) {
-      if (!system || typeof system.init !== "function") {
+      if (!system || (initialize && typeof system.init !== "function")) {
         throw new Error("LAMBO CITY startup module is invalid: " + name);
       }
       engine.systems[name] = system;
@@ -139,8 +140,8 @@ async function loadWorldInStages() {
 
     // Preserve the original module initialization order. Yield between
     // modules so the browser can render and process keyboard input.
-    for (const [name, system] of loaded) {
-      system.init(engine.scene, engine.context);
+    for (const [name, system, initialize] of loaded) {
+      if (initialize !== false) system.init(engine.scene, engine.context);
       await yieldToRender();
     }
   }
