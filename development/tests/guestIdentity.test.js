@@ -56,3 +56,22 @@ test("Companion backup import rejects invalid, oversized, and unsupported files"
  assert.throws(()=>importGuestIdentity("x".repeat(24001),storage),/too large/);
  assert.throws(()=>exportGuestIdentity(storage),/no saved Companion/);
 });
+
+test("invalid Companion backup import never overwrites an existing local identity",()=>{
+ const storage=memoryStorage();
+ const existing=saveGuestCompanion({displayName:"Existing"},{storage,now:()=> "2026-11-28T00:00:00.000Z"});
+ const before=storage.getItem(GUEST_IDENTITY_STORAGE_KEY);
+ const invalid=JSON.stringify({format:"alive-guest-export",formatVersion:1,identity:{schema:"alive-guest-identity",schemaVersion:1,guestId:"bad",createdAt:"now",updatedAt:"now",companion:{displayName:" "}}});
+ assert.throws(()=>importGuestIdentity(invalid,storage),/valid/);
+ assert.equal(storage.getItem(GUEST_IDENTITY_STORAGE_KEY),before);
+ assert.equal(loadGuestIdentity(storage).guestId,existing.guestId);
+});
+test("storage write failures surface without changing the existing profile",()=>{
+ const storage=memoryStorage();
+ const existing=saveGuestCompanion({displayName:"Existing"},{storage});
+ const before=storage.getItem(GUEST_IDENTITY_STORAGE_KEY);
+ const failingStorage={getItem:storage.getItem,setItem(){throw new Error("quota exceeded");},removeItem:storage.removeItem};
+ assert.throws(()=>saveGuestCompanion({displayName:"Replacement"},{storage:failingStorage}),/quota exceeded/);
+ assert.equal(storage.getItem(GUEST_IDENTITY_STORAGE_KEY),before);
+ assert.equal(loadGuestIdentity(storage).companion.displayName,"Existing");
+});
