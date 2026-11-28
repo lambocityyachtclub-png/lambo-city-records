@@ -4,6 +4,8 @@ let panel = null;
 let keyHandler = null;
 let restorePreview = null;
 
+const TRAITS = ["curious","creative","thoughtful","playful","calm","confident","supportive","adventurous","witty","focused"];
+
 const OPTIONS = {
   characterForm: [["digital-human", "Digital human"], ["stylized", "Stylized character"]],
   skinTone: [["porcelain", "Porcelain"], ["light", "Light"], ["medium", "Medium"], ["tan", "Tan"], ["deep", "Deep"]],
@@ -119,7 +121,40 @@ function open() {
   personality.placeholder = "A few words about your Companion";
   personality.style.cssText = "width:100%;box-sizing:border-box;padding:11px 12px;border:1px solid rgba(255,255,255,.14);border-radius:9px;background:#101117;color:#fff;font:13px Arial,sans-serif;resize:vertical;";
 
-  const status = make("p", "Saved profiles stay on this device. Cloud accounts and cross-device sync are not connected in this step.", card);
+  const traitLabel = make("p", "PERSONALITY TRAITS  ·  CHOOSE UP TO FIVE", form);
+  traitLabel.style.cssText = "margin:14px 0 8px;color:#d9d2c5;font-size:10px;letter-spacing:1px;";
+  const traitGrid = make("div", null, form);
+  traitGrid.style.cssText = "display:flex;flex-wrap:wrap;gap:7px;";
+  const selectedTraits = new Set(saved?.personality?.traits || []);
+  const traitButtons = new Map();
+  const updateTraitButton = (trait, button) => {
+    const active = selectedTraits.has(trait);
+    button.setAttribute("aria-pressed", String(active));
+    button.style.background = active ? "rgba(216,180,117,.22)" : "#101117";
+    button.style.borderColor = active ? "#d8b475" : "rgba(255,255,255,.16)";
+    button.style.color = active ? "#f0d6a2" : "#d6d2d0";
+  };
+  for (const trait of TRAITS) {
+    const button = make("button", trait, traitGrid);
+    button.type = "button";
+    button.style.cssText = "min-height:34px;padding:7px 11px;border:1px solid rgba(255,255,255,.16);border-radius:999px;font-size:11px;cursor:pointer;";
+    button.addEventListener("click", () => {
+      if (selectedTraits.has(trait)) selectedTraits.delete(trait);
+      else if (selectedTraits.size < 5) selectedTraits.add(trait);
+      else {
+        status.textContent = "Choose up to five personality traits.";
+        status.style.color = "#e6c98f";
+        return;
+      }
+      updateTraitButton(trait, button);
+      status.textContent = "Personality choices update when you save your Companion.";
+      status.style.color = "#c8b98f";
+    });
+    traitButtons.set(trait, button);
+    updateTraitButton(trait, button);
+  }
+
+  const status = make("p", "Saved on this device. Export a backup to move your profile manually; automatic cloud sync is not connected yet.", card);
   status.setAttribute("role", "status");
   status.setAttribute("aria-live", "polite");
   status.style.cssText = "margin:16px 0;color:#c8b98f;font-size:11px;line-height:1.55;";
@@ -190,7 +225,7 @@ function open() {
         skinTone: skinTone.value, hairStyle: hairStyle.value, hairColor: hairColor.value,
         eyeColor: eyeColor.value, outfit: outfit.value, accentColor: accentColor.value
       },
-      personality: { summary: personality.value.slice(0, 240), traits: saved?.personality?.traits || [] }
+      personality: { summary: personality.value.slice(0, 240), traits: [...selectedTraits] }
     };
     window.__lamboCityApplyCompanionAppearance?.(draft);
   };
@@ -216,7 +251,7 @@ function open() {
           outfit: outfit.value,
           accentColor: accentColor.value
         },
-        personality: { summary: personality.value, traits: saved?.personality?.traits || [] }
+        personality: { summary: personality.value, traits: [...selectedTraits] }
       });
       window.__lamboCityApplyCompanionAppearance?.(identity.companion);
       status.textContent = "Your Companion is saved and its supported appearance is applied to your character.";
