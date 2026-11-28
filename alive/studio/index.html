@@ -52,7 +52,7 @@
     @media(max-width:640px){.top-actions{gap:6px}.top-tag{display:none}.small-button{padding:9px 10px;font-size:9px}.guest-banner{align-items:flex-start;flex-direction:column}.studio-actions{width:100%}}\n  </style>
 </head>
 <body>
-  <header class="top"><a class="brand" href="/">LAMBO CITY RECORDS</a><div class="top-actions"><div class="top-tag">ALIVE COMPANION STUDIO</div><button id="export-data" class="small-button">EXPORT DATA</button><button id="clear-guest-data" class="small-button" hidden>DELETE GUEST DATA</button><button id="member-signin" class="small-button">SIGN IN</button><button id="claim-account" class="small-button primary-small">CLAIM &amp; SYNC</button></div></header>
+  <header class="top"><a class="brand" href="/">LAMBO CITY RECORDS</a><div class="top-actions"><div class="top-tag">ALIVE COMPANION STUDIO</div><button id="export-data" class="small-button">EXPORT DATA</button><button id="clear-guest-data" class="small-button" hidden>DELETE GUEST DATA</button><button id="member-signin" class="small-button" hidden>SIGN IN</button><button id="claim-account" class="small-button primary-small" hidden>CLAIM &amp; SYNC</button></div></header>
   <main>
     <section class="hero"><div class="eyebrow">A PERSONAL WORLD, BUILT AROUND YOU</div><h1>Meet your ALIVE Companion.</h1><p class="lead">Meet your Companion first. Shape their look and personality without creating an account. Your guest profile is saved on this device. Account linking will arrive as a separate step when it is ready.</p></section>
     <section id="auth-panel" class="panel auth-panel" hidden>
@@ -66,7 +66,7 @@
       <div id="auth-status" class="status" role="status" aria-live="polite"></div>
     </section>
     <section id="studio" class="studio">
-      <div class="studio-head"><div><div class="eyebrow">YOUR COMPANION PROFILE</div><h2>Shape who they are.</h2></div><div class="studio-actions"><button id="add-passkey" class="secondary" hidden>ADD FACE ID</button><button id="signout-studio" class="secondary" hidden>SIGN OUT</button></div></div><div id="guest-banner" class="guest-banner"><div><strong id="guest-mode-title">You are exploring as a guest.</strong><p id="guest-mode-copy">Your Companion is saved on this device only. Claim your identity whenever you want cloud backup and cross-device access.</p></div><button id="guest-claim" class="small-button primary-small">CLAIM &amp; SYNC</button></div>
+      <div class="studio-head"><div><div class="eyebrow">YOUR COMPANION PROFILE</div><h2>Shape who they are.</h2></div><div class="studio-actions"><button id="add-passkey" class="secondary" hidden>ADD FACE ID</button><button id="signout-studio" class="secondary" hidden>SIGN OUT</button></div></div><div id="guest-banner" class="guest-banner"><div><strong id="guest-mode-title">You are exploring as a guest.</strong><p id="guest-mode-copy">Your Companion is saved on this device only. Claim your identity whenever you want cloud backup and cross-device access.</p></div><button id="guest-claim" class="small-button primary-small" hidden>CLAIM &amp; SYNC</button></div>
       <div class="studio-grid">
         <section class="panel">
           <div class="eyebrow">01 / IDENTITY</div>
