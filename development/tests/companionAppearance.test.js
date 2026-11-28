@@ -16,6 +16,7 @@ test("missing or unknown appearance values use stable defaults", () => {
     accent: 0xffd700
   });
   assert.equal(resolveCompanionMaterials(null), null);
+  assert.equal(resolveCompanionMaterials("not-a-profile"), null);
 });
 
 test("appearance resolver does not mutate the saved Companion profile", () => {
