@@ -37,6 +37,8 @@
 - ALIVE_OWNER_EMAIL, ALIVE_OWNER_AUTH_SECRET, ALIVE_OWNER_ENROLLMENT_SECRET, a newly generated one-time enrollment token, and its seven-day expiry are also scoped only to this Preview branch.
 - The player-accounts-dev database currently has zero users, zero player profiles, and zero ALIVE identities. The alive-dev database currently has zero ALIVE owner accounts, zero tasks, and zero owner reviews.
 - The legacy DATABASE_URL variable remains as a fallback only; new code explicitly routes player auth and ALIVE owner/control-plane work to their separate databases.
+- The first ALIVE owner account has not been created. A Preview-only one-time invitation is configured to activate the owner passkey; the enrollment gate closes automatically after the first owner is created.
+- ALIVE's task queue and owner-review storage are connected in local, owner-controlled planning mode. Paid AI, hosted sandbox execution, background automation, and autonomous production deployment remain disabled.
 - No production database or production environment variables were changed.
 
 ## Verification
