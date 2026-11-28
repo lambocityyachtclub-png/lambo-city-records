@@ -63,7 +63,7 @@ function open() {
   panel.setAttribute("role", "dialog");
   panel.setAttribute("aria-modal", "true");
   panel.setAttribute("aria-label", "ALIVE Companion profile");
-  panel.style.cssText = "position:fixed;inset:0;z-index:12000;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;background:rgba(3,5,10,.82);backdrop-filter:blur(9px);font-family:Arial,sans-serif;";
+  panel.style.cssText = "position:fixed;inset:0;z-index:12000;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;background:rgba(3,5,10,.68);backdrop-filter:blur(9px);font-family:Arial,sans-serif;";
 
   const card = make("section", null, panel);
   card.style.cssText = "width:min(540px,100%);max-height:88vh;overflow:auto;box-sizing:border-box;padding:24px;border:1px solid rgba(220,190,125,.5);border-radius:18px;background:linear-gradient(145deg,#211d18,#080b11);box-shadow:0 24px 90px rgba(0,0,0,.68);color:#f5f0e8;";
@@ -144,7 +144,9 @@ function open() {
       const link = make("a");
       link.href = url;
       link.download = "alive-companion-backup.json";
+      document.body.appendChild(link);
       link.click();
+      link.remove();
       URL.revokeObjectURL(url);
       status.textContent = "Your Companion backup has been exported to this device.";
       status.style.color = "#c8d9ae";
