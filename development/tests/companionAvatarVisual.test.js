@@ -83,7 +83,8 @@ class FakeObject3D {
   traverse(callback) { callback(this); this.children.forEach(child => child.traverse(callback)); }
   removeFromParent() { this.parent?.remove(this); }
 }
-class FakeGeometry { dispose() {} }
+let disposedGeometryCount = 0;
+class FakeGeometry { dispose() { disposedGeometryCount += 1; } }
 class FakeMaterial {
   constructor(options = {}) {
     const color = options.color ?? 0;
@@ -137,9 +138,13 @@ test("avatar layer hides placeholders, follows player limb poses, and restores f
     characterForm: "stylized",
     appearanceProfile: { skinTone: "deep", hairStyle: "curly", hairColor: "auburn", eyeColor: "green", outfit: "creative", accentColor: "violet" }
   });
+  const disposedBeforeRestore = disposedGeometryCount;
   avatar.restoreOriginals();
   assert.ok(Object.values(original).flat().every(part => part.visible === true));
   assert.equal(root.children.includes(avatar.group), false);
+  assert.ok(disposedGeometryCount > disposedBeforeRestore, "removed avatar geometry is disposed");
+  assert.doesNotThrow(() => avatar.sync(), "sync after disposal is harmless");
+  assert.throws(() => avatar.apply(null), /already been disposed/);
 });
 
 test("Companion wardrobe styles build distinct garment details", async () => {
