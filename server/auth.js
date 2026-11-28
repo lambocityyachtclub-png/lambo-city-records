@@ -3,10 +3,11 @@ import { emailOTP } from "better-auth/plugins";
 import { passkey } from "@better-auth/passkey";
 import { Pool } from "pg";
 import { getPlayerAuthOriginConfig } from "./origin.js";
+import { getPlayerDatabaseUrl } from "./databaseTargets.js";
 
-const databaseUrl = process.env.DATABASE_URL;
+const databaseUrl = getPlayerDatabaseUrl();
 const authSecret = process.env.BETTER_AUTH_SECRET;
-if (!databaseUrl) throw new Error("DATABASE_URL is required for LAMBO CITY player accounts.");
+if (!databaseUrl) throw new Error("PLAYER_DATABASE_URL is required for LAMBO CITY player accounts.");
 if (typeof authSecret !== "string" || authSecret.length < 32) {
   throw new Error("BETTER_AUTH_SECRET must be configured for LAMBO CITY player accounts.");
 }
