@@ -131,8 +131,8 @@ async function loadWorldInStages() {
       stage.map(async ([name, load, initialize = true]) => [name, (await load()).default, initialize])
     );
 
-    for (const [name, system] of loaded) {
-      if (!system || (initialize && typeof system.init !== "function")) {
+    for (const [name, system, initialize] of loaded) {
+      if (!system || (initialize !== false && typeof system.init !== "function")) {
         throw new Error("LAMBO CITY startup module is invalid: " + name);
       }
       engine.systems[name] = system;
