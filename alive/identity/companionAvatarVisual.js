@@ -157,11 +157,13 @@ export function createCompanionAvatar(THREE, playerRoot, originalParts, initialC
   const hoodie = mesh(THREE, new THREE.SphereGeometry(0.08, 8, 6), trimMat, torso, [0, 0.42, -0.32]);
   hoodie.visible = false;
   let hoodieActive = false;
+  let currentDesign = resolveCompanionAvatarDesign(initialCompanion);
 
   const originals = Object.values(originalParts).flat().filter(Boolean);
   const originalVisibility = originals.map(part => part.visible);
   const apply = companion => {
     const design = resolveCompanionAvatarDesign(companion);
+    currentDesign = design;
     bodyMat.color.setHex(hoodieActive ? 0x1a0040 : design.outfit);
     trimMat.color.setHex(design.accent);
     trimMat.emissive?.setHex(design.accent);
@@ -211,7 +213,7 @@ export function createCompanionAvatar(THREE, playerRoot, originalParts, initialC
     setHoodie(active) {
       hoodieActive = Boolean(active);
       hoodie.visible = hoodieActive;
-      bodyMat.color.setHex(hoodieActive ? 0x1a0040 : resolveCompanionAvatarDesign(initialCompanion).outfit);
+      bodyMat.color.setHex(hoodieActive ? 0x1a0040 : currentDesign.outfit);
     },
     restoreOriginals() {
       originals.forEach((part, index) => { part.visible = originalVisibility[index]; });
