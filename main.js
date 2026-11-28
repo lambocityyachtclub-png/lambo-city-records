@@ -1,108 +1,158 @@
+// LAMBO CITY startup: make input and HERO playable before optional world systems load.
+// Optional systems are imported and initialized in small ordered stages to preserve frame time.
 import Engine from "./engine.js";
 import Scene from "./scene.js";
 import Camera from "./camera.js";
 import Renderer from "./renderer.js";
-import World from "./world.js";
-import FestivalStageUpgrade from "./festivalStageUpgrade.js";
-import FestivalStageArchitecture from "./festivalStageArchitecture.js";
-import FestivalStageFinishing from "./festivalStageFinishing.js";
-import FestivalAudienceZone from "./festivalAudienceZone.js";
-import Dock from "./dock.js";
-import DockPath from "./dockPath.js";
-import Water from "./water.js";
-import Sky from "./sky.js";
-import Lighting from "./lighting.js";
-import Palms from "./palms.js";
-import Yacht from "./yacht.js";
 import Input from "./input.js";
-import Player from "./player.js";
-import HUD from "./hud.js";
-import NPC from "./npc.js";
-import CharacterSystem from "./characterSystem.js";
-import DockLife from "./dockLife.js";
-import HeroPerformance from "./heroPerformance.js";
-import heroPostPerformance from "./heroPostPerformance.js";
-import HeroMentorInteraction from "./heroMentorInteraction.js";
-import HeroSecurityExperience from "./heroSecurityExperience.js";
-import CinematicFlowSystem from "./cinematicFlowSystem.js";
-import CinematicWorldSkin from "./cinematicWorldSkin.js";
-import CinematicDockCore from "./cinematicDockCore.js";
-import Marina from "./marina.js";
-import WaterfrontStorefrontDetails from "./waterfrontStorefrontDetails.js";
-import ConferenceCenterDistrict from "./conferenceCenterDistrict.js";
-import StageVideo from "./stageVideo.js";
-import StageScreenMedia from "./stageScreenMedia.js";
-import StageBanner from "./stageBanner.js";
-import AmbientMusic from "./ambientMusic.js";
-import StageMusic from "./stageMusic.js";
-import StageAudioZone from "./stageAudioZone.js";
 import Collision from "./collision.js";
-import GrandStagePier from "./grandStagePier.js";
-import StageSpotlights from "./stageSpotlights.js";
-import StageLasers from "./stageLasers.js";
-import StageSmoke from "./stageSmoke.js";
-import StageCrowdPulse from "./stageCrowdPulse.js";
-import StageLiveDrummer from "./stageLiveDrummer.js";
-import StageFireworks from "./stageFireworks.js";
-import YachtLuxuryDetails from "./yachtLuxuryDetails.js";
-import DockEntranceLuxury from "./dockEntranceLuxury.js";
-import DockLuxuryOverhaul from "./dockLuxuryOverhaul.js";
-import RecordsHQ from "./recordsHQ.js";
-import RecordsHQFoundation from "./recordsHQFoundation.js";
-import RecordsHQFloor1 from "./recordsHQFloor1.js";
-import RecordsHQFloor2Studio from "./recordsHQFloor2Studio.js";
-import Floor2StudioApp from "./floor2StudioApp.js";
-import Floor2InstrumentApp from "./floor2InstrumentApp.js";
-import Floor2DrumStation from "./floor2DrumStation.js";
-import Floor2StudioNavigation from "./floor2StudioNavigation.js";
-import Floor2StudioSession from "./floor2StudioSession.js";
-import StudioMixMasterConsole3D from "./studioMixMasterConsole3D.js";
-import Floor2LiveDrummer from "./floor2LiveDrummer.js";
-import Floor2VocalBooth3D from "./floor2VocalBooth3D.js";
-import Floor2CitySynth from "./floor2CitySynth.js";
-import RecordsHQEntranceThreshold from "./recordsHQEntranceThreshold.js";
-import RecordsHQMediaDetails from "./recordsHQMediaDetails.js";
-import RecordsHQMerchDetails from "./recordsHQMerchDetails.js";
-import HeroCareerCenter from "./heroCareerCenter.js";
-import RecordsHQElevator from "./recordsHQElevator.js";
-import Elevator from "./elevator.js";
-import BoardwalkOverlooks from "./boardwalkOverlooks.js";
+import Player from "./player.js";
 import PerformanceMonitor from "./performanceMonitor.js";
+
 const engine = new Engine();
 engine.registerSystems({
-  scene: Scene, camera: Camera, renderer: Renderer, world: World,
-  festivalStageUpgrade: FestivalStageUpgrade,
-  festivalStageArchitecture: FestivalStageArchitecture,
-  festivalStageFinishing: FestivalStageFinishing,
-  festivalAudienceZone: FestivalAudienceZone,
-  water: Water, dock: Dock, dockPath: DockPath, sky: Sky, lighting: Lighting,
-  palms: Palms, yacht: Yacht, npc: NPC, characterSystem: CharacterSystem,
-  dockLife: DockLife, heroPerformance: HeroPerformance, heroPostPerformance,
-  heroMentorInteraction: HeroMentorInteraction, heroSecurityExperience: HeroSecurityExperience,
-  cinematicFlow: CinematicFlowSystem, worldSkin: CinematicWorldSkin,
-  dockCore: CinematicDockCore, marina: Marina,
-  waterfrontStorefrontDetails: WaterfrontStorefrontDetails,
-  conferenceCenterDistrict: ConferenceCenterDistrict, stageVideo: StageVideo,
-  stageScreenMedia: StageScreenMedia, stageBanner: StageBanner,
-  ambientMusic: AmbientMusic, stageMusic: StageMusic, stageAudioZone: StageAudioZone,
-  collision: Collision, stageSpotlights: StageSpotlights, stageLasers: StageLasers,
-  stageSmoke: StageSmoke, stageCrowdPulse: StageCrowdPulse,
-  stageLiveDrummer: StageLiveDrummer,
-  stageFireworks: StageFireworks,
-  grandStagePier: GrandStagePier, yachtLuxuryDetails: YachtLuxuryDetails,
-  dockEntranceLuxury: DockEntranceLuxury, dockLuxuryOverhaul: DockLuxuryOverhaul,
-  recordsHQ: RecordsHQ, recordsHQFoundation: RecordsHQFoundation,
-  recordsHQFloor1: RecordsHQFloor1, recordsHQFloor2Studio: RecordsHQFloor2Studio,
-  floor2StudioApp: Floor2StudioApp, floor2InstrumentApp: Floor2InstrumentApp,
-  floor2DrumStation: Floor2DrumStation, floor2StudioNavigation: Floor2StudioNavigation,
-  floor2StudioSession: Floor2StudioSession, studioMixMasterConsole3D: StudioMixMasterConsole3D,
-  floor2LiveDrummer: Floor2LiveDrummer, floor2VocalBooth3D: Floor2VocalBooth3D,
-  floor2CitySynth: Floor2CitySynth, recordsHQEntranceThreshold: RecordsHQEntranceThreshold,
-  recordsHQMediaDetails: RecordsHQMediaDetails, recordsHQMerchDetails: RecordsHQMerchDetails,
-  heroCareerCenter: HeroCareerCenter, recordsHQElevator: RecordsHQElevator,
-  input: Input, player: Player, elevator: Elevator, boardwalkOverlooks: BoardwalkOverlooks,
-  hud: HUD, performanceMonitor: PerformanceMonitor,
+  scene: Scene,
+  camera: Camera,
+  renderer: Renderer,
+  input: Input,
+  collision: Collision,
+  player: Player,
+  performanceMonitor: PerformanceMonitor
 });
+
+// Core startup completes synchronously: keyboard listeners, collision, HERO,
+// camera, renderer, and the animation loop are ready before world add-ons load.
+engine.init();
+
+const startupStages = [
+  [
+    ["world", () => import("./world.js")],
+    ["festivalStageUpgrade", () => import("./festivalStageUpgrade.js")],
+    ["festivalStageArchitecture", () => import("./festivalStageArchitecture.js")],
+    ["festivalStageFinishing", () => import("./festivalStageFinishing.js")]
+  ],
+  [
+    ["festivalAudienceZone", () => import("./festivalAudienceZone.js")],
+    ["water", () => import("./water.js")],
+    ["dock", () => import("./dock.js")],
+    ["dockPath", () => import("./dockPath.js")]
+  ],
+  [
+    ["sky", () => import("./sky.js")],
+    ["lighting", () => import("./lighting.js")],
+    ["palms", () => import("./palms.js")],
+    ["yacht", () => import("./yacht.js")]
+  ],
+  [
+    ["npc", () => import("./npc.js")],
+    ["characterSystem", () => import("./characterSystem.js")],
+    ["dockLife", () => import("./dockLife.js")],
+    ["heroPerformance", () => import("./heroPerformance.js")]
+  ],
+  [
+    ["heroPostPerformance", () => import("./heroPostPerformance.js")],
+    ["heroSecurityExperience", () => import("./heroSecurityExperience.js")],
+    ["cinematicFlow", () => import("./cinematicFlowSystem.js")],
+    ["worldSkin", () => import("./cinematicWorldSkin.js")]
+  ],
+  [
+    ["dockCore", () => import("./cinematicDockCore.js")],
+    ["marina", () => import("./marina.js")],
+    ["waterfrontStorefrontDetails", () => import("./waterfrontStorefrontDetails.js")],
+    ["conferenceCenterDistrict", () => import("./conferenceCenterDistrict.js")]
+  ],
+  [
+    ["stageVideo", () => import("./stageVideo.js")],
+    ["stageScreenMedia", () => import("./stageScreenMedia.js")],
+    ["stageBanner", () => import("./stageBanner.js")],
+    ["ambientMusic", () => import("./ambientMusic.js")]
+  ],
+  [
+    ["stageMusic", () => import("./stageMusic.js")],
+    ["stageAudioZone", () => import("./stageAudioZone.js")],
+    ["stageSpotlights", () => import("./stageSpotlights.js")],
+    ["stageLasers", () => import("./stageLasers.js")]
+  ],
+  [
+    ["stageSmoke", () => import("./stageSmoke.js")],
+    ["stageCrowdPulse", () => import("./stageCrowdPulse.js")],
+    ["stageLiveDrummer", () => import("./stageLiveDrummer.js")],
+    ["stageFireworks", () => import("./stageFireworks.js")]
+  ],
+  [
+    ["grandStagePier", () => import("./grandStagePier.js")],
+    ["yachtLuxuryDetails", () => import("./yachtLuxuryDetails.js")],
+    ["dockEntranceLuxury", () => import("./dockEntranceLuxury.js")],
+    ["dockLuxuryOverhaul", () => import("./dockLuxuryOverhaul.js")]
+  ],
+  [
+    ["recordsHQ", () => import("./recordsHQ.js")],
+    ["recordsHQFoundation", () => import("./recordsHQFoundation.js")],
+    ["elevator", () => import("./elevator.js")],
+    ["recordsHQFloor1", () => import("./recordsHQFloor1.js")]
+  ],
+  [
+    ["recordsHQFloor2Studio", () => import("./recordsHQFloor2Studio.js")],
+    ["floor2StudioApp", () => import("./floor2StudioApp.js")],
+    ["floor2InstrumentApp", () => import("./floor2InstrumentApp.js")],
+    ["floor2DrumStation", () => import("./floor2DrumStation.js")]
+  ],
+  [
+    ["floor2StudioNavigation", () => import("./floor2StudioNavigation.js")],
+    ["recordsHQEntranceThreshold", () => import("./recordsHQEntranceThreshold.js")],
+    ["recordsHQMediaDetails", () => import("./recordsHQMediaDetails.js")],
+    ["recordsHQMerchDetails", () => import("./recordsHQMerchDetails.js")]
+  ],
+  [
+    ["heroCareerCenter", () => import("./heroCareerCenter.js")],
+    ["recordsHQElevator", () => import("./recordsHQElevator.js")],
+    ["floor2StudioSession", () => import("./floor2StudioSession.js")],
+    ["studioMixMasterConsole3D", () => import("./studioMixMasterConsole3D.js")]
+  ],
+  [
+    ["floor2LiveDrummer", () => import("./floor2LiveDrummer.js")],
+    ["floor2VocalBooth3D", () => import("./floor2VocalBooth3D.js")],
+    ["floor2CitySynth", () => import("./floor2CitySynth.js")],
+    ["boardwalkOverlooks", () => import("./boardwalkOverlooks.js")]
+  ],
+  [
+    ["hud", () => import("./hud.js")]
+  ]
+];
+
+const yieldToRender = () =>
+  new Promise(resolve => requestAnimationFrame(() => resolve()));
+
+async function loadWorldInStages() {
+  for (let stageIndex = 0; stageIndex < startupStages.length; stageIndex++) {
+    const stage = startupStages[stageIndex];
+    const loaded = await Promise.all(
+      stage.map(async ([name, load]) => [name, (await load()).default])
+    );
+
+    for (const [name, system] of loaded) {
+      if (!system || typeof system.init !== "function") {
+        throw new Error("LAMBO CITY startup module is invalid: " + name);
+      }
+      engine.systems[name] = system;
+    }
+
+    // Preserve the original module initialization order. Yield between
+    // modules so the browser can render and process keyboard input.
+    for (const [name, system] of loaded) {
+      system.init(engine.scene, engine.context);
+      await yieldToRender();
+    }
+  }
+
+  window.__lamboCityWorldReady = true;
+}
+
+loadWorldInStages().catch(error => {
+  window.__lamboCityStartupError = String(error?.message || error);
+  console.error("LAMBO CITY staged startup stopped:", error);
+});
+
 const destinationLoads = new Map();
 window.__lamboCityPrepareFloor = floor => {
   if (floor !== 3 && floor !== 4) return Promise.resolve();
