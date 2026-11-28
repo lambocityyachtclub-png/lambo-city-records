@@ -6,7 +6,7 @@ Create a luxury digital universe with the emotional impact of a supercar reveal,
 
 LAMBO CITY is the destination: a living entertainment, culture, and creative world.
 ALIVE is the personal identity and Companion layer: the person, their creations, their history, and the tools that travel with them.
-Hiro is the creative host and record-making guide inside the LAMBO CITY experience.
+HERO is the creative host and record-making guide inside the LAMBO CITY experience.
 
 ## Permanent creative reference pillars
 These three named creative influences are part of the standing LAMBO CITY / ALIVE blueprint. They are sources of inspiration for principles and experience quality—not permission to reproduce protected marks, designs, characters, artwork, or trade dress. LAMBO CITY remains its own original intellectual property.
@@ -67,7 +67,7 @@ Motion should feel like precision machinery and an art installation: short, weig
 ## Experience architecture
 - **LAMBO CITY:** the public-facing world, events, culture, destinations, and shared experiences.
 - **ALIVE:** portable personal identity, Companion, saved work, preferences, and export.
-- **Hiro:** in-world host and guided creative workflow for making records.
+- **HERO:** in-world host and guided creative workflow for making records.
 - **Records / Creations:** user-owned works with explicit save, version history, and export paths.
 - **Owner Control:** private founder controls, Living Contracts, audit history, and deployment approval.
 
