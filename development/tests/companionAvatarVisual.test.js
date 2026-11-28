@@ -134,6 +134,11 @@ test("avatar layer hides placeholders, follows player limb poses, and restores f
   const armPivot = avatar.group.children.find(child => child.position.x === -0.9 && child.position.y === 1.5);
   assert.ok(armPivot, "avatar arm pivot follows the original arm position");
   assert.equal(armPivot.rotation.x, 0.5);
+  original.body.position.set(0, 1.45, 0);
+  original.head.position.set(0, 2.55, 0);
+  avatar.sync();
+  const neck = avatar.group.children.find(child => child.name === "companionNeck");
+  assert.equal(neck.position.y, 1.98, "neck follows the adjusted seated head height");
   avatar.apply({
     characterForm: "stylized",
     appearanceProfile: { skinTone: "deep", hairStyle: "curly", hairColor: "auburn", eyeColor: "green", outfit: "creative", accentColor: "violet" }
