@@ -8,6 +8,18 @@
     "api/alive/auth/[...all].js": {
       "includeFiles": "alive/server/**/*",
       "maxDuration": 30
+    },
+    "api/auth/[...all].js": {
+      "includeFiles": "server/**/*",
+      "maxDuration": 30
+    },
+    "api/player/profile.js": {
+      "includeFiles": "server/**/*",
+      "maxDuration": 30
+    },
+    "api/alive/identity.js": {
+      "includeFiles": "{server/**/*,alive/identity/**/*}",
+      "maxDuration": 30
     }
   }
 }
