@@ -75,3 +75,15 @@ The asset must be tested in neutral stance, walking, turning, greeting, and the 
 ## Not yet complete
 
 This specification does not claim that the high-fidelity GLB has been generated, rigged, imported, or tested. A reference image is not itself a game-ready 3D mesh. The actual GLB must be created from the supplied turnaround and inspected before the code can display the exact target appearance.
+
+
+## Approved animation and rendering direction (founder clarification)
+
+The supplied HERO reference images remain the exact visual source of truth. Do not generate a replacement concept image, redesign the face, change the outfit, or reinterpret the character.
+
+The requested presentation is a realistic 3D character with Dragon Ball Z-inspired animation energy, not a cartoon redesign:
+- Preserve the exact recognizable HERO appearance and reference silhouette.
+- Use realistic 3D skin, hair, fabric, denim, footwear, jewelry, and physically plausible materials.
+- Animation may use expressive poses, energetic movement, dramatic timing, and fluid transitions inspired by high-energy anime action.
+- Keep the character itself grounded and detailed; do not convert the model into a 2D anime drawing or exaggerated cartoon proportions.
+- Any future style exploration must be applied to animation/rendering treatment only and must not replace the supplied reference images as the character design authority.
