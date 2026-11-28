@@ -177,6 +177,7 @@ export function createCompanionAvatar(THREE, playerRoot, originalParts, initialC
   };
 
   const neck = mesh(THREE, new THREE.CylinderGeometry(0.14, 0.17, 0.26, 12), skinMat, group, [0, 2.58, 0]);
+  neck.name = "companionNeck";
   const head = createHead(THREE, group, resolveCompanionAvatarDesign(initialCompanion));
   head.position.set(0, 3.15, 0);
 
@@ -253,6 +254,7 @@ export function createCompanionAvatar(THREE, playerRoot, originalParts, initialC
   const sync = () => {
     if (originalParts.body) torso.position.copy(originalParts.body.position);
     if (originalParts.head) head.position.copy(originalParts.head.position);
+    neck.position.set(head.position.x, head.position.y - 0.57, head.position.z);
     arms.forEach((pivot, index) => {
       const source = originalParts.arms?.[index];
       if (source) { pivot.position.copy(source.position); pivot.rotation.copy(source.rotation); }
