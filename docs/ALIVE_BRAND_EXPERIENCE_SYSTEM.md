@@ -9,25 +9,7 @@ ALIVE is the personal identity and Companion layer: the person, their creations,
 HERO is the creative host and record-making guide inside the LAMBO CITY experience.
 
 ## Permanent creative reference pillars
-These three named creative influences are part of the standing LAMBO CITY / ALIVE blueprint. They are sources of inspiration for principles and experience quality—not permission to reproduce protected marks, designs, characters, artwork, or trade dress. LAMBO CITY remains its own original intellectual property.
-
-### 1. Lamborghini — Automotive identity
-**Reference qualities:** dramatic silhouettes, precision, bold proportions, performance, and unmistakable presence.
-
-**Our translation:** original vehicle forms, cinematic reveals, precise geometry, confident movement, performance-led environments, and a consistent sense of scale. Preserve approved world geography and vehicle placement while improving detail and realism.
-
-### 2. Louis Vuitton — Luxury experience
-**Reference qualities:** craftsmanship, architectural presentation, exclusivity, cultural experiences, and premium details that reward discovery.
-
-**Our translation:** distinctive destinations, crafted materials, considered hospitality, collectible experiences, member-first access, and spaces where fashion, architecture, art, music, and entertainment meet.
-
-### 3. Takashi Murakami — Art and imagination
-**Reference qualities:** vibrant original art, expressive characters, confident color, and playful moments that make a world feel alive.
-
-**Our translation:** original LAMBO CITY characters, art direction, collectible visual stories, bold but curated color moments, and joyful surprises. All characters and artwork must be independently designed for this universe.
-
-### Partnership integrity
-These references do not imply endorsement, sponsorship, licensing, or affiliation. Do not use partner logos or present any company or artist as a sponsor without a formal agreement. A future Lamborghini or Louis Vuitton partnership is an ambition to earn through an original, functioning, professionally presented experience.
+The permanent internal creative direction draws on three broad qualities: performance-led automotive form, crafted luxury environments, and expressive contemporary art. These are private inspiration cues only. The product, public copy, symbols, characters, and visual assets must remain original to LAMBO CITY and ALIVE. No external company, artist, or brand is represented as an endorser, sponsor, or affiliate.
 
 ## Design principles
 1. **Iconic silhouette before decoration.** Every major interface or building needs one memorable shape or composition that reads at a distance.
