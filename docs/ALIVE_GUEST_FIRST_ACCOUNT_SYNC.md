@@ -33,8 +33,10 @@
 
 - Neon project: lambo-city-alive
 - Neon branch: player-accounts-dev (isolated development branch)
-- Vercel variables for alive/guest-first-companion-current-main: DATABASE_URL, BETTER_AUTH_SECRET, and EMAIL_FROM, all Preview-only.
-- The isolated account database currently has zero users, zero player profiles, and zero ALIVE identities.
+- Vercel variables for alive/guest-first-companion-current-main are Preview-only. PLAYER_DATABASE_URL points to player-accounts-dev; ALIVE_DATABASE_URL points to alive-dev. BETTER_AUTH_SECRET and EMAIL_FROM configure the optional player account flow.
+- ALIVE_OWNER_EMAIL, ALIVE_OWNER_AUTH_SECRET, ALIVE_OWNER_ENROLLMENT_SECRET, a newly generated one-time enrollment token, and its seven-day expiry are also scoped only to this Preview branch.
+- The player-accounts-dev database currently has zero users, zero player profiles, and zero ALIVE identities. The alive-dev database currently has zero ALIVE owner accounts, zero tasks, and zero owner reviews.
+- The legacy DATABASE_URL variable remains as a fallback only; new code explicitly routes player auth and ALIVE owner/control-plane work to their separate databases.
 - No production database or production environment variables were changed.
 
 ## Verification
@@ -45,7 +47,8 @@
 
 ## Activation blockers
 
-- Email OTP delivery requires RESEND_API_KEY. The Preview branch has a verified EMAIL_FROM sender configured, but no Resend API key is currently available. Account signup and email-code recovery therefore cannot be fully exercised until the owner supplies a valid key or selects another email provider.
+- Player email OTP delivery requires RESEND_API_KEY. The Preview branch has a verified EMAIL_FROM sender configured, but no Resend API key is currently available. Player account signup and email-code recovery therefore cannot be fully exercised until the owner supplies a valid key or selects another email provider.
+- ALIVE owner enrollment uses its private Preview-only one-time invitation and passkey, so initial owner activation does not depend on email delivery. Owner password-reset email recovery will remain unavailable until RESEND_API_KEY is configured.
 - Vercel currently reports its free daily API deployment quota (100 deployments) exhausted, with a 24-hour retry window. A fresh preview for the latest commit could not be created during this development pass. Existing preview deployments are older than the current account/identity integration and must not be treated as verification of this latest code.
 
 ## Release boundary
