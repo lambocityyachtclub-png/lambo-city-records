@@ -182,7 +182,7 @@ function open() {
       document.body.appendChild(link);
       link.click();
       link.remove();
-      URL.revokeObjectURL(url);
+      window.setTimeout(() => URL.revokeObjectURL(url), 1500);
       status.textContent = "Your Companion backup has been exported to this device.";
       status.style.color = "#c8d9ae";
     } catch (error) {
