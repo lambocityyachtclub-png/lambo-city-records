@@ -15,8 +15,6 @@ on:
       - "migrations/**"
       - "vercel.json"
       - "alive/identity/identityContract.js"
-      - "development/tests/aliveIdentityApi.test.js"
-      - "development/tests/playerAuthOrigin.test.js"
       - ".github/workflows/player-account-checks.yml"
   push:
     branches:
@@ -27,10 +25,13 @@ on:
       - "server/**"
       - "api/auth/**"
       - "api/player/**"
-      - "api/alive/identity.js"
+      - "api/alive/**"
+      - "alive/server/**"
+      - "development/runtime/**"
+      - "development/tests/**"
+      - "migrations/**"
+      - "vercel.json"
       - "alive/identity/identityContract.js"
-      - "development/tests/aliveIdentityApi.test.js"
-      - "development/tests/playerAuthOrigin.test.js"
       - ".github/workflows/player-account-checks.yml"
 
 permissions:
