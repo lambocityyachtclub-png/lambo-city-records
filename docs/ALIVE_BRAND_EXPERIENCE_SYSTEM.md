@@ -17,7 +17,7 @@ The permanent internal creative direction draws on three broad qualities: perfor
 3. **Controlled surprise.** The base system is restrained and architectural; expressive art, color, and collectible moments appear as curated accents.
 4. **One visual universe, distinct sub-brands.** LAMBO CITY owns the city, entertainment, and culture. ALIVE owns identity, Companion, and personal continuity. Shared foundations, different signatures.
 5. **Luxury is restraint plus access.** Do not fill every surface with gold, badges, gradients, or animation. Use negative space, hierarchy, tactile detail, and deliberate reveal.
-6. **Originality is mandatory.** Do not reproduce Lamborghini marks, Louis Vuitton monograms, Murakami flowers/characters, trade dress, or protected artwork. Translate the underlying principles into original geometry, typography, symbols, and characters.
+6. **Originality is mandatory.** Do not reproduce third-party logos, monograms, signature motifs, trade dress, or protected artwork. Translate the underlying principles into original geometry, typography, symbols, and characters.
 
 ## Visual architecture
 ### Core palette
@@ -36,7 +36,7 @@ The permanent internal creative direction draws on three broad qualities: perfor
 - Avoid faux-Italian naming, excessive all-caps, and generic futuristic sci-fi fonts.
 
 ### Shape language
-Develop an original **Orbit / Cutline** geometry: an open circular orbit intersected by one decisive diagonal cut. Use it as a recurring navigation, loading, seal, and ownership motif. Pair with controlled angular chamfers and rounded interaction surfaces. Do not use Lamborghini's Y or hexagon signature as a logo system.
+Develop an original **Orbit / Cutline** geometry: an open circular orbit intersected by one decisive diagonal cut. Use it as a recurring navigation, loading, seal, and ownership motif. Pair with controlled angular chamfers and rounded interaction surfaces. Do not borrow recognizable third-party signature geometry as a logo system.
 
 ### Material language
 - Satin black anodized metal, smoked glass, porcelain, brushed champagne metal, carbon-fiber-inspired microtexture, and deep petrol glass.
