@@ -152,7 +152,7 @@ export function createCompanionAvatar(THREE, playerRoot, originalParts, initialC
         addPanel(0.16, 0.48, 0.045, trimMat, [side * 0.13, 0.38, 0.405], side * -0.22);
         addPanel(0.035, 0.94, 0.02, trimMat, [side * 0.29, 0.02, 0.36]);
       }
-      addPanel(0.13, 0.1, 0.025, ACCENTS.gold ? trimMat : shirtMat, [-0.22, 0.22, 0.414]);
+      addPanel(0.13, 0.1, 0.025, trimMat, [-0.22, 0.22, 0.414]);
       for (let button = 0; button < 3; button++) {
         mesh(THREE, new THREE.SphereGeometry(0.018, 7, 6), metalMat, wardrobe, [0, 0.2 - button * 0.16, 0.43]);
       }
