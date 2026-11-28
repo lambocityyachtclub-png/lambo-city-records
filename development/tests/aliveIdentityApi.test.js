@@ -77,6 +77,10 @@ test("ALIVE identity PUT derives ownership from the verified session", async () 
   assert.equal(JSON.parse(values[2]).privacy.memoryAccess, "owner-only");
   assert.equal(JSON.parse(values[2]).privacy.trainingUse, false);
   assert.equal(JSON.parse(values[2]).memoryPolicy.sharing, "private");
+  assert.deepEqual(JSON.parse(values[2]).character.appearanceProfile, {
+    skinTone: "porcelain", hairStyle: "short", hairColor: "black",
+    eyeColor: "brown", outfit: "classic", accentColor: "gold"
+  });
   assert.equal(res.payload.synced, true);
 });
 
@@ -109,4 +113,30 @@ test("ALIVE identity API rejects unsupported character forms", async () => {
     body: { identityId: "guest-1", displayName: "My Companion", characterForm: "unknown" }
   }, res);
   assert.equal(res.statusCode, 400);
+});
+
+test("ALIVE identity PUT rejects oversized payloads before database writes", async () => {
+  let queried = false;
+  const handler = makeHandler({ query: async () => { queried = true; return { rowCount: 1, rows: [] }; } });
+  const res = response();
+  await handler({
+    method: "PUT",
+    headers: {},
+    body: { identityId: "guest-1", displayName: "My Companion", characterForm: "digital-human", personality: { summary: "x".repeat(17000) } }
+  }, res);
+  assert.equal(res.statusCode, 413);
+  assert.equal(queried, false);
+});
+
+test("ALIVE identity PUT rejects malformed stable identity IDs", async () => {
+  let queried = false;
+  const handler = makeHandler({ query: async () => { queried = true; return { rowCount: 1, rows: [] }; } });
+  const res = response();
+  await handler({
+    method: "PUT",
+    headers: {},
+    body: { identityId: "guest/foreign", displayName: "My Companion", characterForm: "digital-human" }
+  }, res);
+  assert.equal(res.statusCode, 400);
+  assert.equal(queried, false);
 });
