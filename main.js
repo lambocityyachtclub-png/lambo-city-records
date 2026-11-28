@@ -131,7 +131,7 @@ async function loadWorldInStages() {
       stage.map(async ([name, load, initMode = "scene"]) => [name, (await load()).default, initMode])
     );
 
-    for (const [name, system, initialize] of loaded) {
+    for (const [name, system, initMode] of loaded) {
       if (!system || (initMode !== null && typeof system.init !== "function")) {
         throw new Error("LAMBO CITY startup module is invalid: " + name);
       }
@@ -200,4 +200,3 @@ window.__lamboCityPrepareFloor = floor => {
   }
   return destinationLoads.get(floor);
 };
-engine.init();
