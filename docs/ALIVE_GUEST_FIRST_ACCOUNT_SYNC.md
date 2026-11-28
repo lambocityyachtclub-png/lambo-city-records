@@ -43,8 +43,8 @@
 
 ## Verification
 
-- Player Account and ALIVE Identity Checks: 13 passed, 0 failed.
-- Development Engine Tests: 222 passed, 0 failed.
+- Player Account and ALIVE Identity Checks: 24 passed, 0 failed.
+- Development Engine Tests: 233 passed, 0 failed.
 - The separate World System Checks workflow still reports the known legacy DockLife static-import assertion. The deployed startup architecture uses the staged dynamic import from PR #207; no change to that unrelated code was made.
 
 ## Activation blockers
