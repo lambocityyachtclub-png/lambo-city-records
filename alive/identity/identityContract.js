@@ -37,14 +37,26 @@ export function createPersonalIdentity(input = {}) {
   }
 
   const grants = Array.isArray(input.grants) ? input.grants : [];
-  const safeGrants = grants
+  const normalizedGrants = grants
     .filter(grant => grant && typeof grant === "object")
     .map(grant => ({
       subjectId: text(grant.subjectId, 128),
       role: IDENTITY_ROLES.includes(grant.role) && grant.role !== "owner" ? grant.role : "viewer",
       permissions: listOfText(grant.permissions, 12, 48)
-    }))
-    .filter(grant => grant.subjectId && grant.subjectId !== ownerId);
+    }));
+  const grantCounts = new Map();
+  for (const grant of normalizedGrants) {
+    if (grant.subjectId && grant.subjectId !== ownerId) {
+      grantCounts.set(grant.subjectId, (grantCounts.get(grant.subjectId) || 0) + 1);
+    }
+  }
+  // Ambiguous duplicate grants are discarded entirely rather than allowing
+  // array order to decide whether a subject receives editor or viewer access.
+  const safeGrants = normalizedGrants.filter(grant =>
+    grant.subjectId &&
+    grant.subjectId !== ownerId &&
+    grantCounts.get(grant.subjectId) === 1
+  );
 
   const identity = {
     schema: "alive-personal-identity",
@@ -108,9 +120,15 @@ export function validatePersonalIdentity(identity) {
   if (identity.memoryPolicy?.sharing !== "private") errors.push("Memory sharing must remain private by default.");
   if (!Array.isArray(identity.grants)) errors.push("Identity grants must be an array.");
   else {
+    const grantSubjects = new Set();
     for (const grant of identity.grants) {
-      if (!text(grant?.subjectId, 128)) errors.push("Every access grant needs a subject ID.");
-      if (grant?.subjectId === identity.ownerId) errors.push("The owner must not be represented as a delegated grant.");
+      const subjectId = text(grant?.subjectId, 128);
+      if (!subjectId) errors.push("Every access grant needs a subject ID.");
+      if (subjectId === identity.ownerId) errors.push("The owner must not be represented as a delegated grant.");
+      if (subjectId && grantSubjects.has(subjectId)) {
+        errors.push("Each delegated subject may have only one access grant.");
+      }
+      if (subjectId) grantSubjects.add(subjectId);
       if (!["editor", "viewer"].includes(grant?.role)) errors.push("Delegated grants may only be editor or viewer.");
     }
   }
@@ -123,12 +141,15 @@ export function isIdentityOwner(identity, subjectId) {
 }
 
 export function canAccessIdentity(identity, subjectId, requiredRole = "viewer") {
-  if (!identity || !subjectId) return false;
+  if (!identity || typeof subjectId !== "string" || !subjectId) return false;
   if (!["owner", "editor", "viewer"].includes(requiredRole)) return false;
   if (isIdentityOwner(identity, subjectId)) return true;
   if (requiredRole === "owner") return false;
-  const grant = (identity.grants || []).find(item => item.subjectId === subjectId);
-  if (!grant) return false;
+  const grants = Array.isArray(identity.grants) ? identity.grants : [];
+  const matches = grants.filter(item => item?.subjectId === subjectId);
+  // Fail closed for malformed stored records: duplicate grants never confer access.
+  if (matches.length !== 1) return false;
+  const [grant] = matches;
   if (requiredRole === "editor") return grant.role === "editor";
   return grant.role === "editor" || grant.role === "viewer";
 }
