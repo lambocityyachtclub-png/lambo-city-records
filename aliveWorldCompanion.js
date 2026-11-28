@@ -23,7 +23,10 @@ async function syncCompanionIdentity(identity) {
     })
   });
   const payload = await response.json().catch(() => ({}));
-  if (response.status === 401) return false;
+  if (response.status === 401) {
+    window.__aliveAccountConnected = false;
+    return false;
+  }
   if (!response.ok) throw new Error(payload.error || "Your Companion could not be synced.");
   window.__aliveCloudSyncStatus = "Your Companion is backed up to your LAMBO CITY account.";
   return true;
