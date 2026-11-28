@@ -179,10 +179,13 @@ function renderSignIn() {
         throw new Error(passkeyResult.error.message || "Passkey setup was not completed.");
       }
 
-      await api("/api/player/profile", {
-        method: "PUT",
-        body: JSON.stringify({ username: cleanName, avatarImages: [], bio: "" })
-      });
+      const existingProfile = await api("/api/player/profile").catch(() => null);
+      if (!existingProfile?.profile) {
+        await api("/api/player/profile", {
+          method: "PUT",
+          body: JSON.stringify({ username: cleanName, avatarImages: [], bio: "" })
+        });
+      }
       const session = await client.getSession();
       await showSignedIn(session.data?.user || result.data?.user || { name: cleanName, email: cleanEmail });
     } catch (error) {
