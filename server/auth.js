@@ -51,6 +51,7 @@ async function sendPlayerCode({ email, otp, type }) {
 export const auth = betterAuth({
   appName: "LAMBO CITY",
   baseURL: authOrigin.baseURL,
+  advanced: { cookiePrefix: "lambo-player" },
   secret: authSecret,
   trustedOrigins: authOrigin.trustedOrigins,
   database: pool,
@@ -66,7 +67,8 @@ export const auth = betterAuth({
     passkey({
       rpID: authOrigin.rpID,
       rpName: "LAMBO CITY",
-      origin: authOrigin.passkeyOrigins
+      origin: authOrigin.passkeyOrigins,
+      advanced: { webAuthnChallengeCookie: "lambo-player-passkey" }
     })
   ],
   session: { expiresIn: 60 * 60 * 24 * 30, updateAge: 60 * 60 * 24 },
