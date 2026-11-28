@@ -1,7 +1,8 @@
-import { loadGuestIdentity, saveGuestCompanion } from "./alive/identity/guestIdentity.js";
+import { loadGuestIdentity, saveGuestCompanion, exportGuestIdentity, importGuestIdentity } from "./alive/identity/guestIdentity.js";
 
 let panel = null;
 let keyHandler = null;
+let restorePreview = null;
 
 const OPTIONS = {
   characterForm: [["digital-human", "Digital human"], ["stylized", "Stylized character"]],
@@ -20,7 +21,9 @@ function make(tag, text, parent) {
   return node;
 }
 
-function close() {
+function close({ restore = true } = {}) {
+  if (restore) restorePreview?.();
+  restorePreview = null;
   if (panel) panel.remove();
   panel = null;
   window.__aliveCompanionPanelOpen = false;
@@ -48,6 +51,12 @@ function open() {
   if (panel) return;
   let saved = null;
   try { saved = loadGuestIdentity()?.companion || null; } catch {}
+  const baseline = saved || {
+    displayName: "Companion", characterForm: "digital-human",
+    appearanceProfile: { skinTone: "medium", hairStyle: "short", hairColor: "black", eyeColor: "brown", outfit: "streetwear", accentColor: "gold" },
+    personality: { summary: "", traits: [] }
+  };
+  restorePreview = () => window.__lamboCityApplyCompanionAppearance?.(baseline);
 
   panel = make("div", null, document.body);
   panel.id = "alive-companion-panel";
@@ -70,7 +79,7 @@ function open() {
 
   const title = make("h2", "YOUR ALIVE COMPANION", card);
   title.style.cssText = "margin:24px 0 7px;font-size:25px;letter-spacing:.3px;color:#fff;";
-  const intro = make("p", "Create and save your personal Companion profile from inside LAMBO CITY.", card);
+  const intro = make("p", "Create your personal Companion inside LAMBO CITY. Appearance changes preview on your character as you make them.", card);
   intro.style.cssText = "margin:0 0 16px;color:#c5c0c8;font-size:13px;line-height:1.6;";
 
   const form = make("form", null, card);
@@ -115,6 +124,78 @@ function open() {
   status.setAttribute("aria-live", "polite");
   status.style.cssText = "margin:16px 0;color:#c8b98f;font-size:11px;line-height:1.55;";
 
+  const backupRow = make("div", null, card);
+  backupRow.style.cssText = "display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:8px 0 4px;";
+  const exportButton = make("button", "EXPORT PROFILE", backupRow);
+  exportButton.type = "button";
+  exportButton.style.cssText = "min-height:40px;border:1px solid rgba(220,190,125,.5);border-radius:999px;background:#111318;color:#e7d2a5;font-size:10px;font-weight:700;letter-spacing:.8px;cursor:pointer;";
+  const importButton = make("button", "IMPORT BACKUP", backupRow);
+  importButton.type = "button";
+  importButton.style.cssText = exportButton.style.cssText;
+  const importFile = make("input", null, card);
+  importFile.type = "file";
+  importFile.accept = "application/json,.json";
+  importFile.hidden = true;
+  exportButton.addEventListener("click", () => {
+    try {
+      const contents = exportGuestIdentity();
+      const blob = new Blob([contents], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const link = make("a");
+      link.href = url;
+      link.download = "alive-companion-backup.json";
+      link.click();
+      URL.revokeObjectURL(url);
+      status.textContent = "Your Companion backup has been exported to this device.";
+      status.style.color = "#c8d9ae";
+    } catch (error) {
+      status.textContent = error.message || "Your Companion backup could not be exported.";
+      status.style.color = "#ffaaaa";
+    }
+  });
+  importButton.addEventListener("click", () => importFile.click());
+  importFile.addEventListener("change", async () => {
+    const file = importFile.files?.[0];
+    if (!file) return;
+    if (file.size > 24000) {
+      status.textContent = "That backup file is too large to import.";
+      status.style.color = "#ffaaaa";
+      importFile.value = "";
+      return;
+    }
+    if (!window.confirm("Import this ALIVE Companion backup and replace the profile saved on this device?")) {
+      importFile.value = "";
+      return;
+    }
+    try {
+      const contents = await file.text();
+      importGuestIdentity(contents);
+      close({ restore: false });
+      open();
+    } catch (error) {
+      status.textContent = error.message || "That Companion backup could not be imported.";
+      status.style.color = "#ffaaaa";
+    } finally {
+      importFile.value = "";
+    }
+  });
+
+  const preview = () => {
+    const draft = {
+      displayName: name.value.trim().slice(0, 40) || "Companion",
+      characterForm: characterForm.value,
+      appearanceProfile: {
+        skinTone: skinTone.value, hairStyle: hairStyle.value, hairColor: hairColor.value,
+        eyeColor: eyeColor.value, outfit: outfit.value, accentColor: accentColor.value
+      },
+      personality: { summary: personality.value.slice(0, 240), traits: saved?.personality?.traits || [] }
+    };
+    window.__lamboCityApplyCompanionAppearance?.(draft);
+  };
+  [characterForm, skinTone, hairStyle, hairColor, eyeColor, outfit, accentColor].forEach(control => {
+    control.addEventListener("change", preview);
+  });
+
   const save = make("button", saved ? "SAVE COMPANION CHANGES" : "CREATE MY COMPANION", form);
   save.type = "submit";
   save.style.cssText = "width:100%;min-height:46px;margin-top:8px;border:1px solid #d8b475;border-radius:999px;background:linear-gradient(135deg,#ead39a,#c9a55e);color:#17130b;font-size:10px;font-weight:700;letter-spacing:1.3px;cursor:pointer;";
@@ -139,7 +220,7 @@ function open() {
       status.textContent = "Your Companion is saved and its supported appearance is applied to your character.";
       status.style.color = "#c8d9ae";
       save.textContent = "SAVE COMPANION CHANGES";
-      close();
+      close({ restore: false });
     } catch (error) {
       status.textContent = error.message || "Your Companion could not be saved in this browser.";
       status.style.color = "#ffaaaa";
