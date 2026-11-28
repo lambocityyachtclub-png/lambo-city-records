@@ -8,7 +8,12 @@ on:
       - "server/**"
       - "api/auth/**"
       - "api/player/**"
-      - "api/alive/identity.js"
+      - "api/alive/**"
+      - "alive/server/**"
+      - "development/runtime/**"
+      - "development/tests/**"
+      - "migrations/**"
+      - "vercel.json"
       - "alive/identity/identityContract.js"
       - "development/tests/aliveIdentityApi.test.js"
       - "development/tests/playerAuthOrigin.test.js"
@@ -49,7 +54,6 @@ jobs:
           for file in \
             playerAccounts.js \
             server/auth.js \
-            alive/server/ownerAuth.js \
             server/origin.js \
             server/http.js \
             server/aliveIdentityApi.js \
