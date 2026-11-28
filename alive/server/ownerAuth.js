@@ -64,6 +64,7 @@ export function getAliveOwnerAuth() {
   auth = betterAuth({
     appName: "LAMBO CITY ALIVE Owner",
     baseURL,
+    advanced: { cookiePrefix: "alive-owner" },
     basePath: "/api/alive/auth",
     secret,
     trustedOrigins,
@@ -121,6 +122,7 @@ export function getAliveOwnerAuth() {
         rpID,
         rpName: "LAMBO CITY ALIVE Owner",
         origin: [baseURL],
+        advanced: { webAuthnChallengeCookie: "alive-owner-passkey" },
         schema: {
           passkey: { modelName: "alive_owner_passkey" }
         },
