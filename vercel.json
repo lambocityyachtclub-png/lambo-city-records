@@ -24,6 +24,10 @@
     "api/player/profile.js": {
       "includeFiles": "{server/**/*,package.json}",
       "maxDuration": 15
+    },
+    "api/player/export.js": {
+      "includeFiles": "{server/**/*,package.json}",
+      "maxDuration": 30
     }
   }
 }
