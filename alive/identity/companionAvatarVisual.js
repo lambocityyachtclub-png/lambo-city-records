@@ -17,6 +17,7 @@ export function resolveCompanionAvatarDesign(companion) {
     eyes: EYES[source.eyeColor] ?? EYES.brown,
     hairStyle: ["short", "curly", "long", "braids", "buzz", "none"].includes(source.hairStyle) ? source.hairStyle : "short",
     outfit: OUTFITS[source.outfit] ?? OUTFITS.streetwear,
+    outfitStyle: ["streetwear", "classic", "minimal", "creative"].includes(source.outfit) ? source.outfit : "streetwear",
     accent: ACCENTS[source.accentColor] ?? ACCENTS.gold
   });
 }
@@ -138,7 +139,7 @@ export function createCompanionAvatar(THREE, playerRoot, originalParts, initialC
       panel.rotation.z = rotation;
       return panel;
     };
-    if (design.outfit === "streetwear") {
+    if (design.outfitStyle === "streetwear") {
       mesh(THREE, new THREE.SphereGeometry(0.34, 14, 10), bodyMat, wardrobe, [0, 0.38, -0.27], [1, 0.82, 0.55]);
       addPanel(0.46, 0.24, 0.055, bodyMat, [0, -0.34, 0.405]);
       addPanel(0.025, 0.58, 0.025, trimMat, [0, 0.04, 0.414]);
@@ -146,7 +147,7 @@ export function createCompanionAvatar(THREE, playerRoot, originalParts, initialC
         const cord = mesh(THREE, new THREE.CylinderGeometry(0.012, 0.012, 0.26, 6), trimMat, wardrobe, [side * 0.07, 0.23, 0.43]);
         cord.rotation.z = side * -0.08;
       }
-    } else if (design.outfit === "classic") {
+    } else if (design.outfitStyle === "classic") {
       addPanel(0.32, 0.82, 0.04, shirtMat, [0, 0.08, 0.378]);
       for (const side of [-1, 1]) {
         addPanel(0.16, 0.48, 0.045, trimMat, [side * 0.13, 0.38, 0.405], side * -0.22);
@@ -156,7 +157,7 @@ export function createCompanionAvatar(THREE, playerRoot, originalParts, initialC
       for (let button = 0; button < 3; button++) {
         mesh(THREE, new THREE.SphereGeometry(0.018, 7, 6), metalMat, wardrobe, [0, 0.2 - button * 0.16, 0.43]);
       }
-    } else if (design.outfit === "minimal") {
+    } else if (design.outfitStyle === "minimal") {
       addPanel(0.25, 0.88, 0.035, shirtMat, [0, 0.04, 0.38]);
       addPanel(0.018, 0.72, 0.02, seamMat, [0, 0.02, 0.406]);
       addPanel(0.18, 0.025, 0.02, trimMat, [0, -0.38, 0.405]);
