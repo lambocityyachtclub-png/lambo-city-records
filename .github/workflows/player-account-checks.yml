@@ -56,6 +56,7 @@ jobs:
             alive/server/ownerAuth.js \
             alive/server/ownerEnrollment.js \
             development/runtime/hostedAliveApiRuntime.js \
+            development/runtime/aliveOwnerApi.js \
             'api/alive/[action].js' \
             'api/alive/auth/[...all].js' \
             'api/auth/[...all].js' \
