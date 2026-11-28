@@ -345,8 +345,15 @@ export default {
     this._companionParts.logo.emissive.setHex(palette.accent);
     this._companionParts.chain.color.setHex(palette.accent);
     this._companionParts.chain.emissive.setHex(palette.accent);
-    this._companionAvatar?.apply(companion);
-    this._companionAvatar?.sync();
+    try {
+      this._companionAvatar?.apply(companion);
+      this._companionAvatar?.sync();
+    } catch (error) {
+      this._companionAvatar?.restoreOriginals?.();
+      this._companionAvatar = null;
+      console.warn("[ALIVE] Companion appearance update failed; restored the original player visual:", error);
+      return false;
+    }
     return true;
   },
 
