@@ -180,14 +180,20 @@ function renderSignIn() {
       }
 
       const existingProfile = await api("/api/player/profile").catch(() => null);
+      let profileError = null;
       if (!existingProfile?.profile) {
-        await api("/api/player/profile", {
-          method: "PUT",
-          body: JSON.stringify({ username: cleanName, avatarImages: [], bio: "" })
-        });
+        try {
+          await api("/api/player/profile", {
+            method: "PUT",
+            body: JSON.stringify({ username: cleanName, avatarImages: [], bio: "" })
+          });
+        } catch (error) {
+          profileError = error;
+        }
       }
       const session = await client.getSession();
       await showSignedIn(session.data?.user || result.data?.user || { name: cleanName, email: cleanEmail });
+      if (profileError) setStatus(profileError.message, true);
     } catch (error) {
       setStatus(error.message, true);
     }
