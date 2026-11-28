@@ -2,7 +2,7 @@ export default class Engine {
   constructor() {
     this.systems = {};
     this.lastTime = 0;
-    this.context = {};
+    this.context = { startupPending: new Set() };
   }
   registerSystems(systems) {
     this.systems = systems;
@@ -99,6 +99,7 @@ export default class Engine {
     this.context.delta = delta;
     for (const name in this.systems) {
       if (!Object.prototype.hasOwnProperty.call(this.systems, name)) continue;
+      if (this.context.startupPending?.has(name)) continue;
       this.systems[name]?.update?.(delta, this.context);
     }
   }
