@@ -247,6 +247,29 @@ export default {
     player.add(chain);
     this._studioChain = chain;
 
+    this._companionParts = {
+      body: bm,
+      head: head.material,
+      arms: [this.armL.material, this.armR.material],
+      logo: logo.material,
+      chain: chain.material
+    };
+    window.__lamboCityApplyCompanionAppearance = companion =>
+      this.applyCompanionAppearance(companion);
+
+    import("./alive/identity/companionAppearance.js")
+      .then(({ resolveCompanionMaterials }) => {
+        this._resolveCompanionMaterials = resolveCompanionMaterials;
+        return import("./alive/identity/guestIdentity.js");
+      })
+      .then(({ loadGuestIdentity }) => {
+        const savedCompanion = loadGuestIdentity()?.companion;
+        if (savedCompanion) this.applyCompanionAppearance(savedCompanion);
+      })
+      .catch(error => {
+        console.warn("[ALIVE] Companion appearance could not be restored:", error);
+      });
+
     player.position.set(
       0,
       1.3,
@@ -285,6 +308,23 @@ export default {
     this._elevatorY = null;
 
     return player;
+  },
+
+  applyCompanionAppearance(companion) {
+    if (!this._companionParts || typeof this._resolveCompanionMaterials !== "function") {
+      return false;
+    }
+    const palette = this._resolveCompanionMaterials(companion);
+    if (!palette) return false;
+
+    this._companionParts.head.color.setHex(palette.skinTone);
+    this._companionParts.body.color.setHex(palette.outfit);
+    this._companionParts.arms.forEach(material => material.color.setHex(palette.outfit));
+    this._companionParts.logo.color.setHex(palette.accent);
+    this._companionParts.logo.emissive.setHex(palette.accent);
+    this._companionParts.chain.color.setHex(palette.accent);
+    this._companionParts.chain.emissive.setHex(palette.accent);
+    return true;
   },
 
   setFacing(angle = 0) {
