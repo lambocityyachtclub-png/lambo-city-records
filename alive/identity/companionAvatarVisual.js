@@ -265,22 +265,36 @@ export function createCompanionAvatar(THREE, playerRoot, originalParts, initialC
     sync();
   } catch (error) {
     originals.forEach((part, index) => { part.visible = originalVisibility[index]; });
+    disposeTree(group);
     group.removeFromParent();
     throw error;
   }
 
+  let disposed = false;
+  const restoreOriginals = () => {
+    originals.forEach((part, index) => { part.visible = originalVisibility[index]; });
+    if (!disposed) {
+      disposed = true;
+      disposeTree(group);
+      group.removeFromParent();
+    }
+  };
+
   return {
     group,
-    apply,
-    sync,
+    apply(companion) {
+      if (disposed) throw new Error("Companion avatar has already been disposed.");
+      return apply(companion);
+    },
+    sync() {
+      if (!disposed) sync();
+    },
     setHoodie(active) {
+      if (disposed) return;
       hoodieActive = Boolean(active);
       hoodie.visible = hoodieActive;
       bodyMat.color.setHex(hoodieActive ? 0x1a0040 : currentDesign.outfit);
     },
-    restoreOriginals() {
-      originals.forEach((part, index) => { part.visible = originalVisibility[index]; });
-      group.removeFromParent();
-    }
+    restoreOriginals
   };
 }
