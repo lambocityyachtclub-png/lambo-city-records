@@ -98,6 +98,7 @@ async function showSignedIn(user) {
       await client.signOut();
       activeUser = null;
       window.__aliveAccountConnected = false;
+      window.__aliveCloudSyncStatus = "Saved on this device. Connect your account to sync across devices.";
       window.dispatchEvent(new Event("lc-player-account-disconnected"));
       renderSignIn();
     } catch (error) {
