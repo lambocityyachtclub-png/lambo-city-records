@@ -127,14 +127,46 @@ export function createCompanionAvatar(THREE, playerRoot, originalParts, initialC
   mesh(THREE, new THREE.CylinderGeometry(0.37, 0.49, 1.45, 16, 1), bodyMat, torso, [0, 0, 0]);
   mesh(THREE, new THREE.SphereGeometry(0.43, 16, 12), bodyMat, torso, [0, 0.48, 0], [1.02, 0.58, 0.86]);
   mesh(THREE, new THREE.CylinderGeometry(0.32, 0.37, 0.28, 14), pantMat, torso, [0, -0.78, 0]);
-  mesh(THREE, new THREE.BoxGeometry(0.34, 0.82, 0.035), shirtMat, torso, [0, 0.08, 0.372]);
-  for (const side of [-1, 1]) {
-    mesh(THREE, new THREE.BoxGeometry(0.035, 0.95, 0.018), trimMat, torso, [side * 0.29, 0.02, 0.355]);
-    const lapel = mesh(THREE, new THREE.BoxGeometry(0.16, 0.48, 0.045), trimMat, torso, [side * 0.13, 0.38, 0.4]);
-    lapel.rotation.z = side * -0.22;
-    mesh(THREE, new THREE.BoxGeometry(0.23, 0.025, 0.025), seamMat, torso, [side * 0.22, -0.42, 0.39]);
-  }
-  mesh(THREE, new THREE.BoxGeometry(0.16, 0.22, 0.035), trimMat, torso, [0, -0.08, 0.39]);
+  const wardrobe = new THREE.Group();
+  wardrobe.name = "companionWardrobe";
+  torso.add(wardrobe);
+  const rebuildWardrobe = design => {
+    wardrobe.traverse(item => item.geometry?.dispose?.());
+    wardrobe.clear();
+    const addPanel = (width, height, depth, mat, position, rotation = 0) => {
+      const panel = mesh(THREE, new THREE.BoxGeometry(width, height, depth), mat, wardrobe, position);
+      panel.rotation.z = rotation;
+      return panel;
+    };
+    if (design.outfit === "streetwear") {
+      mesh(THREE, new THREE.SphereGeometry(0.34, 14, 10), bodyMat, wardrobe, [0, 0.38, -0.27], [1, 0.82, 0.55]);
+      addPanel(0.46, 0.24, 0.055, bodyMat, [0, -0.34, 0.405]);
+      addPanel(0.025, 0.58, 0.025, trimMat, [0, 0.04, 0.414]);
+      for (const side of [-1, 1]) {
+        const cord = mesh(THREE, new THREE.CylinderGeometry(0.012, 0.012, 0.26, 6), trimMat, wardrobe, [side * 0.07, 0.23, 0.43]);
+        cord.rotation.z = side * -0.08;
+      }
+    } else if (design.outfit === "classic") {
+      addPanel(0.32, 0.82, 0.04, shirtMat, [0, 0.08, 0.378]);
+      for (const side of [-1, 1]) {
+        addPanel(0.16, 0.48, 0.045, trimMat, [side * 0.13, 0.38, 0.405], side * -0.22);
+        addPanel(0.035, 0.94, 0.02, trimMat, [side * 0.29, 0.02, 0.36]);
+      }
+      addPanel(0.13, 0.1, 0.025, ACCENTS.gold ? trimMat : shirtMat, [-0.22, 0.22, 0.414]);
+      for (let button = 0; button < 3; button++) {
+        mesh(THREE, new THREE.SphereGeometry(0.018, 7, 6), metalMat, wardrobe, [0, 0.2 - button * 0.16, 0.43]);
+      }
+    } else if (design.outfit === "minimal") {
+      addPanel(0.25, 0.88, 0.035, shirtMat, [0, 0.04, 0.38]);
+      addPanel(0.018, 0.72, 0.02, seamMat, [0, 0.02, 0.406]);
+      addPanel(0.18, 0.025, 0.02, trimMat, [0, -0.38, 0.405]);
+    } else {
+      addPanel(0.31, 0.8, 0.04, shirtMat, [0, 0.08, 0.378]);
+      addPanel(0.22, 0.58, 0.05, trimMat, [-0.12, 0.23, 0.41], 0.24);
+      addPanel(0.16, 0.38, 0.045, bodyMat, [0.16, -0.12, 0.415], -0.3);
+      addPanel(0.12, 0.12, 0.035, metalMat, [0.22, 0.45, 0.42]);
+    }
+  };
 
   const neck = mesh(THREE, new THREE.CylinderGeometry(0.14, 0.17, 0.26, 12), skinMat, group, [0, 2.58, 0]);
   const head = createHead(THREE, group, resolveCompanionAvatarDesign(initialCompanion));
@@ -181,6 +213,7 @@ export function createCompanionAvatar(THREE, playerRoot, originalParts, initialC
     const design = resolveCompanionAvatarDesign(companion);
     currentDesign = design;
     bodyMat.color.setHex(hoodieActive ? 0x1a0040 : design.outfit);
+    rebuildWardrobe(design);
     trimMat.color.setHex(design.accent);
     trimMat.emissive?.setHex(design.accent);
     metalMat.color.setHex(design.accent);
