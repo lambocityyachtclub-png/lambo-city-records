@@ -93,6 +93,33 @@ test("delegated editor and viewer grants cannot replace personal ownership", () 
   assert.equal(validatePersonalIdentity(identity).length, 0);
 });
 
+test("duplicate delegated grants are removed and malformed duplicates fail closed", () => {
+  const constructed = createPersonalIdentity({
+    identityId: "identity-duplicate-grant-001",
+    ownerId: "owner",
+    displayName: "Shared Character",
+    characterForm: "stylized",
+    grants: [
+      { subjectId: "shared-member", role: "viewer", permissions: ["view"] },
+      { subjectId: "shared-member", role: "editor", permissions: ["view", "edit"] }
+    ]
+  });
+  assert.deepEqual(constructed.grants, []);
+  assert.equal(canAccessIdentity(constructed, "shared-member", "viewer"), false);
+  assert.equal(canAccessIdentity(constructed, "shared-member", "editor"), false);
+
+  const malformed = {
+    ...baseIdentity(),
+    grants: [
+      { subjectId: "shared-member", role: "editor", permissions: ["view", "edit"] },
+      { subjectId: "shared-member", role: "viewer", permissions: ["view"] }
+    ]
+  };
+  assert.ok(validatePersonalIdentity(malformed).some(error => /only one access grant/.test(error)));
+  assert.equal(canAccessIdentity(malformed, "shared-member", "viewer"), false);
+  assert.equal(canAccessIdentity(malformed, "shared-member", "editor"), false);
+});
+
 test("invalid records cannot weaken owner-only memory or training restrictions", () => {
   const identity = { ...baseIdentity(), privacy: { memoryAccess: "public", trainingUse: true } };
   assert.ok(validatePersonalIdentity(identity).some(error => /owner-only/.test(error)));
