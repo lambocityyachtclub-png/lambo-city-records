@@ -135,6 +135,7 @@ async function loadWorldInStages() {
       if (!system || (initMode !== null && typeof system.init !== "function")) {
         throw new Error("LAMBO CITY startup module is invalid: " + name);
       }
+      if (initMode !== null) engine.context.startupPending.add(name);
       engine.systems[name] = system;
     }
 
@@ -144,6 +145,7 @@ async function loadWorldInStages() {
       if (initMode === "sceneContext") system.init(engine.scene, engine.context);
       else if (initMode === "none") system.init();
       else if (initMode !== null) system.init(engine.scene);
+      if (initMode !== null) engine.context.startupPending.delete(name);
       await yieldToRender();
     }
   }
