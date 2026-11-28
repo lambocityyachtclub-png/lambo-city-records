@@ -9,7 +9,7 @@ The launch promise is not a collection of disconnected features. It is one compl
 ## 2. Relationship between the brands
 - **LAMBO CITY** is the first destination and cultural home: entertainment, community, events, the waterfront world, and creative experiences.
 - **ALIVE** is the personal layer: identity, Companion, preferences, memory controls, saved creations, and portability.
-- **Hiro** is the creative guide and host for the first record-making experiences.
+- **HERO** is the creative guide and host for the first record-making experiences.
 A person can enjoy LAMBO CITY without surrendering ownership of their ALIVE identity. ALIVE should ultimately be portable to other compatible experiences.
 
 ## 3. Rollout philosophy
@@ -19,7 +19,7 @@ The rollout is invitation-led and milestone-based. Early access is about learnin
 ### Stage 0 — The signal
 **Audience:** public audience, no account required.
 - Introduce the ALIVE vision, visual identity, and roadmap.
-- Share curated development previews, Hiro sessions, and selected creative reveals.
+- Share curated development previews, HERO sessions, and selected creative reveals.
 - Keep private creation tools and unfinished account flows closed.
 - Collect interest only with a clear privacy notice and no false promise of permanent storage.
 
@@ -28,7 +28,7 @@ The rollout is invitation-led and milestone-based. Early access is about learnin
 ### Stage 1 — Founders' room
 **Audience:** founder and invited friends.
 - Invite-only access to a controlled preview.
-- Explore the world and experience guided creative sessions with Hiro.
+- Explore the world and experience guided creative sessions with HERO.
 - Test record-making workflows with a small group.
 - Label prototypes honestly; do not represent temporary/local data as safely backed up.
 - Collect structured feedback and report known limitations.
@@ -48,9 +48,9 @@ This is the coordinated launch bundle. Do not release these as disconnected prom
 
 **Exit gate:** end-to-end tests pass for new account, returning account, companion sync, record save, export, recovery, and deletion. No partial launch if one of these core promises is missing.
 
-### Stage 3 — Hiro's creative suite
+### Stage 3 — HERO's creative suite
 **Audience:** invited ALIVE members.
-- Guided record creation with Hiro.
+- Guided record creation with HERO.
 - Save drafts, versions, artwork, credits, and project metadata.
 - Clear ownership and permissions for collaborations.
 - Export projects and media in supported formats.
