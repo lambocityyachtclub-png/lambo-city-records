@@ -1,6 +1,8 @@
 function normalizeOrigin(value) {
   if (typeof value !== "string" || !value.trim()) return "";
-  const candidate = /^https?:\\/\\//i.test(value.trim()) ? value.trim() : "https://" + value.trim();
+  const raw = value.trim();
+  const lower = raw.toLowerCase();
+  const candidate = lower.startsWith("https://") || lower.startsWith("http://") ? raw : "https://" + raw;
   try {
     const parsed = new URL(candidate);
     if (parsed.protocol !== "https:" && parsed.hostname !== "localhost") return "";
