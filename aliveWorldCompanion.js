@@ -25,6 +25,7 @@ async function syncCompanionIdentity(identity) {
   const payload = await response.json().catch(() => ({}));
   if (response.status === 401) {
     window.__aliveAccountConnected = false;
+    window.__aliveCloudSyncStatus = "Saved on this device. Reconnect your account to sync.";
     return false;
   }
   if (!response.ok) throw new Error(payload.error || "Your Companion could not be synced.");
@@ -39,6 +40,8 @@ async function reconcileCloudIdentity(statusNode, onRestore) {
   });
   if (response.status === 401) {
     window.__aliveAccountConnected = false;
+    window.__aliveCloudSyncStatus = "Saved on this device. Connect your account to sync across devices.";
+    if (statusNode) statusNode.textContent = window.__aliveCloudSyncStatus;
     return;
   }
   const payload = await response.json().catch(() => ({}));
@@ -411,6 +414,7 @@ function open() {
   };
   accountDisconnectedHandler = () => {
     window.__aliveAccountConnected = false;
+    window.__aliveCloudSyncStatus = "Saved on this device. Connect your account to sync across devices.";
     status.textContent = "Your Companion remains saved on this device. Connect your account to sync it again.";
     status.style.color = "#c8b98f";
   };
