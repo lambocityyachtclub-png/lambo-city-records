@@ -192,7 +192,7 @@ export function createCompanionAvatar(THREE, playerRoot, originalParts, initialC
       mesh(THREE, new THREE.CapsuleGeometry(0.018, 0.065, 3, 6), skinMat, pivot,
         [-0.075 + finger * 0.05, -0.59, 0.035 + (finger === 1 || finger === 2 ? 0.012 : 0)]);
     }
-    const thumb = mesh(THREE, new THREE.CapsuleGeometry(0.022, 0.07, 3, 6), skinMat, pivot, [side * -0.115, -0.52, 0.045]);
+    const thumb = mesh(THREE, new THREE.CapsuleGeometry(0.022, 0.07, 3, 6), skinMat, pivot, [side * 0.115, -0.52, 0.045]);
     thumb.rotation.z = side * 0.72;
     mesh(THREE, new THREE.TorusGeometry(0.12, 0.025, 6, 12), trimMat, pivot, [0, -0.39, 0]);
     arms.push(pivot);
