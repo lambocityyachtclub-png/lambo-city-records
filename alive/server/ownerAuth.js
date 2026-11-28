@@ -3,6 +3,7 @@ import { passkey } from "@better-auth/passkey";
 import { twoFactor } from "better-auth/plugins";
 import { Pool } from "pg";
 import { getAliveOwnerOriginConfig } from "./originPolicy.js";
+import { getAliveDatabaseUrl } from "../../server/databaseTargets.js";
 
 let pool;
 let auth;
@@ -45,7 +46,8 @@ async function sendOwnerEmail({ to, subject, heading, url }) {
 
 export function getAliveOwnerAuth() {
   if (auth) return auth;
-  const databaseUrl = required("DATABASE_URL");
+  const databaseUrl = getAliveDatabaseUrl();
+  if (!databaseUrl) throw new Error("ALIVE_DATABASE_URL must be configured before owner authentication is available.");
   const secret = required("ALIVE_OWNER_AUTH_SECRET", 32);
   const ownerEmail = required("ALIVE_OWNER_EMAIL").trim().toLowerCase();
   const { baseURL, trustedOrigins } = getAliveOwnerOriginConfig();
