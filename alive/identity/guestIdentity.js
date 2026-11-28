@@ -42,3 +42,18 @@ export function saveGuestCompanion(companion,{storage=globalThis.localStorage,no
  const current=loadGuestIdentity(storage)||createGuestIdentity({now});const normalized=normalizeGuestCompanion(companion);const next={...current,companion:normalized,updatedAt:now()};saveGuestIdentity(next,storage);return next;
 }
 export function clearGuestIdentity(storage=globalThis.localStorage){if(storage&&typeof storage.removeItem==="function")storage.removeItem(GUEST_IDENTITY_STORAGE_KEY);}
+
+export function exportGuestIdentity(storage=globalThis.localStorage,{now=()=>new Date().toISOString()}={}){
+ const identity=loadGuestIdentity(storage);
+ if(!identity)throw new TypeError("There is no saved Companion profile to export.");
+ return JSON.stringify({format:"alive-guest-export",formatVersion:1,exportedAt:now(),identity},null,2);
+}
+export function importGuestIdentity(payload,storage=globalThis.localStorage){
+ if(typeof payload!=="string"||payload.length>24000)throw new TypeError("The Companion backup file is invalid or too large.");
+ let record;
+ try{record=JSON.parse(payload);}catch{throw new TypeError("The Companion backup file is not valid JSON.");}
+ if(!record||record.format!=="alive-guest-export"||record.formatVersion!==1)throw new TypeError("This file is not a supported ALIVE Companion backup.");
+ const identity=normalizeGuestIdentity(record.identity);
+ if(!identity?.companion)throw new TypeError("The backup does not contain a valid Companion profile.");
+ return saveGuestIdentity(identity,storage);
+}
