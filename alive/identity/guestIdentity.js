@@ -17,13 +17,26 @@ export function createGuestIdentity({id,now=()=>new Date().toISOString()}={}){
  const guestId=safeText(id,128)||(globalThis.crypto?.randomUUID?.()||"guest-"+Date.now().toString(36)+"-"+Math.random().toString(36).slice(2,12));
  const timestamp=now();return Object.freeze({schema:"alive-guest-identity",schemaVersion:1,guestId,createdAt:timestamp,updatedAt:timestamp,companion:null});
 }
+function normalizeGuestIdentity(record){
+ if(!record||typeof record!=="object"||Array.isArray(record)||record.schema!=="alive-guest-identity"||record.schemaVersion!==1)return null;
+ const guestId=safeText(record.guestId,128);
+ const createdAt=safeText(record.createdAt,64);
+ const updatedAt=safeText(record.updatedAt,64);
+ if(!guestId||!createdAt||!updatedAt)return null;
+ let companion=null;
+ if(record.companion!==null&&record.companion!==undefined){
+  try{companion=normalizeGuestCompanion(record.companion);}catch{return null;}
+ }
+ return {schema:"alive-guest-identity",schemaVersion:1,guestId,createdAt,updatedAt,companion};
+}
 export function loadGuestIdentity(storage=globalThis.localStorage){
- try{const raw=storageOrThrow(storage).getItem(GUEST_IDENTITY_STORAGE_KEY);if(!raw)return null;const record=JSON.parse(raw);if(record?.schema!=="alive-guest-identity"||record?.schemaVersion!==1||!safeText(record.guestId,128))return null;return record;}catch{return null;}
+ try{const raw=storageOrThrow(storage).getItem(GUEST_IDENTITY_STORAGE_KEY);if(!raw)return null;return normalizeGuestIdentity(JSON.parse(raw));}catch{return null;}
 }
 export function saveGuestIdentity(identity,storage=globalThis.localStorage){
- if(!identity||identity.schema!=="alive-guest-identity"||identity.schemaVersion!==1||!safeText(identity.guestId,128))throw new TypeError("A valid guest identity is required.");
- const serialized=JSON.stringify(identity);if(serialized.length>16000)throw new TypeError("Guest identity is larger than the local storage limit.");
- storageOrThrow(storage).setItem(GUEST_IDENTITY_STORAGE_KEY,serialized);return identity;
+ const normalized=normalizeGuestIdentity(identity);
+ if(!normalized)throw new TypeError("A valid guest identity is required.");
+ const serialized=JSON.stringify(normalized);if(serialized.length>16000)throw new TypeError("Guest identity is larger than the local storage limit.");
+ storageOrThrow(storage).setItem(GUEST_IDENTITY_STORAGE_KEY,serialized);return normalized;
 }
 export function saveGuestCompanion(companion,{storage=globalThis.localStorage,now=()=>new Date().toISOString()}={}){
  const current=loadGuestIdentity(storage)||createGuestIdentity({now});const normalized=normalizeGuestCompanion(companion);const next={...current,companion:normalized,updatedAt:now()};saveGuestIdentity(next,storage);return next;
