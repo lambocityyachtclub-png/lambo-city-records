@@ -63,6 +63,7 @@ const WORLD_INVARIANTS = [
 const CONTRACTS = [
   makeContract({
     id: "world-material-quality",
+    version: "1.1.0",
     name: "World Materials and Environmental Finish",
     purpose: "Improve realism, material response, surface finish, and environmental detail without changing established layouts or geometry.",
     autonomyLevel: AUTONOMY.TRUSTED_OPERATOR,
@@ -77,8 +78,7 @@ const CONTRACTS = [
       "inspect",
       "analyze",
       "prepare_isolated_change",
-      "run_tests",
-      "deploy_production_low_risk"
+      "run_tests"
     ],
     ownerApprovalOperations: [
       "change_geometry",
@@ -89,7 +89,9 @@ const CONTRACTS = [
       "remove_existing_content",
       "add_paid_service",
       "change_external_service",
-      "deploy_production_high_risk"
+      "deploy_production_low_risk",
+      "deploy_production_high_risk",
+      "deploy_production"
     ],
     forbiddenOperations: COMMON_FORBIDDEN,
     protectedInvariants: WORLD_INVARIANTS,
@@ -102,7 +104,7 @@ const CONTRACTS = [
       "resource_budget_passed",
       "rollback_ready"
     ],
-    productionDeployment: "low-risk-preauthorized",
+    productionDeployment: "owner-approval",
     resourceBudget: {
       maxChangedFiles: 4,
       maxLinesChanged: 300,
@@ -329,8 +331,8 @@ export function validateProjectContract(contract) {
   if (!Array.isArray(contract.allowedPaths) || !Array.isArray(contract.allowedOperations)) errors.push("Contract allowlists are invalid.");
   if (!Array.isArray(contract.protectedInvariants) || contract.protectedInvariants.length === 0) errors.push("Protected invariants are required.");
   if (!contract.rollback?.required || !contract.rollback?.strategy) errors.push("A rollback strategy is required.");
-  if (!["owner-approval", "low-risk-preauthorized"].includes(contract.productionDeployment)) {
-    errors.push("Production deployment policy is invalid.");
+  if (contract.productionDeployment !== "owner-approval") {
+    errors.push("Production deployment must require explicit owner approval.");
   }
   return errors;
 }
@@ -410,6 +412,16 @@ export function evaluateProjectAction(contractId, operation, evidence = {}) {
   if (contract.forbiddenOperations.includes(operation)) {
     return Object.freeze({ authorized: false, decision: "denied", reason: "This operation is forbidden by the project trust contract." });
   }
+  if (
+    operation === "deploy_production" ||
+    (typeof operation === "string" && operation.startsWith("deploy_production_"))
+  ) {
+    return Object.freeze({
+      authorized: false,
+      decision: "owner_approval_required",
+      reason: "Every production deployment requires a separate explicit owner decision."
+    });
+  }
   if (contract.ownerApprovalOperations.includes(operation)) {
     return Object.freeze({ authorized: false, decision: "owner_approval_required", reason: "This operation is reserved for explicit owner approval." });
   }
@@ -420,28 +432,6 @@ export function evaluateProjectAction(contractId, operation, evidence = {}) {
     if (LEVEL[contract.autonomyLevel] < LEVEL.builder || !Array.isArray(evidence.changedPaths) ||
       !pathsAreAllowed(evidence.changedPaths, contract.allowedPaths)) {
       return Object.freeze({ authorized: false, decision: "denied", reason: "The contract does not authorize these changed paths." });
-    }
-    const budgetDecision = evaluateResourceBudget(contract, evidence);
-    if (budgetDecision) return budgetDecision;
-  }
-  if (operation === "deploy_production_low_risk") {
-    if (contract.productionDeployment !== "low-risk-preauthorized" ||
-      contract.autonomyLevel !== AUTONOMY.TRUSTED_OPERATOR) {
-      return Object.freeze({ authorized: false, decision: "owner_approval_required", reason: "Production deployment is not pre-authorized by this contract." });
-    }
-    const required = contract.requiredEvidence;
-    const missing = required.filter(key => evidence[key] !== true);
-    if (missing.length) {
-      return Object.freeze({ authorized: false, decision: "blocked_missing_evidence", reason: "Required release evidence is missing.", missingEvidence: missing });
-    }
-    if (evidence.risk !== "low") {
-      return Object.freeze({ authorized: false, decision: "owner_approval_required", reason: "Only low-risk changes are covered by the standing owner authorization." });
-    }
-    if (!pathsAreAllowed(evidence.changedPaths, contract.allowedPaths)) {
-      return Object.freeze({ authorized: false, decision: "denied", reason: "Changed paths are outside this contract's allowlist." });
-    }
-    if (evidence.protectedScopeTouched === true) {
-      return Object.freeze({ authorized: false, decision: "owner_approval_required", reason: "The change touches protected project scope." });
     }
     const budgetDecision = evaluateResourceBudget(contract, evidence);
     if (budgetDecision) return budgetDecision;
