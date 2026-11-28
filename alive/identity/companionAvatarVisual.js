@@ -90,21 +90,28 @@ function createHead(THREE, parent, design) {
   const lip = material(THREE, 0x754b43, 0.82);
   const highlight = material(THREE, 0xffffff, 0.22);
   const stylized = design.form === "stylized";
-  mesh(THREE, new THREE.SphereGeometry(0.42, 24, 20), skin, head, [0, 0, 0],
+  mesh(THREE, new THREE.SphereGeometry(0.42, 28, 22), skin, head, [0, 0, 0],
     stylized ? [1.04, 1.08, 0.98] : [0.94, 1.08, 0.92]);
+  mesh(THREE, new THREE.SphereGeometry(0.27, 18, 14), skin, head, [0, -0.2, 0.055],
+    stylized ? [0.92, 0.62, 0.86] : [0.82, 0.66, 0.78]);
   for (const side of [-1, 1]) {
-    mesh(THREE, new THREE.SphereGeometry(0.075, 10, 8), skin, head, [side * 0.41, -0.015, 0]);
-    mesh(THREE, new THREE.SphereGeometry(stylized ? 0.075 : 0.055, 12, 10), eyeWhite, head, [side * 0.16, 0.045, 0.365]);
-    mesh(THREE, new THREE.SphereGeometry(0.035, 10, 8), iris, head, [side * 0.16, 0.045, 0.412]);
-    mesh(THREE, new THREE.SphereGeometry(0.017, 8, 6), dark, head, [side * 0.16, 0.045, 0.43]);
-    mesh(THREE, new THREE.SphereGeometry(0.012, 7, 6), highlight, head, [side * 0.175, 0.065, 0.444]);
-    const brow = mesh(THREE, new THREE.BoxGeometry(0.14, 0.025, 0.035), dark, head, [side * 0.16, 0.14, 0.37]);
+    mesh(THREE, new THREE.SphereGeometry(0.075, 12, 10), skin, head, [side * 0.405, -0.015, 0]);
+    mesh(THREE, new THREE.SphereGeometry(0.105, 12, 10), skin, head, [side * 0.245, -0.105, 0.29], [1, 0.72, 0.52]);
+    mesh(THREE, new THREE.SphereGeometry(0.095, 12, 10), dark, head, [side * 0.16, 0.045, 0.355], [1.2, 0.9, 0.55]);
+    mesh(THREE, new THREE.SphereGeometry(stylized ? 0.075 : 0.055, 14, 12), eyeWhite, head, [side * 0.16, 0.045, 0.385]);
+    mesh(THREE, new THREE.SphereGeometry(0.035, 12, 10), iris, head, [side * 0.16, 0.045, 0.433]);
+    mesh(THREE, new THREE.SphereGeometry(0.017, 10, 8), dark, head, [side * 0.16, 0.045, 0.452]);
+    mesh(THREE, new THREE.SphereGeometry(0.012, 8, 6), highlight, head, [side * 0.175, 0.065, 0.466]);
+    const upperLid = mesh(THREE, new THREE.SphereGeometry(0.085, 12, 8), skin, head, [side * 0.16, 0.112, 0.378], [1, 0.28, 0.48]);
+    upperLid.rotation.z = side * -0.04;
+    const brow = mesh(THREE, new THREE.CapsuleGeometry(0.018, 0.105, 3, 6), dark, head, [side * 0.16, 0.155, 0.365]);
     brow.rotation.z = side * -0.08;
   }
-  mesh(THREE, new THREE.SphereGeometry(0.065, 10, 8), skin, head, [0, -0.075, 0.385], [0.72, 0.9, 0.75]);
-  mesh(THREE, new THREE.SphereGeometry(0.018, 8, 6), dark, head, [-0.025, -0.095, 0.443]);
-  mesh(THREE, new THREE.SphereGeometry(0.018, 8, 6), dark, head, [0.025, -0.095, 0.443]);
-  mesh(THREE, new THREE.BoxGeometry(0.14, 0.018, 0.025), lip, head, [0, -0.22, 0.365]);
+  mesh(THREE, new THREE.SphereGeometry(0.075, 14, 10), skin, head, [0, -0.075, 0.39], [0.66, 1.25, 0.72]);
+  mesh(THREE, new THREE.SphereGeometry(0.021, 9, 7), dark, head, [-0.025, -0.105, 0.445]);
+  mesh(THREE, new THREE.SphereGeometry(0.021, 9, 7), dark, head, [0.025, -0.105, 0.445]);
+  mesh(THREE, new THREE.SphereGeometry(0.075, 12, 8), lip, head, [0, -0.245, 0.35], [1.05, 0.24, 0.5]);
+  mesh(THREE, new THREE.SphereGeometry(0.035, 10, 8), skin, head, [0, -0.285, 0.345], [1.1, 0.16, 0.35]);
   addHair(THREE, head, design.hair, design.hairStyle);
   return head;
 }
@@ -125,7 +132,7 @@ export function createCompanionAvatar(THREE, playerRoot, originalParts, initialC
 
   const torso = new THREE.Group();
   group.add(torso);
-  mesh(THREE, new THREE.CylinderGeometry(0.37, 0.49, 1.45, 16, 1), bodyMat, torso, [0, 0, 0]);
+  mesh(THREE, new THREE.CapsuleGeometry(0.39, 0.68, 6, 14), bodyMat, torso, [0, 0, 0]);
   mesh(THREE, new THREE.SphereGeometry(0.43, 16, 12), bodyMat, torso, [0, 0.48, 0], [1.02, 0.58, 0.86]);
   mesh(THREE, new THREE.CylinderGeometry(0.32, 0.37, 0.28, 14), pantMat, torso, [0, -0.78, 0]);
   const wardrobe = new THREE.Group();
