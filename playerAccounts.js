@@ -1,5 +1,5 @@
 const AUTH_CLIENT_URL = "https://esm.sh/better-auth@1.7.23/client";
-const PASSKEY_CLIENT_URL = "https://esm.sh/@better-auth/passkey@1.7.22/client";
+const PASSKEY_CLIENT_URL = "https://esm.sh/@better-auth/passkey@1.7.23/client";
 const EMAIL_OTP_CLIENT_URL = "https://esm.sh/better-auth@1.7.23/client/plugins";
 
 let authClientPromise;
@@ -97,12 +97,16 @@ async function showSignedIn(user) {
       const client = await getAuthClient();
       await client.signOut();
       activeUser = null;
+      window.__aliveAccountConnected = false;
+      window.dispatchEvent(new Event("lc-player-account-disconnected"));
       renderSignIn();
     } catch (error) {
       setStatus(error.message, true);
     }
   });
   panel.append(heading, identity, email, description, signOut);
+  window.__aliveAccountConnected = true;
+  window.dispatchEvent(new CustomEvent("lc-player-account-connected", { detail: { userId: user.id || null } }));
   setStatus("ACCOUNT CONNECTED");
 }
 
